@@ -22,6 +22,7 @@ class TestFlextValidationsMissingCoverageTargeted:
 
     def test_type_validators_to_int_with_int_method(self) -> None:
         """Test TypeValidators.validate_integer with custom __int__ method (lines 84-89)."""
+
         class CustomIntConvertible:
             def __int__(self) -> int:
                 return 42
@@ -33,6 +34,7 @@ class TestFlextValidationsMissingCoverageTargeted:
 
     def test_type_validators_to_int_conversion_error(self) -> None:
         """Test TypeValidators.validate_integer with conversion error (lines 84-89)."""
+
         class ProblematicInt:
             def __int__(self) -> int:
                 msg = "Conversion failed"
@@ -41,6 +43,7 @@ class TestFlextValidationsMissingCoverageTargeted:
         problematic_obj = ProblematicInt()
         result = FlextValidations.TypeValidators.validate_integer(problematic_obj)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Cannot convert" in result.error
 
     def test_type_validators_to_float_with_float_method(self) -> None:
@@ -76,6 +79,7 @@ class TestFlextValidationsMissingCoverageTargeted:
         result = FlextValidations.TypeValidators.validate_float(problematic_obj)
 
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Cannot convert" in result.error
 
     def test_type_validators_edge_case_conversions(self) -> None:
@@ -133,13 +137,17 @@ class TestFlextValidationsMissingCoverageTargeted:
 
         # Test with very small positive number
         small_positive = 0.000001
-        result = FlextValidations.Guards.require_positive(small_positive, "Small positive test")
+        result = FlextValidations.Guards.require_positive(
+            small_positive, "Small positive test"
+        )
         FlextTestsMatchers.assert_result_success(result)
         assert result.value == small_positive
 
         # Test with large positive number
         large_positive = 1e20
-        result = FlextValidations.Guards.require_positive(large_positive, "Large positive test")
+        result = FlextValidations.Guards.require_positive(
+            large_positive, "Large positive test"
+        )
         FlextTestsMatchers.assert_result_success(result)
         assert result.value == large_positive
 
@@ -286,10 +294,7 @@ class TestFlextValidationsMissingCoverageTargeted:
                 {"id": 1, "name": "User1", "active": True},
                 {"id": 2, "name": "User2", "active": False},
             ],
-            "metadata": {
-                "version": "1.0.0",
-                "timestamp": "2025-01-01T00:00:00Z"
-            }
+            "metadata": {"version": "1.0.0", "timestamp": "2025-01-01T00:00:00Z"},
         }
 
         # Test validation of complex structures
@@ -380,7 +385,9 @@ class TestFlextValidationsMissingCoverageTargeted:
 
             # Test type validation if available
             if hasattr(FlextValidations.TypeValidators, "validate_type"):
-                result = FlextValidations.TypeValidators.validate_type(test_value, expected_type)
+                result = FlextValidations.TypeValidators.validate_type(
+                    test_value, expected_type
+                )
                 assert hasattr(result, "is_success")
 
     def test_decimal_and_numeric_edge_cases(self) -> None:

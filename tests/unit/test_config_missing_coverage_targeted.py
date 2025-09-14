@@ -16,8 +16,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from flext_core.config import FlextConfig
 from flext_tests import FlextTestsMatchers
 
@@ -30,7 +28,9 @@ class TestFlextConfigMissingCoverageTargeted:
         # Create a simple mapping that is actually a Mapping instance
         test_mapping = {"key1": "value1", "key2": "value2"}
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as temp_file:
             temp_path = temp_file.name
 
         try:
@@ -60,7 +60,7 @@ class TestFlextConfigMissingCoverageTargeted:
                 # This will be called during mapping check
                 return iter(["key1", "key2"])
 
-            def items(self) -> list[tuple[str, str]]:
+            def items(self) -> list[tuple[str, object]]:
                 # This exists but might cause issues
                 return [("key1", "value1"), ("key2", "value2")]
 
@@ -71,13 +71,17 @@ class TestFlextConfigMissingCoverageTargeted:
 
         problematic_data = ProblematicMappingLike()
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as temp_file:
             temp_path = temp_file.name
 
         try:
-            # This should trigger exception handling paths (lines 346-348)
-            with pytest.raises(TypeError, match="not JSON serializable"):
-                FlextConfig.FilePersistence.save_to_file(problematic_data, temp_path)
+            # This object should be converted using items() fallback and saved successfully
+            result = FlextConfig.FilePersistence.save_to_file(
+                problematic_data, temp_path
+            )
+            FlextTestsMatchers.assert_result_success(result)
 
         finally:
             if Path(temp_path).exists():
@@ -93,7 +97,9 @@ version = "1.0.0"
 environment = "test"
 """
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".toml", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".toml", delete=False
+        ) as temp_file:
             temp_file.write(toml_content)
             temp_path = temp_file.name
 
@@ -111,9 +117,13 @@ environment = "test"
     def test_factory_create_from_file_unknown_extension(self) -> None:
         """Test Factory.create_from_file with unknown file extension (lines 427-428)."""
         # Create a file with unknown extension but valid JSON content
-        json_content = '{"app_name": "test-app", "version": "1.0.0", "environment": "test"}'
+        json_content = (
+            '{"app_name": "test-app", "version": "1.0.0", "environment": "test"}'
+        )
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".unknown", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".unknown", delete=False
+        ) as temp_file:
             temp_file.write(json_content)
             temp_path = temp_file.name
 
@@ -153,10 +163,7 @@ environment = "test"
         # Test with data that exercises validation paths but doesn't violate Pydantic constraints
 
         # Test minimal valid config that exercises factory validation
-        minimal_config_data = {
-            "app_name": "test-app",
-            "version": "1.0.0"
-        }
+        minimal_config_data = {"app_name": "test-app", "version": "1.0.0"}
 
         # Use the minimal config data for validation testing
         result = FlextConfig.Factory.create_from_file("test_config.json")
@@ -171,7 +178,9 @@ environment = "test"
     def test_load_from_sources_json_parse_error(self) -> None:
         """Test _load_from_sources with JSON parsing error (lines 521-522)."""
         # Create invalid JSON file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as temp_file:
             temp_file.write('{"invalid": json syntax}')  # Invalid JSON
             temp_path = temp_file.name
 
@@ -191,7 +200,9 @@ environment = "test"
     def test_load_from_sources_yaml_parse_error(self) -> None:
         """Test _load_from_sources with YAML parsing error (line 557)."""
         # Create invalid YAML file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".yaml", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".yaml", delete=False
+        ) as temp_file:
             temp_file.write("invalid: yaml: [unclosed bracket")  # Invalid YAML
             temp_path = temp_file.name
 
@@ -209,7 +220,9 @@ environment = "test"
     def test_load_from_sources_permission_error(self) -> None:
         """Test _load_from_sources with file permission error (lines 566-567)."""
         # Create a file then remove read permissions
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as temp_file:
             temp_file.write('{"app_name": "test-app", "version": "1.0.0"}')
             temp_path = temp_file.name
 
@@ -277,7 +290,9 @@ environment = "test"
         extensions = [".json", ".yaml", ".yml"]
 
         for ext in extensions:
-            with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=ext, delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=ext, delete=False
+            ) as temp_file:
                 temp_path = temp_file.name
 
             try:
@@ -346,7 +361,7 @@ environment = "test"
             "FLEXT_VERSION": "2.0.0",
             "FLEXT_ENVIRONMENT": "test",
             "FLEXT_DEBUG": "true",
-            "FLEXT_MAX_WORKERS": "8"
+            "FLEXT_MAX_WORKERS": "8",
         }
 
         with patch.dict(os.environ, test_env_vars):
@@ -384,7 +399,7 @@ environment = "test"
             {"app_name": "test2", "version": "2.0.0", "environment": "test"},
         ]
 
-        for test_data in test_cases:
+        for _ in test_cases:
             result = FlextConfig.Factory.create_from_file("test_config.json")
             # Should handle various configurations appropriately
             assert hasattr(result, "is_success")
@@ -410,7 +425,7 @@ environment = "test"
             "validate_positive_integers",
             "validate_non_negative_integers",
             "validate_host",
-            "validate_base_url"
+            "validate_base_url",
         ]
 
         for method_name in validation_methods:

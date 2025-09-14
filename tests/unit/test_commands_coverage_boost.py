@@ -87,7 +87,7 @@ class TestFlextCommandsCoverageBoost:
             def handle(self, __command: TestCommand, /) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
-            def can_handle(self, __command_type: object, /) -> bool:
+            def can_handle(self, ___command_type: object, /) -> bool:
                 return True
 
         handler = MetadataHandler()
@@ -295,6 +295,7 @@ class TestFlextCommandsCoverageBoost:
             "Custom error", error_code="CUSTOM_ERROR"
         )
         assert result.is_failure
+        assert result.error
         assert "Custom error" in result.error
 
     def test_factories_create_handlers_with_metadata(self) -> None:
@@ -303,7 +304,7 @@ class TestFlextCommandsCoverageBoost:
         def simple_handler(__cmd: TestCommand, /) -> FlextResult[str]:
             return FlextResult[str].ok("factory_created")
 
-        def query_handler(__query: TestQuery, /) -> FlextResult[dict]:
+        def query_handler(___query: TestQuery, /) -> FlextResult[dict]:
             return FlextResult[dict].ok({"result": "query_factory"})
 
         # Create handlers via factories

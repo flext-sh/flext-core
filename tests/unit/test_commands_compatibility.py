@@ -120,8 +120,9 @@ class TestCommandsCompatibility:
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
             def handle(self, query: TestQuery) -> FlextResult[str]:
-                _ = query  # Avoid unused parameter warning
-                return FlextResult[str].ok("Query result")
+                return FlextResult[str].ok(
+                    f"Query result for {query.query_id if hasattr(query, 'query_id') else 'unknown'}"
+                )
 
         handler = TestQueryHandler()
         assert handler is not None
@@ -162,8 +163,9 @@ class TestCommandsCompatibility:
         # Create simple middleware
         class TestMiddleware:
             def process(self, command: object, handler: object) -> FlextResult[None]:
-                _ = command  # Avoid unused parameter warning
-                _ = handler  # Avoid unused parameter warning
+                # Process middleware with validation
+                if command is None or handler is None:
+                    return FlextResult[None].fail("Command and handler cannot be None")
                 return FlextResult[None].ok(None)
 
         # Add middleware to bus
@@ -182,8 +184,7 @@ class TestCommandsCompatibility:
 
         # Test simple handler factory
         def test_handler_func(command: object) -> str:
-            _ = command  # Avoid unused parameter warning
-            return "Factory handler result"
+            return f"Factory handler result for {type(command).__name__}"
 
         handler = FlextCommands.Factories.create_simple_handler(test_handler_func)
         assert isinstance(handler, FlextCommands.Handlers.CommandHandler)

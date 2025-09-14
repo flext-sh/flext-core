@@ -35,6 +35,7 @@ class TestFlextValidationsCoverageBoost:
         )
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "minimum" in result.error
 
         # Test maximum value constraint using BusinessValidators
@@ -43,6 +44,7 @@ class TestFlextValidationsCoverageBoost:
         )
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "maximum" in result.error
 
         # Test within range using BusinessValidators
@@ -63,6 +65,7 @@ class TestFlextValidationsCoverageBoost:
         result = FlextValidations.validate_number(object())
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "Value cannot be converted to a number" in result.error
 
     def test_validate_number_with_conversion_errors(self) -> None:
@@ -71,6 +74,7 @@ class TestFlextValidationsCoverageBoost:
         result = FlextValidations.validate_number("not_a_number")
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "Value must be numeric" in result.error
 
         # Test None
@@ -85,6 +89,7 @@ class TestFlextValidationsCoverageBoost:
         )
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "minimum" in result.error
 
         # Test maximum length constraint using BusinessValidators
@@ -93,6 +98,7 @@ class TestFlextValidationsCoverageBoost:
         )
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "maximum" in result.error
 
         # Test valid string within length constraints

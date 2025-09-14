@@ -169,6 +169,7 @@ ENVIRONMENT=staging
         # Test with nonexistent file
         result = FlextConfig.create_from_environment(env_file="/nonexistent/file.env")
         assert result.is_failure
+        assert result.error
         assert "Environment file not found" in result.error
 
     def test_load_from_sources_method(self) -> None:
@@ -263,6 +264,7 @@ ENVIRONMENT=staging
         )
         result = config_invalid.validate_business_rules()
         assert result.is_failure
+        assert result.error
         assert "Debug mode in production" in result.error
 
         # Test auth validation separately
@@ -508,6 +510,7 @@ ENVIRONMENT=staging
             extra_settings={"environment": "invalid_env"}
         )
         assert result.is_failure
+        assert result.error
         assert "Invalid environment" in result.error
 
         # Test merge with incompatible configs (if applicable)

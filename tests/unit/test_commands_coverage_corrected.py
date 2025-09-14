@@ -28,7 +28,10 @@ class TestCommandHandler(FlextCommands.Handlers.CommandHandler):
         """Handle the given command and return result."""
         if self.can_handle(command):
             return FlextResult[dict].ok(
-                {"handled": True, "command_type": command.command_type}
+                {
+                    "handled": True,
+                    "command_type": getattr(command, "command_type", "unknown"),
+                }
             )
         return FlextResult[dict].fail("Cannot handle command")
 
@@ -275,8 +278,10 @@ class TestFlextCommandsCorrected:
         @decorators.command_handler("test_decorated")
         def test_handler(command: object) -> dict[str, bool]:
             # Use the command parameter to avoid unused argument warning
-            _ = command  # Acknowledge parameter usage
-            return {"handled_by_decorator": True}
+            return {
+                "handled_by_decorator": True,
+                "command_type": type(command).__name__,
+            }
 
         # Test that decorator function is callable
         assert callable(test_handler)

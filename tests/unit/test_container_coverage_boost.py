@@ -58,6 +58,7 @@ class TestFlextContainerCoverageBoost:
 
             # Should fail and trigger rollback
             assert result.is_failure
+            assert result.error
             assert "Batch registration failed" in result.error
 
     def test_get_typed_type_mismatch(self) -> None:
@@ -68,6 +69,7 @@ class TestFlextContainerCoverageBoost:
         # Try to get as int when it's a string
         result = container.get_typed("string_service", int)
         assert result.is_failure
+        assert result.error
         assert "is str, expected int" in result.error
 
     def test_get_typed_service_not_found(self) -> None:
@@ -76,6 +78,7 @@ class TestFlextContainerCoverageBoost:
 
         result = container.get_typed("nonexistent", str)
         assert result.is_failure
+        assert result.error
         assert "not found" in result.error
 
     def test_get_typed_success(self) -> None:
@@ -164,6 +167,7 @@ class TestFlextContainerCoverageBoost:
         # Register non-callable as factory
         result = container.register_factory("invalid_factory", "not_callable")
         assert result.is_failure
+        assert result.error
         assert "Factory must be callable" in result.error
 
     def test_register_factory_with_parameters(self) -> None:
@@ -176,7 +180,9 @@ class TestFlextContainerCoverageBoost:
         # This should fail because factory requires parameters
         result = container.register_factory("param_factory", factory_with_params)
         assert result.is_failure
+        assert result.error
         assert "requires" in result.error
+        assert result.error
         assert "parameter" in result.error
 
     def test_register_factory_success(self) -> None:
@@ -253,6 +259,7 @@ class TestFlextContainerCoverageBoost:
 
         result = cmd.validate_command()
         assert result.is_failure
+        assert result.error
         assert "Factory must be callable" in result.error
 
         # Test with callable factory
@@ -294,6 +301,7 @@ class TestFlextContainerCoverageBoost:
         ):
             result = container.batch_register(problematic_registrations)
             assert result.is_failure
+            assert result.error
             assert "Batch registration crashed" in result.error
 
     def test_auto_wire_basic_functionality(self) -> None:

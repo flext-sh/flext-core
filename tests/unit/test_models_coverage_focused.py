@@ -416,6 +416,7 @@ class TestFlextModelsCoverageFocused:
             ):
                 result = FlextModels.create_entity(id="test")
                 FlextTestsMatchers.assert_result_failure(result)
+                assert result.error
                 assert "Forced error" in result.error
         except Exception:
             # If patching doesn't work as expected, just ensure the method handles it gracefully

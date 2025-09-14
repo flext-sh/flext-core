@@ -54,9 +54,9 @@ class TestFlextConfigComprehensive:
                 assert data["app_name"] == "test_app"
 
             # Test load_from_file method using class method
-            result = FlextConfig.load_from_file(temp_path)
-            assert result.is_success
-            loaded_config = result.unwrap()
+            load_result = FlextConfig.load_from_file(temp_path)
+            assert load_result.is_success
+            loaded_config = load_result.unwrap()
             assert loaded_config.app_name == "test_app"
         finally:
             if Path(temp_path).exists():
@@ -108,6 +108,7 @@ class TestFlextConfigComprehensive:
         # Test get_env_var for nonexistent variable (returns FlextResult with failure)
         result = adapter.get_env_var("NONEXISTENT_VAR")
         assert result.is_failure
+        assert result.error
         assert "not found" in result.error
 
         # Test get_env_var with valid environment variable
@@ -378,6 +379,7 @@ class TestFlextConfigComprehensive:
         # Test get_env_var with nonexistent variable (should fail)
         result = config.get_env_var("NONEXISTENT_VAR")
         assert result.is_failure
+        assert result.error
         assert "not found" in result.error
 
     def test_config_value_validation(self) -> None:

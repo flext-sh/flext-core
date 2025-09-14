@@ -463,6 +463,7 @@ class TestFlextCommandBus:
 
         # Verify the result is a failure
         assert result.is_failure
+        assert result.error
         assert "Invalid handler" in result.error
 
         # Verify no handlers were registered

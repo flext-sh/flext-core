@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
 from collections.abc import (
     Callable,
 )
@@ -115,9 +114,8 @@ class FlextTypes:
         # Value type - Union type for domain operations
         type Value = str | int | float | bool | None | object
 
-        # Operation callable
         # Operation callable - specific operation type
-        OperationCallable = typing.Callable[[object], object]
+        OperationCallable = Callable[[object], object]
 
         # Serialization
         # Serialization function type

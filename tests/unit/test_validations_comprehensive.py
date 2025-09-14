@@ -21,161 +21,174 @@ class TestFlextValidationsComprehensive:
     def test_type_validators_validate_string_success(self) -> None:
         """Test TypeValidators.validate_string with valid string."""
         result = FlextValidations.TypeValidators.validate_string("valid_string")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "valid_string"
 
     def test_type_validators_validate_string_failure(self) -> None:
         """Test TypeValidators.validate_string with non-string value."""
         result = FlextValidations.TypeValidators.validate_string(12345)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Type mismatch" in result.error
 
     def test_type_validators_validate_integer_with_min_max(self) -> None:
         """Test TypeValidators.validate_integer with min/max constraints."""
         # Test valid integer within range
         result = FlextValidations.TypeValidators.validate_integer(50)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 50
 
     def test_type_validators_validate_integer_below_min(self) -> None:
         """Test TypeValidators.validate_integer with invalid string."""
         result = FlextValidations.TypeValidators.validate_integer("not_a_number")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Cannot convert" in result.error
 
     def test_type_validators_validate_integer_above_max(self) -> None:
         """Test TypeValidators.validate_integer with non-numeric type."""
         result = FlextValidations.TypeValidators.validate_integer([1, 2, 3])
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Type mismatch" in result.error
 
     def test_type_validators_validate_integer_string_conversion(self) -> None:
         """Test TypeValidators.validate_integer with string conversion."""
         result = FlextValidations.TypeValidators.validate_integer("42")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 42
 
     def test_type_validators_validate_integer_invalid_string(self) -> None:
         """Test TypeValidators.validate_integer with invalid string."""
         result = FlextValidations.TypeValidators.validate_integer("not_a_number")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Cannot convert" in result.error
+        assert result.error
         assert "to integer" in result.error
 
     def test_type_validators_validate_integer_non_numeric_type(self) -> None:
         """Test TypeValidators.validate_integer with non-numeric type."""
         result = FlextValidations.TypeValidators.validate_integer([1, 2, 3])
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Type mismatch" in result.error
 
     def test_type_validators_validate_float_with_precision(self) -> None:
         """Test TypeValidators.validate_float with precision constraints."""
         # Test valid float with precision
         result = FlextValidations.TypeValidators.validate_float(math.pi)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert abs(result.value - math.pi) < 1e-10
 
     def test_type_validators_validate_float_with_min_max(self) -> None:
         """Test TypeValidators.validate_float with min/max constraints."""
         result = FlextValidations.TypeValidators.validate_float(2.5)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 2.5
 
     def test_type_validators_validate_float_success_case(self) -> None:
         """Test TypeValidators.validate_float with valid float."""
         result = FlextValidations.TypeValidators.validate_float(0.5)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 0.5
 
     def test_type_validators_validate_float_string_conversion(self) -> None:
         """Test TypeValidators.validate_float with string conversion."""
         result = FlextValidations.TypeValidators.validate_float("3.14159")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 3.14159
 
     def test_type_validators_validate_float_invalid_string(self) -> None:
         """Test TypeValidators.validate_float with invalid string."""
         result = FlextValidations.TypeValidators.validate_float("not_a_float")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Cannot convert" in result.error
 
     def test_type_validators_validate_dict_success(self) -> None:
         """Test TypeValidators.validate_dict with valid dictionary."""
         test_dict = {"key1": "value1", "key2": "value2"}
         result = FlextValidations.TypeValidators.validate_dict(test_dict)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == test_dict
 
     def test_type_validators_validate_dict_failure(self) -> None:
         """Test TypeValidators.validate_dict with non-dictionary value."""
         result = FlextValidations.TypeValidators.validate_dict("not_a_dict")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Type mismatch" in result.error
 
     def test_type_validators_validate_list_success(self) -> None:
         """Test TypeValidators.validate_list with valid list."""
         test_list = [1, 2, 3, 4, 5]
         result = FlextValidations.TypeValidators.validate_list(test_list)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == test_list
 
     def test_type_validators_validate_list_failure(self) -> None:
         """Test TypeValidators.validate_list with non-list value."""
         result = FlextValidations.TypeValidators.validate_list("not_a_list")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Type mismatch" in result.error
 
     def test_field_validators_validate_email_success(self) -> None:
         """Test FieldValidators.validate_email with valid email."""
         result = FlextValidations.FieldValidators.validate_email("user@example.com")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "user@example.com"
 
     def test_field_validators_validate_email_failure(self) -> None:
         """Test FieldValidators.validate_email with invalid email."""
         result = FlextValidations.FieldValidators.validate_email("invalid_email")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid email" in result.error
 
     def test_field_validators_validate_phone_success(self) -> None:
         """Test FieldValidators.validate_phone with valid phone."""
         result = FlextValidations.FieldValidators.validate_phone("+1-555-123-4567")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_field_validators_validate_phone_with_locale(self) -> None:
         """Test FieldValidators.validate_phone with specific locale."""
         result = FlextValidations.validate_phone("555-123-4567", locale="US")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_field_validators_validate_phone_failure(self) -> None:
         """Test FieldValidators.validate_phone with invalid phone."""
         result = FlextValidations.FieldValidators.validate_phone("123")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid phone" in result.error
 
     def test_field_validators_validate_url_success(self) -> None:
         """Test FieldValidators.validate_url with valid URL."""
         result = FlextValidations.FieldValidators.validate_url("https://example.com")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "https://example.com"
 
     def test_field_validators_validate_url_failure(self) -> None:
         """Test FieldValidators.validate_url with invalid URL."""
         result = FlextValidations.FieldValidators.validate_url("not_a_url")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid URL" in result.error
 
     def test_field_validators_validate_uuid_success(self) -> None:
         """Test FieldValidators.validate_uuid with valid UUID."""
         test_uuid = str(uuid.uuid4())
         result = FlextValidations.FieldValidators.validate_uuid(test_uuid)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == test_uuid
 
     def test_field_validators_validate_uuid_failure(self) -> None:
         """Test FieldValidators.validate_uuid with invalid UUID."""
         result = FlextValidations.FieldValidators.validate_uuid("not_a_uuid")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid UUID" in result.error
 
     def test_business_validators_validate_string_field_success(self) -> None:
@@ -183,7 +196,7 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_string_field(
             "valid_string", min_length=5, max_length=20
         )
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "valid_string"
 
     def test_business_validators_validate_string_field_too_short(self) -> None:
@@ -191,7 +204,8 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_string_field(
             "hi", min_length=5, max_length=20
         )
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "String too short, minimum 5" in result.error
 
     def test_business_validators_validate_string_field_too_long(self) -> None:
@@ -200,25 +214,26 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_string_field(
             long_string, min_length=5, max_length=20
         )
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "String too long, maximum 20" in result.error
 
     def test_business_validators_validate_numeric_field_integer(self) -> None:
         """Test BusinessValidators.validate_numeric_field with integer."""
         result = FlextValidations.BusinessValidators.validate_numeric_field(42)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 42
 
     def test_business_validators_validate_numeric_field_float(self) -> None:
         """Test BusinessValidators.validate_numeric_field with float."""
         result = FlextValidations.BusinessValidators.validate_numeric_field(math.pi)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert abs(result.value - math.pi) < 1e-10
 
     def test_business_validators_validate_numeric_field_string_conversion(self) -> None:
         """Test BusinessValidators.validate_numeric_field with string conversion."""
         result = FlextValidations.BusinessValidators.validate_numeric_field("42.5")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 42.5
 
     def test_business_validators_validate_numeric_field_with_constraints(self) -> None:
@@ -226,7 +241,7 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_numeric_field(
             50, min_value=10, max_value=100
         )
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 50
 
     def test_business_validators_validate_numeric_field_below_min(self) -> None:
@@ -234,7 +249,8 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_numeric_field(
             5, min_value=10, max_value=100
         )
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value too small, minimum 10" in result.error
 
     def test_business_validators_validate_numeric_field_above_max(self) -> None:
@@ -242,25 +258,28 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_numeric_field(
             150, min_value=10, max_value=100
         )
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value too large, maximum 100" in result.error
 
     def test_business_validators_validate_numeric_field_invalid_type(self) -> None:
         """Test BusinessValidators.validate_numeric_field with invalid type."""
         result = FlextValidations.BusinessValidators.validate_numeric_field([1, 2, 3])
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value cannot be converted to a number" in result.error
 
     def test_business_validators_validate_range_success(self) -> None:
         """Test BusinessValidators.validate_range with valid range."""
         result = FlextValidations.BusinessValidators.validate_range(50, 10, 100)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 50
 
     def test_business_validators_validate_range_failure(self) -> None:
         """Test BusinessValidators.validate_range outside valid range."""
         result = FlextValidations.BusinessValidators.validate_range(150, 10, 100)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value 150 out of range [10, 100]" in result.error
 
     def test_business_validators_validate_password_strength_success(self) -> None:
@@ -268,12 +287,13 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_password_strength(
             "StrongPass123!"
         )
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_business_validators_validate_password_strength_failure(self) -> None:
         """Test BusinessValidators.validate_password_strength with weak password."""
         result = FlextValidations.BusinessValidators.validate_password_strength("weak")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Password must be at least" in result.error
 
     def test_business_validators_validate_credit_card_success(self) -> None:
@@ -282,113 +302,123 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.BusinessValidators.validate_credit_card(
             "4532015112830366"
         )
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_business_validators_validate_credit_card_failure(self) -> None:
         """Test BusinessValidators.validate_credit_card with invalid card number."""
         result = FlextValidations.BusinessValidators.validate_credit_card("123456789")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid credit card" in result.error
 
     def test_business_validators_validate_ipv4_success(self) -> None:
         """Test BusinessValidators.validate_ipv4 with valid IP."""
         result = FlextValidations.BusinessValidators.validate_ipv4("192.168.1.1")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "192.168.1.1"
 
     def test_business_validators_validate_ipv4_failure(self) -> None:
         """Test BusinessValidators.validate_ipv4 with invalid IP."""
         result = FlextValidations.BusinessValidators.validate_ipv4("256.256.256.256")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid IPv4" in result.error
 
     def test_business_validators_validate_date_success(self) -> None:
         """Test BusinessValidators.validate_date with valid date."""
         result = FlextValidations.BusinessValidators.validate_date("2023-12-25")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_business_validators_validate_date_failure(self) -> None:
         """Test BusinessValidators.validate_date with invalid date."""
         result = FlextValidations.BusinessValidators.validate_date("invalid_date")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid date" in result.error
 
     def test_business_validators_validate_json_success(self) -> None:
         """Test BusinessValidators.validate_json with valid JSON."""
         json_str = '{"key": "value", "number": 42}'
         result = FlextValidations.BusinessValidators.validate_json(json_str)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_business_validators_validate_json_failure(self) -> None:
         """Test BusinessValidators.validate_json with invalid JSON."""
         result = FlextValidations.BusinessValidators.validate_json("invalid_json")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid JSON" in result.error
 
     def test_guards_require_not_none_success(self) -> None:
         """Test Guards.require_not_none with non-None value."""
         result = FlextValidations.Guards.require_not_none("not_none")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "not_none"
 
     def test_guards_require_not_none_failure(self) -> None:
         """Test Guards.require_not_none with None value."""
         result = FlextValidations.Guards.require_not_none(None)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "cannot be None" in result.error
 
     def test_guards_require_positive_success(self) -> None:
         """Test Guards.require_positive with positive number."""
         result = FlextValidations.Guards.require_positive(42)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 42
 
     def test_guards_require_positive_failure(self) -> None:
         """Test Guards.require_positive with negative number."""
         result = FlextValidations.Guards.require_positive(-5)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "must be positive" in result.error
 
     def test_guards_require_in_range_success(self) -> None:
         """Test Guards.require_in_range with value in range."""
         result = FlextValidations.Guards.require_in_range(50, 10, 100)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 50
 
     def test_guards_require_in_range_failure_below(self) -> None:
         """Test Guards.require_in_range with value below range."""
         result = FlextValidations.Guards.require_in_range(5, 10, 100)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value out of range" in result.error
 
     def test_guards_require_in_range_failure_above(self) -> None:
         """Test Guards.require_in_range with value above range."""
         result = FlextValidations.Guards.require_in_range(150, 10, 100)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value out of range" in result.error
 
     def test_guards_require_non_empty_success_string(self) -> None:
         """Test Guards.require_non_empty with non-empty string."""
         result = FlextValidations.Guards.require_non_empty("not_empty")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "not_empty"
 
     def test_guards_require_non_empty_success_list(self) -> None:
         """Test Guards.require_non_empty with non-empty list."""
         result = FlextValidations.Guards.require_non_empty([1, 2, 3])
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == [1, 2, 3]
 
     def test_guards_require_non_empty_failure_empty_string(self) -> None:
         """Test Guards.require_non_empty with empty string."""
         result = FlextValidations.Guards.require_non_empty("")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "cannot be empty" in result.error
 
     def test_guards_require_non_empty_failure_empty_list(self) -> None:
         """Test Guards.require_non_empty with empty list."""
         result = FlextValidations.Guards.require_non_empty([])
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "cannot be empty" in result.error
 
     def test_guards_is_dict_of_success(self) -> None:
@@ -426,7 +456,7 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.SchemaValidators.validate_with_pydantic_schema(
             data, TestModel
         )
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_schema_validators_validate_with_pydantic_schema_failure(self) -> None:
         """Test SchemaValidators.validate_with_pydantic_schema with invalid data."""
@@ -439,7 +469,7 @@ class TestFlextValidationsComprehensive:
         result = FlextValidations.SchemaValidators.validate_with_pydantic_schema(
             data, TestModel
         )
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_schema_validators_validate_schema_success(self) -> None:
         """Test SchemaValidators.validate_schema with valid data against schema."""
@@ -452,8 +482,8 @@ class TestFlextValidationsComprehensive:
             "required": ["name", "age"],
         }
         data = {"name": "John Doe", "age": 30}
-        result = FlextValidations.validate_with_schema(data, schema)
-        FlextTestsMatchers.assert_result_success(result)
+        result = FlextValidations.validate_with_schema(data, schema)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_schema_validators_validate_schema_failure(self) -> None:
         """Test SchemaValidators.validate_schema with invalid data against schema."""
@@ -466,44 +496,45 @@ class TestFlextValidationsComprehensive:
             "required": ["name", "age"],
         }
         data = {"name": "", "age": -5}  # Invalid data
-        result = FlextValidations.validate_with_schema(data, schema)
-        FlextTestsMatchers.assert_result_failure(result)
+        result = FlextValidations.validate_with_schema(data, schema)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_validate_number_string_with_dot(self) -> None:
         """Test validate_number with string containing dot (float conversion)."""
         result = FlextValidations.validate_number("3.14159")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 3.14159
         assert isinstance(result.value, float)
 
     def test_validate_number_string_without_dot(self) -> None:
         """Test validate_number with string without dot (int conversion)."""
         result = FlextValidations.validate_number("42")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 42
         assert isinstance(result.value, int)
 
     def test_validate_number_string_invalid(self) -> None:
         """Test validate_number with invalid string."""
         result = FlextValidations.validate_number("not_a_number")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Value must be numeric" in result.error
 
     def test_validate_number_delegates_to_business_validators(self) -> None:
         """Test validate_number delegates to BusinessValidators for non-string input."""
         result = FlextValidations.validate_number(42.5)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == 42.5
 
     def test_validate_phone_with_locale_parameter(self) -> None:
         """Test validate_phone with explicit locale parameter."""
         result = FlextValidations.validate_phone("555-123-4567", locale="US")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_validate_phone_with_failure_result(self) -> None:
         """Test validate_phone handles failure from FieldValidators."""
         result = FlextValidations.validate_phone("123")  # Invalid phone
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_email_validator_function(self) -> None:
         """Test create_email_validator returns working validator function."""
@@ -511,11 +542,11 @@ class TestFlextValidationsComprehensive:
 
         # Test valid email
         result = validator("user@example.com")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Test invalid email
         result = validator("invalid_email")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_phone_validator_function(self) -> None:
         """Test create_phone_validator returns working validator function."""
@@ -523,11 +554,11 @@ class TestFlextValidationsComprehensive:
 
         # Test valid phone
         result = validator("+1-555-123-4567")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Test invalid phone
         result = validator("123")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_url_validator_function(self) -> None:
         """Test create_url_validator returns working validator function."""
@@ -535,11 +566,11 @@ class TestFlextValidationsComprehensive:
 
         # Test valid URL
         result = validator("https://example.com")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Test invalid URL
         result = validator("not_a_url")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_uuid_validator_function(self) -> None:
         """Test create_uuid_validator returns working validator function."""
@@ -548,11 +579,11 @@ class TestFlextValidationsComprehensive:
         # Test valid UUID
         test_uuid = str(uuid.uuid4())
         result = validator(test_uuid)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Test invalid UUID
         result = validator("not_a_uuid")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_composite_validator_all_pass(self) -> None:
         """Test create_composite_validator when all validators pass."""
@@ -562,11 +593,11 @@ class TestFlextValidationsComprehensive:
             return FlextValidations.Guards.require_not_none(x)
 
         composite = FlextValidations.create_composite_validator(
-            [validator1, validator2]
+            [validator1, validator2]  # type: ignore[list-item]
         )
 
         result = composite("user@example.com")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_create_composite_validator_first_fails(self) -> None:
         """Test create_composite_validator when first validator fails."""
@@ -576,11 +607,11 @@ class TestFlextValidationsComprehensive:
             return FlextValidations.Guards.require_not_none(x)
 
         composite = FlextValidations.create_composite_validator(
-            [validator1, validator2]
+            [validator1, validator2]  # type: ignore[list-item]
         )
 
         result = composite("invalid_email")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_composite_validator_second_fails(self) -> None:
         """Test create_composite_validator when second validator fails."""
@@ -594,11 +625,11 @@ class TestFlextValidationsComprehensive:
             )  # Fail for non-numeric
 
         composite = FlextValidations.create_composite_validator(
-            [validator1, validator2]
+            [validator1, validator2]  # type: ignore[list-item]
         )
 
         result = composite("user@example.com")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_schema_validator_function(self) -> None:
         """Test create_schema_validator returns working validator function."""
@@ -609,11 +640,11 @@ class TestFlextValidationsComprehensive:
 
         # Test valid data
         result = validator({"name": "John"})
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Test invalid data
         result = validator({"age": 30})  # Missing required name
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_create_cached_validator_caching_behavior(self) -> None:
         """Test create_cached_validator caches results properly."""
@@ -648,25 +679,26 @@ class TestFlextValidationsComprehensive:
         # Test valid user data
         user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
         result = validator(user_data)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Test invalid user data (missing required field)
         invalid_user_data = {"email": "john@example.com"}
         result = validator(invalid_user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_validate_user_data_success(self) -> None:
         """Test validate_user_data with valid user data."""
         user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == user_data
 
     def test_validate_user_data_missing_required_field(self) -> None:
         """Test validate_user_data with missing required field."""
         user_data = {"email": "john@example.com"}  # Missing name
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Missing required field: name" in result.error
 
     def test_validate_user_data_invalid_email_no_at(self) -> None:
@@ -676,7 +708,8 @@ class TestFlextValidationsComprehensive:
             "email": "johnexample.com",  # Missing @
         }
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid email format" in result.error
 
     def test_validate_user_data_invalid_email_no_domain_dot(self) -> None:
@@ -686,14 +719,16 @@ class TestFlextValidationsComprehensive:
             "email": "john@examplecom",  # Missing dot in domain
         }
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid email format" in result.error
 
     def test_validate_user_data_age_negative(self) -> None:
         """Test validate_user_data with negative age."""
         user_data = {"name": "John Doe", "email": "john@example.com", "age": -5}
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Age must be a string or number" in result.error
 
     def test_validate_user_data_age_too_old(self) -> None:
@@ -704,7 +739,8 @@ class TestFlextValidationsComprehensive:
             "age": 200,  # Exceeds MAX_REASONABLE_AGE (150)
         }
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Age must be a string or number" in result.error
 
     def test_validate_user_data_age_invalid_string(self) -> None:
@@ -715,7 +751,8 @@ class TestFlextValidationsComprehensive:
             "age": "not_a_number",
         }
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Age must be a string or number" in result.error
 
     def test_validate_user_data_age_invalid_type(self) -> None:
@@ -726,7 +763,8 @@ class TestFlextValidationsComprehensive:
             "age": [1, 2, 3],  # List instead of number
         }
         result = FlextValidations.validate_user_data(user_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Age must be a string or number" in result.error
 
     def test_validate_api_request_success(self) -> None:
@@ -737,21 +775,23 @@ class TestFlextValidationsComprehensive:
             "headers": {"Content-Type": "application/json"},
         }
         result = FlextValidations.validate_api_request(request_data)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == request_data
 
     def test_validate_api_request_missing_required_field(self) -> None:
         """Test validate_api_request with missing required field."""
         request_data = {"path": "/api/users"}  # Missing method
         result = FlextValidations.validate_api_request(request_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Missing required field: method" in result.error
 
     def test_validate_api_request_invalid_method(self) -> None:
         """Test validate_api_request with invalid HTTP method."""
         request_data = {"method": "INVALID_METHOD", "path": "/api/users"}
         result = FlextValidations.validate_api_request(request_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Invalid HTTP method" in result.error
 
     def test_validate_api_request_invalid_path_format(self) -> None:
@@ -761,7 +801,8 @@ class TestFlextValidationsComprehensive:
             "path": "invalid_path",  # Should start with /
         }
         result = FlextValidations.validate_api_request(request_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Path must start with /" in result.error
 
     def test_is_valid_boolean_check(self) -> None:
@@ -811,8 +852,8 @@ class TestFlextValidationsComprehensive:
             "type": "object",
             "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
         }
-        result = FlextValidations.validate_with_schema(data, schema)
-        FlextTestsMatchers.assert_result_success(result)
+        result = FlextValidations.validate_with_schema(data, schema)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_validate_with_schema_failure(self) -> None:
         """Test validate_with_schema with invalid data against schema."""
@@ -821,13 +862,13 @@ class TestFlextValidationsComprehensive:
             "type": "object",
             "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
         }
-        result = FlextValidations.validate_with_schema(data, schema)
-        FlextTestsMatchers.assert_result_failure(result)
+        result = FlextValidations.validate_with_schema(data, schema)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_validate_string_delegates_to_type_validators(self) -> None:
         """Test validate_string delegates to TypeValidators."""
         result = FlextValidations.validate_string("test_string")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "test_string"
 
     def test_validate_non_empty_string_func_success(self) -> None:
@@ -868,7 +909,7 @@ class TestFlextValidationsComprehensive:
 
         predicate = FlextValidations.Predicates(is_positive, "is_positive")
         result = predicate(42)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_predicates_class_call_failure(self) -> None:
         """Test Predicates class __call__ method with failing predicate."""
@@ -878,7 +919,8 @@ class TestFlextValidationsComprehensive:
 
         predicate = FlextValidations.Predicates(is_positive, "is_positive")
         result = predicate(-5)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Predicate 'is_positive' failed for value: -5" in result.error
 
     def test_predicates_class_call_exception(self) -> None:
@@ -890,7 +932,7 @@ class TestFlextValidationsComprehensive:
 
         predicate = FlextValidations.Predicates(failing_predicate, "failing_predicate")
         result = predicate("any_value")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
         assert (
             "Predicate 'failing_predicate' raised exception: Test exception"
             in result.error

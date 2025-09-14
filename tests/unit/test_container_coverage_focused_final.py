@@ -105,6 +105,7 @@ class TestFlextContainerCoverageFocused:
         # Test empty service name
         result = retriever.get_service("")
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Service name cannot be empty" in result.error
 
     def test_service_retriever_get_service_info_comprehensive(self) -> None:

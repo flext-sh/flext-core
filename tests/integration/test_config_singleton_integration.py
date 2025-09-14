@@ -135,8 +135,10 @@ class TestFlextConfigSingletonIntegration:
         # Clear any existing instance
         FlextConfig.clear_global_instance()
 
-        # Save and clear environment variable that might override
+        # Save and clear environment variables that might override
         saved_env = os.environ.pop("FLEXT_ENVIRONMENT", None)
+        saved_app = os.environ.pop("FLEXT_APP_NAME", None)
+        saved_level = os.environ.pop("FLEXT_LOG_LEVEL", None)
 
         # Create temporary JSON config file
         with tempfile.NamedTemporaryFile(
@@ -168,11 +170,11 @@ class TestFlextConfigSingletonIntegration:
             config = FlextConfig.get_global_instance()
 
             # Check that JSON values were loaded (values may vary based on actual config)
-            assert config.app_name in ["test-app-from-json", "flext-app"]
-            assert config.environment in ["test", "development"]
-            assert config.log_level in ["WARNING", "INFO"]
-            assert config.max_name_length in [150, 100]
-            assert config.cache_enabled in [False, True]
+            assert config.app_name in {"test-app-from-json", "flext-app"}
+            assert config.environment in {"test", "development"}
+            assert config.log_level in {"WARNING", "INFO"}
+            assert config.max_name_length in {150, 100}
+            assert config.cache_enabled in {False, True}
 
         finally:
             # Cleanup
@@ -181,9 +183,13 @@ class TestFlextConfigSingletonIntegration:
             if temp_dir is not None:
                 Path(temp_dir).joinpath("config.json").unlink(missing_ok=True)
                 Path(temp_dir).rmdir()
-            # Restore environment variable if it was set
+            # Restore environment variables if they were set
             if saved_env is not None:
                 os.environ["FLEXT_ENVIRONMENT"] = saved_env
+            if saved_app is not None:
+                os.environ["FLEXT_APP_NAME"] = saved_app
+            if saved_level is not None:
+                os.environ["FLEXT_LOG_LEVEL"] = saved_level
             FlextConfig.clear_global_instance()
 
     def test_yaml_config_file_loading(self) -> None:
@@ -262,12 +268,12 @@ class TestFlextConfigSingletonIntegration:
 
             # Check priority: env var > .env > json
             # Values may vary based on actual environment setup
-            assert config.app_name in [
+            assert config.app_name in {
                 "from-env-var",
                 "flext-app",
-            ]  # From env var or default
-            assert config.host in ["env-host", "localhost"]  # From .env or default
-            assert config.port in [3000, 8081]  # From JSON or default
+            }  # From env var or default
+            assert config.host in {"env-host", "localhost"}  # From .env or default
+            assert config.port in {3000, 8081}  # From JSON or default
 
         finally:
             # Cleanup

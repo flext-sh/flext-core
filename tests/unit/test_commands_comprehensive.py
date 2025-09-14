@@ -60,7 +60,7 @@ class TestFlextCommandsModels:
         )
 
         result = command.validate_command()
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.data is True
 
     def test_command_id_property(self) -> None:
@@ -109,7 +109,8 @@ class TestFlextCommandsModels:
 
             result = command.to_payload()
             assert isinstance(result, FlextResult)
-            FlextTestsMatchers.assert_result_failure(result)
+            FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+            assert result.error
             assert "Failed to create payload" in result.error
 
     def test_command_from_payload_with_dict(self) -> None:
@@ -120,7 +121,7 @@ class TestFlextCommandsModels:
         }
 
         result = FlextCommands.Models.Command.from_payload(payload_data)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         command = result.value
         assert command.command_type == "test_command"
 
@@ -133,14 +134,15 @@ class TestFlextCommandsModels:
         )
 
         result = FlextCommands.Models.Command.from_payload(payload_obj)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         command = result.value
         assert command.command_type == "test_command"
 
     def test_command_from_payload_invalid_data(self) -> None:
         """Test Command.from_payload with invalid data."""
         result = FlextCommands.Models.Command.from_payload("invalid")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "FlextModels data is not compatible" in result.error
 
     def test_command_from_payload_exception_handling(self) -> None:
@@ -149,7 +151,7 @@ class TestFlextCommandsModels:
         invalid_data = {"command_type": 123}  # Invalid type
 
         result = FlextCommands.Models.Command.from_payload(invalid_data)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
 
     def test_query_model_initialization(self) -> None:
         """Test FlextCommands.Models.Query initialization."""
@@ -188,14 +190,15 @@ class TestFlextCommandsModels:
         }
 
         result = FlextCommands.Models.Query.from_payload(payload_data)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         query = result.value
         assert query.query_type == "test_query"
 
     def test_query_from_payload_invalid_data(self) -> None:
         """Test Query.from_payload with invalid data."""
         result = FlextCommands.Models.Query.from_payload("invalid")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "FlextModels data is not compatible" in result.error
 
 
@@ -242,7 +245,7 @@ class TestFlextCommandsHandlers:
         handler = FlextCommands.Handlers.CommandHandler()
         result = handler.validate_command(mock_command)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_command_handler_validate_command_without_validation_method(self) -> None:
         """Test CommandHandler.validate_command without validation method."""
@@ -252,7 +255,7 @@ class TestFlextCommandsHandlers:
         handler = FlextCommands.Handlers.CommandHandler()
         result = handler.validate_command(mock_command)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_command_handler_handle_method_not_implemented(self) -> None:
         """Test CommandHandler.handle raises NotImplementedError."""
@@ -291,8 +294,9 @@ class TestFlextCommandsHandlers:
             # Override __orig_bases__ to include something that will cause a TypeError
             def can_handle(self, command_type: object) -> bool:
                 # Test the fallback behavior directly by bypassing generic checking
-                _ = command_type  # Acknowledge parameter usage
-                self.logger.info("Could not determine handler type constraints")
+                self.logger.info(
+                    f"Could not determine handler type constraints for {command_type}"
+                )
                 return True
 
         handler = TestHandler()
@@ -310,7 +314,8 @@ class TestFlextCommandsHandlers:
 
         # Try to execute with wrong type
         result = handler.execute("not_an_int")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "cannot handle" in result.error
 
     def test_command_handler_execute_validation_failure(self) -> None:
@@ -326,13 +331,15 @@ class TestFlextCommandsHandlers:
 
             def validate_command(self, command: object) -> FlextResult[None]:
                 # Override to return validation failure
-                _ = command  # Acknowledge parameter usage
-                return FlextResult[None].fail("Validation failed")
+                return FlextResult[None].fail(
+                    f"Validation failed for {type(command).__name__}"
+                )
 
         handler = TestHandler()
 
         result = handler.execute(test_command)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Validation failed" in result.error
 
     def test_command_handler_execute_success(self) -> None:
@@ -345,7 +352,7 @@ class TestFlextCommandsHandlers:
         handler = TestHandler()
 
         result = handler.execute("test_command")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "handled: test_command"
 
     def test_command_handler_execute_exception_handling(self) -> None:
@@ -361,7 +368,8 @@ class TestFlextCommandsHandlers:
         handler = FailingHandler()
 
         result = handler.execute("test_command")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Command processing failed" in result.error
 
     def test_command_handler_handle_command_delegate(self) -> None:
@@ -376,7 +384,7 @@ class TestFlextCommandsHandlers:
         handler = TestHandler()
 
         result = handler.handle_command("test")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "delegated"
 
     def test_query_handler_initialization_with_config(self) -> None:
@@ -424,7 +432,7 @@ class TestFlextCommandsHandlers:
         handler = FlextCommands.Handlers.QueryHandler()
         result = handler.validate_query(mock_query)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_query_handler_validate_query_without_validation_method(self) -> None:
         """Test QueryHandler.validate_query without validation method."""
@@ -434,7 +442,7 @@ class TestFlextCommandsHandlers:
         handler = FlextCommands.Handlers.QueryHandler()
         result = handler.validate_query(mock_query)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_query_handler_handle_method_not_implemented(self) -> None:
         """Test QueryHandler.handle raises NotImplementedError."""
@@ -462,7 +470,8 @@ class TestFlextCommandsHandlers:
         )
 
         result = handler.handle_query(mock_query)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Query validation failed" in result.error
 
     def test_query_handler_handle_query_success(self) -> None:
@@ -475,7 +484,7 @@ class TestFlextCommandsHandlers:
         handler = TestQueryHandler()
 
         result = handler.handle_query("test_query")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "query result: test_query"
 
 
@@ -484,7 +493,10 @@ class TestFlextCommandsBus:
 
     def test_bus_initialization_with_config(self) -> None:
         """Test Bus initialization with bus_config."""
-        bus_config = {"enable_middleware": True, "enable_metrics": True}
+        bus_config: dict[str, object] = {
+            "enable_middleware": True,
+            "enable_metrics": True,
+        }
 
         bus = FlextCommands.Bus(bus_config=bus_config)
 
@@ -511,7 +523,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.register_handler(mock_handler)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert "test_handler" in bus._handlers
         assert mock_handler in bus._auto_handlers
 
@@ -520,7 +532,8 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.register_handler(None)
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Handler cannot be None" in result.error
 
     def test_bus_register_handler_single_arg_invalid_handler(self) -> None:
@@ -531,7 +544,8 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.register_handler(mock_handler)
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "must have callable 'handle' method" in result.error
 
     def test_bus_register_handler_single_arg_already_registered(self) -> None:
@@ -546,7 +560,7 @@ class TestFlextCommandsBus:
 
         # Register again
         result = bus.register_handler(mock_handler)
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_bus_register_handler_two_args_valid(self) -> None:
         """Test Bus.register_handler with valid command_type and handler."""
@@ -559,7 +573,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.register_handler(TestCommand, mock_handler)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert "TestCommand" in bus._handlers
 
     def test_bus_register_handler_two_args_none_values(self) -> None:
@@ -567,7 +581,8 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.register_handler(None, None)
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "command_type and handler are required" in result.error
 
     def test_bus_register_handler_invalid_arg_count(self) -> None:
@@ -575,7 +590,8 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.register_handler("arg1", "arg2", "arg3")
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "takes 1 or 2 positional arguments" in result.error
 
     def test_bus_find_handler_by_command_name(self) -> None:
@@ -627,14 +643,15 @@ class TestFlextCommandsBus:
 
     def test_bus_execute_middleware_disabled(self) -> None:
         """Test Bus.execute with middleware disabled but configured."""
-        bus_config = {"enable_middleware": False}
+        bus_config: dict[str, object] = {"enable_middleware": False}
         bus = FlextCommands.Bus(bus_config=bus_config)
         bus._middleware = [{"middleware_id": "test"}]  # Add middleware
 
         mock_command = MagicMock()
 
         result = bus.execute(mock_command)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Middleware pipeline is disabled" in result.error
 
     def test_bus_execute_no_handler_found(self) -> None:
@@ -647,7 +664,8 @@ class TestFlextCommandsBus:
         command_instance = TestCommand()
 
         result = bus.execute(command_instance)
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "No handler found for TestCommand" in result.error
 
     def test_bus_execute_successful(self) -> None:
@@ -668,7 +686,7 @@ class TestFlextCommandsBus:
         command_instance = TestCommand()
         result = bus.execute(command_instance)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_bus_execute_with_query_caching(self) -> None:
         """Test Bus.execute with query result caching."""
@@ -679,7 +697,7 @@ class TestFlextCommandsBus:
             def __str__(self) -> str:
                 return "TestQuery"
 
-        bus_config = {"enable_metrics": True}
+        bus_config: dict[str, object] = {"enable_metrics": True}
         bus = FlextCommands.Bus(bus_config=bus_config)
         bus._cache = {}  # Initialize cache
 
@@ -705,11 +723,11 @@ class TestFlextCommandsBus:
 
     def test_bus_apply_middleware_disabled(self) -> None:
         """Test Bus._apply_middleware when middleware is disabled."""
-        bus_config = {"enable_middleware": False}
+        bus_config: dict[str, object] = {"enable_middleware": False}
         bus = FlextCommands.Bus(bus_config=bus_config)
 
         result = bus._apply_middleware("command", "handler")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_bus_apply_middleware_with_sorted_middleware(self) -> None:
         """Test Bus._apply_middleware with sorted middleware pipeline."""
@@ -738,7 +756,7 @@ class TestFlextCommandsBus:
         bus._middleware_instances = {"mw1": mock_mw1, "mw2": mock_mw2}
 
         result = bus._apply_middleware("command", "handler")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
         # Verify both middleware were called
         mock_mw1.process.assert_called_once()
@@ -766,7 +784,8 @@ class TestFlextCommandsBus:
         bus._middleware_instances = {"rejecting_mw": mock_middleware}
 
         result = bus._apply_middleware("command", "handler")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Middleware rejected" in result.error
 
     def test_bus_execute_handler_with_execute_method(self) -> None:
@@ -777,7 +796,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus._execute_handler(mock_handler, "command")
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "executed"
 
     def test_bus_execute_handler_with_handle_method(self) -> None:
@@ -789,7 +808,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus._execute_handler(mock_handler, "command")
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "handled"
 
     def test_bus_execute_handler_with_process_command_method(self) -> None:
@@ -802,7 +821,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus._execute_handler(mock_handler, "command")
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "processed"
 
     def test_bus_execute_handler_no_valid_method(self) -> None:
@@ -815,7 +834,8 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus._execute_handler(mock_handler, "command")
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "no callable execute, handle, or process_command method" in result.error
 
     def test_bus_execute_handler_exception(self) -> None:
@@ -826,7 +846,8 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus._execute_handler(mock_handler, "command")
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        assert result.error
         assert "Handler execution failed" in result.error
 
     def test_bus_add_middleware_with_config(self) -> None:
@@ -843,7 +864,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.add_middleware(mock_middleware, middleware_config)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert middleware_config in bus._middleware
         # The actual implementation uses str(getattr(middleware_config, "middleware_id", ""))
         # but middleware_config is a dict, so getattr returns empty string for dict objects
@@ -861,18 +882,18 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
         result = bus.add_middleware(mock_middleware)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert len(bus._middleware) == 1
 
     def test_bus_add_middleware_disabled_pipeline(self) -> None:
         """Test Bus.add_middleware when middleware pipeline is disabled."""
-        bus_config = {"enable_middleware": False}
+        bus_config: dict[str, object] = {"enable_middleware": False}
         bus = FlextCommands.Bus(bus_config=bus_config)
 
         mock_middleware = MagicMock()
         result = bus.add_middleware(mock_middleware)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         # Should skip adding when disabled
 
     def test_bus_get_all_handlers(self) -> None:
@@ -928,7 +949,7 @@ class TestFlextCommandsBus:
         bus.register_handler(mock_handler)
 
         result = bus.send_command("test_command")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
 
     def test_bus_get_registered_handlers(self) -> None:
         """Test Bus.get_registered_handlers method."""
@@ -985,7 +1006,7 @@ class TestFlextCommandsDecorators:
         handler_instance = handle_command_with_result.__dict__["handler_instance"]
         result = handler_instance.handle(TestCommand())
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "handled with result"
 
     def test_command_handler_decorator_preserves_annotations(self) -> None:
@@ -1017,7 +1038,7 @@ class TestFlextCommandsResults:
 
         result = FlextCommands.Results.success(test_data)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == test_data
 
     def test_results_failure_with_error_code(self) -> None:
@@ -1030,7 +1051,7 @@ class TestFlextCommandsResults:
             error_msg, error_code=error_code, error_data=error_data
         )
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
         assert result.error == error_msg
 
     def test_results_failure_without_error_code(self) -> None:
@@ -1039,7 +1060,7 @@ class TestFlextCommandsResults:
 
         result = FlextCommands.Results.failure(error_msg)
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
         assert result.error == error_msg
 
 
@@ -1066,7 +1087,7 @@ class TestFlextCommandsFactories:
 
         # Test handler execution
         result = handler.handle("test_command")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "processed: test_command"
 
     def test_create_simple_handler_with_flext_result(self) -> None:
@@ -1078,7 +1099,7 @@ class TestFlextCommandsFactories:
         handler = FlextCommands.Factories.create_simple_handler(handler_func)
 
         result = handler.handle("test_command")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "result: test_command"
 
     def test_create_query_handler(self) -> None:
@@ -1093,7 +1114,7 @@ class TestFlextCommandsFactories:
 
         # Test handler execution
         result = handler.handle("test_query")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "query result: test_query"
 
     def test_create_query_handler_with_flext_result(self) -> None:
@@ -1105,7 +1126,7 @@ class TestFlextCommandsFactories:
         handler = FlextCommands.Factories.create_query_handler(query_func)
 
         result = handler.handle("test_query")
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert result.value == "query processed: test_query"
 
 
@@ -1135,7 +1156,7 @@ class TestFlextCommandsIntegration:
         # Execute command
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert "User created: John" in result.value
 
     def test_middleware_pipeline_integration(self) -> None:
@@ -1151,7 +1172,7 @@ class TestFlextCommandsIntegration:
             def __init__(self) -> None:
                 self.called = False
 
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 # Use the parameters to avoid unused argument warnings
                 _ = command  # Acknowledge parameter usage
                 _ = handler  # Acknowledge parameter usage
@@ -1178,7 +1199,7 @@ class TestFlextCommandsIntegration:
         # Execute command
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
         assert middleware.called is True
 
     def test_query_processing_with_caching(self) -> None:
@@ -1200,14 +1221,14 @@ class TestFlextCommandsIntegration:
                 super().__init__()
                 self.call_count = 0
 
-            def handle(self, query: TestQuery) -> FlextResult[dict]:
+            def handle(self, _query: TestQuery) -> FlextResult[dict]:
                 self.call_count += 1
                 return FlextResult[dict].ok(
                     {"result": "data", "filters": query.filters}
                 )
 
         # Setup bus with caching enabled
-        bus_config = {"enable_metrics": True}
+        bus_config: dict[str, object] = {"enable_metrics": True}
         bus = FlextCommands.Bus(bus_config=bus_config)
         bus._cache = {}  # Initialize cache
 

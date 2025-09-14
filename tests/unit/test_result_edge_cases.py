@@ -113,6 +113,7 @@ class TestFlextResultEdgeCases:
         # Test with failure in third argument
         result = FlextResult.applicative_lift3(add_three, r1, r2, r3)
         assert result.is_failure
+        assert result.error
         assert "error" in result.error
 
     def test_advanced_operators_complete_coverage(self) -> None:
