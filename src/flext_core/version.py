@@ -125,9 +125,11 @@ class FlextVersionManager:
         return 0
 
     @staticmethod
-    def validate_version_format(version: str) -> bool:
+    def validate_version_format(version: object) -> bool:
         """Validate a semantic version string format."""
         try:
+            if not isinstance(version, str):
+                return False
             parts = version.split(".")
             if len(parts) != FlextVersionManager.SEMVER_PARTS_COUNT:
                 return False

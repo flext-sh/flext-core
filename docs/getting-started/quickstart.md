@@ -1,33 +1,16 @@
-# Quick Start Guide
+# FLEXT-Core Quick Start
 
-Get started with FLEXT Core in 5 minutes with practical, working examples.
-
-> **For complete API reference and advanced examples, see [ACTUAL_CAPABILITIES.md](../ACTUAL_CAPABILITIES.md) and [Core API Reference](../api/core.md)**
+Get started with FLEXT-Core patterns and architecture.
 
 ## Installation
 
-### Development Setup
-
 ```bash
-# Clone repository
 git clone https://github.com/flext-sh/flext-core.git
 cd flext-core
-
-# Setup environment
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('✅ Ready')"
-```
-
-### As a Dependency
-
-```bash
-# Using Poetry (recommended)
-poetry add flext-core
-
-# Using pip
-pip install flext-core
+python -c "from flext_core import FlextResult; print('Ready')"
 ```
 
 ## Core Concepts

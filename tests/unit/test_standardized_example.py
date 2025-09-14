@@ -45,7 +45,6 @@ class TestStandardizedExample:
             failure_result, expected_error="test_error"
         )
 
-    @pytest.mark.usefixtures("fixtures", "test_config")
     def test_config_with_fixtures(self) -> None:
         """Demonstrate proper config testing with fixtures."""
         # Test config creation using fixtures
@@ -64,6 +63,7 @@ class TestStandardizedExample:
         FlextTestsMatchers.assert_result_failure(result)
 
         # Use actual error message from implementation
+        assert result.error
         assert "Type mismatch" in result.error
 
         # Test with valid data
@@ -166,7 +166,10 @@ class TestFlextCommandsStandardized:
         fixtures = FlextTestsFixtures()
 
         # Use correct constructor parameter name
-        bus_config = {"enable_middleware": True, "enable_caching": False}
+        bus_config: dict[str, object] = {
+            "enable_middleware": True,
+            "enable_caching": False,
+        }
 
         # Use actual API - bus_config parameter, not config
         bus = FlextCommands.Bus(bus_config=bus_config)

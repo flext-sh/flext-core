@@ -318,7 +318,7 @@ class TestFlextVersionComprehensiveCoverage:
 
         # Test immutability (NamedTuple characteristic)
         with pytest.raises(AttributeError):
-            version_info.major = 1
+            version_info.major = 1  # type: ignore[misc]
 
     def test_compare_versions_edge_cases_comprehensive(self) -> None:
         """Comprehensive test of compare_versions with edge cases."""

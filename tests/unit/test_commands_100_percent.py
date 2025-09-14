@@ -125,13 +125,15 @@ class TestBusExecutionEdgeCasesRemaining:
             handler_id = "test-handler"
 
             def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult[str].ok("query result")
+                return FlextResult[str].ok(f"query result for {query.query_id}")
 
             def execute(self, query: TestQuery) -> FlextResult[str]:
                 return self.handle(query)
 
             def can_handle(self, query_type: type) -> bool:
-                return True
+                return query_type == TestQuery or (
+                    isinstance(query_type, type) and issubclass(query_type, TestQuery)
+                )
 
         handler = TestHandler()
         bus.register_handler(handler)
@@ -141,7 +143,7 @@ class TestBusExecutionEdgeCasesRemaining:
         # Execute - should not use caching logic when metrics disabled
         result = bus.execute(query)
         FlextTestsMatchers.assert_result_success(result)
-        assert result.unwrap() == "query result"
+        assert result.unwrap() == "query result for test-query"
 
 
 # Add a comprehensive integration test that exercises multiple paths
@@ -168,15 +170,24 @@ class TestCommandsIntegrationFinal:
                 return FlextResult[str].ok(f"Handled: {command.name}")
 
             def can_handle(self, command_type: object) -> bool:
-                return True
+                return command_type == CustomCommand or (
+                    isinstance(command_type, type)
+                    and issubclass(command_type, CustomCommand)
+                )
 
         # Test middleware with edge cases
         class TestMiddleware:
             def process(self, command: object, handler: object) -> FlextResult[None]:
+                # Process middleware - validate command and handler types
+                if command is None or handler is None:
+                    return FlextResult[None].fail("Command and handler cannot be None")
                 return FlextResult[None].ok(None)
 
         # Setup bus with all configurations
-        bus_config = {"enable_middleware": True, "enable_metrics": True}
+        bus_config: dict[str, object] = {
+            "enable_middleware": True,
+            "enable_metrics": True,
+        }
         bus = FlextCommands.Bus(bus_config=bus_config)
 
         # Register handler and middleware

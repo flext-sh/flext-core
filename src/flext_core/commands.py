@@ -1015,7 +1015,7 @@ class FlextCommands:
 
         @staticmethod
         def create_simple_handler(
-            handler_func: FlextTypes.Core.OperationCallable,
+            handler_func: Callable[[object], object],
         ) -> FlextCommands.Handlers.CommandHandler[object, object]:
             """Create a simple command handler from a function."""
 
@@ -1034,7 +1034,7 @@ class FlextCommands:
 
         @staticmethod
         def create_query_handler(
-            handler_func: FlextTypes.Core.OperationCallable,
+            handler_func: Callable[[object], object],
         ) -> FlextCommands.Handlers.QueryHandler[object, object]:
             """Create a simple query handler from a function."""
 

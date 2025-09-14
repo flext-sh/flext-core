@@ -189,6 +189,7 @@ class TestFlextConfigCoverageImprovement:
         assert hasattr(result, "is_success")  # Check it's a FlextResult
         # The result will likely be a failure since FLEXT_DEBUG isn't set
         if result.is_failure:
+            assert result.error
             assert "not found" in result.error
 
     def test_config_validation_edge_cases(self) -> None:

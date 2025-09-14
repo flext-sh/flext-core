@@ -33,11 +33,11 @@ class TestUtilitiesDebugCoverage:
                 exception_counter += 1
                 msg = "Forced TypeError for coverage"
                 raise TypeError(msg)
-            return original_float(value)
+            return original_float(value)  # type: ignore[arg-type]
 
         try:
             # Temporarily replace float()
-            builtins.float = counting_float
+            builtins.float = counting_float  # type: ignore[misc,assignment]
 
             # Test forced ValueError path
             result1 = FlextUtilities.Conversions.safe_float(

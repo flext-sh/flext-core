@@ -52,7 +52,7 @@ class TestFlextValidations100Percent:
         # Test with string that can be converted to float
         result1 = FlextValidations.TypeValidators.validate_float("3.14")
         assert result1.is_success
-        assert result1.value == math.pi  # Compare with the actual expected value 3.14
+        assert result1.value == 3.14  # Compare with the actual expected value 3.14
 
         # Test with int that can be converted
         result2 = FlextValidations.TypeValidators.validate_float(42)
@@ -105,6 +105,7 @@ class TestFlextValidations100Percent:
         # Test with invalid phone format
         result = FlextValidations.FieldValidators.validate_phone("not-a-phone")
         assert result.is_failure
+        assert result.error
         assert "Invalid phone number" in result.error
 
     def test_field_validators_validate_url_edge_cases(self) -> None:
@@ -118,6 +119,7 @@ class TestFlextValidations100Percent:
         # Test with invalid UUID
         result = FlextValidations.FieldValidators.validate_uuid("not-a-uuid")
         assert result.is_failure
+        assert result.error
         assert "Invalid UUID" in result.error
 
     def test_business_validators_validate_string_field_edge_cases(self) -> None:

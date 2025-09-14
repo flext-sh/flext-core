@@ -17,7 +17,7 @@ import os
 import re
 import time
 from collections.abc import Awaitable, Callable, Iterator, Sequence
-from typing import Any, Protocol, TypeGuard, runtime_checkable
+from typing import Protocol, TypeGuard, runtime_checkable
 
 from flext_core import FlextResult, FlextTypes, T
 
@@ -75,10 +75,10 @@ class FlextTestsMatchers:
     # === CORE MATCHERS ===
 
     class CoreMatchers:
-        """Matchers that delegate to FlextValidations and FlextCore components."""
+        """Core matcher methods for FLEXT tests."""
 
         @staticmethod
-        def assert_result_success(
+        def assert_result_success[T](
             result: FlextResult[T],
             expected_data: T | None = None,
         ) -> None:
@@ -92,8 +92,8 @@ class FlextTestsMatchers:
                 raise AssertionError(msg)
 
         @staticmethod
-        def assert_result_failure(
-            result: FlextResult[Any],
+        def assert_result_failure[T](
+            result: FlextResult[T],
             expected_error: str | None = None,
             expected_error_code: str | None = None,
         ) -> None:
@@ -113,6 +113,28 @@ class FlextTestsMatchers:
                 if actual_code != expected_error_code:
                     msg = f"Expected error code {expected_error_code!r}, got {actual_code!r}"
                     raise AssertionError(msg)
+
+        @staticmethod
+        def assert_greater_than(
+            actual: float,
+            expected: float,
+            message: str | None = None,
+        ) -> None:
+            """Assert actual value is greater than expected value.
+
+            Args:
+                actual: Actual value to test
+                expected: Expected minimum value (exclusive)
+                message: Custom error message
+
+            Raises:
+                AssertionError: If actual <= expected
+
+            """
+            if actual <= expected:
+                if message:
+                    raise AssertionError(message)
+                raise AssertionError(f"Expected {actual} > {expected}")
 
         # Convenience boolean helpers using FlextResult
         @staticmethod
@@ -494,7 +516,7 @@ class FlextTestsMatchers:
     # === CONVENIENCE METHODS ===
 
     @classmethod
-    def assert_result_success(
+    def assert_result_success[T](
         cls,
         result: FlextResult[T],
         expected_data: T | None = None,
@@ -503,9 +525,9 @@ class FlextTestsMatchers:
         cls.CoreMatchers.assert_result_success(result, expected_data)
 
     @classmethod
-    def assert_result_failure(
+    def assert_result_failure[T](
         cls,
-        result: FlextResult[Any],
+        result: FlextResult[T],
         expected_error: str | None = None,
         expected_error_code: str | None = None,
     ) -> None:

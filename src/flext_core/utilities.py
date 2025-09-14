@@ -101,10 +101,10 @@ class FlextUtilities:
         """Type conversion utilities."""
 
         @staticmethod
-        def safe_int(value: str | float, *, default: int = 0) -> int:
+        def safe_int(value: object, *, default: int = 0) -> int:
             """Convert value to int safely."""
             try:
-                return int(value)
+                return int(value)  # type: ignore[arg-type,call-overload,no-any-return]
             except (ValueError, TypeError):
                 return default
 
@@ -126,10 +126,10 @@ class FlextUtilities:
                 return default
 
         @staticmethod
-        def safe_float(value: str | float, *, default: float = 0.0) -> float:
+        def safe_float(value: object, *, default: float = 0.0) -> float:
             """Convert value to float safely."""
             try:
-                return float(value)
+                return float(value)  # type: ignore[arg-type,call-overload,no-any-return]
             except (ValueError, TypeError):
                 return default
 

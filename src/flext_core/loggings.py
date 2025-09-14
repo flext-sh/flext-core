@@ -88,30 +88,61 @@ class FlextLogger:
     ) -> None:
         """Initialize structured logger instance using FlextConfig singleton."""
         if not type(self)._configured:
-            # Use stored configuration if available, otherwise configure with defaults
-            if type(self)._configuration:
-                # Configuration already exists, just reuse it
-                type(self)._configured = True
-            else:
-                type(self).configure()
-
-        # Get config from SINGLETON
-        config = FlextConfig.get_global_instance()
+            # Always (re)configure structlog to ensure processors reflect stored config
+            raw_kwargs = (
+                cast("dict[str, object]", type(self)._configuration)
+                if type(self)._configuration
+                else {}
+            )
+            allowed_keys = {
+                "log_level",
+                "json_output",
+                "include_source",
+                "structured_output",
+            }
+            config_kwargs = {k: v for k, v in raw_kwargs.items() if k in allowed_keys}
+            type(self).configure(**config_kwargs)
 
         self._name = name
-        # Use level from parameter or singleton config
-        if level and isinstance(level, str):
-            valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-            upper_level = level.upper()
-            if upper_level in valid_levels:
-                # Cast to proper LogLevel type after validation
-                self._level = cast("FlextTypes.Config.LogLevel", upper_level)
-            else:
-                self._level = cast("FlextTypes.Config.LogLevel", config.log_level)
-        else:
-            self._level = cast("FlextTypes.Config.LogLevel", config.log_level)
+        # Load configuration early so .env and FLEXT_* vars are available
+        config = FlextConfig.get_global_instance()
 
-        # ALWAYS use environment from singleton - ignore parameter
+        # Resolve log level with strict precedence and deterministic behavior
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+
+        # 0) Detect test environment deterministically (pytest session or explicit config)
+        is_pytest = (
+            os.getenv("PYTEST_CURRENT_TEST") is not None or "pytest" in sys.modules
+        )
+        is_test_env = (str(config.environment).lower() == "test") or is_pytest
+
+        resolved_level: str | None = None
+
+        # 1) Explicit parameter takes precedence when valid
+        if isinstance(level, str) and level:
+            cand = level.upper()
+            if cand in valid_levels:
+                resolved_level = cand
+
+        # 2) Testing default: prefer WARNING in test sessions when no explicit level
+        if resolved_level is None and is_test_env:
+            resolved_level = "WARNING"
+
+        # 3) Environment variable override when valid (after loading .env via config)
+        if resolved_level is None:
+            env_level = os.getenv("FLEXT_LOG_LEVEL")
+            env_level_upper = env_level.upper() if isinstance(env_level, str) else None
+            if env_level_upper in valid_levels:
+                resolved_level = env_level_upper
+
+        # 4) Configuration/defaults
+        if resolved_level is None:
+            cfg_level = str(config.log_level).upper()
+            resolved_level = cfg_level if cfg_level in valid_levels else "INFO"
+
+        self._level = cast("FlextTypes.Config.LogLevel", resolved_level)
+
+        # Use environment from configuration singleton for consistency
         self._environment = config.environment
 
         # Initialize service context

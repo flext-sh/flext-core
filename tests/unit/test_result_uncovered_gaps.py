@@ -64,6 +64,7 @@ class TestFlextResultUncoveredGaps:
 
         result = FlextResult.from_exception(failing_func)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Type error occurred" in result.error
 
     def test_from_exception_value_error(self) -> None:
@@ -75,6 +76,7 @@ class TestFlextResultUncoveredGaps:
 
         result = FlextResult.from_exception(failing_func)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Invalid value provided" in result.error
 
     def test_from_exception_attribute_error(self) -> None:
@@ -97,6 +99,7 @@ class TestFlextResultUncoveredGaps:
 
         result = FlextResult.from_exception(failing_func)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Runtime failure" in result.error
 
     def test_from_exception_unhandled_exception(self) -> None:
@@ -208,6 +211,7 @@ class TestFlextResultUncoveredGaps:
 
         result = FlextResult.safe_call(unsafe_func)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Function failed" in result.error
 
     def test_safe_call_generic_exception(self) -> None:
@@ -222,6 +226,7 @@ class TestFlextResultUncoveredGaps:
 
         result = FlextResult.safe_call(failing_func)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Generic error" in result.error
 
     def test_safe_call_with_complex_return_type(self) -> None:

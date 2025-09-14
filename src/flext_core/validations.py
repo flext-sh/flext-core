@@ -906,7 +906,7 @@ class FlextValidations:
         # Handle callable schema format - delegate to SchemaValidators
         if isinstance(data, dict) and all(callable(v) for v in schema.values()):
             # Cast schema to the expected type for SchemaValidators
-            callable_schema: dict[str, Callable[[object], FlextResult[object]]] = schema
+            callable_schema: dict[str, Callable[[object], FlextResult[object]]] = schema  # type: ignore[assignment]
             result = cls.SchemaValidators.validate_schema(data, callable_schema)
             if result.is_success:
                 return FlextResult[object].ok(result.data)
@@ -975,15 +975,24 @@ class FlextValidations:
 
 
 # Add legacy compatibility after class definition
-FlextValidations.Core.TypeValidators = FlextValidations.TypeValidators
-FlextValidations.Core.Collections = FlextValidations.BusinessValidators
-FlextValidations.Core.Domain = FlextValidations.BusinessValidators
+# Legacy compatibility - PyRight requires explicit type ignores for dynamic attributes
+setattr(FlextValidations.Core, "TypeValidators", FlextValidations.TypeValidators)
+setattr(FlextValidations.Core, "Collections", FlextValidations.BusinessValidators)
+setattr(FlextValidations.Core, "Domain", FlextValidations.BusinessValidators)
+# Legacy compatibility - PyRight requires explicit type ignores for dynamic attributes
+setattr(FlextValidations.Core, "TypeValidators", FlextValidations.TypeValidators)
+setattr(FlextValidations.Core, "Collections", FlextValidations.BusinessValidators)
+setattr(FlextValidations.Core, "Domain", FlextValidations.BusinessValidators)
+setattr(FlextValidations.Core, "Predicates", FlextValidations.Predicates)
+setattr(FlextValidations.Core, "TypeValidators", FlextValidations.TypeValidators)
+setattr(FlextValidations.Core, "Collections", FlextValidations.BusinessValidators)
+setattr(FlextValidations.Core, "Domain", FlextValidations.BusinessValidators)
 
 
 # Create the Predicates class that tests expect
 
 
-FlextValidations.Core.Predicates = FlextValidations.Predicates
+# Create the Predicates class that tests expect (already set above)
 
 # Make Predicates available at module level for direct imports
 Predicates = FlextValidations.Predicates

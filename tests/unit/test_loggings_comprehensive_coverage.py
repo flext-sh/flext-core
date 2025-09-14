@@ -23,7 +23,7 @@ class TestFlextLoggingComprehensiveCoverage:
         with patch.dict(os.environ, {"SERVICE_NAME": "test-service"}):
             logger = FlextLogger("test.module")
             # Access private method for testing
-            service_name = logger._extract_service_name("test.module.name")
+            service_name = logger._extract_service_name()
             assert service_name == "test-service"
 
     def test_get_calling_function_exception_handling(self) -> None:
@@ -56,8 +56,9 @@ class TestFlextLoggingComprehensiveCoverage:
 
     def test_debug_with_structured_output_disabled(self) -> None:
         """Test debug method with structured_output disabled (line 469)."""
-        # Create logger with structured_output disabled
-        logger = FlextLogger("test.module" )
+        # Disable structured output to exercise simple call path
+        FlextLogger.configure(structured_output=False)
+        logger = FlextLogger("test.module", _force_new=True)
 
         # Mock the structlog logger to verify call
         mock_structlog = Mock()
@@ -74,8 +75,8 @@ class TestFlextLoggingComprehensiveCoverage:
 
     def test_info_with_structured_output_disabled(self) -> None:
         """Test info method with structured_output disabled (line 479)."""
-        # Create logger with structured_output disabled
-        logger = FlextLogger("test.module" )
+        FlextLogger.configure(structured_output=False)
+        logger = FlextLogger("test.module", _force_new=True)
 
         # Mock the structlog logger to verify call
         mock_structlog = Mock()
@@ -91,8 +92,8 @@ class TestFlextLoggingComprehensiveCoverage:
 
     def test_warning_with_structured_output_disabled(self) -> None:
         """Test warning method with structured_output disabled (line 489)."""
-        # Create logger
-        logger = FlextLogger("test.module")
+        FlextLogger.configure(structured_output=False)
+        logger = FlextLogger("test.module", _force_new=True)
 
         # Mock the structlog logger to verify call
         mock_structlog = Mock()
@@ -108,8 +109,8 @@ class TestFlextLoggingComprehensiveCoverage:
 
     def test_error_with_structured_output_disabled_and_error(self) -> None:
         """Test error method with structured_output disabled and error (lines 505-507)."""
-        # Create logger with structured_output disabled
-        logger = FlextLogger("test.module" )
+        FlextLogger.configure(structured_output=False)
+        logger = FlextLogger("test.module", _force_new=True)
 
         # Mock the structlog logger to verify call
         mock_structlog = Mock()
@@ -128,8 +129,8 @@ class TestFlextLoggingComprehensiveCoverage:
 
     def test_critical_with_structured_output_disabled_and_error(self) -> None:
         """Test critical method with structured_output disabled and error (lines 523-525)."""
-        # Create logger with structured_output disabled
-        logger = FlextLogger("test.module" )
+        FlextLogger.configure(structured_output=False)
+        logger = FlextLogger("test.module", _force_new=True)
 
         # Mock the structlog logger to verify call
         mock_structlog = Mock()
@@ -184,9 +185,7 @@ class TestFlextLoggingComprehensiveCoverage:
         assert logger1 is not None
 
         # Test with custom configuration
-        logger2 = FlextLogger(
-            "custom", service_name="custom-service"
-        )
+        logger2 = FlextLogger("custom", service_name="custom-service")
         assert logger2 is not None
 
         # Test with disabled structured output
@@ -198,7 +197,7 @@ class TestFlextLoggingComprehensiveCoverage:
         logger = FlextLogger("test.comprehensive")
 
         # Test all private methods with various scenarios
-        service_name = logger._extract_service_name("test.module.name")
+        service_name = logger._extract_service_name()
         assert isinstance(service_name, str)
 
         calling_func = logger._get_calling_function()
@@ -218,7 +217,7 @@ class TestFlextLoggingComprehensiveCoverage:
         structured_logger.critical("Structured critical")
 
         # Test unstructured logging
-        unstructured_logger = FlextLogger("unstructured" )
+        unstructured_logger = FlextLogger("unstructured")
         unstructured_logger.debug("Unstructured debug")
         unstructured_logger.info("Unstructured info")
         unstructured_logger.warning("Unstructured warning")
@@ -227,7 +226,7 @@ class TestFlextLoggingComprehensiveCoverage:
 
     def test_error_handling_with_different_error_types(self) -> None:
         """Test error handling with different error types for comprehensive coverage."""
-        logger = FlextLogger("error_test" )
+        logger = FlextLogger("error_test")
 
         # Mock the structlog logger
         mock_structlog = Mock()

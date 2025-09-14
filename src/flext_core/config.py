@@ -335,8 +335,14 @@ class FlextConfig(BaseSettings):
                                 # Cast to Mapping to satisfy type checker
                                 if isinstance(data, Mapping):
                                     config_data = dict(data)
+                                # Fallback for non-Mapping objects with items()
+                                elif hasattr(data, "items") and callable(
+                                    getattr(data, "items")
+                                ):
+                                    config_data = {
+                                        "data": dict(getattr(data, "items")())
+                                    }
                                 else:
-                                    # Fallback for non-Mapping objects with items()
                                     config_data = {"data": data}
                             else:
                                 # For other iterables, wrap as data
@@ -376,7 +382,7 @@ class FlextConfig(BaseSettings):
 
                 return FlextResult[None].ok(None)
 
-            except (OSError, json.JSONDecodeError, PermissionError) as e:
+            except (OSError, json.JSONDecodeError, PermissionError, TypeError) as e:
                 return FlextResult[None].fail(
                     f"Failed to save file: {e}",
                     error_code="CONFIG_SAVE_ERROR",

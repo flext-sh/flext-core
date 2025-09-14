@@ -90,7 +90,7 @@ typings = [
 security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
 
 [tool.poetry]
-packages = [{ include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
+packages = [{ include = "flext_auth", from = "src" }, { include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
 
 [tool.poetry.group.typings.dependencies]
 types-pygments = ">=2.19.0.20250715"

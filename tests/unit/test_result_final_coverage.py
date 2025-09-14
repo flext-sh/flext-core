@@ -185,6 +185,7 @@ class TestFlextResultFinalCoverage:
         # This should return a failure with default message
         result = FlextResult.first_success()
         assert result.is_failure
+        assert result.error
         assert "No successful results found" in result.error
 
     def test_unwrap_or_raise_edge_cases(self) -> None:

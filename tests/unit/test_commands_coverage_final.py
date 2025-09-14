@@ -32,7 +32,9 @@ class TestCommandsPayloadException:
 
             # Should return FlextResult.fail on exception (lines 129-130)
             FlextTestsMatchers.assert_result_failure(result)
+            assert result.error
             assert "Failed to create payload" in result.error
+            assert result.error
             assert "UUID generation failed" in result.error
 
 
@@ -75,8 +77,7 @@ class TestCommandHandlerTimingEdgeCases:
                 return FlextResult[str].ok("handled")
 
             def can_handle(self, command_type: object) -> bool:
-                _ = command_type  # Acknowledge parameter usage
-                return True
+                return command_type is not None  # Use parameter meaningfully
 
         handler = TestHandler()
         command = TestCommand()
@@ -99,7 +100,7 @@ class TestQueryHandlerEdgeCases:
                 return True
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
-            def handle(self, query: TestQuery) -> FlextResult[str]:
+            def handle(self, _query: TestQuery) -> FlextResult[str]:
                 _ = query  # Acknowledge parameter usage
                 return FlextResult[str].ok("handled")
 
@@ -130,6 +131,7 @@ class TestBusMiddlewareEdgeCases:
 
         # Should fail with middleware disabled error (lines 598-603)
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error
         assert "Middleware pipeline is disabled" in result.error
 
     def test_bus_apply_middleware_sorting_with_string_order(self) -> None:
@@ -204,7 +206,7 @@ class TestFactoriesEdgeCases:
     def test_simple_handler_with_non_flext_result_return(self) -> None:
         """Test create_simple_handler when function returns non-FlextResult."""
 
-        def handler_function(command: dict) -> str:
+        def handler_function(_command: dict) -> str:
             _ = command  # Acknowledge parameter usage
             return "simple result"  # Returns string, not FlextResult
 
