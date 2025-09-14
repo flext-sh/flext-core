@@ -104,7 +104,7 @@ class FlextUtilities:
         def safe_int(value: object, *, default: int = 0) -> int:
             """Convert value to int safely."""
             try:
-                return int(value)  # type: ignore[arg-type,call-overload,no-any-return]
+                return int(value)  # type: ignore[call-overload,no-any-return]
             except (ValueError, TypeError):
                 return default
 
@@ -129,7 +129,7 @@ class FlextUtilities:
         def safe_float(value: object, *, default: float = 0.0) -> float:
             """Convert value to float safely."""
             try:
-                return float(value)  # type: ignore[arg-type,call-overload,no-any-return]
+                return float(value)  # type: ignore[arg-type]
             except (ValueError, TypeError):
                 return default
 

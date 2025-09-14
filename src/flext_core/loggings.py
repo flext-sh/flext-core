@@ -89,11 +89,7 @@ class FlextLogger:
         """Initialize structured logger instance using FlextConfig singleton."""
         if not type(self)._configured:
             # Always (re)configure structlog to ensure processors reflect stored config
-            raw_kwargs = (
-                cast("dict[str, object]", type(self)._configuration)
-                if type(self)._configuration
-                else {}
-            )
+            raw_kwargs = type(self)._configuration if type(self)._configuration else {}
             allowed_keys = {
                 "log_level",
                 "json_output",
@@ -101,7 +97,21 @@ class FlextLogger:
                 "structured_output",
             }
             config_kwargs = {k: v for k, v in raw_kwargs.items() if k in allowed_keys}
-            type(self).configure(**config_kwargs)
+
+            # Call configure with proper typed arguments
+            log_level = str(config_kwargs.get("log_level", "INFO"))
+            json_output = config_kwargs.get("json_output")
+            include_source = bool(config_kwargs.get("include_source", True))
+            structured_output = bool(config_kwargs.get("structured_output", True))
+
+            # Type-safe configure call
+            json_output_typed: bool | None = None if json_output is None else bool(json_output)
+            type(self).configure(
+                log_level=log_level,
+                json_output=json_output_typed,
+                include_source=include_source,
+                structured_output=structured_output,
+            )
 
         self._name = name
         # Load configuration early so .env and FLEXT_* vars are available
