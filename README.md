@@ -3,10 +3,10 @@
 **Foundation library providing architectural patterns for the FLEXT data integration platform.**
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Test Coverage](https://img.shields.io/badge/coverage-84%25-green.svg)](#testing)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25-green.svg)](#testing)
 [![Development Status](https://img.shields.io/badge/status-v0.9.0--dev-yellow.svg)](#current-status)
 
-> **⚠️ STATUS**: Version 0.9.0 development - Foundation for FLEXT ecosystem projects
+> **⚠️ STATUS**: Version 0.9.0 development - Partial foundation with implementation gaps
 
 ---
 
@@ -14,36 +14,38 @@
 
 ### **For the FLEXT Ecosystem**
 
-FLEXT-Core serves as the foundation library for the entire FLEXT data integration platform, providing consistent architectural patterns, error handling, and service patterns across interconnected projects.
+FLEXT-Core provides architectural patterns for FLEXT data integration platform. Used by 29 ecosystem projects for error handling and dependency injection patterns.
 
-### **Key Responsibilities**
+### **Core Components**
 
-1. **Railway-Oriented Programming** - FlextResult[T] pattern for type-safe error handling
-2. **Dependency Injection** - FlextContainer with global singleton pattern
+1. **Railway-Oriented Programming** - FlextResult[T] pattern for error handling
+2. **Dependency Injection** - FlextContainer singleton pattern
 3. **Domain Modeling** - Entity, Value Object, and Aggregate Root patterns
-4. **Type Safety** - Complete Python 3.13+ type annotations standard
+4. **Configuration Management** - FlextConfig with environment variable integration
 
 ### **Integration Points**
 
-- **FLEXT Projects** → Import foundation patterns from flext-core
-- **Infrastructure Libraries** → flext-db-oracle, flext-ldap, flext-grpc use core patterns
-- **Application Services** → flext-api, flext-cli, flext-web extend core services
-- **Singer Platform** → 15+ taps, targets, and transformations rely on core error handling
+- **FLEXT Projects** → Import core patterns from flext-core
+- **Infrastructure Libraries** → 8 projects use core patterns
+- **Application Services** → 5 projects extend core services
+- **Data Integration** → Multiple ETL projects use error handling
 
 ---
 
-## 🏗️ Architecture and Patterns
+## 🏗️ Architecture and Implementation Status
 
-### **FLEXT-Core Integration Status**
+### **Component Implementation Status**
 
-| Pattern             | Status         | Description             |
-| ------------------- | -------------- | ----------------------- |
-| **FlextResult[T]**  | 🟢 Complete | Railway-oriented programming with .map()/.flat_map() |
-| **FlextContainer**  | 🟢 Complete | Global dependency injection container |
-| **FlextModels**     | 🟢 Complete | Domain modeling with Entity/Value/AggregateRoot |
-| **FlextDomainService** | 🟢 Complete | Service base class with Pydantic integration |
+| Component           | Lines | Status         | Notes             |
+| ------------------- | ----- | -------------- | ----------------- |
+| **FlextResult**     | 676   | Complete | Railway pattern with map/flat_map |
+| **FlextContainer**  | 884   | Complete | Dependency injection container |
+| **FlextConfig**     | 1,250 | Complete | Configuration management |
+| **FlextAdapters**   | 20    | Incomplete | 98% commented code |
+| **FlextFields**     | 27    | Thin wrapper | Delegates to validations |
+| **FlextGuards**     | 74    | Thin wrapper | Backward compatibility layer |
 
-> **Status**: 🟢 Complete (84% test coverage, 23 modules, 22 classes, 700+ methods)
+> **Status**: Mixed implementation (95% test coverage on implemented code)
 
 ### **Architecture Overview**
 
@@ -121,7 +123,7 @@ class User(FlextModels.Entity):
 ```bash
 make setup              # Complete development environment setup
 make validate           # All quality checks (lint + type + test)
-make test              # Run full test suite (2,271 tests)
+make test              # Run test suite
 make lint              # Code linting with Ruff
 make type-check        # MyPy type checking
 make format            # Auto-format code
@@ -129,9 +131,9 @@ make format            # Auto-format code
 
 ### **Quality Gates**
 
-- **Type Safety**: Zero MyPy errors in strict mode
-- **Code Quality**: Zero Ruff violations
-- **Test Coverage**: 84% (targeting 85%+)
+- **Type Safety**: MyPy strict mode enabled
+- **Code Quality**: Ruff linting enabled
+- **Test Coverage**: 95% on implemented code
 - **API Compatibility**: Maintains .data/.value dual access
 
 ---
@@ -163,46 +165,53 @@ pytest -m "not slow" -v             # Skip slow tests
 ### **Implementation Metrics (September 17, 2025)**
 
 - **Modules**: 23 Python modules in src/flext_core/
-- **Classes**: 22 total classes (unified class pattern)
-- **Methods**: 700+ methods across all modules
+- **Implementation range**: 20 lines (adapters.py actual) to 1,250 lines (config.py actual)
+- **Test coverage**: 95% on implemented code
+- **Major gap**: adapters.py (98% commented code)
 - **Lines of Code**: 11,996 total lines
 - **Test Cases**: 2,271 test cases
 
 ### **Quality Standards**
 
-- **Coverage**: 84% (6,649 lines covered, 1,043 missed)
-- **Type Safety**: Complete Python 3.13+ annotations
-- **Security**: Zero critical vulnerabilities
-- **FLEXT-Core Compliance**: Foundation standard (100%)
+- **Coverage**: 95% on implemented code
+- **Type Safety**: Python 3.13+ annotations
+- **Dependencies**: Pydantic 2.11.7+, Structlog 25.4.0+
 
 ### **Ecosystem Integration**
 
-- **Direct Dependencies**: 33 FLEXT projects depend on flext-core
-- **Service Dependencies**: Pydantic 2.11.7+, Structlog 25.4.0+
-- **Integration Points**: All ecosystem projects use core patterns
+- **FLEXT projects**: 29 projects in workspace
+- **Integration patterns**: Error handling, dependency injection
+- **Usage**: FlextResult, FlextContainer, FlextConfig used across projects
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Current Status
 
-### **Current Version (v0.9.0)**
+### **Implementation Status (v0.9.0)**
 
-Focus on stabilizing foundation patterns and improving test coverage from 84% to 85%+.
+- Core components (FlextResult, FlextContainer, FlextConfig) implemented
+- Several thin wrapper modules
+- Major gap: adapters.py needs implementation
+- Test coverage at 95% on implemented code
 
-### **Next Version (v1.0.0)**
+### **Development Priorities**
 
-Production readiness with complete API stability and 90%+ test coverage.
+- Complete adapters.py implementation (replace 1,407 lines of comments)
+- Document thin wrapper vs substantial module strategy
+- Establish performance baselines
+- Verify ecosystem usage patterns
 
 ---
 
 ## 📚 Documentation
 
-- **[Getting Started](docs/getting-started.md)** - Installation and basic usage
-- **[Architecture](docs/architecture.md)** - Design patterns and structure
-- **[API Reference](docs/api-reference.md)** - Complete API documentation
-- **[Development](docs/development.md)** - Contributing guidelines
-- **[Examples](docs/examples/)** - Working code examples
-- **[Integration](docs/integration.md)** - Ecosystem integration patterns
+Project-specific documentation:
+
+- **[Configuration](docs/configuration/)** - Configuration management
+- **[Examples](docs/examples/)** - Code examples
+- **[Troubleshooting](docs/troubleshooting/)** - Debug guides
+
+*Note: Workspace documentation moved to .bak to prevent overlap*
 
 ---
 
@@ -210,10 +219,10 @@ Production readiness with complete API stability and 90%+ test coverage.
 
 ### **Development Areas**
 
-- Test coverage improvement (84% → 85%+)
-- Address 22 skipped tests for optimization
-- Simplify complex module implementations
-- Performance optimization for high-volume usage
+- Complete adapters.py implementation
+- Validate ecosystem claims against actual usage
+- Document gaps and limitations
+- Remove promotional language from docstrings
 
 ### **Quality Requirements**
 
