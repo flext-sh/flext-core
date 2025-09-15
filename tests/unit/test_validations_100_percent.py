@@ -516,11 +516,11 @@ class TestFlextValidations100Percent:
         # Test Predicates wrapper class functionality
         predicate = FlextValidations.Core.Predicates(is_positive, "positive_check")
 
-        # Test predicate wrapper functionality using type: ignore for Pyright issue
-        predicate_result1 = predicate(42)  # type: ignore[call-arg]
+        # Test predicate wrapper functionality
+        predicate_result1 = predicate(42)
         assert predicate_result1.is_success is True
 
-        predicate_result2 = predicate(-5)  # type: ignore[call-arg]
+        predicate_result2 = predicate(-5)
         assert predicate_result2.is_success is False
 
     def test_service_api_request_validator(self) -> None:

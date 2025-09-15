@@ -19,14 +19,16 @@ class TestCommandModel:
         """Initialize test command model."""
         self.command_type = command_type
 
-    def to_payload(self) -> dict:
+    def to_payload(self) -> dict[str, object]:
         """Convert to payload dictionary."""
         return {"command_type": self.command_type}
 
     @classmethod
-    def from_payload(cls, payload: dict) -> TestCommandModel:
+    def from_payload(cls, payload: dict[str, object]) -> TestCommandModel:
         """Create from payload dictionary."""
-        return cls(payload.get("command_type", "test_command"))
+        command_type = payload.get("command_type", "test_command")
+        assert isinstance(command_type, str)
+        return cls(command_type)
 
 
 class TestQueryModel:
@@ -36,17 +38,19 @@ class TestQueryModel:
         """Initialize test query model."""
         self.query_type = query_type
 
-    def to_payload(self) -> dict:
+    def to_payload(self) -> dict[str, object]:
         """Convert to payload dictionary."""
         return {"query_type": self.query_type}
 
     @classmethod
-    def from_payload(cls, payload: dict) -> TestQueryModel:
+    def from_payload(cls, payload: dict[str, object]) -> TestQueryModel:
         """Create from payload dictionary."""
-        return cls(payload.get("query_type", "test_query"))
+        query_type = payload.get("query_type", "test_query")
+        assert isinstance(query_type, str)
+        return cls(query_type)
 
 
-class TestCommandHandler(FlextCommands.Handlers.CommandHandler):
+class TestCommandHandler(FlextCommands.Handlers.CommandHandler[object, object]):
     """Test command handler for coverage testing."""
 
     def can_handle(self, command: object) -> bool:
@@ -56,16 +60,16 @@ class TestCommandHandler(FlextCommands.Handlers.CommandHandler):
             return issubclass(command, TestCommandModel)
         return isinstance(command, TestCommandModel)
 
-    def handle(self, command: object) -> FlextResult[dict]:
+    def handle(self, command: object) -> FlextResult[object]:
         """Handle the given command and return result."""
         if isinstance(command, TestCommandModel):
-            return FlextResult[dict].ok(
+            return FlextResult[object].ok(
                 {"handled": True, "command_type": command.command_type}
             )
-        return FlextResult[dict].fail("Cannot handle command")
+        return FlextResult[object].fail("Cannot handle command")
 
 
-class TestQueryHandler(FlextCommands.Handlers.QueryHandler):
+class TestQueryHandler(FlextCommands.Handlers.QueryHandler[object, object]):
     """Test query handler for coverage testing."""
 
     def can_handle(self, query: object) -> bool:
@@ -75,15 +79,15 @@ class TestQueryHandler(FlextCommands.Handlers.QueryHandler):
             return issubclass(query, TestQueryModel)
         return isinstance(query, TestQueryModel)
 
-    def handle_query(self, query: object) -> FlextResult[dict]:
+    def handle_query(self, query: object) -> FlextResult[object]:
         """Handle the given query and return result."""
         if isinstance(query, TestQueryModel):
-            return FlextResult[dict].ok(
+            return FlextResult[object].ok(
                 {"handled": True, "query_type": query.query_type}
             )
-        return FlextResult[dict].fail("Cannot handle query")
+        return FlextResult[object].fail("Cannot handle query")
 
-    def handle(self, query: object) -> FlextResult[dict]:
+    def handle(self, query: object) -> FlextResult[object]:
         """Handle the given query by delegating to handle_query."""
         # Delegate to handle_query
         return self.handle_query(query)
@@ -108,7 +112,7 @@ class TestFlextCommandsCoverageFocused:
         assert payload.data["payload"] == {"key": "value"}
 
         # Test from_payload method
-        recreated_result = command_class.from_payload(payload)
+        recreated_result = command_class.from_payload(payload.data)
         assert recreated_result.is_success
         recreated = recreated_result.value
         assert recreated.command_type == "test"
@@ -182,7 +186,7 @@ class TestFlextCommandsCoverageFocused:
         assert hasattr(bus, "logger")
 
         # Test initialization with config
-        config = {"max_handlers": 100, "enable_metrics": True}
+        config: dict[str, object] = {"max_handlers": 100, "enable_metrics": True}
         bus_with_config = FlextCommands.Bus(bus_config=config)
         assert bus_with_config._config == config
 
@@ -222,7 +226,9 @@ class TestFlextCommandsCoverageFocused:
         # Test successful execution
         result = bus.execute(command)
         FlextTestsMatchers.assert_result_success(result)
-        assert result.value["handled"] is True
+        result_value = result.value
+        assert isinstance(result_value, dict)
+        assert result_value["handled"] is True
 
         # Test send_command alias
         send_result = bus.send_command(command)
@@ -246,7 +252,7 @@ class TestFlextCommandsCoverageFocused:
         # Create mock middleware
         middleware = Mock()
         middleware.process = Mock(
-            return_value=FlextResult[dict].ok({"processed": True})
+            return_value=FlextResult[object].ok({"processed": True})
         )
 
         # Register handler and middleware
@@ -275,7 +281,7 @@ class TestFlextCommandsCoverageFocused:
         """Test command decorators functionality."""
         decorators = FlextCommands.Decorators()
 
-        @decorators.command_handler("test_command")
+        @decorators.command_handler(TestCommandModel)
         def test_handler_func(command: object) -> dict[str, bool]:
             # Use the command parameter to avoid unused argument warning
             _ = command  # Acknowledge parameter usage
@@ -293,7 +299,9 @@ class TestFlextCommandsCoverageFocused:
         # Test success factory method
         success_result = results.success({"data": "success"})
         FlextTestsMatchers.assert_result_success(success_result)
-        assert success_result.value["data"] == "success"
+        result_value = success_result.value
+        assert isinstance(result_value, dict)
+        assert result_value["data"] == "success"
 
         # Test failure factory method
         failure_result = results.failure("Test error")
@@ -352,7 +360,7 @@ class TestFlextCommandsCoverageFocused:
         # Create middleware that rejects
         rejecting_middleware = Mock()
         rejecting_middleware.process = Mock(
-            return_value=FlextResult[dict].fail("Rejected by middleware")
+            return_value=FlextResult[object].fail("Rejected by middleware")
         )
 
         # Register handler and middleware
@@ -388,7 +396,7 @@ class TestFlextCommandsCoverageFocused:
 
         # Test _apply_middleware method
         middleware_result = bus._apply_middleware(
-            command, lambda _: FlextResult[dict].ok({"processed": True})
+            command, lambda _: FlextResult[object].ok({"processed": True})
         )
         FlextTestsMatchers.assert_result_success(middleware_result)
 
@@ -401,7 +409,7 @@ class TestFlextCommandsCoverageFocused:
         assert minimal_command.command_type == "minimal"
 
         # Test payload with missing data
-        payload = {"command_type": "partial"}
+        payload: dict[str, object] = {"command_type": "partial"}
         recreated_result = command_class.from_payload(payload)
         FlextTestsMatchers.assert_result_success(recreated_result)
         recreated = recreated_result.unwrap()
@@ -416,7 +424,7 @@ class TestFlextCommandsCoverageFocused:
         assert minimal_query.query_type == "minimal"
 
         # Test payload with missing data
-        payload = {"query_type": "partial"}
+        payload: dict[str, object] = {"query_type": "partial"}
         recreated_result = query_class.from_payload(payload)
         FlextTestsMatchers.assert_result_success(recreated_result)
         recreated = recreated_result.unwrap()

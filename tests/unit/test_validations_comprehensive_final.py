@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 from pydantic import BaseModel
 
@@ -434,13 +435,13 @@ class TestFlextValidationsComprehensive:
     def test_schema_validators_validate_schema_success(self) -> None:
         """Test SchemaValidators.validate_schema success case with function validators."""
         # Schema expects validator functions, not JSON schema
-        schema = {
-            "name": lambda x: FlextResult[str].ok(str(x))
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {
+            "name": lambda x: FlextResult[object].ok(str(x))
             if isinstance(x, str)
-            else FlextResult[str].fail("Must be string"),
-            "age": lambda x: FlextResult[int].ok(int(x))
+            else FlextResult[object].fail("Must be string"),
+            "age": lambda x: FlextResult[object].ok(int(x))
             if isinstance(x, int)
-            else FlextResult[int].fail("Must be int"),
+            else FlextResult[object].fail("Must be int"),
         }
         data = {"name": "John", "age": 30}
         result = FlextValidations.SchemaValidators.validate_schema(data, schema)
@@ -449,13 +450,13 @@ class TestFlextValidationsComprehensive:
 
     def test_schema_validators_validate_schema_failure(self) -> None:
         """Test SchemaValidators.validate_schema failure case."""
-        schema = {
-            "name": lambda x: FlextResult[str].ok(str(x))
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {
+            "name": lambda x: FlextResult[object].ok(str(x))
             if isinstance(x, str)
-            else FlextResult[str].fail("Must be string"),
-            "age": lambda x: FlextResult[int].ok(int(x))
+            else FlextResult[object].fail("Must be string"),
+            "age": lambda x: FlextResult[object].ok(int(x))
             if isinstance(x, int)
-            else FlextResult[int].fail("Must be int"),
+            else FlextResult[object].fail("Must be int"),
         }
         data: dict[str, object] = {"name": "John"}  # Missing age
         result = FlextValidations.SchemaValidators.validate_schema(data, schema)
@@ -768,7 +769,7 @@ class TestFlextValidationsComprehensive:
                 return FlextResult[object].ok(x)
             return FlextResult[object].fail("Must be string")
 
-        schema = {"value": validate_value}
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {"value": validate_value}
         result = FlextValidations.validate_with_schema({"value": "test"}, schema)
         FlextTestsMatchers.assert_result_success(result)
         assert result.value == {"value": "test"}
@@ -781,7 +782,7 @@ class TestFlextValidationsComprehensive:
                 return FlextResult[object].ok(x)
             return FlextResult[object].fail("Must be string")
 
-        schema = {"value": validate_value}
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {"value": validate_value}
         result = FlextValidations.validate_with_schema({"value": 123}, schema)
         FlextTestsMatchers.assert_result_failure(result)
 

@@ -1,580 +1,543 @@
 # Development Guide
 
-Professional development guide for contributing to FLEXT-Core foundation library.
+**FLEXT-Core Foundation Library Development**
+**Date**: September 17, 2025 | **Version**: 0.9.0
 
-## Development Environment
+---
+
+## Foundation Library Responsibilities
+
+FLEXT-Core serves as the architectural foundation for 45+ FLEXT ecosystem projects. All development must maintain the highest quality standards to ensure ecosystem stability.
+
+**Workspace Development Standards**: [Development Best Practices](../../docs/development/best-practices.md)
+
+---
+
+## Development Environment Setup
 
 ### Prerequisites
 
-- **Python 3.13+**: Required for modern type annotations
-- **Poetry 1.7+**: Dependency management and virtual environments
-- **Git**: Version control
-- **Make**: Build automation (included on Linux/macOS, install on Windows)
+```bash
+# Required tools
+python --version     # 3.13+
+poetry --version     # Latest
+git --version        # 2.0+
 
-### Setup
+# Install development tools
+make setup           # Complete environment setup
+```
+
+### Project Structure
+
+```
+flext-core/
+├── src/flext_core/           # Foundation library source
+│   ├── result.py             # Railway pattern (869 lines)
+│   ├── container.py          # DI container (1,142 lines)
+│   ├── config.py             # Configuration (1,710 lines)
+│   ├── models.py             # Domain models (351 lines)
+│   ├── validations.py        # Validation patterns (1,024 lines)
+│   ├── commands.py           # CQRS patterns (1,059 lines)
+│   ├── adapters.py           # Type adapters (22 actual, minimal design)
+│   └── ...                   # Other foundation modules
+├── src/flext_tests/          # Test infrastructure
+├── tests/                    # Test suite (2,271 tests)
+├── docs/                     # Foundation-specific documentation
+└── pyproject.toml            # Project configuration
+```
+
+---
+
+## Foundation Development Standards
+
+### Quality Gates (MANDATORY)
+
+All commits must pass these quality gates:
 
 ```bash
-# Clone repository
-git clone https://github.com/flext-sh/flext-core.git
-cd flext-core
+# Complete validation pipeline
+make validate           # All checks (lint + type + test + security)
 
-# Install dependencies and setup environment
-make setup
-
-# Verify installation
-PYTHONPATH=src python -c "from flext_core import FlextResult; print('Development environment ready')"
+# Individual checks
+make lint              # Ruff linting (zero violations)
+make type-check        # MyPy strict mode (zero errors)
+make test              # Test suite (84%+ coverage)
+make format            # Code formatting
 ```
 
-## Development Workflow
+### Code Quality Requirements
 
-### Essential Commands
+1. **Type Safety**: MyPy strict mode compliance
+   ```bash
+   # Must pass with zero errors
+   mypy src/ --strict --show-error-codes
+   ```
 
-```bash
-# Quality gates (run before every commit)
-make validate          # Complete validation (lint + type + test + security)
-make check            # Quick validation (lint + type only)
+2. **Code Quality**: Ruff linting
+   ```bash
+   # Must pass with zero violations
+   ruff check src/
+   ```
 
-# Individual quality checks
-make lint             # Code linting with Ruff
-make type-check       # Type checking with MyPy
-make test             # Run test suite with coverage
-make security         # Security audit with Bandit
+3. **Test Coverage**: Maintain 84%+ coverage
+   ```bash
+   # Current: 84% (6,691 statements, 1,065 missing)
+   pytest tests/ --cov=src --cov-report=term
+   ```
 
-# Code formatting
-make format           # Auto-format code (Ruff + line length 79)
+4. **API Compatibility**: Backward compatibility required
+   ```python
+   # Both patterns must work (ecosystem dependency)
+   result = FlextResult[str].ok("test")
+   assert result.value == "test"  # New API
+   assert result.data == "test"   # Legacy API (maintain)
+   ```
 
-# Development utilities
-make clean            # Clean build artifacts
-make docs             # Build documentation
-make shell            # Python REPL with project loaded
-```
+---
 
-### Quality Standards
+## Foundation Architecture Patterns
 
-FLEXT-Core maintains the highest quality standards as the foundation library:
+### 1. Railway-Oriented Programming
 
-- **Type Safety**: Zero MyPy errors in strict mode
-- **Code Quality**: Zero Ruff violations
-- **Test Coverage**: 84% minimum (targeting 85%+)
-- **Security**: Zero critical vulnerabilities
-- **Line Length**: 79 characters maximum (PEP8 strict)
-
-### Pre-commit Hooks
-
-```bash
-# Pre-commit hooks are installed automatically with 'make setup'
-# They run automatically on git commit:
-
-# Manual execution
-pre-commit run --all-files
-
-# Update hooks
-pre-commit autoupdate
-```
-
-## Code Standards
-
-### Import Organization
-
-**ALWAYS use root-level imports** for public APIs:
+FlextResult[T] implementation principles:
 
 ```python
-# ✅ CORRECT - Root module imports
-from flext_core import (
-    FlextResult,           # Railway pattern
-    FlextContainer,        # Dependency injection
-    FlextModels,           # Domain models
-    FlextConfig,           # Configuration
-    FlextLogger,           # Logging
-)
+# Core implementation pattern
+class FlextResult[T]:
+    def __init__(self, success: bool, data: T | None, error: str | None):
+        self._success = success
+        self._data = data
+        self._error = error
 
-# ❌ FORBIDDEN - Internal module imports
-from flext_core.result import FlextResult
-from flext_core.container import FlextContainer
+    @property
+    def value(self) -> T:
+        """New API - preferred access pattern"""
+        return self._data
+
+    @property
+    def data(self) -> T:
+        """Legacy API - maintain for ecosystem compatibility"""
+        return self._data
+
+    def map(self, func: Callable[[T], U]) -> "FlextResult[U]":
+        """Functor pattern - transform success values"""
+        if self.is_failure:
+            return FlextResult[U].fail(self.error)
+        return FlextResult[U].ok(func(self.value))
+
+    def flat_map(self, func: Callable[[T], "FlextResult[U]"]) -> "FlextResult[U]":
+        """Monad pattern - chain operations"""
+        if self.is_failure:
+            return FlextResult[U].fail(self.error)
+        return func(self.value)
 ```
 
-### Function Signatures
+### 2. Dependency Injection Container
 
-All functions must have complete type annotations:
+Singleton pattern implementation:
 
 ```python
-# ✅ CORRECT - Complete type annotations
-def process_data(data: dict[str, Any]) -> FlextResult[ProcessedData]:
-    """Process input data with explicit error handling."""
-    if not data:
-        return FlextResult.fail("Data cannot be empty")
+class FlextContainer:
+    _instance: Optional["FlextContainer"] = None
+    _services: dict[str, Any] = {}
 
-    result = ProcessedData(**data)
-    return FlextResult.ok(result)
+    @classmethod
+    def get_global(cls) -> "FlextContainer":
+        """Singleton access pattern"""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
-# ❌ INCORRECT - Missing type annotations
-def process_data(data):
-    # No type information
-    pass
+    def register(self, key: str, service: Any) -> FlextResult[None]:
+        """Service registration with error handling"""
+        if key in self._services:
+            return FlextResult[None].fail(f"Service '{key}' already registered")
+
+        self._services[key] = service
+        return FlextResult[None].ok(None)
+
+    def get(self, key: str) -> FlextResult[Any]:
+        """Service retrieval with error handling"""
+        if key not in self._services:
+            return FlextResult[Any].fail(f"Service '{key}' not found")
+
+        return FlextResult[Any].ok(self._services[key])
 ```
 
-### Error Handling
+### 3. Domain Modeling Patterns
 
-**ALWAYS use FlextResult** for operations that can fail:
+DDD implementation with Pydantic integration:
 
 ```python
-# ✅ CORRECT - Explicit error handling with FlextResult
-def divide_numbers(a: float, b: float) -> FlextResult[float]:
-    """Safe division with explicit error handling."""
-    if b == 0:
-        return FlextResult.fail("Division by zero")
-    return FlextResult.ok(a / b)
+class FlextEntity(BaseModel):
+    """Base entity with identity and domain events"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
-# Usage with proper error handling
-result = divide_numbers(10, 2)
-if result.success:
-    value = result.unwrap()
-    print(f"Result: {value}")
-else:
-    print(f"Error: {result.error}")
+    _domain_events: list[dict] = PrivateAttr(default_factory=list)
 
-# ❌ INCORRECT - Exception-based error handling
-def divide_numbers(a: float, b: float) -> float:
-    if b == 0:
-        raise ValueError("Division by zero")
-    return a / b
+    def add_domain_event(self, event_type: str, data: dict) -> None:
+        """Record domain events for processing"""
+        self._domain_events.append({
+            "event_type": event_type,
+            "data": data,
+            "timestamp": datetime.now().isoformat()
+        })
+
+class FlextValue(BaseModel):
+    """Base value object (immutable)"""
+    class Config:
+        frozen = True  # Immutable
+        allow_mutation = False
+
+class FlextAggregateRoot(FlextEntity):
+    """Base aggregate root for consistency boundaries"""
+    version: int = Field(default=1)
+
+    def mark_events_as_committed(self) -> None:
+        """Clear domain events after processing"""
+        self._domain_events.clear()
 ```
 
-### Class Design
+---
 
-**Single Responsibility** - one class per module with unified purpose:
-
-```python
-# ✅ CORRECT - Unified class with single responsibility
-class UserService(FlextDomainService):
-    """Unified user service with all user-related operations."""
-
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        self._container = FlextContainer.get_global()
-        self._logger = FlextLogger(__name__)
-
-    class _ValidationHelper:
-        """Nested helper class - no loose functions."""
-        @staticmethod
-        def validate_email(email: str) -> FlextResult[str]:
-            if "@" not in email:
-                return FlextResult.fail("Invalid email format")
-            return FlextResult.ok(email.lower())
-
-    def create_user(self, data: dict) -> FlextResult[User]:
-        """Create user with validation and business logic."""
-        email_result = self._ValidationHelper.validate_email(data.get("email", ""))
-        if email_result.is_failure:
-            return email_result.map(lambda _: User())
-
-        # Continue with user creation
-        user = User(email=email_result.unwrap(), **data)
-        return FlextResult.ok(user)
-
-# ❌ INCORRECT - Multiple classes per module
-class UserValidator:  # Should be nested helper
-    pass
-
-class UserService:    # Main service
-    pass
-
-class UserEmailer:    # Should be injected dependency
-    pass
-```
-
-### Documentation
-
-All public APIs require docstrings with examples:
-
-```python
-def process_user_registration(data: dict) -> FlextResult[User]:
-    """Process complete user registration workflow.
-
-    Validates input data, creates user account, and sends welcome email.
-    Uses railway-oriented programming for error handling.
-
-    Args:
-        data: Registration data containing username, email, password
-
-    Returns:
-        FlextResult[User]: Success with User object, or failure with error message
-
-    Example:
-        >>> registration_data = {
-        ...     "username": "johndoe",
-        ...     "email": "john@example.com",
-        ...     "password": "securepass123"
-        ... }
-        >>> result = process_user_registration(registration_data)
-        >>> if result.success:
-        ...     user = result.unwrap()
-        ...     print(f"User {user.username} registered")
-        ... else:
-        ...     print(f"Registration failed: {result.error}")
-    """
-    # Implementation here
-    pass
-```
-
-## Testing
+## Testing Standards
 
 ### Test Organization
 
 ```
 tests/
-├── unit/                    # Fast, isolated unit tests
-│   ├── test_result.py       # FlextResult railway pattern
-│   ├── test_container.py    # Dependency injection
-│   └── test_models.py       # Domain models
-├── integration/             # Cross-module integration tests
-├── performance/             # Performance and load tests
-└── conftest.py             # Shared fixtures and utilities
+├── unit/                     # Fast, isolated tests
+│   ├── test_result.py        # FlextResult functionality
+│   ├── test_container.py     # DI container
+│   ├── test_models.py        # Domain models
+│   └── ...
+├── integration/              # Component interaction tests
+├── performance/              # Performance benchmarks
+└── conftest.py              # Shared fixtures
 ```
 
-### Test Patterns
+### Test Quality Standards
 
-#### Unit Testing with FlextResult
+1. **Real Functional Tests**: Minimize mocking
+   ```python
+   # ✅ Preferred - test actual functionality
+   def test_result_chain_operations():
+       result = (
+           FlextResult[int].ok(5)
+           .map(lambda x: x * 2)
+           .flat_map(lambda x: safe_divide(x, 2))
+       )
+       assert result.unwrap() == 5
 
-```python
-import pytest
-from flext_core import FlextResult
-
-def test_railway_pattern_success():
-    """Test successful railway operations."""
-    result = FlextResult[str].ok("success")
-
-    assert result.success
-    assert result.unwrap() == "success"
-    assert result.value == "success"  # New API
-    assert result.data == "success"   # Legacy compatibility
-
-def test_railway_pattern_failure():
-    """Test failure railway operations."""
-    result = FlextResult[str].fail("error occurred")
-
-    assert result.is_failure
-    assert result.error == "error occurred"
-
-    with pytest.raises(ValueError):
-        result.unwrap()  # Should raise on failure
-
-def test_railway_chaining():
-    """Test operation chaining with map and flat_map."""
-    def double(x: int) -> int:
-        return x * 2
-
-    def safe_divide(x: int, y: int) -> FlextResult[float]:
-        if y == 0:
-            return FlextResult.fail("Division by zero")
-        return FlextResult.ok(x / y)
-
-    result = (
-        FlextResult[int].ok(20)
-        .map(double)                           # 40
-        .flat_map(lambda x: safe_divide(x, 4)) # 10.0
-        .map(lambda x: int(x))                 # 10
-    )
-
-    assert result.success
-    assert result.unwrap() == 10
-```
-
-#### Testing with Dependency Injection
-
-```python
-def test_service_with_injected_dependencies():
-    """Test service using dependency injection."""
-    # Setup clean container
-    container = FlextContainer()
-
-    # Register mock dependencies
-    mock_database = MockDatabase()
-    mock_email_service = MockEmailService()
-
-    container.register("database", mock_database)
-    container.register("email", mock_email_service)
-
-    # Test service (would use injected dependencies)
-    service = UserService()  # Gets dependencies from container
-
-    result = service.create_user({
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "testpass123"
-    })
-
-    assert result.success
-    user = result.unwrap()
-    assert user.username == "testuser"
-
-    # Verify mock interactions
-    assert mock_database.save_called
-    assert mock_email_service.welcome_email_sent
-```
-
-#### Testing Domain Models
-
-```python
-def test_domain_entity_business_logic():
-    """Test entity business logic and domain events."""
-    from datetime import datetime
-
-    user = User(
-        id="user_123",
-        username="testuser",
-        email="test@example.com",
-        created_at=datetime.now(),
-        is_active=False
-    )
-
-    # Test business operation
-    activation_result = user.activate()
-    assert activation_result.success
-    assert user.is_active
-
-    # Test domain events
-    events = user.get_domain_events()
-    assert len(events) == 1
-    assert events[0]["event_type"] == "UserActivated"
-    assert events[0]["data"]["user_id"] == "user_123"
-
-    # Test business rule (cannot activate twice)
-    second_activation = user.activate()
-    assert second_activation.is_failure
-    assert "already active" in second_activation.error.lower()
-```
-
-### Test Coverage
-
-Run tests with coverage reporting:
-
-```bash
-# Full test suite with coverage
-make test
-
-# Run specific test file
-pytest tests/unit/test_result.py -v
-
-# Coverage report
-pytest --cov=src --cov-report=term-missing --cov-report=html
-
-# Coverage by module
-pytest --cov=src/flext_core/result.py --cov-report=term
-```
-
-**Coverage Target**: 84% minimum (currently achieved), targeting 85%+
-
-## Contributing
-
-### Pull Request Process
-
-1. **Fork and Clone**
-   ```bash
-   git fork https://github.com/flext-sh/flext-core.git
-   git clone https://github.com/yourusername/flext-core.git
-   cd flext-core
+   # ❌ Avoid excessive mocking
+   def test_with_too_many_mocks():
+       mock1 = Mock()
+       mock2 = Mock()
+       # ... excessive mocking
    ```
 
-2. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
+2. **Performance Testing**: Benchmarks for core operations
+   ```python
+   def test_result_performance(benchmark):
+       """Benchmark FlextResult operations"""
+       def create_and_chain():
+           return (
+               FlextResult[int].ok(1)
+               .map(lambda x: x + 1)
+               .flat_map(lambda x: FlextResult[int].ok(x * 2))
+           )
+
+       result = benchmark(create_and_chain)
+       assert result.unwrap() == 4
    ```
 
-3. **Develop with Quality Gates**
-   ```bash
-   # Make changes
-   # Run quality checks frequently
-   make check    # Quick validation
-   make validate # Full validation
-   ```
+3. **Property-Based Testing**: Use Hypothesis for edge cases
+   ```python
+   from hypothesis import given, strategies as st
 
-4. **Test Thoroughly**
-   ```bash
-   # Run full test suite
-   make test
-
-   # Test your specific changes
-   pytest tests/unit/test_your_feature.py -v
-   ```
-
-5. **Commit and Push**
-   ```bash
-   git add .
-   git commit -m "Add feature: description of changes"
-   git push origin feature/your-feature-name
-   ```
-
-6. **Create Pull Request**
-   - Describe changes clearly
-   - Include test coverage information
-   - Reference any related issues
-
-### Code Review Checklist
-
-Before submitting, ensure:
-
-- [ ] All tests pass (`make test`)
-- [ ] Type checking passes (`make type-check`)
-- [ ] Linting passes (`make lint`)
-- [ ] Security audit passes (`make security`)
-- [ ] Code coverage is maintained or improved
-- [ ] All public APIs have docstrings with examples
-- [ ] Changes follow established patterns
-- [ ] No breaking changes to existing APIs
-
-### Foundation Library Responsibilities
-
-As FLEXT-Core is the foundation for 33+ ecosystem projects:
-
-1. **API Stability**: No breaking changes without deprecation cycle
-2. **Backward Compatibility**: Maintain .data/.value dual access
-3. **Quality Leadership**: Set quality standards for ecosystem
-4. **Documentation**: All public APIs fully documented
-5. **Performance**: Efficient implementation for high-volume usage
-
-### Ecosystem Impact Testing
-
-Before major changes, test impact on dependent projects:
-
-```bash
-# Test core imports work across ecosystem
-for project in ../flext-api ../flext-cli ../flext-auth; do
-    if [ -d "$project" ]; then
-        echo "Testing $project compatibility..."
-        cd "$project"
-        python -c "from flext_core import FlextResult, FlextContainer; print('✅ OK')"
-        cd - > /dev/null
-    fi
-done
-
-# Test API compatibility patterns
-python -c "
-from flext_core import FlextResult
-result = FlextResult[str].ok('test')
-assert hasattr(result, 'data'), '.data API missing (ecosystem breaking)'
-assert hasattr(result, 'value'), '.value API missing'
-assert result.data == result.value, 'API consistency broken'
-print('✅ API compatibility confirmed')
-"
-```
-
-## Debugging
-
-### Development REPL
-
-```bash
-# Start interactive shell with project loaded
-make shell
-
-# In the Python shell:
->>> from flext_core import *
->>> result = FlextResult[str].ok("test")
->>> result.success
-True
->>> container = FlextContainer.get_global()
->>> container.register("test", "value")
-<FlextResult success=True>
-```
-
-### Debugging Type Issues
-
-```bash
-# Run MyPy with verbose output
-mypy src/ --strict --show-error-codes --show-traceback
-
-# Check specific file
-mypy src/flext_core/result.py --strict --show-error-codes
-
-# Generate type coverage report
-mypy src/ --html-report mypy-report --show-error-codes
-```
-
-### Performance Profiling
-
-```python
-import cProfile
-from flext_core import FlextResult
-
-def benchmark_railway_operations():
-    """Benchmark railway pattern operations."""
-    for i in range(10000):
-        result = (
-            FlextResult[int].ok(i)
-            .map(lambda x: x * 2)
-            .flat_map(lambda x: FlextResult.ok(x + 1))
-            .map(lambda x: str(x))
-        )
-        value = result.unwrap()
-
-# Profile the function
-cProfile.run('benchmark_railway_operations()', 'profile_results')
-```
-
-## Documentation
-
-### Building Documentation
-
-```bash
-# Build documentation locally
-make docs
-
-# Serve documentation (if available)
-make docs-serve  # Available at http://localhost:8000
-```
-
-### Documentation Standards
-
-- All public APIs require complete docstrings
-- Include usage examples in docstrings
-- Use Google-style docstring format
-- Document error conditions and return types
-- Provide practical examples
-
-## Release Process
-
-### Version Management
-
-```python
-# Update version in src/flext_core/version.py
-__version__ = "0.9.1"
-
-class FlextVersionManager:
-    VERSION_MAJOR = 0
-    VERSION_MINOR = 9
-    VERSION_PATCH = 1
-```
-
-### Release Checklist
-
-1. **Quality Validation**
-   ```bash
-   make validate  # All checks must pass
-   ```
-
-2. **Test Coverage**
-   ```bash
-   make test
-   # Ensure coverage is 84%+
-   ```
-
-3. **Documentation Update**
-   - Update CHANGELOG.md
-   - Update README.md version references
-   - Update documentation version numbers
-
-4. **Ecosystem Compatibility**
-   - Test core imports across dependent projects
-   - Verify API compatibility maintained
-   - Test no regressions in dependent project builds
-
-5. **Release**
-   ```bash
-   git tag v0.9.1
-   git push origin v0.9.1
-   make build  # If building distributions
+   @given(st.text(), st.text())
+   def test_result_error_handling(data, error_msg):
+       result = FlextResult[str].fail(error_msg)
+       assert result.is_failure
+       assert result.error == error_msg
    ```
 
 ---
 
-**Development Complete**: Follow these standards to maintain FLEXT-Core as a solid foundation for the entire FLEXT ecosystem. Quality and compatibility are paramount.
+## Foundation Development Workflow
+
+### Before Making Changes
+
+1. **Understand Ecosystem Impact**
+   ```bash
+   # Check dependent projects (45+ projects depend on this)
+   grep -r "from flext_core import" ../flext-*/
+   ```
+
+2. **Run Full Validation**
+   ```bash
+   make validate          # Must pass before changes
+   ```
+
+### Making Changes
+
+1. **Follow Patterns**
+   - Use FlextResult[T] for all operations that can fail
+   - Maintain both `.value` and `.data` access patterns
+   - Add comprehensive type annotations
+   - Include domain events for entities
+
+2. **Add Tests First** (TDD approach)
+   ```python
+   def test_new_functionality():
+       # Test the desired behavior first
+       result = new_function("input")
+       assert result.is_success
+       assert result.unwrap() == expected_value
+   ```
+
+3. **Implement with Quality**
+   ```python
+   def new_function(input_data: str) -> FlextResult[str]:
+       """New foundation functionality."""
+       if not input_data:
+           return FlextResult[str].fail("Input required")
+
+       # Business logic
+       processed = input_data.upper()
+       return FlextResult[str].ok(processed)
+   ```
+
+### After Making Changes
+
+1. **Quality Validation**
+   ```bash
+   make validate          # All quality gates
+   make test             # Verify tests pass
+   ```
+
+2. **Ecosystem Testing** (for breaking changes)
+   ```bash
+   # Test impact on dependent projects
+   cd ../flext-api && make test
+   cd ../flext-cli && make test
+   ```
+
+3. **Documentation Updates**
+   - Update docstrings for all public APIs
+   - Add examples to documentation
+   - Update type annotations
+
+---
+
+## API Design Principles
+
+### 1. Backward Compatibility
+
+**CRITICAL**: 45+ projects depend on FLEXT-Core APIs
+
+```python
+# ✅ Maintain both access patterns
+class FlextResult[T]:
+    @property
+    def value(self) -> T:
+        """New preferred API"""
+        return self._data
+
+    @property
+    def data(self) -> T:
+        """Legacy API - MUST MAINTAIN"""
+        return self._data
+
+# ✅ Add new methods without breaking existing
+def new_method(self) -> FlextResult[U]:
+    """New functionality without breaking changes"""
+    pass
+
+# ❌ NEVER remove or change existing methods
+# def old_method(self):  # Don't remove or change signature
+```
+
+### 2. Type Safety
+
+All APIs must have complete type annotations:
+
+```python
+# ✅ Complete type annotations
+def process_data(
+    input_data: dict[str, Any],
+    transformer: Callable[[str], str],
+    validator: Optional[Callable[[str], bool]] = None
+) -> FlextResult[dict[str, str]]:
+    """Process data with complete type information."""
+    pass
+
+# ❌ Missing or incomplete types
+def process_data(input_data, transformer, validator=None):  # No types
+    pass
+```
+
+### 3. Error Handling
+
+All operations that can fail must return FlextResult[T]:
+
+```python
+# ✅ Explicit error handling
+def risky_operation(data: str) -> FlextResult[str]:
+    if not data:
+        return FlextResult[str].fail("Data required")
+
+    try:
+        result = process(data)
+        return FlextResult[str].ok(result)
+    except Exception as e:
+        return FlextResult[str].fail(f"Processing failed: {e}")
+
+# ❌ Exceptions for business logic
+def risky_operation(data: str) -> str:
+    if not data:
+        raise ValueError("Data required")  # Don't use exceptions
+    return process(data)
+```
+
+---
+
+## Performance Considerations
+
+### Optimization Guidelines
+
+1. **Hot Path Optimization**: Focus on FlextResult operations
+   ```python
+   # Optimized for common usage patterns
+   def map(self, func: Callable[[T], U]) -> "FlextResult[U]":
+       # Fast path for success case (most common)
+       if self._success:
+           return FlextResult._create_success(func(self._data))
+       return FlextResult._create_failure(self._error)
+   ```
+
+2. **Memory Efficiency**: Minimize object creation
+   ```python
+   # Reuse common failure cases
+   _EMPTY_DATA_ERROR = FlextResult[Any].fail("Empty data")
+
+   def validate_not_empty(data: Any) -> FlextResult[Any]:
+       if not data:
+           return _EMPTY_DATA_ERROR
+       return FlextResult[Any].ok(data)
+   ```
+
+3. **Benchmark Critical Paths**
+   ```bash
+   # Run performance tests
+   pytest tests/performance/ -v
+
+   # Benchmark specific operations
+   python -m pytest tests/performance/test_result_performance.py::test_map_performance -s
+   ```
+
+---
+
+## Security Guidelines
+
+### Dependency Management
+
+```bash
+# Security scanning
+pip-audit                    # Check for vulnerabilities
+bandit -r src/              # Static security analysis
+
+# Dependency updates
+poetry update               # Update dependencies
+poetry show --outdated     # Check for updates
+```
+
+### Code Security
+
+1. **Input Validation**: Always validate inputs
+   ```python
+   def secure_operation(user_input: str) -> FlextResult[str]:
+       # Validate and sanitize
+       if not isinstance(user_input, str):
+           return FlextResult[str].fail("Invalid input type")
+
+       sanitized = user_input.strip()[:1000]  # Limit size
+       return FlextResult[str].ok(sanitized)
+   ```
+
+2. **Secret Management**: No secrets in code
+   ```python
+   # ✅ Use environment variables
+   class SecureConfig(FlextConfig):
+       api_key: SecretStr          # Masked in logs
+       database_url: str
+
+   # ❌ Never hardcode secrets
+   API_KEY = "secret-key-here"     # Don't do this
+   ```
+
+---
+
+## Documentation Standards
+
+### Code Documentation
+
+```python
+def complex_operation(
+    data: dict[str, Any],
+    options: Optional[dict[str, Any]] = None
+) -> FlextResult[ProcessedData]:
+    """Process complex data with business logic.
+
+    Args:
+        data: Input data dictionary with required fields
+        options: Optional processing configuration
+
+    Returns:
+        FlextResult containing processed data or error message
+
+    Examples:
+        >>> result = complex_operation({"key": "value"})
+        >>> if result.is_success:
+        ...     processed = result.unwrap()
+
+    Note:
+        This operation follows the railway pattern for error handling.
+        All business validation errors are returned as FlextResult failures.
+    """
+    # Implementation
+```
+
+### API Documentation
+
+- All public APIs must have complete docstrings
+- Include working examples
+- Document error conditions
+- Specify return types clearly
+
+---
+
+## Contributing Guidelines
+
+### Foundation Library Checklist
+
+- [ ] All tests pass (`make test`)
+- [ ] Type checking passes (`make type-check`)
+- [ ] Linting passes (`make lint`)
+- [ ] Coverage maintained at 84%+
+- [ ] API compatibility preserved
+- [ ] Documentation updated
+- [ ] Examples work with current implementation
+
+### Code Review Standards
+
+1. **Quality Focus**: Functionality, performance, maintainability
+2. **Ecosystem Impact**: Consider effects on dependent projects
+3. **Pattern Consistency**: Follow established foundation patterns
+4. **Security Review**: Check for vulnerabilities
+
+---
+
+**Foundation Development Guide** - Building reliable patterns for the FLEXT ecosystem

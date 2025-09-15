@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
-from typing import Any, cast
+from typing import cast
 from unittest.mock import Mock
 
 from flext_core import FlextContainer, FlextResult
@@ -26,7 +26,7 @@ class TestFlextContainer100PercentCoverage:
         # Test valid service key
         valid_key = FlextContainer.ServiceKey("valid_service")
         FlextTestsMatchers.assert_result_success(
-            FlextResult[FlextContainer.ServiceKey].ok(valid_key)
+            FlextResult[FlextContainer.ServiceKey[object]].ok(valid_key)
         )
         assert valid_key.name == "valid_service"
 
@@ -73,7 +73,7 @@ class TestFlextContainer100PercentCoverage:
         assert cmd.factory is None
 
         # Test with factory function
-        def test_factory() -> dict[str, Any]:
+        def test_factory() -> dict[str, object]:
             return {"name": "factory_service", "created": True}
 
         cmd_with_factory = FlextContainer.Commands.RegisterFactory.create(
@@ -127,7 +127,7 @@ class TestFlextContainer100PercentCoverage:
         """Test FlextContainer.ServiceRegistrar.register_factory method."""
         registrar = FlextContainer.ServiceRegistrar()
 
-        def factory_func() -> dict[str, Any]:
+        def factory_func() -> dict[str, object]:
             return {"name": "factory_test", "created_by": "registrar"}
 
         # Test successful factory registration
@@ -166,7 +166,7 @@ class TestFlextContainer100PercentCoverage:
         info_result = container.get_info("basic_test")
         FlextTestsMatchers.assert_result_success(info_result)
 
-        info_data = cast("dict[str, Any]", info_result.value)
+        info_data = cast("dict[str, object]", info_result.value)
         assert info_data["name"] == "basic_test"
         assert info_data["version"] == "1.0"
 
@@ -186,7 +186,7 @@ class TestFlextContainer100PercentCoverage:
         # Test registration with empty service name
         empty_name_result = container.register("", {"data": "test"})
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", empty_name_result)
+            cast("FlextResult[object]", empty_name_result)
         )
 
         # Test getting non-existent service
@@ -196,13 +196,13 @@ class TestFlextContainer100PercentCoverage:
         # Test info for non-existent service
         missing_info_result = container.get_info("nonexistent_service")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", missing_info_result)
+            cast("FlextResult[object]", missing_info_result)
         )
 
         # Test unregistering non-existent service
         missing_unregister_result = container.unregister("nonexistent_service")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", missing_unregister_result)
+            cast("FlextResult[object]", missing_unregister_result)
         )
 
     def test_factory_registration_and_execution(self) -> None:
@@ -210,7 +210,7 @@ class TestFlextContainer100PercentCoverage:
         container = FlextContainer()
 
         # Test simple factory
-        def simple_factory() -> dict[str, Any]:
+        def simple_factory() -> dict[str, object]:
             return {"type": "simple", "created": True}
 
         factory_result = container.register_factory("simple_factory", simple_factory)
@@ -220,7 +220,7 @@ class TestFlextContainer100PercentCoverage:
         get_result = container.get("simple_factory")
         FlextTestsMatchers.assert_result_success(get_result)
 
-        factory_output = cast("dict[str, Any]", get_result.value)
+        factory_output = cast("dict[str, object]", get_result.value)
         assert factory_output["type"] == "simple"
         assert factory_output["created"] is True
 
@@ -238,7 +238,7 @@ class TestFlextContainer100PercentCoverage:
         param_get_result = container.get("param_factory")
         FlextTestsMatchers.assert_result_success(param_get_result)
 
-        param_output = cast("dict[str, Any]", param_get_result.value)
+        param_output = cast("dict[str, object]", param_get_result.value)
         assert param_output["param"] == "test_param"
 
     def test_global_container_singleton(self) -> None:
@@ -282,7 +282,7 @@ class TestFlextContainer100PercentCoverage:
         try:
             empty_module_result = FlextContainer.create_module_utilities("")
             FlextTestsMatchers.assert_result_failure(
-                cast("FlextResult[Any]", empty_module_result)
+                cast("FlextResult[object]", empty_module_result)
             )
         except AttributeError:
             # Method doesn't exist, skip this part
@@ -293,7 +293,7 @@ class TestFlextContainer100PercentCoverage:
             summary_result = container.get_configuration_summary()
             FlextTestsMatchers.assert_result_success(summary_result)
 
-            summary_data = cast("dict[str, Any]", summary_result.value)
+            summary_data = cast("dict[str, object]", summary_result.value)
             assert isinstance(summary_data, dict)
         except AttributeError:
             # Method doesn't exist, skip this part
@@ -302,7 +302,7 @@ class TestFlextContainer100PercentCoverage:
     def test_container_thread_safety(self) -> None:
         """Test container thread safety with concurrent operations."""
         container = FlextContainer()
-        results: list[FlextResult[Any]] = []
+        results: list[FlextResult[object]] = []
         errors: list[Exception] = []
 
         def register_service_thread(service_id: int) -> None:
@@ -405,7 +405,7 @@ class TestFlextContainer100PercentCoverage:
         get_result = container.get("lifecycle_test")
         FlextTestsMatchers.assert_result_success(get_result)
 
-        retrieved_service = cast("dict[str, Any]", get_result.value)
+        retrieved_service = cast("dict[str, object]", get_result.value)
         assert retrieved_service["version"] == "2.0"
 
         # Test registering None as service
@@ -443,7 +443,7 @@ class TestFlextContainer100PercentCoverage:
             get_result = container.get(f"bulk_service_{i}")
             FlextTestsMatchers.assert_result_success(get_result)
 
-            service_data = cast("dict[str, Any]", get_result.value)
+            service_data = cast("dict[str, object]", get_result.value)
             assert service_data["id"] == i
             assert service_data["index"] == i
 
@@ -469,7 +469,7 @@ class TestFlextContainer100PercentCoverage:
         container = FlextContainer()
 
         # Test factory that raises exception
-        def failing_factory() -> dict[str, Any]:
+        def failing_factory() -> dict[str, object]:
             msg = "Factory intentionally failed"
             raise ValueError(msg)
 
@@ -482,10 +482,10 @@ class TestFlextContainer100PercentCoverage:
         FlextTestsMatchers.assert_result_failure(get_result)
 
         # Test factory with empty name
-        def valid_factory() -> dict[str, Any]:
+        def valid_factory() -> dict[str, object]:
             return {"status": "ok"}
 
         empty_name_result = container.register_factory("", valid_factory)
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", empty_name_result)
+            cast("FlextResult[object]", empty_name_result)
         )

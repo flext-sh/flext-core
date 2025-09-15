@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from typing import Never
 
 from pydantic import BaseModel
@@ -434,9 +435,15 @@ class TestFlextValidationsComprehensive:
 
     def test_schema_validators_validate_schema_success(self) -> None:
         """Test SchemaValidators.validate_schema success case."""
-        schema = {
-            "name": FlextValidations.TypeValidators.validate_string,
-            "age": FlextValidations.TypeValidators.validate_integer,
+        def validate_name(x: object) -> FlextResult[object]:
+            return FlextValidations.TypeValidators.validate_string(x).map(lambda s: s)
+
+        def validate_age(x: object) -> FlextResult[object]:
+            return FlextValidations.TypeValidators.validate_integer(x).map(lambda i: i)
+
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {
+            "name": validate_name,
+            "age": validate_age,
         }
         data: dict[str, object] = {"name": "John", "age": 30}
         result = FlextValidations.SchemaValidators.validate_schema(data, schema)
@@ -445,9 +452,15 @@ class TestFlextValidationsComprehensive:
 
     def test_schema_validators_validate_schema_failure(self) -> None:
         """Test SchemaValidators.validate_schema failure case."""
-        schema = {
-            "name": FlextValidations.TypeValidators.validate_string,
-            "age": FlextValidations.TypeValidators.validate_integer,
+        def validate_name(x: object) -> FlextResult[object]:
+            return FlextValidations.TypeValidators.validate_string(x).map(lambda s: s)
+
+        def validate_age(x: object) -> FlextResult[object]:
+            return FlextValidations.TypeValidators.validate_integer(x).map(lambda i: i)
+
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {
+            "name": validate_name,
+            "age": validate_age,
         }
         data: dict[str, object] = {"name": "John"}  # Missing age
         result = FlextValidations.SchemaValidators.validate_schema(data, schema)

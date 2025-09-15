@@ -395,10 +395,10 @@ class TestOperationTracking:
         assert operation_id in logger._local.operations
 
         # Verify operation data structure
-        operation_info = cast("dict[str, object]", logger._local.operations[operation_id])
+        operation_info = logger._local.operations[operation_id]
         assert operation_info["name"] == "user_authentication"
         assert "start_time" in operation_info
-        op_ctx = cast("dict[str, object]", operation_info["context"])  # narrow type
+        op_ctx = operation_info["context"]  # narrow type
         assert op_ctx["user_id"] == "123"
         assert op_ctx["method"] == "oauth2"
 
@@ -415,7 +415,7 @@ class TestOperationTracking:
         assert operation_id in logger._local.operations
 
         # Get start time for duration calculation
-        start_time = cast("dict[str, object]", logger._local.operations[operation_id])["start_time"]
+        start_time = logger._local.operations[operation_id]["start_time"]
         assert isinstance(start_time, float)
 
         # Simulate some work
@@ -469,7 +469,7 @@ class TestOperationTracking:
         assert operation_id in logger._local.operations
 
         # Get start time for validation
-        start_time = cast("dict[str, object]", logger._local.operations[operation_id])["start_time"]
+        start_time = logger._local.operations[operation_id]["start_time"]
         assert isinstance(start_time, float)
 
         # Simulate precise timing
@@ -568,10 +568,10 @@ class TestSecuritySanitization:
         assert isinstance(sanitized["request"], dict)
 
         # Extract nested data for verification
-        user_data = cast("dict[str, object]", sanitized["user"])  # narrow
-        profile_data = cast("dict[str, object]", user_data["profile"])  # narrow
-        request_data = cast("dict[str, object]", sanitized["request"])  # narrow
-        headers_data = cast("dict[str, object]", request_data["headers"])  # narrow
+        user_data = sanitized["user"]  # narrow
+        profile_data = user_data["profile"]  # narrow
+        request_data = sanitized["request"]  # narrow
+        headers_data = request_data["headers"]  # narrow
 
         # Non-sensitive nested data should remain unchanged
         assert user_data["name"] == "john"
@@ -584,8 +584,8 @@ class TestSecuritySanitization:
 
         # Test that nested sanitization works in actual log building
         log_entry = logger._build_log_entry("INFO", "Test nested", nested_context)
-        context = cast("dict[str, object]", log_entry["context"])  # narrow
-        nested_user = cast("dict[str, object]", context["user"])  # narrow
+        context = log_entry["context"]
+        nested_user = context["user"]
         assert nested_user["name"] == "john"
         assert nested_user["password"] == "[REDACTED]"
 
@@ -802,14 +802,12 @@ class TestRequestContextManagement:
         # Set context
         logger.set_request_context(request_id="req_123")
         assert hasattr(logger._local, "request_context")
-        assert cast("dict[str, object]", logger._local.request_context)["request_id"] == "req_123"
+        assert logger._local.request_context["request_id"] == "req_123"
 
         # Test that log entry includes context before clearing
         log_entry_with_context = logger._build_log_entry("INFO", "With context")
         assert "request" in log_entry_with_context
-        assert cast("dict[str, object]", log_entry_with_context["request"])[
-            "request_id"
-        ] == "req_123"
+        assert log_entry_with_context["request"]["request_id"] == "req_123"
 
         # Clear context
         logger.clear_request_context()
@@ -903,7 +901,7 @@ class TestLoggerConfiguration:
 
         assert log_entry["message"] == "JSON test message"
         assert "context" in log_entry
-        context = cast("dict[str, object]", log_entry["context"])  # narrow
+        context = log_entry["context"]  # narrow
         assert context["field1"] == "value1"
         assert context["field2"] == 123
 
@@ -927,7 +925,7 @@ class TestLoggerConfiguration:
 
         assert log_entry["message"] == "Console test message"
         assert "context" in log_entry
-        assert cast("dict[str, object]", log_entry["context"])["debug_info"] == "useful"
+        assert log_entry["context"]["debug_info"] == "useful"
 
     def test_structured_processor_functionality(self) -> None:
         """Test that structured processors are working."""

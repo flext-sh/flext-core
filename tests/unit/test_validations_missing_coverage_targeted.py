@@ -402,11 +402,11 @@ class TestFlextValidationsMissingCoverageTargeted:
                 result = FlextValidations.TypeValidators.validate_string(test_value)
                 assert hasattr(result, "is_success") or hasattr(result, "success")
             elif isinstance(test_value, int):
-                result = FlextValidations.TypeValidators.validate_integer(test_value)
-                assert hasattr(result, "is_success") or hasattr(result, "success")
+                int_result = FlextValidations.TypeValidators.validate_integer(test_value)
+                assert hasattr(int_result, "is_success") or hasattr(int_result, "success")
             elif isinstance(test_value, float):
-                result = FlextValidations.TypeValidators.validate_float(test_value)
-                assert hasattr(result, "is_success") or hasattr(result, "success")
+                float_result = FlextValidations.TypeValidators.validate_float(test_value)
+                assert hasattr(float_result, "is_success") or hasattr(float_result, "success")
             elif isinstance(test_value, bool):
                 # Use validate_string for boolean values since validate_boolean doesn't exist
                 result = FlextValidations.TypeValidators.validate_string(

@@ -503,7 +503,7 @@ class TestFlextValidationsComprehensive:
 
     def test_schema_validators_validate_schema_success(self) -> None:
         """Test SchemaValidators.validate_schema with valid data against schema."""
-        schema = {
+        schema: dict[str, object] = {
             "type": "object",
             "properties": {
                 "name": {"type": "string", "minLength": 1},
@@ -517,7 +517,7 @@ class TestFlextValidationsComprehensive:
 
     def test_schema_validators_validate_schema_failure(self) -> None:
         """Test SchemaValidators.validate_schema with invalid data against schema."""
-        schema = {
+        schema: dict[str, object] = {
             "type": "object",
             "properties": {
                 "name": {"type": "string", "minLength": 1},
@@ -933,7 +933,7 @@ class TestFlextValidationsComprehensive:
     def test_validate_with_schema_success(self) -> None:
         """Test validate_with_schema with valid data and schema."""
         data = {"name": "John Doe", "age": 30}
-        schema = {
+        schema: dict[str, object] = {
             "type": "object",
             "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
         }
@@ -943,7 +943,7 @@ class TestFlextValidationsComprehensive:
     def test_validate_with_schema_failure(self) -> None:
         """Test validate_with_schema with invalid data against schema."""
         data = {"name": "John Doe", "age": "thirty"}  # age should be integer
-        schema = {
+        schema: dict[str, object] = {
             "type": "object",
             "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
         }

@@ -15,7 +15,7 @@ import re
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Self, cast
+from typing import Self, cast, get_origin
 
 from pydantic import model_validator
 
@@ -369,15 +369,39 @@ class FlextCommands:
                         args = getattr(base, "__args__", None)
                         if args is not None and len(args) >= 1:
                             expected_type = base.__args__[0]
+
+                            # Handle parameterized generics by getting origin type
+                            origin_type = get_origin(expected_type) or expected_type
+
+                            # Handle both parameterized generics and regular types
+                            command_origin = get_origin(command_type) or command_type
+
                             # Support being called with instance or type
-                            if isinstance(command_type, type):
-                                can_handle_result = issubclass(
-                                    command_type, expected_type
-                                )
+                            if isinstance(command_type, type) or hasattr(
+                                command_type, "__origin__"
+                            ):
+                                try:
+                                    # For parameterized generics, compare origin types
+                                    if hasattr(command_type, "__origin__"):
+                                        can_handle_result = (
+                                            command_origin == origin_type
+                                        )
+                                    else:
+                                        can_handle_result = issubclass(
+                                            command_type, origin_type  # type: ignore[arg-type]
+                                        )
+                                except TypeError:
+                                    # Handle cases where origin_type is not a valid class
+                                    can_handle_result = command_type == expected_type
                             else:
-                                can_handle_result = isinstance(
-                                    command_type, expected_type
-                                )
+                                try:
+                                    can_handle_result = isinstance(
+                                        command_type, origin_type
+                                    )
+                                except TypeError:
+                                    # Handle cases where origin_type is not a valid class
+                                    # Be more permissive for duck typing and flexibility
+                                    can_handle_result = True
 
                             self.logger.debug(
                                 "Handler check result",
@@ -644,8 +668,24 @@ class FlextCommands:
                     return FlextResult[None].fail(msg)
 
                 # Compute key for local registry visibility
-                name_attr = getattr(command_type_obj, "__name__", None)
-                key = name_attr if name_attr is not None else str(command_type_obj)
+                # Handle parameterized generics first before checking __name__
+                if hasattr(command_type_obj, "__origin__") and hasattr(
+                    command_type_obj, "__args__"
+                ):
+                    # Reconstruct the string representation for parameterized generics
+                    origin = getattr(command_type_obj, "__origin__")
+                    origin_name = getattr(origin, "__name__", str(origin))
+                    args = getattr(command_type_obj, "__args__")
+                    if args:
+                        args_str = ", ".join(
+                            getattr(arg, "__name__", str(arg)) for arg in args
+                        )
+                        key = f"{origin_name}[{args_str}]"
+                    else:
+                        key = origin_name
+                else:
+                    name_attr = getattr(command_type_obj, "__name__", None)
+                    key = name_attr if name_attr is not None else str(command_type_obj)
                 self._handlers[key] = handler
                 # Register into underlying CQRS bus
                 # _ = self._fb_bus.register(cast("type", command_type_obj), handler)  # Disabled

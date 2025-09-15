@@ -65,7 +65,7 @@ class TestFlextModelsCoverageFocused:
     def test_payload_extract_functionality(self) -> None:
         """Test Payload extract method."""
         payload_data = {"key": "value", "number": 42}
-        payload = FlextModels.Payload[dict](
+        payload = FlextModels.Payload[dict[str, object]](
             data=payload_data,
             message_type="test_message",
             source_service="test_service",
@@ -79,7 +79,7 @@ class TestFlextModelsCoverageFocused:
 
     def test_event_model_functionality(self) -> None:
         """Test Event model functionality."""
-        event_payload = {"action": "created", "entity_id": "123"}
+        event_payload: dict[str, object] = {"action": "created", "entity_id": "123"}
         event = FlextModels.Event(event_type="EntityCreated", payload=event_payload)
 
         # Test basic properties
@@ -306,7 +306,7 @@ class TestFlextModelsCoverageFocused:
 
     def test_factory_create_event_method(self) -> None:
         """Test create_event factory method."""
-        payload = {"user_id": "123", "action": "login"}
+        payload: dict[str, object] = {"user_id": "123", "action": "login"}
         event = FlextModels.create_event("UserLoggedIn", payload)
 
         assert event.event_type == "UserLoggedIn"
@@ -316,7 +316,7 @@ class TestFlextModelsCoverageFocused:
 
     def test_factory_create_command_method(self) -> None:
         """Test create_command factory method."""
-        payload = {"name": "John", "email": "john@example.com"}
+        payload: dict[str, object] = {"name": "John", "email": "john@example.com"}
         command = FlextModels.create_command("CreateUser", payload)
 
         assert command.command_type == "CreateUser"
@@ -328,7 +328,7 @@ class TestFlextModelsCoverageFocused:
     def test_factory_create_query_method(self) -> None:
         """Test create_query factory method."""
         # Test with filters
-        filters = {"status": "active", "role": "admin"}
+        filters: dict[str, object] = {"status": "active", "role": "admin"}
         query = FlextModels.create_query("FindUsers", filters)
 
         assert query.query_type == "FindUsers"

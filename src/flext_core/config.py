@@ -902,6 +902,8 @@ class FlextConfig(BaseSettings):
         *,
         _factory_mode: bool = False,
         _env_file: str | None = None,
+        _env_file_encoding: str = "utf-8",
+        _env_ignore_empty: bool = True,
         _env_format: str = "env",
         **_data: object,
     ) -> None:
@@ -919,10 +921,7 @@ class FlextConfig(BaseSettings):
 
         """
         super().__init__(
-            _env_file=_env_file,
-            _env_file_encoding="utf-8",
-            _env_ignore_empty=True,
-            **_data,  # type: ignore[arg-type]
+            **_data,
         )
 
     # =============================================================================
@@ -1124,7 +1123,10 @@ class FlextConfig(BaseSettings):
     # Provide a runtime-callable method for tests and a Pydantic model validator
     def validate_configuration_consistency(self) -> Self:
         """Validate cross-field configuration consistency at runtime."""
-        if self.environment == "development" and self.log_level in {"CRITICAL", "ERROR"}:
+        if self.environment == "development" and self.log_level in {
+            "CRITICAL",
+            "ERROR",
+        }:
             msg = f"Log level {self.log_level} too restrictive for development"
             raise ValueError(msg)
         return self
@@ -1255,12 +1257,19 @@ class FlextConfig(BaseSettings):
                 instance = cls(
                     _factory_mode=True,
                     _env_file=str(env_file),
+                    _env_file_encoding="utf-8",
+                    _env_ignore_empty=True,
                     _env_format="env",
                     **settings,
                 )
             else:
                 instance = cls(
-                    _factory_mode=True, _env_file=None, _env_format="env", **settings
+                    _factory_mode=True,
+                    _env_file=None,
+                    _env_file_encoding="utf-8",
+                    _env_ignore_empty=True,
+                    _env_format="env",
+                    **settings,
                 )
 
             # Track creation metadata
@@ -1433,26 +1442,11 @@ class FlextConfig(BaseSettings):
         """
         try:
             # Instance invocation
-            if isinstance(self, FlextConfig):
-                if file_path is None:
-                    return FlextResult[None].fail(
-                        "No file path provided", error_code="CONFIG_SAVE_ERROR"
-                    )
-                return self.FilePersistence.save_to_file(self, str(file_path))
-
-            # NOTE: The following code is unreachable when called as instance method
-            # since isinstance(self, FlextConfig) will always be True for instance calls.
-            # This appears to be dead code for a class-level invocation pattern that
-            # doesn't work as designed. Keeping for reference but it won't execute.
-            # actual_path = str(self)
-            # try:
-            #     payload: object = FlextConfig.get_global_instance()
-            # except Exception:
-            #     payload = FlextConfig()
-            # return FlextConfig.FilePersistence.save_to_file(payload, actual_path)
-
-            # NOTE: This code is unreachable because isinstance(self, FlextConfig)
-            # will always be True for instance method calls
+            if file_path is None:
+                return FlextResult[None].fail(
+                    "No file path provided", error_code="CONFIG_SAVE_ERROR"
+                )
+            return self.FilePersistence.save_to_file(self, str(file_path))
         except Exception as error:
             return FlextResult[None].fail(
                 f"Failed to save configuration: {error}",

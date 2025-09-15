@@ -117,7 +117,7 @@ class TestFlextCommandsModels:
 
     def test_command_from_payload_with_dict(self) -> None:
         """Test Command.from_payload with dict input."""
-        payload_data = {
+        payload_data: dict[str, object] = {
             "command_type": "test_command",
             "payload": {"data": "test"},
         }
@@ -129,7 +129,7 @@ class TestFlextCommandsModels:
 
     def test_command_from_payload_with_payload_object(self) -> None:
         """Test Command.from_payload with Payload object."""
-        payload_obj = FlextModels.Payload[dict](
+        payload_obj = FlextModels.Payload[dict[str, object]](
             data={"command_type": "test_command", "payload": {"data": "test"}},
             message_type="test",
             source_service="test",
@@ -191,7 +191,7 @@ class TestFlextCommandsModels:
 
     def test_query_from_payload_with_dict(self) -> None:
         """Test Query.from_payload with dict input."""
-        payload_data = {
+        payload_data: dict[str, object] = {
             "query_type": "test_query",
             "filters": {"status": "active"},
         }
@@ -204,7 +204,7 @@ class TestFlextCommandsModels:
     def test_query_from_payload_invalid_data(self) -> None:
         """Test Query.from_payload with invalid data."""
         invalid_query_payload = cast(
-            "FlextModels.Payload[dict[str, object]] | dict[str, object] | None",
+            "FlextModels.Payload[dict[str, object]] | dict[str, object]",
             "invalid",
         )
         result = FlextCommands.Models.Query.from_payload(invalid_query_payload)
@@ -225,7 +225,7 @@ class TestFlextCommandsHandlers:
             "handler_type": "command",
         }
 
-        handler = FlextCommands.Handlers.CommandHandler(handler_config=handler_config)
+        handler: FlextCommands.Handlers.CommandHandler[object, object] = FlextCommands.Handlers.CommandHandler(handler_config=handler_config)
 
         assert handler.handler_name == "test_handler"
         assert handler.handler_id == "test_id"
@@ -246,7 +246,7 @@ class TestFlextCommandsHandlers:
 
     def test_command_handler_logger_property(self) -> None:
         """Test CommandHandler logger property."""
-        handler = FlextCommands.Handlers.CommandHandler()
+        handler: FlextCommands.Handlers.CommandHandler[object, object] = FlextCommands.Handlers.CommandHandler()
         logger = handler.logger
 
         assert isinstance(logger, FlextLogger)
@@ -256,7 +256,7 @@ class TestFlextCommandsHandlers:
         mock_command = MagicMock()
         mock_command.validate_command.return_value = FlextResult[bool].ok(True)
 
-        handler = FlextCommands.Handlers.CommandHandler()
+        handler: FlextCommands.Handlers.CommandHandler[object, object] = FlextCommands.Handlers.CommandHandler()
         result = handler.validate_command(mock_command)
 
         FlextTestsMatchers.assert_result_success(result)
@@ -266,14 +266,14 @@ class TestFlextCommandsHandlers:
         mock_command = MagicMock()
         del mock_command.validate_command  # Remove the method
 
-        handler = FlextCommands.Handlers.CommandHandler()
+        handler: FlextCommands.Handlers.CommandHandler[object, object] = FlextCommands.Handlers.CommandHandler()
         result = handler.validate_command(mock_command)
 
         FlextTestsMatchers.assert_result_success(result)
 
     def test_command_handler_handle_method_not_implemented(self) -> None:
         """Test CommandHandler.handle raises NotImplementedError."""
-        handler = FlextCommands.Handlers.CommandHandler()
+        handler: FlextCommands.Handlers.CommandHandler[object, object] = FlextCommands.Handlers.CommandHandler()
 
         with pytest.raises(
             NotImplementedError, match="Subclasses must implement handle method"
@@ -304,7 +304,7 @@ class TestFlextCommandsHandlers:
         # is to log and return True. Let's test this by using a handler
         # and checking the fallback path when issubclass/isinstance fails
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler):
+        class TestHandler(FlextCommands.Handlers.CommandHandler[object, object]):
             # Override __orig_bases__ to include something that will cause a TypeError
             def can_handle(self, command_type: object) -> bool:
                 # Test the fallback behavior directly by bypassing generic checking
@@ -477,9 +477,9 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler.handle_query with validation failure."""
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[str, str]):
-            def handle(self, _query: str) -> FlextResult[str]:
+            def handle(self, query: str) -> FlextResult[str]:
                 # Use the query parameter to avoid unused argument warning
-                _ = _query  # Acknowledge parameter usage
+                _ = query  # Acknowledge parameter usage
                 return FlextResult[str].ok("handled")
 
         handler = TestQueryHandler()
@@ -499,8 +499,8 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler.handle_query successful execution."""
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[str, str]):
-            def handle(self, _query: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"query result: {_query}")
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"query result: {query}")
 
         handler = TestQueryHandler()
 
@@ -765,7 +765,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
 
         # Create middleware config objects with getattr support
-        class MiddlewareConfig(UserDict):
+        class MiddlewareConfig(UserDict[str, object]):
             def __getattr__(self, key: str) -> object:
                 return self.get(key)
 
@@ -806,7 +806,7 @@ class TestFlextCommandsBus:
         )
 
         # Add a enabled attribute to the middleware_config dict
-        class MiddlewareConfig(UserDict):
+        class MiddlewareConfig(UserDict[str, object]):
             def __getattr__(self, key: str) -> object:
                 return self.get(key)
 
@@ -1145,9 +1145,9 @@ class TestFlextCommandsFactories:
     def test_create_query_handler(self) -> None:
         """Test Factories.create_query_handler method."""
 
-        def query_func(_query: object) -> object:
-            assert isinstance(_query, str)
-            return f"query result: {_query}"
+        def query_func(query: object) -> object:
+            assert isinstance(query, str)
+            return f"query result: {query}"
 
         handler = FlextCommands.Factories.create_query_handler(query_func)
 
@@ -1161,9 +1161,9 @@ class TestFlextCommandsFactories:
     def test_create_query_handler_with_flext_result(self) -> None:
         """Test Factories.create_query_handler with FlextResult return."""
 
-        def query_func(_query: object) -> object:
-            assert isinstance(_query, str)
-            return FlextResult[str].ok(f"query processed: {_query}")
+        def query_func(query: object) -> object:
+            assert isinstance(query, str)
+            return FlextResult[str].ok(f"query processed: {query}")
 
         handler = FlextCommands.Factories.create_query_handler(query_func)
 
@@ -1260,14 +1260,14 @@ class TestFlextCommandsIntegration:
                 return f"TestQuery({self.filters})"
 
         # Create query handler
-        class TestQueryHandler(FlextCommands.Handlers.QueryHandler[TestQuery, dict]):
+        class TestQueryHandler(FlextCommands.Handlers.QueryHandler[TestQuery, dict[str, object]]):
             def __init__(self) -> None:
                 super().__init__()
                 self.call_count = 0
 
-            def handle(self, _query: TestQuery) -> FlextResult[dict]:
+            def handle(self, query: TestQuery) -> FlextResult[dict[str, object]]:
                 self.call_count += 1
-                return FlextResult[dict].ok(
+                return FlextResult[dict[str, object]].ok(
                     {"result": "data", "filters": query.filters}
                 )
 
