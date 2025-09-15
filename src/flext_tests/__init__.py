@@ -7,7 +7,22 @@ modern testing patterns and SOLID principles.
 
 from __future__ import annotations
 
-
+# =============================================================================
+# CONSOLIDATED EXPORTS - Combine all __all__ from modules
+# =============================================================================
+# Import modules for __all__ collection
+from . import (
+    asyncs as _asyncs,
+    builders as _builders,
+    domains as _domains,
+    factories as _factories,
+    fixtures as _fixtures,
+    http_support as _http,
+    hypothesis as _hypothesis,
+    matchers as _matchers,
+    performance as _performance,
+    utilities as _utilities,
+)
 from .asyncs import *
 from .builders import *
 from .domains import *
@@ -18,23 +33,6 @@ from .hypothesis import *
 from .matchers import *
 from .performance import *
 from .utilities import *
-
-# =============================================================================
-# CONSOLIDATED EXPORTS - Combine all __all__ from modules
-# =============================================================================
-
-# Import modules for __all__ collection
-from . import asyncs as _asyncs
-from . import builders as _builders
-from . import domains as _domains
-from . import factories as _factories
-from . import fixtures as _fixtures
-from . import http_support as _http
-from . import hypothesis as _hypothesis
-from . import matchers as _matchers
-from . import performance as _performance
-from . import utilities as _utilities
-
 
 # Collect all __all__ exports from imported modules
 _temp_exports: list[str] = []

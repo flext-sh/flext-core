@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-import uuid
-import re
 
 import json
-from typing import Protocol, TypeVar, TYPE_CHECKING
+import re
+import uuid
+from typing import Protocol, TypeVar
 
 from flext_core import (
     FlextResult,
@@ -25,10 +25,6 @@ from flext_core import (
 T = TypeVar("T")
 
 # For static type checkers, use a package-relative import that mypy can resolve
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .shared_example_strategies import (
-        ExamplePatternFactory as _ExamplePatternFactory,
-    )
 
 
 class HasError(Protocol):

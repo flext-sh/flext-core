@@ -7,8 +7,6 @@ Shows modern decorator composition patterns and FlextResult integration.
 
 from __future__ import annotations
 
-import contextlib
-import hashlib
 import time
 
 from flext_core import (
@@ -17,7 +15,6 @@ from flext_core import (
     FlextLogger,
     FlextProtocols,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
 )
 

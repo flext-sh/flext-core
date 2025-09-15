@@ -9,19 +9,18 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 import contextlib
 import operator
 import os
 import time
-from collections.abc import Mapping
-from typing import cast, TYPE_CHECKING
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, cast
 
 from flext_core import (
     FlextConstants,
     FlextExceptions,
     FlextResult,
-    FlextTypes,
 )
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only

@@ -16,7 +16,7 @@ from __future__ import annotations
 import sys
 from decimal import Decimal
 from enum import StrEnum
-from typing import Self, NotRequired, TypedDict, Unpack
+from typing import NotRequired, Self, TypedDict, Unpack
 
 from pydantic import ConfigDict, Field
 

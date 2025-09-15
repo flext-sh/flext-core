@@ -20,7 +20,7 @@ import time
 import traceback
 from collections.abc import Generator
 from types import TracebackType
-from typing import cast, Self
+from typing import Self, cast
 
 from flext_core import (
     FlextConstants,

@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 from typing import Protocol, cast
 
 from flext_core import (

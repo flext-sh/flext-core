@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 from decimal import Decimal
 from typing import cast
 
@@ -18,7 +19,6 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
-    FlextTypes,
 )
 
 # =============================================================================

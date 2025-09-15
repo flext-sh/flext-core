@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from functools import reduce
 
-from typing import NamedTuple, Protocol, TypeVar
 from collections.abc import Callable
+from functools import reduce
+from typing import NamedTuple, Protocol, TypeVar
 
 from flext_core import FlextLogger, FlextResult
 
