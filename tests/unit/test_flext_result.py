@@ -1,24 +1,24 @@
-"""Comprehensive tests for FlextResult using all test infrastructure."""
+"""Comprehensive tests for FlextResult using all test infrastructure.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import json
 import tempfile
 from pathlib import Path
-from typing import TypeVar, cast
-from unittest.mock import Mock
+from typing import cast
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes, T
 from flext_tests import (
-    BenchmarkFixture,
-    FlextResultFactory,
-    TestBuilders,
+    FlextTestsBuilders,
+    FlextTestsFixtures,
+    FlextTestsMatchers,
 )
-
-# Type variable for generic test utilities
-T = TypeVar("T")
 
 
 # Test Utilities and Matchers
@@ -36,44 +36,7 @@ class TestUtilities:
         return result.is_success and result.value is not None
 
 
-class FlextMatchers:
-    """Custom matchers for FlextResult testing."""
-
-    @staticmethod
-    def is_successful_result(result: FlextResult[T]) -> bool:
-        """Check if result is successful."""
-        return result.is_success
-
-    @staticmethod
-    def is_failed_result(result: FlextResult[T]) -> bool:
-        """Check if result failed."""
-        return result.is_failure
-
-    @staticmethod
-    def result_contains_data(
-        result: FlextResult[T],
-        expected_data: T,
-    ) -> bool:
-        """Check if result contains expected data."""
-        return result.is_success and result.value == expected_data
-
-    @staticmethod
-    def result_has_value_type(result: FlextResult[T], expected_type: type) -> bool:
-        """Check if result value has expected type."""
-        return result.is_success and isinstance(result.value, expected_type)
-
-    @staticmethod
-    def result_has_error_code(result: FlextResult[T], expected_code: str) -> bool:
-        """Check if result has expected error code."""
-        return result.is_failure and result.error_code == expected_code
-
-    @staticmethod
-    def result_has_error_message(
-        result: FlextResult[T],
-        expected_message: str,
-    ) -> bool:
-        """Check if result has expected error message."""
-        return result.is_failure and expected_message in (result.error or "")
+# NOTE: FlextTestsMatchers is imported from flext_tests - no local redefinition needed
 
 
 class TestFlextResultComprehensive:
@@ -89,7 +52,7 @@ class TestFlextResultComprehensive:
         test_data = {"user_id": "123", "name": "test", "active": True}
 
         # Use builder pattern
-        result = TestBuilders.result().with_success_data(test_data).build()
+        result = FlextTestsBuilders.result().with_success_data(test_data).build()
 
         # Use custom assertions
         assert result.success
@@ -100,12 +63,13 @@ class TestFlextResultComprehensive:
 
     def test_success_result_with_different_data_types(
         self,
-        user_factory: FlextResultFactory,  # From conftest.py
     ) -> None:
         """Test success results with various data types."""
         # String result
         string_result = FlextResult[str].ok("success message")
-        assert FlextMatchers.is_successful_result(string_result)
+        assert FlextTestsMatchers.is_successful_result(
+            cast("FlextResult[object]", string_result)
+        )
         assert string_result.value == "success message"
 
         # Integer result
@@ -114,12 +78,12 @@ class TestFlextResultComprehensive:
         assert int_result.value == 42
 
         # List result
-        list_result = FlextResult[list[str]].ok(["a", "b", "c"])
+        list_result = FlextResult[FlextTypes.Core.StringList].ok(["a", "b", "c"])
         assert list_result.success
         assert list_result.value == ["a", "b", "c"]
 
         # Dict result
-        dict_result = FlextResult[dict[str, object]].ok({"key": "value"})
+        dict_result = FlextResult[FlextTypes.Core.Dict].ok({"key": "value"})
         assert dict_result.success
         assert dict_result.value == {"key": "value"}
 
@@ -134,7 +98,6 @@ class TestFlextResultComprehensive:
 
     def test_failure_result_creation_comprehensive(self) -> None:
         """Test failure result creation with all parameters."""
-        # Simple failure
         simple_fail = FlextResult[str].fail("Operation failed")
         assert simple_fail.is_failure
         assert simple_fail.error == "Operation failed"
@@ -168,7 +131,7 @@ class TestFlextResultComprehensive:
         """Test failure results using builder pattern."""
         # Use TestBuilders for failure scenarios
         failure_result = (
-            TestBuilders.result()
+            FlextTestsBuilders.result()
             .with_failure(
                 "Database connection failed",
                 "DB_CONN_001",
@@ -177,7 +140,7 @@ class TestFlextResultComprehensive:
             .build()
         )
 
-        assert FlextMatchers.is_failed_result(failure_result)
+        assert FlextTestsMatchers.is_failed_result(failure_result)
         assert failure_result.error == "Database connection failed"
         assert failure_result.error_code == "DB_CONN_001"
         assert failure_result.error_data == {
@@ -192,43 +155,53 @@ class TestFlextResultComprehensive:
 
     def test_result_with_large_data_structures(
         self,
-        benchmark: BenchmarkFixture,
+        benchmark: FlextTestsFixtures.BenchmarkFixture,
     ) -> None:
         """Test FlextResult with large data structures and performance."""
         # Create large data structure
         large_data = {f"key_{i}": f"value_{i}" for i in range(10000)}
 
         # Benchmark result creation
-        def create_large_result() -> FlextResult[dict[str, str]]:
-            return FlextResult[dict[str, str]].ok(large_data)
+        def create_large_result() -> FlextResult[FlextTypes.Core.Headers]:
+            return FlextResult[FlextTypes.Core.Headers].ok(large_data)
 
-        result = cast("FlextResult[dict[str, str]]", benchmark(create_large_result))
+        result = cast(
+            "FlextResult[FlextTypes.Core.Headers]", benchmark(create_large_result)
+        )
 
         assert result.success
         assert len(result.value) == 10000
-        assert FlextMatchers.is_successful_result(result)
+        assert FlextTestsMatchers.is_successful_result(
+            cast("FlextResult[object]", result)
+        )
 
     def test_result_serialization_edge_cases(self) -> None:
         """Test FlextResult with complex serialization scenarios."""
-        # Test with non-serializable object (Mock)
-        mock_object = Mock()
-        mock_object.name = "test_mock"
 
-        result_with_mock = FlextResult[Mock].ok(mock_object)
-        assert result_with_mock.success
-        assert result_with_mock.value.name == "test_mock"
+        # Test with non-serializable object (custom class)
+        class NonSerializableObject:
+            def __init__(self) -> None:
+                self.name = "test_object"
+
+        non_serializable_object = NonSerializableObject()
+
+        result_with_object = FlextResult[NonSerializableObject].ok(
+            non_serializable_object
+        )
+        assert result_with_object.success
+        assert result_with_object.value.name == "test_object"
 
         # Test with nested complex data
-        complex_data: dict[str, object] = {
+        complex_data: FlextTypes.Core.Dict = {
             "nested": {"level": 2, "data": [1, 2, 3]},
             "timestamp": "2024-01-01T00:00:00Z",
             "metadata": {"source": "test", "version": 1.0},
         }
 
-        complex_result = FlextResult[dict[str, object]].ok(complex_data)
+        complex_result = FlextResult[FlextTypes.Core.Dict].ok(complex_data)
         assert complex_result.success
         nested = complex_result.value
-        assert cast("dict[str, object]", nested["nested"])["level"] == 2
+        assert cast("FlextTypes.Core.Dict", nested["nested"])["level"] == 2
 
     def test_result_chaining_patterns(self) -> None:
         """Test FlextResult chaining and composition patterns."""
@@ -267,14 +240,16 @@ class TestFlextResultComprehensive:
     def test_result_with_test_utilities_validation(self) -> None:
         """Test FlextResult integration with TestUtilities."""
         # Create test result
-        result = FlextResult[dict[str, str]].ok({"status": "active", "role": "admin"})
+        result = FlextResult[FlextTypes.Core.Headers].ok(
+            {"status": "active", "role": "admin"}
+        )
 
         # Use TestUtilities for validation
         assert TestUtilities.is_valid_result(result)
         assert TestUtilities.result_has_data(result)
 
         # Test with failure result
-        failure = FlextResult[dict[str, str]].fail(
+        failure = FlextResult[FlextTypes.Core.Headers].fail(
             "Access denied",
             error_code="AUTH_001",
         )
@@ -286,19 +261,24 @@ class TestFlextResultComprehensive:
         success_result = FlextResult[str].ok("test_data")
         failure_result = FlextResult[str].fail("test_error", error_code="ERR_001")
 
-        # Success matchers
-        assert FlextMatchers.is_successful_result(success_result)
-        assert FlextMatchers.result_contains_data(success_result, "test_data")
-        assert FlextMatchers.result_has_value_type(success_result, str)
+        # Success matchers - using correct API
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", success_result), "test_data"
+        )
+        assert success_result.is_success
+        assert isinstance(success_result.value, str)
 
-        # Failure matchers
-        assert FlextMatchers.is_failed_result(failure_result)
-        assert FlextMatchers.result_has_error_code(failure_result, "ERR_001")
-        assert FlextMatchers.result_has_error_message(failure_result, "test_error")
+        # Failure matchers - using correct API
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", failure_result)
+        )
+        assert failure_result.is_failure
+        assert failure_result.error_code == "ERR_001"
+        assert "test_error" in (failure_result.error or "")
 
         # Negative assertions
-        assert not FlextMatchers.is_successful_result(failure_result)
-        assert not FlextMatchers.is_failed_result(success_result)
+        assert not failure_result.is_success
+        assert not success_result.is_failure
 
     # =========================================================================
     # PERFORMANCE AND MEMORY TESTING
@@ -329,7 +309,7 @@ class TestFlextResultComprehensive:
     def test_result_concurrent_access_safety(self) -> None:
         """Test FlextResult thread safety characteristics."""
         # FlextResult should be immutable after creation
-        result = FlextResult[dict[str, str]].ok({"key": "value"})
+        result = FlextResult[FlextTypes.Core.Headers].ok({"key": "value"})
 
         original_value = result.value
         original_success = result.success
@@ -380,10 +360,10 @@ class TestFlextResultComprehensive:
     def test_result_json_serialization_comprehensive(self) -> None:
         """Test FlextResult JSON serialization edge cases."""
         # Test success result with JSON-serializable data
-        json_data: dict[str, object] = {
+        json_data: FlextTypes.Core.Dict = {
             "users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
         }
-        result = FlextResult[dict[str, object]].ok(json_data)
+        result = FlextResult[FlextTypes.Core.Dict].ok(json_data)
 
         # Should be able to serialize the data
         serialized = json.dumps(result.value)
@@ -391,7 +371,7 @@ class TestFlextResultComprehensive:
         assert deserialized == json_data
 
         # Test failure result serialization
-        failure = FlextResult[dict[str, object]].fail(
+        failure = FlextResult[FlextTypes.Core.Dict].fail(
             "JSON serialization error",
             error_code="JSON_001",
             error_data={

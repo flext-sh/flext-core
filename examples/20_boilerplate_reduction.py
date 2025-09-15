@@ -2,9 +2,9 @@
 """Boilerplate reduction using maximum FLEXT Core functionality.
 
 Demonstrates massive boilerplate reduction across FLEXT projects using:
-- FlextServices for service patterns
+- FlextProcessing for service patterns
 - FlextMixins for behavioral patterns
-- FlextHandlers for request processing
+- FlextProcessing for request processing
 - FlextDecorators for cross-cutting concerns
 - FlextValidations for data validation
 - Complete railway-oriented programming
@@ -23,8 +23,8 @@ from datetime import UTC, datetime
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextMixins,
     FlextResult,
+    FlextTypes,
 )
 
 # ==============================================================================
@@ -36,6 +36,7 @@ class TraditionalDatabaseService:
     """Traditional service with massive boilerplate code."""
 
     def __init__(self, host: str, port: int, username: str, password: str) -> None:
+        """Initialize database connection with credentials."""
         self.host = host
         self.port = port
         self.username = username
@@ -116,11 +117,11 @@ class TraditionalDatabaseService:
 # ==============================================================================
 
 
-class UltraModernDatabaseService(FlextMixins.Entity):
+class UltraModernDatabaseService:
     """ULTIMATE concise service - 20+ classes in minimal code!."""
 
     def __init__(self) -> None:
-        super().__init__()
+        """Initialize ultimate service with container and context."""
         self.container = FlextContainer()
         self.context = FlextContext()
 
@@ -129,7 +130,7 @@ class UltraModernDatabaseService(FlextMixins.Entity):
         query: str,
         user_id: str = "anonymous",
     ) -> FlextResult[Sequence[Mapping[str, object]]]:
-        """Complete enterprise pipeline in railway pattern."""
+        """Complete business pipeline in railway pattern."""
         return self._validate_query(query).map(lambda _: self._create_results(user_id))
 
     def _validate_query(self, query: str) -> FlextResult[str]:
@@ -159,18 +160,18 @@ class UltraModernDatabaseService(FlextMixins.Entity):
 # ==============================================================================
 
 
-class EnterpriseServiceOrchestrator(FlextMixins.Entity):
+class EnterpriseServiceOrchestrator:
     """ULTIMATE Enterprise orchestrator using flext-core patterns!."""
 
     def __init__(self) -> None:
-        super().__init__()
+        """Initialize business orchestrator with container and context."""
         self.container = FlextContainer()
         self.context = FlextContext()
 
     def orchestrate_business_process(
         self,
         data: Mapping[str, object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Complete business process orchestration."""
         return (
             self._validate_data(data).map(self._process_data).map(self._enhance_result)
@@ -185,7 +186,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
             return FlextResult[Mapping[str, object]].fail("Action required")
         return FlextResult[Mapping[str, object]].ok(data)
 
-    def _process_data(self, data: Mapping[str, object]) -> dict[str, object]:
+    def _process_data(self, data: Mapping[str, object]) -> FlextTypes.Core.Dict:
         """Process business data."""
         return {
             **dict(data),
@@ -193,7 +194,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-    def _enhance_result(self, result: dict[str, object]) -> dict[str, object]:
+    def _enhance_result(self, result: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         """Enhance result with metadata."""
         return {
             **result,
@@ -254,7 +255,7 @@ def demonstrate_ultra_modern_approach() -> int:
     print("\n" + "=" * 80)
     print(
         "🚀 ULTRA-MODERN FLEXT APPROACH - 29 lines vs 78 traditional "
-        "with ALL enterprise features!",
+        "with all features!",
     )
     print("=" * 80)
 
@@ -262,7 +263,7 @@ def demonstrate_ultra_modern_approach() -> int:
         # Create ultra-modern service (inherits ALL behavior from mixins)
         service = UltraModernDatabaseService()
 
-        # Single method call with ALL enterprise patterns built-in:
+        # Single method call with all patterns built-in:
         # - Automatic validation via decorators
         # - Performance monitoring with thresholds
         # - Observability tracing
@@ -273,7 +274,7 @@ def demonstrate_ultra_modern_approach() -> int:
 
         if result.success:
             records = result.value
-            print(f"📋 Retrieved {len(records)} records with full enterprise features")
+            print(f"📋 Retrieved {len(records)} records with full features")
             for record in records:
                 print(f"   - {record}")
 
@@ -288,14 +289,14 @@ def demonstrate_ultra_modern_approach() -> int:
         return 1
 
 
-def demonstrate_enterprise_orchestration() -> int:
-    """Demonstrate enterprise-grade service orchestration with maximum functionality."""
+def demonstrate_business_orchestration() -> int:
+    """Demonstrate service orchestration with full functionality."""
     print("\n" + "=" * 80)
     print("🏢 ENTERPRISE ORCHESTRATION - Complete business process in 3 lines!")
     print("=" * 80)
 
     try:
-        # Create enterprise orchestrator with ALL enterprise features via decorator
+        # Create business orchestrator with all features via decorator
         orchestrator = EnterpriseServiceOrchestrator()
 
         # Complete business process with railway-oriented programming
@@ -317,7 +318,7 @@ def demonstrate_enterprise_orchestration() -> int:
 
         if result.success:
             response = result.value
-            print("✅ Complete enterprise business process executed successfully!")
+            print("✅ Complete business process executed successfully!")
             print(f"📋 Response: {response}")
             print(
                 "   🔥 Includes: validation, auth, logging, monitoring, "
@@ -389,7 +390,7 @@ def main() -> int:
             "Ultra-Modern FLEXT Approach (29 vs 78 lines)",
             demonstrate_ultra_modern_approach,
         ),
-        ("Enterprise Orchestration (3 lines)", demonstrate_enterprise_orchestration),
+        ("Business Orchestration (3 lines)", demonstrate_business_orchestration),
         ("Boilerplate Reduction Metrics", demonstrate_boilerplate_metrics),
     ]
 
@@ -407,10 +408,10 @@ def main() -> int:
     print("\n🎉 ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
     print("\n🔥 MASSIVE BENEFITS OF FLEXT CORE MAXIMUM USAGE:")
     print("   ✅ FlextMixins: Automatic timestamps, logging, configuration")
-    print("   ✅ FlextServices: Service patterns with zero boilerplate")
+    print("   ✅ FlextProcessing: Service patterns with zero boilerplate")
     print("   ✅ FlextDecorators: Enterprise features via simple decorators")
     print("   ✅ FlextValidations: Composable validation with predicates")
-    print("   ✅ FlextHandlers: CQRS and orchestration patterns")
+    print("   ✅ FlextProcessing: CQRS and orchestration patterns")
     print("   ✅ FlextResult: Complete railway-oriented programming")
     print("   ✅ FlextTypes: Type safety across the entire stack")
     print("   ✅ FlextConstants: Configuration without magic numbers")

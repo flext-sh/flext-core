@@ -18,24 +18,16 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import NotRequired, Self, TypedDict, Unpack
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
+from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextModels, FlextResult
-
-# =============================================================================
-# TYPE ALIASES AND CONSTANTS
-# =============================================================================
+from flext_core import FlextConfig, FlextModels, FlextResult, FlextTypes
 
 MIN_AGE = 18
 MAX_AGE = 120
 MIN_PRICE = Decimal("0.01")
 MAX_PRICE = Decimal("100000.00")
 CURRENCY_CODE_LENGTH = 3
-
-
-# =============================================================================
-# ENUMS AND VALUE OBJECTS
-# =============================================================================
 
 
 class OrderStatus(StrEnum):
@@ -76,9 +68,9 @@ class Age(FlextModels.Value):
         """Create age with validation."""
         try:
             instance = cls(value=age)
-            return FlextResult[Self].ok(instance)
+            return FlextResult.ok(instance)
         except Exception as e:
-            return FlextResult[Self].fail(f"Invalid age: {e}")
+            return FlextResult.fail(f"Invalid age: {e}")
 
 
 class Money(FlextModels.Value):
@@ -107,9 +99,9 @@ class Money(FlextModels.Value):
         try:
             decimal_amount = Decimal(str(amount))
             instance = cls(amount=decimal_amount, currency=currency.upper())
-            return FlextResult[Self].ok(instance)
+            return FlextResult.ok(instance)
         except Exception as e:
-            return FlextResult[Self].fail(f"Invalid money: {e}")
+            return FlextResult.fail(f"Invalid money: {e}")
 
     def add(self, other: Money) -> FlextResult[Money]:
         """Add two money values."""
@@ -142,16 +134,11 @@ class EmailAddress(FlextModels.Value):
         """Create email with validation."""
         try:
             if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
-                return FlextResult[Self].fail("Invalid email format")
+                return FlextResult.fail("Invalid email format")
             instance = cls(address=email.lower())
-            return FlextResult[Self].ok(instance)
+            return FlextResult.ok(instance)
         except Exception as e:
-            return FlextResult[Self].fail(f"Invalid email: {e}")
-
-
-# =============================================================================
-# CONFIGURATION
-# =============================================================================
+            return FlextResult.fail(f"Invalid email: {e}")
 
 
 class ECommerceConfig(FlextConfig):
@@ -175,8 +162,8 @@ class ECommerceConfig(FlextConfig):
     enable_email_notifications: bool = True
     enable_sms_notifications: bool = False
 
-    model_config = ConfigDict(
-        extra="forbid",
+    model_config = SettingsConfigDict(
+        extra="allow",
         str_strip_whitespace=True,
         validate_assignment=True,
         use_enum_values=True,
@@ -193,13 +180,8 @@ class ECommerceConfig(FlextConfig):
         return FlextResult[None].ok(None)
 
 
-# =============================================================================
-# DOMAIN ENTITIES
-# =============================================================================
-
-
 class User(FlextModels.Entity):
-    """User entity with comprehensive validation."""
+    """User entity with business validation."""
 
     email: EmailAddress
     name: str = Field(..., min_length=1, max_length=100)
@@ -369,7 +351,7 @@ class OrderItem(FlextModels.Value):
 
 
 class Order(FlextModels.AggregateRoot):
-    """Order aggregate with comprehensive business logic."""
+    """Order aggregate with business logic."""
 
     user: User
     items: list[OrderItem]
@@ -397,7 +379,7 @@ class Order(FlextModels.AggregateRoot):
 
         return FlextResult[None].ok(None)
 
-    def model_post_init(self, __context: dict[str, object] | None = None, /) -> None:
+    def model_post_init(self, __context: FlextTypes.Core.Dict | None = None, /) -> None:
         """Calculate total after initialization."""
         if not hasattr(self, "total_amount") and self.items:
             self.total_amount = self._calculate_total()
@@ -420,7 +402,7 @@ class Order(FlextModels.AggregateRoot):
     def create(
         cls,
         user: User,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
         config: ECommerceConfig,
         order_id: str | None = None,
     ) -> FlextResult[Order]:
@@ -451,7 +433,7 @@ class Order(FlextModels.AggregateRoot):
     @classmethod
     def _validate_order_constraints(
         cls,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
         config: ECommerceConfig,
     ) -> FlextResult[None]:
         """Validate order constraints."""
@@ -468,7 +450,7 @@ class Order(FlextModels.AggregateRoot):
     @classmethod
     def _create_order_items(
         cls,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
     ) -> FlextResult[list[OrderItem]]:
         """Create order items from data."""
         items: list[OrderItem] = []
@@ -573,11 +555,6 @@ class Order(FlextModels.AggregateRoot):
         return FlextResult[None].ok(None)
 
 
-# =============================================================================
-# SERVICES
-# =============================================================================
-
-
 class PaymentService:
     """Payment processing service."""
 
@@ -623,7 +600,7 @@ class OrderService:
     def create_and_process_order(
         self,
         user: User,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
     ) -> FlextResult[Order]:
         """Create and process complete order."""
         try:
@@ -655,11 +632,6 @@ class OrderService:
 
         except Exception as e:
             return FlextResult[Order].fail(f"Order processing failed: {e}")
-
-
-# =============================================================================
-# DEMONSTRATION FUNCTIONS
-# =============================================================================
 
 
 def demonstrate_user_creation() -> FlextResult[User]:
@@ -727,7 +699,7 @@ def demonstrate_order_processing(
     order_service = OrderService(config, payment_service)
 
     # Create order items
-    items_data: list[dict[str, object]] = [
+    items_data: list[FlextTypes.Core.Dict] = [
         {"product": products[0], "quantity": 1},  # Laptop
         {"product": products[1], "quantity": 2},  # Mouse x2
     ]
@@ -744,11 +716,6 @@ def demonstrate_order_processing(
         print(f"❌ Order processing failed: {order_result.error}")
 
     return order_result
-
-
-# =============================================================================
-# MAIN EXECUTION
-# =============================================================================
 
 
 def main() -> int:

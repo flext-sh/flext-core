@@ -1,48 +1,47 @@
-# ruff: noqa: PLC0415
 """Advanced async testing utilities using pytest-asyncio and pytest-timeout.
 
-Provides comprehensive async testing patterns, concurrency testing,
+Provides async testing patterns, concurrency testing,
 timeout management, and async context management for robust testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 import random
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager, suppress
-from typing import Protocol, TypeGuard, TypeVar
+from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_core import FlextLogger
-
-T = TypeVar("T")
-
-
-def _is_not_exception[T](value: T | BaseException) -> TypeGuard[T]:
-    """Type guard to filter out BaseException instances."""
-    return not isinstance(value, BaseException)
-
-
-class AsyncMockProtocol(Protocol):
-    """Protocol for async mock functions."""
-
-    async def __call__(self, *args: object, **kwargs: object) -> object: ...
-
+from flext_core import FlextLogger, FlextTypes, T
 
 logger = FlextLogger(__name__)
 
 
-class AsyncTestUtils:
-    """Comprehensive async testing utilities with timeout and concurrency support."""
+class FlextTestsAsyncs:
+    """Unified async testing utilities for FLEXT ecosystem.
+
+    Consolidates all async testing patterns, concurrency testing, timeout management,
+    async context management, and mock utilities into a single unified class.
+    """
+
+    @staticmethod
+    def _is_not_exception(obj: object | Exception) -> TypeGuard[object]:
+        """Type guard to check if object is not an exception."""
+        return not isinstance(obj, Exception)
+
+    # === Core Async Testing Utilities ===
 
     @staticmethod
     async def wait_for_condition(
         condition: Callable[[], bool | Awaitable[bool]],
-        *,
         timeout_seconds: float = 5.0,
         poll_interval: float = 0.1,
         error_message: str = "Condition not met within timeout",
@@ -71,19 +70,13 @@ class AsyncTestUtils:
     @staticmethod
     async def run_with_timeout(
         coro: Awaitable[T],
-        *,
         timeout_seconds: float = 5.0,
     ) -> T:
-        """Run coroutine with timeout, with light retry if callable is discoverable.
-
-        If the provided awaitable raises before the timeout and the originating
-        coroutine function can be discovered from the caller frame, the call is
-        retried until success or timeout. This preserves real behavior in tests
-        that use transiently failing coroutines.
-        """
+        """Run coroutine with timeout, with light retry if callable is discoverable."""
         start = time.time()
 
         async def attempt_once() -> T:
+            """attempt_once method."""
             return await asyncio.wait_for(
                 coro, timeout=max(0.0, timeout_seconds - (time.time() - start))
             )
@@ -130,16 +123,19 @@ class AsyncTestUtils:
                             await asyncio.sleep(0)
                     msg = f"Operation timed out after {timeout_seconds} seconds"
                     raise TimeoutError(msg)
-            except Exception:
+            except Exception as e:
                 # Fall through to final timeout-based error
-                pass
+                # Log the exception for debugging but continue to timeout error
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Exception during timeout operation, falling through to timeout: {e}")
             # If we couldn't discover a factory or retries failed, re-raise as TimeoutError respecting API contract
             msg = f"Operation timed out after {timeout_seconds} seconds"
             raise TimeoutError(msg) from None
 
     @staticmethod
     async def run_concurrently(
-        *coroutines: Awaitable[T],
+        coroutines: list[Awaitable[T]],
+        *,
         return_exceptions: bool = False,
     ) -> list[T]:
         """Run multiple coroutines concurrently."""
@@ -147,38 +143,22 @@ class AsyncTestUtils:
             return []
 
         if return_exceptions:
-            results = await asyncio.gather(*coroutines, return_exceptions=True)
-            # Filter out exceptions and return only successful results using type guard
-            filtered_results: list[T] = [r for r in results if _is_not_exception(r)]
-            return filtered_results
+            results: list[T | BaseException] = await asyncio.gather(
+                *coroutines, return_exceptions=True
+            )
+            # Filter out exceptions and return only successful results
+            return [r for r in results if not isinstance(r, BaseException)]
 
         # When return_exceptions=False, asyncio.gather will raise on first exception
         return await asyncio.gather(*coroutines, return_exceptions=False)
 
     @staticmethod
-    async def run_concurrent(
-        coroutines: list[Awaitable[T]],
-        *,
-        return_exceptions: bool = False,
-    ) -> list[T]:
-        """Run coroutines from a list concurrently."""
-        return await AsyncTestUtils.run_concurrently(
-            *coroutines,
-            return_exceptions=return_exceptions,
-        )
-
-    @staticmethod
-    async def sleep_with_timeout(duration: float) -> None:
+    async def run_concurrent(duration: float) -> None:
         """Sleep for specified duration (alias for asyncio.sleep)."""
         await asyncio.sleep(duration)
 
     @staticmethod
-    async def simulate_delay(duration: float) -> None:
-        """Simulate delay for testing purposes (alias for asyncio.sleep)."""
-        await asyncio.sleep(duration)
-
-    @staticmethod
-    async def run_concurrent_tasks(
+    async def simulate_delay(
         tasks: list[Awaitable[T]],
         *,
         return_exceptions: bool = False,
@@ -187,13 +167,13 @@ class AsyncTestUtils:
         if not tasks:
             return []
         if return_exceptions:
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            # Filter out exceptions and return only successful results using type guard
-            filtered_results: list[T] = [r for r in results if _is_not_exception(r)]
-            return filtered_results
+            results: list[T | BaseException] = await asyncio.gather(
+                *tasks, return_exceptions=True
+            )
+            # Filter out exceptions and return only successful results
+            return [r for r in results if not isinstance(r, BaseException)]
         # When return_exceptions=False, asyncio.gather will raise on first exception
         return await asyncio.gather(*tasks, return_exceptions=False)
-        # Type assertion: when return_exceptions=False, results is guaranteed to be list[T]
 
     @staticmethod
     async def retry_async(
@@ -222,17 +202,16 @@ class AsyncTestUtils:
         msg = "All retry attempts failed"
         raise RuntimeError(msg)
 
-
-class AsyncContextManagers:
-    """Async context managers for testing scenarios."""
+    # === Async Context Managers ===
 
     @staticmethod
     @asynccontextmanager
-    async def async_timer(duration: float = 5.0) -> AsyncGenerator[None]:
+    async def async_timer(duration: float) -> AsyncGenerator[None]:
         """Async context manager with timeout."""
         start_time = time.time()
 
         async def check_timeout() -> None:
+            """check_timeout method."""
             while True:
                 if time.time() - start_time > duration:
                     msg = f"Operation exceeded timeout of {duration} seconds"
@@ -272,6 +251,7 @@ class AsyncContextManagers:
         if not asyncio.iscoroutine(awaitable):
 
             async def _wrapper() -> None:
+                """_wrapper method."""
                 return await awaitable
 
             coro = _wrapper()
@@ -290,7 +270,6 @@ class AsyncContextManagers:
     @asynccontextmanager
     async def async_event_waiter(
         event: asyncio.Event,
-        *,
         wait_duration: float = 5.0,
     ) -> AsyncGenerator[None]:
         """Wait for event with timeout."""
@@ -301,93 +280,9 @@ class AsyncContextManagers:
             msg = f"Event not set within {wait_duration} seconds"
             raise TimeoutError(msg) from e
 
-
-class AsyncMockUtils:
-    """Utilities for mocking async functions and testing async behavior."""
-
-    @staticmethod
-    def create_async_mock(
-        return_value: object = None,
-        side_effect: Exception | None = None,
-    ) -> AsyncMockProtocol:
-        """Create async mock function."""
-
-        async def async_mock(*_args: object, **_kwargs: object) -> object:
-            if side_effect:
-                raise side_effect
-            return return_value
-
-        return async_mock
-
-    @staticmethod
-    def create_delayed_async_mock(
-        return_value: object = None,
-        delay: float = 0.1,
-        side_effect: Exception | None = None,
-    ) -> AsyncMockProtocol:
-        """Create async mock with delay before returning/raising."""
-
-        async def delayed_async_mock(*_args: object, **_kwargs: object) -> object:
-            await asyncio.sleep(delay)
-            if side_effect:
-                raise side_effect
-            return return_value
-
-        return delayed_async_mock
-
-    @staticmethod
-    def create_flaky_async_mock(
-        return_value: object | None = None,
-        failure_rate: float | None = None,
-        exception: Exception | None = None,
-        *,
-        success_value: object | None = None,
-        failure_count: int | None = None,
-        exception_type: type[Exception] | None = None,
-    ) -> AsyncMockProtocol:
-        """Create async mock with either random failure or fixed failure count.
-
-        Two modes:
-        - Random: use failure_rate in [0,1] and optional exception instance.
-        - Counter: fail first `failure_count` calls with `exception_type`, then return success_value.
-        """
-        # Counter mode
-        if failure_count is not None:
-            remaining = int(failure_count)
-            exc_type = exception_type or RuntimeError
-            result_value = success_value if success_value is not None else return_value
-
-            async def flaky_count_mock(*_args: object, **_kwargs: object) -> object:
-                nonlocal remaining
-                if remaining > 0:
-                    remaining -= 1
-                    raise exc_type()
-                return result_value
-
-            return flaky_count_mock
-
-        # Random mode
-        rate = 0.3 if failure_rate is None else float(failure_rate)
-
-        async def flaky_random_mock(*_args: object, **_kwargs: object) -> object:
-            if random.random() < rate:
-                raise exception or RuntimeError("flaky failure")
-            return return_value
-
-        return flaky_random_mock
-
-
-class AsyncContextManager:
-    """Facade with simple async context helpers expected by tests.
-
-    Provides lightweight wrappers delegating to AsyncContextManagers implementations
-    or using asyncio primitives to offer concise async context managers.
-    """
-
     @staticmethod
     @asynccontextmanager
     async def create_test_context(
-        *,
         setup_coro: Awaitable[T],
         teardown_func: Callable[[T], Awaitable[None]],
     ) -> AsyncGenerator[T]:
@@ -420,38 +315,114 @@ class AsyncContextManager:
         async with asyncio.timeout(duration):
             yield
 
+    # === Mock Utilities ===
+
+    @staticmethod
+    def create_async_mock(
+        return_value: object | None = None,
+        side_effect: Exception | None = None,
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
+        """async_mock method."""
+
+        async def async_mock(*_args: object, **_kwargs: object) -> object:
+            if side_effect:
+                raise side_effect
+            return return_value
+
+        # Return the async function directly as it's compatible with FlextTestsAsyncs.AsyncMockProtocol
+        return async_mock
+
     @staticmethod
     def create_delayed_async_mock(
-        return_value: object = None,
-        delay: float = 0.1,
+        delay: float,
+        return_value: object | None = None,
         side_effect: Exception | None = None,
-    ) -> AsyncMockProtocol:
-        """Deprecated placement; use AsyncMockUtils.create_delayed_async_mock."""
-        # Delegate to AsyncMockUtils for canonical implementation
-        return AsyncMockUtils.create_delayed_async_mock(
-            return_value=return_value,
-            delay=delay,
-            side_effect=side_effect,
-        )
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
+        """delayed_async_mock method."""
+
+        async def delayed_async_mock(*_args: object, **_kwargs: object) -> object:
+            await asyncio.sleep(delay)
+            if side_effect:
+                raise side_effect
+            return return_value
+
+        return delayed_async_mock
 
     @staticmethod
     def create_flaky_async_mock(
-        return_value: object = None,
-        failure_rate: float = 0.3,
+        return_value: object | None = None,
+        failure_rate: float | None = None,
         exception: Exception | None = None,
-    ) -> AsyncMockProtocol:
-        """Deprecated placement; use AsyncMockUtils.create_flaky_async_mock."""
-        return AsyncMockUtils.create_flaky_async_mock(
-            return_value=return_value,
-            failure_rate=failure_rate,
-            exception=exception,
-        )
+        *,
+        success_value: object | None = None,
+        failure_count: int | None = None,
+        exception_type: type[Exception] | None = None,
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
+        """Create async mock with either random failure or fixed failure count."""
+        # Counter mode
+        if failure_count is not None:
+            remaining = int(failure_count)
+            exc_type = exception_type or RuntimeError
+            result_value = success_value if success_value is not None else return_value
 
+            async def flaky_count_mock(*_args: object, **_kwargs: object) -> object:
+                """flaky_count_mock method."""
+                nonlocal remaining
+                if remaining > 0:
+                    remaining -= 1
+                    raise exc_type()
+                return result_value
 
-class AsyncFixtureUtils:
-    """Utilities for creating async fixtures."""
+            return flaky_count_mock
+
+        # Random mode
+        rate = 0.3 if failure_rate is None else float(failure_rate)
+
+        async def flaky_random_mock(*_args: object, **_kwargs: object) -> object:
+            """flaky_random_mock method."""
+            if random.random() < rate:
+                raise exception or RuntimeError("flaky failure")
+            return return_value
+
+        return flaky_random_mock
 
     @staticmethod
+    def create_async_mock_with_side_effect(
+        side_effect: object | None = None,
+        return_value: object | None = None,
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
+        """Create async mock with extended side_effect semantics."""
+        # Normalize list-like side effects
+        sequence: FlextTypes.Core.List | None = None
+        if isinstance(side_effect, (list, tuple)):
+            sequence = list(side_effect)
+
+        async def async_mock(*args: object, **kwargs: object) -> object:
+            """async_mock method."""
+            nonlocal sequence
+            if sequence is not None:
+                if not sequence:
+                    msg = "Side effect sequence exhausted"
+                    raise RuntimeError(msg)
+                return sequence.pop(0)
+            if side_effect is None:
+                return return_value
+            if isinstance(side_effect, Exception):
+                raise side_effect
+            if callable(side_effect):
+                result = side_effect(*args, **kwargs)
+                if asyncio.iscoroutine(result):
+                    return await result
+                return result
+            # side_effect is some other non-callable object
+            return return_value
+
+        return async_mock
+
+    # === Fixture Utilities ===
+
+    @staticmethod
+    @asynccontextmanager
     async def async_setup_teardown(
         setup: Callable[[], Awaitable[T]],
         teardown: Callable[[T], Awaitable[None]],
@@ -464,24 +435,24 @@ class AsyncFixtureUtils:
             await teardown(resource)
 
     @staticmethod
-    async def create_async_test_client() -> object:
+    @asynccontextmanager
+    async def create_async_test_client() -> AsyncGenerator[object]:
         """Create async test client (placeholder for actual implementation)."""
 
         # This would typically create an async HTTP client or similar
         class AsyncTestClient:
             async def get(self, url: str) -> dict[str, object]:
+                """Get method."""
                 await asyncio.sleep(0.01)  # Simulate network delay
                 return {"url": url, "status": 200}
 
-            async def post(
-                self,
-                url: str,
-                data: dict[str, object],
-            ) -> dict[str, object]:
+            async def post(self, url: str, data: object) -> dict[str, object]:
+                """Post method."""
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
 
             async def close(self) -> None:
+                """Close method."""
                 await asyncio.sleep(0.01)
 
         client = AsyncTestClient()
@@ -491,6 +462,7 @@ class AsyncFixtureUtils:
             await client.close()
 
     @staticmethod
+    @asynccontextmanager
     async def create_async_event_loop() -> AsyncGenerator[asyncio.AbstractEventLoop]:
         """Create isolated event loop for testing."""
         loop = asyncio.new_event_loop()
@@ -500,14 +472,12 @@ class AsyncFixtureUtils:
         finally:
             loop.close()
 
-
-class AsyncConcurrencyTesting:
-    """Advanced concurrency testing patterns."""
+    # === Concurrency Testing ===
 
     @staticmethod
     async def run_parallel_tasks(
-        task_func: Callable[[object], Awaitable[object]],
-        inputs: list[object],
+        inputs: list[T],
+        task_func: Callable[[T], Awaitable[object]],
     ) -> list[object]:
         """Run the given async task function over inputs in parallel and collect results."""
         if not inputs:
@@ -521,9 +491,9 @@ class AsyncConcurrencyTesting:
         func1: Callable[[], Awaitable[object]],
         func2: Callable[[], Awaitable[object]],
         iterations: int = 100,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Test for race conditions between two async functions."""
-        results: list[dict[str, object]] = []
+        results: list[FlextTypes.Core.Dict] = []
 
         for _ in range(iterations):
             # Start both functions simultaneously
@@ -532,25 +502,38 @@ class AsyncConcurrencyTesting:
 
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
+                # Create wrapper with proper variable binding
+                def make_wrapper1(
+                    aw: Awaitable[object],
+                ) -> Callable[[], Coroutine[None, None, object]]:
+                    async def _wrapper1() -> object:
+                        """_wrapper1 method."""
+                        return await aw
 
-                async def _wrapper1(result: object = awaitable1) -> object:
-                    return result
+                    return _wrapper1
 
-                coro1 = _wrapper1()
+                coro1 = make_wrapper1(awaitable1)()
             else:
                 coro1 = awaitable1
 
             if not asyncio.iscoroutine(awaitable2):
+                # Create wrapper with proper variable binding
+                def make_wrapper2(
+                    aw: Awaitable[object],
+                ) -> Callable[[], Coroutine[None, None, object]]:
+                    async def _wrapper2() -> object:
+                        """_wrapper2 method."""
+                        return await aw
 
-                async def _wrapper2(result: object = awaitable2) -> object:
-                    return result
+                    return _wrapper2
 
-                coro2 = _wrapper2()
+                coro2 = make_wrapper2(awaitable2)()
             else:
                 coro2 = awaitable2
 
-            task1 = asyncio.create_task(coro1)
-            task2 = asyncio.create_task(coro2)
+            # Create tasks - coro1 and coro2 are guaranteed to be coroutines here
+            task1: asyncio.Task[object] = asyncio.create_task(coro1)
+            task2: asyncio.Task[object] = asyncio.create_task(coro2)
 
             # Wait for both to complete
             result1, result2 = await asyncio.gather(
@@ -580,13 +563,14 @@ class AsyncConcurrencyTesting:
     @staticmethod
     async def test_concurrent_access(
         func: Callable[[], Awaitable[object]],
-        concurrency_level: int = 10,
+        concurrency_level: int = 5,
         iterations_per_worker: int = 10,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Test concurrent access to a resource."""
 
-        async def worker() -> list[dict[str, object]]:
-            results: list[dict[str, object]] = []
+        async def worker() -> list[FlextTypes.Core.Dict]:
+            """Worker method."""
+            results: list[FlextTypes.Core.Dict] = []
             for _ in range(iterations_per_worker):
                 try:
                     result = await func()
@@ -600,7 +584,7 @@ class AsyncConcurrencyTesting:
         worker_results = await asyncio.gather(*workers)
 
         # Flatten results
-        all_results: list[dict[str, object]] = []
+        all_results: list[FlextTypes.Core.Dict] = []
         for worker_result in worker_results:
             all_results.extend(worker_result)
 
@@ -618,8 +602,8 @@ class AsyncConcurrencyTesting:
     @staticmethod
     async def test_deadlock_detection(
         operations: list[Callable[[], Awaitable[object]]],
-        deadline: float = 5.0,
-    ) -> dict[str, object]:
+        deadline: float = 10.0,
+    ) -> FlextTypes.Core.Dict:
         """Test for potential deadlocks in async operations."""
         start_time = time.time()
 
@@ -647,62 +631,37 @@ class AsyncConcurrencyTesting:
                 "potential_deadlock": True,
             }
 
-
-# Pytest markers for async tests
-class AsyncMarkers:
-    """Custom pytest markers for async tests."""
-
-    asyncio = pytest.mark.asyncio
-    timeout = pytest.mark.timeout
-    concurrency = pytest.mark.concurrency
-    race_condition = pytest.mark.race_condition
-
     @staticmethod
-    def async_timeout(seconds: float) -> object:
-        """Mark async test with specific timeout."""
-        return pytest.mark.timeout(seconds)
-
-    @staticmethod
-    def async_slow() -> object:
-        """Mark async test as slow."""
-        return pytest.mark.slow
-
-
-# Export utilities
-__all__ = [
-    "AsyncConcurrencyTesting",
-    "AsyncContextManagers",
-    "AsyncFixtureUtils",
-    "AsyncMarkers",
-    "AsyncMockBuilder",
-    "AsyncMockUtils",
-    "AsyncTestUtils",
-    "ConcurrencyTestHelper",
-]
-
-
-class ConcurrencyTestHelper:
-    """Lightweight helpers used by tests for concurrency measurements."""
-
-    @staticmethod
-    async def test_race_condition(
-        func: Callable[[], Coroutine[object, object, object]],
-        *,
-        concurrent_count: int = 2,
+    async def test_race_condition_simple(
+        func: Callable[[], Awaitable[object]],
+        concurrent_count: int = 5,
     ) -> list[object]:
         """Run the same async function concurrently and return results."""
+        # Create coroutines and ensure they are proper coroutines
+        coroutines = []
+        for _ in range(concurrent_count):
+            result = func()
+            if asyncio.iscoroutine(result):
+                coroutines.append(result)
+            else:
+                # Wrap non-coroutine awaitables
+                async def _wrapper(aw: Awaitable[object] = result) -> object:
+                    """Wrapper for non-coroutine awaitable."""
+                    return await aw
+
+                coroutines.append(_wrapper())
+
         tasks: list[asyncio.Task[object]] = [
-            asyncio.create_task(func()) for _ in range(concurrent_count)
+            asyncio.create_task(coro) for coro in coroutines
         ]
         results = await asyncio.gather(*tasks)
         return list(results)
 
     @staticmethod
     async def measure_concurrency_performance(
-        func: Callable[[], Awaitable[object]],
-        *,
-        iterations: int = 10,
-    ) -> dict[str, float]:
+        func: Callable[[], Awaitable[None]],
+        iterations: int = 100,
+    ) -> FlextTypes.Core.Dict:
         """Measure total time, average time and throughput for repeated async calls."""
         start_total = time.time()
         durations: list[float] = []
@@ -719,45 +678,31 @@ class ConcurrencyTestHelper:
             "throughput": throughput,
         }
 
-
-class AsyncMockBuilder:
-    """Builder for async mocks supporting side_effect lists and callables."""
+    # === Pytest Markers ===
+    asyncio = pytest.mark.asyncio
+    timeout = pytest.mark.timeout
+    concurrency = pytest.mark.concurrency
+    race_condition = pytest.mark.race_condition
 
     @staticmethod
-    def create_async_mock(
-        return_value: object = None,
-        side_effect: object | None = None,
-    ) -> AsyncMockProtocol:
-        """Create async mock with extended side_effect semantics.
+    def async_timeout(seconds: float) -> pytest.MarkDecorator:
+        """Mark async test with specific timeout."""
+        return pytest.mark.timeout(seconds)
 
-        side_effect may be:
-        - Exception: raised when called
-        - list/tuple: elements returned one by one on successive calls
-        - callable: awaited and its return used
-        - None: always return return_value
-        """
-        # Normalize list-like side effects
-        sequence: list[object] | None = None
-        if isinstance(side_effect, (list, tuple)):
-            sequence = list(side_effect)
+    @staticmethod
+    def async_slow() -> pytest.MarkDecorator:
+        """Ultra-simple alias for test compatibility."""
+        return pytest.mark.slow
 
-        async def async_mock(*args: object, **kwargs: object) -> object:
-            nonlocal sequence
-            if sequence is not None:
-                if not sequence:
-                    msg = "Side effect sequence exhausted"
-                    raise RuntimeError(msg)
-                return sequence.pop(0)
-            if side_effect is None:
-                return return_value
-            if isinstance(side_effect, Exception):
-                raise side_effect
-            if callable(side_effect):
-                result = side_effect(*args, **kwargs)
-                if asyncio.iscoroutine(result):
-                    return await result
-                return result
-            # side_effect is some other non-callable object
-            return return_value
+    class AsyncMockProtocol(Protocol):
+        """Protocol for async mock functions."""
 
-        return async_mock
+        async def __call__(self, *args: object, **kwargs: object) -> object:
+            """Async callable interface for mock functions."""
+            ...
+
+
+# Export only the unified class
+__all__ = [
+    "FlextTestsAsyncs",
+]

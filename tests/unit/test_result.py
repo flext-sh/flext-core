@@ -1,9 +1,14 @@
-"""Targeted tests for 100% coverage on FlextResult module."""
+"""Targeted tests for 100% coverage on FlextResult module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+from typing import cast
 
 import pytest
 
@@ -20,7 +25,7 @@ class TestFlextResult100PercentCoverage:
         default_value = "default"
 
         # This should trigger line 635 for None data case
-        actual = result | default_value
+        actual = cast("FlextResult[str]", result) | default_value
         # When data is None, should return default
         assert actual == default_value
 
@@ -111,9 +116,9 @@ class TestFlextResult100PercentCoverage:
         async def async_test() -> None:
             # Test async unwrap
             result: FlextResult[str] = FlextResult.ok("async_value")
-            if hasattr(result, "unwrap_async"):
-                value = await result.unwrap_async()
-                assert value == "async_value"
+            # unwrap_async doesn't exist, use regular unwrap instead
+            value = result.unwrap()
+            assert value == "async_value"
 
             # Test async context manager if supported
             try:
@@ -179,7 +184,7 @@ class TestFlextResult100PercentCoverage:
 
         # Test success case with None value
         none_success = FlextResult.ok(None)
-        assert (none_success | "default") == "default"
+        assert (cast("FlextResult[str]", none_success) | "default") == "default"
 
     def test_context_manager_comprehensive(self) -> None:
         """Test context manager to trigger lines 646-647."""
