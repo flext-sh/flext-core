@@ -105,7 +105,7 @@ def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Cor
 
     # Age validation
     try:
-        age = int(data["age"])
+        age = int(str(data["age"]))
         if age < 0 or age > 150:
             return FlextResult[FlextTypes.Core.Dict].fail(
                 "Age must be between 0 and 150"
@@ -126,7 +126,7 @@ def create_user(data: FlextTypes.Core.Dict) -> FlextResult[User]:
             user_id=cast("str", data["user_id"]),
             name=cast("str", data["name"]),
             email=cast("str", data["email"]),
-            age=int(data["age"]),
+            age=int(str(data["age"])),
         )
         logger.info(f"✅ User created: {user}")
         return FlextResult[User].ok(user)

@@ -37,7 +37,7 @@ class TestFlextProcessingHandler:
         for request in test_data:
             result = handler.handle(request)
             FlextTestsMatchers.assert_result_success(result)
-            assert "Base handler processed:" in result.unwrap()
+            assert "Base handler processed:" in str(result.unwrap())
 
 
 class TestFlextProcessingHandlerRegistry:
@@ -76,7 +76,7 @@ class TestFlextProcessingHandlerRegistry:
         result = self.registry.register(handler_name, self.mock_handler)
 
         FlextTestsMatchers.assert_result_failure(result)
-        assert f"Handler '{handler_name}' already registered" in result.error
+        assert f"Handler '{handler_name}' already registered" in str(result.error)
 
     def test_get_existing_handler_success(self) -> None:
         """Test retrieving existing handler."""
@@ -95,7 +95,7 @@ class TestFlextProcessingHandlerRegistry:
         result = self.registry.get(handler_name)
 
         FlextTestsMatchers.assert_result_failure(result)
-        assert f"Handler '{handler_name}' not found" in result.error
+        assert f"Handler '{handler_name}' not found" in str(result.error)
 
     def test_execute_handler_with_handle_method(self) -> None:
         """Test executing handler that has handle method."""
@@ -154,6 +154,7 @@ class TestFlextProcessingHandlerRegistry:
         result = self.registry.execute(handler_name, "request")
 
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error is not None
         assert (
             f"Handler '{handler_name}' does not implement handle method" in result.error
         )
@@ -547,7 +548,7 @@ class TestFlextProcessingIntegration:
         def validate_step(data: object) -> FlextResult[str]:
             if not data or data == "invalid":
                 return FlextResult[str].fail("Validation failed")
-            return FlextResult[str].ok(data)
+            return FlextResult[str].ok(str(data))
 
         def transform_step(data: object) -> str:
             return f"processed_{data}"
@@ -569,17 +570,19 @@ class TestFlextProcessingIntegration:
         """Test handler chain with mixed handler types."""
         chain = FlextProcessing.Patterns.HandlerChain("mixed_chain")
 
-        # Add BasicHandler
+        # Add BasicHandler with proper attribute assignment
         basic_handler = FlextProcessing.Implementation.BasicHandler("basic")
-        basic_handler.handle = Mock(
+        # Use setattr to avoid method assignment error
+        setattr(basic_handler, "handle", Mock(
             return_value=Mock(success=True, data="basic_result")
-        )
+        ))
 
-        # Add ChainableHandler
+        # Add ChainableHandler with proper attribute assignment
         chainable_handler = FlextProcessing.Protocols.ChainableHandler("chainable")
-        chainable_handler.handle = Mock(
+        # Use setattr to avoid method assignment error
+        setattr(chainable_handler, "handle", Mock(
             return_value=Mock(success=True, data="chainable_result")
-        )
+        ))
 
         chain.add_handler(basic_handler)
         chain.add_handler(chainable_handler)

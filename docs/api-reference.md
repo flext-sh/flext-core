@@ -1,405 +1,365 @@
 # API Reference
 
-Complete API documentation for FLEXT-Core foundation library components.
+**FLEXT-Core Foundation Library API Documentation**
+**Date**: September 17, 2025 | **Version**: 0.9.0
 
 ---
 
-## Core Imports
+## Overview
 
-All FLEXT-Core functionality is available through root-level imports:
+FLEXT-Core API reference is maintained at the workspace level to ensure consistency across the ecosystem. This document provides foundation-specific usage patterns and examples.
+
+**Complete API Documentation**: [Workspace API Reference](../../docs/api/flext-core.md)
+
+---
+
+## Foundation Exports
+
+### Core Imports
 
 ```python
 from flext_core import (
-    # Railway pattern
-    FlextResult,           # Error handling with monadic operations
+    # Error handling and composition
+    FlextResult,
 
     # Dependency injection
-    FlextContainer,        # Service container with type safety
+    FlextContainer,
 
     # Domain modeling
-    FlextModels,           # Entity/Value/Aggregate patterns
-    FlextDomainService,    # Service base class
+    FlextModels,
 
-    # Configuration and core
-    FlextConfig,           # Environment-aware configuration
-    FlextCore,             # Main orchestrator class
-    FlextContext,          # Request/operation context
+    # Configuration management
+    FlextConfig,
 
-    # CQRS and processing
-    FlextCommands,         # CQRS command patterns
-    FlextProcessing,       # Handler patterns and execution
-    FlextHandlers,         # Alias for FlextProcessing (backward compatibility)
+    # Validation patterns
+    FlextValidations,
 
-    # Validation and guards
-    FlextValidations,      # Validation patterns and predicates
-    FlextGuards,           # Type guards and validation decorators
-    Predicates,            # Predicate functions
+    # CQRS patterns
+    FlextCommands,
+
+    # Structured logging
+    FlextLogger,
 
     # Type system
-    FlextTypes,            # Type definitions and aliases
-    FlextTypeAdapters,     # Type adapters for conversions
-    T, U, V, E, F, P, R,   # Type variables
-    T_co,                  # Covariant type variable
+    FlextTypes,
 
-    # Infrastructure
-    FlextLogger,           # Structured logging
-    FlextExceptions,       # Exception hierarchy
-    FlextConstants,        # System constants
-    FlextProtocols,        # Interface definitions
+    # Utilities
+    FlextUtilities,
 
-    # Utilities and extensions
-    FlextUtilities,        # Helper functions
-    FlextDecorators,       # Decorator utilities
-    FlextMixins,           # Reusable behaviors
-    FlextFields,           # Field definitions
+    # Constants
+    FlextConstants,
 
-    # Version management
-    FlextVersionManager,   # Version information
-    __version__,           # Current version string
+    # Type adaptation (minimal)
+    FlextTypeAdapters
 )
 ```
 
 ---
 
-## FlextResult[T]
+## Usage Patterns
 
-Railway-oriented programming pattern for type-safe error handling.
+### FlextResult[T] - Railway Pattern
 
-### Creation
-
-```python
-# Success case
-result = FlextResult[str].ok("success value")
-
-# Failure case
-result = FlextResult[str].fail("error message")
-result = FlextResult[str].fail("error", error_code="CUSTOM_ERROR")
-```
-
-### Core Operations
+**Primary API for error handling across FLEXT ecosystem**
 
 ```python
-# Check status
-result.is_success        # bool
-result.is_failure        # bool
+from flext_core import FlextResult
 
-# Safe value access
+# Creation
+success = FlextResult[str].ok("value")
+failure = FlextResult[str].fail("error message")
+
+# Access patterns (both supported for compatibility)
 if result.is_success:
-    value = result.unwrap()  # Extract value after success check
+    value = result.value    # New API
+    value = result.data     # Legacy API (maintained)
+    value = result.unwrap() # Explicit API
 
-# Alternative access
-value = result.unwrap_or("default")  # With fallback
+# Composition
+result = (
+    initial_operation()
+    .map(transform_value)           # Transform success
+    .flat_map(chain_operation)      # Chain operations
+    .map_error(handle_error)        # Handle errors
+    .filter(predicate, "Error")     # Conditional filtering
+)
+
+# Pattern matching
+match result:
+    case result if result.is_success:
+        process(result.unwrap())
+    case result if result.is_failure:
+        log_error(result.error)
 ```
 
-### Monadic Operations
+### FlextContainer - Dependency Injection
+
+**Singleton container for service lifecycle management**
 
 ```python
-# Transform success values
-result.map(lambda x: x.upper())
+from flext_core import FlextContainer
 
-# Chain operations that return FlextResult
-result.flat_map(lambda x: process_value(x))
-
-# Filter with predicate
-result.filter(lambda x: len(x) > 5, "Too short")
-```
-
----
-
-## FlextContainer
-
-Dependency injection container with type-safe service management.
-
-### Basic Usage
-
-```python
 # Get global singleton
 container = FlextContainer.get_global()
 
-# Register services
-container.register("database", DatabaseService())
-container.register("logger", LoggerService())
+# Service registration
+register_result = container.register("service_name", service_instance)
+if register_result.is_success:
+    print("Service registered")
 
-# Retrieve services
-db_result = container.get("database")
-if db_result.is_success:
-    database = db_result.unwrap()
+# Service retrieval
+service_result = container.get("service_name")
+if service_result.is_success:
+    service = service_result.unwrap()
+    # Use service
+
+# Type-safe registration pattern
+class DatabaseService:
+    def connect(self) -> str:
+        return "Connected"
+
+db_service = DatabaseService()
+container.register("database", db_service)
 ```
 
-### Factory Registration
+### FlextModels - Domain Modeling
+
+**Domain-driven design patterns**
 
 ```python
-# Register factory function
-container.register_factory("connection", lambda: create_connection())
+from flext_core import FlextModels, FlextResult
 
-# Register singleton (cached after first creation)
-container.register_singleton("config", ConfigService())
-```
-
----
-
-## FlextModels
-
-Domain modeling patterns following Domain-Driven Design principles.
-
-### Entity Pattern
-
-```python
+# Entity (has identity)
 class User(FlextModels.Entity):
     name: str
     email: str
-    is_active: bool = False
 
-    def activate(self) -> FlextResult[None]:
-        if self.is_active:
-            return FlextResult[None].fail("Already active")
-        self.is_active = True
+    def change_email(self, new_email: str) -> FlextResult[None]:
+        # Business logic with validation
+        if "@" not in new_email:
+            return FlextResult[None].fail("Invalid email")
+
+        self.email = new_email
+        self.add_domain_event("EmailChanged", {"new_email": new_email})
         return FlextResult[None].ok(None)
-```
 
-### Value Object Pattern
-
-```python
+# Value Object (immutable)
 class Money(FlextModels.Value):
-    amount: int
+    amount: float
     currency: str
 
     def add(self, other: "Money") -> FlextResult["Money"]:
         if self.currency != other.currency:
-            return FlextResult[Money].fail("Currency mismatch")
-        return FlextResult[Money].ok(
+            return FlextResult["Money"].fail("Currency mismatch")
+        return FlextResult["Money"].ok(
             Money(amount=self.amount + other.amount, currency=self.currency)
         )
+
+# Aggregate Root (consistency boundary)
+class Account(FlextModels.AggregateRoot):
+    balance: Money
+    owner: User
+
+    def transfer_to(self, target: "Account", amount: Money) -> FlextResult[None]:
+        # Ensure business invariants
+        if self.balance.amount < amount.amount:
+            return FlextResult[None].fail("Insufficient funds")
+
+        # Business logic
+        return FlextResult[None].ok(None)
 ```
 
----
+### FlextConfig - Configuration Management
 
-## FlextConfig
-
-Environment-aware configuration management with Pydantic integration.
-
-### Basic Configuration
+**Environment-aware configuration with Pydantic**
 
 ```python
-class AppConfig(FlextConfig):
+from flext_core import FlextConfig
+
+class ApplicationConfig(FlextConfig):
+    """Application configuration with environment variables."""
+
+    # Required settings
     database_url: str
     api_key: str
+
+    # Optional with defaults
     debug: bool = False
+    port: int = 8000
     timeout: int = 30
 
-# Automatically loads from environment variables
-config = AppConfig()
-```
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+        env_prefix = "APP_"
 
-### Environment Integration
+# Automatic environment variable loading
+# APP_DATABASE_URL, APP_API_KEY, APP_DEBUG, etc.
+config = ApplicationConfig()
 
-```python
-# Reads from:
-# - DATABASE_URL environment variable
-# - API_KEY environment variable
-# - DEBUG environment variable (with bool conversion)
-# - TIMEOUT environment variable (with int conversion)
-```
-
----
-
-## FlextValidations
-
-Validation patterns and predicate-based validation system.
-
-### Type Validators
-
-```python
-# Built-in type validation
-FlextValidations.TypeValidators.validate_string("test")
-FlextValidations.TypeValidators.validate_integer(42)
-FlextValidations.TypeValidators.validate_email("user@example.com")
-```
-
-### Custom Validators
-
-```python
-def validate_positive(value: int) -> FlextResult[int]:
-    if value <= 0:
-        return FlextResult[int].fail("Must be positive")
-    return FlextResult[int].ok(value)
-
-# Compose validators
-composite = FlextValidations.create_composite_validator([
-    validate_positive,
-    lambda x: FlextResult[int].ok(x) if x < 100 else FlextResult[int].fail("Too large")
-])
+# Validation with FlextResult integration
+def validate_config(config: ApplicationConfig) -> FlextResult[None]:
+    if not config.database_url.startswith(("postgresql://", "mysql://")):
+        return FlextResult[None].fail("Invalid database URL")
+    return FlextResult[None].ok(None)
 ```
 
 ---
 
-## FlextLogger
+## Advanced Patterns
 
-Structured logging with correlation tracking and environment awareness.
-
-### Basic Usage
+### Error Handling Chain
 
 ```python
-logger = FlextLogger(__name__)
+def complex_operation(data: dict) -> FlextResult[str]:
+    """Complex business operation with multiple steps."""
+    return (
+        validate_input(data)
+        .flat_map(parse_data)
+        .flat_map(process_business_logic)
+        .flat_map(serialize_result)
+        .map_error(lambda e: f"Operation failed: {e}")
+    )
 
-logger.info("Operation completed", user_id="123", duration_ms=45.2)
-logger.error("Operation failed", error="Database timeout", user_id="123")
+def validate_input(data: dict) -> FlextResult[dict]:
+    if not data:
+        return FlextResult[dict].fail("Empty input")
+    return FlextResult[dict].ok(data)
+
+def parse_data(data: dict) -> FlextResult[dict]:
+    try:
+        # Parsing logic
+        return FlextResult[dict].ok(parsed_data)
+    except Exception as e:
+        return FlextResult[dict].fail(f"Parse error: {e}")
 ```
 
-### Context Management
+### Service Layer Pattern
 
 ```python
-# Add persistent context
-logger = logger.bind(service="user-service", version="1.0")
+from flext_core import FlextContainer, FlextResult, FlextLogger
 
-# Performance tracking
-with logger.performance_timer():
-    # Operation being timed
-    process_data()
-```
+class UserService:
+    """Business service using FLEXT patterns."""
 
----
-
-## FlextDomainService
-
-Base class for domain services with dependency injection integration.
-
-### Service Implementation
-
-```python
-class UserService(FlextDomainService):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self):
+        container = FlextContainer.get_global()
+        self._db = container.get("database").unwrap()
         self._logger = FlextLogger(__name__)
 
     def create_user(self, data: dict) -> FlextResult[User]:
-        # Validate input
-        if not data.get("email"):
-            return FlextResult[User].fail("Email required")
+        """Create user with business validation."""
+        self._logger.info("Creating user", extra={"email": data.get("email")})
 
-        # Create user
-        user = User(**data)
-        self._logger.info("User created", user_id=user.id)
-        return FlextResult[User].ok(user)
-```
-
----
-
-## Error Handling
-
-### FlextResult Error Propagation
-
-```python
-def process_user_data(data: dict) -> FlextResult[ProcessedUser]:
-    return (
-        validate_user_data(data)           # FlextResult[dict]
-        .flat_map(enrich_user_data)        # FlextResult[dict]
-        .map(create_user_object)           # FlextResult[User]
-        .flat_map(save_user)               # FlextResult[ProcessedUser]
-    )
-
-# Automatic error propagation - first failure stops the chain
-result = process_user_data({"email": "test@example.com"})
-```
-
-### Exception Handling
-
-```python
-# Convert exceptions to FlextResult
-def safe_operation() -> FlextResult[str]:
-    try:
-        risky_operation()
-        return FlextResult[str].ok("success")
-    except Exception as e:
-        return FlextResult[str].fail(f"Operation failed: {e}")
-```
-
----
-
-## Type System
-
-### Core Types
-
-```python
-# Type variables for generic programming
-T = TypeVar('T')  # Generic type
-U = TypeVar('U')  # Second generic type
-
-# Result type aliases
-FlextTypes.Core.StringResult = FlextResult[str]
-FlextTypes.Core.IntResult = FlextResult[int]
-```
-
-### Configuration Types
-
-```python
-FlextTypes.Config.LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-FlextTypes.Config.Environment = Literal["development", "testing", "production"]
-```
-
----
-
-## Integration Patterns
-
-### Service Composition
-
-```python
-class ComposedService(FlextDomainService):
-    def __init__(self) -> None:
-        super().__init__()
-        container = FlextContainer.get_global()
-
-        # Get dependencies
-        self._user_service = container.get("user_service").unwrap()
-        self._email_service = container.get("email_service").unwrap()
-
-    def register_user(self, data: dict) -> FlextResult[User]:
         return (
-            self._user_service.create_user(data)
-            .flat_map(lambda user: self._email_service.send_welcome(user))
+            self._validate_user_data(data)
+            .flat_map(self._check_email_uniqueness)
+            .flat_map(self._create_user_entity)
+            .flat_map(self._save_user)
+            .map(self._log_user_created)
         )
+
+    def _validate_user_data(self, data: dict) -> FlextResult[dict]:
+        # Validation logic
+        pass
+
+    def _check_email_uniqueness(self, data: dict) -> FlextResult[dict]:
+        # Business rule validation
+        pass
 ```
 
-### Error Aggregation
+---
+
+## Foundation-Specific APIs
+
+### FlextTypeAdapters (Minimal Design)
+
+**Simplified type adaptation interface**
 
 ```python
-# Collect multiple results
-results = [
-    validate_name(data.get("name")),
-    validate_email(data.get("email")),
-    validate_age(data.get("age"))
-]
+from flext_core import FlextTypeAdapters
 
-# Combine results
-combined = FlextResult.combine(*results)
-if combined.is_success:
-    # All validations passed
-    validated_data = combined.unwrap()
+# Simple object-to-dict adaptation
+adapters = FlextTypeAdapters()
+result_dict = adapters.adapt_to_dict(some_object)
+
+# The design is intentionally minimal (22 lines total)
+# For complex type adaptation, use Pydantic TypeAdapter directly:
+from pydantic import TypeAdapter
+
+adapter = TypeAdapter(YourType)
+validated = adapter.validate_python(data)
+```
+
+### FlextUtilities
+
+**Foundation utility functions**
+
+```python
+from flext_core import FlextUtilities
+
+# ID generation
+unique_id = FlextUtilities.Generators.generate_id()
+timestamp = FlextUtilities.Generators.generate_iso_timestamp()
+
+# Type guards
+is_valid = FlextUtilities.Guards.is_not_none(value)
+is_string = FlextUtilities.Guards.is_string(value)
 ```
 
 ---
 
-## Performance Considerations
+## Type Safety Guidelines
 
-### FlextResult Optimization
+### Strict Type Annotations
 
-- Use `map()` for simple transformations
-- Use `flat_map()` for operations returning FlextResult
-- Avoid deep nesting with early returns
-- Consider `unwrap_or()` for simple fallbacks
+```python
+# ✅ Complete type annotations
+def process_user(user_data: dict[str, str]) -> FlextResult[User]:
+    return FlextResult[User].ok(User(**user_data))
 
-### Container Performance
+# ✅ Generic type parameters
+def map_results(
+    results: list[FlextResult[T]],
+    mapper: Callable[[T], U]
+) -> list[FlextResult[U]]:
+    return [result.map(mapper) for result in results]
 
-- Register singletons for expensive-to-create services
-- Use factories for lightweight, stateful services
-- Minimize container lookups in hot paths
+# ❌ Missing type information
+def process_user(user_data):  # Missing types
+    return FlextResult.ok(User(**user_data))  # Missing generic
+```
 
-### Logging Performance
+### Error Handling Standards
 
-- Use structured logging with consistent field names
-- Avoid expensive operations in log messages
-- Use appropriate log levels (DEBUG only in development)
+```python
+# ✅ Explicit error handling
+result = risky_operation()
+if result.is_success:
+    value = result.unwrap()
+    # Continue processing
+else:
+    logger.error(f"Operation failed: {result.error}")
+    return FlextResult[None].fail("Processing failed")
+
+# ❌ Direct unwrap without checking
+value = risky_operation().unwrap()  # Can raise exception
+```
 
 ---
 
-**API Status**: This reference covers FLEXT-Core v0.9.0 foundation patterns with 84% test coverage. All documented APIs are functional and tested. For development workflow and contribution guidelines, see [development.md](development.md).
+## Integration with FLEXT Ecosystem
+
+All FLEXT projects should use these foundation patterns for consistency:
+
+1. **Error Handling**: FlextResult[T] for all business operations
+2. **Dependency Injection**: FlextContainer for service management
+3. **Configuration**: FlextConfig for environment-aware settings
+4. **Domain Modeling**: FlextModels for business entities
+5. **Logging**: FlextLogger for structured logging
+
+**Complete API Documentation**: [Workspace API Reference](../../docs/api/flext-core.md)
+
+---
+
+**Foundation API Reference** - Core patterns for the FLEXT ecosystem

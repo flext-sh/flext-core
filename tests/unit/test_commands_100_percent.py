@@ -65,7 +65,7 @@ class TestBusMiddlewareOrderEdgeCases:
             },  # Valid order
         ]
 
-        bus._middleware = middleware_configs
+        bus._middleware = [dict(config) for config in middleware_configs if isinstance(config, dict)]
 
         # Should handle various order types gracefully (line 683)
         result = bus._apply_middleware({}, None)

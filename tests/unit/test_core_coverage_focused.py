@@ -133,6 +133,7 @@ class TestFlextCoreCoverageFocused:
         assert current_instance is instance1
 
         # Reset and verify
+        # MyPy false positive on unreachable - this reset call is valid
         FlextCore.reset_instance()
         assert FlextCore._instance is None
 

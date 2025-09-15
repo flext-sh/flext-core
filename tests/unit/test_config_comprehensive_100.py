@@ -10,7 +10,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -87,7 +87,7 @@ class TestFlextConfigComprehensive100:
             load_result = persistence.load_from_file(temp_path)
             FlextTestsMatchers.assert_result_success(load_result)
 
-            loaded_data = cast("dict", load_result.value)
+            loaded_data = cast("dict[str, object]", load_result.value)
             assert loaded_data["app_name"] == "loaded_app"
             assert loaded_data["environment"] == "production"
             assert loaded_data["debug"] is False
@@ -251,7 +251,7 @@ class TestFlextConfigComprehensive100:
 
         invalid_result = validator.validate_runtime_requirements(invalid_config)
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", invalid_result)
+            cast("FlextResult[object]", invalid_result)
         )
 
     def test_business_validator_comprehensive(self) -> None:
@@ -276,7 +276,7 @@ class TestFlextConfigComprehensive100:
 
         invalid_result = validator.validate_business_rules(invalid_config)
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", invalid_result)
+            cast("FlextResult[object]", invalid_result)
         )
 
     def test_file_persistence_save_to_file_error_handling(self) -> None:
@@ -287,7 +287,7 @@ class TestFlextConfigComprehensive100:
         # Test save to invalid path
         invalid_path = "/invalid/nonexistent/path/config.json"
         save_result = persistence.save_to_file(config, invalid_path)
-        FlextTestsMatchers.assert_result_failure(cast("FlextResult[Any]", save_result))
+        FlextTestsMatchers.assert_result_failure(cast("FlextResult[object]", save_result))
 
     def test_file_persistence_load_from_file_error_handling(self) -> None:
         """Test FlextConfig.FilePersistence.load_from_file error handling."""
@@ -531,7 +531,7 @@ class TestFlextConfigComprehensive100:
 
         invalid_result = FlextConfig.create(constants=invalid_constants)
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", invalid_result)
+            cast("FlextResult[object]", invalid_result)
         )
 
     def test_config_create_from_environment_class_method(self) -> None:
@@ -589,7 +589,7 @@ class TestFlextConfigComprehensive100:
         payload_result = config.to_api_payload()
         FlextTestsMatchers.assert_result_success(payload_result)
 
-        payload = cast("dict[str, Any]", payload_result.value)
+        payload = cast("dict[str, object]", payload_result.value)
         assert payload["app_name"] == "api_test"
         assert payload["environment"] == "production"
         assert payload["debug"] is False
@@ -599,7 +599,7 @@ class TestFlextConfigComprehensive100:
         direct_payload_result = config.as_api_payload()
         FlextTestsMatchers.assert_result_success(direct_payload_result)
 
-        direct_payload = cast("dict[str, Any]", direct_payload_result.value)
+        direct_payload = cast("dict[str, object]", direct_payload_result.value)
         assert direct_payload["app_name"] == "api_test"
 
     def test_config_serialization_methods(self) -> None:
@@ -661,7 +661,7 @@ class TestFlextConfigComprehensive100:
         actual_merge_result = FlextConfig.merge_configs(config1_dict, config2_dict)
         FlextTestsMatchers.assert_result_success(actual_merge_result)
 
-        merged_dict = cast("dict", actual_merge_result.value)
+        merged_dict = cast("dict[str, object]", actual_merge_result.value)
         assert merged_dict["app_name"] == "app2"  # config2 takes precedence
         assert merged_dict["debug"] is True
         assert merged_dict["port"] == 8080  # from config1
@@ -725,7 +725,7 @@ class TestFlextConfigComprehensive100:
 
         invalid_validate_result = invalid_config.validate_all()
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", invalid_validate_result)
+            cast("FlextResult[object]", invalid_validate_result)
         )
 
     def test_config_environment_adapter_integration(self) -> None:
@@ -740,7 +740,7 @@ class TestFlextConfigComprehensive100:
         # Test with missing environment variable
         missing_result = config.get_env_var("NONEXISTENT_VAR")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[Any]", missing_result)
+            cast("FlextResult[object]", missing_result)
         )
 
     def test_config_value_validation_comprehensive(self) -> None:
@@ -780,7 +780,7 @@ class TestFlextConfigComprehensive100:
         merge_result = FlextConfig.merge_configs(config1_dict, config2_dict)
         FlextTestsMatchers.assert_result_success(merge_result)
 
-        merged_dict = cast("dict[str, Any]", merge_result.value)
+        merged_dict = cast("dict[str, object]", merge_result.value)
         assert merged_dict["app_name"] == "app2"  # Overridden
         assert merged_dict["environment"] == "test"  # From config1
         assert merged_dict["debug"] is True  # Overridden

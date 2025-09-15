@@ -582,7 +582,9 @@ ENVIRONMENT=staging
         }
 
         # Create config with all fields to validate set/get behavior comprehensively
-        config = FlextConfig(**config_data)
+        create_result = FlextConfig.create(constants=config_data)
+        assert create_result.is_success
+        config = create_result.unwrap()
 
         # Verify all fields are set correctly
         for field, value in config_data.items():

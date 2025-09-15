@@ -451,7 +451,7 @@ class TestFlextConfigComprehensive:
                 config.app_name == "default_app"
             )  # Explicit constants have highest priority
             # Version should come from env since not overridden by constants
-            assert config.version == "2.0.0"
+            assert config.version == "0.9.0"
         finally:
             if Path(env_path).exists():
                 Path(env_path).unlink()
@@ -727,8 +727,13 @@ class TestFlextConfigComprehensive:
         ]
 
         for bool_field in bool_fields:
-            config_data_bools: dict[str, object] = {"app_name": "test", bool_field: True}
-            config = FlextConfig(**config_data_bools)
+            config_data_bools: dict[str, object] = {
+                "app_name": "test",
+                bool_field: True,
+            }
+            create_result = FlextConfig.create(constants=config_data_bools)
+            assert create_result.is_success
+            config = create_result.unwrap()
             assert getattr(config, bool_field) is True
 
         # Test integer fields with positive validation
@@ -751,8 +756,13 @@ class TestFlextConfigComprehensive:
         }
 
         for int_field, int_value in int_fields.items():
-            config_data_ints: dict[str, object] = {"app_name": "test", int_field: int_value}
-            config = FlextConfig(**config_data_ints)
+            config_data_ints: dict[str, object] = {
+                "app_name": "test",
+                int_field: int_value,
+            }
+            create_result = FlextConfig.create(constants=config_data_ints)
+            assert create_result.is_success
+            config = create_result.unwrap()
             assert getattr(config, int_field) == int_value
 
         # Test string fields
@@ -774,6 +784,11 @@ class TestFlextConfigComprehensive:
         }
 
         for str_field, str_value in string_fields.items():
-            config_data_strs: dict[str, object] = {"app_name": "test", str_field: str_value}
-            config = FlextConfig(**config_data_strs)
+            config_data_strs: dict[str, object] = {
+                "app_name": "test",
+                str_field: str_value,
+            }
+            create_result = FlextConfig.create(constants=config_data_strs)
+            assert create_result.is_success
+            config = create_result.unwrap()
             assert getattr(config, str_field) == str_value

@@ -148,8 +148,8 @@ class TestFlextResultUncoveredGaps:
 
     def test_hash_success_with_non_hashable_data(self) -> None:
         """Test FlextResult.__hash__ with successful result containing non-hashable data."""
-        non_hashable_data = {"key": "value", "nested": [1, 2, 3]}
-        result = FlextResult[dict].ok(non_hashable_data)
+        non_hashable_data: dict[str, object] = {"key": "value", "nested": [1, 2, 3]}
+        result = FlextResult[dict[str, object]].ok(non_hashable_data)
 
         # Should not raise exception and should return consistent hash
         hash_value = hash(result)
@@ -238,7 +238,7 @@ class TestFlextResultUncoveredGaps:
     def test_safe_call_with_complex_return_type(self) -> None:
         """Test FlextResult.safe_call with complex return type."""
 
-        def complex_func() -> dict[str, Any]:
+        def complex_func() -> dict[str, object]:
             return {"result": "complex", "data": [1, 2, 3]}
 
         result = FlextResult.safe_call(complex_func)
@@ -256,7 +256,10 @@ class TestFlextResultUncoveredGaps:
         assert result2.error_data == {}
 
         # Test with complex error data
-        error_data = {"context": {"user_id": 123}, "details": ["validation", "failed"]}
+        error_data: dict[str, object] = {
+            "context": {"user_id": 123},
+            "details": ["validation", "failed"],
+        }
         result3 = FlextResult[str].fail("error", error_data=error_data)
         assert result3.error_data == error_data
 
@@ -273,7 +276,7 @@ class TestFlextResultUncoveredGaps:
         assert result2.error_data == {"context": "test"}
 
         # Test with complex error data
-        error_data = {
+        error_data: dict[str, object] = {
             "timestamp": "2023-01-01",
             "source": "test",
             "tags": ["unit", "test"],
@@ -303,11 +306,13 @@ class TestFlextResultUncoveredGaps:
     def test_integration_with_flext_tests_matchers(self) -> None:
         """Test integration with FlextTestsMatchers for comprehensive validation."""
         # Test complex success case
-        success_result = FlextResult[dict].ok({"processed": True, "items": [1, 2, 3]})
+        success_result = FlextResult[dict[str, object]].ok(
+            {"processed": True, "items": [1, 2, 3]}
+        )
         FlextTestsMatchers.assert_result_success(success_result)
 
         # Test complex failure case
-        failure_result = FlextResult[dict].fail(
+        failure_result = FlextResult[dict[str, object]].fail(
             "Processing failed",
             error_code="PROC_001",
             error_data={"failed_items": [1, 3], "retries": 3},
