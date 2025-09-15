@@ -296,6 +296,7 @@ class TestFlextCommandsCoverageBoost:
         )
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Custom error" in result.error
 
     def test_factories_create_handlers_with_metadata(self) -> None:
@@ -338,12 +339,14 @@ class TestFlextCommandsCoverageBoost:
         invalid_cmd1 = ValidatingCommand(email="invalid-email", age=25)
         result2 = invalid_cmd1.validate_command()
         assert result2.is_failure
+        assert result2.error is not None
         assert "Invalid email" in result2.error
 
         # Invalid age
         invalid_cmd2 = ValidatingCommand(email="test@example.com", age=-5)
         result3 = invalid_cmd2.validate_command()
         assert result3.is_failure
+        assert result3.error is not None
         assert "Invalid age" in result3.error
 
     def test_query_validation_comprehensive(self) -> None:

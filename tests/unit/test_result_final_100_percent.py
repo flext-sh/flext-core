@@ -58,6 +58,7 @@ class TestFlextResultFinal100Percent:
 
         recovered = failure_result.recover_with(failing_recovery_func)
         assert recovered.is_failure
+        assert recovered.error is not None
         assert "Recovery failed for: original_error" in recovered.error
 
     def test_zip_operator_right_failure_coverage(self) -> None:
@@ -68,7 +69,9 @@ class TestFlextResultFinal100Percent:
         # Test right operand failure path (line 726)
         zipped = left_success & right_failure
         assert zipped.is_failure
-        assert "Right operand failed" in zipped.error or "right_error" in zipped.error
+        assert (
+            zipped.error is not None and "Right operand failed" in zipped.error
+        ) or (zipped.error is not None and "right_error" in zipped.error)
 
     def test_filter_predicate_exception_coverage(self) -> None:
         """Test filter method when predicate raises exception - line 746."""
@@ -81,6 +84,7 @@ class TestFlextResultFinal100Percent:
         # Test predicate exception path (line 746)
         filtered = result.filter(failing_predicate, "Should not matter")
         assert filtered.is_failure
+        assert filtered.error is not None
         assert "Predicate failed" in filtered.error
 
     def test_applicative_lift2_second_argument_failure(self) -> None:
@@ -95,6 +99,7 @@ class TestFlextResultFinal100Percent:
         # Test second argument failure path (line 805)
         result = FlextResult.applicative_lift2(add_func, success1, failure2)
         assert result.is_failure
+        assert result.error is not None
         assert (
             "Second argument failed" in result.error
             or "second_arg_error" in result.error

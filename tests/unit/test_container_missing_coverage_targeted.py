@@ -74,6 +74,7 @@ class TestFlextContainerMissingCoverageTargeted:
 
         validation_result = command.validate_command()
         FlextTestsMatchers.assert_result_failure(validation_result)
+        assert validation_result.error is not None
         assert "Factory must be callable" in validation_result.error
 
     def test_unregister_service_command_validation_empty_name(self) -> None:

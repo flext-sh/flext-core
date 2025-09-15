@@ -45,8 +45,8 @@ class TestDomainServiceExceptionCoverage:
                 msg = "Invalid business rule configuration"
                 raise ValueError(msg)
 
-        service = ValueErrorService()
-        result = service.is_valid()
+        value_error_service = ValueErrorService()
+        result = value_error_service.is_valid()
         assert result is False
 
         class TypeErrorService(FlextDomainService[str]):
@@ -59,8 +59,8 @@ class TestDomainServiceExceptionCoverage:
                 msg = "Type mismatch in business rules"
                 raise TypeError(msg)
 
-        service = TypeErrorService()
-        result = service.is_valid()
+        type_error_service = TypeErrorService()
+        result = type_error_service.is_valid()
         assert result is False
 
     def test_is_valid_exception_handling_with_system_errors(self) -> None:

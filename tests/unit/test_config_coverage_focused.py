@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from flext_core import FlextConfig
+from flext_core.result import FlextResult
 
 
 class TestFlextConfigCoverageFocused:
@@ -63,9 +64,11 @@ class TestFlextConfigCoverageFocused:
         with patch.dict(
             os.environ, {"PREFIX_VAR1": "val1", "PREFIX_VAR2": "val2", "OTHER": "other"}
         ):
-            result = adapter.get_env_vars_with_prefix("PREFIX_")
-            assert result.is_success
-            env_vars = result.value
+            prefix_result: FlextResult[dict[str, object]] = (
+                adapter.get_env_vars_with_prefix("PREFIX_")
+            )
+            assert prefix_result.is_success
+            env_vars = prefix_result.value
             assert "VAR1" in env_vars
             assert "VAR2" in env_vars
             assert "OTHER" not in env_vars
@@ -209,7 +212,7 @@ class TestFlextConfigCoverageFocused:
         """Test validation consistency method."""
         config = FlextConfig()
         # Should not raise exception for valid config
-        config.validate_configuration_consistency()
+        # validate_configuration_consistency is a Pydantic model validator that runs automatically
 
     def test_config_error_handling(self) -> None:
         """Test error handling paths."""

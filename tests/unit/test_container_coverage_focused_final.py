@@ -30,6 +30,7 @@ class TestFlextContainerCoverageFocused:
 
         validation_result = register_cmd.validate_command()
         FlextTestsMatchers.assert_result_failure(validation_result)
+        assert validation_result.error is not None
         assert "Factory must be callable" in validation_result.error
 
     def test_unregister_service_initialization_comprehensive(self) -> None:
@@ -106,6 +107,7 @@ class TestFlextContainerCoverageFocused:
         result = retriever.get_service("")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Service name cannot be empty" in result.error
 
     def test_service_retriever_get_service_info_comprehensive(self) -> None:

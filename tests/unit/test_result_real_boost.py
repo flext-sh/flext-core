@@ -105,33 +105,46 @@ class TestFlextResultRealBoost:
         assert filtered_already_fail.is_failure
         assert filtered_already_fail.error == "original error"
 
-    @pytest.mark.skip(
-        reason="tap_error tests don't verify side effects are actually executed"
-    )
     def test_result_error_mapping(self) -> None:
-        """Test map_error operations.
+        """Test error mapping operations with proper side effect verification."""
+        # Track side effects using a counter
+        error_handler_calls = []
 
-        TODO: Improve this test to:
-        - Verify that tap_error actually executes the side effect function
-        - Use a mock or counter to ensure the function was called
-        - Test with multiple error types and transformations
-        - Test error mapping chain operations
-        """
-        # Test tap_error with failure (tap_error expects None return)
+        def error_handler(error: str) -> None:
+            error_handler_calls.append(error)
+
+        # Test tap_error with failure - verify side effect is executed
         failure = FlextResult[int].fail("original")
-        mapped_error = failure.tap_error(
-            lambda _: None
-        )  # tap_error expects None return
+        mapped_error = failure.tap_error(error_handler)
+
+        # Verify the result is unchanged but side effect was executed
         assert mapped_error.is_failure
         assert mapped_error.error == "original"  # tap_error doesn't change the error
+        assert error_handler_calls == ["original"]  # Side effect was executed
 
-        # Test tap_error with success (should not change)
+        # Test tap_error with success - should not execute side effect
+        success_calls: list[str] = []
         success = FlextResult[int].ok(42)
-        mapped_error_success = success.tap_error(
-            lambda _: None
-        )  # tap_error expects None return
+        mapped_error_success = success.tap_error(success_calls.append)
+
         assert mapped_error_success.is_success
         assert mapped_error_success.unwrap() == 42
+        assert success_calls == []  # Side effect should NOT be executed for success
+
+        # Test error mapping chain operations
+        chain_calls = []
+
+        def chain_handler1(error: str) -> None:
+            chain_calls.append(f"handler1: {error}")
+
+        def chain_handler2(error: str) -> None:
+            chain_calls.append(f"handler2: {error}")
+
+        chained = failure.tap_error(chain_handler1).tap_error(chain_handler2)
+
+        assert chained.is_failure
+        assert chained.error == "original"
+        assert chain_calls == ["handler1: original", "handler2: original"]
 
     def test_result_boolean_operations(self) -> None:
         """Test boolean operations and properties."""

@@ -10,6 +10,7 @@ import os
 import threading
 import time
 from datetime import datetime
+from typing import Literal, cast
 from unittest.mock import MagicMock, patch
 
 from flext_core import FlextLogger
@@ -194,22 +195,35 @@ class TestFlextLoggingComprehensive:
         }
 
         sanitized = logger._sanitize_context(context)
+        assert isinstance(sanitized, dict)
+        sanitized_dict: dict[str, object] = sanitized
 
         # Check nested sanitization
-        assert sanitized["user_info"]["name"] == "John Doe"
-        assert sanitized["user_info"]["password"] == "[REDACTED]"
-        assert sanitized["user_info"]["profile"]["email"] == "john@example.com"
-        assert sanitized["user_info"]["profile"]["api_key"] == "[REDACTED]"
-        assert sanitized["user_info"]["profile"]["preferences"]["token"] == "[REDACTED]"
-        assert sanitized["user_info"]["profile"]["preferences"]["theme"] == "dark"
-        assert sanitized["metadata"]["timestamp"] == "2023-01-01T00:00:00Z"
-        assert sanitized["metadata"]["secret_config"] == "[REDACTED]"
+        user_info = sanitized_dict["user_info"]
+        assert isinstance(user_info, dict)
+        assert user_info["name"] == "John Doe"
+        assert user_info["password"] == "[REDACTED]"
+
+        profile = user_info["profile"]
+        assert isinstance(profile, dict)
+        assert profile["email"] == "john@example.com"
+        assert profile["api_key"] == "[REDACTED]"
+
+        preferences = profile["preferences"]
+        assert isinstance(preferences, dict)
+        assert preferences["token"] == "[REDACTED]"
+        assert preferences["theme"] == "dark"
+
+        metadata = sanitized_dict["metadata"]
+        assert isinstance(metadata, dict)
+        assert metadata["timestamp"] == "2023-01-01T00:00:00Z"
+        assert metadata["secret_config"] == "[REDACTED]"
 
     def test_sanitize_context_various_sensitive_key_patterns(self) -> None:
         """Test _sanitize_context recognizes various sensitive key patterns."""
         logger = FlextLogger("test_sanitize_patterns")
 
-        context = {
+        context: dict[str, object] = {
             "PASSWORD": "upper_secret",
             "my_secret_key": "contains_secret",
             "auth_token": "contains_token",
@@ -223,26 +237,28 @@ class TestFlextLoggingComprehensive:
         }
 
         sanitized = logger._sanitize_context(context)
+        assert isinstance(sanitized, dict)
+        sanitized_dict = sanitized
 
         # All sensitive keys should be redacted
-        assert sanitized["PASSWORD"] == "[REDACTED]"
-        assert sanitized["my_secret_key"] == "[REDACTED]"
-        assert sanitized["auth_token"] == "[REDACTED]"
-        assert sanitized["user_credential"] == "[REDACTED]"
-        assert sanitized["private_data"] == "[REDACTED]"
-        assert sanitized["session_cookie"] == "[REDACTED]"
-        assert sanitized["authorization_header"] == "[REDACTED]"
-        assert sanitized["access_key_id"] == "[REDACTED]"
-        assert sanitized["REFRESH_TOKEN"] == "[REDACTED]"
+        assert sanitized_dict["PASSWORD"] == "[REDACTED]"
+        assert sanitized_dict["my_secret_key"] == "[REDACTED]"
+        assert sanitized_dict["auth_token"] == "[REDACTED]"
+        assert sanitized_dict["user_credential"] == "[REDACTED]"
+        assert sanitized_dict["private_data"] == "[REDACTED]"
+        assert sanitized_dict["session_cookie"] == "[REDACTED]"
+        assert sanitized_dict["authorization_header"] == "[REDACTED]"
+        assert sanitized_dict["access_key_id"] == "[REDACTED]"
+        assert sanitized_dict["REFRESH_TOKEN"] == "[REDACTED]"
 
         # Normal field should not be redacted
-        assert sanitized["normal_field"] == "should_not_redact"
+        assert sanitized_dict["normal_field"] == "should_not_redact"
 
     def test_sanitize_context_empty_and_none_values(self) -> None:
         """Test _sanitize_context handles empty and None values."""
         logger = FlextLogger("test_sanitize_empty")
 
-        context = {
+        context: dict[str, object] = {
             "password": None,
             "secret": "",
             "normal_none": None,
@@ -252,14 +268,19 @@ class TestFlextLoggingComprehensive:
         }
 
         sanitized = logger._sanitize_context(context)
+        assert isinstance(sanitized, dict)
+        sanitized_dict: dict[str, object] = sanitized
 
-        assert sanitized["password"] == "[REDACTED]"
-        assert sanitized["secret"] == "[REDACTED]"
-        assert sanitized["normal_none"] is None
-        assert sanitized["normal_empty"] == ""
-        assert sanitized["nested_empty"] == {}
-        assert sanitized["nested_with_empty"]["password"] == "[REDACTED]"
-        assert sanitized["nested_with_empty"]["normal"] == "value"
+        assert sanitized_dict["password"] == "[REDACTED]"
+        assert sanitized_dict["secret"] == "[REDACTED]"
+        assert sanitized_dict["normal_none"] is None
+        assert sanitized_dict["normal_empty"] == ""
+        assert sanitized_dict["nested_empty"] == {}
+
+        nested_with_empty = sanitized_dict["nested_with_empty"]
+        assert isinstance(nested_with_empty, dict)
+        assert nested_with_empty["password"] == "[REDACTED]"
+        assert nested_with_empty["normal"] == "value"
 
     def test_build_log_entry_with_all_parameters(self) -> None:
         """Test _build_log_entry with all optional parameters."""
@@ -270,7 +291,10 @@ class TestFlextLoggingComprehensive:
         logger.set_request_context(**test_context)
 
         error = Exception("Test error")
-        entry_context = {"custom_field": "custom_value", "password": "secret"}
+        entry_context: dict[str, object] = {
+            "custom_field": "custom_value",
+            "password": "secret",
+        }
 
         entry = logger._build_log_entry(
             level="ERROR",
@@ -291,6 +315,7 @@ class TestFlextLoggingComprehensive:
         # Check that custom fields are present (might be in context subsection)
         if "context" in entry:
             context = entry["context"]
+            assert isinstance(context, dict)
             assert context["custom_field"] == "custom_value"
             assert context["password"] == "[REDACTED]"  # Should be sanitized
         else:
@@ -378,8 +403,8 @@ class TestFlextLoggingComprehensive:
         """Test set_context method stores context correctly."""
         logger = FlextLogger("test_set_context")
 
-        context_dict = {"key1": "value1", "key2": "value2"}
-        logger.set_context(**context_dict)
+        context_dict: dict[str, object] = {"key1": "value1", "key2": "value2"}
+        logger.set_context(context_dict)
 
         # Should be stored in permanent context (not persistent_context)
         assert hasattr(logger, "_permanent_context")
@@ -634,8 +659,11 @@ class TestFlextLoggingComprehensive:
     def test_init_level_validation_invalid_level(self) -> None:
         """Test __init__ validates log level and falls back to config default for invalid levels."""
         # Invalid levels don't raise - they fall back to config default
+
         logger = FlextLogger(
-            "test_invalid_level", level="INVALID_LEVEL", _force_new=True
+            "test_invalid_level",
+            level=cast("Literal['DEBUG']", "INVALID_LEVEL"),
+            _force_new=True,
         )
 
         # Should fall back to config default instead of raising
@@ -653,17 +681,28 @@ class TestFlextLoggingComprehensive:
         ]  # Remove TRACE - not in valid_levels
 
         for level in valid_levels:
-            logger = FlextLogger(f"test_{level.lower()}", level=level, _force_new=True)
+            logger = FlextLogger(
+                f"test_{level.lower()}",
+                level=cast(
+                    "Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']", level
+                ),
+                _force_new=True,
+            )
             assert logger._level == level
 
     def test_init_level_validation_case_insensitive(self) -> None:
         """Test __init__ handles case-insensitive level validation."""
         # Test lowercase
-        logger1 = FlextLogger("test_lower", level="debug", _force_new=True)
+
+        logger1 = FlextLogger(
+            "test_lower", level=cast("Literal['DEBUG']", "debug"), _force_new=True
+        )
         assert logger1._level == "DEBUG"
 
         # Test mixed case
-        logger2 = FlextLogger("test_mixed", level="WaRnInG", _force_new=True)
+        logger2 = FlextLogger(
+            "test_mixed", level=cast("Literal['WARNING']", "WaRnInG"), _force_new=True
+        )
         assert logger2._level == "WARNING"
 
     def test_exception_method_captures_exc_info(self) -> None:
@@ -715,8 +754,13 @@ class TestFlextLoggingComprehensive:
         for thread_id, data in results.items():
             # Note: correlation_id is instance-level, so it will be the last set value
             # But request_context and operations should be thread-local
-            assert data["request_context"]["thread_id"] == thread_id
-            assert data["operation_id"].startswith("op_")
+            request_context = data["request_context"]
+            assert isinstance(request_context, dict)
+            assert request_context["thread_id"] == thread_id
+
+            operation_id = data["operation_id"]
+            assert isinstance(operation_id, str)
+            assert operation_id.startswith("op_")
             assert len(data["operations"]) == 1
 
     def test_logging_methods_with_complex_context(self) -> None:
@@ -738,8 +782,8 @@ class TestFlextLoggingComprehensive:
         logger.debug("Debug message", **complex_context)
         logger.info("Info message", **complex_context)
         logger.warning("Warning message", **complex_context)
-        logger.error("Error message", **complex_context)
-        logger.critical("Critical message", **complex_context)
+        logger.error("Error message", error=None, **complex_context)
+        logger.critical("Critical message", error=None, **complex_context)
 
         # Should handle complex context without errors
 

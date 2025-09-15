@@ -28,7 +28,9 @@ class TestContainerApiCorrectedComprehensive:
         service_key = FlextContainer.ServiceKey[str]("")
         result = service_key.validate("")
         FlextTestsMatchers.assert_result_failure(result)
-        assert "empty" in result.error.lower() or "SERVICE_NAME_EMPTY" in result.error
+        assert (
+            result.error is not None and "empty" in result.error.lower()
+        ) or "SERVICE_NAME_EMPTY" in result.error
 
     def test_register_factory_command_validation_lines_422_423(self) -> None:
         """Test RegisterFactory command validation paths (lines 422-423)."""
@@ -36,7 +38,9 @@ class TestContainerApiCorrectedComprehensive:
         # Try to register with non-callable factory
         result = container.register_factory("test_factory", "not_callable")
         FlextTestsMatchers.assert_result_failure(result)
-        assert "callable" in result.error.lower() or "factory" in result.error.lower()
+        assert (
+            result.error is not None and "callable" in result.error.lower()
+        ) or "factory" in result.error.lower()
 
     def test_unregister_service_validation_lines_451_452(self) -> None:
         """Test UnregisterService validation paths (lines 451-452)."""
@@ -54,13 +58,16 @@ class TestContainerApiCorrectedComprehensive:
         container = FlextContainer.get_global()
         result = container.get("")
         FlextTestsMatchers.assert_result_failure(result)
-        assert "empty" in result.error.lower() or "name" in result.error.lower()
+        assert (
+            result.error is not None and "empty" in result.error.lower()
+        ) or "name" in result.error.lower()
 
     def test_get_service_info_not_found_line_555(self) -> None:
         """Test get_service_info for non-existent service (line 555)."""
         container = FlextContainer.get_global()
         result = container.get_info("non_existent_service_info")
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error is not None
         assert "not found" in result.error.lower()
 
     def test_configure_container_error_handling_lines_688_693(self) -> None:
@@ -183,7 +190,9 @@ class TestContainerApiCorrectedComprehensive:
         result = container.auto_wire(ServiceWithDependencies)
         # Should handle missing dependency gracefully
         FlextTestsMatchers.assert_result_failure(result)
-        assert "dependency" in result.error.lower() or "missing" in result.error.lower()
+        assert (
+            result.error is not None and "dependency" in result.error.lower()
+        ) or "missing" in result.error.lower()
 
     def test_auto_wire_instance_creation_error_line_1003(self) -> None:
         """Test auto_wire instance creation error (line 1003)."""
@@ -197,7 +206,9 @@ class TestContainerApiCorrectedComprehensive:
         result = container.auto_wire(FailingService)
         # Should handle instance creation failure
         FlextTestsMatchers.assert_result_failure(result)
-        assert "construction" in result.error.lower() or "error" in result.error.lower()
+        assert (
+            result.error is not None and "construction" in result.error.lower()
+        ) or "error" in result.error.lower()
 
     def test_get_global_typed_lines_1081_1082(self) -> None:
         """Test get_global_typed method (lines 1081-1082)."""

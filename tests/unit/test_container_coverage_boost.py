@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
 from unittest.mock import patch
 
 from flext_core import FlextContainer, FlextResult
@@ -53,12 +55,16 @@ class TestFlextContainerCoverageBoost:
                 FlextResult[None].fail("Registration failed"),  # Second fails
             ]
 
-            registrations = {"service1": "value1", "service2": "value2"}
+            registrations: dict[str, object] = {
+                "service1": "value1",
+                "service2": "value2",
+            }
             result = container.batch_register(registrations)
 
             # Should fail and trigger rollback
             assert result.is_failure
             assert result.error
+            assert result.error is not None
             assert "Batch registration failed" in result.error
 
     def test_get_typed_type_mismatch(self) -> None:
@@ -70,6 +76,7 @@ class TestFlextContainerCoverageBoost:
         result = container.get_typed("string_service", int)
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "is str, expected int" in result.error
 
     def test_get_typed_service_not_found(self) -> None:
@@ -79,6 +86,7 @@ class TestFlextContainerCoverageBoost:
         result = container.get_typed("nonexistent", str)
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "not found" in result.error
 
     def test_get_typed_success(self) -> None:
@@ -93,7 +101,7 @@ class TestFlextContainerCoverageBoost:
     def test_service_key_validate_method(self) -> None:
         """Test ServiceKey validate method - covers validation logic."""
         # Test empty string validation
-        key = FlextContainer.ServiceKey("")
+        key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("")
         result = key.validate("")
         assert result.is_failure
 
@@ -108,7 +116,7 @@ class TestFlextContainerCoverageBoost:
 
     def test_service_key_name_property(self) -> None:
         """Test ServiceKey name property."""
-        key = FlextContainer.ServiceKey("test_service")
+        key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("test_service")
         assert key.name == "test_service"
 
     def test_clear_method(self) -> None:
@@ -164,10 +172,16 @@ class TestFlextContainerCoverageBoost:
         """Test register_factory with invalid factory."""
         container = FlextContainer()
 
-        # Register non-callable as factory
-        result = container.register_factory("invalid_factory", "not_callable")
+        # Register non-callable as factory (should fail)
+
+        not_callable_str = "not_callable"
+
+        result = container.register_factory(
+            "invalid_factory", cast("Callable[[], object]", not_callable_str)
+        )
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Factory must be callable" in result.error
 
     def test_register_factory_with_parameters(self) -> None:
@@ -177,12 +191,16 @@ class TestFlextContainerCoverageBoost:
         def factory_with_params(param1: str, param2: int) -> str:
             return f"{param1}_{param2}"
 
-        # This should fail because factory requires parameters
-        result = container.register_factory("param_factory", factory_with_params)
+        # This should fail because factory requires parameters and cannot be called without them
+        result = container.register_factory(
+            "param_factory", cast("Callable[[], object]", factory_with_params)
+        )
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "requires" in result.error
         assert result.error
+        assert result.error is not None
         assert "parameter" in result.error
 
     def test_register_factory_success(self) -> None:
@@ -260,6 +278,7 @@ class TestFlextContainerCoverageBoost:
         result = cmd.validate_command()
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Factory must be callable" in result.error
 
         # Test with callable factory
@@ -293,7 +312,7 @@ class TestFlextContainerCoverageBoost:
         container = FlextContainer()
 
         # Create registrations dict that will cause an exception
-        problematic_registrations = {"service1": "value1"}
+        problematic_registrations: dict[str, object] = {"service1": "value1"}
 
         # Mock to throw an exception during processing
         with patch.object(
@@ -302,6 +321,7 @@ class TestFlextContainerCoverageBoost:
             result = container.batch_register(problematic_registrations)
             assert result.is_failure
             assert result.error
+            assert result.error is not None
             assert "Batch registration crashed" in result.error
 
     def test_auto_wire_basic_functionality(self) -> None:

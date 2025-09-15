@@ -67,3 +67,5 @@ __all__ = [
     "V",
     "__version__",
 ]
+
+# No test-time monkey patches: keep core semantics consistent.

@@ -64,6 +64,7 @@ class TestStandardizedExample:
 
         # Use actual error message from implementation
         assert result.error
+        assert result.error is not None
         assert "Type mismatch" in result.error
 
         # Test with valid data
@@ -137,6 +138,7 @@ class TestFixedValidationExample:
         result1 = FlextValidations.validate_user_data({})
         FlextTestsMatchers.assert_result_failure(result1)
         # Use the actual error message from implementation
+        assert result1.error is not None
         assert "Missing required field" in result1.error
 
         # Create proper test user using fixtures

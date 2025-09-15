@@ -52,7 +52,7 @@ class TestFlextValidations100Percent:
         # Test with string that can be converted to float
         result1 = FlextValidations.TypeValidators.validate_float("3.14")
         assert result1.is_success
-        assert result1.value == 3.14  # Compare with the actual expected value 3.14
+        assert result1.value == math.pi  # Compare with the actual expected value 3.14
 
         # Test with int that can be converted
         result2 = FlextValidations.TypeValidators.validate_float(42)
@@ -81,6 +81,7 @@ class TestFlextValidations100Percent:
         # Test with non-dict value
         result1 = FlextValidations.TypeValidators.validate_dict("not_a_dict")
         assert result1.is_failure
+        assert result1.error is not None
         assert "Type mismatch" in result1.error
 
         # Test with valid dict
@@ -93,6 +94,7 @@ class TestFlextValidations100Percent:
         # Test with non-list value
         result1 = FlextValidations.TypeValidators.validate_list("not_a_list")
         assert result1.is_failure
+        assert result1.error is not None
         assert "Type mismatch" in result1.error
 
         # Test with valid list
@@ -106,6 +108,7 @@ class TestFlextValidations100Percent:
         result = FlextValidations.FieldValidators.validate_phone("not-a-phone")
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Invalid phone number" in result.error
 
     def test_field_validators_validate_url_edge_cases(self) -> None:
@@ -120,6 +123,7 @@ class TestFlextValidations100Percent:
         result = FlextValidations.FieldValidators.validate_uuid("not-a-uuid")
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Invalid UUID" in result.error
 
     def test_business_validators_validate_string_field_edge_cases(self) -> None:
@@ -135,6 +139,7 @@ class TestFlextValidations100Percent:
             "", min_length=1
         )
         assert result2.is_failure
+        assert result2.error is not None
         assert "too short" in result2.error
 
         # Test with string too long
@@ -142,6 +147,7 @@ class TestFlextValidations100Percent:
             "very long string", max_length=5
         )
         assert result3.is_failure
+        assert result3.error is not None
         assert "too long" in result3.error
 
     def test_business_validators_validate_numeric_field_comprehensive(self) -> None:
@@ -158,7 +164,7 @@ class TestFlextValidations100Percent:
             "3.14", min_value=0.0, max_value=10.0
         )
         assert result2.is_success
-        assert result2.value == 3.14
+        assert result2.value == math.pi
 
         # Test with invalid conversion
         result3 = FlextValidations.BusinessValidators.validate_numeric_field(
@@ -171,6 +177,7 @@ class TestFlextValidations100Percent:
             -5, min_value=0, max_value=100
         )
         assert result4.is_failure
+        assert result4.error is not None
         assert "Value too small" in result4.error
 
         # Test with value above maximum
@@ -178,6 +185,7 @@ class TestFlextValidations100Percent:
             150, min_value=0, max_value=100
         )
         assert result5.is_failure
+        assert result5.error is not None
         assert "Value too large" in result5.error
 
         # Test with None value
@@ -200,6 +208,7 @@ class TestFlextValidations100Percent:
         # Test with weak password (too short)
         result1 = FlextValidations.BusinessValidators.validate_password_strength("123")
         assert result1.is_failure
+        assert result1.error is not None
         assert "at least 8 characters" in result1.error
 
         # Test with strong password
@@ -213,6 +222,7 @@ class TestFlextValidations100Percent:
         # Test with None value - returns FlextResult
         result_none = FlextValidations.Guards.require_not_none(None)
         assert result_none.is_failure
+        assert result_none.error is not None
         assert "Value cannot be None" in result_none.error
 
         # Test with valid value - returns FlextResult
@@ -225,11 +235,13 @@ class TestFlextValidations100Percent:
         # Test with negative value - returns FlextResult
         result_negative = FlextValidations.Guards.require_positive(-5)
         assert result_negative.is_failure
+        assert result_negative.error is not None
         assert "Value must be positive" in result_negative.error
 
         # Test with zero - returns FlextResult
         result_zero = FlextValidations.Guards.require_positive(0)
         assert result_zero.is_failure
+        assert result_zero.error is not None
         assert "Value must be positive" in result_zero.error
 
         # Test with positive value - returns FlextResult
@@ -242,11 +254,13 @@ class TestFlextValidations100Percent:
         # Test with value below range - returns FlextResult
         result_below = FlextValidations.Guards.require_in_range(-1, 0, 100)
         assert result_below.is_failure
+        assert result_below.error is not None
         assert "Value out of range" in result_below.error
 
         # Test with value above range - returns FlextResult
         result_above = FlextValidations.Guards.require_in_range(101, 0, 100)
         assert result_above.is_failure
+        assert result_above.error is not None
         assert "Value out of range" in result_above.error
 
         # Test with value in range - returns FlextResult
@@ -259,21 +273,25 @@ class TestFlextValidations100Percent:
         # Test with empty string - returns FlextResult
         result_empty_str = FlextValidations.Guards.require_non_empty("")
         assert result_empty_str.is_failure
+        assert result_empty_str.error is not None
         assert "Value cannot be empty" in result_empty_str.error
 
         # Test with empty list - returns FlextResult
         result_empty_list = FlextValidations.Guards.require_non_empty([])
         assert result_empty_list.is_failure
+        assert result_empty_list.error is not None
         assert "Value cannot be empty" in result_empty_list.error
 
         # Test with empty dict - returns FlextResult
         result_empty_dict = FlextValidations.Guards.require_non_empty({})
         assert result_empty_dict.is_failure
+        assert result_empty_dict.error is not None
         assert "Value cannot be empty" in result_empty_dict.error
 
         # Test with None - returns FlextResult
         result_none = FlextValidations.Guards.require_non_empty(None)
         assert result_none.is_failure
+        assert result_none.error is not None
         assert "Value cannot be empty" in result_none.error
 
         # Test with valid non-empty value - returns FlextResult
@@ -352,7 +370,7 @@ class TestFlextValidations100Percent:
                 return FlextResult[object].ok(value)
             return FlextResult[object].fail("Age must be a non-negative integer")
 
-        schema = {
+        schema: dict[str, object] = {
             "name": name_validator,
             "age": age_validator,
         }
@@ -360,6 +378,7 @@ class TestFlextValidations100Percent:
         # Test with invalid data (missing required field)
         result1 = FlextValidations.SchemaValidators.validate_schema({}, schema)
         assert result1.is_failure
+        assert result1.error is not None
         assert "Missing required field: name" in result1.error
 
         # Test with invalid data type
@@ -367,6 +386,7 @@ class TestFlextValidations100Percent:
             {"name": "John", "age": "not_number"}, schema
         )
         assert result2.is_failure
+        assert result2.error is not None
         assert "Age must be a non-negative integer" in result2.error
 
         # Test with valid data (only providing name, age is not required)
@@ -417,15 +437,15 @@ class TestFlextValidations100Percent:
     def test_create_composite_validator(self) -> None:
         """Test create_composite_validator function - lines 663-670."""
 
-        def validate_length(value: str) -> FlextResult[str]:
-            if len(value) < 3:
-                return FlextResult[str].fail("Too short")
-            return FlextResult[str].ok(value)
+        def validate_length(value: object) -> FlextResult[object]:
+            if not isinstance(value, str) or len(value) < 3:
+                return FlextResult[object].fail("Too short")
+            return FlextResult[object].ok(value)
 
-        def validate_alpha(value: str) -> FlextResult[str]:
-            if not value.isalpha():
-                return FlextResult[str].fail("Not alphabetic")
-            return FlextResult[str].ok(value)
+        def validate_alpha(value: object) -> FlextResult[object]:
+            if not isinstance(value, str) or not value.isalpha():
+                return FlextResult[object].fail("Not alphabetic")
+            return FlextResult[object].ok(value)
 
         composite = FlextValidations.create_composite_validator(
             [validate_length, validate_alpha]
@@ -438,23 +458,25 @@ class TestFlextValidations100Percent:
         # Test with invalid input (too short)
         result2 = composite("ab")
         assert result2.is_failure
+        assert result2.error is not None
         assert "Too short" in result2.error
 
         # Test with invalid input (not alpha)
         result3 = composite("abc123")
         assert result3.is_failure
+        assert result3.error is not None
         assert "Not alphabetic" in result3.error
 
     def test_create_cached_validator(self) -> None:
         """Test create_cached_validator function - line 694."""
         call_count = 0
 
-        def counting_validator(value: str) -> FlextResult[str]:
+        def counting_validator(value: object) -> FlextResult[object]:
             nonlocal call_count
             call_count += 1
-            if len(value) > 5:
-                return FlextResult[str].fail("Too long")
-            return FlextResult[str].ok(value)
+            if not isinstance(value, str) or len(value) > 5:
+                return FlextResult[object].fail("Too long")
+            return FlextResult[object].ok(value)
 
         cached_validator = FlextValidations.create_cached_validator(counting_validator)
 
@@ -486,7 +508,9 @@ class TestFlextValidations100Percent:
         def is_positive(value: object) -> bool:
             return isinstance(value, (int, float)) and value > 0
 
-        predicate = FlextValidations.Core.Predicates(is_positive, "positive_check")
+        predicate: FlextValidations.Core.Predicates = FlextValidations.Core.Predicates(
+            is_positive, "positive_check"
+        )
         predicate_result1 = predicate(42)
         assert predicate_result1.is_success is True
 
@@ -498,7 +522,7 @@ class TestFlextValidations100Percent:
         validator = FlextValidations.Service.ApiRequestValidator()
 
         # Test with valid API request data
-        valid_request = {
+        valid_request: dict[str, object] = {
             "method": "POST",
             "path": "/api/users",
             "headers": {"Content-Type": "application/json"},
@@ -516,10 +540,11 @@ class TestFlextValidations100Percent:
         # Test with missing required fields using proper assertion
         result1 = FlextValidations.validate_user_data({})
         FlextTestsMatchers.assert_result_failure(result1)
+        assert result1.error is not None
         assert "Missing required field: name" in result1.error
 
         # Test with valid user data using fixtures
-        valid_user_data = {
+        valid_user_data: dict[str, object] = {
             "name": "John Doe",
             "email": "john@example.com",
             "age": "25",  # Use string to match expected validation
@@ -528,11 +553,17 @@ class TestFlextValidations100Percent:
         FlextTestsMatchers.assert_result_success(result2)
 
         # Test with invalid email using proper error message
-        invalid_email_data = {"name": "John Doe", "email": "invalid-email", "age": "25"}
+        invalid_email_data: dict[str, object] = {
+            "name": "John Doe",
+            "email": "invalid-email",
+            "age": "25",
+        }
         result3 = FlextValidations.validate_user_data(invalid_email_data)
         FlextTestsMatchers.assert_result_failure(result3)
         # Check for actual error message returned by implementation
-        assert "Invalid email" in result3.error or "email" in result3.error.lower()
+        assert (result3.error is not None and "Invalid email" in result3.error) or (
+            result3.error is not None and "email" in result3.error.lower()
+        )
 
         # Test with invalid age (string that can't convert)
         result4 = FlextValidations.validate_user_data(
@@ -549,6 +580,7 @@ class TestFlextValidations100Percent:
             }
         )
         assert result5.is_failure
+        assert result5.error is not None
         assert "Age must be a string or number" in result5.error
 
         # Test with valid data (age as string to match API expectation)
@@ -562,6 +594,7 @@ class TestFlextValidations100Percent:
         # Test with missing required fields
         result1 = FlextValidations.validate_api_request({})
         assert result1.is_failure
+        assert result1.error is not None
         assert "Missing required field: method" in result1.error
 
         # Test with invalid method
@@ -569,6 +602,7 @@ class TestFlextValidations100Percent:
             {"method": "INVALID", "path": "/api/test"}
         )
         assert result2.is_failure
+        assert result2.error is not None
         assert "Invalid HTTP method" in result2.error
 
         # Test with invalid path
@@ -579,6 +613,7 @@ class TestFlextValidations100Percent:
             }
         )
         assert result3.is_failure
+        assert result3.error is not None
         assert "Path must start with" in result3.error
 
         # Test with valid request

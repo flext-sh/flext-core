@@ -190,6 +190,7 @@ class TestFlextConfigCoverageImprovement:
         # The result will likely be a failure since FLEXT_DEBUG isn't set
         if result.is_failure:
             assert result.error
+            assert result.error is not None
             assert "not found" in result.error
 
     def test_config_validation_edge_cases(self) -> None:

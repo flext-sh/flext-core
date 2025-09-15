@@ -172,6 +172,7 @@ class TestFlextProcessingHandlerRegistry:
 
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Handler execution failed:" in result.error
 
     def test_execute_nonexistent_handler(self) -> None:
@@ -180,6 +181,7 @@ class TestFlextProcessingHandlerRegistry:
 
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Handler 'nonexistent' not found" in result.error
 
     def test_count_handlers(self) -> None:
@@ -477,6 +479,7 @@ class TestFlextProcessingPatterns:
 
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Handler failed" in result.error
 
     def test_handler_chain_with_no_handlers(self) -> None:

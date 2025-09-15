@@ -8,6 +8,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import FlextResult
@@ -50,7 +52,8 @@ class TestFlextResultFinalCoverage:
         mapped = result.map(lambda x: x.upper())
         assert mapped.is_failure
         # Should get the default error from map operation
-        assert mapped.error is not None and "Map operation failed" in mapped.error
+        assert mapped.error is not None
+        assert "Map operation failed" in mapped.error
 
     def test_flat_map_internal_none_check(self) -> None:
         """Test flat_map method internal None data check path."""
@@ -162,20 +165,27 @@ class TestFlextResultFinalCoverage:
         # Both None should fail
         result1 = success_none.zip_with(success_none, lambda x, y: (x, y))
         assert result1.is_failure
-        assert result1.error is not None and "Missing data for zip operation" in result1.error
+        assert result1.error is not None
+        assert "Missing data for zip operation" in result1.error
 
         # One None should fail
         result2 = success_none.zip_with(success_value, lambda x, y: (x, y))
         assert result2.is_failure
-        assert result2.error is not None and "Missing data for zip operation" in result2.error
+        assert result2.error is not None
+        assert "Missing data for zip operation" in result2.error
 
     def test_combine_none_value_handling(self) -> None:
         """Test combine static method with None values."""
         none_result = FlextResult[None].ok(None)
         string_result = FlextResult[str].ok("test")
 
+        # Cast to FlextResult[object] for combine method
+
+        none_result_obj = cast("FlextResult[object]", none_result)
+        string_result_obj = cast("FlextResult[object]", string_result)
+
         # Combine should handle None values by not including them
-        combined = FlextResult.combine(string_result, none_result)
+        combined = FlextResult.combine(string_result_obj, none_result_obj)
         assert combined.is_success
         # None values are not included in the result based on implementation
         assert combined.value == ["test"]
@@ -186,7 +196,8 @@ class TestFlextResultFinalCoverage:
         result: FlextResult[object] = FlextResult.first_success()
         assert result.is_failure
         assert result.error
-        assert result.error is not None and "No successful results found" in result.error
+        assert result.error is not None
+        assert "No successful results found" in result.error
 
     def test_unwrap_or_raise_edge_cases(self) -> None:
         """Test unwrap_or_raise utility method edge cases."""
@@ -226,7 +237,8 @@ class TestFlextResultFinalCoverage:
 
         filtered = success % failing_predicate
         assert filtered.is_failure
-        assert filtered.error is not None and "Predicate evaluation failed" in filtered.error
+        assert filtered.error is not None
+        assert "Predicate evaluation failed" in filtered.error
 
     def test_traverse_empty_items(self) -> None:
         """Test traverse with empty items list."""
@@ -285,4 +297,5 @@ class TestFlextResultFinalCoverage:
         # Failure case
         result_failure = FlextResult.safe_call(failing_func)
         assert result_failure.is_failure
-        assert result_failure.error is not None and "Generic error" in result_failure.error
+        assert result_failure.error is not None
+        assert "Generic error" in result_failure.error
