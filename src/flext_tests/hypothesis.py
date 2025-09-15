@@ -341,7 +341,7 @@ class FlextTestsHypothesis:
                 "MI",
             ]
 
-            return st.builds(  # pyright: ignore[reportUnknownVariableType]
+            return st.builds(
                 dict,
                 street=st.builds(
                     FlextTestsHypothesis.BusinessDomainStrategies._build_street_address,

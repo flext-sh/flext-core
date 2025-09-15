@@ -527,7 +527,7 @@ class TestFlextConfigComprehensive100:
         assert cli_config.log_level == "ERROR"
 
         # Test creation with invalid environment
-        invalid_constants = {"environment": "invalid_environment"}
+        invalid_constants: dict[str, object] = {"environment": "invalid_environment"}
 
         invalid_result = FlextConfig.create(constants=invalid_constants)
         FlextTestsMatchers.assert_result_failure(
@@ -638,7 +638,7 @@ class TestFlextConfigComprehensive100:
         config2_dict = {"app_name": "override_config", "debug": True, "max_workers": 10}
 
         # Test safe_load (compatibility method - returns global instance)
-        safe_load_data = {"env": "test", "log_level": "DEBUG"}
+        safe_load_data: dict[str, object] = {"env": "test", "log_level": "DEBUG"}
         load_result = config1.safe_load(safe_load_data)
         FlextTestsMatchers.assert_result_success(load_result)
 

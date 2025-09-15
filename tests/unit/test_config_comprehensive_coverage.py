@@ -726,10 +726,10 @@ class TestFlextConfigComprehensive:
             "cache_enabled",
         ]
 
-        for field in bool_fields:
-            config_data: dict[str, object] = {"app_name": "test", field: True}
-            config = FlextConfig(**config_data)
-            assert getattr(config, field) is True
+        for bool_field in bool_fields:
+            config_data_bools: dict[str, object] = {"app_name": "test", bool_field: True}
+            config = FlextConfig(**config_data_bools)
+            assert getattr(config, bool_field) is True
 
         # Test integer fields with positive validation
         int_fields = {
@@ -750,10 +750,10 @@ class TestFlextConfigComprehensive:
             "max_cache_size": 1000,
         }
 
-        for field, value in int_fields.items():
-            config_data: dict[str, object] = {"app_name": "test", field: value}
-            config = FlextConfig(**config_data)
-            assert getattr(config, field) == value
+        for int_field, int_value in int_fields.items():
+            config_data_ints: dict[str, object] = {"app_name": "test", int_field: int_value}
+            config = FlextConfig(**config_data_ints)
+            assert getattr(config, int_field) == int_value
 
         # Test string fields
         string_fields = {
@@ -773,7 +773,7 @@ class TestFlextConfigComprehensive:
             "api_key": "test_api_key",
         }
 
-        for field, value in string_fields.items():
-            config_data: dict[str, object] = {"app_name": "test", field: value}
-            config = FlextConfig(**config_data)
-            assert getattr(config, field) == value
+        for str_field, str_value in string_fields.items():
+            config_data_strs: dict[str, object] = {"app_name": "test", str_field: str_value}
+            config = FlextConfig(**config_data_strs)
+            assert getattr(config, str_field) == str_value

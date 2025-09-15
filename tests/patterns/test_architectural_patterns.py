@@ -80,10 +80,10 @@ class TestCleanArchitecturePatterns:
                     CreateUserCommand,
                 )
 
-            def handle(self, request: object) -> FlextResult[object]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Handle user creation."""
                 if not isinstance(request, CreateUserCommand):
-                    return FlextResult[object].fail("Invalid command type")
+                    return FlextResult[str].fail("Invalid command type")
 
                 command = request
 
@@ -92,11 +92,11 @@ class TestCleanArchitecturePatterns:
                     email_obj = UserEmail.model_validate({"email": command.email})
                     email_validation = email_obj.validate_business_rules()
                     if email_validation.is_failure:
-                        return FlextResult[object].fail(
+                        return FlextResult[str].fail(
                             f"Email validation failed: {email_validation.error}",
                         )
                 except Exception as e:
-                    return FlextResult[object].fail(f"Email creation failed: {e}")
+                    return FlextResult[str].fail(f"Email creation failed: {e}")
 
                 # Create entity
                 user = User(
@@ -107,11 +107,11 @@ class TestCleanArchitecturePatterns:
                 user_result = user.validate_domain_rules()
 
                 if user_result.is_failure:
-                    return FlextResult[object].fail(
+                    return FlextResult[str].fail(
                         f"User validation failed: {user_result.error}",
                     )
 
-                return FlextResult[object].ok("User created successfully")
+                return FlextResult[str].ok("User created successfully")
 
         # Infrastructure Layer - Framework integration
         # Use FlextResult pattern for framework integration

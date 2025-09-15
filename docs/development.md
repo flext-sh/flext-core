@@ -22,7 +22,7 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('Development environment ready')"
+PYTHONPATH=src python -c "from flext_core import FlextResult; print('Development environment ready')"
 ```
 
 ## Development Workflow

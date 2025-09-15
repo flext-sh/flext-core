@@ -6,6 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
+
 import pytest
 
 from flext_core import FlextCommands, FlextResult
@@ -18,7 +21,9 @@ class TestAbstractMethodCoverage:
     def test_command_handler_abstract_handle_method(self) -> None:
         """Test CommandHandler abstract handle method (lines 260-261)."""
         # Create handler without implementing handle method
-        handler = FlextCommands.Handlers.CommandHandler()
+        handler: FlextCommands.Handlers.CommandHandler[object, object] = (
+            FlextCommands.Handlers.CommandHandler()
+        )
 
         with pytest.raises(
             NotImplementedError, match="Subclasses must implement handle method"
@@ -28,7 +33,9 @@ class TestAbstractMethodCoverage:
     def test_query_handler_abstract_handle_method(self) -> None:
         """Test QueryHandler abstract handle method (lines 449-450)."""
         # Create handler without implementing handle method
-        handler = FlextCommands.Handlers.QueryHandler()
+        handler: FlextCommands.Handlers.QueryHandler[object, object] = (
+            FlextCommands.Handlers.QueryHandler()
+        )
 
         with pytest.raises(
             NotImplementedError, match="Subclasses must implement handle method"
@@ -101,13 +108,13 @@ class TestBusUnregisterEdgeCasesFinal:
             _ = cmd  # Acknowledge parameter usage
             return "handled"
 
-        # Manually add to handlers dict with object key
-        bus._handlers[key_obj] = handler
+        handlers = cast("dict[object, Callable[[object], str]]", bus._handlers)
+        handlers[key_obj] = handler
 
         # Try to unregister - should match by str() comparison (lines 842-845)
         result = bus.unregister_handler("KeyWithoutName")
         assert result is True
-        assert key_obj not in bus._handlers
+        assert str(key_obj) not in bus._handlers
 
 
 class TestBusExecutionEdgeCasesRemaining:
@@ -115,7 +122,7 @@ class TestBusExecutionEdgeCasesRemaining:
 
     def test_bus_execute_metrics_disabled_no_cache(self) -> None:
         """Test Bus execute when metrics are disabled (lines 598-603)."""
-        config = {"enable_metrics": False}  # Disable metrics
+        config: dict[str, object] = {"enable_metrics": False}  # Disable metrics
         bus = FlextCommands.Bus(bus_config=config)
 
         class TestQuery:
@@ -205,7 +212,9 @@ class TestCommandsIntegrationFinal:
         result = bus.execute(command)
 
         FlextTestsMatchers.assert_result_success(result)
-        assert "Handled: integration_test" in result.unwrap()
+        value = result.unwrap()
+        assert isinstance(value, str)
+        assert "Handled: integration_test" in value
 
         # Test factories
         FlextCommands.Factories.create_simple_handler(lambda cmd: f"Factory: {cmd}")
@@ -223,5 +232,5 @@ class TestCommandsIntegrationFinal:
         def decorated_handler(cmd: CustomCommand) -> str:
             return f"Decorated: {cmd.name}"
 
-        result = decorated_handler(command)
-        assert "Decorated: integration_test" in result
+        result_str = decorated_handler(command)
+        assert "Decorated: integration_test" in result_str

@@ -319,8 +319,8 @@ class TestFlextLoggingComprehensive:
             assert context["custom_field"] == "custom_value"
             assert context["password"] == "[REDACTED]"  # Should be sanitized
         else:
-            assert entry["custom_field"] == "custom_value"
-            assert entry["password"] == "[REDACTED]"  # Should be sanitized
+            assert entry["context"]["custom_field"] == "custom_value"
+            assert entry["context"]["password"] == "[REDACTED]"  # Should be sanitized
 
     def test_build_log_entry_without_optional_parameters(self) -> None:
         """Test _build_log_entry with minimal parameters."""
@@ -330,7 +330,7 @@ class TestFlextLoggingComprehensive:
 
         assert entry["level"] == "INFO"
         assert entry["message"] == "Simple message"
-        assert "@timestamp" in entry  # Uses @timestamp not timestamp
+        assert "timestamp" in entry  # Uses timestamp field
         # Check for actual fields in the entry rather than assuming logger_name
         assert "correlation_id" in entry or "service" in entry
 

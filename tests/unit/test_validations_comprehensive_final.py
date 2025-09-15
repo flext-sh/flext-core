@@ -413,8 +413,10 @@ class TestFlextValidationsComprehensive:
             data, TestModel
         )
         FlextTestsMatchers.assert_result_success(result)
-        assert result.value.name == "John"
-        assert result.value.age == 30
+        assert isinstance(result.value, TestModel)
+        test_model = result.value
+        assert test_model.name == "John"
+        assert test_model.age == 30
 
     def test_schema_validators_validate_with_pydantic_schema_failure(self) -> None:
         """Test SchemaValidators.validate_with_pydantic_schema failure case."""
@@ -423,7 +425,7 @@ class TestFlextValidationsComprehensive:
             name: str
             age: int
 
-        data = {"name": "John"}  # Missing age
+        data: dict[str, object] = {"name": "John"}  # Missing age
         result = FlextValidations.SchemaValidators.validate_with_pydantic_schema(
             data, TestModel
         )
@@ -455,7 +457,7 @@ class TestFlextValidationsComprehensive:
             if isinstance(x, int)
             else FlextResult[int].fail("Must be int"),
         }
-        data = {"name": "John"}  # Missing age
+        data: dict[str, object] = {"name": "John"}  # Missing age
         result = FlextValidations.SchemaValidators.validate_schema(data, schema)
         FlextTestsMatchers.assert_result_failure(result)
 
@@ -490,14 +492,18 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_user_data_success(self) -> None:
         """Test validate_user_data success case."""
-        user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+        user_data: dict[str, object] = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+        }
         result = FlextValidations.validate_user_data(user_data)
         FlextTestsMatchers.assert_result_success(result)
         assert result.value == user_data
 
     def test_validate_user_data_missing_required_field(self) -> None:
         """Test validate_user_data missing required field."""
-        user_data = {"name": "John Doe"}  # Missing email (required)
+        user_data: dict[str, object] = {"name": "John Doe"}  # Missing email (required)
         result = FlextValidations.validate_user_data(user_data)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
@@ -506,7 +512,7 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_user_data_invalid_email_no_at(self) -> None:
         """Test validate_user_data with invalid email (no @)."""
-        user_data = {
+        user_data: dict[str, object] = {
             "name": "John Doe",
             "email": "johnexample.com",  # No @
             "age": 30,
@@ -516,7 +522,7 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_user_data_invalid_email_no_domain_dot(self) -> None:
         """Test validate_user_data with invalid email (no domain dot)."""
-        user_data = {
+        user_data: dict[str, object] = {
             "name": "John Doe",
             "email": "john@example",  # No dot in domain
             "age": 30,
@@ -526,13 +532,17 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_user_data_age_negative(self) -> None:
         """Test validate_user_data with negative age."""
-        user_data = {"name": "John Doe", "email": "john@example.com", "age": -5}
+        user_data: dict[str, object] = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": -5,
+        }
         result = FlextValidations.validate_user_data(user_data)
         FlextTestsMatchers.assert_result_failure(result)
 
     def test_validate_user_data_age_too_old(self) -> None:
         """Test validate_user_data with age too old."""
-        user_data = {
+        user_data: dict[str, object] = {
             "name": "John Doe",
             "email": "john@example.com",
             "age": 151,  # Above MAX_REASONABLE_AGE (150)
@@ -542,13 +552,17 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_user_data_age_invalid_type(self) -> None:
         """Test validate_user_data with invalid age type."""
-        user_data = {"name": "John Doe", "email": "john@example.com", "age": "thirty"}
+        user_data: dict[str, object] = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": "thirty",
+        }
         result = FlextValidations.validate_user_data(user_data)
         FlextTestsMatchers.assert_result_failure(result)
 
     def test_validate_user_data_age_invalid_string(self) -> None:
         """Test validate_user_data with age as invalid string."""
-        user_data = {
+        user_data: dict[str, object] = {
             "name": "John Doe",
             "email": "john@example.com",
             "age": "not_a_number",
@@ -558,7 +572,7 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_api_request_success(self) -> None:
         """Test validate_api_request success case."""
-        request_data = {
+        request_data: dict[str, object] = {
             "method": "GET",
             "path": "/api/users",
             "headers": {"Content-Type": "application/json"},
@@ -569,19 +583,23 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_api_request_missing_required_field(self) -> None:
         """Test validate_api_request missing required field."""
-        request_data = {"method": "GET"}  # Missing path
+        request_data: dict[str, object] = {"method": "GET"}  # Missing path
         result = FlextValidations.validate_api_request(request_data)
         FlextTestsMatchers.assert_result_failure(result)
 
     def test_validate_api_request_invalid_method(self) -> None:
         """Test validate_api_request with invalid method."""
-        request_data = {"method": "INVALID", "path": "/api/users", "headers": {}}
+        request_data: dict[str, object] = {
+            "method": "INVALID",
+            "path": "/api/users",
+            "headers": {},
+        }
         result = FlextValidations.validate_api_request(request_data)
         FlextTestsMatchers.assert_result_failure(result)
 
     def test_validate_api_request_invalid_path_format(self) -> None:
         """Test validate_api_request with invalid path format."""
-        request_data = {
+        request_data: dict[str, object] = {
             "method": "GET",
             "path": "invalid_path",  # Should start with /
             "headers": {},
@@ -623,8 +641,15 @@ class TestFlextValidationsComprehensive:
         def validator1(x: object) -> FlextResult[object]:
             return FlextValidations.Guards.require_not_none(x)
 
-        def validator2(x: object) -> FlextResult[str]:
-            return FlextValidations.TypeValidators.validate_string(x)
+        def validator2(x: object) -> FlextResult[object]:
+            if isinstance(x, str):
+                result = FlextValidations.TypeValidators.validate_string(x)
+                if result.is_success:
+                    return FlextResult[object].ok(x)
+                return FlextResult[object].fail(
+                    result.error or "String validation failed"
+                )
+            return FlextResult[object].fail("Expected string for validation")
 
         composite = FlextValidations.create_composite_validator(
             [validator1, validator2]
@@ -639,8 +664,15 @@ class TestFlextValidationsComprehensive:
         def validator1(x: object) -> FlextResult[object]:
             return FlextValidations.Guards.require_not_none(x)
 
-        def validator2(x: object) -> FlextResult[str]:
-            return FlextValidations.TypeValidators.validate_string(x)
+        def validator2(x: object) -> FlextResult[object]:
+            if isinstance(x, str):
+                result = FlextValidations.TypeValidators.validate_string(x)
+                if result.is_success:
+                    return FlextResult[object].ok(x)
+                return FlextResult[object].fail(
+                    result.error or "String validation failed"
+                )
+            return FlextResult[object].fail("Expected string for validation")
 
         composite = FlextValidations.create_composite_validator(
             [validator1, validator2]
@@ -654,8 +686,15 @@ class TestFlextValidationsComprehensive:
         def validator1(x: object) -> FlextResult[object]:
             return FlextValidations.Guards.require_not_none(x)
 
-        def validator2(x: object) -> FlextResult[str]:
-            return FlextValidations.TypeValidators.validate_string(x)
+        def validator2(x: object) -> FlextResult[object]:
+            if isinstance(x, str):
+                result = FlextValidations.TypeValidators.validate_string(x)
+                if result.is_success:
+                    return FlextResult[object].ok(x)
+                return FlextResult[object].fail(
+                    result.error or "String validation failed"
+                )
+            return FlextResult[object].fail("Expected string for validation")
 
         composite = FlextValidations.create_composite_validator(
             [validator1, validator2]
@@ -665,11 +704,13 @@ class TestFlextValidationsComprehensive:
 
     def test_create_schema_validator_function(self) -> None:
         """Test create_schema_validator function with validator functions."""
-        schema = {
-            "name": lambda x: FlextResult[str].ok(str(x))
-            if isinstance(x, str)
-            else FlextResult[str].fail("Must be string")
-        }
+
+        def validate_name(x: object) -> FlextResult[object]:
+            if isinstance(x, str):
+                return FlextResult[object].ok(x)
+            return FlextResult[object].fail("Must be string")
+
+        schema = {"name": validate_name}
         validator = FlextValidations.create_schema_validator(schema)
         result = validator({"name": "John"})
         FlextTestsMatchers.assert_result_success(result)
@@ -679,7 +720,7 @@ class TestFlextValidationsComprehensive:
         """Test create_cached_validator caches results properly."""
         call_count = 0
 
-        def slow_validator(value: object) -> bool:
+        def slow_validator(value: object) -> FlextResult[object]:
             nonlocal call_count
             call_count += 1
             return FlextValidations.Guards.require_not_none(value)
@@ -699,7 +740,11 @@ class TestFlextValidationsComprehensive:
     def test_create_user_validator_function(self) -> None:
         """Test create_user_validator function."""
         validator = FlextValidations.create_user_validator()
-        user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+        user_data: dict[str, object] = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+        }
         result = validator(user_data)
         FlextTestsMatchers.assert_result_success(result)
         assert result.value == user_data
@@ -717,22 +762,26 @@ class TestFlextValidationsComprehensive:
 
     def test_validate_with_schema_success(self) -> None:
         """Test validate_with_schema success case using validator functions."""
-        schema = {
-            "value": lambda x: FlextResult[str].ok(str(x))
-            if isinstance(x, str)
-            else FlextResult[str].fail("Must be string")
-        }
+
+        def validate_value(x: object) -> FlextResult[object]:
+            if isinstance(x, str):
+                return FlextResult[object].ok(x)
+            return FlextResult[object].fail("Must be string")
+
+        schema = {"value": validate_value}
         result = FlextValidations.validate_with_schema({"value": "test"}, schema)
         FlextTestsMatchers.assert_result_success(result)
         assert result.value == {"value": "test"}
 
     def test_validate_with_schema_failure(self) -> None:
         """Test validate_with_schema failure case."""
-        schema = {
-            "value": lambda x: FlextResult[str].ok(str(x))
-            if isinstance(x, str)
-            else FlextResult[str].fail("Must be string")
-        }
+
+        def validate_value(x: object) -> FlextResult[object]:
+            if isinstance(x, str):
+                return FlextResult[object].ok(x)
+            return FlextResult[object].fail("Must be string")
+
+        schema = {"value": validate_value}
         result = FlextValidations.validate_with_schema({"value": 123}, schema)
         FlextTestsMatchers.assert_result_failure(result)
 
@@ -801,7 +850,7 @@ class TestFlextValidationsComprehensive:
     def test_predicates_class_call_exception(self) -> None:
         """Test Predicates class __call__ with exception handling."""
 
-        def error_func(_x: object) -> None:
+        def error_func(_x: object) -> bool:
             msg = "Test error"
             raise ValueError(msg)
 
@@ -841,7 +890,11 @@ class TestFlextValidationsComprehensive:
     def test_service_api_request_validator_exists(self) -> None:
         """Test that service API request validator functionality exists."""
         # Test that the validate_api_request method exists and can be called
-        request_data = {"method": "GET", "path": "/api/test", "headers": {}}
+        request_data: dict[str, object] = {
+            "method": "GET",
+            "path": "/api/test",
+            "headers": {},
+        }
         result = FlextValidations.validate_api_request(request_data)
         # Should return a FlextResult
         assert hasattr(result, "is_success") or hasattr(result, "success")

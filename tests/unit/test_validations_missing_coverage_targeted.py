@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 from decimal import Decimal
 
-from flext_core.validations import FlextValidations
+from flext_core import FlextValidations
 from flext_tests import FlextTestsMatchers
 
 
@@ -96,9 +96,9 @@ class TestFlextValidationsMissingCoverageTargeted:
 
         # Test with scientific notation
         sci_notation = "1.5e10"
-        result = FlextValidations.TypeValidators.validate_float(sci_notation)
-        FlextTestsMatchers.assert_result_success(result)
-        assert result.value == 1.5e10
+        float_result = FlextValidations.TypeValidators.validate_float(sci_notation)
+        FlextTestsMatchers.assert_result_success(float_result)
+        assert float_result.value == 1.5e10
 
     def test_guards_type_checking_edge_cases(self) -> None:
         """Test Guards type checking edge cases (line 178)."""
@@ -247,7 +247,7 @@ class TestFlextValidationsMissingCoverageTargeted:
         # Test predicate functions with edge cases
 
         # Test with various data types
-        test_values = [
+        test_values: list[object] = [
             None,
             0,
             "",
@@ -260,13 +260,25 @@ class TestFlextValidationsMissingCoverageTargeted:
 
         for value in test_values:
             # Test predicates that might hit missing lines
-            if hasattr(FlextValidations.Predicates, "is_empty"):
-                result = FlextValidations.Predicates.is_empty(value)
-                assert isinstance(result, bool)
+            # Test predicates using the class constructor
+            def is_empty_predicate(x: object) -> bool:
+                return x == "" or x is None
 
-            if hasattr(FlextValidations.Predicates, "is_truthy"):
-                result = FlextValidations.Predicates.is_truthy(value)
-                assert isinstance(result, bool)
+            def is_truthy_predicate(x: object) -> bool:
+                return bool(x)
+
+            empty_predicate = FlextValidations.Predicates(
+                is_empty_predicate, "is_empty"
+            )
+            truthy_predicate = FlextValidations.Predicates(
+                is_truthy_predicate, "is_truthy"
+            )
+
+            result = empty_predicate(value)
+            assert hasattr(result, "is_success") or hasattr(result, "success")
+
+            result = truthy_predicate(value)
+            assert hasattr(result, "is_success") or hasattr(result, "success")
 
     def test_core_validation_patterns(self) -> None:
         """Test Core validation patterns (lines 814, 835, 837)."""
@@ -385,12 +397,22 @@ class TestFlextValidationsMissingCoverageTargeted:
             # Verify type checking works correctly
             assert isinstance(test_value, expected_type)
 
-            # Test type validation if available
-            if hasattr(FlextValidations.TypeValidators, "validate_type"):
-                result = FlextValidations.TypeValidators.validate_type(
-                    test_value, expected_type
+            # Test type validation using available methods
+            if isinstance(test_value, str):
+                result = FlextValidations.TypeValidators.validate_string(test_value)
+                assert hasattr(result, "is_success") or hasattr(result, "success")
+            elif isinstance(test_value, int):
+                result = FlextValidations.TypeValidators.validate_integer(test_value)
+                assert hasattr(result, "is_success") or hasattr(result, "success")
+            elif isinstance(test_value, float):
+                result = FlextValidations.TypeValidators.validate_float(test_value)
+                assert hasattr(result, "is_success") or hasattr(result, "success")
+            elif isinstance(test_value, bool):
+                # Use validate_string for boolean values since validate_boolean doesn't exist
+                result = FlextValidations.TypeValidators.validate_string(
+                    str(test_value)
                 )
-                assert hasattr(result, "is_success")
+                assert hasattr(result, "is_success") or hasattr(result, "success")
 
     def test_decimal_and_numeric_edge_cases(self) -> None:
         """Test Decimal and other numeric edge cases."""
