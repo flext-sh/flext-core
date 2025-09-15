@@ -31,7 +31,6 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "structlog>=25.4.0",
     "typing-extensions>=4.12.0",
-    "ecdsa (>=0.19.1,<0.20.0)",
 ]
 keywords = [
     "clean-architecture",
@@ -91,12 +90,16 @@ typings = [
 security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
 
 [tool.poetry]
-packages = [{ include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
+packages = [{ include = "flext_auth", from = "src" }, { include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
 
 [tool.poetry.group.typings.dependencies]
 types-pygments = ">=2.19.0.20250715"
 types-colorama = ">=0.4.15.20240311"
 types-pexpect = ">=4.9.0.20250516"
+
+
+[tool.poetry.group.dev.dependencies]
+types-pyyaml = "^6.0.12.20250822"
 
 [tool.bandit]
 extend = "../.bandit-shared.toml"
@@ -178,7 +181,7 @@ platform = "linux"
 # Package structure
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = ["src", "typings"]
+mypy_path = ["src", "tests"]
 files = ["src"]
 
 # Plugins
@@ -218,6 +221,10 @@ disable_error_code = ["import-untyped", "no-any-unimported", "attr-defined"]
 [[tool.mypy.overrides]]
 module = "tests.patterns.test_advanced_patterns"
 disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = ".vulture_whitelist"
+ignore_errors = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -276,4 +283,8 @@ extend = "../ruff-shared.toml"
 lint.isort.known-first-party = ["flext_core", "flext_tests"]
 
 [tool.vulture]
-extend = "../.vulture-shared.toml"
+exclude = [
+    "src/flext_core/protocols.py",  # Protocol definitions with intentional unused parameters
+]
+min_confidence = 80
+paths = ["src/"]

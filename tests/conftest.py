@@ -2,11 +2,15 @@
 
 Provides centralized fixtures, test utilities, and configuration for all flext-core tests
 using the consolidated tests/support/ infrastructure for maximum testing efficiency.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import math
+import os
 import shutil
 import tempfile
 from collections.abc import Generator
@@ -15,33 +19,13 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextContainer, FlextCore
-from flext_tests import (
-    APITestClient,
-    AsyncTestUtils,
-    BenchmarkUtils,
-    ConfigFactory,
-    FailingUserRepository,
-    FlextMatchers,
-    FlextResultFactory,
-    HTTPTestUtils,
-    InMemoryUserRepository,
-    MemoryProfiler,
-    PayloadDataFactory,
-    PerformanceProfiler,
-    RealAuditService,
-    RealEmailService,
-    ServiceDataFactory,
-    SimpleConfigurationFactory,
-    TestBuilders,
-    UserDataFactory,
-    UserFactory,
-)
+from flext_core import FlextConfig, FlextContainer, FlextCore, FlextLogger, FlextTypes
+from flext_tests import FlextTestsAsyncs
 
 
 # Core Fixtures
 @pytest.fixture
-def test_scenario() -> dict[str, str]:
+def test_scenario() -> FlextTypes.Core.Headers:
     """Basic test scenario fixture."""
     return {"status": "test", "environment": "test"}
 
@@ -64,7 +48,7 @@ def clean_container() -> Generator[FlextContainer]:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, object]:
+def sample_data() -> FlextTypes.Core.Dict:
     """Provide deterministic sample data for tests.
 
     Enterprise-grade test data factory providing consistent, typed sample data
@@ -88,7 +72,7 @@ def sample_data() -> dict[str, object]:
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
+def test_user_data() -> dict[str, str | int | bool | FlextTypes.Core.StringList | None]:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns
@@ -194,7 +178,7 @@ def performance_threshold() -> dict[str, float]:
 
 
 @pytest.fixture
-def benchmark_data() -> dict[str, object]:
+def benchmark_data() -> FlextTypes.Core.Dict:
     """Provide standardized data for performance testing.
 
     Benchmark data factory for testing performance characteristics
@@ -215,52 +199,49 @@ def benchmark_data() -> dict[str, object]:
     }
 
 
-# Factory Fixtures - using consolidated tests/support
-@pytest.fixture
-def user_factory() -> type[UserDataFactory]:
-    """User data factory fixture (simple dict-based)."""
-    return UserDataFactory
+# Factory Fixtures - COMMENTED OUT: Use FlextTestsMatchers directly instead of aliases
+# @pytest.fixture
+# def user_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
+#
+# @pytest.fixture
+# def advanced_user_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
+#
+# @pytest.fixture
+# def config_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
 
 
-@pytest.fixture
-def advanced_user_factory() -> type[UserFactory]:
-    """Advanced user factory fixture (factory-boy with Pydantic)."""
-    return UserFactory
-
-
-@pytest.fixture
-def config_factory() -> type[SimpleConfigurationFactory]:
-    """Configuration factory fixture."""
-    return SimpleConfigurationFactory
-
-
-@pytest.fixture
-def advanced_config_factory() -> type[ConfigFactory]:
-    """Advanced configuration factory fixture (factory-boy)."""
-    return ConfigFactory
-
-
-@pytest.fixture
-def result_factory() -> type[FlextResultFactory]:
-    """FlextResult factory fixture."""
-    return FlextResultFactory
-
-
-@pytest.fixture
-def service_factory() -> type[ServiceDataFactory]:
-    """Service data factory fixture."""
-    return ServiceDataFactory
-
-
-@pytest.fixture
-def payload_factory() -> type[PayloadDataFactory]:
-    """Payload factory fixture."""
-    return PayloadDataFactory
+# COMMENTED OUT: Use FlextTestsMatchers directly instead of aliases
+# @pytest.fixture
+# def advanced_config_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
+#
+# @pytest.fixture
+# def result_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
+#
+# @pytest.fixture
+# def service_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
+#
+# @pytest.fixture
+# def payload_factory() -> type:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers
 
 
 # -----------------------------------------------------------------------------
 # Test isolation for FlextCore singleton state
 # -----------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _isolate_flext_core_state() -> None:
@@ -269,63 +250,92 @@ def _isolate_flext_core_state() -> None:
     Prevents cross-test leakage of database/security/logging configs that could
     make property-default tests flaky or order-dependent.
     """
-    core = FlextCore.get_instance()
-    core._specialized_configs.pop("database_config", None)
-    core._specialized_configs.pop("security_config", None)
-    core._specialized_configs.pop("logging_config", None)
+    # FlextCore was simplified - no longer has _specialized_configs
+    # Just reset the singleton instance
+    FlextCore.reset_instance()
+
+
+@pytest.fixture
+def logging_test_env() -> Generator[None]:
+    """Set up test environment for logging tests.
+
+    Ensures logging tests get consistent log level by temporarily overriding
+    the FLEXT_LOG_LEVEL environment variable to WARNING as expected by tests.
+    """
+    # Save original value
+    original_log_level = os.environ.get("FLEXT_LOG_LEVEL")
+
+    try:
+        # Clear both config and logger singleton states
+        FlextConfig.clear_global_instance()
+
+        # Reset logger singleton state
+        FlextLogger._configured = False
+        FlextLogger._instances.clear()
+
+        # Set the expected log level for logging tests
+        os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
+        yield
+    finally:
+        # Clear both singleton states again and restore original value
+        FlextConfig.clear_global_instance()
+        FlextLogger._configured = False
+        FlextLogger._instances.clear()
+
+        if original_log_level is not None:
+            os.environ["FLEXT_LOG_LEVEL"] = original_log_level
+        elif "FLEXT_LOG_LEVEL" in os.environ:
+            del os.environ["FLEXT_LOG_LEVEL"]
 
 
 # Performance Testing Fixtures
-@pytest.fixture
-def benchmark_utils() -> BenchmarkUtils:
-    """Benchmark utilities for performance tests."""
-    return BenchmarkUtils()
+# COMMENTED OUT: Use FlextTestsMatchers directly
+# @pytest.fixture
+# COMMENTED OUT: # def benchmark_utils() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
 
 
-@pytest.fixture
-def memory_profiler() -> MemoryProfiler:
-    """Memory profiler for memory usage tests."""
-    return MemoryProfiler()
-
-
-@pytest.fixture
-def performance_profiler() -> PerformanceProfiler:
-    """Performance profiler for comprehensive profiling."""
-    return PerformanceProfiler()
+# COMMENTED OUT: Use FlextTestsMatchers directly
+# @pytest.fixture
+# COMMENTED OUT: # def memory_profiler() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
+#
+# @pytest.fixture
+# COMMENTED OUT: # def performance_profiler() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
 
 
 # HTTP Testing Fixtures
+# COMMENTED OUT: Use FlextTestsMatchers directly
+# @pytest.fixture
+# COMMENTED OUT: # def http_test_utils() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
+#
+# @pytest.fixture
+# COMMENTED OUT: # def api_test_client() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
+#
 @pytest.fixture
-def http_test_utils() -> HTTPTestUtils:
-    """HTTP testing utilities."""
-    return HTTPTestUtils()
+def async_test_utils() -> FlextTestsAsyncs:
+    """Provide async test utilities."""
+    return FlextTestsAsyncs()
 
 
-@pytest.fixture
-def api_test_client() -> APITestClient:
-    """API test client for HTTP testing."""
-    return APITestClient()
-
-
-# Async Testing Fixtures
-@pytest.fixture
-def async_test_utils() -> AsyncTestUtils:
-    """Async testing utilities."""
-    return AsyncTestUtils()
-
-
-# Builder Fixtures
-@pytest.fixture
-def test_builders() -> TestBuilders:
-    """Test builders for complex object creation."""
-    return TestBuilders()
-
-
-# Matcher Fixtures
-@pytest.fixture
-def flext_matchers() -> FlextMatchers:
-    """Advanced assertion matchers."""
-    return FlextMatchers()
+#
+# @pytest.fixture
+# COMMENTED OUT: # def test_builders() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
+#
+# @pytest.fixture
+# COMMENTED OUT: # def flext_matchers() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
 
 
 # Shared test configuration
@@ -337,52 +347,35 @@ def setup_test_environment() -> None:
     # object global test teardown can go here
 
 
-# =============================================================================
-# FUNCTIONAL TESTING FIXTURES - Real implementations without mocks
-# =============================================================================
+# COMMENTED OUT: Use FlextTestsMatchers directly
+# @pytest.fixture
+# COMMENTED OUT: # def user_repository() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
 
 
-@pytest.fixture
-def user_repository() -> InMemoryUserRepository:
-    """Provide clean in-memory user repository for functional testing."""
-    return InMemoryUserRepository()
+# COMMENTED OUT: Use FlextTestsMatchers directly
+# @pytest.fixture
+# def email_service() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
+#
+# @pytest.fixture
+# def audit_service() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
+#
+# @pytest.fixture
+# def failing_repository() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
 
 
-@pytest.fixture
-def email_service() -> RealEmailService:
-    """Provide real email service for functional testing."""
-    return RealEmailService()
-
-
-@pytest.fixture
-def audit_service() -> RealAuditService:
-    """Provide real audit service for functional testing."""
-    return RealAuditService()
-
-
-@pytest.fixture
-def failing_repository() -> FailingUserRepository:
-    """Provide failing repository for error scenario testing."""
-    return FailingUserRepository()
-
-
-@pytest.fixture
-def real_services(
-    user_repository: InMemoryUserRepository,
-    email_service: RealEmailService,
-    audit_service: RealAuditService,
-) -> dict[str, InMemoryUserRepository | RealEmailService | RealAuditService]:
-    """Provide complete set of real services for integration testing."""
-    return {
-        "user_repository": user_repository,
-        "email_service": email_service,
-        "audit_service": audit_service,
-    }
-
-
-# =============================================================================
-# PYTEST CONFIGURATION
-# =============================================================================
+# COMMENTED OUT: Use FlextTestsMatchers directly
+# @pytest.fixture
+# def real_services() -> FlextTestsMatchers:
+#     """Use FlextTestsMatchers directly."""
+#     return FlextTestsMatchers()
 
 
 # Mark configuration

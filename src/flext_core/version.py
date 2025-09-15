@@ -1,7 +1,7 @@
 """Version management and compatibility tracking.
 
-Provides version information, compatibility checks, and semantic
-versioning support for the FLEXT ecosystem.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from typing import ClassVar, NamedTuple
@@ -9,18 +9,8 @@ from typing import ClassVar, NamedTuple
 __version__: str = "0.9.0"
 
 
-# =============================================================================
-# VERSION UTILITIES - Programmatic version handling and compatibility
-# =============================================================================
-
-
 class FlextVersionManager:
-    """Single consolidated class for all version management functionality.
-
-    Consolidates ALL version-related classes and operations into one class
-    following FLEXT patterns. Provides version information, compatibility
-    checking, and utility functions.
-    """
+    """Single consolidated class for all version management functionality."""
 
     # Version constants consolidated within the class
     VERSION_MAJOR: int = 0
@@ -42,7 +32,7 @@ class FlextVersionManager:
         "dependency_injection": True,
         "domain_driven_design": True,
         "railway_programming": True,
-        "enterprise_logging": True,
+        "structured_logging": True,
         "performance_tracking": True,
         "decorators": True,
         "type_safety": True,
@@ -53,7 +43,7 @@ class FlextVersionManager:
     }
 
     class VersionInfo(NamedTuple):
-        """Structured version information nested inside consolidated class."""
+        """Structured version information."""
 
         major: int
         minor: int
@@ -63,7 +53,7 @@ class FlextVersionManager:
         build_type: str
 
     class CompatibilityResult:
-        """Result of Python version compatibility check."""
+        """Python version compatibility check result."""
 
         def __init__(
             self,
@@ -74,6 +64,7 @@ class FlextVersionManager:
             error_message: str,
             recommendations: list[str],
         ) -> None:
+            """Initialize compatibility result."""
             self.is_compatible = is_compatible
             self.current_version = current_version
             self.required_version = required_version
@@ -134,9 +125,11 @@ class FlextVersionManager:
         return 0
 
     @staticmethod
-    def validate_version_format(version: str) -> bool:
+    def validate_version_format(version: object) -> bool:
         """Validate a semantic version string format."""
         try:
+            if not isinstance(version, str):
+                return False
             parts = version.split(".")
             if len(parts) != FlextVersionManager.SEMVER_PARTS_COUNT:
                 return False

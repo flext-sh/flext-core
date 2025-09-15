@@ -1,4 +1,8 @@
-"""Extended tests for FlextCommands to achieve higher coverage."""
+"""Extended tests for FlextCommands to achieve higher coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,10 +10,12 @@ import asyncio
 from datetime import UTC, datetime
 
 import pytest
+from pydantic import Field
 
 from flext_core import (
     FlextCommands,
     FlextResult,
+    FlextTypes,
 )
 
 
@@ -18,15 +24,23 @@ class ExtendedTestCommand(FlextCommands.Models.Command):
 
     name: str
     value: int = 0
-    metadata: dict[str, object] | None = None
+    # Override metadata to allow more flexible types
+    metadata: FlextTypes.Core.Headers = Field(
+        default_factory=dict, description="Command metadata"
+    )
 
-    def validate_command(self) -> FlextResult[None]:
+    # Additional flexible metadata field
+    extra_data: FlextTypes.Core.Dict | None = Field(
+        default=None, description="Additional command data"
+    )
+
+    def validate_command(self) -> FlextResult[bool]:
         """Validate the command."""
         if not self.name:
-            return FlextResult[None].fail("Name is required")
+            return FlextResult[bool].fail("Name is required")
         if self.value < 0:
-            return FlextResult[None].fail("Value must be non-negative")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Value must be non-negative")
+        return FlextResult[bool].ok(True)
 
     def execute(self) -> FlextResult[str]:
         """Execute the command."""
@@ -37,16 +51,24 @@ class ExtendedQuery(FlextCommands.Models.Query):
     """Extended query with additional features."""
 
     search_term: str
-    filters: dict[str, object] | None = None
+    # Override filters to allow None
+    filters: FlextTypes.Core.Dict = Field(
+        default_factory=dict, description="Query filters"
+    )
+
+    # Additional flexible filters field
+    custom_filters: FlextTypes.Core.Dict | None = Field(
+        default=None, description="Custom query filters"
+    )
     limit: int = 10
 
-    def validate_query(self) -> FlextResult[None]:
+    def validate_query(self) -> FlextResult[bool]:
         """Validate the query."""
         if not self.search_term:
-            return FlextResult[None].fail("Search term required")
+            return FlextResult[bool].fail("Search term required")
         if self.limit <= 0:
-            return FlextResult[None].fail("Limit must be positive")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Limit must be positive")
+        return FlextResult[bool].ok(True)
 
 
 class TestCommandBusExtended:
@@ -78,13 +100,13 @@ class TestCommandBusExtended:
         bus.register_handler(handler2)
 
         # Test with command that should be handled by handler1
-        cmd1 = ExtendedTestCommand(name="test1", value=25)
+        cmd1 = ExtendedTestCommand(command_type="test", name="test1", value=25)
         result1 = bus.execute(cmd1)
         assert result1.success
         assert "Handler1" in str(result1.value) or "test1" in str(result1.value)
 
         # Test with command that should be handled by handler2
-        cmd2 = ExtendedTestCommand(name="test2", value=75)
+        cmd2 = ExtendedTestCommand(command_type="test", name="test2", value=75)
         result2 = bus.execute(cmd2)
         assert result2.success
         assert "Handler2" in str(result2.value) or "test2" in str(result2.value)
@@ -94,7 +116,7 @@ class TestCommandBusExtended:
         bus = FlextCommands.Bus()
 
         # Command with no registered handler
-        cmd = ExtendedTestCommand(name="unhandled", value=0)
+        cmd = ExtendedTestCommand(command_type="test", name="unhandled", value=0)
         result = bus.execute(cmd)
 
         # Should return failure when no handler found
@@ -106,15 +128,26 @@ class TestCommandValidation:
 
     def test_command_with_metadata(self) -> None:
         """Test command with metadata."""
-        metadata: dict[str, object] = {
+        metadata: FlextTypes.Core.Headers = {
             "user_id": "123",
             "timestamp": datetime.now(UTC).isoformat(),
         }
-        cmd = ExtendedTestCommand(name="test", value=42, metadata=metadata)
+        extra_data: FlextTypes.Core.Dict = {
+            "complex_data": {"nested": "value"},
+            "number": 42,
+        }
+        cmd = ExtendedTestCommand(
+            command_type="test",
+            name="test",
+            value=42,
+            metadata=metadata,
+            extra_data=extra_data,
+        )
 
         assert cmd.metadata == metadata
         assert cmd.metadata is not None
         assert cmd.metadata["user_id"] == "123"
+        assert cmd.extra_data == extra_data
 
         # Test validation still works
         result = cmd.validate_command()
@@ -123,20 +156,20 @@ class TestCommandValidation:
     def test_invalid_command_validation(self) -> None:
         """Test invalid command validation."""
         # Empty name
-        cmd1 = ExtendedTestCommand(name="", value=10)
+        cmd1 = ExtendedTestCommand(command_type="test", name="", value=10)
         result1 = cmd1.validate_command()
         assert result1.is_failure
         assert "Name is required" in (result1.error or "")
 
         # Negative value
-        cmd2 = ExtendedTestCommand(name="test", value=-5)
+        cmd2 = ExtendedTestCommand(command_type="test", name="test", value=-5)
         result2 = cmd2.validate_command()
         assert result2.is_failure
         assert "Value must be non-negative" in (result2.error or "")
 
     def test_command_execution(self) -> None:
         """Test command execution method."""
-        cmd = ExtendedTestCommand(name="execute_test", value=100)
+        cmd = ExtendedTestCommand(command_type="test", name="execute_test", value=100)
         result = cmd.execute()
 
         assert result.success
@@ -149,11 +182,13 @@ class TestQueryHandling:
 
     def test_query_with_filters(self) -> None:
         """Test query with filter parameters."""
-        filters: dict[str, object] = {
+        filters: FlextTypes.Core.Dict = {
             "category": "electronics",
             "price_range": [100, 500],
         }
-        query = ExtendedQuery(search_term="laptop", filters=filters, limit=20)
+        query = ExtendedQuery(
+            query_type="search", search_term="laptop", filters=filters, limit=20
+        )
 
         assert query.filters == filters
         assert query.filters is not None
@@ -167,13 +202,13 @@ class TestQueryHandling:
     def test_invalid_query_validation(self) -> None:
         """Test invalid query validation."""
         # Empty search term
-        query1 = ExtendedQuery(search_term="", limit=10)
+        query1 = ExtendedQuery(query_type="search", search_term="", limit=10)
         result1 = query1.validate_query()
         assert result1.is_failure
         assert "Search term required" in (result1.error or "")
 
         # Invalid limit
-        query2 = ExtendedQuery(search_term="test", limit=0)
+        query2 = ExtendedQuery(query_type="search", search_term="test", limit=0)
         result2 = query2.validate_query()
         assert result2.is_failure
         assert "Limit must be positive" in (result2.error or "")
@@ -182,12 +217,14 @@ class TestQueryHandling:
         """Test query handler execution."""
 
         class SearchHandler(
-            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[dict[str, object]]],
+            FlextCommands.Handlers.QueryHandler[
+                ExtendedQuery, list[FlextTypes.Core.Dict]
+            ],
         ):
             def handle(
                 self,
                 query: ExtendedQuery,
-            ) -> FlextResult[list[dict[str, object]]]:
+            ) -> FlextResult[list[FlextTypes.Core.Dict]]:
                 # Simulate search results
                 results = [
                     {
@@ -197,13 +234,13 @@ class TestQueryHandling:
                     }
                     for i in range(min(query.limit, 5))
                 ]
-                return FlextResult[list[dict[str, object]]].ok(results)
+                return FlextResult[list[FlextTypes.Core.Dict]].ok(results)
 
             def can_handle(self, query: object) -> bool:
                 return isinstance(query, ExtendedQuery)
 
         handler = SearchHandler()
-        query = ExtendedQuery(search_term="product", limit=3)
+        query = ExtendedQuery(query_type="search", search_term="product", limit=3)
 
         result = handler.handle(query)
         assert result.success
@@ -216,7 +253,7 @@ class TestCommandSerialization:
 
     def test_command_serialization(self) -> None:
         """Test command to dict and JSON serialization."""
-        cmd = ExtendedTestCommand(name="serialize", value=42)
+        cmd = ExtendedTestCommand(command_type="test", name="serialize", value=42)
 
         # Test model_dump
         data = cmd.model_dump()
@@ -232,7 +269,7 @@ class TestCommandSerialization:
 
     def test_query_serialization(self) -> None:
         """Test query serialization."""
-        query = ExtendedQuery(search_term="test", limit=5)
+        query = ExtendedQuery(query_type="test", search_term="test", limit=5)
 
         # Test model_dump
         data = query.model_dump()
@@ -252,9 +289,9 @@ class TestCommandChaining:
     def test_command_chaining(self) -> None:
         """Test chaining multiple commands."""
         # Create a chain of commands
-        cmd1 = ExtendedTestCommand(name="step1", value=10)
-        cmd2 = ExtendedTestCommand(name="step2", value=20)
-        cmd3 = ExtendedTestCommand(name="step3", value=30)
+        cmd1 = ExtendedTestCommand(command_type="test", name="step1", value=10)
+        cmd2 = ExtendedTestCommand(command_type="test", name="step2", value=20)
+        cmd3 = ExtendedTestCommand(command_type="test", name="step3", value=30)
 
         # Execute chain
         results = []
@@ -272,7 +309,7 @@ class TestCommandChaining:
 
     def test_conditional_command_execution(self) -> None:
         """Test conditional command execution."""
-        cmd = ExtendedTestCommand(name="conditional", value=50)
+        cmd = ExtendedTestCommand(command_type="test", name="conditional", value=50)
 
         # Only execute if value is above threshold
         threshold = 40
@@ -298,7 +335,7 @@ class TestAsyncCommandPatterns:
                 await asyncio.sleep(0.01)  # Simulate async work
                 return FlextResult[str].ok(f"Async executed: {self.name}")
 
-        cmd = AsyncCommand(name="async_test", value=100)
+        cmd = AsyncCommand(command_type="async", name="async_test", value=100)
         result = await cmd.execute_async()
 
         assert result.success
@@ -309,17 +346,21 @@ class TestAsyncCommandPatterns:
         """Test async query handler."""
 
         class AsyncQueryHandler(
-            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[str]],
+            FlextCommands.Handlers.QueryHandler[
+                ExtendedQuery, FlextTypes.Core.StringList
+            ],
         ):
             async def handle_async(
                 self,
                 query: ExtendedQuery,
-            ) -> FlextResult[list[str]]:
+            ) -> FlextResult[FlextTypes.Core.StringList]:
                 await asyncio.sleep(0.01)  # Simulate async work
                 results = [f"Async result {i}" for i in range(query.limit)]
-                return FlextResult[list[str]].ok(results)
+                return FlextResult[FlextTypes.Core.StringList].ok(results)
 
-            def handle(self, query: ExtendedQuery) -> FlextResult[list[str]]:
+            def handle(
+                self, query: ExtendedQuery
+            ) -> FlextResult[FlextTypes.Core.StringList]:
                 # Sync wrapper
                 loop = asyncio.get_event_loop()
                 return loop.run_until_complete(self.handle_async(query))
@@ -328,7 +369,7 @@ class TestAsyncCommandPatterns:
                 return isinstance(query, ExtendedQuery)
 
         handler = AsyncQueryHandler()
-        query = ExtendedQuery(search_term="async", limit=3)
+        query = ExtendedQuery(query_type="async_search", search_term="async", limit=3)
 
         result = await handler.handle_async(query)
         assert result.success
@@ -357,7 +398,7 @@ class TestCommandMiddleware:
                 return FlextResult[object].ok("Processed")
 
         middleware = LoggingMiddleware()
-        cmd = ExtendedTestCommand(name="logged_command", value=50)
+        cmd = ExtendedTestCommand(command_type="test", name="logged_command", value=50)
 
         # Process through middleware
         result = middleware.process(cmd, None)
@@ -388,13 +429,13 @@ class TestCommandMiddleware:
         middleware = ValidationMiddleware()
 
         # Test with valid command
-        valid_cmd = ExtendedTestCommand(name="valid", value=10)
+        valid_cmd = ExtendedTestCommand(command_type="test", name="valid", value=10)
         result = middleware.process(valid_cmd, None)
         assert result.success
         assert result.value == "Valid and processed"
 
         # Test with invalid command
-        invalid_cmd = ExtendedTestCommand(name="", value=10)
+        invalid_cmd = ExtendedTestCommand(command_type="test", name="", value=10)
         result = middleware.process(invalid_cmd, None)
         assert result.is_failure
         assert "Validation failed" in (result.error or "")
@@ -418,7 +459,7 @@ class TestCommandRetry:
 
                 return FlextResult[str].ok(f"Success after {attempt_count} attempts")
 
-        cmd = RetryableCommand(name="retry_test", value=10)
+        cmd = RetryableCommand(command_type="retry", name="retry_test", value=10)
 
         # Execute with retry logic
         result = None
@@ -439,7 +480,8 @@ class TestCommandAggregation:
     def test_batch_command_execution(self) -> None:
         """Test batch execution of multiple commands."""
         commands = [
-            ExtendedTestCommand(name=f"batch_{i}", value=i * 10) for i in range(5)
+            ExtendedTestCommand(command_type="test", name=f"batch_{i}", value=i * 10)
+            for i in range(5)
         ]
 
         # Execute batch
@@ -455,9 +497,9 @@ class TestCommandAggregation:
     def test_aggregate_command_results(self) -> None:
         """Test aggregating results from multiple commands."""
         commands = [
-            ExtendedTestCommand(name="sum", value=10),
-            ExtendedTestCommand(name="sum", value=20),
-            ExtendedTestCommand(name="sum", value=30),
+            ExtendedTestCommand(command_type="test", name="sum", value=10),
+            ExtendedTestCommand(command_type="test", name="sum", value=20),
+            ExtendedTestCommand(command_type="test", name="sum", value=30),
         ]
 
         # Execute and aggregate

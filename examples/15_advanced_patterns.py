@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """FLEXT Core - Advanced Examples.
 
-Advanced patterns and enterprise scenarios using FLEXT Core.
-This module demonstrates advanced usage patterns and can be run independently
+Complex patterns and production scenarios using FLEXT Core.
+This module demonstrates complex usage patterns and can be run independently
 when flext_core is properly installed.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,40 +15,27 @@ import contextlib
 import sys
 from decimal import Decimal
 
-from pydantic import ConfigDict
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextContext,
-    FlextMixins,
     FlextResult,
+    FlextTypes,
 )
 
-# =============================================================================
-# TYPE ALIASES - For better type safety
-# =============================================================================
+OrderData = FlextTypes.Core.Dict
+ItemData = FlextTypes.Core.Dict
 
-OrderData = dict[str, object]
-ItemData = dict[str, object]
-
-
-# =============================================================================
-# VALIDATION CONSTANTS - Domain rule constraints
-# =============================================================================
 
 MAX_ORDER_ITEMS = 100
 MIN_ORDER_VALUE = Decimal("0.01")
 MAX_ORDER_VALUE = Decimal("100000.00")
 
 
-# =============================================================================
-# CONFIGURATION - Enterprise settings with validation
-# =============================================================================
-
-
 class AdvancedExamplesConfig(FlextConfig):
-    """Configuration for advanced examples with enterprise validation."""
+    """Configuration for complex examples with business validation."""
 
     # Service configuration
     service_name: str = "flext-advanced-examples"
@@ -64,8 +51,8 @@ class AdvancedExamplesConfig(FlextConfig):
     require_email_verification: bool = True
     password_complexity_required: bool = True
 
-    model_config = ConfigDict(
-        extra="forbid",
+    model_config = SettingsConfigDict(
+        extra="allow",
         str_strip_whitespace=True,
         validate_assignment=True,
         use_enum_values=True,
@@ -87,17 +74,11 @@ class AdvancedExamplesConfig(FlextConfig):
         return FlextResult[None].ok(None)
 
 
-# =============================================================================
-# BUSINESS LOGIC - Order processing with validation
-# =============================================================================
-
-
-class OrderProcessor(FlextMixins.Entity):
-    """Advanced order processing with comprehensive validation and error handling."""
+class OrderProcessor:
+    """Order processing with validation and error handling."""
 
     def __init__(self, config: AdvancedExamplesConfig) -> None:
         """Initialize order processor with configuration."""
-        super().__init__()
         self._config = config
         self.container = FlextContainer()
         self.context = FlextContext()
@@ -108,7 +89,7 @@ class OrderProcessor(FlextMixins.Entity):
         user_id: str,
         items_data: list[ItemData],
     ) -> FlextResult[OrderData]:
-        """Create and validate order with comprehensive business rules."""
+        """Create and validate order with business rules."""
         return (
             self._validate_items_count(items_data)
             .flat_map(lambda _: self._process_all_items(items_data))
@@ -207,7 +188,7 @@ class OrderProcessor(FlextMixins.Entity):
     def _validate_required_fields(
         self,
         item_data: ItemData,
-        fields: list[str],
+        fields: FlextTypes.Core.StringList,
     ) -> FlextResult[ItemData]:
         """Validate required fields exist."""
         for field in fields:
@@ -242,13 +223,8 @@ class OrderProcessor(FlextMixins.Entity):
             return FlextResult[ItemData].fail(f"Invalid item data: {e}")
 
 
-# =============================================================================
-# DEMONSTRATION FUNCTIONS - Example usage patterns
-# =============================================================================
-
-
 def demonstrate_order_processing() -> FlextResult[None]:
-    """Demonstrate advanced order processing with error handling."""
+    """Demonstrate order processing with error handling."""
     print("Starting order processing demonstration")
 
     try:
@@ -339,13 +315,8 @@ def demonstrate_configuration_validation() -> FlextResult[None]:
         return FlextResult[None].fail(error_msg)
 
 
-# =============================================================================
-# MAIN EXECUTION - Comprehensive demonstration
-# =============================================================================
-
-
 def main() -> int:
-    """Main execution function with comprehensive error handling."""
+    """Main execution function with error handling."""
     print("Starting FLEXT Core Advanced Examples")
 
     try:

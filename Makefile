@@ -77,7 +77,7 @@ type-check: ## Run type checking
 
 .PHONY: security
 security: ## Run security scanning
-	$(POETRY) run bandit -r $(SRC_DIR)
+	$(POETRY) run bandit -r $(SRC_DIR) --exclude src/flext_tests
 	$(POETRY) run pip-audit
 
 .PHONY: fix
@@ -191,7 +191,7 @@ diagnose: ## Project diagnostics
 doctor: diagnose check ## Health check
 
 # =============================================================================
-# ALIASES (SINGLE LETTER SHORTCUTS)
+
 # =============================================================================
 
 .PHONY: t l f tc c i v

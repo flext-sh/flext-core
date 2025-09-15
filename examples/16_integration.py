@@ -15,15 +15,12 @@ from typing import cast
 
 from flext_core import (
     FlextContainer,
-    FlextFields,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextTypes,
+    FlextValidations,
 )
-
-# =============================================================================
-# VALIDATION CONSTANTS - Integration example constraints using FlextTypes
-# =============================================================================
 
 # Email validation constants using proper FlextTypes annotations
 MIN_EMAIL_LENGTH: int = 5  # Minimum characters for basic email validation
@@ -34,6 +31,7 @@ class Money:
     """Simple money value object for demonstration."""
 
     def __init__(self, amount: Decimal, currency: str) -> None:
+        """Initialize money with amount and currency."""
         self.amount = amount
         self.currency = currency
 
@@ -49,15 +47,15 @@ class Order:
         self,
         order_id: str,
         customer_id: str,
-        items: list[dict[str, object]],
+        items: list[FlextTypes.Core.Dict],
     ) -> None:
+        """Initialize order with ID, customer, and items."""
         self.id = order_id
         self.customer_id = customer_id
         self.items = items
 
     def calculate_total(self) -> FlextResult[Money]:
         """Calculate order total."""
-        # Simple calculation for demo
         total = Decimal(0)
         for item in self.items:
             price = item.get("price", 0)
@@ -76,6 +74,7 @@ class User:
     """Simple user class for demonstration."""
 
     def __init__(self, user_id: str, name: str, email: str) -> None:
+        """Initialize user with ID, name, and email."""
         self.id = user_id
         self.name = name
         self.email = email
@@ -96,7 +95,12 @@ def _setup_logger() -> FlextLogger:
 
 
 def _shared_domain_vo_demo() -> tuple[FlextModels.EmailAddress, Money]:
-    email = FlextModels.EmailAddress(root="customer@example.com")
+    email_result = FlextModels.EmailAddress.create("customer@example.com")
+    if email_result.is_failure:
+        error_msg = f"Invalid email: {email_result.error}"
+        raise ValueError(error_msg)
+    # After checking is_failure, we know data is not None
+    email = cast("FlextModels.EmailAddress", email_result.data)
     money = Money(amount=Decimal("100.0"), currency="USD")
     return email, money
 
@@ -104,7 +108,7 @@ def _shared_domain_vo_demo() -> tuple[FlextModels.EmailAddress, Money]:
 def _create_customer(
     email: FlextModels.EmailAddress,
 ) -> FlextResult[User]:
-    user = User(user_id="customer_123", name="John Customer", email=str(email.root))
+    user = User(user_id="customer_123", name="John Customer", email=email.value)
     return FlextResult[User].ok(user)
 
 
@@ -123,9 +127,9 @@ def _create_order(customer_id: str, money: Money) -> FlextResult[Order]:
         },
     ]
     # Add price for calculate_total method
-    order_items_with_price: list[dict[str, object]] = []
+    order_items_with_price: list[FlextTypes.Core.Dict] = []
     for item in order_items:
-        item_copy: dict[str, object] = {
+        item_copy: FlextTypes.Core.Dict = {
             "product_id": item["product_id"],
             "product_name": item["product_name"],
             "quantity": item["quantity"],
@@ -149,7 +153,7 @@ def _print_order(order: Order) -> None:
 
 def _demo_command_pattern(
     customer_id: str,
-    order_items: list[dict[str, str]],
+    order_items: list[FlextTypes.Core.Headers],
 ) -> None:
     class CreateOrderCommand:
         """Command pattern for order creation with FlextTypes annotations."""
@@ -157,7 +161,7 @@ def _demo_command_pattern(
         def __init__(
             self,
             customer_id: str,
-            items: list[dict[str, str]],
+            items: list[FlextTypes.Core.Headers],
         ) -> None:
             self.customer_id = customer_id
             self.items = items
@@ -220,19 +224,16 @@ def _demo_container(customer: User, repository: object) -> None:
 
 
 def _demo_fields_validation() -> None:
-    """Demo fields validation using correct FlextFields API."""
-    # Use the actual FlextFields.Factory.create_field API with correct signature
-    email_field_result = FlextFields.Factory.create_field(
-        field_type="string",
-        name="email",
-        pattern=r"^[^@]+@[^@]+\.[^@]+$",
-        required=True,
-        field_id="customer_email",
-    )
+    """Demo fields validation using FlextFields validators."""
+    # Use the available FlextFields validation methods
+    test_email = "user@example.com"
+    # Use FlextValidations for email validation instead
 
-    # Test validation using the created field with FlextResult pattern
-    if email_field_result.success:
-        # Field created successfully, ready for use
+    email_result = FlextValidations.validate_email(test_email)
+    email_valid = email_result.is_success
+
+    if email_valid:
+        # Email is valid
         pass
 
 

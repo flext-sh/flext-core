@@ -1,0 +1,19 @@
+{
+  "typeCheckingMode": "strict",
+  "pythonVersion": "3.13",
+  "diagnosticRuleSet": {
+    "reportCallIssue": "error",
+    "reportArgumentType": "error",
+    "reportAttributeAccessIssue": "error",
+    "reportIndexIssue": "error",
+    "reportOperatorIssue": "error",
+    "reportReturnType": "error",
+    "reportMissingTypeStubs": "warning",
+    "reportUnknownMemberType": "error",
+    "reportUnknownVariableType": "error",
+    "reportUnknownArgumentType": "error",
+    "reportUnknownLambdaType": "error",
+    "reportUnknownParameterType": "error",
+    "reportMissingModuleSource": "error"
+  }
+}

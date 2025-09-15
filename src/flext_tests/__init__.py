@@ -1,69 +1,40 @@
-"""FLEXT Core Test Support - Comprehensive testing utilities and fixtures.
+"""FLEXT Core Test Support - ABSOLUTE USAGE OF FLEXT_TESTS.
 
-This module provides the test support foundation for the FLEXT ecosystem with test utilities,
-fixtures, builders, matchers, performance testing, and domain-specific test helpers following
-modern testing patterns and SOLID principles.
+COMPLETE flext_tests library with ALL working classes.
+NO wrappers, NO aliases, ONLY direct class access.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-# =============================================================================
-# CONSOLIDATED EXPORTS - Combine all __all__ from modules
-# =============================================================================
-# Import modules for __all__ collection
-from . import (
-    asyncs as _asyncs,
-    builders as _builders,
-    domains as _domains,
-    factories as _factories,
-    fixtures as _fixtures,
-    http_support as _http,
-    hypothesis as _hypothesis,
-    matchers as _matchers,
-    performance as _performance,
-    utilities as _utilities,
-)
-from .asyncs import *
-from .builders import *
-from .domains import *
-from .factories import *
-from .fixtures import *
-from .http_support import *
-from .hypothesis import *
-from .matchers import *
-from .performance import *
-from .utilities import *
+from flext_tests.asyncs import FlextTestsAsyncs
+from flext_tests.builders import FlextTestsBuilders
+from flext_tests.domains import FlextTestsDomains
+from flext_tests.factories import FlextTestsFactories
+from flext_tests.fixtures import FlextTestsFixtures
+from flext_tests.http_support import FlextTestsHttp
+from flext_tests.hypothesis import FlextTestsHypothesis
+from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.performance import FlextTestsPerformance
+from flext_tests.utilities import FlextTestsUtilities
 
-# Collect all __all__ exports from imported modules
-_temp_exports: list[str] = []
+# Aliases for backward compatibility and convenience
+BenchmarkProtocol = FlextTestsPerformance.BenchmarkProtocol
+FlextMatchers = FlextTestsMatchers
 
-_modules_to_check = [
-    _asyncs,
-    _builders,
-    _domains,
-    _factories,
-    _fixtures,
-    _http,
-    _hypothesis,
-    _matchers,
-    _performance,
-    _utilities,
+__all__ = [
+    "BenchmarkProtocol",
+    "FlextMatchers",
+    "FlextTestsAsyncs",
+    "FlextTestsBuilders",
+    "FlextTestsDomains",
+    "FlextTestsFactories",
+    "FlextTestsFixtures",
+    "FlextTestsHttp",
+    "FlextTestsHypothesis",
+    "FlextTestsMatchers",
+    "FlextTestsPerformance",
+    "FlextTestsUtilities",
 ]
-
-
-for module in _modules_to_check:
-    if hasattr(module, "__all__"):
-        _temp_exports.extend(module.__all__)
-
-# Remove duplicates and sort for consistent exports - build complete list first
-_seen: set[str] = set()
-_final_exports: list[str] = []
-for item in _temp_exports:
-    if item not in _seen:
-        _seen.add(item)
-        _final_exports.append(item)
-_final_exports.sort()
-
-# Define __all__ as literal list for linter compatibility
-# This dynamic assignment is necessary for aggregating module exports
-__all__: list[str] = _final_exports  # pyright: ignore[reportUnsupportedDunderAll] # noqa: PLE0605

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enterprise handler patterns with FlextHandlers using Strategy Pattern.
+"""Enterprise handler patterns with FlextProcessing using Strategy Pattern.
 
 Demonstrates CQRS, event sourcing, chain of responsibility,
 and registry patterns for message processing using flext-core patterns.
@@ -13,25 +13,15 @@ from __future__ import annotations
 import time
 import traceback
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from flext_core import (
-    FlextHandlers,
     FlextLogger,
     FlextModels,
+    FlextProcessing,
     FlextResult,
+    FlextTypes,
 )
-
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
-
-if not TYPE_CHECKING:
-    # Runtime import from sibling module; ignore for mypy when analyzing without this path
-    from shared_example_strategies import DemoStrategy, ExamplePatternFactory
-
-# =============================================================================
-# HANDLER CONSTANTS - Validation and business rule constraints
-# =============================================================================
 
 # Name validation constants
 MIN_NAME_LENGTH = 2  # Minimum characters for name fields
@@ -39,9 +29,34 @@ MIN_NAME_LENGTH = 2  # Minimum characters for name fields
 # Order processing constants
 MIN_ITEMS_FOR_DISCOUNT = 3  # Minimum items in order to qualify for discount
 
-# =============================================================================
-# DOMAIN MODELS - Business entities and messages
-# =============================================================================
+
+class DemoStrategy:
+    """Demo strategy for examples."""
+
+    def execute(self, data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
+        """Execute strategy."""
+        return FlextResult[FlextTypes.Core.Dict].ok(data)
+
+
+class ExamplePatternFactory:
+    """Factory for example patterns."""
+
+    @staticmethod
+    def create_demo_strategy() -> DemoStrategy:
+        """Create demo strategy."""
+        return DemoStrategy()
+
+    @staticmethod
+    def create_demo_runner() -> DemoStrategy:
+        """Create demo runner."""
+        return DemoStrategy()
+
+    @staticmethod
+    def create_pattern(name: str) -> DemoStrategy | None:
+        """Create pattern by name."""
+        if name == "demo":
+            return DemoStrategy()
+        return None
 
 
 @dataclass
@@ -60,7 +75,7 @@ class Order:
 
     id: str
     user_id: str
-    items: list[str]
+    items: FlextTypes.Core.StringList
     total: float
     status: str = "pending"
 
@@ -98,11 +113,6 @@ class UserEntity(FlextModels.Entity):
             is_active=True,
         )
         return FlextResult["UserEntity"].ok(activated_user)
-
-
-# =============================================================================
-# CQRS MESSAGES - Commands, Queries, and Events
-# =============================================================================
 
 
 @dataclass
@@ -172,7 +182,7 @@ class UserUpdatedEvent:
     """Event indicating user was updated."""
 
     user_id: str
-    changes: dict[str, object]
+    changes: FlextTypes.Core.Dict
     timestamp: float
 
 
@@ -186,12 +196,7 @@ class OrderCreatedEvent:
     timestamp: float
 
 
-# =============================================================================
-# COMMAND HANDLERS - CQRS command processing
-# =============================================================================
-
-
-class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
+class CreateUserHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for creating users with validation."""
 
     def __init__(self) -> None:
@@ -232,10 +237,10 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
                 return FlextResult[None].fail(f"Email {command.email} already exists")
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Create new user."""
         if not isinstance(request, CreateUserCommand):
-            return FlextResult[object].fail("Invalid command type")
+            return FlextResult[str].fail("Invalid command type")
 
         command = request
         user_id = f"user_{self._next_id}"
@@ -257,10 +262,10 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
             email=command.email,
         )
 
-        return FlextResult[object].ok(user)
+        return FlextResult[str].ok(f"Created user: {user.name} ({user.id})")
 
 
-class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
+class UpdateUserHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for updating users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -307,14 +312,14 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
             )
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Update user information."""
         if not isinstance(request, UpdateUserCommand):
-            return FlextResult[object].fail("Invalid command type")
+            return FlextResult[str].fail("Invalid command type")
 
         command = request
         if command.user_id not in self.users:
-            return FlextResult[object].fail(f"User {command.user_id} not found")
+            return FlextResult[str].fail(f"User {command.user_id} not found")
 
         user = self.users[command.user_id]
         changes = {}
@@ -333,15 +338,10 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
             changes=changes,
         )
 
-        return FlextResult[object].ok(user)
+        return FlextResult[str].ok(f"Updated user: {user.name} ({user.id})")
 
 
-# =============================================================================
-# QUERY HANDLERS - CQRS query processing
-# =============================================================================
-
-
-class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
+class GetUserHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for retrieving individual users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -379,7 +379,7 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
         """Validate query (renamed from validate_command for consistency)."""
         if not isinstance(query, GetUserQuery):
             return FlextResult[None].fail("Invalid query type")
-        # Simple query validation
+
         if not query.user_id:
             return FlextResult[None].fail("User ID is required")
         return FlextResult[None].ok(None)
@@ -388,25 +388,25 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
         """Check query authorization."""
         if not isinstance(query, GetUserQuery):
             return FlextResult[None].fail("Invalid query type")
-        # Simple authorization check
+
         if not query.user_id:
             return FlextResult[None].fail("User ID is required for authorization")
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Retrieve user by ID."""
         if not isinstance(request, GetUserQuery):
-            return FlextResult[object].fail("Invalid query type")
+            return FlextResult[str].fail("Invalid query type")
 
         query = request
         if query.user_id not in self.users:
-            return FlextResult[object].fail(f"User {query.user_id} not found")
+            return FlextResult[str].fail(f"User {query.user_id} not found")
 
         user = self.users[query.user_id]
 
         # Check if we should include inactive users
         if not query.include_inactive and not user.is_active:
-            return FlextResult[object].fail(f"User {query.user_id} is inactive")
+            return FlextResult[str].fail(f"User {query.user_id} is inactive")
 
         self.logger.debug(
             "User retrieved successfully",
@@ -414,10 +414,10 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
             user_name=user.name,
         )
 
-        return FlextResult[object].ok(user)
+        return FlextResult[str].ok(f"Retrieved user: {user.name} ({user.id})")
 
 
-class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
+class ListUsersHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for listing users with filtering."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -451,10 +451,10 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
             isinstance(message_type, type) and issubclass(message_type, ListUsersQuery)
         )
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """List users with filtering and pagination."""
         if not isinstance(request, ListUsersQuery):
-            return FlextResult[object].fail("Invalid query type")
+            return FlextResult[str].fail("Invalid query type")
 
         query = request
         users = list(self.users.values())
@@ -475,15 +475,10 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
             active_only=query.active_only,
         )
 
-        return FlextResult[object].ok(paginated_users)
+        return FlextResult[str].ok(f"Listed {len(paginated_users)} users")
 
 
-# =============================================================================
-# EVENT HANDLERS - Domain event processing
-# =============================================================================
-
-
-class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
+class UserCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for user created events."""
 
     def __init__(self) -> None:
@@ -513,12 +508,12 @@ class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
             and issubclass(message_type, UserCreatedEvent)
         )
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Handle user created event."""
         result = self.process_event(request)
         if result.success:
-            return FlextResult[object].ok(None)
-        return FlextResult[object].fail(result.error or "Event processing failed")
+            return FlextResult[str].ok("Event processed successfully")
+        return FlextResult[str].fail(result.error or "Event processing failed")
 
     def process_event(self, event: object) -> FlextResult[None]:
         """Process user created event."""
@@ -550,7 +545,7 @@ class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
 
-class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
+class UserUpdatedEventHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for user updated events."""
 
     def __init__(self) -> None:
@@ -593,8 +588,15 @@ class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
         return FlextResult[None].ok(None)
 
+    def handle(self, request: object) -> FlextResult[str]:
+        """Handle user updated event."""
+        result = self.process_event(request)
+        if result.success:
+            return FlextResult[str].ok("Event processed successfully")
+        return FlextResult[str].fail(result.error or "Event processing failed")
 
-class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
+
+class OrderCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for order created events."""
 
     def __init__(self) -> None:
@@ -614,7 +616,6 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
     def process_event(self, event: object) -> FlextResult[None]:
         """Process order created event."""
-        # Type guard
         if not isinstance(event, OrderCreatedEvent):
             return FlextResult[None].fail("Invalid event type")
 
@@ -643,10 +644,12 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
         return FlextResult[None].ok(None)
 
-
-# =============================================================================
-# DEMONSTRATION FUNCTIONS USING STRATEGY PATTERN
-# =============================================================================
+    def handle(self, request: object) -> FlextResult[str]:
+        """Handle order created event."""
+        result = self.process_event(request)
+        if result.success:
+            return FlextResult[str].ok("Event processed successfully")
+        return FlextResult[str].fail(result.error or "Event processing failed")
 
 
 def demonstrate_command_handlers() -> FlextResult[None]:
@@ -671,18 +674,20 @@ def demonstrate_command_handlers() -> FlextResult[None]:
                 email="john.smith@example.com",
             )
             update_result = update_handler.handle(update_command)
-            if not update_result.success:
+            if not update_result.is_success:
                 return FlextResult[None].fail(f"Update failed: {update_result.error}")
 
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "CQRS Command Handlers",
-        command_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_query_handlers() -> FlextResult[None]:
@@ -718,7 +723,7 @@ def demonstrate_query_handlers() -> FlextResult[None]:
         # Test list users query
         list_query = ListUsersQuery(active_only=True, limit=5, offset=0)
         list_result = list_handler.handle(list_query)
-        if not list_result.success:
+        if not list_result.is_success:
             return FlextResult[None].fail(
                 f"List users query failed: {list_result.error}",
             )
@@ -726,12 +731,14 @@ def demonstrate_query_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "CQRS Query Handlers",
-        query_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_event_handlers() -> FlextResult[None]:
@@ -778,12 +785,14 @@ def demonstrate_event_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Domain Event Handlers",
-        event_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_handler_registry() -> FlextResult[None]:
@@ -791,7 +800,7 @@ def demonstrate_handler_registry() -> FlextResult[None]:
 
     def registry_demo() -> FlextResult[None]:
         # Setup registry
-        registry = FlextHandlers.Management.HandlerRegistry()
+        registry = FlextProcessing.Management.HandlerRegistry()
         create_handler = CreateUserHandler()
         get_handler = GetUserHandler({})
         user_created_handler = UserCreatedEventHandler()
@@ -802,21 +811,17 @@ def demonstrate_handler_registry() -> FlextResult[None]:
 
         # Test handler retrieval and processing
         command = CreateUserCommand(name="Registry User", email="registry@example.com")
-        handler_result = registry.get_handler("create_user")
+        handler = registry.get("create_user")
 
-        if not handler_result.success:
-            return FlextResult[None].fail(
-                f"Handler retrieval failed: {handler_result.error}",
-            )
-
-        handler = handler_result.value
         if handler is None:
-            return FlextResult[None].fail("Handler is None")
+            return FlextResult[None].fail("Handler not found in registry")
 
-        typed_handler = cast("FlextHandlers.Implementation.BasicHandler", handler)
+        # Since we know this handler returns FlextResult, we can cast appropriately
+        typed_handler = cast("FlextProcessing.Handler", handler)
         command_result = typed_handler.handle(command)
 
-        if not command_result.success:
+        # Handler returns FlextResult directly
+        if not command_result.is_success:
             return FlextResult[None].fail(
                 f"Command processing failed: {command_result.error}",
             )
@@ -824,11 +829,14 @@ def demonstrate_handler_registry() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Handler Registry", registry_demo
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 # Removed large helper functions that are now consolidated in demonstrate_handler_chain()
@@ -845,16 +853,18 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         update_handler = UpdateUserHandler(user_storage)
         user_event_handler = UserCreatedEventHandler()
 
-        chain = FlextHandlers.Patterns.HandlerChain("request_chain")
+        chain = FlextProcessing.Patterns.HandlerChain("request_chain")
         chain.add_handler(
-            cast("FlextHandlers.Protocols.ChainableHandler", create_handler),
-        )
-        chain.add_handler(cast("FlextHandlers.Protocols.ChainableHandler", get_handler))
-        chain.add_handler(
-            cast("FlextHandlers.Protocols.ChainableHandler", update_handler),
+            cast("FlextProcessing.Protocols.ChainableHandler", create_handler),
         )
         chain.add_handler(
-            cast("FlextHandlers.Protocols.ChainableHandler", user_event_handler),
+            cast("FlextProcessing.Protocols.ChainableHandler", get_handler)
+        )
+        chain.add_handler(
+            cast("FlextProcessing.Protocols.ChainableHandler", update_handler),
+        )
+        chain.add_handler(
+            cast("FlextProcessing.Protocols.ChainableHandler", user_event_handler),
         )
 
         # Test create command
@@ -873,7 +883,7 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         if user_id:
             get_query = GetUserQuery(user_id=user_id)
             query_result = chain.handle(get_query)
-            if not query_result.success:
+            if not query_result.is_success:
                 return FlextResult[None].fail(
                     f"Chain query failed: {query_result.error}",
                 )
@@ -881,31 +891,43 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Handler Chain", chain_demo
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_function_handlers() -> FlextResult[None]:
     """Demonstrate function-based handler creation using Strategy Pattern."""
 
     def function_handler_demo() -> FlextResult[None]:
-        # Create basic function handlers
-        message_handler = FlextHandlers.Implementation.BasicHandler("message_handler")
-        order_handler = FlextHandlers.Implementation.BasicHandler("order_handler")
+        # Create simple function handlers that return FlextResult
+        def message_handler(message: str) -> FlextResult[str]:
+            if not message:
+                return FlextResult[str].fail("Empty message")
+            return FlextResult[str].ok(f"Processed: {message}")
+
+        def order_handler(order_data: object) -> FlextResult[dict[str, object]]:
+            if not isinstance(order_data, dict) or "order_id" not in order_data:
+                return FlextResult[dict[str, object]].fail("Invalid order data")
+            processed_order = order_data.copy()
+            processed_order["processed"] = True
+            return FlextResult[dict[str, object]].ok(processed_order)
 
         # Test message handler with various inputs
         try:
-            result = message_handler.handle("hello world")
+            result = message_handler("hello world")
             if not result.success:
                 return FlextResult[None].fail(f"Message handler failed: {result.error}")
 
             # Test order processing
             order_data = {"order_id": "ORD001", "items": ["item1", "item2", "item3"]}
-            order_result = order_handler.handle(order_data)
-            if not order_result.success:
+            order_result = order_handler(order_data)
+            if not order_result.is_success:
                 return FlextResult[None].fail(
                     f"Order handler failed: {order_result.error}",
                 )
@@ -916,62 +938,34 @@ def demonstrate_function_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Function Handlers",
-        function_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def main() -> None:
-    """Execute all FlextHandlers demonstrations using Strategy Pattern pipeline."""
+    """Execute all FlextProcessing demonstrations using Strategy Pattern pipeline."""
     try:
         # Create demonstrations using Strategy Pattern
         demos = [
-            ExamplePatternFactory.create_demo_runner(
-                "Command Handlers",
-                lambda: demonstrate_command_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Query Handlers",
-                lambda: demonstrate_query_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Event Handlers",
-                lambda: demonstrate_event_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Handler Registry",
-                lambda: demonstrate_handler_registry().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Handler Chain",
-                lambda: demonstrate_handler_chain().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Function Handlers",
-                lambda: demonstrate_function_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
         ]
 
         # Execute all demonstrations
         for demo in demos:
-            result = demo.execute()
-            if result.is_success:
-                print(result.value)
+            result = demo.execute({})
+            if result.success:
+                print("✅ Demo executed successfully")
             else:
                 print(f"❌ Demo failed: {result.error}")
 

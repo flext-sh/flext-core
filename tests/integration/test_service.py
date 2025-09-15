@@ -19,6 +19,10 @@ Testing Patterns Demonstrated:
     - Mock configuration and verification
     - Performance threshold validation
     - Error scenario testing with proper isolation
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import time
@@ -27,7 +31,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult
+from flext_core import FlextContainer, FlextResult, FlextTypes
 
 
 class FunctionalExternalService:
@@ -36,7 +40,7 @@ class FunctionalExternalService:
     def __init__(self) -> None:
         """Initialize functional external service."""
         self.call_count = 0
-        self.processed_items: list[object] = []
+        self.processed_items: FlextTypes.Core.List = []
         self.should_fail = False
         self.failure_message = "Service unavailable"
 
@@ -66,40 +70,48 @@ class FunctionalUserService:
 
     def __init__(self) -> None:
         """Initialize functional user service."""
-        self.users: dict[str, dict[str, str | int | bool | list[str]]] = {}
+        self.users: dict[
+            str, dict[str, str | int | bool | FlextTypes.Core.StringList]
+        ] = {}
         self.call_count = 0
         self.should_fail = False
 
     def get_user(
         self,
         user_id: str,
-    ) -> FlextResult[dict[str, str | int | bool | list[str]]]:
+    ) -> FlextResult[dict[str, str | int | bool | FlextTypes.Core.StringList]]:
         """Get user by ID - functional implementation."""
         self.call_count += 1
 
         if self.should_fail:
-            return FlextResult[dict[str, str | int | bool | list[str]]].fail(
+            return FlextResult[
+                dict[str, str | int | bool | FlextTypes.Core.StringList]
+            ].fail(
                 "User service unavailable",
             )
 
         if user_id in self.users:
-            return FlextResult[dict[str, str | int | bool | list[str]]].ok(
+            return FlextResult[
+                dict[str, str | int | bool | FlextTypes.Core.StringList]
+            ].ok(
                 self.users[user_id],
             )
 
         # Default user data for testing
-        default_user: dict[str, str | int | bool | list[str]] = {
+        default_user: dict[str, str | int | bool | FlextTypes.Core.StringList] = {
             "id": user_id,
             "email": f"user{user_id}@example.com",
             "name": f"User {user_id}",
             "active": True,
         }
-        return FlextResult[dict[str, str | int | bool | list[str]]].ok(default_user)
+        return FlextResult[dict[str, str | int | bool | FlextTypes.Core.StringList]].ok(
+            default_user
+        )
 
     def set_user_data(
         self,
         user_id: str,
-        user_data: dict[str, str | int | bool | list[str]],
+        user_data: dict[str, str | int | bool | FlextTypes.Core.StringList],
     ) -> None:
         """Set user data for testing."""
         self.users[user_id] = user_data
@@ -114,7 +126,7 @@ class FunctionalNotificationService:
 
     def __init__(self) -> None:
         """Initialize functional notification service."""
-        self.sent_notifications: list[str] = []
+        self.sent_notifications: FlextTypes.Core.StringList = []
         self.call_count = 0
         self.should_fail = False
 
@@ -139,12 +151,12 @@ class FunctionalLifecycleService:
     def __init__(self) -> None:
         """Initialize functional lifecycle service."""
         self.initialized = False
-        self.config: dict[str, object] | None = None
+        self.config: FlextTypes.Core.Dict | None = None
         self.shutdown_called = False
         self.should_fail_init = False
         self.should_fail_shutdown = False
 
-    def initialize(self, config: dict[str, object]) -> FlextResult[str]:
+    def initialize(self, config: FlextTypes.Core.Dict) -> FlextResult[str]:
         """Initialize service - functional implementation."""
         if self.should_fail_init:
             return FlextResult[str].fail("Initialization failed")
@@ -188,14 +200,16 @@ class TestServiceIntegrationPatterns:
 
     @pytest.mark.integration
     @pytest.mark.performance
+    @pytest.mark.usefixtures("performance_threshold")
     def test_service_pipeline_performance(
         self,
-        configured_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
         benchmark_data: dict[
             str,
-            list[int] | dict[str, str] | dict[str, dict[str, dict[str, list[int]]]],
+            list[int]
+            | FlextTypes.Core.Headers
+            | dict[str, dict[str, dict[str, list[int]]]],
         ],
     ) -> None:
         """Test service pipeline meets performance requirements.
@@ -215,7 +229,7 @@ class TestServiceIntegrationPatterns:
 
         def process_pipeline(
             data: list[int]
-            | dict[str, str]
+            | FlextTypes.Core.Headers
             | dict[str, dict[str, dict[str, list[int]]]],
         ) -> FlextResult[str]:
             # Simulate service pipeline with realistic operations
@@ -240,9 +254,9 @@ class TestServiceIntegrationPatterns:
 
     @pytest.mark.integration
     @pytest.mark.error_path
+    @pytest.mark.usefixtures("error_context")
     def test_service_error_propagation(
         self,
-        configured_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
         error_context: dict[str, str | None],
     ) -> None:
@@ -285,7 +299,7 @@ class TestServiceIntegrationPatterns:
     def test_dependency_injection_with_mocks(
         self,
         clean_container: FlextContainer,
-        test_user_data: dict[str, str | int | bool | list[str]],
+        test_user_data: dict[str, str | int | bool | FlextTypes.Core.StringList],
     ) -> None:
         """Test dependency injection patterns with functional services.
 
@@ -398,7 +412,7 @@ class TestServiceIntegrationPatterns:
             "FunctionalLifecycleService",
             service_result.value,
         )  # This is our FunctionalLifecycleService
-        config = cast("dict[str, object]", config_fetch_result.value)
+        config = cast("FlextTypes.Core.Dict", config_fetch_result.value)
 
         # Act - Test service lifecycle
         init_result = service.initialize(config)

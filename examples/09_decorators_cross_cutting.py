@@ -15,34 +15,29 @@ from flext_core import (
     FlextLogger,
     FlextProtocols,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
 )
 
-# =============================================================================
-# CONSTANTS
-# =============================================================================
-
 MIN_NAME_LENGTH = 2
 MINIMUM_AGE = 18
-
-# =============================================================================
-# LOCAL DOMAIN FACTORY (replacing shared_domain dependency)
-# =============================================================================
 
 
 class LocalDomainFactory:
     """Local domain factory for user creation without external dependencies."""
 
     @staticmethod
-    def create_user(name: str, email: str, age: int) -> FlextResult[dict[str, object]]:
+    def create_user(
+        name: str, email: str, age: int
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Create user with validation."""
         # Basic validation
         if not name or len(name) < MIN_NAME_LENGTH:
-            return FlextResult[dict[str, object]].fail("Invalid name")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid name")
         if "@" not in email:
-            return FlextResult[dict[str, object]].fail("Invalid email")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid email")
         if age < MINIMUM_AGE:
-            return FlextResult[dict[str, object]].fail("User must be 18+")
+            return FlextResult[FlextTypes.Core.Dict].fail("User must be 18+")
 
         user_data = {
             "name": name,
@@ -50,7 +45,7 @@ class LocalDomainFactory:
             "age": age,
             "id": f"user_{FlextUtilities.Generators.generate_uuid()}",
         }
-        return FlextResult[dict[str, object]].ok(user_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(user_data)
 
 
 # FlextCore singleton removed - using direct imports
@@ -61,10 +56,6 @@ MAX_AGE: int = 150
 MIN_AGE: int = 0
 SUCCESS_THRESHOLD: float = 0.4
 MIN_USER_CREATION_ARGS: int = 3
-
-# =============================================================================
-# PROTOCOLS - Using FlextProtocols hierarchical patterns
-# =============================================================================
 
 
 class CalculationProtocol(FlextProtocols.Foundation.Validator[int]):
@@ -87,16 +78,11 @@ class ValidationProtocol(FlextProtocols.Foundation.Validator[int]):
         return FlextResult[int].ok(data)
 
 
-# =============================================================================
-# MODERN FLEXT DECORATORS SHOWCASE - Maximum FLEXT Integration
-# =============================================================================
-
-
 def demonstrate_cache_decorator() -> FlextResult[str]:
     """Demonstrate cache decorator using Strategy Pattern - REDUCED COMPLEXITY."""
 
     # Strategy Pattern: Use FlextUtilities.Performance for measurement
-    @FlextDecorators.Performance.cache(max_size=128)
+    @FlextDecorators.cache()
     def expensive_calculation(x: int) -> FlextResult[int]:
         """Cached calculation using FlextResult pattern."""
         return (
@@ -128,19 +114,21 @@ def demonstrate_complete_decorator() -> FlextResult[str]:
     """Demonstrate decorator composition using Strategy Pattern - REDUCED COMPLEXITY."""
 
     # Strategy Pattern: Use FlextUtilities for data generation
-    @FlextDecorators.Performance.monitor()
-    @FlextDecorators.Performance.cache(max_size=64)
-    def business_operation(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    @FlextDecorators.retry()
+    @FlextDecorators.cache()
+    def business_operation(
+        data: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Business operation with flext-core validation."""
         return (
-            FlextResult[dict[str, object]]
+            FlextResult[FlextTypes.Core.Dict]
             .ok(data)
             .flat_map(
-                lambda d: FlextResult[dict[str, object]].fail(
+                lambda d: FlextResult[FlextTypes.Core.Dict].fail(
                     FlextConstants.Errors.VALIDATION_ERROR,
                 )
                 if not d or not isinstance(d, dict)
-                else FlextResult[dict[str, object]].ok(d),
+                else FlextResult[FlextTypes.Core.Dict].ok(d),
             )
             .map(
                 lambda d: {
@@ -192,13 +180,13 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
     """Demonstrate user creation with modern decorators - SIMPLIFIED."""
 
     # Strategy Pattern: Use LocalDomainFactory directly
-    @FlextDecorators.Performance.cache(max_size=32)
-    @FlextDecorators.Performance.monitor()
+    @FlextDecorators.cache()
+    @FlextDecorators.retry()
     def create_user_with_validation(
         name: str,
         email: str,
         age: int,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Create user using flext-core validation patterns."""
         return LocalDomainFactory.create_user(name, email, age)
 
@@ -223,9 +211,9 @@ def demonstrate_decorator_categories() -> None:
     """Demonstrate decorator categories - SIMPLIFIED."""
 
     # Template Method Pattern: Use flext-core decorator composition
-    @FlextDecorators.Observability.log_execution()
-    @FlextDecorators.Performance.monitor()
-    @FlextDecorators.Performance.cache(max_size=32)
+    @FlextDecorators.Observability.log_execution
+    @FlextDecorators.retry()
+    @FlextDecorators.cache()
     def complete_example_function() -> str:
         """Complete decorator composition example."""
         return "completed"
@@ -233,11 +221,6 @@ def demonstrate_decorator_categories() -> None:
     # Execute test
     result = complete_example_function()
     logger.info(f"Decorator categories test: {result}")
-
-
-# =============================================================================
-# DEMONSTRATIONS - Modern decorator usage
-# =============================================================================
 
 
 def main() -> FlextResult[str]:
@@ -254,7 +237,7 @@ def main() -> FlextResult[str]:
 
     success_count: int = 0
     total_operations: int = 5
-    operation_results: list[str] = []
+    operation_results: FlextTypes.Core.StringList = []
 
     try:
         # Execute all decorator demonstrations with FlextResult handling
@@ -303,7 +286,7 @@ def main() -> FlextResult[str]:
         # Calculate success rate using FlextTypes
         success_rate: float = (success_count / total_operations) * 100.0
 
-        # Generate comprehensive summary using centralized patterns
+        # Generate summary using centralized patterns
         summary_lines = [
             "Example 09 Execution Summary:",
             f"Total Operations: {total_operations}",

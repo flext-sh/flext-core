@@ -9,28 +9,24 @@ from __future__ import annotations
 
 from typing import cast, override
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextCommands,
-    FlextConstants,
     FlextContainer,
     FlextDecorators,
     FlextLogger,
-    FlextModels,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
 )
 
-# =============================================================================
-# 🚀 MAXIMUM FLEXT-CORE SHOWCASE - 20+ Features in Minimal Code
-# =============================================================================
-
 # FlextCore ecosystem setup
-MAX_AGE = FlextConstants.Network.DEFAULT_TIMEOUT  # FlextConstants
 logger = FlextLogger(__name__)  # FlextLogger structured output
 container = FlextContainer.get_global()  # FlextContainer dependency injection
 
 
-class Email(FlextModels.Config):
+class Email(BaseModel):
     """Email with FlextResult validation."""
 
     address: str
@@ -45,7 +41,7 @@ class Email(FlextModels.Config):
         return cls(address=address)
 
 
-class User(FlextModels.Config):
+class User(BaseModel):
     """User entity with FlextUtilities integration."""
 
     id: str | None = None
@@ -54,7 +50,7 @@ class User(FlextModels.Config):
     age: int = 25
 
     @FlextDecorators.Reliability.safe_result  # FlextDecorators
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         """FlextUtilities serialization pattern."""
         return {
             "id": self.id,
@@ -64,13 +60,9 @@ class User(FlextModels.Config):
         }
 
 
-# =============================================================================
-# 🚀 MAXIMUM FUNCTIONALITY - 10+ Features in 50 Lines!
-# =============================================================================
-
 # FlextContainer DI setup
 container.register("user_db", dict[str, User]())
-container.register("events", list[dict[str, object]]())
+container.register("events", list[FlextTypes.Core.Dict]())
 
 
 class CreateUserCommand(FlextCommands.Models.Command):
@@ -89,18 +81,18 @@ class UserCommandHandler(
     @override
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """🚀 5 FlextCore features in 6 lines of code!."""
-        return (
-            Email.create(command.email)  # FlextResult + safe_result
-            .map(
-                lambda e: User(
-                    id=FlextUtilities.Generators.generate_uuid(),  # FlextUtilities UUID
-                    name=command.name,
-                    email=e,
-                    age=command.age,
-                ),
+        try:
+            email = Email.create(command.email)
+            user = User(
+                id=FlextUtilities.Generators.generate_uuid(),
+                name=command.name,
+                email=email,
+                age=command.age,
             )
-            .tap(self._save_user)  # FlextResult tap
-        )
+            self._save_user(user)
+            return FlextResult[User].ok(user)
+        except ValueError:
+            return FlextResult[User].fail("Invalid email")
 
     def _save_user(self, user: User) -> None:
         """FlextContainer + FlextLogger integration."""
@@ -109,7 +101,7 @@ class UserCommandHandler(
             container.get("user_db").value,
         )  # FlextContainer DI
         events = cast(
-            "list[dict[str, object]]",
+            "list[FlextTypes.Core.Dict]",
             container.get("events").value,
         )  # FlextContainer DI
 
@@ -138,7 +130,12 @@ def demo_flext_ecosystem() -> None:
     bus.register_handler(CreateUserCommand, UserCommandHandler())
 
     # Execute command with FlextResult railway
-    command = CreateUserCommand(name="Alice FlextCore", email="alice@flext.dev", age=28)
+    command = CreateUserCommand(
+        name="Alice FlextCore",
+        email="alice@flext.dev",
+        age=28,
+        command_type="CreateUser",
+    )
     result = bus.execute(command)
 
     if result.success:
@@ -159,7 +156,7 @@ def demo_flext_ecosystem() -> None:
 
         # Show stored data
         db = cast("dict[str, User]", container.get("user_db").value)
-        events = cast("list[dict[str, object]]", container.get("events").value)
+        events = cast("list[FlextTypes.Core.Dict]", container.get("events").value)
         print(f"💾 Database has {len(db)} users, {len(events)} events")
     else:
         print(f"❌ Failed: {result.error}")

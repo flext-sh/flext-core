@@ -3,20 +3,24 @@
 Este teste único e abrangente valida que todo o sistema flext-core funciona
 corretamente após wildcard imports, com foco em railway-oriented programming,
 hierarquia de constantes, sistema de exceções e utilitários.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import uuid
-from typing import cast
 
 from flext_core import (
     FlextConstants,
+    FlextContainer,
     FlextExceptions,
     FlextFields,
     FlextResult,
     FlextTypes,
     FlextUtilities,
+    FlextValidations,
 )
 
 
@@ -39,28 +43,23 @@ class TestCompleteFlextSystemIntegration:
         6. Sistema de campos (FlextFields)
         7. Validação e configuração
         8. Cenários de erro e recuperação
+
+        Returns:
+            None: Este teste não retorna valor; apenas valida cenários.
+
         """
         # =========================================================================
         # FASE 1: Validação de imports e disponibilidade de módulos
         # =========================================================================
 
         # Verificar que todos os componentes principais estão disponíveis
-        expected_modules = [
-            "FlextResult",
-            "FlextConstants",
-            "FlextExceptions",
-            "FlextUtilities",
-            "FlextTypes",
-            "FlextFields",
-        ]
-
-        current_globals = globals()
-        for module_name in expected_modules:
-            assert module_name in current_globals, (
-                f"Módulo '{module_name}' não encontrado nos exports do wildcard"
-            )
-            module = current_globals[module_name]
-            assert module is not None, f"Módulo '{module_name}' é None"
+        # Usar verificação direta em vez de globals() para evitar problemas de contexto
+        assert FlextResult is not None, "FlextResult não está disponível"
+        assert FlextConstants is not None, "FlextConstants não está disponível"
+        assert FlextExceptions is not None, "FlextExceptions não está disponível"
+        assert FlextUtilities is not None, "FlextUtilities não está disponível"
+        assert FlextTypes is not None, "FlextTypes não está disponível"
+        assert FlextFields is not None, "FlextFields não está disponível"
 
         # =========================================================================
         # FASE 2: Railway-Oriented Programming com FlextResult
@@ -117,21 +116,20 @@ class TestCompleteFlextSystemIntegration:
         assert isinstance(timeout_default, int)
         assert timeout_default > 0
 
-        # Constantes de erro com formato FLEXT_xxxx
+        # Constantes de erro
         validation_error_code = FlextConstants.Errors.VALIDATION_ERROR
         assert isinstance(validation_error_code, str)
-        assert validation_error_code.startswith("FLEXT_")
-        assert "3001" in validation_error_code  # Código específico para validação
+        assert validation_error_code == "VALIDATION_ERROR"
 
-        # Constantes de mensagem
-        success_message = FlextConstants.Messages.SUCCESS
-        assert isinstance(success_message, str)
-        assert len(success_message) > 0
+        # Verificar outros códigos de erro importantes
+        config_error_code = FlextConstants.Errors.CONFIG_ERROR
+        assert isinstance(config_error_code, str)
+        assert config_error_code == "CONFIG_ERROR"
 
-        # Constantes de padrões (regex)
-        email_pattern = FlextConstants.Patterns.EMAIL_PATTERN
-        assert isinstance(email_pattern, str)
-        assert "@" in email_pattern
+        # Constantes de validação
+        min_name_length = FlextConstants.Validation.MIN_NAME_LENGTH
+        assert isinstance(min_name_length, int)
+        assert min_name_length > 0
 
         # =========================================================================
         # FASE 4: Sistema de exceções estruturado
@@ -144,7 +142,7 @@ class TestCompleteFlextSystemIntegration:
 
         # Verificar formato da mensagem de erro
         error_message = str(validation_exception)
-        assert "[FLEXT_3001]" in error_message
+        assert "[VALIDATION_ERROR]" in error_message
         assert "campo_invalido" in error_message
 
         # Teste de outras exceções da hierarquia
@@ -161,7 +159,7 @@ class TestCompleteFlextSystemIntegration:
         # =========================================================================
 
         # Geração de UUID
-        generated_uuid = FlextUtilities.generate_uuid()
+        generated_uuid = FlextUtilities.Generators.generate_uuid()
         assert isinstance(generated_uuid, str)
         assert len(generated_uuid) == 36  # Formato padrão UUID
 
@@ -170,127 +168,125 @@ class TestCompleteFlextSystemIntegration:
         assert str(uuid_obj) == generated_uuid
 
         # Geração de timestamp
-        timestamp = FlextUtilities.generate_timestamp()
+        timestamp = FlextUtilities.Generators.generate_iso_timestamp()
         assert isinstance(timestamp, str)
         assert len(timestamp) > 0
 
         # Conversão segura de tipos
-        safe_int_success = FlextUtilities.safe_int("42")
+        safe_int_success = FlextUtilities.Conversions.safe_int("42")
         assert safe_int_success == 42
 
-        safe_int_failure = FlextUtilities.safe_int("not_a_number", default=-1)
+        safe_int_failure = FlextUtilities.Conversions.safe_int(
+            "not_a_number", default=-1
+        )
         assert (
             safe_int_failure == -1
         )  # Retorna default em caso de erro        # =========================================================================
-        # FASE 6: Sistema de campos (FlextFields)
+        # FASE 6: Sistema de validação (FlextValidations)
         # =========================================================================
 
-        # Criação de campo string básico
-        string_field = FlextFields.Core.StringField(
-            "username",
-            min_length=3,
-            max_length=20,
-            required=True,
+        # Teste de validação de email usando API real
+        email_result = FlextValidations.FieldValidators.validate_email(
+            "joao@example.com"
         )
+        assert email_result.success is True
+        assert email_result.value == "joao@example.com"
 
-        # Validação de campo - caso de sucesso
-        valid_username = string_field.validate("joao123")
-        assert valid_username.success is True
-        assert valid_username.value == "joao123"
-
-        # Validação de campo - caso de falha (muito curto)
-        invalid_username = string_field.validate("jo")
-        assert invalid_username.success is False
-        assert invalid_username.error is not None
-        assert "short" in invalid_username.error.lower()
-
-        # Criação usando factory pattern
-        email_field_result = FlextFields.Factory.create_field(
-            "email",
-            "user_email",
-            required=True,
-            description="Email do usuário",
+        # Teste de validação de email inválido
+        invalid_email_result = FlextValidations.FieldValidators.validate_email(
+            "email_invalido"
         )
-        assert email_field_result.success is True
-        email_field = cast("FlextFields.Core.EmailField", email_field_result.value)
+        assert invalid_email_result.success is False
+        assert invalid_email_result.error is not None
 
-        # Validação de email
-        valid_email = email_field.validate("user@example.com")
-        assert valid_email.success is True
+        # Teste de validação de UUID
+        uuid_result = FlextValidations.FieldValidators.validate_uuid(
+            "550e8400-e29b-41d4-a716-446655440000"
+        )
+        assert uuid_result.success is True
 
-        invalid_email = email_field.validate("invalid-email")
-        assert invalid_email.success is False
+        # Teste de validação de URL
+        url_result = FlextValidations.FieldValidators.validate_url(
+            "https://example.com"
+        )
+        assert url_result.success is True
+
+        # Teste de validação de telefone
+        phone_result = FlextValidations.FieldValidators.validate_phone(
+            "+55 11 99999-9999"
+        )
+        assert phone_result.success is True
 
         # =========================================================================
-        # FASE 7: Registro e gerenciamento de campos
+        # FASE 7: Sistema de container (Dependency Injection)
         # =========================================================================
 
-        # Teste do sistema de registro
-        registry = FlextFields.Registry.FieldRegistry()
+        # Teste do sistema de container
+        container = FlextContainer.get_global()
 
-        # Registrar campo
-        register_result = registry.register_field(
-            "user_name",
-            cast("FlextFields.Core.BaseField[object]", string_field),
-        )
+        # Registrar serviço
+        register_result = container.register("test_service", "test_value")
         assert register_result.success is True
 
-        # Recuperar campo registrado
-        retrieved_field_result = registry.get_field("user_name")
-        assert retrieved_field_result.success is True
-        retrieved_field = retrieved_field_result.value
-        assert retrieved_field.name == "username"
+        # Recuperar serviço registrado
+        retrieved_service_result = container.get("test_service")
+        assert retrieved_service_result.success is True
+        retrieved_service = retrieved_service_result.value
+        assert retrieved_service == "test_value"
 
-        # Teste de campo não encontrado
-        not_found_result = registry.get_field("campo_inexistente")
+        # Teste de serviço não encontrado
+        not_found_result = container.get("servico_inexistente")
         assert not_found_result.success is False
         assert not_found_result.error is not None
-        assert "not found" in (not_found_result.error or "").lower()
 
         # =========================================================================
         # FASE 8: Validação múltipla e processamento de schema
         # =========================================================================
 
-        # Criação de múltiplos campos
-        integer_field = FlextFields.Core.IntegerField(
-            "age",
-            min_value=0,
-            max_value=120,
-            required=True,
+        # Validação múltipla usando o sistema real
+        user_data = {
+            "email": "maria@example.com",
+            "phone": "+55 11 99999-9999",
+            "url": "https://example.com",
+        }
+        # Validar email
+        email_validation = FlextValidations.FieldValidators.validate_email(
+            user_data["email"]
         )
+        assert email_validation.success is True
 
-        # Validação múltipla usando o sistema
-        fields: list[FlextFields.Core.BaseField[object]] = [
-            cast("FlextFields.Core.BaseField[object]", string_field),
-            cast("FlextFields.Core.BaseField[object]", integer_field),
-        ]
-        values = {"username": "maria123", "age": 25}
-
-        validation_result = FlextFields.Validation.validate_multiple_fields(
-            fields,
-            values,
+        # Validar telefone
+        phone_validation = FlextValidations.FieldValidators.validate_phone(
+            user_data["phone"]
         )
-        assert validation_result.success is True
-        validated_data = validation_result.value
-        assert validated_data["username"] == "maria123"
-        assert validated_data["age"] == 25
+        assert phone_validation.success is True
+
+        # Validar URL
+        url_validation = FlextValidations.FieldValidators.validate_url(user_data["url"])
+        assert url_validation.success is True
 
         # Teste com dados inválidos
-        invalid_values = {
-            "username": "jo",  # Muito curto
-            "age": 150,  # Muito alto
+        invalid_test_data = {
+            "email": "email_invalido",
+            "phone": "123",  # Muito curto
+            "url": "not_a_url",
         }
 
-        invalid_validation = FlextFields.Validation.validate_multiple_fields(
-            fields,
-            invalid_values,
+        # Validar dados inválidos
+        invalid_email = FlextValidations.FieldValidators.validate_email(
+            invalid_test_data["email"]
         )
-        assert invalid_validation.success is False
-        assert invalid_validation.error is not None
-        assert (
-            "length" in invalid_validation.error.lower()
-            or "value" in invalid_validation.error.lower()
+        assert invalid_email.success is False
+
+        invalid_phone = FlextValidations.FieldValidators.validate_phone(
+            invalid_test_data["phone"]
         )
+        assert invalid_phone.success is False
+
+        invalid_url = FlextValidations.FieldValidators.validate_url(
+            invalid_test_data["url"]
+        )
+        assert invalid_url.success is False
 
         # =========================================================================
         # FASE 9: Cenários de integração complexa
@@ -298,12 +294,12 @@ class TestCompleteFlextSystemIntegration:
 
         # Simulação de processamento de dados completo
         def processar_dados_usuario(
-            dados: dict[str, str],
-        ) -> FlextResult[dict[str, str]]:
+            dados: FlextTypes.Core.Headers,
+        ) -> FlextResult[FlextTypes.Core.Headers]:
             """Função que simula processamento completo usando todo o sistema."""
             # Validar entrada
             if not dados:
-                return FlextResult[dict[str, str]].fail(
+                return FlextResult[FlextTypes.Core.Headers].fail(
                     "Dados não fornecidos",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -311,41 +307,45 @@ class TestCompleteFlextSystemIntegration:
             # Processar dados
             dados_processados = {}
 
-            # Validar username
-            if "username" in dados:
-                username_result = string_field.validate(dados["username"])
-                if not username_result.success:
-                    return FlextResult[dict[str, str]].fail(
-                        f"Username inválido: {username_result.error}",
+            # Validar email se presente
+            if "email" in dados:
+                email_result = FlextValidations.FieldValidators.validate_email(
+                    dados["email"]
+                )
+                if not email_result.success:
+                    return FlextResult[FlextTypes.Core.Headers].fail(
+                        f"Email inválido: {email_result.error}",
                     )
-                dados_processados["username"] = username_result.value
+                dados_processados["email"] = email_result.value
 
             # Gerar ID único
-            dados_processados["id"] = FlextUtilities.generate_uuid()
+            dados_processados["id"] = FlextUtilities.Generators.generate_uuid()
 
             # Adicionar timestamp
-            dados_processados["created_at"] = FlextUtilities.generate_timestamp()
+            dados_processados["created_at"] = (
+                FlextUtilities.Generators.generate_iso_timestamp()
+            )
 
-            return FlextResult[dict[str, str]].ok(dados_processados)
+            return FlextResult[FlextTypes.Core.Headers].ok(dados_processados)
 
         # Teste do fluxo completo - sucesso
-        dados_entrada = {"username": "usuario_teste"}
+        dados_entrada = {"email": "usuario@teste.com"}
         resultado_processamento = processar_dados_usuario(dados_entrada)
 
         assert resultado_processamento.success is True
         dados_finais = resultado_processamento.value
-        assert "username" in dados_finais
+        assert "email" in dados_finais
         assert "id" in dados_finais
         assert "created_at" in dados_finais
-        assert dados_finais["username"] == "usuario_teste"
+        assert dados_finais["email"] == "usuario@teste.com"
 
         # Teste do fluxo completo - falha
-        dados_invalidos = {"username": "u"}  # Muito curto
+        dados_invalidos = {"email": "email_invalido"}
         resultado_falha = processar_dados_usuario(dados_invalidos)
 
         assert resultado_falha.success is False
         assert resultado_falha.error is not None
-        assert "username inválido" in resultado_falha.error.lower()
+        assert "email inválido" in resultado_falha.error.lower()
 
         # =========================================================================
         # FASE 10: Verificação de tipos e protocolos

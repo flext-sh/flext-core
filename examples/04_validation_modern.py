@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Modern validation patterns using validate_call decorators.
+"""04 - Modern Validation using FlextCore DIRECTLY.
 
-This example demonstrates the modernized validation system in FLEXT Core,
-showing how validate_call decorators eliminate legacy code while providing
-automatic type checking and runtime validation
+Demonstrates DIRECT usage of FlextValidations eliminating ALL duplication:
+- FlextValidations.create_user_validator() for business rules
+- FlextValidations.Rules for field validation
+- FlextDomainService for service architecture
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,190 +12,247 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
+
 from flext_core import (
-    FlextLogger,
+    FlextDomainService,
     FlextResult,
+    FlextTypes,
+    FlextValidations,
 )
 
-# Logger using centralized logging
-logger = FlextLogger("flext.examples.validation")
 
+class ProfessionalValidationService(FlextDomainService[object]):
+    """UNIFIED validation service using FlextCore DIRECTLY.
 
-def flext_validate_string(
-    value: str,
-    field_name: str,
-    min_length: int = 0,
-    max_length: int = 1000,
-) -> FlextResult[str]:
-    """Validate string with length constraints."""
-    # Simple string length validation
-    if len(value) < min_length:
-        return FlextResult[str].fail(
-            f"{field_name}: Must be at least {min_length} characters",
-        )
-
-    if len(value) > max_length:
-        return FlextResult[str].fail(
-            f"{field_name}: Must not exceed {max_length} characters",
-        )
-
-    return FlextResult[str].ok(value)
-
-
-def flext_validate_numeric(
-    value: float,
-    field_name: str,
-    min_val: float = 0.0,
-    max_val: float = 1000.0,
-) -> FlextResult[float]:
-    """Validate numeric value with range constraints."""
-    if value < min_val or value > max_val:
-        return FlextResult[float].fail(
-            f"{field_name} must be between {min_val} and {max_val}",
-        )
-    return FlextResult[float].ok(float(value))
-
-
-def flext_validate_email(email: str, _field_name: str) -> FlextResult[str]:
-    """Validate email address using centralized patterns."""
-    email_clean = email.strip().lower()
-
-    if not email_clean:
-        return FlextResult[str].fail("Email cannot be empty")
-
-    if "@" not in email_clean:
-        return FlextResult[str].fail("Email must contain @ symbol")
-
-    local, domain = email_clean.split("@", 1)
-
-    if not local or not domain:
-        return FlextResult[str].fail("Email must have local and domain parts")
-
-    if "." not in domain:
-        return FlextResult[str].fail("Domain must contain at least one dot")
-
-    return FlextResult[str].ok(email_clean)
-
-
-def flext_validate_required(value: object, field_name: str) -> FlextResult[object]:
-    """Validate required field is not None or empty."""
-    if value is None:
-        return FlextResult[object].fail(f"{field_name} is required")
-    if isinstance(value, str) and not value.strip():
-        return FlextResult[object].fail(f"{field_name} cannot be empty")
-    return FlextResult[object].ok(value)
-
-
-def demonstrate_modern_validation() -> None:
-    """Demonstrate modern validation with FlextResult patterns.
-
-    Uses centralized logging for better observability.
+    Eliminates ALL duplication by using FlextValidations components directly:
+    - FlextValidations.create_user_validator() for user business rules
+    - FlextValidations.validate_email for email validation
+    - FlextValidations.validate_* convenience methods
     """
-    logger.info("Starting modern validation demonstration")
 
-    # Test string validation using FlextTypes
-    string_result = flext_validate_string(
-        "Hello World",
-        "greeting",
-        min_length=5,
-        max_length=20,
-    )
-    if string_result.is_failure:
-        logger.error(f"String validation failed: {string_result.error}")
-    else:
-        logger.info(f"String validation passed: {string_result.value}")
+    def __init__(self) -> None:
+        """Initialize with FlextCore components."""
+        super().__init__()
+        self._user_validator = FlextValidations.create_user_validator()
 
-    # Test numeric validation using FlextTypes
-    numeric_result = flext_validate_numeric(25.5, "age", min_val=0.0, max_val=120.0)
-    if numeric_result.is_failure:
-        logger.error(f"Numeric validation failed: {numeric_result.error}")
-    else:
-        logger.info(f"Numeric validation passed: {numeric_result.value}")
+    class ValidationReport:
+        """Validation report using simple data class pattern."""
 
-    # Test email validation using centralized patterns
-    email_result = flext_validate_email("user@example.com", "email")
-    if email_result.is_failure:
-        logger.error(f"Email validation failed: {email_result.error}")
-    else:
-        logger.info(f"Email validation passed: {email_result.value}")
+        def __init__(
+            self,
+            total_validations: int,
+            successful_validations: int,
+            failed_validations: int,
+            success_rate: float,
+            validation_errors: FlextTypes.Core.StringList,
+        ) -> None:
+            """Initialize validation report with metrics."""
+            self.total_validations = total_validations
+            self.successful_validations = successful_validations
+            self.failed_validations = failed_validations
+            self.success_rate = success_rate
+            self.validation_errors = validation_errors
 
-    # Test required field validation
-    required_result = flext_validate_required("some value", "required_field")
-    if required_result.is_failure:
-        logger.error(f"Required field validation failed: {required_result.error}")
-    else:
-        logger.info("Required field validation passed")
+    class _ValidationHelper:
+        """Nested helper for validation operations."""
 
-    # Test email validation with invalid email (expected failure)
-    invalid_email_result = flext_validate_email("invalid-email", "email")
-    if invalid_email_result.is_failure:
-        logger.info(f"Email validation correctly failed: {invalid_email_result.error}")
-    else:
-        logger.warning("Email validation unexpectedly passed for invalid email")
+        @staticmethod
+        def process_validation_batch(
+            validation_data: list[tuple[str, object, str]], validator_func: object
+        ) -> tuple[int, int, FlextTypes.Core.StringList]:
+            """Process batch of validations with unified error handling."""
+            successful = 0
+            failed = 0
+            errors: FlextTypes.Core.StringList = []
 
-    # Test required field with None (expected failure)
-    none_required_result = flext_validate_required(None, "required_field")
-    if none_required_result.is_failure:
-        logger.info(
-            f"Required field validation correctly failed: {none_required_result.error}",
+            for description, value, expected_type in validation_data:
+                if callable(validator_func):
+                    try:
+                        result = validator_func(value)
+                        if hasattr(result, "is_success") and getattr(
+                            result, "is_success", False
+                        ):
+                            successful += 1
+                        else:
+                            failed += 1
+                            error_msg = getattr(
+                                result, "error", f"Validation failed for {description}"
+                            )
+                            errors.append(f"{expected_type}: {error_msg}")
+                    except Exception as e:
+                        failed += 1
+                        errors.append(f"{expected_type}: Exception - {e}")
+                else:
+                    failed += 1
+                    errors.append(f"{expected_type}: Invalid validator function")
+
+            return successful, failed, errors
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate using FlextDomainService pattern."""
+        return FlextResult[None].ok(None)
+
+    def execute(self) -> FlextResult[object]:
+        """Execute validation - required by FlextDomainService."""
+        return self.demonstrate_validation()
+
+    def demonstrate_user_validation(self) -> FlextResult[None]:
+        """Demonstrate user validation using FlextValidations.create_user_validator() DIRECTLY."""
+        print("1. User Validation usando FlextValidations.create_user_validator():")
+
+        test_users = [
+            {"name": "Alice Johnson", "email": "alice@example.com"},
+            {"name": "Bob Smith", "email": "bob@company.com"},
+            {"name": "", "email": "invalid-email"},  # Should fail
+        ]
+
+        for user_data in test_users:
+            # Convert to dict[str, object] for validation API
+            user_data_obj = dict[str, object](user_data)
+            result = self._user_validator(user_data_obj)
+            if result.is_success:
+                validated = result.unwrap()
+                print(f"✅ Valid: {validated.get('name')} ({validated.get('email')})")
+            else:
+                print(f"❌ Invalid: {result.error}")
+
+        return FlextResult[None].ok(None)
+
+    def demonstrate_email_validation(self) -> FlextResult[None]:
+        """Demonstrate email validation using FlextValidations.validate_email."""
+        print("\n2. Email Validation usando FlextValidations.validate_email:")
+
+        emails = [
+            "valid@example.com",
+            "another.valid+email@domain.co.uk",
+            "invalid-email",
+            "@invalid.com",
+            "invalid@",
+        ]
+
+        for email in emails:
+            result = FlextValidations.validate_email(email)
+            status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+            print(f"Email {email}: {status}")
+
+        return FlextResult[None].ok(None)
+
+    def demonstrate_field_validation(self) -> FlextResult[None]:
+        """Demonstrate field validation using FlextValidations convenience methods DIRECTLY."""
+        print("\n3. Field Validation usando FlextValidations convenience methods:")
+
+        # String field validation using FlextValidations DIRECTLY
+        strings = ["Valid String", "", 123]  # Mixed types
+        for string_val in strings:
+            string_result = FlextValidations.validate_string_field(string_val)
+            status = (
+                "✅ Valid" if string_result.is_success else f"❌ {string_result.error}"
+            )
+            print(f"String '{string_val}': {status}")
+
+        # Numeric field validation using FlextValidations DIRECTLY
+        numbers = [42, "not a number", math.pi]
+        for number in numbers:
+            numeric_result = FlextValidations.validate_numeric_field(number)
+            status = (
+                "✅ Valid"
+                if numeric_result.is_success
+                else f"❌ {numeric_result.error}"
+            )
+            print(f"Number '{number}': {status}")
+
+        return FlextResult[None].ok(None)
+
+    def demonstrate_validation(self) -> FlextResult[object]:
+        """Demonstrate validation using FlextValidations DIRECTLY."""
+        print("\n4. Comprehensive Validation Report using FlextValidations:")
+
+        # Test data for validation
+        validation_test_data = [
+            ("Email format", "test@example.com", "Email"),
+            ("Invalid email", "invalid-email", "Email"),
+            ("Valid string", "Hello World", "String"),
+            ("Empty string", "", "String"),
+            ("Valid number", 42, "Number"),
+            ("Invalid number", "not-a-number", "Number"),
+        ]
+
+        successful, failed, errors = self._ValidationHelper.process_validation_batch(
+            validation_test_data, FlextValidations.validate_string_field
         )
-    else:
-        logger.warning("Required field validation unexpectedly passed for None value")
 
-    logger.info("Modern validation demonstration completed")
+        total = len(validation_test_data)
+        success_rate = (successful / total) if total > 0 else 0.0
 
+        report = self.ValidationReport(
+            total_validations=total,
+            successful_validations=successful,
+            failed_validations=failed,
+            success_rate=success_rate,
+            validation_errors=errors,
+        )
 
-def demonstrate_modern_validators() -> None:
-    """Demonstrate modern validator classes with validate_call."""
-    # Since FlextValidations is not available, demonstrate basic validation concepts
+        print(
+            f"✅ Validation Report: {successful}/{total} successful ({success_rate:.1%})"
+        )
+        if errors:
+            print(f"⚠️  Errors found: {len(errors)}")
 
-    # Demonstrate validation concepts
-
-
-def demonstrate_flext_result_integration() -> None:
-    """Demonstrate integration with FlextResult patterns."""
-    # Test entity ID validation (conceptual)
-
-    # Test service name validation (conceptual)
-
-    # Test generic validation with result (conceptual)
-
-
-def demonstrate_validation_pipeline() -> None:
-    """Demonstrate validation pipeline for complex validation chains."""
-    # Demonstrate validation pipeline concept
-
-
-def demonstrate_type_safety() -> None:
-    """Demonstrate type safety improvements with validate_call."""
-    # These will work correctly
-    try:
-        flext_validate_numeric(42, "number")
-
-        flext_validate_string("hello", "greeting")
-
-    except Exception as e:
-        logger.warning(f"Validation demo failed: {e}")
-
-    # These will raise ValidationError due to wrong types
+        return FlextResult[object].ok(report)
 
 
 def main() -> None:
-    """Main demonstration function with centralized logging and error handling."""
-    logger.info("Starting Example 04: Modern Validation Patterns")
+    """Main demonstration using FlextCore DIRECTLY - ZERO duplication."""
+    service = ProfessionalValidationService()
 
-    try:
-        demonstrate_modern_validation()
-        demonstrate_modern_validators()
-        demonstrate_flext_result_integration()
-        demonstrate_validation_pipeline()
-        demonstrate_type_safety()
+    print("🚀 FlextCore Professional Validation Showcase - ZERO Duplication")
+    print("=" * 50)
+    print(
+        "Features: FlextDomainService • FlextValidations.create_user_validator() • FlextValidations.Rules"
+    )
+    print()
 
-        logger.info("Example 04 completed successfully")
+    # Demonstrate user validation using FlextValidations DIRECTLY
+    user_result = service.demonstrate_user_validation()
+    if user_result.is_failure:
+        print(f"❌ User validation failed: {user_result.error}")
+        return
 
-    except Exception:
-        logger.exception("Example 04 failed with exception")
-        raise
+    # Demonstrate email validation using FlextValidations.Rules DIRECTLY
+    email_result = service.demonstrate_email_validation()
+    if email_result.is_failure:
+        print(f"❌ Email validation failed: {email_result.error}")
+        return
+
+    # Demonstrate field validation using FlextValidations convenience methods DIRECTLY
+    field_result = service.demonstrate_field_validation()
+    if field_result.is_failure:
+        print(f"❌ Field validation failed: {field_result.error}")
+        return
+
+    # Execute validation using FlextDomainService pattern
+    execution_result = service.execute()
+    if execution_result.is_failure:
+        print(f"❌ Comprehensive validation failed: {execution_result.error}")
+        return
+    report_obj = execution_result.unwrap()
+    if hasattr(report_obj, "success_rate"):
+        print(
+            f"\n📊 Comprehensive validation completed with {getattr(report_obj, 'success_rate', 0.0):.1%} success rate"
+        )
+
+    print("\n✅ FlextCore Professional Validation Demo Completed Successfully!")
+    print(
+        "💪 Professional architecture using FlextDomainService with ZERO code duplication!"
+    )
+
+
+# Setup function for test compatibility
+def create_validation_service() -> FlextResult[ProfessionalValidationService]:
+    """Create validation service for test compatibility."""
+    service = ProfessionalValidationService()
+    return FlextResult[ProfessionalValidationService].ok(service)
 
 
 if __name__ == "__main__":

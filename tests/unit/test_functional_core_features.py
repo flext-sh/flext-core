@@ -121,14 +121,14 @@ class TestFlextCoreIntegration:
             def __init__(self) -> None:
                 self.connected = True
 
-            def query(self, sql: str, *args: object) -> list[dict[str, object]]:
+            def query(self, _sql: str, *_args: object) -> list[dict[str, object]]:
                 return [{"id": 1, "name": "test"}] if self.connected else []
 
         class NotificationService:
             def __init__(self, db_service: DatabaseService) -> None:
                 self.db = db_service
 
-            def send_notification(self, user_id: str, message: str) -> bool:
+            def send_notification(self, user_id: str, _message: str) -> bool:
                 # Safe query without SQL injection
                 users = self.db.query("SELECT * FROM users WHERE id=?", user_id)
                 return len(users) > 0

@@ -1,7 +1,12 @@
-"""Comprehensive tests for FLEXT patterns logging module."""
+"""Comprehensive tests for FLEXT patterns logging module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+import logging
 import time
 
 import pytest
@@ -9,6 +14,7 @@ import pytest
 from flext_core import (
     FlextConstants,
     FlextLogger,
+    FlextTypes,
 )
 
 # Alias for the LogLevel enum
@@ -23,7 +29,7 @@ class TestFlextContext:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: dict[str, object] = {}
+        context: FlextTypes.Core.Dict = {}
 
         assert isinstance(context, dict)
         if len(context) != 0:
@@ -31,7 +37,7 @@ class TestFlextContext:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: dict[str, object] = {
+        context: FlextTypes.Core.Dict = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -48,7 +54,7 @@ class TestFlextContext:
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
         # Test with partial context
-        context: dict[str, object] = {
+        context: FlextTypes.Core.Dict = {
             "user_id": "123",
         }
 
@@ -58,7 +64,7 @@ class TestFlextContext:
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: dict[str, object] = {
+        context: FlextTypes.Core.Dict = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -79,7 +85,7 @@ class TestFlextContext:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: dict[str, object] = {
+        context: FlextTypes.Core.Dict = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
@@ -93,7 +99,7 @@ class TestFlextContext:
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: dict[str, object] = {
+        context: FlextTypes.Core.Dict = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",
@@ -112,33 +118,29 @@ class TestFlextLogLevel:
     """Test FlextLogLevel enum."""
 
     def test_log_level_values(self) -> None:
-        """Test that log levels have correct string values."""
-        if FlextLogLevel.TRACE != "TRACE":
-            raise AssertionError(f"Expected {'TRACE'}, got {FlextLogLevel.TRACE}")
-        assert FlextLogLevel.DEBUG == "DEBUG"
-        if FlextLogLevel.INFO != "INFO":
-            raise AssertionError(f"Expected {'INFO'}, got {FlextLogLevel.INFO}")
-        assert FlextLogLevel.WARNING == "WARNING"
-        if FlextLogLevel.ERROR != "ERROR":
-            raise AssertionError(f"Expected {'ERROR'}, got {FlextLogLevel.ERROR}")
-        assert FlextLogLevel.CRITICAL == "CRITICAL"
+        """Test standard logging levels - FlextLogLevel was removed."""
+        # Test standard Python logging levels instead of removed FlextLogLevel
+        assert logging.getLevelName(logging.DEBUG) == "DEBUG"
+        assert logging.getLevelName(logging.INFO) == "INFO"
+        assert logging.getLevelName(logging.WARNING) == "WARNING"
+        assert logging.getLevelName(logging.ERROR) == "ERROR"
+        assert logging.getLevelName(logging.CRITICAL) == "CRITICAL"
 
     def test_log_level_membership(self) -> None:
-        """Test log level membership."""
+        """Test standard logging level membership - FlextLogLevel was removed."""
+        # Test standard Python logging levels instead of removed FlextLogLevel
         all_levels = [
-            FlextLogLevel.TRACE,
-            FlextLogLevel.DEBUG,
-            FlextLogLevel.INFO,
-            FlextLogLevel.WARNING,
-            FlextLogLevel.ERROR,
-            FlextLogLevel.CRITICAL,
+            logging.DEBUG,
+            logging.INFO,
+            logging.WARNING,
+            logging.ERROR,
+            logging.CRITICAL,
         ]
 
+        # Validate that all levels are valid Python logging levels
         for level in all_levels:
-            if level not in FlextLogLevel.__dict__.values():
-                raise AssertionError(
-                    f"Expected {level} in {FlextLogLevel.__dict__.values()}",
-                )
+            assert isinstance(level, int), f"Level {level} should be an integer"
+            assert level >= 0, f"Level {level} should be non-negative"
 
 
 class TestFlextLogger:
@@ -285,7 +287,7 @@ class TestFlextLoggerUsage:
     def test_basic_logging(self) -> None:
         """Test basic logging functionality."""
         # Use FlextLogger constructor directly, not FlextLogger()
-        logger = FlextLogger("usage_test", "DEBUG")
+        logger = FlextLogger("usage_test")
 
         # These should not raise errors
         logger.info("Test info message", test=True)
@@ -296,7 +298,7 @@ class TestFlextLoggerUsage:
 
     def test_logging_with_context(self) -> None:
         """Test logging with context data."""
-        logger = FlextLogger("context_test", "DEBUG")
+        logger = FlextLogger("context_test")
 
         # These should not raise errors
         logger.info("User action", user_id="123", action="login")
@@ -304,7 +306,7 @@ class TestFlextLoggerUsage:
 
     def test_bound_logger_usage(self) -> None:
         """Test using bound logger."""
-        logger = FlextLogger("bound_test", "DEBUG")
+        logger = FlextLogger("bound_test", level="DEBUG")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
 
         # Context should be automatically included in these logs
@@ -313,7 +315,7 @@ class TestFlextLoggerUsage:
 
     def test_context_manager_style(self) -> None:
         """Test context manager style usage."""
-        logger = FlextLogger("context_mgr_test", "DEBUG")
+        logger = FlextLogger("context_mgr_test")
 
         # Bind context for a series of operations
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
@@ -328,7 +330,7 @@ class TestFlextLoggerUsage:
         perf_logger = FlextLogger("performance_test")
 
         # Performance loggers should support similar operations
-        # Type check to ensure we have a logger-like object
+
         assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 
@@ -388,7 +390,7 @@ class TestFlextLoggerIntegration:
 
     def test_complex_logging_scenario(self) -> None:
         """Test complex logging scenario with multiple contexts."""
-        logger = FlextLogger("complex_test", "DEBUG")
+        logger = FlextLogger("complex_test")
 
         # Simulate a complex operation with nested contexts
         bound_logger = logger.bind(operation="user_registration", request_id="req-789")
@@ -409,7 +411,7 @@ class TestFlextLoggerIntegration:
 
     def test_error_logging_with_context(self) -> None:
         """Test error logging with rich context."""
-        logger = FlextLogger("error_test", "DEBUG")
+        logger = FlextLogger("error_test")
 
         def _raise_test_error() -> None:
             """Raise test error for exception logging tests."""
@@ -432,7 +434,7 @@ class TestFlextLoggerIntegration:
     @pytest.mark.performance
     def test_performance_logging_integration(self) -> None:
         """Test performance logging integration."""
-        logger = FlextLogger("perf_integration_test", "DEBUG")
+        logger = FlextLogger("perf_integration_test")
 
         start_time = time.time()
 
