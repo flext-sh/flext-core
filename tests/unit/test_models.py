@@ -1180,7 +1180,7 @@ class TestFlextModelsRootModelValidation:
             message_type="test_message",
             source_service="test_service",
         )
-        assert not no_expiry_payload.is_expired()
+        assert not no_expiry_payload.is_expired
 
     def test_json_data_validation_serializable(self) -> None:
         """Test JsonData validation for JSON serializable data (lines 889-895)."""

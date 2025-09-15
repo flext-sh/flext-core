@@ -10,6 +10,7 @@ from __future__ import annotations
 # ALL IMPORTS AT TOP - Required by ruff E402
 # =============================================================================
 from typing import TypeVar
+
 from flext_core.adapters import FlextTypeAdapters
 from flext_core.commands import FlextCommands
 from flext_core.config import FlextConfig
