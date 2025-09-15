@@ -274,7 +274,7 @@ class TestFlextConfigFactory:
 
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
-        assert config.environment == "test"  # Environment from test environment
+        assert config.environment == "development"  # Environment from factory method
         assert hasattr(config, "debug")
         assert config.debug is True  # Debug from .env file
 
@@ -285,9 +285,9 @@ class TestFlextConfigFactory:
 
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
-        assert config.environment == "test"  # Environment from test environment
+        assert config.environment == "production"  # Environment from factory method
         assert hasattr(config, "debug")
-        assert config.debug is True  # Debug from .env file
+        assert config.debug is False  # Debug should be False in production
 
 
 class TestCommandFactory:

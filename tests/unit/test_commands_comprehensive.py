@@ -321,10 +321,12 @@ class TestFlextCommandsHandlers:
         """Test CommandHandler.execute when handler cannot handle command."""
 
         class RestrictedHandler(FlextCommands.Handlers.CommandHandler[object, int]):
-            def handle(self, _command: object) -> FlextResult[int]:
+            def handle(self, command: object) -> FlextResult[int]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[int].ok(1)
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return False
 
         handler = RestrictedHandler()

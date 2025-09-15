@@ -24,24 +24,24 @@ class TestFlextContainer100PercentCoverage:
     def test_service_key_creation_and_validation(self) -> None:
         """Test FlextContainer.ServiceKey creation and validation."""
         # Test valid service key
-        valid_key = FlextContainer.ServiceKey("valid_service")
+        valid_key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("valid_service")
         FlextTestsMatchers.assert_result_success(
             FlextResult[FlextContainer.ServiceKey[object]].ok(valid_key)
         )
         assert valid_key.name == "valid_service"
 
         # Test empty service key validation
-        empty_key = FlextContainer.ServiceKey("")
+        empty_key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("")
         assert empty_key.name == ""
 
         # Test service key with special characters
-        special_key = FlextContainer.ServiceKey("service.with.dots")
+        special_key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("service.with.dots")
         assert special_key.name == "service.with.dots"
 
         # Test service key equality
-        key1 = FlextContainer.ServiceKey("test")
-        key2 = FlextContainer.ServiceKey("test")
-        key3 = FlextContainer.ServiceKey("different")
+        key1: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("test")
+        key2: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("test")
+        key3: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("different")
 
         assert key1 == key2
         assert key1 != key3
@@ -270,10 +270,9 @@ class TestFlextContainer100PercentCoverage:
         # Test module utilities creation (if method exists)
         try:
             module_result = FlextContainer.create_module_utilities("test_module")
-            FlextTestsMatchers.assert_result_success(module_result)
-
-            utilities = module_result.value
-            assert utilities is not None
+            # module_result is a dict, not FlextResult
+            assert isinstance(module_result, dict)
+            assert module_result is not None
         except AttributeError:
             # Method doesn't exist, skip this part
             pass
@@ -302,7 +301,7 @@ class TestFlextContainer100PercentCoverage:
     def test_container_thread_safety(self) -> None:
         """Test container thread safety with concurrent operations."""
         container = FlextContainer()
-        results: list[FlextResult[object]] = []
+        results: list[FlextResult[None]] = []
         errors: list[Exception] = []
 
         def register_service_thread(service_id: int) -> None:

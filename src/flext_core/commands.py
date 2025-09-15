@@ -386,9 +386,16 @@ class FlextCommands:
                                         can_handle_result = (
                                             command_origin == origin_type
                                         )
-                                    else:
+                                    # Ensure command_type is a valid type for issubclass
+                                    elif isinstance(command_type, type) and isinstance(
+                                        origin_type, type
+                                    ):
                                         can_handle_result = issubclass(
                                             command_type, origin_type
+                                        )
+                                    else:
+                                        can_handle_result = (
+                                            command_type == expected_type
                                         )
                                 except TypeError:
                                     # Handle cases where origin_type is not a valid class

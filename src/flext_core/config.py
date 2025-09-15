@@ -64,11 +64,8 @@ class FlextConfig(BaseSettings):
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
-    # Provide a simple, mypy-friendly constructor that accepts arbitrary kwargs.
-    # This avoids overly specific generated signatures from BaseSettings that
-    # can confuse static checking when tests expand a generic dict of overrides.
-    # Note: The main __init__ method is defined later in the file with full functionality.
-    # This placeholder is removed to avoid duplicate method definition.
+    # REMOVED: Unnecessary __init__ override that created type ignore violation
+    # BaseSettings already handles kwargs properly - no wrapper needed
 
     # =============================================================================
     # NESTED PROTOCOLS - Interface Segregation Principle
@@ -462,7 +459,7 @@ class FlextConfig(BaseSettings):
             """
             try:
                 # Use Pydantic's built-in environment loading with factory mode to avoid default forcing
-                config = FlextConfig(_factory_mode=True)
+                config = FlextConfig()
 
                 # Validate the created configuration
                 validation_result = config.validate_all()
@@ -893,37 +890,6 @@ class FlextConfig(BaseSettings):
     )
 
     # =============================================================================
-    # INITIALIZATION
-    # =============================================================================
-
-    def __init__(
-        self,
-        /,
-        *,
-        _factory_mode: bool = False,
-        _env_file: str | None = None,
-        _env_file_encoding: str = "utf-8",
-        _env_ignore_empty: bool = True,
-        _env_format: str = "env",
-        **kwargs: object,
-    ) -> None:
-        """Override BaseSettings init to preserve pure default semantics.
-
-        AUTOMATIC .ENV SUPPORT: Loads .env files automatically from current working directory.
-        Priority order: DEFAULT CONSTANTS → .ENV FILES → CLI PARAMETERS
-        CLI can specify custom .env file path and format (env, toml, json).
-
-        Args:
-            _factory_mode: Internal flag to indicate factory creation (allows env vars)
-            _env_file: Custom .env file path (defaults to .env in current directory)
-            _env_format: Environment file format (env, toml, json)
-            **kwargs: Additional configuration data to override defaults
-
-        """
-        # Pass all kwargs to BaseSettings __init__ for field assignment
-        super().__init__(**kwargs)
-
-    # =============================================================================
     # SINGLETON GLOBAL INSTANCE METHOD
     # =============================================================================
 
@@ -1232,7 +1198,7 @@ class FlextConfig(BaseSettings):
             FlextResult containing configured instance or error details
 
         """
-        settings: FlextTypes.Core.Dict = {}
+        settings: dict[str, object] = {}
         try:
             # Start with constants if provided
             settings = constants.copy() if constants else {}
@@ -1250,26 +1216,9 @@ class FlextConfig(BaseSettings):
                         error_code="ENV_FILE_NOT_FOUND",
                     )
 
-            # Create instance with validation
-            if env_file:
-                # CLI specified custom env file path
-                instance = cls(
-                    _factory_mode=True,
-                    _env_file=str(env_file),
-                    _env_file_encoding="utf-8",
-                    _env_ignore_empty=True,
-                    _env_format="env",
-                    **settings,
-                )
-            else:
-                instance = cls(
-                    _factory_mode=True,
-                    _env_file=None,
-                    _env_file_encoding="utf-8",
-                    _env_ignore_empty=True,
-                    _env_format="env",
-                    **settings,
-                )
+            # Create instance using model_validate instead of direct instantiation
+            # This properly handles type conversion from dict[str, object]
+            instance = cls.model_validate(settings)
 
             # Track creation metadata
             instance._metadata["created_from"] = "factory"
@@ -1321,7 +1270,7 @@ class FlextConfig(BaseSettings):
             FlextResult containing configured instance or error details
 
         """
-        settings: FlextTypes.Core.Dict = {}
+        settings: dict[str, object] = {}
         try:
             # Prepare settings for Pydantic
             settings = {}
@@ -1636,7 +1585,7 @@ class FlextConfig(BaseSettings):
                     _data = {}
 
             # Start from a baseline instance with defaults/environment
-            instance = cls(_factory_mode=True)
+            instance = cls()
 
             # Apply provided values if the field exists; ignore None overrides
             if isinstance(_data, dict) and _data:

@@ -283,7 +283,7 @@ class TestFlextContainerCoverageFocused:
         container.register("existing", "value")
 
         # Attempt batch with failure
-        registrations = {
+        registrations: dict[str, object] = {
             "service1": "value1",
             "": "invalid_empty_name",  # Should cause failure
         }
@@ -309,8 +309,12 @@ class TestFlextContainerCoverageFocused:
         get_service = utilities["get_service"]
 
         # These should not raise exceptions
+        assert callable(get_container)
+        assert callable(configure_deps)
+        assert callable(get_service)
+
         get_container()
-        configure_deps()  # No parameters needed
+        configure_deps()
         service_result = get_service("test_service")
         FlextTestsMatchers.assert_result_success(service_result)
         service = service_result.unwrap()
@@ -360,7 +364,7 @@ class TestFlextContainerCoverageFocused:
     def test_service_key_validate_method(self) -> None:
         """Test ServiceKey validate method."""
         # Test ServiceKey with proper signature
-        key = FlextContainer.ServiceKey("")
+        key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("")
 
         # The validate method requires data parameter
         result = key.validate("")

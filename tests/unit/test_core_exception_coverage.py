@@ -88,7 +88,9 @@ class TestFlextCoreExceptionCoverage:
         ):
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
-            assert f"Cleanup failed: {complex_error_msg}" in result.error
+            error_msg = result.error
+            assert error_msg is not None
+            assert f"Cleanup failed: {complex_error_msg}" in error_msg
 
     def test_cleanup_success_path_still_works(self) -> None:
         """Verify cleanup success path still works after exception testing."""
@@ -226,7 +228,9 @@ class TestFlextCoreExceptionCoverage:
         ):
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
+            error_msg = result.error
+            assert error_msg is not None
             assert (
                 "Cleanup failed: Database connection failed during session generation"
-                in result.error
+                in error_msg
             )

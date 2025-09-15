@@ -386,7 +386,7 @@ class TestFlextContainerMissingCoverageTargeted:
         """Test container commands comprehensive functionality."""
         # Test RegisterService command
         register_cmd = FlextContainer.Commands.RegisterService(
-            service_name="test_service", service={"data": "test"}
+            service_name="test_service", service_instance={"data": "test"}
         )
 
         validation_result = register_cmd.validate_command()

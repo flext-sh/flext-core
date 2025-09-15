@@ -586,6 +586,7 @@ class TestSecuritySanitization:
         log_entry = logger._build_log_entry("INFO", "Test nested", nested_context)
         context = log_entry["context"]
         nested_user = context["user"]
+        assert isinstance(nested_user, dict)
         assert nested_user["name"] == "john"
         assert nested_user["password"] == "[REDACTED]"
 
@@ -670,7 +671,10 @@ class TestErrorHandling:
             error_info = log_entry["error"]
             assert isinstance(error_info, dict)
             assert error_info["type"] == "ValueError"
-            assert "Invalid configuration parameter" in error_info["message"]
+            assert isinstance(error_info["message"], str)
+            message = error_info["message"]
+            assert isinstance(message, str)
+            assert "Invalid configuration parameter" in message
             assert "stack_trace" in error_info
 
     def test_exception_logging_with_stack_trace(self) -> None:
@@ -706,7 +710,10 @@ class TestErrorHandling:
             error_info = log_entry["error"]
             assert isinstance(error_info, dict)
             assert error_info["type"] == "RuntimeError"
-            assert "Deep error" in error_info["message"]
+            assert isinstance(error_info["message"], str)
+            message = error_info["message"]
+            assert isinstance(message, str)
+            assert "Deep error" in message
             assert "stack_trace" in error_info
             assert isinstance(error_info["stack_trace"], list)
             assert len(error_info["stack_trace"]) > 0
@@ -1307,7 +1314,7 @@ class TestAdvancedLoggingFeatures:
 
         # Performance section should be included with rounded duration
         assert "performance" in entry
-        performance_data = cast("FlextTypes.Core.Dict", entry["performance"])
+        performance_data = entry["performance"]
         assert performance_data["duration_ms"] == 123.456
 
     def test_system_information_gathering(self) -> None:
@@ -1319,7 +1326,7 @@ class TestAdvancedLoggingFeatures:
 
         # Check system metadata exists
         assert "system" in entry
-        system_data = cast("FlextTypes.Core.Dict", entry["system"])
+        system_data = entry["system"]
 
         # Verify system information fields
         assert "hostname" in system_data
@@ -1343,7 +1350,7 @@ class TestAdvancedLoggingFeatures:
 
         entry = logger._build_log_entry("INFO", "Test uptime", {})
 
-        execution_data = cast("FlextTypes.Core.Dict", entry["execution"])
+        execution_data = entry["execution"]
         uptime = execution_data["uptime_seconds"]
 
         # Should be a positive number

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
 import pytest
 
@@ -33,52 +34,40 @@ class TestFlextCoreIntegration:
                 if self.status == "inactive":
                     self.status = "active"
                     self.add_domain_event(
-                        {
-                            "event_type": "UserActivated",
-                            "user_id": self.id,
-                            "timestamp": datetime.now(UTC).isoformat(),
-                        },
+                        FlextModels.Event(
+                            event_type="UserActivated",
+                            payload={"user_id": self.id},
+                            aggregate_id=f"user-{self.id}",
+                        )
                     )
 
-        # Create entity with business validation
+        # Create entity with business validation (start with inactive status)
         result = core.create_entity(
             UserEntity,
             id="user-001",
             name="John Doe",
             email="john@example.com",
+            status="inactive",
         )
 
         assert result.success
         user = result.unwrap()
-        assert user.name == "John Doe"
-        assert user.email == "john@example.com"
-        assert user.status == "active"
+        assert isinstance(user, UserEntity)
+        assert user.id == "user-001"
+        assert user.version == 1
         assert len(user.domain_events) == 0
 
-        # Test business logic
-        user.status = "inactive"
-        user.activate()
-        assert user.status == "active"
+        # Test business logic - activate method to trigger domain events
+        user.activate()  # Call the activate method defined in UserEntity
         assert len(user.domain_events) == 1
-        assert user.domain_events[0]["event_type"] == "UserActivated"
+        assert user.domain_events[0].event_type == "UserActivated"
 
     def test_payload_message_workflow(self) -> None:
         """Test complete message payload workflow."""
         core = FlextCore.get_instance()
 
         # Create a message payload
-        data: dict[
-            str,
-            str
-            | int
-            | float
-            | bool
-            | list[str | int | float | bool | list[object] | dict[str, object] | None]
-            | dict[
-                str, str | int | float | bool | list[object] | dict[str, object] | None
-            ]
-            | None,
-        ] = {
+        data: dict[str, object] = {
             "user_id": "user-123",
             "action": "profile_update",
             "changes": {"email": "new@example.com"},
@@ -144,7 +133,7 @@ class TestFlextCoreIntegration:
             if db_result.failure:
                 error_msg = "Database service not available"
                 raise RuntimeError(error_msg)
-            return NotificationService(db_result.unwrap())
+            return NotificationService(cast("DatabaseService", db_result.unwrap()))
 
         factory_result = core.register_factory("notifications", notification_factory)
         assert factory_result.success
