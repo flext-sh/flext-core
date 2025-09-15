@@ -9,60 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import builtins
-
 from flext_core import FlextUtilities
 
 
 class TestUtilitiesDebugCoverage:
     """Debug tests for utilities coverage using direct exception forcing."""
 
-    def test_safe_float_exception_paths_with_monkey_patch(self) -> None:
-        """Test safe_float by temporarily patching float() to force exceptions."""
-        original_float = builtins.float
-        exception_counter = 0
+    def test_safe_float_exception_paths_real_inputs(self) -> None:
+        """Test safe_float exception paths using real invalid inputs (no mocks)."""
+        # ValueError: invalid string for float conversion
+        result1 = FlextUtilities.Conversions.safe_float("not_a_float", default=111.0)
+        assert result1 == 111.0
 
-        def counting_float(value: object) -> float:
-            nonlocal exception_counter
-            # Force exceptions for certain values to ensure coverage
-            if value == "force_value_error":
-                exception_counter += 1
-                msg = "Forced ValueError for coverage"
-                raise ValueError(msg)
-            if value == "force_type_error":
-                exception_counter += 1
-                msg = "Forced TypeError for coverage"
-                raise TypeError(msg)
-            return original_float(value)  # type: ignore[arg-type]
-
-        try:
-            # Temporarily replace float()
-            builtins.float = counting_float  # type: ignore[misc,assignment]
-
-            # Test forced ValueError path
-            result1 = FlextUtilities.Conversions.safe_float(
-                "force_value_error", default=111.0
-            )
-            assert result1 == 111.0, (
-                f"Forced ValueError should return default, got {result1}"
-            )
-
-            # Test forced TypeError path
-            result2 = FlextUtilities.Conversions.safe_float(
-                "force_type_error", default=222.0
-            )
-            assert result2 == 222.0, (
-                f"Forced TypeError should return default, got {result2}"
-            )
-
-            # Verify exceptions were actually raised and caught
-            assert exception_counter == 2, (
-                f"Expected 2 exceptions, got {exception_counter}"
-            )
-
-        finally:
-            # Restore original float()
-            builtins.float = original_float
+        # TypeError: non-convertible object
+        result2 = FlextUtilities.Conversions.safe_float(object(), default=222.0)
+        assert result2 == 222.0
 
     def test_safe_float_comprehensive_edge_cases(self) -> None:
         """Test comprehensive edge cases to ensure all exception paths are covered."""

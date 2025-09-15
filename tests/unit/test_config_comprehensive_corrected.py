@@ -342,6 +342,7 @@ class TestFlextConfigCorrected:
             result = adapter.get_env_var("TEST_VAR")
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Failed to get environment variable" in result.error
 
         # Test get_env_vars_with_prefix with exception
@@ -351,6 +352,7 @@ class TestFlextConfigCorrected:
             result = adapter.get_env_vars_with_prefix("TEST_")
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Failed to get environment variables" in result.error
 
     def test_runtime_validator_edge_cases(self) -> None:
@@ -362,6 +364,7 @@ class TestFlextConfigCorrected:
         result = validator.validate_runtime_requirements(config)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "high timeout" in result.error
 
         # Test excessive workers (above 50 is excessive)
@@ -369,6 +372,7 @@ class TestFlextConfigCorrected:
         result = validator.validate_runtime_requirements(config)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "exceeds maximum recommended workers" in result.error
 
     def test_create_from_environment_with_invalid_values(self) -> None:
@@ -377,6 +381,7 @@ class TestFlextConfigCorrected:
             result = FlextConfig.create_from_environment()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Invalid environment" in result.error
 
     def test_factory_methods_error_handling(self) -> None:
@@ -409,12 +414,14 @@ class TestFlextConfigCorrected:
         result = persistence.save_to_file(config, "/invalid/path/file.json")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Failed to save" in result.error
 
         # Test load from non-existent file
         result = persistence.load_from_file("/non/existent/file.json")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Configuration file not found" in result.error
 
     def test_api_payload_serialization_error_handling(self) -> None:

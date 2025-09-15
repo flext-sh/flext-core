@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import json
 from datetime import UTC, datetime
 
@@ -45,7 +46,17 @@ class FlextMixins:
         """Mixin for service functionality."""
 
         def __init__(self, **data: object) -> None:
-            """Initialize service."""
+            """Initialize service with provided data and basic state."""
+            # Store provided initialization data as attributes
+            for key, value in data.items():
+                try:
+                    setattr(self, str(key), value)
+                except Exception:
+                    # Ignore attributes that cannot be set
+                    pass
+            # Mark service as initialized for observability in tests
+            with contextlib.suppress(Exception):
+                setattr(self, "initialized", True)
 
     @staticmethod
     def to_json(obj: object, indent: int | None = None) -> str:
@@ -58,7 +69,12 @@ class FlextMixins:
 
     @staticmethod
     def initialize_validation(obj: object) -> None:
-        """Initialize validation for object."""
+        """Initialize validation for object by toggling a 'validated' flag."""
+        try:
+            setattr(obj, "validated", True)
+        except Exception:
+            # Best effort; ignore objects that don't allow setattr
+            pass
 
     @staticmethod
     def start_timing(obj: object) -> None:

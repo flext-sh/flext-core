@@ -50,7 +50,7 @@ class TestFlextCommandsModels:
         command = FlextCommands.Models.Command(command_type="valid_command")
 
         result = command.validate_command()
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() is True
 
     def test_command_model_id_property(self) -> None:
@@ -147,7 +147,7 @@ class TestFlextCommandsModels:
 
         result = FlextCommands.Models.Command.from_payload(payload)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         command = result.unwrap()
         assert command.command_type == "test_command"
 
@@ -159,8 +159,9 @@ class TestFlextCommandsModels:
 
         result = FlextCommands.Models.Command.from_payload(payload)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "not compatible" in result.error
 
     def test_command_model_from_payload_validation_error(self) -> None:
@@ -180,7 +181,7 @@ class TestFlextCommandsModels:
 
         result = FlextCommands.Models.Command.from_payload(payload)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
 
     def test_query_model_basic_creation(self) -> None:
         """Test basic query model creation."""
@@ -274,7 +275,7 @@ class TestFlextCommandsHandlers:
         command = TestCommand()
 
         result = handler.validate_command(command)
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_command_handler_validate_command_without_validation_method(self) -> None:
         """Test validate_command when command has no validate_command method."""
@@ -289,7 +290,7 @@ class TestFlextCommandsHandlers:
         command = {"test": "data"}
 
         result = handler.validate_command(command)
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_command_handler_can_handle_with_type_check(self) -> None:
         """Test can_handle method with type parameter."""
@@ -359,7 +360,7 @@ class TestFlextCommandsHandlers:
 
         result = handler.execute(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "success"
 
     def test_command_handler_execute_cannot_handle(self) -> None:
@@ -380,7 +381,7 @@ class TestFlextCommandsHandlers:
 
         result = handler.execute(command)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error_code == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
 
     def test_command_handler_execute_validation_failure(self) -> None:
@@ -404,8 +405,9 @@ class TestFlextCommandsHandlers:
 
         result = handler.execute(command)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Validation failed" in result.error
 
     def test_command_handler_execute_handle_exception(self) -> None:
@@ -430,10 +432,12 @@ class TestFlextCommandsHandlers:
 
         result = handler.execute(command)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Command processing failed" in result.error
         assert result.error
+        assert result.error is not None
         assert "Handler error" in result.error
 
     def test_command_handler_handle_command_delegation(self) -> None:
@@ -451,7 +455,7 @@ class TestFlextCommandsHandlers:
 
         result = handler.handle_command(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "delegated"
 
     def test_query_handler_initialization_default(self) -> None:
@@ -511,7 +515,7 @@ class TestFlextCommandsHandlers:
         query = TestQuery()
 
         result = handler.validate_query(query)
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_query_handler_validate_query_without_validation_method(self) -> None:
         """Test validate_query when query has no validate_query method."""
@@ -524,7 +528,7 @@ class TestFlextCommandsHandlers:
         query = {"test": "data"}
 
         result = handler.validate_query(query)
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_query_handler_handle_query_success(self) -> None:
         """Test QueryHandler handle_query method success path."""
@@ -542,7 +546,7 @@ class TestFlextCommandsHandlers:
 
         result = handler.handle_query(query)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "query result"
 
     def test_query_handler_handle_query_validation_failure(self) -> None:
@@ -561,8 +565,9 @@ class TestFlextCommandsHandlers:
 
         result = handler.handle_query(query)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Query validation failed" in result.error
         assert result.error_code == FlextConstants.Errors.VALIDATION_ERROR
 
@@ -609,7 +614,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
 
         result = bus.register_handler(None)
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Handler cannot be None" in str(result.error)
 
     def test_bus_register_handler_single_arg_invalid_handler(self) -> None:
@@ -622,7 +627,7 @@ class TestFlextCommandsBus:
         handler = InvalidHandler()
 
         result = bus.register_handler(handler)
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert "must have callable 'handle' method" in str(result.error)
 
     def test_bus_register_handler_single_arg_duplicate(self) -> None:
@@ -666,7 +671,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
 
         result = bus.register_handler(None, None)
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert "command_type and handler are required" in str(result.error)
 
     def test_bus_register_handler_invalid_arg_count(self) -> None:
@@ -674,7 +679,7 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
 
         result = bus.register_handler("arg1", "arg2", "arg3")
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert "takes 1 or 2 positional arguments" in str(result.error)
 
     def test_bus_find_handler_by_command_type_name(self) -> None:
@@ -760,7 +765,7 @@ class TestFlextCommandsBus:
         command = TestCommand()
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "executed"
 
     def test_bus_execute_no_handler_found(self) -> None:
@@ -773,7 +778,7 @@ class TestFlextCommandsBus:
         command = UnhandledCommand()
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error_code == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
 
     def test_bus_execute_with_query_caching(self) -> None:
@@ -825,8 +830,9 @@ class TestFlextCommandsBus:
         command = TestCommand()
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Middleware pipeline is disabled" in result.error
 
     def test_bus_apply_middleware_disabled(self) -> None:
@@ -837,7 +843,7 @@ class TestFlextCommandsBus:
 
         result = bus._apply_middleware({}, None)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_bus_apply_middleware_success(self) -> None:
         """Test Bus _apply_middleware success path."""
@@ -861,7 +867,7 @@ class TestFlextCommandsBus:
 
         result = bus._apply_middleware({}, None)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_bus_apply_middleware_rejection(self) -> None:
         """Test Bus _apply_middleware when middleware rejects command."""
@@ -890,8 +896,9 @@ class TestFlextCommandsBus:
             # Middleware might be skipped if not properly configured
             assert True  # Pass the test
         else:
-            FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+            FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Middleware rejected" in result.error
 
     def test_bus_execute_handler_execute_method(self) -> None:
@@ -906,7 +913,7 @@ class TestFlextCommandsBus:
 
         result = bus._execute_handler(handler, {})
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "executed"
 
     def test_bus_execute_handler_handle_method(self) -> None:
@@ -921,7 +928,7 @@ class TestFlextCommandsBus:
 
         result = bus._execute_handler(handler, {})
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "handled"
 
     def test_bus_execute_handler_process_command_method(self) -> None:
@@ -937,7 +944,7 @@ class TestFlextCommandsBus:
 
         result = bus._execute_handler(handler, {})
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "processed unknown"
 
     def test_bus_execute_handler_method_exception(self) -> None:
@@ -953,8 +960,9 @@ class TestFlextCommandsBus:
 
         result = bus._execute_handler(handler, {})
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Handler execution failed" in result.error
 
     def test_bus_execute_handler_no_valid_method(self) -> None:
@@ -970,8 +978,9 @@ class TestFlextCommandsBus:
 
         result = bus._execute_handler(handler, {})
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "no callable execute, handle, or process_command method" in result.error
 
     def test_bus_add_middleware_success(self) -> None:
@@ -986,7 +995,7 @@ class TestFlextCommandsBus:
 
         result = bus.add_middleware(middleware)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert len(bus._middleware) == 1
 
     def test_bus_add_middleware_with_config(self) -> None:
@@ -1006,7 +1015,7 @@ class TestFlextCommandsBus:
 
         result = bus.add_middleware(middleware, config)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert bus._middleware[0] == config
 
     def test_bus_add_middleware_disabled_pipeline(self) -> None:
@@ -1021,7 +1030,7 @@ class TestFlextCommandsBus:
         middleware = TestMiddleware()
         result = bus.add_middleware(middleware)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         # Should skip adding when pipeline disabled
 
     def test_bus_get_all_handlers(self) -> None:
@@ -1083,7 +1092,7 @@ class TestFlextCommandsBus:
         # Should delegate to execute (which will fail since no handler)
         result = bus.send_command(command)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
 
     def test_bus_get_registered_handlers(self) -> None:
         """Test Bus get_registered_handlers method."""
@@ -1144,7 +1153,7 @@ class TestFlextCommandsDecorators:
         command = TestCommand()
         result = handle_test_command(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "Handled test"
 
 
@@ -1157,7 +1166,7 @@ class TestFlextCommandsResults:
 
         result = FlextCommands.Results.success(data)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == data
 
     def test_results_failure_default(self) -> None:
@@ -1166,7 +1175,7 @@ class TestFlextCommandsResults:
 
         result = FlextCommands.Results.failure(error_message)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error == error_message
         assert result.error_code == FlextConstants.Errors.COMMAND_PROCESSING_FAILED
 
@@ -1177,7 +1186,7 @@ class TestFlextCommandsResults:
 
         result = FlextCommands.Results.failure(error_message, error_code=error_code)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error == error_message
         assert result.error_code == error_code
 
@@ -1188,7 +1197,7 @@ class TestFlextCommandsResults:
 
         result = FlextCommands.Results.failure(error_message, error_data=error_data)
 
-        FlextTestsMatchers.assert_result_failure(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_failure(result)
         assert result.error == error_message
 
 
@@ -1222,7 +1231,7 @@ class TestFlextCommandsFactories:
 
         result = handler.handle(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "Handled test"
 
     def test_create_query_handler(self) -> None:
@@ -1247,7 +1256,7 @@ class TestFlextCommandsFactories:
 
         result = handler.handle(query)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == ["Result for test"]
 
 
@@ -1296,7 +1305,7 @@ class TestFlextCommandsIntegration:
 
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         user_data = result.unwrap()
         assert user_data["username"] == "testuser"
         assert user_data["email"] == "test@example.com"
@@ -1334,7 +1343,7 @@ class TestFlextCommandsIntegration:
 
         result = bus.execute(query)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         users = result.unwrap()
         assert len(users) == 2
         assert users[0]["username"] == "test_user_0"
@@ -1407,7 +1416,7 @@ class TestFlextCommandsIntegration:
 
         result = bus.execute(command)
 
-        FlextTestsMatchers.assert_result_success(result)  # type: ignore[arg-type]
+        FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "Processed test"
         # Note: Middleware integration depends on bus implementation
         # Test passes if command execution works, middleware logging is optional

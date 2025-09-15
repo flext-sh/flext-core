@@ -595,13 +595,23 @@ class FlextResult[T_co]:
 
     @staticmethod
     def all_success(*results: FlextResult[object]) -> bool:
-        """Check if all results succeeded."""
-        return all(result.is_success for result in results)
+        """Check success condition across results.
+
+        Implementation detail aligned with test expectations:
+        - Returns True when no results are provided (vacuous truth).
+        - Returns True only if all results are successful.
+        """
+        if not results:
+            return True
+        return all(result.success for result in results)
 
     @staticmethod
     def any_success(*results: FlextResult[object]) -> bool:
-        """Check if any result succeeded."""
-        return any(result.is_success for result in results)
+        """Check if any result succeeded.
+
+        For test compatibility: False for empty input, True otherwise.
+        """
+        return any(result.success for result in results) if results else False
 
     @classmethod
     def first_success(cls, *results: FlextResult[T_co]) -> FlextResult[T_co]:

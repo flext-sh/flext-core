@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -74,7 +74,9 @@ class TestFlextResultCompleteCoverage:
 
         # Single success
         single_result = FlextResult[str].ok("single")
-        chain_single = FlextResult.chain_results(single_result)
+        chain_single = FlextResult.chain_results(
+            cast("FlextResult[object]", single_result)
+        )
         assert chain_single.is_success
         assert chain_single.value == ["single"]
 
@@ -83,8 +85,13 @@ class TestFlextResultCompleteCoverage:
         failure = FlextResult[str].fail("error occurred")
         success2 = FlextResult[str].ok("second")  # This shouldn't be reached
 
-        chain_mixed = FlextResult.chain_results(success1, failure, success2)
+        chain_mixed = FlextResult.chain_results(
+            cast("FlextResult[object]", success1),
+            cast("FlextResult[object]", failure),
+            cast("FlextResult[object]", success2),
+        )
         assert chain_mixed.is_failure
+        assert chain_mixed.error is not None
         assert "error occurred" in chain_mixed.error
 
     def test_map_with_exception_handling(self) -> None:
@@ -98,6 +105,7 @@ class TestFlextResultCompleteCoverage:
 
         mapped_value_error = result.map(raise__value__error)
         assert mapped_value_error.is_failure
+        assert mapped_value_error.error is not None
         assert "Transformation error: Invalid value" in mapped_value_error.error
         assert mapped_value_error.error_code == FlextConstants.Errors.EXCEPTION_ERROR
 
@@ -108,6 +116,7 @@ class TestFlextResultCompleteCoverage:
 
         mapped_type_error = result.map(raise__type__error)
         assert mapped_type_error.is_failure
+        assert mapped_type_error.error is not None
         assert "Transformation error: Type error" in mapped_type_error.error
 
         # Test AttributeError exception
@@ -117,6 +126,7 @@ class TestFlextResultCompleteCoverage:
 
         mapped_attr_error = result.map(raise__attribute__error)
         assert mapped_attr_error.is_failure
+        assert mapped_attr_error.error is not None
         assert "Transformation error: Attribute error" in mapped_attr_error.error
 
         # Test generic Exception (not in specific types)
@@ -126,6 +136,7 @@ class TestFlextResultCompleteCoverage:
 
         mapped_generic_error = result.map(raise__generic__error)
         assert mapped_generic_error.is_failure
+        assert mapped_generic_error.error is not None
         assert "Transformation failed: Runtime error" in mapped_generic_error.error
         assert mapped_generic_error.error_code == FlextConstants.Errors.MAP_ERROR
 
@@ -140,6 +151,7 @@ class TestFlextResultCompleteCoverage:
 
         flat_mapped = result.flat_map(raise__type__error)
         assert flat_mapped.is_failure
+        assert flat_mapped.error is not None
         assert "Chained operation failed: Type error in flat_map" in flat_mapped.error
         assert flat_mapped.error_code == FlextConstants.Errors.BIND_ERROR
 
@@ -150,6 +162,7 @@ class TestFlextResultCompleteCoverage:
 
         flat_mapped_ve = result.flat_map(raise__value__error)
         assert flat_mapped_ve.is_failure
+        assert flat_mapped_ve.error is not None
         assert "Chained operation failed: Value error" in flat_mapped_ve.error
 
         # Test AttributeError
@@ -159,6 +172,7 @@ class TestFlextResultCompleteCoverage:
 
         flat_mapped_ae = result.flat_map(raise__attr__error)
         assert flat_mapped_ae.is_failure
+        assert flat_mapped_ae.error is not None
         assert "Chained operation failed: Attribute error" in flat_mapped_ae.error
 
         # Test IndexError
@@ -168,6 +182,7 @@ class TestFlextResultCompleteCoverage:
 
         flat_mapped_ie = result.flat_map(raise__index__error)
         assert flat_mapped_ie.is_failure
+        assert flat_mapped_ie.error is not None
         assert "Chained operation failed: Index error" in flat_mapped_ie.error
 
         # Test KeyError
@@ -177,6 +192,7 @@ class TestFlextResultCompleteCoverage:
 
         flat_mapped_ke = result.flat_map(raise__key__error)
         assert flat_mapped_ke.is_failure
+        assert flat_mapped_ke.error is not None
         assert "Chained operation failed: 'Key error'" in flat_mapped_ke.error
 
         # Test generic Exception
@@ -186,6 +202,7 @@ class TestFlextResultCompleteCoverage:
 
         flat_mapped_ge = result.flat_map(raise__generic__error)
         assert flat_mapped_ge.is_failure
+        assert flat_mapped_ge.error is not None
         assert (
             "Unexpected chaining error: Runtime error in flat_map"
             in flat_mapped_ge.error
@@ -310,6 +327,7 @@ class TestFlextResultCompleteCoverage:
 
         error_result = failure.or_else_get(failing_function)
         assert error_result.is_failure
+        assert error_result.error is not None
         assert "Function failed" in error_result.error
 
     def test_recover_methods_comprehensive(self) -> None:
@@ -333,6 +351,7 @@ class TestFlextResultCompleteCoverage:
 
         failed_recovery = failure.recover(failing__recover)
         assert failed_recovery.is_failure
+        assert failed_recovery.error is not None
         assert "Recovery failed" in failed_recovery.error
 
         # recover_with method - success should pass through
@@ -355,13 +374,14 @@ class TestFlextResultCompleteCoverage:
 
         failed_recovery_with = failure.recover_with(failing__recover__with)
         assert failed_recovery_with.is_failure
+        assert failed_recovery_with.error is not None
         assert "Recovery with failed" in failed_recovery_with.error
 
     def test_tap_methods_with_side_effects(self) -> None:
         """Test tap and tap_error methods with real side effects."""
         side_effect_calls: list[str] = []
 
-        def success_side_effect(value: str) -> None:
+        def success_side_effect(value: str | None) -> None:
             side_effect_calls.append(f"success: {value}")
 
         def error_side_effect(error: str) -> None:
@@ -396,7 +416,7 @@ class TestFlextResultCompleteCoverage:
             raise ValueError(msg)
 
         # Should not raise exception, just suppress it
-        success_result.tap(failing__side__effect)  # Should not raise
+        success_result.tap(failing__side__effect)
 
     def test_filter_method_comprehensive(self) -> None:
         """Test filter method with comprehensive scenarios."""
@@ -423,6 +443,7 @@ class TestFlextResultCompleteCoverage:
 
         filtered_exception = success_result.filter(failing__predicate, "Error message")
         assert filtered_exception.is_failure
+        assert filtered_exception.error is not None
         assert "Predicate failed" in filtered_exception.error
 
     def test_zip_with_method_comprehensive(self) -> None:
@@ -440,11 +461,13 @@ class TestFlextResultCompleteCoverage:
         # First failure
         zipped_first_fail = failure1.zip_with(success2, operator.add)
         assert zipped_first_fail.is_failure
+        assert zipped_first_fail.error is not None
         assert "first_error" in zipped_first_fail.error
 
         # Second failure
         zipped_second_fail = success1.zip_with(failure2, operator.add)
         assert zipped_second_fail.is_failure
+        assert zipped_second_fail.error is not None
         assert "second_error" in zipped_second_fail.error
 
         # Missing data (None values) - should fail
@@ -452,6 +475,7 @@ class TestFlextResultCompleteCoverage:
         none_result2 = FlextResult[int | None].ok(None)
         zipped_none = none_result1.zip_with(none_result2, lambda x, y: (x, y))
         assert zipped_none.is_failure
+        assert zipped_none.error is not None
         assert "Missing data for zip operation" in zipped_none.error
 
         # Exception in zip function
@@ -461,6 +485,7 @@ class TestFlextResultCompleteCoverage:
 
         zipped_exception = success1.zip_with(success2, failing_zip_func)
         assert zipped_exception.is_failure
+        assert zipped_exception.error is not None
         assert "Division by zero" in zipped_exception.error
 
     def test_conversion_methods(self) -> None:
@@ -501,6 +526,7 @@ class TestFlextResultCompleteCoverage:
 
         result_type_error = FlextResult.from_exception(failing_func_type_error)
         assert result_type_error.is_failure
+        assert result_type_error.error is not None
         assert "Type error occurred" in result_type_error.error
 
         def failing_func_value_error() -> str:
@@ -509,6 +535,7 @@ class TestFlextResultCompleteCoverage:
 
         result_value_error = FlextResult.from_exception(failing_func_value_error)
         assert result_value_error.is_failure
+        assert result_value_error.error is not None
         assert "Value error occurred" in result_value_error.error
 
         def failing_func_attr_error() -> str:
@@ -517,6 +544,7 @@ class TestFlextResultCompleteCoverage:
 
         result_attr_error = FlextResult.from_exception(failing_func_attr_error)
         assert result_attr_error.is_failure
+        assert result_attr_error.error is not None
         assert "Attribute error occurred" in result_attr_error.error
 
         def failing_func_runtime_error() -> str:
@@ -525,6 +553,7 @@ class TestFlextResultCompleteCoverage:
 
         result_runtime_error = FlextResult.from_exception(failing_func_runtime_error)
         assert result_runtime_error.is_failure
+        assert result_runtime_error.error is not None
         assert "Runtime error occurred" in result_runtime_error.error
 
     def test_combine_static_method(self) -> None:
@@ -535,19 +564,32 @@ class TestFlextResultCompleteCoverage:
         failure = FlextResult[str].fail("failed")
 
         # All success
-        combined_success = FlextResult.combine(success1, success2, success3)
+
+        combined_success = FlextResult.combine(
+            cast("FlextResult[object]", success1),
+            cast("FlextResult[object]", success2),
+            cast("FlextResult[object]", success3),
+        )
         assert combined_success.is_success
         expected_data = ["first", 42, True]
         assert combined_success.value == expected_data
 
         # With failure
-        combined_failure = FlextResult.combine(success1, failure, success3)
+        combined_failure = FlextResult.combine(
+            cast("FlextResult[object]", success1),
+            cast("FlextResult[object]", failure),
+            cast("FlextResult[object]", success3),
+        )
         assert combined_failure.is_failure
+        assert combined_failure.error is not None
         assert "failed" in combined_failure.error
 
         # With None values - should include them
         none_success = FlextResult[None].ok(None)
-        combined_with_none = FlextResult.combine(success1, none_success)
+        combined_with_none = FlextResult.combine(
+            cast("FlextResult[object]", success1),
+            cast("FlextResult[object]", none_success),
+        )
         assert combined_with_none.is_success
         # None values should not be included based on the implementation
         assert combined_with_none.value == ["first"]
@@ -560,15 +602,52 @@ class TestFlextResultCompleteCoverage:
         failure2 = FlextResult[str].fail("second_error")
 
         # all_success tests
-        assert FlextResult.all_success(success1, success2) is True
-        assert FlextResult.all_success(success1, failure1) is False
-        assert FlextResult.all_success(failure1, failure2) is False
+
+        assert (
+            FlextResult.all_success(
+                cast("FlextResult[object]", success1),
+                cast("FlextResult[object]", success2),
+            )
+            is True
+        )
+        assert (
+            FlextResult.all_success(
+                cast("FlextResult[object]", success1),
+                cast("FlextResult[object]", failure1),
+            )
+            is False
+        )
+        assert (
+            FlextResult.all_success(
+                cast("FlextResult[object]", failure1),
+                cast("FlextResult[object]", failure2),
+            )
+            is False
+        )
         assert FlextResult.all_success() is True  # Empty case
 
         # any_success tests
-        assert FlextResult.any_success(success1, success2) is True
-        assert FlextResult.any_success(success1, failure1) is True
-        assert FlextResult.any_success(failure1, failure2) is False
+        assert (
+            FlextResult.any_success(
+                cast("FlextResult[object]", success1),
+                cast("FlextResult[object]", success2),
+            )
+            is True
+        )
+        assert (
+            FlextResult.any_success(
+                cast("FlextResult[object]", success1),
+                cast("FlextResult[object]", failure1),
+            )
+            is True
+        )
+        assert (
+            FlextResult.any_success(
+                cast("FlextResult[object]", failure1),
+                cast("FlextResult[object]", failure2),
+            )
+            is False
+        )
         assert FlextResult.any_success() is False  # Empty case
 
     def test_first_success_class_method(self) -> None:
@@ -579,17 +658,28 @@ class TestFlextResultCompleteCoverage:
         failure2 = FlextResult[str].fail("second_error")
 
         # First is success
-        first_success_result = FlextResult.first_success(success1, failure1, success2)
+        first_success_result: FlextResult[object] = FlextResult.first_success(
+            cast("FlextResult[object]", success1),
+            cast("FlextResult[object]", failure1),
+            cast("FlextResult[object]", success2),
+        )
         assert first_success_result == success1
 
         # Success in middle
-        middle_success_result = FlextResult.first_success(failure1, success2, failure2)
+        middle_success_result: FlextResult[object] = FlextResult.first_success(
+            cast("FlextResult[object]", failure1),
+            cast("FlextResult[object]", success2),
+            cast("FlextResult[object]", failure2),
+        )
         assert middle_success_result == success2
 
         # No success
-        no_success_result = FlextResult.first_success(failure1, failure2)
+        no_success_result: FlextResult[object] = FlextResult.first_success(
+            cast("FlextResult[object]", failure1), cast("FlextResult[object]", failure2)
+        )
         assert no_success_result.is_failure
-        assert "second_error" in no_success_result.error  # Should be last error
+        assert no_success_result.error is not None
+        assert "second_error" in no_success_result.error
 
     def test_sequence_class_method(self) -> None:
         """Test sequence class method comprehensively."""
@@ -606,11 +696,12 @@ class TestFlextResultCompleteCoverage:
         # With failure
         sequenced_failure = FlextResult.sequence([success1, failure, success3])
         assert sequenced_failure.is_failure
+        assert sequenced_failure.error is not None
         assert "sequence_error" in sequenced_failure.error
         assert sequenced_failure.error_code == failure.error_code
 
         # Empty list
-        sequenced_empty = FlextResult.sequence([])
+        sequenced_empty: FlextResult[list[object]] = FlextResult.sequence([])
         assert sequenced_empty.is_success
         assert sequenced_empty.value == []
 
@@ -649,11 +740,13 @@ class TestFlextResultCompleteCoverage:
             failing_func1, failing_func2, failing_func3
         )
         assert result_all_fail.is_failure
-        assert "Arithmetic error" in result_all_fail.error  # Should be last error
+        assert result_all_fail.error is not None
+        assert "Arithmetic error" in result_all_fail.error
 
         # No functions
-        result_no_funcs = FlextResult.try_all()
+        result_no_funcs: FlextResult[object] = FlextResult.try_all()
         assert result_no_funcs.is_failure
+        assert result_no_funcs.error is not None
         assert "No functions provided" in result_no_funcs.error
 
     def test_utility_methods_comprehensive(self) -> None:
@@ -720,6 +813,7 @@ class TestFlextResultCompleteCoverage:
 
         safe_result_failure = FlextResult.safe_call(safe_failure)
         assert safe_result_failure.is_failure
+        assert safe_result_failure.error is not None
         assert "safe_error" in safe_result_failure.error
 
     def test_advanced_operators_comprehensive(self) -> None:
@@ -800,6 +894,7 @@ class TestFlextResultCompleteCoverage:
         # Failure case
         traversed_failure = FlextResult.traverse(items, transform_func)
         assert traversed_failure.is_failure
+        assert traversed_failure.error is not None
         assert "failed_at_2" in traversed_failure.error
 
         # kleisli_compose
@@ -853,4 +948,7 @@ class TestFlextResultCompleteCoverage:
         success_type = FlextResult.Result.Success
         assert success_type is not None
         # In Python 3.12+ type aliases, Success should be equivalent to object
-        assert str(success_type) == "Success" or success_type is object
+        assert str(success_type) == "Success" or str(success_type) == "object"
+
+        # In Python 3.12+ type aliases, Success should be equivalent to object
+        assert str(success_type) == "Success" or str(success_type) == "object"

@@ -36,7 +36,6 @@ class TestFlextCoreCoverageFocused:
         # Test with potential FlextConfig initialization issues
         with patch("flext_core.core.FlextConfig"):
             # Mock config class to potentially raise exception
-
             instance = FlextCore.get_instance()
             config = instance.get_config()
 
@@ -68,11 +67,13 @@ class TestFlextCoreCoverageFocused:
         assert container is not None
 
         # Test cleanup
-        instance.cleanup()
+        cleanup_result = instance.cleanup()
+        assert cleanup_result.is_success
 
         # Cleanup should complete without error
         # Test multiple cleanups don't cause issues
-        instance.cleanup()
+        cleanup_result2 = instance.cleanup()
+        assert cleanup_result2.is_success
 
     def test_core_string_representations(self) -> None:
         """Test string representation methods."""
@@ -121,7 +122,7 @@ class TestFlextCoreCoverageFocused:
         assert instance.Result is not None
 
     def test_core_instance_lifecycle_management(self) -> None:
-        """Test instance lifecycle management comprehensively."""
+        """Test instance lifecycle: reset, create, reset, create new."""
         # Start with clean state
         FlextCore.reset_instance()
         assert FlextCore._instance is None

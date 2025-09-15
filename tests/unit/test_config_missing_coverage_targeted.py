@@ -146,7 +146,9 @@ environment = "test"
 
         # Should handle file not found gracefully
         FlextTestsMatchers.assert_result_failure(result)
-        assert "file" in result.error.lower() or "not found" in result.error.lower()
+        assert (
+            result.error is not None and "file" in result.error.lower()
+        ) or "not found" in result.error.lower()
 
     def test_factory_create_from_env_missing_vars(self) -> None:
         """Test Factory.create_from_env with missing environment variables (lines 465-466)."""
@@ -337,6 +339,7 @@ environment = "test"
         # Test sealing already sealed config
         second_seal_result = config.seal()
         FlextTestsMatchers.assert_result_failure(second_seal_result)
+        assert second_seal_result.error is not None
         assert "already sealed" in second_seal_result.error.lower()
 
     def test_config_merge_operations(self) -> None:

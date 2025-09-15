@@ -170,6 +170,7 @@ ENVIRONMENT=staging
         result = FlextConfig.create_from_environment(env_file="/nonexistent/file.env")
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Environment file not found" in result.error
 
     def test_load_from_sources_method(self) -> None:
@@ -265,12 +266,14 @@ ENVIRONMENT=staging
         result = config_invalid.validate_business_rules()
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Debug mode in production" in result.error
 
         # Test auth validation separately
         config_auth_invalid = FlextConfig(app_name="test", enable_auth=True, api_key="")
         result_auth = config_auth_invalid.validate_business_rules()
         assert result_auth.is_failure
+        assert result_auth.error is not None
         assert "API key required" in result_auth.error
 
     def test_get_env_var_method(self) -> None:
@@ -364,8 +367,8 @@ ENVIRONMENT=staging
             json_path = f.name
 
         try:
-            result = config.save_to_file(json_path)
-            assert result.is_success
+            save_result = config.save_to_file(json_path)
+            assert save_result.is_success
 
             # Verify file exists and has content
             assert Path(json_path).exists()
@@ -374,7 +377,7 @@ ENVIRONMENT=staging
                 assert data["app_name"] == "file_test"
 
             # Test load from file
-            result = FlextConfig.load_from_file(json_path)
+            result: FlextResult[FlextConfig] = FlextConfig.load_from_file(json_path)
             assert result.is_success
             loaded_config = result.unwrap()
             assert loaded_config.app_name == "file_test"
@@ -385,11 +388,13 @@ ENVIRONMENT=staging
                 Path(json_path).unlink()
 
         # Test error cases
-        result = config.save_to_file("/invalid/path/config.json")
-        assert result.is_failure
+        save_error_result = config.save_to_file("/invalid/path/config.json")
+        assert save_error_result.is_failure
 
-        result = FlextConfig.load_from_file("/nonexistent/config.json")
-        assert result.is_failure
+        load_error_result: FlextResult[FlextConfig] = FlextConfig.load_from_file(
+            "/nonexistent/config.json"
+        )
+        assert load_error_result.is_failure
 
     def test_seal_operations(self) -> None:
         """Test seal and is_sealed methods."""
@@ -466,7 +471,10 @@ ENVIRONMENT=staging
         assert isinstance(config.app_name, str)  # Just verify it's a valid string
 
         # Test with invalid data (still succeeds because safe_load always succeeds)
-        invalid_data = {"app_name": "test", "environment": "invalid_environment"}
+        invalid_data: dict[str, object] = {
+            "app_name": "test",
+            "environment": "invalid_environment",
+        }
         result = FlextConfig.safe_load(invalid_data)
         assert result.is_success  # safe_load is for compatibility and always succeeds
 
@@ -511,13 +519,16 @@ ENVIRONMENT=staging
         )
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "Invalid environment" in result.error
 
         # Test merge with incompatible configs (if applicable)
         try:
-            result = config.merge_configs(config, config)
+            merge_result: FlextResult[dict[str, object]] = config.merge_configs(
+                config.to_dict(), config.to_dict()
+            )
             # Should succeed or fail gracefully
-            assert isinstance(result, FlextResult)
+            assert isinstance(merge_result, FlextResult)
         except Exception:
             # Exception handling is also valid
             pass
@@ -525,7 +536,7 @@ ENVIRONMENT=staging
     def test_all_config_fields_coverage(self) -> None:
         """Test to ensure all config fields can be set and retrieved."""
         # This test ensures we cover the field definitions
-        config_data = {
+        config_data: dict[str, object] = {
             "app_name": "comprehensive_test",
             "config_name": "test_config",
             "config_type": "json",
@@ -570,6 +581,7 @@ ENVIRONMENT=staging
             "max_cache_size": 1000,
         }
 
+        # Create config with all fields to validate set/get behavior comprehensively
         config = FlextConfig(**config_data)
 
         # Verify all fields are set correctly

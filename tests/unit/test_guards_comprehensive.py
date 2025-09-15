@@ -30,6 +30,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_not_none(None, "test_param")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "test_param cannot be None" in result.error
 
     def test_validation_utils_require_not_none_default_name(self) -> None:
@@ -37,6 +38,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_not_none(None)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "value cannot be None" in result.error
 
     def test_validation_utils_require_positive_success(self) -> None:
@@ -50,6 +52,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_positive(-5, "test_number")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "test_number must be positive" in result.error
 
     def test_validation_utils_require_positive_default_name(self) -> None:
@@ -57,6 +60,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_positive(-1)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "value must be positive" in result.error
 
     def test_validation_utils_require_in_range_success(self) -> None:
@@ -72,6 +76,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_in_range(5, 10, 100, "test_value")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "test_value out of range" in result.error
 
     def test_validation_utils_require_in_range_failure_above(self) -> None:
@@ -81,6 +86,7 @@ class TestFlextGuardsComprehensive:
         )
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "test_value out of range" in result.error
 
     def test_validation_utils_require_in_range_default_name(self) -> None:
@@ -88,6 +94,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_in_range(5, 10, 100)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "value out of range" in result.error
 
     def test_validation_utils_require_non_empty_success_string(self) -> None:
@@ -108,6 +115,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_non_empty("", "test_string")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "test_string cannot be empty" in result.error
 
     def test_validation_utils_require_non_empty_failure_empty_list(self) -> None:
@@ -115,6 +123,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_non_empty([], "test_list")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "test_list cannot be empty" in result.error
 
     def test_validation_utils_require_non_empty_default_name(self) -> None:
@@ -122,6 +131,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards._ValidationUtils.require_non_empty("")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "value cannot be empty" in result.error
 
     # Test the direct static methods
@@ -192,6 +202,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards.require_not_none(None, "direct_param")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "direct_param cannot be None" in result.error
 
     def test_direct_require_positive_success(self) -> None:
@@ -205,6 +216,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards.require_positive(-10, "direct_number")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "direct_number must be positive" in result.error
 
     def test_direct_require_in_range_success(self) -> None:
@@ -218,6 +230,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards.require_in_range(25, 50, 100, "direct_value")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "direct_value out of range" in result.error
 
     def test_direct_require_non_empty_success(self) -> None:
@@ -231,6 +244,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards.require_non_empty("", "direct_param")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "direct_param cannot be empty" in result.error
 
     # Test ValidationUtils compatibility
@@ -252,6 +266,7 @@ class TestFlextGuardsComprehensive:
         result = FlextGuards.require_positive(0, "zero_value")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "zero_value must be positive" in result.error
 
     def test_edge_cases_boundary_values(self) -> None:

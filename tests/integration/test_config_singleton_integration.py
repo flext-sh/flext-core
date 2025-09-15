@@ -13,13 +13,13 @@ import tempfile
 import threading
 from pathlib import Path
 
-import pytest
 import yaml
 
 from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextCore,
+    FlextProcessing,
     FlextValidations,
 )
 
@@ -94,9 +94,24 @@ class TestFlextConfigSingletonIntegration:
 
     def test_config_in_processors(self) -> None:
         """Test that processors use global config."""
-        # DISABLED: FlextProcessing.EntryValidator doesn't exist
-        # Tests must reflect the API, not the opposite
-        pytest.skip("FlextProcessing.EntryValidator doesn't exist")
+        # Get global config
+        global_config = FlextConfig.get_global_instance()
+
+        # Test with available FlextProcessing classes
+        handler_registry = FlextProcessing.create_handler_registry()
+        pipeline = FlextProcessing.create_pipeline()
+
+        # These should work with the current API
+        assert handler_registry is not None
+        assert pipeline is not None
+
+        # Test basic handler functionality
+        basic_handler = FlextProcessing.Implementation.BasicHandler("test-handler")
+        register_result = handler_registry.register("test", basic_handler)
+        assert register_result.is_success
+
+        # Verify global config is accessible
+        assert global_config.app_name is not None
 
     def test_environment_variable_override(self) -> None:
         """Test that environment variables override default config."""
@@ -287,9 +302,30 @@ class TestFlextConfigSingletonIntegration:
 
     def test_config_values_used_in_validation(self) -> None:
         """Test that config values are actually used in validation logic."""
-        # DISABLED: FlextProcessing.EntryValidator and FlextMixins don't exist
-        # Tests must reflect the API, not the opposite
-        pytest.skip("FlextProcessing.EntryValidator and FlextMixins don't exist")
+        # Get global config
+        global_config = FlextConfig.get_global_instance()
+
+        # Test that validation uses config values
+        # Use BusinessValidators with config-based constraints
+        min_length = global_config.min_phone_digits or 8
+        max_length = global_config.max_name_length or 100
+
+        # Test string validation with config values
+        result = FlextValidations.BusinessValidators.validate_string_field(
+            "valid_string", min_length=min_length, max_length=max_length
+        )
+        assert result.is_success
+
+        # Test numeric validation with config-based constraints
+        result = FlextValidations.BusinessValidators.validate_numeric_field(
+            min_length, min_value=1, max_value=max_length
+        )
+        assert result.is_success
+
+        # Verify config accessibility
+        assert global_config.app_name is not None
+        assert isinstance(global_config.min_phone_digits, int)
+        assert isinstance(global_config.max_name_length, int)
 
     def test_config_singleton_thread_safety(self) -> None:
         """Test that singleton is thread-safe."""

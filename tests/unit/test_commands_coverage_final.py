@@ -33,8 +33,10 @@ class TestCommandsPayloadException:
             # Should return FlextResult.fail on exception (lines 129-130)
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Failed to create payload" in result.error
             assert result.error
+            assert result.error is not None
             assert "UUID generation failed" in result.error
 
 
@@ -132,6 +134,7 @@ class TestBusMiddlewareEdgeCases:
         # Should fail with middleware disabled error (lines 598-603)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Middleware pipeline is disabled" in result.error
 
     def test_bus_apply_middleware_sorting_with_string_order(self) -> None:

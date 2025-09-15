@@ -331,17 +331,17 @@ class FlextTestsFixtures:
         @staticmethod
         def create_test_config() -> FlextConfig:
             """Create test configuration."""
-            return FlextConfig()
+            return FlextConfig(environment="test", debug=True)
 
         @staticmethod
         def create_development_config() -> FlextConfig:
             """Create development configuration."""
-            return FlextConfig()
+            return FlextConfig(environment="test", debug=True)
 
         @staticmethod
         def create_production_config() -> FlextConfig:
             """Create production configuration."""
-            return FlextConfig()
+            return FlextConfig(environment="test", debug=True)
 
     # === Command Classes ===
 

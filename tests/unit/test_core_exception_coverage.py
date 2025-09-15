@@ -32,6 +32,7 @@ class TestFlextCoreExceptionCoverage:
             # Should handle exception and return failure result
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: Forced cleanup error" in result.error
 
     def test_cleanup_exception_handling_with_different_error_types(self) -> None:
@@ -48,6 +49,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: Invalid session generation" in result.error
 
         # Test with RuntimeError
@@ -59,6 +61,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: Runtime issue in cleanup" in result.error
 
         # Test with generic Exception
@@ -68,6 +71,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: Generic error" in result.error
 
     def test_cleanup_exception_handling_with_complex_error_message(self) -> None:
@@ -117,6 +121,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: UUID generation failed" in result.error
 
     def test_cleanup_exception_during_timestamp_generation(self) -> None:
@@ -131,6 +136,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: Timestamp generation failed" in result.error
 
     def test_cleanup_exception_preserves_original_session_id(self) -> None:
@@ -165,6 +171,7 @@ class TestFlextCoreExceptionCoverage:
         ):
             result1 = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result1)
+            assert result1.error is not None
             assert "Cleanup failed: First error" in result1.error
 
         # Second exception
@@ -173,6 +180,7 @@ class TestFlextCoreExceptionCoverage:
         ):
             result2 = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result2)
+            assert result2.error is not None
             assert "Cleanup failed: Second error" in result2.error
 
         # Recovery - normal cleanup should work
@@ -189,6 +197,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: " in result.error
 
         # Test with None-like error
@@ -198,6 +207,7 @@ class TestFlextCoreExceptionCoverage:
             result = instance.cleanup()
             FlextTestsMatchers.assert_result_failure(result)
             assert result.error
+            assert result.error is not None
             assert "Cleanup failed: None" in result.error
 
     def test_cleanup_exception_with_nested_method_failure(self) -> None:

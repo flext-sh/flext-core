@@ -40,6 +40,7 @@ class TestFlextResultEdgeCases:
         # This should hit the RuntimeError safety check and convert to failure
         flat_mapped = result.flat_map(transform)
         assert flat_mapped.is_failure
+        assert flat_mapped.error is not None
         assert (
             "Unexpected chaining error: Internal error: data is None when result is success"
             in flat_mapped.error
@@ -114,6 +115,7 @@ class TestFlextResultEdgeCases:
         result = FlextResult.applicative_lift3(add_three, r1, r2, r3)
         assert result.is_failure
         assert result.error
+        assert result.error is not None
         assert "error" in result.error
 
     def test_advanced_operators_complete_coverage(self) -> None:
@@ -139,6 +141,7 @@ class TestFlextResultEdgeCases:
         result3 = failure / alt_failure
         assert result3.is_failure
         # Should use the alternative error or original error as fallback
+        assert result3.error is not None
         assert "error" in result3.error
 
     def test_or_operator_none_handling(self) -> None:

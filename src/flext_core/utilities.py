@@ -10,7 +10,9 @@ import json
 import re
 import unicodedata
 import uuid
+from collections.abc import Buffer
 from datetime import UTC, datetime
+from typing import SupportsFloat, SupportsIndex, cast
 
 
 class FlextUtilities:
@@ -74,7 +76,7 @@ class FlextUtilities:
             return str(value)
 
         @staticmethod
-        def clean_text(text: str) -> str:
+        def clean_text(text: str | None) -> str:
             """Clean and normalize text."""
             if not text:
                 return ""
@@ -88,7 +90,7 @@ class FlextUtilities:
             return isinstance(value, str) and len(value.strip()) > 0
 
         @staticmethod
-        def slugify(text: str) -> str:
+        def slugify(text: str | None) -> str:
             """Convert text to URL-friendly slug."""
             if not text:
                 return ""
@@ -104,7 +106,9 @@ class FlextUtilities:
         def safe_int(value: object, *, default: int = 0) -> int:
             """Convert value to int safely."""
             try:
-                return int(value)  # type: ignore[call-overload,no-any-return]
+                if isinstance(value, (str, int, float)):
+                    return int(value)
+                return default
             except (ValueError, TypeError):
                 return default
 
@@ -129,7 +133,11 @@ class FlextUtilities:
         def safe_float(value: object, *, default: float = 0.0) -> float:
             """Convert value to float safely."""
             try:
-                return float(value)  # type: ignore[arg-type]
+                # Try conversion for any input; rely on exceptions for invalid types
+
+                return float(
+                    cast("str | Buffer | SupportsFloat | SupportsIndex", value)
+                )
             except (ValueError, TypeError):
                 return default
 

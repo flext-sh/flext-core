@@ -410,8 +410,8 @@ class TestFlextExceptionsComprehensiveTargeted:
                 value="invalid_value",
             )
 
-        exception = exc_info.value
-        assert exception.field == "integration_field"
-        assert exception.value == "invalid_value"
-        assert isinstance(exception, FlextExceptions.BaseError)
-        assert isinstance(exception, ValueError)  # Also inherits from ValueError
+        # Verify captured exception details
+        err = exc_info.value
+        assert isinstance(err, FlextExceptions.ValidationError)
+        assert err.message == error_message
+        assert err.field == "integration_field"

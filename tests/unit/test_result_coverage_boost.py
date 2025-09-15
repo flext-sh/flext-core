@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 import asyncio
 import json
 import operator
+from typing import cast
 
 import pytest
 
@@ -50,35 +51,41 @@ class TestFlextResultCoverageBoost:
         assert filtered.is_failure
         assert filtered.error == "original error"
 
-    @pytest.mark.skip(reason="Uses hasattr check instead of direct testing")
     def test_result_error_handling(self) -> None:
-        """Test result error handling methods.
+        """Test result error handling methods with proper verification."""
+        # Test tap_error on failure - verify the method exists and works
+        errors_captured = []
 
-        TODO: Improve this test to:
-        - Remove hasattr check - test should fail if method doesn't exist
-        - Verify error handler is actually called with correct error
-        - Test error transformation chains
-        - Test multiple error types beyond strings
-        """
-        # Test tap_error on failure (if available)
+        def error_handler(e: str) -> None:
+            errors_captured.append(e)
+
         result = FlextResult[int].fail("original error")
-        if hasattr(result, "tap_error"):
+        tapped = result.tap_error(error_handler)
 
-            def error_handler(e: str) -> None:
-                pass  # Silent error handler for testing
+        # Verify tap_error works correctly
+        assert tapped.is_failure
+        assert tapped.error == "original error"
+        assert errors_captured == ["original error"]  # Handler was called
 
-            tapped = result.tap_error(error_handler)
-            assert tapped.is_failure
-            assert tapped.error == "original error"
+        # Test error transformation with recover
+        recovered = result.recover(lambda _: 42)
+        assert recovered.is_success
+        assert recovered.unwrap() == 42
 
-        # Test error access
+        # Test error access patterns
         assert result.error == "original error"
         assert result.is_failure
 
         # Test success result error handling
-        result = FlextResult[int].ok(5)
-        assert result.error is None  # Should be consistent, not None or empty string
-        assert result.is_success
+        success_result = FlextResult[int].ok(5)
+        assert success_result.error is None
+        assert success_result.is_success
+
+        # Test error with success result doesn't call handler
+        success_errors: list[str] = []
+        success_tapped = success_result.tap_error(success_errors.append)
+        assert success_tapped.is_success
+        assert success_errors == []  # Handler not called for success
 
     def test_result_unwrap_methods(self) -> None:
         """Test various unwrap methods."""
@@ -103,98 +110,128 @@ class TestFlextResultCoverageBoost:
             result.expect("Should have value")
         assert "Should have value" in str(exc_info.value)
 
-    @pytest.mark.skip(
-        reason="Tests manual try/catch patterns instead of FlextResult methods"
-    )
     def test_result_alternative_constructors(self) -> None:
-        """Test alternative result construction methods.
+        """Test alternative result construction methods using FlextResult utilities."""
 
-        TODO: Improve this test to:
-        - Test FlextResult.from_callable() if it exists
-        - Test FlextResult.from_exception() if it exists
-        - Test async result creation patterns
-        - Remove manual try/catch testing
-        """
-
-        # Test manual construction with try/catch pattern
+        # Test from_exception method which is available in FlextResult
         def successful_function() -> int:
             return 42
 
-        try:
-            value = successful_function()
-            result = FlextResult[int].ok(value)
-            assert result.is_success
-            assert result.unwrap() == 42
-        except Exception as e:
-            result = FlextResult[int].fail(str(e))
-            assert result.is_failure
-
-        # Test with exception handling
         def failing_function() -> int:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        try:
-            value = failing_function()
-            result = FlextResult[int].ok(value)
-        except Exception as e:
-            result = FlextResult[int].fail(str(e))
-            assert result.is_failure
-            assert "Something went wrong" in str(result.error)
+        # Test from_exception with successful function
+        result = FlextResult.from_exception(successful_function)
+        assert result.is_success
+        assert result.unwrap() == 42
 
-    @pytest.mark.skip(
-        reason="Tests manual collection logic instead of built-in methods"
-    )
+        # Test from_exception with failing function
+        result = FlextResult.from_exception(failing_function)
+        assert result.is_failure
+        assert "Something went wrong" in str(result.error)
+
+        # Test safe_call static method
+        result = FlextResult.safe_call(successful_function)
+        assert result.is_success
+        assert result.unwrap() == 42
+
+        result = FlextResult.safe_call(failing_function)
+        assert result.is_failure
+        assert "Something went wrong" in str(result.error)
+
+        # Test try_all method with multiple functions
+        def func1() -> int:
+            error_msg = "Function 1 failed"
+            raise ValueError(error_msg)
+
+        def func2() -> int:
+            error_msg = "Function 2 failed"
+            raise ValueError(error_msg)
+
+        def func3() -> int:
+            return 42
+
+        result = FlextResult.try_all(func1, func2, func3)
+        assert result.is_success
+        assert result.unwrap() == 42
+
     def test_result_collect_operations(self) -> None:
-        """Test result collection and aggregation operations.
-
-        TODO: Improve this test to:
-        - Test FlextResult.collect() if it exists
-        - Test FlextResult.traverse() if it exists
-        - Test parallel result aggregation
-        - Remove manual collection logic
-        """
-        # Test manual collection of results
+        """Test result collection and aggregation operations using built-in methods."""
+        # Test sequence method with all successful results
         results = [
             FlextResult[int].ok(1),
             FlextResult[int].ok(2),
             FlextResult[int].ok(3),
         ]
 
-        # Manual collection logic
-        collected_values = []
-        failed = False
+        # Use built-in sequence method
+        sequenced = FlextResult.sequence(results)
+        assert sequenced.is_success
+        assert sequenced.unwrap() == [1, 2, 3]
 
-        for result in results:
-            if result.is_success:
-                collected_values.append(result.unwrap())
-            else:
-                failed = True
-                break
+        # Test collect_successes method
+        successes = FlextResult.collect_successes(results)
+        assert successes == [1, 2, 3]
 
-        if not failed:
-            collected = FlextResult[list[int]].ok(collected_values)
-            assert collected.is_success
-            assert collected.unwrap() == [1, 2, 3]
-
-        # Test with a failure
-        results = [
+        # Test with mixed success/failure results
+        mixed_results = [
             FlextResult[int].ok(1),
             FlextResult[int].fail("error"),
             FlextResult[int].ok(3),
         ]
 
-        failed = False
-        collected = FlextResult[list[int]].ok([])
-        for result in results:
-            if result.is_failure:
-                failed = True
-                collected = FlextResult[list[int]].fail(result.error or "Unknown error")
-                break
+        # Test sequence with failure (should fail)
+        sequenced_mixed = FlextResult.sequence(mixed_results)
+        assert sequenced_mixed.is_failure
 
-        if failed:
-            assert collected.is_failure
-            assert "error" in str(collected.error)
+        # Test collect_successes (should only return successful values)
+        partial_successes = FlextResult.collect_successes(mixed_results)
+        assert partial_successes == [1, 3]
+
+        # Test collect_failures
+        failures = FlextResult.collect_failures(mixed_results)
+        assert failures == ["error"]
+
+        # Test combine method
+
+        combined = FlextResult.combine(
+            *[cast("FlextResult[object]", r) for r in results[:3]]
+        )
+        assert combined.is_success
+        assert combined.unwrap() == [1, 2, 3]
+
+        # Test all_success and any_success
+
+        assert (
+            FlextResult.all_success(
+                *[cast("FlextResult[object]", r) for r in results[:3]]
+            )
+            is True
+        )
+        assert (
+            FlextResult.any_success(
+                *[cast("FlextResult[object]", r) for r in mixed_results]
+            )
+            is True
+        )
+
+        all_failures = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].fail("error2"),
+        ]
+        assert (
+            FlextResult.all_success(
+                *[cast("FlextResult[object]", r) for r in all_failures]
+            )
+            is False
+        )
+        assert (
+            FlextResult.any_success(
+                *[cast("FlextResult[object]", r) for r in all_failures]
+            )
+            is False
+        )
 
     def test_result_sequence_operations(self) -> None:
         """Test result sequence and traversal operations."""

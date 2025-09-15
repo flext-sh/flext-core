@@ -168,12 +168,18 @@ class TestFlextConfigMissingLinesCoverage:
 
         try:
             # The method catches TypeError and returns FlextResult.fail instead of raising
-            result = FlextConfig.FilePersistence.save_to_file(problematic_data, temp_path)
+            result = FlextConfig.FilePersistence.save_to_file(
+                problematic_data, temp_path
+            )
 
             # Verify it returns a failed result due to the TypeError
-            assert result.is_failure, "Expected failed result due to TypeError during data conversion"
+            assert result.is_failure, (
+                "Expected failed result due to TypeError during data conversion"
+            )
             assert result.error is not None, "Expected error message in failed result"
-            assert "CONFIG_SAVE_ERROR" in str(result.error_code), "Expected CONFIG_SAVE_ERROR error code"
+            assert "CONFIG_SAVE_ERROR" in str(result.error_code), (
+                "Expected CONFIG_SAVE_ERROR error code"
+            )
 
         finally:
             if Path(temp_path).exists():
@@ -310,11 +316,11 @@ class TestFlextConfigMissingLinesCoverage:
         # Create config with valid values first, then modify to test validation
         config = FlextConfig(max_workers=4)
         with pytest.raises(ValidationError):
-            config.max_workers = -1  # type: ignore[assignment]
+            config.max_workers = -1
         # Test with zero timeout_seconds
         config_zero_timeout = FlextConfig(timeout_seconds=30)
         with pytest.raises(ValidationError):
-            config_zero_timeout.timeout_seconds = 0  # type: ignore[assignment]
+            config_zero_timeout.timeout_seconds = 0
 
     def test_validate_non_negative_integers_negative_values(self) -> None:
         """Test validate_non_negative_integers with negative values (lines 946-953)."""
@@ -382,6 +388,7 @@ class TestFlextConfigMissingLinesCoverage:
         result = FlextConfig.validate_config_value("max_workers", -5)  # Negative value
 
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error is not None
         assert "validation failed" in result.error.lower()
 
     # Test create method missing lines (1318, 1360-1365, 1428-1433)
@@ -444,7 +451,9 @@ class TestFlextConfigMissingLinesCoverage:
 
         # Should handle permission error gracefully
         FlextTestsMatchers.assert_result_failure(result)
-        assert "permission" in result.error.lower() or "access" in result.error.lower()
+        assert (
+            result.error is not None and "permission" in result.error.lower()
+        ) or "access" in result.error.lower()
 
     def test_load_from_file_complex_error_scenarios(self) -> None:
         """Test load_from_file with complex error scenarios (lines 1528-1545)."""
@@ -454,7 +463,9 @@ class TestFlextConfigMissingLinesCoverage:
         result = FlextConfig.load_from_file(non_existent_file)
 
         FlextTestsMatchers.assert_result_failure(result)
-        assert "file" in result.error.lower() or "not found" in result.error.lower()
+        assert (
+            result.error is not None and "file" in result.error.lower()
+        ) or "not found" in result.error.lower()
 
     def test_seal_already_sealed_config(self) -> None:
         """Test sealing an already sealed config (lines 1583-1584)."""
@@ -467,6 +478,7 @@ class TestFlextConfigMissingLinesCoverage:
         # Try to seal again
         result2 = config.seal()
         FlextTestsMatchers.assert_result_failure(result2)
+        assert result2.error is not None
         assert "already sealed" in result2.error.lower()
 
     def test_to_api_payload_serialization_error(self) -> None:
@@ -519,11 +531,11 @@ class TestFlextConfigMissingLinesCoverage:
         """Test nested class functionality comprehensively."""
         # Protocols/abstracts should not be instantiated
         with pytest.raises(TypeError):
-            FlextConfig.ConfigValidator()  # type: ignore[call-arg]
+            FlextConfig.ConfigValidator()
         with pytest.raises(TypeError):
-            FlextConfig.ConfigPersistence()  # type: ignore[call-arg]
+            FlextConfig.ConfigPersistence()
         with pytest.raises(TypeError):
-            FlextConfig.EnvironmentConfigAdapter()  # type: ignore[call-arg]
+            FlextConfig.EnvironmentConfigAdapter()
 
         # Test DefaultEnvironmentAdapter basic API
         default_adapter = FlextConfig.DefaultEnvironmentAdapter()

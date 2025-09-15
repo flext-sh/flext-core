@@ -5,9 +5,6 @@ SPDX-License-Identifier: MIT
 """
 
 from decimal import Decimal
-from typing import cast
-
-import pytest
 
 from flext_core import FlextResult, FlextValidations, Predicates
 
@@ -36,6 +33,7 @@ class TestFlextValidationsCoverageBoost:
         assert result.is_failure
         assert result.error is not None
         assert result.error
+        assert result.error is not None
         assert "minimum" in result.error
 
         # Test maximum value constraint using BusinessValidators
@@ -45,6 +43,7 @@ class TestFlextValidationsCoverageBoost:
         assert result.is_failure
         assert result.error is not None
         assert result.error
+        assert result.error is not None
         assert "maximum" in result.error
 
         # Test within range using BusinessValidators
@@ -66,6 +65,7 @@ class TestFlextValidationsCoverageBoost:
         assert result.is_failure
         assert result.error is not None
         assert result.error
+        assert result.error is not None
         assert "Value cannot be converted to a number" in result.error
 
     def test_validate_number_with_conversion_errors(self) -> None:
@@ -75,6 +75,7 @@ class TestFlextValidationsCoverageBoost:
         assert result.is_failure
         assert result.error is not None
         assert result.error
+        assert result.error is not None
         assert "Value must be numeric" in result.error
 
         # Test None
@@ -90,6 +91,7 @@ class TestFlextValidationsCoverageBoost:
         assert result.is_failure
         assert result.error is not None
         assert result.error
+        assert result.error is not None
         assert "minimum" in result.error
 
         # Test maximum length constraint using BusinessValidators
@@ -99,6 +101,7 @@ class TestFlextValidationsCoverageBoost:
         assert result.is_failure
         assert result.error is not None
         assert result.error
+        assert result.error is not None
         assert "maximum" in result.error
 
         # Test valid string within length constraints
@@ -107,65 +110,62 @@ class TestFlextValidationsCoverageBoost:
         )
         assert result.is_success
 
-    @pytest.mark.skip(reason="Tests code path without verifying actual validation")
     def test_validate_user_data_integration(self) -> None:
-        """Test user data validation integration.
+        """Test user data validation integration with proper assertions."""
+        # Test valid user data
+        valid_user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+        result = FlextValidations.validate_user_data(valid_user_data)
+        assert result.is_success
+        validated_data = result.unwrap()
+        assert validated_data["name"] == "John Doe"
+        assert validated_data["email"] == "john@example.com"
+        assert validated_data["age"] == 30
 
-        TODO: Improve this test to:
-        - Verify validation results match expected behavior
-        - Test with invalid user data and verify specific errors
-        - Test edge cases (missing fields, wrong types, etc.)
-        - Remove comments about 'may fail' - test should be deterministic
-        """
-        user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+        # Test invalid user data - missing required fields
+        invalid_user_data: dict[str, object] = {"name": "John"}  # Missing email and age
+        result = FlextValidations.validate_user_data(invalid_user_data)
+        assert result.is_failure
+        assert result.error is not None
 
-        # This should work with the existing validator
-        _ = FlextValidations.validate_user_data(user_data)
-        # Note: This may fail depending on the validator implementation
-        # but we're testing the code path
+        # Test invalid email format
+        invalid_email_data = {"name": "John", "email": "invalid-email", "age": 30}
+        result = FlextValidations.validate_user_data(invalid_email_data)
+        assert result.is_failure
+        assert "email" in str(result.error).lower()
 
-    @pytest.mark.skip(reason="Tests code path without verifying actual validation")
+        # Test invalid age (negative)
+        invalid_age_data = {"name": "John", "email": "john@example.com", "age": -5}
+        result = FlextValidations.validate_user_data(invalid_age_data)
+        assert result.is_failure
+        assert "age" in str(result.error).lower()
+
     def test_validate_api_request_integration(self) -> None:
-        """Test API request validation integration.
-
-        TODO: Improve this test to:
-        - Assert validation results are correct
-        - Test invalid HTTP methods, paths, headers
-        - Test missing required fields
-        - Remove cast() and test with proper types
-        """
-        request_data = {
+        """Test API request validation integration with assertions."""
+        request_data: dict[str, object] = {
             "method": "GET",
             "path": "/api/users",
             "headers": {"Content-Type": "application/json"},
         }
+        ok = FlextValidations.validate_api_request(request_data)
+        assert ok.is_success
+        # Invalid method
+        bad_method: dict[str, object] = {**request_data, "method": "BAD"}
+        assert FlextValidations.validate_api_request(bad_method).is_failure
+        # Missing path
+        missing_path: dict[str, object] = {"method": "GET"}
+        assert FlextValidations.validate_api_request(missing_path).is_failure
 
-        # This should work with the existing validator
-        _ = FlextValidations.validate_api_request(
-            cast("dict[str, object]", request_data)
-        )
-        # Note: This may fail depending on the validator implementation
-        # but we're testing the code path
-
-    @pytest.mark.skip(
-        reason="Only tests that validators are not None, not their functionality"
-    )
     def test_create_validators(self) -> None:
-        """Test validator creation methods.
-
-        TODO: Improve this test to:
-        - Test that created validators actually work
-        - Validate sample data with created validators
-        - Test validator configuration options
-        - Verify validators enforce expected rules
-        """
-        # Test user validator creation
+        """Test validator creation and behavior with real data."""
         user_validator = FlextValidations.create_user_validator()
-        assert user_validator is not None
+        ok = user_validator({"name": "Jane", "email": "jane@example.com"})
+        assert ok.is_success
+        fail = user_validator({"name": "Jane"})  # missing email
+        assert fail.is_failure
 
-        # Test email validator creation (actual method that exists)
         email_validator = FlextValidations.create_email_validator()
-        assert email_validator is not None
+        assert email_validator("user@example.com").is_success
+        assert email_validator("invalid").is_failure
 
     def test_predicate_composition(self) -> None:
         """Test predicate composition features."""
@@ -207,63 +207,29 @@ class TestFlextValidationsCoverageBoost:
         result = predicate(None)
         # Should handle gracefully
 
-    @pytest.mark.skip(
-        reason="Uses try/except to ignore failures instead of testing properly"
-    )
     def test_business_rule_integration(self) -> None:
-        """Test business rule integration features.
+        """Test business rule style validators deterministically."""
+        # Missing required field
+        bad = FlextValidations.validate_user_data({"name": "X"})
+        assert bad.is_failure
+        # Valid data
+        good = FlextValidations.validate_user_data(
+            {"name": "X", "email": "x@example.com", "age": 30}
+        )
+        assert good.is_success
 
-        TODO: Improve this test to:
-        - Test specific business rules with known outcomes
-        - Remove try/except - test should have deterministic behavior
-        - Verify business rule violations produce correct errors
-        - Test rule composition and priority
-        """
-        # Test business rule application through available methods
-        test_data = {"value": 42, "status": "active"}
-
-        # Test validation paths that exist
-        try:
-            # Test user data validation which exercises business rules
-            _ = FlextValidations.validate_user_data(test_data)
-            # May succeed or fail, but we're testing the code path
-        except Exception:
-            # Some business rules might not be fully implemented
-            pass
-
-    @pytest.mark.skip(reason="Incomplete test with try block and no assertions")
     def test_specialized_validators(self) -> None:
-        """Test specialized validation features.
-
-        TODO: Improve this test to:
-        - Complete the test implementation
-        - Test actual specialized validators
-        - Verify nested data validation works correctly
-        - Remove try blocks and add proper assertions
-        """
-        # Test specialized validation patterns
-
-        # Test with complex nested data
+        """Test specialized schema-like validators with assertions."""
         complex_data: dict[str, object] = {
             "user": {"profile": {"settings": {"theme": "dark", "notifications": True}}}
         }
-
-        # Test validation with schema-like validation
-        try:
-            # Create a proper validation schema with callable functions
-            schema = {
-                "type": lambda x: FlextResult[object].ok(x)
-                if isinstance(x, dict)
-                else FlextResult[object].fail("Not a dict")
-            }
-            _ = FlextValidations.validate_with_schema(
-                complex_data,
-                schema,
-            )
-            # This tests the schema validation path
-        except Exception:
-            # Schema validation might not be fully implemented
-            pass
+        schema = {
+            "type": lambda x: FlextResult[object].ok(x)
+            if isinstance(x, dict)
+            else FlextResult[object].fail("Not a dict")
+        }
+        res = FlextValidations.validate_with_schema(complex_data, schema)
+        assert res.is_success
 
     def test_validation_optimization_features(self) -> None:
         """Test validation optimization and performance features."""

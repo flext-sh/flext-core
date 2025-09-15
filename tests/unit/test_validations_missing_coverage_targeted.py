@@ -44,6 +44,7 @@ class TestFlextValidationsMissingCoverageTargeted:
         result = FlextValidations.TypeValidators.validate_integer(problematic_obj)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Cannot convert" in result.error
 
     def test_type_validators_to_float_with_float_method(self) -> None:
@@ -80,6 +81,7 @@ class TestFlextValidationsMissingCoverageTargeted:
 
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
+        assert result.error is not None
         assert "Cannot convert" in result.error
 
     def test_type_validators_edge_case_conversions(self) -> None:
