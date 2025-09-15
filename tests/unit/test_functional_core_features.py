@@ -109,8 +109,8 @@ class TestFlextCoreIntegration:
         assert payload.retry_count == 0
 
         # Test message expiration
-        assert not payload.is_expired()
-        assert payload.age_seconds() >= 0
+        assert not payload.is_expired
+        assert payload.age_seconds >= 0
 
     def test_service_container_integration(self) -> None:
         """Test dependency injection container functionality."""

@@ -599,7 +599,7 @@ class TestFinalHundredPercentCoverage:
 
         logger = FlextMixins.flext_logger(obj)
         assert logger is not None
-        assert obj._logger == str(logger)  # Compare string representation
+        assert str(obj._logger) == str(logger)  # Compare string representation
 
     def test_logging_line_49_basemodel_normalization(self) -> None:
         """Test logging line 49: BaseModel normalization."""
@@ -904,7 +904,7 @@ class TestSpecificUncoveredLines:
         # Verify logger was created and assigned
         assert logger is not None
         assert obj._logger is not None
-        assert obj._logger == str(logger)  # Compare string representation
+        assert str(obj._logger) == str(logger)  # Compare string representation
 
     def test_logging_line_49_basemodel_context(self) -> None:
         """Test logging line 49 - BaseModel in context normalization."""
