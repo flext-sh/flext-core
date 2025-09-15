@@ -87,10 +87,12 @@ class TestFlextCommandsCoverageBoost:
                 self.middleware = [middleware_func]
                 self.metadata = {"priority": "high", "timeout": 30}
 
-            def handle(self, __command: TestCommand, /) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
-            def can_handle(self, ___command_type: object, /) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
         handler = MetadataHandler()
@@ -177,8 +179,9 @@ class TestFlextCommandsCoverageBoost:
         bus = FlextCommands.Bus()
 
         class FailingHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, __command: TestCommand, /) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextResult[str]:
                 """Handle command with error."""
+                _ = command  # Acknowledge parameter usage
                 error_msg = "Handler execution error"
                 raise ValueError(error_msg)
 

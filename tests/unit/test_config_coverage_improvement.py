@@ -55,9 +55,9 @@ class TestFlextConfigCoverageImprovement:
         assert result == config.environment
 
         # Test debug validation (returns validated bool value)
-        result = FlextConfig.validate_debug(config.debug)
-        assert isinstance(result, bool)
-        assert result == config.debug
+        debug_result = FlextConfig.validate_debug(config.debug)
+        assert isinstance(debug_result, bool)
+        assert debug_result == config.debug
 
         # Test log level validation (returns validated string value)
         result = FlextConfig.validate_log_level(config.log_level)

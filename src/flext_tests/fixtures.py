@@ -331,17 +331,23 @@ class FlextTestsFixtures:
         @staticmethod
         def create_test_config() -> FlextConfig:
             """Create test configuration."""
-            return FlextConfig.create(constants={"environment": "test", "debug": True}).unwrap()
+            return FlextConfig.create(
+                constants={"environment": "test", "debug": True}
+            ).unwrap()
 
         @staticmethod
         def create_development_config() -> FlextConfig:
             """Create development configuration."""
-            return FlextConfig.create(constants={"environment": "test", "debug": True}).unwrap()
+            return FlextConfig.create(
+                constants={"environment": "development", "debug": True}
+            ).unwrap()
 
         @staticmethod
         def create_production_config() -> FlextConfig:
             """Create production configuration."""
-            return FlextConfig.create(constants={"environment": "test", "debug": True}).unwrap()
+            return FlextConfig.create(
+                constants={"environment": "production", "debug": False}
+            ).unwrap()
 
     # === Command Classes ===
 

@@ -147,9 +147,9 @@ environment = "test"
 
         # Should handle file not found gracefully
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "file" in result.error.lower()
-        ) or "not found" in result.error.lower()
+        assert (result.error is not None and "file" in result.error.lower()) or (
+            result.error is not None and "not found" in result.error.lower()
+        )
 
     def test_factory_create_from_env_missing_vars(self) -> None:
         """Test Factory.create_from_env with missing environment variables (lines 465-466)."""
@@ -351,7 +351,7 @@ environment = "test"
         # Test merge with different configs
         # Note: Using the correct signature based on the error from previous attempt
         try:
-            result = config1.merge(config2, _override=True)
+            result = config1.merge(config2, _override={"debug": True})
             assert hasattr(result, "is_success")
         except TypeError:
             # If merge signature is different, just test that method exists
@@ -387,13 +387,16 @@ environment = "test"
 
         for operation in operations:
             try:
-                result = operation()
-                # Should not raise unhandled exceptions
-                assert result is not None
+                if callable(operation):
+                    result = operation()
+                    # Should not raise unhandled exceptions
+                    assert result is not None
             except Exception as e:
                 # If exceptions occur, they should be specific and handled
                 # Using pytest.raises would be better but this tests error handling
-                logging.getLogger(__name__).warning(f"Expected exception in error handling test: {e}")
+                logging.getLogger(__name__).warning(
+                    f"Expected exception in error handling test: {e}"
+                )
 
     def test_factory_methods_comprehensive(self) -> None:
         """Test factory methods comprehensively to hit various code paths."""

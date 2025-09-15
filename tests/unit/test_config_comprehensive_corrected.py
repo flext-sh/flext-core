@@ -210,8 +210,8 @@ class TestFlextConfigCorrected:
 
     def test_config_merge_methods(self) -> None:
         """Test FlextConfig merge and merge_configs methods."""
-        config1_dict = {"app_name": "base_app"}
-        config2_dict = {"app_name": "override_app", "debug": True}
+        config1_dict: dict[str, object] = {"app_name": "base_app"}
+        config2_dict: dict[str, object] = {"app_name": "override_app", "debug": True}
 
         # Test static merge_configs method
         result = FlextConfig.merge_configs(config1_dict, config2_dict)
@@ -222,7 +222,10 @@ class TestFlextConfigCorrected:
 
     def test_config_safe_load_method(self) -> None:
         """Test FlextConfig.safe_load class method."""
-        config_dict = {"app_name": "safe_load_test", "environment": "test"}
+        config_dict: dict[str, object] = {
+            "app_name": "safe_load_test",
+            "environment": "test",
+        }
 
         result = FlextConfig.safe_load(config_dict)
         FlextTestsMatchers.assert_result_success(result)
@@ -349,11 +352,11 @@ class TestFlextConfigCorrected:
         with patch(
             "os.environ.items", side_effect=Exception("Environment access failed")
         ):
-            result = adapter.get_env_vars_with_prefix("TEST_")
-            FlextTestsMatchers.assert_result_failure(result)
-            assert result.error
-            assert result.error is not None
-            assert "Failed to get environment variables" in result.error
+            env_result = adapter.get_env_vars_with_prefix("TEST_")
+            FlextTestsMatchers.assert_result_failure(env_result)
+            assert env_result.error
+            assert env_result.error is not None
+            assert "Failed to get environment variables" in env_result.error
 
     def test_runtime_validator_edge_cases(self) -> None:
         """Test RuntimeValidator edge cases."""
@@ -418,11 +421,11 @@ class TestFlextConfigCorrected:
         assert "Failed to save" in result.error
 
         # Test load from non-existent file
-        result = persistence.load_from_file("/non/existent/file.json")
-        FlextTestsMatchers.assert_result_failure(result)
-        assert result.error
-        assert result.error is not None
-        assert "Configuration file not found" in result.error
+        load_result = persistence.load_from_file("/non/existent/file.json")
+        FlextTestsMatchers.assert_result_failure(load_result)
+        assert load_result.error
+        assert load_result.error is not None
+        assert "Configuration file not found" in load_result.error
 
     def test_api_payload_serialization_error_handling(self) -> None:
         """Test to_api_payload error handling with mock serialization failure."""

@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextContainer
 from flext_tests import FlextTestsMatchers
 
@@ -137,7 +139,8 @@ class TestFlextContainerComprehensiveCoverage:
         # Test factory execution
         service_result = container.get("factory_service")
         FlextTestsMatchers.assert_result_success(service_result)
-        assert service_result.value["type"] == "factory_created"
+        factory_service = cast("dict[str, str]", service_result.value)
+        assert factory_service["type"] == "factory_created"
 
     def test_container_error_handling(self, clean_container: FlextContainer) -> None:
         """Test comprehensive error handling scenarios."""

@@ -39,12 +39,12 @@ class TestFlextContainer100Percent:
     def test_service_key_validate_method(self) -> None:
         """Test ServiceKey.validate method - line 45."""
         # Test valid service key validation
-        key = FlextContainer.ServiceKey("valid_service")
+        key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("valid_service")
         result = key.validate("test_data")
         FlextTestsMatchers.assert_result_success(result)
 
         # Test invalid service key (empty name)
-        empty_key = FlextContainer.ServiceKey("")
+        empty_key: FlextContainer.ServiceKey[str] = FlextContainer.ServiceKey("")
         result2 = empty_key.validate("")
         FlextTestsMatchers.assert_result_failure(result2)
 
@@ -128,7 +128,7 @@ class TestFlextContainer100Percent:
         container = FlextTestsBuilders.container().build()
 
         # Test with invalid configuration
-        invalid_config = {}
+        invalid_config: dict[str, object] = {}
         container.configure_container(invalid_config)
         # This should handle error cases appropriately
         # Result success/failure depends on implementation details
@@ -306,8 +306,8 @@ class TestFlextContainer100Percent:
             config_result = container.get("config")
             db_result = container.get("database")
             if config_result.is_success and db_result.is_success:
-                return {"config": config_result.value, "db": db_result.value}
-            return None
+                return "complex_service_ready"
+            return "service_unavailable"
 
         factory_reg = container.register_factory("complex_service", complex_factory)
         FlextTestsMatchers.assert_result_success(factory_reg)
@@ -347,7 +347,7 @@ class TestFlextContainer100Percent:
                 "service3": "another_service",
             }
 
-            container.batch_register(services)
+            container.batch_register(dict(services))
             # Should handle partial failures appropriately
 
     def test_service_retriever_get_service_factory_execution_error(self) -> None:
@@ -411,10 +411,12 @@ class TestFlextContainer100Percent:
         if hasattr(container, "batch_register"):
             # Test with problematic input
             try:
-                container.batch_register(None)  # Should handle None input
+                container.batch_register(None)
             except Exception as e:
                 # Should handle exceptions gracefully
-                logging.getLogger(__name__).warning(f"Expected exception in batch_register test: {e}")
+                logging.getLogger(__name__).warning(
+                    f"Expected exception in batch_register test: {e}"
+                )
 
     def test_clear_method(self) -> None:
         """Test container clear method."""
@@ -455,4 +457,6 @@ class TestFlextContainer100Percent:
                 container.configure_global(None)
             except Exception as e:
                 # Should handle exceptions appropriately
-                logging.getLogger(__name__).warning(f"Expected exception in configure_global test: {e}")
+                logging.getLogger(__name__).warning(
+                    f"Expected exception in configure_global test: {e}"
+                )

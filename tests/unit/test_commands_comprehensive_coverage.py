@@ -217,7 +217,9 @@ class TestFlextCommandsHandlers:
         class TestHandler(
             FlextCommands.Handlers.CommandHandler[dict[str, object], str]
         ):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -237,7 +239,9 @@ class TestFlextCommandsHandlers:
         class TestHandler(
             FlextCommands.Handlers.CommandHandler[dict[str, object], str]
         ):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler(handler_config=config)
@@ -251,7 +255,9 @@ class TestFlextCommandsHandlers:
         class TestHandler(
             FlextCommands.Handlers.CommandHandler[dict[str, object], str]
         ):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -266,8 +272,12 @@ class TestFlextCommandsHandlers:
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
+        ):
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -282,7 +292,9 @@ class TestFlextCommandsHandlers:
         class TestHandler(
             FlextCommands.Handlers.CommandHandler[dict[str, object], str]
         ):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -297,8 +309,12 @@ class TestFlextCommandsHandlers:
         class TestCommand:
             pass
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
+        ):
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -314,7 +330,8 @@ class TestFlextCommandsHandlers:
             pass
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, _command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -330,8 +347,12 @@ class TestFlextCommandsHandlers:
         class TestCommand:
             pass
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
+        ):
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -352,11 +373,15 @@ class TestFlextCommandsHandlers:
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[TestCommand, str]
+        ):
+            def handle(self, command: TestCommand) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("success")
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
         handler = TestHandler()
@@ -370,14 +395,19 @@ class TestFlextCommandsHandlers:
     def test_command_handler_execute_cannot_handle(self) -> None:
         """Test CommandHandler execute when handler cannot handle command."""
 
-        class TestCommand:
-            command_id = "test-command-id"
+        class TestCommand(dict[str, object]):
+            def __init__(self) -> None:
+                super().__init__({"command_id": "test-command-id"})
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
+        ):
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("success")
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return False  # Cannot handle
 
         handler = TestHandler()
@@ -393,16 +423,20 @@ class TestFlextCommandsHandlers:
 
         class TestCommand(dict[str, object]):
             def __init__(self) -> None:
-                super().__init__(command_id="test-command-id")
+                super().__init__({"command_id": "test-command-id"})
 
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].fail("Validation failed")
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
+        ):
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("success")
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
         handler = TestHandler()
@@ -418,18 +452,23 @@ class TestFlextCommandsHandlers:
     def test_command_handler_execute_handle_exception(self) -> None:
         """Test CommandHandler execute when handle method raises exception."""
 
-        class TestCommand:
-            command_id = "test-command-id"
+        class TestCommand(dict[str, object]):
+            def __init__(self) -> None:
+                super().__init__({"command_id": "test-command-id"})
 
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[dict[str, object], str]):
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
+        ):
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 msg = "Handler error"
                 raise ValueError(msg)
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
         handler = TestHandler()
@@ -452,7 +491,8 @@ class TestFlextCommandsHandlers:
             pass
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, _command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("delegated")
 
         handler = TestHandler()
@@ -467,7 +507,8 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler initialization with default config."""
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict[str, object], str]):
-            def handle(self, _query: object) -> FlextResult[str]:
+            def handle(self, query: object) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -484,7 +525,8 @@ class TestFlextCommandsHandlers:
         }
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict[str, object], str]):
-            def handle(self, _query: object) -> FlextResult[str]:
+            def handle(self, query: object) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler(handler_config=config)
@@ -496,7 +538,8 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler can_handle default implementation."""
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict[str, object], str]):
-            def handle(self, _query: object) -> FlextResult[str]:
+            def handle(self, query: object) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -513,7 +556,8 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict[str, object], str]):
-            def handle(self, _query: object) -> FlextResult[str]:
+            def handle(self, query: object) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -525,7 +569,8 @@ class TestFlextCommandsHandlers:
         """Test validate_query when query has no validate_query method."""
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict[str, object], str]):
-            def handle(self, _query: object) -> FlextResult[str]:
+            def handle(self, query: object) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -542,7 +587,8 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict[str, object], str]):
-            def handle(self, _query: object) -> FlextResult[str]:
+            def handle(self, query: object) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("query result")
 
         handler = TestHandler()
@@ -560,7 +606,8 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].fail("Query validation failed")
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
-            def handle(self, _query: TestQuery) -> FlextResult[str]:
+            def handle(self, query: TestQuery) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("query result")
 
         handler = TestHandler()
@@ -601,7 +648,9 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -639,7 +688,9 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -658,7 +709,9 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -692,7 +745,8 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, _command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -711,12 +765,14 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
                 # Check if command_type is dict (the actual runtime type)
-                return isinstance(_command_type, type) and _command_type is dict
+                return isinstance(command_type, type) and command_type is dict
 
         bus = FlextCommands.Bus()
         handler = TestHandler()
@@ -750,10 +806,12 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("executed")
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
             def execute(self, _command: dict[str, object]) -> FlextResult[str]:
@@ -792,10 +850,12 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _query: TestQuery) -> FlextResult[str]:
+            def handle(self, query: TestQuery) -> FlextResult[str]:
+                _ = query  # Acknowledge the parameter
                 return FlextResult[str].ok("query result")
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
             def execute(self, query: TestQuery, /) -> FlextResult[str]:
@@ -922,7 +982,9 @@ class TestFlextCommandsBus:
         """Test Bus _execute_handler with handle method."""
 
         class TestHandler:
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1041,7 +1103,9 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1061,7 +1125,9 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1103,7 +1169,9 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, _command: dict[str, object]) -> FlextResult[str]:
+            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+                # Use the command parameter to make the test more realistic
+                _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1132,7 +1200,7 @@ class TestFlextCommandsDecorators:
             return f"Handled {command['name']}"
 
         # Test the decorated function
-        command = {"name": "test"}
+        command: dict[str, object] = {"name": "test"}
         result = handle_test_command(command)
 
         assert result == "Handled test"
@@ -1152,7 +1220,7 @@ class TestFlextCommandsDecorators:
         def handle_test_command(command: dict[str, object]) -> FlextResult[str]:
             return FlextResult[str].ok(f"Handled {command['name']}")
 
-        command = {"name": "test"}
+        command: dict[str, object] = {"name": "test"}
         result = handle_test_command(command)
 
         FlextTestsMatchers.assert_result_success(result)
@@ -1227,13 +1295,13 @@ class TestFlextCommandsFactories:
     def test_create_simple_handler_with_flext_result(self) -> None:
         """Test create_simple_handler with function returning FlextResult."""
 
-        def handler_function(_command: object) -> object:
-            if isinstance(_command, dict) and "name" in _command:
-                return FlextResult[str].ok(f"Handled {_command.get('name', 'unknown')}")
+        def handler_function(command: object) -> object:
+            if isinstance(command, dict) and "name" in command:
+                return FlextResult[str].ok(f"Handled {command.get('name', 'unknown')}")
             return FlextResult[str].ok("Handled unknown")
 
         handler = FlextCommands.Factories.create_simple_handler(handler_function)
-        command = {"name": "test"}
+        command: dict[str, object] = {"name": "test"}
 
         result = handler.handle(command)
 
@@ -1292,7 +1360,7 @@ class TestFlextCommandsIntegration:
             FlextCommands.Handlers.CommandHandler[CreateUserCommand, dict[str, object]]
         ):
             def handle(
-                self, _command: CreateUserCommand
+                self, command: CreateUserCommand
             ) -> FlextResult[dict[str, object]]:
                 user_data: dict[str, object] = {
                     "id": FlextUtilities.Generators.generate_uuid(),
@@ -1400,13 +1468,14 @@ class TestFlextCommandsIntegration:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, _command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Processed {command.name}")
 
-            def execute(self, _command: TestCommand) -> FlextResult[str]:
-                return self.handle(_command)
+            def execute(self, command: TestCommand) -> FlextResult[str]:
+                return self.handle(command)
 
-            def can_handle(self, _command_type: object) -> bool:
+            def can_handle(self, command_type: object) -> bool:
+                _ = command_type  # Acknowledge the parameter
                 return True
 
         # Setup bus with middleware
@@ -1428,7 +1497,7 @@ class TestFlextCommandsIntegration:
         )
 
         # Execute command
-        command = TestCommand(name="test")
+        command = TestCommand(name="test", command_type="test")
 
         result = bus.execute(command)
 

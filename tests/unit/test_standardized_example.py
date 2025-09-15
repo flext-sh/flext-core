@@ -71,7 +71,7 @@ class TestStandardizedExample:
         valid_dict = {"key": "value"}
         success_result = FlextValidations.TypeValidators.validate_dict(valid_dict)
         # Type annotation for assert_result_success
-        assert_fn: FlextTestsMatchers = FlextTestsMatchers()
+        assert_fn = FlextTestsMatchers()
         assert_fn.assert_result_success(success_result, expected_data=valid_dict)
 
     def test_async_service_with_fixtures(

@@ -98,6 +98,7 @@ class Product(FlextModels.Entity):
                         "product_id": self.id,
                         "product_name": self.name,
                     },
+                    aggregate_id=self.id,
                 ),
             )
 
@@ -141,6 +142,7 @@ class Customer(FlextModels.Entity):
                         "old_address": str(old_address),
                         "new_address": str(new_address),
                     },
+                    aggregate_id=self.id,
                 ),
             )
 
@@ -232,6 +234,7 @@ class ShoppingCart(FlextModels.Entity):
                     "cart_id": self.id,
                     "discount_percent": float(discount_percent),
                 },
+                aggregate_id=self.id,
             ),
         )
 

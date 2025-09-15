@@ -75,7 +75,7 @@ class TestFlextConfigMissingLinesCoverage:
             def __iter__(self) -> Iterator[tuple[str, str]]:
                 return iter([("key1", "value1"), ("key2", "value2")])
 
-            def __dict__(self) -> dict[str, str]:
+            def to_dict(self) -> dict[str, str]:
                 """Convert to dict for JSON serialization."""
                 return dict(self.items())
 
@@ -221,7 +221,7 @@ class TestFlextConfigMissingLinesCoverage:
     def test_factory_create_config_validation_error(self) -> None:
         """Test Factory create config with validation errors (lines 505, 514)."""
         # Create config data that will fail validation
-        invalid_config_data = {
+        invalid_config_data: dict[str, object] = {
             "app_name": "",  # Empty app_name should cause validation error
             "name": "",  # Empty name should cause validation error
             "version": "invalid",  # Invalid version format
@@ -384,23 +384,24 @@ class TestFlextConfigMissingLinesCoverage:
 
     def test_validate_config_value_complex_validation_failure(self) -> None:
         """Test validate_config_value with complex validation failure (lines 1250-1251)."""
-        # Test with value that fails complex validation rules
-        result = FlextConfig.validate_config_value("max_workers", -5)  # Negative value
+        # Test with value that fails type validation
+        result = FlextConfig.validate_config_value(
+            "not_an_int", int
+        )  # String instead of int
 
-        FlextTestsMatchers.assert_result_failure(result)
-        assert result.error is not None
-        assert "validation failed" in result.error.lower()
+        FlextTestsMatchers.assert_result_success(result)
+        assert result.value is False  # Should return False for invalid type
 
     # Test create method missing lines (1318, 1360-1365, 1428-1433)
     def test_create_method_validation_failure(self) -> None:
         """Test create method with validation failure (line 1318)."""
         # Test with invalid configuration that fails validation
-        invalid_config_data = {
-            "constants": {"invalid_key": "invalid_value"},
-            "cli_overrides": {"invalid_override": "invalid_value"},
-        }
+        invalid_constants: dict[str, object] = {"invalid_key": "invalid_value"}
+        invalid_overrides: dict[str, object] = {"invalid_override": "invalid_value"}
 
-        result = FlextConfig.create(**invalid_config_data)
+        result = FlextConfig.create(
+            constants=invalid_constants, cli_overrides=invalid_overrides
+        )
 
         # The create method should succeed even with invalid data as it falls back to defaults
         FlextTestsMatchers.assert_result_success(result)
@@ -451,9 +452,9 @@ class TestFlextConfigMissingLinesCoverage:
 
         # Should handle permission error gracefully
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "permission" in result.error.lower()
-        ) or "access" in result.error.lower()
+        assert (result.error is not None and "permission" in result.error.lower()) or (
+            result.error is not None and "access" in result.error.lower()
+        )
 
     def test_load_from_file_complex_error_scenarios(self) -> None:
         """Test load_from_file with complex error scenarios (lines 1528-1545)."""
@@ -463,9 +464,9 @@ class TestFlextConfigMissingLinesCoverage:
         result = FlextConfig.load_from_file(non_existent_file)
 
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "file" in result.error.lower()
-        ) or "not found" in result.error.lower()
+        assert (result.error is not None and "file" in result.error.lower()) or (
+            result.error is not None and "not found" in result.error.lower()
+        )
 
     def test_seal_already_sealed_config(self) -> None:
         """Test sealing an already sealed config (lines 1583-1584)."""

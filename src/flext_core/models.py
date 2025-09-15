@@ -13,7 +13,14 @@ import json
 from datetime import UTC, datetime
 from typing import Generic, cast
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    field_validator,
+    model_validator,
+)
 
 from flext_core.result import FlextResult
 from flext_core.typings import T
@@ -100,6 +107,16 @@ class FlextModels:
         event_type: str = Field(...)
         payload: dict[str, object] = Field(default_factory=dict)
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        aggregate_id: str = Field(..., min_length=1, description="Aggregate identifier")
+
+        @field_validator("aggregate_id")
+        @classmethod
+        def validate_aggregate_id(cls, v: str) -> str:
+            """Validate aggregate_id is not empty or whitespace only."""
+            if not v or not v.strip():
+                error_msg = "Aggregate identifier cannot be empty or whitespace only"
+                raise ValueError(error_msg)
+            return v.strip()
 
     class Command(BaseModel):
         """Simple command."""
@@ -207,7 +224,9 @@ class FlextModels:
             host = host.strip()
             # Check for spaces in hostname
             if " " in host:
-                return FlextResult["FlextModels.Host"].fail("Host cannot contain spaces")
+                return FlextResult["FlextModels.Host"].fail(
+                    "Host cannot contain spaces"
+                )
             return FlextResult["FlextModels.Host"].ok(cls(value=host))
 
     class Timestamp(Value):
@@ -232,7 +251,9 @@ class FlextModels:
         def create(cls, entity_id: str) -> FlextResult[FlextModels.EntityId]:
             """Create entity ID with validation and trimming."""
             if not entity_id or not entity_id.strip():
-                return FlextResult["FlextModels.EntityId"].fail("Entity ID cannot be empty")
+                return FlextResult["FlextModels.EntityId"].fail(
+                    "Entity ID cannot be empty"
+                )
             return FlextResult["FlextModels.EntityId"].ok(cls(value=entity_id.strip()))
 
     class JsonData(Value):
@@ -248,7 +269,9 @@ class FlextModels:
                 json.dumps(data)
                 return FlextResult["FlextModels.JsonData"].ok(cls(value=data))
             except (TypeError, ValueError) as e:
-                return FlextResult["FlextModels.JsonData"].fail(f"Invalid JSON data: {e}")
+                return FlextResult["FlextModels.JsonData"].fail(
+                    f"Invalid JSON data: {e}"
+                )
 
     class Metadata(Value):
         """Metadata value object."""
@@ -259,7 +282,9 @@ class FlextModels:
         def create(cls, metadata: dict[str, str]) -> FlextResult[FlextModels.Metadata]:
             """Create metadata with validation."""
             # Ensure all values are strings
-            invalid_keys = [key for key, value in metadata.items() if not isinstance(value, str)]
+            invalid_keys = [
+                key for key, value in metadata.items() if not isinstance(value, str)
+            ]
             if invalid_keys:
                 return FlextResult["FlextModels.Metadata"].fail(
                     f"Metadata values for keys {invalid_keys} must be strings"
@@ -279,10 +304,14 @@ class FlextModels:
 
             url = url.strip()
             if not url.startswith(("http://", "https://")):
-                return FlextResult["FlextModels.Url"].fail("URL must start with http:// or https://")
+                return FlextResult["FlextModels.Url"].fail(
+                    "URL must start with http:// or https://"
+                )
 
             if "://" in url and not url.split("://", 1)[1]:
-                return FlextResult["FlextModels.Url"].fail("URL must have a valid hostname")
+                return FlextResult["FlextModels.Url"].fail(
+                    "URL must have a valid hostname"
+                )
 
             return FlextResult["FlextModels.Url"].ok(cls(value=url))
 
@@ -451,9 +480,9 @@ class FlextModels:
             return FlextResult[FlextModels.Entity].fail(str(e))
 
     @staticmethod
-    def create_event(event_type: str, payload: dict[str, object]) -> Event:
+    def create_event(event_type: str, payload: dict[str, object], aggregate_id: str) -> Event:
         """Create an event."""
-        return FlextModels.Event(event_type=event_type, payload=payload)
+        return FlextModels.Event(event_type=event_type, payload=payload, aggregate_id=aggregate_id)
 
     @staticmethod
     def create_command(command_type: str, payload: dict[str, object]) -> Command:

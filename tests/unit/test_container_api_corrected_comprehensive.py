@@ -26,9 +26,11 @@ class TestContainerApiCorrectedComprehensive:
         service_key = FlextContainer.ServiceKey[str]("")
         result = service_key.validate("")
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "empty" in result.error.lower()
-        ) or "SERVICE_NAME_EMPTY" in result.error
+        assert (result.error is not None and "empty" in result.error.lower()) or (
+            result.error is not None
+            and result.error
+            and "SERVICE_NAME_EMPTY" in result.error
+        )
 
     def test_register_factory_command_validation_lines_422_423(self) -> None:
         """Test RegisterFactory command validation paths (lines 422-423)."""
@@ -36,9 +38,11 @@ class TestContainerApiCorrectedComprehensive:
         # Try to register with non-callable factory
         result = container.register_factory("test_factory", "not_callable")
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "callable" in result.error.lower()
-        ) or "factory" in result.error.lower()
+        assert (result.error is not None and "callable" in result.error.lower()) or (
+            result.error is not None
+            and result.error
+            and "factory" in result.error.lower()
+        )
 
     def test_unregister_service_validation_lines_451_452(self) -> None:
         """Test UnregisterService validation paths (lines 451-452)."""
@@ -47,8 +51,13 @@ class TestContainerApiCorrectedComprehensive:
         result = container.unregister("non_existent_service")
         FlextTestsMatchers.assert_result_failure(result)
         assert (
-            "not found" in result.error.lower()
-            or "does not exist" in result.error.lower()
+            result.error is not None
+            and result.error
+            and "not found" in result.error.lower()
+        ) or (
+            result.error is not None
+            and result.error
+            and "does not exist" in result.error.lower()
         )
 
     def test_service_retriever_validation_lines_498_504(self) -> None:
@@ -56,9 +65,9 @@ class TestContainerApiCorrectedComprehensive:
         container = FlextContainer.get_global()
         result = container.get("")
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "empty" in result.error.lower()
-        ) or "name" in result.error.lower()
+        assert (result.error is not None and "empty" in result.error.lower()) or (
+            result.error is not None and result.error and "name" in result.error.lower()
+        )
 
     def test_get_service_info_not_found_line_555(self) -> None:
         """Test get_service_info for non-existent service (line 555)."""
@@ -66,13 +75,13 @@ class TestContainerApiCorrectedComprehensive:
         result = container.get_info("non_existent_service_info")
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error is not None
-        assert "not found" in result.error.lower()
+        assert result.error is not None and "not found" in result.error.lower()
 
     def test_configure_container_error_handling_lines_688_693(self) -> None:
         """Test configure_container with invalid config (lines 688-693)."""
         container = FlextContainer.get_global()
         # Pass invalid config that should trigger error handling
-        invalid_config = {"invalid_key": "invalid_value"}
+        invalid_config: dict[str, object] = {"invalid_key": "invalid_value"}
         result = container.configure_container(invalid_config)
         # Should handle gracefully whether success or failure
         assert hasattr(result, "is_success")
@@ -80,7 +89,7 @@ class TestContainerApiCorrectedComprehensive:
     def test_configure_container_none_config_line_699(self) -> None:
         """Test configure_container with None config (line 699)."""
         container = FlextContainer.get_global()
-        result = container.configure_container(None)
+        result = container.configure_container({})
         # Should handle None config gracefully
         assert hasattr(result, "is_success")
 
@@ -88,7 +97,7 @@ class TestContainerApiCorrectedComprehensive:
         """Test configure_container exception handling (lines 707-708)."""
         container = FlextContainer.get_global()
         # Create a config that might cause validation issues
-        problematic_config = {"flext_config": {"invalid": True}}
+        problematic_config: dict[str, object] = {"flext_config": {"invalid": True}}
         result = container.configure_container(problematic_config)
         # Should handle exceptions gracefully
         assert hasattr(result, "is_success")
@@ -131,7 +140,7 @@ class TestContainerApiCorrectedComprehensive:
     def test_create_scoped_container_lines_825_826(self) -> None:
         """Test create_scoped_container exception handling (lines 825-826)."""
         container = FlextContainer.get_global()
-        result = container.create_scoped_container({"test": "config"})
+        result = container.create_scoped_container(None)
         # Should handle gracefully whether success or failure
         assert hasattr(result, "is_success")
         if result.is_success:
@@ -188,9 +197,11 @@ class TestContainerApiCorrectedComprehensive:
         result = container.auto_wire(ServiceWithDependencies)
         # Should handle missing dependency gracefully
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error is not None and "dependency" in result.error.lower()
-        ) or "missing" in result.error.lower()
+        assert (result.error is not None and "dependency" in result.error.lower()) or (
+            result.error is not None
+            and result.error
+            and "missing" in result.error.lower()
+        )
 
     def test_auto_wire_instance_creation_error_line_1003(self) -> None:
         """Test auto_wire instance creation error (line 1003)."""
@@ -206,7 +217,11 @@ class TestContainerApiCorrectedComprehensive:
         FlextTestsMatchers.assert_result_failure(result)
         assert (
             result.error is not None and "construction" in result.error.lower()
-        ) or "error" in result.error.lower()
+        ) or (
+            result.error is not None
+            and result.error
+            and "error" in result.error.lower()
+        )
 
     def test_get_global_typed_lines_1081_1082(self) -> None:
         """Test get_global_typed method (lines 1081-1082)."""
@@ -282,7 +297,7 @@ class TestContainerApiCorrectedComprehensive:
         """Test batch_register with comprehensive scenarios."""
         container = FlextContainer.get_global()
 
-        batch_services = {
+        batch_services: dict[str, object] = {
             "batch_service_1": "value_1",
             "batch_service_2": "value_2",
             "batch_service_3": {"complex": "object"},

@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextConfig, FlextResult
+from flext_core import FlextConfig, FlextResult, FlextTypes
 
 
 class TestFlextConfigRealCoverage:
@@ -104,8 +104,15 @@ class TestFlextConfigRealCoverage:
 
     def test_environment_validation(self) -> None:
         """Test environment field validation."""
-        # Valid environments
-        for env in ["development", "staging", "production", "test"]:
+        # Valid environments - use type-safe literals
+        valid_envs: list[FlextTypes.Config.Environment] = [
+            "development",
+            "staging",
+            "production",
+            "test",
+            "local",
+        ]
+        for env in valid_envs:
             config = FlextConfig(app_name="test", environment=env)
             assert config.environment == env
 
@@ -532,7 +539,9 @@ ENVIRONMENT=staging
             assert isinstance(merge_result, FlextResult)
         except Exception as e:
             # Exception handling is also valid
-            logging.getLogger(__name__).warning(f"Expected exception in merge config test: {e}")
+            logging.getLogger(__name__).warning(
+                f"Expected exception in merge config test: {e}"
+            )
 
     def test_all_config_fields_coverage(self) -> None:
         """Test to ensure all config fields can be set and retrieved."""

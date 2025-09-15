@@ -12,7 +12,6 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -127,31 +126,38 @@ class FlextCore:
     # =============================================================================
 
     # ---- Entity creation helper ----
-    def create_entity(self, entity_cls: type[FlextModels.Entity], /, **kwargs: object) -> FlextResult[FlextModels.Entity]:
+    def create_entity(
+        self, entity_cls: type[FlextModels.Entity], /, **kwargs: object
+    ) -> FlextResult[FlextModels.Entity]:
         """Create an entity instance and run business validation if available.
 
         Keeps behavior minimal and explicit for tests.
         """
         try:
+            # Dynamic entity instantiation - runtime type checking cannot be verified statically
             entity = entity_cls(**kwargs)
             # Run business rule validation if method exists
             validator = getattr(entity, "validate_business_rules", None)
             if callable(validator):
                 res = validator()
                 if getattr(res, "is_failure", False):
-                    return FlextResult[FlextModels.Entity].fail(res.error or "Business rule validation failed")
+                    return FlextResult[FlextModels.Entity].fail(
+                        getattr(res, "error", None) or "Business rule validation failed"
+                    )
             return FlextResult[FlextModels.Entity].ok(entity)
         except Exception as e:
             return FlextResult[FlextModels.Entity].fail(str(e))
 
     # ---- Payload helper tailored for tests ----
     class _CorePayload(BaseModel):
-        data: dict[str, Any]
+        data: dict[str, object]
         message_type: str
         source_service: str
         target_service: str | None = None
         message_id: str = Field(default_factory=lambda: f"msg_{uuid.uuid4().hex}")
-        correlation_id: str = Field(default_factory=lambda: FlextUtilities.Generators.generate_uuid())
+        correlation_id: str = Field(
+            default_factory=lambda: FlextUtilities.Generators.generate_uuid()
+        )
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
         priority: int = 5
         retry_count: int = 0
@@ -159,7 +165,11 @@ class FlextCore:
 
         @property
         def is_expired(self) -> bool:
-            return False if self.expires_at is None else datetime.now(UTC) > self.expires_at
+            return (
+                False
+                if self.expires_at is None
+                else datetime.now(UTC) > self.expires_at
+            )
 
         @property
         def age_seconds(self) -> float:
@@ -168,7 +178,7 @@ class FlextCore:
     def create_payload(
         self,
         *,
-        data: dict[str, Any],
+        data: dict[str, object],
         message_type: str,
         source_service: str,
         target_service: str | None = None,
@@ -192,7 +202,9 @@ class FlextCore:
         """Register a service instance in the container."""
         return self._container.register(name, instance)
 
-    def register_factory(self, name: str, factory: Callable[[], object]) -> FlextResult[None]:
+    def register_factory(
+        self, name: str, factory: Callable[[], object]
+    ) -> FlextResult[None]:
         """Register a factory function in the container."""
         return self._container.register_factory(name, factory)
 

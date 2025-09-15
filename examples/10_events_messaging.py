@@ -86,6 +86,7 @@ def demonstrate_event_messaging() -> None:
     domain_event = FlextModels.Event(
         event_type="UserProfileUpdated",
         payload=event_data,
+        aggregate_id="user123",
     )
 
     print(f"Event Type: {domain_event.event_type}")

@@ -99,7 +99,7 @@ class TestQueryHandlerEdgeCases:
                 return True
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
-            def handle(self, _query: TestQuery) -> FlextResult[str]:
+            def handle(self, query: TestQuery) -> FlextResult[str]:
                 _ = query  # Acknowledge parameter usage
                 return FlextResult[str].ok("handled")
 
@@ -206,8 +206,8 @@ class TestFactoriesEdgeCases:
     def test_simple_handler_with_non_flext_result_return(self) -> None:
         """Test create_simple_handler when function returns non-FlextResult."""
 
-        def handler_function(_command: object) -> object:
-            _ = _command  # Acknowledge parameter usage
+        def handler_function(command: object) -> object:
+            _ = command  # Acknowledge parameter usage
             return "simple result"  # Returns string, not FlextResult
 
         handler = FlextCommands.Factories.create_simple_handler(handler_function)

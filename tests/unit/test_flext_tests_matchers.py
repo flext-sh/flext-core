@@ -159,16 +159,12 @@ class TestFlextTestsMatchers:
             success_result = FlextResult[str].ok("test")
 
             # This should not raise
-            FlextTestsMatchers.pytest_assert(
-                success_result, FlextTestsMatchers.be_success()
-            )
+            FlextTestsMatchers.assert_result_success(success_result)
 
             # This should raise AssertionError
             failure_result = FlextResult[str].fail("error")
             with pytest.raises(AssertionError):
-                FlextTestsMatchers.pytest_assert(
-                    failure_result, FlextTestsMatchers.be_success()
-                )
+                FlextTestsMatchers.assert_result_success(failure_result)
 
     def test_matcher_descriptions(self) -> None:
         """Test matcher description functionality."""

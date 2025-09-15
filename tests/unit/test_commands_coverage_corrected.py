@@ -18,14 +18,14 @@ class TestCommandHandler(
 ):
     """Test command handler for coverage testing."""
 
-    def can_handle(self, command: object) -> bool:
+    def can_handle(self, command_type: object) -> bool:
         """Check if this handler can handle the given command."""
         # Handle both instances and types
-        if isinstance(command, type):
+        if isinstance(command_type, type):
             return True  # Accept any command type for testing
         return (
-            hasattr(command, "command_type")
-            and getattr(command, "command_type") == "test_command"
+            hasattr(command_type, "command_type")
+            and getattr(command_type, "command_type") == "test_command"
         )
 
     def handle(self, command: object) -> FlextResult[dict[str, object]]:

@@ -53,12 +53,12 @@ class TestQueryModel:
 class TestCommandHandler(FlextCommands.Handlers.CommandHandler[object, object]):
     """Test command handler for coverage testing."""
 
-    def can_handle(self, command: object) -> bool:
+    def can_handle(self, command_type: object) -> bool:
         """Check if this handler can handle the given command."""
         # Handle both instances and types
-        if isinstance(command, type):
-            return issubclass(command, TestCommandModel)
-        return isinstance(command, TestCommandModel)
+        if isinstance(command_type, type):
+            return issubclass(command_type, TestCommandModel)
+        return isinstance(command_type, TestCommandModel)
 
     def handle(self, command: object) -> FlextResult[object]:
         """Handle the given command and return result."""
@@ -106,7 +106,12 @@ class TestFlextCommandsCoverageFocused:
         assert command.payload == {"key": "value"}
 
         # Test to_payload method
-        payload = command.to_payload()
+        payload_result = command.to_payload()
+        if isinstance(payload_result, FlextResult):
+            assert payload_result.is_success
+            payload = payload_result.value
+        else:
+            payload = payload_result
         assert payload.message_type == "Command"
         assert "payload" in payload.data
         assert payload.data["payload"] == {"key": "value"}
@@ -151,6 +156,7 @@ class TestFlextCommandsCoverageFocused:
         # Test handle method
         result = handler.handle(command)
         FlextTestsMatchers.assert_result_success(result)
+        assert isinstance(result.value, dict)
         assert result.value["handled"] is True
 
         # Test execute method
@@ -169,6 +175,7 @@ class TestFlextCommandsCoverageFocused:
         # Test handle_query method
         result = handler.handle_query(query)
         FlextTestsMatchers.assert_result_success(result)
+        assert isinstance(result.value, dict)
         assert result.value["handled"] is True
 
         # Test handle method (QueryHandler doesn't have execute method)
