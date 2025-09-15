@@ -24,9 +24,9 @@ def debug_flext_result(result: FlextResult[object], operation_name: str) -> None
 def safe_divide(a: float, b: float) -> FlextResult[float]:
     """Example operation with error handling."""
     if b == 0:
-        return FlextResult[None].fail("Division by zero not allowed")
+        return FlextResult[float].fail("Division by zero not allowed")
 
-    return FlextResult[None].ok(a / b)
+    return FlextResult[float].ok(a / b)
 
 # Usage with debugging
 result = safe_divide(10, 0)

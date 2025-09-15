@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 import uuid
+from collections.abc import Callable
 
 from pydantic import BaseModel
 
@@ -370,7 +371,7 @@ class TestFlextValidations100Percent:
                 return FlextResult[object].ok(value)
             return FlextResult[object].fail("Age must be a non-negative integer")
 
-        schema: dict[str, object] = {
+        schema: dict[str, Callable[[object], FlextResult[object]]] = {
             "name": name_validator,
             "age": age_validator,
         }
@@ -379,7 +380,7 @@ class TestFlextValidations100Percent:
         result1 = FlextValidations.SchemaValidators.validate_schema({}, schema)
         assert result1.is_failure
         assert result1.error is not None
-        assert "Missing required field: name" in result1.error
+        assert "Missing required field: name" in str(result1.error)
 
         # Test with invalid data type
         result2 = FlextValidations.SchemaValidators.validate_schema(
@@ -387,7 +388,7 @@ class TestFlextValidations100Percent:
         )
         assert result2.is_failure
         assert result2.error is not None
-        assert "Age must be a non-negative integer" in result2.error
+        assert "Age must be a non-negative integer" in str(result2.error)
 
         # Test with valid data (only providing name, age is not required)
         result3 = FlextValidations.SchemaValidators.validate_schema(
@@ -508,13 +509,18 @@ class TestFlextValidations100Percent:
         def is_positive(value: object) -> bool:
             return isinstance(value, (int, float)) and value > 0
 
-        predicate: FlextValidations.Core.Predicates = FlextValidations.Core.Predicates(
-            is_positive, "positive_check"
-        )
-        predicate_result1 = predicate(42)
+        # Test predicate function directly
+        assert is_positive(42) is True
+        assert is_positive(-5) is False
+
+        # Test Predicates wrapper class functionality
+        predicate = FlextValidations.Core.Predicates(is_positive, "positive_check")
+
+        # Test predicate wrapper functionality using type: ignore for Pyright issue
+        predicate_result1 = predicate(42)  # type: ignore[call-arg]
         assert predicate_result1.is_success is True
 
-        predicate_result2 = predicate(-5)
+        predicate_result2 = predicate(-5)  # type: ignore[call-arg]
         assert predicate_result2.is_success is False
 
     def test_service_api_request_validator(self) -> None:

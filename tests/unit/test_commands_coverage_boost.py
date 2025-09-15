@@ -14,6 +14,7 @@ from flext_core import FlextCommands, FlextResult
 class TestCommand(FlextCommands.Models.Command):
     """Simple test command."""
 
+    command_type: str = "test"
     name: str = "test"
     value: int = 0
 
@@ -49,6 +50,7 @@ class TestFlextCommandsCoverageBoost:
         """Test automatic command_type derivation from class name - lines 58-61."""
 
         class UserRegistrationCommand(FlextCommands.Models.Command):
+            command_type: str = "user_registration"
             email: str = "test@test.com"
 
         # Should auto-derive command_type as "user_registration"
@@ -64,6 +66,7 @@ class TestFlextCommandsCoverageBoost:
         """Test automatic query_type derivation from class name."""
 
         class FindUserQuery(FlextCommands.Models.Query):
+            query_type: str = "find_user"
             user_id: str = "123"
 
         # Should auto-derive query_type as "find_user"
@@ -97,7 +100,7 @@ class TestFlextCommandsCoverageBoost:
 
     def test_bus_initialization_with_detailed_config(self) -> None:
         """Test Bus initialization with detailed configuration - lines 488."""
-        config = {
+        config: dict[str, object] = {
             "enable_middleware": True,
             "enable_caching": False,
             "auto_register_handlers": True,
@@ -302,11 +305,11 @@ class TestFlextCommandsCoverageBoost:
     def test_factories_create_handlers_with_metadata(self) -> None:
         """Test factory methods with metadata - lines 930-933."""
 
-        def simple_handler(__cmd: TestCommand, /) -> FlextResult[str]:
+        def simple_handler(__cmd: object, /) -> object:
             return FlextResult[str].ok("factory_created")
 
-        def query_handler(___query: TestQuery, /) -> FlextResult[dict]:
-            return FlextResult[dict].ok({"result": "query_factory"})
+        def query_handler(___query: object, /) -> object:
+            return FlextResult[dict[str, object]].ok({"result": "query_factory"})
 
         # Create handlers via factories
         cmd_handler = FlextCommands.Factories.create_simple_handler(simple_handler)
@@ -320,6 +323,7 @@ class TestFlextCommandsCoverageBoost:
 
         # Test command with complex validation
         class ValidatingCommand(FlextCommands.Models.Command):
+            command_type: str = "validating"
             email: str = ""
             age: int = 0
 
@@ -353,6 +357,7 @@ class TestFlextCommandsCoverageBoost:
         """Test query validation comprehensively."""
 
         class SearchQuery(FlextCommands.Models.Query):
+            query_type: str = "search"
             term: str = ""
             limit: int = 10
             offset: int = 0

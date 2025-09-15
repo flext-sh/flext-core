@@ -16,8 +16,9 @@ import threading
 import time
 import traceback
 import uuid
+from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self, TypedDict
 
 import structlog
 from structlog.typing import EventDict, Processor
@@ -49,14 +50,13 @@ class FlextLogger:
     ] = {}  # Performance tracking in LOGGING!
 
     # Logger instance cache for singleton pattern
-    _instances: ClassVar[
-        dict[str, FlextLogger]
-    ] = {}  # Instance caching - over-engineering
+    _instances: ClassVar[dict[str, Self]] = {}  # Instance caching - over-engineering
 
     # Thread-local storage for per-request context
     _local = (
         internal.invalid()
     )  # Thread-local for logging - most apps are single-threaded!
+
 
     # Instance attributes type declarations
     _name: str
@@ -68,13 +68,13 @@ class FlextLogger:
         # Check if this is a bind() call that needs a new instance
         force_new = kwargs.pop("_force_new", False)
 
-        if force_new or name not in cls._instances:
-            instance = super().__new__(cls)
-            if not force_new:  # Only cache if not forced new
-                cls._instances[name] = instance
-            return instance
+        if not force_new and name in cls._instances:
+            return cls._instances[name]
 
-        return cast("Self", cls._instances[name])
+        instance = super().__new__(cls)
+        if not force_new:  # Only cache if not forced new
+            cls._instances[name] = instance
+        return instance
 
     def __init__(
         self,
@@ -152,7 +152,7 @@ class FlextLogger:
             cfg_level = str(config.log_level).upper()
             resolved_level = cfg_level if cfg_level in valid_levels else "INFO"
 
-        self._level = cast("FlextTypes.Config.LogLevel", resolved_level)
+        self._level = self._validated_log_level(resolved_level)
 
         # Use environment from configuration singleton for consistency
         self._environment = config.environment
@@ -287,32 +287,44 @@ class FlextLogger:
         self,
         level: str,
         message: str,
-        context: FlextTypes.Core.Dict | None = None,
+        context: Mapping[str, object] | None = None,
         error: Exception | str | None = None,
         duration_ms: float | None = None,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextLogger.LogEntry:
         """Build structured log entry."""
         # Start with timestamp and correlation
-        entry: FlextTypes.Core.Dict = {
-            "@timestamp": self._get_current_timestamp(),
+        entry: FlextLogger.LogEntry = {
+            "timestamp": self._get_current_timestamp(),
             "level": level.upper(),
             "message": str(message),
             "logger": self._name,
             "correlation_id": self._correlation_id,
+            # Always include these containers for type predictability in tests
+            "request": {},
+            "context": {},
+            "service": {},
+            "system": {},
+            "execution": {},
         }
 
         # Add service and system context
-        entry.update(self._persistent_context)
+        # Populate service and system from persistent context without broad update
+        service_ctx = self._persistent_context.get("service")
+        system_ctx = self._persistent_context.get("system")
+        if isinstance(service_ctx, dict):
+            entry["service"] = dict(service_ctx)
+        if isinstance(system_ctx, dict):
+            entry["system"] = dict(system_ctx)
 
         # Add request context if available
-        request_context = getattr(self._local, "request_context", {})
-        if request_context:
-            entry["request"] = request_context
+        request_context = getattr(self._local, "request_context", None)
+        # Always set request (may be empty)
+        entry["request"] = dict(request_context) if isinstance(request_context, dict) else {}
 
         # Add permanent context if available
-        permanent_context = getattr(self, "_permanent_context", {})
-        if permanent_context:
-            entry["permanent"] = permanent_context
+        permanent_context = getattr(self, "_permanent_context", None)
+        if isinstance(permanent_context, dict) and permanent_context:
+            entry["permanent"] = dict(permanent_context)
 
         # Add performance metrics
         if duration_ms is not None:
@@ -346,8 +358,11 @@ class FlextLogger:
 
         # Add sanitized user context
         if context:
-            sanitized_context = self._sanitize_context(context)
+            sanitized_context = self._sanitize_context(dict(context))
             entry["context"] = sanitized_context
+        else:
+            # Ensure context key exists for type stability
+            entry["context"] = {}
 
         # Add execution context
         entry["execution"] = {
@@ -780,10 +795,41 @@ class FlextLogger:
         """Check if logging has been configured.
 
         Returns:
-            True if configured, False otherwise
+            bool: True if logging is configured, False otherwise.
 
         """
         return cls._configured
+
+    class LogEntry(TypedDict, total=False):
+        """Typed structure for structured log entries."""
+
+        timestamp: str
+        level: str
+        message: str
+        logger: str
+        correlation_id: str
+        service: dict[str, object]
+        system: dict[str, object]
+        request: dict[str, object]
+        context: dict[str, object]
+        execution: dict[str, object]
+        # Optional fields below may be conditionally present
+        performance: dict[str, object]
+        error: dict[str, object]
+        permanent: dict[str, object]
+
+    @staticmethod
+    def _validated_log_level(level: str) -> FlextTypes.Config.LogLevel:
+        """Validate and coerce a raw string to Flext log level without casts."""
+        mapping: dict[str, FlextTypes.Config.LogLevel] = {
+            "DEBUG": "DEBUG",
+            "INFO": "INFO",
+            "WARNING": "WARNING",
+            "ERROR": "ERROR",
+            "CRITICAL": "CRITICAL",
+        }
+        upper = level.upper()
+        return mapping.get(upper, "INFO")
 
 
 __all__: FlextTypes.Core.StringList = [

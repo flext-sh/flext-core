@@ -22,6 +22,7 @@ import uuid
 from collections.abc import Generator
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
+from types import TracebackType
 from typing import NoReturn, Self, cast
 
 import pytest
@@ -54,7 +55,12 @@ class RealLogCapture:
         self._stderr_redirect.__enter__()
         return self
 
-    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         self._stdout_redirect.__exit__(exc_type, exc_val, exc_tb)
         self._stderr_redirect.__exit__(exc_type, exc_val, exc_tb)
@@ -202,7 +208,7 @@ class TestStructuredLogging:
         assert len(log_entry) > 0
 
         # Check required fields exist
-        required_fields = ["@timestamp", "level", "message", "logger", "correlation_id"]
+        required_fields = ["timestamp", "level", "message", "logger", "correlation_id"]
         for field in required_fields:
             assert field in log_entry, f"Required field {field} missing"
 
@@ -389,11 +395,12 @@ class TestOperationTracking:
         assert operation_id in logger._local.operations
 
         # Verify operation data structure
-        operation_info = logger._local.operations[operation_id]
+        operation_info = cast("dict[str, object]", logger._local.operations[operation_id])
         assert operation_info["name"] == "user_authentication"
         assert "start_time" in operation_info
-        assert operation_info["context"]["user_id"] == "123"
-        assert operation_info["context"]["method"] == "oauth2"
+        op_ctx = cast("dict[str, object]", operation_info["context"])  # narrow type
+        assert op_ctx["user_id"] == "123"
+        assert op_ctx["method"] == "oauth2"
 
     def test_operation_completion_tracking(self) -> None:
         """Test operation completion with real performance metrics."""
@@ -408,7 +415,7 @@ class TestOperationTracking:
         assert operation_id in logger._local.operations
 
         # Get start time for duration calculation
-        start_time = logger._local.operations[operation_id]["start_time"]
+        start_time = cast("dict[str, object]", logger._local.operations[operation_id])["start_time"]
         assert isinstance(start_time, float)
 
         # Simulate some work
@@ -462,7 +469,7 @@ class TestOperationTracking:
         assert operation_id in logger._local.operations
 
         # Get start time for validation
-        start_time = logger._local.operations[operation_id]["start_time"]
+        start_time = cast("dict[str, object]", logger._local.operations[operation_id])["start_time"]
         assert isinstance(start_time, float)
 
         # Simulate precise timing
@@ -527,8 +534,10 @@ class TestSecuritySanitization:
 
         # Test that sanitization works in actual log entries
         log_entry = logger._build_log_entry("INFO", "Test message", sensitive_context)
+        assert isinstance(log_entry, dict)
         assert "context" in log_entry
         context = log_entry["context"]
+        assert isinstance(context, dict)
         assert context["username"] == "john_doe"
         for key in sensitive_keys:
             assert context[key] == "[REDACTED]", (
@@ -559,10 +568,10 @@ class TestSecuritySanitization:
         assert isinstance(sanitized["request"], dict)
 
         # Extract nested data for verification
-        user_data = sanitized["user"]
-        profile_data = user_data["profile"]
-        request_data = sanitized["request"]
-        headers_data = request_data["headers"]
+        user_data = cast("dict[str, object]", sanitized["user"])  # narrow
+        profile_data = cast("dict[str, object]", user_data["profile"])  # narrow
+        request_data = cast("dict[str, object]", sanitized["request"])  # narrow
+        headers_data = cast("dict[str, object]", request_data["headers"])  # narrow
 
         # Non-sensitive nested data should remain unchanged
         assert user_data["name"] == "john"
@@ -575,8 +584,8 @@ class TestSecuritySanitization:
 
         # Test that nested sanitization works in actual log building
         log_entry = logger._build_log_entry("INFO", "Test nested", nested_context)
-        context = log_entry["context"]
-        nested_user = context["user"]
+        context = cast("dict[str, object]", log_entry["context"])  # narrow
+        nested_user = cast("dict[str, object]", context["user"])  # narrow
         assert nested_user["name"] == "john"
         assert nested_user["password"] == "[REDACTED]"
 
@@ -596,7 +605,7 @@ class TestSecuritySanitization:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Test that log entry building properly sanitizes sensitive data
-        context_data = {
+        context_data: dict[str, object] = {
             "username": "john_doe",
             "password": "should_be_hidden",
             "api_key": "should_also_be_hidden",
@@ -734,10 +743,12 @@ class TestErrorHandling:
         )
 
         # Verify log entry structure is correct
+        assert isinstance(log_entry, dict)
         assert log_entry["level"] == "ERROR"
         assert log_entry["message"] == "Business rule violation"
         assert "context" in log_entry
         context = log_entry["context"]
+        assert isinstance(context, dict)
         assert context["rule"] == "max_daily_limit"
         assert context["current_amount"] == 1500
         assert context["limit"] == 1000
@@ -770,8 +781,10 @@ class TestRequestContextManagement:
 
         # Test that log entry includes request context
         log_entry = logger._build_log_entry("INFO", "Processing request")
+        assert isinstance(log_entry, dict)
         assert "request" in log_entry
         request_data = log_entry["request"]
+        assert isinstance(request_data, dict)
         assert request_data["request_id"] == "req_123"
         assert request_data["user_id"] == "user_456"
         assert request_data["endpoint"] == "/api/orders"
@@ -789,12 +802,14 @@ class TestRequestContextManagement:
         # Set context
         logger.set_request_context(request_id="req_123")
         assert hasattr(logger._local, "request_context")
-        assert logger._local.request_context["request_id"] == "req_123"
+        assert cast("dict[str, object]", logger._local.request_context)["request_id"] == "req_123"
 
         # Test that log entry includes context before clearing
         log_entry_with_context = logger._build_log_entry("INFO", "With context")
         assert "request" in log_entry_with_context
-        assert log_entry_with_context["request"]["request_id"] == "req_123"
+        assert cast("dict[str, object]", log_entry_with_context["request"])[
+            "request_id"
+        ] == "req_123"
 
         # Clear context
         logger.clear_request_context()
@@ -888,7 +903,7 @@ class TestLoggerConfiguration:
 
         assert log_entry["message"] == "JSON test message"
         assert "context" in log_entry
-        context = log_entry["context"]
+        context = cast("dict[str, object]", log_entry["context"])  # narrow
         assert context["field1"] == "value1"
         assert context["field2"] == 123
 
@@ -912,7 +927,7 @@ class TestLoggerConfiguration:
 
         assert log_entry["message"] == "Console test message"
         assert "context" in log_entry
-        assert log_entry["context"]["debug_info"] == "useful"
+        assert cast("dict[str, object]", log_entry["context"])["debug_info"] == "useful"
 
     def test_structured_processor_functionality(self) -> None:
         """Test that structured processors are working."""

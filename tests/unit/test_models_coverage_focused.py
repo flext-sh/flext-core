@@ -438,13 +438,13 @@ class TestFlextModelsCoverageFocused:
     def test_payload_generic_typing(self) -> None:
         """Test Payload with different generic types."""
         # Test with dict type
-        dict_payload = FlextModels.Payload[dict](
+        dict_payload = FlextModels.Payload[dict[str, object]](
             data={"key": "value"}, message_type="dict_message", source_service="test"
         )
         assert isinstance(dict_payload.data, dict)
 
         # Test with list type
-        list_payload = FlextModels.Payload[list](
+        list_payload = FlextModels.Payload[list[object]](
             data=["item1", "item2"], message_type="list_message", source_service="test"
         )
         assert isinstance(list_payload.data, list)

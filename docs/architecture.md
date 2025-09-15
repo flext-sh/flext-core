@@ -4,7 +4,7 @@ Technical architecture overview for the FLEXT-Core foundation library.
 
 ## Overview
 
-FLEXT-Core implements Clean Architecture principles with domain-driven design patterns, providing a solid foundation for the FLEXT ecosystem's 33 interconnected projects.
+FLEXT-Core implements Clean Architecture principles with domain-driven design patterns, providing a solid foundation for data integration solutions in the FLEXT ecosystem.
 
 ### Architectural Principles
 

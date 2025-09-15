@@ -210,7 +210,7 @@ class TestFlextConfigCoverageFocused:
 
     def test_config_validation_consistency(self) -> None:
         """Test validation consistency method."""
-        config = FlextConfig()
+        FlextConfig()
         # Should not raise exception for valid config
         # validate_configuration_consistency is a Pydantic model validator that runs automatically
 

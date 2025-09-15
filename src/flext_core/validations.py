@@ -15,7 +15,7 @@ import ipaddress
 import json
 import math
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from decimal import Decimal
 from typing import Protocol, cast, runtime_checkable
 
@@ -472,8 +472,8 @@ class FlextValidations:
 
         @staticmethod
         def validate_schema(
-            data: FlextTypes.Core.Dict,
-            schema: dict[str, Callable[[object], FlextResult[object]]],
+            data: Mapping[str, object],
+            schema: Mapping[str, Callable[[object], FlextResult[object]]],
         ) -> FlextResult[FlextTypes.Core.Dict]:
             """Validate data against schema."""
             validated_data: FlextTypes.Core.Dict = {}
@@ -661,11 +661,11 @@ class FlextValidations:
     @classmethod
     def create_schema_validator(
         cls,
-        schema: dict[str, Callable[[object], FlextResult[object]]],
-    ) -> Callable[[FlextTypes.Core.Dict], FlextResult[FlextTypes.Core.Dict]]:
+        schema: Mapping[str, Callable[[object], FlextResult[object]]],
+    ) -> Callable[[Mapping[str, object]], FlextResult[FlextTypes.Core.Dict]]:
         """Create schema validator."""
 
-        def validate(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
+        def validate(data: Mapping[str, object]) -> FlextResult[FlextTypes.Core.Dict]:
             return cls.SchemaValidators.validate_schema(data, schema)
 
         return validate
@@ -750,7 +750,7 @@ class FlextValidations:
 
     @classmethod
     def validate_user_data(
-        cls, user_data: FlextTypes.Core.Dict
+        cls, user_data: Mapping[str, object]
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate user data - test compatibility."""
         # Simple validation - check required fields
@@ -780,11 +780,11 @@ class FlextValidations:
                     "Age must be a string or number"
                 )
 
-        return FlextResult[FlextTypes.Core.Dict].ok(user_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(dict(user_data))
 
     @classmethod
     def validate_api_request(
-        cls, request_data: FlextTypes.Core.Dict
+        cls, request_data: Mapping[str, object]
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate API request - test compatibility."""
         # Simple validation - check required fields
@@ -808,7 +808,7 @@ class FlextValidations:
         if not path.startswith("/"):
             return FlextResult[FlextTypes.Core.Dict].fail("Path must start with /")
 
-        return FlextResult[FlextTypes.Core.Dict].ok(request_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(dict(request_data))
 
     @staticmethod
     def is_valid(value: object) -> bool | Callable[[object], bool]:

@@ -311,16 +311,16 @@ class TestFlextConfigSingletonIntegration:
         max_length = global_config.max_name_length or 100
 
         # Test string validation with config values
-        result = FlextValidations.BusinessValidators.validate_string_field(
+        string_result = FlextValidations.BusinessValidators.validate_string_field(
             "valid_string", min_length=min_length, max_length=max_length
         )
-        assert result.is_success
+        assert string_result.is_success
 
         # Test numeric validation with config-based constraints
-        result = FlextValidations.BusinessValidators.validate_numeric_field(
+        number_result = FlextValidations.BusinessValidators.validate_numeric_field(
             min_length, min_value=1, max_value=max_length
         )
-        assert result.is_success
+        assert number_result.is_success
 
         # Verify config accessibility
         assert global_config.app_name is not None

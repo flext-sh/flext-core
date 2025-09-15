@@ -64,7 +64,7 @@ def transform_data_bad(data, transformer):
 Use the container pattern for service management:
 
 ```python
-from flext_core import get_flext_container
+from flext_core import FlextContainer
 
 # ✅ GOOD - Dependencies injected
 class OrderService:
@@ -103,7 +103,7 @@ Organize code by architectural boundaries:
 ```python
 # Domain Layer - Pure business logic
 # domain/entities.py
-from flext_core import FlextModels.Entity, FlextResult
+from flext_core import FlextModels, FlextResult
 
 class Product(FlextModels.Entity):
     """Domain entity with business rules."""

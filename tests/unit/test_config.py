@@ -28,7 +28,13 @@ class TestFlextConfigSimple:
         assert isinstance(config.debug, bool)
 
         assert isinstance(config.log_level, str)
-        assert config.log_level.upper() in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        assert config.log_level.upper() in {
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
         # Verify numeric attributes
         assert isinstance(config.min_phone_digits, int)
@@ -73,7 +79,7 @@ class TestFlextConfigSimple:
             "environment": "development",
             "app_name": "test-create-app",
             "debug": True,
-            "max_name_length": 150
+            "max_name_length": 150,
         }
         result = FlextConfig.create(constants=constants)
         assert result.is_success
@@ -86,7 +92,7 @@ class TestFlextConfigSimple:
         assert config.max_name_length == 150
 
         # Test with invalid environment
-        invalid_constants = {"environment": "invalid_env_name"}
+        invalid_constants: dict[str, object] = {"environment": "invalid_env_name"}
         result = FlextConfig.create(constants=invalid_constants)
         # The test should handle validation appropriately
         # If validation fails, it should return failure
@@ -99,11 +105,7 @@ class TestFlextConfigSimple:
     def test_config_safe_load_applies_values(self) -> None:
         """Test that safe_load actually applies loaded values."""
         # Test with valid data
-        valid_data = {
-            "app_name": "safe-load-app",
-            "debug": False,
-            "log_level": "ERROR"
-        }
+        valid_data = {"app_name": "safe-load-app", "debug": False, "log_level": "ERROR"}
         result = FlextConfig.safe_load(valid_data)
         assert result.is_success
 
@@ -114,7 +116,7 @@ class TestFlextConfigSimple:
         assert config.log_level == "ERROR"
 
         # Test with potentially invalid data to verify graceful handling
-        invalid_data = {"log_level": "INVALID_LEVEL"}
+        invalid_data: dict[str, object] = {"log_level": "INVALID_LEVEL"}
         result = FlextConfig.safe_load(invalid_data)
         # Safe load should handle invalid data gracefully
         assert result.is_success
@@ -132,7 +134,7 @@ class TestFlextConfigSimple:
         override_data = {
             "environment": "production",
             "debug": True,
-            "app_name": "merged-app"  # Should override base value
+            "app_name": "merged-app",  # Should override base value
         }
         result = FlextConfig.merge(base_config, override_data)
         assert result.is_success

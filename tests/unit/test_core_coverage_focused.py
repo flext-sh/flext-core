@@ -129,7 +129,8 @@ class TestFlextCoreCoverageFocused:
 
         # Create instance
         instance1 = FlextCore.get_instance()
-        assert FlextCore._instance is instance1
+        current_instance = FlextCore._instance
+        assert current_instance is instance1
 
         # Reset and verify
         FlextCore.reset_instance()
