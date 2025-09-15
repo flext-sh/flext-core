@@ -9,10 +9,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 import time
 import traceback
 from dataclasses import dataclass
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import (
     FlextHandlers,

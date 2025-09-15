@@ -22,7 +22,6 @@ from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
-    FlextTypes,
 )
 
 # =============================================================================
