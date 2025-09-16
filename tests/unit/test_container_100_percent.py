@@ -50,7 +50,7 @@ class TestFlextContainer100Percent:
 
     def test_commands_register_factory_error_handling(self) -> None:
         """Test Commands.RegisterFactory error handling - line 185."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test registering factory with invalid name - this should trigger error handling
         def test_factory() -> str:
@@ -62,7 +62,7 @@ class TestFlextContainer100Percent:
 
     def test_service_registrar_unregister_service_validation_failure(self) -> None:
         """Test service registrar unregister validation failure."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Try to unregister non-existent service
         result = container.unregister("non_existent_service")
@@ -70,7 +70,7 @@ class TestFlextContainer100Percent:
 
     def test_service_registrar_utility_methods(self) -> None:
         """Test service registrar utility methods."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextContainer()  # Use empty container for count tests
 
         # Register a service first
         service_data = FlextTestsDomains.create_service(name="test_service", port=8080)
@@ -89,7 +89,7 @@ class TestFlextContainer100Percent:
 
     def test_commands_register_factory_duplicate_registration(self) -> None:
         """Test factory duplicate registration handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         def test_factory() -> str:
             return "test"
@@ -125,7 +125,7 @@ class TestFlextContainer100Percent:
 
     def test_configure_container_error_handling(self) -> None:
         """Test container configuration error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test with invalid configuration
         invalid_config: dict[str, object] = {}
@@ -135,7 +135,7 @@ class TestFlextContainer100Percent:
 
     def test_get_or_create_registration_failure(self) -> None:
         """Test get_or_create registration failure scenarios."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test get_or_create with invalid factory
         def failing_factory() -> None:
@@ -147,7 +147,7 @@ class TestFlextContainer100Percent:
 
     def test_factory_lifecycle_management(self) -> None:
         """Test factory lifecycle management."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         call_count = 0
 
@@ -169,7 +169,7 @@ class TestFlextContainer100Percent:
 
     def test_list_services_empty(self) -> None:
         """Test listing services when container is empty."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextContainer()  # Create truly empty container
 
         # Empty container should return empty list
         service_names = container.get_service_names()
@@ -180,7 +180,7 @@ class TestFlextContainer100Percent:
 
     def test_service_retriever_get_service_info_comprehensive(self) -> None:
         """Test service retriever get service info comprehensively."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Register a service
         service_data = FlextTestsDomains.create_service(name="info_service", port=9090)
@@ -193,7 +193,7 @@ class TestFlextContainer100Percent:
 
     def test_get_or_create_factory_error_handling(self) -> None:
         """Test get_or_create factory error handling scenarios."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test with None factory
         container.get_or_create("test_service", None)
@@ -201,7 +201,7 @@ class TestFlextContainer100Percent:
 
     def test_service_registrar_clear_all(self) -> None:
         """Test service registrar clear all functionality."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextContainer()  # Use empty container for count tests
 
         # Register multiple services
         service1 = FlextTestsDomains.create_service(name="service1", port=8001)
@@ -219,7 +219,7 @@ class TestFlextContainer100Percent:
 
     def test_get_container_config_error_handling(self) -> None:
         """Test container configuration getter error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test getting configuration
         if hasattr(container, "get_configuration"):
@@ -228,7 +228,7 @@ class TestFlextContainer100Percent:
 
     def test_auto_wire_missing_dependencies(self) -> None:
         """Test auto-wire with missing dependencies."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test auto-wire functionality if available
         if hasattr(container, "auto_wire"):
@@ -237,7 +237,7 @@ class TestFlextContainer100Percent:
 
     def test_auto_wire_registration_failure(self) -> None:
         """Test auto-wire registration failure scenarios."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test auto-wire registration failure if method exists
         if hasattr(container, "auto_wire"):
@@ -246,7 +246,7 @@ class TestFlextContainer100Percent:
 
     def test_has_method_edge_cases(self) -> None:
         """Test has method with edge cases."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test with empty string
         assert not container.has("")
@@ -256,7 +256,7 @@ class TestFlextContainer100Percent:
 
     def test_service_retriever_list_services_edge_cases(self) -> None:
         """Test service retriever list services edge cases."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test empty case already covered, test after operations
         service1 = FlextTestsDomains.create_service(name="temp_service", port=8001)
@@ -272,7 +272,7 @@ class TestFlextContainer100Percent:
 
     def test_get_configuration_summary_error_handling(self) -> None:
         """Test configuration summary error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test configuration summary if method exists
         if hasattr(container, "get_configuration_summary"):
@@ -281,7 +281,7 @@ class TestFlextContainer100Percent:
 
     def test_commands_unregister_service_error_handling(self) -> None:
         """Test unregister service command error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test unregistering non-existent service
         result = container.unregister("non_existent")
@@ -289,7 +289,7 @@ class TestFlextContainer100Percent:
 
     def test_complex_dependency_injection_scenario(self) -> None:
         """Test complex dependency injection scenarios."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Create complex service with dependencies
         config = FlextTestsDomains.create_configuration()
@@ -314,7 +314,7 @@ class TestFlextContainer100Percent:
 
     def test_get_exception_class_edge_cases(self) -> None:
         """Test exception class getter edge cases."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test exception handling if method exists
         if hasattr(container, "get_exception_class"):
@@ -323,7 +323,7 @@ class TestFlextContainer100Percent:
 
     def test_get_typed_type_mismatch(self) -> None:
         """Test get_typed with type mismatch scenarios."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Register service of one type
         service = FlextTestsDomains.create_service(name="typed_service", port=8080)
@@ -337,7 +337,7 @@ class TestFlextContainer100Percent:
 
     def test_batch_register_partial_failure_rollback(self) -> None:
         """Test batch register with partial failure and rollback."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test batch operations if supported
         if hasattr(container, "batch_register"):
@@ -352,7 +352,7 @@ class TestFlextContainer100Percent:
 
     def test_service_retriever_get_service_factory_execution_error(self) -> None:
         """Test service factory execution error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Register factory that will fail during execution
         def failing_factory() -> Never:
@@ -368,7 +368,7 @@ class TestFlextContainer100Percent:
 
     def test_service_registrar_register_factory_duplicate_service(self) -> None:
         """Test registering factory with duplicate service name."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Register regular service first
         service = FlextTestsDomains.create_service(name="duplicate_test", port=8080)
@@ -384,7 +384,7 @@ class TestFlextContainer100Percent:
 
     def test_command_bus_property(self) -> None:
         """Test command bus property access."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test command bus access if available
         if hasattr(container, "command_bus"):
@@ -393,7 +393,7 @@ class TestFlextContainer100Percent:
 
     def test_service_registrar_validate_service_name_edge_cases(self) -> None:
         """Test service name validation edge cases."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test with whitespace-only name
         result1 = container.register("   ", "test_service")
@@ -405,13 +405,13 @@ class TestFlextContainer100Percent:
 
     def test_batch_register_exception_handling(self) -> None:
         """Test batch register exception handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test batch register if method exists
         if hasattr(container, "batch_register"):
             # Test with problematic input
             try:
-                container.batch_register(None)
+                container.batch_register({})
             except Exception as e:
                 # Should handle exceptions gracefully
                 logging.getLogger(__name__).warning(
@@ -420,7 +420,7 @@ class TestFlextContainer100Percent:
 
     def test_clear_method(self) -> None:
         """Test container clear method."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextContainer()  # Use empty container for count tests
 
         # Register some services
         service1 = FlextTestsDomains.create_service(name="service1", port=8001)
@@ -440,7 +440,7 @@ class TestFlextContainer100Percent:
 
     def test_service_registrar_register_factory_validation_failure(self) -> None:
         """Test factory registration validation failure."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test with invalid factory parameters
         result = container.register_factory("", lambda: "test")  # Empty name
@@ -448,7 +448,7 @@ class TestFlextContainer100Percent:
 
     def test_configure_global_error_handling(self) -> None:
         """Test global configuration error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = FlextTestsBuilders().create_test_container()
 
         # Test global configuration if method exists
         if hasattr(container, "configure_global"):

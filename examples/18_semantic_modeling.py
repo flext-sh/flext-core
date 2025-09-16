@@ -133,7 +133,11 @@ class FlextDataPipeline(FlextModels.Entity):
             "timestamp": "2025-08-05T10:00:00Z",
         }
         self.add_domain_event(
-            FlextModels.Event(event_type="pipeline_activated", payload=event_data, aggregate_id=self.id)
+            FlextModels.Event(
+                event_type="pipeline_activated",
+                payload=event_data,
+                aggregate_id=self.id,
+            )
         )
 
         return FlextResult[None].ok(None)

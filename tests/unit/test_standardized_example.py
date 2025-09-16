@@ -68,11 +68,12 @@ class TestStandardizedExample:
         assert "Type mismatch" in result.error
 
         # Test with valid data
-        valid_dict = {"key": "value"}
+        valid_dict: dict[str, object] = {"key": "value"}
         success_result = FlextValidations.TypeValidators.validate_dict(valid_dict)
-        # Type annotation for assert_result_success
-        assert_fn = FlextTestsMatchers()
-        assert_fn.assert_result_success(success_result, expected_data=valid_dict)
+        # Use FlextTestsMatchers static method directly
+        FlextTestsMatchers.assert_result_success(
+            success_result, expected_data=valid_dict
+        )
 
     def test_async_service_with_fixtures(
         self,

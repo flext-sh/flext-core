@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import UserDict
 from datetime import UTC, datetime
 from unittest.mock import Mock
 
@@ -373,9 +374,7 @@ class TestFlextCommandsHandlers:
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
-        class TestHandler(
-            FlextCommands.Handlers.CommandHandler[TestCommand, str]
-        ):
+        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
             def handle(self, command: TestCommand) -> FlextResult[str]:
                 _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("success")
@@ -395,14 +394,12 @@ class TestFlextCommandsHandlers:
     def test_command_handler_execute_cannot_handle(self) -> None:
         """Test CommandHandler execute when handler cannot handle command."""
 
-        class TestCommand(dict[str, object]):
+        class TestCommand(UserDict[str, object]):
             def __init__(self) -> None:
                 super().__init__({"command_id": "test-command-id"})
 
-        class TestHandler(
-            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
-        ):
-            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
+            def handle(self, command: TestCommand) -> FlextResult[str]:
                 _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("success")
 
@@ -421,17 +418,15 @@ class TestFlextCommandsHandlers:
     def test_command_handler_execute_validation_failure(self) -> None:
         """Test CommandHandler execute when validation fails."""
 
-        class TestCommand(dict[str, object]):
+        class TestCommand(UserDict[str, object]):
             def __init__(self) -> None:
                 super().__init__({"command_id": "test-command-id"})
 
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].fail("Validation failed")
 
-        class TestHandler(
-            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
-        ):
-            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
+            def handle(self, command: TestCommand) -> FlextResult[str]:
                 _ = command  # Acknowledge the parameter
                 return FlextResult[str].ok("success")
 
@@ -452,17 +447,15 @@ class TestFlextCommandsHandlers:
     def test_command_handler_execute_handle_exception(self) -> None:
         """Test CommandHandler execute when handle method raises exception."""
 
-        class TestCommand(dict[str, object]):
+        class TestCommand(UserDict[str, object]):
             def __init__(self) -> None:
                 super().__init__({"command_id": "test-command-id"})
 
             def validate_command(self) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
-        class TestHandler(
-            FlextCommands.Handlers.CommandHandler[dict[str, object], str]
-        ):
-            def handle(self, command: dict[str, object]) -> FlextResult[str]:
+        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
+            def handle(self, command: TestCommand) -> FlextResult[str]:
                 _ = command  # Acknowledge the parameter
                 msg = "Handler error"
                 raise ValueError(msg)

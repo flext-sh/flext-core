@@ -477,9 +477,9 @@ class FlextConfig(BaseSettings):
                     error_code="CONFIG_ENV_CREATION_ERROR",
                 )
 
-        @staticmethod
+        @classmethod
         def create_from_file(
-            file_path: str, _env_prefix: str = "FLEXT_"
+            cls, file_path: str, _env_prefix: str = "FLEXT_"
         ) -> FlextResult[FlextConfig]:
             """Create configuration from JSON file with environment override.
 

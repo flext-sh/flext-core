@@ -22,468 +22,410 @@ from flext_core import (
 )
 
 
-class _TestCallable(Protocol):
-    """Protocol for test callable objects to avoid explicit Any."""
-
-    def __call__(self, *args: object, **kwargs: object) -> object:
-        """Call signature for test functions."""
-        ...
-
-
 class FlextTestsBuilders:
     """Unified test builders for FLEXT ecosystem.
 
-    Consolidates all builder patterns into a single class interface.
-    Implements Builder pattern with fluent interface for creating
-    complex test scenarios with proper setup and teardown.
+    Single responsibility class implementing Builder pattern with fluent interface
+    for creating complex test scenarios with proper setup and teardown.
+    Follows FLEXT patterns with single unified class and nested helper classes.
     """
 
-    # === Result Builder ===
+    class _TestCallableProtocol(Protocol):
+        """Protocol for test callable objects to avoid explicit Any."""
 
-    @classmethod
-    def result(cls) -> FlextTestsBuilders.ResultBuilder:
-        """Create a result builder."""
-        return cls.ResultBuilder()
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            """Call signature for test functions."""
+            ...
 
-    class ResultBuilder:
-        """Builder for FlextResult objects with various scenarios."""
+    def __init__(self) -> None:
+        """Initialize unified test builders service."""
+        try:
+            self._container: FlextContainer | None = FlextContainer.get_global()
+        except Exception:
+            self._container = None
 
-        def __init__(self) -> None:
-            """Initialize result builder."""
-            self._data: object = None
-            self._error: str | None = None
-            self._error_code: str | None = None
-            self._error_data: FlextTypes.Core.Dict | None = None
-            self._is_success: bool = True
+        # Attributes for deprecated builder patterns
+        self._building_container: bool = False
 
-        def with_success_data(self, data: object) -> FlextTestsBuilders.ResultBuilder:
-            """Set successful result data."""
-            self._data = data
-            self._is_success = True
-            return self
+    # === Result Builder Methods (Unified) ===
 
-        def with_failure(
-            self,
-            error: str,
-            error_code: str | None = None,
-            error_data: FlextTypes.Core.Dict | None = None,
-        ) -> FlextTestsBuilders.ResultBuilder:
-            """Set failure result with error details."""
-            self._error = error
-            self._error_code = error_code
-            self._error_data = error_data
-            self._is_success = False
-            return self
+    def create_success_result(self, data: object = "test_data") -> FlextResult[object]:
+        """Create a successful FlextResult for testing."""
+        return FlextResult[object].ok(data)
 
-        def build(self) -> FlextResult[object]:
-            """Build the FlextResult object."""
-            if self._is_success:
-                return FlextResult[object].ok(self._data)
+    def create_failure_result(
+        self,
+        error: str = "test_error",
+        error_code: str | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
+    ) -> FlextResult[object]:
+        """Create a failed FlextResult for testing."""
+        return FlextResult[object].fail(
+            error, error_code=error_code, error_data=error_data
+        )
 
-            return FlextResult[object].fail(
-                self._error or "Test error",
-                error_code=self._error_code,
-                error_data=self._error_data,
-            )
+    # === Container Builder Methods (Unified) ===
 
-    # === Container Builder ===
+    def create_test_container(self) -> FlextContainer:
+        """Create a FlextContainer with common test services."""
+        container = FlextContainer()
 
-    @classmethod
-    def container(cls) -> FlextTestsBuilders.ContainerBuilder:
-        """Create a container builder."""
-        return cls.ContainerBuilder()
+        # Register common test services
+        services = {
+            "database": {
+                "host": "localhost",
+                "port": 5432,
+                "name": "test_db",
+                "connected": True,
+            },
+            "cache": {
+                "host": "localhost",
+                "port": 6379,
+                "ttl": 3600,
+                "connected": True,
+            },
+            "logger": {
+                "level": "DEBUG",
+                "format": "json",
+                "handlers": ["console"],
+            },
+        }
 
-    class ContainerBuilder:
-        """Builder for FlextContainer with pre-configured services."""
+        for name, service in services.items():
+            result = container.register(name, service)
+            if result.is_failure:
+                msg = f"Failed to register service {name}: {result.error}"
+                raise RuntimeError(msg)
 
-        def __init__(self) -> None:
-            """Initialize container builder."""
-            self._container = FlextContainer()
-            self._services: FlextTypes.Core.Dict = {}
-            self._factories: dict[str, Callable[[], object]] = {}
+        return container
 
-        def with_service(
-            self, name: str, service: object
-        ) -> FlextTestsBuilders.ContainerBuilder:
-            """Add a service to the container."""
-            self._services[name] = service
-            return self
+    def create_container_with_service(
+        self, name: str, service: object
+    ) -> FlextContainer:
+        """Create a container with a specific service."""
+        container = FlextContainer()
+        result = container.register(name, service)
+        if result.is_failure:
+            msg = f"Failed to register service {name}: {result.error}"
+            raise RuntimeError(msg)
+        return container
 
-        def with_factory(
-            self, name: str, factory: Callable[[], object]
-        ) -> FlextTestsBuilders.ContainerBuilder:
-            """Add a factory to the container."""
-            self._factories[name] = factory
-            return self
+    # === Config Builder Methods (Unified) ===
 
-        def with_database_service(self) -> FlextTestsBuilders.ContainerBuilder:
-            """Add a real database service."""
-            return self.with_service(
-                "database",
-                {
-                    "host": "localhost",
-                    "port": 5432,
-                    "name": "test_db",
-                    "connected": True,
-                },
-            )
+    def create_test_config(
+        self,
+        *,
+        debug: bool = True,
+        log_level: str = "INFO",
+        environment: str = "test",
+        database_url: str | None = None,
+        **custom_settings: object,
+    ) -> FlextConfig:
+        """Create a FlextConfig for testing."""
+        # Validate environment
+        valid_envs = ["development", "staging", "production", "test", "local"]
+        if environment not in valid_envs:
+            environment = "test"
 
-        def with_cache_service(self) -> FlextTestsBuilders.ContainerBuilder:
-            """Add a mock cache service."""
-            return self.with_service(
-                "cache",
-                {
-                    "host": "localhost",
-                    "port": 6379,
-                    "ttl": 3600,
-                    "connected": True,
-                },
-            )
+        config_data = {
+            "log_level": log_level,
+            "environment": environment,
+            "debug": debug,
+        }
 
-        def with_logger_service(self) -> FlextTestsBuilders.ContainerBuilder:
-            """Add a mock logger service."""
-            return self.with_service(
-                "logger",
-                {
-                    "level": "DEBUG",
-                    "format": "json",
-                    "handlers": ["console"],
-                },
-            )
+        if database_url:
+            config_data["database_url"] = database_url
 
-        def build(self) -> FlextContainer:
-            """Build the container with all configured services."""
-            for name, service in self._services.items():
-                result = self._container.register(name, service)
-                if result.is_failure:
-                    msg = f"Failed to register service {name}: {result.error}"
-                    raise RuntimeError(msg)
-
-            for name, factory in self._factories.items():
-                result = self._container.register_factory(name, factory)
-                if result.is_failure:
-                    msg = f"Failed to register factory {name}: {result.error}"
-                    raise RuntimeError(msg)
-
-            return self._container
-
-    # === Field Builder ===
-
-    @classmethod
-    def field(cls, field_type: str) -> FlextTestsBuilders.FieldBuilder:
-        """Create a field builder."""
-        return cls.FieldBuilder(field_type)
-
-    class FieldBuilder:
-        """Builder for FlextFields objects with various configurations."""
-
-        def __init__(self, field_type: str) -> None:
-            """Initialize field builder."""
-            self._field_type = field_type
-            self._field_id = f"test_{field_type}_field"
-            self._field_name = f"test_{field_type}_field"
-            self._config: FlextTypes.Core.Dict = {}
-
-        def with_id(self, field_id: str) -> FlextTestsBuilders.FieldBuilder:
-            """Set field ID."""
-            self._field_id = field_id
-            return self
-
-        def with_name(self, field_name: str) -> FlextTestsBuilders.FieldBuilder:
-            """Set field name."""
-            self._field_name = field_name
-            return self
-
-        def with_validation(self, **rules: object) -> FlextTestsBuilders.FieldBuilder:
-            """Add validation rules."""
-            # Convert rules to JsonValue compatible format
-            for key, value in rules.items():
-                if isinstance(value, (str, int, float, bool, type(None))):
-                    self._config[key] = value
-                else:
-                    self._config[key] = str(value)
-            return self
-
-        def with_string_constraints(
-            self,
-            min_length: int | None = None,
-            max_length: int | None = None,
-            pattern: str | None = None,
-        ) -> FlextTestsBuilders.FieldBuilder:
-            """Add string-specific constraints."""
-            if min_length is not None:
-                self._config["min_length"] = min_length
-            if max_length is not None:
-                self._config["max_length"] = max_length
-            if pattern is not None:
-                self._config["pattern"] = pattern
-            return self
-
-        def with_numeric_constraints(
-            self,
-            min_value: float | None = None,
-            max_value: float | None = None,
-        ) -> FlextTestsBuilders.FieldBuilder:
-            """Add numeric constraints."""
-            if min_value is not None:
-                self._config["min_value"] = min_value
-            if max_value is not None:
-                self._config["max_value"] = max_value
-            return self
-
-        def required(
-            self, *, is_required: bool = True
-        ) -> FlextTestsBuilders.FieldBuilder:
-            """Set field required status."""
-            self._config["required"] = is_required
-            return self
-
-        def with_default(
-            self, default_value: object
-        ) -> FlextTestsBuilders.FieldBuilder:
-            """Set default value."""
-            # Convert default value to JsonValue format
-            if isinstance(default_value, (str, int, float, bool, type(None))):
-                self._config["default_value"] = default_value
-            else:
-                self._config["default_value"] = str(default_value)
-            return self
-
-        def build(self) -> object:
-            """Build the field object."""
-            # Create field directly without non-existent Factory
-            return {
-                "type": self._field_type,
-                "name": self._field_name,
-                **self._config,
-            }
-
-    # === Config Builder ===
-
-    @classmethod
-    def config(cls) -> FlextTestsBuilders.ConfigBuilder:
-        """Create a config builder."""
-        return cls.ConfigBuilder()
-
-    class ConfigBuilder:
-        """Builder for FlextConfig objects with various settings."""
-
-        def __init__(self) -> None:
-            """Initialize config builder."""
-            self._config_data: FlextTypes.Core.Dict = {}
-
-        def with_debug(self, *, debug: bool = True) -> FlextTestsBuilders.ConfigBuilder:
-            """Set debug mode."""
-            self._config_data["debug"] = debug
-            return self
-
-        def with_log_level(
-            self, level: str = "INFO"
-        ) -> FlextTestsBuilders.ConfigBuilder:
-            """Set log level."""
-            self._config_data["log_level"] = level
-            return self
-
-        def with_environment(
-            self, env: str = "test"
-        ) -> FlextTestsBuilders.ConfigBuilder:
-            """Set environment."""
-            self._config_data["environment"] = env
-            return self
-
-        def with_database_url(self, url: str) -> FlextTestsBuilders.ConfigBuilder:
-            """Set database URL."""
-            self._config_data["database_url"] = url
-            return self
-
-        def with_custom_setting(
-            self, key: str, value: object
-        ) -> FlextTestsBuilders.ConfigBuilder:
-            """Add custom configuration setting."""
-            # Convert value to JsonValue format
+        # Add custom settings
+        for key, value in custom_settings.items():
             if isinstance(value, (str, int, float, bool, type(None))):
-                self._config_data[key] = value
+                config_data[key] = value
             else:
-                self._config_data[key] = str(value)
-            return self
+                config_data[key] = str(value)
 
-        def build(self) -> FlextConfig:
-            """Build the configuration object."""
-            # Extract known fields with proper type casting
-            # Get environment with validation
-            env_value = str(self._config_data.get("environment", "test"))
-            valid_envs = ["development", "staging", "production", "test", "local"]
-            if env_value not in valid_envs:
-                env_value = "test"  # Default fallback
+        # Create configuration using factory method
+        result = FlextConfig.create(constants=config_data)
+        if result.is_success:
+            return result.unwrap()
 
-            # Use FlextConfig.create() method for proper configuration creation
-            config_data = {
-                "log_level": str(self._config_data.get("log_level", "INFO")),
-                "environment": env_value,
-                "debug": bool(self._config_data.get("debug", False)),
-            }
+        # Fallback to default config if creation fails
+        return FlextConfig()
 
-            # Create configuration using the factory method
-            result = FlextConfig.create(constants=config_data)
-            if result.is_success:
-                return result.unwrap()
+    # === Field Builder Methods (Unified) ===
 
-            # Fallback to default config if creation fails
-            return FlextConfig()
+    def create_test_field(
+        self,
+        field_type: str,
+        field_id: str | None = None,
+        field_name: str | None = None,
+        *,
+        required: bool = True,
+        default_value: object = None,
+        **constraints: object,
+    ) -> object:
+        """Create a test field object."""
+        if not field_id:
+            field_id = f"test_{field_type}_field"
+        if not field_name:
+            field_name = field_id
 
-    # === Test Double Builder ===
+        config: dict[str, object] = {
+            "required": required,
+        }
 
-    @classmethod
-    def test_double(cls) -> FlextTestsBuilders.TestDoubleBuilder:
-        """Create a test double builder for real test behavior."""
-        return cls.TestDoubleBuilder()
+        # Add constraints
+        for key, value in constraints.items():
+            if isinstance(value, (str, int, float, bool, type(None))):
+                config[key] = value
+            else:
+                config[key] = str(value)
 
-    class TestDoubleBuilder:
-        """Builder for test double objects that provide real behavior instead of mocks."""
+        # Add default value if provided
+        if default_value is not None:
+            if isinstance(default_value, (str, int, float, bool, type(None))):
+                config["default_value"] = default_value
+            else:
+                config["default_value"] = str(default_value)
 
-        def __init__(self) -> None:
-            """Initialize test double builder."""
-            self._return_values: FlextTypes.Core.List = []
-            self._side_effects: list[BaseException] = []
-            self._behavior_func: _TestCallable | None = None
+        return {
+            "type": field_type,
+            "name": field_name,
+            **config,
+        }
 
-        def returns(self, value: object) -> FlextTestsBuilders.TestDoubleBuilder:
-            """Set return value for the test double."""
-            self._return_values.append(value)
-            return self
+    def create_string_field(
+        self,
+        field_id: str = "test_string",
+        *,
+        required: bool = True,
+        **constraints: object,
+    ) -> object:
+        """Create a string field for testing."""
+        return self.create_test_field(
+            "string", field_id, None, required=required, **constraints
+        )
 
-        def returns_result_success(
-            self, data: object
-        ) -> FlextTestsBuilders.TestDoubleBuilder:
-            """Return successful FlextResult."""
-            result = FlextResult[object].ok(data)
-            return self.returns(result)
+    # === File Builder Methods (Unified) ===
 
-        def returns_result_failure(
-            self, error: str
-        ) -> FlextTestsBuilders.TestDoubleBuilder:
-            """Return failed FlextResult."""
+    def create_temp_file(
+        self,
+        content: str = "",
+        suffix: str = ".txt",
+        encoding: str = "utf-8",
+    ) -> str:
+        """Create a temporary file for testing."""
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=suffix,
+            delete=False,
+            encoding=encoding,
+        ) as f:
+            f.write(content)
+            return f.name
+
+    def create_json_file(self, data: object, suffix: str = ".json") -> str:
+        """Create a temporary JSON file for testing."""
+        content = json.dumps(data, indent=2)
+        return self.create_temp_file(content=content, suffix=suffix)
+
+    def create_config_file(self, config: object) -> str:
+        """Create a temporary configuration file for testing."""
+        return self.create_json_file(config, suffix=".config.json")
+
+    # === Test Double Methods (Unified) ===
+
+    def create_test_callable(
+        self,
+        return_value: object = None,
+        return_values: FlextTypes.Core.List | None = None,
+        side_effect: BaseException | None = None,
+        behavior: _TestCallableProtocol | None = None,
+    ) -> _TestCallableProtocol:
+        """Create a test callable object with direct implementation."""
+        if return_value is not None and return_values is None:
+            return_values = [return_value]
+
+        side_effects = [side_effect] if side_effect else []
+        call_count = 0
+
+        def callable_impl(*args: object, **kwargs: object) -> object:
+            """Test callable implementation."""
+            nonlocal call_count
+
+            if behavior:
+                return behavior(*args, **kwargs)
+
+            if side_effects:
+                raise side_effects[0]
+
+            if return_values:
+                if len(return_values) == 1:
+                    return return_values[0]
+                if len(return_values) > 1:
+                    # Cycle through return values
+                    result = return_values[call_count % len(return_values)]
+                    call_count += 1
+                    return result
+
+            return None
+
+        return callable_impl
+
+    def create_result_returning_callable(
+        self, data: object = None, error: str | None = None
+    ) -> _TestCallableProtocol:
+        """Create a callable that returns FlextResult objects."""
+        if error:
             result = FlextResult[object].fail(error)
-            return self.returns(result)
+        else:
+            result = FlextResult[object].ok(data)
 
-        def raises(
-            self, exception: BaseException
-        ) -> FlextTestsBuilders.TestDoubleBuilder:
-            """Set behavior to raise exception."""
-            self._side_effects.append(exception)
-            return self
+        return self.create_test_callable(return_value=result)
 
-        def with_behavior(
-            self, func: _TestCallable
-        ) -> FlextTestsBuilders.TestDoubleBuilder:
-            """Set custom behavior function for the test double."""
-            self._behavior_func = func
-            return self
-
-        def build(self) -> _TestCallable:
-            """Build a real callable test double instead of a mock."""
-
-            class TestDouble:
-                def __init__(
-                    self, builder: FlextTestsBuilders.TestDoubleBuilder
-                ) -> None:
-                    self._builder = builder
-                    self._call_count = 0
-
-                def __call__(self, *args: object, **kwargs: object) -> object:
-                    """Real test double implementation."""
-                    if self._builder._behavior_func:
-                        return self._builder._behavior_func(*args, **kwargs)
-
-                    if self._builder._side_effects:
-                        raise self._builder._side_effects[0]
-
-                    if len(self._builder._return_values) == 1:
-                        return self._builder._return_values[0]
-                    if len(self._builder._return_values) > 1:
-                        # Cycle through return values
-                        result = self._builder._return_values[
-                            self._call_count % len(self._builder._return_values)
-                        ]
-                        self._call_count += 1
-                        return result
-
-                    # Default behavior - return None
-                    return None
-
-            return TestDouble(self)
-
-    # === File Builder ===
+    # === Convenience Factory Methods ===
 
     @classmethod
-    def file(cls) -> FlextTestsBuilders.FileBuilder:
-        """Builder for test files with automatic cleanup."""
-        return cls.FileBuilder()
+    def create_instance(cls) -> FlextTestsBuilders:
+        """Create a new instance of the unified builders service."""
+        return cls()
 
-    class FileBuilder:
-        """Builder for test files with automatic cleanup."""
+    # DEPRECATED: Legacy methods for backward compatibility
+    @classmethod
+    def result(cls) -> FlextTestsBuilders:
+        """Create a result builder (deprecated - use create_success_result/create_failure_result)."""
+        instance = cls()
+        # Ensure result building mode is enabled by setting result-specific attributes
+        instance._result_success = True
+        instance._result_data = None
+        # Explicitly disable container building mode
+        instance._building_container = False
+        return instance
 
-        def __init__(self) -> None:
-            """Initialize file builder."""
-            self._content = ""
-            self._suffix = ".txt"
-            self._encoding = "utf-8"
-            self._mode = "w"
+    def with_success_data(self, data: object) -> FlextTestsBuilders:
+        """Set successful result data (deprecated method)."""
+        self._result_data = data
+        self._result_success = True
+        return self
 
-        def with_json_content(self, data: object) -> FlextTestsBuilders.FileBuilder:
-            """Set JSON content."""
-            self._content = json.dumps(data, indent=2)
-            self._suffix = ".json"
-            return self
+    def with_failure(
+        self,
+        error: str,
+        error_code: str | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
+    ) -> FlextTestsBuilders:
+        """Set failure result with error details (deprecated method)."""
+        self._result_error = error
+        self._result_error_code = error_code
+        self._result_error_data = error_data
+        self._result_success = False
+        return self
 
-        def with_text_content(self, content: str) -> FlextTestsBuilders.FileBuilder:
-            """Set text content."""
-            self._content = content
-            self._suffix = ".txt"
-            return self
+    def build(self) -> FlextContainer | FlextResult[object]:
+        """Build object (deprecated method - supports both container and result building)."""
+        # Check for result building first (explicit result building mode)
+        if (
+            hasattr(self, "_result_success")
+            or hasattr(self, "_result_error")
+            or hasattr(self, "_result_data")
+        ):
+            # FlextResult building pattern (deprecated)
+            if getattr(self, "_result_success", True):
+                data = getattr(self, "_result_data", "test_data")
+                return FlextResult[object].ok(data)
 
-        def with_config_content(self, config: object) -> FlextTestsBuilders.FileBuilder:
-            """Set configuration file content."""
-            return self.with_json_content(config).with_suffix(".config.json")
+            error = getattr(self, "_result_error", "Test error")
+            error_code = getattr(self, "_result_error_code", None)
+            error_data = getattr(self, "_result_error_data", None)
+            return FlextResult[object].fail(
+                error, error_code=error_code, error_data=error_data
+            )
 
-        def with_suffix(self, suffix: str) -> FlextTestsBuilders.FileBuilder:
-            """Set file suffix."""
-            self._suffix = suffix
-            return self
+        # Container building pattern (deprecated)
+        if (
+            getattr(self, "_building_container", False)
+            or hasattr(self, "_container_services")
+            or hasattr(self, "_container_factories")
+        ):
+            container = FlextContainer()
 
-        def build(self) -> str:
-            """Build temporary file and return path."""
-            with tempfile.NamedTemporaryFile(
-                mode=self._mode,
-                suffix=self._suffix,
-                delete=False,
-                encoding=self._encoding,
-            ) as f:
-                f.write(self._content)
-                return f.name
+            # Register services if any
+            if hasattr(self, "_container_services"):
+                for name, service in self._container_services.items():
+                    result = container.register(name, service)
+                    if result.is_failure:
+                        msg = f"Failed to register service {name}: {result.error}"
+                        raise RuntimeError(msg)
 
-    # === Convenience Methods ===
+            # Register factories if any
+            if hasattr(self, "_container_factories"):
+                for name, factory in self._container_factories.items():
+                    result = container.register_factory(name, factory)
+                    if result.is_failure:
+                        msg = f"Failed to register factory {name}: {result.error}"
+                        raise RuntimeError(msg)
 
+            return container
+
+        # Default to successful result if no specific mode is detected
+        return FlextResult[object].ok("test_data")
+
+    @classmethod
+    def container(cls) -> FlextTestsBuilders:
+        """Create a container builder (deprecated - use create_test_container)."""
+        instance = cls()
+        instance._building_container = True  # Flag to indicate container building mode
+        return instance
+
+    def with_service(self, name: str, service: object) -> FlextTestsBuilders:
+        """Add a service to the container (deprecated method)."""
+        if not hasattr(self, "_container_services"):
+            self._container_services = {}
+        self._container_services[name] = service
+        return self
+
+    def with_factory(
+        self, name: str, factory: Callable[[], object]
+    ) -> FlextTestsBuilders:
+        """Add a factory to the container (deprecated method)."""
+        if not hasattr(self, "_container_factories"):
+            self._container_factories = {}
+        self._container_factories[name] = factory
+        return self
+
+    def with_database_service(self) -> FlextTestsBuilders:
+        """Add a database service (deprecated method)."""
+        return self.with_service(
+            "database",
+            {"host": "localhost", "port": 5432, "name": "test_db", "connected": True},
+        )
+
+    def with_cache_service(self) -> FlextTestsBuilders:
+        """Add a cache service (deprecated method)."""
+        return self.with_service(
+            "cache", {"host": "localhost", "port": 6379, "ttl": 3600, "connected": True}
+        )
+
+    def with_logger_service(self) -> FlextTestsBuilders:
+        """Add a logger service (deprecated method)."""
+        return self.with_service(
+            "logger", {"level": "DEBUG", "format": "json", "handlers": ["console"]}
+        )
+
+    # Legacy class references for backward compatibility
     @classmethod
     def success_result(cls, data: object = "test_data") -> FlextResult[object]:
-        """Build a successful result quickly."""
-        return cls.result().with_success_data(data).build()
+        """Build a successful result quickly (deprecated - use create_success_result)."""
+        return cls().create_success_result(data)
 
     @classmethod
     def failure_result(cls, error: str = "test_error") -> FlextResult[object]:
-        """Build a failure result quickly."""
-        return cls.result().with_failure(error).build()
+        """Build a failure result quickly (deprecated - use create_failure_result)."""
+        return cls().create_failure_result(error)
 
     @classmethod
     def test_container(cls) -> FlextContainer:
-        """Build a container with common test services."""
-        return (
-            cls.container()
-            .with_database_service()
-            .with_cache_service()
-            .with_logger_service()
-            .build()
-        )
+        """Build a container with common test services (deprecated - use create_test_container)."""
+        return cls().create_test_container()
 
     @classmethod
     def string_field(
@@ -492,14 +434,11 @@ class FlextTestsBuilders:
         *,
         required: bool = True,
         **constraints: object,
-    ) -> object:  # Return object to avoid field type import issues
-        """Build a string field quickly."""
-        builder = cls.field("string").with_id(field_id).required(is_required=required)
-
-        if constraints:
-            builder = builder.with_validation(**constraints)
-
-        return builder.build()
+    ) -> object:
+        """Build a string field quickly (deprecated - use create_string_field)."""
+        return cls().create_string_field(
+            field_id=field_id, required=required, **constraints
+        )
 
 
 # Export only the unified class

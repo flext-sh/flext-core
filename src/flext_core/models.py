@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+from collections import UserString
 from datetime import UTC, datetime
 from typing import Generic, cast
 
@@ -480,9 +481,13 @@ class FlextModels:
             return FlextResult[FlextModels.Entity].fail(str(e))
 
     @staticmethod
-    def create_event(event_type: str, payload: dict[str, object], aggregate_id: str) -> Event:
+    def create_event(
+        event_type: str, payload: dict[str, object], aggregate_id: str
+    ) -> Event:
         """Create an event."""
-        return FlextModels.Event(event_type=event_type, payload=payload, aggregate_id=aggregate_id)
+        return FlextModels.Event(
+            event_type=event_type, payload=payload, aggregate_id=aggregate_id
+        )
 
     @staticmethod
     def create_command(command_type: str, payload: dict[str, object]) -> Command:
@@ -533,5 +538,5 @@ class FlextModels:
             url: str | None = Field(default=None)
 
     # Internal helper to mark EmailAddress inputs that should bypass strict validation
-    class _EmailBypassStr(str):
+    class _EmailBypassStr(UserString):
         __slots__ = ()

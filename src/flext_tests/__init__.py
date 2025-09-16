@@ -22,11 +22,9 @@ from flext_tests.utilities import FlextTestsUtilities
 
 # Aliases for backward compatibility and convenience
 BenchmarkProtocol = FlextTestsPerformance.BenchmarkProtocol
-FlextMatchers = FlextTestsMatchers
 
 __all__ = [
     "BenchmarkProtocol",
-    "FlextMatchers",
     "FlextTestsAsyncs",
     "FlextTestsBuilders",
     "FlextTestsDomains",

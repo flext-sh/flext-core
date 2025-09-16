@@ -132,10 +132,15 @@ class FlextCore:
         """Create an entity instance and run business validation if available.
 
         Keeps behavior minimal and explicit for tests.
+
+        Note: MyPy cannot verify kwargs compatibility at compile time for dynamic entity creation.
+        This is expected behavior for runtime entity instantiation patterns.
         """
         try:
-            # Dynamic entity instantiation - runtime type checking cannot be verified statically
-            entity = entity_cls(**kwargs)
+            # Dynamic entity instantiation - MyPy cannot verify kwargs at compile time
+            # This is intentional for flexible entity creation in tests
+            # Type ignore needed for dynamic instantiation with object kwargs
+            entity = entity_cls(**kwargs)  # type: ignore[arg-type]
             # Run business rule validation if method exists
             validator = getattr(entity, "validate_business_rules", None)
             if callable(validator):
@@ -146,7 +151,9 @@ class FlextCore:
                     )
             return FlextResult[FlextModels.Entity].ok(entity)
         except Exception as e:
-            return FlextResult[FlextModels.Entity].fail(str(e))
+            return FlextResult[FlextModels.Entity].fail(
+                f"Entity creation failed: {e}"
+            )
 
     # ---- Payload helper tailored for tests ----
     class _CorePayload(BaseModel):
@@ -156,7 +163,7 @@ class FlextCore:
         target_service: str | None = None
         message_id: str = Field(default_factory=lambda: f"msg_{uuid.uuid4().hex}")
         correlation_id: str = Field(
-            default_factory=lambda: FlextUtilities.Generators.generate_uuid()
+            default_factory=FlextUtilities.Generators.generate_uuid
         )
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
         priority: int = 5

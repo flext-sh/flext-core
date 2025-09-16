@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+# Builder pattern returns union types - handled with type guards
+
 from __future__ import annotations
 
 import asyncio
@@ -12,8 +14,16 @@ from typing import cast
 
 from pydantic import Field
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextContainer, FlextModels, FlextResult, FlextTypes
 from flext_tests import FlextTestsBuilders, FlextTestsDomains, FlextTestsMatchers
+
+
+def _get_container_from_builder() -> FlextContainer:
+    """Helper to safely extract FlextContainer from builder result."""
+    result = FlextTestsBuilders.container().build()
+    if isinstance(result, FlextContainer):
+        return result
+    raise RuntimeError(f"Expected FlextContainer, got {type(result)}")
 
 
 class ContainerTestModels:
@@ -62,7 +72,7 @@ class TestFlextContainer:
 
     def test_basic_registration_and_retrieval(self) -> None:
         """Test basic service registration and retrieval."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Test basic service registration
         service_data = FlextTestsDomains.create_service(name="test_service", port=8080)
@@ -82,7 +92,7 @@ class TestFlextContainer:
 
     def test_pydantic_model_integration(self) -> None:
         """Test container with Pydantic models."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Test with Pydantic service config
         service_config = ContainerTestModels.ServiceConfig(
@@ -111,7 +121,7 @@ class TestFlextContainer:
 
     def test_factory_pattern_comprehensive(self) -> None:
         """Test comprehensive factory pattern functionality."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Test simple factory
         def create_user() -> FlextTypes.Core.Dict:
@@ -170,7 +180,7 @@ class TestFlextContainer:
 
     def test_batch_operations(self) -> None:
         """Test batch registration and cleanup."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Create batch of services
         services_batch = [
@@ -213,7 +223,7 @@ class TestFlextContainer:
 
     def test_duplicate_registration_handling(self) -> None:
         """Test handling of duplicate service registration."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         service_data = FlextTestsDomains.create_service(
             name="duplicate_test", port=8080
@@ -229,7 +239,7 @@ class TestFlextContainer:
 
     def test_unregister_nonexistent_service(self) -> None:
         """Test unregistering non-existent service."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         unregister_missing = container.unregister("nonexistent_service")
         FlextTestsMatchers.assert_result_failure(
@@ -238,7 +248,7 @@ class TestFlextContainer:
 
     async def test_async_container_operations(self) -> None:
         """Test async container operations."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Register services asynchronously
         async def register_service(
@@ -274,7 +284,7 @@ class TestFlextContainer:
 
     def test_container_cleanup_and_reset(self) -> None:
         """Test container cleanup and reset functionality."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Register some services
         for i in range(3):
@@ -298,7 +308,7 @@ class TestFlextContainer:
 
     def test_result_containment_pattern(self) -> None:
         """Test container storing FlextResult objects."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Store success result
         success_result = FlextResult[str].ok("success_data")
@@ -328,7 +338,7 @@ class TestFlextContainer:
 
     def test_service_lifecycle_with_info(self) -> None:
         """Test service lifecycle with info tracking."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Register service with info
         service_data = FlextTestsDomains.create_service(
@@ -354,7 +364,7 @@ class TestFlextContainer:
 
     def test_container_configuration(self) -> None:
         """Test container configuration management."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Test configuration methods (these methods don't exist - skip or use alternatives)
         # config_result = container.set_container_config(config_data)
@@ -379,7 +389,7 @@ class TestFlextContainer:
 
     def test_service_info_tracking(self) -> None:
         """Test service info tracking functionality."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Register service
         service_data = FlextTestsDomains.create_service(name="info_service", port=8080)
@@ -403,7 +413,7 @@ class TestFlextContainer:
 
     def test_get_or_create_pattern(self) -> None:
         """Test get or create pattern."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Test auto-wiring
         def create_auto_service() -> FlextTypes.Core.Dict:
@@ -422,7 +432,7 @@ class TestFlextContainer:
 
     def test_error_handling_comprehensive(self) -> None:
         """Test comprehensive error handling."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Test empty service name
         service_data = FlextTestsDomains.create_service(name="test", port=8080)
@@ -449,7 +459,7 @@ class TestFlextContainer:
 
     def test_service_lifecycle_complete(self) -> None:
         """Test complete service lifecycle."""
-        container = FlextTestsBuilders.container().build()
+        container = _get_container_from_builder()
 
         # Phase 1: Registration
         service_data = FlextTestsDomains.create_service(

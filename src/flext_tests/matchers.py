@@ -53,8 +53,9 @@ class FlextTestsMatchers:
     ) -> object:
         """Assert function performance is within time limit."""
         # Remove any benchmark-specific kwargs that might conflict
-        filtered_kwargs = {k: v for k, v in kwargs.items()
-                          if k not in ["max_time_seconds", "max_time"]}
+        filtered_kwargs = {
+            k: v for k, v in kwargs.items() if k not in {"max_time_seconds", "max_time"}
+        }
         return benchmark(func, *args, **filtered_kwargs)
 
     # === PROTOCOL DEFINITIONS ===
@@ -65,7 +66,10 @@ class FlextTestsMatchers:
         """Protocol for pytest-benchmark fixture."""
 
         def __call__(
-            self, func: Callable[[], object], *args: object, **kwargs: object
+            self,
+            func: Callable[[], object],
+            *args: object,
+            **kwargs: object,
         ) -> object:
             """Call benchmark fixture."""
             ...
@@ -140,6 +144,16 @@ class FlextTestsMatchers:
                 if actual_code != expected_error_code:
                     msg = f"Expected error code {expected_error_code!r}, got {actual_code!r}"
                     raise AssertionError(msg)
+
+        @staticmethod
+        def be_success() -> FlextTestsMatchers.SuccessMatcher:
+            """Create a success matcher for FlextResult."""
+            return FlextTestsMatchers.SuccessMatcher()
+
+        @staticmethod
+        def be_failure() -> FlextTestsMatchers.FailureMatcher:
+            """Create a failure matcher for FlextResult."""
+            return FlextTestsMatchers.FailureMatcher()
 
         @staticmethod
         def assert_greater_than(
@@ -428,6 +442,30 @@ class FlextTestsMatchers:
             """
             # This is handled by pytest-asyncio and pytest-timeout decorators
             # This method serves as documentation for async patterns
+
+    # === RESULT MATCHERS ===
+
+    class SuccessMatcher:
+        """Matcher for successful FlextResult instances."""
+
+        def matches(self, result: FlextResult[T]) -> bool:
+            """Check if result is successful."""
+            return result.success
+
+        def describe_mismatch(self, result: FlextResult[T]) -> str:
+            """Describe why the match failed."""
+            return f"Expected success but got failure: {result.error}"
+
+    class FailureMatcher:
+        """Matcher for failed FlextResult instances."""
+
+        def matches(self, result: FlextResult[T]) -> bool:
+            """Check if result is failed."""
+            return result.is_failure
+
+        def describe_mismatch(self, result: FlextResult[T]) -> str:
+            """Describe why the match failed."""
+            return f"Expected failure but got success: {result.data}"
 
     # === PERFORMANCE MATCHERS ===
 
@@ -857,6 +895,14 @@ class FlextTestsMatchers:
                         await result
 
         return AsyncTestContext(setup_coro, teardown_func)
+
+    # =========================================================================
+    # ALIASES FOR BACKWARD COMPATIBILITY
+    # =========================================================================
+
+    # Aliases for test compatibility
+    be_success = CoreMatchers.be_success
+    be_failure = CoreMatchers.be_failure
 
 
 # Export only the unified class

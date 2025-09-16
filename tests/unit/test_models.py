@@ -22,7 +22,7 @@ import pytest
 from pydantic import Field, ValidationError
 
 from flext_core import FlextModels, FlextResult, FlextTypes
-from flext_tests import BenchmarkProtocol, FlextMatchers
+from flext_tests import FlextTestsMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -870,22 +870,22 @@ class TestModelsIntegrationRealFunctionality:
 
 
 class TestModelsWithFlextMatchers:
-    """Enhanced model tests using FlextMatchers for comprehensive validation."""
+    """Enhanced model tests using FlextTestMatchers for comprehensive validation."""
 
     def test_result_validation_with_matchers(self) -> None:
-        """Test FlextResult validation using FlextMatchers."""
+        """Test FlextResult validation using FlextTestsMatchers."""
         # Test success case
         email = EmailValue(address="valid@example.com", domain="example.com")
         result = email.validate_business_rules()
 
-        # Use FlextMatchers for cleaner assertions
-        FlextMatchers.assert_result_success(result)
+        # Use FlextTestsMatchers for cleaner assertions
+        FlextTestsMatchers.assert_result_success(result)
 
         # Test failure case with specific error checking
         invalid_email = EmailValue(address="invalid", domain="example.com")
         result = invalid_email.validate_business_rules()
 
-        FlextMatchers.assert_result_failure(result, expected_error="@ symbol")
+        FlextTestsMatchers.assert_result_failure(result, expected_error="@ symbol")
 
     def test_entity_validation_with_matchers(self) -> None:
         """Test entity validation with comprehensive matchers."""
@@ -898,11 +898,11 @@ class TestModelsWithFlextMatchers:
         )
 
         result = user.validate_business_rules()
-        FlextMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(result)
 
         # Test business logic operations
         activation_result = user.activate()
-        FlextMatchers.assert_result_failure(
+        FlextTestsMatchers.assert_result_failure(
             activation_result,
             expected_error="already active",
         )
@@ -910,10 +910,10 @@ class TestModelsWithFlextMatchers:
         # Deactivate first
         user.is_active = False
         activation_result = user.activate()
-        FlextMatchers.assert_result_success(activation_result)
+        FlextTestsMatchers.assert_result_success(activation_result)
 
     def test_json_structure_validation(self) -> None:
-        """Test JSON structure validation with FlextMatchers."""
+        """Test JSON structure validation with FlextTestMatchers."""
         user = UserEntity(
             id="json_test_123",
             name="JSON Test User",
@@ -926,10 +926,12 @@ class TestModelsWithFlextMatchers:
 
         # Test required fields are present
         expected_keys = ["id", "name", "email", "age", "is_active", "version"]
-        FlextMatchers.assert_json_structure(user_data, expected_keys, exact_match=False)
+        FlextTestsMatchers.assert_json_structure(
+            user_data, expected_keys, exact_match=False
+        )
 
     def test_regex_matching_validation(self) -> None:
-        """Test regex pattern matching with FlextMatchers."""
+        """Test regex pattern matching with FlextTestMatchers."""
         user = UserEntity(
             id="regex_test_123",
             name="Regex Test User",
@@ -939,13 +941,13 @@ class TestModelsWithFlextMatchers:
 
         # Test string representations contain expected patterns
         user_str = str(user)
-        FlextMatchers.assert_regex_match(user_str, r"regex_test_123")
+        FlextTestsMatchers.assert_regex_match(user_str, r"regex_test_123")
 
         user_repr = repr(user)
-        FlextMatchers.assert_regex_match(user_repr, r"regex_test_123")
+        FlextTestsMatchers.assert_regex_match(user_repr, r"regex_test_123")
 
     def test_type_guard_validation(self) -> None:
-        """Test type guard validation with FlextMatchers."""
+        """Test type guard validation with FlextTestMatchers."""
         email = EmailValue(address="typeguard@example.com", domain="example.com")
         user = UserEntity(
             id="type_test_123",
@@ -961,36 +963,36 @@ class TestModelsWithFlextMatchers:
         def is_user_entity(obj: object) -> TypeGuard[UserEntity]:
             return isinstance(obj, UserEntity)
 
-        FlextMatchers.assert_type_guard(email, is_email_value)
-        FlextMatchers.assert_type_guard(user, is_user_entity)
+        FlextTestsMatchers.assert_type_guard(email, is_email_value)
+        FlextTestsMatchers.assert_type_guard(user, is_user_entity)
 
 
 class TestModelsPerformance:
     """Performance tests using PerformanceProfiler for comprehensive benchmarking."""
 
-    def test_entity_creation_performance(self, benchmark: BenchmarkProtocol) -> None:
-        """Test entity creation performance with benchmarking."""
+    def test_entity_creation_performance(self) -> None:
+        """Test entity creation performance."""
+        start_time = time.time()
 
-        def create_user_entity() -> UserEntity:
-            return UserEntity(
-                id=f"perf_test_{int(time.time() * 1000000)}",
-                name="Performance Test User",
-                email="performance@example.com",
-                age=30,
-            )
-
-        # Use FlextMatchers for performance assertion
-        result = FlextMatchers.assert_performance_within_limit(
-            benchmark,
-            create_user_entity,
-            max_time_seconds=0.01,  # 10ms limit
+        user = UserEntity(
+            id=f"perf_test_{int(time.time() * 1000000)}",
+            name="Performance Test User",
+            email="performance@example.com",
+            age=30,
         )
 
-        assert isinstance(result, UserEntity)
-        assert result.name == "Performance Test User"
+        end_time = time.time()
+        creation_time = end_time - start_time
 
-    def test_validation_performance(self, benchmark: BenchmarkProtocol) -> None:
-        """Test validation performance with comprehensive profiling."""
+        # Assert creation is fast (under 10ms)
+        assert creation_time < 0.01, (
+            f"Entity creation took {creation_time:.4f}s, expected < 0.01s"
+        )
+        assert isinstance(user, UserEntity)
+        assert user.name == "Performance Test User"
+
+    def test_validation_performance(self) -> None:
+        """Test validation performance."""
         user = UserEntity(
             id="validation_perf_123",
             name="Validation Performance User",
@@ -998,21 +1000,21 @@ class TestModelsPerformance:
             age=25,
         )
 
-        def validate_user() -> FlextResult[None]:
-            return user.validate_business_rules()
+        start_time = time.time()
+        validation_result = user.validate_business_rules()
+        end_time = time.time()
 
-        # Test validation performance
-        FlextMatchers.assert_performance_within_limit(
-            benchmark,
-            validate_user,
-            max_time_seconds=0.005,  # 5ms limit
+        validation_time = end_time - start_time
+
+        # Assert validation is fast (under 5ms)
+        assert validation_time < 0.005, (
+            f"Validation took {validation_time:.4f}s, expected < 0.005s"
         )
 
         # Test that validation actually works
-        validation_result = user.validate_business_rules()
-        FlextMatchers.assert_result_success(validation_result)
+        FlextTestsMatchers.assert_result_success(validation_result)
 
-    def test_serialization_performance(self, benchmark: BenchmarkProtocol) -> None:
+    def test_serialization_performance(self) -> None:
         """Test serialization performance with comprehensive metrics."""
         user = UserEntity(
             id="serialization_perf_123",
@@ -1036,40 +1038,43 @@ class TestModelsPerformance:
                 )
             )
 
-        def serialize_user() -> dict[str, object]:
-            return user.model_dump()
+        start_time = time.time()
+        result = user.model_dump()
+        end_time = time.time()
 
-        result = FlextMatchers.assert_performance_within_limit(
-            benchmark,
-            serialize_user,
-            max_time_seconds=0.01,  # 10ms limit
+        serialization_time = end_time - start_time
+
+        # Assert serialization is fast (under 10ms)
+        assert serialization_time < 0.01, (
+            f"Serialization took {serialization_time:.4f}s, expected < 0.01s"
         )
 
         assert isinstance(result, dict)
         assert "id" in result
         assert result["name"] == "Serialization Performance User"
 
-    def test_bulk_operations_performance(self, benchmark: BenchmarkProtocol) -> None:
-        """Test bulk operations performance with linear complexity validation."""
+    def test_bulk_operations_performance(self) -> None:
+        """Test bulk operations performance."""
+        start_time = time.time()
 
-        def create_bulk_users(count: int) -> list[UserEntity]:
-            users = []
-            for i in range(count):
-                user = UserEntity(
-                    id=f"bulk_user_{i}",
-                    name=f"Bulk User {i}",
-                    email=f"bulk{i}@example.com",
-                    age=20 + (i % 50),
-                )
-                users.append(user)
-            return users
+        users = []
+        for i in range(100):
+            user = UserEntity(
+                id=f"bulk_user_{i}",
+                name=f"Bulk User {i}",
+                email=f"bulk{i}@example.com",
+                age=20 + (i % 50),
+            )
+            users.append(user)
 
-        # Test linear complexity for bulk operations
-        FlextMatchers.assert_performance_within_limit(
-            benchmark,
-            lambda: create_bulk_users(100),
-            max_time_seconds=0.1,  # 100ms for 100 users
+        end_time = time.time()
+        bulk_creation_time = end_time - start_time
+
+        # Assert bulk operations are fast (under 100ms for 100 users)
+        assert bulk_creation_time < 0.1, (
+            f"Bulk creation took {bulk_creation_time:.4f}s, expected < 0.1s"
         )
+        assert len(users) == 100
 
 
 class TestFlextModelsRootModelValidation:

@@ -573,16 +573,20 @@ class TestFlextProcessingIntegration:
         # Add BasicHandler with proper attribute assignment
         basic_handler = FlextProcessing.Implementation.BasicHandler("basic")
         # Use setattr to avoid method assignment error
-        setattr(basic_handler, "handle", Mock(
-            return_value=Mock(success=True, data="basic_result")
-        ))
+        setattr(
+            basic_handler,
+            "handle",
+            Mock(return_value=Mock(success=True, data="basic_result")),
+        )
 
         # Add ChainableHandler with proper attribute assignment
         chainable_handler = FlextProcessing.Protocols.ChainableHandler("chainable")
         # Use setattr to avoid method assignment error
-        setattr(chainable_handler, "handle", Mock(
-            return_value=Mock(success=True, data="chainable_result")
-        ))
+        setattr(
+            chainable_handler,
+            "handle",
+            Mock(return_value=Mock(success=True, data="chainable_result")),
+        )
 
         chain.add_handler(basic_handler)
         chain.add_handler(chainable_handler)
