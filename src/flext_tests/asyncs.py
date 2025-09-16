@@ -127,7 +127,9 @@ class FlextTestsAsyncs:
                 # Fall through to final timeout-based error
                 # Log the exception for debugging but continue to timeout error
                 logger = logging.getLogger(__name__)
-                logger.debug(f"Exception during timeout operation, falling through to timeout: {e}")
+                logger.debug(
+                    f"Exception during timeout operation, falling through to timeout: {e}"
+                )
             # If we couldn't discover a factory or retries failed, re-raise as TimeoutError respecting API contract
             msg = f"Operation timed out after {timeout_seconds} seconds"
             raise TimeoutError(msg) from None

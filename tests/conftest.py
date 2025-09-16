@@ -19,7 +19,14 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig, FlextContainer, FlextCore, FlextLogger, FlextTypes
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextCore,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
 from flext_tests import FlextTestsAsyncs
 
 
@@ -112,6 +119,49 @@ def temp_directory() -> Generator[Path]:
 
 
 @pytest.fixture
+def mock_external_service() -> object:
+    """Provide mock external service for integration testing.
+
+    Simple mock service that can be used across different test modules
+    for consistent external service simulation.
+
+    Returns:
+        Mock external service object
+
+    """
+
+    class MockExternalService:
+        def __init__(self) -> None:
+            self.call_count = 0
+            self.processed_items: list[object] = []
+            self._should_fail = False
+            self._failure_message = ""
+
+        def process(self, data: object) -> FlextResult[str]:
+            """Process data through mock external service."""
+            self.call_count += 1
+            self.processed_items.append(data)
+
+            if self._should_fail:
+                return FlextResult[str].fail(self._failure_message)
+
+            return FlextResult[str].ok(f"processed_{data}")
+
+        def get_call_count(self) -> int:
+            """Get number of times process was called."""
+            return self.call_count
+
+        def set_failure_mode(
+            self, *, should_fail: bool = True, message: str = "Mock service failure"
+        ) -> None:
+            """Configure mock to simulate failures."""
+            self._should_fail = should_fail
+            self._failure_message = message
+
+    return MockExternalService()
+
+
+@pytest.fixture
 def configured_container(
     clean_container: FlextContainer,
     mock_external_service: object,
@@ -154,6 +204,227 @@ def error_context() -> dict[str, str | None]:
         "request_id": "test-request-456",
         "timestamp": datetime.now(UTC).isoformat(),
         "stack_trace": None,  # Populated by actual error handling
+    }
+
+
+# Test Data Constants - Centralized test data and constants
+@pytest.fixture
+def test_constants() -> dict[str, object]:
+    """Provide centralized test constants for all tests.
+
+    Centralized constants used across multiple test files to ensure
+    consistency and reduce duplication.
+
+    Returns:
+        Dict containing test constants and data
+
+    """
+    return {
+        # Common test identifiers
+        "test_user_id": "test_user_123",
+        "test_session_id": "test_session_123",
+        "test_service_name": "test_service",
+        "test_operation_id": "test_operation",
+        "test_request_id": "test-request-456",
+        "test_correlation_id": "test-corr-123",
+        # Test module and component names
+        "test_module_name": "test_module",
+        "test_handler_name": "test_handler",
+        "test_chain_name": "test_chain",
+        "test_command_type": "test_command",
+        "test_query_type": "test_query",
+        # Test error codes and messages
+        "test_error_code": "TEST_ERROR_001",
+        "test_validation_error": "test_error",
+        "test_operation_error": "Op failed",
+        "test_config_error": "Config failed",
+        "test_timeout_error": "Operation timeout",
+        # Test field names and values
+        "test_field_name": "test_field",
+        "test_config_key": "test_key",
+        "test_username": "test_user",
+        "test_email": "test@example.com",
+        "test_password": "test_pass",
+        # Test data values
+        "test_string_value": "test_value",
+        "test_input_data": "test_input",
+        "test_request_data": "test_request",
+        "test_result_data": "test_result",
+        "test_message": "test_message",
+        # Test service and component identifiers
+        "test_logger_name": "test_logger",
+        "test_app_name": "test-app",
+        "test_validation_app": "validation-test",
+        "test_source_service": "test_service",
+        # Test patterns and formats
+        "test_slug_input": "Test_String",
+        "test_slug_expected": "test_string",
+        "test_uuid_format": "550e8400-e29b-41d4-a716-446655440000",
+        # Test port and numeric values
+        "test_port": 8080,
+        "test_timeout": 30,
+        "test_retry_count": 3,
+        "test_batch_size": 100,
+    }
+
+
+@pytest.fixture
+def test_contexts() -> dict[str, dict[str, object]]:
+    """Provide common test contexts for various scenarios.
+
+    Pre-defined contexts for testing different scenarios like
+    user operations, service calls, validation, etc.
+
+    Returns:
+        Dict containing various test contexts
+
+    """
+    return {
+        "user_context": {
+            "user_id": "test_user_123",
+            "username": "test_user",
+            "email": "test@example.com",
+            "roles": ["user", "tester"],
+        },
+        "service_context": {
+            "service_name": "test_service",
+            "version": "1.0.0",
+            "environment": "test",
+            "port": 8080,
+        },
+        "operation_context": {
+            "operation_id": "test_operation",
+            "module": "test_module",
+            "function": "test_func",
+            "correlation_id": "test-corr-123",
+        },
+        "error_context": {
+            "error_code": "TEST_ERROR_001",
+            "severity": "medium",
+            "component": "test_module",
+            "timestamp": datetime.now(UTC).isoformat(),
+        },
+        "validation_context": {
+            "field": "test_field",
+            "rule": "required",
+            "validator": "test_validator",
+            "message": "Validation failed",
+        },
+        "request_context": {
+            "request_id": "test-request-456",
+            "method": "POST",
+            "path": "/api/test",
+            "headers": {"Content-Type": "application/json"},
+        },
+    }
+
+
+@pytest.fixture
+def test_payloads() -> dict[str, dict[str, object]]:
+    """Provide common test payloads for different operations.
+
+    Standardized payloads for testing commands, queries, events,
+    and other data structures across the system.
+
+    Returns:
+        Dict containing various test payloads
+
+    """
+    return {
+        "command_payload": {
+            "command_type": "test_command",
+            "data": {"action": "create", "entity": "user"},
+            "timestamp": datetime.now(UTC).isoformat(),
+            "correlation_id": "test-corr-123",
+        },
+        "query_payload": {
+            "query_type": "test_query",
+            "filters": {"status": "active", "type": "test"},
+            "pagination": {"page": 1, "size": 10},
+            "sort": {"field": "created_at", "order": "desc"},
+        },
+        "event_payload": {
+            "event_type": "test_event",
+            "source": "test_service",
+            "data": {"entity_id": "123", "action": "created"},
+            "timestamp": datetime.now(UTC).isoformat(),
+        },
+        "user_creation_payload": {
+            "username": "test_user",
+            "email": "test@example.com",
+            "password": "test_pass",
+            "profile": {"first_name": "Test", "last_name": "User"},
+        },
+        "service_config_payload": {
+            "name": "test_service",
+            "port": 8080,
+            "timeout": 30,
+            "retries": 3,
+            "endpoints": ["/health", "/metrics"],
+        },
+        "validation_payload": {
+            "field": "email",
+            "value": "test@example.com",
+            "rules": ["required", "email_format"],
+            "context": {"form": "user_registration"},
+        },
+    }
+
+
+@pytest.fixture
+def test_error_scenarios() -> dict[str, dict[str, object]]:
+    """Provide common error scenarios for testing.
+
+    Pre-defined error scenarios for testing error handling,
+    validation failures, timeouts, and other edge cases.
+
+    Returns:
+        Dict containing various error scenarios
+
+    """
+    return {
+        "validation_error": {
+            "type": "ValidationError",
+            "message": "Invalid input data",
+            "field": "test_field",
+            "code": "VAL_001",
+            "context": {"input": "invalid_data"},
+        },
+        "configuration_error": {
+            "type": "ConfigurationError",
+            "message": "Missing required configuration",
+            "config_key": "database_url",
+            "code": "CFG_001",
+            "context": {"section": "database"},
+        },
+        "connection_error": {
+            "type": "ConnectionError",
+            "message": "Failed to connect to service",
+            "service": "test_service",
+            "code": "CONN_001",
+            "context": {"host": "localhost", "port": 8080},
+        },
+        "timeout_error": {
+            "type": "TimeoutError",
+            "message": "Operation timed out",
+            "operation": "test_operation",
+            "code": "TIMEOUT_001",
+            "context": {"timeout": 30, "elapsed": 35},
+        },
+        "processing_error": {
+            "type": "ProcessingError",
+            "message": "Failed to process request",
+            "handler": "test_handler",
+            "code": "PROC_001",
+            "context": {"stage": "validation", "input_size": 1024},
+        },
+        "authentication_error": {
+            "type": "AuthenticationError",
+            "message": "Authentication failed",
+            "user": "test_user",
+            "code": "AUTH_001",
+            "context": {"method": "token", "reason": "expired"},
+        },
     }
 
 

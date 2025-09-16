@@ -720,7 +720,16 @@ class FlextValidations:
         TypeValidators = type("TypeValidators", (), {})
         Collections = type("Collections", (), {})
         Domain = type("Domain", (), {})
-        Predicates = type("Predicates", (), {})
+        class Predicates:
+            """Legacy Predicates wrapper for test compatibility."""
+
+            def __init__(self, func: Callable[[object], bool] | None = None, name: str = "predicate") -> None:
+                """Initialize predicate wrapper."""
+                self._inner = FlextValidations.Predicates(func, name)
+
+            def __call__(self, value: object) -> FlextResult[None]:
+                """Execute predicate via inner instance."""
+                return self._inner(value)
         FieldValidators = type("FieldValidators", (), {})
         BusinessValidators = type("BusinessValidators", (), {})
 

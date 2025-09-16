@@ -309,7 +309,7 @@ class TestFlextConfigMissingLinesCoverage:
         # Create config then assign invalid environment triggers ValidationError
         config = FlextConfig(environment="development")
         with pytest.raises(ValidationError):
-            config.environment = "invalid_environment"
+            config.environment = "invalid_environment"  # type: ignore[assignment]
 
     def test_validate_positive_integers_negative_values(self) -> None:
         """Test validate_positive_integers with negative values (lines 936-943)."""
@@ -374,7 +374,7 @@ class TestFlextConfigMissingLinesCoverage:
         """Test validate_debug with invalid type (line 1122)."""
         # Setting a non-boolean string coerces via validator (becomes False)
         config = FlextConfig()
-        config.debug = "not_a_boolean"
+        config.debug = "not_a_boolean"  # type: ignore[assignment]
         assert config.debug is False
 
     def test_validate_base_url_invalid_scheme(self) -> None:
@@ -532,11 +532,11 @@ class TestFlextConfigMissingLinesCoverage:
         """Test nested class functionality comprehensively."""
         # Protocols/abstracts should not be instantiated
         with pytest.raises(TypeError):
-            FlextConfig.ConfigValidator()
+            FlextConfig.ConfigValidator()  # type: ignore[misc]
         with pytest.raises(TypeError):
-            FlextConfig.ConfigPersistence()
+            FlextConfig.ConfigPersistence()  # type: ignore[misc]
         with pytest.raises(TypeError):
-            FlextConfig.EnvironmentConfigAdapter()
+            FlextConfig.EnvironmentConfigAdapter()  # type: ignore[abstract]
 
         # Test DefaultEnvironmentAdapter basic API
         default_adapter = FlextConfig.DefaultEnvironmentAdapter()

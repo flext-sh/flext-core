@@ -300,6 +300,16 @@ class FlextTestsFactories:
                 return FlextResult[FlextTypes.Core.Dict].ok(user_data)
             return FlextResult[FlextTypes.Core.Dict].fail("User creation failed")
 
+    # =========================================================================
+    # ALIASES FOR BACKWARD COMPATIBILITY
+    # =========================================================================
+
+    # Aliases for test compatibility
+    User = UserFactory
+    Config = ConfigFactory
+    Result = ResultFactory
+    FlextResult = ResultFactory
+
 
 # Export main factory class
 __all__ = ["FlextTestsFactories"]

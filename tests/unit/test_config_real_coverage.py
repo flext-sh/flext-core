@@ -118,7 +118,7 @@ class TestFlextConfigRealCoverage:
 
         # Invalid environment should raise ValidationError
         with pytest.raises(ValidationError):
-            FlextConfig(app_name="test", environment="invalid_env")
+            FlextConfig(app_name="test", environment="invalid_env")  # type: ignore[arg-type]
 
     def test_create_from_environment_basic(self) -> None:
         """Test create_from_environment class method."""

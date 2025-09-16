@@ -121,6 +121,7 @@ class FlextConstants:
             "staging",
             "production",
             "test",
+            "local",
         ]
         DEFAULT_ENVIRONMENT: Final[str] = "development"
         DOTENV_FILES: Final[list[str]] = [".env", ".env.local", ".env.production"]

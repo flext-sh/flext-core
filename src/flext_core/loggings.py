@@ -57,7 +57,6 @@ class FlextLogger:
         threading.local()
     )  # Thread-local for logging - most apps are single-threaded!
 
-
     # Instance attributes type declarations
     _name: str
     _level: FlextTypes.Config.LogLevel
@@ -319,7 +318,9 @@ class FlextLogger:
         # Add request context if available
         request_context = getattr(self._local, "request_context", None)
         # Always set request (may be empty)
-        entry["request"] = dict(request_context) if isinstance(request_context, dict) else {}
+        entry["request"] = (
+            dict(request_context) if isinstance(request_context, dict) else {}
+        )
 
         # Add permanent context if available
         permanent_context = getattr(self, "_permanent_context", None)
@@ -801,22 +802,31 @@ class FlextLogger:
         return cls._configured
 
     class LogEntry(TypedDict, total=False):
-        """Typed structure for structured log entries."""
+        """Typed structure for structured log entries.
 
-        timestamp: str
-        level: str
+        Essential fields are required, while optional fields have defaults.
+        """
+
+        # Required fields
         message: str
+        level: str
+        timestamp: str
         logger: str
-        correlation_id: str
-        service: dict[str, object]
-        system: dict[str, object]
-        request: dict[str, object]
-        context: dict[str, object]
-        execution: dict[str, object]
-        # Optional fields below may be conditionally present
-        performance: dict[str, object]
-        error: dict[str, object]
-        permanent: dict[str, object]
+        correlation_id: str | None
+        context: FlextTypes.Core.Dict
+
+        # Optional structured fields used in actual logging
+        logger_name: str
+        module: str
+        function: str
+        line_number: int
+        request: FlextTypes.Core.Dict
+        service: FlextTypes.Core.Dict
+        system: FlextTypes.Core.Dict
+        execution: FlextTypes.Core.Dict
+        permanent: FlextTypes.Core.Dict
+        performance: FlextTypes.Core.Dict
+        error: FlextTypes.Core.Dict
 
     @staticmethod
     def _validated_log_level(level: str) -> FlextTypes.Config.LogLevel:
