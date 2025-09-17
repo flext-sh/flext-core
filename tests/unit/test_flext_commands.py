@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextCommands using all test infrastructure.
+"""Comprehensive tests for Flext CQRS components using all test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,7 +13,14 @@ from typing import Protocol, cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextCommands, FlextModels, FlextResult, FlextTypes
+from flext_core import (
+    FlextBus,
+    FlextCqrs,
+    FlextHandlers,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+)
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 
@@ -124,7 +131,7 @@ class UserCreatedEvent(FlextModels.TimestampedModel):
 
 
 class CreateUserHandler(
-    FlextCommands.Handlers.CommandHandler[CreateUserCommand, UserCreatedEvent],
+    FlextHandlers[CreateUserCommand, UserCreatedEvent],
 ):
     """Handler for user creation with real business logic."""
 
@@ -154,15 +161,15 @@ class CreateUserHandler(
         self.email_service = email_service or MockEmailService()
         self.audit_service = audit_service or MockAuditService()
 
-    def handle(self, command: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
+    def handle(self, message: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
         """Handle user creation with full business logic."""
         # Validate command first
-        validation_result = command.validate_command()
+        validation_result = message.validate_command()
         if validation_result.is_failure:
             return FlextResult[UserCreatedEvent].fail(
                 validation_result.error or "Validation failed",
                 error_code=validation_result.error_code,
-                error_data={"command": command.model_dump()},
+                error_data={"command": message.model_dump()},
             )
 
         try:
@@ -170,26 +177,26 @@ class CreateUserHandler(
             if self.user_repository is not None:
                 existing_user = cast(
                     "UserRepository", self.user_repository
-                ).find_by_username(command.username)
+                ).find_by_username(message.username)
             else:
                 existing_user = None
             if existing_user:
                 return FlextResult[UserCreatedEvent].fail(
                     "User already exists",
                     error_code="USER_EXISTS",
-                    error_data={"username": command.username},
+                    error_data={"username": message.username},
                 )
 
             # Create user
-            user_id = f"user_{command.username}_{len(command.username)}"
+            user_id = f"user_{message.username}_{len(message.username)}"
             user = FlextTestsDomains.TestUser(
                 id=user_id,
-                name=command.username,  # Map username to name
-                email=command.email,
-                age=command.age,
-                is_active=not command.is_REDACTED_LDAP_BIND_PASSWORD,  # Map is_REDACTED_LDAP_BIND_PASSWORD to is_active (inverted)
+                name=message.username,  # Map username to name
+                email=message.email,
+                age=message.age,
+                is_active=not message.is_REDACTED_LDAP_BIND_PASSWORD,  # Map is_REDACTED_LDAP_BIND_PASSWORD to is_active (inverted)
                 created_at=datetime.now(UTC),
-                metadata=command.metadata,
+                metadata=message.metadata,
             )
 
             if self.user_repository is not None:
@@ -213,7 +220,7 @@ class CreateUserHandler(
             else:
                 # Mock user data for testing
                 user_data_result = FlextResult[dict[str, object]].ok(
-                    {"id": user_id, "name": command.username, "email": command.email}
+                    {"id": user_id, "name": message.username, "email": message.email}
                 )
             if user_data_result.is_failure:
                 return FlextResult[UserCreatedEvent].fail(
@@ -243,8 +250,8 @@ class CreateUserHandler(
             # Return success event
             event = UserCreatedEvent(
                 user_id=user_id,
-                username=command.username,
-                email=command.email,
+                username=message.username,
+                email=message.email,
             )
 
             return FlextResult[UserCreatedEvent].ok(event)
@@ -253,18 +260,18 @@ class CreateUserHandler(
             return FlextResult[UserCreatedEvent].fail(
                 f"User creation failed: {e!s}",
                 error_code="CREATION_ERROR",
-                error_data={"command": command.model_dump(), "exception": str(e)},
+                error_data={"command": message.model_dump(), "exception": str(e)},
             )
 
 
 class UpdateUserHandler(
-    FlextCommands.Handlers.CommandHandler[UpdateUserCommand, FlextTypes.Core.Dict],
+    FlextHandlers[UpdateUserCommand, FlextTypes.Core.Dict],
 ):
     """Handler for user updates."""
 
-    def handle(self, command: UpdateUserCommand) -> FlextResult[FlextTypes.Core.Dict]:
+    def handle(self, message: UpdateUserCommand) -> FlextResult[FlextTypes.Core.Dict]:
         """Handle user update."""
-        validation = command.validate_command()
+        validation = message.validate_command()
         if validation.is_failure:
             return FlextResult[FlextTypes.Core.Dict].fail(
                 validation.error or "Validation failed",
@@ -272,32 +279,32 @@ class UpdateUserHandler(
             )
 
         # Mock update operation
-        updated_data = {"user_id": command.user_id, "updated": True}
-        if command.username:
-            updated_data["username"] = command.username
-        if command.email:
-            updated_data["email"] = command.email
+        updated_data = {"user_id": message.user_id, "updated": True}
+        if message.username:
+            updated_data["username"] = message.username
+        if message.email:
+            updated_data["email"] = message.email
 
         return FlextResult[FlextTypes.Core.Dict].ok(updated_data)
 
 
-class DeleteUserHandler(FlextCommands.Handlers.CommandHandler[DeleteUserCommand, bool]):
+class DeleteUserHandler(FlextHandlers[DeleteUserCommand, bool]):
     """Handler for user deletion."""
 
-    def handle(self, command: DeleteUserCommand) -> FlextResult[bool]:
+    def handle(self, message: DeleteUserCommand) -> FlextResult[bool]:
         """Handle user deletion."""
-        if not command.force and "REDACTED_LDAP_BIND_PASSWORD" in command.user_id:
+        if not message.force and "REDACTED_LDAP_BIND_PASSWORD" in message.user_id:
             return FlextResult[bool].fail(
                 "Cannot delete REDACTED_LDAP_BIND_PASSWORD user without force flag",
                 error_code="ADMIN_DELETE_DENIED",
-                error_data={"user_id": command.user_id, "reason": command.reason},
+                error_data={"user_id": message.user_id, "reason": message.reason},
             )
 
         return FlextResult[bool].ok(data=True)
 
 
-class TestFlextCommandsComprehensive:
-    """Comprehensive FlextCommands testing with 100% coverage."""
+class TestFlextCqrsComprehensive:
+    """Comprehensive Flext CQRS testing with 100% coverage."""
 
     # =========================================================================
     # COMMAND CREATION AND VALIDATION
@@ -501,7 +508,7 @@ class TestFlextCommandsComprehensive:
     def test_command_bus_registration_and_execution(self) -> None:
         """Test complete command bus registration and execution."""
         # Create bus and handlers
-        bus = FlextCommands.Bus()
+        bus = FlextBus()
         create_handler = CreateUserHandler()
         update_handler = UpdateUserHandler()
 
@@ -523,7 +530,7 @@ class TestFlextCommandsComprehensive:
         benchmark: FlextTestsFixtures.BenchmarkFixture,
     ) -> None:
         """Test command bus with multiple handlers and performance."""
-        bus = FlextCommands.Bus()
+        bus = FlextBus()
 
         # Register multiple handlers
         handlers = [
@@ -562,14 +569,14 @@ class TestFlextCommandsComprehensive:
 
     def test_additional_bus_and_helpers_coverage(self) -> None:
         """Additional coverage for bus registration forms, middleware, and helpers."""
-        bus = FlextCommands.Bus()
+        bus = FlextBus()
 
         class EchoCmd(FlextModels.TimestampedModel):
             value: str
 
-        class EchoHandler(FlextCommands.Handlers.CommandHandler[EchoCmd, str]):
-            def handle(self, command: EchoCmd) -> FlextResult[str]:
-                return FlextResult[str].ok(command.value)
+        class EchoHandler(FlextHandlers[EchoCmd, str]):
+            def handle(self, message: EchoCmd) -> FlextResult[str]:
+                return FlextResult[str].ok(message.value)
 
         # 1-arg form registers by handler id
         bus.register_handler(EchoHandler())
@@ -596,16 +603,16 @@ class TestFlextCommandsComprehensive:
 
         bus.add_middleware(RejectingMiddleware())
         res = bus.execute(EchoCmd(value="m"))
-        assert res.failure
+        assert res.is_failure
         assert "rejected" in (str(res.error) if res.error else "")
 
         # Reset middleware and auto-registered handlers to test fallbacks/overrides
         bus._middleware = []  # ok in tests to reach branch
         bus._auto_handlers = []  # prefer explicit two-arg registration below
 
-        class OnlyProcess(FlextCommands.Handlers.CommandHandler[EchoCmd, str]):
-            def handle(self, command: EchoCmd) -> FlextResult[str]:
-                return FlextResult[str].ok(command.value.upper())
+        class OnlyProcess(FlextHandlers[EchoCmd, str]):
+            def handle(self, message: EchoCmd) -> FlextResult[str]:
+                return FlextResult[str].ok(message.value.upper())
 
         bus.register_handler(EchoCmd, OnlyProcess())
         res2 = bus.execute(EchoCmd(value="ok"))
@@ -619,52 +626,50 @@ class TestFlextCommandsComprehensive:
 
         # Directly exercise _execute_handler exception path to ensure coverage
         res3 = bus._execute_handler(FailingHandler(), EchoCmd(value="x"))
-        assert res3.failure
+        assert res3.is_failure
         assert "boom" in (res3.error or "")
 
         # Results helpers
-        ok = FlextCommands.Results.success({"k": 1})
+        ok = FlextCqrs.Results.success({"k": 1})
         assert ok.success
         assert ok.value == {"k": 1}
-        fail = FlextCommands.Results.failure(
-            "err", error_code="E1", error_data={"a": 2}
-        )
-        assert fail.failure
+        fail = FlextCqrs.Results.failure("err", error_code="E1", error_data={"a": 2})
+        assert fail.is_failure
         assert fail.error_code == "E1"
 
         # Test command bus creation
-        bus = FlextCommands.Factories.create_command_bus()
+        bus = FlextBus.create_command_bus()
         assert bus is not None
-        assert isinstance(bus, FlextCommands.Bus)
+        assert isinstance(bus, FlextBus)
 
         # Test handler creation
         def test_handler_func(command: object) -> FlextResult[object]:
             return FlextResult[object].ok(f"processed_{command}")
 
-        handler = FlextCommands.Factories.create_simple_handler(test_handler_func)
+        handler = FlextBus.create_simple_handler(test_handler_func)
         assert handler is not None
-        assert isinstance(handler, FlextCommands.Handlers.CommandHandler)
+        assert isinstance(handler, FlextHandlers)
 
     # =========================================================================
     # COMMAND FACTORIES AND DECORATORS
     # =========================================================================
 
     def test_command_factories_comprehensive(self) -> None:
-        """Test FlextCommands factories with all variations."""
+        """Test Flext CQRS factories with all variations."""
         # Create command bus using factory
-        bus1 = FlextCommands.Factories.create_command_bus()
-        bus2 = FlextCommands.Factories.create_command_bus()
+        bus1 = FlextBus.create_command_bus()
+        bus2 = FlextBus.create_command_bus()
 
-        assert isinstance(bus1, FlextCommands.Bus)
-        assert isinstance(bus2, FlextCommands.Bus)
+        assert isinstance(bus1, FlextBus)
+        assert isinstance(bus2, FlextBus)
         assert bus1 is not bus2  # Should create new instances
 
         # Create simple handler using factory
         def simple_handler_func(command: object) -> FlextResult[str]:
             return FlextResult[str].ok(f"handled: {command}")
 
-        handler = FlextCommands.Factories.create_simple_handler(simple_handler_func)
-        assert isinstance(handler, FlextCommands.Handlers.CommandHandler)
+        handler = FlextBus.create_simple_handler(simple_handler_func)
+        assert isinstance(handler, FlextHandlers)
 
         # Test handler created by factory
         test_command = CreateUserCommand(
@@ -679,7 +684,7 @@ class TestFlextCommandsComprehensive:
         """Test command decorators with real scenarios."""
 
         # Test command_handler decorator
-        @FlextCommands.Decorators.command_handler(CreateUserCommand)
+        @FlextCqrs.Decorators.command_handler(CreateUserCommand)
         def decorated_create_handler(command: CreateUserCommand) -> FlextResult[str]:
             validation = command.validate_command()
             if validation.is_failure:
@@ -712,7 +717,7 @@ class TestFlextCommandsComprehensive:
 
     def test_command_bus_with_middleware(self) -> None:
         """Test command bus middleware functionality."""
-        bus = FlextCommands.Bus()
+        bus = FlextBus()
 
         # Create test middleware
         class AuditMiddleware:
@@ -829,19 +834,19 @@ class TestFlextCommandsComprehensive:
 
     def test_command_bus_error_propagation(self) -> None:
         """Test error propagation through command bus."""
-        bus = FlextCommands.Bus()
+        bus = FlextBus()
 
         # Handler that always fails
         class FailingHandler(
-            FlextCommands.Handlers.CommandHandler[CreateUserCommand, str],
+            FlextHandlers[CreateUserCommand, str],
         ):
-            def handle(self, command: CreateUserCommand) -> FlextResult[str]:
+            def handle(self, message: CreateUserCommand) -> FlextResult[str]:
                 return FlextResult[str].fail(
                     "Simulated handler failure",
                     error_code="HANDLER_FAILURE",
                     error_data={
                         "handler": "FailingHandler",
-                        "command_type": type(command).__name__,
+                        "command_type": type(message).__name__,
                     },
                 )
 

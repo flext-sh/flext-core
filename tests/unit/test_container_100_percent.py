@@ -115,6 +115,7 @@ class TestFlextContainer100Percent:
 
         # Test the returned utilities work
         get_container_fn = result["get_container"]
+        assert callable(get_container_fn), "get_container should be callable"
         container = get_container_fn()
         assert isinstance(container, FlextContainer)
 

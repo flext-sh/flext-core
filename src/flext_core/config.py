@@ -1,13 +1,4 @@
-"""FLEXT Configuration Management - Type-safe configuration with environment integration.
-
-This module provides configuration management using Pydantic
-settings with proper validation, environment variable integration, and
-FlextResult error handling patterns.
-
-AUTOMATIC .ENV SUPPORT: Automatically loads .env files in working directory.
-Priority order: DEFAULT CONSTANTS → .ENV FILES → CLI PARAMETERS
-
-For verified capabilities and configuration examples, see docs/ACTUAL_CAPABILITIES.md
+"""FLEXT Core Configuration.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,7 +13,7 @@ import tomllib
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, Protocol, Self, cast
+from typing import ClassVar, Self, cast
 
 import yaml
 from dotenv import load_dotenv
@@ -40,85 +31,12 @@ from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
-# Version validation constants
-_SEMANTIC_VERSION_MIN_PARTS = 3
-
-# Business rule validation constants
-_MIN_PRODUCTION_WORKERS = 2
-_HIGH_TIMEOUT_THRESHOLD = 120
-_MIN_WORKERS_FOR_HIGH_TIMEOUT = 4
-_MAX_WORKERS_THRESHOLD = 50
-
-# Configuration profile constants
-_PROFILE_WEB_SERVICE = "web_service"
-_PROFILE_DATA_PROCESSOR = "data_processor"
-_PROFILE_API_CLIENT = "api_client"
-_PROFILE_BATCH_JOB = "batch_job"
-_PROFILE_MICROSERVICE = "microservice"
-
 
 class FlextConfig(BaseSettings):
     """Unified configuration management system with nested specialized components."""
 
-    # SINGLETON PATTERN - Global configuration instance with thread safety
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
-
-    # REMOVED: Unnecessary __init__ override that created type ignore violation
-    # BaseSettings already handles kwargs properly - no wrapper needed
-
-    # =============================================================================
-    # NESTED PROTOCOLS - Interface Segregation Principle
-    # =============================================================================
-
-    class ConfigValidator(Protocol):
-        """Protocol for configuration validation strategies."""
-
-        def validate_runtime_requirements(self) -> FlextResult[None]:
-            """Validate configuration meets runtime requirements."""
-            ...
-
-        def validate_business_rules(self) -> FlextResult[None]:
-            """Validate business rules for configuration consistency."""
-            ...
-
-    class ConfigPersistence(Protocol):
-        """Protocol for configuration persistence operations.
-
-        Follows Single Responsibility Principle - only handles persistence.
-        """
-
-        def save_to_file(
-            self, file_path: str | Path, **kwargs: object
-        ) -> FlextResult[None]:
-            """Save configuration to file."""
-            ...
-
-        @classmethod
-        def load_from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
-            """Load configuration from file."""
-            ...
-
-    class ConfigFactory(Protocol):
-        """Protocol for configuration factory methods.
-
-        Follows Open/Closed Principle - extensible for new configuration types.
-        """
-
-        @classmethod
-        def create_web_service_config(
-            cls, **kwargs: object
-        ) -> FlextResult[FlextConfig]:
-            """Create web service configuration."""
-            ...
-
-        @classmethod
-        def create_microservice_config(
-            cls, **kwargs: object
-        ) -> FlextResult[FlextConfig]:
-            """Create microservice configuration."""
-            ...
-
     # =============================================================================
     # NESTED ENVIRONMENT ADAPTER - Dependency Inversion Principle
     # =============================================================================
@@ -211,28 +129,30 @@ class FlextConfig(BaseSettings):
             # Validate version format
             if (
                 not config.version
-                or len(config.version.split(".")) < _SEMANTIC_VERSION_MIN_PARTS
+                or len(config.version.split("."))
+                < FlextConstants.Config.SEMANTIC_VERSION_MIN_PARTS
             ):
                 errors.append("version must follow semantic versioning (x.y.z)")
 
             # Validate production environment worker requirements
             if (
                 config.environment == "production"
-                and config.max_workers < _MIN_PRODUCTION_WORKERS
+                and config.max_workers < FlextConstants.Config.MIN_PRODUCTION_WORKERS
             ):
                 errors.append(
-                    f"production environment requires at least {_MIN_PRODUCTION_WORKERS} workers"
+                    f"production environment requires at least {FlextConstants.Config.MIN_PRODUCTION_WORKERS} workers"
                 )
 
             # Validate timeout/workers relationship
             if (
-                config.timeout_seconds >= _HIGH_TIMEOUT_THRESHOLD
-                and config.max_workers < _MIN_WORKERS_FOR_HIGH_TIMEOUT
+                config.timeout_seconds >= FlextConstants.Config.HIGH_TIMEOUT_THRESHOLD
+                and config.max_workers
+                < FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
             ):
                 errors.append("high timeout (120s+) requires at least 4 workers")
 
             # Validate maximum workers limit
-            if config.max_workers > _MAX_WORKERS_THRESHOLD:
+            if config.max_workers > FlextConstants.Config.MAX_WORKERS_THRESHOLD:
                 errors.append("max_workers exceeds maximum recommended workers (50)")
 
             if errors:
@@ -270,22 +190,23 @@ class FlextConfig(BaseSettings):
                         "Debug mode in production requires explicit configuration"
                     )
 
-                if config.max_workers < _MIN_PRODUCTION_WORKERS:
+                if config.max_workers < FlextConstants.Config.MIN_PRODUCTION_WORKERS:
                     errors.append(
                         "Production environment should have at least 2 workers"
                     )
 
             # Performance consistency checks
             if (
-                config.timeout_seconds > _HIGH_TIMEOUT_THRESHOLD
-                and config.max_workers < _MIN_WORKERS_FOR_HIGH_TIMEOUT
+                config.timeout_seconds > FlextConstants.Config.HIGH_TIMEOUT_THRESHOLD
+                and config.max_workers
+                < FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
             ):
                 errors.append(
                     "High timeout with low worker count may cause performance issues"
                 )
 
             # Resource validation
-            if config.max_workers > _MAX_WORKERS_THRESHOLD:
+            if config.max_workers > FlextConstants.Config.MAX_WORKERS_THRESHOLD:
                 errors.append("Worker count above 50 may cause resource exhaustion")
 
             # Check security requirements
@@ -835,6 +756,34 @@ class FlextConfig(BaseSettings):
         description="Default cache TTL in seconds",
         ge=1,
         le=86400,
+    )
+
+    # Bus and Middleware Configuration (Flext CQRS architecture)
+    enable_middleware: bool = Field(
+        default=True,
+        description="Enable middleware pipeline in command bus",
+    )
+
+    bus_enable_metrics: bool = Field(
+        default=True,
+        description="Enable metrics collection in command bus execution",
+    )
+
+    bus_enable_caching: bool = Field(
+        default=True,
+        description="Enable result caching for query commands in bus",
+    )
+
+    command_bus_class: str = Field(
+        default="flext_core.bus:FlextBus",
+        description="Import path for command bus implementation (module:Class)",
+    )
+
+    middleware_execution_timeout: int = Field(
+        default=30,
+        description="Timeout for middleware execution in seconds",
+        ge=1,
+        le=300,
     )
 
     max_cache_size: int = Field(
@@ -1607,6 +1556,95 @@ class FlextConfig(BaseSettings):
                 error_code="CONFIG_CREATION_ERROR",
             )
 
+    class SystemConfigs:
+        """System-wide configuration classes."""
+
+        class ContainerConfig(BaseModel):
+            """Container configuration."""
+
+            max_services: int = Field(
+                default=100, description="Maximum number of services"
+            )
+            enable_caching: bool = Field(
+                default=True, description="Enable service caching"
+            )
+            cache_ttl: int = Field(
+                default=300, description="Cache time-to-live in seconds"
+            )
+            enable_monitoring: bool = Field(
+                default=False, description="Enable monitoring"
+            )
+
+        class DatabaseConfig(BaseModel):
+            """Database configuration."""
+
+            host: str = Field(default="localhost", description="Database host")
+            port: int = Field(default=5432, description="Database port")
+            name: str = Field(default="flext_db", description="Database name")
+            user: str = Field(default="flext_user", description="Database user")
+            password: str = Field(default="", description="Database password")
+            ssl_mode: str = Field(default="prefer", description="SSL mode")
+            connection_timeout: int = Field(
+                default=30, description="Connection timeout"
+            )
+            max_connections: int = Field(default=20, description="Maximum connections")
+
+        class SecurityConfig(BaseModel):
+            """Security configuration."""
+
+            enable_encryption: bool = Field(
+                default=True, description="Enable encryption"
+            )
+            encryption_key: str = Field(default="", description="Encryption key")
+            enable_audit: bool = Field(
+                default=False, description="Enable audit logging"
+            )
+            session_timeout: int = Field(
+                default=3600, description="Session timeout in seconds"
+            )
+            password_policy: dict[str, object] = Field(
+                default_factory=lambda: cast(
+                    "dict[str, object]",
+                    {
+                        "min_length": 8,
+                        "require_uppercase": True,
+                        "require_lowercase": True,
+                        "require_digits": True,
+                        "require_special": False,
+                    },
+                )
+            )
+
+        class LoggingConfig(BaseModel):
+            """Logging configuration."""
+
+            level: str = Field(default="INFO", description="Log level")
+            format: str = Field(
+                default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                description="Log format",
+            )
+            file_path: str = Field(default="", description="Log file path")
+            max_file_size: int = Field(
+                default=10485760, description="Max log file size in bytes"
+            )
+            backup_count: int = Field(default=5, description="Number of backup files")
+            enable_console: bool = Field(
+                default=True, description="Enable console logging"
+            )
+
+        class MiddlewareConfig(BaseModel):
+            """Middleware configuration."""
+
+            middleware_type: str = Field(..., description="Type of middleware")
+            middleware_id: str = Field(default="", description="Unique middleware ID")
+            order: int = Field(default=0, description="Execution order")
+            enabled: bool = Field(
+                default=True, description="Whether middleware is enabled"
+            )
+            config: dict[str, object] = Field(
+                default_factory=dict, description="Middleware-specific configuration"
+            )
+
     @classmethod
     def merge(
         cls, _base: FlextConfig, _override: FlextTypes.Core.Dict
@@ -1638,6 +1676,24 @@ class FlextConfig(BaseSettings):
                 f"Configuration merge failed: {error}",
                 error_code="CONFIG_MERGE_ERROR",
             )
+
+
+# =========================================================================
+# BACKWARD COMPATIBILITY EXPORTS - Maintain ecosystem compatibility
+# =========================================================================
+
+# Export constants for backward compatibility (tests and internal usage may depend on these)
+# Constants moved to FlextConstants.Config for proper unification
+_SEMANTIC_VERSION_MIN_PARTS = FlextConstants.Config.SEMANTIC_VERSION_MIN_PARTS
+_MIN_PRODUCTION_WORKERS = FlextConstants.Config.MIN_PRODUCTION_WORKERS
+_HIGH_TIMEOUT_THRESHOLD = FlextConstants.Config.HIGH_TIMEOUT_THRESHOLD
+_MIN_WORKERS_FOR_HIGH_TIMEOUT = FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
+_MAX_WORKERS_THRESHOLD = FlextConstants.Config.MAX_WORKERS_THRESHOLD
+_PROFILE_WEB_SERVICE = FlextConstants.Config.PROFILE_WEB_SERVICE
+_PROFILE_DATA_PROCESSOR = FlextConstants.Config.PROFILE_DATA_PROCESSOR
+_PROFILE_API_CLIENT = FlextConstants.Config.PROFILE_API_CLIENT
+_PROFILE_BATCH_JOB = FlextConstants.Config.PROFILE_BATCH_JOB
+_PROFILE_MICROSERVICE = FlextConstants.Config.PROFILE_MICROSERVICE
 
 
 __all__ = ["FlextConfig"]

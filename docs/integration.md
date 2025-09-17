@@ -176,7 +176,7 @@ class ProjectApi:
 ### Data Integration Projects
 
 ```python
-from flext_core import FlextResult, FlextModels, FlextValidations
+from flext_core import FlextResult, FlextModels
 
 # Domain modeling for data integration
 class DataRecord(FlextModels.Entity):
@@ -189,13 +189,11 @@ class DataRecord(FlextModels.Entity):
         if not self.data:
             return FlextResult[None].fail("Data cannot be empty")
 
-        # Use FlextValidations for complex validation
-        validation_result = FlextValidations.validate_required_fields(
-            self.data, ["id", "timestamp"]
-        )
-
-        if validation_result.is_failure:
-            return FlextResult[None].fail(f"Validation failed: {validation_result.error}")
+        # FlextUtilities.Validation was removed - using direct validation
+        required_fields = ["id", "timestamp"]
+        missing_fields = [field for field in required_fields if field not in self.data]
+        if missing_fields:
+            return FlextResult[None].fail(f"Missing required fields: {missing_fields}")
 
         return FlextResult[None].ok(None)
 
@@ -505,23 +503,23 @@ class EnvironmentConfig(FlextConfig):
 
 ```python
 from flext_core import FlextResult, FlextContainer
-from typing import Optional, Any
+from typing import Optional
 
 class CacheService:
     """Cache service using foundation patterns."""
 
     def __init__(self) -> None:
-        self._cache: dict[str, Any] = {}
+        self._cache: dict[str, object] = {}
 
-    def get(self, key: str) -> FlextResult[Optional[Any]]:
+    def get(self, key: str) -> FlextResult[Optional[object]]:
         """Get cached value with foundation error handling."""
         if not key:
-            return FlextResult[Optional[Any]].fail("Cache key required")
+            return FlextResult[Optional[object]].fail("Cache key required")
 
         value = self._cache.get(key)
-        return FlextResult[Optional[Any]].ok(value)
+        return FlextResult[Optional[object]].ok(value)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> FlextResult[None]:
+    def set(self, key: str, value: object, ttl: Optional[int] = None) -> FlextResult[None]:
         """Set cached value with foundation error handling."""
         if not key:
             return FlextResult[None].fail("Cache key required")

@@ -312,7 +312,7 @@ def demonstrate_caching_patterns() -> None:
 
 def main() -> None:
     """Run FlextMixins composition patterns demonstration."""
-    print("FlextCore Mixins Composition Patterns")
+    print("FLEXT Core Mixins Composition Patterns")
     print("=" * 40)
 
     demonstrate_mixins_composition()

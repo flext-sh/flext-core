@@ -14,7 +14,7 @@ import json
 from datetime import datetime
 from uuid import UUID
 
-from flext_core import FlextUtilities
+from flext_core import FlextResult, FlextUtilities
 
 
 class TestFlextUtilitiesValidation:
@@ -493,3 +493,42 @@ class TestFlextUtilitiesIntegration:
         assert parsed_back["event_type"] == "User Registration Event"
         assert parsed_back["event_slug"] == "user-registration-event"
         assert parsed_back["active"] is True
+
+
+class TestFlextUtilitiesReliability:
+    """Tests for reliability helpers."""
+
+    def test_safe_result_wraps_return_value(self) -> None:
+        """Test safe_result wraps return value."""
+
+        @FlextUtilities.Reliability.safe_result
+        def add(a: int, b: int) -> int:
+            return a + b
+
+        result = add(2, 3)
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert result.unwrap() == 5
+
+    def test_safe_result_preserves_flext_result(self) -> None:
+        """Test safe_result preserves FlextResult."""
+
+        @FlextUtilities.Reliability.safe_result
+        def make_result(value: int) -> FlextResult[int]:
+            return FlextResult[int].ok(value)
+
+        result = make_result(7)
+        assert result.is_success
+        assert result.unwrap() == 7
+
+    def test_safe_result_captures_exception(self) -> None:
+        """Test safe_result captures exception."""
+
+        @FlextUtilities.Reliability.safe_result
+        def explode() -> int:
+            error_msg = "boom"
+            raise ValueError(error_msg)
+
+        result = explode()
+        assert result.is_failure
+        assert result.error == "boom"

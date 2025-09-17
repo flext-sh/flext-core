@@ -188,12 +188,11 @@ src/flext_core/
 ├── Domain Layer (Business Logic - Depends on Foundation)
 │   ├── models.py           # FlextModels.Entity/Value/AggregateRoot (DDD patterns)
 │   ├── domain_services.py  # Domain service patterns and operations
-│   └── validations.py      # FlextValidations with predicate-based rules
+│   └── utilities.py        # FlextUtilities.Validation with validation utilities
 │
 ├── Application Layer (Use Cases - Depends on Domain)
 │   ├── commands.py         # FlextCommands CQRS pattern implementation
 │   ├── handlers.py         # FlextHandlers registry and execution
-│   └── guards.py           # FlextGuards type guards and validation decorators
 │
 ├── Infrastructure Layer (External Concerns - Depends on Application)
 │   ├── config.py           # FlextConfig with Pydantic Settings
@@ -203,9 +202,8 @@ src/flext_core/
 │
 └── Support Modules (Cross-cutting Utilities)
     ├── mixins.py           # Reusable behaviors (timestamps, serialization)
-    ├── decorators.py       # @safe_result, @validate, @cache decorators
     ├── utilities.py        # FlextUtilities helper functions
-    └── core.py             # FlextCore main orchestrator class
+    └── processing.py       # FlextProcessing for orchestration functionality
 ```
 
 ### Domain Modeling (DDD Patterns)
@@ -305,8 +303,7 @@ from flext_core import (
     FlextConfig,           # Configuration management
     FlextConstants,        # System constants and enums
     FlextTypes,            # Type definitions and aliases
-    FlextValidations,      # Validation patterns
-    FlextUtilities,        # Helper functions
+    FlextUtilities,        # Utilities including validation patterns
 )
 
 # ❌ ABSOLUTELY FORBIDDEN - Internal module imports
@@ -482,7 +479,7 @@ import sys
 sys.path.insert(0, 'src')
 from flext_core import (
     FlextResult, FlextContainer, FlextModels, FlextDomainService,
-    FlextLogger, FlextConfig, FlextConstants, FlextTypes, FlextValidations
+    FlextLogger, FlextConfig, FlextConstants, FlextTypes, FlextUtilities
 )
 print('✅ All foundation exports available')
 "
@@ -695,7 +692,7 @@ sys.path.insert(0, 'src')
 # Test ALL foundation exports
 from flext_core import (
     FlextResult, FlextContainer, FlextModels, FlextDomainService,
-    FlextLogger, FlextConfig, FlextConstants, FlextTypes, FlextValidations
+    FlextLogger, FlextConfig, FlextConstants, FlextTypes, FlextUtilities
 )
 
 # Test FlextResult API completeness

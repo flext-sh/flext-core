@@ -1,11 +1,6 @@
 """Dependency injection container with service management.
 
 Uses Command pattern for service registration operations.
-Note: Implementation uses CQRS patterns which may be over-engineered
-for simple service registration scenarios. Consider direct dictionary
-access for simple use cases.
-
-For verified capabilities and API examples, see docs/ACTUAL_CAPABILITIES.md
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -30,12 +25,7 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextContainer:
-    """Dependency injection container with type-safe service management.
-
-    Provides a global singleton container for managing application services
-    with type-safe registration and retrieval. Supports factory patterns,
-    service validation, and lifecycle management.
-    """
+    """Dependency injection container with type-safe service management."""
 
     # Class-level global manager instance
     _global_manager: FlextContainer.GlobalManager | None = None
@@ -750,6 +740,10 @@ class FlextContainer:
                 f"Failed to get container config: {e}"
             )
 
+    def get_configuration(self) -> FlextResult[dict[str, object]]:
+        """Get container configuration (alias for get_container_config)."""
+        return self.get_container_config()
+
     def get_configuration_summary(self) -> FlextResult[dict[str, object]]:
         """Get a summary of container configuration and status."""
         try:
@@ -838,7 +832,7 @@ class FlextContainer:
     def register_factory(
         self,
         name: str,
-        factory: Callable[[], object],
+        factory: Callable[[], object] | object,
     ) -> FlextResult[None]:
         """Register a service factory."""
         return self._registrar.register_factory(name, factory)
@@ -933,12 +927,16 @@ class FlextContainer:
     def get_or_create(
         self,
         name: str,
-        factory: Callable[[], object],
+        factory: Callable[[], object] | None = None,
     ) -> FlextResult[object]:
         """Get existing service or register-and-return a newly created one."""
         existing = self.get(name)
         if existing.is_success:
             return existing
+
+        if factory is None:
+            return FlextResult[object].fail("Factory is required for get_or_create")
+
         try:
             # Register factory and immediately resolve
             reg = self.register_factory(name, factory)
@@ -963,11 +961,17 @@ class FlextContainer:
 
     def auto_wire(
         self,
-        service_class: type[T],
+        service_class: type[T] | str,
         service_name: str | None = None,
     ) -> FlextResult[T]:
         """Auto-wire service dependencies and register the service."""
         try:
+            # Handle string service_class parameter (for test compatibility)
+            if isinstance(service_class, str):
+                return FlextResult[T].fail(
+                    f"Service class must be a type, not string: {service_class}"
+                )
+
             # Use class name as default service name
             name = service_name or service_class.__name__
 

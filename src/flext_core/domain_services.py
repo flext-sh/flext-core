@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, cast
+from typing import cast
 
 from pydantic import BaseModel, ConfigDict
 
@@ -15,10 +15,8 @@ from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, TDomainResult
 from flext_core.utilities import FlextUtilities
-
-TDomainResult = TypeVar("TDomainResult")
 
 
 class FlextDomainService[TDomainResult](

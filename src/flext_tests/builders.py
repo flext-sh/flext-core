@@ -31,7 +31,7 @@ class FlextTestsBuilders:
     """
 
     class _TestCallableProtocol(Protocol):
-        """Protocol for test callable objects to avoid explicit Any."""
+        """Protocol for test callable objects to avoid explicit object."""
 
         def __call__(self, *args: object, **kwargs: object) -> object:
             """Call signature for test functions."""

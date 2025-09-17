@@ -15,9 +15,9 @@ from typing import Protocol, cast
 from pydantic import Field
 
 from flext_core import (
-    FlextCommands,
     FlextConfig,
     FlextLogger,
+    FlextModels,
     FlextResult,
     FlextTypes,
 )
@@ -351,19 +351,19 @@ class FlextTestsFixtures:
 
     # === Command Classes ===
 
-    class TestCommand(FlextCommands.Models.Command):
+    class TestCommand(FlextModels.Command):
         """Test command for fixtures."""
 
         command_type: str = Field(default="test", description="Type of command")
         config: object = Field(default_factory=dict)
 
-    class BatchCommand(FlextCommands.Models.Command):
+    class BatchCommand(FlextModels.Command):
         """Batch command for fixtures."""
 
         command_type: str = Field(default="batch", description="Type of command")
         config: object = Field(default_factory=dict)
 
-    class ValidationCommand(FlextCommands.Models.Command):
+    class ValidationCommand(FlextModels.Command):
         """Validation command for fixtures."""
 
         command_type: str = Field(default="validation", description="Type of command")

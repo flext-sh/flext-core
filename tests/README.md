@@ -29,7 +29,6 @@ tests/
 │   │   ├── test_utilities.py        # Utility functions
 │   │   ├── test_payload.py          # Payload patterns
 │   │   ├── test_mixins.py           # Mixin behaviors
-│   │   ├── test_decorators.py       # Decorator patterns
 │   │   ├── test_models.py           # Domain models (entities, values, aggregates)
 │   │   ├── test_interfaces.py       # Interface definitions
 │   │   ├── test_loggings.py         # Logging system

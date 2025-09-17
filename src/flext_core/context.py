@@ -1,7 +1,6 @@
 """Request context and correlation tracking.
 
-Provides context management with 558 lines of functionality.
-Features hierarchical context system with 4 nested classes for managing
+Features hierarchical context system for managing
 correlation IDs, service context, request context, and performance variables.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

@@ -191,11 +191,11 @@ class User(FlextModels.Entity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate user business rules."""
         email_result = self.email.validate_business_rules()
-        if email_result.failure:
+        if email_result.is_failure:
             return email_result
 
         age_result = self.age.validate_business_rules()
-        if age_result.failure:
+        if age_result.is_failure:
             return age_result
 
         return FlextResult[None].ok(None)
@@ -248,7 +248,7 @@ class Product(FlextModels.Entity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate product business rules."""
         price_result = self.price.validate_business_rules()
-        if price_result.failure:
+        if price_result.is_failure:
             return price_result
 
         if self.stock_quantity < 0:
@@ -320,10 +320,10 @@ class OrderItem(FlextModels.Value):
         if self.quantity <= 0:
             return FlextResult[None].fail("Quantity must be positive")
         product_result = self.product.validate_business_rules()
-        if product_result.failure:
+        if product_result.is_failure:
             return product_result
         total_result = self.total_price.validate_business_rules()
-        if total_result.failure:
+        if total_result.is_failure:
             return total_result
         return FlextResult[None].ok(None)
 
@@ -365,16 +365,16 @@ class Order(FlextModels.AggregateRoot):
             return FlextResult[None].fail("Order must have at least one item")
 
         user_result = self.user.validate_business_rules()
-        if user_result.failure:
+        if user_result.is_failure:
             return user_result
 
         for item in self.items:
             item_result = item.validate_business_rules()
-            if item_result.failure:
+            if item_result.is_failure:
                 return item_result
 
         total_result = self.total_amount.validate_business_rules()
-        if total_result.failure:
+        if total_result.is_failure:
             return total_result
 
         return FlextResult[None].ok(None)

@@ -71,15 +71,13 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Cross-Cutting Concerns
 
-#### Mixins, decorators, and utilities
+#### Mixins and utilities
 
 | Module          | Purpose             | Key Components                |
 | --------------- | ------------------- | ----------------------------- |
 | `mixins.py`     | Behavior mixins     | Timestamp, audit, soft delete |
-| `decorators.py` | Function decorators | Retry, cache, logging         |
-| `guards.py`     | Guard clauses       | Validation, assertions        |
 | `context.py`    | Context management  | Request context, correlation  |
-| `core.py`       | Core integration    | Main FlextCore class          |
+| `processing.py` | Processing patterns | Data processing orchestration |
 
 ### Specialized Modules
 
@@ -256,7 +254,6 @@ src/flext_core/
 │
 ├── # Cross-Cutting
 ├── mixins.py                # Mixins
-├── decorators.py            # Decorators
 ├── interfaces.py            # Interfaces
 │
 └── # Supporting

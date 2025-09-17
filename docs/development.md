@@ -139,7 +139,7 @@ Singleton pattern implementation:
 ```python
 class FlextContainer:
     _instance: Optional["FlextContainer"] = None
-    _services: dict[str, Any] = {}
+    _services: dict[str, object] = {}
 
     @classmethod
     def get_global(cls) -> "FlextContainer":
@@ -148,7 +148,7 @@ class FlextContainer:
             cls._instance = cls()
         return cls._instance
 
-    def register(self, key: str, service: Any) -> FlextResult[None]:
+    def register(self, key: str, service: object) -> FlextResult[None]:
         """Service registration with error handling"""
         if key in self._services:
             return FlextResult[None].fail(f"Service '{key}' already registered")
@@ -156,12 +156,12 @@ class FlextContainer:
         self._services[key] = service
         return FlextResult[None].ok(None)
 
-    def get(self, key: str) -> FlextResult[Any]:
+    def get(self, key: str) -> FlextResult[object]:
         """Service retrieval with error handling"""
         if key not in self._services:
-            return FlextResult[Any].fail(f"Service '{key}' not found")
+            return FlextResult[object].fail(f"Service '{key}' not found")
 
-        return FlextResult[Any].ok(self._services[key])
+        return FlextResult[object].ok(self._services[key])
 ```
 
 ### 3. Domain Modeling Patterns
@@ -367,7 +367,7 @@ All APIs must have complete type annotations:
 ```python
 # ✅ Complete type annotations
 def process_data(
-    input_data: dict[str, Any],
+    input_data: dict[str, object],
     transformer: Callable[[str], str],
     validator: Optional[Callable[[str], bool]] = None
 ) -> FlextResult[dict[str, str]]:
@@ -421,12 +421,12 @@ def risky_operation(data: str) -> str:
 2. **Memory Efficiency**: Minimize object creation
    ```python
    # Reuse common failure cases
-   _EMPTY_DATA_ERROR = FlextResult[Any].fail("Empty data")
+   _EMPTY_DATA_ERROR = FlextResult[object].fail("Empty data")
 
-   def validate_not_empty(data: Any) -> FlextResult[Any]:
+   def validate_not_empty(data: object) -> FlextResult[object]:
        if not data:
            return _EMPTY_DATA_ERROR
-       return FlextResult[Any].ok(data)
+       return FlextResult[object].ok(data)
    ```
 
 3. **Benchmark Critical Paths**
@@ -486,8 +486,8 @@ poetry show --outdated     # Check for updates
 
 ```python
 def complex_operation(
-    data: dict[str, Any],
-    options: Optional[dict[str, Any]] = None
+    data: dict[str, object],
+    options: Optional[dict[str, object]] = None
 ) -> FlextResult[ProcessedData]:
     """Process complex data with business logic.
 

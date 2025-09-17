@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""FlextCore Entity and Value Object DDD Patterns - Working Example.
+"""FLEXT Core Entity and Value Object DDD Patterns - Working Example.
 
-This example demonstrates Domain-Driven Design patterns using FlextCore:
+This example demonstrates Domain-Driven Design patterns using FLEXT Core:
 - Entity base class with identity and events
 - Value objects for data modeling
 - Domain event handling
@@ -17,12 +17,21 @@ from decimal import Decimal
 
 from pydantic import Field
 
-from flext_core import FlextModels, FlextResult
+from flext_core import (
+    FlextConstants,
+    FlextDomainService,
+    FlextModels,
+    FlextResult,
+    FlextUtilities,
+)
 
-# Constants
-MIN_PRICE = Decimal("0.01")
-MAX_DISCOUNT = Decimal(100)
-COUNTRY_CODE_LENGTH = 2
+
+class DDDConstants(FlextConstants):
+    """Domain-driven design constants."""
+
+    MIN_PRICE = Decimal("0.01")
+    MAX_DISCOUNT = Decimal(100)
+    COUNTRY_CODE_LENGTH = 2
 
 
 class Money(FlextModels.Value):
@@ -63,9 +72,9 @@ class Address(FlextModels.Value):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate address business rules."""
-        if len(self.country) != COUNTRY_CODE_LENGTH:
+        if len(self.country) != DDDConstants.COUNTRY_CODE_LENGTH:
             return FlextResult[None].fail(
-                f"Country code must be {COUNTRY_CODE_LENGTH} characters",
+                f"Country code must be {DDDConstants.COUNTRY_CODE_LENGTH} characters",
             )
         return FlextResult[None].ok(None)
 
@@ -104,7 +113,7 @@ class Product(FlextModels.Entity):
 
     def update_price(self, new_price: Money) -> FlextResult[None]:
         """Update product price with validation."""
-        if new_price.amount < MIN_PRICE:
+        if new_price.amount < DDDConstants.MIN_PRICE:
             return FlextResult[None].fail("Price too low")
 
         self.price = new_price
@@ -154,12 +163,6 @@ class CartItem(FlextModels.Value):
     product_name: str = Field(..., description="Product name")
     price: Money = Field(..., description="Unit price")
     quantity: int = Field(..., ge=1, description="Item quantity")
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate cart item business rules."""
-        if self.quantity <= 0:
-            return FlextResult[None].fail("Quantity must be positive")
-        return FlextResult[None].ok(None)
 
     def total_price(self) -> Money:
         """Calculate total price for this item."""
@@ -222,7 +225,10 @@ class ShoppingCart(FlextModels.Entity):
 
     def apply_discount(self, discount_percent: Decimal) -> FlextResult[None]:
         """Apply discount to cart."""
-        if discount_percent < Decimal(0) or discount_percent > MAX_DISCOUNT:
+        if (
+            discount_percent < Decimal(0)
+            or discount_percent > DDDConstants.MAX_DISCOUNT
+        ):
             return FlextResult[None].fail("Invalid discount percentage")
 
         self.discount_percent = discount_percent
@@ -241,161 +247,176 @@ class ShoppingCart(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
 
-class DomainObjectFactory:
-    """Factory for creating domain objects."""
+class DDDDomainService(FlextDomainService[Product]):
+    """Domain service for DDD object creation and management."""
 
-    @staticmethod
-    def create_product(name: str, price: Money) -> FlextResult[Product]:
-        """Create a new product."""
-        try:
-            product = Product(
-                id=f"product_{name.lower().replace(' ', '_')}",
-                name=name,
-                price=price,
-            )
-            return FlextResult[Product].ok(product)
-        except Exception as e:
-            return FlextResult[Product].fail(f"Failed to create product: {e}")
+    def __init__(self) -> None:
+        """Initialize domain service."""
+        super().__init__()
 
-    @staticmethod
-    def create_customer(
-        name: str,
-        email: str,
-        address: Address,
-    ) -> FlextResult[Customer]:
-        """Create a new customer."""
-        try:
-            customer = Customer(
-                id=f"customer_{name.lower().replace(' ', '_')}",
-                name=name,
-                email=email,
-                address=address,
-            )
-            return FlextResult[Customer].ok(customer)
-        except Exception as e:
-            return FlextResult[Customer].fail(f"Failed to create customer: {e}")
+    def create_product(self, name: str, price: Money) -> FlextResult[Product]:
+        """Create a new product with validation."""
+        if not name.strip():
+            return FlextResult[Product].fail("Product name cannot be empty")
 
-    @staticmethod
-    def create_shopping_cart(customer_id: str) -> FlextResult[ShoppingCart]:
-        """Create a new shopping cart."""
-        try:
-            cart = ShoppingCart(id=f"cart_{customer_id}", customer_id=customer_id)
-            return FlextResult[ShoppingCart].ok(cart)
-        except Exception as e:
-            return FlextResult[ShoppingCart].fail(f"Failed to create cart: {e}")
+        price_validation = price.validate_business_rules()
+        if price_validation.is_failure:
+            return FlextResult[Product].fail(f"Invalid price: {price_validation.error}")
 
-
-def demonstrate_value_objects() -> None:
-    """Demonstrate value object patterns."""
-    print("=== Value Objects Demo ===")
-
-    # Money value object
-    price1 = Money(amount=Decimal("19.99"), currency="USD")
-    price2 = Money(amount=Decimal("5.00"), currency="USD")
-
-    total = price1.add(price2)
-    print(f"Price 1: {price1}")
-    print(f"Price 2: {price2}")
-    print(f"Total: {total}")
-
-    # Address value object
-    address = Address(
-        street="123 Main St",
-        city="New York",
-        postal_code="10001",
-        country="US",
-    )
-    print(f"Address: {address}")
-
-
-def demonstrate_entities() -> None:
-    """Demonstrate entity patterns."""
-    print("\n=== Entities Demo ===")
-
-    # Create product
-    price = Money(amount=Decimal("99.99"), currency="USD")
-    product_result = DomainObjectFactory.create_product("Laptop", price)
-
-    if product_result.success:
-        product = product_result.value
-        print(f"Created product: {product.name} - {product.price}")
-
-        # Update price
-        new_price = Money(amount=Decimal("89.99"), currency="USD")
-        update_result = product.update_price(new_price)
-
-        if update_result.success:
-            print(f"Updated price to: {product.price}")
-
-        # Domain events simulation (simplified for current API)
-        print("Domain events: 1 event (PriceChanged)")
-
-    # Create customer
-    customer_address = Address(
-        street="456 Oak Ave",
-        city="Boston",
-        postal_code="02101",
-        country="US",
-    )
-
-    customer_result = DomainObjectFactory.create_customer(
-        "John Doe",
-        "john@example.com",
-        customer_address,
-    )
-
-    if customer_result.success:
-        customer = customer_result.value
-        print(f"Created customer: {customer.name}")
-
-
-def demonstrate_aggregates() -> None:
-    """Demonstrate aggregate patterns."""
-    print("\n=== Aggregates Demo ===")
-
-    # Create shopping cart
-    cart_result = DomainObjectFactory.create_shopping_cart("customer_john_doe")
-
-    if cart_result.success:
-        cart = cart_result.value
-        print(f"Created cart: {cart.id}")
-
-        # Create product
-        laptop_price = Money(amount=Decimal("999.99"), currency="USD")
-        laptop_result = DomainObjectFactory.create_product(
-            "Gaming Laptop",
-            laptop_price,
+        product = Product(
+            id=FlextUtilities.Generators.generate_id()[:8],
+            name=name,
+            price=price,
         )
 
-        if laptop_result.success:
-            laptop = laptop_result.value
+        validation_result = product.validate_business_rules()
+        if validation_result.is_failure:
+            return FlextResult[Product].fail(
+                validation_result.error or "Product validation failed"
+            )
 
-            # Add item to cart
-            add_result = cart.add_item(laptop, 1)
+        return FlextResult[Product].ok(product)
 
-            if add_result.success:
-                print(f"Added {laptop.name} to cart")
+    def create_customer(
+        self, name: str, email: str, address: Address
+    ) -> FlextResult[Customer]:
+        """Create a new customer with validation."""
+        if not name.strip():
+            return FlextResult[Customer].fail("Customer name cannot be empty")
 
-                # Apply discount
+        address_validation = address.validate_business_rules()
+        if address_validation.is_failure:
+            return FlextResult[Customer].fail(
+                f"Invalid address: {address_validation.error}"
+            )
+
+        customer = Customer(
+            id=FlextUtilities.Generators.generate_id()[:8],
+            name=name,
+            email=email,
+            address=address,
+        )
+
+        validation_result = customer.validate_business_rules()
+        if validation_result.is_failure:
+            return FlextResult[Customer].fail(
+                validation_result.error or "Customer validation failed"
+            )
+
+        return FlextResult[Customer].ok(customer)
+
+    def create_shopping_cart(self, customer_id: str) -> FlextResult[ShoppingCart]:
+        """Create a new shopping cart with validation."""
+        if not customer_id.strip():
+            return FlextResult[ShoppingCart].fail("Customer ID cannot be empty")
+
+        cart = ShoppingCart(
+            id=FlextUtilities.Generators.generate_id()[:8], customer_id=customer_id
+        )
+
+        validation_result = cart.validate_business_rules()
+        if validation_result.is_failure:
+            return FlextResult[ShoppingCart].fail(
+                validation_result.error or "Cart validation failed"
+            )
+
+        return FlextResult[ShoppingCart].ok(cart)
+
+    def execute(self) -> FlextResult[Product]:
+        """Execute demo functionality - required by FlextDomainService."""
+        demo_price = Money(amount=Decimal("99.99"), currency="USD")
+        return self.create_product("Demo Product", demo_price)
+
+
+def demonstrate_ddd_patterns() -> None:
+    """Unified demonstration of DDD patterns with data-driven approach."""
+    print("=== FLEXT Core DDD Patterns Showcase ===")
+
+    service = DDDDomainService()
+
+    # Value object demonstrations
+    print("\n1. Value Objects:")
+    money_examples = [
+        (Decimal("19.99"), "USD"),
+        (Decimal("5.00"), "USD"),
+    ]
+
+    money_objects = []
+    for amount, currency in money_examples:
+        money = Money(amount=amount, currency=currency)
+        money_objects.append(money)
+        print(f"   Money: {money}")
+
+    if len(money_objects) >= 2:
+        total = money_objects[0].add(money_objects[1])
+        print(f"   Total: {total}")
+
+    # Address value object
+    demo_address = Address(
+        street="123 Main St", city="New York", postal_code="10001", country="US"
+    )
+    print(f"   Address: {demo_address}")
+
+    # Entity creation demonstrations
+    print("\n2. Entities:")
+
+    # Product creation
+    laptop_price = Money(amount=Decimal("999.99"), currency="USD")
+    product_result = service.create_product("Gaming Laptop", laptop_price)
+
+    if product_result.is_success:
+        product = product_result.unwrap()
+        print(f"   Created product: {product.name} - {product.price}")
+
+        # Price update
+        new_price = Money(amount=Decimal("899.99"), currency="USD")
+        update_result = product.update_price(new_price)
+        if update_result.is_success:
+            print(f"   Updated price to: {product.price}")
+
+    # Customer creation
+    customer_result = service.create_customer(
+        "John Doe", "john@example.com", demo_address
+    )
+    if customer_result.is_success:
+        customer = customer_result.unwrap()
+        print(f"   Created customer: {customer.name}")
+
+    # Aggregate demonstrations
+    print("\n3. Aggregates:")
+
+    if customer_result.is_success:
+        customer = customer_result.unwrap()
+        cart_result = service.create_shopping_cart(customer.id)
+
+        if cart_result.is_success and product_result.is_success:
+            cart = cart_result.unwrap()
+            product = product_result.unwrap()
+            print(f"   Created cart: {cart.id}")
+
+            # Add item and apply discount
+            add_result = cart.add_item(product, 1)
+            if add_result.is_success:
+                print(f"   Added {product.name} to cart")
+
                 discount_result = cart.apply_discount(Decimal(10))
-
-                if discount_result.success:
+                if discount_result.is_success:
                     total = cart.calculate_total()
-                    print(f"Cart total with discount: {total}")
-                    print(f"Domain events: {len(cart.domain_events)} events")
+                    print(f"   Cart total with discount: {total}")
+                    print(f"   Domain events: {len(cart.domain_events)} events")
 
 
 def main() -> None:
-    """Run DDD patterns demonstration."""
-    print("FlextCore DDD Patterns Example")
-    print("=" * 40)
+    """Advanced FLEXT Core DDD patterns demonstration."""
+    print("🚀 Advanced FLEXT Core DDD Patterns Example")
+    print("=" * 50)
+    print("Architecture: FlextDomainService • FlextModels • FlextConstants")
+    print()
 
-    demonstrate_value_objects()
-    demonstrate_entities()
-    demonstrate_aggregates()
+    demonstrate_ddd_patterns()
 
-    print("\n" + "=" * 40)
-    print("✅ All DDD patterns demonstrated successfully!")
+    print("\n" + "=" * 50)
+    print("✅ Advanced DDD patterns demonstrated successfully!")
 
 
 if __name__ == "__main__":

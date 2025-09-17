@@ -101,11 +101,6 @@ class FlextTestsDomains:
         return data
 
     @staticmethod
-    def build_user(**overrides: object) -> FlextTypes.Core.Dict:
-        """Build user data dict (alias for create_user)."""
-        return FlextTestsDomains.create_user(**overrides)
-
-    @staticmethod
     def batch_users(count: int = 5) -> list[FlextTypes.Core.Dict]:
         """Create batch of user data."""
         return [FlextTestsDomains.create_user() for _ in range(count)]
@@ -237,91 +232,6 @@ class FlextTestsDomains:
             "timestamp": "2024-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
         }
-
-    # === Convenience Inner Classes ===
-
-    class UserData:
-        """User data factory methods."""
-
-        @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
-            """Create user data dict."""
-            return FlextTestsDomains.create_user(**overrides)
-
-        @staticmethod
-        def build(**overrides: object) -> FlextTypes.Core.Dict:
-            """Build user data dict (alias for create)."""
-            return FlextTestsDomains.build_user(**overrides)
-
-        @staticmethod
-        def batch(count: int = 5) -> list[FlextTypes.Core.Dict]:
-            """Create batch of user data."""
-            return FlextTestsDomains.batch_users(count)
-
-    class Configuration:
-        """Configuration data factory methods."""
-
-        @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
-            """Create configuration data dict."""
-            return FlextTestsDomains.create_configuration(**overrides)
-
-    class ServiceData:
-        """Service data factory methods."""
-
-        @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
-            """Create service data dict."""
-            return FlextTestsDomains.create_service(**overrides)
-
-    class PayloadData:
-        """Payload data factory methods."""
-
-        @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
-            """Create payload data dict."""
-            return FlextTestsDomains.create_payload(**overrides)
-
-    class Validation:
-        """Validation test cases."""
-
-        @staticmethod
-        def valid_email_cases() -> FlextTypes.Core.StringList:
-            """Return valid email test cases."""
-            return FlextTestsDomains.valid_email_cases()
-
-        @staticmethod
-        def invalid_email_cases() -> FlextTypes.Core.StringList:
-            """Return invalid email test cases."""
-            return FlextTestsDomains.invalid_email_cases()
-
-        @staticmethod
-        def valid_ages() -> list[int]:
-            """Return valid age test cases."""
-            return FlextTestsDomains.valid_ages()
-
-        @staticmethod
-        def invalid_ages() -> list[int]:
-            """Return invalid age test cases."""
-            return FlextTestsDomains.invalid_ages()
-
-    class Realistic:
-        """Realistic test data scenarios."""
-
-        @staticmethod
-        def user_registration_data() -> FlextTypes.Core.Dict:
-            """Create realistic user registration data."""
-            return FlextTestsDomains.user_registration_data()
-
-        @staticmethod
-        def order_data() -> FlextTypes.Core.Dict:
-            """Create realistic order data."""
-            return FlextTestsDomains.order_data()
-
-        @staticmethod
-        def api_response_data() -> FlextTypes.Core.Dict:
-            """Create realistic API response data."""
-            return FlextTestsDomains.api_response_data()
 
 
 # === REMOVED COMPATIBILITY ALIASES AND FACADES ===

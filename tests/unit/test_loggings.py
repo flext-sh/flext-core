@@ -213,24 +213,25 @@ class TestStructuredLogging:
             assert field in log_entry, f"Required field {field} missing"
 
         # Verify field values are correct type and content
-        assert log_entry["level"] == "INFO"
-        assert log_entry["message"] == "Test message"
-        assert log_entry["logger"] == "test_service"
-        assert isinstance(log_entry["correlation_id"], str)
-        assert len(log_entry["correlation_id"]) > 0
+        assert log_entry.get("level") == "INFO"
+        assert log_entry.get("message") == "Test message"
+        assert log_entry.get("logger") == "test_service"
+        correlation_id = log_entry.get("correlation_id")
+        assert isinstance(correlation_id, str)
+        assert len(correlation_id) > 0
 
         # Check service metadata exists and is structured
         assert "service" in log_entry
-        service_data = log_entry["service"]
+        service_data = log_entry.get("service", {})
         assert isinstance(service_data, dict)
-        assert service_data["name"] == "validation-test"
+        assert service_data.get("name") == "validation-test"
         assert "version" in service_data
         assert "instance_id" in service_data
         assert "environment" in service_data
 
         # Check system metadata exists and is populated
         assert "system" in log_entry
-        system_data = log_entry["system"]
+        system_data = log_entry.get("system", {})
         assert isinstance(system_data, dict)
         assert "hostname" in system_data
         assert "platform" in system_data
@@ -238,7 +239,7 @@ class TestStructuredLogging:
 
         # Check execution context exists
         assert "execution" in log_entry
-        execution_data = log_entry["execution"]
+        execution_data = log_entry.get("execution", {})
         assert isinstance(execution_data, dict)
 
     def test_timestamp_format_validation(self) -> None:
@@ -270,11 +271,11 @@ class TestStructuredLogging:
         log_entry = logger._build_log_entry("INFO", "Order processed", context_data)
 
         # Verify message is correctly set
-        assert log_entry["message"] == "Order processed"
+        assert log_entry.get("message") == "Order processed"
 
         # Verify context data is properly included and structured
         assert "context" in log_entry
-        context = log_entry["context"]
+        context = log_entry.get("context", {})
         assert isinstance(context, dict)
         assert context["order_id"] == "ORD-123"
         assert context["amount"] == 99.99
@@ -333,7 +334,7 @@ class TestCorrelationIdFunctionality:
 
         # Test that log entry includes correlation ID
         log_entry = logger._build_log_entry("INFO", "Test message with correlation")
-        assert log_entry["correlation_id"] == test_correlation_id
+        assert log_entry.get("correlation_id") == test_correlation_id
 
         # Test that real logging works with correlation ID
         try:
@@ -357,9 +358,9 @@ class TestCorrelationIdFunctionality:
         entry3 = logger._build_log_entry("ERROR", "Third message")
 
         # All entries should have the same correlation ID
-        assert entry1["correlation_id"] == test_correlation_id
-        assert entry2["correlation_id"] == test_correlation_id
-        assert entry3["correlation_id"] == test_correlation_id
+        assert entry1.get("correlation_id") == test_correlation_id
+        assert entry2.get("correlation_id") == test_correlation_id
+        assert entry3.get("correlation_id") == test_correlation_id
 
         # Test that real logging maintains correlation ID
         try:
@@ -536,7 +537,7 @@ class TestSecuritySanitization:
         log_entry = logger._build_log_entry("INFO", "Test message", sensitive_context)
         assert isinstance(log_entry, dict)
         assert "context" in log_entry
-        context = log_entry["context"]
+        context = log_entry.get("context", {})
         assert isinstance(context, dict)
         assert context["username"] == "john_doe"
         for key in sensitive_keys:
@@ -584,7 +585,7 @@ class TestSecuritySanitization:
 
         # Test that nested sanitization works in actual log building
         log_entry = logger._build_log_entry("INFO", "Test nested", nested_context)
-        context = log_entry["context"]
+        context = log_entry.get("context", {})
         nested_user = context["user"]
         assert isinstance(nested_user, dict)
         assert nested_user["name"] == "john"
@@ -616,7 +617,7 @@ class TestSecuritySanitization:
 
         # Verify log entry was built correctly
         assert "context" in log_entry
-        context = log_entry["context"]
+        context = log_entry.get("context", {})
         assert isinstance(context, dict)
 
         # Username should appear (not sensitive)
@@ -668,7 +669,7 @@ class TestErrorHandling:
 
             # Verify error details are included
             assert "error" in log_entry
-            error_info = log_entry["error"]
+            error_info = log_entry.get("error", {})
             assert isinstance(error_info, dict)
             assert error_info["type"] == "ValueError"
             assert isinstance(error_info["message"], str)
@@ -707,7 +708,7 @@ class TestErrorHandling:
 
             # Verify stack trace information is captured
             assert "error" in log_entry
-            error_info = log_entry["error"]
+            error_info = log_entry.get("error", {})
             assert isinstance(error_info, dict)
             assert error_info["type"] == "RuntimeError"
             assert isinstance(error_info["message"], str)
@@ -751,17 +752,17 @@ class TestErrorHandling:
 
         # Verify log entry structure is correct
         assert isinstance(log_entry, dict)
-        assert log_entry["level"] == "ERROR"
-        assert log_entry["message"] == "Business rule violation"
+        assert log_entry.get("level") == "ERROR"
+        assert log_entry.get("message") == "Business rule violation"
         assert "context" in log_entry
-        context = log_entry["context"]
+        context = log_entry.get("context", {})
         assert isinstance(context, dict)
         assert context["rule"] == "max_daily_limit"
         assert context["current_amount"] == 1500
         assert context["limit"] == 1000
 
         # Verify no error object is present when none provided
-        assert "error" not in log_entry or log_entry["error"] is None
+        assert "error" not in log_entry or log_entry.get("error", {}) is None
 
 
 class TestRequestContextManagement:
@@ -790,7 +791,7 @@ class TestRequestContextManagement:
         log_entry = logger._build_log_entry("INFO", "Processing request")
         assert isinstance(log_entry, dict)
         assert "request" in log_entry
-        request_data = log_entry["request"]
+        request_data = log_entry.get("request", {})
         assert isinstance(request_data, dict)
         assert request_data["request_id"] == "req_123"
         assert request_data["user_id"] == "user_456"
@@ -906,9 +907,9 @@ class TestLoggerConfiguration:
             "INFO", "JSON test message", {"field1": "value1", "field2": 123}
         )
 
-        assert log_entry["message"] == "JSON test message"
+        assert log_entry.get("message") == "JSON test message"
         assert "context" in log_entry
-        context = log_entry["context"]  # narrow
+        context = log_entry.get("context", {})  # narrow
         assert context["field1"] == "value1"
         assert context["field2"] == 123
 
@@ -930,9 +931,9 @@ class TestLoggerConfiguration:
             "INFO", "Console test message", {"debug_info": "useful"}
         )
 
-        assert log_entry["message"] == "Console test message"
+        assert log_entry.get("message") == "Console test message"
         assert "context" in log_entry
-        assert log_entry["context"]["debug_info"] == "useful"
+        assert log_entry.get("context", {})["debug_info"] == "useful"
 
     def test_structured_processor_functionality(self) -> None:
         """Test that structured processors are working."""
@@ -951,7 +952,7 @@ class TestLoggerConfiguration:
 
         # Test that correlation ID is properly included in log entries
         log_entry = logger._build_log_entry("INFO", "Processor test")
-        assert log_entry["correlation_id"] == test_correlation
+        assert log_entry.get("correlation_id") == test_correlation
 
 
 class TestConvenienceFunctions:
@@ -1039,12 +1040,12 @@ class TestLoggingLevels:
         )
 
         # Verify all entries have correct levels
-        assert trace_entry["level"] == "TRACE"
-        assert debug_entry["level"] == "DEBUG"
-        assert info_entry["level"] == "INFO"
-        assert warning_entry["level"] == "WARNING"
-        assert error_entry["level"] == "ERROR"
-        assert critical_entry["level"] == "CRITICAL"
+        assert trace_entry.get("level") == "TRACE"
+        assert debug_entry.get("level") == "DEBUG"
+        assert info_entry.get("level") == "INFO"
+        assert warning_entry.get("level") == "WARNING"
+        assert error_entry.get("level") == "ERROR"
+        assert critical_entry.get("level") == "CRITICAL"
 
     def test_level_filtering(self) -> None:
         """Test that level filtering works correctly using real functionality."""
@@ -1073,10 +1074,10 @@ class TestLoggingLevels:
         critical_entry = logger._build_log_entry("CRITICAL", "Should appear")
 
         # All entries should be built correctly (filtering happens at output level)
-        assert trace_entry["level"] == "TRACE"
-        assert warning_entry["level"] == "WARNING"
-        assert error_entry["level"] == "ERROR"
-        assert critical_entry["level"] == "CRITICAL"
+        assert trace_entry.get("level") == "TRACE"
+        assert warning_entry.get("level") == "WARNING"
+        assert error_entry.get("level") == "ERROR"
+        assert critical_entry.get("level") == "CRITICAL"
 
 
 class TestRealWorldScenarios:
@@ -1201,9 +1202,9 @@ class TestRealWorldScenarios:
             {"item_id": "item_0", "batch_id": "batch_001", "sequence": 0},
         )
 
-        assert sample_entry["message"] == "Processing item 0"
+        assert sample_entry.get("message") == "Processing item 0"
         assert "context" in sample_entry
-        context = sample_entry["context"]
+        context = sample_entry.get("context", {})
         assert context["item_id"] == "item_0"
         assert context["batch_id"] == "batch_001"
         assert context["sequence"] == 0
@@ -1252,7 +1253,7 @@ class TestLoggingConfiguration:
         # Test that bound logger includes context in log entries
         log_entry = bound_logger._build_log_entry("INFO", "Test bound logging")
         assert "request" in log_entry
-        request_data = log_entry["request"]
+        request_data = log_entry.get("request", {})
         assert request_data["user_id"] == "123"
         assert request_data["operation"] == "test"
 
@@ -1350,8 +1351,8 @@ class TestAdvancedLoggingFeatures:
 
         entry = logger._build_log_entry("INFO", "Test uptime", {})
 
-        execution_data = entry["execution"]
-        uptime = execution_data["uptime_seconds"]
+        execution_data = entry.get("execution", {})
+        uptime = execution_data.get("uptime_seconds", 0)
 
         # Should be a positive number
         assert isinstance(uptime, (int, float))
@@ -1825,7 +1826,7 @@ class TestCoverageTargetedTests:
 
         # Verify correlation ID is maintained in log entries
         log_entry = logger._build_log_entry("INFO", "Test correlation processor")
-        assert log_entry["correlation_id"] == test_correlation
+        assert log_entry.get("correlation_id") == test_correlation
 
     def test_edge_cases_for_remaining_coverage(self) -> None:
         """Test remaining edge cases to push coverage over 95%."""
@@ -1873,8 +1874,8 @@ class TestCoverageTargetedTests:
         # Test that log entry building includes permanent context
         log_entry = logger._build_log_entry("INFO", "Test with permanent context")
         assert "permanent" in log_entry
-        assert log_entry["permanent"]["app_version"] == "1.0.0"
-        assert log_entry["permanent"]["deployment"] == "test"
+        assert log_entry.get("permanent", {})["app_version"] == "1.0.0"
+        assert log_entry.get("permanent", {})["deployment"] == "test"
 
     def test_string_error_handling_coverage(self) -> None:
         """Test string error handling to cover line 385."""
@@ -1892,9 +1893,9 @@ class TestCoverageTargetedTests:
             "ERROR", "String error occurred", error="This is a string error"
         )
         assert "error" in log_entry
-        assert log_entry["error"]["type"] == "StringError"
-        assert log_entry["error"]["message"] == "This is a string error"
-        assert log_entry["error"]["stack_trace"] is None
+        assert log_entry.get("error", {})["type"] == "StringError"
+        assert log_entry.get("error", {})["message"] == "This is a string error"
+        assert log_entry.get("error", {})["stack_trace"] is None
 
     def test_frame_exception_handling_coverage(self) -> None:
         """Test frame exception handling to cover lines 411-412, 419-420."""
@@ -1911,7 +1912,7 @@ class TestCoverageTargetedTests:
         log_entry = logger._build_log_entry("INFO", "Test normal frame handling")
         # Real logging should have proper execution context
         assert "execution" in log_entry
-        execution_context = log_entry["execution"]
+        execution_context = log_entry.get("execution", {})
         # Real frame access should work normally
         if "function" in execution_context:
             assert isinstance(execution_context["function"], str)
@@ -1998,7 +1999,7 @@ class TestCoverageTargetedTests:
         )
         # Bound context data should be in the request field
         assert "request" in log_entry
-        request_data = log_entry["request"]
+        request_data = log_entry.get("request", {})
         assert "complex_data" in request_data
         assert "simple_str" in request_data
 
@@ -2078,7 +2079,7 @@ class TestCoverageTargetedTests:
         assert "request" in log_entry, (
             f"request field not found in log_entry: {list(log_entry.keys())}"
         )
-        request_context = log_entry["request"]
+        request_context = log_entry.get("request", {})
         context_repr = (
             list(request_context.keys())
             if isinstance(request_context, dict)

@@ -38,10 +38,7 @@ class FlextTestsFactories:
             """Create user data with optional overrides."""
             return FlextTestsDomains.create_user(**overrides)
 
-        @staticmethod
-        def build(**overrides: object) -> FlextTypes.Core.Dict:
-            """Build user data (alias for create)."""
-            return FlextTestsDomains.create_user(**overrides)
+        # build method removed - use create directly per FLEXT architectural principles
 
         @staticmethod
         def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
@@ -61,6 +58,9 @@ class FlextTestsFactories:
             defaults = {"active": False, "name": "Inactive User"}
             defaults.update(overrides)
             return FlextTestsDomains.create_user(**defaults)
+
+        # Alias methods removed - use REDACTED_LDAP_BIND_PASSWORD_user, inactive_user, create_batch directly
+        # per FLEXT architectural principles
 
     # =========================================================================
     # CONFIG FACTORIES - Configuration data creation
@@ -300,15 +300,15 @@ class FlextTestsFactories:
                 return FlextResult[FlextTypes.Core.Dict].ok(user_data)
             return FlextResult[FlextTypes.Core.Dict].fail("User creation failed")
 
+        # Alias methods removed - use success_result, failure_result directly
+        # per FLEXT architectural principles
+
     # =========================================================================
     # ALIASES FOR BACKWARD COMPATIBILITY
     # =========================================================================
 
-    # Aliases for test compatibility
-    User = UserFactory
-    Config = ConfigFactory
-    Result = ResultFactory
-    FlextResult = ResultFactory
+    # Aliases removed - use direct class access per FLEXT architectural principles
+    # Use UserFactory, ConfigFactory, ResultFactory directly
 
 
 # Export main factory class

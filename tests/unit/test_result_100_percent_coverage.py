@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Any, cast
+from typing import cast
 from unittest.mock import Mock
 
 import pytest
@@ -32,23 +32,22 @@ class TestFlextResultCompleteCoverage:
         assert result_success._is_success_state(None) is False
         assert result_failure._is_success_state("value") is False
 
-    def test_error_message_property_alias(self) -> None:
-        """Test error_message property alias."""
+    def test_error_property_access(self) -> None:
+        """Test error property access."""
         result = FlextResult[str].fail("test error")
-        assert result.error_message == "test error"
+        assert result.error == "test error"
 
         success_result = FlextResult[str].ok("value")
-        assert success_result.error_message is None
+        assert success_result.error is None
 
-    def test_metadata_property_alias(self) -> None:
-        """Test metadata property alias for error_data."""
+    def test_error_data_property_access(self) -> None:
+        """Test error_data property access."""
         error_data = {"key": "value", "code": 404}
         result = FlextResult[str].fail("error", error_data=error_data)
 
-        assert result.metadata == error_data
         assert result.error_data == error_data
-        # They should be the same object
-        assert result.metadata is result.error_data
+        # Test the property is accessible
+        assert result.error_data == error_data
 
     def test_fail_with_empty_error_normalization(self) -> None:
         """Test fail method with empty/whitespace error normalization."""
@@ -258,9 +257,9 @@ class TestFlextResultCompleteCoverage:
 
     def test_hash_with_non_hashable_data(self) -> None:
         """Test __hash__ method with non-hashable data types."""
-        # Test with dict (non-hashable)
-        dict_data = {"key": "value", "nested": {"inner": "data"}}
-        result_with_dict = FlextResult[dict[str, Any]].ok(dict_data)
+        # Test with dict (non-hashable) - use cast to satisfy MyPy variance
+        dict_data: dict[str, object] = {"key": "value", "nested": {"inner": "data"}}
+        result_with_dict = FlextResult[dict[str, object]].ok(dict_data)
 
         # Should not raise exception and return consistent hash
         hash1 = hash(result_with_dict)
@@ -281,7 +280,7 @@ class TestFlextResultCompleteCoverage:
         # Test with complex object without __dict__
         mock_obj = Mock()
         del mock_obj.__dict__  # Remove __dict__ to test fallback
-        result_with_mock = FlextResult[Any].ok(mock_obj)
+        result_with_mock = FlextResult[Mock].ok(mock_obj)
         mock_hash = hash(result_with_mock)
         assert isinstance(mock_hash, int)
 

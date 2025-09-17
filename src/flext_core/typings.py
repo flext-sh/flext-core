@@ -15,49 +15,9 @@ from collections.abc import (
 )
 from typing import Literal, ParamSpec, TypeVar
 
-# Type alias for Optional to avoid Union syntax
-type Optional[T] = T | None
-
-# Common ecosystem-wide generic parameters (exported)
-T = TypeVar("T")
-U = TypeVar("U")
-V = TypeVar("V")
-R = TypeVar("R")
-E = TypeVar("E")
-F = TypeVar("F")
-K = TypeVar("K")  # Key type variable
-P = ParamSpec("P")
-T_co = TypeVar("T_co", covariant=True)
-T_contra = TypeVar("T_contra", contravariant=True)
-
 
 class FlextTypes:
     """Hierarchical type system for FLEXT types."""
-
-    # TYPE COMPLEXITY: Still complex with 10+ specialized TypeVars and hierarchical organization
-    # Most projects need just T, U, V - not 10 specialized domain-specific type variables
-
-    # =========================================================================
-
-    # =========================================================================
-
-    class TypeVars:
-        """Generic type variables for ecosystem-wide use."""
-
-        # Specialized TypeVars providing 10 specific type variables for different use cases
-        # TEntity, TValueObject, TAggregate etc. are premature domain abstractions
-
-        # Specialized type variables
-        TEntity = TypeVar("TEntity")  # Entity types
-        TValueObject = TypeVar("TValueObject")  # Value object types
-        TAggregate = TypeVar("TAggregate")  # Aggregate root types
-        TMessage = TypeVar("TMessage")  # Message types for handlers
-        TRequest = TypeVar("TRequest")  # Request types
-        TResponse = TypeVar("TResponse")  # Response types
-        TCommand = TypeVar("TCommand")  # Command types for CQRS
-        TQuery = TypeVar("TQuery")  # Query types for CQRS
-        TResult = TypeVar("TResult")  # Result types for handlers
-        TEntry = TypeVar("TEntry")  # Entry types for schema processing
 
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
@@ -65,6 +25,9 @@ class FlextTypes:
 
     class Core:
         """Core fundamental types used across flext-core modules."""
+
+        # Type alias for Optional to avoid Union syntax
+        type Optional[T] = T | None
 
         # Basic functional types - use typing imports directly in code
 
@@ -142,7 +105,7 @@ class FlextTypes:
         type DomainEvent = dict[str, object]
 
     # =========================================================================
-    # SERVICE TYPES - Service layer patterns - REFACTORED with Pydantic 2.11+ & Python 3.13+
+    # SERVICE TYPES - Service layer patterns - with Pydantic 2.11+ & Python 3.13+
     # =========================================================================
 
     class Service:
@@ -221,7 +184,7 @@ class FlextTypes:
         type ConfigSerializer = Callable[[ConfigDict], str]
 
     # =========================================================================
-    # MODELS TYPES - Models system types - REFACTORED with Pydantic 2.11+ & Python 3.13+
+    # MODELS TYPES - Models system types - with Pydantic 2.11+ & Python 3.13+
     # =========================================================================
 
     class Models:
@@ -281,16 +244,24 @@ class FlextTypes:
         type PerformanceLevel = Literal["low", "balanced", "high", "extreme"]
 
     class Commands:
-        """Command types for core.py compatibility."""
+        """CQRS Command and Query types for Flext CQRS components."""
 
-        # DUPLICATE: Same ConfigValue definition as Aggregates, Core, Models - consolidate this!
+        # Handler function types (avoiding FlextResult to prevent circular imports)
+        type CommandHandlerFunc[T, R] = Callable[[T], R]
+        type QueryHandlerFunc[T, R] = Callable[[T], R]
 
-        type CommandsConfigDict = dict[
+        # Bus configuration types
+        type BusConfig = dict[
             str, str | int | float | bool | list[object] | dict[str, object]
         ]
-        type CommandsConfig = dict[
+        type MiddlewareConfig = dict[
             str, str | int | float | bool | list[object] | dict[str, object]
         ]
+        type HandlerRegistry = dict[str, object]
+
+        # Command/Query metadata types
+        type CommandMetadata = dict[str, str | int | float | bool | None]
+        type QueryMetadata = dict[str, str | int | float | bool | None]
 
     class Container:
         """Container types for core.py compatibility."""
@@ -320,14 +291,81 @@ class FlextTypes:
         type ResultValue = object
 
 
+# =========================================================================
+# BACKWARD COMPATIBILITY EXPORTS - Maintain ecosystem compatibility
+# =========================================================================
+
+# Export TypeVars for backward compatibility (32+ projects depend on these)
+# Note: Direct assignment to maintain proper TypeVar types for MyPy
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+R = TypeVar("R")
+E = TypeVar("E")
+F = TypeVar("F")
+K = TypeVar("K")
+P = ParamSpec("P")
+T_co = TypeVar("T_co", covariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)
+
+MessageT = TypeVar("MessageT")
+ResultT = TypeVar("ResultT")
+T_Service = TypeVar("T_Service")
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+TAggregate = TypeVar("TAggregate")
+TCommand = TypeVar("TCommand")
+TDomain = TypeVar("TDomain")
+TDomainResult = TypeVar("TDomainResult")
+TEntity = TypeVar("TEntity")
+TEntry = TypeVar("TEntry")
+TInput_contra = TypeVar("TInput_contra", contravariant=True)
+TItem = TypeVar("TItem")
+TMessage = TypeVar("TMessage")
+TOutput_co = TypeVar("TOutput_co", covariant=True)
+TQuery = TypeVar("TQuery")
+TRequest = TypeVar("TRequest")
+TResponse = TypeVar("TResponse")
+TResult = TypeVar("TResult")
+TUtil = TypeVar("TUtil")
+TValueObject = TypeVar("TValueObject")
+
+
+# Export Optional type alias for backward compatibility
+# Re-export the type alias from FlextTypes.Core to maintain backward compatibility
+type Optional[T] = FlextTypes.Core.Optional[T]
+
+
 __all__: list[str] = [
+    "T1",
+    "T2",
+    "T3",
     "E",
     "F",
     "FlextTypes",
     "K",
+    "Optional",
     "P",
     "R",
     "T",
+    "TAggregate",
+    "TCommand",
+    "TDomain",
+    "TDomainResult",
+    "TEntity",
+    "TEntry",
+    "TInput_contra",
+    "TItem",
+    "TMessage",
+    "TOutput_co",
+    "TQuery",
+    "TRequest",
+    "TResponse",
+    "TResult",
+    "TUtil",
+    "TValueObject",
+    "T_Service",
     "T_co",
     "T_contra",
     "U",

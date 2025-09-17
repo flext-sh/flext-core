@@ -2,13 +2,13 @@
 
 ## Task Completion Protocol (MANDATORY)
 
-### 1. Before Any Code Change
+### 1. Before object Code Change
 ```bash
 # Always validate current state first
 make check                 # Quick lint + type check
 ```
 
-### 2. After Any Code Change  
+### 2. After object Code Change  
 ```bash
 # MANDATORY: Run after editing any file
 make lint                  # Fix ALL ruff issues before continuing
