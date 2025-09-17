@@ -38,7 +38,7 @@ FLEXT-Core serves as the architectural foundation for all 45+ FLEXT ecosystem pr
 | **FlextContainer**  | 🟢 Complete   | Dependency injection singleton container |
 | **FlextConfig**     | 🟢 Complete   | Environment-aware configuration management |
 | **Domain Patterns** | 🟢 Complete   | DDD Entity/Value/Aggregate implementations |
-| **FlextValidations**| 🟢 Complete   | Predicate-based validation system |
+| **FlextUtilities**| 🟢 Complete   | Validation utilities in FlextUtilities |
 | **FlextAdapters**   | 🟢 Minimal    | Simplified type adaptation (22 lines, intentional design) |
 
 > **Status**: 🔴 Critical | 🟡 Partial | 🟢 Complete

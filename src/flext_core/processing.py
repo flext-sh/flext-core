@@ -1,6 +1,7 @@
 """FlextProcessing - Simple unified processing for FLEXT.
 
-Just what's needed, no over-engineering.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

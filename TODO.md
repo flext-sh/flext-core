@@ -18,8 +18,8 @@ Based on comprehensive `src/` analysis and workspace documentation review:
 | **FlextContainer** | 477 | 92% | ✅ Production | DI container ecosystem-proven |
 | **FlextModels** | 178 | 100% | ✅ Production | DDD patterns complete |
 | **FlextConfig** | 553 | 89% | ✅ Production | Pydantic integration solid |
-| **FlextValidations** | 536 | 93% | ✅ Production | Type validation working |
-| **FlextCommands** | 417 | 97% | ✅ Production | CQRS implementation |
+| **FlextUtilities** | 536 | 93% | ✅ Production | Validation utilities in FlextUtilities |
+| **FlextCqrs** | 417 | 97% | ✅ Production | CQRS implementation |
 | **FlextTypeAdapters** | 22 | 100% | ✅ Minimal | Intentionally simplified |
 
 **Total**: 18,295 lines across 34 files

@@ -19,16 +19,15 @@ from typing import cast, get_origin
 import pytest
 
 from flext_core import (
-    FlextCommands,
     FlextConfig,
     FlextConstants,
     FlextContainer,
+    FlextCqrs,
     FlextExceptions,
-    FlextFields,
+    FlextHandlers,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValidations,
 )
 
 
@@ -52,9 +51,8 @@ class TestFlextCoreWildcardExports:
             "FlextTypes": "Type system and protocol definitions",
             "FlextConfig": "Configuration management system",
             "FlextContainer": "Dependency injection container",
-            "FlextFields": "Pydantic field extensions",
-            "FlextValidations": "Validation system",
-            "FlextCommands": "Command pattern implementations",
+            "FlextCqrs": "CQRS utilities",
+            "FlextHandlers": "Handlers for CQRS patterns",
         }
 
         # Verify each essential module is available in globals
@@ -131,10 +129,10 @@ class TestFlextCoreWildcardExports:
         assert isinstance(invalid_msg, str)
         assert len(invalid_msg) > 0
 
-        # Test pattern constants
-        email_pattern = FlextConstants.Patterns.EMAIL_PATTERN
-        assert isinstance(email_pattern, str)
-        assert "@" in email_pattern
+        # Test config constants
+        environments = FlextConstants.Config.ENVIRONMENTS
+        assert isinstance(environments, list)
+        assert "development" in environments
 
     def test_flext_exceptions_functionality(self) -> None:
         """Test that FlextExceptions work correctly after wildcard import."""
@@ -188,40 +186,14 @@ class TestFlextCoreWildcardExports:
         assert resolved_result.success
         assert resolved_result.value == "test_value"
 
-    def test_flext_fields_functionality(self) -> None:
-        """Test that FlextFields work after wildcard import."""
-        # Test field validation functions (current API)
-        assert hasattr(FlextFields, "validate_email")
-        assert hasattr(FlextFields, "validate_uuid")
-        assert hasattr(FlextFields, "validate_url")
-        assert hasattr(FlextFields, "validate_phone")
-
-        # Test that validation functions work - use FlextValidations instead
-
-        email_result = FlextValidations.validate_email("test@example.com")
-        assert email_result.is_success
-
-    def test_flext_validation_functionality(self) -> None:
-        """Test that FlextValidations works after wildcard import."""
-        # Test validation decorators and functions
-        assert hasattr(FlextValidations, "Rules")
-        assert hasattr(FlextValidations, "Validators")
-
-        # Test basic validation
-        guard_result = FlextValidations.validate_non_empty_string_func("test")
-        assert guard_result is True
-
-        empty_result = FlextValidations.validate_non_empty_string_func("")
-        assert empty_result is False
-
     def test_flext_commands_functionality(self) -> None:
-        """Test that FlextCommands work after wildcard import."""
+        """Test that CQRS components work after wildcard import."""
         # Test command pattern components
-        assert hasattr(FlextCommands, "Models") or hasattr(FlextCommands, "Bus")
+        assert hasattr(FlextCqrs, "Results") or hasattr(FlextCqrs, "Factories")
 
-        # Test command functionality
-        assert hasattr(FlextCommands, "Handlers") or hasattr(FlextCommands, "Protocols")
-        # FlextCommands provides command patterns
+        # Test handler functionality
+        assert hasattr(FlextHandlers, "handle") or hasattr(FlextHandlers, "execute")
+        # CQRS components provide command patterns
 
     def test_no_import_duplications(self) -> None:
         """Test that there are no duplicate exports in wildcard import."""
@@ -265,9 +237,8 @@ class TestFlextCoreWildcardExports:
             "Types",  # FlextTypes
             "Config",  # FlextConfig
             "Container",  # FlextContainer
-            "Fields",  # FlextFields
-            "Validation",  # FlextValidations
-            "Commands",  # FlextCommands
+            "Handler",  # FlextHandler, FlextQueryHandler
+            "Cqrs",  # FlextCqrs for CQRS patterns
         ]
 
         exported_names = [name for name in globals() if not name.startswith("_")]
@@ -294,9 +265,8 @@ class TestFlextCoreIntegrationScenarios:
                 "status": "started",
             },
         )
-        validation_result = FlextValidations.validate_non_empty_string_func(
-            operation_id,
-        )
+        # FlextValidations was completely removed - using direct validation
+        validation_result = bool(operation_id and operation_id.strip())
 
         assert validation_result is True
         assert result.success is True
@@ -333,11 +303,9 @@ class TestFlextCoreIntegrationScenarios:
 
     def test_error_handling_integration(self) -> None:
         """Test error handling across multiple components."""
-        # Test validation error propagation
+        # FlextValidations was completely removed - using direct validation
         invalid_data = ""
-        validation_result = FlextValidations.validate_non_empty_string_func(
-            invalid_data,
-        )
+        validation_result = bool(invalid_data and invalid_data.strip())
 
         assert validation_result is False
 

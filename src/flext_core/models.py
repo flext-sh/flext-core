@@ -10,9 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+import re
+import warnings
 from collections import UserString
 from datetime import UTC, datetime
-from typing import Generic, cast
+from pathlib import Path
+from typing import Generic, Literal, cast
+from urllib.parse import urlparse
 
 from pydantic import (
     BaseModel,
@@ -23,6 +27,7 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core.config import FlextConfig
 from flext_core.result import FlextResult
 from flext_core.typings import T
 from flext_core.utilities import FlextUtilities
@@ -70,7 +75,12 @@ class FlextModels:
             return hash(self.id)
 
     class Value(BaseModel):
-        """Immutable value object."""
+        """Domain-Driven Design Value Object base class.
+
+        Value objects are immutable objects that represent descriptive aspects
+        of the domain with no conceptual identity. They are compared by value
+        rather than identity and should be side-effect free.
+        """
 
         model_config = ConfigDict(frozen=True)
 
@@ -158,45 +168,238 @@ class FlextModels:
                 return FlextResult[bool].fail("Query type is required")
             return FlextResult[bool].ok(data=True)
 
+    class CqrsCommand(Command):
+        """Enhanced Command model with CQRS-specific functionality."""
+
+        @model_validator(mode="before")
+        @classmethod
+        def _ensure_command_type(cls, data: object) -> object:
+            """Populate command_type based on class name if missing."""
+            if not isinstance(data, dict):
+                return data
+            if "command_type" not in data or not data.get("command_type"):
+                name = cls.__name__
+                base = name.removesuffix("Command")
+                s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
+                data["command_type"] = re.sub(
+                    r"([a-z0-9])([A-Z])", r"\1_\2", s1
+                ).lower()
+            return data
+
+        @property
+        def id(self) -> str:
+            """Get command ID (alias for command_id)."""
+            return self.command_id
+
+        def get_command_type(self) -> str:
+            """Get command type derived from class name."""
+            name = self.__class__.__name__
+            base = name.removesuffix("Command")
+            s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
+            return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+
+    class CqrsQuery(Query):
+        """Enhanced Query model with CQRS-specific functionality."""
+
+        @model_validator(mode="before")
+        @classmethod
+        def _ensure_query_type(cls, data: object) -> object:
+            """Populate query_type based on class name if missing."""
+            if not isinstance(data, dict):
+                return data
+            if "query_type" not in data or not data.get("query_type"):
+                name = cls.__name__
+                base = name.removesuffix("Query")
+                s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
+                data["query_type"] = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+            return data
+
+        @property
+        def id(self) -> str:
+            """Get query ID (alias for query_id)."""
+            return self.query_id
+
+    class CqrsConfig:
+        """Centralized CQRS configuration schemas."""
+
+        model_config = ConfigDict(extra="ignore", validate_assignment=True)
+
+        class Handler(BaseModel):
+            """Configuration schema for CQRS handlers."""
+
+            handler_id: str = Field(..., min_length=1)
+            handler_name: str = Field(..., min_length=1)
+            handler_type: Literal["command", "query"] = Field(default="command")
+            enabled: bool = Field(default=True)
+            metadata: dict[str, object] = Field(default_factory=dict)
+
+            model_config = ConfigDict(
+                extra="ignore",
+                validate_assignment=True,
+                str_strip_whitespace=True,
+            )
+
+            @model_validator(mode="after")
+            def _ensure_metadata(self) -> FlextModels.CqrsConfig.Handler:
+                if not self.metadata:
+                    object.__setattr__(self, "metadata", {})
+                return self
+
+        @staticmethod
+        def create_handler_config(
+            *,
+            handler_type: Literal["command", "query"],
+            default_name: str,
+            default_id: str | None,
+            handler_config: Handler | dict[str, object] | None,
+            command_timeout: int = 0,
+            max_command_retries: int = 0,
+        ) -> Handler:
+            """Build validated handler configuration."""
+            if isinstance(handler_config, FlextModels.CqrsConfig.Handler):
+                if handler_config.handler_type == handler_type:
+                    return handler_config
+                return handler_config.model_copy(update={"handler_type": handler_type})
+
+            metadata_defaults: dict[str, object] = {
+                "command_timeout": command_timeout,
+                "max_command_retries": max_command_retries,
+            }
+
+            overrides: dict[str, object]
+            overrides = dict(handler_config) if isinstance(handler_config, dict) else {}
+
+            overrides.pop("handler_type", None)
+
+            resolved_id = overrides.pop(
+                "handler_id",
+                default_id or FlextUtilities.Generators.generate_id(),
+            )
+            resolved_name = overrides.pop("handler_name", default_name)
+            enabled_value = overrides.pop("enabled", True)
+
+            metadata_override_raw = overrides.pop("metadata", {})
+            metadata_override = (
+                dict(metadata_override_raw)
+                if isinstance(metadata_override_raw, dict)
+                else {}
+            )
+            metadata_payload = {**metadata_defaults, **metadata_override}
+
+            payload = {
+                "handler_id": resolved_id,
+                "handler_name": resolved_name,
+                "handler_type": handler_type,
+                "enabled": bool(enabled_value),
+                "metadata": metadata_payload,
+            }
+            payload.update(overrides)
+
+            return FlextModels.CqrsConfig.Handler.model_validate(payload)
+
+        class Bus(BaseModel):
+            """Configuration schema for CQRS bus pipeline."""
+
+            enable_middleware: bool = Field(default=True)
+            enable_metrics: bool = Field(default=True)
+            enable_caching: bool = Field(default=True)
+            execution_timeout: int = Field(
+                default=30,
+                ge=1,
+                le=600,
+                description="Middleware execution timeout in seconds",
+            )
+            max_cache_size: int = Field(
+                default=1000,
+                ge=10,
+                le=100000,
+                description="Maximum cached query results",
+            )
+            implementation_path: str = Field(
+                default="flext_core.bus:FlextBus",
+                description="Import path for command bus implementation (module:Class)",
+                min_length=3,
+            )
+
+            model_config = ConfigDict(
+                extra="ignore",
+                validate_assignment=True,
+            )
+
+            @model_validator(mode="after")
+            def _validate_path(self) -> FlextModels.CqrsConfig.Bus:
+                if ":" not in self.implementation_path:
+                    msg = "implementation_path must be in 'module:Class' format"
+                    raise ValueError(msg)
+                return self
+
+        @staticmethod
+        def create_bus_config(
+            bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None,
+            *,
+            enable_middleware: bool = True,
+            enable_metrics: bool = True,
+            enable_caching: bool = True,
+            execution_timeout: int = 30,
+            max_cache_size: int = 1000,
+            implementation_path: str = "flext_core.bus:FlextBus",
+        ) -> FlextModels.CqrsConfig.Bus:
+            """Build validated bus configuration."""
+            if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
+                return bus_config
+
+            defaults: dict[str, object] = {
+                "enable_middleware": enable_middleware,
+                "enable_metrics": enable_metrics,
+                "enable_caching": enable_caching,
+                "execution_timeout": execution_timeout,
+                "max_cache_size": max_cache_size,
+                "implementation_path": implementation_path,
+            }
+
+            overrides: dict[str, object]
+            overrides = dict(bus_config) if isinstance(bus_config, dict) else {}
+
+            payload = {**defaults, **overrides}
+            return FlextModels.CqrsConfig.Bus.model_validate(payload)
+
     class EmailAddress(RootModel[str]):
-        """Email address value object, supporting RootModel and value alias."""
+        """Email address value object with simplified validation."""
 
         root: str
 
         @model_validator(mode="before")
         @classmethod
         def _coerce_input(cls, v: str | dict[str, str]) -> str:
-            # Support constructing with {"value": "..."} for back-compat by prefixing
+            """Simplified input coercion with backward compatibility."""
             if isinstance(v, dict) and "value" in v and isinstance(v["value"], str):
-                return f"__bypass__::{v['value']}"
+                # Direct return for backward compatibility - no complex bypass mechanism
+                return v["value"]
             if isinstance(v, str):
                 return v
-            # Fallback for unexpected types
             return str(v)
 
         @model_validator(mode="after")
         def _validate_email(self) -> FlextModels.EmailAddress:
+            """Simplified email validation."""
             email = self.root
-            # If constructed via back-compat path, skip strict validation and strip prefix
-            bypass_prefix = "__bypass__::"
-            if isinstance(email, str) and email.startswith(bypass_prefix):
-                object.__setattr__(self, "root", email[len(bypass_prefix) :])
-                return self
+            error_msg = "Invalid email format"
+
+            # Basic email validation - simplified from complex logic
             if email.count("@") != 1:
-                error_msg = "Invalid email format"
                 raise ValueError(error_msg)
+
             local, domain = email.split("@", 1)
             if not local or not domain:
-                error_msg = "Invalid email format"
                 raise ValueError(error_msg)
+
             if "." not in domain or domain.startswith(".") or domain.endswith("."):
-                error_msg = "Invalid email format"
                 raise ValueError(error_msg)
+
             return self
 
-        # Back-compat alias for previous Value-based API
         @property
-        def value(self) -> str:  # pragma: no cover - trivial alias
+        def value(self) -> str:
             """Return the email address value for backward compatibility."""
             return self.root
 
@@ -293,13 +496,13 @@ class FlextModels:
             return FlextResult["FlextModels.Metadata"].ok(cls(value=metadata))
 
     class Url(Value):
-        """URL value object."""
+        """URL value object with enhanced HTTP validation using Pydantic v2."""
 
         value: str
 
         @classmethod
         def create(cls, url: str) -> FlextResult[FlextModels.Url]:
-            """Create URL with validation."""
+            """Create URL with basic validation."""
             if not url or not url.strip():
                 return FlextResult["FlextModels.Url"].fail("URL cannot be empty")
 
@@ -315,6 +518,92 @@ class FlextModels:
                 )
 
             return FlextResult["FlextModels.Url"].ok(cls(value=url))
+
+        @classmethod
+        def create_http_url(
+            cls, url: str, *, max_length: int = 2048, max_port: int = 65535
+        ) -> FlextResult[FlextModels.Url]:
+            """Create URL with HTTP-specific validation using Pydantic v2 patterns.
+
+            Args:
+                url: URL string to validate
+                max_length: Maximum URL length (default: 2048)
+                max_port: Maximum port number (default: 65535)
+
+            Returns:
+                FlextResult containing validated URL or error message
+
+            """
+            # First use basic validation
+            base_result = cls.create(url)
+            if base_result.is_failure:
+                return base_result
+
+            # Additional HTTP-specific validation
+            try:
+                parsed = urlparse(url)
+
+                # Port validation
+                if parsed.port is not None:
+                    port = parsed.port
+                    if port == 0:
+                        return FlextResult["FlextModels.Url"].fail("Invalid port 0")
+                    if port > max_port:
+                        return FlextResult["FlextModels.Url"].fail(
+                            f"Invalid port {port}"
+                        )
+
+                # URL length validation
+                if len(url) > max_length:
+                    return FlextResult["FlextModels.Url"].fail("URL is too long")
+
+            except Exception as e:
+                return FlextResult["FlextModels.Url"].fail(f"URL parsing failed: {e}")
+
+            return base_result
+
+        def get_port(self) -> int | None:
+            """Get port from URL using urlparse."""
+            try:
+                parsed = urlparse(self.value)
+                return parsed.port
+            except Exception:
+                return None
+
+        def get_scheme(self) -> str:
+            """Get scheme from URL."""
+            try:
+                parsed = urlparse(self.value)
+                return parsed.scheme or ""
+            except Exception:
+                return ""
+
+        def get_hostname(self) -> str:
+            """Get hostname from URL."""
+            try:
+                parsed = urlparse(self.value)
+                return parsed.hostname or ""
+            except Exception:
+                return ""
+
+        def normalize(self) -> FlextResult[FlextModels.Url]:
+            """Normalize URL by removing trailing slash (except for scheme-only URLs)."""
+            try:
+                # Use FlextUtilities for text processing
+                cleaned = FlextUtilities.TextProcessor.clean_text(self.value)
+                if not cleaned:
+                    return FlextResult["FlextModels.Url"].fail("URL cannot be empty")
+
+                normalized = (
+                    cleaned.rstrip("/") if not cleaned.endswith("://") else cleaned
+                )
+                return FlextResult["FlextModels.Url"].ok(
+                    self.__class__(value=normalized)
+                )
+            except Exception as e:
+                return FlextResult["FlextModels.Url"].fail(
+                    f"URL normalization failed: {e}"
+                )
 
     # AggregateRoot for compatibility - but SIMPLE
     class AggregateRoot(Entity):
@@ -335,103 +624,37 @@ class FlextModels:
     # =========================================================================
 
     class SystemConfigs:
-        """System-wide configuration classes."""
+        """System-wide configuration classes.
 
-        class ContainerConfig(BaseModel):
-            """Container configuration."""
+        DEPRECATED: Use FlextConfig.SystemConfigs instead.
+        This alias will be removed in a future version.
+        """
 
-            max_services: int = Field(
-                default=100, description="Maximum number of services"
-            )
-            enable_caching: bool = Field(
-                default=True, description="Enable service caching"
-            )
-            cache_ttl: int = Field(
-                default=300, description="Cache time-to-live in seconds"
-            )
-            enable_monitoring: bool = Field(
-                default=False, description="Enable monitoring"
-            )
+        def __getattr__(self, name: str) -> type:
+            """Dynamic attribute access for backward compatibility."""
+            valid_configs = {
+                "ContainerConfig",
+                "DatabaseConfig",
+                "SecurityConfig",
+                "LoggingConfig",
+                "MiddlewareConfig",
+            }
 
-        class DatabaseConfig(BaseModel):
-            """Database configuration."""
-
-            host: str = Field(default="localhost", description="Database host")
-            port: int = Field(default=5432, description="Database port")
-            name: str = Field(default="flext_db", description="Database name")
-            user: str = Field(default="flext_user", description="Database user")
-            password: str = Field(default="", description="Database password")
-            ssl_mode: str = Field(default="prefer", description="SSL mode")
-            connection_timeout: int = Field(
-                default=30, description="Connection timeout"
-            )
-            max_connections: int = Field(default=20, description="Maximum connections")
-
-        class SecurityConfig(BaseModel):
-            """Security configuration."""
-
-            enable_encryption: bool = Field(
-                default=True, description="Enable encryption"
-            )
-            encryption_key: str = Field(default="", description="Encryption key")
-            enable_audit: bool = Field(
-                default=False, description="Enable audit logging"
-            )
-            session_timeout: int = Field(
-                default=3600, description="Session timeout in seconds"
-            )
-            password_policy: dict[str, object] = Field(
-                default_factory=lambda: cast(
-                    "dict[str, object]",
-                    {
-                        "min_length": 8,
-                        "require_uppercase": True,
-                        "require_lowercase": True,
-                        "require_digits": True,
-                        "require_special": False,
-                    },
+            if name in valid_configs:
+                warnings.warn(
+                    f"FlextModels.SystemConfigs.{name} is deprecated. "
+                    f"Use FlextConfig.SystemConfigs.{name} instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
                 )
-            )
+                return cast("type", getattr(FlextConfig.SystemConfigs, name))
 
-        class LoggingConfig(BaseModel):
-            """Logging configuration."""
-
-            level: str = Field(default="INFO", description="Log level")
-            format: str = Field(
-                default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                description="Log format",
-            )
-            file_path: str = Field(default="", description="Log file path")
-            max_file_size: int = Field(
-                default=10485760, description="Max log file size in bytes"
-            )
-            backup_count: int = Field(default=5, description="Number of backup files")
-            enable_console: bool = Field(
-                default=True, description="Enable console logging"
-            )
-
-        class MiddlewareConfig(BaseModel):
-            """Middleware configuration."""
-
-            middleware_type: str = Field(..., description="Type of middleware")
-            middleware_id: str = Field(default="", description="Unique middleware ID")
-            order: int = Field(default=0, description="Execution order")
-            enabled: bool = Field(
-                default=True, description="Whether middleware is enabled"
-            )
-            config: dict[str, object] = Field(
-                default_factory=dict, description="Middleware-specific configuration"
-            )
+            error_msg = f"'{self.__class__.__name__}' object has no attribute '{name}'"
+            raise AttributeError(error_msg)
 
     # =========================================================================
     # SIMPLE CONFIG CLASSES - Direct access versions
     # =========================================================================
-
-    # Alias for backward compatibility and direct access
-    DatabaseConfig = SystemConfigs.DatabaseConfig
-    SecurityConfig = SystemConfigs.SecurityConfig
-    LoggingConfig = SystemConfigs.LoggingConfig
-    MiddlewareConfig = SystemConfigs.MiddlewareConfig
 
     # =========================================================================
     # EXAMPLE-SPECIFIC CLASSES - For examples and demos
@@ -501,42 +724,253 @@ class FlextModels:
         """Create a query."""
         return FlextModels.Query(query_type=query_type, filters=filters or {})
 
-    class Http:
-        """HTTP-related models for API configuration."""
-
-        class HttpRequestConfig(BaseModel):
-            """Configuration for HTTP requests."""
-
-            config_type: str = Field(default="http_request")
-            url: str = Field(min_length=1)
-            method: str = Field(default="GET")
-            timeout: int = Field(default=30)
-            retries: int = Field(default=3)
-            headers: dict[str, str] = Field(default_factory=dict)
-
-        class HttpErrorConfig(BaseModel):
-            """Configuration for HTTP error handling."""
-
-            config_type: str = Field(default="http_error")
-            status_code: int = Field(ge=100, le=599)
-            message: str = Field(min_length=1)
-            url: str | None = Field(default=None)
-            method: str | None = Field(default=None)
-            headers: dict[str, str] | None = Field(default=None)
-            context: dict[str, object] = Field(default_factory=dict)
-            details: dict[str, object] = Field(default_factory=dict)
-
-        class ValidationConfig(BaseModel):
-            """Configuration for validation."""
-
-            config_type: str = Field(default="validation")
-            strict_mode: bool = Field(default=False)
-            validate_schema: bool = Field(default=True)
-            custom_validators: list[str] = Field(default_factory=list)
-            field: str | None = Field(default=None)
-            value: object | None = Field(default=None)
-            url: str | None = Field(default=None)
-
     # Internal helper to mark EmailAddress inputs that should bypass strict validation
+
     class _EmailBypassStr(UserString):
         __slots__ = ()
+
+    # =========================================================================
+    # FIELD VALIDATION FUNCTIONS - Replace FieldValidators patterns
+    # =========================================================================
+
+    @staticmethod
+    def create_validated_email(email: str) -> FlextResult[str]:
+        """Create validated email using Pydantic models - replaces FieldValidators.validate_email."""
+        try:
+            validated = FlextModels.EmailAddress(email)
+            return FlextResult[str].ok(validated.root)
+        except ValueError as e:
+            return FlextResult[str].fail(str(e))
+
+    @staticmethod
+    def create_validated_url(url: str) -> FlextResult[str]:
+        """Create validated URL using Pydantic models - replaces FieldValidators.validate_url."""
+        url_result = FlextModels.Url.create(url)
+        if url_result.is_success:
+            return FlextResult[str].ok(url_result.unwrap().value)
+        return FlextResult[str].fail(url_result.error or "Invalid URL")
+
+    @staticmethod
+    def create_validated_http_url(
+        url: str, *, max_length: int = 2048, max_port: int = 65535
+    ) -> FlextResult[str]:
+        """Create validated HTTP URL with enhanced validation - centralized replacement for HttpValidator."""
+        url_result = FlextModels.Url.create_http_url(
+            url, max_length=max_length, max_port=max_port
+        )
+        if url_result.is_success:
+            return FlextResult[str].ok(url_result.unwrap().value)
+        return FlextResult[str].fail(url_result.error or "Invalid HTTP URL")
+
+    @staticmethod
+    def create_validated_http_method(method: str | None) -> FlextResult[str]:
+        """Create validated HTTP method - centralized replacement for HttpValidator.validate_http_method."""
+        if not method or not isinstance(method, str):
+            return FlextResult[str].fail("HTTP method must be a non-empty string")
+
+        method_upper = method.upper()
+        # Standard HTTP methods - using Python 3.13+ enum patterns
+        valid_methods = {
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "HEAD",
+            "OPTIONS",
+            "TRACE",
+            "CONNECT",
+        }
+
+        if method_upper not in valid_methods:
+            valid_methods_str = ", ".join(sorted(valid_methods))
+            return FlextResult[str].fail(
+                f"Invalid HTTP method. Valid methods: {valid_methods_str}"
+            )
+
+        return FlextResult[str].ok(method_upper)
+
+    @staticmethod
+    def create_validated_http_status(code: int | str) -> FlextResult[int]:
+        """Create validated HTTP status code - centralized replacement for HttpValidator.validate_status_code."""
+        try:
+            code_int = int(code)
+            if (
+                code_int < FlextModels.HTTP_STATUS_MIN
+                or code_int > FlextModels.HTTP_STATUS_MAX
+            ):
+                return FlextResult[int].fail(
+                    f"Invalid HTTP status code range ({FlextModels.HTTP_STATUS_MIN}-{FlextModels.HTTP_STATUS_MAX})"
+                )
+            return FlextResult[int].ok(code_int)
+        except (ValueError, TypeError):
+            return FlextResult[int].fail("Status code must be a valid integer")
+
+    @staticmethod
+    def create_validated_phone(phone: str) -> FlextResult[str]:
+        """Create validated phone - replaces FieldValidators.validate_phone."""
+        # Remove non-digit characters for validation
+
+        digits_only = re.sub(r"\D", "", phone)
+        min_phone_digits = 10
+        max_phone_digits = 15
+        if len(digits_only) < min_phone_digits or len(digits_only) > max_phone_digits:
+            return FlextResult[str].fail(f"Invalid phone number: {phone}")
+
+        return FlextResult[str].ok(phone)
+
+    @staticmethod
+    def create_validated_uuid(uuid_str: str) -> FlextResult[str]:
+        """Create validated UUID - replaces FieldValidators.validate_uuid."""
+        uuid_pattern = (
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        )
+        if not re.match(uuid_pattern, uuid_str.lower()):
+            return FlextResult[str].fail(f"Invalid UUID format: {uuid_str}")
+
+        return FlextResult[str].ok(uuid_str)
+
+    @staticmethod
+    def create_validated_iso_date(date_str: str) -> FlextResult[str]:
+        """Create validated ISO date string - centralizes datetime.fromisoformat() validation.
+
+        Args:
+            date_str: Date string in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)
+
+        Returns:
+            FlextResult containing validated date string or validation error
+
+        Examples:
+            >>> result = FlextModels.create_validated_iso_date("2025-01-08")
+            >>> if result.is_success:
+            ...     validated_date = result.unwrap()
+
+        """
+        if not date_str or not date_str.strip():
+            return FlextResult[str].fail("Date string cannot be empty")
+
+        try:
+            # Use datetime.fromisoformat for validation (this is the pattern we're centralizing)
+            datetime.fromisoformat(date_str.strip())
+            return FlextResult[str].ok(date_str.strip())
+        except ValueError as e:
+            return FlextResult[str].fail(f"Invalid ISO date format: {e}")
+
+    @staticmethod
+    def create_validated_date_range(
+        start_date: str, end_date: str
+    ) -> FlextResult[tuple[str, str]]:
+        """Create validated date range - centralizes date range validation logic.
+
+        Args:
+            start_date: Start date in ISO format
+            end_date: End date in ISO format
+
+        Returns:
+            FlextResult containing validated date tuple or validation error
+
+        """
+        # Validate individual dates first
+        start_result = FlextModels.create_validated_iso_date(start_date)
+        if start_result.is_failure:
+            return FlextResult[tuple[str, str]].fail(
+                f"Invalid start date: {start_result.error}"
+            )
+
+        end_result = FlextModels.create_validated_iso_date(end_date)
+        if end_result.is_failure:
+            return FlextResult[tuple[str, str]].fail(
+                f"Invalid end date: {end_result.error}"
+            )
+
+        # Validate date range
+        try:
+            start_dt = datetime.fromisoformat(start_date.strip())
+            end_dt = datetime.fromisoformat(end_date.strip())
+
+            if start_dt >= end_dt:
+                return FlextResult[tuple[str, str]].fail(
+                    "Start date must be before end date"
+                )
+
+            return FlextResult[tuple[str, str]].ok(
+                (start_date.strip(), end_date.strip())
+            )
+        except ValueError as e:
+            return FlextResult[tuple[str, str]].fail(
+                f"Date range validation failed: {e}"
+            )
+
+    @staticmethod
+    def create_validated_file_path(file_path: str) -> FlextResult[str]:
+        """Create validated file path string - centralizes pathlib.Path validation.
+
+        Args:
+            file_path: Path string to validate
+
+        Returns:
+            FlextResult with validated path string or validation error
+
+        """
+        if not file_path or not file_path.strip():
+            return FlextResult[str].fail("File path cannot be empty")
+
+        try:
+            path = Path(file_path.strip())
+            # Basic validation - path should be constructible
+            str(path)  # Verify path can be converted to string
+            return FlextResult[str].ok(str(path))
+        except (OSError, ValueError) as e:
+            return FlextResult[str].fail(f"Invalid file path: {e}")
+
+    @staticmethod
+    def create_validated_existing_file_path(file_path: str) -> FlextResult[str]:
+        """Create validated existing file path - centralizes Path().exists() validation.
+
+        Args:
+            file_path: Path string to validate for existence
+
+        Returns:
+            FlextResult with validated path string or validation error
+
+        """
+        # First validate the path format
+        path_result = FlextModels.create_validated_file_path(file_path)
+        if path_result.is_failure:
+            return path_result
+
+        try:
+            path = Path(path_result.unwrap())
+            if not path.exists():
+                return FlextResult[str].fail(f"Path does not exist: {path}")
+            return FlextResult[str].ok(str(path))
+        except (OSError, PermissionError) as e:
+            return FlextResult[str].fail(f"Cannot access path: {e}")
+
+    @staticmethod
+    def create_validated_directory_path(dir_path: str) -> FlextResult[str]:
+        """Create validated directory path - centralizes Path().is_dir() validation.
+
+        Args:
+            dir_path: Directory path string to validate
+
+        Returns:
+            FlextResult with validated directory path string or validation error
+
+        """
+        # First validate the path exists
+        existing_path_result = FlextModels.create_validated_existing_file_path(dir_path)
+        if existing_path_result.is_failure:
+            return existing_path_result
+
+        try:
+            path = Path(existing_path_result.unwrap())
+            if not path.is_dir():
+                return FlextResult[str].fail(f"Path is not a directory: {path}")
+            return FlextResult[str].ok(str(path))
+        except (OSError, PermissionError) as e:
+            return FlextResult[str].fail(f"Cannot verify directory: {e}")
+
+    # HTTP status code constants
+    HTTP_STATUS_MIN = 100
+    HTTP_STATUS_MAX = 599

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""05 - Advanced Validation using FlextCore EXISTING functionality.
+"""05 - Advanced Validation using FLEXT Core EXISTING functionality.
 
-Demonstrates direct use of FlextValidations.Domain.UserValidator,
-FlextValidations.Service, and existing FlextCore validation patterns.
+Demonstrates direct use of FlextModels validation methods
+and direct validation patterns.
 ZERO code duplication - uses only what already exists.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,129 +14,178 @@ from __future__ import annotations
 import math
 
 from flext_core import (
+    FlextDomainService,
+    FlextModels,
     FlextResult,
-    FlextTypes,
-    FlextValidations,
 )
 
 
-class ValidationShowcaseService:
-    """Showcase usando APENAS funcionalidades existentes do FlextCore."""
+class ValidationResult(FlextModels.Value):
+    """Structured validation result using FlextModels for type safety."""
+
+    validation_type: str
+    value: str
+    is_valid: bool
+    error_message: str | None = None
+
+
+class AdvancedValidationService(FlextDomainService[ValidationResult]):
+    """Advanced validation service using FLEXT Core patterns."""
 
     def __init__(self) -> None:
-        """Initialize usando apenas funcionalidades existentes."""
-        # Create user validator using available methods
-        self._user_validator = FlextValidations.create_user_validator()
+        """Initialize with FLEXT Core components."""
+        super().__init__()
 
-    def demonstrate_user_validation(
-        self, user_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Demonstra validação de usuário usando UserValidator existente."""
-        # Call the validator function with user data
-        return self._user_validator(user_data)
+    def _validate_user_data(self, user_data: dict[str, object]) -> FlextResult[None]:
+        """Validate user data using direct validation."""
+        if not user_data:
+            return FlextResult[None].fail("User data cannot be empty")
+        name = user_data.get("name", "")
+        email = user_data.get("email", "")
+        if not isinstance(name, str) or len(name) < 2:
+            return FlextResult[None].fail("Name must be at least 2 characters")
+        if not isinstance(email, str):
+            return FlextResult[None].fail("Email must be a string")
+        email_result = FlextModels.create_validated_email(email)
+        if email_result.is_failure:
+            return FlextResult[None].fail(email_result.error or "Invalid email")
+        return FlextResult[None].ok(None)
 
-    def demonstrate_email_validation(self, email: str) -> FlextResult[str]:
-        """Demonstra validação de email usando funcionalidade existente."""
-        return FlextValidations.validate_email(email)
+    def validate_input(
+        self, value: object, validation_type: str
+    ) -> FlextResult[ValidationResult]:
+        """Unified validation method handling all validation types."""
+        str_value = str(value) if value is not None else ""
 
-    def demonstrate_string_validation(self, value: object) -> FlextResult[bool]:
-        """Demonstra validação de string usando funcionalidade existente."""
-        if isinstance(value, str):
-            return FlextResult[bool].ok(data=True)
-        return FlextResult[bool].fail("Value must be a string")
+        if validation_type == "user" and isinstance(value, dict):
+            user_result = self._validate_user_data(value)
+            return FlextResult[ValidationResult].ok(
+                ValidationResult(
+                    validation_type=validation_type,
+                    value=str(value),
+                    is_valid=user_result.is_success,
+                    error_message=user_result.error if user_result.is_failure else None,
+                )
+            )
+        if validation_type == "email":
+            email_result = FlextModels.create_validated_email(str_value)
+            return FlextResult[ValidationResult].ok(
+                ValidationResult(
+                    validation_type=validation_type,
+                    value=str_value,
+                    is_valid=email_result.is_success,
+                    error_message=email_result.error
+                    if email_result.is_failure
+                    else None,
+                )
+            )
+        if validation_type == "string":
+            string_valid = isinstance(value, str) and bool(value and value.strip())
+            return FlextResult[ValidationResult].ok(
+                ValidationResult(
+                    validation_type=validation_type,
+                    value=str_value,
+                    is_valid=string_valid,
+                    error_message=None if string_valid else "String must be non-empty",
+                )
+            )
+        if validation_type == "numeric":
+            numeric_valid = isinstance(value, (int, float)) and not isinstance(
+                value, bool
+            )
+            return FlextResult[ValidationResult].ok(
+                ValidationResult(
+                    validation_type=validation_type,
+                    value=str_value,
+                    is_valid=numeric_valid,
+                    error_message=None if numeric_valid else "Value must be a number",
+                )
+            )
+        if validation_type == "api_request" and isinstance(value, dict):
+            # Basic API request validation
+            has_action = "action" in value and isinstance(value["action"], str)
+            has_version = "version" in value and isinstance(value["version"], str)
+            api_valid = has_action and has_version
+            error_msg = (
+                None
+                if api_valid
+                else "API request must have 'action' and 'version' fields"
+            )
+            return FlextResult[ValidationResult].ok(
+                ValidationResult(
+                    validation_type=validation_type,
+                    value=str(value),
+                    is_valid=api_valid,
+                    error_message=error_msg,
+                )
+            )
 
-    def demonstrate_numeric_validation(self, value: object) -> FlextResult[bool]:
-        """Demonstra validação numérica usando funcionalidade existente."""
-        return FlextValidations.validate_numeric_field(value)
+        return FlextResult[ValidationResult].fail(
+            f"Unknown validation type: {validation_type}"
+        )
 
-    def demonstrate_api_request_validation(
-        self, request_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Demonstra validação de request usando funcionalidade existente."""
-        # Use the available API request validation method
-        return FlextValidations.validate_api_request(request_data)
+    def execute(self) -> FlextResult[ValidationResult]:
+        """Execute demo functionality - required by FlextDomainService."""
+        # Demo execution with default user validation
+        demo_user = {"name": "Demo User", "email": "demo@example.com"}
+        return self.validate_input(demo_user, "user")
 
 
 def main() -> None:
-    """Main demonstration usando APENAS funcionalidades existentes do FlextCore."""
-    validator = ValidationShowcaseService()
-
-    print("🚀 FlextCore Advanced Validation Showcase - ZERO Duplication")
+    """Advanced FLEXT Core validation with data-driven patterns."""
+    print("🚀 Advanced FLEXT Core Validation Showcase")
     print("=" * 50)
-    print(
-        "Features: FlextValidations.Domain.UserValidator • FlextValidations.Service • Direct API"
-    )
+    print("Architecture: FlextDomainService • FlextModels • Data-Driven Validation")
     print()
 
-    # Test user validation usando UserValidator existente
-    print("1. User Validation usando FlextValidations.Domain.UserValidator:")
-    test_users = [
-        {"name": "Alice Johnson", "email": "alice@example.com"},
-        {"name": "Bob", "email": "invalid-email"},  # Invalid
+    service = AdvancedValidationService()
+
+    # Data-driven validation scenarios
+    validation_scenarios = [
+        # User validations
+        ("Valid User", {"name": "Alice Johnson", "email": "alice@example.com"}, "user"),
+        ("Invalid User", {"name": "Bob", "email": "invalid-email"}, "user"),
+        # Email validations
+        ("Valid Email", "valid@example.com", "email"),
+        ("Invalid Email", "invalid-email", "email"),
+        ("Complex Email", "another.valid+email@domain.co.uk", "email"),
+        # String validations
+        ("Valid String", "Valid String", "string"),
+        ("Empty String", "", "string"),
+        ("Non-String", 123, "string"),
+        # Numeric validations
+        ("Valid Number", 42, "numeric"),
+        ("Pi Number", math.pi, "numeric"),
+        ("Invalid Number", "not a number", "numeric"),
+        # API request validations
+        (
+            "Valid API Request",
+            {"action": "create_user", "version": "1.0", "data": {}},
+            "api_request",
+        ),
+        ("Invalid API Request", {"incomplete": "request"}, "api_request"),
     ]
 
-    for user_data in test_users:
-        result = validator.demonstrate_user_validation(dict(user_data))
-        if result.success:
-            validated = result.data
-            if validated is not None:
-                print(f"✅ Valid: {validated.get('name')} ({validated.get('email')})")
-            else:
-                print("❌ Invalid: No data returned")
+    print("Comprehensive Validation Results:")
+    print("-" * 35)
+
+    for description, value, validation_type in validation_scenarios:
+        result = service.validate_input(value, validation_type)
+        if result.is_success:
+            validation_result = result.unwrap()
+            status = "✅" if validation_result.is_valid else "❌"
+            error_info = (
+                f" - {validation_result.error_message}"
+                if validation_result.error_message
+                else ""
+            )
+            print(f"{status} {description} ({validation_type}){error_info}")
         else:
-            print(f"❌ Invalid: {result.error}")
+            print(
+                f"❌ {description} ({validation_type}) - Service Error: {result.error}"
+            )
 
-    # Test email validation usando FlextValidations.validate_email
-    print("\n2. Email Validation usando FlextValidations.validate_email:")
-    emails = ["valid@example.com", "invalid-email", "another.valid+email@domain.co.uk"]
-
-    for email in emails:
-        # Use FlextValidations directly instead of method calls
-        email_result = FlextValidations.validate_email(str(email))
-        status = "✅ Valid" if email_result.success else f"❌ {email_result.error}"
-        print(f"Email {email}: {status}")
-
-    # Test string validation usando FlextValidations.validate_string_field
-    print("\n3. String Field Validation usando FlextValidations.validate_string_field:")
-    strings = ["Valid String", "", 123]  # Mixed types
-
-    for string_val in strings:
-        # Use FlextValidations directly
-        string_result = FlextValidations.validate_string_field(str(string_val))
-        status = "✅ Valid" if string_result.success else f"❌ {string_result.error}"
-        print(f"String '{string_val}': {status}")
-
-    # Test numeric validation usando FlextValidations.validate_numeric_field
-    print(
-        "\n4. Numeric Field Validation usando FlextValidations.validate_numeric_field:"
-    )
-    numbers = [42, "not a number", math.pi]
-
-    for number in numbers:
-        # Use FlextValidations directly
-        numeric_result = FlextValidations.validate_numeric_field(number)
-        status = "✅ Valid" if numeric_result.success else f"❌ {numeric_result.error}"
-        print(f"Number '{number}': {status}")
-
-    # Test API request validation usando ApiRequestValidator herdado
-    print(
-        "\n5. API Request Validation usando FlextValidations.Service.ApiRequestValidator:"
-    )
-    api_requests: list[FlextTypes.Core.Dict] = [
-        {"action": "create_user", "version": "1.0", "data": {}},
-        {"incomplete": "request"},  # Missing required fields
-    ]
-
-    for request_data in api_requests:
-        # Use FlextValidations directly for API request validation
-        api_result = FlextValidations.validate_api_request(request_data)
-        status = "✅ Valid" if api_result.success else f"❌ {api_result.error}"
-        print(f"API Request: {status}")
-
-    print("\n✅ FlextCore Advanced Validation Demo Completed Successfully!")
-    print(
-        "💪 ZERO code duplication - using only existing FlextValidations functionality!"
-    )
+    print("\n✅ Advanced validation patterns demonstrated!")
 
 
 if __name__ == "__main__":

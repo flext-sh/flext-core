@@ -6,13 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 import unicodedata
 import uuid
-from collections.abc import Buffer
+from collections.abc import Buffer, Callable
 from datetime import UTC, datetime
 from typing import SupportsFloat, SupportsIndex, cast
+
+from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
+from flext_core.typings import P, R
 
 
 class FlextUtilities:
@@ -158,6 +163,29 @@ class FlextUtilities:
         def is_list_non_empty(value: object) -> bool:
             """Check if value is non-empty list."""
             return isinstance(value, list) and len(value) > 0
+
+    class Reliability:
+        """Reliability-focused helpers."""
+
+        @staticmethod
+        def safe_result(func: Callable[P, R]) -> Callable[P, FlextResult[R]]:
+            """Wrap callable execution in FlextResult for safe error handling."""
+
+            @functools.wraps(func)
+            def _wrapped(*args: P.args, **kwargs: P.kwargs) -> FlextResult[R]:
+                try:
+                    result = func(*args, **kwargs)
+                    if isinstance(result, FlextResult):
+                        return result
+                    return FlextResult[R].ok(result)
+                except Exception as exc:
+                    return FlextResult[R].fail(
+                        str(exc),
+                        error_code=FlextConstants.Errors.UNKNOWN_ERROR,
+                        error_data={"exception": type(exc).__name__},
+                    )
+
+            return _wrapped
 
     @staticmethod
     def generate_iso_timestamp() -> str:

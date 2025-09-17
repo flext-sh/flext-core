@@ -17,10 +17,6 @@ from flext_core.typings import FlextTypes
 class FlextExceptions:
     """Hierarchical exception system with error codes and metrics tracking."""
 
-    # Hierarchical exception system with 685 lines of functionality
-    # Features: Metrics tracking in exceptions, correlation IDs, context mapping
-    # Capabilities: Error codes, operation tracking, field validation for exceptions
-
     def __call__(
         self,
         message: str,

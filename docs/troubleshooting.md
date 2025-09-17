@@ -534,9 +534,9 @@ error: Incompatible return value type
 
 2. **Type Annotations for Complex Cases**:
    ```python
-   from typing import Union, Dict, Any
+   from typing import Union, Dict
 
-   def complex_operation(data: Dict[str, Any]) -> FlextResult[Union[str, int]]:
+   def complex_operation(data: Dict[str, object]) -> FlextResult[Union[str, int]]:
        # Complex logic
        return FlextResult[Union[str, int]].ok(result)
    ```

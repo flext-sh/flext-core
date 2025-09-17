@@ -1,22 +1,7 @@
-"""FLEXT Core Result - Simple success/failure wrapper for type-safe error handling.
+"""FLEXT Core Result - Success/failure wrapper for type-safe error handling.
 
 This module provides a Result type for basic error handling following
-Railway-oriented Programming patterns with Python 3.13+ features.
-
-Key Features:
-- Basic success/failure wrapper with type safety
-- Railway-oriented programming pattern (simplified implementation)
-- Type-safe error handling with discriminated unions
-- Pattern matching support for result processing
-- Python 3.13+ discriminated union support
-- Unwrap() method for safe data extraction
-- Integration with FlextConstants for error codes
-- Pydantic integration for schema validation
-
-Note: This is a simplified implementation. Advanced monadic operations
-(map, flat_map, bind) and composition operators are planned for future versions.
-
-For verified capabilities and examples, see docs/ACTUAL_CAPABILITIES.md
+Railway-oriented Programming patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,22 +11,14 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Iterator
-from typing import TypeGuard, TypeVar, cast, overload, override
+from typing import TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes, T_co, U, V
-
-# Local type variables for backward compatibility with existing methods
-TUtil = TypeVar("TUtil")  # Utility type variable
-TItem = TypeVar("TItem")  # Item type variable
-TResult = TypeVar("TResult")  # Result type variable
-T1 = TypeVar("T1")  # First type variable for multi-arg functions
-T2 = TypeVar("T2")  # Second type variable for multi-arg functions
-T3 = TypeVar("T3")  # Third type variable for multi-arg functions
+from flext_core.typings import T1, T2, T3, FlextTypes, T_co, TItem, TResult, TUtil, U, V
 
 # =============================================================================
-# FLEXT RESULT - Simple and efficient implementation
-# Uses existing flext-core utilities instead of duplicating functionality
+# FLEXT RESULT
+# =============================================================================
 
 
 class FlextResult[T_co]:
@@ -132,25 +109,6 @@ class FlextResult[T_co]:
         """Check if result is failed."""
         return self._error is not None
 
-    @property
-    def failure(self) -> bool:
-        """Alias for is_failure."""
-        return self.is_failure
-
-    @property
-    def is_valid(self) -> bool:
-        """Alias for is_success."""
-        return self.is_success
-
-    @property
-    def error_message(self) -> str | None:
-        """Alias for error property."""
-        return self.error
-
-    @property
-    def is_fail(self) -> bool:
-        """Alias for is_failure."""
-        return self._error is not None
 
     @property
     def value(self) -> T_co:
@@ -182,10 +140,6 @@ class FlextResult[T_co]:
         """Get error metadata dictionary."""
         return self._error_data
 
-    @property
-    def metadata(self) -> FlextTypes.Core.Dict:
-        """Alias for error_data."""
-        return self._error_data
 
     @classmethod
     def ok(cls: type[FlextResult[T_co]], data: T_co) -> FlextResult[T_co]:
@@ -195,17 +149,6 @@ class FlextResult[T_co]:
     # Note: Classmethod `success()` removed to avoid name collision with
     # the instance property `success`. Use `ok()` instead.
 
-    @classmethod
-    def create_failure(
-        cls: type[FlextResult[T_co]],
-        error: str,
-        /,
-        *,
-        error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
-    ) -> FlextResult[T_co]:
-        """Alias for fail method."""
-        return cls.fail(error, error_code=error_code, error_data=error_data)
 
     @classmethod
     def fail(
@@ -439,16 +382,10 @@ class FlextResult[T_co]:
             return f"FlextResult(data={self._data!r}, is_success=True, error=None)"
         return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
-    # Removed validation methods that duplicate FlextValidations and FlextUtilities functionality
+    # Validation methods removed to avoid duplication with utility functions
 
     # Methods for a railway pattern
-    def then(self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
-        """Alias for flat_map."""
-        return self.flat_map(func)
 
-    def bind(self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
-        """Alias for flat_map (monadic bind)."""
-        return self.flat_map(func)
 
     def or_else(self, alternative: FlextResult[T_co]) -> FlextResult[T_co]:
         """Return this result if successful, otherwise return an alternative result."""
@@ -859,9 +796,6 @@ class FlextResult[T_co]:
 
         type Success = object  # Generic success type without FlextResult dependency
 
-    # ==========================================================================
-    # COLLECTION AND TRAVERSAL OPERATIONS - Real functional programming patterns
-    # ==========================================================================
 
 
 __all__: list[str] = [

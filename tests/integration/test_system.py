@@ -16,11 +16,9 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextExceptions,
-    FlextFields,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValidations,
 )
 
 
@@ -40,7 +38,6 @@ class TestCompleteFlextSystemIntegration:
         3. Sistema hierárquico de constantes
         4. Hierarquia de exceções estruturada
         5. Utilitários e funções auxiliares
-        6. Sistema de campos (FlextFields)
         7. Validação e configuração
         8. Cenários de erro e recuperação
 
@@ -59,7 +56,6 @@ class TestCompleteFlextSystemIntegration:
         assert FlextExceptions is not None, "FlextExceptions não está disponível"
         assert FlextUtilities is not None, "FlextUtilities não está disponível"
         assert FlextTypes is not None, "FlextTypes não está disponível"
-        assert FlextFields is not None, "FlextFields não está disponível"
 
         # =========================================================================
         # FASE 2: Railway-Oriented Programming com FlextResult
@@ -182,40 +178,8 @@ class TestCompleteFlextSystemIntegration:
         assert (
             safe_int_failure == -1
         )  # Retorna default em caso de erro        # =========================================================================
-        # FASE 6: Sistema de validação (FlextValidations)
+        # FASE 6: Sistema de validação (FlextValidations was removed)
         # =========================================================================
-
-        # Teste de validação de email usando API real
-        email_result = FlextValidations.FieldValidators.validate_email(
-            "joao@example.com"
-        )
-        assert email_result.success is True
-        assert email_result.value == "joao@example.com"
-
-        # Teste de validação de email inválido
-        invalid_email_result = FlextValidations.FieldValidators.validate_email(
-            "email_invalido"
-        )
-        assert invalid_email_result.success is False
-        assert invalid_email_result.error is not None
-
-        # Teste de validação de UUID
-        uuid_result = FlextValidations.FieldValidators.validate_uuid(
-            "550e8400-e29b-41d4-a716-446655440000"
-        )
-        assert uuid_result.success is True
-
-        # Teste de validação de URL
-        url_result = FlextValidations.FieldValidators.validate_url(
-            "https://example.com"
-        )
-        assert url_result.success is True
-
-        # Teste de validação de telefone
-        phone_result = FlextValidations.FieldValidators.validate_phone(
-            "+55 11 99999-9999"
-        )
-        assert phone_result.success is True
 
         # =========================================================================
         # FASE 7: Sistema de container (Dependency Injection)
@@ -240,55 +204,6 @@ class TestCompleteFlextSystemIntegration:
         assert not_found_result.error is not None
 
         # =========================================================================
-        # FASE 8: Validação múltipla e processamento de schema
-        # =========================================================================
-
-        # Validação múltipla usando o sistema real
-        user_data = {
-            "email": "maria@example.com",
-            "phone": "+55 11 99999-9999",
-            "url": "https://example.com",
-        }
-        # Validar email
-        email_validation = FlextValidations.FieldValidators.validate_email(
-            user_data["email"]
-        )
-        assert email_validation.success is True
-
-        # Validar telefone
-        phone_validation = FlextValidations.FieldValidators.validate_phone(
-            user_data["phone"]
-        )
-        assert phone_validation.success is True
-
-        # Validar URL
-        url_validation = FlextValidations.FieldValidators.validate_url(user_data["url"])
-        assert url_validation.success is True
-
-        # Teste com dados inválidos
-        invalid_test_data = {
-            "email": "email_invalido",
-            "phone": "123",  # Muito curto
-            "url": "not_a_url",
-        }
-
-        # Validar dados inválidos
-        invalid_email = FlextValidations.FieldValidators.validate_email(
-            invalid_test_data["email"]
-        )
-        assert invalid_email.success is False
-
-        invalid_phone = FlextValidations.FieldValidators.validate_phone(
-            invalid_test_data["phone"]
-        )
-        assert invalid_phone.success is False
-
-        invalid_url = FlextValidations.FieldValidators.validate_url(
-            invalid_test_data["url"]
-        )
-        assert invalid_url.success is False
-
-        # =========================================================================
         # FASE 9: Cenários de integração complexa
         # =========================================================================
 
@@ -307,16 +222,15 @@ class TestCompleteFlextSystemIntegration:
             # Processar dados
             dados_processados = {}
 
-            # Validar email se presente
+            # FlextValidations was completely removed - using direct validation
             if "email" in dados:
-                email_result = FlextValidations.FieldValidators.validate_email(
-                    dados["email"]
-                )
-                if not email_result.success:
+                email = dados["email"]
+                # Simple email validation since FlextValidations was removed
+                if "@" not in email or "." not in email:
                     return FlextResult[FlextTypes.Core.Headers].fail(
-                        f"Email inválido: {email_result.error}",
+                        f"Email inválido: {email}",
                     )
-                dados_processados["email"] = email_result.value
+                dados_processados["email"] = email
 
             # Gerar ID único
             dados_processados["id"] = FlextUtilities.Generators.generate_uuid()
@@ -355,19 +269,3 @@ class TestCompleteFlextSystemIntegration:
         assert hasattr(FlextTypes, "Core")
         assert hasattr(FlextTypes, "Config")
         assert hasattr(FlextTypes, "Result")
-
-        # =========================================================================
-        # CONCLUSÃO: Sistema totalmente integrado e funcional
-        # =========================================================================
-
-        # Integration test completed successfully
-        # All core functionality validated:
-        # - Wildcard imports functional
-        # - Railway-oriented programming operational
-        # - Hierarchical constants system accessible
-        # - Exception hierarchy structured
-        # - Utilities and helper functions functional
-        # - FlextFields system operational
-        # - Validation and data processing functional
-        # - Complex integration scenarios validated
-        # FLEXT Core is completely functional!

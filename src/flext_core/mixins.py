@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import contextlib
 import json
+import uuid
 from datetime import UTC, datetime
-
-from flext_core.utilities import FlextUtilities
 
 
 class FlextMixins:
@@ -91,7 +90,7 @@ class FlextMixins:
     def ensure_id(obj: object) -> None:
         """Ensure object has an ID."""
         if hasattr(obj, "id") and not getattr(obj, "id"):
-            setattr(obj, "id", FlextUtilities.Generators.generate_id())
+            setattr(obj, "id", str(uuid.uuid4())[:8])
 
     @staticmethod
     def update_timestamp(obj: object) -> None:

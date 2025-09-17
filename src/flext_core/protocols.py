@@ -7,22 +7,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Awaitable, Callable
-from typing import Generic, Protocol, TypeVar, runtime_checkable
+from collections.abc import Callable
+from pathlib import Path
+from typing import TYPE_CHECKING, Generic, Protocol, runtime_checkable
 
-from flext_core.typings import FlextTypes, T_co, T_contra
+from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes, T_contra, TInput_contra, TOutput_co
 
-# Type variables for generic protocols with correct variance
-TInput_contra = TypeVar("TInput_contra", contravariant=True)
-TOutput_co = TypeVar("TOutput_co", covariant=True)
+if TYPE_CHECKING:
+    from flext_core.config import FlextConfig
 
 
 class FlextProtocols:
     """Hierarchical protocol architecture with composition patterns."""
-
-    # Protocol system with 618 lines across 5 hierarchical layers and 40+ protocols
-    # Protocol definitions with hierarchical organization
-    # Provides protocol coverage for various use cases
 
     # =========================================================================
     # FOUNDATION LAYER - Core building blocks
@@ -31,178 +28,11 @@ class FlextProtocols:
     class Foundation:
         """Foundation layer protocols - core building blocks."""
 
-        # Foundation protocols providing 15+ core building blocks
-
-        class Callable(Protocol, Generic[T_co]):
-            """Generic callable protocol with type safety."""
-
-            # Generic callable protocol with enhanced type safety
-
-            def __call__(self, *args: object, **kwargs: object) -> T_co:
-                """Execute callable with arguments."""
-                ...
-
-        @runtime_checkable
-        class DecoratedCallable(Protocol, Generic[T_co]):
-            """Callable protocol with function attributes for decorators."""
-
-            def __call__(self, *args: object, **kwargs: object) -> T_co:
-                """Execute callable with arguments."""
-                ...
-
-            __name__: str
-            __module__: str
-            __doc__: str | None
-            __qualname__: str
-            __annotations__: FlextTypes.Core.Dict
-            __dict__: FlextTypes.Core.Dict
-            __wrapped__: object | None  # Can be any callable
-
-        class SupportsRichComparison(Protocol):
-            """Protocol for objects supporting rich comparison."""
-
-            # Comparison protocol with enhanced ordering capabilities
-            # This defines 7 methods for what Python provides automatically
-
-            def __lt__(self, other: object) -> bool:
-                """Less than comparison."""
-                ...
-
-            def __le__(self, other: object) -> bool:
-                """Less than or equal comparison."""
-                ...
-
-            def __gt__(self, other: object) -> bool:
-                """Greater than comparison."""
-                ...
-
-            def __ge__(self, other: object) -> bool:
-                """Greater than or equal comparison."""
-                ...
-
-            def __eq__(self, other: object) -> bool:
-                """Equality comparison."""
-                ...
-
-            def __ne__(self, other: object) -> bool:
-                """Not equal comparison."""
-                ...
-
-            def __hash__(self) -> int:
-                """Hash support for rich comparison objects."""
-                ...
-
         class Validator(Protocol, Generic[T_contra]):
             """Generic validator protocol."""
 
             def validate(self, data: T_contra) -> object:
                 """Validate input data and return status."""
-                ...
-
-        class ErrorHandler(Protocol):
-            """Error handler protocol."""
-
-            def handle_error(self, error: Exception) -> str:
-                """Transform exception to error message."""
-                ...
-
-        class Factory(Protocol, Generic[T_co]):
-            """Type-safe factory protocol."""
-
-            def create(self, **kwargs: object) -> T_co:
-                """Create instance of type T."""
-                ...
-
-        class AsyncFactory(Protocol, Generic[T_co]):
-            """Async factory protocol."""
-
-            async def create_async(self, **kwargs: object) -> T_co:
-                """Create instance asynchronously."""
-                ...
-
-        @runtime_checkable
-        class HasToDictBasic(Protocol):
-            """Protocol for objects exposing to_dict_basic."""
-
-            def to_dict_basic(
-                self,
-            ) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
-                """Convert object to basic dictionary."""
-                ...
-
-        @runtime_checkable
-        class HasToDict(Protocol):
-            """Protocol for objects exposing to_dict."""
-
-            def to_dict(
-                self,
-            ) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
-                """Convert object to dictionary."""
-                ...
-
-        @runtime_checkable
-        class SupportsDynamicAttributes(Protocol):
-            """Protocol for objects that support dynamic attribute setting.
-
-            This protocol allows mixins to set arbitrary attributes on objects
-            without triggering MyPy errors for missing attributes.
-            """
-
-            def __setattr__(self, name: str, value: object, /) -> None:
-                """Set attribute on object."""
-                ...
-
-            def __getattribute__(self, name: str, /) -> object:
-                """Get attribute from object."""
-                ...
-
-        @runtime_checkable
-        class HasModelDump(Protocol):
-            """Protocol for Pydantic v2 models with model_dump method."""
-
-            def model_dump(self) -> FlextTypes.Core.Dict:
-                """Convert model to dictionary (Pydantic v2 style)."""
-                ...
-
-        @runtime_checkable
-        class HasDict(Protocol):
-            """Protocol for Pydantic v1 models with dict method."""
-
-            def dict(self) -> FlextTypes.Core.Dict:
-                """Convert model to dictionary (Pydantic v1 style)."""
-                ...
-
-        @runtime_checkable
-        class HasModelValidate(Protocol):
-            """Protocol for Pydantic v2 models with model_validate class method."""
-
-            @classmethod
-            def model_validate(cls, obj: object) -> object:
-                """Validate and create model instance from object data."""
-                ...
-
-        @runtime_checkable
-        class DataConstructor(Protocol):
-            """Protocol for classes that can be constructed from data."""
-
-            def __call__(self, data: object) -> object:
-                """Construct instance from data object."""
-                ...
-
-        @runtime_checkable
-        class SizedDict(Protocol):
-            """Protocol for dict-like objects that support len()."""
-
-            def __len__(self) -> int:
-                """Return length of dict."""
-                ...
-
-        @runtime_checkable
-        class SizedList(Protocol):
-            """Protocol for list-like objects that support len()."""
-
-            def __len__(self) -> int:
-                """Return length of list."""
                 ...
 
     # =========================================================================
@@ -212,13 +42,10 @@ class FlextProtocols:
     class Domain:
         """Domain layer protocols - business logic."""
 
-        # Domain protocols providing 6 specialized patterns for business logic
+        # Domain protocols providing service and repository patterns
 
         class Service(Protocol):
             """Domain service protocol with lifecycle management."""
-
-            # Service lifecycle management with start/stop/health_check capabilities
-            # Provides service management patterns
 
             def __call__(self, *args: object, **kwargs: object) -> object:
                 """Callable interface for service."""
@@ -262,45 +89,6 @@ class FlextProtocols:
                 """Find all entities."""
                 ...
 
-        class DomainEvent(Protocol):
-            """Domain event protocol."""
-
-            event_id: str
-            event_type: str
-            aggregate_id: str
-            event_version: int
-            timestamp: str
-
-            def to_dict(self) -> FlextTypes.Core.Dict:
-                """Convert event to dictionary."""
-                ...
-
-            @classmethod
-            def from_dict(
-                cls,
-                data: FlextTypes.Core.Dict,
-            ) -> FlextProtocols.Domain.DomainEvent:
-                """Create event from dictionary."""
-                ...
-
-        class EventStore(Protocol):
-            """Event store protocol."""
-
-            @abstractmethod
-            def save_events(
-                self,
-                aggregate_id: str,
-                events: list[FlextProtocols.Domain.DomainEvent],
-                expected_version: int,
-            ) -> object:
-                """Save events for aggregate."""
-                ...
-
-            @abstractmethod
-            def get_events(self, aggregate_id: str) -> object:
-                """Get events for aggregate."""
-                ...
-
     # =========================================================================
     # APPLICATION LAYER - Use cases and handlers
     # =========================================================================
@@ -317,64 +105,6 @@ class FlextProtocols:
 
             def validate(self, data: TInput_contra) -> object:
                 """Validate input before processing."""
-                ...
-
-        class MessageHandler(Protocol):
-            """Message handler for CQRS patterns."""
-
-            def handle(self, message: object) -> object:
-                """Handle incoming message and return result."""
-                ...
-
-            def can_handle(self, message_type: type) -> bool:
-                """Check if handler can process a message type."""
-                ...
-
-        class ValidatingHandler(MessageHandler, Protocol):
-            """Handler with built-in validation capabilities."""
-
-            def validate(self, message: object) -> object:
-                """Validate message before processing (Foundation.Validator composition)."""
-                ...
-
-        class AuthorizingHandler(MessageHandler, Protocol):
-            """Handler with authorization capabilities."""
-
-            def authorize(
-                self,
-                message: object,
-                context: FlextTypes.Core.Dict,
-            ) -> object:
-                """Check authorization for message processing."""
-                ...
-
-        class EventProcessor(Protocol):
-            """Event processor for domain event handling."""
-
-            def process_event(self, event: FlextTypes.Core.Dict) -> object:
-                """Process domain event."""
-                ...
-
-            def can_process(self, event_type: str) -> bool:
-                """Check if the processor can handle an event type."""
-                ...
-
-        class UnitOfWork(Protocol):
-            """Unit of Work pattern for transaction management."""
-
-            @abstractmethod
-            def begin(self) -> object:
-                """Begin transaction."""
-                ...
-
-            @abstractmethod
-            def commit(self) -> object:
-                """Commit transaction."""
-                ...
-
-            @abstractmethod
-            def rollback(self) -> object:
-                """Rollback transaction."""
                 ...
 
     # =========================================================================
@@ -453,6 +183,57 @@ class FlextProtocols:
                 """Log exception message."""
                 ...
 
+        @runtime_checkable
+        class ConfigValidator(Protocol):
+            """Protocol for configuration validation strategies."""
+
+            def validate_runtime_requirements(self) -> FlextResult[None]:
+                """Validate configuration meets runtime requirements."""
+                ...
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules for configuration consistency."""
+                ...
+
+        @runtime_checkable
+        class ConfigPersistence(Protocol):
+            """Protocol for configuration persistence operations.
+
+            Follows Single Responsibility Principle - only handles persistence.
+            """
+
+            def save_to_file(
+                self, file_path: str | Path, **kwargs: object
+            ) -> FlextResult[None]:
+                """Save configuration to file."""
+                ...
+
+            @classmethod
+            def load_from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
+                """Load configuration from file."""
+                ...
+
+        @runtime_checkable
+        class ConfigFactory(Protocol):
+            """Protocol for configuration factory methods.
+
+            Follows Open/Closed Principle - extensible for new configuration types.
+            """
+
+            @classmethod
+            def create_web_service_config(
+                cls, **kwargs: object
+            ) -> FlextResult[FlextConfig]:
+                """Create web service configuration."""
+                ...
+
+            @classmethod
+            def create_microservice_config(
+                cls, **kwargs: object
+            ) -> FlextResult[FlextConfig]:
+                """Create microservice configuration."""
+                ...
+
     # =========================================================================
     # EXTENSIONS LAYER - Advanced patterns and plugins
     # =========================================================================
@@ -521,17 +302,6 @@ class FlextProtocols:
                 """Process request with middleware logic."""
                 ...
 
-        class AsyncMiddleware(Protocol):
-            """Async middleware component protocol."""
-
-            async def process_async(
-                self,
-                request: object,
-                _next_handler: Callable[[object], Awaitable[object]],
-            ) -> object:
-                """Process request asynchronously."""
-                ...
-
         @runtime_checkable
         class Observability(Protocol):
             """Observability and monitoring protocol."""
@@ -553,18 +323,92 @@ class FlextProtocols:
                 """Perform health check."""
                 ...
 
-    # =============================================================================
-    # DECORATOR PROTOCOLS - Special function patterns
-    # =============================================================================
+    class Commands:
+        """CQRS Command and Query protocols for Flext CQRS components."""
 
-    class DecoratedFunction(Protocol, Generic[T_co]):
-        """Decorated function protocol returning FlextResult for railway-oriented programming."""
+        class CommandHandler[CommandT, ResultT](Protocol):
+            """Protocol for command handlers in CQRS pattern."""
 
-        def __call__(self, *args: object, **kwargs: object) -> T_co:
-            """Execute the decorated function returning FlextResult."""
-            ...
+            def handle(self, command: CommandT) -> ResultT:
+                """Handle a command and return result.
+
+                Args:
+                    command: The command to handle
+
+                Returns:
+                    The result of handling the command
+
+                """
+                ...
+
+            def can_handle(self, command_type: type) -> bool:
+                """Check if this handler can process the given command type.
+
+                Args:
+                    command_type: The type of command to check
+
+                Returns:
+                    True if this handler can process the command type
+
+                """
+                ...
+
+        class QueryHandler[QueryT, ResultT](Protocol):
+            """Protocol for query handlers in CQRS pattern."""
+
+            def handle(self, query: QueryT) -> ResultT:
+                """Handle a query and return result.
+
+                Args:
+                    query: The query to handle
+
+                Returns:
+                    The result of handling the query
+
+                """
+                ...
+
+        class CommandBus(Protocol):
+            """Protocol for command bus routing and execution."""
+
+            def register_handler(self, handler: object) -> None:
+                """Register a command handler.
+
+                Args:
+                    handler: The handler to register
+
+                """
+                ...
+
+            def execute(self, command: object) -> object:
+                """Execute a command through registered handlers.
+
+                Args:
+                    command: The command to execute
+
+                Returns:
+                    The result of command execution
+
+                """
+                ...
+
+        class Middleware(Protocol):
+            """Protocol for command bus middleware."""
+
+            def process(self, command: object, handler: object) -> object:
+                """Process command through middleware.
+
+                Args:
+                    command: The command being processed
+                    handler: The handler that will process the command
+
+                Returns:
+                    The result of middleware processing
+
+                """
+                ...
 
 
-__all__: FlextTypes.Core.StringList = [
+__all__ = [
     "FlextProtocols",  # Main hierarchical protocol architecture with Config
 ]

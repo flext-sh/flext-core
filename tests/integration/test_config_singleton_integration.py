@@ -18,9 +18,7 @@ import yaml
 from flext_core import (
     FlextConfig,
     FlextContainer,
-    FlextCore,
     FlextProcessing,
-    FlextValidations,
 )
 
 
@@ -30,12 +28,12 @@ class TestFlextConfigSingletonIntegration:
     def setup_method(self) -> None:
         """Clear singleton instances before each test."""
         FlextConfig.clear_global_instance()
-        FlextCore.reset_instance()
+        FlextContainer.get_global().clear()
 
     def teardown_method(self) -> None:
         """Clear singleton instances after each test."""
         FlextConfig.clear_global_instance()
-        FlextCore.reset_instance()
+        FlextContainer.get_global().clear()
 
     def test_singleton_pattern(self) -> None:
         """Test that FlextConfig.get_global_instance() returns the same instance."""
@@ -56,18 +54,6 @@ class TestFlextConfigSingletonIntegration:
         assert hasattr(config1, "max_name_length")
         assert hasattr(config1, "min_phone_digits")
 
-    def test_config_in_flext_core(self) -> None:
-        """Test that FlextCore uses the global config singleton."""
-        # Get global config
-        global_config = FlextConfig.get_global_instance()
-
-        # Get FlextCore instance
-        core = FlextCore.get_instance()
-
-        # FlextCore should use the same config
-        assert core._config is global_config
-        assert core.get_config() is global_config
-
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""
         # Get global config
@@ -78,19 +64,6 @@ class TestFlextConfigSingletonIntegration:
 
         # Container should have reference to global config
         assert container._global_config is global_config
-
-    def test_config_in_validation_classes(self) -> None:
-        """Test that validation classes use global config."""
-        # Create validator using available validation methods
-        validator = FlextValidations.BusinessValidators
-
-        # Test that validator class exists and can be used
-        assert validator is not None
-        assert hasattr(validator, "validate_string_field")
-
-        # Test basic validation functionality
-        result = validator.validate_string_field("test", min_length=1, max_length=10)
-        assert result.is_success
 
     def test_config_in_processors(self) -> None:
         """Test that processors use global config."""
@@ -212,8 +185,10 @@ class TestFlextConfigSingletonIntegration:
         # Clear any existing instance
         FlextConfig.clear_global_instance()
 
-        # Save and clear environment variable that might override
+        # Save and clear environment variables that might override
         saved_env = os.environ.pop("FLEXT_ENVIRONMENT", None)
+        saved_app = os.environ.pop("FLEXT_APP_NAME", None)
+        saved_debug = os.environ.pop("FLEXT_DEBUG", None)
 
         # Create temporary directory
         original_dir = Path.cwd()
@@ -249,9 +224,13 @@ class TestFlextConfigSingletonIntegration:
             os.chdir(original_dir)
             Path(temp_dir).joinpath("config.yaml").unlink(missing_ok=True)
             Path(temp_dir).rmdir()
-            # Restore environment variable if it was set
+            # Restore environment variables if they were set
             if saved_env is not None:
                 os.environ["FLEXT_ENVIRONMENT"] = saved_env
+            if saved_app is not None:
+                os.environ["FLEXT_APP_NAME"] = saved_app
+            if saved_debug is not None:
+                os.environ["FLEXT_DEBUG"] = saved_debug
             FlextConfig.clear_global_instance()
 
     def test_config_priority_order(self) -> None:
@@ -299,33 +278,6 @@ class TestFlextConfigSingletonIntegration:
             Path(temp_dir).joinpath(".env").unlink(missing_ok=True)
             Path(temp_dir).rmdir()
             FlextConfig.clear_global_instance()
-
-    def test_config_values_used_in_validation(self) -> None:
-        """Test that config values are actually used in validation logic."""
-        # Get global config
-        global_config = FlextConfig.get_global_instance()
-
-        # Test that validation uses config values
-        # Use BusinessValidators with config-based constraints
-        min_length = global_config.min_phone_digits or 8
-        max_length = global_config.max_name_length or 100
-
-        # Test string validation with config values
-        string_result = FlextValidations.BusinessValidators.validate_string_field(
-            "valid_string", min_length=min_length, max_length=max_length
-        )
-        assert string_result.is_success
-
-        # Test numeric validation with config-based constraints
-        number_result = FlextValidations.BusinessValidators.validate_numeric_field(
-            min_length, min_value=1, max_value=max_length
-        )
-        assert number_result.is_success
-
-        # Verify config accessibility
-        assert global_config.app_name is not None
-        assert isinstance(global_config.min_phone_digits, int)
-        assert isinstance(global_config.max_name_length, int)
 
     def test_config_singleton_thread_safety(self) -> None:
         """Test that singleton is thread-safe."""

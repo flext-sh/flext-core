@@ -1,6 +1,6 @@
 # FLEXT-API Task Completion Protocol
 
-## Mandatory Steps After Any Code Changes
+## Mandatory Steps After object Code Changes
 
 ### 1. Quality Gates Execution (ZERO TOLERANCE)
 ```bash

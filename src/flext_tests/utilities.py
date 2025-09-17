@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import warnings
 from collections.abc import Callable
 from typing import ClassVar, Generic, Protocol, cast, runtime_checkable
 
@@ -74,7 +75,7 @@ class FlextTestsUtilities:
     # === CORE UTILITIES ===
 
     class TestUtilities:
-        """Testing utilities that delegate to FlextCore components."""
+        """Testing utilities that delegate to flext-core components."""
 
         @staticmethod
         def create_test_result(
@@ -83,7 +84,7 @@ class FlextTestsUtilities:
             data: object = None,
             error: str | None = None,
         ) -> FlextResult[object]:
-            """Create a test FlextResult using FlextCore."""
+            """Create a test FlextResult using flext-core."""
             if success:
                 return FlextResult[object].ok(data)
             return FlextResult[object].fail(error or "Test error")
@@ -282,9 +283,15 @@ class FlextTestsUtilities:
                     if contains_method is not None and contains_method(item):
                         msg = message or f"{item!r} found in {container!r}"
                         raise AssertionError(msg)
-            except (TypeError, AttributeError):
+            except (TypeError, AttributeError) as err:
                 # Fallback for containers that don't support 'in' operator
-                pass  # If we can't check, assume item is not in container
+                # Log the specific error for debugging but don't fail the assertion
+                # since we cannot verify containment
+                warnings.warn(
+                    f"Cannot check containment for {type(container).__name__}: {err}",
+                    UserWarning,
+                    stacklevel=2,
+                )  # If we can't check, assume item is not in container
 
         @staticmethod
         def assert_raises(

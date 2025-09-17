@@ -156,7 +156,7 @@ class FlextTestsAsyncs:
 
     @staticmethod
     async def run_concurrent(duration: float) -> None:
-        """Sleep for specified duration (alias for asyncio.sleep)."""
+        """Sleep for specified duration during concurrent operations."""
         await asyncio.sleep(duration)
 
     @staticmethod

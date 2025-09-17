@@ -31,11 +31,11 @@ from flext_core import (
     # Configuration management
     FlextConfig,
 
-    # Validation patterns
-    FlextValidations,
 
     # CQRS patterns
-    FlextCommands,
+    FlextBus,
+    FlextHandlers,
+    FlextCqrs,
 
     # Structured logging
     FlextLogger,

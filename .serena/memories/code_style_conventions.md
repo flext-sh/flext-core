@@ -48,7 +48,7 @@ from flext_core.result import FlextResult  # Internal imports prohibited
 - ❌ Helper functions outside classes (use nested classes)
 - ❌ `try/except` fallback mechanisms (use explicit FlextResult)
 - ❌ `# type: ignore` without specific error codes
-- ❌ `Any` types instead of proper annotations
+- ❌ `object` types instead of proper annotations
 - ❌ Wrappers, legacy access patterns, fallbacks
 - ❌ Direct imports from internal modules
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Advanced Architecture Patterns using FlextCore Native Features.
+"""Advanced Architecture Patterns using FLEXT Core Native Features.
 
 Demonstrates Clean Architecture, Domain-Driven Design, and business patterns
-using FlextCore's built-in protocols, interfaces, and architectural components.
-Shows how to leverage FlextCore's protocol system instead of
+using FLEXT Core's built-in protocols, interfaces, and architectural components.
+Shows how to leverage FLEXT Core's protocol system instead of
 reimplementing common patterns manually.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,13 +16,13 @@ import time
 from dataclasses import dataclass
 
 from flext_core import (
-    FlextCommands,
+    FlextHandlers,
     FlextLogger,
+    FlextModels,
     FlextProtocols,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValidations,
 )
 
 logger = FlextLogger("flext.examples.architecture")
@@ -45,14 +45,14 @@ class User:
 
     @classmethod
     def create_validated(cls, name: str, email: str, age: int) -> FlextResult[User]:
-        """Create user with FlextCore validation."""
-        # Use existing FlextValidations and FlextUtilities directly
+        """Create user with FLEXT Core validation."""
+        # Use FlextModels and FlextUtilities directly
         # Validate name
         if not name or len(name) < 2 or len(name) > 100:
             return FlextResult[User].fail("Name must be 2-100 characters")
 
-        # Validate email using existing FlextValidations
-        email_result = FlextValidations.validate_email(email)
+        # Validate email using FlextModels
+        email_result = FlextModels.create_validated_email(email)
         if email_result.is_failure:
             return FlextResult[User].fail("Invalid email format")
 
@@ -79,7 +79,7 @@ class User:
 
 @dataclass
 class Order:
-    """Order domain model using FlextCore patterns."""
+    """Order domain model using FLEXT Core patterns."""
 
     id: str
     user_id: str
@@ -88,7 +88,7 @@ class Order:
 
     @classmethod
     def create_validated(cls, user_id: str, total: float) -> FlextResult[Order]:
-        """Create order with validation using FlextCore."""
+        """Create order with validation using FLEXT Core."""
         # Use direct validation with existing utilities
         if not user_id:
             return FlextResult[Order].fail("User ID cannot be None")
@@ -112,7 +112,7 @@ class Order:
 
 
 class UserCreatedEvent:
-    """Domain event using FlextCore patterns."""
+    """Domain event using FLEXT Core patterns."""
 
     def __init__(self, user: User) -> None:
         """Initialize event with user data."""
@@ -139,15 +139,15 @@ class UserCreatedEvent:
 
 # =============================================================================
 # SERVICE IMPLEMENTATIONS USING FLEXTPROTOCOLS
-# Demonstrates proper use of FlextCore protocols instead of custom definitions
+# Demonstrates proper use of FLEXT Core protocols instead of custom definitions
 # =============================================================================
 
 
 class UserService(FlextProtocols.Domain.Service):
-    """User domain service using FlextCore service protocol."""
+    """User domain service using FLEXT Core service protocol."""
 
     def __init__(self) -> None:
-        """Initialize service with FlextCore logging."""
+        """Initialize service with FLEXT Core logging."""
         self._logger = FlextLogger("flext.services.user")
         self._users: dict[str, User] = {}
         self._is_started = False
@@ -207,12 +207,12 @@ class UserService(FlextProtocols.Domain.Service):
 
 # =============================================================================
 # REPOSITORY PATTERN USING FLEXTPROTOCOLS
-# Shows proper repository implementation with FlextCore patterns
+# Shows proper repository implementation with FLEXT Core patterns
 # =============================================================================
 
 
 class UserRepository(FlextProtocols.Domain.Repository[User]):
-    """User repository using FlextCore repository protocol."""
+    """User repository using FLEXT Core repository protocol."""
 
     def __init__(self) -> None:
         """Initialize repository."""
@@ -247,7 +247,7 @@ class UserRepository(FlextProtocols.Domain.Repository[User]):
 
 # =============================================================================
 # COMMAND HANDLERS USING FLEXTHANDLERS
-# Demonstrates CQRS patterns with FlextCore handlers
+# Demonstrates CQRS patterns with FLEXT Core handlers
 # =============================================================================
 
 
@@ -262,11 +262,12 @@ class CreateUserCommand:
         self.command_id = FlextUtilities.Generators.generate_correlation_id()
 
 
-class CreateUserHandler(FlextCommands.Handlers.CommandHandler[CreateUserCommand, User]):
-    """Create user command handler using FlextCore."""
+class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+    """Create user command handler using FLEXT Core."""
 
     def __init__(self, user_service: UserService) -> None:
         """Initialize with service dependency."""
+        super().__init__(handler_mode="command")
         self._user_service = user_service
         self._logger = FlextLogger("flext.handlers.create_user")
 
@@ -300,20 +301,20 @@ class CreateUserHandler(FlextCommands.Handlers.CommandHandler[CreateUserCommand,
 
         return user_result
 
-    def can_handle(self, command_type: object) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if handler can execute command type."""
-        return command_type is CreateUserCommand
+        return message_type is CreateUserCommand
 
 
 # =============================================================================
 # DEMONSTRATION FUNCTIONS
-# Shows FlextCore architecture patterns in action
+# Shows FLEXT Core architecture patterns in action
 # =============================================================================
 
 
 def demonstrate_domain_services() -> None:
-    """Demonstrate domain services using FlextCore protocols."""
-    print("=== FlextCore Domain Services Demo ===")
+    """Demonstrate domain services using FLEXT Core protocols."""
+    print("=== FLEXT Core Domain Services Demo ===")
 
     # Create and start user service
     user_service = UserService()
@@ -350,8 +351,8 @@ def demonstrate_domain_services() -> None:
 
 
 def demonstrate_business_architecture() -> None:
-    """Demonstrate complete business architecture with FlextCore."""
-    print("\n=== FlextCore Enterprise Architecture Demo ===")
+    """Demonstrate complete business architecture with FLEXT Core."""
+    print("\n=== FLEXT Core Enterprise Architecture Demo ===")
 
     print("✅ System health: healthy")
     print("✅ Environment configuration loaded")
@@ -368,7 +369,7 @@ def demonstrate_business_architecture() -> None:
     # Railway-oriented composition
     pipeline_result = (
         FlextResult[str]
-        .ok("FlextCore")
+        .ok("FLEXT Core")
         .map(lambda s: f"Enterprise {s}")
         .map(lambda s: f"{s} Architecture")
         .tap(lambda s: logger.info("Pipeline completed", result=s))
@@ -379,14 +380,14 @@ def demonstrate_business_architecture() -> None:
 
 
 if __name__ == "__main__":
-    print("FlextCore Advanced Architecture Patterns")
+    print("FLEXT Core Advanced Architecture Patterns")
     print("=======================================")
 
-    # Demonstrate FlextCore architecture patterns
+    # Demonstrate FLEXT Core architecture patterns
     demonstrate_domain_services()
     demonstrate_business_architecture()
 
-    print("\n✅ All FlextCore architecture patterns demonstrated successfully!")
+    print("\n✅ All FLEXT Core architecture patterns demonstrated successfully!")
     print("Key benefits: Native protocols, business handlers, dependency injection,")
     print("CQRS patterns, domain services, and railway-oriented programming.")
     print(

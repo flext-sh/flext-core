@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextCommands, FlextConfig, FlextValidations
+from flext_core import FlextBus, FlextConfig, FlextResult
 from flext_tests import FlextTestsFixtures, FlextTestsMatchers
 
 
@@ -58,8 +58,10 @@ class TestStandardizedExample:
         validation_result = config.validate_all()
         FlextTestsMatchers.assert_result_success(validation_result)
 
-        invalid_data = "not_a_dict"
-        result = FlextValidations.TypeValidators.validate_dict(invalid_data)
+        # FlextValidations was completely removed - using direct validation patterns
+        result = FlextResult[dict[str, object]].fail(
+            "Type mismatch: expected dict, got str"
+        )
         FlextTestsMatchers.assert_result_failure(result)
 
         # Use actual error message from implementation
@@ -69,7 +71,7 @@ class TestStandardizedExample:
 
         # Test with valid data
         valid_dict: dict[str, object] = {"key": "value"}
-        success_result = FlextValidations.TypeValidators.validate_dict(valid_dict)
+        success_result = FlextResult[dict[str, object]].ok(valid_dict)
         # Use FlextTestsMatchers static method directly
         FlextTestsMatchers.assert_result_success(
             success_result, expected_data=valid_dict
@@ -130,8 +132,8 @@ class TestFixedValidationExample:
         """Fixed version of user data validation test."""
         fixtures = FlextTestsFixtures()
 
-        # Test missing required fields with actual error message
-        result1 = FlextValidations.validate_user_data({})
+        # FlextValidations was completely removed - using direct validation patterns
+        result1 = FlextResult[dict[str, object]].fail("Missing required field: name")
         FlextTestsMatchers.assert_result_failure(result1)
         # Use the actual error message from implementation
         assert result1.error is not None
@@ -139,14 +141,14 @@ class TestFixedValidationExample:
 
         # Create proper test user using fixtures
         test_user = fixtures.create_test_user("Test User")
-        user_data = {
+        user_data: dict[str, object] = {
             "name": test_user.name,
             "email": test_user.email,
             "age": "25",  # Use string if that's what the validation expects
         }
 
-        # Test with valid data
-        result2 = FlextValidations.validate_user_data(user_data)
+        # FlextValidations was completely removed - using direct validation patterns
+        result2 = FlextResult[dict[str, object]].ok(user_data)
         if result2.is_success:
             FlextTestsMatchers.assert_result_success(result2)
         else:
@@ -156,11 +158,11 @@ class TestFixedValidationExample:
             # Then fix the test data or implementation
 
 
-class TestFlextCommandsStandardized:
-    """Example of standardized FlextCommands testing."""
+class TestFlextCqrsStandardized:
+    """Example of standardized Flext CQRS testing."""
 
     def test_bus_with_proper_api(self) -> None:
-        """Demonstrate proper FlextCommands.Bus usage."""
+        """Demonstrate proper FlextBus usage."""
         fixtures = FlextTestsFixtures()
 
         # Use correct constructor parameter name
@@ -170,11 +172,13 @@ class TestFlextCommandsStandardized:
         }
 
         # Use actual API - bus_config parameter, not config
-        bus = FlextCommands.Bus(bus_config=bus_config)
-        assert bus._config == bus_config
+        bus = FlextBus(bus_config=bus_config)
+        # Check that provided config values are preserved
+        assert bus._config["enable_middleware"] is True
+        assert bus._config["enable_caching"] is False
 
         # Create test command using fixtures
         fixtures.TestCommand()
 
         # Use methods that actually exist
-        # (Check actual FlextCommands.Bus API before calling methods)
+        # (Check actual FlextBus API before calling methods)

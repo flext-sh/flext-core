@@ -8,19 +8,26 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextCommands, FlextModels, FlextResult, FlextTypes
+from flext_core import (
+    FlextBus,
+    FlextCqrs,
+    FlextHandlers,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+)
+
+# =============================================================================
+# Import required classes for CQRS patterns
+# Constants
+EXPECTED_BULK_SIZE = 2
 
 FlextCommandId = str
 FlextCommandType = str
 
-# =============================================================================
-# Extract classes from FlextCommands
-# Constants
-EXPECTED_BULK_SIZE = 2
-
-FlextCommandHandler = FlextCommands.Handlers.CommandHandler
-FlextCommandBus = FlextCommands.Bus
-FlextCommandResults = FlextCommands.Results  # FlextCommands.Results with metadata
+FlextCommandHandler = FlextHandlers
+FlextCommandBus = FlextBus
+FlextCommandResults = FlextCqrs.Results  # FlextCqrs.Results with metadata
 
 # TEST COMMAND IMPLEMENTATIONS
 # =============================================================================
@@ -97,26 +104,26 @@ class CreateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize create user command handler."""
-        super().__init__(handler_id="create_user_handler")
+        super().__init__(handler_mode="command", handler_id="create_user_handler")
         self.created_users: list[FlextTypes.Core.Dict] = []
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
         return "create_user"
 
-    def can_handle(self, command_type: object) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
-        return command_type == CreateUserCommand or str(command_type) == "create_user"
+        return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     def handle(
         self,
-        command: CreateUserCommand,
+        message: CreateUserCommand,
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Handle the create user command."""
         user_data: FlextTypes.Core.Dict = {
             "id": f"user_{len(self.created_users) + 1}",
-            "username": command.username,
-            "email": command.email,
+            "username": message.username,
+            "email": message.email,
         }
         self.created_users.append(user_data)
 
@@ -144,23 +151,23 @@ class UpdateUserCommandHandler(
         """Get command type this handler processes."""
         return "update_user"
 
-    def can_handle(self, command_type: object) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
-        return command_type == UpdateUserCommand or str(command_type) == "update_user"
+        return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
     def handle(
         self,
-        command: UpdateUserCommand,
+        message: UpdateUserCommand,
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Handle the update user command."""
-        if command.target_user_id not in self.updated_users:
-            self.updated_users[command.target_user_id] = {}
+        if message.target_user_id not in self.updated_users:
+            self.updated_users[message.target_user_id] = {}
 
-        self.updated_users[command.target_user_id].update(command.updates)
+        self.updated_users[message.target_user_id].update(message.updates)
 
         result_data: FlextTypes.Core.Dict = {
-            "target_user_id": command.target_user_id,
-            "updated_fields": list(command.updates.keys()),
+            "target_user_id": message.target_user_id,
+            "updated_fields": list(message.updates.keys()),
         }
 
         return FlextResult[FlextTypes.Core.Dict].ok(result_data)
@@ -180,15 +187,15 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
         """Get command type this handler processes."""
         return "failing"
 
-    def can_handle(self, command_type: object) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
-        return command_type == FailingCommand or str(command_type) == "failing"
+        return message_type == FailingCommand or str(message_type) == "failing"
 
-    def handle(self, command: FailingCommand) -> FlextResult[None]:
+    def handle(self, message: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally."""
-        # Use command to demonstrate it's being processed
+        # Use message to demonstrate it's being processed
         error_msg = (
-            f"Handler processing failed for command: {command.__class__.__name__}"
+            f"Handler processing failed for command: {message.__class__.__name__}"
         )
         return FlextResult[None].fail(error_msg)
 

@@ -55,7 +55,6 @@ Infrastructure Layer (External Concerns)
 
 Support Layer (Cross-cutting Utilities)
 ├── utilities.py        # Helper functions and generators
-├── decorators.py       # Decorator utilities (@safe_result, etc.)
 ├── mixins.py           # Reusable behaviors (timestamps, serialization)
 ├── fields.py           # Field definitions and constraints
 ├── adapters.py         # Minimal type adapters (22 lines)
@@ -204,14 +203,14 @@ class FlextTypes:
     class Core:
         StringList = list[str]
         StringDict = dict[str, str]
-        AnyDict = dict[str, Any]
+        AnyDict = dict[str, object]
         JSONData = Union[dict, list, str, int, float, bool, None]
 ```
 
 ### **MyPy Strict Mode Compliance**
 
 **Requirements**:
-- Zero `Any` types in public API
+- Zero `object` types in public API
 - Complete function annotations
 - No `type: ignore` without specific error codes
 - Generic type parameters properly bounded

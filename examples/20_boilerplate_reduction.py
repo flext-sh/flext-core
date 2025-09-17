@@ -5,8 +5,7 @@ Demonstrates massive boilerplate reduction across FLEXT projects using:
 - FlextProcessing for service patterns
 - FlextMixins for behavioral patterns
 - FlextProcessing for request processing
-- FlextDecorators for cross-cutting concerns
-- FlextValidations for data validation
+- FlextModels validation methods for data validation
 - Complete railway-oriented programming
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -409,8 +408,7 @@ def main() -> int:
     print("\n🔥 MASSIVE BENEFITS OF FLEXT CORE MAXIMUM USAGE:")
     print("   ✅ FlextMixins: Automatic timestamps, logging, configuration")
     print("   ✅ FlextProcessing: Service patterns with zero boilerplate")
-    print("   ✅ FlextDecorators: Enterprise features via simple decorators")
-    print("   ✅ FlextValidations: Composable validation with predicates")
+    print("   ✅ FlextModels: Composable validation with direct methods")
     print("   ✅ FlextProcessing: CQRS and orchestration patterns")
     print("   ✅ FlextResult: Complete railway-oriented programming")
     print("   ✅ FlextTypes: Type safety across the entire stack")

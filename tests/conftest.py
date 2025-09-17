@@ -22,7 +22,6 @@ import pytest
 from flext_core import (
     FlextConfig,
     FlextContainer,
-    FlextCore,
     FlextLogger,
     FlextResult,
     FlextTypes,
@@ -510,20 +509,20 @@ def benchmark_data() -> FlextTypes.Core.Dict:
 
 
 # -----------------------------------------------------------------------------
-# Test isolation for FlextCore singleton state
+# Test isolation for flext-core singleton state
 # -----------------------------------------------------------------------------
 
 
 @pytest.fixture(autouse=True)
 def _isolate_flext_core_state() -> None:
-    """Clear FlextCore specialized configs before each test.
+    """Clear core specialized configs before each test.
 
     Prevents cross-test leakage of database/security/logging configs that could
     make property-default tests flaky or order-dependent.
     """
-    # FlextCore was simplified - no longer has _specialized_configs
-    # Just reset the singleton instance
-    FlextCore.reset_instance()
+    # Individual components isolation - FlextCore facade was removed
+    # Reset container singleton state if needed
+    FlextContainer.get_global().clear()
 
 
 @pytest.fixture

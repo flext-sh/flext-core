@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FlextCore Payload and Messaging Events - Simplified Example.
+"""FLEXT Core Payload and Messaging Events - Simplified Example.
 
 This example demonstrates the correct usage of FlextModels for messaging
 and event handling patterns using the current API.
@@ -162,7 +162,7 @@ def demonstrate_message_specialization() -> None:
 
 def main() -> None:
     """Run all payload messaging examples."""
-    print("FlextCore Payload & Messaging Examples")
+    print("FLEXT Core Payload & Messaging Examples")
     print("=" * 40)
 
     demonstrate_basic_payload_creation()

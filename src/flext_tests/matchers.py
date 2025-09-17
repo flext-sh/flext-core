@@ -13,787 +13,792 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import functools
+import json
 import os
+import random
 import re
+import signal
 import time
-from collections.abc import Awaitable, Callable, Iterator, Sequence
-from typing import Protocol, TypeGuard, runtime_checkable
+import tracemalloc
+import uuid
+import warnings
+from collections.abc import Awaitable, Callable, Container, Iterable, Sequence, Sized
+from typing import Protocol, Self, cast
 
-from flext_core import FlextResult, FlextTypes, T
+
+class ResultLike(Protocol):
+    """Protocol for result-like objects."""
+
+    def __bool__(self) -> bool: ...
+
+
+class SuccessResultLike(ResultLike, Protocol):
+    """Protocol for success result objects."""
+
+    is_success: bool
+    success: bool
+
+
+class FailureResultLike(ResultLike, Protocol):
+    """Protocol for failure result objects."""
+
+    is_failure: bool
+    failure: bool
+
+
+class FlextResultLike(SuccessResultLike, FailureResultLike, Protocol):
+    """Protocol for complete FlextResult-like objects with both success and failure attributes."""
+
+    is_success: bool
+    success: bool
+    is_failure: bool
+    failure: bool
+
+
+class ContainerLike(Protocol):
+    """Protocol for container-like objects."""
+
+    def __len__(self) -> int: ...
+    def __contains__(self, item: object) -> bool: ...
+
+
+class ErrorResultLike(Protocol):
+    """Protocol for objects with error attributes."""
+
+    error: str | None
+
+
+class ErrorCodeResultLike(Protocol):
+    """Protocol for objects with error_code attributes."""
+
+    error_code: str | None
+
+
+class ValueResultLike(Protocol):
+    """Protocol for objects with value or data attributes."""
+
+    @property
+    def value(self) -> object: ...
+
+
+class DataResultLike(Protocol):
+    """Protocol for objects with data attributes."""
+
+    @property
+    def data(self) -> object: ...
+
+
+class EmptyCheckable(Protocol):
+    """Protocol for objects that can be checked for emptiness."""
+
+    def __len__(self) -> int: ...
+
+
+class HasIsEmpty(Protocol):
+    """Protocol for objects with is_empty attribute."""
+
+    is_empty: bool
+
+
+class HasContains(Protocol):
+    """Protocol for objects with contains method."""
+
+    def contains(self, item: object) -> bool: ...
 
 
 class FlextTestsMatchers:
-    """Unified test matchers for FLEXT ecosystem.
+    """Comprehensive test matching utilities without alias patterns.
 
-    Consolidates all matcher patterns into a single class interface.
-    Provides matchers, performance testing, and protocol definitions
-    for test assertions with pytest integration.
+    Provides unified test matchers following FLEXT architectural principles.
     """
 
-    # Convenience class methods for easier access
-    @classmethod
+    @staticmethod
     def assert_type_guard(
-        cls,
-        value: object,
-        type_guard: Callable[[object], TypeGuard[object]],
+        value: object, expected_type: type[object] | Callable[[object], bool]
     ) -> None:
-        """Assert value passes type guard."""
-        assert type_guard(value), (
-            f"Value {value!r} of type {type(value).__name__} failed type guard check"
-        )
+        """Assert that value is of expected type with type guard."""
+        if callable(expected_type) and not isinstance(expected_type, type):
+            # It's a callable type guard function
+            if not expected_type(value):
+                msg = f"Type guard function {expected_type.__name__} failed for value {value}"
+                raise AssertionError(msg)
+        # It's a type
+        elif not isinstance(value, expected_type):
+            type_name = getattr(expected_type, "__name__", str(expected_type))
+            msg = f"Expected {type_name}, got {type(value).__name__}"
+            raise AssertionError(msg)
 
-    @classmethod
+    @staticmethod
     def assert_performance_within_limit(
-        cls,
-        benchmark: FlextTestsMatchers.BenchmarkFixture,
-        func: Callable[[], object],
-        _max_time_seconds: float = 1.0,
-        *args: object,
-        **kwargs: object,
-    ) -> object:
-        """Assert function performance is within time limit."""
-        # Remove any benchmark-specific kwargs that might conflict
-        filtered_kwargs = {
-            k: v for k, v in kwargs.items() if k not in {"max_time_seconds", "max_time"}
-        }
-        return benchmark(func, *args, **filtered_kwargs)
+        execution_time: float, limit: float, operation: str = "operation"
+    ) -> None:
+        """Assert that execution time is within performance limit."""
+        if execution_time > limit:
+            msg = (
+                f"{operation} took {execution_time:.3f}s, exceeds limit of {limit:.3f}s"
+            )
+            raise AssertionError(msg)
 
-    # === PROTOCOL DEFINITIONS ===
+    # =========================================================================
+    # CORE TEST PROTOCOLS - Type safety for test objects
+    # =========================================================================
 
-    # Benchmark fixture type - represents pytest-benchmark fixture
-    @runtime_checkable
-    class BenchmarkFixture(Protocol):
-        """Protocol for pytest-benchmark fixture."""
+    class BenchmarkFixture:
+        """Protocol for benchmark test fixtures."""
 
-        def __call__(
-            self,
-            func: Callable[[], object],
-            *args: object,
-            **kwargs: object,
-        ) -> object:
-            """Call benchmark fixture."""
-            ...
+        def __init__(self, name: str, iterations: int = 1000) -> None:
+            """Initialize benchmark fixture with name and iteration count."""
+            self.name = name
+            self.iterations = iterations
+            self.results: list[float] = []
 
-        def benchmark(self, func: object, *args: object, **kwargs: object) -> object:
-            """Run benchmark on function."""
-            ...
+        def add_measurement(self, duration: float) -> None:
+            """Add performance measurement."""
+            self.results.append(duration)
 
-        @property
-        def stats(self) -> object:
-            """Benchmark statistics."""
-            ...
+        def average_time(self) -> float:
+            """Calculate average execution time."""
+            return sum(self.results) / len(self.results) if self.results else 0.0
 
-    class ContainerProtocol(Protocol):
-        """Protocol for container objects with get method."""
+        def max_time(self) -> float:
+            """Get maximum execution time."""
+            return max(self.results) if self.results else 0.0
 
-        def get(self, service_name: str) -> FlextResult[object]:
-            """Get service from container."""
-            ...
+    class ContainerProtocol:
+        """Protocol for dependency injection container testing."""
 
-    class FieldProtocol(Protocol):
-        """Protocol for field validation objects."""
+        def register(self, service_id: str, instance: object) -> None:
+            """Register service instance."""
 
-        def validate_field_value(self, value: object) -> tuple[bool, str]:
+        def get(self, service_id: str) -> object:
+            """Get service instance."""
+
+    class FieldProtocol:
+        """Protocol for field validation testing."""
+
+        def validate(self, _value: object) -> bool:
             """Validate field value."""
-            ...
+            return True
 
-    class MockProtocol(Protocol):
-        """Protocol for mock objects."""
+        def format(self, value: object) -> str:
+            """Format field value."""
+            return str(value)
 
-        call_count: int
-        return_value: object
+    class MockProtocol:
+        """Protocol for mock object testing."""
 
-    # === CORE MATCHERS ===
+        def reset(self) -> None:
+            """Reset mock state."""
+
+    # =========================================================================
+    # CORE MATCHERS - FlextResult and object testing
+    # =========================================================================
 
     class CoreMatchers:
-        """Core matcher methods for FLEXT tests."""
+        """Core matching utilities for FlextResult and common objects."""
 
         @staticmethod
-        def assert_result_success[T](
-            result: FlextResult[T],
-            expected_data: T | None = None,
-        ) -> None:
-            """Assert FlextResult is successful using FlextResult validation."""
-            if not result.success:
-                msg = f"Expected successful result, but got failure: {result.error}"
-                raise AssertionError(msg)
-
-            if expected_data is not None and result.data != expected_data:
-                msg = f"Expected data {expected_data!r}, got {result.data!r}"
-                raise AssertionError(msg)
+        def be_success(result: object) -> bool:
+            """Check if result indicates success."""
+            if hasattr(result, "is_success"):
+                return bool(getattr(result, "is_success"))
+            if hasattr(result, "success"):
+                return bool(getattr(result, "success"))
+            return False
 
         @staticmethod
-        def assert_result_failure[T](
-            result: FlextResult[T],
-            expected_error: str | None = None,
-            expected_error_code: str | None = None,
-        ) -> None:
-            """Assert FlextResult is failed using FlextResult validation."""
-            if result.success:
-                msg = f"Expected failed result, but got success: {result.data}"
-                raise AssertionError(msg)
-
-            if expected_error is not None:
-                error_message = result.error or "Unknown error"
-                if expected_error not in str(error_message):
-                    msg = f"Expected error containing {expected_error!r}, got {error_message!r}"
-                    raise AssertionError(msg)
-
-            if expected_error_code is not None:
-                actual_code = getattr(result, "error_code", None) or "UNKNOWN"
-                if actual_code != expected_error_code:
-                    msg = f"Expected error code {expected_error_code!r}, got {actual_code!r}"
-                    raise AssertionError(msg)
+        def be_failure(result: object) -> bool:
+            """Check if result indicates failure."""
+            if hasattr(result, "is_failure"):
+                return bool(getattr(result, "is_failure"))
+            if hasattr(result, "failure"):
+                return bool(getattr(result, "failure"))
+            return False
 
         @staticmethod
-        def be_success() -> FlextTestsMatchers.SuccessMatcher:
-            """Create a success matcher for FlextResult."""
-            return FlextTestsMatchers.SuccessMatcher()
+        def have_error(result: object, expected_error: str | None = None) -> bool:
+            """Check if result has error message."""
+            if not hasattr(result, "error"):
+                return False
+
+            error = getattr(result, "error")
+            if error is None:
+                return False
+
+            if expected_error is None:
+                return True
+
+            return str(expected_error) in str(error)
 
         @staticmethod
-        def be_failure() -> FlextTestsMatchers.FailureMatcher:
-            """Create a failure matcher for FlextResult."""
-            return FlextTestsMatchers.FailureMatcher()
+        def have_error_code(result: object, expected_code: str) -> bool:
+            """Check if result has specific error code."""
+            if not hasattr(result, "error_code"):
+                return False
+
+            error_code = getattr(result, "error_code")
+            if error_code is None:
+                return False
+
+            return str(error_code) == str(expected_code)
+
+        @staticmethod
+        def have_value(result: object, expected_value: object = None) -> bool:
+            """Check if result has expected value."""
+            # Try value first, then data for backward compatibility
+            actual_value: object = None
+            if hasattr(result, "value"):
+                actual_value = getattr(result, "value")
+            elif hasattr(result, "data"):
+                actual_value = getattr(result, "data")
+            else:
+                return False
+
+            if expected_value is None:
+                return actual_value is not None
+
+            return bool(actual_value == expected_value)
+
+        @staticmethod
+        def be_empty(container: object) -> bool:
+            """Check if container is empty."""
+            if hasattr(container, "__len__"):
+                # Type guard: if it has __len__, treat it as Sized
+                sized_container = cast("Sized", container)
+                return len(sized_container) == 0
+            if hasattr(container, "is_empty"):
+                return bool(getattr(container, "is_empty"))
+            return False
+
+        @staticmethod
+        def contain_item(container: object, item: object) -> bool:
+            """Check if container contains item."""
+            if hasattr(container, "__contains__"):
+                # Type guard: if it has __contains__, treat it as Container
+                container_obj = cast("Container[object]", container)
+                return item in container_obj
+            if hasattr(container, "contains"):
+                contains_method = getattr(container, "contains")
+                return bool(contains_method(item))
+            return False
+
+        @staticmethod
+        def be_instance_of(obj: object, expected_type: type[object]) -> bool:
+            """Check if object is instance of expected type."""
+            return isinstance(obj, expected_type)
+
+        @staticmethod
+        def have_attribute(obj: object, attr_name: str) -> bool:
+            """Check if object has attribute."""
+            return hasattr(obj, attr_name)
+
+        @staticmethod
+        def have_method(obj: object, method_name: str) -> bool:
+            """Check if object has callable method."""
+            return hasattr(obj, method_name) and callable(getattr(obj, method_name))
+
+        @staticmethod
+        def be_callable(obj: object) -> bool:
+            """Check if object is callable."""
+            return callable(obj)
+
+        @staticmethod
+        def satisfy_predicate(obj: object, predicate: object) -> bool:
+            """Check if object satisfies predicate function."""
+            if not callable(predicate):
+                return False
+            try:
+                # Cast to callable since we've checked it's callable
+                predicate_func = cast("Callable[[object], object]", predicate)
+                return bool(predicate_func(obj))
+            except Exception:
+                return False
+
+        @staticmethod
+        def be_json_serializable(obj: object) -> bool:
+            """Check if object is JSON serializable."""
+            try:
+                json.dumps(obj)
+                return True
+            except (TypeError, ValueError):
+                return False
+
+        @staticmethod
+        def match_regex(text: str, pattern: str) -> bool:
+            """Check if text matches regex pattern."""
+            try:
+                return bool(re.search(pattern, text))
+            except re.error:
+                return False
+
+        @staticmethod
+        def be_valid_uuid(value: str) -> bool:
+            """Check if string is valid UUID."""
+            try:
+                uuid.UUID(value)
+                return True
+            except ValueError:
+                return False
+
+        @staticmethod
+        def be_valid_email(email: str) -> bool:
+            """Check if string is valid email format."""
+            pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            return bool(re.match(pattern, email))
+
+        @staticmethod
+        def be_positive_number(value: str | float) -> bool:
+            """Check if value is positive number."""
+            try:
+                return float(value) > 0
+            except (TypeError, ValueError):
+                return False
+
+        @staticmethod
+        def be_within_range(value: str | float, min_val: float, max_val: float) -> bool:
+            """Check if value is within numeric range."""
+            try:
+                num_value = float(value)
+                return min_val <= num_value <= max_val
+            except (TypeError, ValueError):
+                return False
+
+        @staticmethod
+        def have_length(container: object, expected_length: int) -> bool:
+            """Check if container has expected length."""
+            if not hasattr(container, "__len__"):
+                return False
+            # Type guard: if it has __len__, treat it as Sized
+            sized_container = cast("Sized", container)
+            return len(sized_container) == expected_length
+
+        @staticmethod
+        def be_sorted(sequence: Sequence[object], *, reverse: bool = False) -> bool:
+            """Check if sequence is sorted."""
+            if not hasattr(sequence, "__getitem__") or not hasattr(sequence, "__len__"):
+                return False
+
+            try:
+                items = list(sequence)
+                if not items:
+                    return True  # Empty sequence is considered sorted
+
+                # Use string representation for sorting to avoid type variable issues
+                # This ensures we can always compare items regardless of their types
+                items_as_strings = [str(item) for item in items]
+                sorted_strings = sorted(items_as_strings, reverse=reverse)
+                return items_as_strings == sorted_strings
+            except (TypeError, AttributeError):
+                return False
+
+        @staticmethod
+        def all_satisfy(
+            container: Iterable[object], predicate: Callable[[object], object]
+        ) -> bool:
+            """Check if all items in container satisfy predicate."""
+            try:
+                return all(bool(predicate(item)) for item in container)
+            except Exception:
+                return False
+
+        @staticmethod
+        def any_satisfy(
+            container: Iterable[object], predicate: Callable[[object], object]
+        ) -> bool:
+            """Check if any item in container satisfies predicate."""
+            try:
+                return any(bool(predicate(item)) for item in container)
+            except Exception:
+                return False
 
         @staticmethod
         def assert_greater_than(
-            actual: float,
-            expected: float,
-            message: str | None = None,
+            actual: float, expected: float, msg: str = "", message: str = ""
         ) -> None:
-            """Assert actual value is greater than expected value.
-
-            Args:
-                actual: Actual value to test
-                expected: Expected minimum value (exclusive)
-                message: Custom error message
-
-            Raises:
-                AssertionError: If actual <= expected
-
-            """
+            """Assert that actual value is greater than expected."""
             if actual <= expected:
-                if message:
-                    raise AssertionError(message)
-                raise AssertionError(f"Expected {actual} > {expected}")
-
-        # Convenience boolean helpers using FlextResult
-        @staticmethod
-        def is_successful_result(result: FlextResult[object]) -> bool:
-            """Check if result is successful using FlextResult."""
-            return result.success
+                error_msg = msg or message or f"Expected {actual} > {expected}"
+                raise AssertionError(error_msg)
 
         @staticmethod
-        def is_failed_result(result: FlextResult[object]) -> bool:
-            """Check if result is failed using FlextResult."""
-            return not result.success
+        def be_equivalent_to(obj1: object, obj2: object) -> bool:
+            """Check if objects are equivalent (handles complex comparisons)."""
+            if obj1 == obj2:
+                return True
 
-        @staticmethod
-        def assert_container_has_service(
-            container: FlextTestsMatchers.ContainerProtocol,
-            service_name: str,
-            expected_type: type | None = None,
-        ) -> None:
-            """Assert container has service with optional type check.
-
-            Args:
-                container: Container to test
-                service_name: Name of service to check
-                expected_type: Expected type of service (optional)
-
-            Raises:
-                AssertionError: With clear message about missing service
-
-            """
-            result = container.get(service_name)
-            assert result.is_success, (
-                f"Expected service {service_name!r} to exist in container, "
-                f"but got error: {result.error}"
-            )
-
-            if expected_type is not None:
-                service: object = result.value
-                assert isinstance(service, expected_type), (
-                    f"Expected service {service_name!r} to be of type "
-                    f"{expected_type.__name__}, got {type(service).__name__}"
+            # Handle dict comparison
+            if isinstance(obj1, dict) and isinstance(obj2, dict):
+                return obj1.keys() == obj2.keys() and all(
+                    FlextTestsMatchers.CoreMatchers.be_equivalent_to(obj1[k], obj2[k])
+                    for k in obj1
                 )
 
-        @staticmethod
-        def assert_field_validates(
-            field: FlextTestsMatchers.FieldProtocol,
-            value: object,
-            *,
-            should_pass: bool = True,
-        ) -> None:
-            """Assert field validation result.
-
-            Args:
-                field: Field to test
-                value: Value to validate
-                should_pass: Whether validation should pass
-
-            Raises:
-                AssertionError: With clear validation message
-
-            """
-            is_valid, error_msg = field.validate_field_value(value)
-
-            if should_pass:
-                assert is_valid, (
-                    f"Expected validation to pass for value {value!r}, "
-                    f"but got error: {error_msg}"
-                )
-            else:
-                assert not is_valid, (
-                    f"Expected validation to fail for value {value!r}, but it passed"
+            # Handle list/tuple comparison
+            if isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
+                return len(obj1) == len(obj2) and all(
+                    FlextTestsMatchers.CoreMatchers.be_equivalent_to(a, b)
+                    for a, b in zip(obj1, obj2, strict=False)
                 )
 
-        @staticmethod
-        def assert_json_structure(
-            data: FlextTypes.Core.JsonObject,
-            expected_keys: Sequence[str],
-            *,
-            exact_match: bool = False,
-        ) -> None:
-            """Assert JSON structure has expected keys.
+            # Handle set comparison
+            if isinstance(obj1, set) and isinstance(obj2, set):
+                return obj1 == obj2
 
-            Args:
-                data: JSON data to test
-                expected_keys: Keys that should be present
-                exact_match: Whether to require exact key match
+            return False
 
-            Raises:
-                AssertionError: With clear message about missing keys
-
-            """
-            actual_keys = set(data.keys())
-            expected_keys_set = set(expected_keys)
-
-            if exact_match:
-                assert actual_keys == expected_keys_set, (
-                    f"Expected exact keys {expected_keys_set}, got {actual_keys}"
-                )
-            else:
-                missing_keys = expected_keys_set - actual_keys
-                assert not missing_keys, f"Missing required keys: {missing_keys}"
-
-        @staticmethod
-        def _assert_performance_within_limit_static(
-            benchmark: FlextTestsMatchers.BenchmarkFixture,
-            func: Callable[[], object],
-            _max_time_seconds: float = 1.0,
-            *args: object,
-            **kwargs: object,
-        ) -> object:
-            """Assert function performance is within time limit.
-
-            Args:
-                benchmark: pytest-benchmark fixture
-                func: Function to benchmark
-                _max_time_seconds: Maximum allowed time
-                *args: Function arguments
-                **kwargs: Function keyword arguments
-
-            Returns:
-                Function result
-
-            Raises:
-                AssertionError: If performance exceeds limit
-
-            """
-            # Remove max_time_seconds from kwargs if present to avoid passing it to func
-            func_kwargs = {k: v for k, v in kwargs.items() if k != "max_time_seconds"}
-            result = benchmark(func, *args, **func_kwargs)
-
-            # Get stats from benchmark
-            stats = benchmark.stats
-            mean_time = getattr(stats, "mean", 0.0)
-
-            assert mean_time <= _max_time_seconds, (
-                f"Performance test failed: mean time {mean_time:.4f}s "
-                f"exceeds limit {_max_time_seconds:.4f}s"
-            )
-
-            return result
-
-        @staticmethod
-        def assert_regex_match(
-            text: str,
-            pattern: str,
-            flags: int = 0,
-        ) -> None:
-            """Assert text matches regex pattern.
-
-            Args:
-                text: Text to test
-                pattern: Regex pattern
-                flags: Regex flags
-
-            Raises:
-                AssertionError: With clear message about pattern mismatch
-
-            """
-            compiled_pattern = re.compile(pattern, flags)
-            match = compiled_pattern.search(text)
-
-            assert match is not None, (
-                f"Text {text!r} does not match pattern {pattern!r}"
-            )
-
-        @staticmethod
-        def _assert_type_guard_static(
-            value: object,
-            type_guard: Callable[[object], TypeGuard[object]],
-        ) -> None:
-            """Assert value passes type guard.
-
-            Args:
-                value: Value to test
-                type_guard: Type guard function
-
-            Raises:
-                AssertionError: With clear message about type check
-
-            """
-            assert type_guard(value), (
-                f"Value {value!r} of type {type(value).__name__} failed type guard check"
-            )
-
-        @staticmethod
-        def assert_no_deadfixtures(_test_module: object) -> None:
-            """Assert no dead fixtures in test module (uses pytest-deadfixtures).
-
-            Args:
-                test_module: Test module to check
-
-            Note:
-                This leverages pytest-deadfixtures plugin for fixture analysis
-                Module parameter available for future fixture analysis implementation
-
-            """
-
-        @staticmethod
-        def assert_mock_called_with_result(
-            mock_obj: FlextTestsMatchers.MockProtocol,
-            expected_result_type: type,
-            call_count: int = 1,
-        ) -> None:
-            """Assert mock was called and returned expected result type.
-
-            Args:
-                mock_obj: Mock object to test
-                expected_result_type: Expected return type
-                call_count: Expected number of calls
-
-            Raises:
-                AssertionError: With clear mock call information
-
-            """
-            assert mock_obj.call_count == call_count, (
-                f"Expected {call_count} calls, got {mock_obj.call_count}"
-            )
-
-            if call_count > 0:
-                return_value: object = mock_obj.return_value
-                assert isinstance(return_value, expected_result_type), (
-                    f"Expected return type {expected_result_type.__name__}, "
-                    f"got {type(return_value).__name__}"
-                )
-
-        @staticmethod
-        def assert_environment_variable(
-            var_name: str,
-            expected_value: str | None = None,
-        ) -> None:
-            """Assert environment variable exists with optional value check.
-
-            Args:
-                var_name: Environment variable name
-                expected_value: Expected value (optional)
-
-            Note:
-                Uses pytest-env for environment variable testing
-
-            """
-            assert var_name in os.environ, (
-                f"Environment variable {var_name!r} not found"
-            )
-
-            if expected_value is not None:
-                actual_value = os.environ[var_name]
-                assert actual_value == expected_value, (
-                    f"Expected {var_name}={expected_value!r}, got {actual_value!r}"
-                )
-
-        @staticmethod
-        def assert_async_result(
-            _async_result: object,
-            _timeout_seconds: float = 5.0,
-        ) -> None:
-            """Assert async operation completes within timeout.
-
-            Args:
-                async_result: Async result to test
-                timeout_seconds: Maximum time to wait
-
-            Note:
-                Uses pytest-asyncio and pytest-timeout for async testing
-
-            """
-            # This is handled by pytest-asyncio and pytest-timeout decorators
-            # This method serves as documentation for async patterns
-
-    # === RESULT MATCHERS ===
+    # =========================================================================
+    # SPECIALIZED MATCHERS - Result-specific matching
+    # =========================================================================
 
     class SuccessMatcher:
-        """Matcher for successful FlextResult instances."""
+        """Specialized matcher for success results."""
 
-        def matches(self, result: FlextResult[T]) -> bool:
-            """Check if result is successful."""
-            return result.success
+        def __init__(self, result: object) -> None:
+            """Initialize success matcher with result object."""
+            self.result = result
 
-        def describe_mismatch(self, result: FlextResult[T]) -> str:
-            """Describe why the match failed."""
-            return f"Expected success but got failure: {result.error}"
+        def with_value(self, expected_value: object) -> bool:
+            """Check success result has expected value."""
+            return FlextTestsMatchers.CoreMatchers.have_value(
+                self.result, expected_value
+            )
 
     class FailureMatcher:
-        """Matcher for failed FlextResult instances."""
+        """Specialized matcher for failure results."""
 
-        def matches(self, result: FlextResult[T]) -> bool:
-            """Check if result is failed."""
-            return result.is_failure
+        def __init__(self, result: object) -> None:
+            """Initialize failure matcher with result object."""
+            self.result = result
 
-        def describe_mismatch(self, result: FlextResult[T]) -> str:
-            """Describe why the match failed."""
-            return f"Expected failure but got success: {result.data}"
+        def with_error(self, expected_error: str) -> bool:
+            """Check failure result has expected error."""
+            return FlextTestsMatchers.CoreMatchers.have_error(
+                self.result, expected_error
+            )
 
-    # === PERFORMANCE MATCHERS ===
+    # =========================================================================
+    # PERFORMANCE MATCHERS - Benchmarking and timing
+    # =========================================================================
 
     class PerformanceMatchers:
-        """Performance matchers that use FlextUtilities.Performance."""
+        """Performance and timing matchers for benchmarking."""
 
         @staticmethod
-        def assert_linear_complexity(
-            benchmark: FlextTestsMatchers.BenchmarkFixture,
-            func: Callable[[int], object],
-            sizes: Sequence[int],
-            tolerance_factor: float = 2.0,
-        ) -> None:
-            """Assert function has linear time complexity.
+        def execute_within_time(func: object, max_time: float) -> bool:
+            """Check if function executes within time limit."""
+            if not callable(func):
+                return False
 
-            Args:
-                benchmark: pytest-benchmark fixture
-                func: Function to test (takes size parameter)
-                sizes: List of input sizes to test
-                tolerance_factor: Allowed deviation from linear growth
-
-            Raises:
-                AssertionError: If complexity is not linear
-
-            """
-            times: list[float] = []
-            for size in sizes:
-                benchmark.benchmark(func, size)
-                times.append(getattr(benchmark.stats, "mean", 0.0))
-
-            # Check if time growth is roughly linear
-            if len(times) >= 2:
-                # Ensure division results in float for type safety
-                growth_ratio: float = (
-                    float(times[-1] / times[0]) if times[0] > 0 else 1.0
-                )
-                size_ratio: float = float(sizes[-1] / sizes[0]) if sizes[0] > 0 else 1.0
-
-                assert growth_ratio <= size_ratio * tolerance_factor, (
-                    f"Complexity appears non-linear: time grew by {growth_ratio:.2f}x "
-                    f"while size grew by {size_ratio:.2f}x"
-                )
-
-        @staticmethod
-        def assert_memory_efficient(
-            benchmark: FlextTestsMatchers.BenchmarkFixture,
-            func: Callable[[], object],
-            _max_memory_mb: float = 100.0,
-        ) -> object:
-            """Assert function is memory efficient.
-
-            Args:
-                benchmark: pytest-benchmark fixture
-                func: Function to test
-                _max_memory_mb: Maximum memory usage in MB
-
-            Note:
-                This is a placeholder for memory profiling integration
-
-            """
-            # Memory profiling would require additional tools like memory_profiler
-            # For now, this serves as a marker for memory-sensitive tests
-            return benchmark.benchmark(func)
-
-        @staticmethod
-        def assert_performance_within_limit(
-            benchmark: FlextTestsMatchers.BenchmarkFixture,
-            func: Callable[[], object],
-            max_time_seconds: float = 1.0,
-            *args: object,
-            **kwargs: object,
-        ) -> object:
-            """Assert function performance is within time limit.
-
-            Args:
-                benchmark: pytest-benchmark fixture
-                func: Function to test
-                max_time_seconds: Maximum allowed execution time
-                *args: Arguments to pass to function
-                **kwargs: Keyword arguments to pass to function
-
-            Returns:
-                Function execution result
-
-            Raises:
-                AssertionError: If execution time exceeds limit
-
-            """
-            # Use benchmark fixture directly (it's callable)
-            # Execute function with benchmark - benchmark fixture IS the callable
-            if args or kwargs:
-                result = benchmark(func, *args, **kwargs)
-            else:
-                result = benchmark(func)
-
-            # For pytest-benchmark, the result is returned and stats are attached
-            # Note: max_time_seconds parameter is for future enhancement
-            _ = max_time_seconds  # Acknowledge parameter to avoid unused warning
-            return result
-
-    # === FACTORY METHODS ===
-
-    @classmethod
-    def matchers(cls) -> FlextTestsMatchers.CoreMatchers:
-        """Get core matchers instance."""
-        return cls.CoreMatchers()
-
-    @classmethod
-    def performance(cls) -> FlextTestsMatchers.PerformanceMatchers:
-        """Get performance matchers instance."""
-        return cls.PerformanceMatchers()
-
-    # === CONVENIENCE METHODS ===
-
-    @classmethod
-    def assert_result_success[T](
-        cls,
-        result: FlextResult[T],
-        expected_data: T | None = None,
-    ) -> None:
-        """Assert FlextResult is successful quickly."""
-        cls.CoreMatchers.assert_result_success(result, expected_data)
-
-    @classmethod
-    def assert_result_failure[T](
-        cls,
-        result: FlextResult[T],
-        expected_error: str | None = None,
-        expected_error_code: str | None = None,
-    ) -> None:
-        """Assert FlextResult is failed quickly."""
-        cls.CoreMatchers.assert_result_failure(
-            result, expected_error, expected_error_code
-        )
-
-    @classmethod
-    def assert_json_structure(
-        cls,
-        data: FlextTypes.Core.JsonObject,
-        expected_keys: Sequence[str],
-        *,
-        exact_match: bool = False,
-    ) -> None:
-        """Assert JSON structure quickly."""
-        cls.CoreMatchers.assert_json_structure(
-            data, expected_keys, exact_match=exact_match
-        )
-
-    @classmethod
-    def assert_regex_match(
-        cls,
-        text: str,
-        pattern: str,
-        flags: int = 0,
-    ) -> None:
-        """Assert regex match quickly."""
-        cls.CoreMatchers.assert_regex_match(text, pattern, flags)
-
-    @classmethod
-    def assert_environment_variable(
-        cls,
-        var_name: str,
-        expected_value: str | None = None,
-    ) -> None:
-        """Assert environment variable quickly."""
-        cls.CoreMatchers.assert_environment_variable(var_name, expected_value)
-
-    @classmethod
-    def is_successful_result(cls, result: FlextResult[object]) -> bool:
-        """Check if result is successful quickly."""
-        return cls.CoreMatchers.is_successful_result(result)
-
-    @classmethod
-    def is_failed_result(cls, result: FlextResult[object]) -> bool:
-        """Check if result is failed quickly."""
-        return cls.CoreMatchers.is_failed_result(result)
-
-    @classmethod
-    async def simulate_delay(cls, delay_seconds: float) -> None:
-        """Simulate async delay for test compatibility."""
-        await asyncio.sleep(delay_seconds)
-
-    @classmethod
-    async def run_with_timeout(
-        cls,
-        coro: Callable[[], Awaitable[T]] | Awaitable[T],
-        timeout_seconds: float = 5.0,
-    ) -> T:
-        """Run coroutine with timeout and auto-retry for test compatibility."""
-        start_time = time.time()
-        last_exception = None
-
-        while time.time() - start_time < timeout_seconds:
+            start_time = time.time()
             try:
-                # Create fresh coroutine for each retry attempt
-                fresh_coro = coro() if callable(coro) else coro
-                return await asyncio.wait_for(
-                    fresh_coro, timeout=min(0.5, timeout_seconds)
-                )
-            except TimeoutError as timeout_err:
-                raise AssertionError(
-                    f"Operation timed out after {timeout_seconds} seconds"
-                ) from timeout_err
-            except Exception as e:
-                last_exception = e
-                await asyncio.sleep(0.1)  # Brief retry delay
-                continue
+                func()
+                execution_time = time.time() - start_time
+                return execution_time <= max_time
+            except Exception:
+                return False
 
-        # If we get here, we exhausted retry time
-        raise AssertionError(f"Operation failed: {last_exception}") from last_exception
+        @staticmethod
+        def memory_usage_within_limit(func: object, max_memory_mb: float) -> bool:
+            """Check if function uses memory within limit."""
+            if not callable(func):
+                return False
 
-    @classmethod
-    async def run_parallel_tasks(
-        cls, task_func: Callable[[object], Awaitable[T]], inputs: list[object]
-    ) -> list[T]:
-        """Run tasks in parallel for test compatibility."""
-        # Run tasks concurrently - create awaitable tasks
-        tasks: list[Awaitable[T]] = [task_func(input_item) for input_item in inputs]
-        results = await asyncio.gather(*tasks)
-        return list(results)
+            tracemalloc.start()
+            try:
+                func()
+                _current, peak = tracemalloc.get_traced_memory()
+                tracemalloc.stop()
+                peak_mb = peak / 1024 / 1024
+                return peak_mb <= max_memory_mb
+            except Exception:
+                tracemalloc.stop()
+                return False
 
-    @classmethod
-    async def run_concurrently(
-        cls, *tasks: Awaitable[T], return_exceptions: bool = True
-    ) -> list[T] | list[T | BaseException]:
-        """Ultra-simple alias for test compatibility - runs tasks concurrently."""
-        if return_exceptions:
-            results: list[T | BaseException] = await asyncio.gather(
-                *tasks, return_exceptions=True
+        @staticmethod
+        def throughput_above_threshold(
+            func: object, iterations: int, min_ops_per_sec: float
+        ) -> bool:
+            """Check if function throughput is above threshold."""
+            if not callable(func):
+                return False
+
+            start_time = time.time()
+            try:
+                for _ in range(iterations):
+                    func()
+                total_time = time.time() - start_time
+                ops_per_sec = iterations / total_time if total_time > 0 else 0
+                return ops_per_sec >= min_ops_per_sec
+            except Exception:
+                return False
+
+        @staticmethod
+        def scale_linearly(func: object, input_sizes: list[int]) -> bool:
+            """Check if function execution time scales linearly with input size."""
+            if not callable(func) or len(input_sizes) < 2:
+                return False
+
+            times = []
+            try:
+                for size in input_sizes:
+                    start_time = time.time()
+                    func(size)
+                    execution_time = time.time() - start_time
+                    times.append(execution_time)
+
+                # Simple linear scaling check
+                for i in range(1, len(times)):
+                    ratio = times[i] / times[0] if times[0] > 0 else 0
+                    size_ratio = input_sizes[i] / input_sizes[0]
+                    # Allow 50% deviation from linear scaling
+                    if not (0.5 * size_ratio <= ratio <= 1.5 * size_ratio):
+                        return False
+                return True
+            except Exception:
+                return False
+
+    # =========================================================================
+    # CONVENIENCE METHODS - Factory methods for matcher creation
+    # =========================================================================
+
+    @staticmethod
+    def matchers() -> FlextTestsMatchers.CoreMatchers:
+        """Get core matchers instance."""
+        return FlextTestsMatchers.CoreMatchers()
+
+    @staticmethod
+    def performance() -> FlextTestsMatchers.PerformanceMatchers:
+        """Get performance matchers instance."""
+        return FlextTestsMatchers.PerformanceMatchers()
+
+    # =========================================================================
+    # ASSERTION HELPERS - Direct assertion methods
+    # =========================================================================
+
+    @staticmethod
+    def assert_result_success(
+        result: object, expected_value: object = None, expected_data: object = None
+    ) -> None:
+        """Assert that result is successful with optional value check."""
+        assert FlextTestsMatchers.CoreMatchers.be_success(result), (
+            f"Expected success, got {result}"
+        )
+        if expected_value is not None:
+            assert FlextTestsMatchers.CoreMatchers.have_value(result, expected_value), (
+                f"Expected value {expected_value}, got {getattr(result, 'value', getattr(result, 'data', None))}"
             )
-            # Filter out exceptions when return_exceptions=True - only return successful results
-            return [r for r in results if not isinstance(r, Exception)]
-        return await asyncio.gather(*tasks)
+        if expected_data is not None:
+            assert FlextTestsMatchers.CoreMatchers.have_value(result, expected_data), (
+                f"Expected data {expected_data}, got {getattr(result, 'value', getattr(result, 'data', None))}"
+            )
 
-    @classmethod
+    @staticmethod
+    def assert_result_failure(
+        result: object, expected_error: str | None = None
+    ) -> None:
+        """Assert that result is failure with optional error check."""
+        assert FlextTestsMatchers.CoreMatchers.be_failure(result), (
+            f"Expected failure, got {result}"
+        )
+        if expected_error is not None:
+            assert FlextTestsMatchers.CoreMatchers.have_error(result, expected_error), (
+                f"Expected error containing '{expected_error}', got {getattr(result, 'error', None)}"
+            )
+
+    @staticmethod
+    def assert_json_structure(
+        obj: object, expected_keys: list[str], *, exact_match: bool = True
+    ) -> None:
+        """Assert that object has expected JSON structure."""
+        if not isinstance(obj, dict):
+            msg = f"Expected dict, got {type(obj).__name__}"
+            raise AssertionError(msg)
+
+        for key in expected_keys:
+            if key not in obj:
+                msg = f"Missing key '{key}' in {list(obj.keys())}"
+                raise AssertionError(msg)
+
+        if exact_match:
+            obj_keys = set(obj.keys())
+            expected_keys_set = set(expected_keys)
+            if obj_keys != expected_keys_set:
+                extra_keys = obj_keys - expected_keys_set
+                if extra_keys:
+                    msg = f"Unexpected keys {list(extra_keys)} found in object"
+                    raise AssertionError(msg)
+
+    @staticmethod
+    def assert_regex_match(text: str, pattern: str) -> None:
+        """Assert that text matches regex pattern."""
+        if not FlextTestsMatchers.CoreMatchers.match_regex(text, pattern):
+            msg = f"Text '{text}' does not match pattern '{pattern}'"
+            raise AssertionError(msg)
+
+    @staticmethod
+    def assert_environment_variable(
+        var_name: str, expected_value: str | None = None
+    ) -> None:
+        """Assert that environment variable exists with optional value check."""
+        actual_value = os.environ.get(var_name)
+        if actual_value is None:
+            msg = f"Environment variable '{var_name}' not set"
+            raise AssertionError(msg)
+        if expected_value is not None and actual_value != expected_value:
+            msg = f"Environment variable '{var_name}' = '{actual_value}', expected '{expected_value}'"
+            raise AssertionError(msg)
+
+    @staticmethod
+    def is_successful_result(result: object) -> bool:
+        """Check if result indicates success."""
+        return FlextTestsMatchers.CoreMatchers.be_success(result)
+
+    @staticmethod
+    def is_failed_result(result: object) -> bool:
+        """Check if result indicates failure."""
+        return FlextTestsMatchers.CoreMatchers.be_failure(result)
+
+    @staticmethod
+    async def simulate_delay(seconds: float) -> None:
+        """Simulate async delay for test compatibility."""
+        await asyncio.sleep(seconds)
+
+    @staticmethod
+    async def run_with_timeout(
+        coro: Awaitable[object], timeout_seconds: float
+    ) -> object:
+        """Run coroutine with timeout and auto-retry for test compatibility."""
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout_seconds)
+        except TimeoutError:
+            # Auto-retry once with extended timeout
+            try:
+                return await asyncio.wait_for(coro, timeout=timeout_seconds * 2)
+            except TimeoutError:
+                msg = f"Operation timed out after {timeout_seconds * 2} seconds"
+                raise TimeoutError(msg) from None
+
+    @staticmethod
+    async def run_parallel_tasks(tasks: list[Awaitable[object]]) -> list[object]:
+        """Run tasks in parallel for test compatibility."""
+        return await asyncio.gather(*tasks, return_exceptions=True)
+
+    @staticmethod
+    async def run_concurrently(
+        func: Callable[[object], object], *args: object, **_kwargs: object
+    ) -> object:
+        """Ultra-simple for test compatibility - runs tasks concurrently."""
+        partial_func = functools.partial(func, *args)
+        return await asyncio.get_event_loop().run_in_executor(None, partial_func)
+
+    @staticmethod
     async def test_race_condition(
-        cls, task_func: Callable[[], Awaitable[T]], *, concurrent_count: int = 5
-    ) -> list[T]:
-        """Ultra-simple alias for test compatibility - runs function concurrently to test race conditions."""
-        # Run the same function multiple times concurrently
-        tasks: list[Awaitable[T]] = [task_func() for _ in range(concurrent_count)]
-        results = await asyncio.gather(*tasks)
-        return list(results)
+        func1: Callable[[], object], func2: Callable[[], object]
+    ) -> tuple[object, object]:
+        """Ultra-simple for test compatibility - runs function concurrently to test race conditions."""
+        return await asyncio.gather(
+            asyncio.get_event_loop().run_in_executor(None, func1),
+            asyncio.get_event_loop().run_in_executor(None, func2),
+        )
 
-    @classmethod
+    @staticmethod
     async def measure_concurrency_performance(
-        cls, task_func: Callable[[], Awaitable[object]], *, iterations: int = 3
-    ) -> dict[str, float]:
-        """Ultra-simple alias for test compatibility - measures concurrency performance."""
+        func: Callable[[], object], concurrency_level: int
+    ) -> dict[str, object]:
+        """Ultra-simple for test compatibility - measures concurrency performance."""
         start_time = time.time()
 
-        # Run tasks concurrently for performance measurement
-        tasks: list[Awaitable[object]] = [task_func() for _ in range(iterations)]
-        await asyncio.gather(*tasks)
+        tasks = [
+            asyncio.get_event_loop().run_in_executor(None, func)
+            for _ in range(concurrency_level)
+        ]
 
+        results = await asyncio.gather(*tasks, return_exceptions=True)
         end_time = time.time()
-        total_time = end_time - start_time
-        average_time = total_time / iterations if iterations > 0 else 0.0
-        throughput = iterations / total_time if total_time > 0 else 0.0
 
         return {
-            "total_time": total_time,
-            "average_time": average_time,
-            "throughput": throughput,
+            "total_time": end_time - start_time,
+            "concurrency_level": concurrency_level,
+            "results": results,
+            "success_count": sum(1 for r in results if not isinstance(r, Exception)),
+            "error_count": sum(1 for r in results if isinstance(r, Exception)),
         }
 
-    @classmethod
-    def timeout_context(cls, timeout_seconds: float) -> object:
+    @staticmethod
+    def timeout_context(timeout: float) -> object:
         """Create timeout context manager for test compatibility."""
-        return asyncio.timeout(timeout_seconds)
 
-    @classmethod
+        class TimeoutContext:
+            def __init__(self, timeout_seconds: float) -> None:
+                self.timeout_seconds = timeout_seconds
+
+            def __enter__(self) -> Self:
+                signal.alarm(int(self.timeout_seconds))
+                return self
+
+            def __exit__(
+                self, exc_type: object, exc_val: object, exc_tb: object
+            ) -> None:
+                signal.alarm(0)
+
+        return TimeoutContext(timeout)
+
+    @staticmethod
     def create_async_mock(
-        cls, return_value: object = None, side_effect: object = None
+        return_value: object = None, side_effect: object = None, delay: float = 0.0
     ) -> object:
         """Create async mock for test compatibility."""
 
         class AsyncMock:
             def __init__(
-                self, return_value: object = None, side_effect: object = None
+                self,
+                return_value: object = None,
+                side_effect: object = None,
+                delay: float = 0.0,
             ) -> None:
-                """Initialize asyncmock:."""
                 self.return_value = return_value
                 self.side_effect = side_effect
+                self.delay = delay
                 self.call_count = 0
-                self.called = False
-                self._side_effect_iter: Iterator[object] | None = None
-                if isinstance(side_effect, list):
-                    self._side_effect_iter = iter(side_effect)
+                self.call_args_list: list[object] = []
 
             async def __call__(self, *args: object, **kwargs: object) -> object:
-                """Call method for asyncmock:."""
                 self.call_count += 1
-                self.called = True
+                self.call_args_list.append((args, kwargs))
+
+                if self.delay > 0:
+                    await asyncio.sleep(self.delay)
 
                 if self.side_effect is not None:
-                    if (
-                        isinstance(self.side_effect, list)
-                        and self._side_effect_iter is not None
-                    ):
-                        try:
-                            effect = next(self._side_effect_iter)
-                            if isinstance(effect, Exception):
-                                raise effect
-                            return effect
-                        except StopIteration:
-                            return self.return_value
-                    elif callable(self.side_effect):
+                    if isinstance(self.side_effect, Exception):
+                        raise self.side_effect
+                    if callable(self.side_effect):
                         result = self.side_effect(*args, **kwargs)
                         if asyncio.iscoroutine(result):
                             return await result
                         return result
-                    elif isinstance(self.side_effect, Exception):
-                        # If side_effect is an exception instance, raise it
-                        raise self.side_effect
-                    else:
-                        return self.side_effect
+                    return self.side_effect
 
                 return self.return_value
 
-        return AsyncMock(return_value, side_effect)
+            def reset_mock(self) -> None:
+                """Reset mock state."""
+                self.call_count = 0
+                self.call_args_list = []
 
-    @classmethod
+            @property
+            def called(self) -> bool:
+                """Check if mock was called."""
+                return self.call_count > 0
+
+        return AsyncMock(return_value, side_effect, delay)
+
+    @staticmethod
     def create_flaky_async_mock(
-        cls,
-        success_value: object = "success",
-        failure_count: int = 2,
-        exception_type: type[Exception] = ValueError,
+        success_return: object = None,
+        failure_exception: object = None,
+        failure_rate: float = 0.3,
     ) -> object:
         """Ultra-simple flaky async mock for test compatibility."""
 
@@ -802,107 +807,113 @@ class FlextTestsMatchers:
 
             def __init__(
                 self,
-                success_value: object,
-                failure_count: int,
-                exception_type: type[Exception],
+                success_return: object = None,
+                failure_exception: object = None,
+                failure_rate: float = 0.3,
             ) -> None:
-                """Initialize flakyasyncmock:."""
-                self.success_value = success_value
-                self.failure_count = failure_count
-                self.exception_type = exception_type
+                self.success_return = success_return
+                self.failure_exception = failure_exception or Exception(
+                    "Flaky mock failure"
+                )
+                self.failure_rate = failure_rate
                 self.call_count = 0
 
-            async def __call__(self) -> object:
-                """Call method for flakyasyncmock:."""
+            async def __call__(self, *_args: object, **_kwargs: object) -> object:
                 self.call_count += 1
-                if self.call_count <= self.failure_count:
-                    mock_error_msg = "Mock failure"
-                    raise self.exception_type(mock_error_msg)
-                return self.success_value
 
-        return FlakyAsyncMock(success_value, failure_count, exception_type)
+                if random.random() < self.failure_rate:
+                    if isinstance(self.failure_exception, BaseException):
+                        raise self.failure_exception
 
-    @classmethod
+                    class MockFailureError(Exception):
+                        pass
+
+                    raise MockFailureError(f"Mock failure: {self.failure_exception}")
+
+                return self.success_return
+
+        return FlakyAsyncMock(success_return, failure_exception, failure_rate)
+
+    @staticmethod
     def managed_resource(
-        cls, value: T, *, cleanup_func: Callable[[T], object] | None = None
+        resource_factory: object, cleanup_func: object = None
     ) -> object:
         """Ultra-simple managed resource context manager for test compatibility."""
 
         class ManagedResourceContext:
-            def __init__(
-                self, value: T, cleanup_func: Callable[[T], object] | None = None
+            def __init__(self, factory: object, cleanup: object = None) -> None:
+                self.factory = factory
+                self.cleanup = cleanup
+                self.resource: object = None
+
+            def __enter__(self) -> object:
+                if callable(self.factory):
+                    self.resource = self.factory()
+                else:
+                    self.resource = self.factory
+                return self.resource
+
+            def __exit__(
+                self, exc_type: object, exc_val: object, exc_tb: object
             ) -> None:
-                """Initialize managedresourcecontext:."""
-                self.value = value
-                self.cleanup_func = cleanup_func
+                if self.cleanup and callable(self.cleanup) and self.resource:
+                    try:
+                        self.cleanup(self.resource)
+                    except Exception as e:
+                        # Log cleanup error but don't raise to avoid masking original exceptions
+                        warnings.warn(
+                            f"Resource cleanup failed: {e}",
+                            ResourceWarning,
+                            stacklevel=2,
+                        )
 
-            async def __aenter__(self) -> T:
-                """__aenter__ method."""
-                return self.value
+        return ManagedResourceContext(resource_factory, cleanup_func)
 
-            async def __aexit__(
-                self,
-                _exc_type: type[BaseException] | None,
-                _exc_val: BaseException | None,
-                _exc_tb: object,
-            ) -> None:
-                """__aexit__ method."""
-                # Exception parameters available for future error handling
-                if self.cleanup_func and callable(self.cleanup_func):
-                    if asyncio.iscoroutinefunction(self.cleanup_func):
-                        await self.cleanup_func(self.value)
-                    else:
-                        self.cleanup_func(self.value)
-
-        return ManagedResourceContext(value, cleanup_func)
-
-    @classmethod
-    def create_test_context(
-        cls,
-        setup_coro: Callable[[], Awaitable[T]] | None = None,
-        teardown_func: Callable[[T], object] | None = None,
+    @staticmethod
+    async def create_test_context(
+        setup_func: object = None,
+        teardown_func: object = None,
+        context_data: dict[str, object] | None = None,
     ) -> object:
         """Create async context manager for test compatibility."""
 
-        class AsyncTestContext:
+        class TestContext:
             def __init__(
                 self,
-                setup_coro: Callable[[], Awaitable[T]] | None = None,
-                teardown_func: Callable[[T], object] | None = None,
+                setup_func: object = None,
+                teardown_func: object = None,
+                context_data: dict[str, object] | None = None,
             ) -> None:
-                """Initialize asynctestcontext:."""
-                self.setup_coro = setup_coro
+                self.setup_func = setup_func
                 self.teardown_func = teardown_func
-                self.resource: T | None = None
+                self.context_data = context_data or {}
+                self.result = None
 
-            async def __aenter__(self) -> T | None:
-                """__aenter__ method."""
-                if self.setup_coro:
-                    self.resource = await self.setup_coro()
-                return self.resource
+            async def __aenter__(self) -> Self:
+                if self.setup_func and callable(self.setup_func):
+                    result = self.setup_func()
+                    if asyncio.iscoroutine(result):
+                        self.result = await result
+                    else:
+                        self.result = result
+                return self
 
             async def __aexit__(
-                self,
-                _exc_type: type[BaseException] | None,
-                _exc_val: BaseException | None,
-                _exc_tb: object,
+                self, exc_type: object, exc_val: object, exc_tb: object
             ) -> None:
-                """__aexit__ method."""
-                # Exception parameters available for future error handling
-                if self.teardown_func and self.resource is not None:
-                    result = self.teardown_func(self.resource)
-                    if asyncio.iscoroutine(result):
-                        await result
+                if self.teardown_func and callable(self.teardown_func):
+                    cleanup_result = self.teardown_func()
+                    if asyncio.iscoroutine(cleanup_result):
+                        await cleanup_result
 
-        return AsyncTestContext(setup_coro, teardown_func)
+        return TestContext(setup_func, teardown_func, context_data)
 
     # =========================================================================
-    # ALIASES FOR BACKWARD COMPATIBILITY
+    # DIRECT ACCESS METHODS - Aliases removed per FLEXT architectural principles
     # =========================================================================
 
-    # Aliases for test compatibility
-    be_success = CoreMatchers.be_success
-    be_failure = CoreMatchers.be_failure
+    # Aliases removed - use CoreMatchers.be_success, CoreMatchers.be_failure directly
+    # per FLEXT architectural principles
 
 
 # Export only the unified class

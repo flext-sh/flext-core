@@ -804,10 +804,10 @@ class FlextLogger:
     class LogEntry(TypedDict, total=False):
         """Typed structure for structured log entries.
 
-        Essential fields are required, while optional fields have defaults.
+        All fields are optional to support flexible logging scenarios.
         """
 
-        # Required fields
+        # Core fields
         message: str
         level: str
         timestamp: str

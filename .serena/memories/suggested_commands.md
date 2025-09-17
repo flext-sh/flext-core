@@ -1,55 +1,80 @@
-# FLEXT-CORE Essential Commands
+# FLEXT-DB-ORACLE Development Commands
 
-## Quality Gates (MANDATORY)
+## Essential Commands
+
+### Setup & Installation
 ```bash
-make validate              # Complete validation pipeline (lint + type + security + test)
-make check                 # Quick validation (lint + type-check only)
+make setup                    # Complete project setup (install deps + pre-commit)
+make install                  # Install dependencies only
+make install-dev              # Install dev dependencies
 ```
 
-## Individual Quality Checks
+### Quality Gates (MANDATORY)
 ```bash
-make lint                  # Ruff linting with basic rules
-make type-check            # MyPy strict mode checking (zero tolerance in src/)
-make test                  # Full test suite (75% coverage minimum required)
-make security              # Bandit + pip-audit security scanning
-make format                # Auto-format code (79 char line limit)
-make fix                   # Auto-fix linting issues
+make validate                 # Run all quality gates (lint + type + security + test)
+make check                    # Quick health check (lint + type)
+make lint                     # Ruff linting
+make type-check              # MyPy strict type checking  
+make security                # Bandit + pip-audit security scanning
+make fix                     # Auto-fix issues
 ```
 
-## Testing Commands
+### Testing
 ```bash
-make test-unit             # Unit tests only (fast feedback)
-make test-integration      # Integration tests only  
-make test-fast             # Tests without coverage (quick iteration)
-make coverage-html         # Generate HTML coverage report
-
-# Specific test execution
-PYTHONPATH=src poetry run pytest tests/unit/test_result.py -v
-PYTHONPATH=src poetry run pytest tests/unit/test_container.py::TestFlextContainer::test_basic_registration -v
+make test                     # Run tests with 90% coverage requirement
+make test-unit               # Unit tests only (fast)
+make test-integration        # Integration tests with Oracle container
+make test-e2e               # End-to-end tests
+make test-fast              # Tests without coverage
+make coverage-html          # Generate HTML coverage report
 ```
 
-## Development Utilities
+### Oracle Operations
 ```bash
-make setup                 # Complete dev environment setup
-make shell                 # Python REPL with project loaded
-make deps-show             # Show dependency tree
-make deps-update           # Update all dependencies
-make clean                 # Clean build artifacts
-make reset                 # Full reset (clean + setup)
+make oracle-test            # Test Oracle connection
+make oracle-connect         # Test Oracle connectivity
+make oracle-schema          # Validate Oracle schema access
+make oracle-validate        # Validate Oracle configuration
+make oracle-operations      # Run all Oracle validations
 ```
 
-## Build and Deploy
+### Development
 ```bash
-make build                 # Build the package
-make docs                  # Build documentation
-make docs-serve            # Serve documentation locally
+make format                 # Format code (ruff format)
+make build                  # Build package
+make clean                  # Clean build artifacts
+make shell                  # Open Python shell
+make pre-commit            # Run pre-commit hooks
+make diagnose              # Project diagnostics
+make doctor                # Health check
 ```
 
-## Single Letter Aliases (Speed)
+### Short Aliases
 ```bash
 make t                     # test
 make l                     # lint  
 make f                     # format
 make tc                    # type-check
+make c                     # clean
+make i                     # install
 make v                     # validate
 ```
+
+## Oracle Container Commands
+```bash
+# Start Oracle XE 21c container
+docker-compose -f docker-compose.oracle.yml up -d
+
+# Test Oracle connectivity  
+make oracle-connect
+
+# Stop Oracle container
+docker-compose -f docker-compose.oracle.yml down
+```
+
+## Key Quality Requirements
+- **Zero tolerance**: All quality gates must pass
+- **Coverage**: 90% minimum test coverage
+- **Type Safety**: MyPy strict mode with zero errors
+- **Security**: Bandit vulnerability scanning
+- **FLEXT Compliance**: Must follow FLEXT architectural patterns

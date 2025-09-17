@@ -19,7 +19,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextTypes,
-    FlextValidations,
 )
 
 # Email validation constants using proper FlextTypes annotations
@@ -224,12 +223,11 @@ def _demo_container(customer: User, repository: object) -> None:
 
 
 def _demo_fields_validation() -> None:
-    """Demo fields validation using FlextFields validators."""
-    # Use the available FlextFields validation methods
+    """Demo fields validation using FlextModels validators."""
     test_email = "user@example.com"
-    # Use FlextValidations for email validation instead
+    # Use FlextModels for email validation instead
 
-    email_result = FlextValidations.validate_email(test_email)
+    email_result = FlextModels.create_validated_email(test_email)
     email_valid = email_result.is_success
 
     if email_valid:
