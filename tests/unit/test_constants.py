@@ -108,7 +108,7 @@ class TestConstantsLogLevel100PercentCoverage:
         log_level = FlextConstants.Config.LogLevel.INFO
 
         # Test empty string
-        assert log_level != ""
+        assert log_level
 
         # Test partial matches
         assert log_level != "INF"

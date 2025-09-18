@@ -7,7 +7,6 @@ This test file showcases the full power of our testing infrastructure including:
 - Advanced test patterns (Builder, Given-When-Then)
 - Comprehensive parametrized testing
 
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

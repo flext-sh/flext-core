@@ -304,11 +304,137 @@ class FlextTestsFactories:
         # per FLEXT architectural principles
 
     # =========================================================================
+    # SERVICE FACTORIES - Service layer testing
+    # =========================================================================
+
+    class ServiceFactory:
+        """Simple service factory for testing service layer."""
+
+        @staticmethod
+        def create(**overrides: object) -> FlextTypes.Core.Dict:
+            """Create service data."""
+            defaults: dict[str, object] = {
+                "service_id": str(uuid.uuid4()),
+                "service_name": "Test Service",
+                "version": "1.0.0",
+                "status": "active",
+                "endpoints": ["/api/test"],
+                "metadata": {},
+            }
+            defaults.update(overrides)
+            return defaults
+
+        @staticmethod
+        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+            """Create batch of services."""
+            return [
+                FlextTestsFactories.ServiceFactory.create(**kwargs) for _ in range(size)
+            ]
+
+    # =========================================================================
+    # MOCK FACTORIES - Mock data for testing
+    # =========================================================================
+
+    class MockFactory:
+        """Simple mock factory for testing."""
+
+        @staticmethod
+        def create(**overrides: object) -> FlextTypes.Core.Dict:
+            """Create mock data."""
+            defaults: dict[str, object] = {
+                "mock_id": str(uuid.uuid4()),
+                "mock_type": "test_mock",
+                "data": {"key": "value"},
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+            defaults.update(overrides)
+            return defaults
+
+        @staticmethod
+        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+            """Create batch of mocks."""
+            return [
+                FlextTestsFactories.MockFactory.create(**kwargs) for _ in range(size)
+            ]
+
+    # =========================================================================
+    # SEQUENCE FACTORIES - Sequential data generation
+    # =========================================================================
+
+    class SequenceFactory:
+        """Simple sequence factory for sequential data."""
+
+        @staticmethod
+        def create(**overrides: object) -> FlextTypes.Core.Dict:
+            """Create sequence data."""
+            defaults = {
+                "sequence_id": str(uuid.uuid4()),
+                "sequence_name": "Test Sequence",
+                "current_value": 1,
+                "step": 1,
+                "max_value": 1000,
+            }
+            defaults.update(overrides)
+            return defaults
+
+        @staticmethod
+        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+            """Create batch of sequences."""
+            return [
+                FlextTestsFactories.SequenceFactory.create(**kwargs)
+                for _ in range(size)
+            ]
+
+    # =========================================================================
+    # POST FACTORIES - Post/Article data for testing
+    # =========================================================================
+
+    class PostFactory:
+        """Simple post factory for testing post/article functionality."""
+
+        @staticmethod
+        def create(**overrides: object) -> FlextTypes.Core.Dict:
+            """Create post data."""
+            defaults = {
+                "post_id": str(uuid.uuid4()),
+                "title": "Test Post",
+                "content": "This is test content for the post.",
+                "author": "Test Author",
+                "published": True,
+                "created_at": datetime.now(UTC).isoformat(),
+                "tags": ["test", "post"],
+            }
+            defaults.update(overrides)
+            return defaults
+
+        @staticmethod
+        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+            """Create batch of posts."""
+            return [
+                FlextTestsFactories.PostFactory.create(**kwargs) for _ in range(size)
+            ]
+
+        @staticmethod
+        def draft_post(**overrides: object) -> FlextTypes.Core.Dict:
+            """Create draft post."""
+            defaults = {"published": False, "title": "Draft Post"}
+            defaults.update(overrides)
+            return FlextTestsFactories.PostFactory.create(**defaults)
+
+        @staticmethod
+        def published_post(**overrides: object) -> FlextTypes.Core.Dict:
+            """Create published post."""
+            defaults = {"published": True, "title": "Published Post"}
+            defaults.update(overrides)
+            return FlextTestsFactories.PostFactory.create(**defaults)
+
+    # =========================================================================
     # ALIASES FOR BACKWARD COMPATIBILITY
     # =========================================================================
 
     # Aliases removed - use direct class access per FLEXT architectural principles
-    # Use UserFactory, ConfigFactory, ResultFactory directly
+    # Use UserFactory, ConfigFactory, ResultFactory, ServiceFactory, MockFactory,
+    # SequenceFactory, PostFactory directly
 
 
 # Export main factory class

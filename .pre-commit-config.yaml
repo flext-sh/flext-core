@@ -20,7 +20,6 @@ repos:
   # Poetry-managed tools via local repo
   - repo: local
     hooks:
-
       - id: ruff-format
         name: "⚡ Ruff Format (PEP8 Strict - 79 chars)"
         entry: poetry run ruff format
@@ -45,7 +44,6 @@ repos:
       #   types: [python]
       #   require_serial: true
       #   args: [--check-only, --diff]
-
 
       - id: mypy
         name: "🛡️ MyPy Strict"

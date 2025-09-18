@@ -190,9 +190,14 @@ class TestContainerApiCorrectedComprehensive:
         """Test auto_wire dependency resolution error (line 985)."""
         container = FlextContainer.get_global()
 
+        from dataclasses import dataclass
+
+        @dataclass
         class ServiceWithDependencies:
-            def __init__(self, missing_dependency: str) -> None:
-                self.dependency = missing_dependency
+            missing_dependency: str
+
+            def __post_init__(self) -> None:
+                self.dependency = self.missing_dependency
 
         result = container.auto_wire(ServiceWithDependencies)
         # Should handle missing dependency gracefully

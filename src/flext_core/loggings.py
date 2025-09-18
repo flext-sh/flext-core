@@ -1,6 +1,8 @@
-"""Structured logging with correlation IDs and metrics.
+"""Structured logging utilities enabling the context-first pillar for 1.0.0.
 
-For verified logging patterns and examples, see docs/ACTUAL_CAPABILITIES.md
+The module mirrors the expectations in ``README.md`` and
+``docs/architecture.md`` by binding log records to ``FlextContext`` metadata
+and providing the default processors shared across FLEXT packages.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,7 +33,12 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextLogger:
-    """Structured logger with correlation IDs, performance tracking, and data sanitization."""
+    """Structured logger that binds to ``FlextContext`` automatically.
+
+    It fulfils the modernization requirement for context-first observability:
+    correlation IDs, latency metrics, and sanitised payloads are attached to
+    every log entry so downstream services obtain consistent telemetry.
+    """
 
     # Comprehensive logging implementation with 735 lines of functionality
     # Features: Logger caching, thread-local storage, global correlation IDs

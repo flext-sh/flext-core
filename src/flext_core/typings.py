@@ -1,8 +1,7 @@
-"""FLEXT Type System - Pure type definitions without external dependencies.
+"""FLEXT type system underpinning the 1.0.0 modernization guarantees.
 
-This module provides ONLY basic type definitions using Python built-in types.
-NO imports from other flext modules to avoid circular dependencies.
-All types are based on built-in Python types: dict, list, str, int, etc.
+The module only defines aliases and generics backed by built-in types to keep
+ABI guarantees stable across the entire 1.x series.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,7 +17,11 @@ from typing import Literal, ParamSpec, TypeVar
 
 
 class FlextTypes:
-    """Hierarchical type system for FLEXT types."""
+    """Namespace of shared type aliases locked for the 1.0.0 lifecycle.
+
+    The aliases stabilise signatures referenced throughout the modernization
+    plan so downstream packages rely on the same shapes.
+    """
 
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
@@ -51,7 +54,7 @@ class FlextTypes:
         type AttributeDict = dict[str, object]
 
         type ConfigValue = (
-            str | int | float | bool | None | list[object] | dict[str, object]
+            str | int | float | bool | list[object] | dict[str, object] | None
         )
         type JsonData = (
             dict[str, object] | list[object] | str | int | float | bool | None
@@ -65,18 +68,18 @@ class FlextTypes:
             | int
             | float
             | bool
-            | None
-            | list[str | int | float | bool | None | list[object] | dict[str, object]]
+            | list[str | int | float | bool | list[object] | dict[str, object] | None]
             | dict[
                 str,
-                str | int | float | bool | None | list[object] | dict[str, object],
+                str | int | float | bool | list[object] | dict[str, object] | None,
             ]
+            | None
         )
         type JsonObject = dict[str, JsonValue]
         JsonDict = dict[str, JsonValue]
 
         # Value type - Union type for domain operations
-        type Value = str | int | float | bool | None | object
+        type Value = str | int | float | bool | object | None
 
         # Operation callable - specific operation type
         OperationCallable = Callable[[object], object]

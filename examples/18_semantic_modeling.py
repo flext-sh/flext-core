@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Callable
 from typing import Literal, cast
 from urllib.parse import ParseResult, urlparse
@@ -380,7 +379,7 @@ def safe_transform_data(
         )
 
 
-async def demonstrate_foundation_models() -> FlextDataPipeline | None:
+def demonstrate_foundation_models() -> FlextDataPipeline | None:
     """Demonstrate Layer 0: Foundation Models."""
     service = FlextPipelineService()
 
@@ -507,10 +506,10 @@ def print_completion_summary() -> None:
     """Print completion summary."""
 
 
-async def demonstrate_unified_patterns() -> None:
+def demonstrate_unified_patterns() -> None:
     """Demonstrate complete unified semantic pattern usage."""
     # Layer 0: Foundation Models
-    pipeline = await demonstrate_foundation_models()
+    pipeline = demonstrate_foundation_models()
     if pipeline is None:
         return
 
@@ -538,7 +537,7 @@ async def demonstrate_unified_patterns() -> None:
 def main() -> None:
     """Main execution function."""
     try:
-        asyncio.run(demonstrate_unified_patterns())
+        demonstrate_unified_patterns()
     except KeyboardInterrupt:
         pass
     except Exception:

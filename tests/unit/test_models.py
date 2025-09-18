@@ -9,6 +9,9 @@ Classes Tested:
 - FlextModels: Immutable value objects with business rules
 - FlextModels: Mutable entities with identity and lifecycle
 - FlextFactory: Factory pattern implementations
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

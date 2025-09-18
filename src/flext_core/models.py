@@ -1,7 +1,8 @@
-"""FlextModels - Domain models for FLEXT ecosystem.
+"""Domain models aligned with the FLEXT 1.0.0 modernization charter.
 
-Practical domain-driven design patterns including entities, value objects,
-and aggregate roots. For verified capabilities, see docs/ACTUAL_CAPABILITIES.md
+Entities, value objects, and aggregates mirror the design captured in
+``README.md`` and ``docs/architecture.md`` so downstream packages share a
+consistent DDD foundation during the rollout.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -34,16 +35,20 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextModels:
-    """Simple, useful domain models for the FLEXT ecosystem."""
+    """Namespace for the canonical FLEXT domain primitives.
+
+    These types lock in the immutable, timestamped data structures referenced
+    by the modernization plan and exercised across the FLEXT ecosystem.
+    """
 
     class TimestampedModel(BaseModel):
-        """Base model with timestamps - SIMPLE."""
+        """Base model capturing creation/update timestamps for observability."""
 
         created_at: datetime = Field(default_factory=datetime.now)
         updated_at: datetime = Field(default_factory=datetime.now)
 
     class Entity(TimestampedModel):
-        """Entity with ID - that's it."""
+        """Entity base with identity, versioning, and modernization-friendly events."""
 
         id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
         version: int = Field(default=1)
@@ -75,17 +80,12 @@ class FlextModels:
             return hash(self.id)
 
     class Value(BaseModel):
-        """Domain-Driven Design Value Object base class.
-
-        Value objects are immutable objects that represent descriptive aspects
-        of the domain with no conceptual identity. They are compared by value
-        rather than identity and should be side-effect free.
-        """
+        """Immutable value object base aligned with modernization guidance."""
 
         model_config = ConfigDict(frozen=True)
 
     class Payload(BaseModel, Generic[T]):
-        """Generic payload wrapper - actually useful."""
+        """Message payload wrapper carrying standardized modernization metadata."""
 
         data: T = Field(..., description="Payload data")
         metadata: dict[str, object] = Field(default_factory=dict)
@@ -112,7 +112,7 @@ class FlextModels:
             return datetime.now(UTC) > self.expires_at
 
     class Event(BaseModel):
-        """Simple event for notifications."""
+        """Domain event record mirroring modernization telemetry needs."""
 
         event_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
         event_type: str = Field(...)
@@ -130,7 +130,7 @@ class FlextModels:
             return v.strip()
 
     class Command(BaseModel):
-        """Simple command."""
+        """Command message template for dispatcher-driven CQRS flows."""
 
         command_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
         command_type: str = Field(...)
@@ -150,7 +150,7 @@ class FlextModels:
             return FlextResult[bool].ok(data=True)
 
     class Query(BaseModel):
-        """Simple query."""
+        """Query message template for dispatcher-driven CQRS flows."""
 
         query_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
         query_type: str = Field(...)
@@ -169,7 +169,7 @@ class FlextModels:
             return FlextResult[bool].ok(data=True)
 
     class CqrsCommand(Command):
-        """Enhanced Command model with CQRS-specific functionality."""
+        """CQRS command with derived type metadata for consistent routing."""
 
         @model_validator(mode="before")
         @classmethod
@@ -199,7 +199,7 @@ class FlextModels:
             return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
     class CqrsQuery(Query):
-        """Enhanced Query model with CQRS-specific functionality."""
+        """CQRS query with derived type metadata for consistent routing."""
 
         @model_validator(mode="before")
         @classmethod
@@ -220,12 +220,12 @@ class FlextModels:
             return self.query_id
 
     class CqrsConfig:
-        """Centralized CQRS configuration schemas."""
+        """Configuration schemas backing the unified dispatcher stack."""
 
         model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
         class Handler(BaseModel):
-            """Configuration schema for CQRS handlers."""
+            """Configuration schema for CQRS handlers in the modernization plan."""
 
             handler_id: str = Field(..., min_length=1)
             handler_name: str = Field(..., min_length=1)
@@ -242,7 +242,7 @@ class FlextModels:
             @model_validator(mode="after")
             def _ensure_metadata(self) -> FlextModels.CqrsConfig.Handler:
                 if not self.metadata:
-                    object.__setattr__(self, "metadata", {})
+                    setattr(self, "metadata", {})
                 return self
 
         @staticmethod
@@ -255,7 +255,7 @@ class FlextModels:
             command_timeout: int = 0,
             max_command_retries: int = 0,
         ) -> Handler:
-            """Build validated handler configuration."""
+            """Build validated handler configuration with roadmap defaults."""
             if isinstance(handler_config, FlextModels.CqrsConfig.Handler):
                 if handler_config.handler_type == handler_type:
                     return handler_config
@@ -298,7 +298,7 @@ class FlextModels:
             return FlextModels.CqrsConfig.Handler.model_validate(payload)
 
         class Bus(BaseModel):
-            """Configuration schema for CQRS bus pipeline."""
+            """Configuration schema for the command bus pipeline used in 1.0.0."""
 
             enable_middleware: bool = Field(default=True)
             enable_metrics: bool = Field(default=True)
@@ -344,7 +344,7 @@ class FlextModels:
             max_cache_size: int = 1000,
             implementation_path: str = "flext_core.bus:FlextBus",
         ) -> FlextModels.CqrsConfig.Bus:
-            """Build validated bus configuration."""
+            """Build validated bus configuration with modernization defaults."""
             if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
                 return bus_config
 
@@ -364,7 +364,7 @@ class FlextModels:
             return FlextModels.CqrsConfig.Bus.model_validate(payload)
 
     class EmailAddress(RootModel[str]):
-        """Email address value object with simplified validation."""
+        """Email address value object honoring modernization validation rules."""
 
         root: str
 
@@ -405,7 +405,7 @@ class FlextModels:
 
         @classmethod
         def create(cls, email: str) -> FlextResult[FlextModels.EmailAddress]:
-            """Factory with validation returning FlextResult."""
+            """Create factory with validation returning FlextResult."""
             try:
                 return FlextResult["FlextModels.EmailAddress"].ok(cls(email))
             except Exception as e:
@@ -416,7 +416,7 @@ class FlextModels:
             return self.root.split("@")[1] if "@" in self.root else ""
 
     class Host(Value):
-        """Host value object."""
+        """Host value object enforcing modernization-friendly hostname rules."""
 
         value: str
 
@@ -434,7 +434,7 @@ class FlextModels:
             return FlextResult["FlextModels.Host"].ok(cls(value=host))
 
     class Timestamp(Value):
-        """Timestamp value object."""
+        """Timestamp value object ensuring UTC normalization for telemetry."""
 
         value: datetime
 
@@ -447,7 +447,7 @@ class FlextModels:
             return FlextResult["FlextModels.Timestamp"].ok(cls(value=dt))
 
     class EntityId(Value):
-        """Entity ID value object."""
+        """Entity identifier value object used across modernization APIs."""
 
         value: str
 
@@ -461,7 +461,7 @@ class FlextModels:
             return FlextResult["FlextModels.EntityId"].ok(cls(value=entity_id.strip()))
 
     class JsonData(Value):
-        """JSON data value object."""
+        """JSON payload value object with serialization guardrails."""
 
         value: dict[str, object]
 
@@ -478,7 +478,7 @@ class FlextModels:
                 )
 
     class Metadata(Value):
-        """Metadata value object."""
+        """Metadata map value object for dispatcher/context enrichment."""
 
         value: dict[str, str]
 
@@ -496,7 +496,7 @@ class FlextModels:
             return FlextResult["FlextModels.Metadata"].ok(cls(value=metadata))
 
     class Url(Value):
-        """URL value object with enhanced HTTP validation using Pydantic v2."""
+        """URL value object with HTTP-aware validation matched to docs."""
 
         value: str
 
@@ -607,7 +607,7 @@ class FlextModels:
 
     # AggregateRoot for compatibility - but SIMPLE
     class AggregateRoot(Entity):
-        """Aggregate root - just an entity with version."""
+        """Aggregate root with version-based concurrency control."""
 
         version: int = Field(default=1)
         aggregate_type: str = Field(default="")
@@ -688,7 +688,7 @@ class FlextModels:
     # =========================================================================
 
     class Project(Value):
-        """Project model consolidated from flext.workspace_models."""
+        """Project value object consolidated for modernization workspace scans."""
 
         name: str = Field(..., description="Project name")
         path: str = Field(..., description="Project path")
@@ -705,7 +705,7 @@ class FlextModels:
             return FlextResult[None].ok(None)
 
     class WorkspaceContext(Config):
-        """Workspace context configuration consolidated from flext.workspace_models."""
+        """Workspace context configuration reused across modernization tooling."""
 
         workspace_root: str = Field(..., description="Workspace root path")
         project_filter: str | None = Field(None, description="Project name filter")
@@ -717,7 +717,7 @@ class FlextModels:
         )
 
     class WorkspaceInfo(Value):
-        """Workspace information model consolidated from flext.workspace_models."""
+        """Workspace information object feeding modernization dashboards."""
 
         name: str = Field(..., description="Workspace name")
         path: str = Field(..., description="Workspace path")

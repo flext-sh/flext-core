@@ -1,6 +1,9 @@
-"""Dependency injection container with service management.
+"""Dependency injection container anchoring the configuration pillar for 1.0.0.
 
-Uses Command pattern for service registration operations.
+The container is the canonical runtime surface described in ``README.md`` and
+``docs/architecture.md``: a singleton, type-safe registry that coordinates with
+``FlextConfig`` and ``FlextDispatcher`` so every package shares the same
+service lifecycle during the modernization rollout.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,7 +28,13 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextContainer:
-    """Dependency injection container with type-safe service management."""
+    """Global container providing the standardized FLEXT service contract.
+
+    It fulfils the modernization plan requirement for a shared DI surface by
+    offering typed service keys, factory registration, and global lifecycle
+    helpers. The container integrates with ``FlextConfig`` for configuration
+    hydration and hooks into dispatcher setup routines across the ecosystem.
+    """
 
     # Class-level global manager instance
     _global_manager: FlextContainer.GlobalManager | None = None
@@ -1063,7 +1072,12 @@ class FlextContainer:
 
     @classmethod
     def get_global(cls) -> FlextContainer:
-        """Get global container instance (class method)."""
+        """Get the global container instance.
+
+        Returns:
+            The global FlextContainer instance for dependency injection.
+
+        """
         manager = cls._ensure_global_manager()
         return manager.get_container()
 
@@ -1081,7 +1095,16 @@ class FlextContainer:
 
     @classmethod
     def get_global_typed(cls, name: str, expected_type: type[T]) -> FlextResult[T]:
-        """Get typed service from global container (class method)."""
+        """Get a typed service from the global container.
+
+        Args:
+            name: The name of the service to retrieve.
+            expected_type: The expected type of the service.
+
+        Returns:
+            A FlextResult containing the typed service or an error.
+
+        """
         container = cls.get_global()
         return container.get_typed(name, expected_type)
 

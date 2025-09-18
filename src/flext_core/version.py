@@ -1,8 +1,10 @@
-"""Version management and compatibility tracking.
+"""Version management utilities tracking the FLEXT-Core 1.0.0 programme.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 from typing import ClassVar, NamedTuple
 
@@ -10,7 +12,11 @@ __version__: str = "0.9.0"
 
 
 class FlextVersionManager:
-    """Single consolidated class for all version management functionality."""
+    """Single consolidated class for all version management functionality.
+
+    The helpers drive documentation badges, compatibility checks, and feature
+    gates tracked as part of the 1.0.0 release roadmap.
+    """
 
     # Version constants consolidated within the class
     VERSION_MAJOR: int = 0
@@ -43,7 +49,7 @@ class FlextVersionManager:
     }
 
     class VersionInfo(NamedTuple):
-        """Structured version information."""
+        """Structured version metadata used in release communications."""
 
         major: int
         minor: int
@@ -53,7 +59,7 @@ class FlextVersionManager:
         build_type: str
 
     class CompatibilityResult:
-        """Python version compatibility check result."""
+        """Python compatibility outcome backing modernization guarantees."""
 
         def __init__(
             self,
@@ -64,7 +70,7 @@ class FlextVersionManager:
             error_message: str,
             recommendations: list[str],
         ) -> None:
-            """Initialize compatibility result."""
+            """Capture modernization-focused compatibility findings."""
             self.is_compatible = is_compatible
             self.current_version = current_version
             self.required_version = required_version
@@ -73,7 +79,7 @@ class FlextVersionManager:
 
     @staticmethod
     def get_version_tuple() -> tuple[int, int, int]:
-        """Get a version as tuple for programmatic comparison."""
+        """Return the semantic version tuple used across 1.0.0 tooling."""
         return (
             FlextVersionManager.VERSION_MAJOR,
             FlextVersionManager.VERSION_MINOR,
@@ -81,8 +87,8 @@ class FlextVersionManager:
         )
 
     @staticmethod
-    def get_version_info() -> "FlextVersionManager.VersionInfo":
-        """Get efficient version information."""
+    def get_version_info() -> FlextVersionManager.VersionInfo:
+        """Return the structured release payload surfaced in documentation."""
         return FlextVersionManager.VersionInfo(
             major=FlextVersionManager.VERSION_MAJOR,
             minor=FlextVersionManager.VERSION_MINOR,
@@ -94,13 +100,13 @@ class FlextVersionManager:
 
     @staticmethod
     def get_version_string() -> str:
-        """Get formatted version string for display."""
+        """Render the version banner consumed by README and docs badges."""
         info = FlextVersionManager.get_version_info()
         return f"{__version__} ({info.release_name})"
 
     @staticmethod
     def get_available_features() -> list[str]:
-        """Get a list of available features in the current version."""
+        """List features flagged as ready for the 1.0.0 modernization cycle."""
         return [
             name
             for name, available in FlextVersionManager.AVAILABLE_FEATURES.items()
@@ -109,10 +115,10 @@ class FlextVersionManager:
 
     @staticmethod
     def compare_versions(version1: str, version2: str) -> int:
-        """Compare two semantic version strings."""
+        """Compare semantic versions to inform upgrade guidance."""
 
         def parse_version(version: str) -> tuple[int, ...]:
-            """Parse version string into comparable tuple."""
+            """Parse a version string into comparison-friendly tuple form."""
             return tuple(int(part) for part in version.split("."))
 
         v1_tuple = parse_version(version1)
@@ -126,7 +132,7 @@ class FlextVersionManager:
 
     @staticmethod
     def validate_version_format(version: object) -> bool:
-        """Validate a semantic version string format."""
+        """Validate semantic version formatting for roadmap compliance."""
         try:
             if not isinstance(version, str):
                 return False

@@ -1,10 +1,11 @@
-"""FLEXT Core Result - Success/failure wrapper for type-safe error handling.
+"""Railway-oriented result type with type-safe composition semantics.
 
-This module provides a Result type for basic error handling following
-Railway-oriented Programming patterns.
+Provides the canonical success/failure wrapper for FLEXT-Core 1.0.0,
+including explicit error metadata and backward-compatible `.value`/`.data`
+accessors.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: MIT.
 """
 
 from __future__ import annotations
@@ -22,16 +23,12 @@ from flext_core.typings import T1, T2, T3, FlextTypes, T_co, TItem, TResult, TUt
 
 
 class FlextResult[T_co]:
-    """Result type for railway-oriented programming.
+    """Foundation result type that powers FLEXT's railway pattern.
 
-    This class implements a Result pattern with:
-    - Type-safe success/failure handling
-    - Monadic operations (map, flat_map, bind)
-    - Method chaining for composition
-    - Python 3.13+ type safety features
-
-    Commonly used with FlextContainer for service operations.
-    See also: container.py for dependency injection patterns.
+    The implementation mirrors the behaviour promised for the 1.0.0 release:
+    explicit success/failure states, functional composition helpers, and
+    ergonomic metadata for telemetry. It backs every service contract inside
+    the FLEXT ecosystem and is guaranteed stable throughout the 1.x line.
     """
 
     # Removed performance optimization duplications - use FlextUtilities instead
@@ -96,22 +93,22 @@ class FlextResult[T_co]:
 
     @property
     def is_success(self) -> bool:
-        """Check if result is successful."""
+        """Return ``True`` when the result carries a successful payload."""
         return self._error is None
 
     @property
     def success(self) -> bool:
-        """True if result is successful."""
+        """Legacy name that mirrors :attr:`is_success` for 1.x support."""
         return self._error is None
 
     @property
     def is_failure(self) -> bool:
-        """Check if result is failed."""
+        """Return ``True`` when the result represents a failure."""
         return self._error is not None
 
     @property
     def value(self) -> T_co:
-        """Get contained value or raise TypeError on failure."""
+        """Return the success payload, raising :class:`TypeError` on failure."""
         if self.is_failure:
             msg = "Attempted to access value on failed result"
             raise TypeError(msg)
@@ -119,29 +116,37 @@ class FlextResult[T_co]:
 
     @property
     def data(self) -> T_co | None:
-        """Legacy API - returns value if success, None if failure."""
+        """Return the success payload, preserving ``None`` for legacy callers."""
         if self.is_success:
             return self.value
         return None
 
     @property
     def error(self) -> str | None:
-        """Get error message if failed."""
+        """Return the captured error message for failure results."""
         return self._error
 
     @property
     def error_code(self) -> str | None:
-        """Get error code if failed."""
+        """Return the structured error code supplied on failure."""
         return self._error_code
 
     @property
     def error_data(self) -> FlextTypes.Core.Dict:
-        """Get error metadata dictionary."""
+        """Return the structured error metadata dictionary for observability."""
         return self._error_data
 
     @classmethod
     def ok(cls: type[FlextResult[T_co]], data: T_co) -> FlextResult[T_co]:
-        """Create successful result with data."""
+        """Create a successful result matching the 1.0.0 API contract.
+
+        Args:
+            data: The successful data to wrap in the result.
+
+        Returns:
+            A successful FlextResult containing the provided data.
+
+        """
         return cls(data=data)
 
     # Note: Classmethod `success()` removed to avoid name collision with
@@ -156,7 +161,17 @@ class FlextResult[T_co]:
         error_code: str | None = None,
         error_data: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[T_co]:
-        """Create failed result with error."""
+        """Create a failure result with optional error metadata.
+
+        Args:
+            error: The error message describing the failure.
+            error_code: Optional error code for categorization.
+            error_data: Optional additional error data/metadata.
+
+        Returns:
+            A failed FlextResult with the provided error information.
+
+        """
         # Normalize empty/whitespace errors to default message
         if not error or (isinstance(error, str) and error.isspace()):
             actual_error = "Unknown error occurred"
@@ -171,7 +186,7 @@ class FlextResult[T_co]:
     def chain_results(
         *results: FlextResult[object],
     ) -> FlextResult[FlextTypes.Core.List]:
-        """Chain multiple results into a list, failing on first failure."""
+        """Collect a series of results, aborting on the first failure."""
         if not results:
             return FlextResult[FlextTypes.Core.List].ok([])
         aggregated: FlextTypes.Core.List = []
@@ -182,7 +197,7 @@ class FlextResult[T_co]:
         return FlextResult[FlextTypes.Core.List].ok(aggregated)
 
     def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:
-        """Transform success value with function."""
+        """Transform the success payload using ``func`` while preserving errors."""
         if self.is_failure:
             error_msg = self._error or "Map operation failed"
             new_result: FlextResult[U] = FlextResult(
@@ -255,7 +270,7 @@ class FlextResult[T_co]:
         """Return True if successful, False if failed."""
         return self.is_success
 
-    def __iter__(self) -> Iterator[T_co | None | str]:
+    def __iter__(self) -> Iterator[T_co | str | None]:
         """Enable unpacking: value, error = result."""
         if self.is_success:
             yield self._data

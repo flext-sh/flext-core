@@ -1,10 +1,8 @@
-"""Unified dispatcher facade built on top of FlextBus.
+"""Dispatcher facade delivering the Phase 1 unified dispatcher charter.
 
-This module introduces a small orchestration layer that coordinates
-handler registration, contextual execution, and command/query dispatching
-while preserving the existing FlextBus semantics. It will be adopted
-incrementally across CLI and connector packages as part of the
-modernization roadmap.
+The façade wraps ``FlextBus`` so handler registration, context propagation, and
+metadata-aware dispatch all match the expectations documented in ``README.md``
+and ``docs/architecture.md`` for the 1.0.0 modernization programme.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,7 +26,13 @@ from flext_core.typings import FlextTypes, MessageT, ResultT
 
 
 class FlextDispatcher:
-    """Dispatcher facade coordinating bus execution and context propagation."""
+    """Orchestrates CQRS execution while enforcing context-first observability.
+
+    The dispatcher is the front door promoted across the ecosystem: all handler
+    registration flows, context scoping, and dispatch telemetry align with the
+    modernization plan so downstream packages can adopt a consistent runtime
+    contract without bespoke buses.
+    """
 
     @dataclass(slots=True)
     class Registration[MessageT, ResultT]:
@@ -150,7 +154,16 @@ class FlextDispatcher:
         *,
         metadata: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[object]:
-        """Dispatch commands or queries through the underlying bus."""
+        """Dispatch commands or queries through the underlying bus.
+
+        Args:
+            message: The command or query message to dispatch.
+            metadata: Optional metadata to include in the execution context.
+
+        Returns:
+            A FlextResult containing the execution result or error details.
+
+        """
         with self._context_scope(metadata):
             result = self._bus.execute(message)
             if result.is_failure:

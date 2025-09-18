@@ -1,4 +1,7 @@
-"""FLEXT Core Utilities - Refactored based on REAL usage analysis.
+"""Utility helpers referenced by the FLEXT 1.0.0 modernization plan.
+
+These helpers back the validation, ID generation, and text-processing stories
+described in ``README.md`` and ``docs/architecture.md``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,10 +24,14 @@ from flext_core.typings import P, R
 
 
 class FlextUtilities:
-    """Essential utilities based on REAL usage analysis across FLEXT ecosystem."""
+    """Utility namespace reused across the FLEXT ecosystem.
+
+    Convenience functions live here so packages share the same guardrails and
+    generators while we stabilise the 1.0.0 surface area.
+    """
 
     class Validation:
-        """Centralized validation utilities to eliminate code duplication."""
+        """Validation helpers shared across modules."""
 
         @staticmethod
         def is_non_empty_string(value: str | None) -> bool:
@@ -32,7 +39,7 @@ class FlextUtilities:
             return bool(value and value.strip())
 
     class Generators:
-        """ID and timestamp generation utilities - ACTUALLY USED."""
+        """ID and timestamp generators for traceability."""
 
         @staticmethod
         def generate_id() -> str:
@@ -69,7 +76,7 @@ class FlextUtilities:
     # ==========================================================================
 
     class TextProcessor:
-        """Text processing utilities - ACTUALLY USED."""
+        """Text processing helpers for normalization and sanitisation."""
 
         @staticmethod
         def safe_string(value: object) -> str:
