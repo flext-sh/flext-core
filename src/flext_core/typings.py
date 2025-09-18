@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
 )
+from enum import StrEnum
 from typing import Literal, ParamSpec, TypeVar
 
 
@@ -221,6 +222,38 @@ class FlextTypes:
         type Validator = Callable[[object], bool]
         type ValidationRule = Callable[[object], bool]
         type BusinessRule = Callable[[object], bool]
+
+    # =========================================================================
+    # PROJECT TYPES - Project and workspace management
+    # =========================================================================
+
+    class Project:
+        """Project and workspace types consolidated from across ecosystem."""
+
+        # Enum is now imported at module level
+
+        class ProjectType(StrEnum):
+            """Project type enumeration."""
+
+            PYTHON = "python"
+            JAVASCRIPT = "javascript"
+            GO = "go"
+            RUST = "rust"
+            DOCUMENTATION = "documentation"
+            MIXED = "mixed"
+
+        class WorkspaceStatus(StrEnum):
+            """Workspace status enumeration."""
+
+            INITIALIZING = "initializing"
+            READY = "ready"
+            ERROR = "error"
+
+        # Project-related type aliases
+        type ProjectPath = str
+        type ProjectName = str
+        type WorkspacePath = str
+        type WorkspaceName = str
 
     # =========================================================================
     # LEGACY COMPATIBILITY - Types that modules still reference

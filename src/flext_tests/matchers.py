@@ -24,6 +24,7 @@ import tracemalloc
 import uuid
 import warnings
 from collections.abc import Awaitable, Callable, Container, Iterable, Sequence, Sized
+from itertools import starmap
 from typing import Protocol, Self, cast
 
 
@@ -437,8 +438,10 @@ class FlextTestsMatchers:
             # Handle list/tuple comparison
             if isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
                 return len(obj1) == len(obj2) and all(
-                    FlextTestsMatchers.CoreMatchers.be_equivalent_to(a, b)
-                    for a, b in zip(obj1, obj2, strict=False)
+                    starmap(
+                        FlextTestsMatchers.CoreMatchers.be_equivalent_to,
+                        zip(obj1, obj2, strict=False),
+                    )
                 )
 
             # Handle set comparison

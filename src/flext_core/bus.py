@@ -219,7 +219,8 @@ class FlextBus(FlextMixins):
         command_type = type(command)
         command_name = command_type.__name__
 
-        # First, try to find handler by command type name in _handlers (two-arg registration)
+        # First, try to find handler by command type name in _handlers
+        # (two-arg registration)
         if command_name in self._handlers:
             return self._handlers[command_name]
 

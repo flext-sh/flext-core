@@ -21,8 +21,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from flext_core.config import FlextConfig
-from flext_core.protocols import FlextProtocols
+from flext_core import FlextConfig, FlextProtocols
 from flext_tests import FlextTestsMatchers
 
 
@@ -535,10 +534,14 @@ class TestFlextConfigMissingLinesCoverage:
     def test_nested_class_functionality(self) -> None:
         """Test nested class functionality comprehensively."""
         # Protocols/abstracts should not be instantiated - test that they are abstract
-        assert inspect.isabstract(FlextProtocols.Infrastructure.ConfigValidator) or hasattr(
+        assert inspect.isabstract(
+            FlextProtocols.Infrastructure.ConfigValidator
+        ) or hasattr(
             FlextProtocols.Infrastructure.ConfigValidator, "__abstractmethods__"
         )
-        assert inspect.isabstract(FlextProtocols.Infrastructure.ConfigPersistence) or hasattr(
+        assert inspect.isabstract(
+            FlextProtocols.Infrastructure.ConfigPersistence
+        ) or hasattr(
             FlextProtocols.Infrastructure.ConfigPersistence, "__abstractmethods__"
         )
         assert inspect.isabstract(FlextConfig.EnvironmentConfigAdapter)

@@ -149,7 +149,9 @@ class TestFlextCqrsModels:
         # Test that command creation validates payload type
         with pytest.raises((TypeError, ValidationError)):
             # This should fail if payload is not a dict - intentionally invalid for testing
-            FlextModels.create_command("test_command", cast("dict[str, object]", "not_a_dict"))
+            FlextModels.create_command(
+                "test_command", cast("dict[str, object]", "not_a_dict")
+            )
 
     def test_command_model_validation_error(self) -> None:
         """Test command creation with validation error."""

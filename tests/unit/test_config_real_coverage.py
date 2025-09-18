@@ -120,7 +120,10 @@ class TestFlextConfigRealCoverage:
         # Invalid environment should raise ValidationError
         with pytest.raises(ValidationError):
             # Pass invalid environment directly - test validates error handling
-            FlextConfig(app_name="test", environment=cast("FlextTypes.Config.Environment", "invalid_env"))
+            FlextConfig(
+                app_name="test",
+                environment=cast("FlextTypes.Config.Environment", "invalid_env"),
+            )
 
     def test_create_from_environment_basic(self) -> None:
         """Test create_from_environment class method."""
