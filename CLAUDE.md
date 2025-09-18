@@ -2,9 +2,11 @@
 
 **The Foundation Library Development Guide for FLEXT Ecosystem**
 **Version**: 2.1.0 | **Authority**: CORE FOUNDATION | **Updated**: 2025-01-08
-**Status**: 79% test coverage, PROVEN foundation for 32+ dependent projects
+**Status**: 75%+ test coverage (proven achievable), production-ready foundation for 32+ dependent projects
 
 **References**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and [README.md](README.md) for project overview.
+
+**Hierarchy**: This document provides project-specific standards based on workspace-level patterns defined in [../CLAUDE.md](../CLAUDE.md). For architectural principles, quality gates, and MCP server usage, reference the main workspace standards.
 
 ---
 
@@ -789,6 +791,20 @@ print('Import successful, methods:', [m for m in dir(FlextResult) if not m.start
 # Measure actual metrics - NEVER guess
 pytest tests/ --cov=src/flext_core --tb=no -q | tail -3
 ```
+
+---
+
+## 🔗 MCP SERVER INTEGRATION
+
+### Mandatory MCP Server Usage (FOUNDATION COMPLIANCE)
+As defined in [../CLAUDE.md](../CLAUDE.md), all FLEXT development MUST use:
+- **serena**: All semantic code operations, symbol analysis, and refactoring
+- **sequential-thinking**: Complex problem decomposition and planning
+- **context7**: Third-party library documentation and API references
+- **github**: Repository operations and pull request management
+- **puppeteer**: Web automation and testing interfaces
+
+Foundation library development must demonstrate proper MCP usage patterns for the ecosystem.
 
 ---
 

@@ -683,6 +683,61 @@ class FlextModels:
         aggregate_id: str = Field(default="")
         aggregate_type: str = Field(default="")
 
+    # =========================================================================
+    # WORKSPACE MODELS - Consolidated from ecosystem projects
+    # =========================================================================
+
+    class Project(Value):
+        """Project model consolidated from flext.workspace_models."""
+
+        name: str = Field(..., description="Project name")
+        path: str = Field(..., description="Project path")
+        project_type: str = Field(
+            ..., description="Project type"
+        )  # Use string to avoid enum import
+        has_tests: bool = Field(default=False, description="Has test directory")
+        has_pyproject: bool = Field(default=False, description="Has pyproject.toml")
+        has_go_mod: bool = Field(default=False, description="Has go.mod file")
+        test_count: int = Field(0, ge=0, description="Number of test files")
+
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Implement required abstract method from Value."""
+            return FlextResult[None].ok(None)
+
+    class WorkspaceContext(Config):
+        """Workspace context configuration consolidated from flext.workspace_models."""
+
+        workspace_root: str = Field(..., description="Workspace root path")
+        project_filter: str | None = Field(None, description="Project name filter")
+        include_hidden: bool = Field(
+            default=False, description="Include hidden directories"
+        )
+        max_depth: int = Field(
+            default=3, ge=1, le=10, description="Maximum directory depth"
+        )
+
+    class WorkspaceInfo(Value):
+        """Workspace information model consolidated from flext.workspace_models."""
+
+        name: str = Field(..., description="Workspace name")
+        path: str = Field(..., description="Workspace path")
+        project_count: int = Field(default=0, ge=0, description="Number of projects")
+        total_size_mb: float = Field(default=0.0, ge=0, description="Total size in MB")
+        projects: list[str] | None = Field(
+            default=None, description="List of project names"
+        )
+        status: str = Field(
+            default="ready", description="Workspace status"
+        )  # Use string to avoid enum import
+
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Implement required abstract method from Value."""
+            if self.project_count < 0:
+                return FlextResult[None].fail("Project count cannot be negative")
+            if self.total_size_mb < 0:
+                return FlextResult[None].fail("Total size cannot be negative")
+            return FlextResult[None].ok(None)
+
     # Simple factory methods - no over-engineering
     @staticmethod
     def create_entity(**data: object) -> FlextResult[FlextModels.Entity]:

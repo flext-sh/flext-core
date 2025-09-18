@@ -103,7 +103,7 @@ class FlextDbOracleCliService:
 - **FORBIDDEN**: Helper functions outside classes
 - **FORBIDDEN**: `try/except` fallback mechanisms
 - **FORBIDDEN**: `# type: ignore` without specific error codes
-- **FORBIDDEN**: `Any` types instead of proper annotations
+- **FORBIDDEN**: `object` types instead of proper annotations
 
 ### ❌ Oracle Integration Violations
 - **FORBIDDEN**: Custom SQLAlchemy/oracledb implementations outside flext-db-oracle

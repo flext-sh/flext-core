@@ -12,6 +12,9 @@ import contextlib
 import json
 import uuid
 from datetime import UTC, datetime
+from typing import cast
+
+from flext_core.loggings import FlextLogger
 
 
 class FlextMixins:
@@ -29,17 +32,29 @@ class FlextMixins:
     class Loggable:
         """Mixin for logging functionality."""
 
+        @property
+        def logger(self) -> FlextLogger:
+            """Get logger instance for this class."""
+            return FlextLogger(self.__class__.__name__)
+
         def log_info(self, message: str, **kwargs: object) -> None:
             """Log info message."""
+            self.logger.info(message, **kwargs)
 
         def log_error(self, message: str, **kwargs: object) -> None:
             """Log error message."""
+            # Extract 'error' parameter if present for FlextLogger.error() method
+            error = kwargs.pop("error", None)
+            error_typed = cast("Exception | str | None", error)
+            self.logger.error(message, error=error_typed, **kwargs)
 
         def log_warning(self, message: str, **kwargs: object) -> None:
             """Log warning message."""
+            self.logger.warning(message, **kwargs)
 
         def log_debug(self, message: str, **kwargs: object) -> None:
             """Log debug message."""
+            self.logger.debug(message, **kwargs)
 
     class Service:
         """Mixin for service functionality."""

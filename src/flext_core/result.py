@@ -109,7 +109,6 @@ class FlextResult[T_co]:
         """Check if result is failed."""
         return self._error is not None
 
-
     @property
     def value(self) -> T_co:
         """Get contained value or raise TypeError on failure."""
@@ -140,7 +139,6 @@ class FlextResult[T_co]:
         """Get error metadata dictionary."""
         return self._error_data
 
-
     @classmethod
     def ok(cls: type[FlextResult[T_co]], data: T_co) -> FlextResult[T_co]:
         """Create successful result with data."""
@@ -148,7 +146,6 @@ class FlextResult[T_co]:
 
     # Note: Classmethod `success()` removed to avoid name collision with
     # the instance property `success`. Use `ok()` instead.
-
 
     @classmethod
     def fail(
@@ -385,7 +382,6 @@ class FlextResult[T_co]:
     # Validation methods removed to avoid duplication with utility functions
 
     # Methods for a railway pattern
-
 
     def or_else(self, alternative: FlextResult[T_co]) -> FlextResult[T_co]:
         """Return this result if successful, otherwise return an alternative result."""
@@ -795,7 +791,6 @@ class FlextResult[T_co]:
             return FlextResult[dict[str, object]]
 
         type Success = object  # Generic success type without FlextResult dependency
-
 
 
 __all__: list[str] = [
