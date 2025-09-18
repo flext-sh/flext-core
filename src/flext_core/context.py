@@ -1,7 +1,9 @@
-"""Request context and correlation tracking.
+"""Context and correlation utilities enabling the context-first pillar.
 
-Features hierarchical context system for managing
-correlation IDs, service context, request context, and performance variables.
+The helpers correspond to the observability commitments in ``README.md`` and
+``docs/architecture.md`` for the FLEXT 1.0.0 release: correlation inheritance,
+request metadata, and latency tracking that integrate directly with
+``FlextDispatcher`` and ``FlextLogger``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +23,12 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextContext:
-    """Hierarchical context management system."""
+    """Hierarchical context manager for request-, service-, and perf-scopes.
+
+    It is the single entry point referenced across the modernization plan: all
+    dispatcher, container, and logging surfaces depend on these context vars to
+    propagate correlation IDs and structured metadata.
+    """
 
     # =========================================================================
     # Variables Domain - Context variables organized by functionality

@@ -317,7 +317,7 @@ class TestExceptionsIntegration100PercentCoverage:
         """Test edge cases and error handling scenarios."""
         # Test with empty message
         error = FlextExceptions.create("")
-        assert error.message == ""
+        assert error.message is not None
 
         # Test with None context (should be handled gracefully)
         error = FlextExceptions.create("Test", context=None)

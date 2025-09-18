@@ -1,4 +1,8 @@
-"""Hierarchical exception system with structured error handling.
+"""Exception hierarchy aligned with the FLEXT 1.0.0 modernization charter.
+
+Error codes, correlation tracking, and structured payloads match the guidance
+in ``README.md`` and ``docs/architecture.md`` so diagnostics remain uniform
+across packages.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,7 +19,12 @@ from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
-    """Hierarchical exception system with error codes and metrics tracking."""
+    """Hierarchical exception system with modernization-ready diagnostics.
+
+    Factory helpers create structured errors and record metrics so dispatcher
+    flows, domain services, and configuration loaders surface consistent
+    failures throughout the 1.0.0 rollout.
+    """
 
     def __call__(
         self,

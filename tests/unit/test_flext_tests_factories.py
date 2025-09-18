@@ -19,17 +19,22 @@ class TestFlextTestsFactories:
 
     def test_user_factory_basic_functionality(self) -> None:
         """Test basic user factory functionality."""
-        if hasattr(FlextTestsFactories, "User"):
+        if hasattr(FlextTestsFactories, "UserFactory"):
             user_factory = FlextTestsFactories.UserFactory
             # Test if we can create instances or get attributes
             assert hasattr(user_factory, "__name__") or callable(user_factory)
+
+            # Test basic user creation
+            user = user_factory.create()
+            assert isinstance(user, dict)
+            assert "name" in user or "email" in user  # Basic user fields
         else:
-            # Skip test if User factory doesn't exist
-            pytest.skip("User factory not available in FlextTestsFactories")
+            # Skip test if UserFactory doesn't exist
+            pytest.skip("UserFactory not available in FlextTestsFactories")
 
     def test_user_factory_with_overrides(self) -> None:
         """Test user factory with custom overrides."""
-        if hasattr(FlextTestsFactories, "User") and hasattr(
+        if hasattr(FlextTestsFactories, "UserFactory") and hasattr(
             FlextTestsFactories.UserFactory, "create"
         ):
             try:
@@ -67,8 +72,33 @@ class TestFlextTestsFactories:
 
     def test_service_factory(self) -> None:
         """Test service factory functionality."""
-        # FlextTestsFactories doesn't have a Service factory - skip this test
-        pytest.skip("Service factory not available in FlextTestsFactories")
+        if hasattr(FlextTestsFactories, "ServiceFactory"):
+            service_factory = FlextTestsFactories.ServiceFactory
+
+            # Test basic service creation
+            service = service_factory.create()
+            assert isinstance(service, dict)
+            assert "service_id" in service
+            assert "service_name" in service
+            assert "version" in service
+            assert "status" in service
+
+            # Test service creation with overrides
+            custom_service = service_factory.create(
+                service_name="Custom Service", version="2.0.0"
+            )
+            assert custom_service["service_name"] == "Custom Service"
+            assert custom_service["version"] == "2.0.0"
+
+            # Test batch creation
+            if hasattr(service_factory, "create_batch"):
+                services = service_factory.create_batch(3)
+                assert isinstance(services, list)
+                assert len(services) == 3
+                for service in services:
+                    assert isinstance(service, dict)
+        else:
+            pytest.skip("ServiceFactory not available in FlextTestsFactories")
 
     def test_config_factory(self) -> None:
         """Test configuration factory functionality."""
@@ -104,13 +134,65 @@ class TestFlextTestsFactories:
 
     def test_mock_factory(self) -> None:
         """Test mock factory functionality."""
-        # FlextTestsFactories doesn't have a Mock factory - skip this test
-        pytest.skip("Mock factory not available in FlextTestsFactories")
+        if hasattr(FlextTestsFactories, "MockFactory"):
+            mock_factory = FlextTestsFactories.MockFactory
+
+            # Test basic mock creation
+            mock = mock_factory.create()
+            assert isinstance(mock, dict)
+            assert "mock_id" in mock
+            assert "mock_type" in mock
+            assert "data" in mock
+            assert "created_at" in mock
+
+            # Test mock creation with overrides
+            custom_mock = mock_factory.create(
+                mock_type="custom_mock", data={"custom": "data"}
+            )
+            assert custom_mock["mock_type"] == "custom_mock"
+            assert custom_mock["data"]["custom"] == "data"
+
+            # Test batch creation
+            if hasattr(mock_factory, "create_batch"):
+                mocks = mock_factory.create_batch(2)
+                assert isinstance(mocks, list)
+                assert len(mocks) == 2
+                for mock in mocks:
+                    assert isinstance(mock, dict)
+        else:
+            pytest.skip("MockFactory not available in FlextTestsFactories")
 
     def test_factory_sequences(self) -> None:
         """Test factory sequence functionality."""
-        # FlextTestsFactories doesn't have a Sequence factory - skip this test
-        pytest.skip("Sequence factory not available in FlextTestsFactories")
+        if hasattr(FlextTestsFactories, "SequenceFactory"):
+            sequence_factory = FlextTestsFactories.SequenceFactory
+
+            # Test basic sequence creation
+            sequence = sequence_factory.create()
+            assert isinstance(sequence, dict)
+            assert "sequence_id" in sequence
+            assert "sequence_name" in sequence
+            assert "current_value" in sequence
+            assert "step" in sequence
+            assert "max_value" in sequence
+
+            # Test sequence creation with overrides
+            custom_sequence = sequence_factory.create(
+                sequence_name="Custom Sequence", current_value=10, step=2
+            )
+            assert custom_sequence["sequence_name"] == "Custom Sequence"
+            assert custom_sequence["current_value"] == 10
+            assert custom_sequence["step"] == 2
+
+            # Test batch creation
+            if hasattr(sequence_factory, "create_batch"):
+                sequences = sequence_factory.create_batch(3)
+                assert isinstance(sequences, list)
+                assert len(sequences) == 3
+                for sequence in sequences:
+                    assert isinstance(sequence, dict)
+        else:
+            pytest.skip("SequenceFactory not available in FlextTestsFactories")
 
     def test_factory_traits(self) -> None:
         """Test factory traits functionality."""
@@ -127,8 +209,48 @@ class TestFlextTestsFactories:
 
     def test_factory_associations(self) -> None:
         """Test factory association functionality."""
-        # FlextTestsFactories doesn't have a Post factory - skip this test
-        pytest.skip("Post factory not available in FlextTestsFactories")
+        if hasattr(FlextTestsFactories, "PostFactory"):
+            post_factory = FlextTestsFactories.PostFactory
+
+            # Test basic post creation
+            post = post_factory.create()
+            assert isinstance(post, dict)
+            assert "post_id" in post
+            assert "title" in post
+            assert "content" in post
+            assert "author" in post
+            assert "published" in post
+            assert "created_at" in post
+            assert "tags" in post
+
+            # Test post creation with overrides
+            custom_post = post_factory.create(
+                title="Custom Post", author="Custom Author"
+            )
+            assert custom_post["title"] == "Custom Post"
+            assert custom_post["author"] == "Custom Author"
+
+            # Test draft post creation
+            if hasattr(post_factory, "draft_post"):
+                draft = post_factory.draft_post()
+                assert isinstance(draft, dict)
+                assert draft["published"] is False
+
+            # Test published post creation
+            if hasattr(post_factory, "published_post"):
+                published = post_factory.published_post()
+                assert isinstance(published, dict)
+                assert published["published"] is True
+
+            # Test batch creation
+            if hasattr(post_factory, "create_batch"):
+                posts = post_factory.create_batch(2)
+                assert isinstance(posts, list)
+                assert len(posts) == 2
+                for post in posts:
+                    assert isinstance(post, dict)
+        else:
+            pytest.skip("PostFactory not available in FlextTestsFactories")
 
     def test_factory_callbacks(self) -> None:
         """Test factory callback functionality."""

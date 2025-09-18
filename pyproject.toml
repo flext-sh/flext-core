@@ -10,7 +10,7 @@ maintainers = [{ name = "FLEXT Team", email = "team@flext.sh" }]
 name = "flext-core"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-version = "0.9.0"
+version = "0.9.9"
 urls.Homepage = "https://github.com/flext-sh/flext-core"
 urls.Repository = "https://github.com/flext-sh/flext-core"
 urls.Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
@@ -31,6 +31,7 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "structlog>=25.4.0",
     "typing-extensions>=4.12.0",
+    "pyyaml (>=6.0.2,<7.0.0)",
 ]
 keywords = [
     "clean-architecture",
@@ -90,7 +91,7 @@ typings = [
 security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
 
 [tool.poetry]
-packages = [{ include = "flext_auth", from = "src" }, { include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
+packages = [{ include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
 
 [tool.poetry.group.typings.dependencies]
 types-pygments = ">=2.19.0.20250715"

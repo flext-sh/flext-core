@@ -1,10 +1,8 @@
-"""Dispatcher registration helpers consolidating setup logic.
+"""Dispatcher registration helpers aligned with the 1.0.0 modernization plan.
 
-This module centralises the repeated handler registration code that
-previously lived inside individual packages. It provides a thin
-stateful facade that keeps track of successfully registered handlers,
-ensures idempotent behaviour, and offers helpers for mapping concrete
-message types to handlers or callables.
+The registry implements the handler bootstrapping workflow called out in
+``README.md`` and ``docs/architecture.md`` so CLI and connector packages can
+standardise idempotent registrations during the unified dispatcher rollout.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,11 +21,16 @@ from flext_core.typings import MessageT, ResultT
 
 
 class FlextDispatcherRegistry:
-    """Stateful helper wrapping a ``FlextDispatcher`` instance."""
+    """Stateful helper that reports on handler adoption across packages.
+
+    By wrapping ``FlextDispatcher`` it provides registration summaries and
+    idempotency guarantees that feed ecosystem migration dashboards during the
+    1.0.0 rollout.
+    """
 
     @dataclass(slots=True)
     class Summary:
-        """Aggregated outcome of a batch registration attempt."""
+        """Aggregated outcome used for 1.0.0 handler adoption tracking."""
 
         registered: list[FlextDispatcher.Registration[object, object]] = field(
             default_factory=list

@@ -1,4 +1,8 @@
-"""Domain-Driven Design services for business operations.
+"""Domain service abstractions supporting the 1.0.0 alignment pillar.
+
+These bases codify the service ergonomics described in ``README.md`` and
+``docs/architecture.md``: immutable models, context-aware logging, and
+``FlextResult`` contracts that remain stable throughout the 1.x lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,7 +29,13 @@ class FlextDomainService[TDomainResult](
     FlextMixins.Loggable,
     ABC,
 ):
-    """Abstract base class for domain services implementing DDD patterns."""
+    """Base class for domain services following the modernization guidance.
+
+    Subclasses inherit logging, serialization, and validation utilities so they
+    match the domain-service ergonomics promised for the FLEXT 1.0.0 rollout.
+    The class keeps contracts strict—``execute`` returns ``FlextResult`` and
+    configuration checks are routed through helper validators.
+    """
 
     model_config = ConfigDict(
         frozen=True,
@@ -36,12 +46,12 @@ class FlextDomainService[TDomainResult](
 
     # Override to_json to resolve inheritance conflict
     def to_json(self, indent: int | None = None) -> str:
-        """Convert to JSON string with proper signature."""
+        """Convert to JSON string while preserving modernization metadata."""
         return FlextMixins.to_json(self, indent)
 
     # Mixin functionality is now inherited via FlextMixins.Serializable
     def is_valid(self) -> bool:
-        """Check if domain service is valid."""
+        """Check service validity using 1.0.0-aligned validators."""
         try:
             validation_result = self.validate_business_rules()
             return validation_result.is_success
@@ -50,31 +60,16 @@ class FlextDomainService[TDomainResult](
             return False
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate domain service business rules.
-
-        Returns:
-            FlextResult[None]: The validation result.
-
-        """
+        """Validate domain service business rules per modernization policy."""
         return FlextResult[None].ok(None)
 
     @abstractmethod
     def execute(self) -> FlextResult[TDomainResult]:
-        """Execute the main domain service operation.
-
-        Returns:
-            FlextResult[TDomainResult]: The execution result.
-
-        """
-        raise NotImplementedError
+        """Execute the main domain service operation with result contract."""
+        ...
 
     def validate_config(self) -> FlextResult[None]:
-        """Validate service configuration.
-
-        Returns:
-            FlextResult[None]: The validation result.
-
-        """
+        """Validate service configuration using shared configuration guardrails."""
         return FlextResult[None].ok(None)
 
     def execute_operation(
@@ -84,12 +79,7 @@ class FlextDomainService[TDomainResult](
         *args: object,
         **kwargs: object,
     ) -> FlextResult[object]:
-        """Execute operation with error handling and validation.
-
-        Returns:
-            FlextResult[object]: The execution result.
-
-        """
+        """Execute an operation with modernization-compliant error handling."""
         try:
             # Validate configuration first
             config_result = self.validate_config()
@@ -127,12 +117,7 @@ class FlextDomainService[TDomainResult](
             )
 
     def get_service_info(self) -> FlextTypes.Core.Dict:
-        """Get service information for monitoring and diagnostics.
-
-        Returns:
-            FlextTypes.Core.Dict: The service information.
-
-        """
+        """Return service metadata for modernization monitoring dashboards."""
         config_result = self.validate_config()
         rules_result = self.validate_business_rules()
         is_valid = config_result.is_success and rules_result.is_success

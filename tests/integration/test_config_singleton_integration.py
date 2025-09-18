@@ -5,7 +5,12 @@ This test validates that:
 2. Configuration can be loaded from multiple sources (.env, JSON, YAML, TOML)
 3. Environment variables override file configurations
 4. All modules use the same configuration instance
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 import json
 import os

@@ -1,31 +1,23 @@
-# Testes de Integração FLEXT Core
+# FLEXT Core Integration Tests
 
-## Como rodar os testes automatizados
-
-Execute na raiz do projeto:
+These tests verify that configuration, container, dispatcher, and context layers behave consistently – the core promise of the 1.0.0 modernization plan.
 
 ```bash
 cd flext-core
-python -m pytest tests/integration/ -v
+poetry run pytest tests/integration -v
 ```
 
-- Todos os testes automatizados estão em **test_wildcard_exports.py**.
-- Cobrem: imports, exports, exceptions, constants, utilities, fluxo end-to-end e estabilidade.
+Highlighted scenarios:
 
-## Scripts auxiliares
+- `test_config_singleton_integration.py` – shared configuration lifecycle wired into the global container.
+- `test_wildcard_exports_clean.py` – protects the official public API surface exposed by `flext_core.__all__`.
+- `test_system.py` / `test_service.py` – end-to-end dispatcher flows that exercise context propagation and logging.
 
-Os scripts a seguir NÃO fazem parte da suíte de testes automatizada, mas podem ser usados para inspeção manual dos exports do flext-core:
-
-- `test_imports.py` — Verifica duplicatas e mostra os exports principais.
-- `analyze_exports.py` — Faz análise detalhada e categorização dos exports.
-
-Execute-os manualmente na raiz do projeto, se desejar:
+Support scripts (optional, run manually when reviewing exports or wiring):
 
 ```bash
-python test_imports.py
-python analyze_exports.py
+poetry run python tests/integration/test_wildcard_exports.py --list
+poetry run python tests/integration/test_integration.py --detail
 ```
 
----
-
-**Padrão de testes consolidado, limpo e documentado.**
+Keep this document updated when new integration scenarios are introduced during the modernization rollout.

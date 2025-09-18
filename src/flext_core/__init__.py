@@ -1,4 +1,4 @@
-"""FLEXT Core - Data integration foundation library.
+"""Public export surface for FLEXT-Core 1.0.0.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -68,5 +68,3 @@ __all__ = [
     "V",
     "__version__",
 ]
-
-# No test-time monkey patches: keep core semantics consistent.

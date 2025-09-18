@@ -1,4 +1,4 @@
-"""FlextProcessing - Simple unified processing for FLEXT.
+"""Processing helpers that complement the FLEXT-Core 1.0.0 dispatcher.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,17 +12,22 @@ from flext_core.result import FlextResult
 
 
 class FlextProcessing:
-    """Simple processing utilities."""
+    """Processing convenience namespace aligned with dispatcher workflows.
+
+    Registries, pipelines, and handler helpers mirror the ergonomics promoted in
+    the modernization plan so supporting packages can compose around
+    ``FlextDispatcher`` without bespoke glue code.
+    """
 
     class Handler:
-        """Base handler - actually simple."""
+        """Minimal handler base returning modernization-compliant results."""
 
         def handle(self, request: object) -> FlextResult[object]:
             """Handle a request."""
             return FlextResult[object].ok(f"Base handler processed: {request}")
 
     class HandlerRegistry:
-        """Simple registry for handlers."""
+        """Registry managing named handler instances for dispatcher pilots."""
 
         def __init__(self) -> None:
             """Initialize handler registry."""
@@ -82,7 +87,7 @@ class FlextProcessing:
             return self._handlers.get(name)
 
     class Pipeline:
-        """Simple processing pipeline."""
+        """Simple processing pipeline mirroring modernization samples."""
 
         def __init__(self) -> None:
             """Initialize processing pipeline."""

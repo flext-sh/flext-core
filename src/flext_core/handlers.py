@@ -1,8 +1,17 @@
-"""Unified handler base for FLEXT CQRS architecture."""
+"""Unified CQRS handler base promoted for the FLEXT 1.0.0 rollout.
+
+Handlers expose the validation and telemetry hooks referenced in
+``docs/architecture.md`` so downstream packages can migrate to
+``FlextDispatcher`` without bespoke wiring.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import time
+from abc import abstractmethod
 from typing import ClassVar, Literal, cast, get_origin
 
 from flext_core.constants import FlextConstants
@@ -14,7 +23,12 @@ from flext_core.typings import FlextTypes
 
 
 class FlextHandlers[MessageT, ResultT](FlextMixins):
-    """Single handler class supporting command or query operations."""
+    """Generic base that normalises command/query handler behaviour.
+
+    The class codifies how handlers are registered, validated, and measured so
+    that ``FlextBus`` and ``FlextDispatcher`` see a consistent surface across
+    the ecosystem, fulfilling the unified dispatcher pillar.
+    """
 
     DEFAULT_MODE: ClassVar[Literal["command", "query"]] = "command"
 
@@ -168,20 +182,36 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 return cast("FlextResult[None]", result)
         return FlextResult[None].ok(None)
 
+    @abstractmethod
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
         """Handle the message and return result.
 
         Subclasses must override this method.
         """
-        msg = "Subclasses must implement handle method"
-        raise NotImplementedError(msg)
+        ...
 
     def execute(self, command: MessageT) -> FlextResult[ResultT]:
-        """Execute command with full validation and error handling."""
+        """Execute command with full validation and error handling.
+
+        Args:
+            command: The command to execute.
+
+        Returns:
+            A FlextResult containing the execution result or error details.
+
+        """
         return self._run_pipeline(command, operation="command")
 
     def handle_query(self, query: MessageT) -> FlextResult[ResultT]:
-        """Execute query with validation and error handling."""
+        """Execute query with validation and error handling.
+
+        Args:
+            query: The query to execute.
+
+        Returns:
+            A FlextResult containing the query result or error details.
+
+        """
         return self._run_pipeline(query, operation="query")
 
     def handle_command(self, command: MessageT) -> FlextResult[ResultT]:

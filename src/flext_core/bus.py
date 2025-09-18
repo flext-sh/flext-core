@@ -1,4 +1,4 @@
-"""Command Bus implementation for FLEXT CQRS architecture.
+"""Command bus for FLEXT-Core 1.0.0 CQRS flows.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +21,14 @@ from flext_core.typings import FlextTypes
 
 
 class FlextBus(FlextMixins):
-    """Command bus for routing and executing commands with Pydantic configuration."""
+    """Runtime bus that enforces the CQRS contract shared across FLEXT 1.x.
+
+    It is the execution core described in the modernization plan: configuration
+    is validated through ``FlextModels.CqrsConfig``, handlers are wrapped so they
+    surface ``FlextResult`` outcomes, and every dispatch emits context-aware
+    telemetry via ``FlextLogger``. Downstream packages reach it through
+    ``FlextDispatcher`` to guarantee a uniform command/query experience.
+    """
 
     def __init__(
         self,
@@ -34,7 +41,7 @@ class FlextBus(FlextMixins):
         max_cache_size: int = 1000,
         implementation_path: str = "flext_core.bus:FlextBus",
     ) -> None:
-        """Initialize command bus with centralized Pydantic configuration."""
+        """Initialise the bus using the CQRS configuration models."""
         super().__init__()
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self)
@@ -72,7 +79,7 @@ class FlextBus(FlextMixins):
 
     @property
     def config(self) -> FlextModels.CqrsConfig.Bus:
-        """Return validated bus configuration."""
+        """Expose the validated CQRS bus configuration model."""
         return self._config_model
 
     @classmethod
@@ -80,7 +87,7 @@ class FlextBus(FlextMixins):
         cls,
         bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
     ) -> FlextBus:
-        """Create a new command bus instance using centralized validation."""
+        """Create factory helper mirroring the documented ``create_command_bus`` API."""
         return cls(bus_config=bus_config)
 
     @staticmethod
@@ -90,7 +97,7 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Create a simple command handler with centralized validation."""
+        """Wrap a bare callable into a CQRS command handler with validation."""
 
         class SimpleHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
@@ -120,7 +127,7 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Create a simple query handler with centralized validation."""
+        """Wrap a callable into a CQRS query handler that returns `FlextResult`."""
 
         class SimpleQueryHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
@@ -144,7 +151,7 @@ class FlextBus(FlextMixins):
         return SimpleQueryHandler()
 
     def register_handler(self, *args: object) -> FlextResult[None]:
-        """Register command handler."""
+        """Register a handler instance (single or paired registration forms)."""
         if len(args) == 1:
             handler = args[0]
             if handler is None:
@@ -215,7 +222,7 @@ class FlextBus(FlextMixins):
         return FlextResult[None].fail(msg)
 
     def find_handler(self, command: object) -> object | None:
-        """Find handler for command."""
+        """Locate the handler that can process the provided message."""
         command_type = type(command)
         command_name = command_type.__name__
 
@@ -232,7 +239,7 @@ class FlextBus(FlextMixins):
         return None
 
     def execute(self, command: object) -> FlextResult[object]:
-        """Execute command through registered handler."""
+        """Execute a command/query through middleware and the resolved handler."""
         # Check if bus is enabled
         if not self._config_model.enable_middleware and self._middleware:
             return FlextResult[object].fail(
@@ -318,7 +325,7 @@ class FlextBus(FlextMixins):
         command: object,
         handler: object,
     ) -> FlextResult[None]:
-        """Apply middleware pipeline using Pydantic configs."""
+        """Run the configured middleware pipeline for the current message."""
         if not self._config_model.enable_middleware:
             return FlextResult[None].ok(None)
 
@@ -378,7 +385,7 @@ class FlextBus(FlextMixins):
         handler: object,
         command: object,
     ) -> FlextResult[object]:
-        """Execute command through handler."""
+        """Execute the handler while normalizing return types to `FlextResult`."""
         self.logger.debug(
             "Delegating to handler",
             handler_type=handler.__class__.__name__,
@@ -412,7 +419,7 @@ class FlextBus(FlextMixins):
         middleware: object,
         middleware_config: dict[str, object] | None = None,
     ) -> FlextResult[None]:
-        """Add middleware to pipeline with optional Pydantic configuration."""
+        """Append middleware with validated configuration metadata."""
         if not self._config_model.enable_middleware:
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
@@ -443,11 +450,11 @@ class FlextBus(FlextMixins):
         return FlextResult[None].ok(None)
 
     def get_all_handlers(self) -> FlextTypes.Core.List:
-        """Get all registered handlers."""
+        """Return all registered handler instances."""
         return list(self._handlers.values())
 
     def unregister_handler(self, command_type: type | str) -> bool:
-        """Unregister command handler."""
+        """Remove a handler registration by type or name."""
         for key in list(self._handlers.keys()):
             # Handle both class objects and string comparisons
             if key == command_type:
@@ -476,11 +483,11 @@ class FlextBus(FlextMixins):
         return False
 
     def send_command(self, command: object) -> FlextResult[object]:
-        """Send command for processing."""
+        """Compatibility shim that delegates to :meth:`execute`."""
         return self.execute(command)
 
     def get_registered_handlers(self) -> FlextTypes.Core.Dict:
-        """Get registered handlers as dictionary."""
+        """Expose the handler registry keyed by command identifiers."""
         return {str(k): v for k, v in self._handlers.items()}
 
 

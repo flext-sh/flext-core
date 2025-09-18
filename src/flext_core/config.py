@@ -1,4 +1,4 @@
-"""FLEXT Core Configuration.
+"""Configuration subsystem delivering the FLEXT 1.0.0 alignment pillar.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -33,7 +33,13 @@ from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
-    """Unified configuration management system with nested specialized components."""
+    """Canonical configuration manager mandated by the modernization plan.
+
+    The class merges environment variables, dotenv files, and typed runtime
+    defaults. It acts as the single source of truth for configuration stated in
+    the 1.0.0 roadmap and is exercised by tests that guarantee ABI stability for
+    downstream projects.
+    """
 
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
@@ -42,14 +48,23 @@ class FlextConfig(BaseSettings):
     # =============================================================================
 
     class EnvironmentConfigAdapter(ABC):
-        """Abstract base for environment-specific configuration adapters.
+        """Abstract adapter interface for environment-backed configuration.
 
-        Follows Dependency Inversion Principle - depend on abstractions.
+        Downstream packages can swap in bespoke sources while keeping the
+        runtime contract enforced by the modernization plan.
         """
 
         @abstractmethod
         def get_env_var(self, var_name: str) -> FlextResult[str]:
-            """Get environment variable with error handling."""
+            """Get environment variable with error handling.
+
+            Args:
+                var_name: The name of the environment variable to retrieve.
+
+            Returns:
+                A FlextResult containing the variable value or error details.
+
+            """
 
         @abstractmethod
         def get_env_vars_with_prefix(
@@ -58,13 +73,23 @@ class FlextConfig(BaseSettings):
             """Get all environment variables with given prefix."""
 
     class DefaultEnvironmentAdapter(EnvironmentConfigAdapter):
-        """Default implementation of environment adapter using os.environ.
+        """Default adapter that resolves values from ``os.environ``.
 
-        Concrete implementation following Dependency Inversion Principle.
+        This keeps the out-of-the-box behaviour described in
+        ``docs/configuration.md`` while still allowing overrides through the
+        adapter abstraction.
         """
 
         def get_env_var(self, var_name: str) -> FlextResult[str]:
-            """Get environment variable with FlextResult error handling."""
+            """Get environment variable with FlextResult error handling.
+
+            Args:
+                var_name: The name of the environment variable to retrieve.
+
+            Returns:
+                A FlextResult containing the variable value or error details.
+
+            """
             try:
                 value = os.getenv(var_name)  # Direct environment variable access
                 if value is None:
@@ -101,9 +126,11 @@ class FlextConfig(BaseSettings):
     # =============================================================================
 
     class RuntimeValidator:
-        """Handles runtime validation requirements.
+        """Runtime guardrails that uphold the documented configuration contract.
 
-        Follows Single Responsibility Principle - only validates runtime requirements.
+        The validator enforces the safety checks surfaced in the configuration
+        pillar of the 1.0.0 plan (timeouts, worker counts, semantic versioning,
+        and other guardrails).
         """
 
         @staticmethod
@@ -165,9 +192,11 @@ class FlextConfig(BaseSettings):
             return FlextResult[None].ok(None)
 
     class BusinessValidator:
-        """Handles business rule validation.
+        """Business-rule validator that mirrors documented production policies.
 
-        Follows Single Responsibility Principle - only validates business rules.
+        It focuses on higher-level guardrails (production debug locks, worker
+        expectations, performance heuristics) so configuration usage matches the
+        guidance captured in the modernization plan.
         """
 
         @staticmethod
@@ -1538,14 +1567,23 @@ class FlextConfig(BaseSettings):
 
             # Apply provided values if the field exists; ignore None overrides
             if isinstance(_data, dict) and _data:
-                for field_name, field_value in _data.items():
+                # Filter valid fields and create update dict
+                update_data = {
+                    field_name: field_value
+                    for field_name, field_value in _data.items()
                     if (
                         isinstance(field_name, str)
                         and field_name in cast("BaseModel", instance).model_fields
                         and field_value is not None
-                    ):
-                        # Bypass validate_assignment for safe load semantics
-                        object.__setattr__(instance, field_name, field_value)
+                    )
+                }
+
+                # Use model_construct to bypass validation entirely
+                if update_data:
+                    # Get current values and merge with updates
+                    current_data = instance.model_dump()
+                    current_data.update(update_data)
+                    instance = cls.model_construct(**current_data)
 
             # Mark origin for observability
             instance._metadata["created_from"] = "safe_load"

@@ -1,7 +1,7 @@
-"""CQRS utilities for FLEXT Command Query Responsibility Segregation patterns.
+"""CQRS utilities aligned with the 1.0.0 unified dispatcher initiative.
 
-This module contains CQRS-specific utilities extracted from FlextUtilities
-following FLEXT architectural principle of "one class per module".
+These helpers sit on top of ``FlextBus``/``FlextDispatcher`` so downstream
+packages can standardise command/query orchestration without custom buses.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

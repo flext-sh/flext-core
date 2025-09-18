@@ -1,6 +1,4 @@
-"""FlextMixins - Mixin classes for FLEXT ecosystem.
-
-This module provides mixin classes for common functionality patterns.
+"""Shared mixins anchoring serialization, logging, and timestamp helpers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,10 +16,15 @@ from flext_core.loggings import FlextLogger
 
 
 class FlextMixins:
-    """Mixin classes for FLEXT ecosystem functionality."""
+    """Namespace containing the reusable mixins shared across FLEXT packages.
+
+    They provide the logging, serialization, and state helpers needed to keep
+    domain services aligned with the modernization plan without duplicating
+    boilerplate.
+    """
 
     class Serializable:
-        """Mixin for serialization functionality."""
+        """Serialization helpers reused in modernization-ready models."""
 
         def to_json(self, indent: int | None = None) -> str:
             """Convert to JSON string."""
@@ -30,7 +33,7 @@ class FlextMixins:
             return json.dumps(self.__dict__, indent=indent)
 
     class Loggable:
-        """Mixin for logging functionality."""
+        """Logging helper mixin aligned with context-first observability."""
 
         @property
         def logger(self) -> FlextLogger:
@@ -57,7 +60,7 @@ class FlextMixins:
             self.logger.debug(message, **kwargs)
 
     class Service:
-        """Mixin for service functionality."""
+        """Service bootstrap mixin shared across domain services."""
 
         def __init__(self, **data: object) -> None:
             """Initialize service with provided data and basic state."""

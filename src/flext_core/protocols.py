@@ -1,4 +1,4 @@
-"""Protocol definitions and interface contracts.
+"""Protocol definitions codifying the FLEXT-Core 1.0.0 contracts.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,20 +19,24 @@ if TYPE_CHECKING:
 
 
 class FlextProtocols:
-    """Hierarchical protocol architecture with composition patterns."""
+    """Grouped protocol interfaces underpinning the modernization contracts.
+
+    They clarify the callable semantics, configuration hooks, and extension
+    points relied upon during the 1.0.0 rollout.
+    """
 
     # =========================================================================
     # FOUNDATION LAYER - Core building blocks
     # =========================================================================
 
     class Foundation:
-        """Foundation layer protocols - core building blocks."""
+        """Foundation layer protocols cementing the 1.0.0 contracts."""
 
         class Validator(Protocol, Generic[T_contra]):
-            """Generic validator protocol."""
+            """Generic validator protocol reused by modernization guardrails."""
 
             def validate(self, data: T_contra) -> object:
-                """Validate input data and return status."""
+                """Validate input data according to the shared release policy."""
                 ...
 
     # =========================================================================
@@ -40,53 +44,53 @@ class FlextProtocols:
     # =========================================================================
 
     class Domain:
-        """Domain layer protocols - business logic."""
+        """Domain layer protocols reflecting FLEXT's modernization DDD usage."""
 
         # Domain protocols providing service and repository patterns
 
         class Service(Protocol):
-            """Domain service protocol with lifecycle management."""
+            """Domain service contract used across modernization-aligned services."""
 
             def __call__(self, *args: object, **kwargs: object) -> object:
-                """Callable interface for service."""
+                """Execute the service entry point with modernization semantics."""
                 ...
 
             @abstractmethod
             def start(self) -> object:
-                """Start the service."""
+                """Start the service using the standardized lifecycle hooks."""
                 ...
 
             @abstractmethod
             def stop(self) -> object:
-                """Stop the service."""
+                """Stop the service following the modernization shutdown guidance."""
                 ...
 
             @abstractmethod
             def health_check(self) -> object:
-                """Perform health check."""
+                """Report modernization-compliant health status."""
                 ...
 
         class Repository(Protocol, Generic[T_contra]):
-            """Repository protocol for data access."""
+            """Repository protocol shaping modernization data access patterns."""
 
             @abstractmethod
             def get_by_id(self, entity_id: str) -> object:
-                """Get entity by ID."""
+                """Retrieve an aggregate using the standardized identity lookup."""
                 ...
 
             @abstractmethod
             def save(self, entity: T_contra) -> object:
-                """Save entity."""
+                """Persist an entity following modernization consistency rules."""
                 ...
 
             @abstractmethod
             def delete(self, entity_id: str) -> object:
-                """Delete entity by ID."""
+                """Delete an entity while respecting modernization invariants."""
                 ...
 
             @abstractmethod
             def find_all(self) -> object:
-                """Find all entities."""
+                """Enumerate entities for modernization-aligned queries."""
                 ...
 
     # =========================================================================
@@ -245,10 +249,11 @@ class FlextProtocols:
         # Provides plugin ecosystem support for applications
 
         class Plugin(Protocol):
-            """Plugin protocol with configuration."""
+            """Plugin protocol with configuration.
 
-            # Plugin lifecycle management with configuration and initialization
-            # Supports complex plugin ecosystems with full lifecycle control
+            Plugin lifecycle management with configuration and initialization
+            Supports complex plugin ecosystems with full lifecycle control
+            """
 
             def configure(self, config: FlextTypes.Core.Dict) -> object:
                 """Configure component with settings."""

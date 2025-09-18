@@ -254,6 +254,7 @@ class TestFlextContainer:
         async def register_service(
             name: str, data: FlextTypes.Core.Dict
         ) -> FlextResult[None]:
+            await asyncio.sleep(0)  # Make it truly async
             return container.register(name, data)
 
         # Test concurrent registrations
@@ -274,6 +275,7 @@ class TestFlextContainer:
 
         # Test concurrent retrievals
         async def get_service(name: str) -> FlextResult[FlextTypes.Core.Dict]:
+            await asyncio.sleep(0)  # Make it truly async
             return cast("FlextResult[dict[str, object]]", container.get(name))
 
         get_tasks = [get_service(f"async_service_{i}") for i in range(5)]

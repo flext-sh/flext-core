@@ -1,4 +1,4 @@
-"""FLEXT Core Constants.
+"""Shared constants backing the FLEXT-Core 1.0.0 modernization plan.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,16 +11,21 @@ from typing import Final
 
 
 class FlextConstants:
-    """Essential constants for FLEXT core functionality."""
+    """Essential constants mirroring the modernization plan defaults.
+
+    Each nested namespace lines up with limits, error codes, and defaults
+    captured in ``README.md`` and ``docs/architecture.md`` so dependants share
+    consistent thresholds during the 1.0.0 rollout.
+    """
 
     class Core:
-        """Core system constants."""
+        """Core identifiers hardened for the 1.0.0 release cycle."""
 
         NAME: Final[str] = "FLEXT"  # Usage count: 1
         VERSION: Final[str] = "0.9.0"  # Usage count: 8
 
     class Network:
-        """Network constants."""
+        """Network defaults shared across dispatcher-aligned services."""
 
         MIN_PORT: Final[int] = 1  # Usage count: 4
         MAX_PORT: Final[int] = 65535  # Usage count: 4
@@ -28,7 +33,7 @@ class FlextConstants:
         DEFAULT_TIMEOUT: Final[int] = 30  # Usage count: 4
 
     class Validation:
-        """Validation constants."""
+        """Validation guardrails referenced in modernization docs."""
 
         MIN_NAME_LENGTH: Final[int] = 2  # Usage count: 1
         MAX_NAME_LENGTH: Final[int] = 100  # Usage count: 0
@@ -39,7 +44,7 @@ class FlextConstants:
         MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
 
     class Errors:
-        """Error codes."""
+        """Canonical error codes surfaced in telemetry narratives."""
 
         VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"  # Usage count: 28
         TYPE_ERROR: Final[str] = "TYPE_ERROR"  # Usage count: 4
@@ -78,7 +83,7 @@ class FlextConstants:
         UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"  # Usage count: 1
 
     class Messages:
-        """Message constants."""
+        """User-facing validation and failure messages."""
 
         TYPE_MISMATCH: Final[str] = "Type mismatch"  # Usage count: 2
         SERVICE_NAME_EMPTY: Final[str] = (
@@ -92,35 +97,35 @@ class FlextConstants:
         NULL_DATA: Final[str] = "Data cannot be null"  # Usage count: 0
 
     class Entities:
-        """Entity constants."""
+        """Entity validation prompts reused across services."""
 
         ENTITY_ID_EMPTY: Final[str] = "Entity ID cannot be empty"  # Usage count: 0
 
     class Defaults:
-        """Default values."""
+        """Baseline defaults called out in onboarding docs."""
 
         TIMEOUT: Final[int] = 30  # Usage count: 18
         PAGE_SIZE: Final[int] = 100  # Usage count: 2
 
     class Limits:
-        """Limits."""
+        """Upper bounds safeguarding payload and resource usage."""
 
         MAX_STRING_LENGTH: Final[int] = 1000  # Usage count: 0
         MAX_LIST_SIZE: Final[int] = 10000  # Usage count: 0
         MAX_FILE_SIZE: Final[int] = 10 * 1024 * 1024  # 10MB  # Usage count: 0
 
     class Utilities:
-        """Utility constants."""
+        """Utility constants reused by helper modules."""
 
         SECONDS_PER_MINUTE: Final[int] = 60  # Usage count: 0
         SECONDS_PER_HOUR: Final[int] = 3600  # Usage count: 0
         BYTES_PER_KB: Final[int] = 1024  # Usage count: 0
 
     class Patterns:
-        """Regex patterns."""  # Usage count: 0
+        """Regex placeholders for downstream ecosystem adapters."""  # Usage count: 0
 
     class Config:
-        """Config constants."""
+        """Configuration defaults anchoring the unified lifecycle."""
 
         ENVIRONMENTS: Final[list[str]] = [  # Usage count: 3
             "development",
@@ -151,7 +156,7 @@ class FlextConstants:
         PROFILE_MICROSERVICE: Final[str] = "microservice"
 
         class ConfigSource(StrEnum):
-            """Config source enumeration."""
+            """Enumerate configuration origins supported by FlextConfig."""
 
             FILE = "file"  # Usage count: 0
             ENVIRONMENT = "env"  # Usage count: 0
@@ -160,7 +165,7 @@ class FlextConstants:
             DOTENV = "dotenv"  # Usage count: 0
 
         class LogLevel(StrEnum):
-            """Log level enumeration."""
+            """Standard log levels mirroring FlextLogger semantics."""
 
             DEBUG = "DEBUG"  # Usage count: 4
             INFO = "INFO"  # Usage count: 4
@@ -169,10 +174,10 @@ class FlextConstants:
             CRITICAL = "CRITICAL"  # Usage count: 3
 
     class Enums:
-        """Enumerations."""
+        """Shared enumerations referenced across the API surface."""
 
         class FieldType(StrEnum):
-            """Field type enumeration."""
+            """Normalized field types for configuration and model metadata."""
 
             STRING = "string"  # Usage count: 0
             INTEGER = "integer"  # Usage count: 0
@@ -184,31 +189,31 @@ class FlextConstants:
             EMAIL = "email"  # Usage count: 0
 
     class Platform:
-        """Platform constants."""
+        """Platform defaults referenced by CLI and adapter packages."""
 
         FLEXT_API_PORT: Final[int] = 8000  # Usage count: 4
         DEFAULT_HOST: Final[str] = "localhost"  # Usage count: 0
 
     class Observability:
-        """Observability constants."""
+        """Observability defaults consumed by FlextLogger."""
 
         DEFAULT_LOG_LEVEL: Final[str] = "INFO"  # Usage count: 0
 
     class Performance:
-        """Performance constants."""
+        """Performance tuning knobs surfaced in roadmap metrics."""
 
         DEFAULT_BATCH_SIZE: Final[int] = 1000  # Usage count: 2
 
     class Reliability:
-        """Reliability constants."""
+        """Reliability thresholds backing retry guidance."""
 
         MAX_RETRY_ATTEMPTS: Final[int] = 3  # Usage count: 1
 
     class Environment:
-        """Environment constants."""
+        """Environment enumerations used by configuration profiles."""
 
         class ConfigEnvironment(StrEnum):
-            """Configuration environment types."""
+            """Enumerate core deployment environments in docs."""
 
             DEVELOPMENT = "development"  # Usage count: 1
             STAGING = "staging"  # Usage count: 0
@@ -216,7 +221,7 @@ class FlextConstants:
             TESTING = "testing"  # Usage count: 0
 
         class ValidationLevel(StrEnum):
-            """Validation level types."""
+            """Validation strictness tiers adopted by tooling."""
 
             STRICT = "strict"  # Usage count: 0
             NORMAL = "normal"  # Usage count: 0
