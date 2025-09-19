@@ -28,8 +28,8 @@ class FlextMixins:
 
         def to_json(self, indent: int | None = None) -> str:
             """Convert to JSON string."""
-            if hasattr(self, "model_dump") and callable(getattr(self, "model_dump")):
-                return json.dumps(getattr(self, "model_dump")(), indent=indent)
+            if hasattr(self, "model_dump") and callable(self.model_dump):
+                return json.dumps(self.model_dump(), indent=indent)
             return json.dumps(self.__dict__, indent=indent)
 
     class Loggable:
@@ -75,8 +75,8 @@ class FlextMixins:
     @staticmethod
     def to_json(obj: object, indent: int | None = None) -> str:
         """Convert object to JSON string."""
-        if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
-            return json.dumps(getattr(obj, "model_dump")(), indent=indent)
+        if hasattr(obj, "model_dump") and callable(obj.model_dump):
+            return json.dumps(obj.model_dump(), indent=indent)
         if hasattr(obj, "__dict__"):
             return json.dumps(obj.__dict__, indent=indent)
         return json.dumps(str(obj), indent=indent)
@@ -107,7 +107,7 @@ class FlextMixins:
     @staticmethod
     def ensure_id(obj: object) -> None:
         """Ensure object has an ID."""
-        if hasattr(obj, "id") and not getattr(obj, "id"):
+        if hasattr(obj, "id") and not obj.id:
             setattr(obj, "id", str(uuid.uuid4())[:8])
 
     @staticmethod
@@ -130,8 +130,8 @@ class FlextMixins:
     @staticmethod
     def to_dict(obj: object) -> dict[str, object]:
         """Convert object to dictionary."""
-        if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
-            result = getattr(obj, "model_dump")()
+        if hasattr(obj, "model_dump") and callable(obj.model_dump):
+            result = obj.model_dump()
             return result if isinstance(result, dict) else {"model_dump": result}
         if hasattr(obj, "__dict__"):
             obj_dict = obj.__dict__

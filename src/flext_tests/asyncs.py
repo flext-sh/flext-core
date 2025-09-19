@@ -78,7 +78,7 @@ class FlextTestsAsyncs:
         async def attempt_once() -> T:
             """attempt_once method."""
             return await asyncio.wait_for(
-                coro, timeout=max(0.0, timeout_seconds - (time.time() - start))
+                coro, timeout=max(0.0, timeout_seconds - (time.time() - start)),
             )
 
         try:
@@ -116,7 +116,7 @@ class FlextTestsAsyncs:
                             return await asyncio.wait_for(
                                 new_coro,
                                 timeout=max(
-                                    0.0, timeout_seconds - (time.time() - start)
+                                    0.0, timeout_seconds - (time.time() - start),
                                 ),
                             )
                         except Exception:
@@ -128,7 +128,7 @@ class FlextTestsAsyncs:
                 # Log the exception for debugging but continue to timeout error
                 logger = logging.getLogger(__name__)
                 logger.debug(
-                    f"Exception during timeout operation, falling through to timeout: {e}"
+                    f"Exception during timeout operation, falling through to timeout: {e}",
                 )
             # If we couldn't discover a factory or retries failed, re-raise as TimeoutError respecting API contract
             msg = f"Operation timed out after {timeout_seconds} seconds"
@@ -146,7 +146,7 @@ class FlextTestsAsyncs:
 
         if return_exceptions:
             results: list[T | BaseException] = await asyncio.gather(
-                *coroutines, return_exceptions=True
+                *coroutines, return_exceptions=True,
             )
             # Filter out exceptions and return only successful results
             return [r for r in results if not isinstance(r, BaseException)]
@@ -170,7 +170,7 @@ class FlextTestsAsyncs:
             return []
         if return_exceptions:
             results: list[T | BaseException] = await asyncio.gather(
-                *tasks, return_exceptions=True
+                *tasks, return_exceptions=True,
             )
             # Filter out exceptions and return only successful results
             return [r for r in results if not isinstance(r, BaseException)]

@@ -33,7 +33,7 @@ class FlextDispatcherRegistry:
         """Aggregated outcome used for 1.0.0 handler adoption tracking."""
 
         registered: list[FlextDispatcher.Registration[object, object]] = field(
-            default_factory=list
+            default_factory=list,
         )
         skipped: list[str] = field(default_factory=list)
         errors: list[str] = field(default_factory=list)
@@ -94,13 +94,13 @@ class FlextDispatcherRegistry:
             self._registered_keys.add(key)
             summary.registered.append(
                 cast(
-                    "FlextDispatcher.Registration[object, object]", registration.value
+                    "FlextDispatcher.Registration[object, object]", registration.value,
                 ),
             )
 
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
-                "; ".join(summary.errors)
+                "; ".join(summary.errors),
             )
         return FlextResult[FlextDispatcherRegistry.Summary].ok(summary)
 
@@ -127,13 +127,13 @@ class FlextDispatcherRegistry:
             self._registered_keys.add(key)
             summary.registered.append(
                 cast(
-                    "FlextDispatcher.Registration[object, object]", registration.value
+                    "FlextDispatcher.Registration[object, object]", registration.value,
                 ),
             )
 
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
-                "; ".join(summary.errors)
+                "; ".join(summary.errors),
             )
         return FlextResult[FlextDispatcherRegistry.Summary].ok(summary)
 
@@ -176,13 +176,13 @@ class FlextDispatcherRegistry:
             self._registered_keys.add(key)
             summary.registered.append(
                 cast(
-                    "FlextDispatcher.Registration[object, object]", handler_result.value
-                )
+                    "FlextDispatcher.Registration[object, object]", handler_result.value,
+                ),
             )
 
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
-                "; ".join(summary.errors)
+                "; ".join(summary.errors),
             )
         return FlextResult[FlextDispatcherRegistry.Summary].ok(summary)
 

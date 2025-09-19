@@ -159,7 +159,8 @@ class TestFlextContainer:
             )
 
         complex_factory_result = container.register_factory(
-            "complex_service", create_complex_service
+            "complex_service",
+            create_complex_service,
         )
         FlextTestsMatchers.assert_result_success(complex_factory_result)
 
@@ -226,7 +227,8 @@ class TestFlextContainer:
         container = _get_container_from_builder()
 
         service_data = FlextTestsDomains.create_service(
-            name="duplicate_test", port=8080
+            name="duplicate_test",
+            port=8080,
         )
 
         # First registration should succeed
@@ -243,7 +245,7 @@ class TestFlextContainer:
 
         unregister_missing = container.unregister("nonexistent_service")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[object]", unregister_missing)
+            cast("FlextResult[object]", unregister_missing),
         )
 
     async def test_async_container_operations(self) -> None:
@@ -252,7 +254,8 @@ class TestFlextContainer:
 
         # Register services asynchronously
         async def register_service(
-            name: str, data: FlextTypes.Core.Dict
+            name: str,
+            data: FlextTypes.Core.Dict,
         ) -> FlextResult[None]:
             await asyncio.sleep(0)  # Make it truly async
             return container.register(name, data)
@@ -263,7 +266,8 @@ class TestFlextContainer:
             register_service(
                 f"async_service_{i}",
                 FlextTestsDomains.create_service(
-                    name=f"Async Service {i}", port=8000 + i
+                    name=f"Async Service {i}",
+                    port=8000 + i,
                 ),
             )
             for i in range(5)
@@ -291,7 +295,8 @@ class TestFlextContainer:
         # Register some services
         for i in range(3):
             service_data = FlextTestsDomains.create_service(
-                name=f"cleanup_service_{i}", port=9000 + i
+                name=f"cleanup_service_{i}",
+                port=9000 + i,
             )
             container.register(f"cleanup_service_{i}", service_data)
 
@@ -325,12 +330,12 @@ class TestFlextContainer:
         FlextTestsMatchers.assert_result_success(get_success)
         retrieved_success = get_success.value
         FlextTestsMatchers.assert_result_success(
-            cast("FlextResult[object]", retrieved_success)
+            cast("FlextResult[object]", retrieved_success),
         )
 
         get_failure = container.get("failure_service")
         FlextTestsMatchers.assert_result_success(
-            get_failure
+            get_failure,
         )  # Container operation succeeds
         retrieved_failure = get_failure.value
         FlextTestsMatchers.assert_result_failure(
@@ -344,7 +349,8 @@ class TestFlextContainer:
 
         # Register service with info
         service_data = FlextTestsDomains.create_service(
-            name="lifecycle_service", port=8080
+            name="lifecycle_service",
+            port=8080,
         )
         register_result = container.register("lifecycle_service", service_data)
         FlextTestsMatchers.assert_result_success(register_result)
@@ -361,7 +367,7 @@ class TestFlextContainer:
         # Test info for non-existent service
         missing_info_result = container.get_info("nonexistent_service")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[object]", missing_info_result)
+            cast("FlextResult[object]", missing_info_result),
         )
 
     def test_container_configuration(self) -> None:
@@ -410,7 +416,7 @@ class TestFlextContainer:
         # Test info for non-existent service
         missing_info_result = container.get_info("nonexistent_service")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[object]", missing_info_result)
+            cast("FlextResult[object]", missing_info_result),
         )
 
     def test_get_or_create_pattern(self) -> None:
@@ -422,7 +428,8 @@ class TestFlextContainer:
             return FlextTestsDomains.create_service(name="auto_service", port=8080)
 
         auto_wire_result = container.register_factory(
-            "auto_service", create_auto_service
+            "auto_service",
+            create_auto_service,
         )
         FlextTestsMatchers.assert_result_success(auto_wire_result)
 
@@ -440,7 +447,7 @@ class TestFlextContainer:
         service_data = FlextTestsDomains.create_service(name="test", port=8080)
         empty_name_result = container.register("", service_data)
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[object]", empty_name_result)
+            cast("FlextResult[object]", empty_name_result),
         )
 
         # Test getting non-existent service
@@ -450,13 +457,13 @@ class TestFlextContainer:
         # Test unregistering non-existent service
         unregister_missing_result = container.unregister("nonexistent")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[object]", unregister_missing_result)
+            cast("FlextResult[object]", unregister_missing_result),
         )
 
         # Test info for non-existent service
         info_missing_result = container.get_info("nonexistent")
         FlextTestsMatchers.assert_result_failure(
-            cast("FlextResult[object]", info_missing_result)
+            cast("FlextResult[object]", info_missing_result),
         )
 
     def test_service_lifecycle_complete(self) -> None:
@@ -465,7 +472,8 @@ class TestFlextContainer:
 
         # Phase 1: Registration
         service_data = FlextTestsDomains.create_service(
-            name="lifecycle_test", port=8080
+            name="lifecycle_test",
+            port=8080,
         )
         register_result = container.register("lifecycle_test", service_data)
         FlextTestsMatchers.assert_result_success(register_result)

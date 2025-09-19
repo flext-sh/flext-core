@@ -416,7 +416,7 @@ class TestFlextContainer100Percent:
             except Exception as e:
                 # Should handle exceptions gracefully
                 logging.getLogger(__name__).warning(
-                    f"Expected exception in batch_register test: {e}"
+                    f"Expected exception in batch_register test: {e}",
                 )
 
     def test_clear_method(self) -> None:
@@ -459,5 +459,5 @@ class TestFlextContainer100Percent:
             except Exception as e:
                 # Should handle exceptions appropriately
                 logging.getLogger(__name__).warning(
-                    f"Expected exception in configure_global test: {e}"
+                    f"Expected exception in configure_global test: {e}",
                 )

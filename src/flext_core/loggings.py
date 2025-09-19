@@ -671,7 +671,7 @@ class FlextLogger:
                     cls._add_correlation_processor,
                     cls._add_performance_processor,
                     cls._sanitize_processor,
-                ]
+                ],
             )
 
         # Choose output format
@@ -688,7 +688,7 @@ class FlextLogger:
                 structlog.processors.KeyValueRenderer(
                     key_order=["message"],  # Show message first
                     drop_missing=True,
-                )
+                ),
             )
         else:
             processors.append(FlextLogger._create_enhanced_console_renderer())

@@ -235,7 +235,7 @@ class FlextTestsFixtures:
             self._data: dict[str, dict[str, object]] = {}
 
         def create_session(
-            self, session_id: str, data: dict[str, object] | None = None
+            self, session_id: str, data: dict[str, object] | None = None,
         ) -> dict[str, object]:
             """Create a new session.
 
@@ -332,21 +332,21 @@ class FlextTestsFixtures:
         def create_test_config() -> FlextConfig:
             """Create test configuration."""
             return FlextConfig.create(
-                constants={"environment": "test", "debug": True}
+                constants={"environment": "test", "debug": True},
             ).unwrap()
 
         @staticmethod
         def create_development_config() -> FlextConfig:
             """Create development configuration."""
             return FlextConfig.create(
-                constants={"environment": "development", "debug": True}
+                constants={"environment": "development", "debug": True},
             ).unwrap()
 
         @staticmethod
         def create_production_config() -> FlextConfig:
             """Create production configuration."""
             return FlextConfig.create(
-                constants={"environment": "production", "debug": False}
+                constants={"environment": "production", "debug": False},
             ).unwrap()
 
     # === Command Classes ===
@@ -437,7 +437,7 @@ class FlextTestsFixtures:
             return await task
 
         async def execute_batch(
-            self, coros: FlextTypes.Core.List
+            self, coros: FlextTypes.Core.List,
         ) -> FlextTypes.Core.List:
             """Execute multiple coroutines in batch."""
             if not self._running:
@@ -570,7 +570,7 @@ class FlextTestsFixtures:
 
     @staticmethod
     def create_test_product(
-        name: str = "Test Product", price: float = 50.0
+        name: str = "Test Product", price: float = 50.0,
     ) -> TestProduct:
         """Create test product."""
         return FlextTestsFixtures.TestProduct(

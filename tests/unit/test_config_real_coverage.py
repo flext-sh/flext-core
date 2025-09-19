@@ -140,7 +140,7 @@ class TestFlextConfigRealCoverage:
                 "app_name": "env_test_app",
                 "debug": True,
                 "max_workers": 16,
-            }
+            },
         )
         assert result.is_success
         config = result.unwrap()
@@ -161,7 +161,7 @@ ENVIRONMENT=staging
 """
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".env"
+            encoding="utf-8", mode="w", delete=False, suffix=".env",
         ) as f:
             f.write(env_content)
             env_path = f.name
@@ -274,7 +274,7 @@ ENVIRONMENT=staging
 
         # Invalid configuration - test production with debug mode
         config_invalid = FlextConfig(
-            app_name="test", environment="production", debug=True, config_source="env"
+            app_name="test", environment="production", debug=True, config_source="env",
         )
         result = config_invalid.validate_business_rules()
         assert result.is_failure
@@ -375,7 +375,7 @@ ENVIRONMENT=staging
 
         # Test save to JSON
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".json"
+            encoding="utf-8", mode="w", delete=False, suffix=".json",
         ) as f:
             json_path = f.name
 
@@ -405,7 +405,7 @@ ENVIRONMENT=staging
         assert save_error_result.is_failure
 
         load_error_result: FlextResult[FlextConfig] = FlextConfig.load_from_file(
-            "/nonexistent/config.json"
+            "/nonexistent/config.json",
         )
         assert load_error_result.is_failure
 
@@ -423,7 +423,7 @@ ENVIRONMENT=staging
 
         # Test that sealed config cannot be modified
         with pytest.raises(
-            AttributeError, match=r"Cannot modify field.*configuration is sealed"
+            AttributeError, match=r"Cannot modify field.*configuration is sealed",
         ):
             config.app_name = "modified"
 
@@ -508,7 +508,7 @@ ENVIRONMENT=staging
         json_data = {"app_name": "json_env_app", "version": "1.0.0", "debug": True}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".json"
+            encoding="utf-8", mode="w", delete=False, suffix=".json",
         ) as f:
             json.dump(json_data, f)
             json_path = f.name
@@ -536,7 +536,7 @@ ENVIRONMENT=staging
 
         # Test creation with invalid environment in extra_settings
         result = FlextConfig.create_from_environment(
-            extra_settings={"environment": "invalid_env"}
+            extra_settings={"environment": "invalid_env"},
         )
         assert result.is_failure
         assert result.error
@@ -546,14 +546,14 @@ ENVIRONMENT=staging
         # Test merge with incompatible configs (if applicable)
         try:
             merge_result: FlextResult[dict[str, object]] = config.merge_configs(
-                config.to_dict(), config.to_dict()
+                config.to_dict(), config.to_dict(),
             )
             # Should succeed or fail gracefully
             assert isinstance(merge_result, FlextResult)
         except Exception as e:
             # Exception handling is also valid
             logging.getLogger(__name__).warning(
-                f"Expected exception in merge config test: {e}"
+                f"Expected exception in merge config test: {e}",
             )
 
     def test_all_config_fields_coverage(self) -> None:

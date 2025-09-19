@@ -26,7 +26,7 @@ class TestPerformanceDataFactory:
     def test_create_large_payload(self) -> None:
         """Test large payload creation."""
         payload = FlextTestsFixtures.PerformanceDataFactory.create_large_payload(
-            size_mb=1
+            size_mb=1,
         )
 
         assert isinstance(payload, dict)
@@ -48,7 +48,7 @@ class TestPerformanceDataFactory:
 
         # Test custom depth
         structure = FlextTestsFixtures.PerformanceDataFactory.create_nested_structure(
-            depth=5
+            depth=5,
         )
         assert isinstance(structure, dict)
         assert structure["value"] == "depth_5"
@@ -88,7 +88,7 @@ class TestErrorSimulationFactory:
     def test_create_error_scenario_validation(self) -> None:
         """Test validation error scenario."""
         scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
-            "ValidationError"
+            "ValidationError",
         )
 
         assert isinstance(scenario, dict)
@@ -112,7 +112,7 @@ class TestErrorSimulationFactory:
     def test_create_error_scenario_network(self) -> None:
         """Test network error scenario."""
         scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
-            "NetworkError"
+            "NetworkError",
         )
 
         assert isinstance(scenario, dict)
@@ -123,7 +123,7 @@ class TestErrorSimulationFactory:
     def test_create_error_scenario_unknown(self) -> None:
         """Test unknown error scenario defaults to unknown."""
         scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
-            "UnknownError"
+            "UnknownError",
         )
 
         assert isinstance(scenario, dict)
@@ -157,7 +157,7 @@ class TestSequenceFactory:
     def test_create_sequence_with_count_override(self) -> None:
         """Test sequence with count parameter override."""
         sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
-            length=10, count=3
+            length=10, count=3,
         )
 
         assert len(sequence) == 3  # Count overrides length
@@ -295,7 +295,7 @@ class TestCommandFactory:
     def test_create_test_command(self) -> None:
         """Test creating processing command (only available method)."""
         command = FlextTestsFixtures.CommandFactory.create_processing_command(
-            {"test": "data"}
+            {"test": "data"},
         )
 
         assert isinstance(command, dict)
@@ -307,7 +307,7 @@ class TestCommandFactory:
         """Test creating processing command with batch data."""
         items = ["item1", "item2", "item3"]
         command = FlextTestsFixtures.CommandFactory.create_processing_command(
-            {"items": items}
+            {"items": items},
         )
 
         assert isinstance(command, dict)
@@ -321,7 +321,7 @@ class TestCommandFactory:
         """Test creating processing command with validation data."""
         rules = {"required": ["field1", "field2"]}
         command = FlextTestsFixtures.CommandFactory.create_processing_command(
-            {"rules": rules}
+            {"rules": rules},
         )
 
         assert isinstance(command, dict)
@@ -390,7 +390,7 @@ class TestAsyncExecutor:
 
         # Add some mock tasks
         executor._tasks.extend(
-            [asyncio.create_task(asyncio.sleep(0)) for _ in range(3)]
+            [asyncio.create_task(asyncio.sleep(0)) for _ in range(3)],
         )
 
         executor.cleanup()
@@ -562,12 +562,12 @@ class TestFixturesIntegration:
         """Test performance data with sequence generation."""
         # Create large payload
         payload = FlextTestsFixtures.PerformanceDataFactory.create_large_payload(
-            size_mb=2
+            size_mb=2,
         )
 
         # Create sequence
         sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
-            length=5, prefix="item"
+            length=5, prefix="item",
         )
 
         # Combine them
@@ -589,7 +589,7 @@ class TestFixturesIntegration:
 
         # Register error factories
         registry.register(
-            "timeout", FlextTestsFixtures.ErrorSimulationFactory.create_timeout_error
+            "timeout", FlextTestsFixtures.ErrorSimulationFactory.create_timeout_error,
         )
         registry.register(
             "connection",
@@ -643,7 +643,7 @@ class TestFixturesIntegration:
 
         # Create processing command with config
         command = FlextTestsFixtures.CommandFactory.create_processing_command(
-            test_config.to_dict()
+            test_config.to_dict(),
         )
 
         assert "config" in command

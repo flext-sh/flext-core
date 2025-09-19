@@ -100,7 +100,7 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
             validation_result = validator(user_data)
             # Check if the result has the expected FlextResult interface
             if hasattr(validation_result, "is_failure") and getattr(
-                validation_result, "is_failure", False
+                validation_result, "is_failure", False,
             ):
                 error_msg = (
                     getattr(validation_result, "error", None) or "Validation failed"
@@ -137,7 +137,7 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         storage_result = self.get_user_storage()
         if storage_result.is_failure:
             return FlextResult[User | None].fail(
-                storage_result.error or "Storage error"
+                storage_result.error or "Storage error",
             )
 
         storage = storage_result.unwrap()
@@ -150,14 +150,14 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         setup_result = self.setup_container()
         if setup_result.is_failure:
             return FlextResult[User].fail(
-                f"Setup failed: {setup_result.error or 'Unknown error'}"
+                f"Setup failed: {setup_result.error or 'Unknown error'}",
             )
 
         # Create demo user
         user_result = self.create_user("Demo User", "demo@example.com", 25)
         if user_result.is_failure:
             return FlextResult[User].fail(
-                f"Demo user creation failed: {user_result.error or 'Unknown error'}"
+                f"Demo user creation failed: {user_result.error or 'Unknown error'}",
             )
 
         return FlextResult[User].ok(user_result.value)
@@ -242,7 +242,7 @@ def main() -> None:
                 if result.is_success and expected == "success":
                     user = result.value
                     print(
-                        f"✅ {i}. Created: {user.name} ({user.email}) - {description}"
+                        f"✅ {i}. Created: {user.name} ({user.email}) - {description}",
                     )
                 elif result.is_failure and expected == "failure":
                     print(f"✅ {i}. Expected failure: {description} - {result.error}")

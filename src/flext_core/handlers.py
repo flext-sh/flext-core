@@ -80,7 +80,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             if raw_mode in {"command", "query"}:
                 return cast("Literal['command', 'query']", raw_mode)
         default_mode = getattr(
-            self.__class__, "DEFAULT_MODE", FlextHandlers.DEFAULT_MODE
+            self.__class__, "DEFAULT_MODE", FlextHandlers.DEFAULT_MODE,
         )
         return cast("Literal['command', 'query']", default_mode)
 
@@ -127,16 +127,16 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     message_origin = get_origin(message_type) or message_type
 
                     if isinstance(message_type, type) or hasattr(
-                        message_type, "__origin__"
+                        message_type, "__origin__",
                     ):
                         try:
                             if hasattr(message_type, "__origin__"):
                                 can_handle_result = message_origin == origin_type
                             elif isinstance(message_type, type) and isinstance(
-                                origin_type, type
+                                origin_type, type,
                             ):
                                 can_handle_result = issubclass(
-                                    message_type, origin_type
+                                    message_type, origin_type,
                                 )
                             else:
                                 can_handle_result = message_type == expected_type
@@ -152,7 +152,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                         "handler_type_check",
                         can_handle=can_handle_result,
                         expected_type=getattr(
-                            expected_type, "__name__", str(expected_type)
+                            expected_type, "__name__", str(expected_type),
                         ),
                     )
                     return bool(can_handle_result)

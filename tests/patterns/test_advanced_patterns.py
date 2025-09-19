@@ -237,7 +237,7 @@ class TestAssertionBuilder:
                         assert item in self.data
                     else:
                         raise AssertionError(
-                            f"Cannot check if {item!r} is in string {self.data!r}"
+                            f"Cannot check if {item!r} is in string {self.data!r}",
                         )
             elif isinstance(self.data, dict):
                 # For dict, check if item is a key
@@ -318,13 +318,13 @@ class TestAdvancedPatterns:
                         "email": "user.name@domain.co.uk",
                         "input": "user.name@domain.co.uk",
                     },
-                ]
+                ],
             )
             .add_failure_cases(
                 [
                     {"email": "invalid-email", "input": "invalid-email"},
                     {"email": "@domain.com", "input": "@domain.com"},
-                ]
+                ],
             )
         )
 
@@ -364,7 +364,7 @@ class TestAdvancedPatterns:
         }
 
         scenario = MockScenario(
-            "api_request", cast("FlextTypes.Core.Dict", scenario_data)
+            "api_request", cast("FlextTypes.Core.Dict", scenario_data),
         )
 
         assert scenario.name == "api_request"
@@ -425,7 +425,7 @@ class TestAdvancedPatterns:
                 nested_data=FlextTestBuilder()
                 .with_id("nested-456")
                 .with_user_data("Jane", "jane@example.com")
-                .build()
+                .build(),
             )
             .build()
         )

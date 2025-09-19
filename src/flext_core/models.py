@@ -112,11 +112,11 @@ class FlextModels:
         message_type: str = Field(default="", description="Message type identifier")
         source_service: str = Field(default="", description="Source service name")
         correlation_id: str = Field(
-            default="", description="Correlation ID for tracking"
+            default="", description="Correlation ID for tracking",
         )
         message_id: str = Field(default="", description="Unique message identifier")
         expires_at: datetime | None = Field(
-            default=None, description="Payload expiration time"
+            default=None, description="Payload expiration time",
         )
 
         def extract(self) -> T:
@@ -156,10 +156,10 @@ class FlextModels:
         payload: dict[str, object] = Field(default_factory=dict)
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
         correlation_id: str = Field(
-            default_factory=FlextUtilities.Generators.generate_id
+            default_factory=FlextUtilities.Generators.generate_id,
         )
         user_id: str | None = Field(
-            default=None, description="User ID associated with the command"
+            default=None, description="User ID associated with the command",
         )
 
         def validate_command(self) -> FlextResult[bool]:
@@ -175,10 +175,10 @@ class FlextModels:
         query_type: str = Field(...)
         filters: dict[str, object] = Field(default_factory=dict)
         pagination: dict[str, int] = Field(
-            default_factory=lambda: {"page": 1, "size": 10}
+            default_factory=lambda: {"page": 1, "size": 10},
         )
         user_id: str | None = Field(
-            default=None, description="User ID associated with the query"
+            default=None, description="User ID associated with the query",
         )
 
         def validate_query(self) -> FlextResult[bool]:
@@ -201,7 +201,7 @@ class FlextModels:
                 base = name.removesuffix("Command")
                 s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
                 data["command_type"] = re.sub(
-                    r"([a-z0-9])([A-Z])", r"\1_\2", s1
+                    r"([a-z0-9])([A-Z])", r"\1_\2", s1,
                 ).lower()
             return data
 
@@ -448,7 +448,7 @@ class FlextModels:
             # Check for spaces in hostname
             if " " in host:
                 return FlextResult["FlextModels.Host"].fail(
-                    "Host cannot contain spaces"
+                    "Host cannot contain spaces",
                 )
             return FlextResult["FlextModels.Host"].ok(cls(value=host))
 
@@ -475,7 +475,7 @@ class FlextModels:
             """Create entity ID with validation and trimming."""
             if not entity_id or not entity_id.strip():
                 return FlextResult["FlextModels.EntityId"].fail(
-                    "Entity ID cannot be empty"
+                    "Entity ID cannot be empty",
                 )
             return FlextResult["FlextModels.EntityId"].ok(cls(value=entity_id.strip()))
 
@@ -493,7 +493,7 @@ class FlextModels:
                 return FlextResult["FlextModels.JsonData"].ok(cls(value=data))
             except (TypeError, ValueError) as e:
                 return FlextResult["FlextModels.JsonData"].fail(
-                    f"Invalid JSON data: {e}"
+                    f"Invalid JSON data: {e}",
                 )
 
     class Metadata(Value):
@@ -510,7 +510,7 @@ class FlextModels:
             ]
             if invalid_keys:
                 return FlextResult["FlextModels.Metadata"].fail(
-                    f"Metadata values for keys {invalid_keys} must be strings"
+                    f"Metadata values for keys {invalid_keys} must be strings",
                 )
             return FlextResult["FlextModels.Metadata"].ok(cls(value=metadata))
 
@@ -528,19 +528,19 @@ class FlextModels:
             url = url.strip()
             if not url.startswith(("http://", "https://")):
                 return FlextResult["FlextModels.Url"].fail(
-                    "URL must start with http:// or https://"
+                    "URL must start with http:// or https://",
                 )
 
             if "://" in url and not url.split("://", 1)[1]:
                 return FlextResult["FlextModels.Url"].fail(
-                    "URL must have a valid hostname"
+                    "URL must have a valid hostname",
                 )
 
             return FlextResult["FlextModels.Url"].ok(cls(value=url))
 
         @classmethod
         def create_http_url(
-            cls, url: str, *, max_length: int = 2048, max_port: int = 65535
+            cls, url: str, *, max_length: int = 2048, max_port: int = 65535,
         ) -> FlextResult[FlextModels.Url]:
             """Create URL with HTTP-specific validation using Pydantic v2 patterns.
 
@@ -569,7 +569,7 @@ class FlextModels:
                         return FlextResult["FlextModels.Url"].fail("Invalid port 0")
                     if port > max_port:
                         return FlextResult["FlextModels.Url"].fail(
-                            f"Invalid port {port}"
+                            f"Invalid port {port}",
                         )
 
                 # URL length validation
@@ -617,11 +617,11 @@ class FlextModels:
                     cleaned.rstrip("/") if not cleaned.endswith("://") else cleaned
                 )
                 return FlextResult["FlextModels.Url"].ok(
-                    self.__class__(value=normalized)
+                    self.__class__(value=normalized),
                 )
             except Exception as e:
                 return FlextResult["FlextModels.Url"].fail(
-                    f"URL normalization failed: {e}"
+                    f"URL normalization failed: {e}",
                 )
 
     # AggregateRoot for compatibility - but SIMPLE
@@ -685,7 +685,7 @@ class FlextModels:
         name: str = Field(default="", description="Configuration name")
         enabled: bool = Field(default=True, description="Whether enabled")
         settings: dict[str, object] = Field(
-            default_factory=dict, description="Additional settings"
+            default_factory=dict, description="Additional settings",
         )
 
     class Message(BaseModel):
@@ -712,7 +712,7 @@ class FlextModels:
         name: str = Field(..., description="Project name")
         path: str = Field(..., description="Project path")
         project_type: str = Field(
-            ..., description="Project type"
+            ..., description="Project type",
         )  # Use string to avoid enum import
         has_tests: bool = Field(default=False, description="Has test directory")
         has_pyproject: bool = Field(default=False, description="Has pyproject.toml")
@@ -729,10 +729,10 @@ class FlextModels:
         workspace_root: str = Field(..., description="Workspace root path")
         project_filter: str | None = Field(None, description="Project name filter")
         include_hidden: bool = Field(
-            default=False, description="Include hidden directories"
+            default=False, description="Include hidden directories",
         )
         max_depth: int = Field(
-            default=3, ge=1, le=10, description="Maximum directory depth"
+            default=3, ge=1, le=10, description="Maximum directory depth",
         )
 
     class WorkspaceInfo(Value):
@@ -743,10 +743,10 @@ class FlextModels:
         project_count: int = Field(default=0, ge=0, description="Number of projects")
         total_size_mb: float = Field(default=0.0, ge=0, description="Total size in MB")
         projects: list[str] | None = Field(
-            default=None, description="List of project names"
+            default=None, description="List of project names",
         )
         status: str = Field(
-            default="ready", description="Workspace status"
+            default="ready", description="Workspace status",
         )  # Use string to avoid enum import
 
         def validate_business_rules(self) -> FlextResult[None]:
@@ -779,11 +779,11 @@ class FlextModels:
 
     @staticmethod
     def create_event(
-        event_type: str, payload: dict[str, object], aggregate_id: str
+        event_type: str, payload: dict[str, object], aggregate_id: str,
     ) -> Event:
         """Create an event."""
         return FlextModels.Event(
-            event_type=event_type, payload=payload, aggregate_id=aggregate_id
+            event_type=event_type, payload=payload, aggregate_id=aggregate_id,
         )
 
     @staticmethod
@@ -793,7 +793,7 @@ class FlextModels:
 
     @staticmethod
     def create_query(
-        query_type: str, filters: dict[str, object] | None = None
+        query_type: str, filters: dict[str, object] | None = None,
     ) -> Query:
         """Create a query."""
         return FlextModels.Query(query_type=query_type, filters=filters or {})
@@ -826,11 +826,11 @@ class FlextModels:
 
     @staticmethod
     def create_validated_http_url(
-        url: str, *, max_length: int = 2048, max_port: int = 65535
+        url: str, *, max_length: int = 2048, max_port: int = 65535,
     ) -> FlextResult[str]:
         """Create validated HTTP URL with enhanced validation - centralized replacement for HttpValidator."""
         url_result = FlextModels.Url.create_http_url(
-            url, max_length=max_length, max_port=max_port
+            url, max_length=max_length, max_port=max_port,
         )
         if url_result.is_success:
             return FlextResult[str].ok(url_result.unwrap().value)
@@ -859,7 +859,7 @@ class FlextModels:
         if method_upper not in valid_methods:
             valid_methods_str = ", ".join(sorted(valid_methods))
             return FlextResult[str].fail(
-                f"Invalid HTTP method. Valid methods: {valid_methods_str}"
+                f"Invalid HTTP method. Valid methods: {valid_methods_str}",
             )
 
         return FlextResult[str].ok(method_upper)
@@ -874,7 +874,7 @@ class FlextModels:
                 or code_int > FlextModels.HTTP_STATUS_MAX
             ):
                 return FlextResult[int].fail(
-                    f"Invalid HTTP status code range ({FlextModels.HTTP_STATUS_MIN}-{FlextModels.HTTP_STATUS_MAX})"
+                    f"Invalid HTTP status code range ({FlextModels.HTTP_STATUS_MIN}-{FlextModels.HTTP_STATUS_MAX})",
                 )
             return FlextResult[int].ok(code_int)
         except (ValueError, TypeError):
@@ -932,7 +932,7 @@ class FlextModels:
 
     @staticmethod
     def create_validated_date_range(
-        start_date: str, end_date: str
+        start_date: str, end_date: str,
     ) -> FlextResult[tuple[str, str]]:
         """Create validated date range - centralizes date range validation logic.
 
@@ -948,13 +948,13 @@ class FlextModels:
         start_result = FlextModels.create_validated_iso_date(start_date)
         if start_result.is_failure:
             return FlextResult[tuple[str, str]].fail(
-                f"Invalid start date: {start_result.error}"
+                f"Invalid start date: {start_result.error}",
             )
 
         end_result = FlextModels.create_validated_iso_date(end_date)
         if end_result.is_failure:
             return FlextResult[tuple[str, str]].fail(
-                f"Invalid end date: {end_result.error}"
+                f"Invalid end date: {end_result.error}",
             )
 
         # Validate date range
@@ -964,15 +964,15 @@ class FlextModels:
 
             if start_dt >= end_dt:
                 return FlextResult[tuple[str, str]].fail(
-                    "Start date must be before end date"
+                    "Start date must be before end date",
                 )
 
             return FlextResult[tuple[str, str]].ok(
-                (start_date.strip(), end_date.strip())
+                (start_date.strip(), end_date.strip()),
             )
         except ValueError as e:
             return FlextResult[tuple[str, str]].fail(
-                f"Date range validation failed: {e}"
+                f"Date range validation failed: {e}",
             )
 
     @staticmethod

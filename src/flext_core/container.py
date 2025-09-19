@@ -362,7 +362,7 @@ class FlextContainer:
             if validation_result.is_failure:
                 return FlextResult[str].fail(
                     validation_result.error
-                    or FlextConstants.Messages.SERVICE_NAME_EMPTY
+                    or FlextConstants.Messages.SERVICE_NAME_EMPTY,
                 )
             return FlextResult[str].ok(name.strip())
 
@@ -498,7 +498,7 @@ class FlextContainer:
             if validation_result.is_failure:
                 return FlextResult[str].fail(
                     validation_result.error
-                    or FlextConstants.Messages.SERVICE_NAME_EMPTY
+                    or FlextConstants.Messages.SERVICE_NAME_EMPTY,
                 )
             return FlextResult[str].ok(name.strip())
 
@@ -696,7 +696,7 @@ class FlextContainer:
             flext_config_result = FlextConfig.create(constants=flext_config_data)
             if flext_config_result.is_failure:
                 return FlextResult[object].fail(
-                    f"Configuration validation failed: {flext_config_result.error}"
+                    f"Configuration validation failed: {flext_config_result.error}",
                 )
 
             # Store the validated configuration
@@ -729,7 +729,7 @@ class FlextContainer:
             mapped_config = {
                 "environment": config_dict.get("environment", "development"),
                 "max_services": config_dict.get(
-                    "max_workers", 4
+                    "max_workers", 4,
                 ),  # Map max_workers to max_services
                 "max_workers": config_dict.get("max_workers", 4),
                 "timeout_seconds": config_dict.get("timeout_seconds", 30),
@@ -737,7 +737,7 @@ class FlextContainer:
                 "log_level": config_dict.get("log_level", "INFO"),
                 "config_source": config_dict.get("config_source", "default"),
                 "service_timeout": config_dict.get(
-                    "timeout_seconds", 30
+                    "timeout_seconds", 30,
                 ),  # Map timeout_seconds to service_timeout
                 "enable_auto_wire": False,  # Default value
                 "enable_factory_cache": True,  # Default value
@@ -746,7 +746,7 @@ class FlextContainer:
             return FlextResult[dict[str, object]].ok(mapped_config)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to get container config: {e}"
+                f"Failed to get container config: {e}",
             )
 
     def get_configuration(self) -> FlextResult[dict[str, object]]:
@@ -765,7 +765,7 @@ class FlextContainer:
                         "container_id": id(self),
                     },
                     "service_statistics": {
-                        "total_services": len(self._registrar._services)
+                        "total_services": len(self._registrar._services),
                     },
                     "has_database_config": self._database_config is not None,
                     "has_security_config": self._security_config is not None,
@@ -809,11 +809,11 @@ class FlextContainer:
             return FlextResult[dict[str, object]].ok(summary)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to get configuration summary: {e}"
+                f"Failed to get configuration summary: {e}",
             )
 
     def create_scoped_container(
-        self, config: FlextConfig | None = None
+        self, config: FlextConfig | None = None,
     ) -> FlextResult[FlextContainer]:
         """Create a new container with injected configuration."""
         try:
@@ -827,7 +827,7 @@ class FlextContainer:
             return FlextResult[FlextContainer].ok(scoped_container)
         except Exception as e:
             return FlextResult[FlextContainer].fail(
-                f"Failed to create scoped container: {e}"
+                f"Failed to create scoped container: {e}",
             )
 
     # -------------------------------------------------------------------------
@@ -978,7 +978,7 @@ class FlextContainer:
             # Handle string service_class parameter (for test compatibility)
             if isinstance(service_class, str):
                 return FlextResult[T].fail(
-                    f"Service class must be a type, not string: {service_class}"
+                    f"Service class must be a type, not string: {service_class}",
                 )
 
             # Use class name as default service name
@@ -1044,7 +1044,7 @@ class FlextContainer:
                     self._registrar.get_factories_dict().clear()
                     self._registrar.get_factories_dict().update(factories_snapshot)
                     return FlextResult[FlextTypes.Core.StringList].fail(
-                        "Batch registration failed"
+                        "Batch registration failed",
                     )
                 registered_names.append(key)
             return FlextResult[FlextTypes.Core.StringList].ok(registered_names)
@@ -1055,7 +1055,7 @@ class FlextContainer:
             self._registrar.get_factories_dict().clear()
             self._registrar.get_factories_dict().update(factories_snapshot)
             return FlextResult[FlextTypes.Core.StringList].fail(
-                f"Batch registration crashed: {e}"
+                f"Batch registration crashed: {e}",
             )
 
     # =========================================================================

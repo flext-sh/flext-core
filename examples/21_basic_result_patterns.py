@@ -95,7 +95,7 @@ def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Cor
     for field in required_fields:
         if field not in data or not data[field]:
             return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Missing required field: {field}"
+                f"Missing required field: {field}",
             )
 
     # Basic email validation
@@ -108,7 +108,7 @@ def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Cor
         age = int(str(data["age"]))
         if age < 0 or age > 150:
             return FlextResult[FlextTypes.Core.Dict].fail(
-                "Age must be between 0 and 150"
+                "Age must be between 0 and 150",
             )
     except (ValueError, TypeError):
         return FlextResult[FlextTypes.Core.Dict].fail("Age must be a valid integer")
@@ -151,7 +151,7 @@ def validate_order_data(
         amount = Decimal(str(data["order_amount"]))
         if amount <= 0:
             return FlextResult[FlextTypes.Core.Dict].fail(
-                "Order amount must be positive"
+                "Order amount must be positive",
             )
     except Exception:
         return FlextResult[FlextTypes.Core.Dict].fail("Invalid order amount format")
@@ -183,7 +183,7 @@ def process_user_order(user: User, order: Order) -> FlextResult[ProcessingResult
 
     try:
         result = ProcessingResult(
-            user=user, order=order, processed_at=datetime.now(UTC).isoformat()
+            user=user, order=order, processed_at=datetime.now(UTC).isoformat(),
         )
         logger.info(f"✅ Processing completed: {result}")
         return FlextResult[ProcessingResult].ok(result)
@@ -209,28 +209,28 @@ def demonstrate_basic_result_chaining() -> FlextResult[str]:
     user_validation_result = validate_user_data(test_data)
     if user_validation_result.is_failure:
         return FlextResult[str].fail(
-            f"User validation failed: {user_validation_result.error}"
+            f"User validation failed: {user_validation_result.error}",
         )
 
     user_data = user_validation_result.unwrap()
     user_creation_result = create_user(user_data)
     if user_creation_result.is_failure:
         return FlextResult[str].fail(
-            f"User creation failed: {user_creation_result.error}"
+            f"User creation failed: {user_creation_result.error}",
         )
 
     user = user_creation_result.unwrap()
     order_validation_result = validate_order_data(test_data)
     if order_validation_result.is_failure:
         return FlextResult[str].fail(
-            f"Order validation failed: {order_validation_result.error}"
+            f"Order validation failed: {order_validation_result.error}",
         )
 
     order_data = order_validation_result.unwrap()
     order_creation_result = create_order(user, order_data)
     if order_creation_result.is_failure:
         return FlextResult[str].fail(
-            f"Order creation failed: {order_creation_result.error}"
+            f"Order creation failed: {order_creation_result.error}",
         )
 
     order = order_creation_result.unwrap()
@@ -241,7 +241,7 @@ def demonstrate_basic_result_chaining() -> FlextResult[str]:
     final_result = processing_result.unwrap()
     logger.info(f"🎉 Complete processing successful: {final_result}")
     return FlextResult[str].ok(
-        "Basic result chaining demonstration completed successfully"
+        "Basic result chaining demonstration completed successfully",
     )
 
 
@@ -262,7 +262,7 @@ def demonstrate_error_handling() -> FlextResult[str]:
         error_msg = result.error or "Unknown validation error"
         logger.info(f"✅ Error correctly caught: {error_msg}")
         return FlextResult[str].ok(
-            f"Error handling demonstration successful: {error_msg}"
+            f"Error handling demonstration successful: {error_msg}",
         )
 
     return FlextResult[str].fail("Expected validation to fail, but it succeeded")

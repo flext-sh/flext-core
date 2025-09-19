@@ -71,7 +71,7 @@ class FunctionalUserService:
     def __init__(self) -> None:
         """Initialize functional user service."""
         self.users: dict[
-            str, dict[str, str | int | bool | FlextTypes.Core.StringList]
+            str, dict[str, str | int | bool | FlextTypes.Core.StringList],
         ] = {}
         self.call_count = 0
         self.should_fail = False
@@ -105,7 +105,7 @@ class FunctionalUserService:
             "active": True,
         }
         return FlextResult[dict[str, str | int | bool | FlextTypes.Core.StringList]].ok(
-            default_user
+            default_user,
         )
 
     def set_user_data(

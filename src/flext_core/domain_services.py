@@ -128,7 +128,7 @@ class FlextDomainService[TDomainResult](
             "config_valid": config_result.is_success,
             "business_rules_valid": rules_result.is_success,
             "configuration": cast(
-                "BaseModel", self
+                "BaseModel", self,
             ).model_dump(),  # Add configuration as expected by tests
             "is_valid": is_valid,  # Add overall validity as expected by tests
             "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),

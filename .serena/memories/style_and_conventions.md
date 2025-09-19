@@ -57,7 +57,7 @@ import click  # Direct CLI imports prohibited
 ### 4. CLI Implementation (ZERO TOLERANCE)
 
 ```python
-from flext_cli import FlextCliApi, FlextCliMain, FlextCliConfig
+from flext_cli import FlextCliApi, FlextCliMain, FlextCliConfigs
 
 class FlextDbOracleCliService:
     def __init__(self) -> None:

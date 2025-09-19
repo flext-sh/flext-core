@@ -272,7 +272,8 @@ class FlextTypes:
         type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
         type ConfigDict = dict[str, ConfigValue]
         type AggregatesConfigDict = dict[
-            str, ConfigValue
+            str,
+            ConfigValue,
         ]  # DUPLICATE: Same as ConfigDict
         type AggregatesConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
         type SystemConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
@@ -288,10 +289,12 @@ class FlextTypes:
 
         # Bus configuration types
         type BusConfig = dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ]
         type MiddlewareConfig = dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ]
         type HandlerRegistry = dict[str, object]
 
@@ -328,11 +331,9 @@ class FlextTypes:
 
 
 # =========================================================================
-# BACKWARD COMPATIBILITY EXPORTS - Maintain ecosystem compatibility
+# TyperVars - Direct assignment to maintain proper TypeVar types for MyPy
 # =========================================================================
 
-# Export TypeVars for backward compatibility (32+ projects depend on these)
-# Note: Direct assignment to maintain proper TypeVar types for MyPy
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")

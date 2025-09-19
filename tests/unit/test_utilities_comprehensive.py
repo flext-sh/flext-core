@@ -388,7 +388,7 @@ class TestFlextUtilitiesTopLevelMethods:
 
         non_serializable = NonSerializable()
         result = FlextUtilities.safe_json_stringify(
-            non_serializable, default=default_value
+            non_serializable, default=default_value,
         )
         assert result == default_value
 

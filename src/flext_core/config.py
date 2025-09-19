@@ -68,7 +68,7 @@ class FlextConfig(BaseSettings):
 
         @abstractmethod
         def get_env_vars_with_prefix(
-            self, prefix: str
+            self, prefix: str,
         ) -> FlextResult[FlextTypes.Core.Dict]:
             """Get all environment variables with given prefix."""
 
@@ -105,7 +105,7 @@ class FlextConfig(BaseSettings):
                 )
 
         def get_env_vars_with_prefix(
-            self, prefix: str
+            self, prefix: str,
         ) -> FlextResult[FlextTypes.Core.Dict]:
             """Get all environment variables with given prefix."""
             try:
@@ -167,7 +167,7 @@ class FlextConfig(BaseSettings):
                 and config.max_workers < FlextConstants.Config.MIN_PRODUCTION_WORKERS
             ):
                 errors.append(
-                    f"production environment requires at least {FlextConstants.Config.MIN_PRODUCTION_WORKERS} workers"
+                    f"production environment requires at least {FlextConstants.Config.MIN_PRODUCTION_WORKERS} workers",
                 )
 
             # Validate timeout/workers relationship
@@ -216,12 +216,12 @@ class FlextConfig(BaseSettings):
             if config.environment == "production":
                 if config.debug and config.config_source != "default":
                     errors.append(
-                        "Debug mode in production requires explicit configuration"
+                        "Debug mode in production requires explicit configuration",
                     )
 
                 if config.max_workers < FlextConstants.Config.MIN_PRODUCTION_WORKERS:
                     errors.append(
-                        "Production environment should have at least 2 workers"
+                        "Production environment should have at least 2 workers",
                     )
 
             # Performance consistency checks
@@ -231,7 +231,7 @@ class FlextConfig(BaseSettings):
                 < FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
             ):
                 errors.append(
-                    "High timeout with low worker count may cause performance issues"
+                    "High timeout with low worker count may cause performance issues",
                 )
 
             # Resource validation
@@ -290,10 +290,10 @@ class FlextConfig(BaseSettings):
                                     config_data = dict(data)
                                 # Fallback for non-Mapping objects with items()
                                 elif hasattr(data, "items") and callable(
-                                    getattr(data, "items")
+                                    data.items,
                                 ):
                                     config_data = {
-                                        "data": dict(getattr(data, "items")())
+                                        "data": dict(data.items()),
                                     }
                                 else:
                                     config_data = {"data": data}
@@ -429,7 +429,7 @@ class FlextConfig(BaseSettings):
 
         @classmethod
         def create_from_file(
-            cls, file_path: str, _env_prefix: str = "FLEXT_"
+            cls, file_path: str, _env_prefix: str = "FLEXT_",
         ) -> FlextResult[FlextConfig]:
             """Create configuration from JSON file with environment override.
 
@@ -458,7 +458,7 @@ class FlextConfig(BaseSettings):
                 # Create configuration with file data and environment overrides
                 # Use the create method for proper type handling
                 create_result = FlextConfig.create(
-                    constants=cast("FlextTypes.Core.Dict", file_data)
+                    constants=cast("FlextTypes.Core.Dict", file_data),
                 )
                 if create_result.is_failure:
                     return FlextResult[FlextConfig].fail(
@@ -862,7 +862,7 @@ class FlextConfig(BaseSettings):
                     "environment": "production",
                     "debug": False,
                     "log_level": "INFO",
-                }
+                },
             ],
         },
     )
@@ -911,7 +911,7 @@ class FlextConfig(BaseSettings):
         # This ensures tests in temp dirs don't pick up project .env files
         if Path(".env").exists():
             load_dotenv(
-                dotenv_path=Path(".env"), override=False
+                dotenv_path=Path(".env"), override=False,
             )  # Don't override existing env vars
 
         config_data = {}
@@ -1084,7 +1084,7 @@ class FlextConfig(BaseSettings):
     # =============================================================================
 
     _env_adapter: DefaultEnvironmentAdapter = PrivateAttr(
-        default_factory=DefaultEnvironmentAdapter
+        default_factory=DefaultEnvironmentAdapter,
     )
 
     @classmethod
@@ -1106,7 +1106,7 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def validate_config_value(
-        cls, value: object, expected_type: type
+        cls, value: object, expected_type: type,
     ) -> FlextResult[bool]:
         """Validate that a configuration value matches expected type.
 
@@ -1129,7 +1129,7 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def merge_configs(
-        cls, config1: FlextTypes.Core.Dict, config2: FlextTypes.Core.Dict
+        cls, config1: FlextTypes.Core.Dict, config2: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Merge two configuration dictionaries with conflict resolution.
 
@@ -1219,7 +1219,7 @@ class FlextConfig(BaseSettings):
                     allowed = ", ".join(sorted(FlextConstants.Config.ENVIRONMENTS))
                     msg = f"Configuration creation failed: Invalid environment '{invalid_env}'. Environment must be one of: {allowed}"
                     return FlextResult["FlextConfig"].fail(
-                        msg, error_code="CONFIG_CREATION_ERROR"
+                        msg, error_code="CONFIG_CREATION_ERROR",
                     )
             return FlextResult["FlextConfig"].fail(
                 f"Configuration creation failed: {exc}",
@@ -1267,7 +1267,7 @@ class FlextConfig(BaseSettings):
 
             # Create instance with validation
             instance = cast(
-                "Self", cast("type[BaseModel]", cls).model_validate(settings)
+                "Self", cast("type[BaseModel]", cls).model_validate(settings),
             )
 
             # Track creation metadata
@@ -1287,7 +1287,7 @@ class FlextConfig(BaseSettings):
                     allowed = ", ".join(sorted(FlextConstants.Config.ENVIRONMENTS))
                     msg = f"Invalid environment '{invalid_env}'. Environment must be one of: {allowed}"
                     return FlextResult["FlextConfig"].fail(
-                        msg, error_code="CONFIG_CREATION_ERROR"
+                        msg, error_code="CONFIG_CREATION_ERROR",
                     )
             return FlextResult["FlextConfig"].fail(
                 f"Configuration creation failed: {exc}",
@@ -1370,7 +1370,7 @@ class FlextConfig(BaseSettings):
             # Instance invocation
             if file_path is None:
                 return FlextResult[None].fail(
-                    "No file path provided", error_code="CONFIG_SAVE_ERROR"
+                    "No file path provided", error_code="CONFIG_SAVE_ERROR",
                 )
             return self.FilePersistence.save_to_file(self, str(file_path))
         except Exception as error:
@@ -1452,7 +1452,7 @@ class FlextConfig(BaseSettings):
         """
         if self._sealed:
             return FlextResult[None].fail(
-                "Configuration is already sealed", error_code="CONFIG_ALREADY_SEALED"
+                "Configuration is already sealed", error_code="CONFIG_ALREADY_SEALED",
             )
 
         try:
@@ -1460,7 +1460,7 @@ class FlextConfig(BaseSettings):
             return FlextResult[None].ok(None)
         except Exception as error:
             return FlextResult[None].fail(
-                f"Failed to seal configuration: {error}", error_code="CONFIG_SEAL_ERROR"
+                f"Failed to seal configuration: {error}", error_code="CONFIG_SEAL_ERROR",
             )
 
     def is_sealed(self) -> bool:
@@ -1601,16 +1601,16 @@ class FlextConfig(BaseSettings):
             """Container configuration."""
 
             max_services: int = Field(
-                default=100, description="Maximum number of services"
+                default=100, description="Maximum number of services",
             )
             enable_caching: bool = Field(
-                default=True, description="Enable service caching"
+                default=True, description="Enable service caching",
             )
             cache_ttl: int = Field(
-                default=300, description="Cache time-to-live in seconds"
+                default=300, description="Cache time-to-live in seconds",
             )
             enable_monitoring: bool = Field(
-                default=False, description="Enable monitoring"
+                default=False, description="Enable monitoring",
             )
 
         class DatabaseConfig(BaseModel):
@@ -1623,7 +1623,7 @@ class FlextConfig(BaseSettings):
             password: str = Field(default="", description="Database password")
             ssl_mode: str = Field(default="prefer", description="SSL mode")
             connection_timeout: int = Field(
-                default=30, description="Connection timeout"
+                default=30, description="Connection timeout",
             )
             max_connections: int = Field(default=20, description="Maximum connections")
 
@@ -1631,14 +1631,14 @@ class FlextConfig(BaseSettings):
             """Security configuration."""
 
             enable_encryption: bool = Field(
-                default=True, description="Enable encryption"
+                default=True, description="Enable encryption",
             )
             encryption_key: str = Field(default="", description="Encryption key")
             enable_audit: bool = Field(
-                default=False, description="Enable audit logging"
+                default=False, description="Enable audit logging",
             )
             session_timeout: int = Field(
-                default=3600, description="Session timeout in seconds"
+                default=3600, description="Session timeout in seconds",
             )
             password_policy: dict[str, object] = Field(
                 default_factory=lambda: cast(
@@ -1650,7 +1650,7 @@ class FlextConfig(BaseSettings):
                         "require_digits": True,
                         "require_special": False,
                     },
-                )
+                ),
             )
 
         class LoggingConfig(BaseModel):
@@ -1663,11 +1663,11 @@ class FlextConfig(BaseSettings):
             )
             file_path: str = Field(default="", description="Log file path")
             max_file_size: int = Field(
-                default=10485760, description="Max log file size in bytes"
+                default=10485760, description="Max log file size in bytes",
             )
             backup_count: int = Field(default=5, description="Number of backup files")
             enable_console: bool = Field(
-                default=True, description="Enable console logging"
+                default=True, description="Enable console logging",
             )
 
         class MiddlewareConfig(BaseModel):
@@ -1677,15 +1677,15 @@ class FlextConfig(BaseSettings):
             middleware_id: str = Field(default="", description="Unique middleware ID")
             order: int = Field(default=0, description="Execution order")
             enabled: bool = Field(
-                default=True, description="Whether middleware is enabled"
+                default=True, description="Whether middleware is enabled",
             )
             config: dict[str, object] = Field(
-                default_factory=dict, description="Middleware-specific configuration"
+                default_factory=dict, description="Middleware-specific configuration",
             )
 
     @classmethod
     def merge(
-        cls, _base: FlextConfig, _override: FlextTypes.Core.Dict
+        cls, _base: FlextConfig, _override: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextConfig]:
         """Merge a base configuration with override values.
 
