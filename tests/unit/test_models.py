@@ -930,7 +930,9 @@ class TestModelsWithFlextMatchers:
         # Test required fields are present
         expected_keys = ["id", "name", "email", "age", "is_active", "version"]
         FlextTestsMatchers.assert_json_structure(
-            user_data, expected_keys, exact_match=False,
+            user_data,
+            expected_keys,
+            exact_match=False,
         )
 
     def test_regex_matching_validation(self) -> None:
@@ -1086,7 +1088,8 @@ class TestFlextModelsRootModelValidation:
     def test_aggregate_id_validation_empty_string(self) -> None:
         """Test Event aggregate_id validation with empty string (lines 759-762)."""
         with pytest.raises(
-            ValidationError, match="String should have at least 1 character",
+            ValidationError,
+            match="String should have at least 1 character",
         ):
             FlextModels.Event(
                 event_type="TestEvent",
@@ -1273,12 +1276,16 @@ class TestFlextModelsEntityClearDomainEvents:
         event2: dict[str, object] = {"event_type": "Event2"}
         user.add_domain_event(
             FlextModels.Event(
-                event_type="Event1", payload=event1, aggregate_id="user-123",
+                event_type="Event1",
+                payload=event1,
+                aggregate_id="user-123",
             ),
         )
         user.add_domain_event(
             FlextModels.Event(
-                event_type="Event2", payload=event2, aggregate_id="user-123",
+                event_type="Event2",
+                payload=event2,
+                aggregate_id="user-123",
             ),
         )
 

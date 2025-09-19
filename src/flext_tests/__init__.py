@@ -20,11 +20,7 @@ from flext_tests.matchers import FlextTestsMatchers
 from flext_tests.performance import FlextTestsPerformance
 from flext_tests.utilities import FlextTestsUtilities
 
-# Aliases for backward compatibility and convenience
-BenchmarkProtocol = FlextTestsPerformance.BenchmarkProtocol
-
 __all__ = [
-    "BenchmarkProtocol",
     "FlextTestsAsyncs",
     "FlextTestsBuilders",
     "FlextTestsDomains",

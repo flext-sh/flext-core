@@ -28,169 +28,92 @@ from itertools import starmap
 from typing import Protocol, Self, cast
 
 
-class ResultLike(Protocol):
-    """Protocol for result-like objects."""
-
-    def __bool__(self) -> bool: ...
-
-
-class SuccessResultLike(ResultLike, Protocol):
-    """Protocol for success result objects."""
-
-    is_success: bool
-    success: bool
-
-
-class FailureResultLike(ResultLike, Protocol):
-    """Protocol for failure result objects."""
-
-    is_failure: bool
-    failure: bool
-
-
-class FlextResultLike(SuccessResultLike, FailureResultLike, Protocol):
-    """Protocol for complete FlextResult-like objects with both success and failure attributes."""
-
-    is_success: bool
-    success: bool
-    is_failure: bool
-    failure: bool
-
-
-class ContainerLike(Protocol):
-    """Protocol for container-like objects."""
-
-    def __len__(self) -> int: ...
-    def __contains__(self, item: object) -> bool: ...
-
-
-class ErrorResultLike(Protocol):
-    """Protocol for objects with error attributes."""
-
-    error: str | None
-
-
-class ErrorCodeResultLike(Protocol):
-    """Protocol for objects with error_code attributes."""
-
-    error_code: str | None
-
-
-class ValueResultLike(Protocol):
-    """Protocol for objects with value or data attributes."""
-
-    @property
-    def value(self) -> object: ...
-
-
-class DataResultLike(Protocol):
-    """Protocol for objects with data attributes."""
-
-    @property
-    def data(self) -> object: ...
-
-
-class EmptyCheckable(Protocol):
-    """Protocol for objects that can be checked for emptiness."""
-
-    def __len__(self) -> int: ...
-
-
-class HasIsEmpty(Protocol):
-    """Protocol for objects with is_empty attribute."""
-
-    is_empty: bool
-
-
-class HasContains(Protocol):
-    """Protocol for objects with contains method."""
-
-    def contains(self, item: object) -> bool: ...
-
-
 class FlextTestsMatchers:
-    """Comprehensive test matching utilities without alias patterns.
+    """Comprehensive test matching utilities following unified class pattern.
 
-    Provides unified test matchers following FLEXT architectural principles.
+    Single unified class containing all test matching protocols and utilities
+    as nested components following FLEXT architectural principles.
     """
 
-    @staticmethod
-    def assert_type_guard(
-        value: object, expected_type: type[object] | Callable[[object], bool],
-    ) -> None:
-        """Assert that value is of expected type with type guard."""
-        if callable(expected_type) and not isinstance(expected_type, type):
-            # It's a callable type guard function
-            if not expected_type(value):
-                msg = f"Type guard function {expected_type.__name__} failed for value {value}"
-                raise AssertionError(msg)
-        # It's a type
-        elif not isinstance(value, expected_type):
-            type_name = getattr(expected_type, "__name__", str(expected_type))
-            msg = f"Expected {type_name}, got {type(value).__name__}"
-            raise AssertionError(msg)
-
-    @staticmethod
-    def assert_performance_within_limit(
-        execution_time: float, limit: float, operation: str = "operation",
-    ) -> None:
-        """Assert that execution time is within performance limit."""
-        if execution_time > limit:
-            msg = (
-                f"{operation} took {execution_time:.3f}s, exceeds limit of {limit:.3f}s"
-            )
-            raise AssertionError(msg)
-
     # =========================================================================
-    # CORE TEST PROTOCOLS - Type safety for test objects
+    # PROTOCOLS - Nested protocol definitions within unified class
     # =========================================================================
 
-    class BenchmarkFixture:
-        """Protocol for benchmark test fixtures."""
+    class ResultLike(Protocol):
+        """Protocol for result-like objects."""
 
-        def __init__(self, name: str, iterations: int = 1000) -> None:
-            """Initialize benchmark fixture with name and iteration count."""
-            self.name = name
-            self.iterations = iterations
-            self.results: list[float] = []
+        def __bool__(self) -> bool:
+            """Return boolean representation of the result."""
+            ...
 
-        def add_measurement(self, duration: float) -> None:
-            """Add performance measurement."""
-            self.results.append(duration)
+    class SuccessResultLike(ResultLike, Protocol):
+        """Protocol for success result objects."""
 
-        def average_time(self) -> float:
-            """Calculate average execution time."""
-            return sum(self.results) / len(self.results) if self.results else 0.0
+        is_success: bool
+        success: bool
 
-        def max_time(self) -> float:
-            """Get maximum execution time."""
-            return max(self.results) if self.results else 0.0
+    class FailureResultLike(ResultLike, Protocol):
+        """Protocol for failure result objects."""
 
-    class ContainerProtocol:
-        """Protocol for dependency injection container testing."""
+        is_failure: bool
+        failure: bool
 
-        def register(self, service_id: str, instance: object) -> None:
-            """Register service instance."""
+    class FlextResultLike(SuccessResultLike, FailureResultLike, Protocol):
+        """Protocol for complete FlextResult-like objects with both success and failure attributes."""
 
-        def get(self, service_id: str) -> object:
-            """Get service instance."""
+        is_success: bool
+        success: bool
+        is_failure: bool
+        failure: bool
 
-    class FieldProtocol:
-        """Protocol for field validation testing."""
+    class ContainerLike(Protocol):
+        """Protocol for container-like objects."""
 
-        def validate(self, _value: object) -> bool:
-            """Validate field value."""
-            return True
+        def __len__(self) -> int:
+            """Return length of the container."""
+            ...
+        def __contains__(self, item: object) -> bool:
+            """Check if item is contained in the container."""
+            ...
 
-        def format(self, value: object) -> str:
-            """Format field value."""
-            return str(value)
+    class ErrorResultLike(Protocol):
+        """Protocol for objects with error attributes."""
 
-    class MockProtocol:
-        """Protocol for mock object testing."""
+        error: str | None
 
-        def reset(self) -> None:
-            """Reset mock state."""
+    class ErrorCodeResultLike(Protocol):
+        """Protocol for objects with error_code attributes."""
+
+        error_code: str | None
+
+    class ValueResultLike(Protocol):
+        """Protocol for objects with value or data attributes."""
+
+        @property
+        def value(self) -> object: ...
+
+    class DataResultLike(Protocol):
+        """Protocol for objects with data attributes."""
+
+        @property
+        def data(self) -> object: ...
+
+    class EmptyCheckable(Protocol):
+        """Protocol for objects that can be checked for emptiness."""
+
+        def __len__(self) -> int:
+            """Return length of the object."""
+            ...
+
+    class HasIsEmpty(Protocol):
+        """Protocol for objects with is_empty attribute."""
+
+        is_empty: bool
+
+    class HasContains(Protocol):
+        """Protocol for objects with contains method."""
+
+        def contains(self, item: object) -> bool: ...
 
     # =========================================================================
     # CORE MATCHERS - FlextResult and object testing
@@ -395,7 +318,8 @@ class FlextTestsMatchers:
 
         @staticmethod
         def all_satisfy(
-            container: Iterable[object], predicate: Callable[[object], object],
+            container: Iterable[object],
+            predicate: Callable[[object], object],
         ) -> bool:
             """Check if all items in container satisfy predicate."""
             try:
@@ -405,7 +329,8 @@ class FlextTestsMatchers:
 
         @staticmethod
         def any_satisfy(
-            container: Iterable[object], predicate: Callable[[object], object],
+            container: Iterable[object],
+            predicate: Callable[[object], object],
         ) -> bool:
             """Check if any item in container satisfies predicate."""
             try:
@@ -415,7 +340,10 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_greater_than(
-            actual: float, expected: float, msg: str = "", message: str = "",
+            actual: float,
+            expected: float,
+            msg: str = "",
+            message: str = "",
         ) -> None:
             """Assert that actual value is greater than expected."""
             if actual <= expected:
@@ -464,7 +392,8 @@ class FlextTestsMatchers:
         def with_value(self, expected_value: object) -> bool:
             """Check success result has expected value."""
             return FlextTestsMatchers.CoreMatchers.have_value(
-                self.result, expected_value,
+                self.result,
+                expected_value,
             )
 
     class FailureMatcher:
@@ -477,7 +406,8 @@ class FlextTestsMatchers:
         def with_error(self, expected_error: str) -> bool:
             """Check failure result has expected error."""
             return FlextTestsMatchers.CoreMatchers.have_error(
-                self.result, expected_error,
+                self.result,
+                expected_error,
             )
 
     # =========================================================================
@@ -520,7 +450,9 @@ class FlextTestsMatchers:
 
         @staticmethod
         def throughput_above_threshold(
-            func: object, iterations: int, min_ops_per_sec: float,
+            func: object,
+            iterations: int,
+            min_ops_per_sec: float,
         ) -> bool:
             """Check if function throughput is above threshold."""
             if not callable(func):
@@ -562,16 +494,101 @@ class FlextTestsMatchers:
                 return False
 
     # =========================================================================
-    # CONVENIENCE METHODS - Factory methods for matcher creation
+    # TEST FIXTURES - Nested test infrastructure classes
+    # =========================================================================
+
+    class BenchmarkFixture:
+        """Benchmark test fixture for performance testing."""
+
+        def __init__(self, name: str, iterations: int = 1000) -> None:
+            """Initialize benchmark fixture with name and iteration count."""
+            self.name = name
+            self.iterations = iterations
+            self.results: list[float] = []
+
+        def add_measurement(self, duration: float) -> None:
+            """Add performance measurement."""
+            self.results.append(duration)
+
+        def average_time(self) -> float:
+            """Calculate average execution time."""
+            return sum(self.results) / len(self.results) if self.results else 0.0
+
+        def max_time(self) -> float:
+            """Get maximum execution time."""
+            return max(self.results) if self.results else 0.0
+
+    class ContainerProtocol:
+        """Protocol for dependency injection container testing."""
+
+        def register(self, service_id: str, instance: object) -> None:
+            """Register service instance."""
+
+        def get(self, service_id: str) -> object:
+            """Get service instance."""
+
+    class FieldProtocol:
+        """Protocol for field validation testing."""
+
+        def validate(self, _value: object) -> bool:
+            """Validate field value."""
+            return True
+
+        def format(self, value: object) -> str:
+            """Format field value."""
+            return str(value)
+
+    class MockProtocol:
+        """Protocol for mock object testing."""
+
+        def reset(self) -> None:
+            """Reset mock state."""
+
+    # =========================================================================
+    # TYPE GUARDS AND ASSERTIONS
     # =========================================================================
 
     @staticmethod
-    def matchers() -> FlextTestsMatchers.CoreMatchers:
+    def assert_type_guard(
+        value: object,
+        expected_type: type[object] | Callable[[object], bool],
+    ) -> None:
+        """Assert that value is of expected type with type guard."""
+        if callable(expected_type) and not isinstance(expected_type, type):
+            # It's a callable type guard function
+            if not expected_type(value):
+                msg = f"Type guard function {expected_type.__name__} failed for value {value}"
+                raise AssertionError(msg)
+        # It's a type
+        elif not isinstance(value, expected_type):
+            type_name = getattr(expected_type, "__name__", str(expected_type))
+            msg = f"Expected {type_name}, got {type(value).__name__}"
+            raise AssertionError(msg)
+
+    @staticmethod
+    def assert_performance_within_limit(
+        execution_time: float,
+        limit: float,
+        operation: str = "operation",
+    ) -> None:
+        """Assert that execution time is within performance limit."""
+        if execution_time > limit:
+            msg = (
+                f"{operation} took {execution_time:.3f}s, exceeds limit of {limit:.3f}s"
+            )
+            raise AssertionError(msg)
+
+    # =========================================================================
+    # CONVENIENCE FACTORY METHODS
+    # =========================================================================
+
+    @staticmethod
+    def matchers() -> CoreMatchers:
         """Get core matchers instance."""
         return FlextTestsMatchers.CoreMatchers()
 
     @staticmethod
-    def performance() -> FlextTestsMatchers.PerformanceMatchers:
+    def performance() -> PerformanceMatchers:
         """Get performance matchers instance."""
         return FlextTestsMatchers.PerformanceMatchers()
 
@@ -581,7 +598,9 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_success(
-        result: object, expected_value: object = None, expected_data: object = None,
+        result: object,
+        expected_value: object = None,
+        expected_data: object = None,
     ) -> None:
         """Assert that result is successful with optional value check."""
         assert FlextTestsMatchers.CoreMatchers.be_success(result), (
@@ -598,7 +617,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: object, expected_error: str | None = None,
+        result: object,
+        expected_error: str | None = None,
     ) -> None:
         """Assert that result is failure with optional error check."""
         assert FlextTestsMatchers.CoreMatchers.be_failure(result), (
@@ -611,7 +631,10 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_json_structure(
-        obj: object, expected_keys: list[str], *, exact_match: bool = True,
+        obj: object,
+        expected_keys: list[str],
+        *,
+        exact_match: bool = True,
     ) -> None:
         """Assert that object has expected JSON structure."""
         if not isinstance(obj, dict):
@@ -641,7 +664,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_environment_variable(
-        var_name: str, expected_value: str | None = None,
+        var_name: str,
+        expected_value: str | None = None,
     ) -> None:
         """Assert that environment variable exists with optional value check."""
         actual_value = os.environ.get(var_name)
@@ -662,6 +686,10 @@ class FlextTestsMatchers:
         """Check if result indicates failure."""
         return FlextTestsMatchers.CoreMatchers.be_failure(result)
 
+    # =========================================================================
+    # ASYNC TESTING UTILITIES
+    # =========================================================================
+
     @staticmethod
     async def simulate_delay(seconds: float) -> None:
         """Simulate async delay for test compatibility."""
@@ -669,7 +697,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def run_with_timeout(
-        coro: Awaitable[object], timeout_seconds: float,
+        coro: Awaitable[object],
+        timeout_seconds: float,
     ) -> object:
         """Run coroutine with timeout and auto-retry for test compatibility."""
         try:
@@ -689,7 +718,9 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def run_concurrently(
-        func: Callable[[object], object], *args: object, **_kwargs: object,
+        func: Callable[[object], object],
+        *args: object,
+        **_kwargs: object,
     ) -> object:
         """Ultra-simple for test compatibility - runs tasks concurrently."""
         partial_func = functools.partial(func, *args)
@@ -697,7 +728,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def test_race_condition(
-        func1: Callable[[], object], func2: Callable[[], object],
+        func1: Callable[[], object],
+        func2: Callable[[], object],
     ) -> tuple[object, object]:
         """Ultra-simple for test compatibility - runs function concurrently to test race conditions."""
         return await asyncio.gather(
@@ -707,7 +739,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def measure_concurrency_performance(
-        func: Callable[[], object], concurrency_level: int,
+        func: Callable[[], object],
+        concurrency_level: int,
     ) -> dict[str, object]:
         """Ultra-simple for test compatibility - measures concurrency performance."""
         start_time = time.time()
@@ -728,6 +761,10 @@ class FlextTestsMatchers:
             "error_count": sum(1 for r in results if isinstance(r, Exception)),
         }
 
+    # =========================================================================
+    # CONTEXT MANAGERS AND UTILITIES
+    # =========================================================================
+
     @staticmethod
     def timeout_context(timeout: float) -> object:
         """Create timeout context manager for test compatibility."""
@@ -741,7 +778,10 @@ class FlextTestsMatchers:
                 return self
 
             def __exit__(
-                self, exc_type: object, exc_val: object, exc_tb: object,
+                self,
+                exc_type: object,
+                exc_val: object,
+                exc_tb: object,
             ) -> None:
                 signal.alarm(0)
 
@@ -749,7 +789,9 @@ class FlextTestsMatchers:
 
     @staticmethod
     def create_async_mock(
-        return_value: object = None, side_effect: object = None, delay: float = 0.0,
+        return_value: object = None,
+        side_effect: object = None,
+        delay: float = 0.0,
     ) -> object:
         """Create async mock for test compatibility."""
 
@@ -839,7 +881,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def managed_resource(
-        resource_factory: object, cleanup_func: object = None,
+        resource_factory: object,
+        cleanup_func: object = None,
     ) -> object:
         """Ultra-simple managed resource context manager for test compatibility."""
 
@@ -857,7 +900,10 @@ class FlextTestsMatchers:
                 return self.resource
 
             def __exit__(
-                self, exc_type: object, exc_val: object, exc_tb: object,
+                self,
+                exc_type: object,
+                exc_val: object,
+                exc_tb: object,
             ) -> None:
                 if self.cleanup and callable(self.cleanup) and self.resource:
                     try:
@@ -902,7 +948,10 @@ class FlextTestsMatchers:
                 return self
 
             async def __aexit__(
-                self, exc_type: object, exc_val: object, exc_tb: object,
+                self,
+                exc_type: object,
+                exc_val: object,
+                exc_tb: object,
             ) -> None:
                 if self.teardown_func and callable(self.teardown_func):
                     cleanup_result = self.teardown_func()

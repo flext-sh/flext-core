@@ -59,7 +59,9 @@ class FlextTestsUtilities:
         """Protocol for test double providers - supports real functional implementations."""
 
         def create_functional_service(
-            self, service_type: str, **config: object,
+            self,
+            service_type: str,
+            **config: object,
         ) -> object:
             """Create functional service implementation with real behavior."""
             ...
@@ -134,7 +136,8 @@ class FlextTestsUtilities:
             self._defaults: FlextTypes.Core.Dict = {}
 
         def set_defaults(
-            self, **defaults: object,
+            self,
+            **defaults: object,
         ) -> FlextTestsUtilities.TestFactory[T]:
             """Set default values for created objects."""
             self._defaults.update(defaults)
@@ -371,7 +374,10 @@ class FlextTestsUtilities:
             self.failure_messages[method_name] = failure_message
 
         def call_method(
-            self, method_name: str, *args: object, **kwargs: object,
+            self,
+            method_name: str,
+            *args: object,
+            **kwargs: object,
         ) -> object:
             """Call a method with functional behavior tracking.
 
@@ -525,7 +531,8 @@ class FlextTestsUtilities:
         ) -> FlextTestsUtilities.FunctionalTestService:
             """Create a functional service using FlextContainer."""
             return FlextTestsUtilities.FunctionalTestService(
-                service_type=service_type, **config,
+                service_type=service_type,
+                **config,
             )
 
         @staticmethod
@@ -546,12 +553,15 @@ class FlextTestsUtilities:
 
             """
             return FlextTestsUtilities.FunctionalTestContext(
-                target, attribute, **options,
+                target,
+                attribute,
+                **options,
             )
 
         @staticmethod
         def create_test_context(
-            name: str = "test_context", **config: object,
+            name: str = "test_context",
+            **config: object,
         ) -> FlextTestsUtilities.FunctionalTestContext:
             """Create a functional test context with real behavior.
 
@@ -564,7 +574,9 @@ class FlextTestsUtilities:
 
             """
             return FlextTestsUtilities.FunctionalTestContext(
-                target=None, attribute=name, **config,
+                target=None,
+                attribute=name,
+                **config,
             )
 
     # === TEST MODELS ===
@@ -711,7 +723,9 @@ class FlextTestsUtilities:
 
     @classmethod
     def functional_service(
-        cls, service_type: str = "generic", **config: object,
+        cls,
+        service_type: str = "generic",
+        **config: object,
     ) -> FlextTestsUtilities.FunctionalTestService:
         """Create functional test service."""
         return cls.FunctionalTestService(service_type, **config)
@@ -739,7 +753,9 @@ class FlextTestsUtilities:
     ) -> FlextResult[object]:
         """Create test FlextResult quickly."""
         return cls.TestUtilities.create_test_result(
-            success=success, data=data, error=error,
+            success=success,
+            data=data,
+            error=error,
         )
 
     @classmethod
@@ -765,7 +781,10 @@ class FlextTestsUtilities:
 
     @classmethod
     def create_api_response(
-        cls, *, success: bool = True, data: object = None,
+        cls,
+        *,
+        success: bool = True,
+        data: object = None,
     ) -> FlextTypes.Core.Dict:
         """Create API test response."""
         return cls.create_api_test_response(success=success, data=data)

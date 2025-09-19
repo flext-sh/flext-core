@@ -206,7 +206,8 @@ class ExamplePatternFactory:
             )
 
         def _cleanup_on_failure(
-            executed_demos: list[DemoStrategy[object]], error: str,
+            executed_demos: list[DemoStrategy[object]],
+            error: str,
         ) -> None:
             """Cleanup executed demos on failure."""
             logger.error(f"❌ Pipeline failed: {error}")
@@ -292,7 +293,8 @@ def main() -> None:
 
     # Demonstrate simple demo runner
     simple_demo = ExamplePatternFactory.create_demo_runner(
-        "Simple Demo", lambda: FlextResult[str].ok("Demo executed successfully"),
+        "Simple Demo",
+        lambda: FlextResult[str].ok("Demo executed successfully"),
     )
 
     result = simple_demo.execute()
@@ -311,7 +313,9 @@ def main() -> None:
     ]
 
     validation_demo = ExamplePatternFactory.create_validation_demo(
-        "Data Validation", sample_data, validation_rules,
+        "Data Validation",
+        sample_data,
+        validation_rules,
     )
 
     validation_result = validation_demo.execute()

@@ -52,7 +52,9 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
         return FlextResult[None].ok(None)
 
     def validate_input(
-        self, value: object, validation_type: str,
+        self,
+        value: object,
+        validation_type: str,
     ) -> FlextResult[ValidationResult]:
         """Unified validation method handling all validation types."""
         str_value = str(value) if value is not None else ""
@@ -91,7 +93,8 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
             )
         if validation_type == "numeric":
             numeric_valid = isinstance(value, (int, float)) and not isinstance(
-                value, bool,
+                value,
+                bool,
             )
             return FlextResult[ValidationResult].ok(
                 ValidationResult(

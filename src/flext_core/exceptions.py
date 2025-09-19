@@ -522,25 +522,7 @@ class FlextExceptions:
     Error = _Error
     UserError = _UserError
 
-    # =============================================================================
-    # Legacy API - Backward compatibility aliases
-    # =============================================================================
-
-    FlextError = _Error
-    FlextUserError = _UserError
-    FlextValidationError = _ValidationError
-    FlextConfigurationError = _ConfigurationError
-    FlextConnectionError = _ConnectionError
-    FlextAuthenticationError = _AuthenticationError
-    FlextPermissionError = _PermissionError
-    FlextOperationError = _OperationError
-    FlextProcessingError = _ProcessingError
-    FlextTimeoutError = _TimeoutError
-    FlextNotFoundError = _NotFoundError
-    FlextAlreadyExistsError = _AlreadyExistsError
-    FlextCriticalError = _CriticalError
-    FlextTypeError = _TypeError
-    FlextAttributeError = _AttributeError
+    # Legacy aliases eliminated - use direct exception names above
 
     # =============================================================================
     # ERROR CODES - Error code constants

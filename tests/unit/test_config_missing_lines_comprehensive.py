@@ -83,7 +83,10 @@ class TestFlextConfigMissingLinesCoverage:
         mock_data = MockObjectWithItems()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as temp_file:
             temp_path = temp_file.name
 
@@ -110,7 +113,10 @@ class TestFlextConfigMissingLinesCoverage:
         test_data = ["item1", "item2", "item3"]
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as temp_file:
             temp_path = temp_file.name
 
@@ -131,7 +137,10 @@ class TestFlextConfigMissingLinesCoverage:
         test_data = 42  # Integer, not iterable
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as temp_file:
             temp_path = temp_file.name
 
@@ -163,14 +172,18 @@ class TestFlextConfigMissingLinesCoverage:
         problematic_data = ProblematicData()
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as temp_file:
             temp_path = temp_file.name
 
         try:
             # The method catches TypeError and returns FlextResult.fail instead of raising
             result = FlextConfig.FilePersistence.save_to_file(
-                problematic_data, temp_path,
+                problematic_data,
+                temp_path,
             )
 
             # Verify it returns a failed result due to the TypeError
@@ -237,7 +250,10 @@ class TestFlextConfigMissingLinesCoverage:
         """Test _load_from_sources with JSON parsing error (lines 521-522)."""
         # Create a file with invalid JSON
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as temp_file:
             temp_file.write('{"invalid": json syntax}')  # Invalid JSON
             temp_path = temp_file.name
@@ -255,7 +271,10 @@ class TestFlextConfigMissingLinesCoverage:
         """Test _load_from_sources with YAML parsing error (line 557)."""
         # Create a file with invalid YAML
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".yaml", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".yaml",
+            delete=False,
         ) as temp_file:
             temp_file.write("invalid: yaml: syntax: [unclosed")  # Invalid YAML
             temp_path = temp_file.name
@@ -273,7 +292,10 @@ class TestFlextConfigMissingLinesCoverage:
         """Test _load_from_sources with file permission error (lines 566-567)."""
         # Create a file and then remove read permissions
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as temp_file:
             temp_file.write('{"valid": "json"}')
             temp_path = temp_file.name
@@ -389,7 +411,8 @@ class TestFlextConfigMissingLinesCoverage:
         """Test validate_config_value with complex validation failure (lines 1250-1251)."""
         # Test with value that fails type validation
         result = FlextConfig.validate_config_value(
-            "not_an_int", int,
+            "not_an_int",
+            int,
         )  # String instead of int
 
         FlextTestsMatchers.assert_result_success(result)
@@ -403,7 +426,8 @@ class TestFlextConfigMissingLinesCoverage:
         invalid_overrides: dict[str, object] = {"invalid_override": "invalid_value"}
 
         result = FlextConfig.create(
-            constants=invalid_constants, cli_overrides=invalid_overrides,
+            constants=invalid_constants,
+            cli_overrides=invalid_overrides,
         )
 
         # The create method should succeed even with invalid data as it falls back to defaults
@@ -537,12 +561,14 @@ class TestFlextConfigMissingLinesCoverage:
         assert inspect.isabstract(
             FlextProtocols.Infrastructure.ConfigValidator,
         ) or hasattr(
-            FlextProtocols.Infrastructure.ConfigValidator, "__abstractmethods__",
+            FlextProtocols.Infrastructure.ConfigValidator,
+            "__abstractmethods__",
         )
         assert inspect.isabstract(
             FlextProtocols.Infrastructure.ConfigPersistence,
         ) or hasattr(
-            FlextProtocols.Infrastructure.ConfigPersistence, "__abstractmethods__",
+            FlextProtocols.Infrastructure.ConfigPersistence,
+            "__abstractmethods__",
         )
         assert inspect.isabstract(FlextConfig.EnvironmentConfigAdapter)
 

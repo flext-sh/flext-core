@@ -61,7 +61,9 @@ class FlextTestsBuilders:
     ) -> FlextResult[object]:
         """Create a failed FlextResult for testing."""
         return FlextResult[object].fail(
-            error, error_code=error_code, error_data=error_data,
+            error,
+            error_code=error_code,
+            error_data=error_data,
         )
 
     # === Container Builder Methods (Unified) ===
@@ -100,7 +102,9 @@ class FlextTestsBuilders:
         return container
 
     def create_container_with_service(
-        self, name: str, service: object,
+        self,
+        name: str,
+        service: object,
     ) -> FlextContainer:
         """Create a container with a specific service."""
         container = FlextContainer()
@@ -202,7 +206,11 @@ class FlextTestsBuilders:
     ) -> object:
         """Create a string field for testing."""
         return self.create_test_field(
-            "string", field_id, None, required=required, **constraints,
+            "string",
+            field_id,
+            None,
+            required=required,
+            **constraints,
         )
 
     # === File Builder Methods (Unified) ===
@@ -272,7 +280,9 @@ class FlextTestsBuilders:
         return callable_impl
 
     def create_result_returning_callable(
-        self, data: object = None, error: str | None = None,
+        self,
+        data: object = None,
+        error: str | None = None,
     ) -> _TestCallableProtocol:
         """Create a callable that returns FlextResult objects."""
         if error:
@@ -337,7 +347,9 @@ class FlextTestsBuilders:
             error_code = getattr(self, "_result_error_code", None)
             error_data = getattr(self, "_result_error_data", None)
             return FlextResult[object].fail(
-                error, error_code=error_code, error_data=error_data,
+                error,
+                error_code=error_code,
+                error_data=error_data,
             )
 
         # Container building pattern (deprecated)
@@ -384,7 +396,9 @@ class FlextTestsBuilders:
         return self
 
     def with_factory(
-        self, name: str, factory: Callable[[], object],
+        self,
+        name: str,
+        factory: Callable[[], object],
     ) -> FlextTestsBuilders:
         """Add a factory to the container (deprecated method)."""
         if not hasattr(self, "_container_factories"):
@@ -402,13 +416,15 @@ class FlextTestsBuilders:
     def with_cache_service(self) -> FlextTestsBuilders:
         """Add a cache service (deprecated method)."""
         return self.with_service(
-            "cache", {"host": "localhost", "port": 6379, "ttl": 3600, "connected": True},
+            "cache",
+            {"host": "localhost", "port": 6379, "ttl": 3600, "connected": True},
         )
 
     def with_logger_service(self) -> FlextTestsBuilders:
         """Add a logger service (deprecated method)."""
         return self.with_service(
-            "logger", {"level": "DEBUG", "format": "json", "handlers": ["console"]},
+            "logger",
+            {"level": "DEBUG", "format": "json", "handlers": ["console"]},
         )
 
     # Legacy class references for backward compatibility
@@ -437,7 +453,9 @@ class FlextTestsBuilders:
     ) -> object:
         """Build a string field quickly (deprecated - use create_string_field)."""
         return cls().create_string_field(
-            field_id=field_id, required=required, **constraints,
+            field_id=field_id,
+            required=required,
+            **constraints,
         )
 
 

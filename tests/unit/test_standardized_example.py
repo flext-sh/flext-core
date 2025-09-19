@@ -36,13 +36,15 @@ class TestStandardizedExample:
         # Test successful result
         success_result = fixtures.create_success_result(test_data)
         FlextTestsMatchers.assert_result_success(
-            success_result, expected_data=test_data,
+            success_result,
+            expected_data=test_data,
         )
 
         # Test failure result
         failure_result = fixtures.create_failure_result("test_error")
         FlextTestsMatchers.assert_result_failure(
-            failure_result, expected_error="test_error",
+            failure_result,
+            expected_error="test_error",
         )
 
     def test_config_with_fixtures(self) -> None:
@@ -74,7 +76,8 @@ class TestStandardizedExample:
         success_result = FlextResult[dict[str, object]].ok(valid_dict)
         # Use FlextTestsMatchers static method directly
         FlextTestsMatchers.assert_result_success(
-            success_result, expected_data=valid_dict,
+            success_result,
+            expected_data=valid_dict,
         )
 
     def test_async_service_with_fixtures(

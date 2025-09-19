@@ -520,7 +520,8 @@ class ConfigurationService:
         self._config: FlextTypes.Core.Dict = {}
 
     def load_configuration(
-        self, config_data: FlextTypes.Core.Dict,
+        self,
+        config_data: FlextTypes.Core.Dict,
     ) -> FlextResult[None]:
         """Load and validate configuration."""
 

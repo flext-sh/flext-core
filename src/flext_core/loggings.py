@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import platform
@@ -93,9 +94,9 @@ class FlextLogger:
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
         """Initialize structured logger instance using FlextConfig singleton."""
-        if not type(self)._configured:
+        if not self._is_configured():
             # Always (re)configure structlog to ensure processors reflect stored config
-            raw_kwargs = type(self)._configuration or {}
+            raw_kwargs = self._get_configuration() or {}
             allowed_keys = {
                 "log_level",
                 "json_output",
@@ -384,16 +385,30 @@ class FlextLogger:
     def _get_calling_function(self) -> str:
         """Get the name of the calling function."""
         try:
-            frame = sys._getframe(4)  # Skip internal logging frames
-            return frame.f_code.co_name
+            frame = inspect.currentframe()
+            # Skip internal logging frames
+            for _ in range(4):
+                if frame is None:
+                    break
+                frame = frame.f_back
+            if frame is not None:
+                return frame.f_code.co_name
+            return "unknown"
         except (AttributeError, ValueError):
             return "unknown"
 
     def _get_calling_line(self) -> int:
         """Get the line number of the calling code."""
         try:
-            frame = sys._getframe(4)  # Skip internal logging frames
-            return frame.f_lineno
+            frame = inspect.currentframe()
+            # Skip internal logging frames
+            for _ in range(4):
+                if frame is None:
+                    break
+                frame = frame.f_back
+            if frame is not None:
+                return frame.f_lineno
+            return 0
         except (AttributeError, ValueError):
             return 0
 
@@ -847,6 +862,16 @@ class FlextLogger:
         }
         upper = level.upper()
         return mapping.get(upper, "INFO")
+
+    @classmethod
+    def _is_configured(cls) -> bool:
+        """Check if logger is configured."""
+        return cls._configured
+
+    @classmethod
+    def _get_configuration(cls) -> dict[str, object]:
+        """Get logger configuration."""
+        return cls._configuration
 
 
 __all__: FlextTypes.Core.StringList = [

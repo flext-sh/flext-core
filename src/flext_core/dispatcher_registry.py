@@ -94,7 +94,8 @@ class FlextDispatcherRegistry:
             self._registered_keys.add(key)
             summary.registered.append(
                 cast(
-                    "FlextDispatcher.Registration[object, object]", registration.value,
+                    "FlextDispatcher.Registration[object, object]",
+                    registration.value,
                 ),
             )
 
@@ -127,7 +128,8 @@ class FlextDispatcherRegistry:
             self._registered_keys.add(key)
             summary.registered.append(
                 cast(
-                    "FlextDispatcher.Registration[object, object]", registration.value,
+                    "FlextDispatcher.Registration[object, object]",
+                    registration.value,
                 ),
             )
 
@@ -176,7 +178,8 @@ class FlextDispatcherRegistry:
             self._registered_keys.add(key)
             summary.registered.append(
                 cast(
-                    "FlextDispatcher.Registration[object, object]", handler_result.value,
+                    "FlextDispatcher.Registration[object, object]",
+                    handler_result.value,
                 ),
             )
 

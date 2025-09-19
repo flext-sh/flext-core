@@ -438,7 +438,8 @@ class FlextResult[T_co]:
             return FlextResult[T_co].fail(str(e))
 
     def recover_with(
-        self, func: Callable[[str], FlextResult[T_co]],
+        self,
+        func: Callable[[str], FlextResult[T_co]],
     ) -> FlextResult[T_co]:
         """Recover from failure by applying func to error, returning FlextResult."""
         if self.is_success:
@@ -666,7 +667,8 @@ class FlextResult[T_co]:
 
     @classmethod
     def safe_call(
-        cls: type[FlextResult[T_co]], func: Callable[[], T_co],
+        cls: type[FlextResult[T_co]],
+        func: Callable[[], T_co],
     ) -> FlextResult[T_co]:
         """Execute function safely, wrapping result."""
         try:

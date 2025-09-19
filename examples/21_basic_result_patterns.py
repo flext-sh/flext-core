@@ -183,7 +183,9 @@ def process_user_order(user: User, order: Order) -> FlextResult[ProcessingResult
 
     try:
         result = ProcessingResult(
-            user=user, order=order, processed_at=datetime.now(UTC).isoformat(),
+            user=user,
+            order=order,
+            processed_at=datetime.now(UTC).isoformat(),
         )
         logger.info(f"✅ Processing completed: {result}")
         return FlextResult[ProcessingResult].ok(result)

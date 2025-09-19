@@ -100,7 +100,9 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
             validation_result = validator(user_data)
             # Check if the result has the expected FlextResult interface
             if hasattr(validation_result, "is_failure") and getattr(
-                validation_result, "is_failure", False,
+                validation_result,
+                "is_failure",
+                False,
             ):
                 error_msg = (
                     getattr(validation_result, "error", None) or "Validation failed"

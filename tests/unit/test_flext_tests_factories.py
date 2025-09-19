@@ -35,11 +35,13 @@ class TestFlextTestsFactories:
     def test_user_factory_with_overrides(self) -> None:
         """Test user factory with custom overrides."""
         if hasattr(FlextTestsFactories, "UserFactory") and hasattr(
-            FlextTestsFactories.UserFactory, "create",
+            FlextTestsFactories.UserFactory,
+            "create",
         ):
             try:
                 user = FlextTestsFactories.UserFactory.create(
-                    name="Custom Name", email="custom@example.com",
+                    name="Custom Name",
+                    email="custom@example.com",
                 )
                 if "name" in user:
                     assert user["name"] == "Custom Name"
@@ -85,7 +87,8 @@ class TestFlextTestsFactories:
 
             # Test service creation with overrides
             custom_service = service_factory.create(
-                service_name="Custom Service", version="2.0.0",
+                service_name="Custom Service",
+                version="2.0.0",
             )
             assert custom_service["service_name"] == "Custom Service"
             assert custom_service["version"] == "2.0.0"
@@ -147,7 +150,8 @@ class TestFlextTestsFactories:
 
             # Test mock creation with overrides
             custom_mock = mock_factory.create(
-                mock_type="custom_mock", data={"custom": "data"},
+                mock_type="custom_mock",
+                data={"custom": "data"},
             )
             assert isinstance(custom_mock, dict)
             if isinstance(custom_mock, dict):
@@ -180,7 +184,9 @@ class TestFlextTestsFactories:
 
             # Test sequence creation with overrides
             custom_sequence = sequence_factory.create(
-                sequence_name="Custom Sequence", current_value=10, step=2,
+                sequence_name="Custom Sequence",
+                current_value=10,
+                step=2,
             )
             assert custom_sequence["sequence_name"] == "Custom Sequence"
             assert custom_sequence["current_value"] == 10
@@ -227,7 +233,8 @@ class TestFlextTestsFactories:
 
             # Test post creation with overrides
             custom_post = post_factory.create(
-                title="Custom Post", author="Custom Author",
+                title="Custom Post",
+                author="Custom Author",
             )
             assert custom_post["title"] == "Custom Post"
             assert custom_post["author"] == "Custom Author"
@@ -266,7 +273,8 @@ class TestFlextTestsFactories:
     def test_batch_factory_creation(self) -> None:
         """Test batch factory creation."""
         if hasattr(FlextTestsFactories, "UserFactory") and hasattr(
-            FlextTestsFactories.UserFactory, "create_batch",
+            FlextTestsFactories.UserFactory,
+            "create_batch",
         ):
             users = FlextTestsFactories.UserFactory.create_batch(3)
             assert isinstance(users, list)
