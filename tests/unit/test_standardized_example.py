@@ -36,13 +36,13 @@ class TestStandardizedExample:
         # Test successful result
         success_result = fixtures.create_success_result(test_data)
         FlextTestsMatchers.assert_result_success(
-            success_result, expected_data=test_data
+            success_result, expected_data=test_data,
         )
 
         # Test failure result
         failure_result = fixtures.create_failure_result("test_error")
         FlextTestsMatchers.assert_result_failure(
-            failure_result, expected_error="test_error"
+            failure_result, expected_error="test_error",
         )
 
     def test_config_with_fixtures(self) -> None:
@@ -60,7 +60,7 @@ class TestStandardizedExample:
 
         # FlextValidations was completely removed - using direct validation patterns
         result = FlextResult[dict[str, object]].fail(
-            "Type mismatch: expected dict, got str"
+            "Type mismatch: expected dict, got str",
         )
         FlextTestsMatchers.assert_result_failure(result)
 
@@ -74,7 +74,7 @@ class TestStandardizedExample:
         success_result = FlextResult[dict[str, object]].ok(valid_dict)
         # Use FlextTestsMatchers static method directly
         FlextTestsMatchers.assert_result_success(
-            success_result, expected_data=valid_dict
+            success_result, expected_data=valid_dict,
         )
 
     def test_async_service_with_fixtures(
@@ -100,7 +100,7 @@ class TestStandardizedExample:
         assert "timeout" in str(timeout_error).lower()
 
         validation_scenario = fixtures.ErrorSimulationFactory.create_error_scenario(
-            "ValidationError"
+            "ValidationError",
         )
         assert validation_scenario["type"] == "validation"
         assert "code" in validation_scenario
@@ -112,13 +112,13 @@ class TestStandardizedExample:
         """Demonstrate performance testing with fixtures."""
         # Create performance test data
         large_payload = fixtures.PerformanceDataFactory.create_large_payload(
-            0.1
+            0.1,
         )  # 0.1 MB
         assert "data" in large_payload
         assert large_payload["size_mb"] == 0.1
 
         nested_structure = fixtures.PerformanceDataFactory.create_nested_structure(
-            depth=2
+            depth=2,
         )
         assert "value" in nested_structure
         assert "nested" in nested_structure

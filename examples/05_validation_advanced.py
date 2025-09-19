@@ -52,7 +52,7 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
         return FlextResult[None].ok(None)
 
     def validate_input(
-        self, value: object, validation_type: str
+        self, value: object, validation_type: str,
     ) -> FlextResult[ValidationResult]:
         """Unified validation method handling all validation types."""
         str_value = str(value) if value is not None else ""
@@ -65,7 +65,7 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
                     value=str(value),
                     is_valid=user_result.is_success,
                     error_message=user_result.error if user_result.is_failure else None,
-                )
+                ),
             )
         if validation_type == "email":
             email_result = FlextModels.create_validated_email(str_value)
@@ -77,7 +77,7 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
                     error_message=email_result.error
                     if email_result.is_failure
                     else None,
-                )
+                ),
             )
         if validation_type == "string":
             string_valid = isinstance(value, str) and bool(value and value.strip())
@@ -87,11 +87,11 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
                     value=str_value,
                     is_valid=string_valid,
                     error_message=None if string_valid else "String must be non-empty",
-                )
+                ),
             )
         if validation_type == "numeric":
             numeric_valid = isinstance(value, (int, float)) and not isinstance(
-                value, bool
+                value, bool,
             )
             return FlextResult[ValidationResult].ok(
                 ValidationResult(
@@ -99,7 +99,7 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
                     value=str_value,
                     is_valid=numeric_valid,
                     error_message=None if numeric_valid else "Value must be a number",
-                )
+                ),
             )
         if validation_type == "api_request" and isinstance(value, dict):
             # Basic API request validation
@@ -117,11 +117,11 @@ class AdvancedValidationService(FlextDomainService[ValidationResult]):
                     value=str(value),
                     is_valid=api_valid,
                     error_message=error_msg,
-                )
+                ),
             )
 
         return FlextResult[ValidationResult].fail(
-            f"Unknown validation type: {validation_type}"
+            f"Unknown validation type: {validation_type}",
         )
 
     def execute(self) -> FlextResult[ValidationResult]:
@@ -182,7 +182,7 @@ def main() -> None:
             print(f"{status} {description} ({validation_type}){error_info}")
         else:
             print(
-                f"❌ {description} ({validation_type}) - Service Error: {result.error}"
+                f"❌ {description} ({validation_type}) - Service Error: {result.error}",
             )
 
     print("\n✅ Advanced validation patterns demonstrated!")

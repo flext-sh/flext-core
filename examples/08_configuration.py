@@ -180,7 +180,7 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
         config_result = FlextConfig.create_from_environment()
         if config_result.is_failure:
             return FlextResult[None].fail(
-                f"Failed to create config from environment: {config_result.error}"
+                f"Failed to create config from environment: {config_result.error}",
             )
 
         config = config_result.value
@@ -279,10 +279,10 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             config = config_result.value
             print(f"✅ Configuration loaded from: {config_file}")
             print(
-                f"Configuration profile: {getattr(config, 'environment', 'development')}"
+                f"Configuration profile: {getattr(config, 'environment', 'development')}",
             )
             print(
-                f"Created from file: {config.get_metadata().get('loaded_from_file', 'unknown')}"
+                f"Created from file: {config.get_metadata().get('loaded_from_file', 'unknown')}",
             )
 
             # Validate configuration using unified validation
@@ -401,7 +401,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
 
             # Show configuration profile
             print(
-                f"📋 Configuration profile: {getattr(config, 'environment', 'development')}"
+                f"📋 Configuration profile: {getattr(config, 'environment', 'development')}",
             )
         else:
             print(f"❌ Merged configuration invalid: {validation.error}")
@@ -479,7 +479,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
         if valid_config_result.is_failure:
             print(f"  ❌ Valid configuration failed: {valid_config_result.error}")
             return FlextResult[None].fail(
-                f"Valid configuration failed: {valid_config_result.error}"
+                f"Valid configuration failed: {valid_config_result.error}",
             )
 
         valid_config = valid_config_result.value

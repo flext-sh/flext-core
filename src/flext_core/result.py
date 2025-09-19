@@ -438,7 +438,7 @@ class FlextResult[T_co]:
             return FlextResult[T_co].fail(str(e))
 
     def recover_with(
-        self, func: Callable[[str], FlextResult[T_co]]
+        self, func: Callable[[str], FlextResult[T_co]],
     ) -> FlextResult[T_co]:
         """Recover from failure by applying func to error, returning FlextResult."""
         if self.is_success:
@@ -535,7 +535,7 @@ class FlextResult[T_co]:
         for result in results:
             if result.is_failure:
                 return FlextResult[FlextTypes.Core.List].fail(
-                    result.error or "Combine failed"
+                    result.error or "Combine failed",
                 )
             if result.value is not None:
                 data.append(result.value)
@@ -666,7 +666,7 @@ class FlextResult[T_co]:
 
     @classmethod
     def safe_call(
-        cls: type[FlextResult[T_co]], func: Callable[[], T_co]
+        cls: type[FlextResult[T_co]], func: Callable[[], T_co],
     ) -> FlextResult[T_co]:
         """Execute function safely, wrapping result."""
         try:
@@ -690,7 +690,7 @@ class FlextResult[T_co]:
             return FlextResult[tuple[T_co, U]].fail(self.error or "Left operand failed")
         if other.is_failure:
             return FlextResult[tuple[T_co, U]].fail(
-                other.error or "Right operand failed"
+                other.error or "Right operand failed",
             )
 
         # Both successful - combine values

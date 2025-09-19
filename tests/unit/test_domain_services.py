@@ -457,7 +457,7 @@ class TestDomainServicesFixed:
                 {
                     "user_id": "123",
                     "extra_field": "not_allowed",
-                }
+                },
             )
 
 

@@ -129,7 +129,7 @@ class TestExceptions100PercentCoverage:
         """Test create_module_exception_classes functionality."""
         # Test creating module-specific exception classes
         module_exceptions = FlextExceptions.create_module_exception_classes(
-            "test_module"
+            "test_module",
         )
 
         assert isinstance(module_exceptions, dict)

@@ -157,7 +157,9 @@ class FlextCqrs:
             ) -> Callable[[TCmd], TResult]:
                 metadata_payload = {
                     "command_type": getattr(
-                        command_type, "__name__", str(command_type)
+                        command_type,
+                        "__name__",
+                        str(command_type),
                     ),
                 }
 

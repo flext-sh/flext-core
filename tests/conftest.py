@@ -151,7 +151,7 @@ def mock_external_service() -> object:
             return self.call_count
 
         def set_failure_mode(
-            self, *, should_fail: bool = True, message: str = "Mock service failure"
+            self, *, should_fail: bool = True, message: str = "Mock service failure",
         ) -> None:
             """Configure mock to simulate failures."""
             self._should_fail = should_fail

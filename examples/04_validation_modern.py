@@ -55,7 +55,7 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
         return FlextResult[None].ok(None)
 
     def _validate_data_batch(
-        self, validation_scenarios: list[tuple[str, object, str]]
+        self, validation_scenarios: list[tuple[str, object, str]],
     ) -> ValidationReport:
         """Process validation batch using FlextUtilities.Validation patterns."""
         successful = 0
@@ -120,7 +120,7 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
         ]
 
         return FlextResult[ValidationReport].ok(
-            self._validate_data_batch(validation_scenarios)
+            self._validate_data_batch(validation_scenarios),
         )
 
     def demonstrate_validation_patterns(self) -> None:
@@ -160,7 +160,7 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
                 status = "✅" if string_valid else "❌"
             elif val_type == "Number":
                 number_valid = isinstance(value, (int, float)) and not isinstance(
-                    value, bool
+                    value, bool,
                 )
                 status = "✅" if number_valid else "❌"
             else:

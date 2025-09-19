@@ -136,7 +136,7 @@ class FlextDataPipeline(FlextModels.Entity):
                 event_type="pipeline_activated",
                 payload=event_data,
                 aggregate_id=self.id,
-            )
+            ),
         )
 
         return FlextResult[None].ok(None)
@@ -375,7 +375,7 @@ def safe_transform_data(
         return FlextResult[FlextTypes.Core.Dict].ok(result)
     except Exception as e:
         return FlextResult[FlextTypes.Core.Dict].fail(
-            f"Data transformation failed: {e}"
+            f"Data transformation failed: {e}",
         )
 
 

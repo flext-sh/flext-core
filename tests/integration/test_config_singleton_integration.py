@@ -135,7 +135,10 @@ class TestFlextConfigSingletonIntegration:
 
         # Create temporary JSON config file
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as f:
             config_data = {
                 "app_name": "test-app-from-json",

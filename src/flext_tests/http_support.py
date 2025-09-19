@@ -155,7 +155,7 @@ class FlextTestsHttp:
                     "method": method,
                     "status_code": status_code,
                     "response_data": response_json,
-                }
+                },
             )
 
             return self
@@ -174,7 +174,7 @@ class FlextTestsHttp:
                     "code": error_code,
                     "message": error_message,
                     "timestamp": "2025-01-01T00:00:00Z",
-                }
+                },
             }
 
             self.httpx_mock.add_response(
@@ -193,7 +193,7 @@ class FlextTestsHttp:
                     "status_code": status_code,
                     "error_code": error_code,
                     "error_message": error_message,
-                }
+                },
             )
 
             return self
@@ -212,7 +212,7 @@ class FlextTestsHttp:
                     method=method,
                     url=url,
                     json={
-                        "error": {"code": "TEMPORARY_ERROR", "message": "Retry needed"}
+                        "error": {"code": "TEMPORARY_ERROR", "message": "Retry needed"},
                     },
                     status_code=503,
                     headers={"content-type": "application/json"},
@@ -234,7 +234,7 @@ class FlextTestsHttp:
                     "method": method,
                     "max_retries": max_retries,
                     "success_after_retries": success_after_retries,
-                }
+                },
             )
 
             return self
@@ -264,7 +264,7 @@ class FlextTestsHttp:
                     "method": method,
                     "failure_threshold": failure_threshold,
                     "recovery_timeout": recovery_timeout,
-                }
+                },
             )
 
             return self

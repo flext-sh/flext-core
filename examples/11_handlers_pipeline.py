@@ -858,7 +858,7 @@ def demonstrate_handler_chain() -> FlextResult[None]:
             cast("FlextProcessing.Protocols.ChainableHandler", create_handler),
         )
         chain.add_handler(
-            cast("FlextProcessing.Protocols.ChainableHandler", get_handler)
+            cast("FlextProcessing.Protocols.ChainableHandler", get_handler),
         )
         chain.add_handler(
             cast("FlextProcessing.Protocols.ChainableHandler", update_handler),

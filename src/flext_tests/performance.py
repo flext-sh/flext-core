@@ -497,7 +497,7 @@ class FlextTestsPerformance:
         ) -> T:
             """Stress test function for memory stability."""
             with FlextTestsPerformance.MemoryProfiler.track_memory_leaks(
-                max_memory_growth_mb
+                max_memory_growth_mb,
             ):
                 last_result: T | None = None
                 for _ in range(iterations):
@@ -677,7 +677,7 @@ class FlextTestsPerformance:
         """Protocol for pytest-benchmark fixture."""
 
         def __call__(
-            self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+            self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs,
         ) -> T:
             """Call the benchmark function."""
             ...

@@ -173,7 +173,7 @@ class TestCompleteFlextSystemIntegration:
         assert safe_int_success == 42
 
         safe_int_failure = FlextUtilities.Conversions.safe_int(
-            "not_a_number", default=-1
+            "not_a_number", default=-1,
         )
         assert (
             safe_int_failure == -1

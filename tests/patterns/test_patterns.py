@@ -394,8 +394,8 @@ class TestPropertyBasedPatterns:
         # Assume valid email format (filters invalid inputs)
         assume(
             FlextTestsHypothesis.PropertyTestHelpers.assume_valid_email(
-                profile["email"]
-            )
+                profile["email"],
+            ),
         )
 
     @given(FlextTestsHypothesis.PerformanceStrategies.large_strings())
@@ -736,7 +736,7 @@ class TestComprehensiveIntegration:
                 f"{profile['name']} <{profile['email']}>"
                 for profile in profiles
                 if FlextTestsHypothesis.PropertyTestHelpers.assume_valid_email(
-                    cast("str", profile["email"])
+                    cast("str", profile["email"]),
                 )
             ]
 

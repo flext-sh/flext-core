@@ -104,7 +104,9 @@ class FlextBus(FlextMixins):
                 super().__init__(
                     handler_mode="command",
                     handler_name=getattr(
-                        handler_func, "__name__", self.__class__.__name__
+                        handler_func,
+                        "__name__",
+                        self.__class__.__name__,
                     ),
                     handler_config=handler_config,
                 )
@@ -134,7 +136,9 @@ class FlextBus(FlextMixins):
                 super().__init__(
                     handler_mode="query",
                     handler_name=getattr(
-                        handler_func, "__name__", self.__class__.__name__
+                        handler_func,
+                        "__name__",
+                        self.__class__.__name__,
                     ),
                     handler_config=handler_config,
                 )
@@ -193,12 +197,13 @@ class FlextBus(FlextMixins):
             # Compute key for local registry visibility
             # Handle parameterized generics first before checking __name__
             if hasattr(command_type_obj, "__origin__") and hasattr(
-                command_type_obj, "__args__"
+                command_type_obj,
+                "__args__",
             ):
                 # Reconstruct the string representation for parameterized generics
-                origin = getattr(command_type_obj, "__origin__")
+                origin = command_type_obj.__origin__
                 origin_name = getattr(origin, "__name__", str(origin))
-                args = getattr(command_type_obj, "__args__")
+                args = command_type_obj.__args__
                 if args:
                     args_str = ", ".join(
                         getattr(arg, "__name__", str(arg)) for arg in args
@@ -350,7 +355,7 @@ class FlextBus(FlextMixins):
 
             # Get actual middleware instance
             middleware = self._middleware_instances.get(
-                str(getattr(middleware_config, "middleware_id", ""))
+                str(getattr(middleware_config, "middleware_id", "")),
             )
             if middleware is None:
                 # Skip middleware configs without instances
@@ -370,7 +375,9 @@ class FlextBus(FlextMixins):
                     self.logger.info(
                         "Middleware rejected command",
                         middleware_type=getattr(
-                            middleware_config, "middleware_type", ""
+                            middleware_config,
+                            "middleware_type",
+                            "",
                         ),
                         error=result.error or "Unknown error",
                     )
@@ -470,7 +477,7 @@ class FlextBus(FlextMixins):
                 # String comparison
                 key_name = getattr(key, "__name__", None)
                 if (key_name is not None and key_name == command_type) or str(
-                    key
+                    key,
                 ) == command_type:
                     del self._handlers[key]
                     self.logger.info(

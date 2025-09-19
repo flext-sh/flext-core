@@ -471,7 +471,7 @@ class TestFlextProcessingPatterns:
         """Test handler chain with failing handler."""
         failing_handler = Mock()
         failing_handler.handle = Mock(
-            return_value=Mock(success=False, error="Handler failed")
+            return_value=Mock(success=False, error="Handler failed"),
         )
 
         self.chain.add_handler(failing_handler)

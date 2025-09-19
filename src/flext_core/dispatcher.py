@@ -96,7 +96,7 @@ class FlextDispatcher:
             handler=handler.__class__.__name__,
         )
         return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].ok(
-            FlextDispatcher.Registration(command_type, handler)
+            FlextDispatcher.Registration(command_type, handler),
         )
 
     def register_query(

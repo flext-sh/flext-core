@@ -148,7 +148,7 @@ class FlextUtilities:
                 # Try conversion for any input; rely on exceptions for invalid types
 
                 return float(
-                    cast("str | Buffer | SupportsFloat | SupportsIndex", value)
+                    cast("str | Buffer | SupportsFloat | SupportsIndex", value),
                 )
             except (ValueError, TypeError):
                 return default

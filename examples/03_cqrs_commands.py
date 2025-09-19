@@ -61,7 +61,7 @@ class UserRepository:
             if user.id:
                 db[user.id] = user
                 event = FlextModels.create_event(
-                    "UserCreated", {"user_id": user.id}, user.id
+                    "UserCreated", {"user_id": user.id}, user.id,
                 )
                 events.append(event)
 

@@ -54,7 +54,7 @@ class AdvancedRailwayService(FlextDomainService[ProcessedUser]):
         return FlextResult[ProcessedUser].fail("Use process_pipeline instead")
 
     def validate_user_input(
-        self, name: str, email: str, age: int
+        self, name: str, email: str, age: int,
     ) -> FlextResult[UserData]:
         """Validate user input using direct validation patterns."""
         # Single validation call replaces manual try/catch
@@ -77,7 +77,7 @@ class AdvancedRailwayService(FlextDomainService[ProcessedUser]):
 
         if not isinstance(age_val, int) or age_val < 0 or age_val > 150:
             return FlextResult[UserData].fail(
-                "Age must be an integer between 0 and 150"
+                "Age must be an integer between 0 and 150",
             )
 
         # Create strongly-typed value object
@@ -107,7 +107,7 @@ class AdvancedRailwayService(FlextDomainService[ProcessedUser]):
         return FlextResult[ProcessedUser].ok(user)
 
     def process_pipeline(
-        self, name: str, email: str, age: int
+        self, name: str, email: str, age: int,
     ) -> FlextResult[ProcessedUser]:
         """Railway-oriented pipeline with type-safe domain models."""
         return (

@@ -150,7 +150,7 @@ class TestFlextCqrsModels:
         with pytest.raises((TypeError, ValidationError)):
             # This should fail if payload is not a dict - intentionally invalid for testing
             FlextModels.create_command(
-                "test_command", cast("dict[str, object]", "not_a_dict")
+                "test_command", cast("dict[str, object]", "not_a_dict"),
             )
 
     def test_command_model_validation_error(self) -> None:
@@ -1326,7 +1326,7 @@ class TestFlextCqrsIntegration:
         # Create handler
         class CreateUserHandler(FlextHandlers[CreateUserCommand, dict[str, object]]):
             def handle(
-                self, message: CreateUserCommand
+                self, message: CreateUserCommand,
             ) -> FlextResult[dict[str, object]]:
                 user_data: dict[str, object] = {
                     "id": FlextUtilities.Generators.generate_uuid(),
@@ -1346,7 +1346,7 @@ class TestFlextCqrsIntegration:
 
         # Create and execute command
         command = CreateUserCommand(
-            command_type="create_user", username="testuser", email="test@example.com"
+            command_type="create_user", username="testuser", email="test@example.com",
         )
 
         result = bus.execute(command)
@@ -1370,7 +1370,7 @@ class TestFlextCqrsIntegration:
         # Create handler
         class FindUsersHandler(FlextHandlers[FindUsersQuery, list[dict[str, object]]]):
             def handle(
-                self, message: FindUsersQuery
+                self, message: FindUsersQuery,
             ) -> FlextResult[list[dict[str, object]]]:
                 # Simulate search results
                 users: list[dict[str, object]] = [
@@ -1405,7 +1405,7 @@ class TestFlextCqrsIntegration:
             def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 # Debug: Let's see what attributes the command has
                 if hasattr(command, "command_type"):
-                    logged_commands.append(getattr(command, "command_type"))
+                    logged_commands.append(command.command_type)
                 elif hasattr(command, "__class__"):
                     # Fallback to class name if no command_type
                     logged_commands.append(command.__class__.__name__)

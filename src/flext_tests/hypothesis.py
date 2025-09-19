@@ -203,7 +203,7 @@ class FlextTestsHypothesis:
         def iso_timestamps() -> st.SearchStrategy[str]:
             """Generate ISO formatted timestamp strings."""
             return FlextTestsHypothesis.FlextStrategies.timestamps().map(
-                FlextTestsHypothesis.FlextStrategies._to_isoformat
+                FlextTestsHypothesis.FlextStrategies._to_isoformat,
             )
 
     # === Business Domain Strategies ===
@@ -289,7 +289,7 @@ class FlextTestsHypothesis:
                 word2=st.sampled_from(words),
                 suffix=st.sampled_from(suffixes),
             ).filter(
-                FlextTestsHypothesis.BusinessDomainStrategies._has_different_words
+                FlextTestsHypothesis.BusinessDomainStrategies._has_different_words,
             )  # Avoid duplicate words
 
         @staticmethod
@@ -440,10 +440,10 @@ class FlextTestsHypothesis:
                 [
                     st.text(alphabet="🚀🎯✅❌🔧📊", min_size=1, max_size=10),  # Emojis
                     st.text(
-                        alphabet="áéíóúñü", min_size=1, max_size=20
+                        alphabet="áéíóúñü", min_size=1, max_size=20,
                     ),  # Accented chars
                     st.text(
-                        alphabet="αβγδεζηθ", min_size=1, max_size=15
+                        alphabet="αβγδεζηθ", min_size=1, max_size=15,
                     ),  # Greek letters
                     st.text(
                         alphabet="中文测试",
@@ -451,10 +451,10 @@ class FlextTestsHypothesis:
                         max_size=10,
                     ),  # Chinese characters
                     st.builds(
-                        FlextTestsHypothesis.EdgeCaseStrategies._zero_width_spaces
+                        FlextTestsHypothesis.EdgeCaseStrategies._zero_width_spaces,
                     ),  # Zero-width spaces
                     st.builds(
-                        FlextTestsHypothesis.EdgeCaseStrategies._null_character_string
+                        FlextTestsHypothesis.EdgeCaseStrategies._null_character_string,
                     ),  # Null characters
                 ],
             )
@@ -595,7 +595,7 @@ class FlextTestsHypothesis:
 
             def _scenario_builder(data: object, id_val: str) -> FlextTypes.Core.Dict:
                 return FlextTestsHypothesis.PropertyTestHelpers._build_test_scenario(
-                    data, id_val, scenario_name
+                    data, id_val, scenario_name,
                 )
 
             return st.builds(
@@ -618,15 +618,15 @@ class FlextTestsHypothesis:
                 return {
                     "id": draw(FlextTestsHypothesis.FlextStrategies.flext_ids()),
                     "name": draw(
-                        FlextTestsHypothesis.BusinessDomainStrategies.user_names()
+                        FlextTestsHypothesis.BusinessDomainStrategies.user_names(),
                     ),
                     "email": draw(FlextTestsHypothesis.FlextStrategies.emails()),
                     "phone": draw(FlextTestsHypothesis.FlextStrategies.phone_numbers()),
                     "address": draw(
-                        FlextTestsHypothesis.BusinessDomainStrategies.addresses()
+                        FlextTestsHypothesis.BusinessDomainStrategies.addresses(),
                     ),
                     "created_at": draw(
-                        FlextTestsHypothesis.FlextStrategies.iso_timestamps()
+                        FlextTestsHypothesis.FlextStrategies.iso_timestamps(),
                     ),
                     "active": draw(st.booleans()),
                     "metadata": draw(
@@ -676,7 +676,7 @@ class FlextTestsHypothesis:
                         ),
                     ),
                     "correlation_id": draw(
-                        FlextTestsHypothesis.FlextStrategies.correlation_ids()
+                        FlextTestsHypothesis.FlextStrategies.correlation_ids(),
                     ),
                 }
 

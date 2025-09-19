@@ -321,7 +321,7 @@ class TestFlextCommandHandler:
 
         if not (handler.can_handle(CreateUserCommand)):
             raise AssertionError(
-                f"Expected True, got {handler.can_handle(CreateUserCommand)}"
+                f"Expected True, got {handler.can_handle(CreateUserCommand)}",
             )
 
     def test_can_handle_wrong_command_type(self) -> None:
@@ -332,7 +332,7 @@ class TestFlextCommandHandler:
 
         if handler.can_handle(UpdateUserCommand):
             raise AssertionError(
-                f"Expected False, got {handler.can_handle(UpdateUserCommand)}"
+                f"Expected False, got {handler.can_handle(UpdateUserCommand)}",
             )
 
     def test_can_handle_non_command_object(self) -> None:

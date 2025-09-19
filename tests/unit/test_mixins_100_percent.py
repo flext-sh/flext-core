@@ -59,9 +59,9 @@ class TestFlextMixins100Percent:
 
         obj = TestClass(test_param="value")
         assert hasattr(obj, "test_param")
-        assert getattr(obj, "test_param") == "value"
+        assert obj.test_param == "value"
         assert hasattr(obj, "initialized")
-        assert getattr(obj, "initialized") is True
+        assert obj.initialized is True
 
     def test_to_json_with_model_dump(self) -> None:
         """Test to_json with model_dump - lines 61-62."""

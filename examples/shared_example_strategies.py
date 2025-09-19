@@ -139,7 +139,7 @@ class ExamplePatternFactory:
                 .flat_map(_validate_config_if_needed)
                 .map(lambda config: _log_success_and_return(config, name))
                 .tap_error(
-                    lambda e: logger.error(f"Configuration creation failed: {e}")
+                    lambda e: logger.error(f"Configuration creation failed: {e}"),
                 )
             )
 
@@ -167,7 +167,7 @@ class ExamplePatternFactory:
                 lambda: FlextResult[None].ok(None),
             )()
             return validation_result.flat_map(
-                lambda _: FlextResult[object].ok(config_instance)
+                lambda _: FlextResult[object].ok(config_instance),
             ).tap_error(lambda e: logger.error(f"Config validation failed: {e}"))
 
         def _log_success_and_return(config_instance: object, name: str) -> object:
@@ -202,11 +202,11 @@ class ExamplePatternFactory:
                         executed_demos=[*state.executed_demos, demo],
                     ),
                 )
-                .tap_error(lambda e: _cleanup_on_failure(state.executed_demos, e))
+                .tap_error(lambda e: _cleanup_on_failure(state.executed_demos, e)),
             )
 
         def _cleanup_on_failure(
-            executed_demos: list[DemoStrategy[object]], error: str
+            executed_demos: list[DemoStrategy[object]], error: str,
         ) -> None:
             """Cleanup executed demos on failure."""
             logger.error(f"❌ Pipeline failed: {error}")
@@ -292,7 +292,7 @@ def main() -> None:
 
     # Demonstrate simple demo runner
     simple_demo = ExamplePatternFactory.create_demo_runner(
-        "Simple Demo", lambda: FlextResult[str].ok("Demo executed successfully")
+        "Simple Demo", lambda: FlextResult[str].ok("Demo executed successfully"),
     )
 
     result = simple_demo.execute()
@@ -311,7 +311,7 @@ def main() -> None:
     ]
 
     validation_demo = ExamplePatternFactory.create_validation_demo(
-        "Data Validation", sample_data, validation_rules
+        "Data Validation", sample_data, validation_rules,
     )
 
     validation_result = validation_demo.execute()

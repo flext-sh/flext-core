@@ -54,8 +54,8 @@ class FlextProcessing:
 
             handler = handler_result.unwrap()
             try:
-                if hasattr(handler, "handle") and callable(getattr(handler, "handle")):
-                    result = getattr(handler, "handle")(request)
+                if hasattr(handler, "handle") and callable(handler.handle):
+                    result = handler.handle(request)
                     return (
                         FlextResult[object].ok(result)
                         if not isinstance(result, FlextResult)
@@ -69,7 +69,7 @@ class FlextProcessing:
                         else result
                     )
                 return FlextResult[object].fail(
-                    f"Handler '{name}' does not implement handle method"
+                    f"Handler '{name}' does not implement handle method",
                 )
             except Exception as e:
                 return FlextResult[object].fail(f"Handler execution failed: {e}")
@@ -148,7 +148,7 @@ class FlextProcessing:
     def is_handler_safe(handler: object) -> bool:
         """Check if a handler is safe (has handle method or is callable)."""
         return (
-            hasattr(handler, "handle") and callable(getattr(handler, "handle"))
+            hasattr(handler, "handle") and callable(handler.handle)
         ) or callable(handler)
 
     # =========================================================================
@@ -217,13 +217,13 @@ class FlextProcessing:
                 result = request
                 for handler in self._handlers:
                     if hasattr(handler, "handle"):
-                        handler_result = getattr(handler, "handle")(result)
+                        handler_result = handler.handle(result)
                         if (
                             hasattr(handler_result, "success")
                             and not handler_result.success
                         ):
                             return FlextResult[object].fail(
-                                f"Handler failed: {handler_result.error}"
+                                f"Handler failed: {handler_result.error}",
                             )
                         result = (
                             handler_result.data

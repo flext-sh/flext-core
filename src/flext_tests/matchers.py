@@ -116,7 +116,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_type_guard(
-        value: object, expected_type: type[object] | Callable[[object], bool]
+        value: object, expected_type: type[object] | Callable[[object], bool],
     ) -> None:
         """Assert that value is of expected type with type guard."""
         if callable(expected_type) and not isinstance(expected_type, type):
@@ -132,7 +132,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_performance_within_limit(
-        execution_time: float, limit: float, operation: str = "operation"
+        execution_time: float, limit: float, operation: str = "operation",
     ) -> None:
         """Assert that execution time is within performance limit."""
         if execution_time > limit:
@@ -203,18 +203,18 @@ class FlextTestsMatchers:
         def be_success(result: object) -> bool:
             """Check if result indicates success."""
             if hasattr(result, "is_success"):
-                return bool(getattr(result, "is_success"))
+                return bool(result.is_success)
             if hasattr(result, "success"):
-                return bool(getattr(result, "success"))
+                return bool(result.success)
             return False
 
         @staticmethod
         def be_failure(result: object) -> bool:
             """Check if result indicates failure."""
             if hasattr(result, "is_failure"):
-                return bool(getattr(result, "is_failure"))
+                return bool(result.is_failure)
             if hasattr(result, "failure"):
-                return bool(getattr(result, "failure"))
+                return bool(result.failure)
             return False
 
         @staticmethod
@@ -223,7 +223,7 @@ class FlextTestsMatchers:
             if not hasattr(result, "error"):
                 return False
 
-            error = getattr(result, "error")
+            error = result.error
             if error is None:
                 return False
 
@@ -238,7 +238,7 @@ class FlextTestsMatchers:
             if not hasattr(result, "error_code"):
                 return False
 
-            error_code = getattr(result, "error_code")
+            error_code = result.error_code
             if error_code is None:
                 return False
 
@@ -250,9 +250,9 @@ class FlextTestsMatchers:
             # Try value first, then data for backward compatibility
             actual_value: object = None
             if hasattr(result, "value"):
-                actual_value = getattr(result, "value")
+                actual_value = result.value
             elif hasattr(result, "data"):
-                actual_value = getattr(result, "data")
+                actual_value = result.data
             else:
                 return False
 
@@ -269,7 +269,7 @@ class FlextTestsMatchers:
                 sized_container = cast("Sized", container)
                 return len(sized_container) == 0
             if hasattr(container, "is_empty"):
-                return bool(getattr(container, "is_empty"))
+                return bool(container.is_empty)
             return False
 
         @staticmethod
@@ -280,7 +280,7 @@ class FlextTestsMatchers:
                 container_obj = cast("Container[object]", container)
                 return item in container_obj
             if hasattr(container, "contains"):
-                contains_method = getattr(container, "contains")
+                contains_method = container.contains
                 return bool(contains_method(item))
             return False
 
@@ -395,7 +395,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def all_satisfy(
-            container: Iterable[object], predicate: Callable[[object], object]
+            container: Iterable[object], predicate: Callable[[object], object],
         ) -> bool:
             """Check if all items in container satisfy predicate."""
             try:
@@ -405,7 +405,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def any_satisfy(
-            container: Iterable[object], predicate: Callable[[object], object]
+            container: Iterable[object], predicate: Callable[[object], object],
         ) -> bool:
             """Check if any item in container satisfies predicate."""
             try:
@@ -415,7 +415,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_greater_than(
-            actual: float, expected: float, msg: str = "", message: str = ""
+            actual: float, expected: float, msg: str = "", message: str = "",
         ) -> None:
             """Assert that actual value is greater than expected."""
             if actual <= expected:
@@ -441,7 +441,7 @@ class FlextTestsMatchers:
                     starmap(
                         FlextTestsMatchers.CoreMatchers.be_equivalent_to,
                         zip(obj1, obj2, strict=False),
-                    )
+                    ),
                 )
 
             # Handle set comparison
@@ -464,7 +464,7 @@ class FlextTestsMatchers:
         def with_value(self, expected_value: object) -> bool:
             """Check success result has expected value."""
             return FlextTestsMatchers.CoreMatchers.have_value(
-                self.result, expected_value
+                self.result, expected_value,
             )
 
     class FailureMatcher:
@@ -477,7 +477,7 @@ class FlextTestsMatchers:
         def with_error(self, expected_error: str) -> bool:
             """Check failure result has expected error."""
             return FlextTestsMatchers.CoreMatchers.have_error(
-                self.result, expected_error
+                self.result, expected_error,
             )
 
     # =========================================================================
@@ -520,7 +520,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def throughput_above_threshold(
-            func: object, iterations: int, min_ops_per_sec: float
+            func: object, iterations: int, min_ops_per_sec: float,
         ) -> bool:
             """Check if function throughput is above threshold."""
             if not callable(func):
@@ -581,7 +581,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_success(
-        result: object, expected_value: object = None, expected_data: object = None
+        result: object, expected_value: object = None, expected_data: object = None,
     ) -> None:
         """Assert that result is successful with optional value check."""
         assert FlextTestsMatchers.CoreMatchers.be_success(result), (
@@ -598,7 +598,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: object, expected_error: str | None = None
+        result: object, expected_error: str | None = None,
     ) -> None:
         """Assert that result is failure with optional error check."""
         assert FlextTestsMatchers.CoreMatchers.be_failure(result), (
@@ -611,7 +611,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_json_structure(
-        obj: object, expected_keys: list[str], *, exact_match: bool = True
+        obj: object, expected_keys: list[str], *, exact_match: bool = True,
     ) -> None:
         """Assert that object has expected JSON structure."""
         if not isinstance(obj, dict):
@@ -641,7 +641,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_environment_variable(
-        var_name: str, expected_value: str | None = None
+        var_name: str, expected_value: str | None = None,
     ) -> None:
         """Assert that environment variable exists with optional value check."""
         actual_value = os.environ.get(var_name)
@@ -669,7 +669,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def run_with_timeout(
-        coro: Awaitable[object], timeout_seconds: float
+        coro: Awaitable[object], timeout_seconds: float,
     ) -> object:
         """Run coroutine with timeout and auto-retry for test compatibility."""
         try:
@@ -689,7 +689,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def run_concurrently(
-        func: Callable[[object], object], *args: object, **_kwargs: object
+        func: Callable[[object], object], *args: object, **_kwargs: object,
     ) -> object:
         """Ultra-simple for test compatibility - runs tasks concurrently."""
         partial_func = functools.partial(func, *args)
@@ -697,7 +697,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def test_race_condition(
-        func1: Callable[[], object], func2: Callable[[], object]
+        func1: Callable[[], object], func2: Callable[[], object],
     ) -> tuple[object, object]:
         """Ultra-simple for test compatibility - runs function concurrently to test race conditions."""
         return await asyncio.gather(
@@ -707,7 +707,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def measure_concurrency_performance(
-        func: Callable[[], object], concurrency_level: int
+        func: Callable[[], object], concurrency_level: int,
     ) -> dict[str, object]:
         """Ultra-simple for test compatibility - measures concurrency performance."""
         start_time = time.time()
@@ -741,7 +741,7 @@ class FlextTestsMatchers:
                 return self
 
             def __exit__(
-                self, exc_type: object, exc_val: object, exc_tb: object
+                self, exc_type: object, exc_val: object, exc_tb: object,
             ) -> None:
                 signal.alarm(0)
 
@@ -749,7 +749,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def create_async_mock(
-        return_value: object = None, side_effect: object = None, delay: float = 0.0
+        return_value: object = None, side_effect: object = None, delay: float = 0.0,
     ) -> object:
         """Create async mock for test compatibility."""
 
@@ -816,7 +816,7 @@ class FlextTestsMatchers:
             ) -> None:
                 self.success_return = success_return
                 self.failure_exception = failure_exception or Exception(
-                    "Flaky mock failure"
+                    "Flaky mock failure",
                 )
                 self.failure_rate = failure_rate
                 self.call_count = 0
@@ -839,7 +839,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def managed_resource(
-        resource_factory: object, cleanup_func: object = None
+        resource_factory: object, cleanup_func: object = None,
     ) -> object:
         """Ultra-simple managed resource context manager for test compatibility."""
 
@@ -857,7 +857,7 @@ class FlextTestsMatchers:
                 return self.resource
 
             def __exit__(
-                self, exc_type: object, exc_val: object, exc_tb: object
+                self, exc_type: object, exc_val: object, exc_tb: object,
             ) -> None:
                 if self.cleanup and callable(self.cleanup) and self.resource:
                     try:
@@ -902,7 +902,7 @@ class FlextTestsMatchers:
                 return self
 
             async def __aexit__(
-                self, exc_type: object, exc_val: object, exc_tb: object
+                self, exc_type: object, exc_val: object, exc_tb: object,
             ) -> None:
                 if self.teardown_func and callable(self.teardown_func):
                     cleanup_result = self.teardown_func()
