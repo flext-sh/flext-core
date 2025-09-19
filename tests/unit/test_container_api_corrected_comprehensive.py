@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from flext_core import FlextContainer
 from flext_tests import FlextTestsMatchers
 
@@ -189,8 +191,6 @@ class TestContainerApiCorrectedComprehensive:
     def test_auto_wire_dependency_error_line_985(self) -> None:
         """Test auto_wire dependency resolution error (line 985)."""
         container = FlextContainer.get_global()
-
-        from dataclasses import dataclass
 
         @dataclass
         class ServiceWithDependencies:

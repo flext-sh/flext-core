@@ -84,6 +84,25 @@ class FlextModels:
 
         model_config = ConfigDict(frozen=True)
 
+        def __hash__(self) -> int:  # pragma: no cover - trivial
+            """Hash value object by all fields."""
+
+            def make_hashable(obj: object) -> object:
+                """Convert object to hashable representation."""
+                if isinstance(obj, dict):
+                    return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
+                if isinstance(obj, list):
+                    return tuple(make_hashable(item) for item in obj)
+                if isinstance(obj, set):
+                    # Convert to hashable items first, then sort by string representation
+                    hashable_items = [make_hashable(item) for item in obj]
+                    return tuple(sorted(hashable_items, key=str))
+                return obj
+
+            model_data = self.model_dump()
+            hashable_data = make_hashable(model_data)
+            return hash((self.__class__, hashable_data))
+
     class Payload(BaseModel, Generic[T]):
         """Message payload wrapper carrying standardized modernization metadata."""
 
