@@ -33,6 +33,193 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
+class FlextConsoleRenderer:
+    """Enhanced console renderer with hierarchical formatting for improved readability."""
+
+    def __init__(self, verbosity: str = "detailed") -> None:
+        """Initialize renderer with specified verbosity level.
+
+        Args:
+            verbosity: Output verbosity ('compact', 'detailed', 'full')
+
+        """
+        self.verbosity = verbosity.lower()
+
+        # Color codes for different log levels
+        self._level_colors = {
+            "critical": "\033[91;1m",  # Bright red, bold
+            "error": "\033[91m",      # Red
+            "warning": "\033[93m",    # Yellow
+            "info": "\033[92m",       # Green
+            "debug": "\033[94m",      # Blue
+            "trace": "\033[95m",      # Magenta
+        }
+
+        # Color codes for different information types
+        self._info_colors = {
+            "service": "\033[36m",     # Cyan
+            "context": "\033[95m",     # Magenta
+            "execution": "\033[94m",   # Blue
+            "system": "\033[90m",      # Dark gray
+            "correlation": "\033[33m", # Yellow
+            "reset": "\033[0m",        # Reset
+        }
+
+    def __call__(self, _logger: logging.Logger, _method_name: str, event_dict: EventDict) -> str:
+        """Render log entry with hierarchical formatting."""
+        return self._format_event(event_dict)
+
+    def _format_event(self, event_dict: EventDict) -> str:
+        """Format event dictionary into hierarchical log output."""
+        # Extract core information
+        timestamp = event_dict.get("@timestamp", "")
+        level = event_dict.get("level", "INFO").upper()
+        logger_name = event_dict.get("logger_name", "")
+        message = event_dict.get("event", "")
+        correlation_id = event_dict.get("correlation_id", "")
+
+        # Extract service info
+        service_info = event_dict.get("service", {})
+        service_name = service_info.get("name", logger_name)
+
+        # Format main log line based on verbosity
+        if self.verbosity == "compact":
+            return self._format_compact(timestamp, level, service_name, message, correlation_id)
+        if self.verbosity == "detailed":
+            return self._format_detailed(event_dict, timestamp, level, service_name, message, correlation_id)
+        # full
+        return self._format_full(event_dict, timestamp, level, service_name, message, correlation_id)
+
+    def _format_compact(self, timestamp: str, level: str, service_name: str, message: str, correlation_id: str) -> str:
+        """Format compact log entry."""
+        # Clean timestamp (remove microseconds and timezone info for readability)
+        clean_timestamp = timestamp.split(".")[0] + "Z" if timestamp else ""
+
+        level_color = self._level_colors.get(level.lower(), "")
+        reset = self._info_colors["reset"]
+        correlation_color = self._info_colors["correlation"]
+
+        # Format: timestamp [LEVEL] [service] message [correlation_id]
+        correlation_part = f" {correlation_color}[{correlation_id}]{reset}" if correlation_id else ""
+
+        return f"{clean_timestamp} {level_color}[{level}]{reset} [{service_name}] {message}{correlation_part}"
+
+    def _format_detailed(self, event_dict: EventDict, timestamp: str, level: str, service_name: str, message: str, correlation_id: str) -> str:
+        """Format detailed log entry with context tree."""
+        lines = []
+
+        # Main line
+        main_line = self._format_compact(timestamp, level, service_name, message, correlation_id)
+        lines.append(main_line)
+
+        # Add context information if available
+        context = event_dict.get("context", {})
+        execution = event_dict.get("execution", {})
+
+        context_color = self._info_colors["context"]
+        execution_color = self._info_colors["execution"]
+        reset = self._info_colors["reset"]
+
+        if context or execution:
+            # Format context info
+            context_parts = []
+            if isinstance(context, dict) and context:
+                # Extract meaningful context data
+                extra = context.get("extra", {}) if isinstance(context.get("extra"), dict) else {}
+                if extra:
+                    for key, value in extra.items():
+                        if key in {"entry_count", "output_size_bytes", "file_path", "write_time_seconds", "throughput_entries_per_sec"}:
+                            context_parts.append(f"{key}={value}")
+
+            if context_parts:
+                context_line = f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
+                lines.append(context_line)
+
+            # Format execution info
+            execution_parts = []
+            if isinstance(execution, dict) and execution:
+                func_name = execution.get("function", "")
+                line_num = execution.get("line", "")
+                uptime = execution.get("uptime_seconds", "")
+                if func_name and line_num:
+                    execution_parts.append(f"{func_name}:{line_num}")
+                if uptime:
+                    execution_parts.append(f"uptime={uptime}s")
+
+            if execution_parts:
+                execution_line = f"  └─ {execution_color}Execution:{reset} {', '.join(execution_parts)}"
+                lines.append(execution_line)
+
+        return "\n".join(lines)
+
+    def _format_full(self, event_dict: EventDict, timestamp: str, level: str, service_name: str, message: str, correlation_id: str) -> str:
+        """Format full log entry with all available information."""
+        lines = []
+
+        # Main line
+        main_line = self._format_compact(timestamp, level, service_name, message, correlation_id)
+        lines.append(main_line)
+
+        # Extract all sections
+        context = event_dict.get("context", {})
+        execution = event_dict.get("execution", {})
+        service = event_dict.get("service", {})
+        system = event_dict.get("system", {})
+
+        # Color setup
+        context_color = self._info_colors["context"]
+        execution_color = self._info_colors["execution"]
+        service_color = self._info_colors["service"]
+        system_color = self._info_colors["system"]
+        reset = self._info_colors["reset"]
+
+        # Format context
+        if isinstance(context, dict) and context:
+            extra = context.get("extra", {}) if isinstance(context.get("extra"), dict) else {}
+            if extra:
+                context_parts = [f"{k}={v}" for k, v in extra.items()]
+                if context_parts:
+                    lines.append(f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}")
+
+        # Format execution
+        if isinstance(execution, dict) and execution:
+            exec_parts = []
+            for key in ["function", "line", "uptime_seconds"]:
+                if execution.get(key):
+                    if key == "uptime_seconds":
+                        exec_parts.append(f"uptime={execution[key]}s")
+                    elif key in ["function", "line"]:
+                        if key == "function" and "line" in execution:
+                            exec_parts.append(f"{execution['function']}:{execution['line']}")
+                            break
+                        if key == "line" and "function" not in execution:
+                            exec_parts.append(f"line={execution[key]}")
+                    else:
+                        exec_parts.append(f"{key}={execution[key]}")
+            if exec_parts:
+                lines.append(f"  ├─ {execution_color}Execution:{reset} {', '.join(exec_parts)}")
+
+        # Format service info
+        if isinstance(service, dict) and service:
+            service_parts = [f"{key}={service[key]}" for key in ["name", "version", "instance_id", "environment"] if service.get(key)]
+            if service_parts:
+                lines.append(f"  ├─ {service_color}Service:{reset} {', '.join(service_parts)}")
+
+        # Format system info (last item gets └─)
+        if isinstance(system, dict) and system:
+            system_parts = []
+            for key in ["hostname", "platform", "python_version", "process_id"]:
+                if system.get(key):
+                    if key == "process_id":
+                        system_parts.append(f"pid={system[key]}")
+                    else:
+                        system_parts.append(f"{key}={system[key]}")
+            if system_parts:
+                lines.append(f"  └─ {system_color}System:{reset} {', '.join(system_parts)}")
+
+        return "\n".join(lines)
+
+
 class FlextLogger:
     """Structured logger that binds to ``FlextContext`` automatically.
 
@@ -149,10 +336,20 @@ class FlextLogger:
 
         # 3) Environment variable override when valid (after loading .env via config)
         if resolved_level is None:
-            env_level = os.getenv("FLEXT_LOG_LEVEL")
-            env_level_upper = env_level.upper() if isinstance(env_level, str) else None
-            if env_level_upper in valid_levels:
-                resolved_level = env_level_upper
+            # Check project-specific environment variable first
+            project_specific_var = self._get_project_specific_env_var("LOG_LEVEL")
+            if project_specific_var:
+                env_level = os.getenv(project_specific_var)
+                env_level_upper = env_level.upper() if isinstance(env_level, str) else None
+                if env_level_upper in valid_levels:
+                    resolved_level = env_level_upper
+
+            # Fallback to global FLEXT_LOG_LEVEL
+            if resolved_level is None:
+                env_level = os.getenv("FLEXT_LOG_LEVEL")
+                env_level_upper = env_level.upper() if isinstance(env_level, str) else None
+                if env_level_upper in valid_levels:
+                    resolved_level = env_level_upper
 
         # 4) Configuration/defaults
         if resolved_level is None:
@@ -234,6 +431,15 @@ class FlextLogger:
             return parts[0].replace("_", "-")
 
         return "flext-core"
+
+    def _get_project_specific_env_var(self, suffix: str) -> str | None:
+        """Get project-specific environment variable name for the current service."""
+        service_name = self._extract_service_name()
+        if service_name.startswith("flext-"):
+            # Convert flext-core -> FLEXT_CORE, flext-ldap -> FLEXT_LDAP, etc.
+            env_name = service_name.upper().replace("-", "_")
+            return f"{env_name}_{suffix}"
+        return None
 
     def _get_version(self) -> str:
         """Get service version."""
@@ -624,6 +830,7 @@ class FlextLogger:
         json_output: bool | None = None,
         include_source: bool = True,
         structured_output: bool = True,
+        log_verbosity: str = "detailed",
     ) -> None:
         """Configure structured logging system.
 
@@ -634,6 +841,7 @@ class FlextLogger:
             json_output: Use JSON output format
             include_source: Include source code location info
             structured_output: Use structured logging format
+            log_verbosity: Console output verbosity ('compact', 'detailed', 'full')
 
         """
         # Reset if already configured (allow reconfiguration)
@@ -641,12 +849,20 @@ class FlextLogger:
         if cls._configured and structlog.is_configured():
             structlog.reset_defaults()
 
+        # Auto-detect verbosity from environment if not specified
+        # Note: We can't use project-specific detection here since this is a class method
+        # Project-specific variables are handled in individual logger initialization
+        env_verbosity = os.environ.get("FLEXT_LOG_VERBOSITY", log_verbosity).lower()
+        if env_verbosity in {"compact", "detailed", "full"}:
+            log_verbosity = env_verbosity
+
         # Store configuration in singleton for reuse
         cls._configuration = {
             "log_level": log_level,
             "json_output": json_output,
             "include_source": include_source,
             "structured_output": structured_output,
+            "log_verbosity": log_verbosity,
         }
 
         # Auto-detect output format if not specified
@@ -706,7 +922,7 @@ class FlextLogger:
                 ),
             )
         else:
-            processors.append(FlextLogger._create_enhanced_console_renderer())
+            processors.append(FlextLogger._create_enhanced_console_renderer(log_verbosity))
 
         # Configure structlog
         structlog.configure(
@@ -778,20 +994,9 @@ class FlextLogger:
         return event_dict
 
     @staticmethod
-    def _create_enhanced_console_renderer() -> structlog.dev.ConsoleRenderer:
-        """Create console renderer for development."""
-        return structlog.dev.ConsoleRenderer(
-            colors=True,
-            level_styles={
-                "critical": "\033[91;1m",  # Bright red, bold
-                "error": "\033[91m",  # Red
-                "warning": "\033[93m",  # Yellow
-                "info": "\033[92m",  # Green
-                "debug": "\033[94m",  # Blue
-                "trace": "\033[95m",  # Magenta
-            },
-            repr_native_str=False,
-        )
+    def _create_enhanced_console_renderer(verbosity: str = "detailed") -> FlextConsoleRenderer:
+        """Create enhanced console renderer with configurable verbosity."""
+        return FlextConsoleRenderer(verbosity=verbosity)
 
     @classmethod
     def set_global_correlation_id(cls, correlation_id: str | None) -> None:
@@ -875,5 +1080,6 @@ class FlextLogger:
 
 
 __all__: FlextTypes.Core.StringList = [
+    "FlextConsoleRenderer",
     "FlextLogger",
 ]
