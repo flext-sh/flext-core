@@ -112,11 +112,13 @@ class FlextModels:
         message_type: str = Field(default="", description="Message type identifier")
         source_service: str = Field(default="", description="Source service name")
         correlation_id: str = Field(
-            default="", description="Correlation ID for tracking",
+            default="",
+            description="Correlation ID for tracking",
         )
         message_id: str = Field(default="", description="Unique message identifier")
         expires_at: datetime | None = Field(
-            default=None, description="Payload expiration time",
+            default=None,
+            description="Payload expiration time",
         )
 
         def extract(self) -> T:
@@ -159,7 +161,8 @@ class FlextModels:
             default_factory=FlextUtilities.Generators.generate_id,
         )
         user_id: str | None = Field(
-            default=None, description="User ID associated with the command",
+            default=None,
+            description="User ID associated with the command",
         )
 
         def validate_command(self) -> FlextResult[bool]:
@@ -178,7 +181,8 @@ class FlextModels:
             default_factory=lambda: {"page": 1, "size": 10},
         )
         user_id: str | None = Field(
-            default=None, description="User ID associated with the query",
+            default=None,
+            description="User ID associated with the query",
         )
 
         def validate_query(self) -> FlextResult[bool]:
@@ -201,7 +205,9 @@ class FlextModels:
                 base = name.removesuffix("Command")
                 s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
                 data["command_type"] = re.sub(
-                    r"([a-z0-9])([A-Z])", r"\1_\2", s1,
+                    r"([a-z0-9])([A-Z])",
+                    r"\1_\2",
+                    s1,
                 ).lower()
             return data
 
@@ -540,7 +546,11 @@ class FlextModels:
 
         @classmethod
         def create_http_url(
-            cls, url: str, *, max_length: int = 2048, max_port: int = 65535,
+            cls,
+            url: str,
+            *,
+            max_length: int = 2048,
+            max_port: int = 65535,
         ) -> FlextResult[FlextModels.Url]:
             """Create URL with HTTP-specific validation using Pydantic v2 patterns.
 
@@ -685,7 +695,8 @@ class FlextModels:
         name: str = Field(default="", description="Configuration name")
         enabled: bool = Field(default=True, description="Whether enabled")
         settings: dict[str, object] = Field(
-            default_factory=dict, description="Additional settings",
+            default_factory=dict,
+            description="Additional settings",
         )
 
     class Message(BaseModel):
@@ -712,7 +723,8 @@ class FlextModels:
         name: str = Field(..., description="Project name")
         path: str = Field(..., description="Project path")
         project_type: str = Field(
-            ..., description="Project type",
+            ...,
+            description="Project type",
         )  # Use string to avoid enum import
         has_tests: bool = Field(default=False, description="Has test directory")
         has_pyproject: bool = Field(default=False, description="Has pyproject.toml")
@@ -729,10 +741,14 @@ class FlextModels:
         workspace_root: str = Field(..., description="Workspace root path")
         project_filter: str | None = Field(None, description="Project name filter")
         include_hidden: bool = Field(
-            default=False, description="Include hidden directories",
+            default=False,
+            description="Include hidden directories",
         )
         max_depth: int = Field(
-            default=3, ge=1, le=10, description="Maximum directory depth",
+            default=3,
+            ge=1,
+            le=10,
+            description="Maximum directory depth",
         )
 
     class WorkspaceInfo(Value):
@@ -743,10 +759,12 @@ class FlextModels:
         project_count: int = Field(default=0, ge=0, description="Number of projects")
         total_size_mb: float = Field(default=0.0, ge=0, description="Total size in MB")
         projects: list[str] | None = Field(
-            default=None, description="List of project names",
+            default=None,
+            description="List of project names",
         )
         status: str = Field(
-            default="ready", description="Workspace status",
+            default="ready",
+            description="Workspace status",
         )  # Use string to avoid enum import
 
         def validate_business_rules(self) -> FlextResult[None]:
@@ -779,11 +797,15 @@ class FlextModels:
 
     @staticmethod
     def create_event(
-        event_type: str, payload: dict[str, object], aggregate_id: str,
+        event_type: str,
+        payload: dict[str, object],
+        aggregate_id: str,
     ) -> Event:
         """Create an event."""
         return FlextModels.Event(
-            event_type=event_type, payload=payload, aggregate_id=aggregate_id,
+            event_type=event_type,
+            payload=payload,
+            aggregate_id=aggregate_id,
         )
 
     @staticmethod
@@ -793,7 +815,8 @@ class FlextModels:
 
     @staticmethod
     def create_query(
-        query_type: str, filters: dict[str, object] | None = None,
+        query_type: str,
+        filters: dict[str, object] | None = None,
     ) -> Query:
         """Create a query."""
         return FlextModels.Query(query_type=query_type, filters=filters or {})
@@ -826,11 +849,16 @@ class FlextModels:
 
     @staticmethod
     def create_validated_http_url(
-        url: str, *, max_length: int = 2048, max_port: int = 65535,
+        url: str,
+        *,
+        max_length: int = 2048,
+        max_port: int = 65535,
     ) -> FlextResult[str]:
         """Create validated HTTP URL with enhanced validation - centralized replacement for HttpValidator."""
         url_result = FlextModels.Url.create_http_url(
-            url, max_length=max_length, max_port=max_port,
+            url,
+            max_length=max_length,
+            max_port=max_port,
         )
         if url_result.is_success:
             return FlextResult[str].ok(url_result.unwrap().value)
@@ -932,7 +960,8 @@ class FlextModels:
 
     @staticmethod
     def create_validated_date_range(
-        start_date: str, end_date: str,
+        start_date: str,
+        end_date: str,
     ) -> FlextResult[tuple[str, str]]:
         """Create validated date range - centralizes date range validation logic.
 

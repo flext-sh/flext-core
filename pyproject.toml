@@ -91,7 +91,10 @@ typings = [
 security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
 
 [tool.poetry]
-packages = [{ include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
+packages = [
+    { include = "flext_core", from = "src" },
+    { include = "flext_tests", from = "src" },
+]
 
 [tool.poetry.group.typings.dependencies]
 types-pygments = ">=2.19.0.20250715"
@@ -137,7 +140,7 @@ strict = true
 check_untyped_defs = true
 disallow_any_decorated = false
 disallow_any_explicit = true
-disallow_any_expr = false          # Too restrictive for real-world usage
+disallow_any_expr = false           # Too restrictive for real-world usage
 disallow_any_generics = true
 disallow_any_unimported = true
 disallow_incomplete_defs = true
@@ -285,7 +288,7 @@ lint.isort.known-first-party = ["flext_core", "flext_tests"]
 
 [tool.vulture]
 exclude = [
-    "src/flext_core/protocols.py",  # Protocol definitions with intentional unused parameters
+    "src/flext_core/protocols.py", # Protocol definitions with intentional unused parameters
 ]
 min_confidence = 80
 paths = ["src/"]

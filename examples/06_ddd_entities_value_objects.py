@@ -278,7 +278,10 @@ class DDDDomainService(FlextDomainService[Product]):
         return FlextResult[Product].ok(product)
 
     def create_customer(
-        self, name: str, email: str, address: Address,
+        self,
+        name: str,
+        email: str,
+        address: Address,
     ) -> FlextResult[Customer]:
         """Create a new customer with validation."""
         if not name.strip():
@@ -311,7 +314,8 @@ class DDDDomainService(FlextDomainService[Product]):
             return FlextResult[ShoppingCart].fail("Customer ID cannot be empty")
 
         cart = ShoppingCart(
-            id=FlextUtilities.Generators.generate_id()[:8], customer_id=customer_id,
+            id=FlextUtilities.Generators.generate_id()[:8],
+            customer_id=customer_id,
         )
 
         validation_result = cart.validate_business_rules()
@@ -353,7 +357,10 @@ def demonstrate_ddd_patterns() -> None:
 
     # Address value object
     demo_address = Address(
-        street="123 Main St", city="New York", postal_code="10001", country="US",
+        street="123 Main St",
+        city="New York",
+        postal_code="10001",
+        country="US",
     )
     print(f"   Address: {demo_address}")
 
@@ -376,7 +383,9 @@ def demonstrate_ddd_patterns() -> None:
 
     # Customer creation
     customer_result = service.create_customer(
-        "John Doe", "john@example.com", demo_address,
+        "John Doe",
+        "john@example.com",
+        demo_address,
     )
     if customer_result.is_success:
         customer = customer_result.unwrap()

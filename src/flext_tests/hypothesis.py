@@ -440,10 +440,14 @@ class FlextTestsHypothesis:
                 [
                     st.text(alphabet="🚀🎯✅❌🔧📊", min_size=1, max_size=10),  # Emojis
                     st.text(
-                        alphabet="áéíóúñü", min_size=1, max_size=20,
+                        alphabet="áéíóúñü",
+                        min_size=1,
+                        max_size=20,
                     ),  # Accented chars
                     st.text(
-                        alphabet="αβγδεζηθ", min_size=1, max_size=15,
+                        alphabet="αβγδεζηθ",
+                        min_size=1,
+                        max_size=15,
                     ),  # Greek letters
                     st.text(
                         alphabet="中文测试",
@@ -595,7 +599,9 @@ class FlextTestsHypothesis:
 
             def _scenario_builder(data: object, id_val: str) -> FlextTypes.Core.Dict:
                 return FlextTestsHypothesis.PropertyTestHelpers._build_test_scenario(
-                    data, id_val, scenario_name,
+                    data,
+                    id_val,
+                    scenario_name,
                 )
 
             return st.builds(

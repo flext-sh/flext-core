@@ -53,7 +53,10 @@ class AuditService(Protocol):
     """Protocol for audit service operations."""
 
     def log_event(
-        self, event_type: str, entity_id: str, details: dict[str, object],
+        self,
+        event_type: str,
+        entity_id: str,
+        details: dict[str, object],
     ) -> FlextResult[None]:
         """Log audit event."""
         ...
@@ -176,7 +179,8 @@ class CreateUserHandler(
             # Check if user already exists
             if self.user_repository is not None:
                 existing_user = cast(
-                    "UserRepository", self.user_repository,
+                    "UserRepository",
+                    self.user_repository,
                 ).find_by_username(message.username)
             else:
                 existing_user = None
@@ -215,7 +219,8 @@ class CreateUserHandler(
             # Get the created user data
             if self.user_repository is not None:
                 user_data_result = cast(
-                    "UserRepository", self.user_repository,
+                    "UserRepository",
+                    self.user_repository,
                 ).find_by_id(user_id)
             else:
                 # Mock user data for testing
@@ -445,7 +450,8 @@ class TestFlextCqrsComprehensive:
                 return self.users.get(email)
 
             def find_by_username(
-                self, username: str,
+                self,
+                username: str,
             ) -> FlextTestsDomains.TestUser | None:
                 for user in self.users.values():
                     if hasattr(user, "name") and user.name == username:
@@ -866,7 +872,8 @@ class TestFlextCqrsComprehensive:
     # =========================================================================
 
     def test_command_processing_performance(
-        self, benchmark: FlextTestsFixtures.BenchmarkFixture,
+        self,
+        benchmark: FlextTestsFixtures.BenchmarkFixture,
     ) -> None:
         """Test command processing performance under load."""
         handler = CreateUserHandler()

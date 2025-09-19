@@ -153,7 +153,9 @@ class FlextTestsFactories:
 
         @staticmethod
         def create_batch(
-            field_type: str, size: int, **kwargs: object,
+            field_type: str,
+            size: int,
+            **kwargs: object,
         ) -> list[FlextTypes.Core.Dict]:
             """Create batch of fields by type."""
             method_map = {
@@ -164,7 +166,8 @@ class FlextTestsFactories:
             }
 
             field_method = method_map.get(
-                field_type, FlextTestsFactories.FieldFactory.string_field,
+                field_type,
+                FlextTestsFactories.FieldFactory.string_field,
             )
             return [field_method(**kwargs) for _ in range(size)]
 
@@ -251,7 +254,9 @@ class FlextTestsFactories:
             return self
 
         def with_configs(
-            self, *, production: bool = False,
+            self,
+            *,
+            production: bool = False,
         ) -> FlextTestsFactories.TestDataBuilder:
             """Add configuration to test data."""
             if production:
@@ -263,7 +268,8 @@ class FlextTestsFactories:
             return self
 
         def with_validation_fields(
-            self, count: int = 5,
+            self,
+            count: int = 5,
         ) -> FlextTestsFactories.TestDataBuilder:
             """Add validation fields to test data."""
             self._data["validation_fields"] = (

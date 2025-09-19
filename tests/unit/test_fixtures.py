@@ -157,7 +157,8 @@ class TestSequenceFactory:
     def test_create_sequence_with_count_override(self) -> None:
         """Test sequence with count parameter override."""
         sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
-            length=10, count=3,
+            length=10,
+            count=3,
         )
 
         assert len(sequence) == 3  # Count overrides length
@@ -567,7 +568,8 @@ class TestFixturesIntegration:
 
         # Create sequence
         sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
-            length=5, prefix="item",
+            length=5,
+            prefix="item",
         )
 
         # Combine them
@@ -589,7 +591,8 @@ class TestFixturesIntegration:
 
         # Register error factories
         registry.register(
-            "timeout", FlextTestsFixtures.ErrorSimulationFactory.create_timeout_error,
+            "timeout",
+            FlextTestsFixtures.ErrorSimulationFactory.create_timeout_error,
         )
         registry.register(
             "connection",

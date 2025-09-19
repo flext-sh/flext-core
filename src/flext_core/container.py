@@ -478,6 +478,18 @@ class FlextContainer:
             """Get factories dictionary (internal use)."""
             return self._factories
 
+        def get_services_count(self) -> int:
+            """Get number of registered services."""
+            return len(self._services)
+
+        def get_factories_count(self) -> int:
+            """Get number of registered factories."""
+            return len(self._factories)
+
+        def get_factory_names(self) -> list[str]:
+            """Get list of factory names."""
+            return list(self._factories.keys())
+
     class ServiceRetriever:
         """Service retrieval component implementing single responsibility principle."""
 
@@ -532,7 +544,7 @@ class FlextContainer:
                     ValueError,
                     AttributeError,
                     RuntimeError,
-                    FlextContainer._get_exception_class("FlextError"),
+                    FlextContainer._get_exception_class("Error"),
                 ) as e:
                     return FlextResult[object].fail(
                         f"Factory for '{validated_name}' failed: {e!s}",
@@ -729,7 +741,8 @@ class FlextContainer:
             mapped_config = {
                 "environment": config_dict.get("environment", "development"),
                 "max_services": config_dict.get(
-                    "max_workers", 4,
+                    "max_workers",
+                    4,
                 ),  # Map max_workers to max_services
                 "max_workers": config_dict.get("max_workers", 4),
                 "timeout_seconds": config_dict.get("timeout_seconds", 30),
@@ -737,7 +750,8 @@ class FlextContainer:
                 "log_level": config_dict.get("log_level", "INFO"),
                 "config_source": config_dict.get("config_source", "default"),
                 "service_timeout": config_dict.get(
-                    "timeout_seconds", 30,
+                    "timeout_seconds",
+                    30,
                 ),  # Map timeout_seconds to service_timeout
                 "enable_auto_wire": False,  # Default value
                 "enable_factory_cache": True,  # Default value
@@ -765,7 +779,7 @@ class FlextContainer:
                         "container_id": id(self),
                     },
                     "service_statistics": {
-                        "total_services": len(self._registrar._services),
+                        "total_services": self._registrar.get_services_count(),
                     },
                     "has_database_config": self._database_config is not None,
                     "has_security_config": self._security_config is not None,
@@ -788,14 +802,14 @@ class FlextContainer:
             environment_info = {
                 "environment": config_dict.get("environment", "development"),
                 "container_id": id(self),
-                "current_services": len(self._registrar._services),
+                "current_services": self._registrar.get_services_count(),
             }
 
             service_statistics = {
-                "total_services": len(self._registrar._services),
-                "total_factories": len(self._registrar._factories),
-                "service_names": list(self._registrar._services.keys()),
-                "factory_names": list(self._registrar._factories.keys()),
+                "total_services": self._registrar.get_services_count(),
+                "total_factories": self._registrar.get_factories_count(),
+                "service_names": self._registrar.get_service_names(),
+                "factory_names": self._registrar.get_factory_names(),
             }
 
             summary = {
@@ -813,7 +827,8 @@ class FlextContainer:
             )
 
     def create_scoped_container(
-        self, config: FlextConfig | None = None,
+        self,
+        config: FlextConfig | None = None,
     ) -> FlextResult[FlextContainer]:
         """Create a new container with injected configuration."""
         try:

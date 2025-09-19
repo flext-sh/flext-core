@@ -54,7 +54,10 @@ class AdvancedRailwayService(FlextDomainService[ProcessedUser]):
         return FlextResult[ProcessedUser].fail("Use process_pipeline instead")
 
     def validate_user_input(
-        self, name: str, email: str, age: int,
+        self,
+        name: str,
+        email: str,
+        age: int,
     ) -> FlextResult[UserData]:
         """Validate user input using direct validation patterns."""
         # Single validation call replaces manual try/catch
@@ -107,7 +110,10 @@ class AdvancedRailwayService(FlextDomainService[ProcessedUser]):
         return FlextResult[ProcessedUser].ok(user)
 
     def process_pipeline(
-        self, name: str, email: str, age: int,
+        self,
+        name: str,
+        email: str,
+        age: int,
     ) -> FlextResult[ProcessedUser]:
         """Railway-oriented pipeline with type-safe domain models."""
         return (

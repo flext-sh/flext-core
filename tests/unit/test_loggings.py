@@ -703,7 +703,9 @@ class TestErrorHandling:
 
             # Test that log entry building includes stack trace
             log_entry = logger._build_log_entry(
-                "ERROR", "Unexpected error occurred", error=e,
+                "ERROR",
+                "Unexpected error occurred",
+                error=e,
             )
 
             # Verify stack trace information is captured
@@ -747,7 +749,9 @@ class TestErrorHandling:
         }
 
         log_entry = logger._build_log_entry(
-            "ERROR", "Business rule violation", context_data,
+            "ERROR",
+            "Business rule violation",
+            context_data,
         )
 
         # Verify log entry structure is correct
@@ -904,7 +908,9 @@ class TestLoggerConfiguration:
 
         # Test that log entry building works correctly
         log_entry = logger._build_log_entry(
-            "INFO", "JSON test message", {"field1": "value1", "field2": 123},
+            "INFO",
+            "JSON test message",
+            {"field1": "value1", "field2": 123},
         )
 
         assert log_entry.get("message") == "JSON test message"
@@ -928,7 +934,9 @@ class TestLoggerConfiguration:
 
         # Test that log entry building works for console output
         log_entry = logger._build_log_entry(
-            "INFO", "Console test message", {"debug_info": "useful"},
+            "INFO",
+            "Console test message",
+            {"debug_info": "useful"},
         )
 
         assert log_entry.get("message") == "Console test message"
@@ -1021,22 +1029,34 @@ class TestLoggingLevels:
 
         # Test that log entry building works for different levels
         trace_entry = logger._build_log_entry(
-            "TRACE", "Trace message", {"detail": "very_fine"},
+            "TRACE",
+            "Trace message",
+            {"detail": "very_fine"},
         )
         debug_entry = logger._build_log_entry(
-            "DEBUG", "Debug message", {"component": "database"},
+            "DEBUG",
+            "Debug message",
+            {"component": "database"},
         )
         info_entry = logger._build_log_entry(
-            "INFO", "Info message", {"status": "normal"},
+            "INFO",
+            "Info message",
+            {"status": "normal"},
         )
         warning_entry = logger._build_log_entry(
-            "WARNING", "Warning message", {"issue": "deprecated"},
+            "WARNING",
+            "Warning message",
+            {"issue": "deprecated"},
         )
         error_entry = logger._build_log_entry(
-            "ERROR", "Error message", {"code": "E001"},
+            "ERROR",
+            "Error message",
+            {"code": "E001"},
         )
         critical_entry = logger._build_log_entry(
-            "CRITICAL", "Critical message", {"severity": "high"},
+            "CRITICAL",
+            "Critical message",
+            {"severity": "high"},
         )
 
         # Verify all entries have correct levels
@@ -1396,7 +1416,8 @@ class TestAdvancedLoggingFeatures:
         # Test with invalid level - should default to INFO
         # Test with invalid level - should default to INFO
         logger = FlextLogger(
-            "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
+            "level_edge_test",
+            level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
         )
         assert (
             logger._level == "WARNING"
@@ -1405,7 +1426,8 @@ class TestAdvancedLoggingFeatures:
         # Test with empty string level - should default to INFO
         # Test with empty string level - should default to INFO
         logger = FlextLogger(
-            "level_edge_test", level=cast("FlextTypes.Config.LogLevel", ""),
+            "level_edge_test",
+            level=cast("FlextTypes.Config.LogLevel", ""),
         )
         assert (
             logger._level == "WARNING"
@@ -1414,7 +1436,8 @@ class TestAdvancedLoggingFeatures:
         # Test with lowercase valid level - should convert to uppercase
         # Test with lowercase valid level - should convert to uppercase
         logger = FlextLogger(
-            "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "debug"),
+            "level_edge_test",
+            level=cast("FlextTypes.Config.LogLevel", "debug"),
         )
         assert logger._level == "DEBUG"  # Should convert to uppercase
 
@@ -1890,7 +1913,9 @@ class TestCoverageTargetedTests:
 
         # Test that log entry building works with string errors
         log_entry = logger._build_log_entry(
-            "ERROR", "String error occurred", error="This is a string error",
+            "ERROR",
+            "String error occurred",
+            error="This is a string error",
         )
         assert "error" in log_entry
         assert log_entry.get("error", {})["type"] == "StringError"
@@ -1995,7 +2020,8 @@ class TestCoverageTargetedTests:
 
         # Test that bound logger includes context in log entries
         log_entry = bound_logger._build_log_entry(
-            "INFO", "Test bound logger with complex data",
+            "INFO",
+            "Test bound logger with complex data",
         )
         # Bound context data should be in the request field
         assert "request" in log_entry

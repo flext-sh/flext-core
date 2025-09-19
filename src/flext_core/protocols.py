@@ -207,7 +207,9 @@ class FlextProtocols:
             """
 
             def save_to_file(
-                self, file_path: str | Path, **kwargs: object,
+                self,
+                file_path: str | Path,
+                **kwargs: object,
             ) -> FlextResult[None]:
                 """Save configuration to file."""
                 ...
@@ -226,14 +228,16 @@ class FlextProtocols:
 
             @classmethod
             def create_web_service_config(
-                cls, **kwargs: object,
+                cls,
+                **kwargs: object,
             ) -> FlextResult[FlextConfig]:
                 """Create web service configuration."""
                 ...
 
             @classmethod
             def create_microservice_config(
-                cls, **kwargs: object,
+                cls,
+                **kwargs: object,
             ) -> FlextResult[FlextConfig]:
                 """Create microservice configuration."""
                 ...

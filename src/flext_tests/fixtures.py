@@ -235,7 +235,9 @@ class FlextTestsFixtures:
             self._data: dict[str, dict[str, object]] = {}
 
         def create_session(
-            self, session_id: str, data: dict[str, object] | None = None,
+            self,
+            session_id: str,
+            data: dict[str, object] | None = None,
         ) -> dict[str, object]:
             """Create a new session.
 
@@ -437,7 +439,8 @@ class FlextTestsFixtures:
             return await task
 
         async def execute_batch(
-            self, coros: FlextTypes.Core.List,
+            self,
+            coros: FlextTypes.Core.List,
         ) -> FlextTypes.Core.List:
             """Execute multiple coroutines in batch."""
             if not self._running:
@@ -570,7 +573,8 @@ class FlextTestsFixtures:
 
     @staticmethod
     def create_test_product(
-        name: str = "Test Product", price: float = 50.0,
+        name: str = "Test Product",
+        price: float = 50.0,
     ) -> TestProduct:
         """Create test product."""
         return FlextTestsFixtures.TestProduct(

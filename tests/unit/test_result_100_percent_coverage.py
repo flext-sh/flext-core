@@ -674,7 +674,8 @@ class TestFlextResultCompleteCoverage:
 
         # No success
         no_success_result: FlextResult[object] = FlextResult.first_success(
-            cast("FlextResult[object]", failure1), cast("FlextResult[object]", failure2),
+            cast("FlextResult[object]", failure1),
+            cast("FlextResult[object]", failure2),
         )
         assert no_success_result.is_failure
         assert no_success_result.error is not None
@@ -729,14 +730,18 @@ class TestFlextResultCompleteCoverage:
 
         # Success after failures
         result_later_success = FlextResult.try_all(
-            failing_func1, failing_func2, success_func,
+            failing_func1,
+            failing_func2,
+            success_func,
         )
         assert result_later_success.is_success
         assert result_later_success.value == "success"
 
         # All fail
         result_all_fail = FlextResult.try_all(
-            failing_func1, failing_func2, failing_func3,
+            failing_func1,
+            failing_func2,
+            failing_func3,
         )
         assert result_all_fail.is_failure
         assert result_all_fail.error is not None
@@ -922,7 +927,9 @@ class TestFlextResultCompleteCoverage:
         # With failure
         failure_result = FlextResult[int].fail("lift_error")
         lifted_failure = FlextResult.applicative_lift2(
-            add_func, result1, failure_result,
+            add_func,
+            result1,
+            failure_result,
         )
         assert lifted_failure.is_failure
 
@@ -932,7 +939,10 @@ class TestFlextResultCompleteCoverage:
 
         result3 = FlextResult[int].ok(30)
         lifted3_result = FlextResult.applicative_lift3(
-            add_three_func, result1, result2, result3,
+            add_three_func,
+            result1,
+            result2,
+            result3,
         )
         assert lifted3_result.is_success
         assert lifted3_result.value == 60

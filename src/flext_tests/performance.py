@@ -677,7 +677,10 @@ class FlextTestsPerformance:
         """Protocol for pytest-benchmark fixture."""
 
         def __call__(
-            self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs,
+            self,
+            func: Callable[P, T],
+            *args: P.args,
+            **kwargs: P.kwargs,
         ) -> T:
             """Call the benchmark function."""
             ...

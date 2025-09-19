@@ -147,9 +147,9 @@ class FlextProcessing:
     @staticmethod
     def is_handler_safe(handler: object) -> bool:
         """Check if a handler is safe (has handle method or is callable)."""
-        return (
-            hasattr(handler, "handle") and callable(handler.handle)
-        ) or callable(handler)
+        return (hasattr(handler, "handle") and callable(handler.handle)) or callable(
+            handler
+        )
 
     # =========================================================================
     # HANDLER CLASSES - For examples and demos

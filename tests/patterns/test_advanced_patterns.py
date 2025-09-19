@@ -364,7 +364,8 @@ class TestAdvancedPatterns:
         }
 
         scenario = MockScenario(
-            "api_request", cast("FlextTypes.Core.Dict", scenario_data),
+            "api_request",
+            cast("FlextTypes.Core.Dict", scenario_data),
         )
 
         assert scenario.name == "api_request"

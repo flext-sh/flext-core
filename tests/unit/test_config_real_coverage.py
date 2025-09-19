@@ -161,7 +161,10 @@ ENVIRONMENT=staging
 """
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".env",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".env",
         ) as f:
             f.write(env_content)
             env_path = f.name
@@ -172,9 +175,10 @@ ENVIRONMENT=staging
             config = result.unwrap()
 
             # Check metadata
-            assert "created_from" in config._metadata
-            assert config._metadata["created_from"] == "environment"
-            assert "env_file" in config._metadata
+            metadata = config.get_metadata()
+            assert "created_from" in metadata
+            assert metadata["created_from"] == "environment"
+            assert "env_file" in metadata
         finally:
             if Path(env_path).exists():
                 Path(env_path).unlink()
@@ -274,7 +278,10 @@ ENVIRONMENT=staging
 
         # Invalid configuration - test production with debug mode
         config_invalid = FlextConfig(
-            app_name="test", environment="production", debug=True, config_source="env",
+            app_name="test",
+            environment="production",
+            debug=True,
+            config_source="env",
         )
         result = config_invalid.validate_business_rules()
         assert result.is_failure
@@ -375,7 +382,10 @@ ENVIRONMENT=staging
 
         # Test save to JSON
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".json",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".json",
         ) as f:
             json_path = f.name
 
@@ -423,7 +433,8 @@ ENVIRONMENT=staging
 
         # Test that sealed config cannot be modified
         with pytest.raises(
-            AttributeError, match=r"Cannot modify field.*configuration is sealed",
+            AttributeError,
+            match=r"Cannot modify field.*configuration is sealed",
         ):
             config.app_name = "modified"
 
@@ -508,7 +519,10 @@ ENVIRONMENT=staging
         json_data = {"app_name": "json_env_app", "version": "1.0.0", "debug": True}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".json",
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".json",
         ) as f:
             json.dump(json_data, f)
             json_path = f.name
@@ -546,7 +560,8 @@ ENVIRONMENT=staging
         # Test merge with incompatible configs (if applicable)
         try:
             merge_result: FlextResult[dict[str, object]] = config.merge_configs(
-                config.to_dict(), config.to_dict(),
+                config.to_dict(),
+                config.to_dict(),
             )
             # Should succeed or fail gracefully
             assert isinstance(merge_result, FlextResult)
