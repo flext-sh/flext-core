@@ -60,6 +60,10 @@ class FlextDispatcherRegistry:
         Re-registration is ignored and treated as success to guarantee
         idempotent behaviour when multiple packages attempt to register
         the same handler.
+        
+        Returns:
+            FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
+
         """
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
@@ -76,7 +80,12 @@ class FlextDispatcherRegistry:
         self,
         handlers: Iterable[FlextHandlers[MessageT, ResultT]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
-        """Register multiple handlers in one shot using railway pattern."""
+        """Register multiple handlers in one shot using railway pattern.
+        
+        Returns:
+            FlextResult[FlextDispatcherRegistry.Summary]: Success result with registration summary.
+
+        """
         summary = FlextDispatcherRegistry.Summary()
         for handler in handlers:
             result = self._process_single_handler(handler, summary)
@@ -91,7 +100,12 @@ class FlextDispatcherRegistry:
         handler: FlextHandlers[MessageT, ResultT],
         summary: FlextDispatcherRegistry.Summary,
     ) -> FlextResult[None]:
-        """Process a single handler registration."""
+        """Process a single handler registration.
+        
+        Returns:
+            FlextResult[None]: Success result if registration succeeds.
+
+        """
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
             summary.skipped.append(key)
@@ -124,7 +138,12 @@ class FlextDispatcherRegistry:
         error: str,
         summary: FlextDispatcherRegistry.Summary,
     ) -> str:
-        """Add registration error to summary."""
+        """Add registration error to summary.
+        
+        Returns:
+            str: The error message that was added.
+
+        """
         summary.errors.append(error or f"Failed to register handler '{key}'")
         return error
 
@@ -132,7 +151,12 @@ class FlextDispatcherRegistry:
         self,
         summary: FlextDispatcherRegistry.Summary,
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
-        """Finalize summary based on error state."""
+        """Finalize summary based on error state.
+        
+        Returns:
+            FlextResult[FlextDispatcherRegistry.Summary]: Success result with summary or failure result with errors.
+
+        """
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
                 "; ".join(summary.errors),
@@ -143,7 +167,12 @@ class FlextDispatcherRegistry:
         self,
         bindings: Sequence[tuple[type[MessageT], FlextHandlers[MessageT, ResultT]]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
-        """Register handlers bound to explicit message types."""
+        """Register handlers bound to explicit message types.
+        
+        Returns:
+            FlextResult[FlextDispatcherRegistry.Summary]: Success result with registration summary.
+
+        """
         summary = FlextDispatcherRegistry.Summary()
         for message_type, handler in bindings:
             key = self._resolve_binding_key(handler, message_type)
@@ -184,7 +213,12 @@ class FlextDispatcherRegistry:
             ],
         ],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
-        """Register plain callables or pre-built handlers for message types."""
+        """Register plain callables or pre-built handlers for message types.
+        
+        Returns:
+            FlextResult[FlextDispatcherRegistry.Summary]: Success result with registration summary.
+
+        """
         summary = FlextDispatcherRegistry.Summary()
         for message_type, entry in mapping.items():
             key = self._resolve_binding_key_from_entry(entry, message_type)

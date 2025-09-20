@@ -1,3 +1,9 @@
+"""Type stubs for Factory Boy library - FLEXT testing support.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from collections.abc import Callable
 from typing import TypeVar
 

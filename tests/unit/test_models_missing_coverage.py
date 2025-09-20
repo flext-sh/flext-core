@@ -67,7 +67,9 @@ class TestCommandQueryValidationMethods:
 
     def test_command_validate_command_with_empty_type(self) -> None:
         """Test Command.validate_command() with empty command_type - Lines 170-172."""
-        command = FlextModels.Command.model_construct(command_type="")  # Bypass validation
+        command = FlextModels.Command.model_construct(
+            command_type=""
+        )  # Bypass validation
 
         # Test validation method
         result = command.validate_command()
@@ -97,6 +99,7 @@ class TestCqrsCommandTypeDerivation:
 
     def test_cqrs_command_type_derivation_from_class_name(self) -> None:
         """Test CqrsCommand command_type derivation from class name - Lines 203-212."""
+
         # Create a custom command class to test derivation
         class CreateUserCommand(FlextModels.CqrsCommand):
             pass
@@ -111,6 +114,7 @@ class TestCqrsCommandTypeDerivation:
 
     def test_cqrs_command_get_command_type_method(self) -> None:
         """Test CqrsCommand.get_command_type() method - Lines 221-224."""
+
         class TestComplexCommand(FlextModels.CqrsCommand):
             pass
 
@@ -139,6 +143,7 @@ class TestCqrsQueryTypeDerivation:
 
     def test_cqrs_query_type_derivation_from_class_name(self) -> None:
         """Test CqrsQuery query_type derivation from class name - Lines 235-240."""
+
         # Create a custom query class to test derivation
         class GetUserDetailsQuery(FlextModels.CqrsQuery):
             pass
@@ -169,7 +174,7 @@ class TestCqrsConfigHandlerMetadata:
             "handler_id": "test_handler",
             "handler_name": "Test Handler",
             "handler_type": "command",
-            "metadata": {"key": "value"}
+            "metadata": {"key": "value"},
         }
 
         # Create handler with explicit metadata
@@ -190,7 +195,7 @@ class TestCqrsConfigFactoryMethods:
             handler_type="query",
             default_name="Query Handler",
             default_id="query_id",
-            handler_config=None  # Test with None to trigger default creation
+            handler_config=None,  # Test with None to trigger default creation
         )
 
         # Lines 285-287: Should create new handler with provided parameters
@@ -202,8 +207,7 @@ class TestCqrsConfigFactoryMethods:
         """Test create_bus_config with existing bus object - Line 374."""
         # Create existing bus config
         existing_bus = FlextModels.CqrsConfig.Bus(
-            enable_middleware=False,
-            execution_timeout=60
+            enable_middleware=False, execution_timeout=60
         )
 
         # Test with existing bus - Line 374
@@ -375,7 +379,10 @@ class TestUrlNormalizationMethod:
         url = FlextModels.Url.model_construct(value="http://example.com/")
 
         # Mock FlextUtilities.TextProcessor.clean_text to raise exception
-        with unittest.mock.patch("flext_core.utilities.FlextUtilities.TextProcessor.clean_text", side_effect=Exception("Mock error")):
+        with unittest.mock.patch(
+            "flext_core.utilities.FlextUtilities.TextProcessor.clean_text",
+            side_effect=Exception("Mock error"),
+        ):
             # Test normalization exception handling - Lines 632-635
             result = url.normalize()
 
@@ -402,7 +409,9 @@ class TestSystemConfigsDeprecation:
         system_configs = FlextModels.SystemConfigs()
 
         # Test accessing invalid config - Lines 681-682
-        with pytest.raises(AttributeError, match="object has no attribute 'InvalidConfig'"):
+        with pytest.raises(
+            AttributeError, match="object has no attribute 'InvalidConfig'"
+        ):
             _ = system_configs.InvalidConfig
 
 
@@ -412,21 +421,21 @@ class TestWorkspaceValidation:
     def test_project_validate_business_rules(self) -> None:
         """Test Project.validate_business_rules() method - Line 736."""
         project = FlextModels.Project(
-            name="test_project",
-            path="/test/path",
-            project_type="python"
+            name="test_project", path="/test/path", project_type="python"
         )
 
         # Test validate_business_rules - Line 736
         result = project.validate_business_rules()
         assert result.is_success
 
-    def test_workspace_info_validate_business_rules_negative_project_count(self) -> None:
+    def test_workspace_info_validate_business_rules_negative_project_count(
+        self,
+    ) -> None:
         """Test WorkspaceInfo.validate_business_rules() with negative count - Lines 772-773."""
         workspace_info = FlextModels.WorkspaceInfo.model_construct(
             name="test_workspace",
             path="/test/path",
-            project_count=-1  # Invalid
+            project_count=-1,  # Invalid
         )
 
         # Test validation - Lines 772-773
@@ -439,7 +448,7 @@ class TestWorkspaceValidation:
         workspace_info = FlextModels.WorkspaceInfo.model_construct(
             name="test_workspace",
             path="/test/path",
-            total_size_mb=-1.0  # Invalid
+            total_size_mb=-1.0,  # Invalid
         )
 
         # Test validation - Lines 774-775
@@ -453,7 +462,7 @@ class TestWorkspaceValidation:
             name="test_workspace",
             path="/test/path",
             project_count=5,
-            total_size_mb=100.0
+            total_size_mb=100.0,
         )
 
         # Test validation success - Line 776
@@ -485,7 +494,9 @@ class TestFactoryMethods:
     def test_create_entity_with_exception(self) -> None:
         """Test create_entity() with exception - Lines 795-796."""
         # Test with data that would cause exception during entity creation
-        with unittest.mock.patch("flext_core.models.FlextModels.Entity", side_effect=Exception("Mock error")):
+        with unittest.mock.patch(
+            "flext_core.models.FlextModels.Entity", side_effect=Exception("Mock error")
+        ):
             result = FlextModels.create_entity(id="test")
 
         assert result.is_failure
@@ -497,7 +508,7 @@ class TestFactoryMethods:
         event = FlextModels.create_event(
             event_type="user_created",
             payload={"user_id": "123"},
-            aggregate_id="user_123"
+            aggregate_id="user_123",
         )
 
         assert event.event_type == "user_created"
@@ -509,7 +520,7 @@ class TestFactoryMethods:
         # Test create_query with None filters - Line 822
         query = FlextModels.create_query(
             query_type="get_users",
-            filters=None  # Should default to {}
+            filters=None,  # Should default to {}
         )
 
         assert query.query_type == "get_users"
@@ -530,7 +541,9 @@ class TestValidationFunctionsMissingCoverage:
     def test_create_validated_http_status_with_type_error(self) -> None:
         """Test create_validated_http_status() with TypeError - Lines 908-909."""
         # Test with input that causes TypeError - Lines 908-909
-        result = FlextModels.create_validated_http_status(object())  # Object can't be converted to int
+        result = FlextModels.create_validated_http_status(
+            object()
+        )  # Object can't be converted to int
 
         assert result.is_failure
         assert "Status code must be a valid integer" in result.error
@@ -547,8 +560,7 @@ class TestValidationFunctionsMissingCoverage:
         """Test create_validated_date_range() with invalid start date - Line 979."""
         # Test with invalid start date - Lines 978-981
         result = FlextModels.create_validated_date_range(
-            start_date="invalid-date",
-            end_date="2025-01-10"
+            start_date="invalid-date", end_date="2025-01-10"
         )
 
         assert result.is_failure
@@ -558,8 +570,7 @@ class TestValidationFunctionsMissingCoverage:
         """Test create_validated_date_range() with invalid end date - Line 985."""
         # Test with invalid end date - Lines 983-987
         result = FlextModels.create_validated_date_range(
-            start_date="2025-01-08",
-            end_date="invalid-date"
+            start_date="2025-01-08", end_date="invalid-date"
         )
 
         assert result.is_failure
@@ -569,8 +580,7 @@ class TestValidationFunctionsMissingCoverage:
         """Test create_validated_date_range() exception handling - Lines 1002-1003."""
         # Test with malformed dates that cause ValueError during parsing
         result = FlextModels.create_validated_date_range(
-            start_date="invalid-date-format",
-            end_date="2025-01-10"
+            start_date="invalid-date-format", end_date="2025-01-10"
         )
 
         assert result.is_failure
@@ -591,7 +601,9 @@ class TestFilePathValidationMethods:
     def test_create_validated_existing_file_path_failure_passthrough(self) -> None:
         """Test create_validated_existing_file_path() with path validation failure - Line 1043."""
         # Test with invalid path that fails basic validation - Line 1043
-        with unittest.mock.patch("flext_core.models.FlextModels.create_validated_file_path") as mock_validate:
+        with unittest.mock.patch(
+            "flext_core.models.FlextModels.create_validated_file_path"
+        ) as mock_validate:
             mock_validate.return_value = FlextResult[str].fail("Invalid path format")
 
             result = FlextModels.create_validated_existing_file_path("/invalid/path")
@@ -606,7 +618,10 @@ class TestFilePathValidationMethods:
             tmp_path = tmp_file.name
 
             # Mock Path.exists() to cause PermissionError
-            with unittest.mock.patch("pathlib.Path.exists", side_effect=PermissionError("Mock permission error")):
+            with unittest.mock.patch(
+                "pathlib.Path.exists",
+                side_effect=PermissionError("Mock permission error"),
+            ):
                 result = FlextModels.create_validated_existing_file_path(tmp_path)
 
         assert result.is_failure
@@ -629,7 +644,10 @@ class TestFilePathValidationMethods:
         # Create a temporary directory
         with (
             tempfile.TemporaryDirectory() as tmp_dir,
-            unittest.mock.patch("pathlib.Path.is_dir", side_effect=PermissionError("Mock permission error"))
+            unittest.mock.patch(
+                "pathlib.Path.is_dir",
+                side_effect=PermissionError("Mock permission error"),
+            ),
         ):
             result = FlextModels.create_validated_directory_path(tmp_dir)
 
