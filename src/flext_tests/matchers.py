@@ -72,6 +72,7 @@ class FlextTestsMatchers:
         def __len__(self) -> int:
             """Return length of the container."""
             ...
+
         def __contains__(self, item: object) -> bool:
             """Check if item is contained in the container."""
             ...
@@ -126,18 +127,26 @@ class FlextTestsMatchers:
         def be_success(result: object) -> bool:
             """Check if result indicates success."""
             if hasattr(result, "is_success"):
-                return bool(result.is_success)
+                is_success_attr = getattr(result, "is_success", None)
+                if is_success_attr is not None:
+                    return bool(is_success_attr)
             if hasattr(result, "success"):
-                return bool(result.success)
+                success_attr = getattr(result, "success", None)
+                if success_attr is not None:
+                    return bool(success_attr)
             return False
 
         @staticmethod
         def be_failure(result: object) -> bool:
             """Check if result indicates failure."""
             if hasattr(result, "is_failure"):
-                return bool(result.is_failure)
+                is_failure_attr = getattr(result, "is_failure", None)
+                if is_failure_attr is not None:
+                    return bool(is_failure_attr)
             if hasattr(result, "failure"):
-                return bool(result.failure)
+                failure_attr = getattr(result, "failure", None)
+                if failure_attr is not None:
+                    return bool(failure_attr)
             return False
 
         @staticmethod
@@ -146,14 +155,14 @@ class FlextTestsMatchers:
             if not hasattr(result, "error"):
                 return False
 
-            error = result.error
-            if error is None:
+            error_attr = getattr(result, "error", None)
+            if error_attr is None:
                 return False
 
             if expected_error is None:
                 return True
 
-            return str(expected_error) in str(error)
+            return str(expected_error) in str(error_attr)
 
         @staticmethod
         def have_error_code(result: object, expected_code: str) -> bool:
@@ -161,11 +170,11 @@ class FlextTestsMatchers:
             if not hasattr(result, "error_code"):
                 return False
 
-            error_code = result.error_code
-            if error_code is None:
+            error_code_attr = getattr(result, "error_code", None)
+            if error_code_attr is None:
                 return False
 
-            return str(error_code) == str(expected_code)
+            return str(error_code_attr) == str(expected_code)
 
         @staticmethod
         def have_value(result: object, expected_value: object = None) -> bool:
@@ -173,16 +182,20 @@ class FlextTestsMatchers:
             # Try value first, then data for backward compatibility
             actual_value: object = None
             if hasattr(result, "value"):
-                actual_value = result.value
+                value_attr = getattr(result, "value", None)
+                if value_attr is not None:
+                    actual_value = value_attr
             elif hasattr(result, "data"):
-                actual_value = result.data
+                data_attr = getattr(result, "data", None)
+                if data_attr is not None:
+                    actual_value = data_attr
             else:
                 return False
 
             if expected_value is None:
-                return actual_value is not None
+                return actual_value is None
 
-            return bool(actual_value == expected_value)
+            return actual_value == expected_value
 
         @staticmethod
         def be_empty(container: object) -> bool:
@@ -192,7 +205,9 @@ class FlextTestsMatchers:
                 sized_container = cast("Sized", container)
                 return len(sized_container) == 0
             if hasattr(container, "is_empty"):
-                return bool(container.is_empty)
+                is_empty_attr = getattr(container, "is_empty", None)
+                if is_empty_attr is not None:
+                    return bool(is_empty_attr)
             return False
 
         @staticmethod
@@ -203,8 +218,9 @@ class FlextTestsMatchers:
                 container_obj = cast("Container[object]", container)
                 return item in container_obj
             if hasattr(container, "contains"):
-                contains_method = container.contains
-                return bool(contains_method(item))
+                contains_method = getattr(container, "contains", None)
+                if contains_method is not None and callable(contains_method):
+                    return bool(contains_method(item))
             return False
 
         @staticmethod

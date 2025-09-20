@@ -40,6 +40,30 @@ class FlextContainer:
     _global_manager: FlextContainer.GlobalManager | None = None
 
     # =========================================================================
+    # COMPOSITION HELPER - Centralizes validation using FlextUtilities
+    # =========================================================================
+
+    class _ValidationHelper:
+        """Internal validation helper using FlextUtilities composition."""
+
+        @staticmethod
+        def validate_service_name(name: str) -> FlextResult[str]:
+            """Validate service name using FlextUtilities composition."""
+            if not FlextUtilities.Validation.is_non_empty_string(name):
+                return FlextResult[str].fail(
+                    FlextConstants.Messages.SERVICE_NAME_EMPTY,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            return FlextResult[str].ok(name.strip())
+
+        @staticmethod
+        def validate_factory_callable(factory: object) -> FlextResult[None]:
+            """Validate factory is callable using composition pattern."""
+            if not callable(factory):
+                return FlextResult[None].fail("Factory must be callable")
+            return FlextResult[None].ok(None)
+
+    # =========================================================================
     # NESTED CLASSES - Organized functionality following FLEXT patterns
     # =========================================================================
 
@@ -63,14 +87,8 @@ class FlextContainer:
             return cls  # Generic subscription support for service keys
 
         def validate(self, data: str) -> FlextResult[str]:
-            """Validate service key name."""
-            # String key validation with empty check
-            if not data or not data.strip():
-                return FlextResult[str].fail(
-                    FlextConstants.Messages.SERVICE_NAME_EMPTY,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return FlextResult[str].ok(data.strip())
+            """Validate service key name using composition pattern."""
+            return FlextContainer._ValidationHelper.validate_service_name(data)
 
     class Commands:
         """Container operation commands."""
@@ -136,11 +154,10 @@ class FlextContainer:
                 )
 
             def validate_command(self) -> FlextResult[None]:
-                """Validate service registration command."""
-                if not self.service_name or not self.service_name.strip():
-                    return FlextResult[None].fail(
-                        FlextConstants.Messages.SERVICE_NAME_EMPTY,
-                    )
+                """Validate service registration command using composition pattern."""
+                validation_result = FlextContainer._ValidationHelper.validate_service_name(self.service_name)
+                if validation_result.is_failure:
+                    return FlextResult[None].fail(validation_result.error)
                 return FlextResult[None].ok(None)
 
         class RegisterFactory:
@@ -194,13 +211,17 @@ class FlextContainer:
                 )
 
             def validate_command(self) -> FlextResult[None]:
-                """Validate factory registration command."""
-                if not self.service_name or not self.service_name.strip():
-                    return FlextResult[None].fail(
-                        FlextConstants.Messages.SERVICE_NAME_EMPTY,
-                    )
-                if not callable(self.factory):
-                    return FlextResult[None].fail("Factory must be callable")
+                """Validate factory registration command using composition pattern."""
+                # Use composition for service name validation
+                name_validation = FlextContainer._ValidationHelper.validate_service_name(self.service_name)
+                if name_validation.is_failure:
+                    return FlextResult[None].fail(name_validation.error)
+
+                # Use composition for factory validation
+                factory_validation = FlextContainer._ValidationHelper.validate_factory_callable(self.factory)
+                if factory_validation.is_failure:
+                    return FlextResult[None].fail(factory_validation.error)
+
                 return FlextResult[None].ok(None)
 
         class UnregisterService:

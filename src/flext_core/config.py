@@ -292,11 +292,16 @@ class FlextConfig(BaseSettings):
                                     config_data = dict(data)
                                 # Fallback for non-Mapping objects with items()
                                 elif hasattr(data, "items") and callable(
-                                    data.items,
+                                    getattr(data, "items", None),
                                 ):
-                                    config_data = {
-                                        "data": dict(data.items()),
-                                    }
+                                    # Type guard: ensure data has items method
+                                    items_method = getattr(data, "items", None)
+                                    if items_method is not None:
+                                        config_data = {
+                                            "data": dict(items_method()),
+                                        }
+                                    else:
+                                        config_data = {"data": data}
                                 else:
                                     config_data = {"data": data}
                             else:
@@ -1747,24 +1752,6 @@ class FlextConfig(BaseSettings):
                 f"Configuration merge failed: {error}",
                 error_code="CONFIG_MERGE_ERROR",
             )
-
-
-# =========================================================================
-# BACKWARD COMPATIBILITY EXPORTS - Maintain ecosystem compatibility
-# =========================================================================
-
-# Export constants for backward compatibility (tests and internal usage may depend on these)
-# Constants moved to FlextConstants.Config for proper unification
-_SEMANTIC_VERSION_MIN_PARTS = FlextConstants.Config.SEMANTIC_VERSION_MIN_PARTS
-_MIN_PRODUCTION_WORKERS = FlextConstants.Config.MIN_PRODUCTION_WORKERS
-_HIGH_TIMEOUT_THRESHOLD = FlextConstants.Config.HIGH_TIMEOUT_THRESHOLD
-_MIN_WORKERS_FOR_HIGH_TIMEOUT = FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
-_MAX_WORKERS_THRESHOLD = FlextConstants.Config.MAX_WORKERS_THRESHOLD
-_PROFILE_WEB_SERVICE = FlextConstants.Config.PROFILE_WEB_SERVICE
-_PROFILE_DATA_PROCESSOR = FlextConstants.Config.PROFILE_DATA_PROCESSOR
-_PROFILE_API_CLIENT = FlextConstants.Config.PROFILE_API_CLIENT
-_PROFILE_BATCH_JOB = FlextConstants.Config.PROFILE_BATCH_JOB
-_PROFILE_MICROSERVICE = FlextConstants.Config.PROFILE_MICROSERVICE
 
 
 __all__ = ["FlextConfig"]
