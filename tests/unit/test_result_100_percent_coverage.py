@@ -959,5 +959,32 @@ class TestFlextResultCompleteCoverage:
         # In Python 3.12+ type aliases, Success should be equivalent to object
         assert str(success_type) == "Success" or str(success_type) == "object"
 
-        # In Python 3.12+ type aliases, Success should be equivalent to object
-        assert str(success_type) == "Success" or str(success_type) == "object"
+    def test_edge_cases_for_missing_coverage(self) -> None:
+        """Test specific edge cases to cover missing lines."""
+        # Test accessing value on failed result (lines 113-114)
+        failed_result = FlextResult[str].fail("test error")
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
+            _ = failed_result.value
+
+        # Test success result with None data - internal state (lines 90-91)
+        # This is an internal error condition that shouldn't normally happen
+        # but we need to cover the defensive code path
+        success_result = FlextResult[str].ok("test")
+
+        # Force internal state to None to test defensive code (line 90-91)
+        # This is testing defensive programming, not normal usage
+        original_data = success_result._data
+        success_result._data = None
+        try:
+            with pytest.raises(RuntimeError, match="Success result has None data"):
+                _ = success_result._ensure_success_data()
+        finally:
+            # Restore original state
+            success_result._data = original_data
+
+        # Test special None handling cases
+        none_result = FlextResult[str | None].ok(None)
+        assert none_result.is_success
+        assert none_result.data is None

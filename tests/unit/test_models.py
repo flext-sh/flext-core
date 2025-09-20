@@ -1379,3 +1379,236 @@ class TestFlextModelsAggregateRootApplyEvent:
         # Verify the event was added successfully
         assert len(root.domain_events) == 1
         assert root.domain_events[0].event_type == "FailingEvent"
+
+
+class TestFlextModelsCqrsConfigMissingCoverage:
+    """Test FlextModels.CqrsConfig functionality for missing lines coverage."""
+
+    def test_cqrs_handler_creation_with_defaults(self) -> None:
+        """Test CqrsConfig.Handler creation with defaults."""
+        handler = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_123",
+            handler_name="Test Handler",
+            metadata={"test": "data"},  # Provide non-empty metadata to avoid recursion
+        )
+
+        assert handler.handler_id == "test_handler_123"
+        assert handler.handler_name == "Test Handler"
+        assert handler.handler_type == "command"  # Default handler type
+        assert handler.enabled is True  # Default enabled
+        assert handler.metadata == {"test": "data"}
+
+    def test_cqrs_handler_creation_with_query_type(self) -> None:
+        """Test CqrsConfig.Handler creation with query type."""
+        handler = FlextModels.CqrsConfig.Handler(
+            handler_id="query_handler_456",
+            handler_name="Query Handler",
+            handler_type="query",
+            enabled=False,
+            metadata={"handler_type": "query", "version": "1.0"},
+        )
+
+        assert handler.handler_id == "query_handler_456"
+        assert handler.handler_name == "Query Handler"
+        assert handler.handler_type == "query"
+        assert handler.enabled is False
+        assert handler.metadata["handler_type"] == "query"
+
+    def test_cqrs_handler_metadata_validation(self) -> None:
+        """Test CqrsConfig.Handler metadata validation."""
+        # Test that empty metadata gets set through the validator
+        handler = FlextModels.CqrsConfig.Handler(
+            handler_id="metadata_handler",
+            handler_name="Metadata Handler",
+            metadata={"initial": "value"},
+        )
+
+        assert handler.metadata == {"initial": "value"}
+
+    def test_cqrs_bus_creation_with_defaults(self) -> None:
+        """Test CqrsConfig.Bus creation with defaults."""
+        bus = FlextModels.CqrsConfig.Bus()
+
+        assert bus.enable_middleware is True  # Default
+        assert bus.enable_metrics is True  # Default
+        assert bus.enable_caching is True  # Default
+        assert bus.execution_timeout == 30  # Default timeout
+        assert bus.max_cache_size == 1000  # Default cache size
+        assert bus.implementation_path == "flext_core.bus:FlextBus"  # Default
+
+    def test_cqrs_bus_creation_with_custom_settings(self) -> None:
+        """Test CqrsConfig.Bus creation with custom settings."""
+        bus = FlextModels.CqrsConfig.Bus(
+            enable_middleware=False,
+            enable_metrics=False,
+            enable_caching=False,
+            execution_timeout=60,
+            max_cache_size=5000,
+            implementation_path="custom.module:CustomBus",
+        )
+
+        assert bus.enable_middleware is False
+        assert bus.enable_metrics is False
+        assert bus.enable_caching is False
+        assert bus.execution_timeout == 60
+        assert bus.max_cache_size == 5000
+        assert bus.implementation_path == "custom.module:CustomBus"
+
+    def test_cqrs_bus_path_validation_success(self) -> None:
+        """Test CqrsConfig.Bus path validation with valid format."""
+        bus = FlextModels.CqrsConfig.Bus(implementation_path="valid.module:ValidClass")
+        assert bus.implementation_path == "valid.module:ValidClass"
+
+    def test_cqrs_bus_path_validation_failure(self) -> None:
+        """Test CqrsConfig.Bus path validation with invalid format."""
+        with pytest.raises(
+            ValueError, match="implementation_path must be in 'module:Class' format"
+        ):
+            FlextModels.CqrsConfig.Bus(
+                implementation_path="invalid_path_without_colon"
+            )  # Default value  # Default value
+
+
+class TestFlextModelsValidationFunctionsMissingCoverage:
+    """Test FlextModels validation functions for missing lines coverage."""
+
+    def test_create_validated_phone_success(self) -> None:
+        """Test create_validated_phone with valid phone number."""
+        result = FlextModels.create_validated_phone("+1234567890")
+        assert result.is_success
+        assert result.value == "+1234567890"
+
+    def test_create_validated_phone_failure(self) -> None:
+        """Test create_validated_phone with invalid phone number."""
+        result = FlextModels.create_validated_phone("invalid")
+        assert result.is_failure
+
+    def test_create_validated_email_success(self) -> None:
+        """Test create_validated_email with valid email."""
+        result = FlextModels.create_validated_email("test@example.com")
+        assert result.is_success
+        assert result.value == "test@example.com"
+
+    def test_create_validated_email_failure(self) -> None:
+        """Test create_validated_email with invalid email."""
+        result = FlextModels.create_validated_email("invalid-email")
+        assert result.is_failure
+
+    def test_create_validated_uuid_success(self) -> None:
+        """Test create_validated_uuid with valid UUID v4."""
+        # Use a proper UUID v4 format
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        result = FlextModels.create_validated_uuid(valid_uuid)
+        assert result.is_success
+        assert result.value == valid_uuid
+
+    def test_create_validated_uuid_failure(self) -> None:
+        """Test create_validated_uuid with invalid UUID."""
+        result = FlextModels.create_validated_uuid("invalid-uuid")
+        assert result.is_failure
+
+    def test_create_validated_url_success(self) -> None:
+        """Test create_validated_url with valid URL."""
+        result = FlextModels.create_validated_url("https://example.com")
+        assert result.is_success
+        assert result.value == "https://example.com"
+
+    def test_create_validated_url_failure(self) -> None:
+        """Test create_validated_url with invalid URL."""
+        result = FlextModels.create_validated_url("not-a-url")
+        assert result.is_failure
+
+    def test_create_validated_http_url_success(self) -> None:
+        """Test create_validated_http_url with valid HTTP URL."""
+        result = FlextModels.create_validated_http_url("https://api.example.com")
+        assert result.is_success
+        assert result.value == "https://api.example.com"
+
+    def test_create_validated_http_url_failure(self) -> None:
+        """Test create_validated_http_url with invalid URL."""
+        result = FlextModels.create_validated_http_url("not-a-url")
+        assert result.is_failure
+
+    def test_create_validated_http_method_success(self) -> None:
+        """Test create_validated_http_method with valid method."""
+        result = FlextModels.create_validated_http_method("POST")
+        assert result.is_success
+        assert result.value == "POST"
+
+    def test_create_validated_http_method_failure(self) -> None:
+        """Test create_validated_http_method with invalid method."""
+        result = FlextModels.create_validated_http_method("INVALID")
+        assert result.is_failure
+
+    def test_create_validated_http_status_success(self) -> None:
+        """Test create_validated_http_status with valid status code."""
+        result = FlextModels.create_validated_http_status(200)
+        assert result.is_success
+        assert result.value == 200
+
+    def test_create_validated_http_status_failure(self) -> None:
+        """Test create_validated_http_status with invalid status code."""
+        result = FlextModels.create_validated_http_status(999)
+        assert result.is_failure
+
+    def test_create_validated_file_path_success(self) -> None:
+        """Test create_validated_file_path with valid path."""
+        # Use a simple relative path that should be valid
+        result = FlextModels.create_validated_file_path("test.txt")
+        assert result.is_success
+        assert result.value == "test.txt"
+
+    def test_create_validated_file_path_failure(self) -> None:
+        """Test create_validated_file_path with invalid path."""
+        # Use an empty string which should fail validation
+        result = FlextModels.create_validated_file_path("")
+        assert result.is_failure
+
+    def test_create_validated_existing_file_path_success(self) -> None:
+        """Test create_validated_existing_file_path with existing file."""
+        # Use a file that likely exists
+        result = FlextModels.create_validated_existing_file_path("pyproject.toml")
+        assert result.is_success
+        assert result.value == "pyproject.toml"
+
+    def test_create_validated_existing_file_path_failure(self) -> None:
+        """Test create_validated_existing_file_path with non-existing file."""
+        result = FlextModels.create_validated_existing_file_path(
+            "non_existing_file.txt"
+        )
+        assert result.is_failure
+
+    def test_create_validated_directory_path_success(self) -> None:
+        """Test create_validated_directory_path with valid directory."""
+        result = FlextModels.create_validated_directory_path("src")
+        assert result.is_success
+        assert result.value == "src"
+
+    def test_create_validated_directory_path_failure(self) -> None:
+        """Test create_validated_directory_path with invalid directory."""
+        result = FlextModels.create_validated_directory_path("invalid\x00directory")
+        assert result.is_failure
+
+    def test_create_validated_iso_date_success(self) -> None:
+        """Test create_validated_iso_date with valid ISO date."""
+        result = FlextModels.create_validated_iso_date("2024-01-15")
+        assert result.is_success
+        assert result.value == "2024-01-15"
+
+    def test_create_validated_iso_date_failure(self) -> None:
+        """Test create_validated_iso_date with invalid date."""
+        result = FlextModels.create_validated_iso_date("invalid-date")
+        assert result.is_failure
+
+    def test_create_validated_date_range_success(self) -> None:
+        """Test create_validated_date_range with valid date range."""
+        result = FlextModels.create_validated_date_range("2024-01-01", "2024-12-31")
+        assert result.is_success
+        start_date, end_date = result.value
+        assert start_date == "2024-01-01"
+        assert end_date == "2024-12-31"
+
+    def test_create_validated_date_range_failure(self) -> None:
+        """Test create_validated_date_range with invalid date range (end before start)."""
+        result = FlextModels.create_validated_date_range("2024-12-31", "2024-01-01")
+        assert result.is_failure

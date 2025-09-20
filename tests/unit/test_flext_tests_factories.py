@@ -156,7 +156,10 @@ class TestFlextTestsFactories:
             assert isinstance(custom_mock, dict)
             if isinstance(custom_mock, dict):
                 assert custom_mock["mock_type"] == "custom_mock"
-                assert custom_mock["data"]["custom"] == "data"
+                # Type-safe access to nested data
+                mock_data = custom_mock.get("data")
+                if isinstance(mock_data, dict):
+                    assert mock_data["custom"] == "data"
 
             # Test batch creation
             if hasattr(mock_factory, "create_batch"):

@@ -197,20 +197,24 @@ class FlextBus(FlextMixins):
             # Compute key for local registry visibility
             # Handle parameterized generics first before checking __name__
             if hasattr(command_type_obj, "__origin__") and hasattr(
-                command_type_obj,
-                "__args__",
+                command_type_obj, "__args__"
             ):
-                # Reconstruct the string representation for parameterized generics
-                origin = command_type_obj.__origin__
-                origin_name = getattr(origin, "__name__", str(origin))
-                args = command_type_obj.__args__
-                if args:
-                    args_str = ", ".join(
-                        getattr(arg, "__name__", str(arg)) for arg in args
-                    )
-                    key = f"{origin_name}[{args_str}]"
+                # Type guard: check if attributes exist and are not None
+                origin_attr = getattr(command_type_obj, "__origin__", None)
+                args_attr = getattr(command_type_obj, "__args__", None)
+                if origin_attr is not None and args_attr is not None:
+                    # Reconstruct the string representation for parameterized generics
+                    origin_name = getattr(origin_attr, "__name__", str(origin_attr))
+                    if args_attr:
+                        args_str = ", ".join(
+                            getattr(arg, "__name__", str(arg)) for arg in args_attr
+                        )
+                        key = f"{origin_name}[{args_str}]"
+                    else:
+                        key = origin_name
                 else:
-                    key = origin_name
+                    name_attr = getattr(command_type_obj, "__name__", None)
+                    key = name_attr if name_attr is not None else str(command_type_obj)
             else:
                 name_attr = getattr(command_type_obj, "__name__", None)
                 key = name_attr if name_attr is not None else str(command_type_obj)

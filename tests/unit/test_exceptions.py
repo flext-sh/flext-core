@@ -12,6 +12,77 @@ from flext_core import FlextExceptions
 class TestExceptions100PercentCoverage:
     """Targeted tests for FlextExceptions uncovered lines."""
 
+    def test_attribute_error_with_context(self) -> None:
+        """Test _AttributeError initialization with attribute_context (lines 128-138)."""
+        # Test creating AttributeError with attribute_context to cover lines 128-138
+        error = FlextExceptions.AttributeError(
+            "Invalid attribute access",
+            attribute_name="test_attr",
+            attribute_context={
+                "obj_type": "TestClass",
+                "available_attrs": ["name", "value"],
+            },
+        )
+
+        assert isinstance(error, FlextExceptions._AttributeError)
+        assert error.message == "Invalid attribute access"
+        assert error.attribute_name == "test_attr"
+        assert "attribute_context" in error.context
+        assert isinstance(error.context["attribute_context"], dict)
+        assert error.context["attribute_context"]["obj_type"] == "TestClass"
+
+    def test_not_found_error_with_resource_context(self) -> None:
+        """Test _NotFoundError initialization with resource context (lines 305-311)."""
+        # Test creating NotFoundError with resource context to cover lines 305-311
+        error = FlextExceptions.NotFoundError(
+            "Resource not found", resource_id="user_123", resource_type="User"
+        )
+
+        assert isinstance(error, FlextExceptions._NotFoundError)
+        assert error.message == "Resource not found"
+        assert error.resource_id == "user_123"
+        assert error.resource_type == "User"
+        assert error.context["resource_id"] == "user_123"
+        assert error.context["resource_type"] == "User"
+
+    def test_already_exists_error_with_resource_context(self) -> None:
+        """Test _AlreadyExistsError initialization with resource context (lines 329-336)."""
+        # Test creating AlreadyExistsError with resource context to cover lines 329-336
+        error = FlextExceptions.AlreadyExistsError(
+            "Resource already exists", resource_id="user_456", resource_type="User"
+        )
+
+        assert isinstance(error, FlextExceptions._AlreadyExistsError)
+        assert error.message == "Resource already exists"
+        assert error.resource_id == "user_456"
+        assert error.resource_type == "User"
+        assert error.context["resource_id"] == "user_456"
+        assert error.context["resource_type"] == "User"
+
+    def test_permission_error_with_required_permission(self) -> None:
+        """Test _PermissionError initialization with required_permission (lines 353-358)."""
+        # Test creating PermissionError with required_permission to cover lines 353-358
+        error = FlextExceptions.PermissionError(
+            "Permission denied", required_permission="admin_access"
+        )
+
+        assert isinstance(error, FlextExceptions._PermissionError)
+        assert error.message == "Permission denied"
+        assert error.required_permission == "admin_access"
+        assert error.context["required_permission"] == "admin_access"
+
+    def test_authentication_error_with_auth_method(self) -> None:
+        """Test _AuthenticationError initialization with auth_method (lines 375-380)."""
+        # Test creating AuthenticationError with auth_method to cover lines 375-380
+        error = FlextExceptions.AuthenticationError(
+            "Authentication failed", auth_method="oauth2"
+        )
+
+        assert isinstance(error, FlextExceptions._AuthenticationError)
+        assert error.message == "Authentication failed"
+        assert error.auth_method == "oauth2"
+        assert error.context["auth_method"] == "oauth2"
+
     def test_line_233_direct_call_method(self) -> None:
         """Test line 233: FlextExceptions.__call__ method."""
         # Test direct call to FlextExceptions instance

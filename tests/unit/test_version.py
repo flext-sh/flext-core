@@ -85,3 +85,29 @@ class TestVersion:
         assert FlextVersionManager.validate_version_format("1.0.0.0") is False
         assert FlextVersionManager.validate_version_format("invalid") is False
         assert FlextVersionManager.validate_version_format("") is False
+
+        # Test additional edge cases to cover missing lines
+        assert FlextVersionManager.validate_version_format(None) is False  # Line 138
+        assert FlextVersionManager.validate_version_format("1.a.0") is False  # Line 145
+        assert (
+            FlextVersionManager.validate_version_format("1.-1.0") is False
+        )  # Line 147
+        assert (
+            FlextVersionManager.validate_version_format("a.b.c") is False
+        )  # Line 147-149
+
+    def test_compatibility_result_creation(self) -> None:
+        """Test CompatibilityResult creation to cover missing init lines."""
+        # Create a CompatibilityResult to cover lines 74-78
+        check = FlextVersionManager.CompatibilityResult(
+            is_compatible=True,
+            current_version=(1, 0, 0),
+            required_version=(1, 0, 0),
+            error_message="No error",
+            recommendations=["Keep using current version"],
+        )
+        assert check.is_compatible is True
+        assert check.current_version == (1, 0, 0)
+        assert check.required_version == (1, 0, 0)
+        assert check.error_message == "No error"
+        assert check.recommendations == ["Keep using current version"]

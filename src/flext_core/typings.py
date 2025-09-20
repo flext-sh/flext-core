@@ -258,77 +258,6 @@ class FlextTypes:
         type WorkspacePath = str
         type WorkspaceName = str
 
-    # =========================================================================
-    # LEGACY COMPATIBILITY - Types that modules still reference
-    # =========================================================================
-    # LEGACY HELL: Multiple compatibility classes with duplicate ConfigValue definitions
-    # This creates 4 different ConfigDict types that are all the same - architectural mess!
-
-    class Aggregates:
-        """Aggregate types for core.py compatibility."""
-
-        # DUPLICATE: ConfigValue defined again - same as Core.ConfigValue, Models.ConfigValue, Commands.ConfigValue
-
-        type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
-        type ConfigDict = dict[str, ConfigValue]
-        type AggregatesConfigDict = dict[
-            str,
-            ConfigValue,
-        ]  # DUPLICATE: Same as ConfigDict
-        type AggregatesConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
-        type SystemConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
-        type PerformanceConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
-        type PerformanceLevel = Literal["low", "balanced", "high", "extreme"]
-
-    class Commands:
-        """CQRS Command and Query types for Flext CQRS components."""
-
-        # Handler function types (avoiding FlextResult to prevent circular imports)
-        type CommandHandlerFunc[T, R] = Callable[[T], R]
-        type QueryHandlerFunc[T, R] = Callable[[T], R]
-
-        # Bus configuration types
-        type BusConfig = dict[
-            str,
-            str | int | float | bool | list[object] | dict[str, object],
-        ]
-        type MiddlewareConfig = dict[
-            str,
-            str | int | float | bool | list[object] | dict[str, object],
-        ]
-        type HandlerRegistry = dict[str, object]
-
-        # Command/Query metadata types
-        type CommandMetadata = dict[str, str | int | float | bool | None]
-        type QueryMetadata = dict[str, str | int | float | bool | None]
-
-    class Container:
-        """Container types for core.py compatibility."""
-
-        type ServiceKey = str
-        type ServiceInstance = object
-        type ServiceRegistration = object  # FlextResult[None]
-        type ServiceRetrieval = object  # FlextResult[object]
-        type FactoryFunction = Callable[[], object]
-        type FactoryRegistration = object  # FlextResult[None]
-
-    class Handler:
-        """Handler types for validations.py compatibility."""
-
-        type Context = dict[str, object]
-        type HandlerMetadata = dict[str, object]
-
-    # =========================================================================
-    # RESULT TYPES - Result pattern types for test compatibility
-    # =========================================================================
-
-    class Result:
-        """Result types for test compatibility."""
-
-        type ResultData = object
-        type ResultError = str | None
-        type ResultValue = object
-
 
 # =========================================================================
 # TyperVars - Direct assignment to maintain proper TypeVar types for MyPy
@@ -368,10 +297,8 @@ TResult = TypeVar("TResult")
 TUtil = TypeVar("TUtil")
 TValueObject = TypeVar("TValueObject")
 
-
-# Export Optional type alias for backward compatibility
-# Re-export the type alias from FlextTypes.Core to maintain backward compatibility
-type Optional[T] = FlextTypes.Core.Optional[T]
+# Type alias for Optional to avoid Union syntax (module-level export)
+type Optional[T] = T | None
 
 
 __all__: list[str] = [

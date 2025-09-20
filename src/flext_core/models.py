@@ -37,9 +37,46 @@ from flext_core.utilities import FlextUtilities
 class FlextModels:
     """Namespace for the canonical FLEXT domain primitives.
 
+    Conservative refactored to maintain only used subclasses (Entity, Command, Value)
+    and use composition with FlextUtilities for validation to eliminate duplication.
     These types lock in the immutable, timestamped data structures referenced
     by the modernization plan and exercised across the FLEXT ecosystem.
     """
+
+    # Composition helper for validation - delegates to FlextUtilities
+    class _ValidationHelper:
+        """Internal validation helper using FlextUtilities composition."""
+
+        @staticmethod
+        def validate_non_empty_string(value: str, field_name: str) -> str:
+            """Validate non-empty string using FlextUtilities."""
+            if not FlextUtilities.Validation.is_non_empty_string(value):
+                msg = f"{field_name} cannot be empty or whitespace only"
+                raise ValueError(msg)
+            return value.strip() if value else ""
+
+        @staticmethod
+        def validate_email_format(email: str) -> str:
+            """Validate email format using consistent patterns."""
+            if not email or not isinstance(email, str):
+                msg = "Email must be a non-empty string"
+                raise ValueError(msg)
+
+            # Use simplified validation pattern consistent with current implementation
+            if email.count("@") != 1:
+                msg = "Invalid email format"
+                raise ValueError(msg)
+
+            local, domain = email.split("@", 1)
+            if not local or not domain:
+                msg = "Invalid email format"
+                raise ValueError(msg)
+
+            if "." not in domain or domain.startswith(".") or domain.endswith("."):
+                msg = "Invalid email format"
+                raise ValueError(msg)
+
+            return email.strip()
 
     class TimestampedModel(BaseModel):
         """Base model capturing creation/update timestamps for observability."""
@@ -144,11 +181,8 @@ class FlextModels:
         @field_validator("aggregate_id")
         @classmethod
         def validate_aggregate_id(cls, v: str) -> str:
-            """Validate aggregate_id is not empty or whitespace only."""
-            if not v or not v.strip():
-                error_msg = "Aggregate identifier cannot be empty or whitespace only"
-                raise ValueError(error_msg)
-            return v.strip()
+            """Validate aggregate_id using FlextUtilities composition."""
+            return FlextModels._ValidationHelper.validate_non_empty_string(v, "Aggregate identifier")
 
     class Command(BaseModel):
         """Command message template for dispatcher-driven CQRS flows."""
@@ -166,8 +200,8 @@ class FlextModels:
         )
 
         def validate_command(self) -> FlextResult[bool]:
-            """Validate command data."""
-            if not self.command_type:
+            """Validate command data using FlextUtilities composition."""
+            if not FlextUtilities.Validation.is_non_empty_string(self.command_type):
                 return FlextResult[bool].fail("Command type is required")
             return FlextResult[bool].ok(data=True)
 
@@ -186,8 +220,8 @@ class FlextModels:
         )
 
         def validate_query(self) -> FlextResult[bool]:
-            """Validate query data."""
-            if not self.query_type:
+            """Validate query data using FlextUtilities composition."""
+            if not FlextUtilities.Validation.is_non_empty_string(self.query_type):
                 return FlextResult[bool].fail("Query type is required")
             return FlextResult[bool].ok(data=True)
 
@@ -406,21 +440,9 @@ class FlextModels:
 
         @model_validator(mode="after")
         def _validate_email(self) -> FlextModels.EmailAddress:
-            """Simplified email validation."""
-            email = self.root
-            error_msg = "Invalid email format"
-
-            # Basic email validation - simplified from complex logic
-            if email.count("@") != 1:
-                raise ValueError(error_msg)
-
-            local, domain = email.split("@", 1)
-            if not local or not domain:
-                raise ValueError(error_msg)
-
-            if "." not in domain or domain.startswith(".") or domain.endswith("."):
-                raise ValueError(error_msg)
-
+            """Email validation using FlextUtilities composition."""
+            # Use composition pattern with _ValidationHelper
+            self.root = FlextModels._ValidationHelper.validate_email_format(self.root)
             return self
 
         @property

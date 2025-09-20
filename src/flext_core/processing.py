@@ -54,13 +54,15 @@ class FlextProcessing:
 
             handler = handler_result.unwrap()
             try:
-                if hasattr(handler, "handle") and callable(handler.handle):
-                    result = handler.handle(request)
-                    return (
-                        FlextResult[object].ok(result)
-                        if not isinstance(result, FlextResult)
-                        else result
-                    )
+                if hasattr(handler, "handle"):
+                    handle_method = getattr(handler, "handle", None)
+                    if handle_method is not None and callable(handle_method):
+                        result = handle_method(request)
+                        return (
+                            FlextResult[object].ok(result)
+                            if not isinstance(result, FlextResult)
+                            else result
+                        )
                 if callable(handler):
                     result = handler(request)
                     return (
@@ -147,9 +149,11 @@ class FlextProcessing:
     @staticmethod
     def is_handler_safe(handler: object) -> bool:
         """Check if a handler is safe (has handle method or is callable)."""
-        return (hasattr(handler, "handle") and callable(handler.handle)) or callable(
-            handler
-        )
+        if hasattr(handler, "handle"):
+            handle_method = getattr(handler, "handle", None)
+            if handle_method is not None and callable(handle_method):
+                return True
+        return callable(handler)
 
     # =========================================================================
     # HANDLER CLASSES - For examples and demos
@@ -217,19 +221,21 @@ class FlextProcessing:
                 result = request
                 for handler in self._handlers:
                     if hasattr(handler, "handle"):
-                        handler_result = handler.handle(result)
-                        if (
-                            hasattr(handler_result, "success")
-                            and not handler_result.success
-                        ):
-                            return FlextResult[object].fail(
-                                f"Handler failed: {handler_result.error}",
+                        handle_method = getattr(handler, "handle", None)
+                        if handle_method is not None:
+                            handler_result = handle_method(result)
+                            if (
+                                hasattr(handler_result, "success")
+                                and not handler_result.success
+                            ):
+                                return FlextResult[object].fail(
+                                    f"Handler failed: {handler_result.error}",
+                                )
+                            result = (
+                                handler_result.data
+                                if hasattr(handler_result, "data")
+                                else handler_result
                             )
-                        result = (
-                            handler_result.data
-                            if hasattr(handler_result, "data")
-                            else handler_result
-                        )
                 return FlextResult[object].ok(result)
 
     class Protocols:

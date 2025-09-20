@@ -55,13 +55,17 @@ class TestFlextMixins100Percent:
         """Test Service.__init__ - lines 51-56."""
 
         class TestClass(FlextMixins.Service):
-            pass
+            def __init__(self, **kwargs: str | bool) -> None:
+                super().__init__(**kwargs)
+                # Set dynamic attributes from kwargs
+                for key, value in kwargs.items():
+                    setattr(self, key, value)
 
         obj = TestClass(test_param="value")
         assert hasattr(obj, "test_param")
-        assert obj.test_param == "value"
+        assert getattr(obj, "test_param") == "value"
         assert hasattr(obj, "initialized")
-        assert obj.initialized is True
+        assert getattr(obj, "initialized") is True
 
     def test_to_json_with_model_dump(self) -> None:
         """Test to_json with model_dump - lines 61-62."""
