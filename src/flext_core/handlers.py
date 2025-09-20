@@ -169,25 +169,48 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
     def validate_command(self, command: object) -> FlextResult[None]:
         """Validate command prior to handling."""
-        return self._validate_message(command, operation="command")
+        result = self._validate_message(command, operation="command")
+        return (
+            FlextResult[None].ok(None)
+            if result.is_success
+            else FlextResult[None].fail(result.error or "Validation failed")
+        )
 
     def validate_query(self, query: object) -> FlextResult[None]:
         """Validate query prior to handling."""
-        return self._validate_message(query, operation="query")
+        result = self._validate_message(query, operation="query")
+        return (
+            FlextResult[None].ok(None)
+            if result.is_success
+            else FlextResult[None].fail(result.error or "Validation failed")
+        )
 
     def _validate_message(
         self,
         message: object,
         *,
         operation: Literal["command", "query"],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[object | None]:
         method_name = "validate_command" if operation == "command" else "validate_query"
         validate_method = getattr(message, method_name, None)
         if callable(validate_method):
             result = validate_method()
             if hasattr(result, "success") and hasattr(result, "error"):
-                return cast("FlextResult[None]", result)
-        return FlextResult[None].ok(None)
+                # Type check for FlextResult-like object before accessing attributes
+                if (
+                    hasattr(result, "is_failure")
+                    and hasattr(result, "error_code")
+                    and hasattr(result, "error_data")
+                ):
+                    # If validation failed and no error code was set, add the appropriate one
+                    if result.is_failure and not result.error_code:
+                        return FlextResult[object | None].fail(
+                            result.error or f"{operation.title()} validation failed",
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                            error_data=result.error_data,
+                        )
+                return cast("FlextResult[object | None]", result)
+        return FlextResult[object | None].ok(None)
 
     @abstractmethod
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
@@ -231,17 +254,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         *,
         operation: Literal["command", "query"],
     ) -> FlextResult[ResultT]:
-        if self.mode != operation:
-            error_msg = (
-                f"{self.handler_name} is configured for {self.mode} operations "
-                f"and cannot execute {operation} pipelines"
-            )
-            self.logger.error("invalid_handler_mode", error_message=error_msg)
-            return FlextResult[ResultT].fail(
-                error_msg,
-                error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
-            )
-
+        """Execute handler pipeline using railway-oriented programming."""
         message_type = type(message).__name__
         identifier = getattr(
             message,
@@ -249,6 +262,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             getattr(message, "id", "unknown"),
         )
 
+        # Log start of pipeline
         self.logger.info(
             "starting_handler_pipeline",
             handler_mode=self.mode,
@@ -256,28 +270,47 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             message_id=identifier,
         )
 
-        # Check if handler can handle this message type
-        if not self.can_handle(type(message)):
-            error_msg = f"{self.handler_name} cannot handle {message_type}"
-            self.logger.error("handler_cannot_handle", error_message=error_msg)
-            return FlextResult[ResultT].fail(
+        # Use railway pattern for validation chain
+        return FlextResult.chain_validations(
+            lambda: self._validate_mode(operation),
+            lambda: self._validate_can_handle(message),
+            lambda: self._validate_message(message, operation=operation),
+        ).flat_map(
+            lambda _: self._execute_with_timing(message, message_type, identifier)
+        )
+
+    def _validate_mode(
+        self, operation: Literal["command", "query"]
+    ) -> FlextResult[object | None]:
+        """Validate handler mode matches operation type."""
+        if self.mode != operation:
+            error_msg = (
+                f"{self.handler_name} is configured for {self.mode} operations "
+                f"and cannot execute {operation} pipelines"
+            )
+            self.logger.error("invalid_handler_mode", error_message=error_msg)
+            return FlextResult[object | None].fail(
                 error_msg,
                 error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
+        return FlextResult[object | None].ok(None)
 
-        validation_result = self._validate_message(message, operation=operation)
-        if validation_result.is_failure:
-            self.logger.info(
-                "handler_validation_failed",
-                handler_mode=self.mode,
-                message_type=message_type,
-                error=validation_result.error,
+    def _validate_can_handle(self, message: MessageT) -> FlextResult[object | None]:
+        """Validate handler can process this message type."""
+        if not self.can_handle(type(message)):
+            message_type = type(message).__name__
+            error_msg = f"{self.handler_name} cannot handle {message_type}"
+            self.logger.error("handler_cannot_handle", error_message=error_msg)
+            return FlextResult[object | None].fail(
+                error_msg,
+                error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
-            return FlextResult[ResultT].fail(
-                validation_result.error or "Validation failed",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+        return FlextResult[object | None].ok(None)
 
+    def _execute_with_timing(
+        self, message: MessageT, message_type: str, identifier: str
+    ) -> FlextResult[ResultT]:
+        """Execute handler with timing and logging."""
         self._start_time = time.time()
 
         try:

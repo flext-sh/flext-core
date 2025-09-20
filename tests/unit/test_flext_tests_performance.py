@@ -49,7 +49,7 @@ class TestFlextTestsPerformance:
     def test_module_imports_and_structure(self) -> None:
         """Test module imports and overall structure."""
         # Test that the module can be imported
-        from flext_tests import performance  # noqa: PLC0415
+        from flext_tests import performance
 
         # Verify module structure
         assert hasattr(performance, "FlextTestsPerformance")

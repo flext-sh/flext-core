@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import json
 import re
+import uuid
 import warnings
 from collections import UserString
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Generic, Literal, cast
 from urllib.parse import urlparse
 
@@ -49,34 +49,21 @@ class FlextModels:
 
         @staticmethod
         def validate_non_empty_string(value: str, field_name: str) -> str:
-            """Validate non-empty string using FlextUtilities."""
-            if not FlextUtilities.Validation.is_non_empty_string(value):
-                msg = f"{field_name} cannot be empty or whitespace only"
-                raise ValueError(msg)
-            return value.strip() if value else ""
+            """Validate non-empty string using consolidated validation patterns."""
+            result = FlextUtilities.Validation.validate_string(
+                value, min_length=1, field_name=field_name
+            )
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.unwrap()
 
         @staticmethod
         def validate_email_format(email: str) -> str:
-            """Validate email format using consistent patterns."""
-            if not email or not isinstance(email, str):
-                msg = "Email must be a non-empty string"
-                raise ValueError(msg)
-
-            # Use simplified validation pattern consistent with current implementation
-            if email.count("@") != 1:
-                msg = "Invalid email format"
-                raise ValueError(msg)
-
-            local, domain = email.split("@", 1)
-            if not local or not domain:
-                msg = "Invalid email format"
-                raise ValueError(msg)
-
-            if "." not in domain or domain.startswith(".") or domain.endswith("."):
-                msg = "Invalid email format"
-                raise ValueError(msg)
-
-            return email.strip()
+            """Validate email format using consolidated validation patterns."""
+            result = FlextUtilities.Validation.validate_email(email)
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.unwrap()
 
     class TimestampedModel(BaseModel):
         """Base model capturing creation/update timestamps for observability."""
@@ -182,7 +169,9 @@ class FlextModels:
         @classmethod
         def validate_aggregate_id(cls, v: str) -> str:
             """Validate aggregate_id using FlextUtilities composition."""
-            return FlextModels._ValidationHelper.validate_non_empty_string(v, "Aggregate identifier")
+            return FlextModels._ValidationHelper.validate_non_empty_string(
+                v, "Aggregate identifier"
+            )
 
     class Command(BaseModel):
         """Command message template for dispatcher-driven CQRS flows."""
@@ -200,10 +189,10 @@ class FlextModels:
         )
 
         def validate_command(self) -> FlextResult[bool]:
-            """Validate command data using FlextUtilities composition."""
-            if not FlextUtilities.Validation.is_non_empty_string(self.command_type):
-                return FlextResult[bool].fail("Command type is required")
-            return FlextResult[bool].ok(data=True)
+            """Validate command using consolidated railway patterns."""
+            return FlextUtilities.Validation.validate_string(
+                self.command_type, min_length=1, field_name="command_type"
+            ) >> (lambda _: FlextResult[bool].ok(data=True))
 
     class Query(BaseModel):
         """Query message template for dispatcher-driven CQRS flows."""
@@ -220,10 +209,10 @@ class FlextModels:
         )
 
         def validate_query(self) -> FlextResult[bool]:
-            """Validate query data using FlextUtilities composition."""
-            if not FlextUtilities.Validation.is_non_empty_string(self.query_type):
-                return FlextResult[bool].fail("Query type is required")
-            return FlextResult[bool].ok(data=True)
+            """Validate query using consolidated railway patterns."""
+            return FlextUtilities.Validation.validate_string(
+                self.query_type, min_length=1, field_name="query_type"
+            ) >> (lambda _: FlextResult[bool].ok(data=True))
 
     class CqrsCommand(Command):
         """CQRS command with derived type metadata for consistent routing."""
@@ -641,7 +630,13 @@ class FlextModels:
             """Normalize URL by removing trailing slash (except for scheme-only URLs)."""
             try:
                 # Use FlextUtilities for text processing
-                cleaned = FlextUtilities.TextProcessor.clean_text(self.value)
+                cleaned_result = FlextUtilities.TextProcessor.clean_text(self.value)
+                if cleaned_result.is_failure:
+                    return FlextResult["FlextModels.Url"].fail(
+                        f"URL cleaning failed: {cleaned_result.error}"
+                    )
+
+                cleaned = cleaned_result.unwrap()
                 if not cleaned:
                     return FlextResult["FlextModels.Url"].fail("URL cannot be empty")
 
@@ -754,8 +749,31 @@ class FlextModels:
         test_count: int = Field(0, ge=0, description="Number of test files")
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Implement required abstract method from Value."""
-            return FlextResult[None].ok(None)
+            """Validate project business rules using consolidated patterns."""
+
+            # Define business rule validators
+            def validate_test_consistency(
+                project: FlextModels.Project,
+            ) -> FlextResult[None]:
+                if project.has_tests and project.test_count <= 0:
+                    return FlextResult[None].fail(
+                        "test_count must be positive when has_tests is True"
+                    )
+                return FlextResult[None].ok(None)
+
+            def validate_project_structure(
+                project: FlextModels.Project,
+            ) -> FlextResult[None]:
+                if not project.has_pyproject and not project.has_go_mod:
+                    return FlextResult[None].fail(
+                        "project must have either pyproject.toml or go.mod"
+                    )
+                return FlextResult[None].ok(None)
+
+            # Apply business rules using railway composition
+            return validate_test_consistency(self) >> (
+                lambda _: validate_project_structure(self)
+            )
 
     class WorkspaceContext(Config):
         """Workspace context configuration reused across modernization tooling."""
@@ -790,12 +808,31 @@ class FlextModels:
         )  # Use string to avoid enum import
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Implement required abstract method from Value."""
-            if self.project_count < 0:
-                return FlextResult[None].fail("Project count cannot be negative")
-            if self.total_size_mb < 0:
-                return FlextResult[None].fail("Total size cannot be negative")
-            return FlextResult[None].ok(None)
+            """Validate workspace business rules using consolidated patterns."""
+
+            # Define business rule validators
+            def validate_workspace_consistency(
+                workspace: FlextModels.WorkspaceInfo,
+            ) -> FlextResult[None]:
+                if workspace.projects and workspace.project_count != len(
+                    workspace.projects
+                ):
+                    return FlextResult[None].fail(
+                        "project_count must match length of projects list"
+                    )
+                return FlextResult[None].ok(None)
+
+            def validate_workspace_size(
+                workspace: FlextModels.WorkspaceInfo,
+            ) -> FlextResult[None]:
+                if workspace.total_size_mb < 0:
+                    return FlextResult[None].fail("total_size_mb cannot be negative")
+                return FlextResult[None].ok(None)
+
+            # Apply business rules using railway composition
+            return validate_workspace_consistency(self) >> (
+                lambda _: validate_workspace_size(self)
+            )
 
     # Simple factory methods - no over-engineering
     @staticmethod
@@ -854,131 +891,62 @@ class FlextModels:
 
     @staticmethod
     def create_validated_email(email: str) -> FlextResult[str]:
-        """Create validated email using Pydantic models - replaces FieldValidators.validate_email."""
-        try:
-            validated = FlextModels.EmailAddress(email)
-            return FlextResult[str].ok(validated.root)
-        except ValueError as e:
-            return FlextResult[str].fail(str(e))
+        """Create validated email using consolidated validation patterns."""
+        return FlextUtilities.Validation.validate_email(email)
 
     @staticmethod
     def create_validated_url(url: str) -> FlextResult[str]:
-        """Create validated URL using Pydantic models - replaces FieldValidators.validate_url."""
-        url_result = FlextModels.Url.create(url)
-        if url_result.is_success:
-            return FlextResult[str].ok(url_result.unwrap().value)
-        return FlextResult[str].fail(url_result.error or "Invalid URL")
+        """Create validated URL using consolidated validation patterns."""
+        return FlextUtilities.Validation.validate_url(url)
 
     @staticmethod
-    def create_validated_http_url(
-        url: str,
-        *,
-        max_length: int = 2048,
-        max_port: int = 65535,
-    ) -> FlextResult[str]:
-        """Create validated HTTP URL with enhanced validation - centralized replacement for HttpValidator."""
-        url_result = FlextModels.Url.create_http_url(
-            url,
-            max_length=max_length,
-            max_port=max_port,
-        )
-        if url_result.is_success:
-            return FlextResult[str].ok(url_result.unwrap().value)
-        return FlextResult[str].fail(url_result.error or "Invalid HTTP URL")
+    def create_validated_http_url(url: str, max_length: int = 2048) -> FlextResult[str]:
+        """Create validated HTTP URL using consolidated validation patterns."""
+        return FlextUtilities.Validation.validate_string(
+            url, min_length=8, max_length=max_length, field_name="URL"
+        ) >> (FlextUtilities.Validation.validate_url)
 
     @staticmethod
-    def create_validated_http_method(method: str | None) -> FlextResult[str]:
-        """Create validated HTTP method - centralized replacement for HttpValidator.validate_http_method."""
-        if not method or not isinstance(method, str):
-            return FlextResult[str].fail("HTTP method must be a non-empty string")
-
-        method_upper = method.upper()
-        # Standard HTTP methods - using Python 3.13+ enum patterns
-        valid_methods = {
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "PATCH",
-            "HEAD",
-            "OPTIONS",
-            "TRACE",
-            "CONNECT",
-        }
-
-        if method_upper not in valid_methods:
-            valid_methods_str = ", ".join(sorted(valid_methods))
-            return FlextResult[str].fail(
-                f"Invalid HTTP method. Valid methods: {valid_methods_str}",
-            )
-
-        return FlextResult[str].ok(method_upper)
+    def create_validated_http_method(method: str) -> FlextResult[str]:
+        """Create validated HTTP method using consolidated validation patterns."""
+        valid_methods = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
+        if method.upper() in valid_methods:
+            return FlextResult[str].ok(method.upper())
+        return FlextResult[str].fail(f"Invalid HTTP method: {method}")
 
     @staticmethod
-    def create_validated_http_status(code: int | str) -> FlextResult[int]:
-        """Create validated HTTP status code - centralized replacement for HttpValidator.validate_status_code."""
-        try:
-            code_int = int(code)
-            if (
-                code_int < FlextModels.HTTP_STATUS_MIN
-                or code_int > FlextModels.HTTP_STATUS_MAX
-            ):
-                return FlextResult[int].fail(
-                    f"Invalid HTTP status code range ({FlextModels.HTTP_STATUS_MIN}-{FlextModels.HTTP_STATUS_MAX})",
-                )
-            return FlextResult[int].ok(code_int)
-        except (ValueError, TypeError):
-            return FlextResult[int].fail("Status code must be a valid integer")
+    def create_validated_http_status(code: int) -> FlextResult[int]:
+        """Create validated HTTP status code using consolidated validation patterns."""
+        if 100 <= code <= 599:
+            return FlextResult[int].ok(code)
+        return FlextResult[int].fail(f"Invalid HTTP status code: {code}")
 
     @staticmethod
     def create_validated_phone(phone: str) -> FlextResult[str]:
-        """Create validated phone - replaces FieldValidators.validate_phone."""
-        # Remove non-digit characters for validation
-
-        digits_only = re.sub(r"\D", "", phone)
-        min_phone_digits = 10
-        max_phone_digits = 15
-        if len(digits_only) < min_phone_digits or len(digits_only) > max_phone_digits:
-            return FlextResult[str].fail(f"Invalid phone number: {phone}")
-
-        return FlextResult[str].ok(phone)
+        """Create validated phone using consolidated validation patterns."""
+        # Basic phone validation - can be enhanced later
+        cleaned = "".join(filter(str.isdigit, phone))
+        if len(cleaned) >= 10:
+            return FlextResult[str].ok(phone)
+        return FlextResult[str].fail(f"Invalid phone number: {phone}")
 
     @staticmethod
     def create_validated_uuid(uuid_str: str) -> FlextResult[str]:
-        """Create validated UUID - replaces FieldValidators.validate_uuid."""
-        uuid_pattern = (
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
-        )
-        if not re.match(uuid_pattern, uuid_str.lower()):
-            return FlextResult[str].fail(f"Invalid UUID format: {uuid_str}")
-
-        return FlextResult[str].ok(uuid_str)
+        """Create validated UUID using consolidated validation patterns."""
+        try:
+            uuid.UUID(uuid_str)
+            return FlextResult[str].ok(uuid_str)
+        except ValueError:
+            return FlextResult[str].fail(f"Invalid UUID: {uuid_str}")
 
     @staticmethod
     def create_validated_iso_date(date_str: str) -> FlextResult[str]:
-        """Create validated ISO date string - centralizes datetime.fromisoformat() validation.
-
-        Args:
-            date_str: Date string in ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)
-
-        Returns:
-            FlextResult containing validated date string or validation error
-
-        Examples:
-            >>> result = FlextModels.create_validated_iso_date("2025-01-08")
-            >>> if result.is_success:
-            ...     validated_date = result.unwrap()
-
-        """
-        if not date_str or not date_str.strip():
-            return FlextResult[str].fail("Date string cannot be empty")
-
+        """Create validated ISO date using consolidated validation patterns."""
         try:
-            # Use datetime.fromisoformat for validation (this is the pattern we're centralizing)
-            datetime.fromisoformat(date_str.strip())
-            return FlextResult[str].ok(date_str.strip())
-        except ValueError as e:
-            return FlextResult[str].fail(f"Invalid ISO date format: {e}")
+            datetime.fromisoformat(date_str)
+            return FlextResult[str].ok(date_str)
+        except ValueError:
+            return FlextResult[str].fail(f"Invalid ISO date: {date_str}")
 
     @staticmethod
     def create_validated_date_range(
@@ -1028,73 +996,18 @@ class FlextModels:
 
     @staticmethod
     def create_validated_file_path(file_path: str) -> FlextResult[str]:
-        """Create validated file path string - centralizes pathlib.Path validation.
-
-        Args:
-            file_path: Path string to validate
-
-        Returns:
-            FlextResult with validated path string or validation error
-
-        """
-        if not file_path or not file_path.strip():
-            return FlextResult[str].fail("File path cannot be empty")
-
-        try:
-            path = Path(file_path.strip())
-            # Basic validation - path should be constructible
-            str(path)  # Verify path can be converted to string
-            return FlextResult[str].ok(str(path))
-        except (OSError, ValueError) as e:
-            return FlextResult[str].fail(f"Invalid file path: {e}")
+        """Create validated file path using consolidated validation patterns."""
+        return FlextUtilities.Validation.validate_file_path(file_path)
 
     @staticmethod
     def create_validated_existing_file_path(file_path: str) -> FlextResult[str]:
-        """Create validated existing file path - centralizes Path().exists() validation.
-
-        Args:
-            file_path: Path string to validate for existence
-
-        Returns:
-            FlextResult with validated path string or validation error
-
-        """
-        # First validate the path format
-        path_result = FlextModels.create_validated_file_path(file_path)
-        if path_result.is_failure:
-            return path_result
-
-        try:
-            path = Path(path_result.unwrap())
-            if not path.exists():
-                return FlextResult[str].fail(f"Path does not exist: {path}")
-            return FlextResult[str].ok(str(path))
-        except (OSError, PermissionError) as e:
-            return FlextResult[str].fail(f"Cannot access path: {e}")
+        """Create validated existing file path using consolidated validation patterns."""
+        return FlextUtilities.Validation.validate_existing_file_path(file_path)
 
     @staticmethod
     def create_validated_directory_path(dir_path: str) -> FlextResult[str]:
-        """Create validated directory path - centralizes Path().is_dir() validation.
-
-        Args:
-            dir_path: Directory path string to validate
-
-        Returns:
-            FlextResult with validated directory path string or validation error
-
-        """
-        # First validate the path exists
-        existing_path_result = FlextModels.create_validated_existing_file_path(dir_path)
-        if existing_path_result.is_failure:
-            return existing_path_result
-
-        try:
-            path = Path(existing_path_result.unwrap())
-            if not path.is_dir():
-                return FlextResult[str].fail(f"Path is not a directory: {path}")
-            return FlextResult[str].ok(str(path))
-        except (OSError, PermissionError) as e:
-            return FlextResult[str].fail(f"Cannot verify directory: {e}")
+        """Create validated directory path using consolidated validation patterns."""
+        return FlextUtilities.Validation.validate_directory_path(dir_path)
 
     # HTTP status code constants
     HTTP_STATUS_MIN = 100

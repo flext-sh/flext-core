@@ -70,7 +70,8 @@ class TestCorrelationIdManagement:
         """Test new correlation context with generated ID."""
         with FlextContext.Correlation.new_correlation() as context_id:
             assert context_id is not None
-            assert 15 <= len(context_id) <= 25  # Flexible length for ID formats
+            assert len(context_id) == 13  # Format: "corr-" + 8 character UUID prefix
+            assert context_id.startswith("corr-")
             assert FlextContext.Correlation.get_correlation_id() == context_id
 
     def test_new_correlation_with_parent(self) -> None:
@@ -123,7 +124,8 @@ class TestCorrelationIdManagement:
 
         with FlextContext.Correlation.inherit_correlation() as inherited_id:
             assert inherited_id is not None
-            assert 15 <= len(inherited_id) <= 25  # Flexible length for ID formats
+            assert len(inherited_id) == 13  # Format: "corr-" + 8 character UUID prefix
+            assert inherited_id.startswith("corr-")
             assert FlextContext.Correlation.get_correlation_id() == inherited_id
 
 
@@ -500,7 +502,8 @@ class TestContextUtilities:
 
         result_id = FlextContext.Utilities.ensure_correlation_id()
         assert result_id is not None
-        assert 15 <= len(result_id) <= 25  # Flexible length for ID formats
+        assert len(result_id) == 13  # Format: "corr-" + 8 character UUID prefix
+        assert result_id.startswith("corr-")
         assert FlextContext.Correlation.get_correlation_id() == result_id
 
     def test_has_correlation_id_true(self) -> None:

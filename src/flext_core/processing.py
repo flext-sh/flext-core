@@ -47,13 +47,17 @@ class FlextProcessing:
             return FlextResult[object].ok(self._handlers[name])
 
         def execute(self, name: str, request: object) -> FlextResult[object]:
-            """Execute a handler by name."""
-            handler_result = self.get(name)
-            if handler_result.is_failure:
-                return FlextResult[object].fail(handler_result.error or "Unknown error")
+            """Execute a handler by name using railway pattern."""
+            return self.get(name).flat_map(
+                lambda handler: self._execute_handler_safely(handler, request, name)
+            )
 
-            handler = handler_result.unwrap()
+        def _execute_handler_safely(
+            self, handler: object, request: object, name: str
+        ) -> FlextResult[object]:
+            """Execute handler with proper method resolution and error handling."""
             try:
+                # Check for handle method first
                 if hasattr(handler, "handle"):
                     handle_method = getattr(handler, "handle", None)
                     if handle_method is not None and callable(handle_method):
@@ -63,6 +67,8 @@ class FlextProcessing:
                             if not isinstance(result, FlextResult)
                             else result
                         )
+
+                # Check if handler itself is callable
                 if callable(handler):
                     result = handler(request)
                     return (
@@ -70,8 +76,9 @@ class FlextProcessing:
                         if not isinstance(result, FlextResult)
                         else result
                     )
+
                 return FlextResult[object].fail(
-                    f"Handler '{name}' does not implement handle method",
+                    f"Handler '{name}' does not implement handle method"
                 )
             except Exception as e:
                 return FlextResult[object].fail(f"Handler execution failed: {e}")
@@ -109,31 +116,36 @@ class FlextProcessing:
             self._steps.append(step)
 
         def process(self, data: object) -> FlextResult[object]:
-            """Process data through pipeline."""
-            current: object = data
+            """Process data through pipeline using railway pattern."""
+            return FlextResult.pipeline(
+                data, *[self._process_step(step) for step in self._steps]
+            )
 
-            for step in self._steps:
-                # Handle callable steps
-                if callable(step):
-                    result = step(current)
-                    if isinstance(result, FlextResult):
-                        if result.is_failure:
+        def _process_step(
+            self, step: object
+        ) -> Callable[[object], FlextResult[object]]:
+            """Convert pipeline step to FlextResult-returning function."""
+
+            def step_processor(current: object) -> FlextResult[object]:
+                try:
+                    # Handle callable steps
+                    if callable(step):
+                        result = step(current)
+                        if isinstance(result, FlextResult):
                             return result
-                        current = result.unwrap()
-                        continue
+                        return FlextResult[object].ok(result)
 
-                    # Non-FlextResult return from callable
-                    current = result
+                    # Handle dictionary merging
+                    if isinstance(current, dict) and isinstance(step, dict):
+                        merged = {**current, **step}
+                        return FlextResult[object].ok(merged)
 
-                # Handle non-callable steps
-                elif isinstance(current, dict) and isinstance(step, dict):
-                    # Merge dictionaries
-                    current = {**current, **step}
-                else:
                     # Replace current data
-                    current = step
+                    return FlextResult[object].ok(step)
+                except Exception as e:
+                    return FlextResult[object].fail(f"Pipeline step failed: {e}")
 
-            return FlextResult[object].ok(current)
+            return step_processor
 
     # Factory methods for convenience
     @staticmethod

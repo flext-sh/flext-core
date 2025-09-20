@@ -76,29 +76,63 @@ class FlextDispatcherRegistry:
         self,
         handlers: Iterable[FlextHandlers[MessageT, ResultT]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
-        """Register multiple handlers in one shot."""
+        """Register multiple handlers in one shot using railway pattern."""
         summary = FlextDispatcherRegistry.Summary()
         for handler in handlers:
-            key = self._resolve_handler_key(handler)
-            if key in self._registered_keys:
-                summary.skipped.append(key)
-                continue
-
-            registration = self._dispatcher.register_handler(handler)
-            if registration.is_failure:
-                summary.errors.append(
-                    registration.error or f"Failed to register handler '{key}'",
+            result = self._process_single_handler(handler, summary)
+            if result.is_failure:
+                return FlextResult[FlextDispatcherRegistry.Summary].fail(
+                    result.error or "Handler processing failed"
                 )
-                continue
+        return self._finalize_summary(summary)
 
-            self._registered_keys.add(key)
-            summary.registered.append(
-                cast(
-                    "FlextDispatcher.Registration[object, object]",
-                    registration.value,
-                ),
-            )
+    def _process_single_handler(
+        self,
+        handler: FlextHandlers[MessageT, ResultT],
+        summary: FlextDispatcherRegistry.Summary,
+    ) -> FlextResult[None]:
+        """Process a single handler registration."""
+        key = self._resolve_handler_key(handler)
+        if key in self._registered_keys:
+            summary.skipped.append(key)
+            return FlextResult[None].ok(None)
 
+        registration_result = self._dispatcher.register_handler(handler)
+        if registration_result.is_success:
+            self._add_successful_registration(key, registration_result.value, summary)
+            return FlextResult[None].ok(None)
+        self._add_registration_error(key, registration_result.error or "", summary)
+        return FlextResult[None].fail(
+            registration_result.error or "Registration failed"
+        )
+
+    def _add_successful_registration(
+        self,
+        key: str,
+        registration: FlextDispatcher.Registration[MessageT, ResultT],
+        summary: FlextDispatcherRegistry.Summary,
+    ) -> None:
+        """Add successful registration to summary."""
+        self._registered_keys.add(key)
+        summary.registered.append(
+            cast("FlextDispatcher.Registration[object, object]", registration),
+        )
+
+    def _add_registration_error(
+        self,
+        key: str,
+        error: str,
+        summary: FlextDispatcherRegistry.Summary,
+    ) -> str:
+        """Add registration error to summary."""
+        summary.errors.append(error or f"Failed to register handler '{key}'")
+        return error
+
+    def _finalize_summary(
+        self,
+        summary: FlextDispatcherRegistry.Summary,
+    ) -> FlextResult[FlextDispatcherRegistry.Summary]:
+        """Finalize summary based on error state."""
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
                 "; ".join(summary.errors),

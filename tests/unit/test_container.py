@@ -972,7 +972,7 @@ class TestFlextContainerErrorScenarios:
         container = _get_container_from_builder()
 
         # Test None as service name (should be handled gracefully)
-        result = container.register(None, {"data": "test"})  # type: ignore[arg-type]
+        result = container.register(None, {"data": "test"})
         assert result.is_failure
 
         # Test whitespace-only service name
