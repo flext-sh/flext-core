@@ -30,6 +30,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextConfig(BaseSettings):
@@ -137,61 +138,21 @@ class FlextConfig(BaseSettings):
 
         @staticmethod
         def validate_runtime_requirements(config: FlextConfig) -> FlextResult[None]:
-            """Validate configuration meets runtime requirements.
-
-            Args:
-                config: Configuration instance to validate
-
-            Returns:
-                FlextResult indicating validation success or specific failures
-
-            """
-            errors = []
-
-            # Check required fields are not empty
-            if not config.app_name.strip():
-                errors.append("app_name cannot be empty")
-
-            if not config.name.strip():
-                errors.append("name cannot be empty")
-
-            # Validate version format
-            if (
-                not config.version
-                or len(config.version.split("."))
-                < FlextConstants.Config.SEMANTIC_VERSION_MIN_PARTS
-            ):
-                errors.append("version must follow semantic versioning (x.y.z)")
-
-            # Validate production environment worker requirements
-            if (
-                config.environment == "production"
-                and config.max_workers < FlextConstants.Config.MIN_PRODUCTION_WORKERS
-            ):
-                errors.append(
-                    f"production environment requires at least {FlextConstants.Config.MIN_PRODUCTION_WORKERS} workers",
+            """Validate runtime requirements using consolidated patterns."""
+            # Validate critical runtime parameters using railway composition
+            return (
+                FlextUtilities.Validation.validate_positive_integer(
+                    config.max_workers, "max_workers"
                 )
-
-            # Validate timeout/workers relationship
-            if (
-                config.timeout_seconds >= FlextConstants.Config.HIGH_TIMEOUT_THRESHOLD
-                and config.max_workers
-                < FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
-            ):
-                errors.append("high timeout (120s+) requires at least 4 workers")
-
-            # Validate maximum workers limit
-            if config.max_workers > FlextConstants.Config.MAX_WORKERS_THRESHOLD:
-                errors.append("max_workers exceeds maximum recommended workers (50)")
-
-            if errors:
-                error_msg = "; ".join(errors)
-                return FlextResult[None].fail(
-                    f"Runtime validation failed: {error_msg}",
-                    error_code="CONFIG_RUNTIME_VALIDATION_ERROR",
+                >> (
+                    lambda _: FlextUtilities.Validation.validate_positive_integer(
+                        config.timeout_seconds, "timeout_seconds"
+                    )
                 )
-
-            return FlextResult[None].ok(None)
+                >> (lambda _: FlextUtilities.Validation.validate_port(config.port))
+                >> (lambda _: FlextUtilities.Validation.validate_host(config.host))
+                >> (lambda _: FlextResult[None].ok(None))
+            )
 
     class BusinessValidator:
         """Business-rule validator that mirrors documented production policies.
@@ -203,53 +164,49 @@ class FlextConfig(BaseSettings):
 
         @staticmethod
         def validate_business_rules(config: FlextConfig) -> FlextResult[None]:
-            """Validate business rules for configuration consistency.
+            """Validate business rules using consolidated railway patterns."""
 
-            Args:
-                config: Configuration instance to validate
-
-            Returns:
-                FlextResult indicating validation success or specific failures
-
-            """
-            errors = []
-
-            # Production environment validation
-            if config.environment == "production":
-                if config.debug and config.config_source != "default":
-                    errors.append(
-                        "Debug mode in production requires explicit configuration",
+            # Define business rule validators
+            def validate_cache_consistency(cfg: FlextConfig) -> FlextResult[None]:
+                if cfg.enable_caching and cfg.cache_ttl <= 0:
+                    return FlextResult[None].fail(
+                        "cache_ttl must be positive when caching is enabled"
                     )
+                return FlextResult[None].ok(None)
 
-                if config.max_workers < FlextConstants.Config.MIN_PRODUCTION_WORKERS:
-                    errors.append(
-                        "Production environment should have at least 2 workers",
+            def validate_auth_requirements(cfg: FlextConfig) -> FlextResult[None]:
+                if cfg.enable_auth and not cfg.api_key:
+                    return FlextResult[None].fail(
+                        "api_key is required when authentication is enabled"
                     )
+                return FlextResult[None].ok(None)
 
-            # Performance consistency checks
-            if (
-                config.timeout_seconds > FlextConstants.Config.HIGH_TIMEOUT_THRESHOLD
-                and config.max_workers
-                < FlextConstants.Config.MIN_WORKERS_FOR_HIGH_TIMEOUT
-            ):
-                errors.append(
-                    "High timeout with low worker count may cause performance issues",
-                )
+            def validate_database_config(cfg: FlextConfig) -> FlextResult[None]:
+                if cfg.database_url and cfg.database_pool_size <= 0:
+                    return FlextResult[None].fail(
+                        "database_pool_size must be positive when database_url is provided"
+                    )
+                return FlextResult[None].ok(None)
 
-            # Resource validation
-            if config.max_workers > FlextConstants.Config.MAX_WORKERS_THRESHOLD:
-                errors.append("Worker count above 50 may cause resource exhaustion")
+            def validate_monitoring_config(cfg: FlextConfig) -> FlextResult[None]:
+                if cfg.enable_metrics and cfg.metrics_port == cfg.port:
+                    return FlextResult[None].fail(
+                        "metrics_port cannot be the same as main port"
+                    )
+                return FlextResult[None].ok(None)
 
-            # Check security requirements
-            if config.enable_auth and not config.api_key.strip():
-                errors.append("API key required when authentication is enabled")
+            # Apply business rules using railway composition
+            business_rules = [
+                validate_cache_consistency,
+                validate_auth_requirements,
+                validate_database_config,
+                validate_monitoring_config,
+            ]
 
-            if errors:
-                error_msg = "; ".join(errors)
-                return FlextResult[None].fail(
-                    f"Business rule validation failed: {error_msg}",
-                    error_code="CONFIG_BUSINESS_RULE_ERROR",
-                )
+            for rule in business_rules:
+                rule_result = rule(config)
+                if rule_result.is_failure:
+                    return rule_result
 
             return FlextResult[None].ok(None)
 
@@ -680,7 +637,7 @@ class FlextConfig(BaseSettings):
     )
 
     base_url: str = Field(
-        default="http://localhost:8000",
+        default=f"http://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.FLEXT_API_PORT}",
         description="Base URL for service endpoints",
     )
 
@@ -981,97 +938,141 @@ class FlextConfig(BaseSettings):
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, value: str) -> str:
-        """Validate environment is in allowed set."""
-        allowed = set(FlextConstants.Config.ENVIRONMENTS)
-        if value not in allowed:
-            allowed_str = ", ".join(sorted(allowed))
-            # Padronizar mensagem para testes que procuram prefixo 'Invalid environment'
-            # mantendo substring anterior para compatibilidade reversa.
-            msg = f"Invalid environment. Environment must be one of: {allowed_str}"
-            raise ValueError(msg)
-        return value
+        """Validate environment using consolidated validation patterns."""
+        allowed_environments = FlextConstants.Config.ENVIRONMENTS
+        result = FlextUtilities.Validation.validate_environment_value(
+            value, allowed_environments
+        )
 
-    @field_validator("debug", mode="before")
+        if result.is_failure:
+            msg = f"Invalid environment. {result.error}"
+            raise ValueError(msg)
+
+        return result.unwrap()
+
+    @field_validator("debug")
     @classmethod
     def validate_debug(cls, value: object) -> bool:
-        """Validate debug field, converting string values."""
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            return value.lower() in {"true", "1", "yes", "on"}
-        # For other types, convert to bool
-        return bool(value)
+        """Validate debug flag using consolidated validation patterns."""
+        # Cast to expected type for to_bool
+        if isinstance(value, (str, bool, int)) or value is None:
+            result = FlextUtilities.Conversions.to_bool(value)
+        else:
+            result = FlextUtilities.Conversions.to_bool(str(value))
+
+        if result.is_failure:
+            msg = f"Invalid debug value. {result.error}"
+            raise ValueError(msg)
+
+        return result.unwrap()
 
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, value: str) -> str:
-        """Validate log level is recognized by logging system."""
-        allowed = {level.value for level in FlextConstants.Config.LogLevel}
-        normalized = value.upper()
-        if normalized not in allowed:
-            allowed_str = ", ".join(sorted(allowed))
-            msg = f"Invalid log_level. Log level must be one of: {allowed_str}"
+        """Validate log level using consolidated validation patterns."""
+        result = FlextUtilities.Validation.validate_log_level(value)
+
+        if result.is_failure:
+            msg = f"Invalid log level. {result.error}"
             raise ValueError(msg)
-        return normalized
+
+        return result.unwrap().upper()
 
     @field_validator("config_source")
     @classmethod
     def validate_config_source(cls, value: str) -> str:
-        """Validate config source is in allowed set."""
-        allowed = {source.value for source in FlextConstants.Config.ConfigSource}
-        if value not in allowed:
-            allowed_str = ", ".join(sorted(allowed))
-            msg = f"Config source must be one of: {allowed_str}"
+        """Validate config source using consolidated validation patterns."""
+        allowed_sources = ["environment", "file", "cli", "default"]
+        result = FlextUtilities.Validation.validate_environment_value(
+            value, allowed_sources
+        )
+
+        if result.is_failure:
+            msg = f"Invalid config source. {result.error}"
             raise ValueError(msg)
-        return value
+
+        return result.unwrap()
 
     @field_validator(
         "max_workers",
         "timeout_seconds",
-        "config_priority",
-        "port",
         "database_pool_size",
         "database_timeout",
+        "message_queue_max_retries",
         "health_check_interval",
         "metrics_port",
+        "max_name_length",
+        "min_phone_digits",
+        "max_email_length",
+        "command_timeout",
+        "max_command_retries",
+        "cache_ttl",
+        "middleware_execution_timeout",
+        "max_cache_size",
     )
     @classmethod
     def validate_positive_integers(cls, value: int) -> int:
-        """Validate that integer fields are positive."""
-        if value <= 0:
-            msg = f"Value must be positive, got {value}"
-            raise ValueError(msg)
-        return value
+        """Validate positive integers using consolidated validation patterns."""
+        result = FlextUtilities.Validation.validate_positive_integer(value, "value")
 
-    @field_validator("message_queue_max_retries")
+        if result.is_failure:
+            msg = f"Invalid positive integer. {result.error}"
+            raise ValueError(msg)
+
+        return result.unwrap()
+
+    @field_validator("command_retry_delay")
+    @classmethod
+    def validate_positive_float(cls, value: float) -> float:
+        """Validate positive float values."""
+        if not isinstance(value, (int, float)):
+            msg = (
+                f"Invalid positive float. value must be int or float, got {type(value)}"
+            )
+            raise TypeError(msg)
+
+        float_value = float(value)
+        if float_value <= 0:
+            msg = f"Invalid positive float. value must be greater than 0, got {float_value}"
+            raise ValueError(msg)
+
+        return float_value
+
+    @field_validator("port")
     @classmethod
     def validate_non_negative_integers(cls, value: int) -> int:
-        """Validate that integer fields are non-negative."""
-        if value < 0:
-            msg = f"Value must be non-negative, got {value}"
+        """Validate non-negative integers using consolidated validation patterns."""
+        result = FlextUtilities.Validation.validate_non_negative_integer(value, "port")
+
+        if result.is_failure:
+            msg = f"Invalid port number. {result.error}"
             raise ValueError(msg)
-        return value
+
+        return result.unwrap()
 
     @field_validator("host")
     @classmethod
     def validate_host(cls, value: str) -> str:
-        """Validate host is not empty."""
-        if not value.strip():
-            msg = "Host cannot be empty"
+        """Validate host using consolidated validation patterns."""
+        result = FlextUtilities.Validation.validate_host(value)
+
+        if result.is_failure:
+            msg = f"Invalid host. {result.error}"
             raise ValueError(msg)
-        return value
+
+        return result.unwrap()
 
     @field_validator("base_url")
     @classmethod
     def validate_base_url(cls, value: str) -> str:
-        """Validate base URL has proper protocol."""
-        if not value.strip():
-            msg = "Base URL cannot be empty"
+        """Validate base URL using consolidated validation patterns."""
+        result = FlextUtilities.Validation.validate_url(value)
+
+        if result.is_failure:
+            msg = f"Invalid base URL. {result.error}"
             raise ValueError(msg)
-        if not value.startswith(("http://", "https://")):
-            msg = "Base URL must start with http:// or https://"
-            raise ValueError(msg)
-        return value
+
+        return result.unwrap()
 
     # Provide a runtime-callable method for tests and a Pydantic model validator
     def validate_configuration_consistency(self) -> Self:
@@ -1321,25 +1322,11 @@ class FlextConfig(BaseSettings):
     # =============================================================================
 
     def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate configuration meets runtime requirements.
-
-        Delegates to specialized validator following Single Responsibility Principle.
-
-        Returns:
-            FlextResult indicating validation success or specific failures
-
-        """
+        """Validate runtime requirements using consolidated patterns."""
         return self.RuntimeValidator.validate_runtime_requirements(self)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules for configuration consistency.
-
-        Delegates to specialized validator following Single Responsibility Principle.
-
-        Returns:
-            FlextResult indicating validation success or specific failures
-
-        """
+        """Validate business rules using consolidated patterns."""
         return self.BusinessValidator.validate_business_rules(self)
 
     def validate_all(self) -> FlextResult[None]:
@@ -1644,7 +1631,10 @@ class FlextConfig(BaseSettings):
         class DatabaseConfig(BaseModel):
             """Database configuration."""
 
-            host: str = Field(default="localhost", description="Database host")
+            host: str = Field(
+                default=FlextConstants.Platform.DEFAULT_HOST,
+                description="Database host",
+            )
             port: int = Field(default=5432, description="Database port")
             name: str = Field(default="flext_db", description="Database name")
             user: str = Field(default="flext_user", description="Database user")

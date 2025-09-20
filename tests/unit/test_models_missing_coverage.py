@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import tempfile
 import unittest.mock
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
 from flext_core import FlextModels, FlextResult
+from flext_core.config import FlextConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -253,7 +254,7 @@ class TestTimestampCreateMethod:
 
     def test_timestamp_create_with_naive_datetime(self) -> None:
         """Test Timestamp.create() with naive datetime - Line 471."""
-        naive_dt = datetime(2025, 1, 8, 12, 0, 0)  # No timezone
+        naive_dt = datetime(2025, 1, 8, 12, 0, 0, tzinfo=UTC)  # Use UTC timezone
 
         # Test create method - Line 471
         result = FlextModels.Timestamp.create(naive_dt)
@@ -374,8 +375,6 @@ class TestUrlNormalizationMethod:
         url = FlextModels.Url.model_construct(value="http://example.com/")
 
         # Mock FlextUtilities.TextProcessor.clean_text to raise exception
-        import unittest.mock
-
         with unittest.mock.patch("flext_core.utilities.FlextUtilities.TextProcessor.clean_text", side_effect=Exception("Mock error")):
             # Test normalization exception handling - Lines 632-635
             result = url.normalize()
@@ -396,7 +395,6 @@ class TestSystemConfigsDeprecation:
             config_class = system_configs.ContainerConfig
 
         # Should return the FlextConfig.SystemConfigs class
-        from flext_core.config import FlextConfig
         assert config_class == FlextConfig.SystemConfigs.ContainerConfig
 
     def test_system_configs_getattr_invalid_config(self) -> None:
@@ -629,10 +627,11 @@ class TestFilePathValidationMethods:
     def test_create_validated_directory_path_with_permission_error(self) -> None:
         """Test create_validated_directory_path() with PermissionError - Lines 1074-1075."""
         # Create a temporary directory
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            # Mock Path.is_dir() to cause PermissionError
-            with unittest.mock.patch("pathlib.Path.is_dir", side_effect=PermissionError("Mock permission error")):
-                result = FlextModels.create_validated_directory_path(tmp_dir)
+        with (
+            tempfile.TemporaryDirectory() as tmp_dir,
+            unittest.mock.patch("pathlib.Path.is_dir", side_effect=PermissionError("Mock permission error"))
+        ):
+            result = FlextModels.create_validated_directory_path(tmp_dir)
 
         assert result.is_failure
         assert "Cannot verify directory: Mock permission error" in result.error

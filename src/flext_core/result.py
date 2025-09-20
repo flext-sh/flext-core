@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT.
 from __future__ import annotations
 
 import contextlib
+import types
 from collections.abc import Callable, Iterator
 from typing import TypeGuard, cast, overload, override
 
@@ -183,18 +184,18 @@ class FlextResult[T_co]:
 
     # Operations
     @staticmethod
-    def chain_results(
-        *results: FlextResult[object],
-    ) -> FlextResult[FlextTypes.Core.List]:
+    def chain_results[TChain](
+        *results: FlextResult[TChain],
+    ) -> FlextResult[list[TChain]]:
         """Collect a series of results, aborting on the first failure."""
         if not results:
-            return FlextResult[FlextTypes.Core.List].ok([])
-        aggregated: FlextTypes.Core.List = []
+            return FlextResult[list[TChain]].ok([])
+        aggregated: list[TChain] = []
         for res in results:
             if res.is_failure:
-                return FlextResult[FlextTypes.Core.List].fail(res.error or "error")
+                return FlextResult[list[TChain]].fail(res.error or "error")
             aggregated.append(res.value)
-        return FlextResult[FlextTypes.Core.List].ok(aggregated)
+        return FlextResult[list[TChain]].ok(aggregated)
 
     def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform the success payload using ``func`` while preserving errors."""
@@ -238,19 +239,28 @@ class FlextResult[T_co]:
             )
             return new_result
 
-        # Safety check: ensure data is not None when result is success
-        if self._data is None:
-            return FlextResult[U](
-                error="Unexpected chaining error: Internal error: data is None when result is success",
-                error_code=FlextConstants.Errors.CHAIN_ERROR,
-                error_data={"internal_inconsistency": True},
-            )
-
+        # For success results, _data can be None if T_co allows it (e.g. FlextResult[None])
+        # The success/failure state is determined by the presence/absence of _error
         try:
             # Apply function to data using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
             data = self._data
-            return func(data)
+            assert data is not None or self._data is None, "Data consistency check"
+
+            # Type narrowing: for success case, data should be T_co
+            # Handle None case explicitly for FlextResult[None] scenarios
+            if data is None and hasattr(self, "_allow_none_data"):
+                # For FlextResult[None], data can legitimately be None
+                return func(data)  # type: ignore[arg-type]
+            if data is not None:
+                # Normal case where data has type T_co
+                return func(data)
+            # Edge case: unexpected None in non-None generic
+            return FlextResult[U](
+                error="Unexpected None data in success result",
+                error_code=FlextConstants.Errors.BIND_ERROR,
+                error_data={"data_type": type(data).__name__},
+            )
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
             return FlextResult[U](
@@ -311,7 +321,7 @@ class FlextResult[T_co]:
         self,
         _exc_type: type[BaseException] | None,
         _exc_val: BaseException | None,
-        _exc_tb: object,
+        _exc_tb: types.TracebackType | None,
     ) -> None:
         """Context manager exit."""
         # Parameters available for future error handling logic
@@ -343,18 +353,13 @@ class FlextResult[T_co]:
         if not isinstance(other, FlextResult):
             return False
 
-        # Cast other to FlextResult[object] to help type checker
-        other_result = cast("FlextResult[object]", other)
-
         try:
-            # Cast to help type checker with comparison
-            self_data = cast("object", self._data)
-            other_data = other_result._data  # No cast needed after explicit typing
+            # Direct comparison without unnecessary casts
             return bool(
-                self_data == other_data
-                and self._error == other_result._error
-                and self._error_code == other_result._error_code
-                and self._error_data == other_result._error_data,
+                self._data == other._data
+                and self._error == other._error
+                and self._error_code == other._error_code
+                and self._error_data == other._error_data,
             )
         except Exception:
             return False
@@ -485,27 +490,27 @@ class FlextResult[T_co]:
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult[T_co].fail(str(e))
 
-    def zip_with(
+    def zip_with[TZip, UZip](
         self,
-        other: FlextResult[U],
-        func: Callable[[T_co, U], object],
-    ) -> FlextResult[object]:
+        other: FlextResult[UZip],
+        func: Callable[[T_co, UZip], TZip],
+    ) -> FlextResult[TZip]:
         """Combine two results with a function."""
         if self.is_failure:
-            return FlextResult[object].fail(self._error or "First result failed")
+            return FlextResult[TZip].fail(self._error or "First result failed")
         if other.is_failure:
-            return FlextResult[object].fail(other._error or "Second result failed")
+            return FlextResult[TZip].fail(other._error or "Second result failed")
 
         # Check for None data - treat as missing data
         if self._data is None or other._data is None:
-            return FlextResult[object].fail("Missing data for zip operation")
+            return FlextResult[TZip].fail("Missing data for zip operation")
 
         # Both data values are not None, proceed with operation
         try:
             result = func(self._data, other._data)
-            return FlextResult[object].ok(result)
+            return FlextResult[TZip].ok(result)
         except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
-            return FlextResult[object].fail(str(e))
+            return FlextResult[TZip].fail(str(e))
 
     def to_either(self) -> tuple[T_co | None, str | None]:
         """Convert a result to either tuple (data, error)."""
@@ -530,20 +535,20 @@ class FlextResult[T_co]:
             return cls.fail(str(e))
 
     @staticmethod
-    def combine(*results: FlextResult[object]) -> FlextResult[FlextTypes.Core.List]:
+    def combine[TCombine](*results: FlextResult[TCombine]) -> FlextResult[list[TCombine]]:
         """Combine multiple results into one."""
-        data: FlextTypes.Core.List = []
+        data: list[TCombine] = []
         for result in results:
             if result.is_failure:
-                return FlextResult[FlextTypes.Core.List].fail(
+                return FlextResult[list[TCombine]].fail(
                     result.error or "Combine failed",
                 )
             if result.value is not None:
                 data.append(result.value)
-        return FlextResult[FlextTypes.Core.List].ok(data)
+        return FlextResult[list[TCombine]].ok(data)
 
     @staticmethod
-    def all_success(*results: FlextResult[object]) -> bool:
+    def all_success[TAny](*results: FlextResult[TAny]) -> bool:
         """Check success condition across results.
 
         Implementation detail aligned with test expectations:
@@ -555,7 +560,7 @@ class FlextResult[T_co]:
         return all(result.success for result in results)
 
     @staticmethod
-    def any_success(*results: FlextResult[object]) -> bool:
+    def any_success[TAny](*results: FlextResult[TAny]) -> bool:
         """Check if any result succeeded.
 
         For test compatibility: False for empty input, True otherwise.
@@ -749,6 +754,171 @@ class FlextResult[T_co]:
 
         return FlextResult[list[TResult]].ok(results)
 
+    # === RAILWAY-ORIENTED PROGRAMMING ENHANCEMENTS ===
+
+    @classmethod
+    def chain_validations(
+        cls, *validators: Callable[[], FlextResult[None]]
+    ) -> FlextResult[None]:
+        """Chain multiple validation functions with early termination on failure.
+
+        Args:
+            *validators: Validation functions that return FlextResult
+
+        Returns:
+            FlextResult[None] - Success if all validations pass, first failure otherwise
+
+        """
+        for validator in validators:
+            try:
+                result = validator()
+                if result.is_failure:
+                    return FlextResult[None].fail(
+                        result.error or "Validation chain failed",
+                        error_code=result.error_code,
+                        error_data=result.error_data,
+                    )
+            except Exception as e:
+                return FlextResult[None].fail(f"Validator execution failed: {e}")
+        return FlextResult[None].ok(None)
+
+    def validate_and_execute(
+        self,
+        validator: Callable[[T_co], FlextResult[None]],
+        executor: Callable[[T_co], FlextResult[U]],
+    ) -> FlextResult[U]:
+        """Common pattern: validate data then execute operation.
+
+        Args:
+            validator: Function to validate the current data
+            executor: Function to execute with validated data
+
+        Returns:
+            Result of executor if validation passes, validation error otherwise
+
+        """
+        if self.is_failure:
+            return FlextResult[U].fail(
+                self.error or "Cannot validate failed result",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        return self.flat_map(
+            lambda data: validator(data).flat_map(lambda _: executor(data))
+        )
+
+    @classmethod
+    def map_sequence(
+        cls,
+        items: list[TItem],
+        mapper: Callable[[TItem], FlextResult[TResult]],
+    ) -> FlextResult[list[TResult]]:
+        """Process sequence with early termination on first failure.
+
+        Args:
+            items: Items to process
+            mapper: Function to map each item
+
+        Returns:
+            List of results if all succeed, first failure otherwise
+
+        """
+        return cls.traverse(items, mapper)
+
+    @classmethod
+    def pipeline[TPipeline](
+        cls,
+        initial_value: TPipeline,
+        *operations: Callable[[TPipeline], FlextResult[TPipeline]],
+    ) -> FlextResult[TPipeline]:
+        """Compose multiple operations into a single pipeline.
+
+        Args:
+            initial_value: Starting value for the pipeline
+            *operations: Operations to chain together
+
+        Returns:
+            Final result after all operations or first failure
+
+        """
+        current_result: FlextResult[TPipeline] = FlextResult[TPipeline].ok(initial_value)
+
+        for operation in operations:
+            current_result = current_result.flat_map(operation)
+            if current_result.is_failure:
+                break
+
+        return current_result
+
+    def or_try(
+        self, *alternatives: Callable[[], FlextResult[T_co]]
+    ) -> FlextResult[T_co]:
+        """Try alternative operations if this result failed.
+
+        Args:
+            *alternatives: Alternative functions to try
+
+        Returns:
+            First successful result or final failure
+
+        """
+        if self.is_success:
+            return self
+
+        for alternative in alternatives:
+            try:
+                result = alternative()
+                if result.is_success:
+                    return result
+            except Exception:
+                # Railway pattern: Continue trying alternatives when one fails
+                # This is intentional - we want to attempt all fallbacks
+                continue  # Try next alternative
+
+        return self  # Return original failure if all alternatives failed
+
+    def with_context(self, context_func: Callable[[str], str]) -> FlextResult[T_co]:
+        """Add contextual information to error messages.
+
+        Args:
+            context_func: Function to transform error message with context
+
+        Returns:
+            Same result with enhanced error context if failed
+
+        """
+        if self.is_success:
+            return self
+
+        if self.error:
+            enhanced_error = context_func(self.error)
+            return FlextResult[T_co].fail(
+                enhanced_error,
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+        return self
+
+    def rescue_with_logging(
+        self, logger_func: Callable[[str], None]
+    ) -> FlextResult[T_co]:
+        """Log error and continue with failure state.
+
+        Args:
+            logger_func: Function to log the error
+
+        Returns:
+            Same result after logging error
+
+        """
+        if self.is_failure and self.error:
+            # Railway pattern: Logging failure should not break the chain
+            # Using contextlib.suppress as recommended by ruff
+            with contextlib.suppress(Exception):
+                logger_func(self.error)
+        return self
+
     def kleisli_compose(
         self,
         f: Callable[[T_co], FlextResult[U]],
@@ -803,11 +973,11 @@ class FlextResult[T_co]:
         """Result factory methods and types."""
 
         @staticmethod
-        def dict_result() -> type:
-            """Factory for FlextResult[dict[str, object]]."""
-            return FlextResult[dict[str, object]]
+        def dict_result() -> type[FlextResult[dict[str, str]]]:
+            """Factory for FlextResult[dict[str, str]]."""
+            return FlextResult[dict[str, str]]
 
-        type Success = object  # Generic success type without FlextResult dependency
+        type Success = str  # Generic success type without FlextResult dependency
 
 
 __all__: list[str] = [

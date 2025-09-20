@@ -887,7 +887,11 @@ class FlextTestsMatchers:
                         raise self.failure_exception
 
                     class MockFailureError(Exception):
-                        pass
+                        """Exception raised when flaky async mock simulates a failure.
+
+                        This exception is used internally by FlakyAsyncMock to simulate
+                        random failures during testing scenarios.
+                        """
 
                     raise MockFailureError(f"Mock failure: {self.failure_exception}")
 

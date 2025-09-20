@@ -65,18 +65,30 @@ class FlextDispatcher:
         self,
         handler: FlextHandlers[MessageT, ResultT],
     ) -> FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]:
-        """Register a fully constructed handler instance."""
-        register_result = self._bus.register_handler(handler)
-        if register_result.is_failure:
-            return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].fail(
-                register_result.error or "Failed to register handler with dispatcher",
-            )
-        self._logger.debug(
-            "handler_registered",
-            handler=handler.__class__.__name__,
+        """Register a fully constructed handler instance using railway pattern."""
+        return self._bus.register_handler(handler).flat_map(
+            lambda _: self._create_registration_and_log(handler, None)
         )
+
+    def _create_registration_and_log(
+        self,
+        handler: FlextHandlers[MessageT, ResultT],
+        message_type: type[MessageT] | None,
+    ) -> FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]:
+        """Create registration and log success."""
+        if message_type is None:
+            self._logger.debug(
+                "handler_registered",
+                handler=handler.__class__.__name__,
+            )
+        else:
+            self._logger.debug(
+                "command_handler_registered",
+                command_type=message_type.__name__,
+                handler=handler.__class__.__name__,
+            )
         return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].ok(
-            FlextDispatcher.Registration[MessageT, ResultT](None, handler),
+            FlextDispatcher.Registration(message_type, handler),
         )
 
     def register_command(
@@ -84,19 +96,9 @@ class FlextDispatcher:
         command_type: type[MessageT],
         handler: FlextHandlers[MessageT, ResultT],
     ) -> FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]:
-        """Register handler bound to a specific command type."""
-        register_result = self._bus.register_handler(command_type, handler)
-        if register_result.is_failure:
-            return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].fail(
-                register_result.error or "Failed to register command handler",
-            )
-        self._logger.debug(
-            "command_handler_registered",
-            command_type=command_type.__name__,
-            handler=handler.__class__.__name__,
-        )
-        return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].ok(
-            FlextDispatcher.Registration(command_type, handler),
+        """Register handler bound to a specific command type using railway pattern."""
+        return self._bus.register_handler(command_type, handler).flat_map(
+            lambda _: self._create_registration_and_log(handler, command_type)
         )
 
     def register_query(
@@ -117,11 +119,30 @@ class FlextDispatcher:
         | None = None,
         mode: str = "command",
     ) -> FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]:
-        """Register a simple function as a handler using bus helpers."""
-        if mode not in {"command", "query"}:
-            return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].fail(
-                "mode must be 'command' or 'query'",
+        """Register a simple function as a handler using railway pattern."""
+        return (
+            self._validate_handler_mode(mode)
+            .flat_map(
+                lambda _: self._create_handler_from_function(
+                    handler_func, handler_config, mode
+                )
             )
+            .flat_map(lambda handler: self.register_command(message_type, handler))
+        )
+
+    def _validate_handler_mode(self, mode: str) -> FlextResult[None]:
+        """Validate handler mode parameter."""
+        if mode not in {"command", "query"}:
+            return FlextResult[None].fail("mode must be 'command' or 'query'")
+        return FlextResult[None].ok(None)
+
+    def _create_handler_from_function(
+        self,
+        handler_func: Callable[[MessageT], ResultT | FlextResult[ResultT]],
+        handler_config: FlextModels.CqrsConfig.Handler | dict[str, object] | None,
+        mode: str,
+    ) -> FlextResult[FlextHandlers[MessageT, ResultT]]:
+        """Create handler from function using appropriate factory."""
         factory = (
             FlextBus.create_simple_handler
             if mode == "command"
@@ -132,7 +153,7 @@ class FlextDispatcher:
         generic_handler = factory(typed_handler_func, handler_config=handler_config)
         # Cast to correct type since we know the factory returns the right type
         typed_handler = cast("FlextHandlers[MessageT, ResultT]", generic_handler)
-        return self.register_command(message_type, typed_handler)
+        return FlextResult[FlextHandlers[MessageT, ResultT]].ok(typed_handler)
 
     # ------------------------------------------------------------------
     # Dispatch execution
@@ -154,7 +175,7 @@ class FlextDispatcher:
         *,
         metadata: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[object]:
-        """Dispatch commands or queries through the underlying bus.
+        """Dispatch commands or queries through the underlying bus using railway pattern.
 
         Args:
             message: The command or query message to dispatch.
@@ -166,18 +187,28 @@ class FlextDispatcher:
         """
         with self._context_scope(metadata):
             result = self._bus.execute(message)
-            if result.is_failure:
-                self._logger.error(
-                    "dispatch_failed",
-                    message_type=type(message).__name__,
-                    error=result.error,
-                )
-            else:
-                self._logger.debug(
-                    "dispatch_succeeded",
-                    message_type=type(message).__name__,
-                )
+            if result.is_success:
+                self._log_dispatch_success(message, result.value)
+                return result
+            self._log_dispatch_failure(message, result.error or "Unknown error")
             return result
+
+    def _log_dispatch_success(self, message: object, result: object) -> object:
+        """Log successful dispatch and return result."""
+        self._logger.debug(
+            "dispatch_succeeded",
+            message_type=type(message).__name__,
+        )
+        return result
+
+    def _log_dispatch_failure(self, message: object, error: str) -> str:
+        """Log failed dispatch and return error."""
+        self._logger.error(
+            "dispatch_failed",
+            message_type=type(message).__name__,
+            error=error,
+        )
+        return error
 
     # ------------------------------------------------------------------
     # Context management
