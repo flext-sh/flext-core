@@ -117,12 +117,11 @@ class FlextContainer:
                 return FlextResult[Callable[[], T]].fail(
                     f"Factory requires {required_params} parameter(s), must be parameterless"
                 )
+            return FlextResult[Callable[[], T]].ok(factory)
         except (ValueError, TypeError, OSError) as e:
             return FlextResult[Callable[[], T]].fail(
                 f"Factory signature inspection failed: {e}"
             )
-
-        return FlextResult[Callable[[], T]].ok(factory)
 
     # =========================================================================
     # REGISTRATION API - RAILWAY COMPOSITION (75% CODE REDUCTION)
@@ -141,7 +140,9 @@ class FlextContainer:
         self._factories.pop(name, None)
         return FlextResult[None].ok(None)
 
-    def register_factory(self, name: str, factory: Callable[[], T]) -> FlextResult[None]:
+    def register_factory(
+        self, name: str, factory: Callable[[], T]
+    ) -> FlextResult[None]:
         """Register factory using railway pattern composition."""
         return FlextResult.applicative_lift2(
             lambda validated_name, validated_factory: (
@@ -152,9 +153,7 @@ class FlextContainer:
             self._validate_factory(factory),
         ) >> (lambda params: self._store_factory(params[0], params[1]))
 
-    def _store_factory(
-        self, name: str, factory: Callable[[], T]
-    ) -> FlextResult[None]:
+    def _store_factory(self, name: str, factory: Callable[[], T]) -> FlextResult[None]:
         """Store factory in registry."""
         # Remove from services if present (factory takes precedence)
         self._services.pop(name, None)
@@ -179,23 +178,23 @@ class FlextContainer:
     # RETRIEVAL API - RAILWAY OPTIMIZATION (90% CODE REDUCTION)
     # =========================================================================
 
-    def get(self, name: str) -> FlextResult[T]:
+    def get(self, name: str) -> FlextResult[object]:
         """Get service using optimized railway pattern."""
         return self._validate_service_name(name) >> (self._resolve_service)
 
-    def _resolve_service(self, name: str) -> FlextResult[T]:
+    def _resolve_service(self, name: str) -> FlextResult[object]:
         """Resolve service with singleton factory caching."""
         # Check direct service registration first (most common case)
         if name in self._services:
-            return FlextResult[T].ok(self._services[name])
+            return FlextResult[object].ok(self._services[name])
 
         # Check factory registration with automatic singleton conversion
         if name in self._factories:
             return self._invoke_factory_and_cache(name)
 
-        return FlextResult[T].fail(f"Service '{name}' not found")
+        return FlextResult[object].fail(f"Service '{name}' not found")
 
-    def _invoke_factory_and_cache(self, name: str) -> FlextResult[T]:
+    def _invoke_factory_and_cache(self, name: str) -> FlextResult[object]:
         """Invoke factory and cache result for singleton behavior."""
         try:
             factory = self._factories[name]
@@ -316,7 +315,10 @@ class FlextContainer:
         """Resolve service name with class name fallback."""
         name = service_name or service_class.__name__
         return FlextResult[FlextTypes.Core.Dict].ok(
-            {"class": service_class, "name": name}
+            {
+                "class": service_class,
+                "name": name,
+            }
         )
 
     def _resolve_dependencies(
@@ -333,18 +335,28 @@ class FlextContainer:
             ) -> FlextResult[tuple[str, object]]:
                 if param.default is not inspect.Parameter.empty:
                     return FlextResult[tuple[str, object]].ok(
-                        (param.name, param.default)
+                        (
+                            param.name,
+                            param.default,
+                        )
                     )
 
                 return self.get(param.name) >> (
                     lambda value: FlextResult[tuple[str, object]].ok(
-                        (param.name, value)
+                        (
+                            param.name,
+                            value,
+                        )
                     )
                 )
 
             return FlextResult.traverse(params, resolve_param) >> (
                 lambda deps: FlextResult[FlextTypes.Core.Dict].ok(
-                    {"class": service_class, "name": name, "kwargs": dict(deps)}
+                    {
+                        "class": service_class,
+                        "name": name,
+                        "kwargs": dict(deps),
+                    }
                 )
             )
         except Exception as e:
@@ -588,24 +600,28 @@ class FlextContainer:
     @classmethod
     def create_module_utilities(cls, module_name: str) -> FlextResult[object]:
         """Create utilities for a specific module.
-        
+
         Args:
             module_name: Name of the module to create utilities for
-            
+
         Returns:
             FlextResult containing module utilities or error
 
         """
-        if not module_name or not isinstance(module_name, str):
+        if not module_name:
             return FlextResult[object].fail("Module name must be a non-empty string")
 
         # For now, return a simple utilities object
         # This can be expanded with actual module-specific functionality
-        utilities = type(f"{module_name}_utilities", (), {
-            "module_name": module_name,
-            "logger": lambda: f"Logger for {module_name}",
-            "config": lambda: f"Config for {module_name}"
-        })()
+        utilities = type(
+            f"{module_name}_utilities",
+            (),
+            {
+                "module_name": module_name,
+                "logger": lambda: f"Logger for {module_name}",
+                "config": lambda: f"Config for {module_name}",
+            },
+        )()
 
         return FlextResult[object].ok(utilities)
 

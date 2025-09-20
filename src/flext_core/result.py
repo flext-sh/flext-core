@@ -11,19 +11,335 @@ SPDX-License-Identifier: MIT.
 from __future__ import annotations
 
 import contextlib
+import signal
+import time
 import types
 from collections.abc import Callable, Iterator
 from typing import TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import T1, T2, T3, FlextTypes, T_co, TItem, TResult, TUtil, U, V
+from flext_core.typings import T1, T2, T3, FlextTypes, TItem, TResult, TUtil, U, V
 
 # =============================================================================
 # FLEXT RESULT
 # =============================================================================
 
 
-class FlextResult[T_co]:
+class FlextResultUtils:
+    """Utility class for FlextResult static operations.
+
+    This class contains static/class methods extracted from FlextResult
+    to improve maintainability while preserving API compatibility.
+    """
+
+    @staticmethod
+    def chain_results[TChain](
+        results: list[FlextResult[TChain]],
+    ) -> FlextResult[list[TChain]]:
+        """Chain multiple results into a single result containing a list."""
+        successful_results = []
+        for result in results:
+            if not result.is_success:
+                return FlextResult[list[TChain]].fail(
+                    f"Chain failed at result: {result.error}"
+                )
+            successful_results.append(result.value)
+        return FlextResult[list[TChain]].ok(successful_results)
+
+    @staticmethod
+    def combine[TCombine](
+        *results: FlextResult[TCombine],
+    ) -> FlextResult[list[TCombine]]:
+        """Combine multiple results into a single result."""
+        values = []
+        for result in results:
+            if result.is_failure:
+                return FlextResult[list[TCombine]].fail(result.error)
+            values.append(result.value)
+        return FlextResult[list[TCombine]].ok(values)
+
+    @staticmethod
+    def all_success[TAny](*results: FlextResult[TAny]) -> bool:
+        """Check if all results are successful."""
+        if not results:
+            return True
+        return all(result.success for result in results)
+
+    @staticmethod
+    def any_success[TAny](*results: FlextResult[TAny]) -> bool:
+        """Check if any result is successful."""
+        return any(result.success for result in results) if results else False
+
+    @classmethod
+    def first_success[TFirst](
+        cls, *results: FlextResult[TFirst]
+    ) -> FlextResult[TFirst]:
+        """Return the first successful result."""
+        for result in results:
+            if result.is_success:
+                return result
+        return FlextResult[TFirst].fail("No successful results found")
+
+    @classmethod
+    def sequence[TSeq](
+        cls, results: list[FlextResult[TSeq]]
+    ) -> FlextResult[list[TSeq]]:
+        """Sequence a list of results into a result of list."""
+        values = []
+        for result in results:
+            if result.is_failure:
+                return FlextResult[list[TSeq]].fail(
+                    result.error or "Sequence failed",
+                    error_code=result.error_code,
+                    error_data=result.error_data,
+                )
+            values.append(result.unwrap())
+        return FlextResult[list[TSeq]].ok(values)
+
+    @classmethod
+    def try_all[TTry](
+        cls, *operations: Callable[[], FlextResult[TTry]]
+    ) -> FlextResult[TTry]:
+        """Try operations in sequence until one succeeds."""
+        errors = []
+        for operation in operations:
+            try:
+                result = operation()
+                if result.is_success:
+                    return result
+                errors.append(result.error)
+            except Exception as e:
+                errors.append(str(e))
+        return FlextResult[TTry].fail(f"All operations failed: {errors}")
+
+    @classmethod
+    def collect_successes[TCollect](
+        cls, results: list[FlextResult[TCollect]]
+    ) -> list[TCollect]:
+        """Collect all successful values from results."""
+        return [result.value for result in results if result.is_success]
+
+    @classmethod
+    def collect_failures[TCollectFail](
+        cls, results: list[FlextResult[TCollectFail]]
+    ) -> list[str]:
+        """Collect all error messages from failed results."""
+        return [r.error for r in results if r.is_failure and r.error]
+
+    @classmethod
+    def success_rate[TRate](cls, results: list[FlextResult[TRate]]) -> float:
+        """Calculate success rate of results."""
+        if not results:
+            return 0.0
+        successful = sum(1 for result in results if result.is_success)
+        return successful / len(results)
+
+    @classmethod
+    def batch_process[TBatch, UBatch](
+        cls,
+        items: list[TBatch],
+        processor: Callable[[TBatch], FlextResult[UBatch]],
+    ) -> tuple[list[UBatch], list[str]]:
+        """Process batch and separate successes from failures."""
+        results = [processor(item) for item in items]
+        successes = cls.collect_successes(results)
+        failures = cls.collect_failures(results)
+        return successes, failures
+
+    @classmethod
+    def safe_call[TSafe](
+        cls, func: Callable[[], TSafe], error_message: str = "Operation failed"
+    ) -> FlextResult[TSafe]:
+        """Safely call a function and wrap result."""
+        try:
+            result = func()
+            return FlextResult[TSafe].ok(result)
+        except Exception as e:
+            return FlextResult[TSafe].fail(f"{error_message}: {e}")
+
+
+class FlextResultCollections:
+    """Advanced collection operations for FlextResult.
+
+    Contains complex collection processing methods extracted from FlextResult
+    for better separation of concerns.
+    """
+
+    @classmethod
+    def traverse[TTraverse, UTraverse](
+        cls,
+        items: list[TTraverse],
+        func: Callable[[TTraverse], FlextResult[UTraverse]],
+    ) -> FlextResult[list[UTraverse]]:
+        """Traverse a list with a function returning FlextResults."""
+        results = []
+        for item in items:
+            result = func(item)
+            if result.is_failure:
+                return FlextResult[list[UTraverse]].fail(
+                    result.error or f"Traverse failed at item {item}",
+                )
+            results.append(result.unwrap())
+        return FlextResult[list[UTraverse]].ok(results)
+
+    @classmethod
+    def chain_validations(
+        cls, *validators: Callable[[], FlextResult[None]]
+    ) -> FlextResult[None]:
+        """Chain multiple validation functions."""
+        for validator in validators:
+            try:
+                result = validator()
+                if result.is_failure:
+                    return FlextResult[None].fail(
+                        result.error or "Validation chain failed",
+                        error_code=result.error_code,
+                        error_data=result.error_data,
+                    )
+            except Exception as e:
+                return FlextResult[None].fail(f"Validator execution failed: {e}")
+        return FlextResult[None].ok(None)
+
+    @classmethod
+    def validate_and_execute[TValidate, UValidate](
+        cls,
+        result: FlextResult[TValidate],
+        validator: Callable[[TValidate], FlextResult[None]],
+        executor: Callable[[TValidate], FlextResult[UValidate]],
+    ) -> FlextResult[UValidate]:
+        """Validate a result then execute if valid."""
+        if result.is_failure:
+            return FlextResult[UValidate].fail(result.error)
+
+        validation = validator(result.value)
+        if validation.is_failure:
+            return FlextResult[UValidate].fail(validation.error)
+
+        return executor(result.value)
+
+    @classmethod
+    def map_sequence[TMapSeq, UMapSeq](
+        cls,
+        items: list[TMapSeq],
+        func: Callable[[TMapSeq], FlextResult[UMapSeq]],
+    ) -> FlextResult[list[UMapSeq]]:
+        """Map function over sequence and collect results."""
+        return cls.traverse(items, func)
+
+    @classmethod
+    def pipeline[TPipe](
+        cls, initial: TPipe, *operations: Callable[[TPipe], FlextResult[TPipe]]
+    ) -> FlextResult[TPipe]:
+        """Execute operations in pipeline."""
+        current = FlextResult[TPipe].ok(initial)
+        for operation in operations:
+            if current.is_failure:
+                return current
+            current = current.flat_map(operation)
+        return current
+
+    @classmethod
+    def accumulate_errors[TAccumulate](
+        cls, *results: FlextResult[TAccumulate]
+    ) -> FlextResult[list[TAccumulate]]:
+        """Accumulate all errors or return all successes."""
+        successes: list[TAccumulate] = []
+        errors: list[str] = []
+
+        for result in results:
+            if result.is_success:
+                successes.append(result.unwrap())
+            else:
+                errors.append(result.error or "Unknown error")
+
+        if errors:
+            combined_error = "; ".join(errors)
+            return FlextResult[list[TAccumulate]].fail(
+                f"Multiple errors occurred: {combined_error}",
+                error_code="ACCUMULATED_ERRORS",
+                error_data={"error_count": len(errors), "errors": errors},
+            )
+
+        return FlextResult[list[TAccumulate]].ok(successes)
+
+    @classmethod
+    def collect_all_errors[TCollectAll](
+        cls, results: list[FlextResult[TCollectAll]]
+    ) -> FlextResult[list[TCollectAll]]:
+        """Collect all errors and return them, or return all successes."""
+        errors = []
+        values = []
+
+        for result in results:
+            if result.is_failure:
+                errors.append(result.error)
+            else:
+                values.append(result.value)
+
+        if errors:
+            return FlextResult[list[TCollectAll]].fail(f"Collected errors: {errors}")
+
+        return FlextResult[list[TCollectAll]].ok(values)
+
+    @classmethod
+    def parallel_map[TPar, UPar](
+        cls,
+        items: list[TPar],
+        func: Callable[[TPar], FlextResult[UPar]],
+        fail_fast: bool = True,
+    ) -> FlextResult[list[UPar]]:
+        """Map function over items in parallel (conceptually)."""
+        results = [func(item) for item in items]
+
+        if fail_fast:
+            # Use sequence for fail-fast behavior
+            successes = []
+            for result in results:
+                if result.is_failure:
+                    error_msg = result.error or "Sequence operation failed"
+                    return FlextResult[list[UPar]].fail(error_msg)
+                successes.append(result.unwrap())
+            return FlextResult[list[UPar]].ok(successes)
+        # Accumulate errors
+        successes = []
+        errors = []
+        for result in results:
+            if result.is_failure:
+                error_msg = result.error or "Operation failed"
+                errors.append(error_msg)
+            else:
+                successes.append(result.unwrap())
+
+        if errors:
+            return FlextResult[list[UPar]].fail("; ".join(errors))
+        return FlextResult[list[UPar]].ok(successes)
+
+    @classmethod
+    def validate_all[TValidateAll](
+        cls,
+        value: TValidateAll,
+        *validators: Callable[[TValidateAll], FlextResult[None]],
+    ) -> FlextResult[TValidateAll]:
+        """Validate data with multiple validators."""
+        validation_results = [validator(value) for validator in validators]
+        errors = [
+            result.error
+            for result in validation_results
+            if result.is_failure and result.error
+        ]
+
+        if errors:
+            combined_error = "; ".join(errors)
+            return FlextResult[TValidateAll].fail(
+                f"Validation failed: {combined_error}",
+                error_code="VALIDATION_FAILED",
+                error_data={"validation_errors": errors, "error_count": len(errors)},
+            )
+
+        return FlextResult[TValidateAll].ok(value)
+
+
+class FlextResult[T_co]:  # noqa: PLR0904  # Monad library legitimately needs many methods
     """Foundation result type that powers FLEXT's railway pattern.
 
     The implementation mirrors the behaviour promised for the 1.0.0 release:
@@ -174,7 +490,7 @@ class FlextResult[T_co]:
 
         """
         # Normalize empty/whitespace errors to default message
-        if not error or (isinstance(error, str) and error.isspace()):
+        if not error or error.isspace():
             actual_error = "Unknown error occurred"
         else:
             actual_error = error
@@ -188,14 +504,7 @@ class FlextResult[T_co]:
         *results: FlextResult[TChain],
     ) -> FlextResult[list[TChain]]:
         """Collect a series of results, aborting on the first failure."""
-        if not results:
-            return FlextResult[list[TChain]].ok([])
-        aggregated: list[TChain] = []
-        for res in results:
-            if res.is_failure:
-                return FlextResult[list[TChain]].fail(res.error or "error")
-            aggregated.append(res.value)
-        return FlextResult[list[TChain]].ok(aggregated)
+        return FlextResultUtils.chain_results(list(results))
 
     def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform the success payload using ``func`` while preserving errors."""
@@ -535,17 +844,11 @@ class FlextResult[T_co]:
             return cls.fail(str(e))
 
     @staticmethod
-    def combine[TCombine](*results: FlextResult[TCombine]) -> FlextResult[list[TCombine]]:
+    def combine[TCombine](
+        *results: FlextResult[TCombine],
+    ) -> FlextResult[list[TCombine]]:
         """Combine multiple results into one."""
-        data: list[TCombine] = []
-        for result in results:
-            if result.is_failure:
-                return FlextResult[list[TCombine]].fail(
-                    result.error or "Combine failed",
-                )
-            if result.value is not None:
-                data.append(result.value)
-        return FlextResult[list[TCombine]].ok(data)
+        return FlextResultUtils.combine(*results)
 
     @staticmethod
     def all_success[TAny](*results: FlextResult[TAny]) -> bool:
@@ -555,9 +858,7 @@ class FlextResult[T_co]:
         - Returns True when no results are provided (vacuous truth).
         - Returns True only if all results are successful.
         """
-        if not results:
-            return True
-        return all(result.success for result in results)
+        return FlextResultUtils.all_success(*results)
 
     @staticmethod
     def any_success[TAny](*results: FlextResult[TAny]) -> bool:
@@ -565,7 +866,7 @@ class FlextResult[T_co]:
 
         For test compatibility: False for empty input, True otherwise.
         """
-        return any(result.success for result in results) if results else False
+        return FlextResultUtils.any_success(*results)
 
     @classmethod
     def first_success(cls, *results: FlextResult[T_co]) -> FlextResult[T_co]:
@@ -589,16 +890,7 @@ class FlextResult[T_co]:
             or first failure encountered.
 
         """
-        values: list[T_co] = []
-        for result in results:
-            if result.is_failure:
-                return FlextResult[list[T_co]].fail(
-                    result.error or "Sequence failed",
-                    error_code=result.error_code,
-                    error_data=result.error_data,
-                )
-            values.append(result.unwrap())
-        return FlextResult[list[T_co]].ok(values)
+        return FlextResultUtils.sequence(results)
 
     @classmethod
     def try_all(cls, *funcs: Callable[[], T_co]) -> FlextResult[T_co]:
@@ -643,12 +935,12 @@ class FlextResult[T_co]:
     @classmethod
     def collect_successes(cls, results: list[FlextResult[TUtil]]) -> list[TUtil]:
         """Collect successful values from results."""
-        return [r.value for r in results if r.success]
+        return FlextResultUtils.collect_successes(results)
 
     @classmethod
     def collect_failures(cls, results: list[FlextResult[TUtil]]) -> list[str]:
         """Collect error messages from failures."""
-        return [r.error for r in results if r.is_failure and r.error]
+        return FlextResultUtils.collect_failures(results)
 
     @classmethod
     def success_rate(cls, results: list[FlextResult[TUtil]]) -> float:
@@ -665,10 +957,7 @@ class FlextResult[T_co]:
         processor: Callable[[TItem], FlextResult[TUtil]],
     ) -> tuple[list[TUtil], list[str]]:
         """Process batch and separate successes from failures."""
-        results = [processor(item) for item in items]
-        successes = cls.collect_successes(results)
-        failures = cls.collect_failures(results)
-        return successes, failures
+        return FlextResultUtils.batch_process(items, processor)
 
     @classmethod
     def safe_call(
@@ -742,17 +1031,7 @@ class FlextResult[T_co]:
         func: Callable[[TItem], FlextResult[TResult]],
     ) -> FlextResult[list[TResult]]:
         """Traverse operation from Category Theory - ADVANCED FUNCTIONAL PATTERN."""
-        results: list[TResult] = []
-
-        for item in items:
-            result = func(item)
-            if result.is_failure:
-                return FlextResult[list[TResult]].fail(
-                    result.error or f"Traverse failed at item {item}",
-                )
-            results.append(result.unwrap())
-
-        return FlextResult[list[TResult]].ok(results)
+        return FlextResultCollections.traverse(items, func)
 
     # === RAILWAY-ORIENTED PROGRAMMING ENHANCEMENTS ===
 
@@ -842,7 +1121,9 @@ class FlextResult[T_co]:
             Final result after all operations or first failure
 
         """
-        current_result: FlextResult[TPipeline] = FlextResult[TPipeline].ok(initial_value)
+        current_result: FlextResult[TPipeline] = FlextResult[TPipeline].ok(
+            initial_value
+        )
 
         for operation in operations:
             current_result = current_result.flat_map(operation)
@@ -969,6 +1250,394 @@ class FlextResult[T_co]:
             result3,
         )
 
+    # === NEW ADVANCED MONADIC OPERATORS FOR COMPLEXITY REDUCTION ===
+
+    def when(self, condition: Callable[[T_co], bool]) -> FlextResult[T_co]:
+        """Conditional execution - proceed only if condition is true.
+
+        Args:
+            condition: Predicate function to test the value
+
+        Returns:
+            Same result if condition passes or result is failure,
+            failure result if condition fails
+
+        """
+        if self.is_failure:
+            return self
+
+        try:
+            if condition(self.unwrap()):
+                return self
+            return FlextResult[T_co].fail("Conditional execution failed")
+        except Exception as e:
+            return FlextResult[T_co].fail(f"Condition evaluation failed: {e}")
+
+    def unless(self, condition: Callable[[T_co], bool]) -> FlextResult[T_co]:
+        """Conditional execution - proceed only if condition is false.
+
+        Args:
+            condition: Predicate function to test the value
+
+        Returns:
+            Same result if condition fails or result is failure,
+            failure result if condition passes
+
+        """
+        return self.when(lambda x: not condition(x))
+
+    def if_then_else(
+        self,
+        condition: Callable[[T_co], bool],
+        then_func: Callable[[T_co], FlextResult[U]],
+        else_func: Callable[[T_co], FlextResult[U]],
+    ) -> FlextResult[U]:
+        """Conditional branching with different execution paths.
+
+        Args:
+            condition: Predicate function to test the value
+            then_func: Function to execute if condition is true
+            else_func: Function to execute if condition is false
+
+        Returns:
+            Result of then_func or else_func based on condition
+
+        """
+        if self.is_failure:
+            return FlextResult[U].fail(
+                self.error or "Cannot branch on failed result",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        try:
+            if condition(self.unwrap()):
+                return then_func(self.unwrap())
+            return else_func(self.unwrap())
+        except Exception as e:
+            return FlextResult[U].fail(f"Conditional branching failed: {e}")
+
+    @classmethod
+    def accumulate_errors[TAccum](
+        cls, *results: FlextResult[TAccum]
+    ) -> FlextResult[list[TAccum]]:
+        """Accumulate all errors instead of early termination.
+
+        Args:
+            *results: Results to accumulate
+
+        Returns:
+            Success with all values if no failures, or failure with all error messages
+
+        """
+        return FlextResultCollections.accumulate_errors(*results)
+
+    @classmethod
+    def collect_all_errors[TCollect](
+        cls, *results: FlextResult[TCollect]
+    ) -> tuple[list[TCollect], list[str]]:
+        """Collect all successful values and all error messages.
+
+        Args:
+            *results: Results to collect from
+
+        Returns:
+            Tuple of (successful_values, error_messages)
+
+        """
+        successes: list[TCollect] = []
+        errors: list[str] = []
+
+        for result in results:
+            if result.is_success:
+                successes.append(result.unwrap())
+            else:
+                errors.append(result.error or "Unknown error")
+
+        return successes, errors
+
+    @classmethod
+    def parallel_map[TParallel, UParallel](
+        cls,
+        items: list[TParallel],
+        mapper: Callable[[TParallel], FlextResult[UParallel]],
+        fail_fast: bool = True,
+    ) -> FlextResult[list[UParallel]]:
+        """Map function over items with parallel semantics.
+
+        Args:
+            items: Items to process
+            mapper: Function to map each item
+            fail_fast: If True, fail on first error; if False, accumulate all errors
+
+        Returns:
+            Result containing list of mapped values or accumulated errors
+
+        """
+        return FlextResultCollections.parallel_map(items, mapper, fail_fast)
+
+    @classmethod
+    def _sequence_typed[U](cls, results: list[FlextResult[U]]) -> FlextResult[list[U]]:
+        """Type-safe sequence for parallel operations."""
+        successes = []
+        for result in results:
+            if result.is_failure:
+                error_msg = result.error or "Sequence operation failed"
+                return FlextResult[list[U]].fail(error_msg)
+            successes.append(result.unwrap())
+        return FlextResult[list[U]].ok(successes)
+
+    @classmethod
+    def _accumulate_errors_typed[U](
+        cls, results: list[FlextResult[U]]
+    ) -> FlextResult[list[U]]:
+        """Type-safe error accumulation for parallel operations."""
+        successes = []
+        errors = []
+        for result in results:
+            if result.is_failure:
+                error_msg = result.error or "Operation failed"
+                errors.append(error_msg)
+            else:
+                successes.append(result.unwrap())
+
+        if errors:
+            return FlextResult[list[U]].fail("; ".join(errors))
+        return FlextResult[list[U]].ok(successes)
+
+    @classmethod
+    def concurrent_sequence[TConcurrent](
+        cls, results: list[FlextResult[TConcurrent]], fail_fast: bool = True
+    ) -> FlextResult[list[TConcurrent]]:
+        """Sequence results with concurrent semantics.
+
+        Args:
+            results: Results to sequence
+            fail_fast: If True, fail on first error; if False, accumulate all errors
+
+        Returns:
+            Result containing list of values or accumulated errors
+
+        """
+        if fail_fast:
+            return cls._sequence_typed(results)
+        return cls._accumulate_errors_typed(results)
+
+    def with_resource[TResource, UResource](
+        self,
+        resource_factory: Callable[[], TResource],
+        operation: Callable[[T_co, TResource], FlextResult[UResource]],
+        cleanup: Callable[[TResource], None] | None = None,
+    ) -> FlextResult[UResource]:
+        """Execute operation with automatic resource management.
+
+        Args:
+            resource_factory: Function to create the resource
+            operation: Function to execute with value and resource
+            cleanup: Optional cleanup function for the resource
+
+        Returns:
+            Result of operation with guaranteed resource cleanup
+
+        """
+        if self.is_failure:
+            return FlextResult[UResource].fail(
+                self.error or "Cannot use resource with failed result",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        try:
+            resource = resource_factory()
+            try:
+                return operation(self.unwrap(), resource)
+            finally:
+                if cleanup:
+                    cleanup(resource)
+        except Exception as e:
+            return FlextResult[UResource].fail(f"Resource operation failed: {e}")
+
+    def bracket[TBracket](
+        self,
+        operation: Callable[[T_co], FlextResult[TBracket]],
+        finally_action: Callable[[T_co], None],
+    ) -> FlextResult[TBracket]:
+        """Execute operation with guaranteed finally action.
+
+        Args:
+            operation: Main operation to execute
+            finally_action: Action to execute regardless of operation outcome
+
+        Returns:
+            Result of operation with guaranteed finally action execution
+
+        """
+        if self.is_failure:
+            return FlextResult[TBracket].fail(
+                self.error or "Cannot bracket failed result",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        try:
+            value = self.unwrap()
+            result = operation(value)
+            finally_action(value)
+            return result
+        except Exception as e:
+            try:
+                finally_action(self.unwrap())
+            except Exception:
+                pass  # Suppress cleanup errors
+            return FlextResult[TBracket].fail(f"Bracket operation failed: {e}")
+
+    def with_timeout[TTimeout](
+        self,
+        timeout_seconds: float,
+        operation: Callable[[T_co], FlextResult[TTimeout]],
+    ) -> FlextResult[TTimeout]:
+        """Execute operation with timeout.
+
+        Args:
+            timeout_seconds: Maximum execution time in seconds
+            operation: Operation to execute with timeout
+
+        Returns:
+            Result of operation or timeout error
+
+        """
+        if self.is_failure:
+            return FlextResult[TTimeout].fail(
+                self.error or "Cannot apply timeout to failed result",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        def timeout_handler(signum: int, frame: object) -> None:
+            msg = f"Operation timed out after {timeout_seconds} seconds"
+            raise TimeoutError(msg)
+
+        try:
+            # Set up timeout signal
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(int(timeout_seconds))
+
+            start_time = time.time()
+            result = operation(self.unwrap())
+            elapsed = time.time() - start_time
+
+            # Clear timeout
+            signal.alarm(0)
+
+            # Add timing metadata
+            if result.is_success:
+                enhanced_data = dict(result.error_data) if result.error_data else {}
+                enhanced_data["execution_time"] = elapsed
+                return FlextResult[TTimeout].ok(result.unwrap())
+            enhanced_data = dict(result.error_data) if result.error_data else {}
+            enhanced_data["execution_time"] = elapsed
+            return FlextResult[TTimeout].fail(
+                result.error or "Timed operation failed",
+                error_code=result.error_code,
+                error_data=enhanced_data,
+            )
+        except TimeoutError as e:
+            signal.alarm(0)  # Clear timeout
+            return FlextResult[TTimeout].fail(
+                str(e),
+                error_code="TIMEOUT_ERROR",
+                error_data={"timeout_seconds": timeout_seconds},
+            )
+        except Exception as e:
+            signal.alarm(0)  # Clear timeout
+            return FlextResult[TTimeout].fail(f"Timeout operation failed: {e}")
+
+    def retry_until_success(
+        self,
+        operation: Callable[[T_co], FlextResult[T_co]],
+        max_attempts: int = 3,
+        backoff_factor: float = 1.0,
+    ) -> FlextResult[T_co]:
+        """Retry operation until success with exponential backoff.
+
+        Args:
+            operation: Operation to retry
+            max_attempts: Maximum number of retry attempts
+            backoff_factor: Multiplier for exponential backoff
+
+        Returns:
+            Result of first successful attempt or final failure
+
+        """
+        if self.is_failure:
+            return self
+
+        last_error = "No attempts made"
+
+        for attempt in range(max_attempts):
+            try:
+                result = operation(self.unwrap())
+                if result.is_success:
+                    return result
+                last_error = result.error or f"Attempt {attempt + 1} failed"
+
+                # Apply exponential backoff (except on last attempt)
+                if attempt < max_attempts - 1:
+                    time.sleep(backoff_factor * (2**attempt))
+
+            except Exception as e:
+                last_error = str(e)
+                if attempt < max_attempts - 1:
+                    time.sleep(backoff_factor * (2**attempt))
+
+        return FlextResult[T_co].fail(
+            f"All {max_attempts} retry attempts failed. Last error: {last_error}",
+            error_code="RETRY_EXHAUSTED",
+            error_data={"max_attempts": max_attempts, "last_error": last_error},
+        )
+
+    def transition[TState](
+        self, state_machine: Callable[[T_co], FlextResult[TState]]
+    ) -> FlextResult[TState]:
+        """State machine transition using railway pattern.
+
+        Args:
+            state_machine: Function that defines state transitions
+
+        Returns:
+            Result of state transition
+
+        """
+        if self.is_failure:
+            return FlextResult[TState].fail(
+                self.error or "Cannot transition from failed state",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        try:
+            return state_machine(self.unwrap())
+        except Exception as e:
+            return FlextResult[TState].fail(f"State transition failed: {e}")
+
+    @classmethod
+    def validate_all[TValidate](
+        cls,
+        value: TValidate,
+        *validators: Callable[[TValidate], FlextResult[None]],
+    ) -> FlextResult[TValidate]:
+        """Run all validators on a value, accumulating errors.
+
+        Args:
+            value: Value to validate
+            *validators: Validation functions
+
+        Returns:
+            Original value if all validations pass, accumulated errors otherwise
+
+        """
+        return FlextResultCollections.validate_all(value, *validators)
+
     class Result:
         """Result factory methods and types."""
 
@@ -977,7 +1646,7 @@ class FlextResult[T_co]:
             """Factory for FlextResult[dict[str, str]]."""
             return FlextResult[dict[str, str]]
 
-        type Success = str  # Generic success type without FlextResult dependency
+        type Success = str  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency
 
 
 __all__: list[str] = [

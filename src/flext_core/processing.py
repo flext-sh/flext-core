@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_core.result import FlextResult
+from flext_core.utilities import FlextUtilities
 
 
 class FlextProcessing:
@@ -95,8 +96,51 @@ class FlextProcessing:
             """Get a handler optionally, returning None if not found."""
             return self._handlers.get(name)
 
+        def execute_with_timeout(
+            self, name: str, request: object, timeout_seconds: float = 30.0
+        ) -> FlextResult[object]:
+            """Execute handler with timeout using advanced railway patterns."""
+            return FlextResult.ok(None).with_timeout(
+                timeout_seconds, lambda _: self.execute(name, request)
+            )
+
+        def execute_with_fallback(
+            self, primary_name: str, request: object, *fallback_names: str
+        ) -> FlextResult[object]:
+            """Execute handler with fallback handlers using railway patterns."""
+            return FlextUtilities.Reliability.with_fallback(
+                lambda: self.execute(primary_name, request),
+                *[
+                    lambda: self.execute(fallback, request)
+                    for fallback in fallback_names
+                ],
+            )
+
+        def execute_batch(
+            self,
+            handler_requests: list[tuple[str, object]],
+            fail_fast: bool = True,
+        ) -> FlextResult[list[object]]:
+            """Execute multiple handlers using advanced railway patterns."""
+            return FlextResult.parallel_map(
+                handler_requests,
+                lambda item: self.execute(item[0], item[1]),
+                fail_fast=fail_fast,
+            )
+
+        def register_with_validation(
+            self,
+            name: str,
+            handler: object,
+            validator: Callable[[object], FlextResult[None]] | None = None,
+        ) -> FlextResult[None]:
+            """Register handler with optional validation using railway patterns."""
+            if validator:
+                return validator(handler) >> (lambda _: self.register(name, handler))
+            return self.register(name, handler)
+
     class Pipeline:
-        """Simple processing pipeline mirroring modernization samples."""
+        """Advanced processing pipeline using monadic composition."""
 
         def __init__(self) -> None:
             """Initialize processing pipeline."""
@@ -116,10 +160,55 @@ class FlextProcessing:
             self._steps.append(step)
 
         def process(self, data: object) -> FlextResult[object]:
-            """Process data through pipeline using railway pattern."""
+            """Process data through pipeline using advanced railway pattern."""
             return FlextResult.pipeline(
                 data, *[self._process_step(step) for step in self._steps]
             )
+
+        def process_conditionally(
+            self,
+            data: object,
+            condition: Callable[[object], bool],
+        ) -> FlextResult[object]:
+            """Process data conditionally using railway patterns."""
+            return FlextResult.ok(data).when(condition) >> (self.process)
+
+        def process_with_timeout(
+            self,
+            data: object,
+            timeout_seconds: float = 30.0,
+        ) -> FlextResult[object]:
+            """Process data with timeout using advanced railway patterns."""
+            return FlextResult.ok(data).with_timeout(timeout_seconds, self.process)
+
+        def process_with_fallback(
+            self,
+            data: object,
+            *fallback_pipelines: FlextProcessing.Pipeline,
+        ) -> FlextResult[object]:
+            """Process with fallback pipelines using railway patterns."""
+            return FlextUtilities.Reliability.with_fallback(
+                lambda: self.process(data),
+                *[lambda: pipeline.process(data) for pipeline in fallback_pipelines],
+            )
+
+        def process_batch(
+            self,
+            data_items: list[object],
+            fail_fast: bool = True,
+        ) -> FlextResult[list[object]]:
+            """Process batch of data using advanced railway patterns."""
+            return FlextResult.parallel_map(
+                data_items, self.process, fail_fast=fail_fast
+            )
+
+        def process_with_validation(
+            self,
+            data: object,
+            *validators: Callable[[object], FlextResult[None]],
+        ) -> FlextResult[object]:
+            """Process with comprehensive validation pipeline."""
+            return FlextResult.validate_all(data, *validators) >> (self.process)
 
         def _process_step(
             self, step: object
@@ -127,25 +216,27 @@ class FlextProcessing:
             """Convert pipeline step to FlextResult-returning function."""
 
             def step_processor(current: object) -> FlextResult[object]:
-                try:
-                    # Handle callable steps
-                    if callable(step):
-                        result = step(current)
-                        if isinstance(result, FlextResult):
-                            return result
-                        return FlextResult[object].ok(result)
-
-                    # Handle dictionary merging
-                    if isinstance(current, dict) and isinstance(step, dict):
-                        merged = {**current, **step}
-                        return FlextResult[object].ok(merged)
-
-                    # Replace current data
-                    return FlextResult[object].ok(step)
-                except Exception as e:
-                    return FlextResult[object].fail(f"Pipeline step failed: {e}")
+                return FlextResult.from_exception(
+                    lambda: self._execute_step(step, current)
+                )
 
             return step_processor
+
+        def _execute_step(self, step: object, current: object) -> object:
+            """Execute a single pipeline step."""
+            # Handle callable steps
+            if callable(step):
+                result = step(current)
+                if isinstance(result, FlextResult):
+                    return result.unwrap()  # Will raise if failed
+                return result
+
+            # Handle dictionary merging
+            if isinstance(current, dict) and isinstance(step, dict):
+                return {**current, **step}
+
+            # Replace current data
+            return step
 
     # Factory methods for convenience
     @staticmethod

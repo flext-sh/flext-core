@@ -31,9 +31,7 @@ class TestTypeErrorTypeConversionMissingCoverage:
         """Test _TypeError with string type conversion - Lines 408-409, 421-422."""
         # Test expected_type="str" conversion - Lines 408-409
         error = FlextExceptions.TypeError(
-            "String type mismatch",
-            expected_type="str",
-            actual_type="str"
+            "String type mismatch", expected_type="str", actual_type="str"
         )
 
         assert error.expected_type == "str"
@@ -43,92 +41,108 @@ class TestTypeErrorTypeConversionMissingCoverage:
         # Check context contains converted types
         assert "expected_type" in error.context
         assert "actual_type" in error.context
-        assert error.context["expected_type"] is str  # Lines 408-409: converted to str type
-        assert error.context["actual_type"] is str    # Lines 421-422: converted to str type
+        assert (
+            error.context["expected_type"] is str
+        )  # Lines 408-409: converted to str type
+        assert (
+            error.context["actual_type"] is str
+        )  # Lines 421-422: converted to str type
 
     def test_type_error_with_int_types(self) -> None:
         """Test _TypeError with int type conversion - Lines 410-411, 423-424."""
         # Test expected_type="int" and actual_type="int" conversion
         error = FlextExceptions.TypeError(
-            "Integer type mismatch",
-            expected_type="int",
-            actual_type="int"
+            "Integer type mismatch", expected_type="int", actual_type="int"
         )
 
         assert error.expected_type == "int"
         assert error.actual_type == "int"
-        assert error.context["expected_type"] is int  # Lines 410-411: converted to int type
-        assert error.context["actual_type"] is int    # Lines 423-424: converted to int type
+        assert (
+            error.context["expected_type"] is int
+        )  # Lines 410-411: converted to int type
+        assert (
+            error.context["actual_type"] is int
+        )  # Lines 423-424: converted to int type
 
     def test_type_error_with_float_types(self) -> None:
         """Test _TypeError with float type conversion - Lines 412-413, 425-426."""
         # Test expected_type="float" and actual_type="float" conversion
         error = FlextExceptions.TypeError(
-            "Float type mismatch",
-            expected_type="float",
-            actual_type="float"
+            "Float type mismatch", expected_type="float", actual_type="float"
         )
 
         assert error.expected_type == "float"
         assert error.actual_type == "float"
-        assert error.context["expected_type"] is float  # Lines 412-413: converted to float type
-        assert error.context["actual_type"] is float    # Lines 425-426: converted to float type
+        assert (
+            error.context["expected_type"] is float
+        )  # Lines 412-413: converted to float type
+        assert (
+            error.context["actual_type"] is float
+        )  # Lines 425-426: converted to float type
 
     def test_type_error_with_bool_types(self) -> None:
         """Test _TypeError with bool type conversion - Lines 414-415, 427-428."""
         # Test expected_type="bool" and actual_type="bool" conversion
         error = FlextExceptions.TypeError(
-            "Boolean type mismatch",
-            expected_type="bool",
-            actual_type="bool"
+            "Boolean type mismatch", expected_type="bool", actual_type="bool"
         )
 
         assert error.expected_type == "bool"
         assert error.actual_type == "bool"
-        assert error.context["expected_type"] is bool  # Lines 414-415: converted to bool type
-        assert error.context["actual_type"] is bool    # Lines 427-428: converted to bool type
+        assert (
+            error.context["expected_type"] is bool
+        )  # Lines 414-415: converted to bool type
+        assert (
+            error.context["actual_type"] is bool
+        )  # Lines 427-428: converted to bool type
 
     def test_type_error_with_list_types(self) -> None:
         """Test _TypeError with list type conversion - Lines 416-417, 429-430."""
         # Test expected_type="list" and actual_type="list" conversion
         error = FlextExceptions.TypeError(
-            "List type mismatch",
-            expected_type="list",
-            actual_type="list"
+            "List type mismatch", expected_type="list", actual_type="list"
         )
 
         assert error.expected_type == "list"
         assert error.actual_type == "list"
-        assert error.context["expected_type"] is list  # Lines 416-417: converted to list type
-        assert error.context["actual_type"] is list    # Lines 429-430: converted to list type
+        assert (
+            error.context["expected_type"] is list
+        )  # Lines 416-417: converted to list type
+        assert (
+            error.context["actual_type"] is list
+        )  # Lines 429-430: converted to list type
 
     def test_type_error_with_dict_types(self) -> None:
         """Test _TypeError with dict type conversion - Lines 418-419, 431-432."""
         # Test expected_type="dict" and actual_type="dict" conversion
         error = FlextExceptions.TypeError(
-            "Dict type mismatch",
-            expected_type="dict",
-            actual_type="dict"
+            "Dict type mismatch", expected_type="dict", actual_type="dict"
         )
 
         assert error.expected_type == "dict"
         assert error.actual_type == "dict"
-        assert error.context["expected_type"] is dict  # Lines 418-419: converted to dict type
-        assert error.context["actual_type"] is dict    # Lines 431-432: converted to dict type
+        assert (
+            error.context["expected_type"] is dict
+        )  # Lines 418-419: converted to dict type
+        assert (
+            error.context["actual_type"] is dict
+        )  # Lines 431-432: converted to dict type
 
     def test_type_error_with_none_types(self) -> None:
         """Test _TypeError with None types - Lines 398-399, 405-406."""
         # Test with None types to cover default case - Lines 398-399
         error = FlextExceptions.TypeError(
-            "Type mismatch with None",
-            expected_type=None,
-            actual_type=None
+            "Type mismatch with None", expected_type=None, actual_type=None
         )
 
-        assert error.expected_type is None              # Line 398: stored as None
-        assert error.actual_type is None                # Line 399: stored as None
-        assert error.context["expected_type"] == ""     # Lines 405-406: default to empty string
-        assert error.context["actual_type"] == ""       # Lines 405-406: default to empty string
+        assert error.expected_type is None  # Line 398: stored as None
+        assert error.actual_type is None  # Line 399: stored as None
+        assert (
+            error.context["expected_type"] == ""
+        )  # Lines 405-406: default to empty string
+        assert (
+            error.context["actual_type"] == ""
+        )  # Lines 405-406: default to empty string
 
     def test_type_error_with_unknown_types(self) -> None:
         """Test _TypeError with unknown type strings - Lines 405-406."""
@@ -136,7 +150,7 @@ class TestTypeErrorTypeConversionMissingCoverage:
         error = FlextExceptions.TypeError(
             "Unknown type mismatch",
             expected_type="custom_type",
-            actual_type="another_type"
+            actual_type="another_type",
         )
 
         assert error.expected_type == "custom_type"
@@ -155,7 +169,7 @@ class TestTypeErrorTypeConversionMissingCoverage:
             expected_type="str",
             actual_type="int",
             context=existing_context,
-            correlation_id="corr-123"
+            correlation_id="corr-123",
         )
 
         # Lines 400-402: Context extraction and dict conversion
@@ -178,7 +192,7 @@ class TestTypeErrorTypeConversionMissingCoverage:
             "Type mismatch empty context",
             expected_type="str",
             actual_type="int",
-            context={}
+            context={},
         )
 
         # Lines 400-402: Empty context handling
@@ -200,7 +214,7 @@ class TestCriticalErrorMissingCoverage:
             "Critical system failure",
             context=original_context,
             correlation_id="critical-456",
-            **additional_kwargs
+            **additional_kwargs,
         )
 
         # Line 452: Context extraction via kwargs.pop
@@ -225,7 +239,7 @@ class TestCriticalErrorMissingCoverage:
             "Critical error no context",
             context=None,
             severity="critical",
-            module="auth"
+            module="auth",
         )
 
         # Lines 460-461: None context with kwargs creates new dict
@@ -238,9 +252,7 @@ class TestCriticalErrorMissingCoverage:
         """Test _CriticalError without context parameter - Lines 460-461."""
         # Test without context parameter but with kwargs - Lines 460-461
         error = FlextExceptions.CriticalError(
-            "Critical error kwargs only",
-            priority="urgent",
-            system="payment"
+            "Critical error kwargs only", priority="urgent", system="payment"
         )
 
         # Lines 460-461: No context parameter, kwargs become context
@@ -252,9 +264,7 @@ class TestCriticalErrorMissingCoverage:
     def test_critical_error_no_context_no_kwargs(self) -> None:
         """Test _CriticalError with no context and no kwargs - Line 462."""
         # Test with neither context nor kwargs
-        error = FlextExceptions.CriticalError(
-            "Simple critical error"
-        )
+        error = FlextExceptions.CriticalError("Simple critical error")
 
         # Line 462: Empty context when no context or kwargs
         assert error.context == {}
@@ -264,8 +274,7 @@ class TestCriticalErrorMissingCoverage:
         """Test _CriticalError with only correlation_id - Line 453."""
         # Test with only correlation_id parameter - Line 453
         error = FlextExceptions.CriticalError(
-            "Critical error with correlation",
-            correlation_id="corr-789"
+            "Critical error with correlation", correlation_id="corr-789"
         )
 
         # Line 453: correlation_id extraction
@@ -283,7 +292,10 @@ class TestTypeErrorConstructorMissingCoverage:
 
         assert "Type validation failed" in str(error)
         assert error.code == FlextConstants.Errors.TYPE_ERROR
-        assert error.context == {"expected_type": "", "actual_type": ""}  # Always has these fields
+        assert error.context == {
+            "expected_type": "",
+            "actual_type": "",
+        }  # Always has these fields
         assert error.correlation_id is not None  # Auto-generated correlation_id
 
     def test_type_error_with_context_and_correlation_id(self) -> None:
@@ -294,7 +306,7 @@ class TestTypeErrorConstructorMissingCoverage:
         error = FlextExceptions.TypeError(
             "Invalid type for field",
             context=context_data,
-            correlation_id="type-error-123"
+            correlation_id="type-error-123",
         )
 
         # Line 498: super().__init__ call with all parameters

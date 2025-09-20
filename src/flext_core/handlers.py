@@ -94,11 +94,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
     @property
     def handler_name(self) -> str:
         """Get handler name for identification."""
-        return (
-            str(self._handler_name)
-            if self._handler_name is not None
-            else self.__class__.__name__
-        )
+        return str(self._handler_name)
 
     @property
     def logger(self) -> FlextLogger:
@@ -190,7 +186,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         message: object,
         *,
         operation: Literal["command", "query"],
-    ) -> FlextResult[object | None]:
+    ) -> FlextResult[None]:
         method_name = "validate_command" if operation == "command" else "validate_query"
         validate_method = getattr(message, method_name, None)
         if callable(validate_method):
@@ -204,13 +200,19 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 ):
                     # If validation failed and no error code was set, add the appropriate one
                     if result.is_failure and not result.error_code:
-                        return FlextResult[object | None].fail(
+                        return FlextResult[None].fail(
                             result.error or f"{operation.title()} validation failed",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                             error_data=result.error_data,
                         )
-                return cast("FlextResult[object | None]", result)
-        return FlextResult[object | None].ok(None)
+                # Convert successful result to FlextResult[None]
+                if hasattr(result, "is_success") and result.is_success:
+                    return FlextResult[None].ok(None)
+                if hasattr(result, "is_failure") and result.is_failure:
+                    return FlextResult[None].fail(
+                        result.error or f"{operation.title()} validation failed"
+                    )
+        return FlextResult[None].ok(None)
 
     @abstractmethod
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
@@ -281,7 +283,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
     def _validate_mode(
         self, operation: Literal["command", "query"]
-    ) -> FlextResult[object | None]:
+    ) -> FlextResult[None]:
         """Validate handler mode matches operation type."""
         if self.mode != operation:
             error_msg = (
@@ -289,23 +291,23 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 f"and cannot execute {operation} pipelines"
             )
             self.logger.error("invalid_handler_mode", error_message=error_msg)
-            return FlextResult[object | None].fail(
+            return FlextResult[None].fail(
                 error_msg,
                 error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
-        return FlextResult[object | None].ok(None)
+        return FlextResult[None].ok(None)
 
-    def _validate_can_handle(self, message: MessageT) -> FlextResult[object | None]:
+    def _validate_can_handle(self, message: MessageT) -> FlextResult[None]:
         """Validate handler can process this message type."""
         if not self.can_handle(type(message)):
             message_type = type(message).__name__
             error_msg = f"{self.handler_name} cannot handle {message_type}"
             self.logger.error("handler_cannot_handle", error_message=error_msg)
-            return FlextResult[object | None].fail(
+            return FlextResult[None].fail(
                 error_msg,
                 error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
-        return FlextResult[object | None].ok(None)
+        return FlextResult[None].ok(None)
 
     def _execute_with_timing(
         self, message: MessageT, message_type: str, identifier: str
