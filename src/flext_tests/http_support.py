@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 from pydantic import BaseModel
 from pytest_httpx import HTTPXMock
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextLogger, FlextResult, FlextTypes
 
 logger = FlextLogger(__name__)
 
@@ -396,7 +396,7 @@ class FlextTestsHttp:
         url: str
         headers: FlextTypes.Core.Dict | None = None
         data: object | None = None
-        timeout: float = 30.0
+        timeout: float = float(FlextConstants.Defaults.TIMEOUT)
 
     class HTTPTestResponse(BaseModel):
         """HTTP test response model."""

@@ -27,6 +27,7 @@ import warnings
 from typing import cast
 
 from flext_core import (
+    FlextConstants,
     FlextDomainService,
     FlextLogger,
     FlextResult,
@@ -225,7 +226,7 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
             return FlextResult[str].ok("Success!")
 
         result = FlextUtilities.Processing.retry_operation(
-            flaky_operation, max_retries=3, delay_seconds=0.1
+            flaky_operation, max_retries=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS, delay_seconds=0.1
         )
         print(
             f"  Retry result: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}"
@@ -311,7 +312,7 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
             current: object = data
             for key in keys:
                 if isinstance(current, dict) and key in current:
-                    current = current[key]
+                    current = current[key]  # type: ignore[misc]
                 else:
                     return default
             # Type narrowing for return
@@ -322,11 +323,11 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
                 return cast("dict[str, object]", current)
             return default
 
-        name = deep_get(nested_data, "user.profile.name")
+        name = deep_get(cast("dict[str, object]", nested_data), "user.profile.name")
         print(f"  Deep get 'user.profile.name': {name}")
 
         missing = deep_get(
-            nested_data,
+            cast("dict[str, object]", nested_data),
             "missing.key",
             default="default_value",
         )
@@ -483,7 +484,7 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
             return FlextResult[str].ok("Success!")
 
         result = FlextUtilities.Reliability.retry_with_backoff(
-            flaky_operation, max_retries=3, backoff_factor=0.1
+            flaky_operation, max_retries=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS, backoff_factor=0.1
         )
         print(
             f"  Final result: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}"
