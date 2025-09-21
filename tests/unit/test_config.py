@@ -218,6 +218,7 @@ class TestFlextConfigInstanceMethods:
             json_output=True,
             include_source=False,
             structured_output=True,
+            log_verbosity="compact",
             database_url="postgresql://localhost/test",
             database_pool_size=20,
             cache_ttl=800,
@@ -231,6 +232,7 @@ class TestFlextConfigInstanceMethods:
         assert logging_config["json_output"] is True
         assert logging_config["include_source"] is False
         assert logging_config["structured_output"] is True
+        assert logging_config["log_verbosity"] == "compact"
 
         # Test get_database_config
         db_config = config.get_database_config()
