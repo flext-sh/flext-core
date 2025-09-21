@@ -40,7 +40,15 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
         super().__init__()
 
     def _validate_user_data(self, user_data: dict[str, object]) -> FlextResult[None]:
-        """Validate user data using direct validation."""
+        """Validate user data using direct validation.
+
+        Args:
+            user_data: Dictionary containing user data to validate
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not user_data:
             return FlextResult[None].fail("User data cannot be empty")
         name = user_data.get("name", "")
@@ -58,7 +66,15 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
         self,
         validation_scenarios: list[tuple[str, object, str]],
     ) -> ValidationReport:
-        """Process validation batch using FlextUtilities.Validation patterns."""
+        """Process validation batch using FlextUtilities.Validation patterns.
+
+        Args:
+            validation_scenarios: List of validation scenarios to process
+
+        Returns:
+            ValidationReport: Validation report with results
+
+        """
         successful = 0
         failed = 0
         errors: FlextTypes.Core.StringList = []
@@ -99,7 +115,12 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
         )
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate using FlextDomainService pattern."""
+        """Validate using FlextDomainService pattern.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         return FlextResult[None].ok(None)
 
     def execute(self) -> FlextResult[ValidationReport]:

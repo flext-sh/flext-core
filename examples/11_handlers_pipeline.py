@@ -34,7 +34,15 @@ class DemoStrategy:
     """Demo strategy for examples."""
 
     def execute(self, data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
-        """Execute strategy."""
+        """Execute strategy.
+
+        Args:
+            data: Input data for strategy execution
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: Result of strategy execution
+
+        """
         return FlextResult[FlextTypes.Core.Dict].ok(data)
 
 
@@ -43,17 +51,35 @@ class ExamplePatternFactory:
 
     @staticmethod
     def create_demo_strategy() -> DemoStrategy:
-        """Create demo strategy."""
+        """Create demo strategy.
+
+        Returns:
+            DemoStrategy: New demo strategy instance
+
+        """
         return DemoStrategy()
 
     @staticmethod
     def create_demo_runner() -> DemoStrategy:
-        """Create demo runner."""
+        """Create demo runner.
+
+        Returns:
+            DemoStrategy: New demo strategy instance
+
+        """
         return DemoStrategy()
 
     @staticmethod
     def create_pattern(name: str) -> DemoStrategy | None:
-        """Create pattern by name."""
+        """Create pattern by name.
+
+        Args:
+            name: Name of the pattern to create
+
+        Returns:
+            DemoStrategy | None: Created strategy or None if not found
+
+        """
         if name == "demo":
             return DemoStrategy()
         return None
@@ -88,7 +114,12 @@ class UserEntity(FlextModels.Entity):
     is_active: bool = True
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for user entity."""
+        """Validate domain rules for user entity.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not self.name or len(self.name) < MIN_NAME_LENGTH:
             return FlextResult[None].fail(
                 f"Name must be at least {MIN_NAME_LENGTH} characters",
@@ -98,11 +129,21 @@ class UserEntity(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules (required by FlextModels)."""
+        """Validate business rules (required by FlextModels).
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         return self.validate_domain_rules()
 
     def activate(self) -> FlextResult[UserEntity]:
-        """Activate user."""
+        """Activate user.
+
+        Returns:
+            FlextResult[UserEntity]: Activated user entity or error
+
+        """
         if self.is_active:
             return FlextResult["UserEntity"].fail("User is already active")
         # Since entities are frozen, we need to create a new instance
@@ -123,7 +164,12 @@ class CreateUserCommand:
     email: str
 
     def validate(self) -> FlextResult[None]:
-        """Validate command data."""
+        """Validate command data.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not self.name or len(self.name) < MIN_NAME_LENGTH:
             return FlextResult[None].fail("Name must be at least 2 characters")
         if not self.email or "@" not in self.email:
@@ -140,7 +186,12 @@ class UpdateUserCommand:
     email: str | None = None
 
     def validate(self) -> FlextResult[None]:
-        """Validate update command."""
+        """Validate update command.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not self.user_id:
             return FlextResult[None].fail("User ID is required")
         if self.name is not None and len(self.name) < MIN_NAME_LENGTH:
@@ -221,14 +272,30 @@ class CreateUserHandler(FlextProcessing.Implementation.BasicHandler):
         return getattr(self, "_name", "CreateUserHandler")
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if can handle this message type."""
+        """Check if can handle this message type.
+
+        Args:
+            message_type: Type of message to check
+
+        Returns:
+            bool: True if can handle, False otherwise
+
+        """
         return message_type is CreateUserCommand or (
             isinstance(message_type, type)
             and issubclass(message_type, CreateUserCommand)
         )
 
     def validate_command(self, command: object) -> FlextResult[None]:
-        """Additional command validation."""
+        """Additional command validation.
+
+        Args:
+            command: Command object to validate
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(command, CreateUserCommand):
             return FlextResult[None].fail("Invalid command type")
         # Check if email already exists
@@ -238,7 +305,15 @@ class CreateUserHandler(FlextProcessing.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
     def handle(self, request: object) -> FlextResult[str]:
-        """Create new user."""
+        """Create new user.
+
+        Args:
+            request: Create user command
+
+        Returns:
+            FlextResult[str]: Success message or error
+
+        """
         if not isinstance(request, CreateUserCommand):
             return FlextResult[str].fail("Invalid command type")
 
@@ -294,14 +369,30 @@ class UpdateUserHandler(FlextProcessing.Implementation.BasicHandler):
         return getattr(self, "_name", "UpdateUserHandler")
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if can handle this message type."""
+        """Check if can handle this message type.
+
+        Args:
+            message_type: Type of message to check
+
+        Returns:
+            bool: True if can handle, False otherwise
+
+        """
         return message_type is UpdateUserCommand or (
             isinstance(message_type, type)
             and issubclass(message_type, UpdateUserCommand)
         )
 
     def validate_command(self, command: object) -> FlextResult[None]:
-        """Validate update command."""
+        """Validate update command.
+
+        Args:
+            command: Command object to validate
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(command, UpdateUserCommand):
             return FlextResult[None].fail("Invalid command type")
         if not command.user_id:
@@ -313,7 +404,15 @@ class UpdateUserHandler(FlextProcessing.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
     def handle(self, request: object) -> FlextResult[str]:
-        """Update user information."""
+        """Update user information.
+
+        Args:
+            request: Update user command
+
+        Returns:
+            FlextResult[str]: Success message or error
+
+        """
         if not isinstance(request, UpdateUserCommand):
             return FlextResult[str].fail("Invalid command type")
 
@@ -370,13 +469,29 @@ class GetUserHandler(FlextProcessing.Implementation.BasicHandler):
         return getattr(self, "_name", "GetUserHandler")
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if can handle this message type."""
+        """Check if can handle this message type.
+
+        Args:
+            message_type: Type of message to check
+
+        Returns:
+            bool: True if can handle, False otherwise
+
+        """
         return message_type is GetUserQuery or (
             isinstance(message_type, type) and issubclass(message_type, GetUserQuery)
         )
 
     def validate_command(self, query: object) -> FlextResult[None]:
-        """Validate query (renamed from validate_command for consistency)."""
+        """Validate query (renamed from validate_command for consistency).
+
+        Args:
+            query: Query object to validate
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(query, GetUserQuery):
             return FlextResult[None].fail("Invalid query type")
 
@@ -385,7 +500,15 @@ class GetUserHandler(FlextProcessing.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
     def authorize_query(self, query: object) -> FlextResult[None]:
-        """Check query authorization."""
+        """Check query authorization.
+
+        Args:
+            query: Query object to authorize
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(query, GetUserQuery):
             return FlextResult[None].fail("Invalid query type")
 
@@ -394,7 +517,15 @@ class GetUserHandler(FlextProcessing.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
     def handle(self, request: object) -> FlextResult[str]:
-        """Retrieve user by ID."""
+        """Retrieve user by ID.
+
+        Args:
+            request: Get user query
+
+        Returns:
+            FlextResult[str]: User information or error
+
+        """
         if not isinstance(request, GetUserQuery):
             return FlextResult[str].fail("Invalid query type")
 
@@ -446,13 +577,29 @@ class ListUsersHandler(FlextProcessing.Implementation.BasicHandler):
         return getattr(self, "_name", "ListUsersHandler")
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if can handle this message type."""
+        """Check if can handle this message type.
+
+        Args:
+            message_type: Type of message to check
+
+        Returns:
+            bool: True if can handle, False otherwise
+
+        """
         return message_type is ListUsersQuery or (
             isinstance(message_type, type) and issubclass(message_type, ListUsersQuery)
         )
 
     def handle(self, request: object) -> FlextResult[str]:
-        """List users with filtering and pagination."""
+        """List users with filtering and pagination.
+
+        Args:
+            request: List users query
+
+        Returns:
+            FlextResult[str]: List result or error
+
+        """
         if not isinstance(request, ListUsersQuery):
             return FlextResult[str].fail("Invalid query type")
 
@@ -502,21 +649,45 @@ class UserCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
         return getattr(self, "_name", "UserCreatedEventHandler")
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if can handle this request type."""
+        """Check if can handle this request type.
+
+        Args:
+            message_type: Type of message to check
+
+        Returns:
+            bool: True if can handle, False otherwise
+
+        """
         return message_type is UserCreatedEvent or (
             isinstance(message_type, type)
             and issubclass(message_type, UserCreatedEvent)
         )
 
     def handle(self, request: object) -> FlextResult[str]:
-        """Handle user created event."""
+        """Handle user created event.
+
+        Args:
+            request: User created event
+
+        Returns:
+            FlextResult[str]: Processing result or error
+
+        """
         result = self.process_event(request)
         if result.success:
             return FlextResult[str].ok("Event processed successfully")
         return FlextResult[str].fail(result.error or "Event processing failed")
 
     def process_event(self, event: object) -> FlextResult[None]:
-        """Process user created event."""
+        """Process user created event.
+
+        Args:
+            event: User created event to process
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(event, UserCreatedEvent):
             return FlextResult[None].fail("Invalid event type")
         # Send welcome email (simulated)
@@ -563,7 +734,15 @@ class UserUpdatedEventHandler(FlextProcessing.Implementation.BasicHandler):
         return self._logger
 
     def process_event(self, event: object) -> FlextResult[None]:
-        """Process user updated event."""
+        """Process user updated event.
+
+        Args:
+            event: User updated event to process
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(event, UserUpdatedEvent):
             return FlextResult[None].fail("Invalid event type")
         # Log audit trail (simulated)
@@ -589,7 +768,15 @@ class UserUpdatedEventHandler(FlextProcessing.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
     def handle(self, request: object) -> FlextResult[str]:
-        """Handle user updated event."""
+        """Handle user updated event.
+
+        Args:
+            request: User updated event
+
+        Returns:
+            FlextResult[str]: Processing result or error
+
+        """
         result = self.process_event(request)
         if result.success:
             return FlextResult[str].ok("Event processed successfully")
@@ -615,7 +802,15 @@ class OrderCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
         return self._logger
 
     def process_event(self, event: object) -> FlextResult[None]:
-        """Process order created event."""
+        """Process order created event.
+
+        Args:
+            event: Order created event to process
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not isinstance(event, OrderCreatedEvent):
             return FlextResult[None].fail("Invalid event type")
 
@@ -645,7 +840,15 @@ class OrderCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
     def handle(self, request: object) -> FlextResult[str]:
-        """Handle order created event."""
+        """Handle order created event.
+
+        Args:
+            request: Order created event
+
+        Returns:
+            FlextResult[str]: Processing result or error
+
+        """
         result = self.process_event(request)
         if result.success:
             return FlextResult[str].ok("Event processed successfully")
@@ -653,7 +856,12 @@ class OrderCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
 
 
 def demonstrate_command_handlers() -> FlextResult[None]:
-    """Demonstrate CQRS command handlers with validation using Strategy Pattern."""
+    """Demonstrate CQRS command handlers with validation using Strategy Pattern.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
 
     def command_handler_demo() -> FlextResult[None]:
         create_handler = CreateUserHandler()
@@ -691,7 +899,12 @@ def demonstrate_command_handlers() -> FlextResult[None]:
 
 
 def demonstrate_query_handlers() -> FlextResult[None]:
-    """Demonstrate CQRS query handlers with authorization using Strategy Pattern."""
+    """Demonstrate CQRS query handlers with authorization using Strategy Pattern.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
 
     def query_handler_demo() -> FlextResult[None]:
         # Setup test users
@@ -742,7 +955,12 @@ def demonstrate_query_handlers() -> FlextResult[None]:
 
 
 def demonstrate_event_handlers() -> FlextResult[None]:
-    """Demonstrate domain event handlers with side effects using Strategy Pattern."""
+    """Demonstrate domain event handlers with side effects using Strategy Pattern.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
 
     def event_handler_demo() -> FlextResult[None]:
         # Create event handlers
@@ -796,7 +1014,12 @@ def demonstrate_event_handlers() -> FlextResult[None]:
 
 
 def demonstrate_handler_registry() -> FlextResult[None]:
-    """Demonstrate handler registry for service location using Strategy Pattern."""
+    """Demonstrate handler registry for service location using Strategy Pattern.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
 
     def registry_demo() -> FlextResult[None]:
         # Setup registry
@@ -843,7 +1066,12 @@ def demonstrate_handler_registry() -> FlextResult[None]:
 
 
 def demonstrate_handler_chain() -> FlextResult[None]:
-    """Demonstrate chain of responsibility pattern using Strategy Pattern."""
+    """Demonstrate chain of responsibility pattern using Strategy Pattern.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
 
     def chain_demo() -> FlextResult[None]:
         # Create handlers and chain
@@ -902,7 +1130,12 @@ def demonstrate_handler_chain() -> FlextResult[None]:
 
 
 def demonstrate_function_handlers() -> FlextResult[None]:
-    """Demonstrate function-based handler creation using Strategy Pattern."""
+    """Demonstrate function-based handler creation using Strategy Pattern.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
 
     def function_handler_demo() -> FlextResult[None]:
         # Create simple function handlers that return FlextResult

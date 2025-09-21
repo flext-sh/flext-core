@@ -47,7 +47,17 @@ class ExamplePatternFactory:
         demo_func: Callable[[], FlextResult[T]],
         cleanup_func: Callable[[], FlextResult[None]] | None = None,
     ) -> DemoStrategy[T]:
-        """Create a demo runner strategy using Factory Pattern."""
+        """Create a demo runner strategy using Factory Pattern.
+
+        Args:
+            name: Name of the demonstration
+            demo_func: Function that executes the demonstration
+            cleanup_func: Optional cleanup function
+
+        Returns:
+            DemoStrategy[T]: Demo runner strategy instance
+
+        """
 
         class DemoRunner:
             def __init__(self) -> None:
@@ -56,7 +66,12 @@ class ExamplePatternFactory:
                 self.cleanup_func = cleanup_func
 
             def execute(self) -> FlextResult[T]:
-                """Execute demo with standardized error handling using Railway Pattern."""
+                """Execute demo with standardized error handling using Railway Pattern.
+
+                Returns:
+                    FlextResult[T]: Demo execution result
+
+                """
                 try:
                     logger.info(f"🚀 Starting demonstration: {self.name}")
                     result = self.demo_func()
@@ -76,7 +91,12 @@ class ExamplePatternFactory:
                     return FlextResult[T].fail(error_msg)
 
             def cleanup(self) -> FlextResult[None]:
-                """Standardized cleanup using Railway Pattern."""
+                """Standardized cleanup using Railway Pattern.
+
+                Returns:
+                    FlextResult[None]: Cleanup result
+
+                """
                 if self.cleanup_func:
                     try:
                         return self.cleanup_func()
@@ -93,10 +113,25 @@ class ExamplePatternFactory:
         data: dict[str, object],
         validation_rules: list[Callable[[dict[str, object]], FlextResult[None]]],
     ) -> DemoStrategy[dict[str, object]]:
-        """Create validation demonstration using Railway Pattern - ELIMINATED LOOP RETURNS."""
+        """Create validation demonstration using Railway Pattern - ELIMINATED LOOP RETURNS.
+
+        Args:
+            name: Name of the validation demo
+            data: Data to validate
+            validation_rules: List of validation rule functions
+
+        Returns:
+            DemoStrategy[dict[str, object]]: Validation demo strategy
+
+        """
 
         def validation_demo() -> FlextResult[dict[str, object]]:
-            """Execute validation demonstration with Functional Railway Pattern."""
+            """Execute validation demonstration with Functional Railway Pattern.
+
+            Returns:
+                FlextResult[dict[str, object]]: Validation result
+
+            """
             logger.info(f"📋 Validating data for {name}")
 
             # Railway Pattern: Use reduce for functional validation chain
@@ -105,7 +140,15 @@ class ExamplePatternFactory:
                 acc_result: FlextResult[dict[str, object]],
                 rule: Callable[[dict[str, object]], FlextResult[None]],
             ) -> FlextResult[dict[str, object]]:
-                """Apply single validation rule in railway chain."""
+                """Apply single validation rule in railway chain.
+                
+                Args:
+                    acc_result: Accumulated validation result
+                    rule: Validation rule to apply
+                    
+                Returns:
+                    FlextResult[dict[str, object]]: Updated validation result
+                """
                 return acc_result.flat_map(
                     lambda data_dict: rule(data_dict).map(lambda _: data_dict),
                 ).tap_error(lambda e: logger.error(f"Validation failed: {e}"))

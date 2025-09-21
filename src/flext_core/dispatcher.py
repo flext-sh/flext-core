@@ -309,7 +309,9 @@ class FlextDispatcher:
                             return result
                         return FlextResult[object].ok(result)
                     except Exception as error:
-                        return FlextResult[object].fail(f"Function handler failed: {error}")
+                        return FlextResult[object].fail(
+                            f"Function handler failed: {error}"
+                        )
 
             handler = FunctionHandler()
             return FlextResult[FlextHandlers[object, object]].ok(handler)
@@ -344,7 +346,11 @@ class FlextDispatcher:
             )
 
         # Execute dispatch with context management
-        with self._context_scope(request.context_metadata, request.correlation_id):
+        metadata_dict: dict[str, object] | None = None
+        if request.context_metadata:
+            # Convert dict[str, str] to dict[str, object] for context scope
+            metadata_dict = dict(request.context_metadata.value.items())
+        with self._context_scope(metadata_dict, request.correlation_id):
             result = self._bus.execute(request.message)
 
             execution_time_ms = int((time.time() - start_time) * 1000)
@@ -409,9 +415,14 @@ class FlextDispatcher:
 
         """
         # Create structured request
+        metadata_obj = None
+        if metadata:
+            # Convert dict[str, object] to dict[str, str] for Metadata model
+            string_metadata = {k: str(v) for k, v in metadata.items()}
+            metadata_obj = FlextModels.Metadata(value=string_metadata)
         request = FlextModels.DispatchRequest(
             message=message,
-            context_metadata=metadata,
+            context_metadata=metadata_obj,
             correlation_id=correlation_id,
             timeout_override=timeout_override,
         )
@@ -420,7 +431,9 @@ class FlextDispatcher:
         structured_result = self.dispatch_with_request(request)
 
         if structured_result.is_failure:
-            return FlextResult[object].fail(structured_result.error or "Dispatch failed")
+            return FlextResult[object].fail(
+                structured_result.error or "Dispatch failed"
+            )
 
         dispatch_result = structured_result.value
 

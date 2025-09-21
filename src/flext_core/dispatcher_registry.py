@@ -16,6 +16,7 @@ from typing import cast
 
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import MessageT, ResultT
 
@@ -32,7 +33,7 @@ class FlextDispatcherRegistry:
     class Summary:
         """Aggregated outcome used for 1.0.0 handler adoption tracking."""
 
-        registered: list[FlextDispatcher.Registration[object, object]] = field(
+        registered: list[FlextModels.RegistrationDetails] = field(
             default_factory=list,
         )
         skipped: list[str] = field(default_factory=list)
@@ -54,7 +55,7 @@ class FlextDispatcherRegistry:
     def register_handler(
         self,
         handler: FlextHandlers[MessageT, ResultT],
-    ) -> FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]:
+    ) -> FlextResult[FlextModels.RegistrationDetails]:
         """Register an already-constructed handler instance.
 
         Re-registration is ignored and treated as success to guarantee
@@ -67,11 +68,19 @@ class FlextDispatcherRegistry:
         """
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
-            return FlextResult[FlextDispatcher.Registration[MessageT, ResultT]].ok(
-                FlextDispatcher.Registration(None, handler),
+            # Return successful registration details for idempotent registration
+            return FlextResult[FlextModels.RegistrationDetails].ok(
+                FlextModels.RegistrationDetails(
+                    registration_id=key,
+                    handler_mode="command",
+                    timestamp="",  # Will be set by model if needed
+                    status="active",
+                )
             )
 
-        registration = self._dispatcher.register_handler(handler)
+        # Cast to the type expected by FlextDispatcher
+        handler_obj = cast("FlextHandlers[object, object]", handler)
+        registration = self._dispatcher.register_handler(handler_obj)
         if registration.is_success:
             self._registered_keys.add(key)
         return registration
@@ -111,7 +120,9 @@ class FlextDispatcherRegistry:
             summary.skipped.append(key)
             return FlextResult[None].ok(None)
 
-        registration_result = self._dispatcher.register_handler(handler)
+        # Cast to the type expected by FlextDispatcher
+        handler_obj = cast("FlextHandlers[object, object]", handler)
+        registration_result = self._dispatcher.register_handler(handler_obj)
         if registration_result.is_success:
             self._add_successful_registration(key, registration_result.value, summary)
             return FlextResult[None].ok(None)
@@ -123,13 +134,13 @@ class FlextDispatcherRegistry:
     def _add_successful_registration(
         self,
         key: str,
-        registration: FlextDispatcher.Registration[MessageT, ResultT],
+        registration: FlextModels.RegistrationDetails,
         summary: FlextDispatcherRegistry.Summary,
     ) -> None:
         """Add successful registration to summary."""
         self._registered_keys.add(key)
         summary.registered.append(
-            cast("FlextDispatcher.Registration[object, object]", registration),
+            registration,
         )
 
     def _add_registration_error(
@@ -180,7 +191,9 @@ class FlextDispatcherRegistry:
                 summary.skipped.append(key)
                 continue
 
-            registration = self._dispatcher.register_command(message_type, handler)
+            # Cast to the type expected by FlextDispatcher
+            handler_obj = cast("FlextHandlers[object, object]", handler)
+            registration = self._dispatcher.register_command(message_type, handler_obj)
             if registration.is_failure:
                 summary.errors.append(
                     registration.error
@@ -189,12 +202,7 @@ class FlextDispatcherRegistry:
                 continue
 
             self._registered_keys.add(key)
-            summary.registered.append(
-                cast(
-                    "FlextDispatcher.Registration[object, object]",
-                    registration.value,
-                ),
-            )
+            summary.registered.append(registration.value)
 
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
@@ -234,7 +242,11 @@ class FlextDispatcherRegistry:
                     handler_config=handler_config,
                 )
             else:
-                handler_result = self._dispatcher.register_command(message_type, entry)
+                # Cast to the type expected by FlextDispatcher
+                entry_obj = cast("FlextHandlers[object, object]", entry)
+                handler_result = self._dispatcher.register_command(
+                    message_type, entry_obj
+                )
 
             if handler_result.is_failure:
                 summary.errors.append(
@@ -245,10 +257,7 @@ class FlextDispatcherRegistry:
 
             self._registered_keys.add(key)
             summary.registered.append(
-                cast(
-                    "FlextDispatcher.Registration[object, object]",
-                    handler_result.value,
-                ),
+                handler_result.value,
             )
 
         if summary.errors:

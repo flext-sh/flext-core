@@ -86,19 +86,37 @@ MAX_VALUE_DISPLAY_LENGTH = 50
 
 
 def _raise_amount_error() -> None:
-    """Raise amount validation error."""
+    """Raise amount validation error.
+
+    Raises:
+        ValueError: When payment amount is not positive
+
+    """
     msg = "Payment amount must be positive"
     raise ValueError(msg)
 
 
 def _raise_method_error(payment_method: str) -> None:
-    """Raise payment method error."""
+    """Raise payment method error.
+
+    Args:
+        payment_method: The unsupported payment method
+
+    Raises:
+        ValueError: When payment method is not supported
+
+    """
     error_msg: str = f"Unsupported payment method: {payment_method}"
     raise ValueError(error_msg)
 
 
 def _raise_timeout_error() -> None:
-    """Raise payment gateway timeout error."""
+    """Raise payment gateway timeout error.
+
+    Raises:
+        ConnectionError: When payment gateway times out
+
+    """
     msg = "Payment gateway timeout"
     raise ConnectionError(msg)
 
@@ -558,7 +576,12 @@ class PerformanceMonitor:
         self.start_time = 0.0
 
     def __enter__(self) -> Self:
-        """Enter context; start timer and log begin of operation."""
+        """Enter context; start timer and log begin of operation.
+
+        Returns:
+            Self: The performance monitor instance
+
+        """
         self.start_time = time.time()
         self.logger.info("Operation started", operation=self.operation, **self.context)
         return self

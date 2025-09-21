@@ -9,21 +9,17 @@ Tests for the new FlextCqrs API with:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Literal
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic import BaseModel, ValidationError
 
 from flext_core import (
-    FlextCqrs,
-    FlextResult,
-    FlextModels,
     FlextConstants,
-    FlextUtilities,
+    FlextCqrs,
     FlextHandlers,
-    FlextConfig,
-    FlextTypes,
+    FlextModels,
+    FlextResult,
 )
 
 
@@ -46,7 +42,7 @@ class TestFlextCqrsResults:
         config = FlextModels.CqrsConfig.Handler(
             handler_id="test_handler_123",
             handler_name="TestHandler",
-            handler_type="command"
+            handler_type="command",
         )
 
         result = FlextCqrs.Results.success(test_data, config)
@@ -75,10 +71,7 @@ class TestFlextCqrsResults:
         error_message = "Validation failed"
         custom_code = "CUSTOM_ERROR"
 
-        result = FlextCqrs.Results.failure(
-            error_message,
-            error_code=custom_code
-        )
+        result = FlextCqrs.Results.failure(error_message, error_code=custom_code)
 
         assert result.is_failure
         assert result.error == error_message
@@ -92,14 +85,14 @@ class TestFlextCqrsResults:
             handler_id="processor_456",
             handler_name="DataProcessor",
             handler_type="query",
-            metadata={"version": "1.0"}
+            metadata={"version": "1.0"},
         )
 
         result = FlextCqrs.Results.failure(
             error_message,
             error_code="PROCESSING_ERROR",
             error_data=error_data,
-            config=config
+            config=config,
         )
 
         assert result.is_failure
@@ -122,7 +115,7 @@ class TestFlextCqrsOperations:
         """Test successful command creation."""
         command_data = {
             "command_type": "ProcessData",
-            "payload": {"data": "test_value"}
+            "payload": {"data": "test_value"},
         }
 
         result = FlextCqrs.Operations.create_command(command_data)
@@ -142,7 +135,7 @@ class TestFlextCqrsOperations:
         command_data = {
             "command_id": custom_id,
             "command_type": "CustomCommand",
-            "payload": {}
+            "payload": {},
         }
 
         result = FlextCqrs.Operations.create_command(command_data)
@@ -155,12 +148,12 @@ class TestFlextCqrsOperations:
         """Test command creation with handler configuration."""
         command_data = {
             "command_type": "ConfiguredCommand",
-            "payload": {"configured": True}
+            "payload": {"configured": True},
         }
         config = FlextModels.CqrsConfig.Handler(
             handler_id="config_handler",
             handler_name="ConfiguredHandler",
-            handler_type="command"
+            handler_type="command",
         )
 
         result = FlextCqrs.Operations.create_command(command_data, config)
@@ -174,7 +167,7 @@ class TestFlextCqrsOperations:
         # Use data that actually causes Pydantic validation to fail
         invalid_data = {
             "command_type": 123,  # Wrong type - should be string
-            "payload": {"data": "test"}
+            "payload": {"data": "test"},
         }
 
         result = FlextCqrs.Operations.create_command(invalid_data)
@@ -189,7 +182,7 @@ class TestFlextCqrsOperations:
         query_data = {
             "query_type": "GetUserData",
             "filters": {"user_id": "123"},
-            "pagination": {"page": 1, "size": 10}
+            "pagination": {"page": 1, "size": 10},
         }
 
         result = FlextCqrs.Operations.create_query(query_data)
@@ -209,7 +202,7 @@ class TestFlextCqrsOperations:
         query_data = {
             "query_id": custom_id,
             "query_type": "CustomQuery",
-            "criteria": {}
+            "criteria": {},
         }
 
         result = FlextCqrs.Operations.create_query(query_data)
@@ -223,7 +216,7 @@ class TestFlextCqrsOperations:
         # Use data that actually causes Pydantic validation to fail
         invalid_data = {
             "query_type": 123,  # Wrong type - should be string
-            "filters": {"invalid": True}
+            "filters": {"invalid": True},
         }
 
         result = FlextCqrs.Operations.create_query(invalid_data)
@@ -235,9 +228,7 @@ class TestFlextCqrsOperations:
     def test_create_handler_config_command(self) -> None:
         """Test creating command handler configuration."""
         result = FlextCqrs.Operations.create_handler_config(
-            "command",
-            handler_name="CustomCommandHandler",
-            handler_id="cmd_handler_123"
+            "command", handler_name="CustomCommandHandler", handler_id="cmd_handler_123"
         )
 
         assert result.is_success
@@ -259,15 +250,10 @@ class TestFlextCqrsOperations:
 
     def test_create_handler_config_with_overrides(self) -> None:
         """Test handler config creation with overrides."""
-        overrides = {
-            "timeout": 5000,
-            "retries": 3,
-            "custom_field": "custom_value"
-        }
+        overrides = {"timeout": 5000, "retries": 3, "custom_field": "custom_value"}
 
         result = FlextCqrs.Operations.create_handler_config(
-            "command",
-            config_overrides=overrides
+            "command", config_overrides=overrides
         )
 
         assert result.is_success
@@ -286,8 +272,9 @@ class TestFlextCqrsOperations:
 @dataclass
 class TestCommand:
     """Test command for decorator testing - defined at module level."""
+
     action: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
 
 class TestFlextCqrsDecorators:
@@ -305,7 +292,7 @@ class TestFlextCqrsDecorators:
         assert callable(handle_test_command)
 
         # Check that decorator added metadata
-        assert hasattr(handle_test_command, '__dict__')
+        assert hasattr(handle_test_command, "__dict__")
         func_metadata = handle_test_command.__dict__
         assert func_metadata.get("command_type") == TestCommand
         assert func_metadata.get("flext_cqrs_decorator") is True
@@ -314,16 +301,9 @@ class TestFlextCqrsDecorators:
 
     def test_command_handler_decorator_with_config(self) -> None:
         """Test command handler decorator with configuration."""
-        custom_config = {
-            "timeout": 10000,
-            "retries": 5,
-            "metadata": {"version": "2.0"}
-        }
+        custom_config = {"timeout": 10000, "retries": 5, "metadata": {"version": "2.0"}}
 
-        @FlextCqrs.Decorators.command_handler(
-            TestCommand,
-            config=custom_config
-        )
+        @FlextCqrs.Decorators.command_handler(TestCommand, config=custom_config)
         def configured_handler(command: TestCommand) -> bool:
             return command.action == "process"
 
@@ -341,10 +321,7 @@ class TestFlextCqrsDecorators:
             return f"Success: {command.action}"
 
         # Create test command
-        test_command = TestCommand(
-            action="test_action",
-            data={"key": "value"}
-        )
+        test_command = TestCommand(action="test_action", data={"key": "value"})
 
         # Execute handler directly (decorator preserves original function)
         result = successful_handler(test_command)
@@ -370,8 +347,9 @@ class TestFlextCqrsDecorators:
 
         @FlextCqrs.Decorators.command_handler(TestCommand)
         def instance_handler(command: TestCommand) -> str:
+            error_msg = "Test error"
             if command.action == "error":
-                raise ValueError("Test error")
+                raise ValueError(error_msg)
             return f"Handled: {command.action}"
 
         # Get the handler instance from decorator metadata
@@ -396,14 +374,14 @@ class TestFlextCqrsDecorators:
         """Test that decorator preserves function annotations."""
 
         @FlextCqrs.Decorators.command_handler(TestCommand)
-        def annotated_handler(command: TestCommand) -> Dict[str, int]:
+        def annotated_handler(command: TestCommand) -> dict[str, int]:
             return {"count": len(command.data)}
 
         # Check annotations are preserved
         annotations = annotated_handler.__annotations__
         assert "command" in annotations
         assert annotations["command"] == TestCommand
-        assert annotations["return"] == Dict[str, int]
+        assert annotations["return"] == dict[str, int]
 
 
 class TestFlextCqrsIntegration:
@@ -411,11 +389,9 @@ class TestFlextCqrsIntegration:
 
     def test_full_command_workflow(self) -> None:
         """Test complete command creation and handling workflow."""
-
         # Step 1: Create handler configuration
         config_result = FlextCqrs.Operations.create_handler_config(
-            "command",
-            handler_name="DataProcessorHandler"
+            "command", handler_name="DataProcessorHandler"
         )
         assert config_result.is_success
         handler_config = config_result.value
@@ -424,19 +400,17 @@ class TestFlextCqrsIntegration:
         command_data = {
             "command_type": "ProcessData",
             "payload": {"items": [1, 2, 3]},
-            "priority": "normal"
+            "priority": "normal",
         }
         command_result = FlextCqrs.Operations.create_command(
-            command_data,
-            handler_config
+            command_data, handler_config
         )
         assert command_result.is_success
         command = command_result.value
 
         # Step 3: Create success result
         success_result = FlextCqrs.Results.success(
-            {"processed_count": 3},
-            handler_config
+            {"processed_count": 3}, handler_config
         )
         assert success_result.is_success
 
@@ -446,11 +420,10 @@ class TestFlextCqrsIntegration:
 
     def test_error_propagation_workflow(self) -> None:
         """Test error handling throughout the CQRS workflow."""
-
         # Step 1: Try to create invalid command (use actually invalid data)
         invalid_command_result = FlextCqrs.Operations.create_command({
             "command_type": 123,  # Wrong type should fail
-            "payload": {}
+            "payload": {},
         })
         assert invalid_command_result.is_failure
 
@@ -458,21 +431,25 @@ class TestFlextCqrsIntegration:
         failure_result = FlextCqrs.Results.failure(
             "Command processing failed",
             error_code="WORKFLOW_ERROR",
-            error_data={"step": "validation", "original_error": invalid_command_result.error}
+            error_data={
+                "step": "validation",
+                "original_error": invalid_command_result.error,
+            },
         )
         assert failure_result.is_failure
         assert failure_result.error_code == "WORKFLOW_ERROR"
         assert "validation" in failure_result.error_data["step"]
 
-    @patch('flext_core.FlextConfig.get_global_instance')
+    @patch("flext_core.FlextConfig.get_global_instance")
     def test_configuration_integration(self, mock_config: Mock) -> None:
         """Test integration with FlextConfig for CQRS configuration."""
-
         # Mock FlextConfig behavior
         mock_instance = Mock()
         mock_config.return_value = mock_instance
         mock_bus_config = FlextModels.CqrsConfig.create_bus_config(None)
-        mock_instance.get_cqrs_bus_config.return_value = FlextResult[FlextModels.CqrsConfig.Bus].ok(mock_bus_config)
+        mock_instance.get_cqrs_bus_config.return_value = FlextResult[
+            FlextModels.CqrsConfig.Bus
+        ].ok(mock_bus_config)
 
         # Test configuration helper
         config_result = FlextCqrs._ConfigurationHelper.get_default_cqrs_config()
@@ -483,7 +460,6 @@ class TestFlextCqrsIntegration:
 
     def test_utility_integration(self) -> None:
         """Test integration with FlextUtilities for ID generation."""
-
         # Test handler ID generation
         base_name = "test_handler"
         handler_id = FlextCqrs._ProcessingHelper.generate_handler_id(base_name)
@@ -493,14 +469,15 @@ class TestFlextCqrsIntegration:
 
     def test_command_type_derivation(self) -> None:
         """Test command type derivation from class names."""
-
         # Test successful derivation
         result = FlextCqrs._ProcessingHelper.derive_command_type("ProcessDataCommand")
         assert result.is_success
         assert result.value == "process_data"
 
         # Test with complex name
-        complex_result = FlextCqrs._ProcessingHelper.derive_command_type("HandleUserRegistrationCommand")
+        complex_result = FlextCqrs._ProcessingHelper.derive_command_type(
+            "HandleUserRegistrationCommand"
+        )
         assert complex_result.is_success
         assert complex_result.value == "handle_user_registration"
 
@@ -509,17 +486,20 @@ class TestFlextCqrsIntegration:
 
         # Create mock Pydantic validation error
         class MockValidationError(Exception):
-            def errors(self):
+            def errors(self) -> list[dict[str, str]]:
                 return [
                     {"field": "email", "message": "Invalid email format"},
-                    {"field": "age", "message": "Must be positive integer"}
+                    {"field": "age", "message": "Must be positive integer"},
                 ]
 
-            def __str__(self):
+            def __str__(self) -> str:
                 return "2 validation errors"
 
         mock_error = MockValidationError()
-        context = {"operation": "user_creation", "input_data": {"email": "invalid", "age": -5}}
+        context = {
+            "operation": "user_creation",
+            "input_data": {"email": "invalid", "age": -5},
+        }
 
         result = FlextCqrs._ErrorHelper.handle_validation_error(mock_error, context)
 

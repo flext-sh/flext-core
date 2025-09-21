@@ -45,7 +45,12 @@ class User:
         self.age = age
 
     def __repr__(self) -> str:
-        """Representation of User."""
+        """Representation of User.
+
+        Returns:
+            str: String representation of the User object
+
+        """
         return f"User(id={self.user_id}, name={self.name}, email={self.email}, age={self.age})"
 
 
@@ -66,7 +71,12 @@ class Order:
         self.items = items
 
     def __repr__(self) -> str:
-        """Representation of Order."""
+        """Representation of Order.
+
+        Returns:
+            str: String representation of the Order object
+
+        """
         return f"Order(id={self.order_id}, user={self.user_id}, amount={self.amount}, items={len(self.items)})"
 
 
@@ -80,7 +90,12 @@ class ProcessingResult:
         self.processed_at = processed_at
 
     def __repr__(self) -> str:
-        """Representation of ProcessingResult."""
+        """Representation of ProcessingResult.
+
+        Returns:
+            str: String representation of the ProcessingResult object
+
+        """
         return f"ProcessingResult(user={self.user.name}, order={self.order.order_id}, at={self.processed_at})"
 
 
@@ -88,7 +103,15 @@ class ProcessingResult:
 
 
 def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
-    """Validate user data with FlextResult pattern."""
+    """Validate user data with FlextResult pattern.
+
+    Args:
+        data: User data dictionary to validate
+
+    Returns:
+        FlextResult[FlextTypes.Core.Dict]: Validated data or error
+
+    """
     logger.info("🔍 Validating user data")
 
     required_fields = ["user_id", "name", "email", "age"]
@@ -118,7 +141,15 @@ def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Cor
 
 
 def create_user(data: FlextTypes.Core.Dict) -> FlextResult[User]:
-    """Create User from validated data."""
+    """Create User from validated data.
+
+    Args:
+        data: Validated user data dictionary
+
+    Returns:
+        FlextResult[User]: Created user or error
+
+    """
     logger.info("👤 Creating user from data")
 
     try:
@@ -137,7 +168,15 @@ def create_user(data: FlextTypes.Core.Dict) -> FlextResult[User]:
 def validate_order_data(
     data: FlextTypes.Core.Dict,
 ) -> FlextResult[FlextTypes.Core.Dict]:
-    """Validate order data."""
+    """Validate order data.
+
+    Args:
+        data: Order data dictionary to validate
+
+    Returns:
+        FlextResult[FlextTypes.Core.Dict]: Validated data or error
+
+    """
     logger.info("📦 Validating order data")
 
     if "order_amount" not in data:
@@ -161,7 +200,16 @@ def validate_order_data(
 
 
 def create_order(user: User, data: FlextTypes.Core.Dict) -> FlextResult[Order]:
-    """Create Order from validated data."""
+    """Create Order from validated data.
+
+    Args:
+        user: User object for the order
+        data: Validated order data dictionary
+
+    Returns:
+        FlextResult[Order]: Created order or error
+
+    """
     logger.info("🛒 Creating order from data")
 
     try:
@@ -178,7 +226,16 @@ def create_order(user: User, data: FlextTypes.Core.Dict) -> FlextResult[Order]:
 
 
 def process_user_order(user: User, order: Order) -> FlextResult[ProcessingResult]:
-    """Process user order and create final result."""
+    """Process user order and create final result.
+
+    Args:
+        user: User object
+        order: Order object
+
+    Returns:
+        FlextResult[ProcessingResult]: Processing result or error
+
+    """
     logger.info("⚡ Processing user order")
 
     try:
@@ -194,7 +251,12 @@ def process_user_order(user: User, order: Order) -> FlextResult[ProcessingResult
 
 
 def demonstrate_basic_result_chaining() -> FlextResult[str]:
-    """Demonstrate basic result chaining without advanced operators."""
+    """Demonstrate basic result chaining without advanced operators.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🔗 Demonstrating basic result chaining")
 
     # Test data
@@ -248,7 +310,12 @@ def demonstrate_basic_result_chaining() -> FlextResult[str]:
 
 
 def demonstrate_error_handling() -> FlextResult[str]:
-    """Demonstrate error handling with invalid data."""
+    """Demonstrate error handling with invalid data.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("❌ Demonstrating error handling with invalid data")
 
     # Invalid test data

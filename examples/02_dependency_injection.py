@@ -47,7 +47,12 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         self._users: dict[str, User] = {}
 
     def setup_container(self) -> FlextResult[None]:
-        """Setup container with required services."""
+        """Setup container with required services.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         # Register user storage
         storage_result = self._container.register("user_storage", self._users)
         if storage_result.is_failure:
@@ -76,7 +81,12 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         return FlextResult[None].ok(None)
 
     def get_user_storage(self) -> FlextResult[dict[str, User]]:
-        """Get user storage from container - eliminates duplicate access pattern."""
+        """Get user storage from container - eliminates duplicate access pattern.
+
+        Returns:
+            FlextResult[dict[str, User]]: User storage dictionary or error
+
+        """
         storage_result = self._container.get("user_storage")
         if storage_result.is_failure:
             return FlextResult[dict[str, User]].fail("Storage not available")
@@ -88,7 +98,17 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         return FlextResult[dict[str, User]].fail("Invalid storage type")
 
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
-        """Create a new user with validation using container-based validator."""
+        """Create a new user with validation using container-based validator.
+
+        Args:
+            name: User's name
+            email: User's email address
+            age: User's age
+
+        Returns:
+            FlextResult[User]: Created user or error
+
+        """
         # Consolidated validation using container validator
         user_data = {"name": name, "email": email, "age": age}
         validator_result = self._container.get("validator")
@@ -135,7 +155,15 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         return FlextResult[User].ok(user)
 
     def find_user(self, email: str) -> FlextResult[User | None]:
-        """Find user by email using helper method."""
+        """Find user by email using helper method.
+
+        Args:
+            email: Email address to search for
+
+        Returns:
+            FlextResult[User | None]: Found user or None if not found
+
+        """
         storage_result = self.get_user_storage()
         if storage_result.is_failure:
             return FlextResult[User | None].fail(
@@ -147,7 +175,12 @@ class ProfessionalDependencyInjectionService(FlextDomainService[User]):
         return FlextResult[User | None].ok(user)
 
     def execute(self) -> FlextResult[User]:
-        """Execute demo functionality - required by FlextDomainService."""
+        """Execute demo functionality - required by FlextDomainService.
+
+        Returns:
+            FlextResult[User]: Demo user or error
+
+        """
         # Setup container
         setup_result = self.setup_container()
         if setup_result.is_failure:

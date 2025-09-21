@@ -72,7 +72,12 @@ class FlextDomainService[TDomainResult](
 
         """
         # Cast the result to maintain type safety while working with the helper
-        return cast("FlextResult[TDomainResult]", self._ValidationHelper.execute_with_validation(cast("FlextDomainService[object]", self)))
+        return cast(
+            "FlextResult[TDomainResult]",
+            self._ValidationHelper.execute_with_validation(
+                cast("FlextDomainService[object]", self)
+            ),
+        )
 
     def is_valid(self) -> bool:
         """Check service validity using railway pattern composition.
@@ -475,8 +480,13 @@ class FlextDomainService[TDomainResult](
             execution_time = time.time() - start_time
 
             # Collect metrics if collector is provided
-            if metrics_request.metrics_collector and metrics_request.include_execution_time:
-                metrics_request.metrics_collector("execution_time_seconds", execution_time)
+            if (
+                metrics_request.metrics_collector
+                and metrics_request.include_execution_time
+            ):
+                metrics_request.metrics_collector(
+                    "execution_time_seconds", execution_time
+                )
 
             return result
         except Exception as e:

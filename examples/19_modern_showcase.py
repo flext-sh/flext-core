@@ -53,7 +53,12 @@ class Age(FlextModels.Value):
     value: int = Field(..., ge=MIN_AGE, le=MAX_AGE)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate age business rules."""
+        """Validate age business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.value < MIN_AGE:
             return FlextResult[None].fail(f"Age must be at least {MIN_AGE}")
         if self.value > MAX_AGE:
@@ -62,7 +67,15 @@ class Age(FlextModels.Value):
 
     @classmethod
     def create(cls, age: int) -> FlextResult[Self]:
-        """Create age with validation."""
+        """Create age with validation.
+
+        Args:
+            age: Age value to validate and create
+
+        Returns:
+            FlextResult[Self]: Created Age instance or error
+
+        """
         try:
             instance = cls(value=age)
             return FlextResult.ok(instance)
@@ -77,7 +90,12 @@ class Money(FlextModels.Value):
     currency: str = Field(default="USD", min_length=3, max_length=3)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate money business rules."""
+        """Validate money business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.amount < MIN_PRICE:
             return FlextResult[None].fail(f"Amount must be at least {MIN_PRICE}")
         if self.amount > MAX_PRICE:
@@ -92,7 +110,16 @@ class Money(FlextModels.Value):
         amount: Decimal | float | str,
         currency: str = "USD",
     ) -> FlextResult[Self]:
-        """Create money with validation."""
+        """Create money with validation.
+
+        Args:
+            amount: Money amount (Decimal, float, or string)
+            currency: Currency code (default: "USD")
+
+        Returns:
+            FlextResult[Self]: Created Money instance or error
+
+        """
         try:
             decimal_amount = Decimal(str(amount))
             instance = cls(amount=decimal_amount, currency=currency.upper())
@@ -101,7 +128,15 @@ class Money(FlextModels.Value):
             return FlextResult.fail(f"Invalid money: {e}")
 
     def add(self, other: Money) -> FlextResult[Money]:
-        """Add two money values."""
+        """Add two money values.
+
+        Args:
+            other: Money instance to add
+
+        Returns:
+            FlextResult[Money]: Sum of money values or error
+
+        """
         if self.currency != other.currency:
             return FlextResult[Money].fail(
                 f"Currency mismatch: {self.currency} vs {other.currency}",
@@ -109,7 +144,15 @@ class Money(FlextModels.Value):
         return Money.create(self.amount + other.amount, self.currency)
 
     def multiply(self, factor: float) -> FlextResult[Money]:
-        """Multiply money by a factor."""
+        """Multiply money by a factor.
+
+        Args:
+            factor: Multiplication factor
+
+        Returns:
+            FlextResult[Money]: Multiplied money value or error
+
+        """
         return Money.create(self.amount * Decimal(str(factor)), self.currency)
 
 
@@ -119,7 +162,12 @@ class EmailAddress(FlextModels.Value):
     address: str = Field(..., min_length=5, max_length=254)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate email business rules."""
+        """Validate email business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if "@" not in self.address:
             return FlextResult[None].fail("Email must contain @")
         if "." not in self.address.split("@")[1]:
@@ -128,7 +176,15 @@ class EmailAddress(FlextModels.Value):
 
     @classmethod
     def create(cls, email: str) -> FlextResult[Self]:
-        """Create email with validation."""
+        """Create email with validation.
+
+        Args:
+            email: Email address string to validate
+
+        Returns:
+            FlextResult[Self]: Created EmailAddress instance or error
+
+        """
         try:
             if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
                 return FlextResult.fail("Invalid email format")
@@ -167,7 +223,12 @@ class ECommerceConfig(FlextConfig):
     )
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate configuration business rules."""
+        """Validate configuration business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.min_order_value >= self.max_order_value:
             return FlextResult[None].fail(
                 "min_order_value must be less than max_order_value",
@@ -186,7 +247,12 @@ class User(FlextModels.Entity):
     is_active: bool = True
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate user business rules."""
+        """Validate user business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         email_result = self.email.validate_business_rules()
         if email_result.is_failure:
             return email_result
@@ -205,7 +271,18 @@ class User(FlextModels.Entity):
         age: int,
         user_id: str | None = None,
     ) -> FlextResult[User]:
-        """Create user with validation."""
+        """Create user with validation.
+
+        Args:
+            email: User email address
+            name: User full name
+            age: User age
+            user_id: Optional user ID (auto-generated if None)
+
+        Returns:
+            FlextResult[User]: Created User instance or error
+
+        """
         try:
             # Validate email
             email_result = EmailAddress.create(email)
@@ -243,7 +320,12 @@ class Product(FlextModels.Entity):
     is_available: bool = True
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate product business rules."""
+        """Validate product business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         price_result = self.price.validate_business_rules()
         if price_result.is_failure:
             return price_result
@@ -265,7 +347,15 @@ class Product(FlextModels.Entity):
 
     @classmethod
     def create(cls, **params: Unpack[CreateProductParams]) -> FlextResult[Product]:
-        """Create product with validation using Python 3.13 TypedDict."""
+        """Create product with validation using Python 3.13 TypedDict.
+
+        Args:
+            **params: Product creation parameters (name, price, stock_quantity, currency, product_id)
+
+        Returns:
+            FlextResult[Product]: Created Product instance or error
+
+        """
         # Extract parameters with defaults
         name = params["name"]
         price = params["price"]
@@ -297,7 +387,15 @@ class Product(FlextModels.Entity):
             return FlextResult[Product].fail(f"Failed to create product: {e}")
 
     def update_stock(self, quantity: int) -> FlextResult[None]:
-        """Update stock quantity."""
+        """Update stock quantity.
+
+        Args:
+            quantity: Quantity to add/subtract from stock
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.stock_quantity + quantity < 0:
             return FlextResult[None].fail("Insufficient stock")
         self.stock_quantity += quantity
@@ -313,7 +411,12 @@ class OrderItem(FlextModels.Value):
     total_price: Money
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate order item business rules."""
+        """Validate order item business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.quantity <= 0:
             return FlextResult[None].fail("Quantity must be positive")
         product_result = self.product.validate_business_rules()
@@ -326,7 +429,16 @@ class OrderItem(FlextModels.Value):
 
     @classmethod
     def create(cls, product: Product, quantity: int) -> FlextResult[OrderItem]:
-        """Create order item with validation."""
+        """Create order item with validation.
+
+        Args:
+            product: Product instance
+            quantity: Quantity of product
+
+        Returns:
+            FlextResult[OrderItem]: Created OrderItem instance or error
+
+        """
         if quantity <= 0:
             return FlextResult[OrderItem].fail("Quantity must be positive")
         if quantity > product.stock_quantity:
@@ -357,7 +469,12 @@ class Order(FlextModels.AggregateRoot):
     total_amount: Money
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate order business rules."""
+        """Validate order business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not self.items:
             return FlextResult[None].fail("Order must have at least one item")
 
@@ -382,7 +499,12 @@ class Order(FlextModels.AggregateRoot):
             self.total_amount = self._calculate_total()
 
     def _calculate_total(self) -> Money:
-        """Calculate order total."""
+        """Calculate order total.
+
+        Returns:
+            Money: Total money amount for the order
+
+        """
         if not self.items:
             return Money.create(0).value
 
@@ -403,7 +525,18 @@ class Order(FlextModels.AggregateRoot):
         config: ECommerceConfig,
         order_id: str | None = None,
     ) -> FlextResult[Order]:
-        """Create order with validation."""
+        """Create order with validation.
+
+        Args:
+            user: User placing the order
+            items_data: List of order item data dictionaries
+            config: E-commerce configuration
+            order_id: Optional order ID (auto-generated if None)
+
+        Returns:
+            FlextResult[Order]: Created Order instance or error
+
+        """
         try:
             # Validate basic constraints
             validation_result = cls._validate_order_constraints(items_data, config)
@@ -433,7 +566,16 @@ class Order(FlextModels.AggregateRoot):
         items_data: list[FlextTypes.Core.Dict],
         config: ECommerceConfig,
     ) -> FlextResult[None]:
-        """Validate order constraints."""
+        """Validate order constraints.
+
+        Args:
+            items_data: List of order item data
+            config: E-commerce configuration
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if len(items_data) > config.max_order_items:
             return FlextResult[None].fail(
                 f"Too many items: {len(items_data)} > {config.max_order_items}",
@@ -449,7 +591,15 @@ class Order(FlextModels.AggregateRoot):
         cls,
         items_data: list[FlextTypes.Core.Dict],
     ) -> FlextResult[list[OrderItem]]:
-        """Create order items from data."""
+        """Create order items from data.
+
+        Args:
+            items_data: List of order item data dictionaries
+
+        Returns:
+            FlextResult[list[OrderItem]]: Created order items or error
+
+        """
         items: list[OrderItem] = []
 
         for item_data in items_data:
@@ -479,7 +629,18 @@ class Order(FlextModels.AggregateRoot):
         config: ECommerceConfig,
         order_id: str | None,
     ) -> FlextResult[Order]:
-        """Build final order with validation."""
+        """Build final order with validation.
+
+        Args:
+            user: User placing the order
+            items: List of validated order items
+            config: E-commerce configuration
+            order_id: Order ID (may be None for auto-generation)
+
+        Returns:
+            FlextResult[Order]: Built Order instance or error
+
+        """
         # Generate ID
         if order_id is None:
             order_id = f"ORDER-{user.id}-{len(items):03d}"
@@ -509,7 +670,16 @@ class Order(FlextModels.AggregateRoot):
         items: list[OrderItem],
         config: ECommerceConfig,
     ) -> FlextResult[Money]:
-        """Calculate and validate order total."""
+        """Calculate and validate order total.
+
+        Args:
+            items: List of order items
+            config: E-commerce configuration
+
+        Returns:
+            FlextResult[Money]: Validated total money amount or error
+
+        """
         if not items:
             return FlextResult[Money].fail("No items to calculate total")
 
@@ -534,7 +704,12 @@ class Order(FlextModels.AggregateRoot):
         return total_money_result
 
     def confirm(self) -> FlextResult[None]:
-        """Confirm order and update stock."""
+        """Confirm order and update stock.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.status != OrderStatus.PENDING:
             return FlextResult[None].fail(
                 f"Cannot confirm order in {self.status} status",
@@ -564,7 +739,16 @@ class PaymentService:
         order: Order,
         payment_method: str = "credit_card",
     ) -> FlextResult[str]:
-        """Process payment for order."""
+        """Process payment for order.
+
+        Args:
+            order: Order to process payment for
+            payment_method: Payment method (default: "credit_card")
+
+        Returns:
+            FlextResult[str]: Payment ID or error
+
+        """
         try:
             if order.payment_status != PaymentStatus.PENDING:
                 return FlextResult[str].fail("Payment already processed")
@@ -599,7 +783,16 @@ class OrderService:
         user: User,
         items_data: list[FlextTypes.Core.Dict],
     ) -> FlextResult[Order]:
-        """Create and process complete order."""
+        """Create and process complete order.
+
+        Args:
+            user: User placing the order
+            items_data: List of order item data dictionaries
+
+        Returns:
+            FlextResult[Order]: Processed Order instance or error
+
+        """
         try:
             # Create order
             order_result = Order.create(user, items_data, self.config)
@@ -632,7 +825,12 @@ class OrderService:
 
 
 def demonstrate_user_creation() -> FlextResult[User]:
-    """Demonstrate user creation with validation."""
+    """Demonstrate user creation with validation.
+
+    Returns:
+        FlextResult[User]: Created user or error
+
+    """
     print("Creating user with validation...")
 
     user_result = User.create(
@@ -651,7 +849,12 @@ def demonstrate_user_creation() -> FlextResult[User]:
 
 
 def demonstrate_product_creation() -> FlextResult[list[Product]]:
-    """Demonstrate product creation and management."""
+    """Demonstrate product creation and management.
+
+    Returns:
+        FlextResult[list[Product]]: List of created products or error
+
+    """
     print("Creating products...")
 
     products: list[Product] = []
@@ -685,11 +888,20 @@ def demonstrate_order_processing(
     user: User,
     products: list[Product],
 ) -> FlextResult[Order]:
-    """Demonstrate complete order processing."""
+    """Demonstrate complete order processing.
+
+    Args:
+        user: User placing the order
+        products: List of available products
+
+    Returns:
+        FlextResult[Order]: Processed order or error
+
+    """
     print("Processing order...")
 
     # Create configuration
-    config = ECommerceConfig()
+    config = ECommerceConfig(log_level="INFO")
 
     # Create services
     payment_service = PaymentService(config)
@@ -716,7 +928,12 @@ def demonstrate_order_processing(
 
 
 def main() -> int:
-    """Main demonstration function."""
+    """Main demonstration function.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("🚀 Modern FLEXT Patterns Showcase")
     print("=" * 50)
 
