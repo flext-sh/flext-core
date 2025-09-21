@@ -148,14 +148,11 @@ class TestFlextLogger:
 
     def test_logger_auto_configuration(self) -> None:
         """Test that logger auto-configures on first use."""
-        # Clear any existing configuration
-        FlextLogger._configured = False
-
         # Getting a logger should auto-configure
         logger = FlextLogger("test")
 
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not FlextLogger.is_configured():
+            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
         assert logger is not None
 
     def test_get_logger_creates_instance(self) -> None:
@@ -190,39 +187,33 @@ class TestFlextLogger:
 
     def test_configure_with_defaults(self) -> None:
         """Test configuring logger with default settings."""
-        # Reset configuration
-        FlextLogger._configured = False
-
         FlextLogger.configure()
 
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not FlextLogger.is_configured():
+            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
 
     def test_configure_with_custom_settings(self) -> None:
         """Test configuring logger with custom settings."""
-        # Reset configuration
-        FlextLogger._configured = False
-
         FlextLogger.configure(
             log_level="DEBUG",
             json_output=True,
             include_source=False,
         )
 
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not FlextLogger.is_configured():
+            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
 
     def test_configure_idempotent(self) -> None:
         """Test that configure is idempotent."""
         # Configure once
         FlextLogger.configure()
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not FlextLogger.is_configured():
+            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
 
         # Configure again should not raise error
         FlextLogger.configure()
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not FlextLogger.is_configured():
+            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
 
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance."""
@@ -234,7 +225,7 @@ class TestFlextLogger:
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level."""
-        base_logger = FlextLogger("level_test", level="DEBUG")
+        base_logger = FlextLogger("level_test")
 
         assert base_logger is not None
 
@@ -306,7 +297,7 @@ class TestFlextLoggerUsage:
 
     def test_bound_logger_usage(self) -> None:
         """Test using bound logger."""
-        logger = FlextLogger("bound_test", level="DEBUG")
+        logger = FlextLogger("bound_test")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
 
         # Context should be automatically included in these logs

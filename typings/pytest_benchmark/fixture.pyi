@@ -3,7 +3,7 @@ from typing import TypeVar
 
 from flext_core import FlextTypes
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 class BenchmarkFixture:
     group: str
@@ -12,16 +12,18 @@ class BenchmarkFixture:
 
     def __call__(
         self,
-        func: Callable[[], T],
+        func: Callable[[], _T],
         /,
         *args: object,
         **kwargs: object,
-    ) -> T: ...
+    ) -> _T: ...
     def pedantic(
         self,
-        func: Callable[[], T],
+        func: Callable[[], _T],
         /,
         *args: object,
         **kwargs: object,
-    ) -> T: ...
-    def timer(self, func: Callable[[], T], /, *args: object, **kwargs: object) -> T: ...
+    ) -> _T: ...
+    def timer(
+        self, func: Callable[[], _T], /, *args: object, **kwargs: object
+    ) -> _T: ...

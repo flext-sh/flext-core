@@ -56,7 +56,7 @@ class FlextResultFunctional:
 
         """
         # Import here to avoid circular import
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         def composed(value: T_co) -> FlextResult[V]:
             return FlextResult[T_co].ok(value).flat_map(f).flat_map(g)
@@ -84,7 +84,7 @@ class FlextResultFunctional:
 
         """
         # Import here to avoid circular import
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         if result1.is_failure:
             return FlextResult[TResult].fail(result1.error or "First argument failed")
@@ -153,8 +153,8 @@ class FlextResultFunctional:
             A FlextResult containing the traversed results.
 
         """
-        from flext_core.result_collections import (  # noqa: PLC0415
-            FlextResultCollections,  # noqa: PLC0415, RUF100
+        from flext_core.result_collections import (
+            FlextResultCollections,
         )
 
         return FlextResultCollections.traverse(items, func)

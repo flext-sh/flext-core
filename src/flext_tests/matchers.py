@@ -28,7 +28,7 @@ from itertools import starmap
 from typing import Protocol, Self, cast
 
 
-class FlextTestsMatchers:  # noqa: PLR0904
+class FlextTestsMatchers:
     """Comprehensive test matching utilities following unified class pattern.
 
     Single unified class containing all test matching protocols and utilities
@@ -120,7 +120,7 @@ class FlextTestsMatchers:  # noqa: PLR0904
     # CORE MATCHERS - FlextResult and object testing
     # =========================================================================
 
-    class CoreMatchers:  # noqa: PLR0904
+    class CoreMatchers:
         """Core matching utilities for FlextResult and common objects."""
 
         @staticmethod
@@ -946,7 +946,7 @@ class FlextTestsMatchers:  # noqa: PLR0904
         Raises:
             AssertionError: If result is not successful or values don't match
 
-        """  # noqa: DOC502
+        """
         assert FlextTestsMatchers.CoreMatchers.be_success(result), (
             f"Expected success, got {result}"
         )
@@ -973,7 +973,7 @@ class FlextTestsMatchers:  # noqa: PLR0904
         Raises:
             AssertionError: If result is not failure or error doesn't match
 
-        """  # noqa: DOC502
+        """
         assert FlextTestsMatchers.CoreMatchers.be_failure(result), (
             f"Expected failure, got {result}"
         )

@@ -231,7 +231,7 @@ class TestRequestMetadata:
         user_id = "test-user"
         operation_name = "test-operation"
         request_id = "test-request"
-        metadata = {"key": "value", "num": 123}
+        metadata: dict[str, object] = {"key": "value", "num": 123}
 
         with FlextContext.Request.request_context(
             user_id=user_id,
@@ -304,7 +304,7 @@ class TestPerformanceContext:
 
     def test_set_get_operation_metadata(self) -> None:
         """Test setting and getting operation metadata."""
-        metadata = {"step": "validation", "count": 10}
+        metadata: dict[str, object] = {"step": "validation", "count": 10}
         FlextContext.Performance.set_operation_metadata(metadata)
         assert FlextContext.Performance.get_operation_metadata() == metadata
 

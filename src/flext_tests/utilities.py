@@ -94,7 +94,7 @@ class FlextTestsUtilities:
         @staticmethod
         def assert_result_success(result: FlextResult[T]) -> T:
             """Assert result is successful using FlextResult validation."""
-            if not result.success:
+            if not result.is_success:
                 msg = f"Expected success but got failure: {result.error}"
                 raise AssertionError(msg)
             return result.value
@@ -102,8 +102,8 @@ class FlextTestsUtilities:
         @staticmethod
         def assert_result_failure(result: FlextResult[T]) -> str:
             """Assert result is failure using FlextResult validation."""
-            if result.success:
-                msg = f"Expected failure but got success: {result.data}"
+            if result.is_success:
+                msg = f"Expected failure but got success: {result.value}"
                 raise AssertionError(msg)
             return result.error or "Unknown error"
 

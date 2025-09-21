@@ -12,13 +12,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import cast
+from typing import Literal, cast
 
+# No cast needed - using proper type checking
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-from flext_core.typings import MessageT, ResultT
 
 
 class FlextDispatcherRegistry:
@@ -49,12 +49,26 @@ class FlextDispatcherRegistry:
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
+    def _safe_get_handler_mode(self, value: object) -> Literal["command", "query"]:
+        """Safely extract and validate handler mode from dict value."""
+        if value == "query":
+            return "query"
+        # Default to "command" for all other cases
+        return "command"
+
+    def _safe_get_status(self, value: object) -> Literal["active", "inactive"]:
+        """Safely extract and validate status from dict value."""
+        if value == "inactive":
+            return "inactive"
+        # Default to "active" for all other cases
+        return "active"
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        handler: FlextHandlers[MessageT, ResultT],
+        handler: FlextHandlers[object, object],
     ) -> FlextResult[FlextModels.RegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -78,16 +92,28 @@ class FlextDispatcherRegistry:
                 )
             )
 
-        # Cast to the type expected by FlextDispatcher
-        handler_obj = cast("FlextHandlers[object, object]", handler)
-        registration = self._dispatcher.register_handler(handler_obj)
+        # Handler is already the correct type
+        registration = self._dispatcher.register_handler(handler)
         if registration.is_success:
             self._registered_keys.add(key)
-        return registration
+            # Convert dict to RegistrationDetails
+            reg_data = registration.value
+            reg_details = FlextModels.RegistrationDetails(
+                registration_id=str(reg_data.get("registration_id", key)),
+                handler_mode=self._safe_get_handler_mode(
+                    reg_data.get("handler_mode", "command")
+                ),
+                timestamp=str(reg_data.get("timestamp", "")),
+                status=self._safe_get_status(reg_data.get("status", "active")),
+            )
+            return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
+        return FlextResult[FlextModels.RegistrationDetails].fail(
+            registration.error or "Unknown error"
+        )
 
     def register_handlers(
         self,
-        handlers: Iterable[FlextHandlers[MessageT, ResultT]],
+        handlers: Iterable[FlextHandlers[object, object]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
         """Register multiple handlers in one shot using railway pattern.
 
@@ -106,7 +132,7 @@ class FlextDispatcherRegistry:
 
     def _process_single_handler(
         self,
-        handler: FlextHandlers[MessageT, ResultT],
+        handler: FlextHandlers[object, object],
         summary: FlextDispatcherRegistry.Summary,
     ) -> FlextResult[None]:
         """Process a single handler registration.
@@ -120,11 +146,20 @@ class FlextDispatcherRegistry:
             summary.skipped.append(key)
             return FlextResult[None].ok(None)
 
-        # Cast to the type expected by FlextDispatcher
-        handler_obj = cast("FlextHandlers[object, object]", handler)
-        registration_result = self._dispatcher.register_handler(handler_obj)
+        # Handler is already the correct type
+        registration_result = self._dispatcher.register_handler(handler)
         if registration_result.is_success:
-            self._add_successful_registration(key, registration_result.value, summary)
+            # Convert dict to RegistrationDetails
+            reg_data = registration_result.value
+            reg_details = FlextModels.RegistrationDetails(
+                registration_id=str(reg_data.get("registration_id", key)),
+                handler_mode=self._safe_get_handler_mode(
+                    reg_data.get("handler_mode", "command")
+                ),
+                timestamp=str(reg_data.get("timestamp", "")),
+                status=self._safe_get_status(reg_data.get("status", "active")),
+            )
+            self._add_successful_registration(key, reg_details, summary)
             return FlextResult[None].ok(None)
         self._add_registration_error(key, registration_result.error or "", summary)
         return FlextResult[None].fail(
@@ -176,7 +211,7 @@ class FlextDispatcherRegistry:
 
     def register_bindings(
         self,
-        bindings: Sequence[tuple[type[MessageT], FlextHandlers[MessageT, ResultT]]],
+        bindings: Sequence[tuple[type[object], FlextHandlers[object, object]]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
         """Register handlers bound to explicit message types.
 
@@ -191,9 +226,8 @@ class FlextDispatcherRegistry:
                 summary.skipped.append(key)
                 continue
 
-            # Cast to the type expected by FlextDispatcher
-            handler_obj = cast("FlextHandlers[object, object]", handler)
-            registration = self._dispatcher.register_command(message_type, handler_obj)
+            # Handler is already the correct type
+            registration = self._dispatcher.register_command(message_type, handler)
             if registration.is_failure:
                 summary.errors.append(
                     registration.error
@@ -202,7 +236,17 @@ class FlextDispatcherRegistry:
                 continue
 
             self._registered_keys.add(key)
-            summary.registered.append(registration.value)
+            # Convert dict to RegistrationDetails
+            reg_data = registration.value
+            reg_details = FlextModels.RegistrationDetails(
+                registration_id=str(reg_data.get("registration_id", key)),
+                handler_mode=self._safe_get_handler_mode(
+                    reg_data.get("handler_mode", "command")
+                ),
+                timestamp=str(reg_data.get("timestamp", "")),
+                status=self._safe_get_status(reg_data.get("status", "active")),
+            )
+            summary.registered.append(reg_details)
 
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
@@ -213,10 +257,10 @@ class FlextDispatcherRegistry:
     def register_function_map(
         self,
         mapping: Mapping[
-            type[MessageT],
-            FlextHandlers[MessageT, ResultT]
+            type[object],
+            FlextHandlers[object, object]
             | tuple[
-                Callable[[MessageT], ResultT | FlextResult[ResultT]],
+                Callable[[object], object | FlextResult[object]],
                 dict[str, object] | None,
             ],
         ],
@@ -236,16 +280,70 @@ class FlextDispatcherRegistry:
 
             if isinstance(entry, tuple):
                 handler_func, handler_config = entry
+                # Convert function to handler object for registration
+
+                # Convert dict config to proper Handler config or use None
+                config_obj = None
+                handler_mode: Literal["command", "query"] = "command"
+
+                if handler_config:
+                    try:
+                        # Ensure proper types for literal fields
+                        handler_type_val: Literal["command", "query"] = "command"
+                        handler_mode_val: Literal["command", "query"] = "command"
+
+                        if isinstance(handler_config.get("handler_type"), str):
+                            raw_type = handler_config.get("handler_type")
+                            if raw_type in {"command", "query"}:
+                                handler_type_val = cast(
+                                    "Literal['command', 'query']", raw_type
+                                )
+
+                        if isinstance(handler_config.get("handler_mode"), str):
+                            raw_mode = handler_config.get("handler_mode")
+                            if raw_mode in {"command", "query"}:
+                                handler_mode_val = cast(
+                                    "Literal['command', 'query']", raw_mode
+                                )
+
+                        metadata_raw = handler_config.get("metadata", {})
+                        if not isinstance(metadata_raw, dict):
+                            metadata_val: dict[str, object] = {}
+                        else:
+                            metadata_val = cast("dict[str, object]", metadata_raw)
+
+                        config_obj = FlextModels.CqrsConfig.Handler(
+                            handler_id=str(handler_config.get("handler_id", "default")),
+                            handler_name=str(
+                                handler_config.get("handler_name", "unnamed")
+                            ),
+                            handler_type=handler_type_val,
+                            handler_mode=handler_mode_val,
+                            metadata=metadata_val,
+                        )
+                        handler_mode = handler_type_val
+                    except Exception:
+                        config_obj = None
+
+                # Convert config_obj to dict if it's a Handler object
+                config_dict = None
+                if config_obj is not None:
+                    if hasattr(config_obj, "model_dump"):
+                        config_dict = config_obj.model_dump()
+                    elif isinstance(config_obj, dict):
+                        config_dict = config_obj
+
+                # Create a handler wrapper for the function
                 handler_result = self._dispatcher.register_function(
                     message_type,
                     handler_func,
-                    handler_config=handler_config,
+                    handler_config=config_dict,
+                    mode=handler_mode,
                 )
             else:
-                # Cast to the type expected by FlextDispatcher
-                entry_obj = cast("FlextHandlers[object, object]", entry)
+                # Entry is already the correct type
                 handler_result = self._dispatcher.register_command(
-                    message_type, entry_obj
+                    message_type, entry, handler_config=None
                 )
 
             if handler_result.is_failure:
@@ -256,9 +354,17 @@ class FlextDispatcherRegistry:
                 continue
 
             self._registered_keys.add(key)
-            summary.registered.append(
-                handler_result.value,
+            # Convert dict to RegistrationDetails
+            reg_data = handler_result.value
+            reg_details = FlextModels.RegistrationDetails(
+                registration_id=str(reg_data.get("registration_id", key)),
+                handler_mode=self._safe_get_handler_mode(
+                    reg_data.get("handler_mode", "command")
+                ),
+                timestamp=str(reg_data.get("timestamp", "")),
+                status=self._safe_get_status(reg_data.get("status", "active")),
             )
+            summary.registered.append(reg_details)
 
         if summary.errors:
             return FlextResult[FlextDispatcherRegistry.Summary].fail(
@@ -269,7 +375,7 @@ class FlextDispatcherRegistry:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _resolve_handler_key(self, handler: FlextHandlers[MessageT, ResultT]) -> str:
+    def _resolve_handler_key(self, handler: FlextHandlers[object, object]) -> str:
         handler_id = getattr(handler, "handler_id", None)
         if isinstance(handler_id, str) and handler_id:
             return handler_id
@@ -277,20 +383,20 @@ class FlextDispatcherRegistry:
 
     def _resolve_binding_key(
         self,
-        handler: FlextHandlers[MessageT, ResultT],
-        message_type: type[MessageT],
+        handler: FlextHandlers[object, object],
+        message_type: type[object],
     ) -> str:
         base_key = self._resolve_handler_key(handler)
         return f"{base_key}::{message_type.__name__}"
 
     def _resolve_binding_key_from_entry(
         self,
-        entry: FlextHandlers[MessageT, ResultT]
+        entry: FlextHandlers[object, object]
         | tuple[
-            Callable[[MessageT], ResultT | FlextResult[ResultT]],
+            Callable[[object], object | FlextResult[object]],
             dict[str, object] | None,
         ],
-        message_type: type[MessageT],
+        message_type: type[object],
     ) -> str:
         if isinstance(entry, tuple):
             handler_func = entry[0]

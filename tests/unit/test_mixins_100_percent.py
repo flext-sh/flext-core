@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 from unittest.mock import Mock
 
-from flext_core import FlextMixins
+from flext_core import FlextMixins, FlextModels
 
 
 class TestFlextMixins100Percent:
@@ -24,7 +24,9 @@ class TestFlextMixins100Percent:
                 return {"test": "value"}
 
         obj = TestClass()
-        result = obj.to_json()
+        # Use FlextMixins.to_json static method
+        request = FlextModels.SerializationRequest(data=obj, use_model_dump=True)
+        result = FlextMixins.to_json(request)
         assert json.loads(result) == {"test": "value"}
 
     def test_serializable_to_json_with_dict(self) -> None:
@@ -35,7 +37,9 @@ class TestFlextMixins100Percent:
                 self.test = "value"
 
         obj = TestClass()
-        result = obj.to_json()
+        # Use FlextMixins.to_json static method
+        request = FlextModels.SerializationRequest(data=obj, use_model_dump=False)
+        result = FlextMixins.to_json(request)
         assert json.loads(result) == {"test": "value"}
 
     def test_loggable_methods(self) -> None:

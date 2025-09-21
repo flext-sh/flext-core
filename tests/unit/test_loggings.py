@@ -110,8 +110,8 @@ class TestFlextLoggerInitialization:
         """Test logger creation with service metadata."""
         logger = FlextLogger(
             "test_service",
-            level="DEBUG",
-            service_name="payment-service",
+            _level="DEBUG",
+            _service_name="payment-service",
             service_version="2.1.0",
         )
 
@@ -172,7 +172,7 @@ class TestStructuredLogging:
 
     def test_basic_structured_logging(self) -> None:
         """Test basic structured log entry creation with real functionality."""
-        logger = FlextLogger("test_service", service_name="test-app")
+        logger = FlextLogger("test_service", _service_name="test-app")
 
         # Test that logger was created correctly
         assert logger._name == "test_service"
@@ -198,7 +198,7 @@ class TestStructuredLogging:
 
     def test_structured_field_validation(self) -> None:
         """Test that structured log entry building works correctly."""
-        logger = FlextLogger("test_service", service_name="validation-test")
+        logger = FlextLogger("test_service", _service_name="validation-test")
 
         # Test the real _build_log_entry method functionality
         log_entry = logger._build_log_entry("INFO", "Test message", {"user_id": "123"})
@@ -968,7 +968,7 @@ class TestConvenienceFunctions:
 
     def test_get_logger_function(self) -> None:
         """Test FlextLogger convenience function."""
-        logger = FlextLogger("convenience_test", service_name="test-service")
+        logger = FlextLogger("convenience_test", _service_name="test-service")
 
         assert isinstance(logger, FlextLogger)
         assert logger._name == "convenience_test"
@@ -978,7 +978,7 @@ class TestConvenienceFunctions:
         """Test FlextLogger with version parameter."""
         logger = FlextLogger(
             "versioned_test",
-            service_name="test-service",
+            _service_name="test-service",
             service_version="1.2.3",
         )
 
@@ -1003,7 +1003,7 @@ class TestLoggingLevels:
 
     def test_all_logging_levels(self) -> None:
         """Test all logging levels work correctly using real functionality."""
-        logger = FlextLogger("level_test", level="DEBUG")
+        logger = FlextLogger("level_test", _level="DEBUG")
 
         # Verify logger level was set correctly
         assert logger._level == "DEBUG"
@@ -1069,7 +1069,7 @@ class TestLoggingLevels:
 
     def test_level_filtering(self) -> None:
         """Test that level filtering works correctly using real functionality."""
-        logger = FlextLogger("filter_test", level="WARNING")
+        logger = FlextLogger("filter_test", _level="WARNING")
 
         # Verify logger level was set correctly
         assert logger._level == "WARNING"
@@ -1105,7 +1105,7 @@ class TestRealWorldScenarios:
 
     def test_api_request_lifecycle(self) -> None:
         """Test complete API request lifecycle logging."""
-        logger = FlextLogger("api_service", service_name="order-api")
+        logger = FlextLogger("api_service", _service_name="order-api")
 
         # Start request
         logger.set_request_context(
@@ -1150,7 +1150,7 @@ class TestRealWorldScenarios:
 
     def test_error_handling_scenario(self) -> None:
         """Test comprehensive error handling scenario."""
-        logger = FlextLogger("error_service", service_name="payment-processor")
+        logger = FlextLogger("error_service", _service_name="payment-processor")
 
         logger.set_request_context(
             request_id="req_payment_fail",
@@ -1189,7 +1189,7 @@ class TestRealWorldScenarios:
 
     def test_high_throughput_logging(self) -> None:
         """Test logging performance under high throughput using real functionality."""
-        logger = FlextLogger("throughput_test", service_name="high-volume-api")
+        logger = FlextLogger("throughput_test", _service_name="high-volume-api")
 
         # Verify logger was created correctly
         assert logger._service_name == "high-volume-api"
@@ -1244,7 +1244,7 @@ class TestLoggingConfiguration:
 
     def test_bind_logger_creates_new_instance(self) -> None:
         """Test that bind creates a new logger with bound context using real functionality."""
-        logger = FlextLogger("bind_test", service_name="test-service")
+        logger = FlextLogger("bind_test", _service_name="test-service")
 
         # Test that bind creates a new instance
         bound_logger = logger.bind(user_id="123", operation="test")
@@ -1288,7 +1288,7 @@ class TestAdvancedLoggingFeatures:
 
         logger = FlextLogger(
             "invalid_level_test",
-            level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
+            _level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
         )
 
         # Should default to INFO level
@@ -1417,7 +1417,7 @@ class TestAdvancedLoggingFeatures:
         # Test with invalid level - should default to INFO
         logger = FlextLogger(
             "level_edge_test",
-            level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
+            _level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
         )
         assert (
             logger._level == "WARNING"
@@ -1427,7 +1427,7 @@ class TestAdvancedLoggingFeatures:
         # Test with empty string level - should default to INFO
         logger = FlextLogger(
             "level_edge_test",
-            level=cast("FlextTypes.Config.LogLevel", ""),
+            _level=cast("FlextTypes.Config.LogLevel", ""),
         )
         assert (
             logger._level == "WARNING"
@@ -1437,7 +1437,7 @@ class TestAdvancedLoggingFeatures:
         # Test with lowercase valid level - should convert to uppercase
         logger = FlextLogger(
             "level_edge_test",
-            level=cast("FlextTypes.Config.LogLevel", "debug"),
+            _level=cast("FlextTypes.Config.LogLevel", "debug"),
         )
         assert logger._level == "DEBUG"  # Should convert to uppercase
 

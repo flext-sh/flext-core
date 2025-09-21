@@ -44,7 +44,7 @@ class TestFlextCoreWildcardExports:
 
         # Verify each essential module is available in globals
         current_globals = globals()
-        missing_modules = []
+        missing_modules: list[str] = []
 
         for module_name in essential_modules:
             if module_name not in current_globals:
@@ -60,18 +60,18 @@ class TestFlextCoreWildcardExports:
         """Test basic FlextResult functionality."""
         # Test success case
         success_result = FlextResult[str].ok("test_value")
-        assert success_result.success is True
+        assert success_result.is_success is True
         assert success_result.value == "test_value"
         assert success_result.error is None
 
         # Test failure case
         failure_result = FlextResult[str].fail("test_error")
-        assert failure_result.success is False
+        assert failure_result.is_success is False
         assert failure_result.error == "test_error"
 
         # Test chaining operations
         chained_result = success_result.map(lambda x: x.upper())
-        assert chained_result.success is True
+        assert chained_result.is_success is True
         assert chained_result.value == "TEST_VALUE"
 
     def test_flext_utilities_basic_functionality(self) -> None:
@@ -178,14 +178,14 @@ class TestFlextCoreIntegrationScenarios:
                 "status": "started",
             },
         )
-        assert result.success is True
+        assert result.is_success is True
 
         # 3. Process the result through transformations
         processed_result = result.map(
             lambda data: {**data, "timestamp": "2024-01-01T00:00:00Z"},
         )
 
-        assert processed_result.success is True
+        assert processed_result.is_success is True
         assert "timestamp" in processed_result.value
 
         # 4. Verify final state using a simple string
@@ -194,14 +194,14 @@ class TestFlextCoreIntegrationScenarios:
             lambda data: {**data, "status": final_status},
         )
 
-        assert final_result.success is True
+        assert final_result.is_success is True
         assert final_result.value["status"] == "COMPLETED"
 
     def test_error_handling_integration(self) -> None:
         """Test error handling across multiple components."""
         # Create a failed result
         failed_result = FlextResult[str].fail("test_error")
-        assert failed_result.success is False
+        assert failed_result.is_success is False
 
         # Convert to exception
         error_msg = failed_result.error or "unknown error"
@@ -269,7 +269,7 @@ class TestFlextCoreSystemValidation:
             FlextResult[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5).map(str)
         )
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.value == "25"
 
         # Test failure propagation

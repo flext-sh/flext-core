@@ -4,6 +4,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+import operator
+
 import pytest
 from pydantic import BaseModel, Field, ValidationError
 
@@ -17,11 +19,16 @@ from flext_core import (
 
 
 # Test Domain Service Implementations
-class TestUserService(FlextDomainService[FlextTypes.Core.Headers]):
-    """Test service for user operations."""
+class SampleUserService(FlextDomainService[FlextTypes.Core.Headers]):
+    """Sample service for user operations used in tests."""
 
     def execute(self) -> FlextResult[FlextTypes.Core.Headers]:
-        """Execute user operation."""
+        """Execute user operation.
+
+        Returns:
+            FlextResult[FlextTypes.Core.Headers]: Success with user headers
+
+        """
         return FlextResult[FlextTypes.Core.Headers].ok(
             {
                 "user_id": "default_123",
@@ -30,27 +37,32 @@ class TestUserService(FlextDomainService[FlextTypes.Core.Headers]):
         )
 
 
-class TestComplexService(FlextDomainService[str]):
-    """Test service with complex validation and operations."""
+class SampleComplexService(FlextDomainService[str]):
+    """Sample service with complex validation and operations used in tests."""
 
     name: str = "default_name"
     value: int = 0
     enabled: bool = True
 
     def __init__(
-        self, name: str = "default_name", value: int = 0, enabled: bool = True, **data
+        self,
+        name: str = "default_name",
+        value: int = 0,
+        *,
+        enabled: bool = True,
+        **_data: object,
     ) -> None:
         """Initialize with field arguments."""
-        # Set field values before calling super().__init__()
-        object.__setattr__(self, "name", name)
-        object.__setattr__(self, "value", value)
-        object.__setattr__(self, "enabled", enabled)
-
-        # Call parent __init__ which initializes _config
-        super().__init__()
+        # Pass field values to parent constructor
+        super().__init__(name=name, value=value, enabled=enabled, **_data)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules with multiple checks."""
+        """Validate business rules with multiple checks.
+
+        Returns:
+            FlextResult[None]: Success if all rules pass, failure with error message otherwise.
+
+        """
         if not self.name:
             return FlextResult[None].fail("Name is required")
         if self.value < 0:
@@ -60,7 +72,12 @@ class TestComplexService(FlextDomainService[str]):
         return FlextResult[None].ok(None)
 
     def validate_config(self) -> FlextResult[None]:
-        """Validate configuration with custom logic."""
+        """Validate configuration with custom logic.
+
+        Returns:
+            FlextResult[None]: Success if configuration is valid, failure otherwise.
+
+        """
         if len(self.name) > 50:
             return FlextResult[None].fail("Name too long")
         if self.value > 1000:
@@ -81,8 +98,8 @@ class TestComplexService(FlextDomainService[str]):
         return FlextResult[str].ok(f"Processed: {self.name} with value {self.value}")
 
 
-class TestFailingService(FlextDomainService[None]):
-    """Test service that fails validation."""
+class SampleFailingService(FlextDomainService[None]):
+    """Sample service that fails validation, used in tests."""
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Always fail validation."""
@@ -93,18 +110,18 @@ class TestFailingService(FlextDomainService[None]):
         return FlextResult[None].fail("Execution failed")
 
 
-class TestExceptionService(FlextDomainService[str]):
-    """Test service that raises exceptions."""
+class SampleExceptionService(FlextDomainService[str]):
+    """Sample service that raises exceptions, used in tests."""
 
     should_raise: bool = False
 
-    def __init__(self, should_raise: bool = False, **data) -> None:
+    def __init__(self, *, should_raise: bool = False, **data: object) -> None:
         """Initialize with field arguments."""
-        # Set field values before calling super().__init__()
-        object.__setattr__(self, "should_raise", should_raise)
+        # Call parent __init__ first to initialize the model
+        super().__init__(**data)
 
-        # Call parent __init__ which initializes _config
-        super().__init__()
+        # Set field values after initialization (required for frozen models)
+        object.__setattr__(self, "should_raise", should_raise)
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validation that can raise exceptions."""
@@ -127,17 +144,6 @@ class ComplexTypeService(FlextDomainService[dict]):
     data: dict = Field(default_factory=dict)
     items: list = Field(default_factory=list)
 
-    def __init__(
-        self, data: dict | None = None, items: list | None = None, **kwargs
-    ) -> None:
-        """Initialize with field arguments."""
-        # Set field values before calling super().__init__()
-        object.__setattr__(self, "data", data or {})
-        object.__setattr__(self, "items", items or [])
-
-        # Call parent __init__ which initializes _config
-        super().__init__()
-
     def execute(self) -> FlextResult[dict]:
         """Execute operation with complex types."""
         return FlextResult[dict].ok({"data": self.data, "items": self.items})
@@ -148,14 +154,14 @@ class TestDomainServicesFixed:
 
     def test_basic_service_creation(self) -> None:
         """Test basic domain service creation."""
-        service = TestUserService()
+        service = SampleUserService()
         assert isinstance(service, FlextDomainService)
         # Test that the service has centralized config
         assert hasattr(service, "_config")
 
     def test_service_immutability(self) -> None:
         """Test that service is immutable (frozen)."""
-        service = TestUserService()
+        service = SampleUserService()
 
         # Test that assignment to frozen field raises ValidationError
         with pytest.raises(ValidationError):
@@ -175,7 +181,7 @@ class TestDomainServicesFixed:
 
     def test_basic_execution(self) -> None:
         """Test basic service execution."""
-        service = TestUserService()
+        service = SampleUserService()
         result = service.execute()
 
         assert result.success is True
@@ -185,19 +191,19 @@ class TestDomainServicesFixed:
 
     def test_is_valid_success(self) -> None:
         """Test is_valid with success."""
-        service = TestComplexService(name="test", value=10, enabled=True)
+        service = SampleComplexService(name="test", value=10, enabled=True)
 
         result = service.is_valid()
         assert result is True
 
     def test_is_valid_failure(self) -> None:
         """Test is_valid with invalid service."""
-        service = TestFailingService()
+        service = SampleFailingService()
         assert service.is_valid() is False
 
     def test_is_valid_exception_handling(self) -> None:
         """Test is_valid with exception handling."""
-        service = TestExceptionService(should_raise=True)
+        service = SampleExceptionService(should_raise=True)
 
         # When validate_business_rules raises an exception, is_valid should handle it
         # and return False (since the validation failed)
@@ -206,46 +212,46 @@ class TestDomainServicesFixed:
 
     def test_validate_business_rules_default(self) -> None:
         """Test default business rules validation."""
-        service = TestUserService()
+        service = SampleUserService()
         result = service.validate_business_rules()
         assert result.success is True
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test validate_business_rules with custom success."""
-        service = TestComplexService(name="valid_name", value=10, enabled=True)
+        service = SampleComplexService(name="valid_name", value=10, enabled=True)
 
         result = service.validate_business_rules()
         assert result.is_success
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test validate_business_rules with custom failure."""
-        service = TestComplexService(
+        service = SampleComplexService(
             name="", value=10, enabled=True
         )  # Empty name should fail
 
         result = service.validate_business_rules()
         assert result.is_failure
-        assert "Business rules validation failed" in result.error
+        assert "Name is required" in result.error
 
     def test_validate_business_rules_multiple_conditions(self) -> None:
         """Test validate_business_rules with multiple conditions."""
-        service = TestComplexService(
+        service = SampleComplexService(
             name="", value=-1, enabled=False
         )  # Invalid name and value
 
         result = service.validate_business_rules()
         assert result.is_failure
-        assert "Business rules validation failed" in result.error
+        assert "Name is required" in result.error
 
     def test_validate_config_default(self) -> None:
         """Test default configuration validation."""
-        service = TestUserService()
+        service = SampleUserService()
         result = service.validate_config()
         assert result.success is True
 
     def test_validate_config_custom_success(self) -> None:
         """Test validate_config with custom success."""
-        service = TestComplexService(name="test", value=10, enabled=True)
+        service = SampleComplexService(name="test", value=10, enabled=True)
 
         result = service.validate_config()
         assert result.is_success
@@ -253,18 +259,17 @@ class TestDomainServicesFixed:
     def test_validate_config_custom_failure(self) -> None:
         """Test validate_config with custom failure."""
         long_name = "a" * 300  # Too long name
-        service = TestComplexService(name=long_name, value=10, enabled=True)
+        service = SampleComplexService(name=long_name, value=10, enabled=True)
 
         result = service.validate_config()
         assert result.is_failure
-        assert "Configuration validation failed" in result.error
+        assert "Name too long" in result.error
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
-        service = TestUserService()
+        service = SampleUserService()
 
-        def test_operation(x: int, y: int) -> int:
-            return x + y
+        test_operation = operator.add
 
         # Create operation request using Pydantic model
         operation_request = FlextModels.OperationExecutionRequest(
@@ -277,7 +282,7 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_with_kwargs(self) -> None:
         """Test execute_operation with keyword arguments."""
-        service = TestUserService()
+        service = SampleUserService()
 
         def test_operation(name: str, value: int = 10) -> str:
             return f"{name}: {value}"
@@ -295,12 +300,10 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_config_validation_failure(self) -> None:
         """Test execute_operation with config validation failure."""
-
-        def test_operation(a: int, b: int) -> int:
-            return a + b
+        test_operation = operator.add
 
         long_name = "a" * 300  # Too long name should fail config validation
-        service = TestComplexService(name=long_name, value=10, enabled=True)
+        service = SampleComplexService(name=long_name, value=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers", operation=test_operation, args=[5, 3]
@@ -311,7 +314,7 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_runtime_error(self) -> None:
         """Test execute_operation with runtime error."""
-        service = TestUserService()
+        service = SampleUserService()
 
         def failing_operation() -> str:
             msg = "Operation failed"
@@ -329,7 +332,7 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_value_error(self) -> None:
         """Test execute_operation with value error."""
-        service = TestUserService()
+        service = SampleUserService()
 
         def value_error_operation() -> str:
             msg = "Invalid value"
@@ -347,7 +350,7 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_type_error(self) -> None:
         """Test execute_operation with type error."""
-        service = TestUserService()
+        service = SampleUserService()
 
         def type_error_operation() -> str:
             msg = "Wrong type"
@@ -365,7 +368,7 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_unexpected_error(self) -> None:
         """Test execute_operation with unexpected error."""
-        service = TestUserService()
+        service = SampleUserService()
 
         def unexpected_error_operation() -> str:
             msg = "Unexpected error"
@@ -383,7 +386,7 @@ class TestDomainServicesFixed:
 
     def test_execute_operation_non_callable(self) -> None:
         """Test execute_operation with non-callable operation."""
-        TestUserService()
+        SampleUserService()
 
         # The OperationExecutionRequest will now validate the operation is callable
         with pytest.raises(ValidationError) as exc_info:
@@ -399,7 +402,7 @@ class TestDomainServicesFixed:
 
     def test_get_service_info_basic(self) -> None:
         """Test get_service_info basic functionality."""
-        service = TestUserService()
+        service = SampleUserService()
         info = service.get_service_info()
 
         assert isinstance(info, dict)
@@ -409,7 +412,7 @@ class TestDomainServicesFixed:
         assert "business_rules_valid" in info
         assert "timestamp" in info
 
-        assert info["service_type"] == "TestUserService"
+        assert info["service_type"] == "SampleUserService"
         assert isinstance(info["service_id"], str)
         assert isinstance(info["config_valid"], bool)
         assert isinstance(info["business_rules_valid"], bool)
@@ -417,15 +420,15 @@ class TestDomainServicesFixed:
 
     def test_get_service_info_with_validation(self) -> None:
         """Test get_service_info with validation failure."""
-        service = TestExceptionService(should_raise=True)
+        service = SampleExceptionService(should_raise=True)
 
         result = service.get_service_info()
         assert isinstance(result, dict)
-        assert "TestExceptionService" in result["service_type"]
+        assert "SampleExceptionService" in result["service_type"]
 
     def test_service_serialization(self) -> None:
         """Test service serialization through mixins."""
-        service = TestUserService()
+        service = SampleUserService()
 
         # Test serialization methods from mixins
         # to_dict was removed - use model_dump instead
@@ -454,7 +457,7 @@ class TestDomainServicesFixed:
 
     def test_service_logging(self) -> None:
         """Test service logging through mixins."""
-        service = TestUserService()
+        service = SampleUserService()
 
         # Test logging methods that are actually available
         assert hasattr(service, "log_info")
@@ -467,11 +470,9 @@ class TestDomainServicesFixed:
 
     def test_complex_service_execution_success(self) -> None:
         """Test complex service execution success."""
+        test_operation = operator.add
 
-        def test_operation(a: int, b: int) -> int:
-            return a + b
-
-        service = TestComplexService(name="test", value=10, enabled=True)
+        service = SampleComplexService(name="test", value=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers", operation=test_operation, args=[5, 3]
@@ -482,11 +483,9 @@ class TestDomainServicesFixed:
 
     def test_complex_service_execution_business_rule_failure(self) -> None:
         """Test complex service execution with business rule failure."""
+        test_operation = operator.add
 
-        def test_operation(a: int, b: int) -> int:
-            return a + b
-
-        service = TestComplexService(
+        service = SampleComplexService(
             name="", value=10, enabled=True
         )  # Empty name should fail business rules
 
@@ -499,12 +498,10 @@ class TestDomainServicesFixed:
 
     def test_complex_service_execution_config_failure(self) -> None:
         """Test complex service execution with config failure."""
-
-        def test_operation(a: int, b: int) -> int:
-            return a + b
+        test_operation = operator.add
 
         long_name = "a" * 300  # Too long name should fail config validation
-        service = TestComplexService(name=long_name, value=10, enabled=True)
+        service = SampleComplexService(name=long_name, value=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers", operation=test_operation, args=[5, 3]
@@ -515,7 +512,7 @@ class TestDomainServicesFixed:
 
     def test_service_model_config(self) -> None:
         """Test service model configuration."""
-        service = TestUserService()
+        service = SampleUserService()
 
         # Test frozen configuration
         assert service.model_config.get("frozen") is True
@@ -525,7 +522,7 @@ class TestDomainServicesFixed:
 
     def test_service_inheritance_hierarchy(self) -> None:
         """Test service inheritance from all mixins."""
-        service = TestUserService()
+        service = SampleUserService()
 
         # Test all expected parent classes
 
@@ -547,7 +544,7 @@ class TestDomainServicesFixed:
     def test_service_extra_forbid(self) -> None:
         """Test service with extra fields forbidden."""
         with pytest.raises(ValidationError) as exc_info:
-            TestComplexService(
+            SampleComplexService(
                 name="test", value=10, enabled=True, extra_field="not_allowed"
             )
 

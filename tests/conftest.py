@@ -32,7 +32,12 @@ from flext_tests import FlextTestsAsyncs
 # Core Fixtures
 @pytest.fixture
 def test_scenario() -> FlextTypes.Core.Headers:
-    """Basic test scenario fixture."""
+    """Basic test scenario fixture.
+
+    Returns:
+        FlextTypes.Core.Headers: Test scenario data with status and environment.
+
+    """
     return {"status": "test", "environment": "test"}
 
 
@@ -137,7 +142,12 @@ def mock_external_service() -> object:
             self._failure_message = ""
 
         def process(self, data: object) -> FlextResult[str]:
-            """Process data through mock external service."""
+            """Process data through mock external service.
+
+            Returns:
+                FlextResult[str]: Success with processed data or failure with error message.
+
+            """
             self.call_count += 1
             self.processed_items.append(data)
 
@@ -147,7 +157,12 @@ def mock_external_service() -> object:
             return FlextResult[str].ok(f"processed_{data}")
 
         def get_call_count(self) -> int:
-            """Get number of times process was called."""
+            """Get number of times process was called.
+
+            Returns:
+                int: Number of times the process method was called.
+
+            """
             return self.call_count
 
         def set_failure_mode(
@@ -595,7 +610,12 @@ def logging_test_env() -> Generator[None]:
 #
 @pytest.fixture
 def async_test_utils() -> FlextTestsAsyncs:
-    """Provide async test utilities."""
+    """Provide async test utilities.
+
+    Returns:
+        FlextTestsAsyncs: Async test utilities instance.
+
+    """
     return FlextTestsAsyncs()
 
 

@@ -10,74 +10,64 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-import logging
-import os
 import tempfile
 from pathlib import Path
-from typing import cast
-from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextConfig, FlextResult, FlextTypes
+from flext_core import FlextConfig
+from flext_core.constants import FlextConstants
 
 
 class TestFlextConfigRealCoverage:
     """Real tests for implemented FlextConfig functionality."""
 
     def setup_method(self) -> None:
-        """Clear global instance before each test."""
-        FlextConfig.clear_global_instance()
+        """Reset global instance before each test."""
+        FlextConfig.reset_global_instance()
 
     def test_basic_initialization(self) -> None:
         """Test basic FlextConfig initialization."""
         config = FlextConfig(app_name="test_app")
         assert config.app_name == "test_app"
-        # Environment can be overridden by test fixtures, check what it actually is
         assert config.environment in {
-            "development",
-            "test",
-            "staging",
-            "production",
-            "local",
+            FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT,
+            FlextConstants.Environment.ConfigEnvironment.TESTING,
+            FlextConstants.Environment.ConfigEnvironment.STAGING,
+            FlextConstants.Environment.ConfigEnvironment.PRODUCTION,
         }
-        # Debug value depends on environment - test env might set it to True
-        assert isinstance(config.debug, bool)  # Verify it's a boolean
+        assert isinstance(config.debug, bool)
 
     def test_initialization_with_all_fields(self) -> None:
         """Test initialization with various field types."""
         config = FlextConfig(
             app_name="full_test_app",
             version="1.2.3",
-            description="Test description",
-            environment="production",
-            debug=True,
+            environment=FlextConstants.Environment.ConfigEnvironment.PRODUCTION,
+            debug=False,  # Must be False in production
             trace=False,
-            log_level="INFO",
+            log_level=FlextConstants.Config.LogLevel.INFO,
             max_workers=8,
             timeout_seconds=60,
             enable_metrics=True,
             enable_caching=False,
-            host="localhost",
-            port=8080,
-            validation_enabled=True,
+            database_url="sqlite:///test.db",
+            api_key="test_key",
         )
 
         assert config.app_name == "full_test_app"
         assert config.version == "1.2.3"
-        assert config.description == "Test description"
         assert config.environment == "production"
-        assert config.debug is True
+        assert config.debug is False
         assert config.trace is False
         assert config.log_level == "INFO"
         assert config.max_workers == 8
         assert config.timeout_seconds == 60
         assert config.enable_metrics is True
         assert config.enable_caching is False
-        assert config.host == "localhost"
-        assert config.port == 8080
-        assert config.validation_enabled is True
+        assert config.database_url == "sqlite:///test.db"
+        assert config.api_key == "test_key"
 
     def test_global_instance_management(self) -> None:
         """Test global instance singleton pattern."""
@@ -98,532 +88,392 @@ class TestFlextConfigRealCoverage:
         assert instance3 is custom_config
         assert instance3.app_name == "custom"
 
-        # Test clear_global_instance
-        FlextConfig.clear_global_instance()
+        # Test reset_global_instance
+        FlextConfig.reset_global_instance()
         instance4 = FlextConfig.get_global_instance()
         assert instance4 is not instance3
 
     def test_environment_validation(self) -> None:
         """Test environment field validation."""
-        # Valid environments - use type-safe literals
-        valid_envs: list[FlextTypes.Config.Environment] = [
-            "development",
-            "staging",
-            "production",
-            "test",
-            "local",
-        ]
+        # Valid environments
+        valid_envs = ["development", "testing", "staging", "production"]
         for env in valid_envs:
             config = FlextConfig(app_name="test", environment=env)
             assert config.environment == env
 
         # Invalid environment should raise ValidationError
         with pytest.raises(ValidationError):
-            # Pass invalid environment directly - test validates error handling
+            FlextConfig(app_name="test", environment="invalid_env")
+
+    def test_log_level_validation(self) -> None:
+        """Test log level validation."""
+        # Valid log levels
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        for level in valid_levels:
+            config = FlextConfig(app_name="test", log_level=level)
+            assert config.log_level == level.upper()
+
+        # Case insensitive
+        config = FlextConfig(app_name="test", log_level="info")
+        assert config.log_level == "INFO"
+
+        # Invalid log level should raise ValidationError
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", log_level="INVALID")
+
+    def test_configuration_consistency_validation(self) -> None:
+        """Test configuration consistency validation."""
+        # Valid configuration - debug False in production
+        config = FlextConfig(app_name="test", environment="production", debug=False)
+        assert config.environment == "production"
+        assert config.debug is False
+
+        # Invalid configuration - debug True in production should fail
+        with pytest.raises(
+            ValidationError, match="Debug mode cannot be enabled in production"
+        ):
+            FlextConfig(app_name="test", environment="production", debug=True)
+
+        # Invalid configuration - trace True without debug should fail
+        with pytest.raises(ValidationError, match="Trace mode requires debug mode"):
             FlextConfig(
-                app_name="test",
-                environment=cast("FlextTypes.Config.Environment", "invalid_env"),
+                app_name="test", environment="development", debug=False, trace=True
             )
 
-    def test_create_from_environment_basic(self) -> None:
-        """Test create_from_environment class method."""
-        # Test basic creation
-        result = FlextConfig.create_from_environment()
-        assert result.is_success
-        config = result.unwrap()
-        # Note: app_name may vary due to test isolation issues or environment state
-        assert isinstance(config.app_name, str)
-
-        # Test with extra settings
-        result = FlextConfig.create_from_environment(
-            extra_settings={
-                "app_name": "env_test_app",
-                "debug": True,
-                "max_workers": 16,
-            },
+        # Valid configuration - trace True with debug True should work
+        config = FlextConfig(
+            app_name="test", environment="development", debug=True, trace=True
         )
-        assert result.is_success
-        config = result.unwrap()
-        assert config.app_name == "env_test_app"
+        assert config.debug is True
+        assert config.trace is True
+
+    def test_helper_methods(self) -> None:
+        """Test helper methods."""
+        # Test is_development
+        dev_config = FlextConfig(app_name="test", environment="development")
+        assert dev_config.is_development() is True
+        assert dev_config.is_production() is False
+
+        # Test is_production
+        prod_config = FlextConfig(
+            app_name="test", environment="production", debug=False
+        )
+        assert prod_config.is_production() is True
+        assert prod_config.is_development() is False
+
+    def test_get_config_methods(self) -> None:
+        """Test configuration getter methods."""
+        config = FlextConfig(
+            app_name="test",
+            log_level="DEBUG",
+            json_output=True,
+            include_source=False,
+            structured_output=True,
+            database_url="postgresql://user:pass@localhost/db",
+            database_pool_size=20,
+            cache_ttl=600,
+            cache_max_size=2000,
+            enable_caching=True,
+        )
+
+        # Test get_logging_config
+        logging_config = config.get_logging_config()
+        assert logging_config["level"] == "DEBUG"
+        assert logging_config["json_output"] is True
+        assert logging_config["include_source"] is False
+        assert logging_config["structured_output"] is True
+
+        # Test get_database_config
+        db_config = config.get_database_config()
+        assert db_config["url"] == "postgresql://user:pass@localhost/db"
+        assert db_config["pool_size"] == 20
+
+        # Test get_cache_config
+        cache_config = config.get_cache_config()
+        assert cache_config["ttl"] == 600
+        assert cache_config["max_size"] == 2000
+        assert cache_config["enabled"] is True
+
+        # Test get_cqrs_bus_config
+        cqrs_config = config.get_cqrs_bus_config()
+        assert isinstance(cqrs_config, dict)
+
+    def test_create_for_environment(self) -> None:
+        """Test create_for_environment class method."""
+        # Test basic creation
+        config = FlextConfig.create_for_environment("development")
+        assert config.environment == "development"
+
+        # Test with overrides
+        config = FlextConfig.create_for_environment(
+            "staging",
+            app_name="staging_app",
+            debug=True,
+            max_workers=16,
+        )
+        assert config.environment == "staging"
+        assert config.app_name == "staging_app"
         assert config.debug is True
         assert config.max_workers == 16
 
-    def test_create_from_environment_with_env_file(self) -> None:
-        """Test create_from_environment with environment file."""
-        # Create temporary env file
-        env_content = """
-
-APP_NAME=file_app
-VERSION=2.0.0
-DEBUG=true
-MAX_WORKERS=12
-ENVIRONMENT=staging
-"""
+    def test_from_file_json(self) -> None:
+        """Test from_file class method with JSON."""
+        # Create temporary JSON config file
+        config_data = {
+            "app_name": "json_app",
+            "version": "2.0.0",
+            "environment": "testing",
+            "debug": True,
+            "log_level": "DEBUG",
+        }
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8",
             mode="w",
-            delete=False,
-            suffix=".env",
-        ) as f:
-            f.write(env_content)
-            env_path = f.name
-
-        try:
-            result = FlextConfig.create_from_environment(env_file=env_path)
-            assert result.is_success
-            config = result.unwrap()
-
-            # Check metadata
-            metadata = config.get_metadata()
-            assert "created_from" in metadata
-            assert metadata["created_from"] == "environment"
-            assert "env_file" in metadata
-        finally:
-            if Path(env_path).exists():
-                Path(env_path).unlink()
-
-        # Test with nonexistent file
-        result = FlextConfig.create_from_environment(env_file="/nonexistent/file.env")
-        assert result.is_failure
-        assert result.error
-        assert result.error is not None
-        assert "Environment file not found" in result.error
-
-    def test_load_from_sources_method(self) -> None:
-        """Test _load_from_sources method."""
-        # Test with empty sources - this is a class method
-        result = FlextConfig._load_from_sources()
-        assert isinstance(result, FlextConfig)
-        # app_name may vary due to test isolation issues with global state
-        assert isinstance(result.app_name, str)
-
-    def test_validation_methods(self) -> None:
-        """Test individual validation methods."""
-        config = FlextConfig(app_name="test")
-
-        # Test validate_environment
-        assert config.validate_environment("development") == "development"
-        assert config.validate_environment("production") == "production"
-
-        with pytest.raises(ValueError, match="Invalid environment"):
-            config.validate_environment("invalid")
-
-        # Test validate_debug
-        assert config.validate_debug(True) is True
-        assert config.validate_debug(False) is False
-        assert config.validate_debug("true") is True
-        assert config.validate_debug("false") is False
-        assert config.validate_debug("1") is True
-        assert config.validate_debug("0") is False
-
-        # Invalid strings are converted to False (no exception raised)
-        assert config.validate_debug("invalid") is False
-
-        # Test validate_log_level
-        assert config.validate_log_level("DEBUG") == "DEBUG"
-        assert config.validate_log_level("info") == "INFO"  # case normalization
-        assert config.validate_log_level("Warning") == "WARNING"
-
-        with pytest.raises(ValueError, match="Invalid log_level"):
-            config.validate_log_level("INVALID")
-
-        # Test validate_config_source
-        assert config.validate_config_source("file") == "file"
-        assert config.validate_config_source("env") == "env"
-
-        with pytest.raises(ValueError, match="Config source must be one of"):
-            FlextConfig.validate_config_source("invalid")
-
-        # Test validate_positive_integers
-        assert config.validate_positive_integers(5) == 5
-        assert config.validate_positive_integers(1) == 1
-
-        with pytest.raises(ValueError, match="must be positive"):
-            config.validate_positive_integers(0)
-        with pytest.raises(ValueError, match="must be positive"):
-            config.validate_positive_integers(-1)
-
-        # Test validate_non_negative_integers
-        assert config.validate_non_negative_integers(0) == 0
-        assert config.validate_non_negative_integers(5) == 5
-
-        with pytest.raises(ValueError, match="must be non-negative"):
-            config.validate_non_negative_integers(-1)
-
-        # Test validate_host
-        assert config.validate_host("localhost") == "localhost"
-        assert config.validate_host("127.0.0.1") == "127.0.0.1"
-        assert config.validate_host("example.com") == "example.com"
-
-        with pytest.raises(ValueError, match="Host cannot be empty"):
-            config.validate_host("")
-
-        # Test validate_base_url
-        assert config.validate_base_url("http://localhost") == "http://localhost"
-        assert (
-            config.validate_base_url("https://api.example.com")
-            == "https://api.example.com"
-        )
-
-        with pytest.raises(ValueError, match="Base URL must start with"):
-            config.validate_base_url("not-a-url")
-
-    def test_validate_configuration_consistency(self) -> None:
-        """Test configuration consistency validation."""
-        # Valid configuration - use business rules validation which returns FlextResult
-        config = FlextConfig(app_name="test", enable_auth=False)
-        result = config.validate_business_rules()
-        assert result.is_success
-
-        # Invalid configuration - test production with debug mode
-        config_invalid = FlextConfig(
-            app_name="test",
-            environment="production",
-            debug=True,
-            config_source="env",
-        )
-        result = config_invalid.validate_business_rules()
-        assert result.is_failure
-        assert result.error
-        assert result.error is not None
-        assert "Debug mode in production" in result.error
-
-        # Test auth validation separately
-        config_auth_invalid = FlextConfig(app_name="test", enable_auth=True, api_key="")
-        result_auth = config_auth_invalid.validate_business_rules()
-        assert result_auth.is_failure
-        assert result_auth.error is not None
-        assert "API key required" in result_auth.error
-
-    def test_get_env_var_method(self) -> None:
-        """Test get_env_var method."""
-        config = FlextConfig(app_name="test")
-
-        # Test with existing environment variable
-        with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
-            result = config.get_env_var("TEST_VAR")
-            assert result.is_success
-            assert result.unwrap() == "test_value"
-
-        # Test with nonexistent variable (returns FlextResult failure)
-        result = config.get_env_var("NONEXISTENT_VAR")
-        assert result.is_failure
-
-    def test_validate_config_value_method(self) -> None:
-        """Test validate_config_value method."""
-        # Test valid value (int)
-        result = FlextConfig.validate_config_value(8, int)
-        assert result.is_success
-        assert result.unwrap() is True
-
-        # Test invalid value (string when expecting int)
-        result = FlextConfig.validate_config_value("invalid", int)
-        assert result.is_success
-        assert result.unwrap() is False
-
-    def test_merge_configs_method(self) -> None:
-        """Test merge_configs static method."""
-        config1 = FlextConfig(app_name="app1", version="1.0.0", debug=False)
-        config2 = FlextConfig(app_name="app2", debug=True, max_workers=16)
-
-        # merge_configs expects dictionaries, not FlextConfig objects
-        config1_dict = config1.to_dict()
-        config2_dict = config2.to_dict()
-
-        result = FlextConfig.merge_configs(config1_dict, config2_dict)
-        assert result.is_success
-        merged = result.unwrap()
-
-        # config2 should override config1
-        assert merged["app_name"] == "app2"
-        assert merged["debug"] is True
-        assert merged["max_workers"] == 16
-        # When config2 has version field in its dict (even if default), it overrides config1
-        # This is expected behavior for dictionary merge - config2 takes precedence
-        assert "version" in merged  # Just verify version field exists
-
-    def test_create_class_method(self) -> None:
-        """Test create class method."""
-        # Basic creation
-        result = FlextConfig.create(constants={"app_name": "created_app"})
-        assert result.is_success
-        config = result.unwrap()
-        assert config.app_name == "created_app"
-
-        # Creation with CLI overrides
-        result = FlextConfig.create(
-            constants={"app_name": "base_app"},
-            cli_overrides={"debug": True, "max_workers": 20},
-        )
-        assert result.is_success
-        config = result.unwrap()
-        assert config.debug is True
-        assert config.max_workers == 20
-
-    def test_validation_comprehensive_methods(self) -> None:
-        """Test validate_runtime_requirements, validate_business_rules, validate_all."""
-        config = FlextConfig(app_name="test")
-
-        # Test individual validation methods
-        result = config.validate_runtime_requirements()
-        assert result.is_success
-
-        result = config.validate_business_rules()
-        assert result.is_success
-
-        # Test validate_all (combines both)
-        result = config.validate_all()
-        assert result.is_success
-
-    def test_file_operations(self) -> None:
-        """Test save_to_file and load_from_file methods."""
-        config = FlextConfig(app_name="file_test", version="1.0.0", debug=True)
-
-        # Test save to JSON
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8",
-            mode="w",
-            delete=False,
             suffix=".json",
+            delete=False,
+            encoding="utf-8",
         ) as f:
+            json.dump(config_data, f)
             json_path = f.name
 
         try:
-            save_result = config.save_to_file(json_path)
-            assert save_result.is_success
-
-            # Verify file exists and has content
-            assert Path(json_path).exists()
-            with Path(json_path).open(encoding="utf-8") as f:
-                data = json.load(f)
-                assert data["app_name"] == "file_test"
-
-            # Test load from file
-            result: FlextResult[FlextConfig] = FlextConfig.load_from_file(json_path)
-            assert result.is_success
-            loaded_config = result.unwrap()
-            assert loaded_config.app_name == "file_test"
-            assert loaded_config.version == "1.0.0"
-            assert loaded_config.debug is True
+            config = FlextConfig.from_file(json_path)
+            assert config.app_name == "json_app"
+            assert config.version == "2.0.0"
+            assert config.environment == "testing"
+            assert config.debug is True
+            assert config.log_level == "DEBUG"
         finally:
-            if Path(json_path).exists():
-                Path(json_path).unlink()
+            Path(json_path).unlink(missing_ok=True)
 
-        # Test error cases
-        save_error_result = config.save_to_file("/invalid/path/config.json")
-        assert save_error_result.is_failure
+    def test_from_file_nonexistent(self) -> None:
+        """Test from_file with nonexistent file."""
+        with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+            FlextConfig.from_file("/nonexistent/config.json")
 
-        load_error_result: FlextResult[FlextConfig] = FlextConfig.load_from_file(
-            "/nonexistent/config.json",
-        )
-        assert load_error_result.is_failure
+    def test_from_file_unsupported_format(self) -> None:
+        """Test from_file with unsupported format."""
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
+            f.write(b"invalid content")
+            txt_path = f.name
 
-    def test_seal_operations(self) -> None:
-        """Test seal and is_sealed methods."""
-        config = FlextConfig(app_name="seal_test")
-
-        # Initially not sealed
-        assert not config.is_sealed()
-
-        # Seal the configuration
-        result = config.seal()
-        assert result.is_success
-        assert config.is_sealed()
-
-        # Test that sealed config cannot be modified
-        with pytest.raises(
-            AttributeError,
-            match=r"Cannot modify field.*configuration is sealed",
-        ):
-            config.app_name = "modified"
-
-    def test_metadata_operations(self) -> None:
-        """Test get_metadata method."""
-        config = FlextConfig(app_name="metadata_test")
-
-        metadata = config.get_metadata()
-        assert isinstance(metadata, dict)
-
-    def test_api_payload_methods(self) -> None:
-        """Test to_api_payload and as_api_payload methods."""
-        config = FlextConfig(app_name="api_test", version="1.0.0", debug=False)
-
-        # Test to_api_payload
-        result = config.to_api_payload()
-        assert result.is_success
-        payload = result.unwrap()
-        assert isinstance(payload, dict)
-        assert payload["app_name"] == "api_test"
-
-        # Test as_api_payload (should be an alias)
-        result2 = config.as_api_payload()
-        assert result2.is_success
-        payload2 = result2.unwrap()
-        assert isinstance(payload2, dict)
-        assert payload2["app_name"] == "api_test"
+        try:
+            with pytest.raises(
+                ValueError, match="Unsupported configuration file format"
+            ):
+                FlextConfig.from_file(txt_path)
+        finally:
+            Path(txt_path).unlink(missing_ok=True)
 
     def test_serialization_methods(self) -> None:
         """Test to_dict and to_json methods."""
-        config = FlextConfig(app_name="serialize_test", version="2.0.0", debug=True)
+        config = FlextConfig(
+            app_name="serialize_test",
+            version="2.0.0",
+            debug=True,
+            environment="development",
+        )
 
         # Test to_dict
         config_dict = config.to_dict()
         assert isinstance(config_dict, dict)
         assert config_dict["app_name"] == "serialize_test"
+        assert config_dict["version"] == "2.0.0"
+        assert config_dict["debug"] is True
 
         # Test to_json
         json_str = config.to_json()
         assert isinstance(json_str, str)
         parsed = json.loads(json_str)
         assert parsed["app_name"] == "serialize_test"
+        assert parsed["version"] == "2.0.0"
+        assert parsed["debug"] is True
 
-        # Test to_json with formatting
-        formatted_json = config.to_json(indent=2)
-        assert isinstance(formatted_json, str)
-        assert "\n" in formatted_json  # Should be formatted
+    def test_merge_method(self) -> None:
+        """Test merge method."""
+        base_config = FlextConfig(app_name="base", version="1.0.0", debug=False)
 
-    def test_safe_load_method(self) -> None:
-        """Test safe_load class method."""
-        # Test with valid data (note: safe_load ignores input data and returns global instance)
-        test_data = {"app_name": "safe_load_test", "version": "1.0.0", "debug": True}
-
-        result = FlextConfig.safe_load(test_data)
-        assert result.is_success
-        config = result.unwrap()
-        # safe_load returns global instance, which may retain state from previous tests
-        assert isinstance(config.app_name, str)  # Just verify it's a valid string
-
-        # Test with invalid data (still succeeds because safe_load always succeeds)
-        invalid_data: dict[str, object] = {
-            "app_name": "test",
-            "environment": "invalid_environment",
-        }
-        result = FlextConfig.safe_load(invalid_data)
-        assert result.is_success  # safe_load is for compatibility and always succeeds
-
-    def test_merge_instance_method(self) -> None:
-        """Test merge instance method."""
-        base_config = FlextConfig(app_name="base", version="1.0.0")
-        override_config = FlextConfig(app_name="override", debug=True)
-
-        result = FlextConfig.merge(base_config, override_config.to_dict())
-        assert result.is_success
-        merged = result.unwrap()
-        # Note: merge returns global instance, so values may not match override
-        assert isinstance(merged, FlextConfig)
-
-    def test_environment_file_loading(self) -> None:
-        """Test loading configuration from environment files."""
-        # Test JSON environment file
-        json_data = {"app_name": "json_env_app", "version": "1.0.0", "debug": True}
-
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8",
-            mode="w",
-            delete=False,
-            suffix=".json",
-        ) as f:
-            json.dump(json_data, f)
-            json_path = f.name
-
-        try:
-            # Load environment variables from the JSON file manually
-            with Path(json_path).open(encoding="utf-8") as f:
-                env_data = json.load(f)
-
-            # Set environment variables
-            for key, value in env_data.items():
-                os.environ[f"FLEXT_{key.upper()}"] = str(value)
-
-            config = FlextConfig()
-            # The actual behavior depends on the implementation
-            # This test ensures the code path is covered
-            assert config.app_name is not None
-        finally:
-            if Path(json_path).exists():
-                Path(json_path).unlink()
-
-    def test_error_handling_paths(self) -> None:
-        """Test various error handling code paths."""
-        config = FlextConfig(app_name="error_test")
-
-        # Test creation with invalid environment in extra_settings
-        result = FlextConfig.create_from_environment(
-            extra_settings={"environment": "invalid_env"},
-        )
-        assert result.is_failure
-        assert result.error
-        assert result.error is not None
-        assert "Invalid environment" in result.error
-
-        # Test merge with incompatible configs (if applicable)
-        try:
-            merge_result: FlextResult[dict[str, object]] = config.merge_configs(
-                config.to_dict(),
-                config.to_dict(),
-            )
-            # Should succeed or fail gracefully
-            assert isinstance(merge_result, FlextResult)
-        except Exception as e:
-            # Exception handling is also valid
-            logging.getLogger(__name__).warning(
-                f"Expected exception in merge config test: {e}",
-            )
-
-    def test_all_config_fields_coverage(self) -> None:
-        """Test to ensure all config fields can be set and retrieved."""
-        # This test ensures we cover the field definitions
-        config_data: dict[str, object] = {
-            "app_name": "comprehensive_test",
-            "config_name": "test_config",
-            "config_type": "json",
-            "config_file": "test.json",
-            "name": "test_name",
-            "version": "1.2.3",
-            "description": "Test config",
-            "environment": "development",
+        # Test merge with dict
+        override_dict: dict[str, object] = {
+            "app_name": "merged",
             "debug": True,
-            "trace": False,
-            "log_level": "INFO",
-            "config_source": "file",
-            "config_priority": 1,
-            "max_workers": 8,
-            "timeout_seconds": 30,
-            "enable_metrics": True,
-            "enable_caching": False,
-            "enable_auth": True,
-            "api_key": "test_key",
-            "enable_rate_limiting": False,
-            "enable_circuit_breaker": True,
-            "host": "localhost",
-            "port": 8080,
-            "base_url": "http://localhost:8080",
-            "database_url": "sqlite:///test.db",
-            "database_pool_size": 5,
-            "database_timeout": 30,
-            "message_queue_url": "redis://localhost",
-            "message_queue_max_retries": 3,
-            "health_check_interval": 60,
-            "metrics_port": 9090,
-            "validation_enabled": True,
-            "validation_strict_mode": False,
-            "max_name_length": 100,
-            "min_phone_digits": 10,
-            "max_email_length": 255,
-            "command_timeout": 30,
-            "max_command_retries": 3,
-            "command_retry_delay": 1,
-            "cache_enabled": True,
-            "cache_ttl": 300,
-            "max_cache_size": 1000,
+            "max_workers": 16,
         }
+        merged = base_config.merge(override_dict)
 
-        # Create config with all fields to validate set/get behavior comprehensively
-        create_result = FlextConfig.create(constants=config_data)
-        assert create_result.is_success
-        config = create_result.unwrap()
+        assert merged.app_name == "merged"
+        assert merged.debug is True
+        assert merged.max_workers == 16
+        assert merged.version == "1.0.0"  # Preserved from base
+
+        # Test merge with another FlextConfig
+        override_config = FlextConfig(
+            app_name="override", trace=True, debug=True, environment="development"
+        )
+        merged2 = base_config.merge(override_config)
+
+        assert merged2.app_name == "override"
+        assert merged2.trace is True
+        assert merged2.environment == "development"
+        assert merged2.version == "0.9.0"  # Default version from override_config
+
+    def test_create_class_method(self) -> None:
+        """Test create class method."""
+        config = FlextConfig.create(
+            app_name="created_app",
+            version="3.0.0",
+            environment="staging",
+            debug=True,
+        )
+
+        assert isinstance(config, FlextConfig)
+        assert config.app_name == "created_app"
+        assert config.version == "3.0.0"
+        assert config.environment == "staging"
+        assert config.debug is True
+
+    def test_field_constraints(self) -> None:
+        """Test field constraints and validation."""
+        # Test positive integer constraints
+        config = FlextConfig(
+            app_name="test",
+            database_pool_size=50,
+            max_retry_attempts=5,
+            timeout_seconds=120,
+            max_workers=25,
+        )
+        assert config.database_pool_size == 50
+        assert config.max_retry_attempts == 5
+        assert config.timeout_seconds == 120
+        assert config.max_workers == 25
+
+        # Test constraint violations
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", database_pool_size=0)  # Must be >= 1
+
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", database_pool_size=200)  # Must be <= 100
+
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", timeout_seconds=0)  # Must be >= 1
+
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", timeout_seconds=500)  # Must be <= 300
+
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", max_workers=0)  # Must be >= 1
+
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", max_workers=100)  # Must be <= 50
+
+    def test_default_values(self) -> None:
+        """Test default field values."""
+        config = FlextConfig()
+
+        # Test core defaults
+        assert config.app_name == "FLEXT Application"
+        assert config.version == "1.0.0"
+        assert config.environment == "development"
+        assert config.debug is False
+        assert config.trace is False
+        assert config.log_level == "INFO"
+
+        # Test feature flag defaults
+        assert config.enable_caching is True
+        assert config.enable_metrics is False
+        assert config.enable_tracing is False
+        assert config.enable_circuit_breaker is False
+
+        # Test numeric defaults
+        assert config.database_pool_size == 10
+        assert config.cache_ttl == 300
+        assert config.cache_max_size == 1000
+        assert config.max_retry_attempts == 3
+        assert config.timeout_seconds == 30
+        assert config.max_workers == 4
+
+        # Test optional defaults
+        assert config.database_url is None
+        assert config.secret_key is None
+        assert config.api_key is None
+
+    def test_comprehensive_field_coverage(self) -> None:
+        """Test all available fields to ensure coverage."""
+        config = FlextConfig(
+            # Core fields
+            app_name="comprehensive_test",
+            version="1.2.3",
+            environment="testing",
+            debug=True,
+            trace=True,
+            # Logging fields
+            log_level="DEBUG",
+            json_output=True,
+            include_source=False,
+            structured_output=True,
+            # Database fields
+            database_url="postgresql://localhost/test",
+            database_pool_size=15,
+            # Cache fields
+            cache_ttl=600,
+            cache_max_size=2000,
+            # Security fields
+            secret_key="test_secret",
+            api_key="test_api_key",
+            # Service fields
+            max_retry_attempts=5,
+            timeout_seconds=60,
+            # Feature flags
+            enable_caching=False,
+            enable_metrics=True,
+            enable_tracing=True,
+            enable_circuit_breaker=True,
+            # Container fields
+            max_workers=8,
+            # Validation fields
+            validation_strict_mode=True,
+            # Serialization fields
+            serialization_encoding="utf-16",
+            # Dispatcher fields
+            dispatcher_auto_context=False,
+            dispatcher_timeout_seconds=45,
+            dispatcher_enable_metrics=False,
+            dispatcher_enable_logging=False,
+            # JSON fields
+            json_indent=4,
+            json_sort_keys=True,
+            ensure_json_serializable=False,
+        )
 
         # Verify all fields are set correctly
-        for field, value in config_data.items():
-            assert getattr(config, field) == value
+        assert config.app_name == "comprehensive_test"
+        assert config.version == "1.2.3"
+        assert config.environment == "testing"
+        assert config.debug is True
+        assert config.trace is True
+        assert config.log_level == "DEBUG"
+        assert config.json_output is True
+        assert config.include_source is False
+        assert config.structured_output is True
+        assert config.database_url == "postgresql://localhost/test"
+        assert config.database_pool_size == 15
+        assert config.cache_ttl == 600
+        assert config.cache_max_size == 2000
+        assert config.secret_key == "test_secret"
+        assert config.api_key == "test_api_key"
+        assert config.max_retry_attempts == 5
+        assert config.timeout_seconds == 60
+        assert config.enable_caching is False
+        assert config.enable_metrics is True
+        assert config.enable_tracing is True
+        assert config.enable_circuit_breaker is True
+        assert config.max_workers == 8
+        assert config.validation_strict_mode is True
+        assert config.serialization_encoding == "utf-16"
+        assert config.dispatcher_auto_context is False
+        assert config.dispatcher_timeout_seconds == 45
+        assert config.dispatcher_enable_metrics is False
+        assert config.dispatcher_enable_logging is False
+        assert config.json_indent == 4
+        assert config.json_sort_keys is True
+        assert config.ensure_json_serializable is False

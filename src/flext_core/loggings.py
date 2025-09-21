@@ -17,11 +17,11 @@ import platform
 import sys
 import threading
 import time
-import traceback
 import uuid
+import warnings
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Self, TypedDict
+from typing import ClassVar, Self, TypedDict, cast
 
 import structlog
 from structlog.typing import EventDict, Processor
@@ -36,7 +36,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR0904
+class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     """High-performance structured logger with comprehensive context management.
 
     Optimized implementation with Pydantic validation, centralized context management,
@@ -70,44 +70,47 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
     _level: FlextTypes.Config.LogLevel
     _environment: FlextTypes.Config.Environment
 
-    def __new__(cls, name: str, **kwargs: object) -> Self:
+    def __new__(
+        cls,
+        name: str,
+        _level: FlextTypes.Config.LogLevel | None = None,
+        _service_name: str | None = None,
+        _service_version: str | None = None,
+        _correlation_id: str | None = None,
+        *,
+        _force_new: bool = False,
+    ) -> Self:
         """Create or return cached logger instance."""
         # Check if this is a bind() call that needs a new instance
-        force_new = kwargs.pop("_force_new", False)
+        force_new = _force_new
 
         if not force_new and name in cls._instances:
-            return cls._instances[name]
+            # Type cast needed for proper Self return type
+            return cast("Self", cls._instances[name])
 
         instance = super().__new__(cls)
         if not force_new:  # Only cache if not forced new
             cls._instances[name] = instance
         return instance
 
-    def __init__(  # noqa: PLR0914
+    def __init__(
         self,
         name: str,
-        level: FlextTypes.Config.LogLevel | None = None,
-        service_name: str | None = None,
-        service_version: str | None = None,
-        correlation_id: str | None = None,
+        _level: FlextTypes.Config.LogLevel | None = None,
+        _service_name: str | None = None,
+        _service_version: str | None = None,
+        _correlation_id: str | None = None,
         *,
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
         """Initialize structured logger instance using Pydantic validation and FlextConfig singleton."""
         # Validate initialization parameters using Pydantic model
         try:
-            from flext_core.models import FlextModels
-
             init_model = FlextModels.LoggerInitializationModel(
                 name=name,
-                level=level,
-                service_name=service_name,
-                service_version=service_version,
-                correlation_id=correlation_id,
+                log_level=_level or "INFO",
             )
         except Exception as e:
-            import warnings
-
             warnings.warn(
                 f"Logger initialization validation failed: {e}. Using provided values as-is.",
                 UserWarning,
@@ -164,13 +167,13 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
         # Use validated model values if available, otherwise use original parameters
         validated_name = init_model.name if init_model else name
-        validated_level = init_model.level if init_model else level
-        validated_service_name = init_model.service_name if init_model else service_name
+        validated_level = init_model.log_level if init_model else _level
+        validated_service_name = _service_name  # Not in model, use parameter directly
         validated_service_version = (
-            init_model.service_version if init_model else service_version
+            _service_version  # Not in model, use parameter directly
         )
         validated_correlation_id = (
-            init_model.correlation_id if init_model else correlation_id
+            _correlation_id  # Not in model, use parameter directly
         )
 
         self._name = validated_name
@@ -182,7 +185,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
         # 0) Detect test environment deterministically (pytest session or explicit config)
         is_pytest = (
-            os.getenv("PYTEST_CURRENT_TEST") is not None or "pytest" in sys.modules
+            os.getenv(FlextConstants.Platform.ENV_PYTEST_CURRENT_TEST) is not None
+            or "pytest" in sys.modules
         )
         is_test_env = (str(config.environment).lower() == "test") or is_pytest
 
@@ -196,7 +200,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
         # 2) Testing default: prefer WARNING in test sessions when no explicit level
         if resolved_level is None and is_test_env:
-            resolved_level = FlextConstants.Config.LogLevel.WARNING
+            resolved_level = FlextConstants.Logging.WARNING
 
         # 3) Environment variable override when valid (after loading .env via config)
         if resolved_level is None:
@@ -231,13 +235,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         self._level = self._validated_log_level(resolved_level)
 
         # Use environment from configuration singleton for consistency
-        self._environment = config.environment
+        # Environment is already typed correctly in FlextConfig
+        self._environment = cast("FlextTypes.Config.Environment", config.environment)
 
         # Initialize service context using validated parameters
         self._service_name = validated_service_name or self._extract_service_name()
-        self._service_version = (
-            validated_service_version or FlextConstants.Core.VERSION or "0.9.0"
-        )
+        self._service_version = validated_service_version or FlextConstants.Core.VERSION
 
         # Set up performance tracking
         self._start_time = time.time()
@@ -285,6 +288,13 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
         - If comparing to another FlextLogger, enforce identity semantics.
         - If comparing to a string, compare with str(self) for test compatibility.
+
+        Args:
+            other: Object to compare with
+
+        Returns:
+            bool: True if equal, False otherwise
+
         """
         if isinstance(other, FlextLogger):
             return self is other
@@ -297,11 +307,20 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
         Uses the hash of the string representation to ensure that when a
         string equals this logger via __eq__, their hashes also match.
+
+        Returns:
+            int: Hash value based on string representation
+
         """
         return hash(str(self))
 
     def _extract_service_name(self) -> str:
-        """Extract service name from logger name or environment."""
+        """Extract service name from logger name or environment.
+
+        Returns:
+            str: Service name extracted from environment or logger name
+
+        """
         if service_name := os.environ.get("SERVICE_NAME"):
             return service_name
 
@@ -314,7 +333,15 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         return "flext-core"
 
     def _get_project_specific_env_var(self, suffix: str) -> str | None:
-        """Get project-specific environment variable name for the current service."""
+        """Get project-specific environment variable name for the current service.
+
+        Args:
+            suffix: Suffix to append to the environment variable name
+
+        Returns:
+            str | None: Environment variable name or None if not applicable
+
+        """
         service_name = self._extract_service_name()
         if service_name.startswith("flext-"):
             # Convert flext-core -> FLEXT_CORE, flext-ldap -> FLEXT_LDAP, etc.
@@ -323,11 +350,24 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         return None
 
     def _get_current_timestamp(self) -> str:
-        """Get current ISO timestamp."""
+        """Get current ISO timestamp.
+
+        Returns:
+            str: Current timestamp in ISO format
+
+        """
         return datetime.now(UTC).isoformat()
 
-    def _sanitize_context(self, context: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
-        """Sanitize context by redacting sensitive data."""
+    def _sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
+        """Sanitize context by redacting sensitive data.
+
+        Args:
+            context: Context dictionary to sanitize
+
+        Returns:
+            dict[str, object]: Sanitized context dictionary
+
+        """
         sensitive_keys = {
             "password",
             "passwd",
@@ -345,13 +385,15 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             "cookie",
         }
 
-        sanitized: FlextTypes.Core.Dict = {}
+        sanitized: dict[str, object] = {}
         for key, value in context.items():
             key_lower = str(key).lower()
             if any(sensitive in key_lower for sensitive in sensitive_keys):
                 sanitized[key] = "[REDACTED]"
             elif isinstance(value, dict):
-                sanitized[key] = self._sanitize_context(value)
+                sanitized[key] = self._sanitize_context(
+                    cast("dict[str, object]", value)
+                )
             else:
                 sanitized[key] = value
 
@@ -365,7 +407,19 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         error: Exception | str | None = None,
         duration_ms: float | None = None,
     ) -> FlextLogger.LogEntry:
-        """Build structured log entry."""
+        """Build structured log entry.
+
+        Args:
+            level: Log level
+            message: Log message
+            context: Optional context dictionary
+            error: Optional error information
+            duration_ms: Optional duration in milliseconds
+
+        Returns:
+            FlextLogger.LogEntry: Structured log entry
+
+        """
         # Start with timestamp and correlation
         entry: FlextLogger.LogEntry = {
             "timestamp": self._get_current_timestamp(),
@@ -385,22 +439,25 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         # Populate service and system from persistent context without broad update
         service_ctx = self._persistent_context.get("service")
         system_ctx = self._persistent_context.get("system")
-        if isinstance(service_ctx, dict):
-            entry["service"] = dict(service_ctx)
-        if isinstance(system_ctx, dict):
-            entry["system"] = dict(system_ctx)
+
+        if isinstance(service_ctx, dict) and service_ctx:
+            entry["service"] = dict(cast("dict[str, object]", service_ctx))
+        if isinstance(system_ctx, dict) and system_ctx:
+            entry["system"] = dict(cast("dict[str, object]", system_ctx))
 
         # Add request context if available
-        request_context = getattr(self._local, "request_context", None)
+        request_context = cast(
+            "dict[str, object] | None", getattr(self._local, "request_context", None)
+        )
         # Always set request (may be empty)
         entry["request"] = (
             dict(request_context) if isinstance(request_context, dict) else {}
         )
 
         # Add permanent context if available
-        permanent_context = getattr(self, "_permanent_context", None)
+        permanent_context = getattr(self, "_persistent_context", None)
         if isinstance(permanent_context, dict) and permanent_context:
-            entry["permanent"] = dict(permanent_context)
+            entry["permanent"] = dict(cast("dict[str, object]", permanent_context))
 
         # Add performance metrics
         if duration_ms is not None:
@@ -410,47 +467,29 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             }
 
         # Add error details if present
-        if error:
+        if error is not None:
             if isinstance(error, Exception):
-                # Handle Exception objects with full details
                 entry["error"] = {
                     "type": error.__class__.__name__,
                     "message": str(error),
-                    "stack_trace": traceback.format_exception(
-                        type(error),
-                        error,
-                        error.__traceback__,
-                    ),
-                    "module": getattr(error, "__module__", "unknown"),
+                    "details": getattr(error, "args", ()),
                 }
             else:
-                # Handle string error messages
-                entry["error"] = {
-                    "type": "StringError",
-                    "message": str(error),
-                    "stack_trace": None,
-                    "module": "unknown",
-                }
+                entry["error"] = {"message": str(error)}
 
-        # Add sanitized user context
-        if context:
-            sanitized_context = self._sanitize_context(dict(context))
-            entry["context"] = sanitized_context
-        else:
-            # Ensure context key exists for type stability
-            entry["context"] = {}
-
-        # Add execution context
-        entry["execution"] = {
-            "function": self._get_calling_function(),
-            "line": self._get_calling_line(),
-            "uptime_seconds": round(time.time() - self._start_time, 3),
-        }
+        # Add additional context if provided
+        if isinstance(context, dict) and context:
+            entry["context"] = dict(context)
 
         return entry
 
     def _get_calling_function(self) -> str:
-        """Get the name of the calling function."""
+        """Get the name of the calling function.
+
+        Returns:
+            str: Name of the calling function
+
+        """
         try:
             frame = inspect.currentframe()
             # Skip internal logging frames
@@ -465,7 +504,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             return "unknown"
 
     def _get_calling_line(self) -> int:
-        """Get the line number of the calling code."""
+        """Get the line number of the calling code.
+
+        Returns:
+            int: Line number of the calling code
+
+        """
         try:
             frame = inspect.currentframe()
             # Skip internal logging frames
@@ -483,8 +527,6 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         """Set correlation ID for request tracing - optimized through context manager."""
         result = self._context_manager.set_correlation_id(correlation_id)
         if result.is_failure:
-            import warnings
-
             warnings.warn(
                 f"Failed to set correlation ID: {result.error}",
                 UserWarning,
@@ -493,11 +535,45 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
     def set_request_context(self, **context: object) -> None:
         """Set request-specific context - optimized through context manager."""
-        model = FlextModels.LoggerRequestContextModel(request_context=context)
+        # Extract known fields from context
+        model_kwargs: dict[str, object] = {}
+        if "request_id" in context:
+            model_kwargs["request_id"] = str(context["request_id"])
+        if "method" in context and context["method"] is not None:
+            model_kwargs["method"] = str(context["method"])
+        if "path" in context and context["path"] is not None:
+            model_kwargs["path"] = str(context["path"])
+        if "headers" in context and isinstance(context["headers"], dict):
+            headers_dict = cast("dict[object, object]", context["headers"])
+            model_kwargs["headers"] = {str(k): str(v) for k, v in headers_dict.items()}
+        if "query_params" in context and isinstance(context["query_params"], dict):
+            query_dict = cast("dict[object, object]", context["query_params"])
+            model_kwargs["query_params"] = {
+                str(k): str(v) for k, v in query_dict.items()
+            }
+
+        # Convert model_kwargs to proper types for LoggerRequestContextModel
+        request_id = str(model_kwargs.get("request_id", ""))
+        method = str(model_kwargs["method"]) if model_kwargs.get("method") else None
+        path = str(model_kwargs["path"]) if model_kwargs.get("path") else None
+        headers = cast("dict[str, str]", model_kwargs.get("headers", {}))
+        query_params = cast("dict[str, str]", model_kwargs.get("query_params", {}))
+        correlation_id = (
+            str(model_kwargs["correlation_id"])
+            if model_kwargs.get("correlation_id")
+            else None
+        )
+
+        model = FlextModels.LoggerRequestContextModel(
+            request_id=request_id,
+            method=method,
+            path=path,
+            headers=headers,
+            query_params=query_params,
+            correlation_id=correlation_id,
+        )
         result = self._context_manager.set_request_context(model)
         if result.is_failure:
-            import warnings
-
             warnings.warn(
                 f"Failed to set request context: {result.error}",
                 UserWarning,
@@ -508,8 +584,6 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         """Clear request context - optimized through context manager."""
         result = self._context_manager.clear_request_context()
         if result.is_failure:
-            import warnings
-
             warnings.warn(
                 f"Failed to clear request context: {result.error}",
                 UserWarning,
@@ -517,28 +591,33 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             )
 
     def bind(self, **context: object) -> FlextLogger:
-        """Create logger instance with bound context - optimized through context manager."""
+        """Create logger instance with bound context - optimized through context manager.
+
+        Args:
+            **context: Context data to bind
+
+        Returns:
+            FlextLogger: New logger instance with bound context
+
+        """
         model = FlextModels.LoggerContextBindingModel(
-            source_logger_name=self._name,
+            logger_name=self._name,
             context_data=context,
-            force_new_instance=True,
-            copy_request_context=True,
-            copy_permanent_context=True,
+            bind_type="temporary",
+            clear_existing=False,
         )
         result = self._context_manager.bind_context(model)
         if result.is_failure:
-            import warnings
-
             warnings.warn(
                 f"Failed to bind context: {result.error}", UserWarning, stacklevel=2
             )
             # Fallback to simplified bind method
             bound_logger = FlextLogger(
                 name=self._name,
-                level=self._level,
-                service_name=getattr(self, "_service_name", None),
-                service_version=getattr(self, "_service_version", None),
-                correlation_id=getattr(self, "_correlation_id", None),
+                _level=self._level,
+                _service_name=getattr(self, "_service_name", None),
+                _service_version=getattr(self, "_service_version", None),
+                _correlation_id=getattr(self, "_correlation_id", None),
                 _force_new=True,
             )
 
@@ -546,14 +625,15 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             if hasattr(self._local, "request_context"):
                 bound_logger.set_request_context(**self._local.request_context)
 
-            # Copy existing permanent context
-            if hasattr(self, "_permanent_context"):
-                bound_logger._permanent_context = self._permanent_context.copy()
+                # Copy existing persistent context
+                if hasattr(self, "_persistent_context"):
+                    bound_logger._persistent_context = self._persistent_context.copy()
 
             # Add new bound context
             bound_logger.set_request_context(**context)
 
             return bound_logger
+
         return result.unwrap()
 
     def set_context(
@@ -561,45 +641,71 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         context_dict: FlextTypes.Core.Dict | None = None,
         **context: object,
     ) -> None:
-        """Set permanent context data - optimized through context manager."""
+        """Set persistent context data - optimized through context manager."""
         # Merge context_dict and kwargs
-        final_context = {}
+        final_context: dict[str, object] = {}
         if context_dict is not None:
             final_context.update(context_dict)
         final_context.update(context)
 
-        model = FlextModels.LoggerPermanentContextModel(
-            permanent_context=final_context,
-            replace_existing=(context_dict is not None),
-            merge_strategy="replace" if context_dict is not None else "update",
-        )
-        result = self._context_manager.set_permanent_context(model)
-        if result.is_failure:
-            import warnings
+        # Since LoggerPermanentContextModel doesn't exist, skip the model-based approach
+        # and directly set the context using a simpler method
+        try:
+            # Directly update persistent context without model validation
+            if not hasattr(self, "_persistent_context"):
+                self._persistent_context = {}
 
+            if context_dict is not None:
+                # Replace mode
+                self._persistent_context = final_context.copy()
+            else:
+                # Update mode
+                self._persistent_context.update(final_context)
+
+            result = FlextResult[None].ok(None)
+        except Exception as e:
+            result = FlextResult[None].fail(f"Failed to set persistent context: {e}")
+        if result.is_failure:
             warnings.warn(
-                f"Failed to set permanent context: {result.error}",
+                f"Failed to set persistent context: {result.error}",
                 UserWarning,
                 stacklevel=2,
             )
 
     def with_context(self, **context: object) -> FlextLogger:
-        """Create logger instance with additional context - optimized through context manager."""
+        """Create logger instance with additional context - optimized through context manager.
+
+        Args:
+            **context: Context data to add
+
+        Returns:
+            FlextLogger: New logger instance with additional context
+
+        """
         return self.bind(**context)
 
     def start_operation(self, operation_name: str, **context: object) -> str:
-        """Start tracking operation with metrics."""
+        """Start tracking operation with metrics.
+
+        Args:
+            operation_name: Name of the operation to track
+            **context: Context data for the operation
+
+        Returns:
+            str: Operation ID for tracking
+
+        """
         operation_id = f"op_{uuid.uuid4().hex[:8]}"
         start_time = time.time()
 
         # Store operation start time
         if not hasattr(self._local, "operations"):
             self._local.operations = {}
-        self._local.operations[operation_id] = {
-            "name": operation_name,
-            "start_time": start_time,
-            "context": context,
-        }
+            self._local.operations[operation_id] = {
+                "name": operation_name,
+                "start_time": start_time,
+                "context": context,
+            }
 
         self.info(
             f"Operation started: {operation_name}",
@@ -667,7 +773,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             self._structlog_logger.debug(formatted_message, **context)
         else:
             entry = self._build_log_entry(
-                FlextConstants.Config.LogLevel.DEBUG, formatted_message, context
+                FlextConstants.Logging.DEBUG, formatted_message, context
             )
             self._structlog_logger.debug(formatted_message, **entry)
 
@@ -684,7 +790,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             self._structlog_logger.info(formatted_message, **context)
         else:
             entry = self._build_log_entry(
-                FlextConstants.Config.LogLevel.INFO, formatted_message, context
+                FlextConstants.Logging.INFO, formatted_message, context
             )
             self._structlog_logger.info(formatted_message, **entry)
 
@@ -701,19 +807,25 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             self._structlog_logger.warning(formatted_message, **context)
         else:
             entry = self._build_log_entry(
-                FlextConstants.Config.LogLevel.WARNING, formatted_message, context
+                FlextConstants.Logging.WARNING, formatted_message, context
             )
             self._structlog_logger.warning(formatted_message, **entry)
 
-    def error(
-        self,
-        message: str,
-        *args: object,
-        error: Exception | str | None = None,
-        **context: object,
-    ) -> None:
+    def error(self, message: str, **kwargs: object) -> None:
         """Log error message with context and error details - LoggerProtocol implementation."""
+        # Extract special parameters from kwargs with proper typing
+        args = kwargs.pop("args", ())
+        error_obj = kwargs.pop("error", None)
+        context = kwargs
+
+        # Convert error to proper type
+        error: Exception | str | None = None
+        if error_obj is not None:
+            error = error_obj if isinstance(error_obj, Exception) else str(error_obj)
+
+        # Handle args formatting
         formatted_message = message % args if args else message
+
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -726,19 +838,28 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             self._structlog_logger.error(formatted_message, **context)
         else:
             entry = self._build_log_entry(
-                FlextConstants.Config.LogLevel.ERROR, formatted_message, context, error
+                FlextConstants.Config.LogLevel.ERROR,
+                formatted_message,
+                context,
+                error,
             )
             self._structlog_logger.error(formatted_message, **entry)
 
-    def critical(
-        self,
-        message: str,
-        *args: object,
-        error: Exception | str | None = None,
-        **context: object,
-    ) -> None:
+    def critical(self, message: str, **kwargs: object) -> None:
         """Log critical message with context and error details - LoggerProtocol implementation."""
+        # Extract special parameters from kwargs with proper typing
+        args = kwargs.pop("args", ())
+        error_obj = kwargs.pop("error", None)
+        context = kwargs
+
+        # Convert error to proper type
+        error: Exception | str | None = None
+        if error_obj is not None:
+            error = error_obj if isinstance(error_obj, Exception) else str(error_obj)
+
+        # Handle args formatting
         formatted_message = message % args if args else message
+
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -771,166 +892,113 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
     @classmethod
     def configure(
         cls,
+        log_level: str | None = None,
         *,
-        log_level: str = FlextConstants.Logging.DEFAULT_LEVEL,
         json_output: bool | None = None,
-        include_source: bool = FlextConstants.Logging.INCLUDE_SOURCE,
-        structured_output: bool = FlextConstants.Logging.STRUCTURED_OUTPUT,
-        log_verbosity: str = FlextConstants.Logging.VERBOSITY,
-    ) -> None:
-        """Configure structured logging system using Pydantic validation.
+        include_source: bool | None = None,
+        structured_output: bool | None = None,
+        log_verbosity: str | None = None,
+    ) -> FlextResult[None]:
+        """Configure the FlextLogger globally with Pydantic validation.
 
-        This configuration is stored in FlextConfig singleton and reused by all FlextLogger instances.
-        Parameters are consolidated and validated through LoggerConfigurationModel.
+        Uses LoggerConfigurationModel for parameter validation and FlextConfig/FlextConstants
+        as source of truth for defaults.
 
         Args:
-            log_level: Logging level string (default from FlextConstants)
-            json_output: Use JSON output format
-            include_source: Include source code location info (default from FlextConstants)
-            structured_output: Use structured logging format (default from FlextConstants)
-            log_verbosity: Console output verbosity (default from FlextConstants)
+            log_level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            json_output: Whether to output JSON format
+            include_source: Whether to include source code location
+            structured_output: Whether to use structured logging
+            log_verbosity: Console output verbosity (compact|detailed|full)
+
+        Returns:
+            FlextResult[None]: Success or failure with error details
 
         """
-        # Use Pydantic model for parameter consolidation and validation
-        try:
-            config_model = FlextModels.LoggerConfigurationModel(
-                log_level=log_level,
-                json_output=json_output,
-                include_source=include_source,
-                structured_output=structured_output,
-                log_verbosity=log_verbosity,
-            )
-        except Exception as e:
-            # If validation fails, fall back to original behavior with warnings
-            import warnings
-
-            warnings.warn(
-                f"Logger configuration validation failed: {e}. Using provided values as-is.",
-                UserWarning,
-                stacklevel=2,
-            )
-            config_model = type(
-                "Config",
-                (),
-                {
-                    "log_level": log_level,
-                    "json_output": json_output,
-                    "include_source": include_source,
-                    "structured_output": structured_output,
-                    "log_verbosity": log_verbosity,
-                },
-            )()
+        # Create configuration model with defaults
+        config_model = FlextModels.LoggerConfigurationModel(
+            log_level=log_level or "INFO",
+            json_output=json_output,
+            include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
+            structured_output=structured_output
+            or FlextConstants.Logging.STRUCTURED_OUTPUT,
+            log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
+        )
 
         # Reset if already configured (allow reconfiguration)
         if cls._configured and structlog.is_configured():
             structlog.reset_defaults()
+            cls._configured = False
 
-        # Auto-detect verbosity from environment if not specified using FlextConstants
-        # Note: We can't use project-specific detection here since this is a class method
-        # Project-specific variables are handled in individual logger initialization
-        env_verbosity = os.environ.get(
-            "FLEXT_LOG_VERBOSITY", config_model.log_verbosity
-        ).lower()
-        valid_verbosity_levels = {"compact", "detailed", "full"}
-        if env_verbosity in valid_verbosity_levels:
-            effective_verbosity = env_verbosity
-        else:
-            effective_verbosity = config_model.log_verbosity
+        try:
+            # Configure structlog with validated parameters
 
-        # Store configuration in FlextConfig singleton - single source of truth
-        global_config = FlextConfig.get_global_instance()
+            processors: list[Processor] = [
+                structlog.stdlib.filter_by_level,
+                structlog.processors.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso"),
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.StackInfoRenderer(),
+            ]
 
-        # Update FlextConfig properties with logging configuration
-        global_config.log_level = config_model.log_level
-        if hasattr(global_config, "json_output"):
-            global_config.json_output = config_model.json_output
-        if hasattr(global_config, "include_source"):
-            global_config.include_source = config_model.include_source
-        if hasattr(global_config, "structured_output"):
-            global_config.structured_output = config_model.structured_output
-        if hasattr(global_config, "log_verbosity"):
-            global_config.log_verbosity = effective_verbosity
+            # Add source location if enabled
+            if config_model.include_source:
+                processors.append(
+                    structlog.processors.CallsiteParameterAdder(
+                        parameters=[
+                            structlog.processors.CallsiteParameter.FILENAME,
+                            structlog.processors.CallsiteParameter.FUNC_NAME,
+                            structlog.processors.CallsiteParameter.LINENO,
+                        ]
+                    )
+                )
 
-        # Auto-detect output format if not specified
-        effective_json_output = config_model.json_output
-        if effective_json_output is None:
-            env = os.environ.get("ENVIRONMENT", "development").lower()
-            effective_json_output = env in {"production", "staging", "prod"}
-            if hasattr(global_config, "json_output"):
-                global_config.json_output = effective_json_output
+            # Configure output format based on json_output setting
+            if config_model.json_output:
+                processors.append(structlog.processors.JSONRenderer())
+            # Use structured console output with verbosity control
+            elif config_model.log_verbosity == "compact":
+                processors.append(
+                    structlog.dev.ConsoleRenderer(colors=True, repr_native_str=False)
+                )
+            elif config_model.log_verbosity == "detailed":
+                processors.append(
+                    structlog.dev.ConsoleRenderer(
+                        colors=True,
+                        repr_native_str=False,
+                        exception_formatter=structlog.dev.plain_traceback,
+                    )
+                )
+            else:  # full verbosity
+                processors.append(
+                    structlog.dev.ConsoleRenderer(
+                        colors=True,
+                        repr_native_str=False,
+                        exception_formatter=structlog.dev.rich_traceback,
+                    )
+                )
 
-        processors: list[Processor] = [
-            # Essential processors
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_log_level,
-            structlog.stdlib.add_logger_name,
-        ]
-
-        # Add timestamp processor with ISO 8601 format
-        processors.append(
-            structlog.processors.TimeStamper(fmt="iso", utc=True, key="@timestamp"),
-        )
-
-        # Add source information if requested
-        if config_model.include_source:
-            processors.append(
-                structlog.processors.CallsiteParameterAdder(
-                    parameters=[
-                        structlog.processors.CallsiteParameter.FILENAME,
-                        structlog.processors.CallsiteParameter.LINENO,
-                        structlog.processors.CallsiteParameter.FUNC_NAME,
-                    ],
-                ),
+            # Configure structlog
+            structlog.configure(
+                processors=processors,
+                wrapper_class=structlog.stdlib.BoundLogger,
+                logger_factory=structlog.stdlib.LoggerFactory(),
+                cache_logger_on_first_use=True,
             )
 
-        # Add structured processors
-        if config_model.structured_output:
-            processors.extend(
-                [
-                    cls._add_correlation_processor,
-                    cls._add_performance_processor,
-                    cls._sanitize_processor,
-                ],
+            # Set root logger level
+
+            logging.basicConfig(
+                level=getattr(logging, config_model.log_level.upper(), logging.INFO)
             )
 
-        # Choose output format
-        if effective_json_output:
-            processors.append(
-                structlog.processors.JSONRenderer(
-                    sort_keys=True,
-                    ensure_ascii=False,
-                ),
-            )
-        elif not config_model.structured_output:
-            # For non-structured output, use KeyValueRenderer for simple readable output
-            processors.append(
-                structlog.processors.KeyValueRenderer(
-                    key_order=["message"],  # Show message first
-                    drop_missing=True,
-                ),
-            )
-        else:
-            processors.append(
-                FlextLogger._create_enhanced_console_renderer(effective_verbosity)
-            )
+            # Store configuration
+            cls._configured = True
 
-        # Configure structlog
-        structlog.configure(
-            processors=processors,
-            context_class=dict,
-            logger_factory=structlog.stdlib.LoggerFactory(),
-            wrapper_class=structlog.stdlib.BoundLogger,
-            cache_logger_on_first_use=True,
-        )
+            return FlextResult[None].ok(None)
 
-        # Configure stdlib logging
-        logging.basicConfig(
-            format="%(message)s",
-            stream=sys.stderr,
-            level=getattr(logging, config_model.log_level.upper(), logging.INFO),
-        )
-
-        cls._configured = True
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to configure structlog: {e}")
 
     @staticmethod
     def _add_correlation_processor(
@@ -938,7 +1006,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         _method_name: str,
         event_dict: EventDict,
     ) -> EventDict:
-        """Add correlation ID to log entries."""
+        """Add correlation ID to log entries.
+
+        Args:
+            _logger: Logger instance (unused)
+            _method_name: Method name (unused)
+            event_dict: Event dictionary to modify
+
+        Returns:
+            EventDict: Modified event dictionary with correlation ID
+
+        """
         if FlextLogger._global_correlation_id:
             event_dict["correlation_id"] = FlextLogger._global_correlation_id
         return event_dict
@@ -949,7 +1027,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         _method_name: str,
         event_dict: EventDict,
     ) -> EventDict:
-        """Add metadata to log entries."""
+        """Add metadata to log entries.
+
+        Args:
+            _logger: Logger instance (unused)
+            _method_name: Method name (unused)
+            event_dict: Event dictionary to modify
+
+        Returns:
+            EventDict: Modified event dictionary with metadata
+
+        """
         event_dict["@metadata"] = {
             "processor": "flext_logging",
             "version": FlextConstants.Core.VERSION,
@@ -963,7 +1051,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         _method_name: str,
         event_dict: EventDict,
     ) -> EventDict:
-        """Sanitize sensitive data from log entries."""
+        """Sanitize sensitive data from log entries.
+
+        Args:
+            _logger: Logger instance (unused)
+            _method_name: Method name (unused)
+            event_dict: Event dictionary to sanitize
+
+        Returns:
+            EventDict: Sanitized event dictionary
+
+        """
         sensitive_keys = {
             "password",
             "passwd",
@@ -987,7 +1085,15 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
     def _create_enhanced_console_renderer(
         verbosity: str = FlextConstants.Logging.VERBOSITY,
     ) -> FlextLogger._ConsoleRenderer:
-        """Create enhanced console renderer with configurable verbosity using FlextConstants."""
+        """Create enhanced console renderer with configurable verbosity using FlextConstants.
+
+        Args:
+            verbosity: Verbosity level for the renderer
+
+        Returns:
+            FlextLogger._ConsoleRenderer: Enhanced console renderer instance
+
+        """
         return FlextLogger._ConsoleRenderer(verbosity=verbosity)
 
     @classmethod
@@ -997,8 +1103,75 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
 
     @classmethod
     def get_global_correlation_id(cls) -> str | None:
-        """Get global correlation ID."""
+        """Get global correlation ID.
+
+        Returns:
+            str | None: Global correlation ID or None if not set
+
+        """
         return cls._global_correlation_id
+
+    def get_correlation_id(self) -> str | None:
+        """Get instance correlation ID.
+
+        Returns:
+            str | None: Instance correlation ID or None if not set
+
+        """
+        return self._correlation_id
+
+    def set_correlation_id_internal(self, correlation_id: str) -> None:
+        """Set instance correlation ID (internal use).
+
+        Args:
+            correlation_id: Correlation ID to set
+
+        """
+        self._correlation_id = correlation_id
+
+    def get_local_storage(self) -> threading.local:
+        """Get thread-local storage.
+
+        Returns:
+            threading.local: Thread-local storage instance
+
+        """
+        return self._local
+
+    def get_persistent_context(self) -> dict[str, object]:
+        """Get persistent context dictionary.
+
+        Returns:
+            dict[str, object]: Persistent context dictionary
+
+        """
+        if not hasattr(self, "_persistent_context"):
+            self._persistent_context = {}
+        return self._persistent_context
+
+    def set_persistent_context_dict(self, context: dict[str, object]) -> None:
+        """Set persistent context dictionary (internal use).
+
+        Args:
+            context: Context dictionary to set
+
+        """
+        self._persistent_context = context
+
+    def get_logger_attributes(self) -> dict[str, object]:
+        """Get logger attributes for binding.
+
+        Returns:
+            dict[str, object]: Logger attributes dictionary
+
+        """
+        return {
+            "name": self._name,
+            "level": self._level,
+            "service_name": getattr(self, "_service_name", None),
+            "service_version": getattr(self, "_service_version", None),
+            "correlation_id": getattr(self, "_correlation_id", None),
+        }
 
     @classmethod
     def get_configuration(cls) -> dict[str, object]:
@@ -1092,14 +1265,36 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
         def __call__(
             self, _logger: logging.Logger, _method_name: str, event_dict: EventDict
         ) -> str:
-            """Render log entry with hierarchical formatting."""
-            return self._format_event(event_dict)
+            """Render log entry with hierarchical formatting.
+
+            Args:
+                _logger: Logger instance (unused)
+                _method_name: Method name (unused)
+                event_dict: Event dictionary to render
+
+            Returns:
+                str: Formatted log entry string
+
+            """
+            # Convert EventDict to dict[str, object] for type safety
+            typed_event_dict: dict[str, object] = dict(event_dict)
+            return self._format_event(typed_event_dict)
 
         def _format_event(self, event_dict: FlextTypes.Core.Dict) -> str:
-            """Format event dictionary into hierarchical log output."""
+            """Format event dictionary into hierarchical log output.
+
+            Args:
+                event_dict: Event dictionary to format
+
+            Returns:
+                str: Formatted log output string
+
+            """
             # Extract core information with proper type casting
             timestamp = str(event_dict.get("@timestamp", ""))
-            level = str(event_dict.get("level", "INFO")).upper()
+            level = str(
+                event_dict.get("level", FlextConstants.Config.LogLevel.INFO)
+            ).upper()
             logger_name = str(event_dict.get("logger_name", ""))
             message = str(event_dict.get("event", ""))
             correlation_id = str(event_dict.get("correlation_id", ""))
@@ -1107,22 +1302,38 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             # Extract service info with type safety
             service_info = event_dict.get("service", {})
             if isinstance(service_info, dict):
-                service_name = str(service_info.get("name", logger_name))
+                service_name = str(
+                    cast("dict[str, object]", service_info).get("name", logger_name)
+                )
             else:
                 service_name = logger_name
 
             # Format main log line based on verbosity
             if self.verbosity == "compact":
                 return self._format_compact(
-                    timestamp, level, service_name, message, correlation_id
+                    timestamp,
+                    level,
+                    service_name,
+                    message,
+                    correlation_id=correlation_id,
                 )
             if self.verbosity == "detailed":
                 return self._format_detailed(
-                    event_dict, timestamp, level, service_name, message, correlation_id
+                    event_dict,
+                    timestamp,
+                    level,
+                    service_name,
+                    message,
+                    correlation_id=correlation_id,
                 )
             # full
             return self._format_full(
-                event_dict, timestamp, level, service_name, message, correlation_id
+                event_dict,
+                timestamp,
+                level,
+                service_name,
+                message,
+                correlation_id=correlation_id,
             )
 
         def _format_compact(
@@ -1131,9 +1342,22 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             level: str,
             service_name: str,
             message: str,
+            *,
             correlation_id: str,
         ) -> str:
-            """Format compact log entry."""
+            """Format compact log entry.
+
+            Args:
+                timestamp: Timestamp string
+                level: Log level string
+                service_name: Service name string
+                message: Log message string
+                correlation_id: Correlation ID string
+
+            Returns:
+                str: Formatted compact log entry
+
+            """
             # Clean timestamp (remove microseconds and timezone info for readability)
             clean_timestamp = (
                 timestamp.split(".", maxsplit=1)[0] + "Z" if timestamp else ""
@@ -1159,33 +1383,49 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             level: str,
             service_name: str,
             message: str,
+            *,
             correlation_id: str,
         ) -> str:
-            """Format detailed log entry with context tree."""
-            lines = []
+            """Format detailed log entry with context tree.
 
-            # Main line
+            Args:
+                event_dict: Event dictionary
+                timestamp: Timestamp string
+                level: Log level string
+                service_name: Service name string
+                message: Log message string
+                correlation_id: Correlation ID string
+
+            Returns:
+                str: Formatted detailed log entry
+
+            """
+            lines: list[str] = []
+
+            # Main line - fix the method call to use keyword argument
             main_line = self._format_compact(
-                timestamp, level, service_name, message, correlation_id
+                timestamp, level, service_name, message, correlation_id=correlation_id
             )
             lines.append(main_line)
 
             # Add context information if available
-            context = event_dict.get("context", {})
-            execution = event_dict.get("execution", {})
+            context_raw = event_dict.get("context", {})
+            execution_raw = event_dict.get("execution", {})
 
             context_color = self._info_colors["context"]
             execution_color = self._info_colors["execution"]
             reset = self._info_colors["reset"]
 
-            if context or execution:
+            if context_raw or execution_raw:
                 # Format context info
-                context_parts = []
-                if isinstance(context, dict) and context:
+                context_parts: list[str] = []
+                if isinstance(context_raw, dict) and context_raw:
+                    context = cast("dict[str, object]", context_raw)
                     # Extract meaningful context data
+                    extra_dict = context
                     extra = (
-                        context.get("extra", {})
-                        if isinstance(context.get("extra"), dict)
+                        cast("dict[str, object]", extra_dict.get("extra", {}))
+                        if isinstance(extra_dict.get("extra"), dict)
                         else {}
                     )
                     if extra:
@@ -1200,49 +1440,64 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
                                 context_parts.append(f"{key}={value}")
 
                 if context_parts:
-                    context_line = f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
+                    context_line = f"  ├─ {context_color}Context:{reset} {', '.join(str(part) for part in context_parts)}"
                     lines.append(context_line)
 
-                # Format execution info
-                execution_parts = []
-                if isinstance(execution, dict) and execution:
-                    func_name = execution.get("function", "")
-                    line_num = execution.get("line", "")
-                    uptime = execution.get("uptime_seconds", "")
-                    if func_name and line_num:
-                        execution_parts.append(f"{func_name}:{line_num}")
-                    if uptime:
-                        execution_parts.append(f"uptime={uptime}s")
+            # Format execution info
+            execution_parts: list[str] = []
+            if isinstance(execution_raw, dict) and execution_raw:
+                execution = cast("dict[str, object]", execution_raw)
+                func_name = str(execution.get("function", ""))
+                line_num = str(execution.get("line", ""))
+                uptime = str(execution.get("uptime_seconds", ""))
+                if func_name and line_num:
+                    execution_parts.append(f"{func_name}:{line_num}")
+                if uptime:
+                    execution_parts.append(f"uptime={uptime}s")
 
-                if execution_parts:
-                    execution_line = f"  └─ {execution_color}Execution:{reset} {', '.join(execution_parts)}"
-                    lines.append(execution_line)
+            if execution_parts:
+                execution_line = f"  └─ {execution_color}Execution:{reset} {', '.join(str(part) for part in execution_parts)}"
+                lines.append(execution_line)
 
             return "\n".join(lines)
 
-        def _format_full(  # noqa: PLR0914
+        def _format_full(
             self,
             event_dict: FlextTypes.Core.Dict,
             timestamp: str,
             level: str,
             service_name: str,
             message: str,
+            *,
             correlation_id: str,
         ) -> str:
-            """Format full log entry with all available information."""
-            lines = []
+            """Format full log entry with all available information.
 
-            # Main line
+            Args:
+                event_dict: Event dictionary
+                timestamp: Timestamp string
+                level: Log level string
+                service_name: Service name string
+                message: Log message string
+                correlation_id: Correlation ID string
+
+            Returns:
+                str: Formatted full log entry
+
+            """
+            lines: list[str] = []
+
+            # Main line - fix the method call to use keyword argument
             main_line = self._format_compact(
-                timestamp, level, service_name, message, correlation_id
+                timestamp, level, service_name, message, correlation_id=correlation_id
             )
             lines.append(main_line)
 
             # Extract all sections
-            context = event_dict.get("context", {})
-            execution = event_dict.get("execution", {})
-            service = event_dict.get("service", {})
-            system = event_dict.get("system", {})
+            context = cast("dict[str, object]", event_dict.get("context", {}))
+            execution = cast("dict[str, object]", event_dict.get("execution", {}))
+            service = cast("dict[str, object]", event_dict.get("service", {}))
+            system = cast("dict[str, object]", event_dict.get("system", {}))
 
             # Color setup
             context_color = self._info_colors["context"]
@@ -1252,22 +1507,26 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             reset = self._info_colors["reset"]
 
             # Format context
-            if isinstance(context, dict) and context:
+            if context:
                 extra = (
-                    context.get("extra", {})
+                    cast("dict[str, object]", context.get("extra", {}))
                     if isinstance(context.get("extra"), dict)
                     else {}
                 )
                 if extra:
-                    context_parts = [f"{k}={v}" for k, v in extra.items()]
+                    # Cast to proper type to avoid unknown type issues
+                    extra_dict = extra
+                    context_parts: list[str] = [
+                        f"{k}={v}" for k, v in extra_dict.items()
+                    ]
                     if context_parts:
                         lines.append(
-                            f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
+                            f"  ├─ {context_color}Context:{reset} {', '.join(str(part) for part in context_parts)}"
                         )
 
             # Format execution
             if isinstance(execution, dict) and execution:
-                exec_parts = []
+                exec_parts: list[str] = []
                 for key in ["function", "line", "uptime_seconds"]:
                     if execution.get(key):
                         if key == "uptime_seconds":
@@ -1284,33 +1543,32 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
                             exec_parts.append(f"{key}={execution[key]}")
                 if exec_parts:
                     lines.append(
-                        f"  ├─ {execution_color}Execution:{reset} {', '.join(exec_parts)}"
+                        f"  ├─ {execution_color}Execution:{reset} {', '.join(str(part) for part in exec_parts)}"
                     )
 
             # Format service info
-            if isinstance(service, dict) and service:
-                service_parts = [
+            if service:
+                service_parts: list[str] = [
                     f"{key}={service[key]}"
                     for key in ["name", "version", "instance_id", "environment"]
                     if service.get(key)
                 ]
                 if service_parts:
                     lines.append(
-                        f"  ├─ {service_color}Service:{reset} {', '.join(service_parts)}"
+                        f"  ├─ {service_color}Service:{reset} {', '.join(str(part) for part in service_parts)}"
                     )
 
             # Format system info (last item gets └─)
-            if isinstance(system, dict) and system:
-                system_parts = []
+            if system:
+                system_parts: list[str] = []
                 for key in ["hostname", "platform", "python_version", "process_id"]:
-                    if system.get(key):
-                        if key == "process_id":
-                            system_parts.append(f"pid={system[key]}")
-                        else:
-                            system_parts.append(f"{key}={system[key]}")
+                    if system.get(key) and key == "process_id":
+                        system_parts.append(f"pid={system[key]}")
+                    elif system.get(key):
+                        system_parts.append(f"{key}={system[key]}")
                 if system_parts:
                     lines.append(
-                        f"  └─ {system_color}System:{reset} {', '.join(system_parts)}"
+                        f"  └─ {system_color}System:{reset} {', '.join(str(part) for part in system_parts)}"
                     )
 
             return "\n".join(lines)
@@ -1322,120 +1580,233 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
             self._logger = logger_instance
 
         def set_correlation_id(self, correlation_id: str) -> FlextResult[None]:
-            """Set correlation ID with validation."""
-            if not correlation_id or not isinstance(correlation_id, str):
+            """Set correlation ID with validation.
+
+            Args:
+                correlation_id: Correlation ID to set
+
+            Returns:
+                FlextResult[None]: Success or failure result
+
+            """
+            if not correlation_id:
                 return FlextResult[None].fail(
                     "Correlation ID must be a non-empty string"
                 )
 
-            self._logger._correlation_id = correlation_id
+            self._logger.set_correlation_id_internal(correlation_id)
             return FlextResult[None].ok(None)
 
         def set_request_context(
             self, model: FlextModels.LoggerRequestContextModel
         ) -> FlextResult[None]:
-            """Set request context using validated model."""
+            """Set request context using validated model.
+
+            Args:
+                model: Request context model to set
+
+            Returns:
+                FlextResult[None]: Success or failure result
+
+            """
             try:
-                if not hasattr(self._logger._local, "request_context"):
-                    self._logger._local.request_context = {}
+                local = self._logger.get_local_storage()
+                if not hasattr(local, "request_context"):
+                    local.request_context = {}
 
-                if model.clear_existing:
-                    self._logger._local.request_context.clear()
+                # Always clear existing context for new request context
+                local.request_context.clear()
 
-                self._logger._local.request_context.update(model.request_context)
-
+                # Add individual fields if they exist
+                local.request_context["request_id"] = model.request_id
+                if model.method:
+                    local.request_context["method"] = model.method
+                if model.path:
+                    local.request_context["path"] = model.path
+                if model.headers:
+                    local.request_context["headers"] = model.headers
+                if model.query_params:
+                    local.request_context["query_params"] = model.query_params
                 if model.correlation_id:
-                    self._logger._correlation_id = model.correlation_id
+                    self._logger.set_correlation_id_internal(model.correlation_id)
 
                 return FlextResult[None].ok(None)
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to set request context: {e}")
 
         def clear_request_context(self) -> FlextResult[None]:
-            """Clear request context safely."""
+            """Clear request context safely.
+
+            Returns:
+                FlextResult[None]: Success or failure result
+
+            """
             try:
-                if hasattr(self._logger._local, "request_context"):
-                    self._logger._local.request_context.clear()
+                local = self._logger.get_local_storage()
+                if hasattr(local, "request_context"):
+                    local.request_context.clear()
                 return FlextResult[None].ok(None)
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to clear request context: {e}")
 
-        def set_permanent_context(
+        def set_persistent_context(
             self, model: FlextModels.LoggerPermanentContextModel
         ) -> FlextResult[None]:
-            """Set permanent context using validated model."""
+            """Set persistent context using validated model.
+
+            Args:
+                model: Persistent context model to set
+
+            Returns:
+                FlextResult[None]: Success or failure result
+
+            """
             try:
-                if not hasattr(self._logger, "_permanent_context"):
-                    self._logger._permanent_context: FlextTypes.Core.Dict = {}
+                persistent_context = self._logger.get_persistent_context()
 
                 if model.replace_existing or model.merge_strategy == "replace":
-                    self._logger._permanent_context = dict(model.permanent_context)
+                    self._logger.set_persistent_context_dict(
+                        dict(model.permanent_context)
+                    )
                 elif model.merge_strategy == "update":
-                    self._logger._permanent_context.update(model.permanent_context)
+                    persistent_context.update(model.permanent_context)
                 elif model.merge_strategy == "merge_deep":
                     self._deep_merge_context(
-                        self._logger._permanent_context, model.permanent_context
+                        persistent_context, model.permanent_context
                     )
 
                 return FlextResult[None].ok(None)
             except Exception as e:
-                return FlextResult[None].fail(f"Failed to set permanent context: {e}")
+                return FlextResult[None].fail(f"Failed to set persistent context: {e}")
 
         def bind_context(
             self, model: FlextModels.LoggerContextBindingModel
         ) -> FlextResult[FlextLogger]:
-            """Create bound logger instance using validated model."""
+            """Create bound logger instance using validated model.
+
+            Args:
+                model: Context binding model to use
+
+            Returns:
+                FlextResult[FlextLogger]: Bound logger instance or error
+
+            """
             try:
+                # Get logger attributes using public method
+                attrs = self._logger.get_logger_attributes()
+
                 # Create new logger instance
                 bound_logger = FlextLogger(
-                    name=self._logger._name,
-                    level=self._logger._level,
-                    service_name=getattr(self._logger, "_service_name", None),
-                    service_version=getattr(self._logger, "_service_version", None),
-                    correlation_id=getattr(self._logger, "_correlation_id", None),
+                    name=str(attrs["name"]),
+                    _level=cast("FlextTypes.Config.LogLevel", attrs["level"]),
+                    _service_name=cast("str | None", attrs["service_name"]),
+                    _service_version=cast("str | None", attrs["service_version"]),
+                    _correlation_id=cast("str | None", attrs["correlation_id"]),
                     _force_new=model.force_new_instance,
                 )
 
                 # Copy request context if requested
-                if model.copy_request_context and hasattr(
-                    self._logger._local, "request_context"
-                ):
+                local = self._logger.get_local_storage()
+                if model.copy_request_context and hasattr(local, "request_context"):
                     context_model = FlextModels.LoggerRequestContextModel(
-                        request_context=self._logger._local.request_context
+                        request_id=str(uuid.uuid4()),
+                        **local.request_context,
                     )
                     bound_logger._context_manager.set_request_context(context_model)
 
-                # Copy permanent context if requested
-                if model.copy_permanent_context and hasattr(
-                    self._logger, "_permanent_context"
-                ):
-                    permanent_model = FlextModels.LoggerPermanentContextModel(
-                        permanent_context=self._logger._permanent_context
-                    )
-                    bound_logger._context_manager.set_permanent_context(permanent_model)
+                # Copy persistent context if requested
+                if model.copy_permanent_context:
+                    persistent_context = self._logger.get_persistent_context()
+                    if persistent_context:
+                        persistent_model = FlextModels.LoggerPermanentContextModel(
+                            app_name="flext-core",
+                            app_version=FlextConstants.Core.VERSION,
+                            environment="development",
+                            permanent_context=persistent_context,
+                        )
+                        bound_logger._context_manager.set_persistent_context(
+                            persistent_model
+                        )
 
                 # Add new bound context
                 if model.context_data:
+                    # Extract known fields from context_data
+                    context_kwargs: dict[str, object] = {
+                        "request_id": str(uuid.uuid4())
+                    }
+                    if "method" in model.context_data:
+                        context_kwargs["method"] = str(model.context_data["method"])
+                    if "path" in model.context_data:
+                        context_kwargs["path"] = str(model.context_data["path"])
+                    if "headers" in model.context_data and isinstance(
+                        model.context_data["headers"], dict
+                    ):
+                        context_kwargs["headers"] = {
+                            str(k): str(v)
+                            for k, v in cast(
+                                "dict[object, object]", model.context_data["headers"]
+                            ).items()
+                        }
+                    if "query_params" in model.context_data and isinstance(
+                        model.context_data["query_params"], dict
+                    ):
+                        context_kwargs["query_params"] = {
+                            str(k): str(v)
+                            for k, v in cast(
+                                "dict[object, object]",
+                                model.context_data["query_params"],
+                            ).items()
+                        }
+                    if "correlation_id" in model.context_data:
+                        context_kwargs["correlation_id"] = str(
+                            model.context_data["correlation_id"]
+                        )
+
                     new_context_model = FlextModels.LoggerRequestContextModel(
-                        request_context=model.context_data
+                        request_id=str(context_kwargs.get("request_id", "")),
+                        method=str(context_kwargs.get("method"))
+                        if context_kwargs.get("method")
+                        else None,
+                        path=str(context_kwargs.get("path"))
+                        if context_kwargs.get("path")
+                        else None,
+                        headers=cast(
+                            "dict[str, str]", context_kwargs.get("headers", {})
+                        )
+                        if isinstance(context_kwargs.get("headers", {}), dict)
+                        else {},
+                        query_params=cast(
+                            "dict[str, str]", context_kwargs.get("query_params", {})
+                        )
+                        if isinstance(context_kwargs.get("query_params", {}), dict)
+                        else {},
+                        correlation_id=str(context_kwargs.get("correlation_id"))
+                        if context_kwargs.get("correlation_id")
+                        else None,
                     )
                     bound_logger._context_manager.set_request_context(new_context_model)
 
-                return FlextResult["FlextLogger"].ok(bound_logger)
+                return FlextResult[FlextLogger].ok(bound_logger)
             except Exception as e:
-                return FlextResult["FlextLogger"].fail(f"Failed to bind context: {e}")
+                return FlextResult[FlextLogger].fail(f"Failed to bind context: {e}")
 
         def get_consolidated_context(self) -> dict[str, object]:
-            """Get all context data consolidated for log entry building."""
-            consolidated = {}
+            """Get all context data consolidated for log entry building.
+
+            Returns:
+                dict[str, object]: Consolidated context data
+
+            """
+            consolidated: dict[str, object] = {}
 
             # Add request context
-            if hasattr(self._logger._local, "request_context"):
-                consolidated.update(self._logger._local.request_context)
+            local = self._logger.get_local_storage()
+            if hasattr(local, "request_context"):
+                consolidated.update(cast("dict[str, object]", local.request_context))
 
             # Add permanent context
-            if hasattr(self._logger, "_permanent_context"):
-                consolidated.update(self._logger._permanent_context)
+            persistent_context = self._logger.get_persistent_context()
+            consolidated.update(persistent_context)
 
             return consolidated
 
@@ -1449,40 +1820,65 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):  # noqa: PLR090
                     and isinstance(target[key], dict)
                     and isinstance(value, dict)
                 ):
-                    self._deep_merge_context(target[key], value)  # type: ignore  # noqa: PGH003
+                    self._deep_merge_context(
+                        cast("dict[str, object]", target[key]),
+                        cast("dict[str, object]", value),
+                    )
                 else:
                     target[key] = value
 
     @staticmethod
     def _validated_log_level(level: str) -> FlextTypes.Config.LogLevel:
-        """Validate and coerce a raw string to Flext log level without casts."""
-        mapping: dict[str, FlextTypes.Config.LogLevel] = {
-            "DEBUG": "DEBUG",
-            "INFO": "INFO",
-            "WARNING": "WARNING",
-            "ERROR": "ERROR",
-            "CRITICAL": "CRITICAL",
+        """Validate and coerce a raw string to Flext log level without casts.
+
+        Args:
+            level: Log level string to validate
+
+        Returns:
+            FlextTypes.Config.LogLevel: Validated log level
+
+        """
+        mapping: dict[str, str] = {
+            "DEBUG": FlextConstants.Config.LogLevel.DEBUG,
+            "INFO": FlextConstants.Config.LogLevel.INFO,
+            "WARNING": FlextConstants.Config.LogLevel.WARNING,
+            "ERROR": FlextConstants.Config.LogLevel.ERROR,
+            "CRITICAL": FlextConstants.Config.LogLevel.CRITICAL,
         }
         upper = level.upper()
-        return mapping.get(upper, "INFO")
+        # mapping values are already FlextTypes.Config.LogLevel
+        return cast(
+            "FlextTypes.Config.LogLevel",
+            mapping.get(upper, FlextConstants.Config.LogLevel.INFO),
+        )
 
     @classmethod
     def _is_configured(cls) -> bool:
-        """Check if logger is configured."""
+        """Check if logger is configured.
+
+        Returns:
+            bool: True if logger is configured, False otherwise
+
+        """
         return cls._configured
 
     def __str__(self) -> str:
-        """Return logger name for string representation."""
+        """Return logger name for string representation.
+
+        Returns:
+            str: Logger name string
+
+        """
         return self._name
 
     def __repr__(self) -> str:
-        """Return detailed representation."""
+        """Return detailed representation.
+
+        Returns:
+            str: Detailed string representation
+
+        """
         return f"FlextLogger(name='{self._name}', level='{self._level}')"
-
-
-__all__: FlextTypes.Core.StringList = [
-    "FlextLogger",
-]
 
 
 __all__: FlextTypes.Core.StringList = [

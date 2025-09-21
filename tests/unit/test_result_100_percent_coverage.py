@@ -915,8 +915,7 @@ class TestFlextResultCompleteCoverage:
         assert composed_result.value is True
 
         # applicative_lift2
-        def add_func(x: int, y: int) -> int:
-            return x + y
+        add_func = operator.add
 
         result1 = FlextResult[int].ok(10)
         result2 = FlextResult[int].ok(20)

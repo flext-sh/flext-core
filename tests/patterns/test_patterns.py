@@ -214,7 +214,7 @@ class ParameterizedTestBuilder:
         ]
 
 
-class TestAssertionBuilder:
+class AssertionBuilder:
     """Builder for complex test assertions."""
 
     def __init__(self, data: object) -> None:
@@ -222,22 +222,22 @@ class TestAssertionBuilder:
         self._data = data
         self._checks: list[tuple[str, object]] = []
 
-    def is_not_none(self) -> TestAssertionBuilder:
+    def is_not_none(self) -> AssertionBuilder:
         """Assert that the data is not None."""
         assert self._data is not None
         return self
 
-    def has_length(self, length: int) -> TestAssertionBuilder:
+    def has_length(self, length: int) -> AssertionBuilder:
         """Assert that the data has the specified length."""
         assert len(cast("Sized", self._data)) == length
         return self
 
-    def contains(self, item: object) -> TestAssertionBuilder:
+    def contains(self, item: object) -> AssertionBuilder:
         """Assert that the data contains the specified item."""
         assert item in cast("Container[object]", self._data)
         return self
 
-    def satisfies(self, predicate: object, message: str = "") -> TestAssertionBuilder:
+    def satisfies(self, predicate: object, message: str = "") -> AssertionBuilder:
         """Assert that the data satisfies the given predicate."""
         if callable(predicate):
             assert predicate(self._data), message
@@ -249,7 +249,7 @@ class TestAssertionBuilder:
         return
 
 
-class TestSuiteBuilder:
+class SuiteBuilder:
     """Builder for test suites."""
 
     def __init__(self, name: str) -> None:
@@ -259,17 +259,17 @@ class TestSuiteBuilder:
         self._setup_data: FlextTypes.Core.Dict = {}
         self._tags: FlextTypes.Core.StringList = []
 
-    def add_scenarios(self, scenarios: FlextTypes.Core.List) -> TestSuiteBuilder:
+    def add_scenarios(self, scenarios: FlextTypes.Core.List) -> SuiteBuilder:
         """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **kwargs: object) -> TestSuiteBuilder:
+    def with_setup_data(self, **kwargs: object) -> SuiteBuilder:
         """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
 
-    def with_tag(self, tag: str) -> TestSuiteBuilder:
+    def with_tag(self, tag: str) -> SuiteBuilder:
         """Add a tag to the test suite."""
         self._tags.append(tag)
         return self
@@ -284,7 +284,7 @@ class TestSuiteBuilder:
         }
 
 
-class TestFixtureBuilder:
+class FixtureBuilder:
     """Builder for test fixtures."""
 
     def __init__(self) -> None:
@@ -293,12 +293,12 @@ class TestFixtureBuilder:
         self._setups: FlextTypes.Core.List = []
         self._teardowns: FlextTypes.Core.List = []
 
-    def with_user(self, **kwargs: object) -> TestFixtureBuilder:
+    def with_user(self, **kwargs: object) -> FixtureBuilder:
         """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
-    def with_request(self, **kwargs: object) -> TestFixtureBuilder:
+    def with_request(self, **kwargs: object) -> FixtureBuilder:
         """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
@@ -307,17 +307,17 @@ class TestFixtureBuilder:
         """Build the test fixtures configuration."""
         return self._fixtures.copy()
 
-    def add_setup(self, func: object) -> TestFixtureBuilder:
+    def add_setup(self, func: object) -> FixtureBuilder:
         """Add a setup function to the fixtures."""
         self._setups.append(func)
         return self
 
-    def add_teardown(self, func: object) -> TestFixtureBuilder:
+    def add_teardown(self, func: object) -> FixtureBuilder:
         """Add a teardown function to the fixtures."""
         self._teardowns.append(func)
         return self
 
-    def add_fixture(self, key: str, value: object) -> TestFixtureBuilder:
+    def add_fixture(self, key: str, value: object) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
         return self
@@ -602,7 +602,7 @@ class TestAdvancedPatterns:
         test_data = ["apple", "banana", "cherry"]
 
         # Build complex assertions
-        TestAssertionBuilder(test_data).is_not_none().has_length(3).contains(
+        AssertionBuilder(test_data).is_not_none().has_length(3).contains(
             "banana",
         ).satisfies(
             lambda x: all(isinstance(item, str) for item in x),
@@ -647,7 +647,7 @@ class TestComprehensiveIntegration:
     def test_complete_test_suite_builder(self) -> None:
         """Demonstrate complete test suite construction."""
         # Create multiple scenarios
-        scenarios = []
+        scenarios: list[MockScenario] = []
 
         # Scenario 1: Success case
         scenario1 = (
@@ -673,7 +673,7 @@ class TestComprehensiveIntegration:
 
         # Build complete test suite
         suite = (
-            TestSuiteBuilder("comprehensive_operation_tests")
+            SuiteBuilder("comprehensive_operation_tests")
             .add_scenarios(cast("FlextTypes.Core.List", scenarios))
             .with_setup_data(environment="test", timeout=30)
             .with_tag("integration")
@@ -714,7 +714,7 @@ class TestComprehensiveIntegration:
         )
 
         # Use assertion builder for verification
-        TestAssertionBuilder(result).is_not_none().satisfies(
+        AssertionBuilder(result).is_not_none().satisfies(
             lambda x: "result" in x,
             "should have result field",
         ).satisfies(
@@ -749,7 +749,7 @@ class TestComprehensiveIntegration:
         )
 
         # Use a fixed set of test profiles instead of Hypothesis example
-        test_profiles = [
+        test_profiles: list[FlextTypes.Core.Dict] = [
             {
                 "id": "flext_test001",
                 "name": "John Smith",
@@ -809,7 +809,7 @@ class TestRealWorldScenarios:
     def test_api_request_processing(self) -> None:
         """Simulate API request processing with comprehensive testing."""
         # Create test fixtures
-        fixture_builder = TestFixtureBuilder()
+        fixture_builder = FixtureBuilder()
 
         # Setup
         def setup_api_environment() -> None:
@@ -852,7 +852,7 @@ class TestRealWorldScenarios:
                 result = process_api_request(test_request)
 
             # Comprehensive assertions
-            TestAssertionBuilder(result).is_not_none().satisfies(
+            AssertionBuilder(result).is_not_none().satisfies(
                 lambda x: x["status"] == "success",
                 "should be successful",
             ).satisfies(

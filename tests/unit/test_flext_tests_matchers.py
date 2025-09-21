@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from flext_core import FlextContainer, FlextResult
 from flext_tests.matchers import FlextTestsMatchers
@@ -235,7 +234,6 @@ class TestFlextTestsMatchers:
         """Test matcher behavior with edge cases and boundary conditions."""
         # Test with None values
         assert len([]) == 0
-        assert None not in []
 
         # Test with empty containers
         empty_containers = [[], {}, set(), "", ()]
@@ -286,7 +284,7 @@ class TestFlextTestsMatchers:
         # Test FlextResultLike protocol compliance
         def check_flext_result_like(
             obj: FlextTestsMatchers.FlextResultLike,
-        ) -> dict[str, Any]:
+        ) -> dict[str, object]:
             return {
                 "is_success": obj.is_success
                 if hasattr(obj, "is_success")

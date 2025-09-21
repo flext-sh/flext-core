@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import time
 from abc import abstractmethod
-from typing import ClassVar, Literal, cast, get_origin
+from typing import Literal, get_origin
+
+from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -34,9 +36,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
     for proper CQRS pattern compliance with enhanced type safety.
     """
 
-    DEFAULT_MODE: ClassVar[Literal["command", "query"]] = cast(
-        "Literal['command', 'query']", FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
-    )
+    # Note: Use FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE directly instead of wrapper
 
     def __init__(
         self,
@@ -74,11 +74,26 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             resolved_name = handler_name or self.__class__.__name__
             resolved_mode = self._resolve_mode(handler_mode, handler_config)
 
-            self._config_model = FlextModels.CqrsConfig.create_handler_config(
+            # Convert handler_config to dict if it's a Handler object
+            config_dict: dict[str, object] | None = None
+            if handler_config is not None:
+                if isinstance(handler_config, dict):
+                    config_dict = handler_config
+                elif hasattr(handler_config, "model_dump"):
+                    # Type-safe call to model_dump for Pydantic models
+                    try:
+                        dump_result = handler_config.model_dump()
+                        config_dict = (
+                            dump_result  # model_dump() always returns dict[str, object]
+                        )
+                    except Exception:
+                        config_dict = {}
+
+            self._config_model = FlextModels.CqrsConfig.Handler.create_handler_config(
                 handler_type=resolved_mode,
                 default_name=resolved_name,
                 default_id=handler_id,
-                handler_config=handler_config,
+                handler_config=config_dict,
                 command_timeout=command_timeout,
                 max_command_retries=max_command_retries,
             )
@@ -109,17 +124,11 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             return handler_config.handler_type
         if isinstance(handler_config, dict):
             raw_mode = handler_config.get("handler_type")
-            if raw_mode in {
-                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            }:
-                return cast("Literal['command', 'query']", raw_mode)
-        default_mode = getattr(
-            self.__class__,
-            "DEFAULT_MODE",
-            FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE,
-        )
-        return cast("Literal['command', 'query']", default_mode)
+            if raw_mode == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
+                return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+            if raw_mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
+                return FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+        return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
 
     @property
     def mode(self) -> Literal["command", "query"]:
@@ -252,9 +261,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         """
         return self._validate_message(
             command,
-            operation=cast(
-                "Literal['command', 'query']", FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
-            ),
+            operation=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         )
 
     def validate_query(self, query: object) -> FlextResult[None]:
@@ -266,9 +273,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         """
         return self._validate_message(
             query,
-            operation=cast(
-                "Literal['command', 'query']", FlextConstants.Cqrs.QUERY_HANDLER_TYPE
-            ),
+            operation=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
         )
 
     def _validate_message(
@@ -344,10 +349,11 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 )
 
         # If message is a Pydantic model, it's already validated
-        if hasattr(message, "model_validate") and hasattr(message, "model_dump"):
+        if isinstance(message, BaseModel):
             try:
                 # Re-validate to ensure consistency
-                message_data = message.model_dump()  # type: ignore[attr-defined]
+                message_data = message.model_dump()
+                # Use the class's model_validate method
                 message.__class__.model_validate(message_data)
                 return FlextResult[None].ok(None)
             except Exception as e:

@@ -247,8 +247,8 @@ class TestFlextCommand:
         command = CreateUserCommand(username="valid_user", email="valid@example.com")
         result = command.validate_command()
 
-        if not (result.success):
-            raise AssertionError(f"Expected True, got {result.success}")
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_validate_command_failure_no_username(self) -> None:
         """Test command validation failure for missing username."""
@@ -358,8 +358,8 @@ class TestFlextCommandHandler:
 
         result = handler.handle(command)
 
-        if not result.success:
-            raise AssertionError(f"Expected True, got {result.success}")
+        if not result.is_success:
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.value is not None
         if (result.value or {})["username"] != "john":
             raise AssertionError(
@@ -379,8 +379,8 @@ class TestFlextCommandHandler:
 
         result = handler.handle(command)
 
-        if not result.success:
-            raise AssertionError(f"Expected True, got {result.success}")
+        if not result.is_success:
+            raise AssertionError(f"Expected True, got {result.is_success}")
         if len(handler.created_users) != 1:
             raise AssertionError(f"Expected {1}, got {len(handler.created_users)}")
 
@@ -485,8 +485,8 @@ class TestFlextCommandBus:
         command = CreateUserCommand(username="alice", email="alice@example.com")
         result = bus.execute(command)
 
-        if not result.success:
-            raise AssertionError(f"Expected True, got {result.success}")
+        if not result.is_success:
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.value is not None
         user_data = cast("FlextTypes.Core.Dict", result.value)
         if user_data["username"] != "alice":
@@ -566,10 +566,10 @@ class TestFlextCommandResults:
         """Test creating successful command result."""
         result_data = {"id": "123", "username": "test"}
 
-        command_result = FlextResult.ok(result_data)
+        command_result: FlextResult[dict[str, object]] = FlextResult.ok(result_data)
 
-        if not command_result.success:
-            raise AssertionError(f"Expected True, got {command_result.success}")
+        if not command_result.is_success:
+            raise AssertionError(f"Expected True, got {command_result.is_success}")
         if command_result.value != result_data:
             raise AssertionError(f"Expected {result_data}, got {command_result.value}")
         assert command_result.error is None
@@ -580,8 +580,8 @@ class TestFlextCommandResults:
 
         command_result = FlextResult[None].fail(error_message)
 
-        if command_result.success:
-            raise AssertionError(f"Expected False, got {command_result.success}")
+        if command_result.is_success:
+            raise AssertionError(f"Expected False, got {command_result.is_success}")
         # Em falha, `.value` lança exceção - verificar que é falha
         assert command_result.is_failure
         if command_result.error != error_message:
@@ -596,8 +596,8 @@ class TestFlextCommandResults:
         # FlextResult test - create successful result
         command_result = FlextResult[FlextTypes.Core.Headers].ok(result_data)
 
-        if not command_result.success:
-            raise AssertionError(f"Expected True, got {command_result.success}")
+        if not command_result.is_success:
+            raise AssertionError(f"Expected True, got {command_result.is_success}")
         # FlextResult doesn't have metadata, use error_data which acts as metadata
         if command_result.error_data == {}:
             # Test passes - metadata would be empty for successful results
@@ -624,8 +624,8 @@ class TestCommandPatternIntegration:
         )
         create_result = bus.execute(create_command)
 
-        if not create_result.success:
-            raise AssertionError(f"Expected True, got {create_result.success}")
+        if not create_result.is_success:
+            raise AssertionError(f"Expected True, got {create_result.is_success}")
         assert create_result.value is not None
         user_data = cast("FlextTypes.Core.Dict", create_result.value)
         assert user_data is not None
@@ -638,8 +638,8 @@ class TestCommandPatternIntegration:
         )
         update_result = bus.execute(update_command)
 
-        if not update_result.success:
-            raise AssertionError(f"Expected True, got {update_result.success}")
+        if not update_result.is_success:
+            raise AssertionError(f"Expected True, got {update_result.is_success}")
         assert update_result.value is not None
         update_data = cast("FlextTypes.Core.Dict", update_result.value)
         if update_data["target_user_id"] != user_id:
@@ -684,9 +684,9 @@ class TestCommandPatternIntegration:
             results.append(result)
 
         # Verify all commands executed successfully
-        if not all(result.success for result in results):
+        if not all(result.is_success for result in results):
             raise AssertionError(
-                f"Expected {all(result.success for result in results)} in {results}",
+                f"Expected {all(result.is_success for result in results)} in {results}",
             )
         if len(create_handler.created_users) != EXPECTED_BULK_SIZE:
             raise AssertionError(
@@ -706,8 +706,8 @@ class TestCommandPatternIntegration:
             email="valid@example.com",
         )
         result = bus.execute(valid_command)
-        if not result.success:
-            raise AssertionError(f"Expected True, got {result.success}")
+        if not result.is_success:
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
         # Test with invalid command (validation should fail)
         invalid_command = CreateUserCommand(username="", email="invalid")

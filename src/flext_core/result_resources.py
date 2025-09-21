@@ -54,7 +54,7 @@ class FlextResultResources:
             A FlextResult containing the resource management result.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         if result.is_failure:
             return FlextResult[UResource].fail(
@@ -93,7 +93,7 @@ class FlextResultResources:
             A FlextResult containing the timeout result.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         if result.is_failure:
             return FlextResult[TTimeout].fail(
@@ -186,7 +186,7 @@ class FlextResultResources:
             A FlextResult containing the contextual result.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         if result.is_success:
             return result

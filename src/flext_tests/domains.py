@@ -88,7 +88,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def create_user(**overrides: object) -> FlextTypes.Core.Dict:
-        """Create user data dict."""
+        """Create user data dict.
+
+        Returns:
+            FlextTypes.Core.Dict: User data dictionary with generated values
+
+        """
         data: FlextTypes.Core.Dict = {
             "id": str(uuid.uuid4()),
             "name": f"User {random.randint(100, 999)}",
@@ -102,14 +107,24 @@ class FlextTestsDomains:
 
     @staticmethod
     def batch_users(count: int = 5) -> list[FlextTypes.Core.Dict]:
-        """Create batch of user data."""
+        """Create batch of user data.
+
+        Returns:
+            list[FlextTypes.Core.Dict]: List of user data dictionaries
+
+        """
         return [FlextTestsDomains.create_user() for _ in range(count)]
 
     # === Configuration Data Factory ===
 
     @staticmethod
     def create_configuration(**overrides: object) -> FlextTypes.Core.Dict:
-        """Create configuration data dict."""
+        """Create configuration data dict.
+
+        Returns:
+            FlextTypes.Core.Dict: Configuration data dictionary with generated values
+
+        """
         data: FlextTypes.Core.Dict = {
             "database_url": "postgresql://localhost:5432/test",
             "log_level": "INFO",
@@ -125,7 +140,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def create_service(**overrides: object) -> FlextTypes.Core.Dict:
-        """Create service data dict."""
+        """Create service data dict.
+
+        Returns:
+            FlextTypes.Core.Dict: Service data dictionary with generated values
+
+        """
         data: FlextTypes.Core.Dict = {
             "name": f"test_service_{random.randint(1, 100)}",
             "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
@@ -140,7 +160,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def create_payload(**overrides: object) -> FlextTypes.Core.Dict:
-        """Create payload data dict."""
+        """Create payload data dict.
+
+        Returns:
+            FlextTypes.Core.Dict: Payload data dictionary with generated values
+
+        """
         data: FlextTypes.Core.Dict = {
             "message_id": str(uuid.uuid4()),
             "type": "user_created",
@@ -155,7 +180,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def valid_email_cases() -> FlextTypes.Core.StringList:
-        """Return valid email test cases."""
+        """Return valid email test cases.
+
+        Returns:
+            FlextTypes.Core.StringList: List of valid email addresses for testing
+
+        """
         return [
             "user@example.com",
             "test.user@domain.co.uk",
@@ -165,7 +195,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def invalid_email_cases() -> FlextTypes.Core.StringList:
-        """Return invalid email test cases."""
+        """Return invalid email test cases.
+
+        Returns:
+            FlextTypes.Core.StringList: List of invalid email addresses for testing
+
+        """
         return [
             "not-an-email",
             "@missing-local.com",
@@ -176,19 +211,34 @@ class FlextTestsDomains:
 
     @staticmethod
     def valid_ages() -> list[int]:
-        """Return valid age test cases."""
+        """Return valid age test cases.
+
+        Returns:
+            list[int]: List of valid age values for testing
+
+        """
         return [18, 25, 35, 45, 65, 99]
 
     @staticmethod
     def invalid_ages() -> list[int]:
-        """Return invalid age test cases."""
+        """Return invalid age test cases.
+
+        Returns:
+            list[int]: List of invalid age values for testing
+
+        """
         return [-1, 0, 17, 150, 999]
 
     # === Realistic Data Factory ===
 
     @staticmethod
     def user_registration_data() -> FlextTypes.Core.Dict:
-        """Create realistic user registration data."""
+        """Create realistic user registration data.
+
+        Returns:
+            FlextTypes.Core.Dict: User registration data dictionary with realistic values
+
+        """
         return {
             "name": f"John Doe {random.randint(1, 100)}",
             "email": f"john.doe{random.randint(1, 1000)}@company.com",
@@ -204,7 +254,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def order_data() -> FlextTypes.Core.Dict:
-        """Create realistic order data."""
+        """Create realistic order data.
+
+        Returns:
+            FlextTypes.Core.Dict: Order data dictionary with realistic values
+
+        """
         return {
             "order_id": str(uuid.uuid4()),
             "customer_id": str(uuid.uuid4()),
@@ -224,7 +279,12 @@ class FlextTestsDomains:
 
     @staticmethod
     def api_response_data() -> FlextTypes.Core.Dict:
-        """Create realistic API response data."""
+        """Create realistic API response data.
+
+        Returns:
+            FlextTypes.Core.Dict: API response data dictionary with realistic values
+
+        """
         return {
             "success": True,
             "data": {"id": str(uuid.uuid4()), "status": "processed"},

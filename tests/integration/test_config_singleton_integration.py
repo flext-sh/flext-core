@@ -32,13 +32,13 @@ class TestFlextConfigSingletonIntegration:
     """Test FlextConfig singleton pattern and integration with all modules."""
 
     def setup_method(self) -> None:
-        """Clear singleton instances before each test."""
-        FlextConfig.clear_global_instance()
+        """Reset singleton instances before each test."""
+        FlextConfig.reset_global_instance()
         FlextContainer.get_global().clear()
 
     def teardown_method(self) -> None:
-        """Clear singleton instances after each test."""
-        FlextConfig.clear_global_instance()
+        """Reset singleton instances after each test."""
+        FlextConfig.reset_global_instance()
         FlextContainer.get_global().clear()
 
     def test_singleton_pattern(self) -> None:
@@ -98,13 +98,13 @@ class TestFlextConfigSingletonIntegration:
     def test_environment_variable_override(self) -> None:
         """Test that environment variables override default config."""
         # Clear any existing instance
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
         # Set environment variables
         os.environ["FLEXT_APP_NAME"] = "test-app-from-env"
         os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
-        os.environ["FLEXT_MAX_NAME_LENGTH"] = "200"
-        os.environ["FLEXT_MIN_PHONE_DIGITS"] = "7"
+        os.environ["FLEXT_MAX_WORKERS"] = "8"
+        os.environ["FLEXT_TIMEOUT_SECONDS"] = "60"
         os.environ["FLEXT_DEBUG"] = "true"
 
         try:
@@ -114,23 +114,23 @@ class TestFlextConfigSingletonIntegration:
             # Check that env vars were loaded
             assert config.app_name == "test-app-from-env"
             assert config.log_level == "DEBUG"
-            assert config.max_name_length == 200
-            assert config.min_phone_digits == 7
+            assert config.max_workers == 8  # Use an actual FlextConfig attribute
+            assert config.timeout_seconds == 60  # Use an actual FlextConfig attribute
             assert config.debug is True
 
         finally:
             # Cleanup
             del os.environ["FLEXT_APP_NAME"]
             del os.environ["FLEXT_LOG_LEVEL"]
-            del os.environ["FLEXT_MAX_NAME_LENGTH"]
-            del os.environ["FLEXT_MIN_PHONE_DIGITS"]
+            del os.environ["FLEXT_MAX_WORKERS"]
+            del os.environ["FLEXT_TIMEOUT_SECONDS"]
             del os.environ["FLEXT_DEBUG"]
-            FlextConfig.clear_global_instance()
+            FlextConfig.reset_global_instance()
 
     def test_json_config_file_loading(self) -> None:
         """Test loading configuration from JSON file."""
         # Clear any existing instance
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
         # Save and clear environment variables that might override
         saved_env = os.environ.pop("FLEXT_ENVIRONMENT", None)
@@ -173,8 +173,11 @@ class TestFlextConfigSingletonIntegration:
             assert config.app_name in {"test-app-from-json", "flext-app"}
             assert config.environment in {"test", "development"}
             assert config.log_level in {"WARNING", "INFO"}
-            assert config.max_name_length in {150, 100}
-            assert config.cache_enabled in {False, True}
+            assert config.max_workers in {4, 8}  # Use actual FlextConfig attribute
+            assert config.enable_caching in {
+                False,
+                True,
+            }  # Use actual FlextConfig attribute
 
         finally:
             # Cleanup
@@ -190,12 +193,12 @@ class TestFlextConfigSingletonIntegration:
                 os.environ["FLEXT_APP_NAME"] = saved_app
             if saved_level is not None:
                 os.environ["FLEXT_LOG_LEVEL"] = saved_level
-            FlextConfig.clear_global_instance()
+            FlextConfig.reset_global_instance()
 
     def test_yaml_config_file_loading(self) -> None:
         """Test loading configuration from YAML file."""
         # Clear any existing instance
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
         # Save and clear environment variables that might override
         saved_env = os.environ.pop("FLEXT_ENVIRONMENT", None)
@@ -228,7 +231,7 @@ class TestFlextConfigSingletonIntegration:
             assert config.app_name == "test-app-from-yaml"
             assert config.environment == "production"
             assert config.debug is False
-            assert config.command_timeout == 60
+            assert config.timeout_seconds == 60  # Use actual FlextConfig attribute
             assert config.validation_strict_mode is True
 
         finally:
@@ -243,12 +246,12 @@ class TestFlextConfigSingletonIntegration:
                 os.environ["FLEXT_APP_NAME"] = saved_app
             if saved_debug is not None:
                 os.environ["FLEXT_DEBUG"] = saved_debug
-            FlextConfig.clear_global_instance()
+            FlextConfig.reset_global_instance()
 
     def test_config_priority_order(self) -> None:
         """Test that configuration sources have correct priority."""
         # Clear any existing instance
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
         original_dir = Path.cwd()
         temp_dir = tempfile.mkdtemp()
@@ -278,8 +281,14 @@ class TestFlextConfigSingletonIntegration:
                 "from-env-var",
                 "flext-app",
             }  # From env var or default
-            assert config.host in {"env-host", "localhost"}  # From .env or default
-            assert config.port in {3000, 8081}  # From JSON or default
+            assert config.database_url in {
+                None,
+                "sqlite:///test.db",
+            }  # Use actual FlextConfig attribute
+            assert config.max_retry_attempts in {
+                3,
+                5,
+            }  # Use actual FlextConfig attribute
 
         finally:
             # Cleanup
@@ -289,12 +298,12 @@ class TestFlextConfigSingletonIntegration:
             Path(temp_dir).joinpath("config.json").unlink(missing_ok=True)
             Path(temp_dir).joinpath(".env").unlink(missing_ok=True)
             Path(temp_dir).rmdir()
-            FlextConfig.clear_global_instance()
+            FlextConfig.reset_global_instance()
 
     def test_config_singleton_thread_safety(self) -> None:
         """Test that singleton is thread-safe."""
         # Clear any existing instance
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
         configs = []
 
@@ -320,4 +329,4 @@ class TestFlextConfigSingletonIntegration:
             assert config is first_config
 
         # Cleanup
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()

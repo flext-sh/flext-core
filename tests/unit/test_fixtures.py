@@ -262,10 +262,14 @@ class TestFlextConfigFactory:
 
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
-        # Config now uses singleton, so environment may vary based on .env files
-        assert config.environment == "test"  # Actual value from .env environment
+        # Config now uses singleton, environment should be "testing" for test config
+        assert (
+            config.environment == "testing"
+        )  # Corrected to match valid environment value
         assert hasattr(config, "debug")
-        assert config.debug is True  # Debug from .env file
+        assert (
+            config.debug is True
+        )  # Debug should be True for test environment  # Debug from .env file
 
     def test_create_development_config(self) -> None:
         """Test development config creation."""

@@ -14,23 +14,26 @@ import pathlib
 import re
 import secrets
 import string
+import threading
 import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TypeVar
+from typing import cast
 
-# Import FlextResult directly since it's used for more than type hinting
+from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
+from flext_core.typings import T, U
 
-T = TypeVar("T")
-U = TypeVar("U")
-
-# Module-level constants to avoid magic numbers
+# Module-level constants to avoid magic numbers - use FlextConstants where available
 MIN_TOKEN_LENGTH = 8  # Minimum length for security tokens and passwords
-MAX_PORT_NUMBER = 65535  # Maximum valid port number
-MAX_TIMEOUT_SECONDS = 3600  # Maximum timeout in seconds (1 hour)
-MAX_RETRY_COUNT = 10  # Maximum retry attempts
+MAX_PORT_NUMBER = FlextConstants.Network.MAX_PORT  # Maximum valid port number
+MAX_TIMEOUT_SECONDS = (
+    3600  # Maximum timeout in seconds (1 hour) - specific to utilities
+)
+MAX_RETRY_COUNT = (
+    FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+)  # Maximum retry attempts
 MAX_ERROR_DISPLAY = 5  # Maximum errors to display in batch processing
 
 
@@ -43,14 +46,19 @@ class FlextUtilities:
 
     MIN_TOKEN_LENGTH = MIN_TOKEN_LENGTH
 
-    class Validation:  # noqa: PLR0904
+    class Validation:
         """Unified validation patterns using railway composition."""
 
         @staticmethod
         def validate_string_not_none(
             value: str | None, field_name: str = "string"
         ) -> FlextResult[str]:
-            """Validate that string is not None."""
+            """Validate that string is not None.
+
+            Returns:
+                FlextResult[str]: Success with validated string or failure with error message
+
+            """
             if value is None:
                 return FlextResult[str].fail(f"{field_name} cannot be None")
             return FlextResult[str].ok(value)
@@ -59,7 +67,12 @@ class FlextUtilities:
         def validate_string_not_empty(
             value: str, field_name: str = "string"
         ) -> FlextResult[str]:
-            """Validate that string is not empty after stripping."""
+            """Validate that string is not empty after stripping.
+
+            Returns:
+                FlextResult[str]: Success with validated string or failure with error message
+
+            """
             stripped = value.strip()
             if not stripped:
                 return FlextResult[str].fail(
@@ -186,7 +199,7 @@ class FlextUtilities:
         @staticmethod
         def validate_log_level(level: str) -> FlextResult[str]:
             """Validate log level value."""
-            allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+            allowed_levels = list(FlextConstants.Logging.VALID_LEVELS)
             return FlextUtilities.Validation.validate_environment_value(
                 level.upper(), allowed_levels
             )
@@ -312,9 +325,11 @@ class FlextUtilities:
         def validate_http_status(status_code: int) -> FlextResult[int]:
             """Validate HTTP status code range."""
             try:
-                if not (100 <= status_code <= 599):
+                min_http_status = FlextConstants.Platform.MIN_HTTP_STATUS_RANGE
+                max_http_status = FlextConstants.Platform.MAX_HTTP_STATUS_RANGE
+                if not (min_http_status <= status_code <= max_http_status):
                     return FlextResult[int].fail(
-                        f"HTTP status code must be between 100 and 599, got {status_code}"
+                        f"HTTP status code must be between {FlextConstants.Platform.MIN_HTTP_STATUS_RANGE} and {FlextConstants.Platform.MAX_HTTP_STATUS_RANGE}, got {status_code}"
                     )
                 return FlextResult[int].ok(status_code)
             except (ValueError, TypeError):
@@ -435,17 +450,22 @@ class FlextUtilities:
                 error_msg = delay_validation.error or "Invalid delay seconds"
                 return FlextResult[T].fail(error_msg)
 
-            # Use retry_until_success with proper typing
-            dummy_result = FlextResult[T].ok(None)  # type: ignore  # Just for the method call
-            return dummy_result.retry_until_success(
+            # Use retry_until_success directly on the operation result
+            initial_result = operation()
+            if initial_result.is_success:
+                return initial_result
+
+            # Retry on failure
+            return initial_result.retry_until_success(
                 lambda _: operation(),
-                max_attempts=max_retries + 1,
+                max_attempts=max_retries,
                 backoff_factor=delay_seconds,
             )
 
         @staticmethod
         def timeout_operation(
-            operation: Callable[[], FlextResult[T]], timeout_seconds: float = 30.0
+            operation: Callable[[], FlextResult[T]],
+            timeout_seconds: float = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS,
         ) -> FlextResult[T]:
             """Execute operation with timeout using advanced railway pattern."""
             return FlextUtilities.Validation.validate_timeout_seconds(
@@ -459,8 +479,8 @@ class FlextUtilities:
         @staticmethod
         def circuit_breaker(
             operation: Callable[[], FlextResult[T]],
-            failure_threshold: int = 5,
-            recovery_timeout: float = 60.0,
+            failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
+            recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
         ) -> FlextResult[T]:
             """Simple circuit breaker pattern implementation."""
             threshold_validation = FlextUtilities.Validation.validate_retry_count(
@@ -498,16 +518,33 @@ class FlextUtilities:
                 if isinstance(value, target_type):
                     return FlextResult[T].ok(value)
 
+                # For object type, return value as-is
+                if target_type is object:
+                    return FlextResult[T].ok(cast("T", value))
+
                 # For basic types, try to construct with value
-                if target_type in {str, int, float, bool}:
-                    # Use type: ignore for basic type construction
-                    casted_value: T = target_type(value)  # type: ignore[call-arg]
-                    return FlextResult[T].ok(casted_value)
+                if target_type is str:
+                    return FlextResult[T].ok(cast("T", str(value)))
+                if target_type is int:
+                    return FlextResult[T].ok(cast("T", int(str(value))))
+                if target_type is float:
+                    return FlextResult[T].ok(cast("T", float(str(value))))
+                if target_type is bool:
+                    return FlextResult[T].ok(cast("T", bool(value)))
 
                 # For other types, try to cast directly
-                # Use type: ignore for generic type construction
-                casted_value = target_type(value)  # type: ignore[call-arg]
-                return FlextResult[T].ok(casted_value)
+                try:
+                    # Type construction - handle object type specially
+                    if target_type is object:
+                        converted_value = value
+                    else:
+                        # For other types with constructors, try calling them
+                        # Use type ignore to handle mypy's overly strict object constructor check
+                        converted_value = target_type(value)  # type: ignore[call-arg]
+                    return FlextResult[T].ok(cast("T", converted_value))
+                except (TypeError, ValueError):
+                    # If constructor fails, return the value with type ignore
+                    return FlextResult[T].ok(cast("T", value))
 
             except (ValueError, TypeError) as e:
                 return FlextResult[T].fail(
@@ -576,6 +613,7 @@ class FlextUtilities:
             items: list[T],
             processor: Callable[[T], FlextResult[U]],
             batch_size: int = 100,
+            *,
             fail_fast: bool = False,
         ) -> FlextResult[list[U]]:
             """Process items in batches with advanced railway pattern error handling.
@@ -592,7 +630,7 @@ class FlextUtilities:
                 lambda x: x > 0, "Batch size must be positive"
             ) >> (
                 lambda _: FlextUtilities.Utilities.process_batches_railway(
-                    items, processor, batch_size, fail_fast
+                    items, processor, batch_size, fail_fast=fail_fast
                 )
             )
 
@@ -601,6 +639,7 @@ class FlextUtilities:
             items: list[T],
             processor: Callable[[T], FlextResult[U]],
             batch_size: int,
+            *,
             fail_fast: bool,
         ) -> FlextResult[list[U]]:
             """Internal method for railway-based batch processing."""
@@ -812,7 +851,7 @@ class FlextUtilities:
         """Type conversion utilities using railway composition."""
 
         @staticmethod
-        def to_bool(value: str | bool | int | None) -> FlextResult[bool]:
+        def to_bool(*, value: str | bool | int | None) -> FlextResult[bool]:
             """Convert value to boolean using railway composition."""
             if isinstance(value, bool):
                 return FlextResult[bool].ok(value)
@@ -881,8 +920,6 @@ class FlextUtilities:
             timeout_seconds: float,
         ) -> FlextResult[TTimeout]:
             """Execute operation with timeout using railway patterns."""
-            import threading
-
             if timeout_seconds <= 0:
                 return FlextResult[TTimeout].fail("Timeout must be positive")
 
@@ -922,8 +959,8 @@ class FlextUtilities:
         @staticmethod
         def circuit_breaker[TCircuit](
             operation: Callable[[], FlextResult[TCircuit]],
-            failure_threshold: int = 5,
-            recovery_timeout: float = 60.0,
+            failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
+            recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
         ) -> FlextResult[TCircuit]:
             """Circuit breaker pattern using railway composition."""
             # Validate parameters

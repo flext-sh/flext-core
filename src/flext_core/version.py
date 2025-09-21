@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import ClassVar, NamedTuple
 
-__version__: str = "0.9.0"
+from flext_core.constants import FlextConstants
+
+__version__: str = FlextConstants.Core.VERSION
 
 
 class FlextVersionManager:
@@ -18,10 +20,10 @@ class FlextVersionManager:
     gates tracked as part of the 1.0.0 release roadmap.
     """
 
-    # Version constants consolidated within the class
-    VERSION_MAJOR: int = 0
-    VERSION_MINOR: int = 9
-    VERSION_PATCH: int = 0
+    # Version constants consolidated within the class - derived from FlextConstants
+    VERSION_MAJOR: int = int(FlextConstants.Core.VERSION.split(".")[0])
+    VERSION_MINOR: int = int(FlextConstants.Core.VERSION.split(".")[1])
+    VERSION_PATCH: int = int(FlextConstants.Core.VERSION.split(".")[2])
     SEMVER_PARTS_COUNT: int = 3  # major.minor.patch
 
     # Release information
@@ -79,7 +81,12 @@ class FlextVersionManager:
 
     @staticmethod
     def get_version_tuple() -> tuple[int, int, int]:
-        """Return the semantic version tuple used across 1.0.0 tooling."""
+        """Return the semantic version tuple used across 1.0.0 tooling.
+
+        Returns:
+            tuple[int, int, int]: Version tuple (major, minor, patch)
+
+        """
         return (
             FlextVersionManager.VERSION_MAJOR,
             FlextVersionManager.VERSION_MINOR,
@@ -88,7 +95,12 @@ class FlextVersionManager:
 
     @staticmethod
     def get_version_info() -> FlextVersionManager.VersionInfo:
-        """Return the structured release payload surfaced in documentation."""
+        """Return the structured release payload surfaced in documentation.
+
+        Returns:
+            FlextVersionManager.VersionInfo: Structured version metadata
+
+        """
         return FlextVersionManager.VersionInfo(
             major=FlextVersionManager.VERSION_MAJOR,
             minor=FlextVersionManager.VERSION_MINOR,
@@ -100,13 +112,23 @@ class FlextVersionManager:
 
     @staticmethod
     def get_version_string() -> str:
-        """Render the version banner consumed by README and docs badges."""
+        """Render the version banner consumed by README and docs badges.
+
+        Returns:
+            str: Version string with release name
+
+        """
         info = FlextVersionManager.get_version_info()
         return f"{__version__} ({info.release_name})"
 
     @staticmethod
     def get_available_features() -> list[str]:
-        """List features flagged as ready for the 1.0.0 modernization cycle."""
+        """List features flagged as ready for the 1.0.0 modernization cycle.
+
+        Returns:
+            list[str]: List of available feature names
+
+        """
         return [
             name
             for name, available in FlextVersionManager.AVAILABLE_FEATURES.items()
@@ -115,10 +137,20 @@ class FlextVersionManager:
 
     @staticmethod
     def compare_versions(version1: str, version2: str) -> int:
-        """Compare semantic versions to inform upgrade guidance."""
+        """Compare semantic versions to inform upgrade guidance.
+
+        Returns:
+            int: -1 if version1 < version2, 0 if equal, 1 if version1 > version2
+
+        """
 
         def parse_version(version: str) -> tuple[int, ...]:
-            """Parse a version string into comparison-friendly tuple form."""
+            """Parse a version string into comparison-friendly tuple form.
+
+            Returns:
+                tuple[int, ...]: Version parts as integers
+
+            """
             return tuple(int(part) for part in version.split("."))
 
         v1_tuple = parse_version(version1)
@@ -132,7 +164,12 @@ class FlextVersionManager:
 
     @staticmethod
     def validate_version_format(version: object) -> bool:
-        """Validate semantic version formatting for roadmap compliance."""
+        """Validate semantic version formatting for roadmap compliance.
+
+        Returns:
+            bool: True if version format is valid, False otherwise
+
+        """
         try:
             if not isinstance(version, str):
                 return False
