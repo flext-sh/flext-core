@@ -46,7 +46,12 @@ class User:
         self.age = age
 
     def __repr__(self) -> str:
-        """Representation of User."""
+        """Representation of User.
+
+        Returns:
+            str: String representation of the User object
+
+        """
         return f"User(id={self.user_id}, name={self.name}, email={self.email}, age={self.age})"
 
 
@@ -67,7 +72,12 @@ class Order:
         self.items = items
 
     def __repr__(self) -> str:
-        """Representation of Order."""
+        """Representation of Order.
+
+        Returns:
+            str: String representation of the Order object
+
+        """
         return f"Order(id={self.order_id}, user={self.user_id}, amount={self.amount}, items={len(self.items)})"
 
 
@@ -81,7 +91,12 @@ class ProcessingResult:
         self.processed_at = processed_at
 
     def __repr__(self) -> str:
-        """Representation of ProcessingResult."""
+        """Representation of ProcessingResult.
+
+        Returns:
+            str: String representation of the ProcessingResult object
+
+        """
         return f"ProcessingResult(user={self.user.name}, order={self.order.order_id}, at={self.processed_at})"
 
 
@@ -89,7 +104,12 @@ class ProcessingResult:
 
 
 def demonstrate_rshift_operator() -> FlextResult[str]:
-    """Demonstrate >> operator for monadic bind (flat_map)."""
+    """Demonstrate >> operator for monadic bind (flat_map).
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🚀 Demonstrating >> operator for monadic bind")
 
     # Traditional approach with flat_map
@@ -139,7 +159,12 @@ def demonstrate_rshift_operator() -> FlextResult[str]:
 
 
 def demonstrate_lshift_operator() -> FlextResult[str]:
-    """Demonstrate << operator for functor map."""
+    """Demonstrate << operator for functor map.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🔄 Demonstrating << operator for functor map")
 
     # Chain multiple transformations using << operator
@@ -158,7 +183,12 @@ def demonstrate_lshift_operator() -> FlextResult[str]:
 
 
 def demonstrate_matmul_operator() -> FlextResult[str]:
-    """Demonstrate @ operator for applicative combination."""
+    """Demonstrate @ operator for applicative combination.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🔗 Demonstrating @ operator for applicative combination")
 
     # Parallel validation using @ operator
@@ -189,7 +219,12 @@ def demonstrate_matmul_operator() -> FlextResult[str]:
 
 
 def demonstrate_truediv_operator() -> FlextResult[str]:
-    """Demonstrate / operator for alternative fallback."""
+    """Demonstrate / operator for alternative fallback.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🔀 Demonstrating / operator for alternative fallback")
 
     # Try multiple data sources with fallback
@@ -208,7 +243,12 @@ def demonstrate_truediv_operator() -> FlextResult[str]:
 
 
 def demonstrate_mod_operator() -> FlextResult[str]:
-    """Demonstrate % operator for conditional filtering."""
+    """Demonstrate % operator for conditional filtering.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🔍 Demonstrating % operator for conditional filtering")
 
     # Chain validations using % operator
@@ -226,7 +266,12 @@ def demonstrate_mod_operator() -> FlextResult[str]:
 
 
 def demonstrate_traverse_operation() -> FlextResult[str]:
-    """Demonstrate traverse operation from Category Theory."""
+    """Demonstrate traverse operation from Category Theory.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("🔄 Demonstrating traverse operation")
 
     # Process list of items with traverse
@@ -248,7 +293,12 @@ def demonstrate_traverse_operation() -> FlextResult[str]:
 
 
 def demonstrate_applicative_lift() -> FlextResult[str]:
-    """Demonstrate applicative lift operations with proper tuple handling."""
+    """Demonstrate applicative lift operations with proper tuple handling.
+
+    Returns:
+        FlextResult[str]: Success message or error
+
+    """
     logger.info("⬆️ Demonstrating applicative lift operations")
 
     # Binary lift - combine two independent results
@@ -302,7 +352,15 @@ def demonstrate_applicative_lift() -> FlextResult[str]:
 
 
 def validate_user_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-    """Validate user data dictionary."""
+    """Validate user data dictionary.
+
+    Args:
+        data: User data dictionary to validate
+
+    Returns:
+        FlextResult[dict[str, object]]: Validated data or error
+
+    """
     required_fields = ["user_id", "name", "email", "age"]
     for field in required_fields:
         if field not in data:
@@ -313,7 +371,15 @@ def validate_user_data(data: dict[str, object]) -> FlextResult[dict[str, object]
 
 
 def create_user(data: dict[str, object]) -> FlextResult[User]:
-    """Create user from validated data."""
+    """Create user from validated data.
+
+    Args:
+        data: Validated user data dictionary
+
+    Returns:
+        FlextResult[User]: Created user or error
+
+    """
     try:
         user = User(
             user_id=str(data["user_id"]),
@@ -327,14 +393,31 @@ def create_user(data: dict[str, object]) -> FlextResult[User]:
 
 
 def validate_order_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-    """Validate order data dictionary."""
+    """Validate order data dictionary.
+
+    Args:
+        data: Order data dictionary to validate
+
+    Returns:
+        FlextResult[dict[str, object]]: Validated data or error
+
+    """
     if "order_amount" not in data or "items" not in data:
         return FlextResult[dict[str, object]].fail("Missing order data")
     return FlextResult[dict[str, object]].ok(data)
 
 
 def create_order(user: User, order_data: dict[str, object]) -> FlextResult[Order]:
-    """Create order for user."""
+    """Create order for user.
+
+    Args:
+        user: User object for the order
+        order_data: Order data dictionary
+
+    Returns:
+        FlextResult[Order]: Created order or error
+
+    """
     try:
         order = Order(
             order_id=f"order_{len(user.user_id)}",
@@ -348,7 +431,15 @@ def create_order(user: User, order_data: dict[str, object]) -> FlextResult[Order
 
 
 def process_user_order(order: Order) -> FlextResult[ProcessingResult]:
-    """Process user order."""
+    """Process user order.
+
+    Args:
+        order: Order object to process
+
+    Returns:
+        FlextResult[ProcessingResult]: Processing result or error
+
+    """
     result = ProcessingResult(
         user=User(order.user_id, "Processed User", "processed@example.com", 0),
         order=order,
@@ -358,21 +449,45 @@ def process_user_order(order: Order) -> FlextResult[ProcessingResult]:
 
 
 def validate_name(name: str) -> FlextResult[str]:
-    """Validate name field."""
+    """Validate name field.
+
+    Args:
+        name: Name string to validate
+
+    Returns:
+        FlextResult[str]: Validated name or error
+
+    """
     if len(name.strip()) < 2:
         return FlextResult[str].fail("Name too short")
     return FlextResult[str].ok(name)
 
 
 def validate_email(email: str) -> FlextResult[str]:
-    """Validate email field."""
+    """Validate email field.
+
+    Args:
+        email: Email string to validate
+
+    Returns:
+        FlextResult[str]: Validated email or error
+
+    """
     if "@" not in email:
         return FlextResult[str].fail("Invalid email format")
     return FlextResult[str].ok(email)
 
 
 def validate_age(age: int) -> FlextResult[int]:
-    """Validate age field."""
+    """Validate age field.
+
+    Args:
+        age: Age integer to validate
+
+    Returns:
+        FlextResult[int]: Validated age or error
+
+    """
     if age < 18 or age > 120:
         return FlextResult[int].fail("Age out of valid range")
     return FlextResult[int].ok(age)
@@ -382,7 +497,12 @@ def validate_age(age: int) -> FlextResult[int]:
 
 
 def main() -> FlextResult[str]:
-    """Main demonstration of advanced monadic composition."""
+    """Main demonstration of advanced monadic composition.
+
+    Returns:
+        FlextResult[str]: Summary message or error
+
+    """
     logger.info("🎯 Starting Advanced Monadic Composition Demonstration")
 
     # Execute all demonstrations

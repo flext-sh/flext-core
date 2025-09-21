@@ -59,7 +59,12 @@ class AdvancedExamplesConfig(FlextConfig):
     )
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rule constraints."""
+        """Validate business rule constraints.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.max_order_items <= 0:
             return FlextResult[None].fail("max_order_items must be positive")
 
@@ -89,7 +94,16 @@ class OrderProcessor:
         user_id: str,
         items_data: list[ItemData],
     ) -> FlextResult[OrderData]:
-        """Create and validate order with business rules."""
+        """Create and validate order with business rules.
+
+        Args:
+            user_id: ID of the user creating the order
+            items_data: List of order items data
+
+        Returns:
+            FlextResult[OrderData]: Created order data or error
+
+        """
         return (
             self._validate_items_count(items_data)
             .flat_map(lambda _: self._process_all_items(items_data))
@@ -106,7 +120,15 @@ class OrderProcessor:
         self,
         items_data: list[ItemData],
     ) -> FlextResult[list[ItemData]]:
-        """Validate order items count."""
+        """Validate order items count.
+
+        Args:
+            items_data: List of order items to validate
+
+        Returns:
+            FlextResult[list[ItemData]]: Validated items or error
+
+        """
         if len(items_data) > self._config.max_order_items:
             return FlextResult[list[ItemData]].fail(
                 f"Too many items: {len(items_data)} > {self._config.max_order_items}",
@@ -119,7 +141,15 @@ class OrderProcessor:
         self,
         items_data: list[ItemData],
     ) -> FlextResult[tuple[list[ItemData], Decimal]]:
-        """Process all items and calculate total."""
+        """Process all items and calculate total.
+
+        Args:
+            items_data: List of order items to process
+
+        Returns:
+            FlextResult[tuple[list[ItemData], Decimal]]: Processed items and total or error
+
+        """
         processed_items: list[ItemData] = []
         total_amount = Decimal("0.00")
 
@@ -148,7 +178,17 @@ class OrderProcessor:
         processed_items: list[ItemData],
         total_amount: Decimal,
     ) -> FlextResult[OrderData]:
-        """Validate amount and create final order."""
+        """Validate amount and create final order.
+
+        Args:
+            user_id: ID of the user creating the order
+            processed_items: List of processed order items
+            total_amount: Total amount of the order
+
+        Returns:
+            FlextResult[OrderData]: Created order data or error
+
+        """
         amount_validation = self._validate_order_amount(total_amount)
         if not amount_validation.success:
             return FlextResult[OrderData].fail(
@@ -165,7 +205,15 @@ class OrderProcessor:
         return FlextResult[OrderData].ok(order)
 
     def _validate_order_amount(self, amount: Decimal) -> FlextResult[None]:
-        """Validate order total amount against business rules."""
+        """Validate order total amount against business rules.
+
+        Args:
+            amount: Order amount to validate
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if amount < self._config.min_order_value:
             return FlextResult[None].fail(
                 f"Order amount too low: {amount} < {self._config.min_order_value}",
@@ -179,7 +227,15 @@ class OrderProcessor:
         return FlextResult[None].ok(None)
 
     def _process_order_item(self, item_data: ItemData) -> FlextResult[ItemData]:
-        """Process and validate individual order item using railway pattern."""
+        """Process and validate individual order item using railway pattern.
+
+        Args:
+            item_data: Order item data to process
+
+        Returns:
+            FlextResult[ItemData]: Processed item data or error
+
+        """
         return self._validate_required_fields(
             item_data,
             ["product_id", "quantity", "unit_price"],
@@ -190,7 +246,16 @@ class OrderProcessor:
         item_data: ItemData,
         fields: FlextTypes.Core.StringList,
     ) -> FlextResult[ItemData]:
-        """Validate required fields exist."""
+        """Validate required fields exist.
+
+        Args:
+            item_data: Item data to validate
+            fields: List of required field names
+
+        Returns:
+            FlextResult[ItemData]: Validated item data or error
+
+        """
         for field in fields:
             if field not in item_data:
                 return FlextResult[ItemData].fail(f"Missing required field: {field}")
@@ -200,7 +265,15 @@ class OrderProcessor:
         self,
         item_data: ItemData,
     ) -> FlextResult[ItemData]:
-        """Parse and validate item values."""
+        """Parse and validate item values.
+
+        Args:
+            item_data: Item data to parse and validate
+
+        Returns:
+            FlextResult[ItemData]: Processed item data or error
+
+        """
         try:
             quantity = int(str(item_data["quantity"]))
             unit_price = Decimal(str(item_data["unit_price"]))
@@ -224,12 +297,17 @@ class OrderProcessor:
 
 
 def demonstrate_order_processing() -> FlextResult[None]:
-    """Demonstrate order processing with error handling."""
+    """Demonstrate order processing with error handling.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("Starting order processing demonstration")
 
     try:
         # Create configuration
-        config = AdvancedExamplesConfig()
+        config = AdvancedExamplesConfig(log_level="INFO")
         validation_result = config.validate_business_rules()
         if not validation_result.success:
             return FlextResult[None].fail(
@@ -276,13 +354,18 @@ def demonstrate_order_processing() -> FlextResult[None]:
 
 
 def demonstrate_configuration_validation() -> FlextResult[None]:
-    """Demonstrate configuration validation with various scenarios."""
+    """Demonstrate configuration validation with various scenarios.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("Starting configuration validation demonstration")
 
     try:
         # Test valid configuration
         print("Testing valid configuration...")
-        valid_config = AdvancedExamplesConfig()
+        valid_config = AdvancedExamplesConfig(log_level="INFO")
         validation_result = valid_config.validate_business_rules()
 
         if not validation_result.success:
@@ -295,7 +378,9 @@ def demonstrate_configuration_validation() -> FlextResult[None]:
         # Test invalid configuration - negative max_order_items
         print("Testing invalid configuration (negative max_order_items)...")
         with contextlib.suppress(Exception):
-            invalid_config1 = AdvancedExamplesConfig(max_order_items=-1)
+            invalid_config1 = AdvancedExamplesConfig(
+                max_order_items=-1, log_level="INFO"
+            )
             invalid_result1 = invalid_config1.validate_business_rules()
 
             if invalid_result1.success:
@@ -316,7 +401,12 @@ def demonstrate_configuration_validation() -> FlextResult[None]:
 
 
 def main() -> int:
-    """Main execution function with error handling."""
+    """Main execution function with error handling.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("Starting FLEXT Core Advanced Examples")
 
     try:

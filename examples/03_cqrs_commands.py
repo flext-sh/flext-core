@@ -30,7 +30,12 @@ class User(FlextModels.Entity):
     age: int = 25
 
     def to_dict(self) -> FlextTypes.Core.Dict:
-        """Serialization using FlextModels capabilities."""
+        """Serialization using FlextModels capabilities.
+
+        Returns:
+            FlextTypes.Core.Dict: Dictionary representation of the user
+
+        """
         return {
             "id": self.id,
             "name": self.name,
@@ -68,7 +73,12 @@ class UserRepository:
                 events.append(event)
 
     def get_stats(self) -> tuple[int, int]:
-        """Get repository statistics."""
+        """Get repository statistics.
+
+        Returns:
+            tuple[int, int]: Tuple of (user_count, event_count)
+
+        """
         db_result = self._container.get("user_db")
         events_result = self._container.get("events")
 
@@ -96,7 +106,15 @@ class UserCommandHandler(FlextModels.Entity):
         self._repository = repository
 
     def handle(self, message: CreateUserCommand) -> FlextResult[User]:
-        """Create user with FlextModels validation and repository."""
+        """Create user with FlextModels validation and repository.
+
+        Args:
+            message: Create user command containing user data
+
+        Returns:
+            FlextResult[User]: Created user or error
+
+        """
         # Use FlextModels.EmailAddress for validation
         email_result = FlextModels.EmailAddress.create(message.email)
         if email_result.is_failure:

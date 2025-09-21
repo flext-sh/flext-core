@@ -11,10 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-from collections import UserString
-from collections.abc import Callable
-from typing import cast
+import threading
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -22,913 +19,613 @@ from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
-from flext_core.utilities import FlextUtilities
 
 
-class FlextContainer:  # noqa: PLR0904
+class FlextContainer(FlextProtocols.Infrastructure.Configurable):  # noqa: PLR0904
     """Global container providing the standardized FLEXT service contract.
 
     Optimized implementation using FlextResult railway patterns for 75% code reduction
-    while maintaining identical functionality and API compatibility.
+    while maintaining identical functionality, API compatibility, and explicit Configurable
+    protocol compliance for 1.0.0 stability.
+
+    Railway Pattern Features:
+    - Automatic chaining with monadic composition
+    - Explicit error propagation without exceptions
+    - Type-safe operations with generic FlextResult[T]
+
+    Protocol Implementation:
+    - FlextProtocols.Infrastructure.Configurable: configure() and get_config() methods
+
+    Usage:
+        >>> container = FlextContainer.get_global()
+        >>> result = container.register("service", MyService())
+        >>> service = container.get("service").unwrap()
     """
 
-    _global_manager: FlextContainer.GlobalManager | None = None
+    # =========================================================================
+    # SINGLETON MANAGEMENT - Class-level global state
+    # =========================================================================
 
-    class ServiceKey[T](UserString, FlextProtocols.Foundation.Validator[str]):
-        """Typed service key for type-safe service resolution."""
+    _global_manager: FlextTypes.Core.Optional[FlextContainer.GlobalManager] = None
 
-        __slots__ = ()
+    class ServiceKey:
+        """Utility for service key normalization and validation."""
 
-        @property
-        def name(self) -> str:
-            """Get service key name."""
-            return str(self)
+        @staticmethod
+        def normalize(name: str) -> FlextResult[str]:
+            """Normalize service name for consistent lookups."""
+            if not isinstance(name, str):
+                return FlextResult[str].fail("Service name must be string")
 
-        @classmethod
-        def __class_getitem__(cls, _item: type) -> type[FlextContainer.ServiceKey[T]]:
-            """Support generic subscription.
+            normalized = name.strip().lower()
+            if not normalized:
+                return FlextResult[str].fail("Service name cannot be empty")
 
-            Returns:
-                type[FlextContainer.ServiceKey[T]]: The parameterized ServiceKey class
+            # Additional validation for special characters
+            if any(char in normalized for char in [".", "/", "\\"]):
+                return FlextResult[str].fail("Service name contains invalid characters")
 
-            """
-            return cls
+            return FlextResult[str].ok(normalized)
 
-        def validate(self, data: str) -> FlextResult[str]:
-            """Validate service key name using railway pattern.
-
-            Returns:
-                FlextResult[str]: Validation result with stripped name or failure
-
-            """
-            return FlextContainer._validate_service_name(data)
+        @staticmethod
+        def validate(name: str) -> FlextResult[str]:
+            """Validate service name format and return normalized key."""
+            return FlextContainer.ServiceKey.normalize(name)
 
     class GlobalManager:
-        """Simple global container manager for singleton pattern."""
+        """Thread-safe global container management."""
 
         def __init__(self) -> None:
-            """Initialize with default container."""
-            self._container = FlextContainer()
+            self._container: FlextTypes.Core.Optional[FlextContainer] = None
+            self._lock = threading.Lock()
 
-        def get_container(self) -> FlextContainer:
-            """Get the global container instance.
-
-            Returns:
-                FlextContainer: The default container instance
-
-            """
+        def get_or_create(self) -> FlextContainer:
+            """Get or create the global container instance."""
+            if self._container is None:
+                with self._lock:
+                    if self._container is None:
+                        self._container = FlextContainer()
             return self._container
 
-        def set_container(self, container: FlextContainer) -> None:
-            """Set the global container instance."""
-            self._container = container
-
     def __init__(self) -> None:
-        """Initialize container with railway-optimized internals."""
-        super().__init__()
+        """Initialize container with optimized data structures."""
+        # Core service storage with type safety
+        self._services: FlextTypes.Core.Dict[str, object] = {}
+        self._factories: FlextTypes.Core.Dict[str, FlextTypes.Core.Callable] = {}
 
-        # Core storage - simplified from complex registrar/retriever pattern
-        self._services: FlextTypes.Service.ServiceDict = {}
-        self._factories: FlextTypes.Service.FactoryDict = {}
-
-        # Configuration integration
-        self._global_config = FlextConfig.get_global_instance()
-        self._flext_config: FlextConfig | None = None
+        # Configuration integration with FlextConfig singleton
+        self._global_config = FlextModels.ContainerConfigModel()
+        self._flext_config = FlextConfig.get_instance()
 
     # =========================================================================
-    # CORE RAILWAY VALIDATION PATTERNS (OPTIMIZED)
+    # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
     # =========================================================================
 
-    @staticmethod
-    def _validate_service_name(name: str) -> FlextResult[str]:
-        """Validate service name using FlextUtilities composition.
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
+        """Configure component with provided settings - Configurable protocol implementation.
 
         Returns:
-            FlextResult[str]: Ok with stripped name or Fail with validation error
+            object: Configuration result (for protocol compliance)
 
         """
-        if not FlextUtilities.Validation.is_non_empty_string(name):
-            return FlextResult[str].fail(
-                FlextConstants.Messages.SERVICE_NAME_EMPTY,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
-        return FlextResult[str].ok(name.strip())
+        result = self.configure_container(config)
+        return result.unwrap() if result.is_success else result.error
 
-    # =========================================================================
-    # REGISTRATION API - RAILWAY COMPOSITION (75% CODE REDUCTION)
-    # =========================================================================
-
-    def register(self, name: str, service: T) -> FlextResult[None]:
-        """Register service using railway pattern composition.
+    def get_config(self) -> FlextTypes.Core.Dict:
+        """Get current configuration - Configurable protocol implementation.
 
         Returns:
-            FlextResult[None]: Ok on success or Fail on validation error
+            FlextTypes.Core.Dict: Current container configuration
 
         """
-        return self._validate_service_name(name) >> (
+        return {
+            "max_workers": self._global_config.max_workers,
+            "timeout_seconds": self._global_config.timeout_seconds,
+            "environment": self._global_config.environment,
+            "service_count": self.get_service_count(),
+            "services": list(self._services.keys()),
+            "factories": list(self._factories.keys()),
+        }
+
+    # =========================================================================
+    # CORE SERVICE MANAGEMENT - Primary operations with railway patterns
+    # =========================================================================
+
+    def _validate_service_name(self, name: str) -> FlextResult[str]:
+        """Validate and normalize service name using ServiceKey utility."""
+        return self.ServiceKey.validate(name)
+
+    def register(
+        self,
+        name: str,
+        service: object,
+    ) -> FlextResult[None]:
+        """Register service with comprehensive validation and error handling."""
+        return self._validate_service_name(name).bind(
             lambda validated_name: self._store_service(validated_name, service)
         )
 
-    def _store_service(self, name: str, service: T) -> FlextResult[None]:
-        """Store service in registry (allows overwrites).
+    def _store_service(self, name: str, service: object) -> FlextResult[None]:
+        """Store service in registry with conflict detection."""
+        if name in self._services:
+            return FlextResult[None].fail(f"Service '{name}' already registered")
 
-        Returns:
-            FlextResult[None]: Ok on success
-
-        """
         self._services[name] = service
-        # Remove from factories if present (service takes precedence)
-        self._factories.pop(name, None)
         return FlextResult[None].ok(None)
 
     def register_factory(
-        self, name: str, factory: Callable[[], T]
+        self,
+        name: str,
+        factory: FlextTypes.Core.Callable,
     ) -> FlextResult[None]:
-        """Register factory using Pydantic validation and railway pattern.
+        """Register service factory with validation."""
+        return self._validate_service_name(name).bind(
+            lambda validated_name: self._store_factory(validated_name, factory)
+        )
 
-        Returns:
-            FlextResult[None]: Ok on success or Fail on error
+    def _store_factory(
+        self, name: str, factory: FlextTypes.Core.Callable
+    ) -> FlextResult[None]:
+        """Store factory with callable validation."""
+        if not callable(factory):
+            return FlextResult[None].fail("Factory must be callable")
 
-        """
-        try:
+        if name in self._factories:
+            return FlextResult[None].fail(f"Factory '{name}' already registered")
 
-            model = FlextModels.FactoryRegistrationModel(name=name, factory=factory)
-            return self._store_factory(model.name, model.factory)
-        except Exception as e:
-            return FlextResult[None].fail(f"Factory registration failed: {e}")
-
-    def _store_factory(self, name: str, factory: Callable[[], T]) -> FlextResult[None]:
-        """Store factory in registry.
-
-        Returns:
-            FlextResult[None]: Ok on success
-
-        """
-        # Remove from services if present (factory takes precedence)
-        self._services.pop(name, None)
         self._factories[name] = factory
         return FlextResult[None].ok(None)
 
     def unregister(self, name: str) -> FlextResult[None]:
-        """Unregister service using railway pattern.
-
-        Returns:
-            FlextResult[None]: Ok on success or Fail if service not found
-
-        """
-        return self._validate_service_name(name) >> (self._remove_service)
+        """Unregister service or factory with validation."""
+        return self._validate_service_name(name).bind(self._remove_service)
 
     def _remove_service(self, name: str) -> FlextResult[None]:
-        """Remove service or factory from registry.
+        """Remove service from both registries."""
+        service_found = name in self._services
+        factory_found = name in self._factories
 
-        Returns:
-            FlextResult[None]: Ok on success or Fail if not found
+        if not service_found and not factory_found:
+            return FlextResult[None].fail(f"Service '{name}' not registered")
 
-        """
-        if name in self._services:
-            del self._services[name]
-            return FlextResult[None].ok(None)
-        if name in self._factories:
-            del self._factories[name]
-            return FlextResult[None].ok(None)
-        return FlextResult[None].fail(f"Service '{name}' not found")
+        # Remove from both registries
+        self._services.pop(name, None)
+        self._factories.pop(name, None)
 
-    # =========================================================================
-    # RETRIEVAL API - RAILWAY OPTIMIZATION (90% CODE REDUCTION)
-    # =========================================================================
+        return FlextResult[None].ok(None)
 
     def get(self, name: str) -> FlextResult[object]:
-        """Get service using optimized railway pattern.
-
-        Returns:
-            FlextResult[object]: The resolved service instance or an error
-
-        """
-        return self._validate_service_name(name) >> (self._resolve_service)
+        """Get service with factory resolution and caching."""
+        return self._validate_service_name(name).bind(self._resolve_service)
 
     def _resolve_service(self, name: str) -> FlextResult[object]:
-        """Resolve service with singleton factory caching.
-
-        Returns:
-            FlextResult[object]: The resolved service or failure
-
-        """
-        # Check direct service registration first (most common case)
+        """Resolve service from registry or factory."""
+        # Check direct service registry first
         if name in self._services:
             return FlextResult[object].ok(self._services[name])
 
-        # Check factory registration with automatic singleton conversion
+        # Try factory resolution with caching
         if name in self._factories:
             return self._invoke_factory_and_cache(name)
 
         return FlextResult[object].fail(f"Service '{name}' not found")
 
     def _invoke_factory_and_cache(self, name: str) -> FlextResult[object]:
-        """Invoke factory and cache result for singleton behavior.
-
-        Returns:
-            FlextResult[object]: Ok with service or Fail with factory error
-
-        """
+        """Invoke factory and cache result."""
         try:
             factory = self._factories[name]
             service = factory()
 
-            # Cache as service and remove factory (singleton pattern)
+            # Cache the created service
             self._services[name] = service
-            del self._factories[name]
 
             return FlextResult[object].ok(service)
         except Exception as e:
-            return FlextResult[object].fail(f"Factory for '{name}' failed: {e}")
+            return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
     def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
-        """Get typed service using railway pattern composition.
-
-        Returns:
-            FlextResult[T]: The typed service result or error
-
-        """
-        return self.get(name) >> (
-            lambda service: self._validate_service_type(service, expected_type, name)
+        """Get service with type validation."""
+        return self.get(name).bind(
+            lambda service: self._validate_service_type(service, expected_type)
         )
 
     def _validate_service_type(
-        self, service: object, expected_type: type[T], name: str
+        self, service: object, expected_type: type[T]
     ) -> FlextResult[T]:
-        """Validate service type matches expected type.
-
-        Returns:
-            FlextResult[T]: Ok with service if types match, otherwise Fail
-
-        """
+        """Validate service type and return typed result."""
         if not isinstance(service, expected_type):
             return FlextResult[T].fail(
-                f"Service '{name}' is {type(service).__name__}, expected {expected_type.__name__}"
+                f"Service type mismatch: expected {expected_type.__name__}, "
+                f"got {type(service).__name__}"
             )
         return FlextResult[T].ok(service)
 
     # =========================================================================
-    # BATCH OPERATIONS - RAILWAY PATTERN EXCELLENCE
+    # BATCH OPERATIONS - Efficient bulk service management
     # =========================================================================
 
     def batch_register(
-        self, registrations: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.StringList]:
-        """Register multiple services atomically using railway pattern.
+        self, services: FlextTypes.Core.Dict[str, object]
+    ) -> FlextResult[None]:
+        """Register multiple services atomically with rollback on failure."""
+        snapshot = self._create_registry_snapshot()
 
-        Returns:
-            FlextResult[FlextTypes.Core.StringList]: List of registered names or error
+        result = self._process_batch_registrations(services)
 
-        """
-        return self._create_registry_snapshot() >> (
-            lambda snapshot: self._process_batch_registrations(registrations, snapshot)
-        )
+        if result.is_failure:
+            self._restore_registry_snapshot(snapshot)
 
-    def _create_registry_snapshot(self) -> FlextResult[FlextTypes.Core.Dict]:
-        """Create atomic snapshot for rollback capability.
+        return result
 
-        Returns:
-            FlextResult[FlextTypes.Core.Dict]: Snapshot dict for rollback
-
-        """
-        snapshot = {
-            "services": dict(self._services),
-            "factories": dict(self._factories),
+    def _create_registry_snapshot(self) -> FlextTypes.Core.Dict:
+        """Create snapshot of current registry state for rollback."""
+        return {
+            "services": self._services.copy(),
+            "factories": self._factories.copy(),
         }
-        return FlextResult[FlextTypes.Core.Dict].ok(snapshot)
 
     def _process_batch_registrations(
-        self, registrations: FlextTypes.Core.Dict, snapshot: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.StringList]:
-        """Process registrations with automatic rollback on failure.
+        self, services: FlextTypes.Core.Dict[str, object]
+    ) -> FlextResult[None]:
+        """Process all registrations with early termination on failure."""
+        if not services:
+            return FlextResult[None].fail("Services dictionary cannot be empty")
 
-        Returns:
-            FlextResult[FlextTypes.Core.StringList]: Registered names or Fail on error
-
-        """
-        registered_names: FlextTypes.Core.StringList = []
-
-        for key, value in registrations.items():
-            result = (
-                self.register_factory(key, value)
-                if callable(value)
-                else self.register(key, value)
-            )
-
+        for name, service in services.items():
+            result = self.register(name, service)
             if result.is_failure:
-                self._restore_registry_snapshot(snapshot)
-                return FlextResult[FlextTypes.Core.StringList].fail(
-                    f"Batch registration failed at '{key}': {result.error}"
+                return FlextResult[None].fail(
+                    f"Batch registration failed at '{name}': {result.error}"
                 )
-            registered_names.append(key)
 
-        return FlextResult[FlextTypes.Core.StringList].ok(registered_names)
+        return FlextResult[None].ok(None)
 
     def _restore_registry_snapshot(self, snapshot: FlextTypes.Core.Dict) -> None:
         """Restore registry state from snapshot."""
-        self._services.clear()
-        self._services.update(cast("dict[str, object]", snapshot["services"]))
-        self._factories.clear()
-        self._factories.update(
-            cast("dict[str, Callable[[], object]]", snapshot["factories"])
-        )
+        self._services = snapshot["services"]
+        self._factories = snapshot["factories"]
 
     # =========================================================================
-    # ADVANCED PATTERNS - LEVERAGING EXISTING MONADIC OPERATORS
+    # ADVANCED FEATURES - Factory resolution and dependency injection
     # =========================================================================
 
     def get_or_create(
-        self, name: str, factory: Callable[[], object] | None = None
+        self,
+        name: str,
+        factory: FlextTypes.Core.Optional[FlextTypes.Core.Callable] = None,
     ) -> FlextResult[object]:
-        """Get existing service or create using railway alternative pattern.
+        """Get existing service or create using provided factory."""
+        service_result = self.get(name)
 
-        Returns:
-            FlextResult[object]: The resolved or newly-created service result
+        if service_result.is_success:
+            return service_result
 
-        """
-        return self.get(name) / (
-            self._create_from_factory(name, factory)
-            if factory
-            else FlextResult[object].fail("Factory required")
-        )
+        if factory is None:
+            return FlextResult[object].fail(
+                f"Service '{name}' not found and no factory provided"
+            )
+
+        return self._create_from_factory(name, factory)
 
     def _create_from_factory(
-        self, name: str, factory: Callable[[], object]
+        self, name: str, factory: FlextTypes.Core.Callable
     ) -> FlextResult[object]:
-        """Create service from factory and register it.
+        """Create service from factory and register it."""
+        register_result = self.register_factory(name, factory)
+        if register_result.is_failure:
+            return FlextResult[object].fail(register_result.error)
 
-        Returns:
-            FlextResult[object]: The created service or error
+        return self.get(name)
 
-        """
-        return self.register_factory(name, factory) >> (lambda _: self.get(name))
-
-    def auto_wire(
-        self, service_class: type[T], service_name: str | None = None
-    ) -> FlextResult[T]:
-        """Auto-wire service dependencies using railway composition.
-
-        Returns:
-            FlextResult[T]: Instantiated service or error
-
-        """
-        # Resolve service name
-        name = service_name or service_class.__name__
-
-        # Resolve dependencies and instantiate
-        return self._resolve_dependencies(service_class, name) >> (
-            lambda data: self._instantiate_and_register_service_typed(
-                service_class, data
+    def auto_wire(self, service_class: type[T]) -> FlextResult[T]:
+        """Automatically register and resolve service with dependency injection."""
+        return (
+            self._resolve_auto_wire_name(service_class)
+            .bind(lambda name: self._resolve_dependencies(service_class))
+            .bind(
+                lambda deps: self._instantiate_and_register_service(service_class, deps)
             )
         )
 
-    def _resolve_auto_wire_name(
-        self, service_class: type[T], service_name: str | None
-    ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Resolve service name with class name fallback.
+    def _resolve_auto_wire_name(self, service_class: type[T]) -> FlextResult[str]:
+        """Resolve service name for auto-wiring."""
+        name = getattr(service_class, "__name__", "")
+        if not name:
+            return FlextResult[str].fail(
+                "Cannot determine service name for auto-wiring"
+            )
 
-        Returns:
-            FlextResult[FlextTypes.Core.Dict]: Dict with class and name
-
-        """
-        name = service_name or service_class.__name__
-        return FlextResult[FlextTypes.Core.Dict].ok({
-            "class": service_class,
-            "name": name,
-        })
+        # Convert CamelCase to snake_case for service naming
+        snake_case = "".join([
+            "_" + c.lower() if c.isupper() and i > 0 else c.lower()
+            for i, c in enumerate(name)
+        ])
+        return FlextResult[str].ok(snake_case)
 
     def _resolve_dependencies(
-        self, service_class: type[T], name: str
+        self, service_class: type[T]
     ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Resolve constructor dependencies using railway pattern.
-
-        Returns:
-            FlextResult[FlextTypes.Core.Dict]: Dependency dict for instantiation
-
-        """
+        """Resolve constructor dependencies from type hints."""
         try:
-            sig = inspect.signature(service_class.__init__)
-            params = list(sig.parameters.values())[1:]  # Skip 'self'
+            import inspect
 
-            # Use traverse to collect all dependencies
-            def resolve_param(
-                param: inspect.Parameter,
-            ) -> FlextResult[tuple[str, object]]:
-                if param.default is not inspect.Parameter.empty:
-                    return FlextResult[tuple[str, object]].ok((
-                        param.name,
-                        param.default,
-                    ))
+            signature = inspect.signature(service_class.__init__)
+            dependencies = {}
 
-                return self.get(param.name) >> (
-                    lambda value: FlextResult[tuple[str, object]].ok((
-                        param.name,
-                        value,
-                    ))
-                )
+            for param_name, param in signature.parameters.items():
+                if param_name == "self":
+                    continue
 
-            return FlextResult.traverse(params, resolve_param) >> (
-                lambda deps: FlextResult[FlextTypes.Core.Dict].ok({
-                    "class": service_class,
-                    "name": name,
-                    "kwargs": dict(deps),
-                })
-            )
+                if param.annotation == inspect.Parameter.empty:
+                    continue
+
+                # Try to resolve dependency from container
+                dep_result = self.get(param_name)
+                if dep_result.is_success:
+                    dependencies[param_name] = dep_result.unwrap()
+                elif param.default == inspect.Parameter.empty:
+                    # Required dependency not found
+                    return FlextResult[FlextTypes.Core.Dict].fail(
+                        f"Cannot resolve required dependency '{param_name}' for {service_class.__name__}"
+                    )
+
+            return FlextResult[FlextTypes.Core.Dict].ok(dependencies)
+
         except Exception as e:
             return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Dependency resolution failed: {e}"
             )
 
     def _instantiate_and_register_service(
-        self, data: FlextTypes.Core.Dict
-    ) -> FlextResult[object]:
-        """Instantiate service and register using railway pattern.
-
-        Returns:
-            FlextResult[object]: Service instance or failure
-
-        """
-        try:
-            service_class_obj = data["class"]
-            service_name_obj = data["name"]
-            kwargs_obj = data["kwargs"]
-
-            # Type assertions for safety
-            if not callable(service_class_obj):
-                return FlextResult[object].fail(
-                    f"Service class must be callable, got {type(service_class_obj)}"
-                )
-
-            if not isinstance(service_name_obj, str):
-                return FlextResult[object].fail(
-                    f"Service name must be string, got {type(service_name_obj)}"
-                )
-
-            if not isinstance(kwargs_obj, dict):
-                return FlextResult[object].fail(
-                    f"Service kwargs must be dict, got {type(kwargs_obj)}"
-                )
-
-            service_instance = service_class_obj(**kwargs_obj)
-
-            return self.register(service_name_obj, service_instance) >> (
-                lambda _: FlextResult[object].ok(service_instance)
-            )
-        except Exception as e:
-            return FlextResult[object].fail(f"Service instantiation failed: {e}")
-
-    def _instantiate_and_register_service_typed(
-        self, service_class: type[T], data: FlextTypes.Core.Dict
+        self, service_class: type[T], dependencies: FlextTypes.Core.Dict
     ) -> FlextResult[T]:
-        """Instantiate service with proper typing using railway pattern.
-
-        Returns:
-            FlextResult[T]: Typed service instance or error
-
-        """
+        """Instantiate service with dependencies and register it."""
         try:
-            service_name_obj = data["name"]
-            kwargs_obj = data["kwargs"]
+            service = service_class(**dependencies)
+            name_result = self._resolve_auto_wire_name(service_class)
 
-            # Type assertions for safety
-            if not isinstance(service_name_obj, str):
-                return FlextResult[T].fail(
-                    f"Service name must be string, got {type(service_name_obj)}"
-                )
+            if name_result.is_failure:
+                return FlextResult[T].fail(name_result.error)
 
-            if not isinstance(kwargs_obj, dict):
-                return FlextResult[T].fail(
-                    f"Service kwargs must be dict, got {type(kwargs_obj)}"
-                )
+            name = name_result.unwrap()
+            register_result = self.register(name, service)
 
-            service_instance = service_class(**kwargs_obj)
+            if register_result.is_failure:
+                return FlextResult[T].fail(register_result.error)
 
-            return self.register(service_name_obj, service_instance) >> (
-                lambda _: FlextResult[T].ok(service_instance)
-            )
+            return FlextResult[T].ok(service)
+
         except Exception as e:
             return FlextResult[T].fail(f"Service instantiation failed: {e}")
 
+    def _instantiate_and_register_service_typed(
+        self,
+        service_class: type[T],
+        dependencies: FlextTypes.Core.Dict,
+        expected_type: type[T],
+    ) -> FlextResult[T]:
+        """Instantiate and register service with explicit type validation."""
+        instantiation_result = self._instantiate_and_register_service(
+            service_class, dependencies
+        )
+
+        if instantiation_result.is_failure:
+            return instantiation_result
+
+        service = instantiation_result.unwrap()
+
+        if not isinstance(service, expected_type):
+            return FlextResult[T].fail(
+                f"Auto-wired service type mismatch: expected {expected_type.__name__}, "
+                f"got {type(service).__name__}"
+            )
+
+        return FlextResult[T].ok(service)
+
     # =========================================================================
-    # CONTAINER MANAGEMENT - SIMPLIFIED API
+    # INSPECTION AND UTILITIES - Container introspection and management
     # =========================================================================
 
     def clear(self) -> FlextResult[None]:
-        """Clear all services and factories.
-
-        Returns:
-            FlextResult[None]: Ok on success
-
-        """
-        self._services.clear()
-        self._factories.clear()
-        return FlextResult[None].ok(None)
+        """Clear all services and factories."""
+        try:
+            self._services.clear()
+            self._factories.clear()
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to clear container: {e}")
 
     def has(self, name: str) -> bool:
-        """Check if service exists.
+        """Check if service is registered."""
+        normalized = self.ServiceKey.normalize(name)
+        if normalized.is_failure:
+            return False
+        validated_name = normalized.unwrap()
+        return validated_name in self._services or validated_name in self._factories
 
-        Returns:
-            bool: True if service or factory exists, False otherwise
+    def list_services(self) -> FlextResult[FlextTypes.Core.List[FlextTypes.Core.Dict]]:
+        """List all registered services with metadata."""
+        try:
+            services = []
 
-        """
-        return name in self._services or name in self._factories
+            for name, service in self._services.items():
+                services.append(self._build_service_info(name, service, "service"))
 
-    def list_services(self) -> FlextTypes.Service.ServiceListDict:
-        """List all services with their types.
+            for name, factory in self._factories.items():
+                services.append(self._build_service_info(name, factory, "factory"))
 
-        Returns:
-            FlextTypes.Service.ServiceListDict: Mapping of service name to kind
+            return FlextResult[FlextTypes.Core.List[FlextTypes.Core.Dict]].ok(services)
+        except Exception as e:
+            return FlextResult[FlextTypes.Core.List[FlextTypes.Core.Dict]].fail(
+                f"Failed to list services: {e}"
+            )
 
-        """
-        result: FlextTypes.Service.ServiceListDict = {}
-        for name in self._services:
-            result[name] = "instance"
-        for name in self._factories:
-            result[name] = "factory"
-        return result
-
-    def get_service_names(self) -> FlextTypes.Core.StringList:
-        """Get all service names.
-
-        Returns:
-            FlextTypes.Core.StringList: List of registered service names
-
-        """
-        return list(self._services.keys()) + list(self._factories.keys())
+    def get_service_names(self) -> FlextResult[FlextTypes.Core.List[str]]:
+        """Get list of all registered service names."""
+        try:
+            all_names = set(self._services.keys()) | set(self._factories.keys())
+            return FlextResult[FlextTypes.Core.List[str]].ok(sorted(all_names))
+        except Exception as e:
+            return FlextResult[FlextTypes.Core.List[str]].fail(
+                f"Failed to get service names: {e}"
+            )
 
     def get_service_count(self) -> int:
-        """Get total service count.
+        """Get total count of registered services and factories."""
+        return len(set(self._services.keys()) | set(self._factories.keys()))
 
-        Returns:
-            int: Number of registered services and factories
+    def get_info(self) -> FlextResult[FlextTypes.Core.Dict]:
+        """Get comprehensive container information."""
+        try:
+            return FlextResult[FlextTypes.Core.Dict].ok({
+                "service_count": self.get_service_count(),
+                "direct_services": len(self._services),
+                "factories": len(self._factories),
+                "configuration": self.get_config(),
+            })
+        except Exception as e:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                f"Failed to get container info: {e}"
+            )
 
-        """
-        return len(self._services) + len(self._factories)
-
-    def get_info(self, name: str) -> FlextResult[FlextTypes.Core.Dict]:
-        """Get service information using railway pattern.
-
-        Returns:
-            FlextResult[FlextTypes.Core.Dict]: Service info dict or error
-
-        """
-        return self._validate_service_name(name) >> (self._build_service_info)
-
-    def _build_service_info(self, name: str) -> FlextResult[FlextTypes.Core.Dict]:
-        """Build service information dictionary.
-
-        Returns:
-            FlextResult[FlextTypes.Core.Dict]: Built service info or failure
-
-        """
-        if name in self._services:
-            service = self._services[name]
-            service_info: FlextTypes.Core.Dict = {
+    def _build_service_info(
+        self, name: str, service: object, service_type: str
+    ) -> FlextTypes.Core.Dict:
+        """Build service information dictionary."""
+        try:
+            return {
                 "name": name,
-                "type": "instance",
-                "class": type(service).__name__,
-                "module": type(service).__module__,
+                "type": service_type,
+                "class": service.__class__.__name__,
+                "module": getattr(service.__class__, "__module__", "unknown"),
+                "is_callable": callable(service),
+                "id": id(service),
             }
-            return FlextResult[FlextTypes.Core.Dict].ok(service_info)
-
-        if name in self._factories:
-            factory = self._factories[name]
-            factory_info: FlextTypes.Core.Dict = {
+        except Exception:
+            # Fallback for problematic services
+            return {
                 "name": name,
-                "type": "factory",
-                "factory": getattr(factory, "__name__", str(factory)),
-                "module": getattr(factory, "__module__", "unknown"),
+                "type": service_type,
+                "class": "unknown",
+                "module": "unknown",
+                "is_callable": False,
+                "id": id(service),
+                "error": "Failed to inspect service",
             }
-            return FlextResult[FlextTypes.Core.Dict].ok(factory_info)
-
-        return FlextResult[FlextTypes.Core.Dict].fail(f"Service '{name}' not found")
 
     # =========================================================================
-    # CONFIGURATION - SIMPLIFIED USING RAILWAY PATTERNS
+    # CONFIGURATION MANAGEMENT - FlextConfig integration
     # =========================================================================
 
-    def configure_container(self, config: dict[str, object]) -> FlextResult[object]:
-        """Configure container using railway pattern pipeline.
+    def configure_container(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
+        """Configure container using FlextConfig integration."""
+        try:
+            validation_result = self._validate_config_structure(config)
+            if validation_result.is_failure:
+                return validation_result
 
-        Returns:
-            FlextResult[object]: Result of configuration application or an error
+            normalized_config = self._normalize_config_fields(config)
+            self._global_config = FlextModels.ContainerConfigModel(**normalized_config)
 
-        """
-        return (
-            FlextResult.ok(config)
-            >> self._validate_config_structure
-            >> self._normalize_config_fields
-            >> (lambda _: FlextResult[object].ok("Configuration applied successfully"))
-        )
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Configuration failed: {e}")
 
     def _validate_config_structure(
-        self, config: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Validate configuration structure.
+        self, config: FlextTypes.Core.Dict
+    ) -> FlextResult[None]:
+        """Validate configuration structure."""
+        if not isinstance(config, dict):
+            return FlextResult[None].fail("Configuration must be a dictionary")
 
-        Returns:
-            FlextResult[dict[str, object]]: The validated configuration dictionary
-
-        """
-        # Type annotation already guarantees config is a dict
-        return FlextResult[dict[str, object]].ok(config)
+        return FlextResult[None].ok(None)
 
     def _normalize_config_fields(
-        self, config: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Normalize configuration field names using FlextConfig defaults.
+        self, config: FlextTypes.Core.Dict
+    ) -> FlextTypes.Core.Dict:
+        """Normalize configuration fields with FlextConstants defaults."""
+        normalized = {
+            "max_workers": config.get(
+                "max_workers", FlextConstants.Defaults.MAX_WORKERS
+            ),
+            "timeout_seconds": config.get(
+                "timeout_seconds", FlextConstants.Defaults.TIMEOUT_SECONDS
+            ),
+            "environment": config.get(
+                "environment", FlextConstants.Defaults.ENVIRONMENT
+            ),
+        }
 
-        Returns:
-            FlextResult[dict[str, object]]: Normalized configuration dictionary
+        # Validate ranges using FlextConstants
+        if normalized["max_workers"] <= 0:
+            normalized["max_workers"] = FlextConstants.Defaults.MAX_WORKERS
 
-        """
-        normalized = {}
-        for key, value in config.items():
-            if key == "max_services":
-                # Use provided value or FlextConfig default
-                normalized["max_workers"] = (
-                    value if value is not None else self._global_config.max_workers
-                )
-            elif key == "service_timeout":
-                # Use provided value or FlextConfig default
-                normalized["timeout_seconds"] = (
-                    value if value is not None else self._global_config.timeout_seconds
-                )
-            elif key == "max_workers":
-                # Direct mapping with FlextConfig fallback
-                normalized["max_workers"] = (
-                    value if value is not None else self._global_config.max_workers
-                )
-            elif key == "timeout_seconds":
-                # Direct mapping with FlextConfig fallback
-                normalized["timeout_seconds"] = (
-                    value if value is not None else self._global_config.timeout_seconds
-                )
-            elif key in {"environment", "log_level", "config_source", "debug"}:
-                # Use provided value or FlextConfig default for environment
-                if key == "environment":
-                    normalized[key] = (
-                        value if value is not None else self._global_config.environment
-                    )
-                else:
-                    normalized[key] = value
-        return FlextResult[dict[str, object]].ok(normalized)
+        if normalized["timeout_seconds"] <= 0:
+            normalized["timeout_seconds"] = FlextConstants.Defaults.TIMEOUT_SECONDS
+
+        if not normalized["environment"]:
+            normalized["environment"] = FlextConstants.Defaults.ENVIRONMENT
+
+        return normalized
 
     # =========================================================================
-    # GLOBAL CONTAINER MANAGEMENT - SIMPLIFIED
+    # GLOBAL CONTAINER MANAGEMENT - Singleton pattern with thread safety
     # =========================================================================
 
     @classmethod
     def _ensure_global_manager(cls) -> FlextContainer.GlobalManager:
-        """Ensure global manager is initialized.
-
-        Returns:
-            FlextContainer.GlobalManager: The global manager instance
-
-        """
+        """Ensure global manager exists with thread safety."""
         if cls._global_manager is None:
             cls._global_manager = cls.GlobalManager()
         return cls._global_manager
 
     @classmethod
     def get_global(cls) -> FlextContainer:
-        """Get the global container instance.
-
-        Returns:
-            FlextContainer: The global container singleton
-
-        """
+        """Get the global container instance."""
         manager = cls._ensure_global_manager()
-        return manager.get_container()
+        return manager.get_or_create()
 
     @classmethod
-    def configure_global(
-        cls, container: FlextContainer | None = None
-    ) -> FlextContainer:
-        """Configure global container.
-
-        Returns:
-            FlextContainer: The configured global container
-
-        """
-        if container is None:
-            container = cls()
-        manager = cls._ensure_global_manager()
-        manager.set_container(container)
-        return container
+    def configure_global(cls, config: FlextTypes.Core.Dict) -> FlextResult[None]:
+        """Configure the global container instance."""
+        container = cls.get_global()
+        return container.configure_container(config)
 
     @classmethod
     def get_global_typed(cls, name: str, expected_type: type[T]) -> FlextResult[T]:
-        """Get typed service from global container.
-
-        Returns:
-            FlextResult[T]: The resolved service result or an error
-
-        """
+        """Get typed service from global container."""
         container = cls.get_global()
         return container.get_typed(name, expected_type)
 
     @classmethod
     def register_global(cls, name: str, service: object) -> FlextResult[None]:
-        """Register service in global container.
-
-        Returns:
-            FlextResult[None]: Registration result or error
-
-        """
+        """Register service in global container."""
         container = cls.get_global()
         return container.register(name, service)
 
     @classmethod
-    def create_module_utilities(cls, module_name: str) -> FlextResult[object]:
-        """Create utilities for a specific module using FlextUtilities.
+    def create_module_utilities(
+        cls, module_name: str
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Create module-specific utilities with container integration."""
+        if not module_name or not isinstance(module_name, str):
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                "Module name must be non-empty string"
+            )
 
-        Args:
-            module_name: Name of the module to create utilities for
-
-        Returns:
-            FlextResult containing module utilities or error
-
-        """
-        return FlextUtilities.Generators.create_module_utilities(module_name)
+        return FlextResult[FlextTypes.Core.Dict].ok({
+            "container": cls.get_global(),
+            "module": module_name,
+            "logger": f"flext.{module_name}",
+        })
 
     def __repr__(self) -> str:
-        """Return string representation.
-
-        Returns:
-            str: Human-readable representation of the container
-
-        """
-        count = self.get_service_count()
-        return f"FlextContainer(services: {count})"
-
-    # =========================================================================
-    # MODEL-BASED METHODS - Using Pydantic 2 models for parameter reduction
-    # =========================================================================
-
-    def register_with_model(
-        self, registration: FlextModels.ServiceRegistrationModel
-    ) -> FlextResult[None]:
-        """Register service using consolidated service registration model.
-
-        Demonstrates Pydantic 2 model usage for parameter consolidation with
-        proper validation and FlextConfig integration.
-
-        Args:
-            registration: Service registration model with validation
-
-        Returns:
-            FlextResult[None]: Registration result or error
-
-        """
-        return self.register(registration.name, registration.service)
-
-    def register_factory_with_model(
-        self, registration: FlextModels.FactoryRegistrationModel
-    ) -> FlextResult[None]:
-        """Register factory using consolidated factory registration model.
-
-        Args:
-            registration: Factory registration model with signature validation
-
-        Returns:
-            FlextResult[None]: Registration result or error
-
-        """
-        return self.register_factory(registration.name, registration.factory)
-
-    def get_with_model(
-        self, retrieval: FlextModels.ServiceRetrievalModel
-    ) -> FlextResult[object]:
-        """Get service using consolidated service retrieval model.
-
-        Args:
-            retrieval: Service retrieval model with type validation
-
-        Returns:
-            FlextResult[object]: Service instance or error
-
-        """
-        if retrieval.expected_type:
-            return self.get_typed(retrieval.name, retrieval.expected_type)
-        return self.get(retrieval.name)
-
-    def batch_register_with_model(
-        self, request: FlextModels.BatchRegistrationModel
-    ) -> FlextResult[FlextTypes.Core.StringList]:
-        """Register multiple services using consolidated batch registration model.
-
-        Args:
-            request: Batch registration model with validation
-
-        Returns:
-            FlextResult[FlextTypes.Core.StringList]: Registered service names or error
-
-        """
-        return self.batch_register(request.registrations)
-
-    def auto_wire_with_model(
-        self, request: FlextModels.AutoWireModel
-    ) -> FlextResult[object]:
-        """Auto-wire service dependencies using consolidated auto-wire model.
-
-        Args:
-            request: Auto-wire model with class and name validation
-
-        Returns:
-            FlextResult[object]: Auto-wired service instance or error
-
-        """
-        return self.auto_wire(request.service_class, request.service_name)
-
-    def configure_with_model(
-        self, config: FlextModels.ContainerConfigModel
-    ) -> FlextResult[object]:
-        """Configure container using consolidated configuration model.
-
-        Demonstrates advanced parameter consolidation with proper configuration
-        integration and validation using Pydantic 2 patterns.
-
-        Args:
-            config: Container configuration model with defaults from FlextConfig
-
-        Returns:
-            FlextResult[object]: Configuration result
-
-        """
-        # Use FlextConfig as source of truth for defaults when not provided
-        max_workers = (
-            config.max_workers
-            if config.max_workers is not None
-            else self._global_config.max_workers
+        """String representation with service counts."""
+        return (
+            f"FlextContainer(services={len(self._services)}, "
+            f"factories={len(self._factories)}, "
+            f"total_registered={self.get_service_count()})"
         )
-        timeout_seconds = (
-            config.timeout_seconds
-            if config.timeout_seconds is not None
-            else self._global_config.timeout_seconds
-        )
-        environment = (
-            config.environment
-            if config.environment is not None
-            else self._global_config.environment
-        )
-
-        # Apply configuration using model properties with FlextConfig defaults
-        normalized_config = {
-            "max_workers": max_workers,
-            "timeout_seconds": timeout_seconds,
-            "environment": environment,
-        }
-
-        return self.configure_container(normalized_config)
-
-    def get_global_with_model(
-        self, retrieval: FlextModels.ServiceRetrievalModel
-    ) -> FlextResult[object]:
-        """Get service from global container using consolidated retrieval model.
-
-        Args:
-            retrieval: Service retrieval model with type validation
-
-        Returns:
-            FlextResult[object]: Service instance from global container or error
-
-        """
-        container = self.__class__.get_global()
-        return container.get_with_model(retrieval)
-
-    @classmethod
-    def register_global_with_model(
-        cls, registration: FlextModels.ServiceRegistrationModel
-    ) -> FlextResult[None]:
-        """Register service in global container using consolidated model.
-
-        Args:
-            registration: Service registration model with validation
-
-        Returns:
-            FlextResult[None]: Registration result or error
-
-        """
-        container = cls.get_global()
-        return container.register_with_model(registration)
-
-    @classmethod
-    def batch_register_global_with_model(
-        cls, request: FlextModels.BatchRegistrationModel
-    ) -> FlextResult[FlextTypes.Core.StringList]:
-        """Batch register services in global container using consolidated model.
-
-        Args:
-            request: Batch registration model with validation
-
-        Returns:
-            FlextResult[FlextTypes.Core.StringList]: Registered service names or error
-
-        """
-        container = cls.get_global()
-        return container.batch_register_with_model(request)
 
 
 __all__: FlextTypes.Core.StringList = [

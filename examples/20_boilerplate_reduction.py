@@ -44,7 +44,12 @@ class TraditionalDatabaseService:
         self.is_connected = False
 
     def connect(self) -> bool:
-        """Connect to database - lots of manual error handling."""
+        """Connect to database - lots of manual error handling.
+
+        Returns:
+            bool: True if connection successful, False otherwise
+
+        """
         try:
             print(f"Connecting to {self.host}:{self.port}...")
 
@@ -68,7 +73,15 @@ class TraditionalDatabaseService:
             return False
 
     def execute_query(self, query: str) -> Sequence[Mapping[str, object]] | None:
-        """Execute query - manual error handling and validation."""
+        """Execute query - manual error handling and validation.
+
+        Args:
+            query: SQL query string to execute
+
+        Returns:
+            Sequence[Mapping[str, object]] | None: Query results or None if failed
+
+        """
         try:
             if not self.is_connected:
                 print("ERROR: Not connected to database")
@@ -99,7 +112,12 @@ class TraditionalDatabaseService:
             return None
 
     def disconnect(self) -> bool:
-        """Disconnect from database."""
+        """Disconnect from database.
+
+        Returns:
+            bool: True if disconnection successful, False otherwise
+
+        """
         try:
             if self.is_connected:
                 print("Disconnecting...")
@@ -129,11 +147,28 @@ class UltraModernDatabaseService:
         query: str,
         user_id: str = "anonymous",
     ) -> FlextResult[Sequence[Mapping[str, object]]]:
-        """Complete business pipeline in railway pattern."""
+        """Complete business pipeline in railway pattern.
+
+        Args:
+            query: SQL query string to execute
+            user_id: User ID for processing context
+
+        Returns:
+            FlextResult[Sequence[Mapping[str, object]]]: Query results wrapped in FlextResult
+
+        """
         return self._validate_query(query).map(lambda _: self._create_results(user_id))
 
     def _validate_query(self, query: str) -> FlextResult[str]:
-        """Validate query using FlextResult pattern."""
+        """Validate query using FlextResult pattern.
+
+        Args:
+            query: SQL query string to validate
+
+        Returns:
+            FlextResult[str]: Validated query wrapped in FlextResult
+
+        """
         if not query or "SELECT" not in query.upper():
             return FlextResult[str].fail("Invalid query")
         return FlextResult[str].ok(query)
@@ -142,7 +177,15 @@ class UltraModernDatabaseService:
         self,
         user_id: str = "anonymous",
     ) -> Sequence[Mapping[str, object]]:
-        """Create enhanced results with metadata."""
+        """Create enhanced results with metadata.
+
+        Args:
+            user_id: User ID for metadata
+
+        Returns:
+            Sequence[Mapping[str, object]]: Enhanced results with metadata
+
+        """
         return [
             {
                 "id": i,
@@ -171,7 +214,15 @@ class EnterpriseServiceOrchestrator:
         self,
         data: Mapping[str, object],
     ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Complete business process orchestration."""
+        """Complete business process orchestration.
+
+        Args:
+            data: Business data to process
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: Orchestrated business result
+
+        """
         return (
             self._validate_data(data).map(self._process_data).map(self._enhance_result)
         )
@@ -180,13 +231,29 @@ class EnterpriseServiceOrchestrator:
         self,
         data: Mapping[str, object],
     ) -> FlextResult[Mapping[str, object]]:
-        """Validate business data."""
+        """Validate business data.
+
+        Args:
+            data: Business data to validate
+
+        Returns:
+            FlextResult[Mapping[str, object]]: Validated data wrapped in FlextResult
+
+        """
         if not data.get("action"):
             return FlextResult[Mapping[str, object]].fail("Action required")
         return FlextResult[Mapping[str, object]].ok(data)
 
     def _process_data(self, data: Mapping[str, object]) -> FlextTypes.Core.Dict:
-        """Process business data."""
+        """Process business data.
+
+        Args:
+            data: Business data to process
+
+        Returns:
+            FlextTypes.Core.Dict: Processed business data
+
+        """
         return {
             **dict(data),
             "processed": True,
@@ -194,7 +261,15 @@ class EnterpriseServiceOrchestrator:
         }
 
     def _enhance_result(self, result: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
-        """Enhance result with metadata."""
+        """Enhance result with metadata.
+
+        Args:
+            result: Result data to enhance
+
+        Returns:
+            FlextTypes.Core.Dict: Enhanced result with metadata
+
+        """
         return {
             **result,
             "service": "EnterpriseOrchestrator",
@@ -208,7 +283,12 @@ class EnterpriseServiceOrchestrator:
 
 
 def demonstrate_traditional_approach() -> int:
-    """Demonstrate traditional approach with MASSIVE boilerplate (90+ lines)."""
+    """Demonstrate traditional approach with MASSIVE boilerplate (90+ lines).
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("\n" + "=" * 80)
     print("📊 TRADITIONAL APPROACH - 78 lines of repetitive boilerplate code")
     print("=" * 80)
@@ -250,6 +330,10 @@ def demonstrate_ultra_modern_approach() -> int:
     """Demonstrate ULTRA-MODERN approach with MASSIVE boilerplate reduction.
 
     29 lines vs 77 traditional lines!
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
     """
     print("\n" + "=" * 80)
     print(
@@ -289,7 +373,12 @@ def demonstrate_ultra_modern_approach() -> int:
 
 
 def demonstrate_business_orchestration() -> int:
-    """Demonstrate service orchestration with full functionality."""
+    """Demonstrate service orchestration with full functionality.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("\n" + "=" * 80)
     print("🏢 ENTERPRISE ORCHESTRATION - Complete business process in 3 lines!")
     print("=" * 80)
@@ -333,7 +422,12 @@ def demonstrate_business_orchestration() -> int:
 
 
 def demonstrate_boilerplate_metrics() -> int:
-    """Demonstrate the massive difference in code metrics."""
+    """Demonstrate the massive difference in code metrics.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("\n" + "=" * 80)
     print("📊 BOILERPLATE REDUCTION METRICS - STUNNING COMPARISON")
     print("=" * 80)
@@ -377,7 +471,12 @@ def demonstrate_boilerplate_metrics() -> int:
 
 
 def main() -> int:
-    """Main demonstration - showcasing MASSIVE boilerplate reduction with FLEXT Core."""
+    """Main demonstration - showcasing MASSIVE boilerplate reduction with FLEXT Core.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("🎯 MAXIMUM BOILERPLATE REDUCTION DEMONSTRATION")
     print(
         "Showcasing 63% code reduction with 300% more functionality using FLEXT Core!",

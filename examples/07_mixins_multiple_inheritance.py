@@ -30,7 +30,12 @@ class User:
         self.age = age
 
     def __str__(self) -> str:
-        """String representation of user."""
+        """String representation of user.
+
+        Returns:
+            str: Formatted user string
+
+        """
         return f"User({self.username}, {self.email}, {self.age})"
 
 
@@ -46,7 +51,17 @@ class EnhancedUserService:
         self._logger = FlextLogger(self.__class__.__name__)
 
     def create_user(self, username: str, email: str, age: int) -> FlextResult[User]:
-        """Create a user with validation and logging."""
+        """Create a user with validation and logging.
+
+        Args:
+            username: User's username
+            email: User's email address
+            age: User's age
+
+        Returns:
+            FlextResult[User]: Created user or error
+
+        """
         # Validate input using mixins utility
         if not username or len(username) < MIN_USERNAME_LENGTH:
             error = f"Username must be at least {MIN_USERNAME_LENGTH} characters"
@@ -74,7 +89,15 @@ class EnhancedUserService:
             return FlextResult[User].fail(error)
 
     def get_user_summary(self, user: User) -> FlextTypes.Core.Dict:
-        """Get user summary with mixins functionality."""
+        """Get user summary with mixins functionality.
+
+        Args:
+            user: User object to summarize
+
+        Returns:
+            FlextTypes.Core.Dict: User summary dictionary
+
+        """
         # Use mixins to add metadata
         summary = {
             "username": user.username,
@@ -96,7 +119,15 @@ class CacheableService:
         self._logger = FlextLogger(self.__class__.__name__)
 
     def get_cached_data(self, key: str) -> FlextResult[object]:
-        """Get data from cache."""
+        """Get data from cache.
+
+        Args:
+            key: Cache key to retrieve
+
+        Returns:
+            FlextResult[object]: Cached data or error
+
+        """
         if key in self._cache:
             self._logger.info("Cache hit", key=key)
             return FlextResult[object].ok(self._cache[key])
@@ -105,7 +136,16 @@ class CacheableService:
         return FlextResult[object].fail(f"Key '{key}' not found in cache")
 
     def set_cached_data(self, key: str, value: object) -> FlextResult[None]:
-        """Set data in cache."""
+        """Set data in cache.
+
+        Args:
+            key: Cache key
+            value: Value to cache
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         try:
             self._cache[key] = value
             self._logger.info("Data cached", key=key)
@@ -116,7 +156,12 @@ class CacheableService:
             return FlextResult[None].fail(error)
 
     def clear_cache(self) -> FlextResult[int]:
-        """Clear cache and return count of items cleared."""
+        """Clear cache and return count of items cleared.
+
+        Returns:
+            FlextResult[int]: Number of items cleared or error
+
+        """
         count = len(self._cache)
         self._cache.clear()
         self._logger.info("Cache cleared", items_cleared=count)
@@ -131,7 +176,15 @@ class ValidationService:
         self._logger = FlextLogger(self.__class__.__name__)
 
     def validate_email(self, email: str) -> FlextResult[bool]:
-        """Validate email format."""
+        """Validate email format.
+
+        Args:
+            email: Email address to validate
+
+        Returns:
+            FlextResult[bool]: Validation result or error
+
+        """
         if not email:
             return FlextResult[bool].fail("Email cannot be empty")
 
@@ -143,7 +196,16 @@ class ValidationService:
         return FlextResult[bool].ok(data=True)
 
     def validate_age(self, age: int, min_age: int = 13) -> FlextResult[bool]:
-        """Validate age requirements."""
+        """Validate age requirements.
+
+        Args:
+            age: Age to validate
+            min_age: Minimum age requirement (default: 13)
+
+        Returns:
+            FlextResult[bool]: Validation result or error
+
+        """
         if age < min_age:
             error = f"Age {age} is below minimum {min_age}"
             self._logger.warning("Age validation failed", age=age, min_age=min_age)
@@ -169,7 +231,17 @@ class ComposedUserManager:
         email: str,
         age: int,
     ) -> FlextResult[User]:
-        """Create user with validation and caching."""
+        """Create user with validation and caching.
+
+        Args:
+            username: User's username
+            email: User's email address
+            age: User's age
+
+        Returns:
+            FlextResult[User]: Created user or error
+
+        """
         # Step 1: Validate email
         email_validation = self._validation_service.validate_email(email)
         if email_validation.is_failure:
@@ -211,7 +283,15 @@ class ComposedUserManager:
         return FlextResult[User].ok(user)
 
     def get_user_info(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
-        """Get detailed user information."""
+        """Get detailed user information.
+
+        Args:
+            username: Username to retrieve information for
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: User information or error
+
+        """
         cache_key = f"user_{username}"
         cached_result = self._cache_service.get_cached_data(cache_key)
 

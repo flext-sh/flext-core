@@ -43,7 +43,7 @@ class FlextUtilities:
 
     MIN_TOKEN_LENGTH = MIN_TOKEN_LENGTH
 
-    class Validation:
+    class Validation:  # noqa: PLR0904
         """Unified validation patterns using railway composition."""
 
         @staticmethod
@@ -634,10 +634,10 @@ class FlextUtilities:
         @staticmethod
         def clear_object_cache(obj: object) -> FlextResult[None]:
             """Clear cache for object if it has cache-related attributes.
-            
+
             Args:
                 obj: Object to clear cache for
-                
+
             Returns:
                 FlextResult indicating success or failure
 
@@ -658,7 +658,9 @@ class FlextUtilities:
                         cache_attr = getattr(obj, attr_name, None)
                         if cache_attr is not None:
                             # Clear dict-like caches
-                            if hasattr(cache_attr, "clear") and callable(cache_attr.clear):
+                            if hasattr(cache_attr, "clear") and callable(
+                                cache_attr.clear
+                            ):
                                 cache_attr.clear()
                                 cleared_count += 1
                             # Reset to None for simple cached values
@@ -674,10 +676,10 @@ class FlextUtilities:
         @staticmethod
         def has_cache_attributes(obj: object) -> bool:
             """Check if object has any cache-related attributes.
-            
+
             Args:
                 obj: Object to check for cache attributes
-                
+
             Returns:
                 True if object has cache attributes, False otherwise
 
@@ -901,13 +903,19 @@ class FlextUtilities:
 
             if thread.is_alive():
                 # Thread is still running, timeout occurred
-                return FlextResult[TTimeout].fail(f"Operation timed out after {timeout_seconds} seconds")
+                return FlextResult[TTimeout].fail(
+                    f"Operation timed out after {timeout_seconds} seconds"
+                )
 
             if exception_container[0]:
-                return FlextResult[TTimeout].fail(f"Operation failed with exception: {exception_container[0]}")
+                return FlextResult[TTimeout].fail(
+                    f"Operation failed with exception: {exception_container[0]}"
+                )
 
             if result_container[0] is None:
-                return FlextResult[TTimeout].fail("Operation completed but returned no result")
+                return FlextResult[TTimeout].fail(
+                    "Operation completed but returned no result"
+                )
 
             return result_container[0]
 
@@ -972,8 +980,7 @@ class FlextUtilities:
 
                 # Convert list of non-dict items to table
                 return FlextResult[list[dict[str, object]]].ok([
-                    {"index": i, "value": str(item)}
-                    for i, item in enumerate(data)
+                    {"index": i, "value": str(item)} for i, item in enumerate(data)
                 ])
 
             # Handle single dictionary
@@ -996,14 +1003,10 @@ class FlextUtilities:
                         for key, value in obj_dict.items()
                         if not key.startswith("_")  # Skip private attributes
                     ])
-                return FlextResult[list[dict[str, object]]].ok([
-                    {"object": str(data)}
-                ])
+                return FlextResult[list[dict[str, object]]].ok([{"object": str(data)}])
 
             # Handle primitive values
-            return FlextResult[list[dict[str, object]]].ok([
-                {"value": str(data)}
-            ])
+            return FlextResult[list[dict[str, object]]].ok([{"value": str(data)}])
 
     class TypeGuards:
         """Type guard utilities for runtime type checking."""

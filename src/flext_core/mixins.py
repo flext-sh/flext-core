@@ -259,9 +259,11 @@ class FlextMixins:
         FlextMixins.create_timestamp_fields_with_config(timestamp_config)
 
     @staticmethod
-    def create_timestamp_fields_with_config(config: FlextModels.TimestampConfig) -> None:
+    def create_timestamp_fields_with_config(
+        config: FlextModels.TimestampConfig,
+    ) -> None:
         """Create timestamp fields for object using TimestampConfig model.
-        
+
         Args:
             config: TimestampConfig containing object and timestamp settings
 
@@ -530,7 +532,9 @@ class FlextMixins:
         # Try __dict__ method with proper type casting
         if hasattr(obj, "__dict__"):
             obj_dict = obj.__dict__
-            return dict(obj_dict) if isinstance(obj_dict, dict) else {"__dict__": obj_dict}
+            return (
+                dict(obj_dict) if isinstance(obj_dict, dict) else {"__dict__": obj_dict}
+            )
 
         # Fallback to type and value representation
         return {"type": type(obj).__name__, "value": str(obj)}

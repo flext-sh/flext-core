@@ -22,7 +22,7 @@ from flext_core import (
 )
 
 
-class FlextTestsBuilders:
+class FlextTestsBuilders:  # noqa: PLR0904
     """Unified test builders for FLEXT ecosystem.
 
     Single responsibility class implementing Builder pattern with fluent interface

@@ -45,7 +45,17 @@ class User:
 
     @classmethod
     def create_validated(cls, name: str, email: str, age: int) -> FlextResult[User]:
-        """Create user with FLEXT Core validation."""
+        """Create user with FLEXT Core validation.
+
+        Args:
+            name: User's name (2-100 characters)
+            email: User's email address
+            age: User's age (18-120)
+
+        Returns:
+            FlextResult[User]: Created user or validation error
+
+        """
         # Use FlextModels and FlextUtilities directly
         # Validate name
         if not name or len(name) < 2 or len(name) > 100:
@@ -88,7 +98,16 @@ class Order:
 
     @classmethod
     def create_validated(cls, user_id: str, total: float) -> FlextResult[Order]:
-        """Create order with validation using FLEXT Core."""
+        """Create order with validation using FLEXT Core.
+
+        Args:
+            user_id: ID of the user placing the order
+            total: Order total amount (must be positive)
+
+        Returns:
+            FlextResult[Order]: Created order or validation error
+
+        """
         # Use direct validation with existing utilities
         if not user_id:
             return FlextResult[Order].fail("User ID cannot be None")
@@ -124,7 +143,12 @@ class UserCreatedEvent:
         self.event_type = "user_created"
 
     def to_entity(self) -> FlextResult[FlextTypes.Core.Dict]:
-        """Convert event to entity dictionary."""
+        """Convert event to entity dictionary.
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: Event data dictionary or error
+
+        """
         event_data: FlextTypes.Core.Dict = {
             "event_id": self.event_id,
             "event_type": self.event_type,
@@ -153,7 +177,12 @@ class UserService(FlextProtocols.Domain.Service):
         self._is_started = False
 
     def start(self) -> FlextResult[None]:
-        """Start service using FlextProtocols pattern."""
+        """Start service using FlextProtocols pattern.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self._is_started:
             return FlextResult[None].fail("Service already started")
 
@@ -162,7 +191,12 @@ class UserService(FlextProtocols.Domain.Service):
         return FlextResult[None].ok(None)
 
     def stop(self) -> FlextResult[None]:
-        """Stop service using FlextProtocols pattern."""
+        """Stop service using FlextProtocols pattern.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if not self._is_started:
             return FlextResult[None].fail("Service not started")
 
@@ -171,7 +205,12 @@ class UserService(FlextProtocols.Domain.Service):
         return FlextResult[None].ok(None)
 
     def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
-        """Health check using FlextProtocols pattern."""
+        """Health check using FlextProtocols pattern.
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: Health status dictionary or error
+
+        """
         health_status: FlextTypes.Core.Dict = {
             "status": "healthy" if self._is_started else "stopped",
             "users_count": len(self._users),
@@ -180,13 +219,32 @@ class UserService(FlextProtocols.Domain.Service):
         return FlextResult[FlextTypes.Core.Dict].ok(health_status)
 
     def __call__(self, *args: object, **kwargs: object) -> object:
-        """Make service callable (required by FlextProtocols.Domain.Service)."""
+        """Make service callable (required by FlextProtocols.Domain.Service).
+
+        Args:
+            *args: Variable length argument list (unused)
+            **kwargs: Arbitrary keyword arguments (unused)
+
+        Returns:
+            object: Service call result
+
+        """
         # Arguments are required by protocol but not used in this implementation
         _ = args, kwargs
         return FlextResult[object].ok("UserService called")
 
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
-        """Create user with business validation."""
+        """Create user with business validation.
+
+        Args:
+            name: User's name
+            email: User's email address
+            age: User's age
+
+        Returns:
+            FlextResult[User]: Created user or error
+
+        """
         if not self._is_started:
             return FlextResult[User].fail("Service not started")
 
@@ -220,7 +278,15 @@ class UserRepository(FlextProtocols.Domain.Repository[User]):
         self._storage: dict[str, User] = {}
 
     def get_by_id(self, entity_id: str) -> FlextResult[User]:
-        """Get user by ID using repository pattern."""
+        """Get user by ID using repository pattern.
+
+        Args:
+            entity_id: User ID to retrieve
+
+        Returns:
+            FlextResult[User]: Found user or error
+
+        """
         if entity_id in self._storage:
             user = self._storage[entity_id]
             self._logger.info("User found", user_id=entity_id)
@@ -230,13 +296,29 @@ class UserRepository(FlextProtocols.Domain.Repository[User]):
         return FlextResult[User].fail(f"User with ID {entity_id} not found")
 
     def save(self, entity: User) -> FlextResult[User]:
-        """Save user using repository pattern."""
+        """Save user using repository pattern.
+
+        Args:
+            entity: User entity to save
+
+        Returns:
+            FlextResult[User]: Saved user or error
+
+        """
         self._storage[entity.id] = entity
         self._logger.info("User saved", user_id=entity.id)
         return FlextResult[User].ok(entity)
 
     def delete(self, entity_id: str) -> FlextResult[None]:
-        """Delete user by ID."""
+        """Delete user by ID.
+
+        Args:
+            entity_id: User ID to delete
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if entity_id in self._storage:
             del self._storage[entity_id]
             self._logger.info("User deleted", user_id=entity_id)
@@ -272,7 +354,15 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         self._logger = FlextLogger("flext.handlers.create_user")
 
     def handle_command(self, command: CreateUserCommand) -> FlextResult[User]:
-        """Handle create user command."""
+        """Handle create user command.
+
+        Args:
+            command: Create user command to process
+
+        Returns:
+            FlextResult[User]: Created user or error
+
+        """
         self._logger.info(
             "Processing create user command",
             command_id=command.command_id,
@@ -302,7 +392,15 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         return user_result
 
     def can_handle(self, message_type: object) -> bool:
-        """Check if handler can execute command type."""
+        """Check if handler can execute command type.
+
+        Args:
+            message_type: Type of message to check
+
+        Returns:
+            bool: True if handler can process the message type
+
+        """
         return message_type is CreateUserCommand
 
 
@@ -359,7 +457,12 @@ def demonstrate_business_architecture() -> None:
 
     # Performance tracking
     def business_operation() -> FlextResult[str]:
-        """Enterprise operation with performance tracking."""
+        """Enterprise operation with performance tracking.
+
+        Returns:
+            FlextResult[str]: Operation result or error
+
+        """
         return FlextResult[str].ok("Enterprise operation completed")
 
     result = business_operation()

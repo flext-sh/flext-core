@@ -293,8 +293,8 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 # Handle FlextResult-like objects
                 if hasattr(result, "is_success") and hasattr(result, "is_failure"):
                     if getattr(result, "is_failure", False):
-                        error_msg = (
-                            getattr(result, "error", f"{operation.title()} validation failed")
+                        error_msg = getattr(
+                            result, "error", f"{operation.title()} validation failed"
                         )
                         error_code = (
                             getattr(result, "error_code", None)

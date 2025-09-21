@@ -10,7 +10,6 @@ from collections.abc import Callable
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
@@ -115,7 +114,7 @@ class FlextProcessing:
             if registration.name in self._handlers:
                 return FlextResult[None].fail(
                     f"Handler '{registration.name}' already registered",
-                    error_code="HANDLER_ALREADY_EXISTS"
+                    error_code="HANDLER_ALREADY_EXISTS",
                 )
 
             # Check handler registry size limits
@@ -123,14 +122,14 @@ class FlextProcessing:
             if len(self._handlers) >= max_handlers:
                 return FlextResult[None].fail(
                     f"Handler registry full: {len(self._handlers)}/{max_handlers} handlers registered",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             # Validate handler safety
             if not FlextProcessing.is_handler_safe(registration.handler):
                 return FlextResult[None].fail(
                     f"Handler '{registration.name}' is not safe (must have handle method or be callable)",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             # Validate handler using the model's built-in validation
@@ -147,8 +146,7 @@ class FlextProcessing:
             """
             if name not in self._handlers:
                 return FlextResult[object].fail(
-                    f"Handler '{name}' not found",
-                    error_code="NOT_FOUND_ERROR"
+                    f"Handler '{name}' not found", error_code="NOT_FOUND_ERROR"
                 )
             return FlextResult[object].ok(self._handlers[name])
 
@@ -197,12 +195,11 @@ class FlextProcessing:
 
                 return FlextResult[object].fail(
                     f"Handler '{name}' does not implement handle method",
-                    error_code="NOT_FOUND_ERROR"
+                    error_code="NOT_FOUND_ERROR",
                 )
             except Exception as e:
                 return FlextResult[object].fail(
-                    f"Handler execution failed: {e}",
-                    error_code="PROCESSING_ERROR"
+                    f"Handler execution failed: {e}", error_code="PROCESSING_ERROR"
                 )
 
         def count(self) -> int:
@@ -263,7 +260,11 @@ class FlextProcessing:
             return FlextUtilities.Reliability.with_fallback(
                 lambda: self.execute(config.handler_name, config.request_data),
                 *[
-                    (lambda fallback=fallback: self.execute(fallback, config.request_data))
+                    (
+                        lambda fallback=fallback: self.execute(
+                            fallback, config.request_data
+                        )
+                    )
                     for fallback in config.fallback_handlers
                 ],
             )
@@ -283,7 +284,7 @@ class FlextProcessing:
             if validation_result.is_failure:
                 return FlextResult[list[object]].fail(
                     f"Batch processing configuration validation failed: {validation_result.error}",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             # Validate batch size limits
@@ -291,7 +292,7 @@ class FlextProcessing:
             if len(config.data_items) > max_batch_size:
                 return FlextResult[list[object]].fail(
                     f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             # Convert data_items to handler execution tuples
@@ -303,7 +304,7 @@ class FlextProcessing:
                 else:
                     return FlextResult[list[object]].fail(
                         "Each data item must be a tuple of (handler_name, request_data)",
-                        error_code="VALIDATION_ERROR"
+                        error_code="VALIDATION_ERROR",
                     )
 
             return FlextResult.parallel_map(
@@ -398,13 +399,13 @@ class FlextProcessing:
             if timeout_seconds < FlextConstants.Container.MIN_TIMEOUT_SECONDS:
                 return FlextResult[object].fail(
                     f"Timeout {timeout_seconds} is below minimum {FlextConstants.Container.MIN_TIMEOUT_SECONDS}",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             if timeout_seconds > FlextConstants.Container.MAX_TIMEOUT_SECONDS:
                 return FlextResult[object].fail(
                     f"Timeout {timeout_seconds} exceeds maximum {FlextConstants.Container.MAX_TIMEOUT_SECONDS}",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             return FlextResult.ok(request.data).with_timeout(
@@ -448,7 +449,7 @@ class FlextProcessing:
             if validation_result.is_failure:
                 return FlextResult[list[object]].fail(
                     f"Batch processing configuration validation failed: {validation_result.error}",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             # Validate batch size limits
@@ -456,7 +457,7 @@ class FlextProcessing:
             if len(config.data_items) > max_batch_size:
                 return FlextResult[list[object]].fail(
                     f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
-                    error_code="VALIDATION_ERROR"
+                    error_code="VALIDATION_ERROR",
                 )
 
             # Process all data items using parallel processing

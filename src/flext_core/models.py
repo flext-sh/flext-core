@@ -17,7 +17,7 @@ import warnings
 from collections import UserString
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Generic, Literal, Self, cast
+from typing import Generic, Literal, Self, cast
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -30,8 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-if TYPE_CHECKING:
-    from flext_core.config import FlextConfig
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import T
@@ -41,6 +40,7 @@ from flext_core.utilities import FlextUtilities
 def _get_global_config() -> FlextConfig:
     """Lazy import helper to break circular dependency."""
     from flext_core.config import FlextConfig
+
     return FlextConfig.get_global_instance()
 
 
@@ -1104,7 +1104,9 @@ class FlextModels:
         """Pydantic model for factory registration validation."""
 
         name: str = Field(min_length=1, description="Factory name identifier")
-        factory: Callable[[], object] = Field(description="Parameterless factory function")
+        factory: Callable[[], object] = Field(
+            description="Parameterless factory function"
+        )
 
         model_config = ConfigDict(
             validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
@@ -1112,7 +1114,9 @@ class FlextModels:
 
         @field_validator("factory")
         @classmethod
-        def validate_factory_signature(cls, v: Callable[[], object]) -> Callable[[], object]:
+        def validate_factory_signature(
+            cls, v: Callable[[], object]
+        ) -> Callable[[], object]:
             """Validate factory has no required parameters."""
             import inspect
 
@@ -1436,9 +1440,9 @@ class FlextModels:
 
     class LoggerConfigurationModel(BaseModel):
         """Pydantic model for FlextLogger.configure() method parameter consolidation.
-        
-        Consolidates 5 parameters (log_level, json_output, include_source, 
-        structured_output, log_verbosity) into a validated model using FlextConfig 
+
+        Consolidates 5 parameters (log_level, json_output, include_source,
+        structured_output, log_verbosity) into a validated model using FlextConfig
         and FlextConstants as source of truth.
         """
 
@@ -1470,8 +1474,8 @@ class FlextModels:
 
     class LoggerInitializationModel(BaseModel):
         """Pydantic model for FlextLogger.__init__() method parameter consolidation.
-        
-        Consolidates 5 parameters (name, level, service_name, service_version, 
+
+        Consolidates 5 parameters (name, level, service_name, service_version,
         correlation_id) into a validated model using FlextConfig defaults.
         """
 
@@ -1504,7 +1508,8 @@ class FlextModels:
                 return v
             valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
             if v.upper() not in valid_levels:
-                raise ValueError(f"Log level must be one of: {valid_levels}")
+                msg = f"Log level must be one of: {valid_levels}"
+                raise ValueError(msg)
             return v.upper()
 
         model_config = ConfigDict(
@@ -1513,7 +1518,7 @@ class FlextModels:
 
     class LogContextModel(BaseModel):
         """Pydantic model for log context binding and management.
-        
+
         Consolidates context-related operations for bind(), set_context(),
         with_context() methods.
         """
@@ -1536,14 +1541,11 @@ class FlextModels:
         @classmethod
         def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate context data is serializable."""
-            if not isinstance(v, dict):
-                raise ValueError("Context data must be a dictionary")
             # Basic serialization check - avoid complex objects
             for key, value in v.items():
-                if not isinstance(key, str):
-                    raise ValueError("Context keys must be strings")
                 if callable(value) or hasattr(value, "__dict__"):
-                    raise ValueError(f"Context value for '{key}' must be serializable")
+                    msg = f"Context value for '{key}' must be serializable"
+                    raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
@@ -1558,32 +1560,29 @@ class FlextModels:
         )
         context_data: dict[str, object] = Field(
             default_factory=dict,
-            description="Context data to bind to new logger instance"
+            description="Context data to bind to new logger instance",
         )
         force_new_instance: bool = Field(
-            default=True,
-            description="Whether to force creation of new logger instance"
+            default=True, description="Whether to force creation of new logger instance"
         )
         copy_request_context: bool = Field(
-            default=True,
-            description="Whether to copy existing request context"
+            default=True, description="Whether to copy existing request context"
         )
         copy_permanent_context: bool = Field(
-            default=True,
-            description="Whether to copy existing permanent context"
+            default=True, description="Whether to copy existing permanent context"
         )
 
         @field_validator("context_data")
         @classmethod
         def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate context data is serializable."""
-            if not isinstance(v, dict):
-                raise ValueError("Context data must be a dictionary")
             for key, value in v.items():
-                if not isinstance(key, str):
-                    raise ValueError("Context keys must be strings")
-                if callable(value) or (hasattr(value, "__dict__") and not isinstance(value, (str, int, float, bool, list, dict))):
-                    raise ValueError(f"Context value for '{key}' must be serializable")
+                if callable(value) or (
+                    hasattr(value, "__dict__")
+                    and not isinstance(value, (str, int, float, bool, list, dict))
+                ):
+                    msg = f"Context value for '{key}' must be serializable"
+                    raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
@@ -1594,27 +1593,21 @@ class FlextModels:
         """Pydantic model for logger request-specific context management."""
 
         request_context: dict[str, object] = Field(
-            default_factory=dict,
-            description="Request-specific context data"
+            default_factory=dict, description="Request-specific context data"
         )
         correlation_id: str | None = Field(
-            default=None,
-            description="Request correlation ID for tracing"
+            default=None, description="Request correlation ID for tracing"
         )
         clear_existing: bool = Field(
             default=False,
-            description="Whether to clear existing request context before setting"
+            description="Whether to clear existing request context before setting",
         )
 
         @field_validator("request_context")
         @classmethod
         def validate_request_context(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate request context data."""
-            if not isinstance(v, dict):
-                raise ValueError("Request context must be a dictionary")
-            for key, value in v.items():
-                if not isinstance(key, str):
-                    raise ValueError("Request context keys must be strings")
+            # Type annotation ensures v is a dict[str, object], so no need for isinstance checks
             return v
 
         model_config = ConfigDict(
@@ -1626,27 +1619,23 @@ class FlextModels:
 
         permanent_context: dict[str, object] = Field(
             default_factory=dict,
-            description="Permanent context data that persists across requests"
+            description="Permanent context data that persists across requests",
         )
         replace_existing: bool = Field(
             default=False,
-            description="Whether to replace existing permanent context completely"
+            description="Whether to replace existing permanent context completely",
         )
         merge_strategy: str = Field(
             default="update",
             pattern="^(update|replace|merge_deep)$",
-            description="Strategy for merging with existing permanent context"
+            description="Strategy for merging with existing permanent context",
         )
 
         @field_validator("permanent_context")
         @classmethod
         def validate_permanent_context(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate permanent context data."""
-            if not isinstance(v, dict):
-                raise ValueError("Permanent context must be a dictionary")
-            for key, value in v.items():
-                if not isinstance(key, str):
-                    raise ValueError("Permanent context keys must be strings")
+            # Type annotation ensures v is a dict[str, object], so no need for isinstance checks
             return v
 
         model_config = ConfigDict(
@@ -1655,7 +1644,7 @@ class FlextModels:
 
     class OperationTrackingModel(BaseModel):
         """Pydantic model for operation tracking in FlextLogger.
-        
+
         Consolidates start_operation() and complete_operation() method parameters
         for tracking long-running operations.
         """
@@ -1686,14 +1675,11 @@ class FlextModels:
         @classmethod
         def validate_metadata(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate metadata is serializable."""
-            if not isinstance(v, dict):
-                raise ValueError("Metadata must be a dictionary")
             # Basic serialization check
             for key, value in v.items():
-                if not isinstance(key, str):
-                    raise ValueError("Metadata keys must be strings")
                 if callable(value):
-                    raise ValueError(f"Metadata value for '{key}' cannot be callable")
+                    msg = f"Metadata value for '{key}' cannot be callable"
+                    raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
@@ -1702,7 +1688,7 @@ class FlextModels:
 
     class PerformanceTrackingModel(BaseModel):
         """Pydantic model for performance tracking in FlextLogger.
-        
+
         Consolidates performance-related logging configuration and context
         for operation timing and resource monitoring.
         """
@@ -1739,7 +1725,8 @@ class FlextModels:
             if "threshold_warning_ms" in info.data:
                 warning = info.data["threshold_warning_ms"]
                 if v <= warning:
-                    raise ValueError("Critical threshold must be higher than warning threshold")
+                    msg = "Critical threshold must be higher than warning threshold"
+                    raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
@@ -2300,7 +2287,9 @@ class FlextModels:
 
         @field_validator("resource_manager")
         @classmethod
-        def validate_resource_manager(cls, v: Callable[[], object]) -> Callable[[], object]:
+        def validate_resource_manager(
+            cls, v: Callable[[], object]
+        ) -> Callable[[], object]:
             """Validate resource manager is callable."""
             if not callable(v):
                 msg = "Resource manager must be callable"
@@ -2364,7 +2353,9 @@ class FlextModels:
 
         @field_validator("transformer")
         @classmethod
-        def validate_transformer(cls, v: Callable[[object], object]) -> Callable[[object], object]:
+        def validate_transformer(
+            cls, v: Callable[[object], object]
+        ) -> Callable[[object], object]:
             """Validate transformer is callable."""
             if not callable(v):
                 msg = "Transformer must be callable"

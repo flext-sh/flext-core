@@ -307,7 +307,7 @@ class FlextConstants:
         INCLUDE_SOURCE: Final[bool] = True
         STRUCTURED_OUTPUT: Final[bool] = True
         VERBOSITY: Final[str] = "detailed"
-        
+
         # Performance tracking constants
         TRACK_PERFORMANCE: Final[bool] = True
         TRACK_MEMORY: Final[bool] = False

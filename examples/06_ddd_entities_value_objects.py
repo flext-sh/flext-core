@@ -41,24 +41,53 @@ class Money(FlextModels.Value):
     currency: str = Field(..., min_length=3, max_length=3, description="Currency code")
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate money business rules."""
+        """Validate money business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.amount < Decimal(0):
             return FlextResult[None].fail("Amount cannot be negative")
         return FlextResult[None].ok(None)
 
     def add(self, other: Money) -> Money:
-        """Add two money amounts."""
+        """Add two money amounts.
+
+        Args:
+            other: Money object to add
+
+        Returns:
+            Money: New Money object with combined amount
+
+        Raises:
+            ValueError: If currencies don't match
+
+        """
         if self.currency != other.currency:
             msg = "Cannot add different currencies"
             raise ValueError(msg)
         return Money(amount=self.amount + other.amount, currency=self.currency)
 
     def multiply(self, factor: Decimal) -> Money:
-        """Multiply money by a factor."""
+        """Multiply money by a factor.
+
+        Args:
+            factor: Multiplication factor
+
+        Returns:
+            Money: New Money object with multiplied amount
+
+        """
         return Money(amount=self.amount * factor, currency=self.currency)
 
     def __str__(self) -> str:
-        """String representation of money amount."""
+        """String representation of money amount.
+
+        Returns:
+            str: Formatted money string
+
+        """
         return f"{self.amount} {self.currency}"
 
 
@@ -71,7 +100,12 @@ class Address(FlextModels.Value):
     country: str = Field(..., min_length=2, description="Country code")
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate address business rules."""
+        """Validate address business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if len(self.country) != DDDConstants.COUNTRY_CODE_LENGTH:
             return FlextResult[None].fail(
                 f"Country code must be {DDDConstants.COUNTRY_CODE_LENGTH} characters",
@@ -79,7 +113,12 @@ class Address(FlextModels.Value):
         return FlextResult[None].ok(None)
 
     def __str__(self) -> str:
-        """String representation of address."""
+        """String representation of address.
+
+        Returns:
+            str: Formatted address string
+
+        """
         return f"{self.street}, {self.city} {self.postal_code}, {self.country}"
 
 
@@ -91,7 +130,12 @@ class Product(FlextModels.Entity):
     active: bool = Field(default=True, description="Product active status")
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate product business rules."""
+        """Validate product business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.price.amount <= Decimal(0):
             return FlextResult[None].fail("Product price must be positive")
         return FlextResult[None].ok(None)
@@ -112,7 +156,15 @@ class Product(FlextModels.Entity):
             )
 
     def update_price(self, new_price: Money) -> FlextResult[None]:
-        """Update product price with validation."""
+        """Update product price with validation.
+
+        Args:
+            new_price: New price for the product
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if new_price.amount < DDDConstants.MIN_PRICE:
             return FlextResult[None].fail("Price too low")
 
@@ -132,13 +184,23 @@ class Customer(FlextModels.Entity):
     address: Address = Field(..., description="Customer address")
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate customer business rules."""
+        """Validate customer business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if "@" not in self.email:
             return FlextResult[None].fail("Invalid email address")
         return FlextResult[None].ok(None)
 
     def update_address(self, new_address: Address) -> None:
-        """Update customer address."""
+        """Update customer address.
+
+        Args:
+            new_address: New address for the customer
+
+        """
         old_address = self.address
         self.address = new_address
 
@@ -165,7 +227,12 @@ class CartItem(FlextModels.Value):
     quantity: int = Field(..., ge=1, description="Item quantity")
 
     def total_price(self) -> Money:
-        """Calculate total price for this item."""
+        """Calculate total price for this item.
+
+        Returns:
+            Money: Total price for this cart item
+
+        """
         return self.price.multiply(Decimal(str(self.quantity)))
 
 
@@ -180,13 +247,27 @@ class ShoppingCart(FlextModels.Entity):
     )
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate shopping cart business rules."""
+        """Validate shopping cart business rules.
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if self.discount_percent < Decimal(0) or self.discount_percent > Decimal(100):
             return FlextResult[None].fail("Discount must be between 0 and 100")
         return FlextResult[None].ok(None)
 
     def add_item(self, product: Product, quantity: int = 1) -> FlextResult[None]:
-        """Add item to cart."""
+        """Add item to cart.
+
+        Args:
+            product: Product to add to cart
+            quantity: Quantity of product to add (default: 1)
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if quantity < 1:
             return FlextResult[None].fail("Quantity must be positive")
 
@@ -210,7 +291,12 @@ class ShoppingCart(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
     def calculate_total(self) -> Money:
-        """Calculate cart total with discount."""
+        """Calculate cart total with discount.
+
+        Returns:
+            Money: Total cart amount with discount applied
+
+        """
         if not self.items:
             return Money(amount=Decimal(0), currency="USD")
 
@@ -224,7 +310,15 @@ class ShoppingCart(FlextModels.Entity):
         return Money(amount=total, currency=currency)
 
     def apply_discount(self, discount_percent: Decimal) -> FlextResult[None]:
-        """Apply discount to cart."""
+        """Apply discount to cart.
+
+        Args:
+            discount_percent: Discount percentage to apply
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
         if (
             discount_percent < Decimal(0)
             or discount_percent > DDDConstants.MAX_DISCOUNT
@@ -255,7 +349,16 @@ class DDDDomainService(FlextDomainService[Product]):
         super().__init__()
 
     def create_product(self, name: str, price: Money) -> FlextResult[Product]:
-        """Create a new product with validation."""
+        """Create a new product with validation.
+
+        Args:
+            name: Product name
+            price: Product price
+
+        Returns:
+            FlextResult[Product]: Created product or error
+
+        """
         if not name.strip():
             return FlextResult[Product].fail("Product name cannot be empty")
 
@@ -283,7 +386,17 @@ class DDDDomainService(FlextDomainService[Product]):
         email: str,
         address: Address,
     ) -> FlextResult[Customer]:
-        """Create a new customer with validation."""
+        """Create a new customer with validation.
+
+        Args:
+            name: Customer name
+            email: Customer email
+            address: Customer address
+
+        Returns:
+            FlextResult[Customer]: Created customer or error
+
+        """
         if not name.strip():
             return FlextResult[Customer].fail("Customer name cannot be empty")
 
@@ -309,7 +422,15 @@ class DDDDomainService(FlextDomainService[Product]):
         return FlextResult[Customer].ok(customer)
 
     def create_shopping_cart(self, customer_id: str) -> FlextResult[ShoppingCart]:
-        """Create a new shopping cart with validation."""
+        """Create a new shopping cart with validation.
+
+        Args:
+            customer_id: Customer identifier
+
+        Returns:
+            FlextResult[ShoppingCart]: Created shopping cart or error
+
+        """
         if not customer_id.strip():
             return FlextResult[ShoppingCart].fail("Customer ID cannot be empty")
 
@@ -327,12 +448,17 @@ class DDDDomainService(FlextDomainService[Product]):
         return FlextResult[ShoppingCart].ok(cart)
 
     def execute(self) -> FlextResult[Product]:
-        """Execute demo functionality - required by FlextDomainService."""
+        """Execute demo functionality - required by FlextDomainService.
+
+        Returns:
+            FlextResult[Product]: Demo product or error
+
+        """
         demo_price = Money(amount=Decimal("99.99"), currency="USD")
         return self.create_product("Demo Product", demo_price)
 
 
-def demonstrate_ddd_patterns() -> None:
+def demonstrate_ddd_patterns() -> None:  # noqa: PLR0914
     """Unified demonstration of DDD patterns with data-driven approach."""
     print("=== FLEXT Core DDD Patterns Showcase ===")
 

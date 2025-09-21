@@ -805,7 +805,12 @@ class FlextTestsMatchers:  # noqa: PLR0904
             return sum(self.results) / len(self.results) if self.results else 0.0
 
         def max_time(self) -> float:
-            """Get maximum execution time."""
+            """Get maximum execution time.
+
+            Returns:
+                float: Maximum execution time in seconds
+
+            """
             return max(self.results) if self.results else 0.0
 
     class ContainerProtocol:
@@ -821,11 +826,21 @@ class FlextTestsMatchers:  # noqa: PLR0904
         """Protocol for field validation testing."""
 
         def validate(self, _value: object) -> bool:
-            """Validate field value."""
+            """Validate field value.
+
+            Returns:
+                bool: Always True for this protocol
+
+            """
             return True
 
         def format(self, value: object) -> str:
-            """Format field value."""
+            """Format field value.
+
+            Returns:
+                str: String representation of the value
+
+            """
             return str(value)
 
     class MockProtocol:
@@ -843,7 +858,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
         value: object,
         expected_type: type[object] | Callable[[object], bool],
     ) -> None:
-        """Assert that value is of expected type with type guard."""
+        """Assert that value is of expected type with type guard.
+
+        Args:
+            value: The value to check
+            expected_type: Expected type or type guard function
+
+        Raises:
+            AssertionError: If value is not of expected type
+
+        """
         if callable(expected_type) and not isinstance(expected_type, type):
             # It's a callable type guard function
             if not expected_type(value):
@@ -861,7 +885,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         limit: float,
         operation: str = "operation",
     ) -> None:
-        """Assert that execution time is within performance limit."""
+        """Assert that execution time is within performance limit.
+
+        Args:
+            execution_time: Actual execution time
+            limit: Performance limit
+            operation: Name of the operation
+
+        Raises:
+            AssertionError: If execution time exceeds limit
+
+        """
         if execution_time > limit:
             msg = (
                 f"{operation} took {execution_time:.3f}s, exceeds limit of {limit:.3f}s"
@@ -874,12 +908,22 @@ class FlextTestsMatchers:  # noqa: PLR0904
 
     @staticmethod
     def matchers() -> CoreMatchers:
-        """Get core matchers instance."""
+        """Get core matchers instance.
+
+        Returns:
+            CoreMatchers: Core matchers instance
+
+        """
         return FlextTestsMatchers.CoreMatchers()
 
     @staticmethod
     def performance() -> PerformanceMatchers:
-        """Get performance matchers instance."""
+        """Get performance matchers instance.
+
+        Returns:
+            PerformanceMatchers: Performance matchers instance
+
+        """
         return FlextTestsMatchers.PerformanceMatchers()
 
     # =========================================================================
@@ -892,7 +936,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         expected_value: object = None,
         expected_data: object = None,
     ) -> None:
-        """Assert that result is successful with optional value check."""
+        """Assert that result is successful with optional value check.
+
+        Args:
+            result: The result object to check
+            expected_value: Expected value (optional)
+            expected_data: Expected data (optional)
+
+        Raises:
+            AssertionError: If result is not successful or values don't match
+
+        """  # noqa: DOC502
         assert FlextTestsMatchers.CoreMatchers.be_success(result), (
             f"Expected success, got {result}"
         )
@@ -910,7 +964,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
         result: object,
         expected_error: str | None = None,
     ) -> None:
-        """Assert that result is failure with optional error check."""
+        """Assert that result is failure with optional error check.
+
+        Args:
+            result: The result object to check
+            expected_error: Expected error message (optional)
+
+        Raises:
+            AssertionError: If result is not failure or error doesn't match
+
+        """  # noqa: DOC502
         assert FlextTestsMatchers.CoreMatchers.be_failure(result), (
             f"Expected failure, got {result}"
         )
@@ -926,7 +989,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         *,
         exact_match: bool = True,
     ) -> None:
-        """Assert that object has expected JSON structure."""
+        """Assert that object has expected JSON structure.
+
+        Args:
+            obj: Object to check
+            expected_keys: List of expected keys
+            exact_match: Whether to require exact key match
+
+        Raises:
+            AssertionError: If structure doesn't match expectations
+
+        """
         if not isinstance(obj, dict):
             msg = f"Expected dict, got {type(obj).__name__}"
             raise AssertionError(msg)
@@ -947,7 +1020,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
 
     @staticmethod
     def assert_regex_match(text: str, pattern: str) -> None:
-        """Assert that text matches regex pattern."""
+        """Assert that text matches regex pattern.
+
+        Args:
+            text: Text to check
+            pattern: Regex pattern to match
+
+        Raises:
+            AssertionError: If text doesn't match pattern
+
+        """
         if not FlextTestsMatchers.CoreMatchers.match_regex(text, pattern):
             msg = f"Text '{text}' does not match pattern '{pattern}'"
             raise AssertionError(msg)
@@ -957,7 +1039,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
         var_name: str,
         expected_value: str | None = None,
     ) -> None:
-        """Assert that environment variable exists with optional value check."""
+        """Assert that environment variable exists with optional value check.
+
+        Args:
+            var_name: Environment variable name
+            expected_value: Expected value (optional)
+
+        Raises:
+            AssertionError: If variable doesn't exist or value doesn't match
+
+        """
         actual_value = os.environ.get(var_name)
         if actual_value is None:
             msg = f"Environment variable '{var_name}' not set"
@@ -968,12 +1059,28 @@ class FlextTestsMatchers:  # noqa: PLR0904
 
     @staticmethod
     def is_successful_result(result: object) -> bool:
-        """Check if result indicates success."""
+        """Check if result indicates success.
+
+        Args:
+            result: The result object to check
+
+        Returns:
+            bool: True if result indicates success, False otherwise
+
+        """
         return FlextTestsMatchers.CoreMatchers.be_success(result)
 
     @staticmethod
     def is_failed_result(result: object) -> bool:
-        """Check if result indicates failure."""
+        """Check if result indicates failure.
+
+        Args:
+            result: The result object to check
+
+        Returns:
+            bool: True if result indicates failure, False otherwise
+
+        """
         return FlextTestsMatchers.CoreMatchers.be_failure(result)
 
     # =========================================================================
@@ -990,7 +1097,19 @@ class FlextTestsMatchers:  # noqa: PLR0904
         coro: Awaitable[object],
         timeout_seconds: float,
     ) -> object:
-        """Run coroutine with timeout and auto-retry for test compatibility."""
+        """Run coroutine with timeout and auto-retry for test compatibility.
+
+        Args:
+            coro: Coroutine to run
+            timeout_seconds: Timeout in seconds
+
+        Returns:
+            object: Coroutine result
+
+        Raises:
+            TimeoutError: If operation times out
+
+        """
         try:
             return await asyncio.wait_for(coro, timeout=timeout_seconds)
         except TimeoutError:
@@ -1003,7 +1122,15 @@ class FlextTestsMatchers:  # noqa: PLR0904
 
     @staticmethod
     async def run_parallel_tasks(tasks: list[Awaitable[object]]) -> list[object]:
-        """Run tasks in parallel for test compatibility."""
+        """Run tasks in parallel for test compatibility.
+
+        Args:
+            tasks: List of awaitable tasks to run in parallel
+
+        Returns:
+            list[object]: List of task results
+
+        """
         return await asyncio.gather(*tasks, return_exceptions=True)
 
     @staticmethod
@@ -1012,7 +1139,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         *args: object,
         **_kwargs: object,
     ) -> object:
-        """Ultra-simple for test compatibility - runs tasks concurrently."""
+        """Ultra-simple for test compatibility - runs tasks concurrently.
+
+        Args:
+            func: Function to run concurrently
+            *args: Positional arguments for the function
+            **_kwargs: Keyword arguments (unused)
+
+        Returns:
+            object: Function execution result
+
+        """
         partial_func = functools.partial(func, *args)
         return await asyncio.get_event_loop().run_in_executor(None, partial_func)
 
@@ -1021,7 +1158,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
         func1: Callable[[], object],
         func2: Callable[[], object],
     ) -> tuple[object, object]:
-        """Ultra-simple for test compatibility - runs function concurrently to test race conditions."""
+        """Ultra-simple for test compatibility - runs function concurrently to test race conditions.
+
+        Args:
+            func1: First function to run concurrently
+            func2: Second function to run concurrently
+
+        Returns:
+            tuple[object, object]: Tuple of results from both functions
+
+        """
         return await asyncio.gather(
             asyncio.get_event_loop().run_in_executor(None, func1),
             asyncio.get_event_loop().run_in_executor(None, func2),
@@ -1032,7 +1178,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
         func: Callable[[], object],
         concurrency_level: int,
     ) -> dict[str, object]:
-        """Ultra-simple for test compatibility - measures concurrency performance."""
+        """Ultra-simple for test compatibility - measures concurrency performance.
+
+        Args:
+            func: Function to measure performance of
+            concurrency_level: Number of concurrent executions
+
+        Returns:
+            dict[str, object]: Performance measurement results
+
+        """
         start_time = time.time()
 
         tasks = [
@@ -1057,7 +1212,15 @@ class FlextTestsMatchers:  # noqa: PLR0904
 
     @staticmethod
     def timeout_context(timeout: float) -> object:
-        """Create timeout context manager for test compatibility."""
+        """Create timeout context manager for test compatibility.
+
+        Args:
+            timeout: Timeout in seconds
+
+        Returns:
+            object: Timeout context manager
+
+        """
 
         class TimeoutContext:
             def __init__(self, timeout_seconds: float) -> None:
@@ -1083,7 +1246,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         side_effect: object = None,
         delay: float = 0.0,
     ) -> object:
-        """Create async mock for test compatibility."""
+        """Create async mock for test compatibility.
+
+        Args:
+            return_value: Value to return from mock calls
+            side_effect: Side effect to execute on mock calls
+            delay: Delay in seconds before returning
+
+        Returns:
+            object: Async mock instance
+
+        """
 
         class AsyncMock:
             def __init__(
@@ -1135,7 +1308,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         failure_exception: object = None,
         failure_rate: float = 0.3,
     ) -> object:
-        """Ultra-simple flaky async mock for test compatibility."""
+        """Ultra-simple flaky async mock for test compatibility.
+
+        Args:
+            success_return: Value to return on successful calls
+            failure_exception: Exception to raise on failed calls
+            failure_rate: Rate of failures (0.0 to 1.0)
+
+        Returns:
+            object: Flaky async mock instance
+
+        """
 
         class FlakyAsyncMock:
             """Flaky async mock for test compatibility."""
@@ -1178,7 +1361,16 @@ class FlextTestsMatchers:  # noqa: PLR0904
         resource_factory: object,
         cleanup_func: object = None,
     ) -> object:
-        """Ultra-simple managed resource context manager for test compatibility."""
+        """Ultra-simple managed resource context manager for test compatibility.
+
+        Args:
+            resource_factory: Factory function or resource instance
+            cleanup_func: Cleanup function for the resource
+
+        Returns:
+            object: Managed resource context manager
+
+        """
 
         class ManagedResourceContext:
             def __init__(self, factory: object, cleanup: object = None) -> None:
@@ -1218,7 +1410,17 @@ class FlextTestsMatchers:  # noqa: PLR0904
         teardown_func: object = None,
         context_data: dict[str, object] | None = None,
     ) -> object:
-        """Create async context manager for test compatibility."""
+        """Create async context manager for test compatibility.
+
+        Args:
+            setup_func: Function to run during setup
+            teardown_func: Function to run during teardown
+            context_data: Additional context data
+
+        Returns:
+            object: Test context manager
+
+        """
 
         class TestContext:
             def __init__(

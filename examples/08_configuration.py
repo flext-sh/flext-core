@@ -69,11 +69,19 @@ def create_production_config(
 
     # Create default configuration
     result = FlextConfig.create()
-    return result.value if result.is_success else FlextConfig()
+    return result.value if result.is_success else FlextConfig(log_level="INFO")
 
 
 def get_connection_string_example(config: FlextConfig) -> FlextResult[str]:
-    """Get connection string using FlextConfig's built-in methods."""
+    """Get connection string using FlextConfig's built-in methods.
+
+    Args:
+        config: FlextConfig instance
+
+    Returns:
+        FlextResult[str]: Connection string or error
+
+    """
     # Simplified example - in real usage you'd construct connection string from config
     db_config = getattr(config, "database", {})
     if isinstance(db_config, dict):
@@ -84,7 +92,15 @@ def get_connection_string_example(config: FlextConfig) -> FlextResult[str]:
 
 
 def demonstrate_config_validation(config: FlextConfig) -> FlextResult[None]:
-    """Demonstrate FlextConfig's built-in validation capabilities."""
+    """Demonstrate FlextConfig's built-in validation capabilities.
+
+    Args:
+        config: FlextConfig instance to validate
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     # Use the unified validation system
     validation_result = config.validate_all()
     if validation_result.is_failure:
@@ -94,7 +110,15 @@ def demonstrate_config_validation(config: FlextConfig) -> FlextResult[None]:
 
 
 def demonstrate_config_serialization(config: FlextConfig) -> FlextResult[None]:
-    """Demonstrate FlextConfig's serialization capabilities."""
+    """Demonstrate FlextConfig's serialization capabilities.
+
+    Args:
+        config: FlextConfig instance to serialize
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     try:
         # Use built-in serialization methods
         config_dict = config.to_dict()
@@ -109,7 +133,12 @@ def demonstrate_config_serialization(config: FlextConfig) -> FlextResult[None]:
 
 
 def demonstrate_basic_configuration() -> FlextResult[None]:
-    """Demonstrate basic configuration creation and validation using unified FlextConfig."""
+    """Demonstrate basic configuration creation and validation using unified FlextConfig.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("\n" + "=" * 60)
     print("🔧 Basic Configuration Demonstration")
     print("=" * 60)
@@ -152,7 +181,12 @@ def demonstrate_basic_configuration() -> FlextResult[None]:
 
 
 def demonstrate_environment_configuration() -> FlextResult[None]:
-    """Demonstrate environment variable integration."""
+    """Demonstrate environment variable integration.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("\n" + "=" * 60)
     print("🌍 Environment Configuration Demonstration")
     print("=" * 60)
@@ -227,7 +261,12 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
 
 
 def demonstrate_file_configuration() -> FlextResult[None]:
-    """Demonstrate file-based configuration loading."""
+    """Demonstrate file-based configuration loading.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("\n" + "=" * 60)
     print("📁 File Configuration Demonstration")
     print("=" * 60)
@@ -316,7 +355,12 @@ def demonstrate_file_configuration() -> FlextResult[None]:
 
 
 def demonstrate_configuration_merging() -> FlextResult[None]:
-    """Demonstrate configuration merging and hierarchies."""
+    """Demonstrate configuration merging and hierarchies.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("\n" + "=" * 60)
     print("🔀 Configuration Merging Demonstration")
     print("=" * 60)
@@ -416,7 +460,12 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
 
 
 def demonstrate_validation_scenarios() -> FlextResult[None]:
-    """Demonstrate various configuration validation scenarios."""
+    """Demonstrate various configuration validation scenarios.
+
+    Returns:
+        FlextResult[None]: Success or failure result
+
+    """
     print("\n" + "=" * 60)
     print("🔍 Configuration Validation Scenarios")
     print("=" * 60)
@@ -501,7 +550,12 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
 
 
 def main() -> int:
-    """Main demonstration function."""
+    """Main demonstration function.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+
+    """
     print("🎯 Enterprise Configuration Management Demo")
     print("Comprehensive configuration patterns with FLEXT")
 

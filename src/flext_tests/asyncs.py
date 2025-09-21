@@ -25,7 +25,7 @@ from flext_core import FlextLogger, FlextTypes, T
 logger = FlextLogger(__name__)
 
 
-class FlextTestsAsyncs:
+class FlextTestsAsyncs:  # noqa: PLR0904
     """Unified async testing utilities for FLEXT ecosystem.
 
     Consolidates all async testing patterns, concurrency testing, timeout management,
