@@ -119,13 +119,7 @@ class UserEntity(FlextModels.Entity, FlextModels.TimestampedModel):
             "user_id": str(self.id),
             "activated_at": datetime.now(UTC).isoformat(),
         }
-        self.add_domain_event(
-            FlextModels.Event(
-                event_type="UserActivated",
-                payload=dict(event_data),
-                aggregate_id="user-123",
-            ),
-        )
+        self.add_domain_event("UserActivated", event_data)
 
         return FlextResult[None].ok(None)
 
@@ -142,13 +136,7 @@ class UserEntity(FlextModels.Entity, FlextModels.TimestampedModel):
             "user_id": str(self.id),
             "deactivated_at": datetime.now(UTC).isoformat(),
         }
-        self.add_domain_event(
-            FlextModels.Event(
-                event_type="UserDeactivated",
-                payload=dict(event_data),
-                aggregate_id="user-123",
-            ),
-        )
+        self.add_domain_event("UserDeactivated", event_data)
 
         return FlextResult[None].ok(None)
 
@@ -497,13 +485,7 @@ class TestFlextEntityRealFunctionality:
             "user_id": str(user.id),
             "created_at": datetime.now(UTC).isoformat(),
         }
-        user.add_domain_event(
-            FlextModels.Event(
-                event_type="UserCreated",
-                payload=dict(event_data),
-                aggregate_id="user-123",
-            ),
-        )
+        user.add_domain_event("UserCreated", event_data)
         assert len(user.domain_events) == 1
 
     def test_entity_business_logic_with_events(self) -> None:
@@ -769,7 +751,7 @@ class TestModelsIntegrationRealFunctionality:
             "source": "integration_test",
         }
         user.add_domain_event(
-            FlextModels.Event(
+            FlextModels.DomainEvent(
                 event_type="UserCreated",
                 payload=dict(event_data),
                 aggregate_id="user-123",
@@ -830,7 +812,7 @@ class TestModelsIntegrationRealFunctionality:
             "timestamp": datetime.now(UTC).isoformat(),
         }
         user.add_domain_event(
-            FlextModels.Event(
+            FlextModels.DomainEvent(
                 event_type="UserCreated",
                 payload=dict(event_data),
                 aggregate_id="user-123",
@@ -1023,7 +1005,7 @@ class TestModelsPerformance:
                 "timestamp": datetime.now(UTC).isoformat(),
             }
             user.add_domain_event(
-                FlextModels.Event(
+                FlextModels.DomainEvent(
                     event_type="UserCreated",
                     payload=cast("dict[str, object]", event_data),
                     aggregate_id="user-123",
@@ -1079,7 +1061,7 @@ class TestFlextModelsRootModelValidation:
     #         ValidationError,
     #         match="String should have at least 1 character",
     #     ):
-    #         FlextModels.Event(
+    #         FlextModels.DomainEvent(
     #             event_type="TestEvent",
     #             payload={"test": "data"},
     #             aggregate_id="",  # Empty string should fail validation
@@ -1091,7 +1073,7 @@ class TestFlextModelsRootModelValidation:
     #         ValidationError,
     #         match="Aggregate identifier cannot be empty or whitespace only",
     #     ):
-    #         FlextModels.Event(
+    #         FlextModels.DomainEvent(
     #             event_type="TestEvent",
     #             payload={"test": "data"},
     #             aggregate_id="   ",  # Whitespace only should fail validation
@@ -1099,7 +1081,7 @@ class TestFlextModelsRootModelValidation:
 
     # def test_aggregate_id_validation_trimming(self) -> None:
     #     """Test Event aggregate_id validation trims whitespace."""
-    #     event = FlextModels.Event(
+    #     event = FlextModels.DomainEvent(
     #         event_type="TestEvent",
     #         payload={"test": "data"},
     #         aggregate_id="test-aggregate",
@@ -1265,20 +1247,8 @@ class TestFlextModelsEntityClearDomainEvents:
         # Add some events
         event1: dict[str, object] = {"event_type": "Event1"}
         event2: dict[str, object] = {"event_type": "Event2"}
-        user.add_domain_event(
-            FlextModels.Event(
-                event_type="Event1",
-                payload=event1,
-                aggregate_id="user-123",
-            ),
-        )
-        user.add_domain_event(
-            FlextModels.Event(
-                event_type="Event2",
-                payload=event2,
-                aggregate_id="user-123",
-            ),
-        )
+        user.add_domain_event("Event1", event1)
+        user.add_domain_event("Event2", event2)
 
         assert len(user.domain_events) == 2
 
@@ -1295,9 +1265,9 @@ class TestFlextModelsEntityClearDomainEvents:
 
 
 class TestFlextModelsAggregateRootApplyEvent:
-    """Test AggregateRoot.apply_domain_event method for missing lines 353-354, 357-358."""
+    """Test AggregateRoot.add_domain_event method for missing lines 353-354, 357-358."""
 
-    def test_apply_domain_event_with_handler_execution(self) -> None:
+    def test_add_domain_event_with_handler_execution(self) -> None:
         """Test lines 353-354: handler execution when event_type matches."""
 
         # Create a test aggregate root
@@ -1322,8 +1292,8 @@ class TestFlextModelsAggregateRootApplyEvent:
         }
 
         # Apply event - this should add the event and increment version
-        root.apply_domain_event(
-            FlextModels.Event(
+        root.add_domain_event(
+            FlextModels.DomainEvent(
                 event_type="TestEvent",
                 payload=dict(test_event),
                 aggregate_id="test-aggregate",
@@ -1334,8 +1304,8 @@ class TestFlextModelsAggregateRootApplyEvent:
         assert len(root.domain_events) == 1
         assert root.version == 2
 
-    def test_apply_domain_event_exception_handling(self) -> None:
-        """Test lines 357-358: exception handling in apply_domain_event."""
+    def test_add_domain_event_exception_handling(self) -> None:
+        """Test lines 357-358: exception handling in add_domain_event."""
 
         # Create aggregate with handler that raises exception
         class FailingAggregateRoot(FlextModels.AggregateRoot):
@@ -1358,9 +1328,9 @@ class TestFlextModelsAggregateRootApplyEvent:
         }
 
         # Apply domain event - this should not raise an exception
-        # The apply_domain_event method just adds the event to the list and increments version
-        root.apply_domain_event(
-            FlextModels.Event(
+        # The add_domain_event method just adds the event to the list and increments version
+        root.add_domain_event(
+            FlextModels.DomainEvent(
                 event_type="FailingEvent",
                 payload=dict(failing_event),
                 aggregate_id="test-aggregate",
