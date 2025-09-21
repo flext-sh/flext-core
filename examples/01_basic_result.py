@@ -190,7 +190,7 @@ class ComprehensiveResultService:
         def sequence_results(
             results_list: list[FlextResult[int]],
         ) -> FlextResult[list[int]]:
-            sequenced: FlextResult[list[int]] = FlextResult.sequence(results_list)
+            sequenced: FlextResult[list[int]] = FlextResult.sequence(results_list)  # type: ignore[misc]
             return sequenced
 
         sequenced = sequence_results(results)
