@@ -170,10 +170,23 @@ class ExamplePatternFactory:
         config_class: type,
         config_data: dict[str, object],
     ) -> DemoStrategy[object]:
-        """Create configuration demonstration using Railway Pattern - ELIMINATED TRY/CATCH RETURNS."""
+        """Create configuration demonstration using Railway Pattern - ELIMINATED TRY/CATCH RETURNS.
+        
+        Args:
+            name: Name of the configuration demo
+            config_class: Configuration class to instantiate
+            config_data: Configuration data dictionary
+            
+        Returns:
+            DemoStrategy[object]: Configuration demo strategy
+        """
 
         def config_demo() -> FlextResult[object]:
-            """Execute configuration demonstration with Pure Railway Pattern."""
+            """Execute configuration demonstration with Pure Railway Pattern.
+            
+            Returns:
+                FlextResult[object]: Configuration creation result
+            """
             logger.info(f"⚙️ Creating configuration for {name}")
 
             # Railway Pattern: Safe configuration creation
@@ -191,7 +204,15 @@ class ExamplePatternFactory:
             config_class: type,
             config_data: dict[str, object],
         ) -> FlextResult[object]:
-            """Safely create config instance with error handling."""
+            """Safely create config instance with error handling.
+            
+            Args:
+                config_class: Configuration class to instantiate
+                config_data: Configuration data dictionary
+                
+            Returns:
+                FlextResult[object]: Configuration instance or error
+            """
             try:
                 config_instance = config_class(**config_data)
                 return FlextResult[object].ok(config_instance)
@@ -199,7 +220,14 @@ class ExamplePatternFactory:
                 return FlextResult[object].fail(str(e))
 
         def _validate_config_if_needed(config_instance: object) -> FlextResult[object]:
-            """Conditionally validate config using Railway Pattern."""
+            """Conditionally validate config using Railway Pattern.
+            
+            Args:
+                config_instance: Configuration instance to validate
+                
+            Returns:
+                FlextResult[object]: Validated configuration or error
+            """
             if not hasattr(config_instance, "validate_business_rules"):
                 return FlextResult[object].ok(config_instance)
 
@@ -214,7 +242,15 @@ class ExamplePatternFactory:
             ).tap_error(lambda e: logger.error(f"Config validation failed: {e}"))
 
         def _log_success_and_return(config_instance: object, name: str) -> object:
-            """Log success and return config instance."""
+            """Log success and return config instance.
+            
+            Args:
+                config_instance: Configuration instance to return
+                name: Name of the configuration
+                
+            Returns:
+                object: Configuration instance
+            """
             logger.info(f"✅ Configuration created successfully for {name}")
             return config_instance
 
