@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import cast
+from typing import Protocol, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -18,6 +18,12 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+
+class ModelDumpable(Protocol):
+    """Protocol for objects that have a model_dump method."""
+
+    def model_dump(self) -> dict[str, object]: ...
 
 
 class FlextBus(FlextMixins):
@@ -37,21 +43,34 @@ class FlextBus(FlextMixins):
         enable_middleware: bool = True,
         enable_metrics: bool = True,
         enable_caching: bool = True,
-        execution_timeout: int = 30,
-        max_cache_size: int = 1000,
+        execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
+        max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
         implementation_path: str = "flext_core.bus:FlextBus",
     ) -> None:
         """Initialise the bus using the CQRS configuration models."""
         super().__init__()
         # Initialize mixins manually since we don't inherit from them
-        FlextMixins.initialize_validation(self)
+        FlextMixins.initialize_validation(self, "bus_config")
         FlextMixins.clear_cache(self)
         # Timestampable mixin initialization
         self._created_at = datetime.now(UTC)
         self._start_time = time.time()
 
-        config_model = FlextModels.CqrsConfig.create_bus_config(
-            bus_config,
+        # Convert bus_config to dict if it's a Bus object
+        config_dict: dict[str, object] | None = None
+        if bus_config is not None:
+            # Check if it's a Pydantic model with model_dump method
+            if hasattr(bus_config, "model_dump") and callable(
+                getattr(bus_config, "model_dump")
+            ):
+                # Cast to ModelDumpable protocol to ensure type checker knows it has model_dump
+                model_obj = cast("ModelDumpable", bus_config)
+                config_dict = model_obj.model_dump()
+            elif isinstance(bus_config, dict):
+                config_dict = bus_config
+
+        config_model = FlextModels.CqrsConfig.Bus.create_bus_config(
+            config_dict,
             enable_middleware=enable_middleware,
             enable_metrics=enable_metrics,
             enable_caching=enable_caching,
@@ -131,6 +150,7 @@ class FlextBus(FlextMixins):
             def handle(self, message: object) -> FlextResult[object]:
                 result = handler_func(message)
                 if isinstance(result, FlextResult):
+                    # Result is already a FlextResult, just return it
                     return cast("FlextResult[object]", result)
                 return FlextResult[object].ok(result)
 
@@ -172,6 +192,7 @@ class FlextBus(FlextMixins):
             def handle(self, message: object) -> FlextResult[object]:
                 result = handler_func(message)
                 if isinstance(result, FlextResult):
+                    # Result is already a FlextResult, just return it
                     return cast("FlextResult[object]", result)
                 return FlextResult[object].ok(result)
 
@@ -321,6 +342,7 @@ class FlextBus(FlextMixins):
                     command_type=command_type.__name__,
                     cache_key=cache_key,
                 )
+                # cached_result is already FlextResult[object]
                 return cast("FlextResult[object]", cached_result)
 
         self.logger.debug(
@@ -479,6 +501,7 @@ class FlextBus(FlextMixins):
                 try:
                     result = method(command)
                     if isinstance(result, FlextResult):
+                        # Result is already a FlextResult, just return it
                         return cast("FlextResult[object]", result)
                     return FlextResult[object].ok(result)
                 except Exception as e:

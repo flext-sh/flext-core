@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Final
+from typing import ClassVar, Final
 
 
 class FlextConstants:
@@ -23,6 +23,7 @@ class FlextConstants:
 
         NAME: Final[str] = "FLEXT"  # Usage count: 1
         VERSION: Final[str] = "0.9.0"  # Usage count: 8
+        DEFAULT_VERSION: Final[str] = "1.0.0"  # Default version for components
 
     class Network:
         """Network defaults shared across dispatcher-aligned services."""
@@ -106,6 +107,8 @@ class FlextConstants:
 
         TIMEOUT: Final[int] = 30  # Usage count: 18
         PAGE_SIZE: Final[int] = 100  # Usage count: 2
+        TIMEOUT_SECONDS: Final[int] = 30  # Default timeout for operations
+        ENVIRONMENT: Final[str] = "development"  # Default environment  # Usage count: 2
 
     class Limits:
         """Upper bounds safeguarding payload and resource usage."""
@@ -165,13 +168,17 @@ class FlextConstants:
             DOTENV = "dotenv"  # Usage count: 0
 
         class LogLevel(StrEnum):
-            """Standard log levels mirroring FlextLogger semantics."""
+            """Standard log levels mirroring FlextLogger semantics.
 
-            DEBUG = "DEBUG"  # Usage count: 4
-            INFO = "INFO"  # Usage count: 4
-            WARNING = "WARNING"  # Usage count: 4
-            ERROR = "ERROR"  # Usage count: 3
-            CRITICAL = "CRITICAL"  # Usage count: 3
+            DEPRECATED: Use FlextConstants.Config.LogLevel. constants instead.
+            This class is maintained for backward compatibility only.
+            """
+
+            DEBUG = "DEBUG"  # Usage count: 4 - DEPRECATED: Use FlextConstants.Config.LogLevel.DEBUG
+            INFO = "INFO"  # Usage count: 4 - DEPRECATED: Use FlextConstants.Config.LogLevel.INFO
+            WARNING = "WARNING"  # Usage count: 4 - DEPRECATED: Use FlextConstants.Config.LogLevel.WARNING
+            ERROR = "ERROR"  # Usage count: 3 - DEPRECATED: Use FlextConstants.Config.LogLevel.ERROR
+            CRITICAL = "CRITICAL"  # Usage count: 3 - DEPRECATED: Use FlextConstants.Config.LogLevel.CRITICAL
 
     class Enums:
         """Shared enumerations referenced across the API surface."""
@@ -194,6 +201,125 @@ class FlextConstants:
         FLEXT_API_PORT: Final[int] = 8000  # Usage count: 4
         DEFAULT_HOST: Final[str] = "localhost"  # Usage count: 0
 
+        # Database defaults
+        POSTGRES_DEFAULT_PORT: Final[int] = 5432
+        MYSQL_DEFAULT_PORT: Final[int] = 3306
+        REDIS_DEFAULT_PORT: Final[int] = 6379
+        MONGODB_DEFAULT_PORT: Final[int] = 27017
+        DEFAULT_HTTP_PORT: Final[int] = 8080  # Alternative HTTP port
+
+        # HTTP status code validation ranges
+        MIN_HTTP_STATUS_CODE: Final[int] = 200
+        MAX_HTTP_STATUS_CODE: Final[int] = 599
+
+        # HTTP methods
+        VALID_HTTP_METHODS: Final[set[str]] = {
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "HEAD",
+            "OPTIONS",
+        }
+
+        # Common MIME types
+        MIME_TYPE_JSON: Final[str] = "application/json"
+        MIME_TYPE_HTML: Final[str] = "text/html"
+        MIME_TYPE_PLAIN: Final[str] = "text/plain"
+        MIME_TYPE_XML: Final[str] = "application/xml"
+
+        # Protocol prefixes
+        PROTOCOL_HTTP: Final[str] = "http://"
+        PROTOCOL_HTTPS: Final[str] = "https://"
+        PROTOCOL_TCP: Final[str] = "tcp://"
+        PROTOCOL_UDP: Final[str] = "udp://"
+
+        # Output formats
+        FORMAT_JSON: Final[str] = "json"
+        FORMAT_XML: Final[str] = "xml"
+        FORMAT_YAML: Final[str] = "yaml"
+        FORMAT_TABLE: Final[str] = "table"
+        FORMAT_CSV: Final[str] = "csv"
+
+        # File extensions
+        EXT_PYTHON: Final[str] = ".py"
+        EXT_JSON: Final[str] = ".json"
+        EXT_YAML: Final[str] = ".yaml"
+        EXT_YML: Final[str] = ".yml"
+        EXT_TOML: Final[str] = ".toml"
+        EXT_TXT: Final[str] = ".txt"
+        EXT_LOG: Final[str] = ".log"
+        EXT_CSV: Final[str] = ".csv"
+        EXT_XML: Final[str] = ".xml"
+        EXT_MD: Final[str] = ".md"
+
+        # Database types and drivers
+        DB_SQLITE: Final[str] = "sqlite"
+        DB_POSTGRESQL: Final[str] = "postgresql"
+        DB_MYSQL: Final[str] = "mysql"
+        DB_ORACLE: Final[str] = "oracle"
+        DB_MONGODB: Final[str] = "mongodb"
+        DB_REDIS: Final[str] = "redis"
+
+        # Database URL schemes
+        DB_SCHEME_SQLITE: Final[str] = "sqlite:///"
+        DB_SCHEME_POSTGRESQL: Final[str] = "postgresql://"
+        DB_SCHEME_MYSQL: Final[str] = "mysql://"
+        DB_SCHEME_ORACLE: Final[str] = "oracle://"
+        DB_SCHEME_MONGODB: Final[str] = "mongodb://"
+        DB_SCHEME_REDIS: Final[str] = "redis://"
+
+        # Environment variable names
+        ENV_PYTEST_CURRENT_TEST: Final[str] = "PYTEST_CURRENT_TEST"
+        ENV_LOG_LEVEL: Final[str] = "LOG_LEVEL"
+        ENV_DEBUG: Final[str] = "DEBUG"
+        ENV_ENVIRONMENT: Final[str] = "ENVIRONMENT"
+        ENV_DATABASE_URL: Final[str] = "DATABASE_URL"
+
+        # Common directory names
+        DIR_LOGS: Final[str] = "logs"
+        DIR_DATA: Final[str] = "data"
+        DIR_CONFIG: Final[str] = "config"
+        DIR_TEMP: Final[str] = "temp"
+        DIR_CACHE: Final[str] = "cache"
+
+        # Configuration delimiters
+        ENV_NESTED_DELIMITER: Final[str] = "__"
+        ENV_PREFIX: Final[str] = "FLEXT_"
+        ENV_FILE_DEFAULT: Final[str] = ".env"
+
+        # Validation patterns
+        PATTERN_SECURITY_LEVEL: Final[str] = "^(low|standard|high|critical)$"
+        PATTERN_DATA_CLASSIFICATION: Final[str] = (
+            "^(public|internal|confidential|restricted)$"
+        )
+        PATTERN_EMAIL: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[1-9]\d{1,14}$"
+        PATTERN_UUID: Final[str] = (
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        )
+
+        # HTTP headers
+        HEADER_CONTENT_TYPE: Final[str] = "Content-Type"
+        HEADER_AUTHORIZATION: Final[str] = "Authorization"
+        HEADER_USER_AGENT: Final[str] = "User-Agent"
+        HEADER_ACCEPT: Final[str] = "Accept"
+        HEADER_CACHE_CONTROL: Final[str] = "Cache-Control"
+
+        # HTTP status codes
+        HTTP_STATUS_OK: Final[int] = 200
+        HTTP_STATUS_CREATED: Final[int] = 201
+        HTTP_STATUS_BAD_REQUEST: Final[int] = 400
+        HTTP_STATUS_UNAUTHORIZED: Final[int] = 401
+        HTTP_STATUS_FORBIDDEN: Final[int] = 403
+        HTTP_STATUS_NOT_FOUND: Final[int] = 404
+        HTTP_STATUS_INTERNAL_ERROR: Final[int] = 500
+
+        # HTTP status ranges
+        MIN_HTTP_STATUS_RANGE: Final[int] = 100
+        MAX_HTTP_STATUS_RANGE: Final[int] = 599
+
     class Observability:
         """Observability defaults consumed by FlextLogger."""
 
@@ -203,6 +329,87 @@ class FlextConstants:
         """Performance tuning knobs surfaced in roadmap metrics."""
 
         DEFAULT_BATCH_SIZE: Final[int] = 1000  # Usage count: 2
+        SUBPROCESS_TIMEOUT: Final[int] = 300  # 5 minutes for build/test operations
+        SUBPROCESS_TIMEOUT_SHORT: Final[int] = 180  # 3 minutes for quick operations
+
+        # Database connection defaults
+        DEFAULT_DB_POOL_SIZE: Final[int] = 10
+        MIN_DB_POOL_SIZE: Final[int] = 1
+        MAX_DB_POOL_SIZE: Final[int] = 100
+
+        # Operation limits
+        MAX_RETRY_ATTEMPTS_LIMIT: Final[int] = 10
+        DEFAULT_TIMEOUT_LIMIT: Final[int] = 300
+
+        # Timing and delays
+        DEFAULT_DELAY_SECONDS: Final[float] = 1.0
+        DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
+        DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
+        DEFAULT_INITIAL_DELAY_SECONDS: Final[float] = 1.0
+        DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
+        DEFAULT_FALLBACK_DELAY: Final[float] = 0.1
+
+        # Pagination and batch processing
+        DEFAULT_PAGE_SIZE: Final[int] = 10
+        DEFAULT_BATCH_SIZE_SMALL: Final[int] = 100
+        DEFAULT_PAGE_NUMBER: Final[int] = 1
+        MAX_BATCH_ITEMS: Final[int] = 10000
+        DEFAULT_STREAM_BATCH_SIZE: Final[int] = 100
+        DEFAULT_TIME_RANGE_SECONDS: Final[int] = 3600  # 1 hour
+        DEFAULT_TTL_SECONDS: Final[int] = 3600  # 1 hour default TTL
+        MAX_BATCH_SIZE_VALIDATION: Final[int] = (
+            1000  # Maximum batch size for validation
+        )
+
+        # Field validation constraints
+        DEFAULT_VERSION: Final[int] = 1  # Default version for entities
+        MIN_VERSION: Final[int] = 1  # Minimum version number
+        DEFAULT_SKIP: Final[int] = 0  # Default skip value for pagination
+        MIN_SKIP: Final[int] = 0  # Minimum skip value
+        DEFAULT_TAKE: Final[int] = 10  # Default take value for pagination
+        MIN_TAKE: Final[int] = 1  # Minimum take value
+        MAX_TAKE: Final[int] = 100  # Maximum take value
+        DEFAULT_CURRENT_STEP: Final[int] = 0  # Default current step
+        MIN_CURRENT_STEP: Final[int] = 0  # Minimum current step
+
+        # String length constraints
+        CURRENCY_CODE_LENGTH: Final[int] = 3  # ISO currency code length
+        MIN_NAME_LENGTH: Final[int] = 1  # Minimum name length
+
+        # Numeric validation constraints
+        DEFAULT_PRIORITY: Final[int] = 0  # Default priority value
+        MIN_PRIORITY: Final[int] = 0  # Minimum priority value
+        DEFAULT_ROLLOUT_PERCENTAGE: Final[float] = 0.0  # Default rollout percentage
+        MIN_ROLLOUT_PERCENTAGE: Final[float] = 0.0  # Minimum rollout percentage
+        MAX_ROLLOUT_PERCENTAGE: Final[float] = 100.0  # Maximum rollout percentage
+        CURRENCY_DECIMAL_PLACES: Final[int] = 2  # Standard currency decimal places
+
+        # Validation limits
+        MAX_METADATA_SIZE: Final[int] = 10000  # Maximum metadata size in characters
+        CRITICAL_DURATION_MS: Final[int] = (
+            5000  # Critical performance threshold (5 seconds)
+        )
+        CRITICAL_USAGE_PERCENT: Final[int] = 90  # Critical CPU/memory usage threshold
+        MAX_TIMEOUT_SECONDS: Final[int] = 600  # Maximum timeout (10 minutes)
+        MAX_BATCH_OPERATIONS: Final[int] = 1000  # Maximum batch operations
+        MAX_OPERATION_NAME_LENGTH: Final[int] = 100  # Maximum operation name length
+        MAX_DIMENSIONS: Final[int] = 20  # Maximum dimensions for metrics
+        PARALLEL_THRESHOLD: Final[int] = 100  # Threshold for parallel processing
+
+        # Data structure constants
+        EXPECTED_TUPLE_LENGTH: Final[int] = 2
+        EXPECTED_PAIR_LENGTH: Final[int] = 2
+
+        # Rate limiting and throttling
+        DEFAULT_RATE_LIMIT_WINDOW: Final[int] = 60  # seconds
+        DEFAULT_REQUEST_TIMEOUT: Final[int] = 30  # seconds
+
+        # Module-specific performance thresholds
+        CLI_PERFORMANCE_WARNING_MS: Final[float] = 2000.0  # 2 seconds
+        CLI_PERFORMANCE_CRITICAL_MS: Final[float] = 10000.0  # 10 seconds
+        AUTH_PERFORMANCE_WARNING_MS: Final[float] = 1000.0  # 1 second
+        AUTH_PERFORMANCE_CRITICAL_MS: Final[float] = 5000.0  # 5 seconds
+        HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 100 * 1024 * 1024  # 100MB
 
     class Reliability:
         """Reliability thresholds backing retry guidance."""
@@ -219,6 +426,21 @@ class FlextConstants:
         DEFAULT_TIMEOUT_SECONDS: Final[float] = (
             30.0  # Default timeout for domain services
         )
+
+    class Security:
+        """Security-related constants for authentication and authorization."""
+
+        # JWT token expiry limits
+        MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days in minutes
+        DEFAULT_JWT_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours in minutes
+
+        # Session management
+        MAX_SESSION_EXTENSION_HOURS: Final[int] = 168  # 7 days maximum
+        DEFAULT_SESSION_HOURS: Final[int] = 24  # 24 hours default
+
+        # Password and hash validation
+        MIN_BCRYPT_HASH_LENGTH: Final[int] = 32  # Minimum bcrypt hash length
+        MAX_DAYS_FOR_MONTH_ADDITION: Final[int] = 28  # Safe days for month calculations
 
     class Environment:
         """Environment enumerations used by configuration profiles."""
@@ -241,10 +463,10 @@ class FlextConstants:
     class Cqrs:
         """CQRS (Command Query Responsibility Segregation) constants."""
 
-        # Handler types
-        DEFAULT_HANDLER_TYPE: Final[str] = "command"
-        COMMAND_HANDLER_TYPE: Final[str] = "command"
-        QUERY_HANDLER_TYPE: Final[str] = "query"
+        # Handler types - Using Literal for type safety
+        DEFAULT_HANDLER_TYPE: Final = "command"
+        COMMAND_HANDLER_TYPE: Final = "command"
+        QUERY_HANDLER_TYPE: Final = "query"
 
         # Timeout constants
         DEFAULT_TIMEOUT: Final[int] = 30000  # milliseconds
@@ -285,28 +507,51 @@ class FlextConstants:
         MAX_FACTORIES: Final[int] = 500
 
     class Logging:
-        """Logging configuration constants."""
+        """Comprehensive logging configuration constants for FLEXT ecosystem.
 
-        # Log levels
-        DEFAULT_LEVEL: Final[str] = "INFO"
-        VALID_LEVELS: Final[set[str]] = {
-            "DEBUG",
-            "INFO",
-            "WARNING",
-            "ERROR",
-            "CRITICAL",
-        }
+        Provides centralized logging defaults, levels, formats, and configuration
+        options used across all FLEXT modules and subprojects.
+        """
 
-        # Log formatting
+        # Log Levels - Standard hierarchy
+        DEBUG: Final[str] = "DEBUG"
+        INFO: Final[str] = "INFO"
+        WARNING: Final[str] = "WARNING"
+        ERROR: Final[str] = "ERROR"
+        CRITICAL: Final[str] = "CRITICAL"
+
+        # Default log level for different environments
+        DEFAULT_LEVEL: Final[str] = INFO
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = DEBUG
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = WARNING
+        DEFAULT_LEVEL_TESTING: Final[str] = INFO
+
+        # Valid log levels set
+        VALID_LEVELS: Final[set[str]] = {DEBUG, INFO, WARNING, ERROR, CRITICAL}
+
+        # Log Formatting
         DEFAULT_FORMAT: Final[str] = (
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
+        DETAILED_FORMAT: Final[str] = (
+            "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s"
+        )
+        JSON_FORMAT: Final[str] = "json"
+        SIMPLE_FORMAT: Final[str] = "%(levelname)s - %(message)s"
+
+        # Date formatting
         DATE_FORMAT: Final[str] = "%Y-%m-%d %H:%M:%S"
+        DATE_FORMAT_WITH_MS: Final[str] = "%Y-%m-%d %H:%M:%S.%f"
 
         # FlextLogger optimization constants for Pydantic models
         INCLUDE_SOURCE: Final[bool] = True
         STRUCTURED_OUTPUT: Final[bool] = True
         VERBOSITY: Final[str] = "detailed"
+
+        # Output configuration
+        JSON_OUTPUT_DEFAULT: Final[None] = None  # Auto-detect
+        JSON_OUTPUT_ENABLED: Final[bool] = True
+        JSON_OUTPUT_DISABLED: Final[bool] = False
 
         # Performance tracking constants
         TRACK_PERFORMANCE: Final[bool] = True
@@ -314,6 +559,170 @@ class FlextConstants:
         TRACK_TIMING: Final[bool] = True
         PERFORMANCE_THRESHOLD_WARNING: Final[float] = 1000.0  # milliseconds
         PERFORMANCE_THRESHOLD_CRITICAL: Final[float] = 5000.0  # milliseconds
+
+        # Log rotation and file management
+        MAX_FILE_SIZE: Final[int] = 10 * 1024 * 1024  # 10MB
+        BACKUP_COUNT: Final[int] = 5
+        ROTATION_WHEN: Final[str] = "midnight"
+
+        # Console output configuration
+        CONSOLE_ENABLED: Final[bool] = True
+        CONSOLE_DISABLED: Final[bool] = False
+        CONSOLE_COLOR_ENABLED: Final[bool] = True
+        CONSOLE_COLOR_DISABLED: Final[bool] = False
+
+        # File output configuration
+        FILE_ENABLED: Final[bool] = True
+        FILE_DISABLED: Final[bool] = False
+        DEFAULT_LOG_FILE: Final[str] = "flext.log"
+        ERROR_LOG_FILE: Final[str] = "flext_error.log"
+
+        # Network logging (syslog, remote logging)
+        SYSLOG_ENABLED: Final[bool] = False
+        REMOTE_LOGGING_ENABLED: Final[bool] = False
+        DEFAULT_SYSLOG_FACILITY: Final[str] = "local0"
+
+        # Context and metadata
+        INCLUDE_CONTEXT: Final[bool] = True
+        INCLUDE_CORRELATION_ID: Final[bool] = True
+        INCLUDE_USER_ID: Final[bool] = False
+        INCLUDE_SESSION_ID: Final[bool] = False
+
+        # Filtering and sampling
+        ENABLE_FILTERING: Final[bool] = True
+        DEFAULT_SAMPLE_RATE: Final[float] = 1.0  # 100% sampling
+        HIGH_VOLUME_SAMPLE_RATE: Final[float] = 0.1  # 10% sampling for high-volume logs
+
+        # Security and compliance
+        MASK_SENSITIVE_DATA: Final[bool] = True
+        REDACT_PASSWORDS: Final[bool] = True
+        REDACT_API_KEYS: Final[bool] = True
+        REDACT_CREDIT_CARDS: Final[bool] = True
+
+        # Environment-specific overrides
+        class Environment:
+            """Environment-specific logging configuration overrides."""
+
+            DEVELOPMENT: Final[dict[str, object]] = {
+                "level": "DEBUG",
+                "console_enabled": True,
+                "file_enabled": True,
+                "structured_output": False,
+                "include_source": True,
+                "track_performance": True,
+            }
+
+            STAGING: Final[dict[str, object]] = {
+                "level": "INFO",
+                "console_enabled": True,
+                "file_enabled": True,
+                "structured_output": True,
+                "include_source": True,
+                "track_performance": True,
+            }
+
+            PRODUCTION: Final[dict[str, object]] = {
+                "level": "WARNING",
+                "console_enabled": False,
+                "file_enabled": True,
+                "structured_output": True,
+                "include_source": False,
+                "track_performance": False,
+            }
+
+            TESTING: Final[dict[str, object]] = {
+                "level": "INFO",
+                "console_enabled": True,
+                "file_enabled": False,
+                "structured_output": False,
+                "include_source": True,
+                "track_performance": False,
+            }
+
+        # Module-specific logging levels
+        class ModuleLevels:
+            """Default log levels for different FLEXT modules."""
+
+            # Core modules
+            FLEXT_CORE: Final[str] = "INFO"
+            FLEXT_CONFIG: Final[str] = "WARNING"
+            FLEXT_LOGGER: Final[str] = "WARNING"
+            FLEXT_CONTAINER: Final[str] = "INFO"
+
+            # API modules
+            FLEXT_API: Final[str] = "INFO"
+            FLEXT_WEB: Final[str] = "INFO"
+            FLEXT_GRPC: Final[str] = "INFO"
+
+            # Data modules
+            FLEXT_DB_ORACLE: Final[str] = "WARNING"
+            FLEXT_LDAP: Final[str] = "WARNING"
+            FLEXT_LDIF: Final[str] = "WARNING"
+            FLEXT_MELTANO: Final[str] = "INFO"
+
+            # CLI modules
+            FLEXT_CLI: Final[str] = "INFO"
+
+            # Auth modules
+            FLEXT_AUTH: Final[str] = "WARNING"
+
+            # Target modules
+            FLEXT_TARGET_ORACLE: Final[str] = "WARNING"
+            FLEXT_TARGET_LDAP: Final[str] = "WARNING"
+            FLEXT_TARGET_LDIF: Final[str] = "WARNING"
+
+            # Tap modules
+            FLEXT_TAP_ORACLE: Final[str] = "WARNING"
+            FLEXT_TAP_LDAP: Final[str] = "WARNING"
+            FLEXT_TAP_LDIF: Final[str] = "WARNING"
+
+            # DBT modules
+            FLEXT_DBT_ORACLE: Final[str] = "WARNING"
+            FLEXT_DBT_LDAP: Final[str] = "WARNING"
+            FLEXT_DBT_LDIF: Final[str] = "WARNING"
+
+        # Log message templates
+        class Messages:
+            """Standard log message templates."""
+
+            # Configuration messages
+            CONFIG_LOADED: Final[str] = "Configuration loaded from {source}"
+            CONFIG_VALIDATED: Final[str] = "Configuration validation completed"
+            CONFIG_ERROR: Final[str] = "Configuration error: {error}"
+
+            # Service messages
+            SERVICE_STARTED: Final[str] = "Service {service_name} started"
+            SERVICE_STOPPED: Final[str] = "Service {service_name} stopped"
+            SERVICE_ERROR: Final[str] = "Service {service_name} error: {error}"
+
+            # Database messages
+            DB_CONNECTED: Final[str] = "Database connected to {database}"
+            DB_DISCONNECTED: Final[str] = "Database disconnected from {database}"
+            DB_QUERY_EXECUTED: Final[str] = "Database query executed: {query_type}"
+            DB_ERROR: Final[str] = "Database error: {error}"
+
+            # API messages
+            API_REQUEST: Final[str] = "API request: {method} {endpoint}"
+            API_RESPONSE: Final[str] = "API response: {status_code} {endpoint}"
+            API_ERROR: Final[str] = "API error: {error}"
+
+            # Authentication messages
+            AUTH_SUCCESS: Final[str] = "Authentication successful for user {user}"
+            AUTH_FAILED: Final[str] = "Authentication failed for user {user}"
+            AUTH_ERROR: Final[str] = "Authentication error: {error}"
+
+            # Performance messages
+            PERFORMANCE_WARNING: Final[str] = (
+                "Performance warning: {operation} took {duration}ms"
+            )
+            PERFORMANCE_CRITICAL: Final[str] = (
+                "Performance critical: {operation} took {duration}ms"
+            )
+
+            # Error messages
+            ERROR_OCCURRED: Final[str] = "Error occurred: {error}"
+            CRITICAL_ERROR: Final[str] = "Critical error: {error}"
+            VALIDATION_ERROR: Final[str] = "Validation error: {error}"  # milliseconds
 
     class Dispatcher:
         """Constants for FlextDispatcher operations.
@@ -367,10 +776,21 @@ class FlextConstants:
 
         # Field Names
         FIELD_ID = "id"
+        FIELD_NAME = "name"
+        FIELD_TYPE = "type"
+        FIELD_STATUS = "status"
+        FIELD_DATA = "data"
+        FIELD_CONFIG = "config"
         FIELD_STATE = "state"
         FIELD_CREATED_AT = "created_at"
         FIELD_UPDATED_AT = "updated_at"
         FIELD_VALIDATED = "validated"
+        FIELD_CLASS = "class"
+        FIELD_MODULE = "module"
+        FIELD_REGISTERED = "registered"
+        FIELD_EVENT_NAME = "event_name"
+        FIELD_AGGREGATE_ID = "aggregate_id"
+        FIELD_OCCURRED_AT = "occurred_at"
 
         # Default States
         STATE_ACTIVE = "active"
@@ -378,6 +798,42 @@ class FlextConstants:
         STATE_PENDING = "pending"
         STATE_COMPLETED = "completed"
         STATE_FAILED = "failed"
+        STATE_RUNNING = "running"
+        STATE_COMPENSATING = "compensating"
+        STATE_SENT = "sent"
+        STATE_IDLE = "idle"
+        STATE_HEALTHY = "healthy"
+        STATE_DEGRADED = "degraded"
+        STATE_UNHEALTHY = "unhealthy"
+
+        # Status Constants for Scripts and Diagnostics
+        STATUS_PASS = "PASS"
+        STATUS_FAIL = "FAIL"
+        STATUS_NO_TARGET = "NO_TARGET"
+        STATUS_SKIP = "SKIP"
+        STATUS_UNKNOWN = "UNKNOWN"
+
+        # Default identifiers
+        IDENTIFIER_UNKNOWN = "unknown"
+        IDENTIFIER_DEFAULT = "default"
+        IDENTIFIER_ANONYMOUS = "anonymous"
+        IDENTIFIER_GUEST = "guest"
+        IDENTIFIER_SYSTEM = "system"
+
+        # Common method names
+        METHOD_HANDLE = "handle"
+        METHOD_PROCESS = "process"
+        METHOD_EXECUTE = "execute"
+
+        # Authentication types
+        AUTH_BEARER = "bearer"
+        AUTH_API_KEY = "api_key"
+        AUTH_JWT = "jwt"
+
+        # CQRS handler types
+        HANDLER_COMMAND = "command"
+        HANDLER_QUERY = "query"
+        METHOD_VALIDATE = "validate"
 
         # Validation Types (simple string constants)
         VALIDATION_BASIC = "basic"
@@ -396,6 +852,12 @@ class FlextConstants:
         DEFAULT_ENCODING = "utf-8"
         DEFAULT_SORT_KEYS = False
         DEFAULT_ENSURE_ASCII = False
+
+        # Boolean string representations
+        BOOL_TRUE_STRINGS: ClassVar[set[str]] = {"true", "1", "yes", "on", "enabled"}
+        BOOL_FALSE_STRINGS: ClassVar[set[str]] = {"false", "0", "no", "off", "disabled"}
+        STRING_TRUE = "true"
+        STRING_FALSE = "false"
 
         # Timestamp Defaults
         DEFAULT_USE_UTC = True

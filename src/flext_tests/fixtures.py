@@ -16,6 +16,7 @@ from pydantic import Field
 
 from flext_core import (
     FlextConfig,
+    FlextConstants,
     FlextLogger,
     FlextModels,
     FlextResult,
@@ -62,7 +63,12 @@ class FlextTestsFixtures:
             self.factories[name] = factory
 
         def get(self, name: str) -> object:
-            """Get a factory."""
+            """Get a factory.
+
+            Returns:
+                object: Factory object or None if not found
+
+            """
             return self.factories.get(name)
 
     class SequenceFactory:
@@ -173,17 +179,32 @@ class FlextTestsFixtures:
 
         @staticmethod
         def create_timeout_error() -> TimeoutError:
-            """Create a timeout error for testing."""
+            """Create a timeout error for testing.
+
+            Returns:
+                TimeoutError: Simulated timeout error instance
+
+            """
             return TimeoutError("Simulated timeout error for testing")
 
         @staticmethod
         def create_connection_error() -> ConnectionError:
-            """Create a connection error for testing."""
+            """Create a connection error for testing.
+
+            Returns:
+                ConnectionError: Simulated connection error instance
+
+            """
             return ConnectionError("Simulated connection error for testing")
 
         @staticmethod
         def create_validation_error() -> ValueError:
-            """Create a validation error for testing."""
+            """Create a validation error for testing.
+
+            Returns:
+                ValueError: Simulated validation error instance
+
+            """
             return ValueError("Simulated validation error for testing")
 
         @staticmethod
@@ -332,24 +353,39 @@ class FlextTestsFixtures:
 
         @staticmethod
         def create_test_config() -> FlextConfig:
-            """Create test configuration."""
+            """Create test configuration.
+
+            Returns:
+                FlextConfig: Test configuration instance
+
+            """
             return FlextConfig.create(
-                constants={"environment": "test", "debug": True},
-            ).unwrap()
+                environment=FlextConstants.Environment.ConfigEnvironment.TESTING,
+                debug=True,
+            )
 
         @staticmethod
         def create_development_config() -> FlextConfig:
-            """Create development configuration."""
+            """Create development configuration.
+
+            Returns:
+                FlextConfig: Development configuration instance
+
+            """
             return FlextConfig.create(
-                constants={"environment": "development", "debug": True},
-            ).unwrap()
+                environment=FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT,
+                debug=True,
+            )
 
         @staticmethod
         def create_production_config() -> FlextConfig:
-            """Create production configuration."""
-            return FlextConfig.create(
-                constants={"environment": "production", "debug": False},
-            ).unwrap()
+            """Create production configuration.
+
+            Returns:
+                FlextConfig: Production configuration instance
+
+            """
+            return FlextConfig.create(environment="production", debug=False)
 
     # === Command Classes ===
 

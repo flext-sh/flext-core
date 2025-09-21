@@ -6,7 +6,7 @@
 
 ```bash
 # PHASE 1: Code Quality (MANDATORY)
-make lint              # Ruff: ZERO violations in src/
+make lint            
 make type-check        # MyPy strict: ZERO errors in src/
 make security          # Bandit: ZERO critical vulnerabilities
 

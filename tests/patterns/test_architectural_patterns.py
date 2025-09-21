@@ -37,7 +37,12 @@ class TestCleanArchitecturePatterns:
             email: str
 
             def validate_business_rules(self) -> FlextResult[None]:
-                """Validate email business rules."""
+                """Validate email business rules.
+
+                Returns:
+                    FlextResult[None]: Success or failure result.
+
+                """
                 if "@" not in self.email:
                     return FlextResult[None].fail("Invalid email format")
                 return FlextResult[None].ok(None)
@@ -49,13 +54,23 @@ class TestCleanArchitecturePatterns:
             email_obj: UserEmail
 
             def validate_business_rules(self) -> FlextResult[None]:
-                """Validate business rules for user entity."""
+                """Validate business rules for user entity.
+
+                Returns:
+                    FlextResult[None]: Success or failure result.
+
+                """
                 if not self.name.strip():
                     return FlextResult[None].fail("Name cannot be empty")
                 return self.email_obj.validate_business_rules()
 
             def validate_domain_rules(self) -> FlextResult[None]:
-                """Validate user domain rules."""
+                """Validate user domain rules.
+
+                Returns:
+                    FlextResult[None]: Success or failure result.
+
+                """
                 return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
@@ -74,14 +89,24 @@ class TestCleanArchitecturePatterns:
                 return "CreateUserHandler"
 
             def can_handle(self, message_type: type) -> bool:
-                """Check if handler can handle the message type."""
+                """Check if handler can handle the message type.
+
+                Returns:
+                    bool: True if handler can handle the message type.
+
+                """
                 return message_type == CreateUserCommand or issubclass(
                     message_type,
                     CreateUserCommand,
                 )
 
             def handle(self, request: object) -> FlextResult[str]:
-                """Handle user creation."""
+                """Handle user creation.
+
+                Returns:
+                    FlextResult[str]: Success or failure result.
+
+                """
                 if not isinstance(request, CreateUserCommand):
                     return FlextResult[str].fail("Invalid command type")
 
@@ -115,14 +140,14 @@ class TestCleanArchitecturePatterns:
 
         # Infrastructure Layer - Framework integration
         # Use FlextResult pattern for framework integration
-        FlextResult.ok("Framework initialized")
+        FlextResult[str].ok("Framework initialized")
 
         # Test the full flow
         command = CreateUserCommand(name="John Doe", email="john@example.com")
         handler = CreateUserHandler("CreateUserHandler")
 
         result = handler.handle(command)
-        assert result.success
+        assert result.is_success
         assert result.value == "User created successfully"
 
     @pytest.mark.architecture
@@ -134,7 +159,12 @@ class TestCleanArchitecturePatterns:
         self._test_ddd_validation_and_behavior(order)
 
     def _create_ddd_value_objects(self) -> tuple[object, object]:
-        """Create DDD value objects for testing."""
+        """Create DDD value objects for testing.
+
+        Returns:
+            tuple[object, object]: Tuple of created value objects.
+
+        """
 
         # Value Objects
         class OrderId(FlextModels.Value):
@@ -253,7 +283,7 @@ class TestCleanArchitecturePatterns:
                 validate_method() if validate_method else FlextResult[None].ok(None)
             )
             assert hasattr(validation_result, "success")
-            assert validation_result.success
+            assert validation_result.is_success
 
         # Test domain behavior
         if hasattr(order, "confirm_order"):
@@ -262,7 +292,7 @@ class TestCleanArchitecturePatterns:
                 confirm_method() if confirm_method else FlextResult[None].ok(None)
             )
             assert hasattr(confirm_result, "success")
-            assert confirm_result.success
+            assert confirm_result.is_success
 
     @pytest.mark.architecture
     def test_cqrs_pattern_implementation(self) -> None:
@@ -321,14 +351,14 @@ class TestCleanArchitecturePatterns:
         command_handler = UpdateUserHandler()
 
         command_result = command_handler.handle(command)
-        assert command_result.success
+        assert command_result.is_success
         assert "updated" in str(command_result.value)
 
         query = GetUserQuery(user_id="123")
         query_handler = GetUserHandler()
 
         query_result = query_handler.handle(query)
-        assert query_result.success
+        assert query_result.is_success
         assert isinstance(query_result.value, dict)
 
 
@@ -367,12 +397,12 @@ class TestEnterprisePatterns:
 
         # Test factory usage
         email_service = ServiceFactory.create_service("email")
-        assert email_service.success
+        assert email_service.is_success
         assert isinstance(email_service.value, dict)
         assert email_service.value["type"] == "email"
 
         sms_service = ServiceFactory.create_service("sms")
-        assert sms_service.success
+        assert sms_service.is_success
         assert isinstance(sms_service.value, dict)
         assert sms_service.value["type"] == "sms"
 
@@ -423,7 +453,7 @@ class TestEnterprisePatterns:
             .build()
         )
 
-        assert config_result.success
+        assert config_result.is_success
         config = config_result.value
         assert isinstance(config, dict)
         config_dict = config  # Already FlextTypes.Core.Dict from assertion
@@ -472,7 +502,7 @@ class TestEnterprisePatterns:
         start_time = time.time()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            assert result.success
+            assert result.is_success
 
         save_duration = time.time() - start_time
 
@@ -480,7 +510,7 @@ class TestEnterprisePatterns:
         start_time = time.time()
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
-            assert query_result.success
+            assert query_result.is_success
             entity_data = cast("FlextTypes.Core.Dict", query_result.value)
             assert entity_data["id"] == i
 
@@ -557,10 +587,10 @@ class TestEventDrivenPatterns:
 
         # Process events
         result1 = handler.handle_user_created(created_event)
-        assert result1.success
+        assert result1.is_success
 
         result2 = handler.handle_user_updated(updated_event)
-        assert result2.success
+        assert result2.is_success
 
         # Verify event processing
         assert len(handler.processed_events) == 2

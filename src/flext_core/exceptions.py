@@ -126,20 +126,25 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.attribute_name = attribute_name
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context["attribute_name"] = attribute_name
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict["attribute_name"] = attribute_name
 
             # Add attribute_context if provided (RESTORED FUNCTIONALITY)
             if attribute_context:
-                context["attribute_context"] = dict(attribute_context)
+                context_dict["attribute_context"] = dict(attribute_context)
 
             super().__init__(
                 message,
                 code=FlextConstants.Errors.OPERATION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _OperationError(BaseError, RuntimeError):
@@ -153,15 +158,20 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.operation = operation
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context["operation"] = operation
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict["operation"] = operation
             super().__init__(
                 message,
                 code=FlextConstants.Errors.OPERATION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _ValidationError(BaseError, ValueError):
@@ -179,22 +189,31 @@ class FlextExceptions:
             self.field = field
             self.value = value
             self.validation_details = validation_details
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context.update(
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict.update(
                 {
                     "field": field,
                     "value": value,
                     "validation_details": validation_details,
                 },
             )
-            error_code = cast("str | None", kwargs.get("error_code"))
+            error_code = (
+                str(kwargs.get("error_code"))
+                if kwargs.get("error_code") is not None
+                else None
+            )
             super().__init__(
                 message,
                 code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _ConfigurationError(BaseError, ValueError):
@@ -210,15 +229,20 @@ class FlextExceptions:
         ) -> None:
             self.config_key = config_key
             self.config_file = config_file
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context.update({"config_key": config_key, "config_file": config_file})
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict.update({"config_key": config_key, "config_file": config_file})
             super().__init__(
                 message,
                 code=FlextConstants.Errors.CONFIGURATION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _ConnectionError(BaseError, ConnectionError):
@@ -234,15 +258,20 @@ class FlextExceptions:
         ) -> None:
             self.service = service
             self.endpoint = endpoint
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context.update({"service": service, "endpoint": endpoint})
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict.update({"service": service, "endpoint": endpoint})
             super().__init__(
                 message,
                 code=FlextConstants.Errors.CONNECTION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _ProcessingError(BaseError, RuntimeError):
@@ -258,15 +287,23 @@ class FlextExceptions:
         ) -> None:
             self.business_rule = business_rule
             self.operation = operation
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context.update({"business_rule": business_rule, "operation": operation})
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict.update({
+                "business_rule": business_rule,
+                "operation": operation,
+            })
             super().__init__(
                 message,
                 code=FlextConstants.Errors.PROCESSING_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _TimeoutError(BaseError, TimeoutError):
@@ -280,15 +317,20 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.timeout_seconds = timeout_seconds
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context["timeout_seconds"] = timeout_seconds
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict["timeout_seconds"] = timeout_seconds
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TIMEOUT_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _NotFoundError(BaseError, FileNotFoundError):
@@ -304,15 +346,23 @@ class FlextExceptions:
         ) -> None:
             self.resource_id = resource_id
             self.resource_type = resource_type
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context.update({"resource_id": resource_id, "resource_type": resource_type})
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict.update({
+                "resource_id": resource_id,
+                "resource_type": resource_type,
+            })
             super().__init__(
                 message,
                 code=FlextConstants.Errors.NOT_FOUND,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _AlreadyExistsError(BaseError, FileExistsError):
@@ -328,16 +378,21 @@ class FlextExceptions:
         ) -> None:
             self.resource_id = resource_id
             self.resource_type = resource_type
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context["resource_id"] = resource_id
-            context["resource_type"] = resource_type
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict["resource_id"] = resource_id
+            context_dict["resource_type"] = resource_type
             super().__init__(
                 message,
                 code=FlextConstants.Errors.ALREADY_EXISTS,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _PermissionError(BaseError, PermissionError):
@@ -351,15 +406,20 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.required_permission = required_permission
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context["required_permission"] = required_permission
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict["required_permission"] = required_permission
             super().__init__(
                 message,
                 code=FlextConstants.Errors.PERMISSION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _AuthenticationError(BaseError, PermissionError):
@@ -373,15 +433,20 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.auth_method = auth_method
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
-            context["auth_method"] = auth_method
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
+            context_dict["auth_method"] = auth_method
             super().__init__(
                 message,
                 code=FlextConstants.Errors.AUTHENTICATION_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _TypeError(BaseError, TypeError):
@@ -397,9 +462,12 @@ class FlextExceptions:
         ) -> None:
             self.expected_type = expected_type
             self.actual_type = actual_type
-            context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
-            )
+            context_raw = kwargs.get("context", {})
+            context_dict: dict[str, object]
+            if isinstance(context_raw, dict):
+                context_dict = cast("dict[str, object]", context_raw)
+            else:
+                context_dict = {}
 
             # Convert type names to actual types for better functionality
             expected_type_obj: type | str = expected_type or ""
@@ -431,7 +499,7 @@ class FlextExceptions:
             elif actual_type == "dict":
                 actual_type_obj = dict
 
-            context.update(
+            context_dict.update(
                 {
                     "expected_type": expected_type_obj,
                     "actual_type": actual_type_obj,
@@ -440,8 +508,10 @@ class FlextExceptions:
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TYPE_ERROR,
-                context=context,
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     class _CriticalError(BaseError, SystemError):
@@ -449,22 +519,33 @@ class FlextExceptions:
 
         def __init__(self, message: str, **kwargs: object) -> None:
             # Extract special parameters
-            context = cast("Mapping[str, object] | None", kwargs.pop("context", None))
-            correlation_id = cast("str | None", kwargs.pop("correlation_id", None))
+            context_raw = kwargs.pop("context", None)
+            if isinstance(context_raw, dict):
+                context_dict: dict[str, object] | None = cast(
+                    "dict[str, object]", context_raw
+                )
+            else:
+                context_dict = None
+            correlation_id_raw = kwargs.pop("correlation_id", None)
+            correlation_id = (
+                str(correlation_id_raw) if correlation_id_raw is not None else None
+            )
 
             # Add remaining kwargs to context for full functionality
-            if context is not None:
-                full_context = dict(context)
+            if context_dict is not None:
+                full_context: dict[str, object] = dict(context_dict)
                 full_context.update(kwargs)
-                context = full_context
+                context_dict = full_context
             elif kwargs:
-                context = dict(kwargs)
+                context_dict = dict(kwargs)
 
             super().__init__(
                 message,
                 code=FlextConstants.Errors.CRITICAL_ERROR,
-                context=context,
-                correlation_id=correlation_id,
+                context=context_dict,
+                correlation_id=str(correlation_id)
+                if correlation_id is not None
+                else None,
             )
 
     class _Error(BaseError, RuntimeError):
@@ -472,22 +553,32 @@ class FlextExceptions:
 
         def __init__(self, message: str, **kwargs: object) -> None:
             # Extract special parameters
-            context = cast("Mapping[str, object] | None", kwargs.pop("context", None))
-            correlation_id = cast("str | None", kwargs.pop("correlation_id", None))
-            error_code = cast("str | None", kwargs.pop("error_code", None))
+            context_raw = kwargs.pop("context", None)
+            if isinstance(context_raw, dict):
+                context_dict: dict[str, object] | None = cast(
+                    "dict[str, object]", context_raw
+                )
+            else:
+                context_dict = None
+            correlation_id_raw = kwargs.pop("correlation_id", None)
+            correlation_id = (
+                str(correlation_id_raw) if correlation_id_raw is not None else None
+            )
+            error_code_raw = kwargs.pop("error_code", None)
+            error_code = str(error_code_raw) if error_code_raw is not None else None
 
             # Add remaining kwargs to context for full functionality
-            if context is not None:
-                full_context = dict(context)
+            if context_dict is not None:
+                full_context: dict[str, object] = dict(context_dict)
                 full_context.update(kwargs)
-                context = full_context
+                context_dict = full_context
             elif kwargs:
-                context = dict(kwargs)
+                context_dict = dict(kwargs)
 
             super().__init__(
                 message,
                 code=error_code or FlextConstants.Errors.GENERIC_ERROR,
-                context=context,
+                context=context_dict,
                 correlation_id=correlation_id,
             )
 
@@ -495,11 +586,20 @@ class FlextExceptions:
         """User input or API usage error."""
 
         def __init__(self, message: str, **kwargs: object) -> None:
+            context_raw = kwargs.get("context", {})
+            if isinstance(context_raw, dict):
+                context_dict: dict[str, object] | None = cast(
+                    "dict[str, object]", context_raw
+                )
+            else:
+                context_dict = None
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TYPE_ERROR,
-                context=cast("Mapping[str, object] | None", kwargs.get("context")),
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context_dict,
+                correlation_id=str(kwargs.get("correlation_id"))
+                if kwargs.get("correlation_id") is not None
+                else None,
             )
 
     # =============================================================================
@@ -522,32 +622,6 @@ class FlextExceptions:
     Error = _Error
     UserError = _UserError
 
-    # Legacy aliases eliminated - use direct exception names above
-
-    # =============================================================================
-    # ERROR CODES - Error code constants
-    # =============================================================================
-
-    class ErrorCodes:
-        """Centralized error code constants from FlextConstants."""
-
-        GENERIC_ERROR = FlextConstants.Errors.GENERIC_ERROR
-        VALIDATION_ERROR = FlextConstants.Errors.VALIDATION_ERROR
-        CONFIGURATION_ERROR = FlextConstants.Errors.CONFIGURATION_ERROR
-        CONNECTION_ERROR = FlextConstants.Errors.CONNECTION_ERROR
-        AUTHENTICATION_ERROR = FlextConstants.Errors.AUTHENTICATION_ERROR
-        PERMISSION_ERROR = FlextConstants.Errors.PERMISSION_ERROR
-        NOT_FOUND = FlextConstants.Errors.NOT_FOUND
-        ALREADY_EXISTS = FlextConstants.Errors.ALREADY_EXISTS
-        TIMEOUT_ERROR = FlextConstants.Errors.TIMEOUT_ERROR
-        PROCESSING_ERROR = FlextConstants.Errors.PROCESSING_ERROR
-        CRITICAL_ERROR = FlextConstants.Errors.CRITICAL_ERROR
-        OPERATION_ERROR = FlextConstants.Errors.OPERATION_ERROR
-        UNWRAP_ERROR = FlextConstants.Errors.UNWRAP_ERROR
-        BUSINESS_ERROR = FlextConstants.Errors.BUSINESS_RULE_ERROR
-        INFRASTRUCTURE_ERROR = FlextConstants.Errors.EXTERNAL_SERVICE_ERROR
-        TYPE_ERROR = FlextConstants.Errors.TYPE_ERROR
-
     # =============================================================================
     # DIRECT CALLABLE INTERFACE - For general usage
     # =============================================================================
@@ -565,8 +639,19 @@ class FlextExceptions:
     ) -> BaseError:
         """Create exception with automatic type selection."""
         # Extract common kwargs that all exceptions understand
-        context = cast("Mapping[str, object] | None", kwargs.get("context", {}))
-        correlation_id = cast("str | None", kwargs.get("correlation_id"))
+        context: dict[str, object] = cast(
+            "dict[str, object]",
+            (
+                kwargs.get("context", {})
+                if isinstance(kwargs.get("context", {}), (dict, type(None)))
+                else {}
+            ),
+        )
+        correlation_id = (
+            kwargs.get("correlation_id")
+            if isinstance(kwargs.get("correlation_id"), (str, type(None)))
+            else None
+        )
 
         if operation is not None:
             return cls._OperationError(
@@ -589,7 +674,11 @@ class FlextExceptions:
                 correlation_id=correlation_id,
             )
         if config_key is not None:
-            config_file = cast("str | None", kwargs.get("config_file"))
+            config_file: str | None = (
+                str(kwargs.get("config_file"))
+                if isinstance(kwargs.get("config_file"), str)
+                else None
+            )
             return cls._ConfigurationError(
                 message,
                 config_key=config_key,

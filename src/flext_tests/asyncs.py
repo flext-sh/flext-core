@@ -25,7 +25,7 @@ from flext_core import FlextLogger, FlextTypes, T
 logger = FlextLogger(__name__)
 
 
-class FlextTestsAsyncs:  # noqa: PLR0904
+class FlextTestsAsyncs:
     """Unified async testing utilities for FLEXT ecosystem.
 
     Consolidates all async testing patterns, concurrency testing, timeout management,
@@ -34,7 +34,12 @@ class FlextTestsAsyncs:  # noqa: PLR0904
 
     @staticmethod
     def _is_not_exception(obj: object | Exception) -> TypeGuard[object]:
-        """Type guard to check if object is not an exception."""
+        """Type guard to check if object is not an exception.
+
+        Returns:
+            TypeGuard[object]: True if object is not an exception
+
+        """
         return not isinstance(obj, Exception)
 
     # === Core Async Testing Utilities ===
@@ -46,7 +51,12 @@ class FlextTestsAsyncs:  # noqa: PLR0904
         poll_interval: float = 0.1,
         error_message: str = "Condition not met within timeout",
     ) -> None:
-        """Wait for a condition to become true with timeout."""
+        """Wait for a condition to become true with timeout.
+
+        Raises:
+            TimeoutError: If condition is not met within timeout
+
+        """
         start_time = time.time()
 
         while time.time() - start_time < timeout_seconds:
@@ -72,11 +82,24 @@ class FlextTestsAsyncs:  # noqa: PLR0904
         coro: Awaitable[T],
         timeout_seconds: float = 5.0,
     ) -> T:
-        """Run coroutine with timeout, with light retry if callable is discoverable."""
+        """Run coroutine with timeout, with light retry if callable is discoverable.
+
+        Returns:
+            T: Result of the coroutine execution
+
+        Raises:
+            TimeoutError: If operation times out
+
+        """
         start = time.time()
 
         async def attempt_once() -> T:
-            """attempt_once method."""
+            """attempt_once method.
+
+            Returns:
+                T: Result of the coroutine execution
+
+            """
             return await asyncio.wait_for(
                 coro,
                 timeout=max(0.0, timeout_seconds - (time.time() - start)),
@@ -331,6 +354,7 @@ class FlextTestsAsyncs:  # noqa: PLR0904
         """async_mock method."""
 
         async def async_mock(*_args: object, **_kwargs: object) -> object:
+            await asyncio.sleep(0)  # Make function actually async
             if side_effect:
                 raise side_effect
             return return_value
@@ -373,6 +397,7 @@ class FlextTestsAsyncs:  # noqa: PLR0904
 
             async def flaky_count_mock(*_args: object, **_kwargs: object) -> object:
                 """flaky_count_mock method."""
+                await asyncio.sleep(0)  # Make function actually async
                 nonlocal remaining
                 if remaining > 0:
                     remaining -= 1
@@ -386,6 +411,7 @@ class FlextTestsAsyncs:  # noqa: PLR0904
 
         async def flaky_random_mock(*_args: object, **_kwargs: object) -> object:
             """flaky_random_mock method."""
+            await asyncio.sleep(0)  # Make function actually async
             if random.random() < rate:
                 raise exception or RuntimeError("flaky failure")
             return return_value

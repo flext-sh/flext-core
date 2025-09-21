@@ -52,7 +52,12 @@ class FunctionalExternalService:
         self.failure_message = "Service unavailable"
 
     def process(self, data: str | None = None) -> FlextResult[str]:
-        """Functional processing method - validates real behavior."""
+        """Functional processing method - validates real behavior.
+
+        Returns:
+            FlextResult[str]: Success with processed data or failure with error message.
+
+        """
         self.call_count += 1
 
         if self.should_fail:
@@ -74,7 +79,12 @@ class FunctionalExternalService:
         self.failure_message = message
 
     def get_call_count(self) -> int:
-        """Get number of times process was called."""
+        """Get number of times process was called.
+
+        Returns:
+            int: Number of times the process method was called.
+
+        """
         return self.call_count
 
     def reset(self) -> None:
@@ -86,7 +96,12 @@ class FunctionalExternalService:
 
 @pytest.fixture
 def mock_external_service() -> FunctionalExternalService:
-    """Functional external service for integration testing."""
+    """Functional external service for integration testing.
+
+    Returns:
+        FunctionalExternalService: A configured external service instance.
+
+    """
     return FunctionalExternalService()
 
 
@@ -127,7 +142,7 @@ class TestLibraryIntegration:
         result = FlextResult[str].ok(test_value)
 
         # Assert - FlextResult functionality
-        assert result.success is True
+        assert result.is_success is True
         assert result.value == test_value
 
         # Act - Test entity ID type system using FlextUtilities
@@ -142,13 +157,13 @@ class TestLibraryIntegration:
         register_result = clean_container.register("test_service", test_value)
 
         # Assert - Service registration success
-        assert register_result.success is True
+        assert register_result.is_success is True
 
         # Act - Test service retrieval
         service_result = clean_container.get("test_service")
 
         # Assert - Service retrieval success
-        assert service_result.success is True
+        assert service_result.is_success is True
         assert service_result.value == test_value
 
         # Act - Test global container access
@@ -188,20 +203,20 @@ class TestLibraryIntegration:
         )
 
         # Assert - Factory registration success
-        assert register_result.success is True
+        assert register_result.is_success is True
 
         # Act - Get factory result from container
         factory_result = clean_container.get("result_factory")
 
         # Assert - Factory retrieval success
-        assert factory_result.success is True
+        assert factory_result.is_success is True
 
         # Act - Verify factory produced FlextResult
         result = factory_result.value
 
         # Assert - Result type and content validation
         assert isinstance(result, FlextResult)
-        assert result.success is True
+        assert result.is_success is True
         assert result.value == expected_result_data
 
         # Assert - Functional service was called (real validation)
@@ -213,7 +228,7 @@ class TestLibraryIntegration:
         entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
         result = FlextResult[str].ok(entity_id)
 
-        assert result.success
+        assert result.is_success
         # Entity ID is a valid hex string (8 chars)
         assert isinstance(result.value, str)
         assert len(result.value) == 8  # IDs are 8 character hex strings

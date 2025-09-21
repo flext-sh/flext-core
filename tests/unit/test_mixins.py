@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextMixins
+from flext_core import FlextMixins, FlextModels
 
 
 class TestMixinsSimple:
@@ -22,5 +22,6 @@ class TestMixinsSimple:
 
     def test_to_json_works(self) -> None:
         """Test that to_json method works."""
-        result = FlextMixins.to_json({"test": "data"})
+        request = FlextModels.SerializationRequest(data={"test": "data"})
+        result = FlextMixins.to_json(request)
         assert "test" in result

@@ -49,7 +49,7 @@ class FlextResultUtils:
             A FlextResult containing the chained results.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         successful_results = []
         for result in results:
@@ -76,7 +76,7 @@ class FlextResultUtils:
             A FlextResult containing the combined results.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         values = []
         for result in results:
@@ -105,7 +105,7 @@ class FlextResultUtils:
         """
         if not results:
             return True
-        return all(result.success for result in results)
+        return all(result.is_success for result in results)
 
     @staticmethod
     def any_success[TAny](*results: FlextResult[TAny]) -> bool:
@@ -127,7 +127,7 @@ class FlextResultUtils:
             A boolean indicating if any result is successful.
 
         """
-        return any(result.success for result in results) if results else False
+        return any(result.is_success for result in results) if results else False
 
     @classmethod
     def first_success[TFirst](
@@ -145,7 +145,7 @@ class FlextResultUtils:
             A FlextResult containing the first successful result.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         for result in results:
             if result.is_success:
@@ -168,7 +168,7 @@ class FlextResultUtils:
             A FlextResult containing the sequenced results.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         values = []
         for result in results:
@@ -197,7 +197,7 @@ class FlextResultUtils:
             A FlextResult containing the result of the first successful operation.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         errors = []
         for operation in operations:
@@ -230,7 +230,7 @@ class FlextResultUtils:
             A list of successful values.
 
         """
-        from flext_core.result_collections import (  # noqa: PLC0415
+        from flext_core.result_collections import (
             FlextResultCollections,
         )
 
@@ -252,7 +252,7 @@ class FlextResultUtils:
             A list of error messages.
 
         """
-        from flext_core.result_collections import (  # noqa: PLC0415
+        from flext_core.result_collections import (
             FlextResultCollections,
         )
 
@@ -326,7 +326,7 @@ class FlextResultUtils:
             A FlextResult containing the result of the function call.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         try:
             result = func()

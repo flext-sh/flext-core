@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -114,7 +115,7 @@ class FlextProcessing:
             if registration.name in self._handlers:
                 return FlextResult[None].fail(
                     f"Handler '{registration.name}' already registered",
-                    error_code="HANDLER_ALREADY_EXISTS",
+                    error_code=FlextConstants.Errors.ALREADY_EXISTS,
                 )
 
             # Check handler registry size limits
@@ -122,14 +123,14 @@ class FlextProcessing:
             if len(self._handlers) >= max_handlers:
                 return FlextResult[None].fail(
                     f"Handler registry full: {len(self._handlers)}/{max_handlers} handlers registered",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Validate handler safety
             if not FlextProcessing.is_handler_safe(registration.handler):
                 return FlextResult[None].fail(
                     f"Handler '{registration.name}' is not safe (must have handle method or be callable)",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Validate handler using the model's built-in validation
@@ -174,32 +175,31 @@ class FlextProcessing:
             """
             try:
                 # Check for handle method first
-                if hasattr(handler, "handle"):
-                    handle_method = getattr(handler, "handle", None)
+                if hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
+                    handle_method = getattr(
+                        handler, FlextConstants.Mixins.METHOD_HANDLE, None
+                    )
                     if handle_method is not None and callable(handle_method):
                         result = handle_method(request)
-                        return (
-                            FlextResult[object].ok(result)
-                            if not isinstance(result, FlextResult)
-                            else result
-                        )
+                        if isinstance(result, FlextResult):
+                            return cast("FlextResult[object]", result)
+                        return FlextResult[object].ok(result)
 
                 # Check if handler itself is callable
                 if callable(handler):
                     result = handler(request)
-                    return (
-                        FlextResult[object].ok(result)
-                        if not isinstance(result, FlextResult)
-                        else result
-                    )
+                    if isinstance(result, FlextResult):
+                        return cast("FlextResult[object]", result)
+                    return FlextResult[object].ok(result)
 
                 return FlextResult[object].fail(
                     f"Handler '{name}' does not implement handle method",
-                    error_code="NOT_FOUND_ERROR",
+                    error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
                 )
             except Exception as e:
                 return FlextResult[object].fail(
-                    f"Handler execution failed: {e}", error_code="PROCESSING_ERROR"
+                    f"Handler execution failed: {e}",
+                    error_code=FlextConstants.Errors.PROCESSING_ERROR,
                 )
 
         def count(self) -> int:
@@ -242,9 +242,13 @@ class FlextProcessing:
             timeout_seconds = getattr(
                 config, "timeout_seconds", FlextProcessing.Config.get_default_timeout()
             )
-            return FlextResult.ok(None).with_timeout(
-                timeout_seconds,
-                lambda _: self.execute(config.handler_name, config.request_data),
+            return (
+                FlextResult[object]
+                .ok(None)
+                .with_timeout(
+                    timeout_seconds,
+                    lambda _: self.execute(config.handler_name, config.input_data),
+                )
             )
 
         def execute_with_fallback(
@@ -258,11 +262,11 @@ class FlextProcessing:
 
             """
             return FlextUtilities.Reliability.with_fallback(
-                lambda: self.execute(config.handler_name, config.request_data),
+                lambda: self.execute(config.handler_name, config.input_data),
                 *[
                     (
                         lambda fallback=fallback: self.execute(
-                            fallback, config.request_data
+                            fallback, config.input_data
                         )
                     )
                     for fallback in config.fallback_handlers
@@ -279,38 +283,39 @@ class FlextProcessing:
                 FlextResult if validation or batch processing fails.
 
             """
-            # Use Pydantic validation from the model
-            validation_result = config.validate_batch()
-            if validation_result.is_failure:
-                return FlextResult[list[object]].fail(
-                    f"Batch processing configuration validation failed: {validation_result.error}",
-                    error_code="VALIDATION_ERROR",
-                )
+            # Pydantic validation is automatic when the model is created
+            # No need to call validate_batch() manually
 
             # Validate batch size limits
             max_batch_size = FlextProcessing.Config.get_max_batch_size()
             if len(config.data_items) > max_batch_size:
                 return FlextResult[list[object]].fail(
                     f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Convert data_items to handler execution tuples
             # Assume data_items contains tuples of (handler_name, request_data)
-            handler_requests = []
+            handler_requests: list[tuple[str, object]] = []
+            expected_tuple_length = FlextConstants.Performance.EXPECTED_TUPLE_LENGTH
             for item in config.data_items:
-                if isinstance(item, tuple) and len(item) == 2:
-                    handler_requests.append(item)
+                if (
+                    isinstance(item, tuple)
+                    and len(cast("tuple[object, ...]", item)) == expected_tuple_length
+                ):
+                    # Type assertion for tuple elements
+                    handler_name, request_data = cast("tuple[str, object]", item)
+                    handler_requests.append((handler_name, request_data))
                 else:
                     return FlextResult[list[object]].fail(
                         "Each data item must be a tuple of (handler_name, request_data)",
-                        error_code="VALIDATION_ERROR",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
             return FlextResult.parallel_map(
                 handler_requests,
                 lambda item: self.execute(item[0], item[1]),
-                fail_fast=config.fail_fast,
+                fail_fast=not config.continue_on_error,
             )
 
         def register_with_validation(
@@ -372,13 +377,16 @@ class FlextProcessing:
                 FlextResult[object]: Result of conditional processing.
 
             """
-            return FlextResult.ok(request.data).when(condition) >> (
-                lambda data: self.process(
-                    FlextModels.ProcessingRequest(
-                        data=data,
-                        context=request.context,
-                        timeout_seconds=request.timeout_seconds,
-                    )
+            return FlextResult[dict[str, object]].ok(request.data).when(condition) >> (
+                cast(
+                    "Callable[[dict[str, object]], FlextResult[object]]",
+                    lambda data: self.process(
+                        FlextModels.ProcessingRequest(
+                            data=cast("dict[str, object]", data),
+                            context=request.context,
+                            timeout_seconds=request.timeout_seconds,
+                        )
+                    ),
                 )
             )
 
@@ -399,17 +407,19 @@ class FlextProcessing:
             if timeout_seconds < FlextConstants.Container.MIN_TIMEOUT_SECONDS:
                 return FlextResult[object].fail(
                     f"Timeout {timeout_seconds} is below minimum {FlextConstants.Container.MIN_TIMEOUT_SECONDS}",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             if timeout_seconds > FlextConstants.Container.MAX_TIMEOUT_SECONDS:
                 return FlextResult[object].fail(
                     f"Timeout {timeout_seconds} exceeds maximum {FlextConstants.Container.MAX_TIMEOUT_SECONDS}",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            return FlextResult.ok(request.data).with_timeout(
-                timeout_seconds, self.process
+            return (
+                FlextResult[object]
+                .ok(request.data)
+                .with_timeout(timeout_seconds, self.process)
             )
 
         def process_with_fallback(
@@ -444,25 +454,20 @@ class FlextProcessing:
                 FlextResult[list[object]]: List of processed data items or a failure.
 
             """
-            # Use Pydantic validation from the model
-            validation_result = config.validate_batch()
-            if validation_result.is_failure:
-                return FlextResult[list[object]].fail(
-                    f"Batch processing configuration validation failed: {validation_result.error}",
-                    error_code="VALIDATION_ERROR",
-                )
+            # Pydantic validation is automatic when the model is created
+            # No need to call validate_batch() manually
 
             # Validate batch size limits
             max_batch_size = FlextProcessing.Config.get_max_batch_size()
             if len(config.data_items) > max_batch_size:
                 return FlextResult[list[object]].fail(
                     f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Process all data items using parallel processing
             return FlextResult.parallel_map(
-                config.data_items, self.process, fail_fast=config.fail_fast
+                config.data_items, self.process, fail_fast=not config.continue_on_error
             )
 
         def process_with_validation(
@@ -494,8 +499,11 @@ class FlextProcessing:
             """
 
             def step_processor(current: object) -> FlextResult[object]:
-                return FlextResult.from_exception(
-                    lambda: self._execute_step(step, current)
+                return cast(
+                    "FlextResult[object]",
+                    FlextResult.from_exception(
+                        lambda: self._execute_step(step, current)
+                    ),
                 )
 
             return step_processor
@@ -511,12 +519,13 @@ class FlextProcessing:
             if callable(step):
                 result = step(current)
                 if isinstance(result, FlextResult):
-                    return result.unwrap()  # Will raise if failed
+                    return cast("object", result.unwrap())  # Will raise if failed
                 return result
 
             # Handle dictionary merging
             if isinstance(current, dict) and isinstance(step, dict):
-                return {**current, **step}
+                merged_dict: dict[str, object] = {**current, **step}
+                return merged_dict
 
             # Replace current data
             return step
@@ -550,8 +559,8 @@ class FlextProcessing:
             bool: True if handler is safe to execute.
 
         """
-        if hasattr(handler, "handle"):
-            handle_method = getattr(handler, "handle", None)
+        if hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
+            handle_method = getattr(handler, FlextConstants.Mixins.METHOD_HANDLE, None)
             if handle_method is not None and callable(handle_method):
                 return True
         return callable(handler)

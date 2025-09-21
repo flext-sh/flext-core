@@ -41,37 +41,72 @@ class FlextTestsHypothesis:
 
         @staticmethod
         def _generate_flext_id() -> str:
-            """Generate a Flext-style ID."""
+            """Generate a Flext-style ID.
+
+            Returns:
+                str: Flext-style ID with prefix and UUID suffix
+
+            """
             return f"flext_{uuid4().hex[:8]}"
 
         @staticmethod
         def _build_correlation_id(prefix: str, suffix: str) -> str:
-            """Build correlation ID from prefix and suffix."""
+            """Build correlation ID from prefix and suffix.
+
+            Returns:
+                str: Correlation ID built from prefix and suffix
+
+            """
             return f"{prefix}_{suffix}"
 
         @staticmethod
         def _build_email(local: str, domain: str, tld: str) -> str:
-            """Build email address from components."""
+            """Build email address from components.
+
+            Returns:
+                str: Email address built from local, domain, and TLD components
+
+            """
             return f"{local}@{domain}.{tld}"
 
         @staticmethod
         def _is_valid_email_part(x: str) -> bool:
-            """Check if email part is valid (no leading/trailing dots/dashes)."""
+            """Check if email part is valid (no leading/trailing dots/dashes).
+
+            Returns:
+                bool: True if email part is valid, False otherwise
+
+            """
             return x[0] not in "._-" and x[-1] not in "._-"
 
         @staticmethod
         def _is_valid_domain(x: str) -> bool:
-            """Check if domain is valid (no leading/trailing dashes)."""
+            """Check if domain is valid (no leading/trailing dashes).
+
+            Returns:
+                bool: True if domain is valid, False otherwise
+
+            """
             return x[0] != "-" and x[-1] != "-"
 
         @staticmethod
         def flext_ids() -> st.SearchStrategy[str]:
-            """Generate Flext-style IDs."""
+            """Generate Flext-style IDs.
+
+            Returns:
+                st.SearchStrategy[str]: Hypothesis strategy for generating Flext-style IDs
+
+            """
             return st.builds(FlextTestsHypothesis.FlextStrategies._generate_flext_id)
 
         @staticmethod
         def correlation_ids() -> st.SearchStrategy[str]:
-            """Generate correlation IDs."""
+            """Generate correlation IDs.
+
+            Returns:
+                st.SearchStrategy[str]: Hypothesis strategy for generating correlation IDs
+
+            """
             return st.builds(
                 FlextTestsHypothesis.FlextStrategies._build_correlation_id,
                 prefix=st.sampled_from(["corr", "trace", "req", "op"]),
@@ -84,7 +119,12 @@ class FlextTestsHypothesis:
 
         @staticmethod
         def emails() -> st.SearchStrategy[str]:
-            """Generate realistic email addresses."""
+            """Generate realistic email addresses.
+
+            Returns:
+                st.SearchStrategy[str]: Hypothesis strategy for generating email addresses
+
+            """
             return st.builds(
                 FlextTestsHypothesis.FlextStrategies._build_email,
                 local=st.text(
@@ -102,22 +142,42 @@ class FlextTestsHypothesis:
 
         @staticmethod
         def _format_phone_international(area: str, exchange: str, number: str) -> str:
-            """Format phone number in international format (+1-555-123-4567)."""
+            """Format phone number in international format (+1-555-123-4567).
+
+            Returns:
+                str: Phone number formatted in international format
+
+            """
             return f"+1-{area}-{exchange}-{number}"
 
         @staticmethod
         def _format_phone_parentheses(area: str, exchange: str, number: str) -> str:
-            """Format phone number with parentheses ((555) 123-4567)."""
+            """Format phone number with parentheses ((555) 123-4567).
+
+            Returns:
+                str: Phone number formatted with parentheses
+
+            """
             return f"({area}) {exchange}-{number}"
 
         @staticmethod
         def _format_phone_dotted(area: str, exchange: str, number: str) -> str:
-            """Format phone number with dots (555.123.4567)."""
+            """Format phone number with dots (555.123.4567).
+
+            Returns:
+                str: Phone number formatted with dots
+
+            """
             return f"{area}.{exchange}.{number}"
 
         @staticmethod
         def phone_numbers() -> st.SearchStrategy[str]:
-            """Generate phone numbers in various formats."""
+            """Generate phone numbers in various formats.
+
+            Returns:
+                st.SearchStrategy[str]: Hypothesis strategy for generating phone numbers
+
+            """
             return st.one_of(
                 [
                     # +1-555-123-4567

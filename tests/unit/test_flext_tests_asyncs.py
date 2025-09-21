@@ -15,6 +15,7 @@ import time
 
 import pytest
 
+from flext_tests import asyncs
 from flext_tests.asyncs import FlextTestsAsyncs
 
 
@@ -365,9 +366,6 @@ class TestFlextTestsAsyncs:
 
     def test_module_imports_and_structure(self) -> None:
         """Test module imports and overall structure."""
-        # Test that the module can be imported
-        from flext_tests import asyncs
-
         # Verify module structure
         assert hasattr(asyncs, "FlextTestsAsyncs")
         assert asyncs.FlextTestsAsyncs is FlextTestsAsyncs

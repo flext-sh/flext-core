@@ -64,7 +64,10 @@ class TestConstantsLogLevel100PercentCoverage:
 
         # Test with different LogLevel - should also call super().__eq__()
         info_level = FlextConstants.Config.LogLevel.INFO
-        result = log_level == info_level  # This should also trigger line 705
+        # Use a variable to avoid Pyright's literal type optimization
+        debug_value = log_level
+        info_value = info_level
+        result = debug_value == info_value  # This should also trigger line 705
         assert result is False
 
         # Test explicit non-string comparison to force super().__eq__() path
@@ -72,11 +75,21 @@ class TestConstantsLogLevel100PercentCoverage:
             """Test object that is not a string."""
 
             def __eq__(self, other: object) -> bool:
-                """Custom equality that returns False for testing."""
+                """Custom equality that returns False for testing.
+
+                Returns:
+                    bool: Always returns False for testing purposes
+
+                """
                 return False
 
             def __hash__(self) -> int:
-                """Hash implementation for the test object."""
+                """Hash implementation for the test object.
+
+                Returns:
+                    int: Hash value based on object identity
+
+                """
                 return hash(id(self))
 
         non_string_obj = NonStringObject()

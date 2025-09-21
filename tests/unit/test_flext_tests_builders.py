@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_tests import builders
 from flext_tests.builders import FlextTestsBuilders
 
 
@@ -46,9 +47,6 @@ class TestFlextTestsBuilders:
 
     def test_module_imports_and_structure(self) -> None:
         """Test module imports and overall structure."""
-        # Test that the module can be imported
-        from flext_tests import builders
-
         # Verify module structure
         assert hasattr(builders, "FlextTestsBuilders")
         assert builders.FlextTestsBuilders is FlextTestsBuilders

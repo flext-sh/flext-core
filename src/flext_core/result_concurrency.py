@@ -55,7 +55,7 @@ class FlextResultConcurrency:
             A FlextResult containing the sequenced results.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         successes = []
         for result in results:
@@ -78,7 +78,7 @@ class FlextResultConcurrency:
             A FlextResult containing the accumulated errors.
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core.result import FlextResult
 
         successes = []
         errors = []

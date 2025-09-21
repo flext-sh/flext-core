@@ -16,13 +16,14 @@ from typing import Protocol
 
 from flext_core import (
     FlextConfig,
+    FlextConstants,
     FlextContainer,
     FlextResult,
     FlextTypes,
 )
 
 
-class FlextTestsBuilders:  # noqa: PLR0904
+class FlextTestsBuilders:
     """Unified test builders for FLEXT ecosystem.
 
     Single responsibility class implementing Builder pattern with fluent interface
@@ -44,13 +45,29 @@ class FlextTestsBuilders:  # noqa: PLR0904
         except Exception:
             self._container = None
 
+        # Dynamic container attributes (set by methods when needed)
+        self._container_services: dict[str, object] = {}
+        self._container_factories: dict[str, Callable[[], object]] = {}
+
         # Attributes for deprecated builder patterns
         self._building_container: bool = False
+
+        # Deprecated result builder attributes
+        self._result_success: bool = True
+        self._result_data: object = None
+        self._result_error: str = ""
+        self._result_error_code: str | None = None
+        self._result_error_data: FlextTypes.Core.Dict | None = None
 
     # === Result Builder Methods (Unified) ===
 
     def create_success_result(self, data: object = "test_data") -> FlextResult[object]:
-        """Create a successful FlextResult for testing."""
+        """Create a successful FlextResult for testing.
+
+        Returns:
+            FlextResult[object]: Success result with test data
+
+        """
         return FlextResult[object].ok(data)
 
     def create_failure_result(
@@ -59,7 +76,12 @@ class FlextTestsBuilders:  # noqa: PLR0904
         error_code: str | None = None,
         error_data: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[object]:
-        """Create a failed FlextResult for testing."""
+        """Create a failed FlextResult for testing.
+
+        Returns:
+            FlextResult[object]: Failure result with test error
+
+        """
         return FlextResult[object].fail(
             error,
             error_code=error_code,
@@ -69,25 +91,33 @@ class FlextTestsBuilders:  # noqa: PLR0904
     # === Container Builder Methods (Unified) ===
 
     def create_test_container(self) -> FlextContainer:
-        """Create a FlextContainer with common test services."""
+        """Create a FlextContainer with common test services.
+
+        Returns:
+            FlextContainer: Container with registered test services
+
+        Raises:
+            RuntimeError: If service registration fails
+
+        """
         container = FlextContainer()
 
         # Register common test services
         services = {
             "database": {
-                "host": "localhost",
-                "port": 5432,
+                "host": FlextConstants.Platform.DEFAULT_HOST,
+                "port": FlextConstants.Platform.POSTGRES_DEFAULT_PORT,
                 "name": "test_db",
                 "connected": True,
             },
             "cache": {
-                "host": "localhost",
-                "port": 6379,
-                "ttl": 3600,
+                "host": FlextConstants.Platform.DEFAULT_HOST,
+                "port": FlextConstants.Platform.REDIS_DEFAULT_PORT,
+                "ttl": FlextConstants.Performance.DEFAULT_TTL_SECONDS,
                 "connected": True,
             },
             "logger": {
-                "level": "DEBUG",
+                "level": FlextConstants.Config.LogLevel.DEBUG,
                 "format": "json",
                 "handlers": ["console"],
             },
@@ -106,7 +136,15 @@ class FlextTestsBuilders:  # noqa: PLR0904
         name: str,
         service: object,
     ) -> FlextContainer:
-        """Create a container with a specific service."""
+        """Create a container with a specific service.
+
+        Returns:
+            FlextContainer: Container with registered service
+
+        Raises:
+            RuntimeError: If service registration fails
+
+        """
         container = FlextContainer()
         result = container.register(name, service)
         if result.is_failure:
@@ -120,16 +158,16 @@ class FlextTestsBuilders:  # noqa: PLR0904
         self,
         *,
         debug: bool = True,
-        log_level: str = "INFO",
-        environment: str = "test",
+        log_level: str = FlextConstants.Config.LogLevel.INFO,
+        environment: str = FlextConstants.Environment.ConfigEnvironment.TESTING,
         database_url: str | None = None,
         **custom_settings: object,
     ) -> FlextConfig:
         """Create a FlextConfig for testing."""
         # Validate environment
-        valid_envs = ["development", "staging", "production", "test", "local"]
+        valid_envs = list(FlextConstants.Config.ENVIRONMENTS)
         if environment not in valid_envs:
-            environment = "test"
+            environment = FlextConstants.Environment.ConfigEnvironment.TESTING
 
         config_data = {
             "log_level": log_level,
@@ -142,18 +180,15 @@ class FlextTestsBuilders:  # noqa: PLR0904
 
         # Add custom settings
         for key, value in custom_settings.items():
-            if isinstance(value, (str, int, float, bool, type(None))):
+            if isinstance(value, (str, bool)):
                 config_data[key] = value
+            elif isinstance(value, (int, float, type(None))):
+                config_data[key] = str(value) if value is not None else "None"
             else:
                 config_data[key] = str(value)
 
-        # Create configuration using factory method
-        result = FlextConfig.create(constants=config_data)
-        if result.is_success:
-            return result.unwrap()
-
-        # Fallback to default config if creation fails
-        return FlextConfig()
+        # Create configuration using factory method - returns FlextConfig directly
+        return FlextConfig.create(**config_data)
 
     # === Field Builder Methods (Unified) ===
 
@@ -218,7 +253,7 @@ class FlextTestsBuilders:  # noqa: PLR0904
     def create_temp_file(
         self,
         content: str = "",
-        suffix: str = ".txt",
+        suffix: str = FlextConstants.Platform.EXT_TXT,
         encoding: str = "utf-8",
     ) -> str:
         """Create a temporary file for testing."""
@@ -410,21 +445,35 @@ class FlextTestsBuilders:  # noqa: PLR0904
         """Add a database service (deprecated method)."""
         return self.with_service(
             "database",
-            {"host": "localhost", "port": 5432, "name": "test_db", "connected": True},
+            {
+                "host": FlextConstants.Platform.DEFAULT_HOST,
+                "port": 5432,
+                "name": "test_db",
+                "connected": True,
+            },
         )
 
     def with_cache_service(self) -> FlextTestsBuilders:
         """Add a cache service (deprecated method)."""
         return self.with_service(
             "cache",
-            {"host": "localhost", "port": 6379, "ttl": 3600, "connected": True},
+            {
+                "host": FlextConstants.Platform.DEFAULT_HOST,
+                "port": 6379,
+                "ttl": 3600,
+                "connected": True,
+            },
         )
 
     def with_logger_service(self) -> FlextTestsBuilders:
         """Add a logger service (deprecated method)."""
         return self.with_service(
             "logger",
-            {"level": "DEBUG", "format": "json", "handlers": ["console"]},
+            {
+                "level": FlextConstants.Config.LogLevel.DEBUG,
+                "format": "json",
+                "handlers": ["console"],
+            },
         )
 
     # Legacy class references for backward compatibility

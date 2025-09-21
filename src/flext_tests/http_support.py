@@ -40,7 +40,12 @@ class FlextTestsHttp:
             }
 
         def build_url(self, endpoint: str) -> str:
-            """Build complete URL from endpoint."""
+            """Build complete URL from endpoint.
+
+            Returns:
+                str: Complete URL built from base URL and endpoint
+
+            """
             return urljoin(self.base_url, endpoint)
 
         def validate_response_structure(
@@ -49,7 +54,12 @@ class FlextTestsHttp:
             required_fields: FlextTypes.Core.StringList,
             _: FlextTypes.Core.StringList | None = None,
         ) -> FlextResult[None]:
-            """Validate API response structure."""
+            """Validate API response structure.
+
+            Returns:
+                FlextResult[None]: Success if structure is valid, failure with error message if invalid
+
+            """
             missing_fields = [
                 field for field in required_fields if field not in response_data
             ]
@@ -67,7 +77,12 @@ class FlextTestsHttp:
             response_data: FlextTypes.Core.JsonObject,
             expected_error_code: str | None = None,
         ) -> FlextResult[None]:
-            """Validate error response format."""
+            """Validate error response format.
+
+            Returns:
+                FlextResult[None]: Success if error format is valid, failure with error message if invalid
+
+            """
             if "error" not in response_data:
                 return FlextResult[None].fail(
                     "Error response missing 'error' field",
@@ -96,7 +111,12 @@ class FlextTestsHttp:
             data: object | None = None,
             headers: dict[str, str] | None = None,
         ) -> dict[str, object]:
-            """Create test request data."""
+            """Create test request data.
+
+            Returns:
+                dict[str, object]: Test request data dictionary
+
+            """
             request_headers = self.default_headers.copy()
             if headers:
                 request_headers.update(headers)
@@ -133,7 +153,12 @@ class FlextTestsHttp:
             status_code: int = 200,
             headers: dict[str, str] | None = None,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add successful request scenario."""
+            """Add successful request scenario.
+
+            Returns:
+                FlextTestsHttp.HTTPScenarioBuilder: Self for method chaining
+
+            """
             response_headers = {"content-type": "application/json"}
             if headers:
                 response_headers.update(headers)
@@ -168,7 +193,12 @@ class FlextTestsHttp:
             status_code: int = 500,
             error_message: str = "Internal server error",
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add error request scenario."""
+            """Add error request scenario.
+
+            Returns:
+                FlextTestsHttp.HTTPScenarioBuilder: Self for method chaining
+
+            """
             error_response = {
                 "error": {
                     "code": error_code,
@@ -205,7 +235,12 @@ class FlextTestsHttp:
             max_retries: int = 3,
             success_after_retries: int = 2,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add retry scenario with failures followed by success."""
+            """Add retry scenario with failures followed by success.
+
+            Returns:
+                FlextTestsHttp.HTTPScenarioBuilder: Self for method chaining
+
+            """
             # Add failures
             for _ in range(success_after_retries):
                 self.httpx_mock.add_response(
@@ -246,7 +281,12 @@ class FlextTestsHttp:
             failure_threshold: int = 5,
             recovery_timeout: int = 60,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add circuit breaker scenario."""
+            """Add circuit breaker scenario.
+
+            Returns:
+                FlextTestsHttp.HTTPScenarioBuilder: Self for method chaining
+
+            """
             # Add failures to trigger circuit breaker
             for _ in range(failure_threshold):
                 self.httpx_mock.add_response(
@@ -270,7 +310,12 @@ class FlextTestsHttp:
             return self
 
         def build_scenario(self) -> FlextTypes.Core.Dict:
-            """Build test scenario."""
+            """Build test scenario.
+
+            Returns:
+                FlextTypes.Core.Dict: Test scenario configuration dictionary
+
+            """
             return {
                 "scenarios": self.scenarios,
                 "total_scenarios": len(self.scenarios),
@@ -288,7 +333,12 @@ class FlextTestsHttp:
             data: FlextTypes.Core.Dict,
             webhook_id: str | None = None,
         ) -> FlextTypes.Core.Dict:
-            """Create webhook payload."""
+            """Create webhook payload.
+
+            Returns:
+                FlextTypes.Core.Dict: Webhook payload dictionary
+
+            """
             return {
                 "id": webhook_id or "test_webhook_123",
                 "event": event_type,
@@ -303,7 +353,12 @@ class FlextTestsHttp:
             signature: str,
             secret: str,
         ) -> FlextResult[bool]:
-            """Validate webhook signature."""
+            """Validate webhook signature.
+
+            Returns:
+                FlextResult[bool]: Success with validation result if valid, failure with error if invalid
+
+            """
             # Simple validation for testing
             expected_signature = f"sha256={hash(payload + secret)}"
             is_valid = signature == expected_signature
@@ -320,7 +375,12 @@ class FlextTestsHttp:
             status: str = "received",
             message: str = "Webhook processed successfully",
         ) -> FlextTypes.Core.Dict:
-            """Create webhook response."""
+            """Create webhook response.
+
+            Returns:
+                FlextTypes.Core.Dict: Webhook response dictionary
+
+            """
             return {
                 "status": status,
                 "message": message,
@@ -352,14 +412,24 @@ class FlextTestsHttp:
     def create_api_client(
         base_url: str = "https://api.example.com",
     ) -> FlextTestsHttp.APITestClient:
-        """Create API test client."""
+        """Create API test client.
+
+        Returns:
+            FlextTestsHttp.APITestClient: API test client instance
+
+        """
         return FlextTestsHttp.APITestClient(base_url)
 
     @staticmethod
     def create_scenario_builder(
         httpx_mock: HTTPXMock,
     ) -> FlextTestsHttp.HTTPScenarioBuilder:
-        """Create HTTP scenario builder."""
+        """Create HTTP scenario builder.
+
+        Returns:
+            FlextTestsHttp.HTTPScenarioBuilder: HTTP scenario builder instance
+
+        """
         return FlextTestsHttp.HTTPScenarioBuilder(httpx_mock)
 
     @staticmethod
@@ -369,7 +439,12 @@ class FlextTestsHttp:
         data: object | None = None,
         headers: FlextTypes.Core.Dict | None = None,
     ) -> FlextTestsHttp.HTTPTestRequest:
-        """Create test request."""
+        """Create test request.
+
+        Returns:
+            FlextTestsHttp.HTTPTestRequest: HTTP test request instance
+
+        """
         return FlextTestsHttp.HTTPTestRequest(
             method=method,
             url=url,
@@ -384,7 +459,12 @@ class FlextTestsHttp:
         data: object | None = None,
         json_data: FlextTypes.Core.JsonObject | None = None,
     ) -> FlextTestsHttp.HTTPTestResponse:
-        """Create test response."""
+        """Create test response.
+
+        Returns:
+            FlextTestsHttp.HTTPTestResponse: HTTP test response instance
+
+        """
         return FlextTestsHttp.HTTPTestResponse(
             status_code=status_code,
             headers=headers or {},
@@ -396,6 +476,7 @@ class FlextTestsHttp:
     def mock_httpx_response(
         httpx_mock: HTTPXMock,
         url: str,
+        *,
         method: str = "GET",
         json_data: object | None = None,
         status_code: int = 200,

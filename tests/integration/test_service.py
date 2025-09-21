@@ -45,7 +45,12 @@ class FunctionalExternalService:
         self.failure_message = "Service unavailable"
 
     def process(self, data: object = None) -> FlextResult[str]:
-        """Functional processing method - validates real behavior."""
+        """Functional processing method - validates real behavior.
+
+        Returns:
+            FlextResult[str]: Success with processed data or failure with error message.
+
+        """
         self.call_count += 1
         self.processed_items.append(data)
 
@@ -81,7 +86,12 @@ class FunctionalUserService:
         self,
         user_id: str,
     ) -> FlextResult[dict[str, str | int | bool | FlextTypes.Core.StringList]]:
-        """Get user by ID - functional implementation."""
+        """Get user by ID - functional implementation.
+
+        Returns:
+            FlextResult[dict]: Success with user data or failure with error message.
+
+        """
         self.call_count += 1
 
         if self.should_fail:
@@ -132,7 +142,12 @@ class FunctionalNotificationService:
         self.should_fail = False
 
     def send(self, email: str) -> FlextResult[str]:
-        """Send notification - functional implementation."""
+        """Send notification - functional implementation.
+
+        Returns:
+            FlextResult[str]: Success with confirmation or failure with error message.
+
+        """
         self.call_count += 1
 
         if self.should_fail:
@@ -158,7 +173,12 @@ class FunctionalLifecycleService:
         self.should_fail_shutdown = False
 
     def initialize(self, config: FlextTypes.Core.Dict) -> FlextResult[str]:
-        """Initialize service - functional implementation."""
+        """Initialize service - functional implementation.
+
+        Returns:
+            FlextResult[str]: Success with confirmation or failure with error message.
+
+        """
         if self.should_fail_init:
             return FlextResult[str].fail("Initialization failed")
 
@@ -167,11 +187,21 @@ class FunctionalLifecycleService:
         return FlextResult[str].ok("initialized")
 
     def is_healthy(self) -> bool:
-        """Check service health - functional implementation."""
+        """Check service health - functional implementation.
+
+        Returns:
+            bool: True if service is healthy, False otherwise.
+
+        """
         return self.initialized and not self.shutdown_called
 
     def shutdown(self) -> FlextResult[str]:
-        """Shutdown service - functional implementation."""
+        """Shutdown service - functional implementation.
+
+        Returns:
+            FlextResult[str]: Success with confirmation or failure with error message.
+
+        """
         if self.should_fail_shutdown:
             return FlextResult[str].fail("Shutdown failed")
 
@@ -191,7 +221,12 @@ class FunctionalLifecycleService:
 
 @pytest.fixture
 def mock_external_service() -> FunctionalExternalService:
-    """Functional external service for integration testing."""
+    """Functional external service for integration testing.
+
+    Returns:
+        FunctionalExternalService: A configured external service instance.
+
+    """
     return FunctionalExternalService()
 
 

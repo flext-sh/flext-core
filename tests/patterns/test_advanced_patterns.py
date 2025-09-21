@@ -26,10 +26,20 @@ TestFunction = Callable[[object], None]
 
 
 def mark_test_pattern(pattern: str) -> Callable[[object], object]:
-    """Mark test with a specific pattern for demonstration purposes."""
+    """Mark test with a specific pattern for demonstration purposes.
+
+    Returns:
+        Callable[[object], object]: Decorator function that marks tests with patterns.
+
+    """
 
     def decorator(func: object) -> object:
-        """Decorator method."""
+        """Decorator method.
+
+        Returns:
+            object: The decorated function with pattern attribute.
+
+        """
         # Use setattr to dynamically assign the pattern attribute
         setattr(func, "_test_pattern", pattern)
         return func
@@ -66,32 +76,62 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
-        """Given method."""
+        """Given method.
+
+        Returns:
+            GivenWhenThenBuilder: Self for method chaining.
+
+        """
         self._given.update(kwargs)
         return self
 
     def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
-        """When method."""
+        """When method.
+
+        Returns:
+            GivenWhenThenBuilder: Self for method chaining.
+
+        """
         self._when.update(kwargs)
         return self
 
     def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
-        """Then method."""
+        """Then method.
+
+        Returns:
+            GivenWhenThenBuilder: Self for method chaining.
+
+        """
         self._then.update(kwargs)
         return self
 
     def with_tag(self, tag: str) -> GivenWhenThenBuilder:
-        """with_tag method."""
+        """with_tag method.
+
+        Returns:
+            GivenWhenThenBuilder: Self for method chaining.
+
+        """
         self._tags.append(tag)
         return self
 
     def with_priority(self, priority: str) -> GivenWhenThenBuilder:
-        """with_priority method."""
+        """with_priority method.
+
+        Returns:
+            GivenWhenThenBuilder: Self for method chaining.
+
+        """
         self._priority = priority
         return self
 
     def build(self) -> MockScenario:
-        """Build method."""
+        """Build method.
+
+        Returns:
+            MockScenario: Built mock scenario.
+
+        """
         return MockScenario(
             self.name,
             {
@@ -112,41 +152,76 @@ class FlextTestBuilder:
         self._data: FlextTypes.Core.Dict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
-        """with_id method."""
+        """with_id method.
+
+        Returns:
+            FlextTestBuilder: Self for method chaining.
+
+        """
         self._data["id"] = id_
         return self
 
     def with_correlation_id(self, correlation_id: str) -> FlextTestBuilder:
-        """with_correlation_id method."""
+        """with_correlation_id method.
+
+        Returns:
+            FlextTestBuilder: Self for method chaining.
+
+        """
         self._data["correlation_id"] = correlation_id
         return self
 
     def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
-        """with_metadata method."""
+        """with_metadata method.
+
+        Returns:
+            FlextTestBuilder: Self for method chaining.
+
+        """
         self._data.update(kwargs)
         return self
 
     def with_user_data(self, name: str, email: str) -> FlextTestBuilder:
-        """with_user_data method."""
+        """with_user_data method.
+
+        Returns:
+            FlextTestBuilder: Self for method chaining.
+
+        """
         self._data["name"] = name
         self._data["email"] = email
         return self
 
     def with_timestamp(self) -> FlextTestBuilder:
-        """with_timestamp method."""
+        """with_timestamp method.
+
+        Returns:
+            FlextTestBuilder: Self for method chaining.
+
+        """
         self._data.setdefault("created_at", "2023-01-01T00:00:00+00:00")
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
     def with_validation_rules(self, **kwargs: object) -> FlextTestBuilder:
-        """with_validation_rules method."""
+        """with_validation_rules method.
+
+        Returns:
+            FlextTestBuilder: Self for method chaining.
+
+        """
         # No-op stub to keep example API; could attach schema metadata here
         # Store kwargs for potential future use
         self._validation_rules = kwargs
         return self
 
     def build(self) -> FlextTypes.Core.Dict:
-        """Build method."""
+        """Build method.
+
+        Returns:
+            FlextTypes.Core.Dict: Copy of the built data.
+
+        """
         return self._data.copy()
 
 
@@ -161,7 +236,12 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[FlextTypes.Core.Dict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
-        """add_case method."""
+        """add_case method.
+
+        Returns:
+            ParameterizedTestBuilder: Self for method chaining.
+
+        """
         self._cases.append(kwargs)
         return self
 
@@ -169,7 +249,12 @@ class ParameterizedTestBuilder:
         self,
         cases: list[FlextTypes.Core.Dict],
     ) -> ParameterizedTestBuilder:
-        """add_success_cases method."""
+        """add_success_cases method.
+
+        Returns:
+            ParameterizedTestBuilder: Self for method chaining.
+
+        """
         self._success_cases.extend(cases)
         return self
 
@@ -177,16 +262,31 @@ class ParameterizedTestBuilder:
         self,
         cases: list[FlextTypes.Core.Dict],
     ) -> ParameterizedTestBuilder:
-        """add_failure_cases method."""
+        """add_failure_cases method.
+
+        Returns:
+            ParameterizedTestBuilder: Self for method chaining.
+
+        """
         self._failure_cases.extend(cases)
         return self
 
     def build(self) -> list[FlextTypes.Core.Dict]:
-        """Build method."""
+        """Build method.
+
+        Returns:
+            list[FlextTypes.Core.Dict]: Copy of the test cases.
+
+        """
         return self._cases.copy()
 
     def build_pytest_params(self) -> list[tuple[str, str, bool]]:
-        """build_pytest_params method."""
+        """build_pytest_params method.
+
+        Returns:
+            list[tuple[str, str, bool]]: Pytest parameters for testing.
+
+        """
         success_params = [
             (str(c.get("email", "")), str(c.get("input", "")), True)
             for c in self._success_cases
@@ -198,23 +298,33 @@ class ParameterizedTestBuilder:
         return success_params + failure_params
 
     def build_test_ids(self) -> FlextTypes.Core.StringList:
-        """build_test_ids method."""
+        """build_test_ids method.
+
+        Returns:
+            FlextTypes.Core.StringList: List of test IDs.
+
+        """
         return [
             str(c.get("input", ""))
             for c in (*self._success_cases, *self._failure_cases)
         ]
 
 
-class TestAssertionBuilder:
+class AssertionBuilder:
     """Builder for complex test assertions."""
 
     def __init__(self, data: object) -> None:
-        """Initialize testassertionbuilder:."""
+        """Initialize assertionbuilder:."""
         self.data = data
         self._assertions: list[Callable[[], None]] = []
 
-    def assert_equals(self, expected: object) -> TestAssertionBuilder:
-        """assert_equals method."""
+    def assert_equals(self, expected: object) -> AssertionBuilder:
+        """assert_equals method.
+
+        Returns:
+            AssertionBuilder: Self for method chaining.
+
+        """
 
         def assertion() -> None:
             assert self.data == expected
@@ -222,8 +332,13 @@ class TestAssertionBuilder:
         self._assertions.append(assertion)
         return self
 
-    def assert_contains(self, item: object) -> TestAssertionBuilder:
-        """assert_contains method."""
+    def assert_contains(self, item: object) -> AssertionBuilder:
+        """assert_contains method.
+
+        Returns:
+            AssertionBuilder: Self for method chaining.
+
+        """
 
         def assertion() -> None:
             # Check if item is in the data container
@@ -249,11 +364,42 @@ class TestAssertionBuilder:
         self._assertions.append(assertion)
         return self
 
-    def assert_type(self, expected_type: type) -> TestAssertionBuilder:
-        """assert_type method."""
+    def assert_type(self, expected_type: type) -> AssertionBuilder:
+        """assert_type method.
+
+        Returns:
+            AssertionBuilder: Self for method chaining.
+
+        """
 
         def assertion() -> None:
             assert isinstance(self.data, expected_type)
+
+        self._assertions.append(assertion)
+        return self
+
+    def satisfies(
+        self, condition: Callable[[object], bool], description: str = ""
+    ) -> AssertionBuilder:
+        """Satisfies method.
+
+        Args:
+            condition: Function that takes the data and returns a boolean
+            description: Optional description of the condition
+
+        Returns:
+            AssertionBuilder: Self for method chaining.
+
+        """
+
+        def assertion() -> None:
+            if not condition(self.data):
+                msg = (
+                    f"Condition failed: {description}"
+                    if description
+                    else "Condition failed"
+                )
+                raise AssertionError(msg)
 
         self._assertions.append(assertion)
         return self
@@ -343,7 +489,7 @@ class TestAdvancedPatterns:
         test_data = {"name": "John", "age": 30, "active": True}
 
         assertion_builder = (
-            TestAssertionBuilder(test_data)
+            AssertionBuilder(test_data)
             .assert_type(dict)
             .assert_contains("name")
             .assert_equals({"name": "John", "age": 30, "active": True})
@@ -440,14 +586,17 @@ class TestAdvancedPatterns:
         """Test fluent interface pattern."""
         # Demonstrate fluent interface with method chaining
         result = (
-            TestAssertionBuilder([1, 2, 3, 4, 5])
+            AssertionBuilder([1, 2, 3, 4, 5])
             .assert_type(list)
             .assert_contains(3)
-            .assert_equals([1, 2, 3, 4, 5])
+            .satisfies(lambda x: len(x) == 5, "should have 5 elements")
         )
 
-        # All assertions should pass
+        # Execute the assertions
         result.execute_all()
+
+        # Verify method chaining returns self
+        assert isinstance(result, AssertionBuilder)
 
     def test_test_pattern_marking(self) -> None:
         """Test test pattern marking functionality."""
