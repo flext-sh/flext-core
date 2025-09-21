@@ -141,12 +141,12 @@ def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
 
     handler = EchoHandler()
 
-    first_result = registry.register_handler(handler)  # type: ignore[arg-type]
+    first_result = registry.register_handler(handler)
     assert first_result.is_success
     # Note: RegistrationDetails doesn't have handler attribute in current implementation
     # assert first_result.unwrap().handler is handler
 
-    second_result = registry.register_handler(handler)  # type: ignore[arg-type]
+    second_result = registry.register_handler(handler)
     assert second_result.is_success
     # Note: RegistrationDetails doesn't have handler attribute in current implementation
     # assert second_result.unwrap().handler is handler
@@ -161,7 +161,7 @@ def test_dispatcher_registry_batch_registration_tracks_skipped() -> None:
     handler = EchoHandler()
     summary_result: FlextResult[FlextDispatcherRegistry.Summary] = (
         registry.register_handlers(
-            [handler, handler],  # type: ignore[list-item]
+            [handler, handler],
         )
     )
 

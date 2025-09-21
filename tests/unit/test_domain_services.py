@@ -278,7 +278,7 @@ class TestDomainServicesFixed:
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers",
             operation_callable=test_operation,
-            arguments={"x": 5, "y": 3}
+            arguments={"x": 5, "y": 3},
         )
 
         result = service.execute_operation(operation_request)
@@ -313,11 +313,13 @@ class TestDomainServicesFixed:
         service = SampleComplexService(name=long_name, value=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
-            operation_name="add_numbers", operation_callable=test_operation, arguments={"x": 5, "y": 3}
+            operation_name="add_numbers",
+            operation_callable=test_operation,
+            arguments={"x": 5, "y": 3},
         )
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert result.error is not None and "Configuration validation failed" in result.error
+        assert result.error is not None and "Name too long" in result.error
 
     def test_execute_operation_runtime_error(self) -> None:
         """Test execute_operation with runtime error."""
@@ -345,9 +347,9 @@ class TestDomainServicesFixed:
             msg = "Invalid value"
             raise ValueError(msg)
 
-        # Create operation request
+        # Create operation request with no arguments so the operation is called
         operation_request = FlextModels.OperationExecutionRequest(
-            operation_name="value_error_op", operation_callable=value_error_operation
+            operation_name="value_error_op", operation_callable=value_error_operation, arguments={}
         )
 
         result = service.execute_operation(operation_request)
@@ -383,7 +385,8 @@ class TestDomainServicesFixed:
 
         # Create operation request
         operation_request = FlextModels.OperationExecutionRequest(
-            operation_name="unexpected_op", operation_callable=unexpected_error_operation
+            operation_name="unexpected_op",
+            operation_callable=unexpected_error_operation,
         )
 
         result = service.execute_operation(operation_request)
@@ -399,7 +402,7 @@ class TestDomainServicesFixed:
         with pytest.raises(ValidationError) as exc_info:
             FlextModels.OperationExecutionRequest(
                 operation_name="not_callable",
-                operation_callable="not_callable",  # type: ignore[arg-type]  # This should fail validation
+                operation_callable="not_callable",
                 arguments={},
             )
 
@@ -449,6 +452,7 @@ class TestDomainServicesFixed:
         try:
             # Use FlextMixins.to_json instead of direct method
             from flext_core.models import FlextModels
+
             request = FlextModels.SerializationRequest(data=service)
             json_str = FlextMixins.to_json(request)
             assert isinstance(json_str, str)
@@ -487,7 +491,9 @@ class TestDomainServicesFixed:
         service = SampleComplexService(name="test", value=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
-            operation_name="add_numbers", operation_callable=test_operation, arguments={"x": 5, "y": 3}
+            operation_name="add_numbers",
+            operation_callable=test_operation,
+            arguments={"x": 5, "y": 3},
         )
         result = service.execute_operation(operation_request)
         assert result.is_success
@@ -503,11 +509,16 @@ class TestDomainServicesFixed:
         )  # Empty name should fail business rules
 
         operation_request = FlextModels.OperationExecutionRequest(
-            operation_name="add_numbers", operation_callable=test_operation, arguments={"x": 5, "y": 3}
+            operation_name="add_numbers",
+            operation_callable=test_operation,
+            arguments={"x": 5, "y": 3},
         )
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert result.error is not None and "Business rules validation failed" in result.error
+        assert (
+            result.error is not None
+            and "Business rules validation failed" in result.error
+        )
 
     def test_complex_service_execution_config_failure(self) -> None:
         """Test complex service execution with config failure."""
@@ -517,11 +528,16 @@ class TestDomainServicesFixed:
         service = SampleComplexService(name=long_name, value=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
-            operation_name="add_numbers", operation_callable=test_operation, arguments={"x": 5, "y": 3}
+            operation_name="add_numbers",
+            operation_callable=test_operation,
+            arguments={"x": 5, "y": 3},
         )
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert result.error is not None and "Configuration validation failed" in result.error
+        assert (
+            result.error is not None
+            and "Configuration validation failed" in result.error
+        )
 
     def test_service_model_config(self) -> None:
         """Test service model configuration."""

@@ -448,9 +448,9 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: object = request.get("text", "")  # type: ignore[misc]
+                text_value: object = request.get("text", "")
                 if not isinstance(text_value, str):
-                    text_value = str(text_value)  # type: ignore[misc]
+                    text_value = str(text_value)
                 return FlextResult[str].ok(f"Uppercase: {text_value.upper()}")
 
         class LowerCaseHandler(FlextProcessing.Implementation.BasicHandler):
@@ -461,9 +461,9 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: object = request.get("text", "")  # type: ignore[misc]
+                text_value: object = request.get("text", "")
                 if not isinstance(text_value, str):
-                    text_value = str(text_value)  # type: ignore[misc]
+                    text_value = str(text_value)
                 return FlextResult[str].ok(f"Lowercase: {text_value.lower()}")
 
         class ReverseHandler(FlextProcessing.Implementation.BasicHandler):
@@ -474,9 +474,9 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: object = request.get("text", "")  # type: ignore[misc]
+                text_value: object = request.get("text", "")
                 if not isinstance(text_value, str):
-                    text_value = str(text_value)  # type: ignore[misc]
+                    text_value = str(text_value)
                 return FlextResult[str].ok(f"Reversed: {text_value[::-1]}")
 
         # Register handlers
