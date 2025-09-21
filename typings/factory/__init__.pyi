@@ -1,9 +1,3 @@
-"""Factory Boy package type stubs - FLEXT testing infrastructure.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from typing import TypeVar
 
 T = TypeVar("T")

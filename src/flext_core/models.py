@@ -17,7 +17,7 @@ import warnings
 from collections import UserString
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Generic, Literal, cast
+from typing import TYPE_CHECKING, Any, Generic, Literal, Self, cast
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -25,15 +25,23 @@ from pydantic import (
     ConfigDict,
     Field,
     RootModel,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
 
-from flext_core.config import FlextConfig
+if TYPE_CHECKING:
+    from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import T
 from flext_core.utilities import FlextUtilities
+
+
+def _get_global_config() -> FlextConfig:
+    """Lazy import helper to break circular dependency."""
+    from flext_core.config import FlextConfig
+    return FlextConfig.get_global_instance()
 
 
 class FlextModels:
@@ -242,27 +250,26 @@ class FlextModels:
         @classmethod
         def validate_pagination(cls, v: dict[str, int]) -> dict[str, int]:
             """Validate pagination parameters using FlextConstants."""
-            if not isinstance(v, dict):
-                raise ValueError("pagination must be a dictionary")
-
             page = v.get("page", 1)
             size = v.get("size", 10)
 
             if not isinstance(page, int) or page < 1:
-                raise ValueError("pagination.page must be a positive integer")
+                msg = "pagination.page must be a positive integer"
+                raise ValueError(msg)
 
-            if not isinstance(size, int) or size < 1 or size > FlextConstants.Cqrs.MAX_PAGE_SIZE:
-                raise ValueError(f"pagination.size must be between 1 and {FlextConstants.Cqrs.MAX_PAGE_SIZE}")
+            if (
+                not isinstance(size, int)
+                or size < 1
+                or size > FlextConstants.Cqrs.MAX_PAGE_SIZE
+            ):
+                msg = f"pagination.size must be between 1 and {FlextConstants.Cqrs.MAX_PAGE_SIZE}"
+                raise ValueError(msg)
 
             return {"page": page, "size": size}
 
         @model_validator(mode="after")
-        def validate_query_consistency(self) -> "FlextModels.Query":
+        def validate_query_consistency(self) -> Self:
             """Validate query consistency using business rules."""
-            # Ensure filters is always a dict
-            if not isinstance(self.filters, dict):
-                raise ValueError("filters must be a dictionary")
-            
             # Additional business validation can be added here
             return self
 
@@ -359,7 +366,7 @@ class FlextModels:
             @model_validator(mode="after")
             def _ensure_metadata(self) -> FlextModels.CqrsConfig.Handler:
                 if not self.metadata:
-                    setattr(self, "metadata", {})
+                    object.__setattr__(self, "metadata", {})
                 return self
 
         @staticmethod
@@ -1087,69 +1094,306 @@ class FlextModels:
         """Pydantic model for service registration validation."""
 
         name: str = Field(min_length=1, description="Service name identifier")
-        service: Any = Field(description="Service instance to register")
+        service: object = Field(description="Service instance to register")
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
         )
 
     class FactoryRegistrationModel(BaseModel):
         """Pydantic model for factory registration validation."""
 
         name: str = Field(min_length=1, description="Factory name identifier")
-        factory: Callable[[], Any] = Field(description="Parameterless factory function")
+        factory: Callable[[], object] = Field(description="Parameterless factory function")
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
         )
 
         @field_validator("factory")
         @classmethod
-        def validate_factory_signature(cls, v: Callable[[], Any]) -> Callable[[], Any]:
+        def validate_factory_signature(cls, v: Callable[[], object]) -> Callable[[], object]:
             """Validate factory has no required parameters."""
             import inspect
+
             sig = inspect.signature(v)
             required_params = sum(
-                1 for p in sig.parameters.values()
-                if p.default == p.empty and p.kind not in {p.VAR_POSITIONAL, p.VAR_KEYWORD}
+                1
+                for p in sig.parameters.values()
+                if p.default == p.empty
+                and p.kind not in {p.VAR_POSITIONAL, p.VAR_KEYWORD}
             )
             if required_params > 0:
-                raise ValueError(f"Factory requires {required_params} parameter(s), must be parameterless")
+                msg = f"Factory requires {required_params} parameter(s), must be parameterless"
+                raise ValueError(msg)
             return v
 
     class ServiceRetrievalModel(BaseModel):
         """Pydantic model for service retrieval validation."""
 
         name: str = Field(min_length=1, description="Service name to retrieve")
-        expected_type: type | None = Field(default=None, description="Expected service type")
+        expected_type: type | None = Field(
+            default=None, description="Expected service type"
+        )
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
         )
 
     class BatchRegistrationModel(BaseModel):
         """Pydantic model for batch registration validation."""
 
-        registrations: dict[str, Any] = Field(description="Dictionary of name->service/factory mappings")
+        registrations: dict[str, object] = Field(
+            description="Dictionary of name->service/factory mappings"
+        )
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
         )
 
         @field_validator("registrations")
         @classmethod
-        def validate_non_empty(cls, v: dict[str, Any]) -> dict[str, Any]:
+        def validate_non_empty(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate registrations dictionary is not empty."""
             if not v:
-                raise ValueError("Registrations dictionary cannot be empty")
+                msg = "Registrations dictionary cannot be empty"
+                raise ValueError(msg)
+            return v
+
+    # =========================================================================
+    # PROCESSING MODELS - For FlextProcessing optimization
+    # =========================================================================
+
+    class ProcessingRequest(BaseModel):
+        """Pydantic model for processing requests in FlextProcessing."""
+
+        data: object = Field(description="Data to be processed")
+        context: str = Field(
+            default="",
+            max_length=500,
+            description="Processing context for error messages",
+        )
+        timeout_seconds: float = Field(
+            default=30.0, ge=0.1, le=3600.0, description="Processing timeout in seconds"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Additional processing metadata"
+        )
+        enable_validation: bool = Field(
+            default=True, description="Enable input validation"
+        )
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+        @field_validator("context")
+        @classmethod
+        def validate_context(cls, v: str) -> str:
+            """Validate context using FlextUtilities."""
+            result = FlextUtilities.Validation.validate_string(
+                v, min_length=0, max_length=500, field_name="context"
+            )
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.value
+
+        @field_validator("timeout_seconds")
+        @classmethod
+        def validate_timeout(cls, v: float) -> float:
+            """Validate timeout is within reasonable bounds."""
+            if not 0.1 <= v <= 3600.0:
+                msg = "timeout_seconds must be between 0.1 and 3600.0 seconds"
+                raise ValueError(msg)
+            return v
+
+    class HandlerRegistration(BaseModel):
+        """Pydantic model for handler registration in FlextProcessing."""
+
+        name: str = Field(min_length=1, description="Handler name identifier")
+        handler: object = Field(description="Handler instance or callable")
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Handler metadata"
+        )
+        enabled: bool = Field(default=True, description="Whether handler is enabled")
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+        @field_validator("name")
+        @classmethod
+        def validate_name(cls, v: str) -> str:
+            """Validate handler name using FlextUtilities."""
+            result = FlextUtilities.Validation.validate_string(
+                v, min_length=1, field_name="handler name"
+            )
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.value
+
+        @field_validator("handler")
+        @classmethod
+        def validate_handler(cls, v: object) -> object:
+            """Validate handler is callable or has handle method."""
+            if not (callable(v) or hasattr(v, "handle")):
+                msg = "Handler must be callable or have a 'handle' method"
+                raise ValueError(msg)
+            return v
+
+    class BatchProcessingConfig(BaseModel):
+        """Pydantic model for batch processing configuration in FlextProcessing."""
+
+        data_items: list[object] = Field(description="List of data items to process")
+        fail_fast: bool = Field(
+            default=True, description="Stop processing on first failure"
+        )
+        max_workers: int = Field(
+            default=4, ge=1, le=32, description="Maximum worker threads"
+        )
+        timeout_seconds: float = Field(
+            default=300.0, ge=1.0, le=3600.0, description="Total batch timeout"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Batch processing metadata"
+        )
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+        @field_validator("data_items")
+        @classmethod
+        def validate_data_items(cls, v: list[object]) -> list[object]:
+            """Validate data items list is not empty."""
+            if not v:
+                msg = "data_items cannot be empty"
+                raise ValueError(msg)
+            return v
+
+        @field_validator("max_workers")
+        @classmethod
+        def validate_max_workers(cls, v: int) -> int:
+            """Validate max_workers is within reasonable bounds."""
+            if not 1 <= v <= 32:
+                msg = "max_workers must be between 1 and 32"
+                raise ValueError(msg)
+            return v
+
+        def validate_batch(self) -> FlextResult[None]:
+            """Validate batch configuration using business rules."""
+            try:
+                # Pydantic validation already done during model creation
+                if not self.data_items:
+                    return FlextResult[None].fail("Batch cannot be empty")
+
+                if len(self.data_items) > 1000:
+                    return FlextResult[None].fail("Batch size cannot exceed 1000 items")
+
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Batch validation failed: {e}")
+
+    class HandlerExecutionConfig(BaseModel):
+        """Pydantic model for handler execution configuration."""
+
+        handler_name: str = Field(min_length=1, description="Handler name to execute")
+        request_data: object = Field(description="Request data to process")
+        timeout_seconds: float = Field(
+            default=30.0, ge=0.1, le=300.0, description="Execution timeout"
+        )
+        retry_count: int = Field(
+            default=0, ge=0, le=5, description="Number of retries on failure"
+        )
+        fallback_handlers: list[str] = Field(
+            default_factory=list, description="Fallback handler names"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Execution metadata"
+        )
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+        @field_validator("handler_name")
+        @classmethod
+        def validate_handler_name(cls, v: str) -> str:
+            """Validate handler name using FlextUtilities."""
+            result = FlextUtilities.Validation.validate_string(
+                v, min_length=1, field_name="handler_name"
+            )
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.value
+
+    class PipelineConfiguration(BaseModel):
+        """Pydantic model for pipeline configuration in FlextProcessing."""
+
+        name: str = Field(min_length=1, description="Pipeline name")
+        steps: list[object] = Field(description="Pipeline processing steps")
+        enable_parallel: bool = Field(
+            default=False, description="Enable parallel step execution"
+        )
+        fail_fast: bool = Field(default=True, description="Stop on first step failure")
+        timeout_seconds: float = Field(
+            default=300.0, ge=1.0, le=3600.0, description="Pipeline timeout"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Pipeline metadata"
+        )
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+        @field_validator("name")
+        @classmethod
+        def validate_name(cls, v: str) -> str:
+            """Validate pipeline name using FlextUtilities."""
+            result = FlextUtilities.Validation.validate_string(
+                v, min_length=1, field_name="pipeline name"
+            )
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.value
+
+        @field_validator("steps")
+        @classmethod
+        def validate_steps(cls, v: list[object]) -> list[object]:
+            """Validate pipeline has at least one step."""
+            if not v:
+                msg = "Pipeline must have at least one step"
+                raise ValueError(msg)
+            return v
+
+    class ProcessingResult(BaseModel):
+        """Pydantic model for processing results."""
+
+        success: bool = Field(description="Whether processing succeeded")
+        data: object = Field(default=None, description="Processing result data")
+        error: str = Field(default="", description="Error message if failed")
+        execution_time_ms: float = Field(
+            default=0.0, ge=0.0, description="Execution time in milliseconds"
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Result metadata"
+        )
+        timestamp: datetime = Field(
+            default_factory=lambda: datetime.now(UTC), description="Result timestamp"
+        )
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+        @field_validator("execution_time_ms")
+        @classmethod
+        def validate_execution_time(cls, v: float) -> float:
+            """Validate execution time is non-negative."""
+            if v < 0.0:
+                msg = "execution_time_ms cannot be negative"
+                raise ValueError(msg)
             return v
 
     class AutoWireModel(BaseModel):
@@ -1159,22 +1403,347 @@ class FlextModels:
         service_name: str = Field(min_length=1, description="Service registration name")
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
         )
 
     class ContainerConfigModel(BaseModel):
-        """Pydantic model for container configuration validation."""
+        """Pydantic model for container configuration validation.
 
-        max_workers: int = Field(default_factory=lambda: FlextConstants.Container.MAX_WORKERS, ge=1, description="Maximum worker threads")
-        timeout_seconds: float = Field(default_factory=lambda: FlextConstants.Container.TIMEOUT_SECONDS, ge=0.1, description="Operation timeout in seconds")
-        environment: str = Field(default_factory=lambda: FlextConfig.get_global_instance().environment, description="Runtime environment")
+        Uses FlextConfig as primary source of truth for defaults with FlextConstants as fallback.
+        """
+
+        max_workers: int = Field(
+            default_factory=lambda: _get_global_config().max_workers,
+            ge=1,
+            description="Maximum worker threads from FlextConfig",
+        )
+        timeout_seconds: float = Field(
+            default_factory=lambda: _get_global_config().timeout_seconds,
+            ge=0.1,
+            description="Operation timeout in seconds from FlextConfig",
+        )
+        environment: str = Field(
+            default_factory=lambda: _get_global_config().environment,
+            description="Runtime environment from FlextConfig",
+        )
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    # === FlextLogger Optimization Models ===
+    # These models consolidate FlextLogger method parameters for optimization
+
+    class LoggerConfigurationModel(BaseModel):
+        """Pydantic model for FlextLogger.configure() method parameter consolidation.
+        
+        Consolidates 5 parameters (log_level, json_output, include_source, 
+        structured_output, log_verbosity) into a validated model using FlextConfig 
+        and FlextConstants as source of truth.
+        """
+
+        log_level: str = Field(
+            default_factory=lambda: _get_global_config().log_level,
+            description="Logging level from FlextConfig",
+        )
+        json_output: bool | None = Field(
+            default=None,
+            description="Use JSON output format (auto-detected if None)",
+        )
+        include_source: bool = Field(
+            default_factory=lambda: FlextConstants.Logging.INCLUDE_SOURCE,
+            description="Include source code location info",
+        )
+        structured_output: bool = Field(
+            default_factory=lambda: FlextConstants.Logging.STRUCTURED_OUTPUT,
+            description="Use structured logging format",
+        )
+        log_verbosity: str = Field(
+            default_factory=lambda: FlextConstants.Logging.VERBOSITY,
+            pattern="^(compact|detailed|full)$",
+            description="Console output verbosity level",
+        )
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class LoggerInitializationModel(BaseModel):
+        """Pydantic model for FlextLogger.__init__() method parameter consolidation.
+        
+        Consolidates 5 parameters (name, level, service_name, service_version, 
+        correlation_id) into a validated model using FlextConfig defaults.
+        """
+
+        name: str = Field(
+            min_length=1,
+            description="Logger name identifier",
+        )
+        level: str | None = Field(
+            default=None,
+            description="Log level override (None uses FlextConfig defaults)",
+        )
+        service_name: str | None = Field(
+            default=None,
+            description="Service name (auto-detected if None)",
+        )
+        service_version: str | None = Field(
+            default=None,
+            description="Service version (auto-detected if None)",
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Correlation ID (auto-generated if None)",
+        )
+
+        @field_validator("level")
+        @classmethod
+        def validate_log_level(cls, v: str | None) -> str | None:
+            """Validate log level is in allowed values."""
+            if v is None:
+                return v
+            valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+            if v.upper() not in valid_levels:
+                raise ValueError(f"Log level must be one of: {valid_levels}")
+            return v.upper()
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class LogContextModel(BaseModel):
+        """Pydantic model for log context binding and management.
+        
+        Consolidates context-related operations for bind(), set_context(),
+        with_context() methods.
+        """
+
+        context_data: dict[str, object] = Field(
+            default_factory=dict,
+            description="Context data to bind to logger",
+        )
+        persistent: bool = Field(
+            default=False,
+            description="Whether context should persist across log calls",
+        )
+        merge_strategy: str = Field(
+            default="update",
+            pattern="^(update|replace|merge_deep)$",
+            description="How to handle existing context data",
+        )
+
+        @field_validator("context_data")
+        @classmethod
+        def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
+            """Validate context data is serializable."""
+            if not isinstance(v, dict):
+                raise ValueError("Context data must be a dictionary")
+            # Basic serialization check - avoid complex objects
+            for key, value in v.items():
+                if not isinstance(key, str):
+                    raise ValueError("Context keys must be strings")
+                if callable(value) or hasattr(value, "__dict__"):
+                    raise ValueError(f"Context value for '{key}' must be serializable")
+            return v
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class LoggerContextBindingModel(BaseModel):
+        """Pydantic model for logger context binding operations."""
+
+        source_logger_name: str = Field(
+            description="Name of the source logger to bind from"
+        )
+        context_data: dict[str, object] = Field(
+            default_factory=dict,
+            description="Context data to bind to new logger instance"
+        )
+        force_new_instance: bool = Field(
+            default=True,
+            description="Whether to force creation of new logger instance"
+        )
+        copy_request_context: bool = Field(
+            default=True,
+            description="Whether to copy existing request context"
+        )
+        copy_permanent_context: bool = Field(
+            default=True,
+            description="Whether to copy existing permanent context"
+        )
+
+        @field_validator("context_data")
+        @classmethod
+        def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
+            """Validate context data is serializable."""
+            if not isinstance(v, dict):
+                raise ValueError("Context data must be a dictionary")
+            for key, value in v.items():
+                if not isinstance(key, str):
+                    raise ValueError("Context keys must be strings")
+                if callable(value) or (hasattr(value, "__dict__") and not isinstance(value, (str, int, float, bool, list, dict))):
+                    raise ValueError(f"Context value for '{key}' must be serializable")
+            return v
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class LoggerRequestContextModel(BaseModel):
+        """Pydantic model for logger request-specific context management."""
+
+        request_context: dict[str, object] = Field(
+            default_factory=dict,
+            description="Request-specific context data"
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Request correlation ID for tracing"
+        )
+        clear_existing: bool = Field(
+            default=False,
+            description="Whether to clear existing request context before setting"
+        )
+
+        @field_validator("request_context")
+        @classmethod
+        def validate_request_context(cls, v: dict[str, object]) -> dict[str, object]:
+            """Validate request context data."""
+            if not isinstance(v, dict):
+                raise ValueError("Request context must be a dictionary")
+            for key, value in v.items():
+                if not isinstance(key, str):
+                    raise ValueError("Request context keys must be strings")
+            return v
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class LoggerPermanentContextModel(BaseModel):
+        """Pydantic model for logger permanent context management."""
+
+        permanent_context: dict[str, object] = Field(
+            default_factory=dict,
+            description="Permanent context data that persists across requests"
+        )
+        replace_existing: bool = Field(
+            default=False,
+            description="Whether to replace existing permanent context completely"
+        )
+        merge_strategy: str = Field(
+            default="update",
+            pattern="^(update|replace|merge_deep)$",
+            description="Strategy for merging with existing permanent context"
+        )
+
+        @field_validator("permanent_context")
+        @classmethod
+        def validate_permanent_context(cls, v: dict[str, object]) -> dict[str, object]:
+            """Validate permanent context data."""
+            if not isinstance(v, dict):
+                raise ValueError("Permanent context must be a dictionary")
+            for key, value in v.items():
+                if not isinstance(key, str):
+                    raise ValueError("Permanent context keys must be strings")
+            return v
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class OperationTrackingModel(BaseModel):
+        """Pydantic model for operation tracking in FlextLogger.
+        
+        Consolidates start_operation() and complete_operation() method parameters
+        for tracking long-running operations.
+        """
+
+        operation_name: str = Field(
+            min_length=1,
+            description="Name of the operation being tracked",
+        )
+        operation_id: str | None = Field(
+            default=None,
+            description="Unique operation identifier (auto-generated if None)",
+        )
+        metadata: dict[str, object] = Field(
+            default_factory=dict,
+            description="Additional operation metadata",
+        )
+        include_performance: bool = Field(
+            default_factory=lambda: FlextConstants.Logging.TRACK_PERFORMANCE,
+            description="Include performance metrics",
+        )
+        timeout_seconds: float | None = Field(
+            default=None,
+            ge=0.1,
+            description="Operation timeout for monitoring",
+        )
+
+        @field_validator("metadata")
+        @classmethod
+        def validate_metadata(cls, v: dict[str, object]) -> dict[str, object]:
+            """Validate metadata is serializable."""
+            if not isinstance(v, dict):
+                raise ValueError("Metadata must be a dictionary")
+            # Basic serialization check
+            for key, value in v.items():
+                if not isinstance(key, str):
+                    raise ValueError("Metadata keys must be strings")
+                if callable(value):
+                    raise ValueError(f"Metadata value for '{key}' cannot be callable")
+            return v
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
+        )
+
+    class PerformanceTrackingModel(BaseModel):
+        """Pydantic model for performance tracking in FlextLogger.
+        
+        Consolidates performance-related logging configuration and context
+        for operation timing and resource monitoring.
+        """
+
+        track_memory: bool = Field(
+            default_factory=lambda: FlextConstants.Logging.TRACK_MEMORY,
+            description="Track memory usage during operations",
+        )
+        track_timing: bool = Field(
+            default_factory=lambda: FlextConstants.Logging.TRACK_TIMING,
+            description="Track execution timing",
+        )
+        threshold_warning_ms: float = Field(
+            default_factory=lambda: FlextConstants.Logging.PERFORMANCE_THRESHOLD_WARNING,
+            ge=0,
+            description="Warning threshold in milliseconds",
+        )
+        threshold_critical_ms: float = Field(
+            default_factory=lambda: FlextConstants.Logging.PERFORMANCE_THRESHOLD_CRITICAL,
+            ge=0,
+            description="Critical threshold in milliseconds",
+        )
+        sampling_rate: float = Field(
+            default=1.0,
+            ge=0.0,
+            le=1.0,
+            description="Performance sampling rate (0.0-1.0)",
+        )
+
+        @field_validator("threshold_critical_ms")
+        @classmethod
+        def validate_critical_threshold(cls, v: float, info: ValidationInfo) -> float:
+            """Ensure critical threshold is higher than warning threshold."""
+            if "threshold_warning_ms" in info.data:
+                warning = info.data["threshold_warning_ms"]
+                if v <= warning:
+                    raise ValueError("Critical threshold must be higher than warning threshold")
+            return v
+
+        model_config = ConfigDict(
+            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
         )
 
     # =============================================================================
@@ -1183,7 +1752,7 @@ class FlextModels:
 
     class DomainServiceExecutionRequest(BaseModel):
         """Pydantic model for domain service execution parameters.
-        
+
         Reduces method parameters by consolidating execution context,
         timeout settings, retry configuration, and metadata into a single model.
         """
@@ -1191,31 +1760,27 @@ class FlextModels:
         context: str = Field(
             default="",
             description="Execution context for enhanced error messaging",
-            max_length=500
+            max_length=500,
         )
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default_factory=lambda: _get_global_config().timeout_seconds,
             ge=0.1,
             le=3600.0,
-            description="Execution timeout in seconds from FlextConfig"
+            description="Execution timeout in seconds from FlextConfig",
         )
         retry_count: int = Field(
-            default=3,
-            ge=0,
-            le=10,
-            description="Maximum number of retry attempts"
+            default=3, ge=0, le=10, description="Maximum number of retry attempts"
         )
         enable_metrics: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().enable_metrics,
-            description="Enable performance metrics collection from FlextConfig"
+            default_factory=lambda: _get_global_config().enable_metrics,
+            description="Enable performance metrics collection from FlextConfig",
         )
         enable_circuit_breaker: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().enable_circuit_breaker,
-            description="Enable circuit breaker pattern from FlextConfig"
+            default_factory=lambda: _get_global_config().enable_circuit_breaker,
+            description="Enable circuit breaker pattern from FlextConfig",
         )
-        metadata: dict[str, Any] = Field(
-            default_factory=dict,
-            description="Additional execution metadata"
+        metadata: dict[str, object] = Field(
+            default_factory=dict, description="Additional execution metadata"
         )
 
         @field_validator("context")
@@ -1234,42 +1799,39 @@ class FlextModels:
         def validate_timeout(cls, v: float) -> float:
             """Validate timeout using FlextUtilities."""
             if v <= 0:
-                raise ValueError("Timeout must be positive")
+                msg = "Timeout must be positive"
+                raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
             validate_assignment=True,
             use_enum_values=True,
             arbitrary_types_allowed=True,
-            extra="forbid"
+            extra="forbid",
         )
 
     class DomainServiceValidationRequest(BaseModel):
         """Pydantic model for domain service validation parameters.
-        
+
         Consolidates validation configuration using FlextConfig as source of truth
         for strict mode, business rules, and validation behavior.
         """
 
         enable_strict_mode: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().validation_strict_mode,
-            description="Enable strict validation mode from FlextConfig"
+            default_factory=lambda: _get_global_config().validation_strict_mode,
+            description="Enable strict validation mode from FlextConfig",
         )
         validate_business_rules: bool = Field(
-            default=True,
-            description="Enable business rule validation"
+            default=True, description="Enable business rule validation"
         )
         validate_config: bool = Field(
-            default=True,
-            description="Enable configuration validation"
+            default=True, description="Enable configuration validation"
         )
         validation_rules: list[str] = Field(
-            default_factory=list,
-            description="Additional validation rules to apply"
+            default_factory=list, description="Additional validation rules to apply"
         )
         fail_fast: bool = Field(
-            default=True,
-            description="Stop validation on first failure"
+            default=True, description="Stop validation on first failure"
         )
 
         @field_validator("validation_rules")
@@ -1281,90 +1843,87 @@ class FlextModels:
                     rule, min_length=1, max_length=100, field_name="validation_rule"
                 )
                 if result.is_failure:
-                    raise ValueError(f"Invalid validation rule: {result.error}")
+                    msg = f"Invalid validation rule: {result.error}"
+                    raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            extra="forbid"
+            validate_assignment=True, use_enum_values=True, extra="forbid"
         )
 
     class DomainServiceBatchRequest(BaseModel):
         """Pydantic model for batch domain service operations.
-        
+
         Consolidates batch processing parameters with proper configuration
         integration and validation using Pydantic 2 patterns.
         """
 
-        operations: list[Callable[[], FlextResult[Any]]] = Field(
+        operations: list[Callable[[], FlextResult[object]]] = Field(
             description="List of operations to execute in batch"
         )
         max_workers: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_workers,
+            default_factory=lambda: _get_global_config().max_workers,
             ge=1,
             le=50,
-            description="Maximum concurrent workers from FlextConfig"
+            description="Maximum concurrent workers from FlextConfig",
         )
         timeout_per_operation: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default_factory=lambda: _get_global_config().timeout_seconds,
             ge=0.1,
             le=3600.0,
-            description="Timeout per operation from FlextConfig"
+            description="Timeout per operation from FlextConfig",
         )
         fail_fast: bool = Field(
-            default=True,
-            description="Stop batch on first operation failure"
+            default=True, description="Stop batch on first operation failure"
         )
         collect_metrics: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().enable_metrics,
-            description="Collect batch execution metrics from FlextConfig"
+            default_factory=lambda: _get_global_config().enable_metrics,
+            description="Collect batch execution metrics from FlextConfig",
         )
 
         @field_validator("operations")
         @classmethod
-        def validate_operations(cls, v: list[Callable[[], FlextResult[Any]]]) -> list[Callable[[], FlextResult[Any]]]:
+        def validate_operations(
+            cls, v: list[Callable[[], FlextResult[object]]]
+        ) -> list[Callable[[], FlextResult[object]]]:
             """Validate operations list."""
             if not v:
-                raise ValueError("Operations list cannot be empty")
+                msg = "Operations list cannot be empty"
+                raise ValueError(msg)
             if len(v) > 100:
-                raise ValueError("Too many operations (max 100)")
+                msg = "Too many operations (max 100)"
+                raise ValueError(msg)
             return v
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
-            extra="forbid"
+            validate_assignment=True, arbitrary_types_allowed=True, extra="forbid"
         )
 
     class DomainServiceMetricsRequest(BaseModel):
         """Pydantic model for domain service metrics collection.
-        
+
         Consolidates metrics configuration with proper defaults from FlextConfig
         and FlextConstants integration.
         """
 
         collect_execution_time: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().enable_metrics,
-            description="Collect execution time metrics from FlextConfig"
+            default_factory=lambda: _get_global_config().enable_metrics,
+            description="Collect execution time metrics from FlextConfig",
         )
         collect_memory_usage: bool = Field(
-            default=False,
-            description="Collect memory usage metrics"
+            default=False, description="Collect memory usage metrics"
         )
         collect_validation_metrics: bool = Field(
-            default=True,
-            description="Collect validation performance metrics"
+            default=True, description="Collect validation performance metrics"
         )
         metrics_prefix: str = Field(
             default="domain_service",
             min_length=1,
             max_length=50,
-            description="Prefix for metric names"
+            description="Prefix for metric names",
         )
         custom_tags: dict[str, str] = Field(
-            default_factory=dict,
-            description="Custom tags for metrics"
+            default_factory=dict, description="Custom tags for metrics"
         )
 
         @field_validator("metrics_prefix")
@@ -1378,36 +1937,29 @@ class FlextModels:
                 raise ValueError(result.error)
             return result.unwrap()
 
-        model_config = ConfigDict(
-            validate_assignment=True,
-            extra="forbid"
-        )
+        model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
     class DomainServiceResourceRequest(BaseModel):
         """Pydantic model for domain service resource management.
-        
+
         Consolidates resource management parameters with proper validation
         and configuration integration for resource lifecycle management.
         """
 
         resource_type: str = Field(
-            description="Type of resource to manage",
-            min_length=1,
-            max_length=100
+            description="Type of resource to manage", min_length=1, max_length=100
         )
-        resource_config: dict[str, Any] = Field(
-            default_factory=dict,
-            description="Resource-specific configuration"
+        resource_config: dict[str, object] = Field(
+            default_factory=dict, description="Resource-specific configuration"
         )
         cleanup_timeout: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default_factory=lambda: _get_global_config().timeout_seconds,
             ge=0.1,
             le=300.0,
-            description="Cleanup timeout in seconds from FlextConfig"
+            description="Cleanup timeout in seconds from FlextConfig",
         )
         auto_cleanup: bool = Field(
-            default=True,
-            description="Enable automatic resource cleanup"
+            default=True, description="Enable automatic resource cleanup"
         )
 
         @field_validator("resource_type")
@@ -1422,17 +1974,16 @@ class FlextModels:
             return result.unwrap()
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
-            extra="forbid"
+            validate_assignment=True, arbitrary_types_allowed=True, extra="forbid"
         )
+
     # =========================================================================
     # DOMAIN SERVICE MODELS - For FlextDomainService optimization
     # =========================================================================
 
     class OperationExecutionRequest(BaseModel):
         """Pydantic model for operation execution in FlextDomainService.
-        
+
         USAGE: Replaces multi-parameter execute_operation() method with single model.
         OPTIMIZATION: Consolidates operation_name, operation, args, kwargs into validated model.
         """
@@ -1441,18 +1992,16 @@ class FlextModels:
             min_length=1,
             max_length=255,
             description="Name of the operation to execute",
-            examples=["validate_user", "process_data", "send_notification"]
+            examples=["validate_user", "process_data", "send_notification"],
         )
-        operation: Callable[..., Any] = Field(
+        operation: Callable[..., object] = Field(
             description="Callable operation to execute"
         )
-        args: list[Any] = Field(
-            default_factory=list,
-            description="Positional arguments for the operation"
+        args: list[object] = Field(
+            default_factory=list, description="Positional arguments for the operation"
         )
-        kwargs: dict[str, Any] = Field(
-            default_factory=dict,
-            description="Keyword arguments for the operation"
+        kwargs: dict[str, object] = Field(
+            default_factory=dict, description="Keyword arguments for the operation"
         )
 
         model_config = ConfigDict(
@@ -1474,7 +2023,9 @@ class FlextModels:
 
         @field_validator("operation")
         @classmethod
-        def validate_operation_callable(cls, v: Callable[..., Any]) -> Callable[..., Any]:
+        def validate_operation_callable(
+            cls, v: Callable[..., object]
+        ) -> Callable[..., object]:
             """Validate that operation is callable."""
             if not callable(v):
                 msg = "Operation must be callable"
@@ -1483,7 +2034,7 @@ class FlextModels:
 
     class RetryConfiguration(BaseModel):
         """Pydantic model for retry configuration in FlextDomainService.
-        
+
         USAGE: Replaces manual retry parameters with validated configuration model.
         OPTIMIZATION: Uses FlextConstants for default values, validates parameters.
         """
@@ -1492,23 +2043,23 @@ class FlextModels:
             default=FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
             ge=1,
             le=20,
-            description="Maximum number of retry attempts"
+            description="Maximum number of retry attempts",
         )
         backoff_strategy: str = Field(
             default=FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY,
-            description="Backoff strategy for retries"
+            description="Backoff strategy for retries",
         )
         initial_delay_seconds: float = Field(
             default=1.0,
             ge=0.1,
             le=60.0,
-            description="Initial delay before first retry in seconds"
+            description="Initial delay before first retry in seconds",
         )
         max_delay_seconds: float = Field(
             default=30.0,
             ge=1.0,
             le=300.0,
-            description="Maximum delay between retries in seconds"
+            description="Maximum delay between retries in seconds",
         )
 
         model_config = ConfigDict(
@@ -1527,7 +2078,7 @@ class FlextModels:
             return v.lower()
 
         @model_validator(mode="after")
-        def validate_delay_consistency(self) -> RetryConfiguration:
+        def validate_delay_consistency(self) -> Self:
             """Validate that max_delay >= initial_delay."""
             if self.max_delay_seconds < self.initial_delay_seconds:
                 msg = "max_delay_seconds must be >= initial_delay_seconds"
@@ -1536,7 +2087,7 @@ class FlextModels:
 
     class CircuitBreakerConfiguration(BaseModel):
         """Pydantic model for circuit breaker configuration in FlextDomainService.
-        
+
         USAGE: Replaces manual circuit breaker parameters with validated configuration.
         OPTIMIZATION: Uses FlextConstants for defaults, validates thresholds.
         """
@@ -1545,25 +2096,25 @@ class FlextModels:
             default=FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
             ge=1,
             le=100,
-            description="Number of failures before opening circuit"
+            description="Number of failures before opening circuit",
         )
         recovery_timeout: float = Field(
             default=FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
             gt=0,
             le=3600.0,
-            description="Timeout in seconds before attempting recovery"
+            description="Timeout in seconds before attempting recovery",
         )
         half_open_max_calls: int = Field(
             default=3,
             ge=1,
             le=10,
-            description="Maximum calls allowed in half-open state"
+            description="Maximum calls allowed in half-open state",
         )
         success_threshold: int = Field(
             default=2,
             ge=1,
             le=10,
-            description="Successes needed in half-open state to close circuit"
+            description="Successes needed in half-open state to close circuit",
         )
 
         model_config = ConfigDict(
@@ -1572,7 +2123,7 @@ class FlextModels:
         )
 
         @model_validator(mode="after")
-        def validate_circuit_breaker_consistency(self) -> CircuitBreakerConfiguration:
+        def validate_circuit_breaker_consistency(self) -> Self:
             """Validate circuit breaker parameter consistency."""
             if self.success_threshold > self.half_open_max_calls:
                 msg = "success_threshold cannot exceed half_open_max_calls"
@@ -1581,26 +2132,23 @@ class FlextModels:
 
     class ValidationConfiguration(BaseModel):
         """Pydantic model for validation configuration in FlextDomainService.
-        
+
         USAGE: Replaces manual validation parameters with structured configuration.
         OPTIMIZATION: Provides type-safe validation configuration.
         """
 
         config_validation: bool = Field(
-            default=True,
-            description="Enable configuration validation"
+            default=True, description="Enable configuration validation"
         )
         business_rules_validation: bool = Field(
-            default=True,
-            description="Enable business rules validation"
+            default=True, description="Enable business rules validation"
         )
         fail_fast: bool = Field(
-            default=True,
-            description="Stop on first validation failure"
+            default=True, description="Stop on first validation failure"
         )
         additional_validators: list[Callable[[], FlextResult[None]]] = Field(
             default_factory=list,
-            description="Additional validation functions to execute"
+            description="Additional validation functions to execute",
         )
 
         model_config = ConfigDict(
@@ -1622,7 +2170,7 @@ class FlextModels:
 
     class ServiceExecutionContext(BaseModel):
         """Pydantic model for service execution context in FlextDomainService.
-        
+
         USAGE: Replaces string context parameter with structured context model.
         OPTIMIZATION: Provides rich context information for error handling.
         """
@@ -1631,23 +2179,21 @@ class FlextModels:
             min_length=1,
             max_length=255,
             description="Name of the execution context",
-            examples=["user_registration", "payment_processing", "data_sync"]
+            examples=["user_registration", "payment_processing", "data_sync"],
         )
         service_name: str = Field(
-            default="",
-            description="Name of the service executing the operation"
+            default="", description="Name of the service executing the operation"
         )
         correlation_id: str = Field(
             default_factory=FlextUtilities.Generators.generate_id,
-            description="Correlation ID for tracing"
+            description="Correlation ID for tracing",
         )
-        additional_metadata: dict[str, Any] = Field(
-            default_factory=dict,
-            description="Additional context metadata"
+        additional_metadata: dict[str, object] = Field(
+            default_factory=dict, description="Additional context metadata"
         )
         started_at: datetime = Field(
             default_factory=lambda: datetime.now(UTC),
-            description="Context start timestamp"
+            description="Context start timestamp",
         )
 
         model_config = ConfigDict(
@@ -1676,27 +2222,173 @@ class FlextModels:
                 raise ValueError(msg)
             return v.strip()
 
+    # =============================================================================
+    # ADDITIONAL DOMAIN SERVICE MODELS - Phase 5 Optimization
+    # =============================================================================
+
+    class ConditionalExecutionRequest(BaseModel):
+        """Pydantic model for conditional execution parameters."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            arbitrary_types_allowed=True,
+        )
+
+        condition: Callable[[], bool] = Field(
+            ..., description="Condition function to check before execution"
+        )
+        fallback_result: object = Field(
+            ..., description="Result to return if condition fails"
+        )
+
+        @field_validator("condition")
+        @classmethod
+        def validate_condition(cls, v: Callable[[], bool]) -> Callable[[], bool]:
+            """Validate condition is callable."""
+            if not callable(v):
+                msg = "Condition must be callable"
+                raise ValueError(msg)
+            return v
+
+    class StateMachineRequest(BaseModel):
+        """Pydantic model for state machine execution parameters."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            arbitrary_types_allowed=True,
+        )
+
+        initial_state: str = Field(
+            ..., min_length=1, description="Initial state for state machine"
+        )
+        transitions: dict[str, Callable[[str], str]] = Field(
+            ..., description="State transition functions mapped by transition name"
+        )
+
+        @field_validator("transitions")
+        @classmethod
+        def validate_transitions(
+            cls, v: dict[str, Callable[[str], str]]
+        ) -> dict[str, Callable[[str], str]]:
+            """Validate all transitions are callable."""
+            for name, transition in v.items():
+                if not callable(transition):
+                    msg = f"Transition '{name}' must be callable"
+                    raise ValueError(msg)
+            return v
+
+    class ResourceManagementRequest(BaseModel):
+        """Pydantic model for resource management execution parameters."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            arbitrary_types_allowed=True,
+        )
+
+        resource_manager: Callable[[], object] = Field(
+            ..., description="Resource manager function for resource allocation"
+        )
+        cleanup_on_error: bool = Field(
+            default=True, description="Whether to cleanup resources on execution error"
+        )
+
+        @field_validator("resource_manager")
+        @classmethod
+        def validate_resource_manager(cls, v: Callable[[], object]) -> Callable[[], object]:
+            """Validate resource manager is callable."""
+            if not callable(v):
+                msg = "Resource manager must be callable"
+                raise ValueError(msg)
+            return v
+
+    class MetricsCollectionRequest(BaseModel):
+        """Pydantic model for metrics collection execution parameters."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            arbitrary_types_allowed=True,
+        )
+
+        metrics_collector: Callable[[str, float], None] | None = Field(
+            default=None, description="Optional metrics collection function"
+        )
+        include_execution_time: bool = Field(
+            default=True, description="Whether to include execution time in metrics"
+        )
+        include_memory_usage: bool = Field(
+            default=False, description="Whether to include memory usage in metrics"
+        )
+        custom_labels: dict[str, str] = Field(
+            default_factory=dict, description="Custom labels to include with metrics"
+        )
+
+        @field_validator("metrics_collector")
+        @classmethod
+        def validate_metrics_collector(
+            cls, v: Callable[[str, float], None] | None
+        ) -> Callable[[str, float], None] | None:
+            """Validate metrics collector is callable when provided."""
+            if v is not None and not callable(v):
+                msg = "Metrics collector must be callable when provided"
+                raise ValueError(msg)
+            return v
+
+    class TransformationRequest(BaseModel):
+        """Pydantic model for validation and transformation parameters."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+            arbitrary_types_allowed=True,
+        )
+
+        transformer: Callable[[object], object] = Field(
+            ..., description="Transformation function to apply to result"
+        )
+        validate_before_transform: bool = Field(
+            default=True, description="Whether to validate before transformation"
+        )
+        transform_on_failure: bool = Field(
+            default=False,
+            description="Whether to apply transformation even on execution failure",
+        )
+
+        @field_validator("transformer")
+        @classmethod
+        def validate_transformer(cls, v: Callable[[object], object]) -> Callable[[object], object]:
+            """Validate transformer is callable."""
+            if not callable(v):
+                msg = "Transformer must be callable"
+                raise ValueError(msg)
+            return v
+
     class FallbackConfiguration(BaseModel):
         """Pydantic model for fallback service configuration in FlextDomainService.
-        
+
         USAGE: Replaces *fallback_services parameter with structured configuration.
         OPTIMIZATION: Provides type-safe fallback handling.
         """
 
-        fallback_services: list[Callable[[], FlextResult[Any]]] = Field(
+        fallback_services: list[Callable[[], FlextResult[object]]] = Field(
             description="List of fallback service functions"
         )
         max_fallback_attempts: int = Field(
-            default=3,
-            ge=1,
-            le=10,
-            description="Maximum number of fallback attempts"
+            default=3, ge=1, le=10, description="Maximum number of fallback attempts"
         )
         fallback_timeout_seconds: float = Field(
             default=10.0,
             gt=0,
             le=300.0,
-            description="Timeout for each fallback attempt"
+            description="Timeout for each fallback attempt",
         )
 
         model_config = ConfigDict(
@@ -1707,25 +2399,368 @@ class FlextModels:
         @field_validator("fallback_services")
         @classmethod
         def validate_fallback_services(
-            cls, v: list[Callable[[], FlextResult[Any]]]
-        ) -> list[Callable[[], FlextResult[Any]]]:
-            """Validate that fallback services are callable."""
+            cls, v: list[Callable[[], FlextResult[object]]]
+        ) -> list[Callable[[], FlextResult[object]]]:
+            """Validate that fallback services are provided."""
             if not v:
                 msg = "At least one fallback service must be provided"
                 raise ValueError(msg)
-
-            for i, service in enumerate(v):
-                if not callable(service):
-                    msg = f"Fallback service at index {i} must be callable"
-                    raise ValueError(msg)
             return v
 
         @model_validator(mode="after")
-        def validate_fallback_limits(self) -> FallbackConfiguration:
+        def validate_fallback_limits(self) -> Self:
             """Validate fallback configuration limits."""
             if len(self.fallback_services) > self.max_fallback_attempts:
                 msg = f"Number of fallback services ({len(self.fallback_services)}) exceeds max_fallback_attempts ({self.max_fallback_attempts})"
                 raise ValueError(msg)
             return self
+
+    # =============================================================================
+    # DISPATCHER MODELS - For FlextDispatcher optimization
+    # =============================================================================
+
+    class DispatcherConfiguration(Config):
+        """Pydantic model for FlextDispatcher configuration.
+
+        USAGE: Replaces individual constructor parameters with structured configuration.
+        OPTIMIZATION: Provides type-safe dispatcher configuration with FlextConfig defaults.
+        """
+
+        auto_context: bool = Field(
+            default=True,
+            description="Enable automatic context management during dispatch",
+        )
+        bus_config: FlextModels.CqrsConfig.Bus | None = Field(
+            default=None, description="Optional bus configuration override"
+        )
+        timeout_seconds: int = Field(
+            default_factory=lambda: _get_global_config().timeout_seconds,
+            ge=1,
+            le=600,
+            description="Operation timeout in seconds from FlextConfig",
+        )
+        enable_metrics: bool = Field(
+            default_factory=lambda: _get_global_config().enable_metrics,
+            description="Enable metrics collection from FlextConfig",
+        )
+        enable_logging: bool = Field(
+            default=True, description="Enable dispatcher operation logging"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+    class HandlerRegistrationRequest(BaseModel):
+        """Pydantic model for handler registration requests.
+
+        USAGE: Replaces multiple registration parameters with structured request.
+        OPTIMIZATION: Provides type-safe registration with validation.
+        """
+
+        handler: object = Field(..., description="Handler instance to register")
+        message_type: type | None = Field(
+            default=None, description="Message type for typed registration"
+        )
+        handler_mode: Literal["command", "query"] = Field(
+            default="command", description="Handler operation mode"
+        )
+        handler_config: FlextModels.CqrsConfig.Handler | None = Field(
+            default=None, description="Optional handler configuration"
+        )
+        registration_id: str = Field(
+            default_factory=FlextUtilities.Generators.generate_id,
+            min_length=1,
+            description="Unique registration identifier",
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+    class DispatchRequest(BaseModel):
+        """Pydantic model for dispatch requests.
+
+        USAGE: Replaces individual dispatch parameters with structured request.
+        OPTIMIZATION: Provides type-safe dispatch with metadata handling.
+        """
+
+        message: object = Field(..., description="Message to dispatch")
+        context_metadata: FlextModels.Metadata | None = Field(
+            default=None, description="Optional execution context metadata"
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            min_length=1,
+            description="Optional correlation ID for tracing",
+        )
+        timeout_override: int | None = Field(
+            default=None, ge=1, le=600, description="Optional timeout override"
+        )
+        request_id: str = Field(
+            default_factory=FlextUtilities.Generators.generate_id,
+            min_length=1,
+            description="Unique request identifier",
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+    class DispatchResult(BaseModel):
+        """Pydantic model for dispatch results.
+
+        USAGE: Provides structured dispatch result information.
+        OPTIMIZATION: Type-safe result handling with execution metrics.
+        """
+
+        success: bool = Field(..., description="Whether dispatch was successful")
+        result: object | None = Field(default=None, description="Dispatch result data")
+        error_message: str | None = Field(
+            default=None, description="Error message if dispatch failed"
+        )
+        request_id: str = Field(
+            ..., min_length=1, description="Request ID from original dispatch request"
+        )
+        execution_time_ms: int = Field(
+            default=0, ge=0, description="Execution time in milliseconds"
+        )
+        correlation_id: str | None = Field(
+            default=None, description="Correlation ID for tracing"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+    class RegistrationDetails(BaseModel):
+        """Pydantic model for registration result details.
+
+        USAGE: Provides structured registration result information.
+        OPTIMIZATION: Type-safe registration tracking.
+        """
+
+        registration_id: str = Field(
+            ..., min_length=1, description="Unique registration identifier"
+        )
+        message_type_name: str | None = Field(
+            default=None, description="Name of registered message type"
+        )
+        handler_mode: Literal["command", "query"] = Field(
+            ..., description="Handler operation mode"
+        )
+        timestamp: str = Field(..., description="Registration timestamp")
+        status: Literal["active", "inactive", "error"] = Field(
+            default="active", description="Registration status"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
     HTTP_STATUS_MIN = 100
     HTTP_STATUS_MAX = 599
+
+    # FlextMixins Models - Pydantic models for FlextMixins operations
+    class SerializationRequest(BaseModel):
+        """Pydantic model for serialization requests.
+
+        USAGE: Provides structured serialization input with validation.
+        OPTIMIZATION: Type-safe serialization with configurable options.
+        """
+
+        obj: object = Field(..., description="Object to serialize")
+        use_model_dump: bool = Field(
+            default=True, description="Whether to use model_dump method if available"
+        )
+        indent: int | None = Field(
+            default=None, ge=0, le=8, description="JSON indentation level"
+        )
+        sort_keys: bool = Field(default=False, description="Whether to sort JSON keys")
+        ensure_ascii: bool = Field(
+            default=False, description="Whether to ensure ASCII-only output"
+        )
+        encoding: str = Field(
+            default="utf-8",
+            pattern=r"^(utf-8|ascii|latin-1|utf-16|utf-32)$",
+            description="Character encoding for serialization",
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+    class JsonFormatConfig(BaseModel):
+        """Pydantic model for JSON formatting configuration.
+
+        USAGE: Provides structured JSON formatting settings.
+        OPTIMIZATION: Type-safe JSON configuration with validation.
+        """
+
+        indent: int | None = Field(
+            default=2, ge=0, le=8, description="JSON indentation level"
+        )
+        sort_keys: bool = Field(default=False, description="Whether to sort JSON keys")
+        ensure_ascii: bool = Field(
+            default=False, description="Whether to ensure ASCII-only output"
+        )
+        separators: tuple[str, str] | None = Field(
+            default=None, description="JSON separators (item_separator, key_separator)"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+    class LogOperation(BaseModel):
+        """Pydantic model for logging operations.
+
+        USAGE: Provides structured logging operation input.
+        OPTIMIZATION: Type-safe logging with context management.
+        """
+
+        obj: object = Field(..., description="Object to log operation for")
+        operation: str = Field(
+            ..., min_length=1, max_length=100, description="Operation name to log"
+        )
+        level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+            default="INFO", description="Log level for the operation"
+        )
+        context: dict[str, object] = Field(
+            default_factory=dict, description="Additional context for logging"
+        )
+        timestamp: datetime | None = Field(
+            default=None, description="Optional timestamp for the operation"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+    class TimestampConfig(BaseModel):
+        """Pydantic model for timestamp configuration.
+
+        USAGE: Provides structured timestamp management settings.
+        OPTIMIZATION: Type-safe timestamp operations with timezone handling.
+        """
+
+        obj: object = Field(..., description="Object to configure timestamps for")
+        use_utc: bool = Field(default=True, description="Whether to use UTC timestamps")
+        auto_update: bool = Field(
+            default=True, description="Whether to automatically update timestamps"
+        )
+        field_names: dict[str, str] = Field(
+            default_factory=lambda: {
+                "created_at": "created_at",
+                "updated_at": "updated_at",
+            },
+            description="Mapping of timestamp field names",
+        )
+        format_string: str | None = Field(
+            default=None, description="Optional custom timestamp format string"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+        @field_validator("field_names")
+        @classmethod
+        def validate_field_names(cls, v: dict[str, str]) -> dict[str, str]:
+            """Validate field names mapping."""
+            required_keys = {"created_at", "updated_at"}
+            if not required_keys.issubset(v.keys()):
+                missing = required_keys - set(v.keys())
+                msg = f"field_names missing required keys: {missing}"
+                raise ValueError(msg)
+
+            return v
+
+    class StateInitializationRequest(BaseModel):
+        """Pydantic model for state initialization requests.
+
+        USAGE: Provides structured state initialization input.
+        OPTIMIZATION: Type-safe state management with validation.
+        """
+
+        obj: object = Field(..., description="Object to initialize state for")
+        state: str = Field(
+            ..., min_length=1, max_length=50, description="Initial state value"
+        )
+        field_name: str = Field(
+            default="state",
+            min_length=1,
+            max_length=50,
+            description="Name of the state field",
+        )
+        validate_state: bool = Field(
+            default=True, description="Whether to validate state value"
+        )
+        allowed_states: list[str] | None = Field(
+            default=None, description="Optional list of allowed state values"
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+        @field_validator("state")
+        @classmethod
+        def validate_state_value(cls, v: str, info: ValidationInfo) -> str:
+            """Validate state value against allowed states if provided."""
+            data = info.data if hasattr(info, "data") else {}
+            allowed_states = data.get("allowed_states")
+
+            if allowed_states and v not in allowed_states:
+                msg = f"state '{v}' not in allowed states: {allowed_states}"
+                raise ValueError(msg)
+
+            return v
+
+    class ValidationRequest(BaseModel):
+        """Pydantic model for validation requests.
+
+        USAGE: Provides structured validation input.
+        OPTIMIZATION: Type-safe validation with configurable options.
+        """
+
+        obj: object = Field(..., description="Object to validate")
+        validation_type: Literal["basic", "strict", "custom"] = Field(
+            default="basic", description="Type of validation to perform"
+        )
+        field_name: str = Field(
+            default="validated",
+            min_length=1,
+            max_length=50,
+            description="Name of the validation flag field",
+        )
+        custom_validators: list[str] | None = Field(
+            default=None, description="Optional list of custom validation methods"
+        )
+        raise_on_failure: bool = Field(
+            default=False,
+            description="Whether to raise exceptions on validation failure",
+        )
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )

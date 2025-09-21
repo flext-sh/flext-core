@@ -23,6 +23,7 @@ import yaml
 from flext_core import (
     FlextConfig,
     FlextContainer,
+    FlextModels,
     FlextProcessing,
 )
 
@@ -85,7 +86,10 @@ class TestFlextConfigSingletonIntegration:
 
         # Test basic handler functionality
         basic_handler = FlextProcessing.Implementation.BasicHandler("test-handler")
-        register_result = handler_registry.register("test", basic_handler)
+        registration = FlextModels.HandlerRegistration(
+            name="test", handler=basic_handler
+        )
+        register_result = handler_registry.register(registration)
         assert register_result.is_success
 
         # Verify global config is accessible

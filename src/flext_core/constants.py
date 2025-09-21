@@ -208,6 +208,17 @@ class FlextConstants:
         """Reliability thresholds backing retry guidance."""
 
         MAX_RETRY_ATTEMPTS: Final[int] = 3  # Usage count: 1
+        DEFAULT_MAX_RETRIES: Final[int] = 3  # Usage count: 1 (referenced in models.py)
+        DEFAULT_BACKOFF_STRATEGY: Final[str] = (
+            "exponential"  # Usage count: 1 (referenced in models.py)
+        )
+        DEFAULT_FAILURE_THRESHOLD: Final[int] = 5  # Circuit breaker failure threshold
+        DEFAULT_RECOVERY_TIMEOUT: Final[int] = (
+            60  # Circuit breaker recovery timeout in seconds
+        )
+        DEFAULT_TIMEOUT_SECONDS: Final[float] = (
+            30.0  # Default timeout for domain services
+        )
 
     class Environment:
         """Environment enumerations used by configuration profiles."""
@@ -237,8 +248,8 @@ class FlextConstants:
 
         # Timeout constants
         DEFAULT_TIMEOUT: Final[int] = 30000  # milliseconds
-        MIN_TIMEOUT: Final[int] = 1000      # milliseconds
-        MAX_TIMEOUT: Final[int] = 300000    # milliseconds (5 minutes)
+        MIN_TIMEOUT: Final[int] = 1000  # milliseconds
+        MAX_TIMEOUT: Final[int] = 300000  # milliseconds (5 minutes)
 
         # Retry constants
         DEFAULT_RETRIES: Final[int] = 0
@@ -248,6 +259,13 @@ class FlextConstants:
         # Pagination constants
         DEFAULT_PAGE_SIZE: Final[int] = 10
         MAX_PAGE_SIZE: Final[int] = 1000
+
+        # Error constants for CQRS operations
+        CQRS_OPERATION_FAILED: Final[str] = "CQRS_OPERATION_FAILED"
+        COMMAND_VALIDATION_FAILED: Final[str] = "COMMAND_VALIDATION_FAILED"
+        QUERY_VALIDATION_FAILED: Final[str] = "QUERY_VALIDATION_FAILED"
+        HANDLER_CONFIG_INVALID: Final[str] = "HANDLER_CONFIG_INVALID"
+        COMMAND_PROCESSING_FAILED: Final[str] = "COMMAND_PROCESSING_FAILED"
 
     class Container:
         """Container configuration constants for FlextContainer."""
@@ -271,11 +289,131 @@ class FlextConstants:
 
         # Log levels
         DEFAULT_LEVEL: Final[str] = "INFO"
-        VALID_LEVELS: Final[set[str]] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        VALID_LEVELS: Final[set[str]] = {
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
         # Log formatting
-        DEFAULT_FORMAT: Final[str] = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        DEFAULT_FORMAT: Final[str] = (
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         DATE_FORMAT: Final[str] = "%Y-%m-%d %H:%M:%S"
+
+        # FlextLogger optimization constants for Pydantic models
+        INCLUDE_SOURCE: Final[bool] = True
+        STRUCTURED_OUTPUT: Final[bool] = True
+        VERBOSITY: Final[str] = "detailed"
+        
+        # Performance tracking constants
+        TRACK_PERFORMANCE: Final[bool] = True
+        TRACK_MEMORY: Final[bool] = False
+        TRACK_TIMING: Final[bool] = True
+        PERFORMANCE_THRESHOLD_WARNING: Final[float] = 1000.0  # milliseconds
+        PERFORMANCE_THRESHOLD_CRITICAL: Final[float] = 5000.0  # milliseconds
+
+    class Dispatcher:
+        """Constants for FlextDispatcher operations.
+
+        USAGE: Centralized constants for dispatcher modes, defaults, and validation.
+        OPTIMIZATION: Eliminates magic strings and provides type-safe constants.
+        """
+
+        # Handler Modes
+        HANDLER_MODE_COMMAND = "command"
+        HANDLER_MODE_QUERY = "query"
+        VALID_HANDLER_MODES = (HANDLER_MODE_COMMAND, HANDLER_MODE_QUERY)
+        DEFAULT_HANDLER_MODE = HANDLER_MODE_COMMAND
+
+        # Default Settings
+        DEFAULT_AUTO_CONTEXT = True
+        DEFAULT_ENABLE_LOGGING = True
+        DEFAULT_ENABLE_METRICS = True
+        DEFAULT_TIMEOUT_SECONDS = 30
+
+        # Validation Limits
+        MIN_TIMEOUT_SECONDS = 1
+        MAX_TIMEOUT_SECONDS = 600
+        MIN_REGISTRATION_ID_LENGTH = 1
+        MIN_REQUEST_ID_LENGTH = 1
+
+        # Error Messages
+        ERROR_INVALID_HANDLER_MODE = "handler_mode must be 'command' or 'query'"
+        ERROR_HANDLER_REQUIRED = "handler cannot be None"
+        ERROR_MESSAGE_REQUIRED = "message cannot be None"
+        ERROR_POSITIVE_TIMEOUT = "timeout must be positive"
+        ERROR_INVALID_REGISTRATION_ID = "registration_id must be non-empty string"
+        ERROR_INVALID_REQUEST_ID = "request_id must be non-empty string"
+
+        # Registration Status
+        REGISTRATION_STATUS_ACTIVE = "active"
+        REGISTRATION_STATUS_INACTIVE = "inactive"
+        REGISTRATION_STATUS_ERROR = "error"
+        VALID_REGISTRATION_STATUSES = (
+            REGISTRATION_STATUS_ACTIVE,
+            REGISTRATION_STATUS_INACTIVE,
+            REGISTRATION_STATUS_ERROR,
+        )
+
+    class Mixins:
+        """Constants for FlextMixins operations.
+
+        USAGE: Centralized constants for mixin field names, states, and defaults.
+        OPTIMIZATION: Eliminates magic strings and provides type-safe constants.
+        """
+
+        # Field Names
+        FIELD_ID = "id"
+        FIELD_STATE = "state"
+        FIELD_CREATED_AT = "created_at"
+        FIELD_UPDATED_AT = "updated_at"
+        FIELD_VALIDATED = "validated"
+
+        # Default States
+        STATE_ACTIVE = "active"
+        STATE_INACTIVE = "inactive"
+        STATE_PENDING = "pending"
+        STATE_COMPLETED = "completed"
+        STATE_FAILED = "failed"
+
+        # Validation Types (simple string constants)
+        VALIDATION_BASIC = "basic"
+        VALIDATION_STRICT = "strict"
+        VALIDATION_CUSTOM = "custom"
+
+        # Log Levels (simple string constants)
+        LOG_LEVEL_DEBUG = "DEBUG"
+        LOG_LEVEL_INFO = "INFO"
+        LOG_LEVEL_WARNING = "WARNING"
+        LOG_LEVEL_ERROR = "ERROR"
+        LOG_LEVEL_CRITICAL = "CRITICAL"
+
+        # Serialization Defaults
+        DEFAULT_JSON_INDENT = 2
+        DEFAULT_ENCODING = "utf-8"
+        DEFAULT_SORT_KEYS = False
+        DEFAULT_ENSURE_ASCII = False
+
+        # Timestamp Defaults
+        DEFAULT_USE_UTC = True
+        DEFAULT_AUTO_UPDATE = True
+
+        # Validation Limits
+        MAX_OPERATION_NAME_LENGTH = 100
+        MAX_STATE_VALUE_LENGTH = 50
+        MAX_FIELD_NAME_LENGTH = 50
+        MIN_FIELD_NAME_LENGTH = 1
+
+        # Error Messages
+        ERROR_EMPTY_OPERATION = "Operation name cannot be empty"
+        ERROR_EMPTY_STATE = "State value cannot be empty"
+        ERROR_EMPTY_FIELD_NAME = "Field name cannot be empty"
+        ERROR_INVALID_ENCODING = "Invalid character encoding"
+        ERROR_MISSING_TIMESTAMP_FIELDS = "Required timestamp fields missing"
+        ERROR_INVALID_LOG_LEVEL = "Invalid log level"
 
 
 __all__ = ["FlextConstants"]

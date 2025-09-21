@@ -394,9 +394,9 @@ class FlextUtilities:
             return FlextUtilities.Validation.validate_string(
                 value, min_length=1, field_name="comma-separated value"
             ) >> (
-                lambda v: FlextResult[list[str]].ok(
-                    [item.strip() for item in v.split(",") if item.strip()]
-                )
+                lambda v: FlextResult[list[str]].ok([
+                    item.strip() for item in v.split(",") if item.strip()
+                ])
             )
 
         @staticmethod
@@ -567,9 +567,9 @@ class FlextUtilities:
             data: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Remove None values from dictionary."""
-            return FlextResult[dict[str, object]].ok(
-                {k: v for k, v in data.items() if v is not None}
-            )
+            return FlextResult[dict[str, object]].ok({
+                k: v for k, v in data.items() if v is not None
+            })
 
         @staticmethod
         def batch_process(
@@ -628,6 +628,70 @@ class FlextUtilities:
             all_results = [processor(item) for batch in batches for item in batch]
             return FlextResult.accumulate_errors(*all_results)
 
+    class Cache:
+        """Cache management utilities for FlextMixins and other components."""
+
+        @staticmethod
+        def clear_object_cache(obj: object) -> FlextResult[None]:
+            """Clear cache for object if it has cache-related attributes.
+            
+            Args:
+                obj: Object to clear cache for
+                
+            Returns:
+                FlextResult indicating success or failure
+
+            """
+            try:
+                # Common cache attribute names to check and clear
+                cache_attributes = [
+                    "_cache",
+                    "__cache__",
+                    "cache",
+                    "_cached_data",
+                    "_memoized",
+                ]
+
+                cleared_count = 0
+                for attr_name in cache_attributes:
+                    if hasattr(obj, attr_name):
+                        cache_attr = getattr(obj, attr_name, None)
+                        if cache_attr is not None:
+                            # Clear dict-like caches
+                            if hasattr(cache_attr, "clear") and callable(cache_attr.clear):
+                                cache_attr.clear()
+                                cleared_count += 1
+                            # Reset to None for simple cached values
+                            else:
+                                setattr(obj, attr_name, None)
+                                cleared_count += 1
+
+                return FlextResult[None].ok(None)
+
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to clear cache: {e}")
+
+        @staticmethod
+        def has_cache_attributes(obj: object) -> bool:
+            """Check if object has any cache-related attributes.
+            
+            Args:
+                obj: Object to check for cache attributes
+                
+            Returns:
+                True if object has cache attributes, False otherwise
+
+            """
+            cache_attributes = [
+                "_cache",
+                "__cache__",
+                "cache",
+                "_cached_data",
+                "_memoized",
+            ]
+
+            return any(hasattr(obj, attr) for attr in cache_attributes)
+
     class Generators:
         """ID and data generation utilities."""
 
@@ -671,6 +735,36 @@ class FlextUtilities:
 
             """
             return str(uuid.uuid4())
+
+        @staticmethod
+        def create_module_utilities(module_name: str) -> FlextResult[object]:
+            """Create utilities for a specific module.
+
+            Args:
+                module_name: Name of the module to create utilities for
+
+            Returns:
+                FlextResult containing module utilities or error
+
+            """
+            if not module_name:
+                return FlextResult[object].fail(
+                    "Module name must be a non-empty string"
+                )
+
+            # For now, return a simple utilities object
+            # This can be expanded with actual module-specific functionality
+            utilities = type(
+                f"{module_name}_utilities",
+                (),
+                {
+                    "module_name": module_name,
+                    "logger": lambda: f"Logger for {module_name}",
+                    "config": lambda: f"Config for {module_name}",
+                },
+            )()
+
+            return FlextResult[object].ok(utilities)
 
     class TextProcessor:
         """Text processing utilities using railway composition."""
@@ -780,6 +874,44 @@ class FlextUtilities:
             )
 
         @staticmethod
+        def with_timeout[TTimeout](
+            operation: Callable[[], FlextResult[TTimeout]],
+            timeout_seconds: float,
+        ) -> FlextResult[TTimeout]:
+            """Execute operation with timeout using railway patterns."""
+            import threading
+
+            if timeout_seconds <= 0:
+                return FlextResult[TTimeout].fail("Timeout must be positive")
+
+            # Use proper typing for containers
+            result_container: list[FlextResult[TTimeout] | None] = [None]
+            exception_container: list[Exception | None] = [None]
+
+            def run_operation() -> None:
+                try:
+                    result_container[0] = operation()
+                except Exception as e:
+                    exception_container[0] = e
+
+            thread = threading.Thread(target=run_operation)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout_seconds)
+
+            if thread.is_alive():
+                # Thread is still running, timeout occurred
+                return FlextResult[TTimeout].fail(f"Operation timed out after {timeout_seconds} seconds")
+
+            if exception_container[0]:
+                return FlextResult[TTimeout].fail(f"Operation failed with exception: {exception_container[0]}")
+
+            if result_container[0] is None:
+                return FlextResult[TTimeout].fail("Operation completed but returned no result")
+
+            return result_container[0]
+
+        @staticmethod
         def circuit_breaker[TCircuit](
             operation: Callable[[], FlextResult[TCircuit]],
             failure_threshold: int = 5,
@@ -806,6 +938,72 @@ class FlextUtilities:
 
             # Use or_try to chain fallbacks
             return primary_result.or_try(*fallback_operations)
+
+    class Conversion:
+        """Data conversion utilities for table formatting and display."""
+
+        @staticmethod
+        def to_table_format(data: object) -> FlextResult[list[dict[str, object]]]:
+            """Convert various data types to table format (list of dictionaries).
+
+            Handles:
+            - list[dict]: Direct passthrough
+            - dict: Convert to single-row table or key-value pairs
+            - object with __dict__: Convert to key-value table
+            - primitive values: Single-cell table
+
+            Args:
+                data: Data to convert to table format
+
+            Returns:
+                FlextResult containing list of dictionaries for table display
+
+            """
+            if data is None:
+                return FlextResult[list[dict[str, object]]].ok([])
+
+            # Handle list of dictionaries (ideal case)
+            if isinstance(data, list):
+                if not data:
+                    return FlextResult[list[dict[str, object]]].ok([])
+
+                if all(isinstance(item, dict) for item in data):
+                    return FlextResult[list[dict[str, object]]].ok(data)
+
+                # Convert list of non-dict items to table
+                return FlextResult[list[dict[str, object]]].ok([
+                    {"index": i, "value": str(item)}
+                    for i, item in enumerate(data)
+                ])
+
+            # Handle single dictionary
+            if isinstance(data, dict):
+                if not data:
+                    return FlextResult[list[dict[str, object]]].ok([])
+
+                # Convert to key-value table
+                return FlextResult[list[dict[str, object]]].ok([
+                    {"key": str(key), "value": str(value)}
+                    for key, value in data.items()
+                ])
+
+            # Handle objects with __dict__ attribute
+            if hasattr(data, "__dict__"):
+                obj_dict = data.__dict__
+                if obj_dict:
+                    return FlextResult[list[dict[str, object]]].ok([
+                        {"attribute": str(key), "value": str(value)}
+                        for key, value in obj_dict.items()
+                        if not key.startswith("_")  # Skip private attributes
+                    ])
+                return FlextResult[list[dict[str, object]]].ok([
+                    {"object": str(data)}
+                ])
+
+            # Handle primitive values
+            return FlextResult[list[dict[str, object]]].ok([
+                {"value": str(data)}
+            ])
 
     class TypeGuards:
         """Type guard utilities for runtime type checking."""

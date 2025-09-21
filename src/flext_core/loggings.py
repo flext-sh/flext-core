@@ -29,262 +29,10 @@ from structlog.typing import EventDict, Processor
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
+from flext_core.models import FlextModels
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-
-class FlextConsoleRenderer:
-    """Enhanced console renderer with hierarchical formatting for improved readability."""
-
-    def __init__(self, verbosity: str = "detailed") -> None:
-        """Initialize renderer with specified verbosity level.
-
-        Args:
-            verbosity: Output verbosity ('compact', 'detailed', 'full')
-
-        """
-        self.verbosity = verbosity.lower()
-
-        # Color codes for different log levels
-        self._level_colors = {
-            "critical": "\033[91;1m",  # Bright red, bold
-            "error": "\033[91m",  # Red
-            "warning": "\033[93m",  # Yellow
-            "info": "\033[92m",  # Green
-            "debug": "\033[94m",  # Blue
-            "trace": "\033[95m",  # Magenta
-        }
-
-        # Color codes for different information types
-        self._info_colors = {
-            "service": "\033[36m",  # Cyan
-            "context": "\033[95m",  # Magenta
-            "execution": "\033[94m",  # Blue
-            "system": "\033[90m",  # Dark gray
-            "correlation": "\033[33m",  # Yellow
-            "reset": "\033[0m",  # Reset
-        }
-
-    def __call__(
-        self, _logger: logging.Logger, _method_name: str, event_dict: EventDict
-    ) -> str:
-        """Render log entry with hierarchical formatting."""
-        return self._format_event(event_dict)
-
-    def _format_event(self, event_dict: EventDict) -> str:
-        """Format event dictionary into hierarchical log output."""
-        # Extract core information
-        timestamp = event_dict.get("@timestamp", "")
-        level = event_dict.get("level", "INFO").upper()
-        logger_name = event_dict.get("logger_name", "")
-        message = event_dict.get("event", "")
-        correlation_id = event_dict.get("correlation_id", "")
-
-        # Extract service info
-        service_info = event_dict.get("service", {})
-        service_name = service_info.get("name", logger_name)
-
-        # Format main log line based on verbosity
-        if self.verbosity == "compact":
-            return self._format_compact(
-                timestamp, level, service_name, message, correlation_id
-            )
-        if self.verbosity == "detailed":
-            return self._format_detailed(
-                event_dict, timestamp, level, service_name, message, correlation_id
-            )
-        # full
-        return self._format_full(
-            event_dict, timestamp, level, service_name, message, correlation_id
-        )
-
-    def _format_compact(
-        self,
-        timestamp: str,
-        level: str,
-        service_name: str,
-        message: str,
-        correlation_id: str,
-    ) -> str:
-        """Format compact log entry."""
-        # Clean timestamp (remove microseconds and timezone info for readability)
-        clean_timestamp = timestamp.split(".", maxsplit=1)[0] + "Z" if timestamp else ""
-
-        level_color = self._level_colors.get(level.lower(), "")
-        reset = self._info_colors["reset"]
-        correlation_color = self._info_colors["correlation"]
-
-        # Format: timestamp [LEVEL] [service] message [correlation_id]
-        correlation_part = (
-            f" {correlation_color}[{correlation_id}]{reset}" if correlation_id else ""
-        )
-
-        return f"{clean_timestamp} {level_color}[{level}]{reset} [{service_name}] {message}{correlation_part}"
-
-    def _format_detailed(
-        self,
-        event_dict: EventDict,
-        timestamp: str,
-        level: str,
-        service_name: str,
-        message: str,
-        correlation_id: str,
-    ) -> str:
-        """Format detailed log entry with context tree."""
-        lines = []
-
-        # Main line
-        main_line = self._format_compact(
-            timestamp, level, service_name, message, correlation_id
-        )
-        lines.append(main_line)
-
-        # Add context information if available
-        context = event_dict.get("context", {})
-        execution = event_dict.get("execution", {})
-
-        context_color = self._info_colors["context"]
-        execution_color = self._info_colors["execution"]
-        reset = self._info_colors["reset"]
-
-        if context or execution:
-            # Format context info
-            context_parts = []
-            if isinstance(context, dict) and context:
-                # Extract meaningful context data
-                extra = (
-                    context.get("extra", {})
-                    if isinstance(context.get("extra"), dict)
-                    else {}
-                )
-                if extra:
-                    for key, value in extra.items():
-                        if key in {
-                            "entry_count",
-                            "output_size_bytes",
-                            "file_path",
-                            "write_time_seconds",
-                            "throughput_entries_per_sec",
-                        }:
-                            context_parts.append(f"{key}={value}")
-
-            if context_parts:
-                context_line = (
-                    f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
-                )
-                lines.append(context_line)
-
-            # Format execution info
-            execution_parts = []
-            if isinstance(execution, dict) and execution:
-                func_name = execution.get("function", "")
-                line_num = execution.get("line", "")
-                uptime = execution.get("uptime_seconds", "")
-                if func_name and line_num:
-                    execution_parts.append(f"{func_name}:{line_num}")
-                if uptime:
-                    execution_parts.append(f"uptime={uptime}s")
-
-            if execution_parts:
-                execution_line = f"  └─ {execution_color}Execution:{reset} {', '.join(execution_parts)}"
-                lines.append(execution_line)
-
-        return "\n".join(lines)
-
-    def _format_full(
-        self,
-        event_dict: EventDict,
-        timestamp: str,
-        level: str,
-        service_name: str,
-        message: str,
-        correlation_id: str,
-    ) -> str:
-        """Format full log entry with all available information."""
-        lines = []
-
-        # Main line
-        main_line = self._format_compact(
-            timestamp, level, service_name, message, correlation_id
-        )
-        lines.append(main_line)
-
-        # Extract all sections
-        context = event_dict.get("context", {})
-        execution = event_dict.get("execution", {})
-        service = event_dict.get("service", {})
-        system = event_dict.get("system", {})
-
-        # Color setup
-        context_color = self._info_colors["context"]
-        execution_color = self._info_colors["execution"]
-        service_color = self._info_colors["service"]
-        system_color = self._info_colors["system"]
-        reset = self._info_colors["reset"]
-
-        # Format context
-        if isinstance(context, dict) and context:
-            extra = (
-                context.get("extra", {})
-                if isinstance(context.get("extra"), dict)
-                else {}
-            )
-            if extra:
-                context_parts = [f"{k}={v}" for k, v in extra.items()]
-                if context_parts:
-                    lines.append(
-                        f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
-                    )
-
-        # Format execution
-        if isinstance(execution, dict) and execution:
-            exec_parts = []
-            for key in ["function", "line", "uptime_seconds"]:
-                if execution.get(key):
-                    if key == "uptime_seconds":
-                        exec_parts.append(f"uptime={execution[key]}s")
-                    elif key in {"function", "line"}:
-                        if key == "function" and "line" in execution:
-                            exec_parts.append(
-                                f"{execution['function']}:{execution['line']}"
-                            )
-                            break
-                        if key == "line" and "function" not in execution:
-                            exec_parts.append(f"line={execution[key]}")
-                    else:
-                        exec_parts.append(f"{key}={execution[key]}")
-            if exec_parts:
-                lines.append(
-                    f"  ├─ {execution_color}Execution:{reset} {', '.join(exec_parts)}"
-                )
-
-        # Format service info
-        if isinstance(service, dict) and service:
-            service_parts = [
-                f"{key}={service[key]}"
-                for key in ["name", "version", "instance_id", "environment"]
-                if service.get(key)
-            ]
-            if service_parts:
-                lines.append(
-                    f"  ├─ {service_color}Service:{reset} {', '.join(service_parts)}"
-                )
-
-        # Format system info (last item gets └─)
-        if isinstance(system, dict) and system:
-            system_parts = []
-            for key in ["hostname", "platform", "python_version", "process_id"]:
-                if system.get(key):
-                    if key == "process_id":
-                        system_parts.append(f"pid={system[key]}")
-                    else:
-                        system_parts.append(f"{key}={system[key]}")
-            if system_parts:
-                lines.append(
-                    f"  └─ {system_color}System:{reset} {', '.join(system_parts)}"
-                )
-
-        return "\n".join(lines)
 
 
 class FlextLogger:
@@ -347,7 +95,24 @@ class FlextLogger:
         *,
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
-        """Initialize structured logger instance using FlextConfig singleton."""
+        """Initialize structured logger instance using Pydantic validation and FlextConfig singleton."""
+        # Validate initialization parameters using Pydantic model
+        try:
+            from flext_core.models import FlextModels
+            init_model = FlextModels.LoggerInitializationModel(
+                name=name,
+                level=level,
+                service_name=service_name,
+                service_version=service_version,
+                correlation_id=correlation_id
+            )
+        except Exception as e:
+            import warnings
+            warnings.warn(f"Logger initialization validation failed: {e}. Using provided values as-is.",
+                         UserWarning, stacklevel=2)
+            # Use parameters directly if validation fails
+            init_model = None
+
         if not self._is_configured():
             # Always (re)configure structlog to ensure processors reflect stored config
             raw_kwargs = self._get_configuration() or {}
@@ -376,7 +141,14 @@ class FlextLogger:
                 structured_output=structured_output,
             )
 
-        self._name = name
+        # Use validated model values if available, otherwise use original parameters
+        validated_name = init_model.name if init_model else name
+        validated_level = init_model.level if init_model else level
+        validated_service_name = init_model.service_name if init_model else service_name
+        validated_service_version = init_model.service_version if init_model else service_version
+        validated_correlation_id = init_model.correlation_id if init_model else correlation_id
+
+        self._name = validated_name
         # Load configuration early so .env and FLEXT_* vars are available
         config = FlextConfig.get_global_instance()
 
@@ -392,8 +164,8 @@ class FlextLogger:
         resolved_level: str | None = None
 
         # 1) Explicit parameter takes precedence when valid
-        if isinstance(level, str) and level:
-            cand = level.upper()
+        if isinstance(validated_level, str) and validated_level:
+            cand = validated_level.upper()
             if cand in valid_levels:
                 resolved_level = cand
 
@@ -432,9 +204,9 @@ class FlextLogger:
         # Use environment from configuration singleton for consistency
         self._environment = config.environment
 
-        # Initialize service context
-        self._service_name = service_name or self._extract_service_name()
-        self._service_version = service_version or self._get_version()
+        # Initialize service context using validated parameters
+        self._service_name = validated_service_name or self._extract_service_name()
+        self._service_version = validated_service_version or self._get_version()
 
         # Set up performance tracking
         self._start_time = time.time()
@@ -443,7 +215,7 @@ class FlextLogger:
         context_id = FlextContext.Correlation.get_correlation_id()
 
         self._correlation_id = (
-            correlation_id
+            validated_correlation_id
             or self._global_correlation_id
             or context_id  # Check global context
             or self._generate_correlation_id()
@@ -451,7 +223,7 @@ class FlextLogger:
 
         # Set up structured logger with enriched context (import locally)
 
-        self._structlog_logger = structlog.get_logger(name)
+        self._structlog_logger = structlog.get_logger(validated_name)
 
         # Initialize persistent context
         self._persistent_context: FlextTypes.Core.Dict = {
@@ -469,6 +241,9 @@ class FlextLogger:
                 "thread_id": threading.get_ident(),
             },
         }
+
+        # Initialize centralized context manager - optimized context operations
+        self._context_manager = self._ContextManager(self)
 
     def __eq__(self, other: object) -> bool:
         """Allow comparison with both logger objects and their string repr.
@@ -690,8 +465,11 @@ class FlextLogger:
             return 0
 
     def set_correlation_id(self, correlation_id: str) -> None:
-        """Set correlation ID for request tracing."""
-        self._correlation_id = correlation_id  # Instance-level correlation ID
+        """Set correlation ID for request tracing - optimized through context manager."""
+        result = self._context_manager.set_correlation_id(correlation_id)
+        if result.is_failure:
+            import warnings
+            warnings.warn(f"Failed to set correlation ID: {result.error}", UserWarning, stacklevel=2)  # Instance-level correlation ID
 
     def set_request_context(self, **context: object) -> None:
         """Set request-specific context."""
@@ -903,9 +681,10 @@ class FlextLogger:
         structured_output: bool = True,
         log_verbosity: str = "detailed",
     ) -> None:
-        """Configure structured logging system.
+        """Configure structured logging system using Pydantic validation.
 
         This configuration is stored as a singleton and reused by all FlextLogger instances.
+        Parameters are consolidated and validated through LoggerConfigurationModel.
 
         Args:
             log_level: Logging level string
@@ -915,32 +694,59 @@ class FlextLogger:
             log_verbosity: Console output verbosity ('compact', 'detailed', 'full')
 
         """
-        # Reset if already configured (allow reconfiguration)
+        # Use Pydantic model for parameter consolidation and validation
+        try:
+            config_model = FlextModels.LoggerConfigurationModel(
+                log_level=log_level,
+                json_output=json_output,
+                include_source=include_source,
+                structured_output=structured_output,
+                log_verbosity=log_verbosity,
+            )
+        except Exception as e:
+            # If validation fails, fall back to original behavior with warnings
+            import warnings
+            warnings.warn(
+                f"Logger configuration validation failed: {e}. Using provided values as-is.",
+                UserWarning,
+                stacklevel=2
+            )
+            config_model = type("Config", (), {
+                "log_level": log_level,
+                "json_output": json_output,
+                "include_source": include_source,
+                "structured_output": structured_output,
+                "log_verbosity": log_verbosity,
+            })()
 
+        # Reset if already configured (allow reconfiguration)
         if cls._configured and structlog.is_configured():
             structlog.reset_defaults()
 
         # Auto-detect verbosity from environment if not specified
         # Note: We can't use project-specific detection here since this is a class method
         # Project-specific variables are handled in individual logger initialization
-        env_verbosity = os.environ.get("FLEXT_LOG_VERBOSITY", log_verbosity).lower()
+        env_verbosity = os.environ.get("FLEXT_LOG_VERBOSITY", config_model.log_verbosity).lower()
         if env_verbosity in {"compact", "detailed", "full"}:
-            log_verbosity = env_verbosity
+            effective_verbosity = env_verbosity
+        else:
+            effective_verbosity = config_model.log_verbosity
 
         # Store configuration in singleton for reuse
         cls._configuration = {
-            "log_level": log_level,
-            "json_output": json_output,
-            "include_source": include_source,
-            "structured_output": structured_output,
-            "log_verbosity": log_verbosity,
+            "log_level": config_model.log_level,
+            "json_output": config_model.json_output,
+            "include_source": config_model.include_source,
+            "structured_output": config_model.structured_output,
+            "log_verbosity": effective_verbosity,
         }
 
         # Auto-detect output format if not specified
-        if json_output is None:
+        effective_json_output = config_model.json_output
+        if effective_json_output is None:
             env = os.environ.get("ENVIRONMENT", "development").lower()
-            json_output = env in {"production", "staging", "prod"}
-            cls._configuration["json_output"] = json_output
+            effective_json_output = env in {"production", "staging", "prod"}
+            cls._configuration["json_output"] = effective_json_output
 
         processors: list[Processor] = [
             # Essential processors
@@ -955,7 +761,7 @@ class FlextLogger:
         )
 
         # Add source information if requested
-        if include_source:
+        if config_model.include_source:
             processors.append(
                 structlog.processors.CallsiteParameterAdder(
                     parameters=[
@@ -967,7 +773,7 @@ class FlextLogger:
             )
 
         # Add structured processors
-        if structured_output:
+        if config_model.structured_output:
             processors.extend(
                 [
                     cls._add_correlation_processor,
@@ -977,14 +783,14 @@ class FlextLogger:
             )
 
         # Choose output format
-        if json_output:
+        if effective_json_output:
             processors.append(
                 structlog.processors.JSONRenderer(
                     sort_keys=True,
                     ensure_ascii=False,
                 ),
             )
-        elif not structured_output:
+        elif not config_model.structured_output:
             # For non-structured output, use KeyValueRenderer for simple readable output
             processors.append(
                 structlog.processors.KeyValueRenderer(
@@ -994,7 +800,7 @@ class FlextLogger:
             )
         else:
             processors.append(
-                FlextLogger._create_enhanced_console_renderer(log_verbosity)
+                FlextLogger._create_enhanced_console_renderer(effective_verbosity)
             )
 
         # Configure structlog
@@ -1010,7 +816,7 @@ class FlextLogger:
         logging.basicConfig(
             format="%(message)s",
             stream=sys.stderr,
-            level=getattr(logging, log_level.upper(), logging.INFO),
+            level=getattr(logging, config_model.log_level.upper(), logging.INFO),
         )
 
         cls._configured = True
@@ -1069,9 +875,9 @@ class FlextLogger:
     @staticmethod
     def _create_enhanced_console_renderer(
         verbosity: str = "detailed",
-    ) -> FlextConsoleRenderer:
-        """Create enhanced console renderer with configurable verbosity."""
-        return FlextConsoleRenderer(verbosity=verbosity)
+    ) -> "FlextLogger._ConsoleRenderer":
+        """Create enhanced console renderer with configurable verbosity - using nested helper class."""
+        return FlextLogger._ConsoleRenderer(verbosity=verbosity)
 
     @classmethod
     def set_global_correlation_id(cls, correlation_id: str | None) -> None:
@@ -1130,6 +936,375 @@ class FlextLogger:
         performance: FlextTypes.Core.Dict
         error: FlextTypes.Core.Dict
 
+    class _ConsoleRenderer:
+        """Enhanced console renderer with hierarchical formatting - nested helper class."""
+
+        def __init__(self, verbosity: str = "detailed") -> None:
+            """Initialize renderer with specified verbosity level."""
+            self.verbosity = verbosity.lower()
+
+            # Color codes for different log levels
+            self._level_colors = {
+                "critical": "\033[91;1m",  # Bright red, bold
+                "error": "\033[91m",  # Red
+                "warning": "\033[93m",  # Yellow
+                "info": "\033[92m",  # Green
+                "debug": "\033[94m",  # Blue
+                "trace": "\033[95m",  # Magenta
+            }
+
+            # Color codes for different information types
+            self._info_colors = {
+                "service": "\033[36m",  # Cyan
+                "context": "\033[95m",  # Magenta
+                "execution": "\033[94m",  # Blue
+                "system": "\033[90m",  # Dark gray
+                "correlation": "\033[33m",  # Yellow
+                "reset": "\033[0m",  # Reset
+            }
+
+        def __call__(
+            self, _logger: logging.Logger, _method_name: str, event_dict: EventDict
+        ) -> str:
+            """Render log entry with hierarchical formatting."""
+            return self._format_event(event_dict)
+
+        def _format_event(self, event_dict: FlextTypes.Core.Dict) -> str:
+            """Format event dictionary into hierarchical log output."""
+            # Extract core information with proper type casting
+            timestamp = str(event_dict.get("@timestamp", ""))
+            level = str(event_dict.get("level", "INFO")).upper()
+            logger_name = str(event_dict.get("logger_name", ""))
+            message = str(event_dict.get("event", ""))
+            correlation_id = str(event_dict.get("correlation_id", ""))
+
+            # Extract service info with type safety
+            service_info = event_dict.get("service", {})
+            if isinstance(service_info, dict):
+                service_name = str(service_info.get("name", logger_name))
+            else:
+                service_name = logger_name
+
+            # Format main log line based on verbosity
+            if self.verbosity == "compact":
+                return self._format_compact(
+                    timestamp, level, service_name, message, correlation_id
+                )
+            if self.verbosity == "detailed":
+                return self._format_detailed(
+                    event_dict, timestamp, level, service_name, message, correlation_id
+                )
+            # full
+            return self._format_full(
+                event_dict, timestamp, level, service_name, message, correlation_id
+            )
+
+        def _format_compact(
+            self,
+            timestamp: str,
+            level: str,
+            service_name: str,
+            message: str,
+            correlation_id: str,
+        ) -> str:
+            """Format compact log entry."""
+            # Clean timestamp (remove microseconds and timezone info for readability)
+            clean_timestamp = timestamp.split(".", maxsplit=1)[0] + "Z" if timestamp else ""
+
+            level_color = self._level_colors.get(level.lower(), "")
+            reset = self._info_colors["reset"]
+            correlation_color = self._info_colors["correlation"]
+
+            # Format: timestamp [LEVEL] [service] message [correlation_id]
+            correlation_part = (
+                f" {correlation_color}[{correlation_id}]{reset}" if correlation_id else ""
+            )
+
+            return f"{clean_timestamp} {level_color}[{level}]{reset} [{service_name}] {message}{correlation_part}"
+
+        def _format_detailed(
+            self,
+            event_dict: FlextTypes.Core.Dict,
+            timestamp: str,
+            level: str,
+            service_name: str,
+            message: str,
+            correlation_id: str,
+        ) -> str:
+            """Format detailed log entry with context tree."""
+            lines = []
+
+            # Main line
+            main_line = self._format_compact(
+                timestamp, level, service_name, message, correlation_id
+            )
+            lines.append(main_line)
+
+            # Add context information if available
+            context = event_dict.get("context", {})
+            execution = event_dict.get("execution", {})
+
+            context_color = self._info_colors["context"]
+            execution_color = self._info_colors["execution"]
+            reset = self._info_colors["reset"]
+
+            if context or execution:
+                # Format context info
+                context_parts = []
+                if isinstance(context, dict) and context:
+                    # Extract meaningful context data
+                    extra = (
+                        context.get("extra", {})
+                        if isinstance(context.get("extra"), dict)
+                        else {}
+                    )
+                    if extra:
+                        for key, value in extra.items():
+                            if key in {
+                                "entry_count",
+                                "output_size_bytes",
+                                "file_path",
+                                "write_time_seconds",
+                                "throughput_entries_per_sec",
+                            }:
+                                context_parts.append(f"{key}={value}")
+
+                if context_parts:
+                    context_line = (
+                        f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
+                    )
+                    lines.append(context_line)
+
+                # Format execution info
+                execution_parts = []
+                if isinstance(execution, dict) and execution:
+                    func_name = execution.get("function", "")
+                    line_num = execution.get("line", "")
+                    uptime = execution.get("uptime_seconds", "")
+                    if func_name and line_num:
+                        execution_parts.append(f"{func_name}:{line_num}")
+                    if uptime:
+                        execution_parts.append(f"uptime={uptime}s")
+
+                if execution_parts:
+                    execution_line = f"  └─ {execution_color}Execution:{reset} {', '.join(execution_parts)}"
+                    lines.append(execution_line)
+
+            return "\n".join(lines)
+
+        def _format_full(
+            self,
+            event_dict: FlextTypes.Core.Dict,
+            timestamp: str,
+            level: str,
+            service_name: str,
+            message: str,
+            correlation_id: str,
+        ) -> str:
+            """Format full log entry with all available information."""
+            lines = []
+
+            # Main line
+            main_line = self._format_compact(
+                timestamp, level, service_name, message, correlation_id
+            )
+            lines.append(main_line)
+
+            # Extract all sections
+            context = event_dict.get("context", {})
+            execution = event_dict.get("execution", {})
+            service = event_dict.get("service", {})
+            system = event_dict.get("system", {})
+
+            # Color setup
+            context_color = self._info_colors["context"]
+            execution_color = self._info_colors["execution"]
+            service_color = self._info_colors["service"]
+            system_color = self._info_colors["system"]
+            reset = self._info_colors["reset"]
+
+            # Format context
+            if isinstance(context, dict) and context:
+                extra = (
+                    context.get("extra", {})
+                    if isinstance(context.get("extra"), dict)
+                    else {}
+                )
+                if extra:
+                    context_parts = [f"{k}={v}" for k, v in extra.items()]
+                    if context_parts:
+                        lines.append(
+                            f"  ├─ {context_color}Context:{reset} {', '.join(context_parts)}"
+                        )
+
+            # Format execution
+            if isinstance(execution, dict) and execution:
+                exec_parts = []
+                for key in ["function", "line", "uptime_seconds"]:
+                    if execution.get(key):
+                        if key == "uptime_seconds":
+                            exec_parts.append(f"uptime={execution[key]}s")
+                        elif key in {"function", "line"}:
+                            if key == "function" and "line" in execution:
+                                exec_parts.append(
+                                    f"{execution['function']}:{execution['line']}"
+                                )
+                                break
+                            if key == "line" and "function" not in execution:
+                                exec_parts.append(f"line={execution[key]}")
+                        else:
+                            exec_parts.append(f"{key}={execution[key]}")
+                if exec_parts:
+                    lines.append(
+                        f"  ├─ {execution_color}Execution:{reset} {', '.join(exec_parts)}"
+                    )
+
+            # Format service info
+            if isinstance(service, dict) and service:
+                service_parts = [
+                    f"{key}={service[key]}"
+                    for key in ["name", "version", "instance_id", "environment"]
+                    if service.get(key)
+                ]
+                if service_parts:
+                    lines.append(
+                        f"  ├─ {service_color}Service:{reset} {', '.join(service_parts)}"
+                    )
+
+            # Format system info (last item gets └─)
+            if isinstance(system, dict) and system:
+                system_parts = []
+                for key in ["hostname", "platform", "python_version", "process_id"]:
+                    if system.get(key):
+                        if key == "process_id":
+                            system_parts.append(f"pid={system[key]}")
+                        else:
+                            system_parts.append(f"{key}={system[key]}")
+                if system_parts:
+                    lines.append(
+                        f"  └─ {system_color}System:{reset} {', '.join(system_parts)}"
+                    )
+
+            return "\n".join(lines)
+
+    class _ContextManager:
+        """Centralized context management helper - optimized nested class."""
+
+        def __init__(self, logger_instance: "FlextLogger") -> None:
+            self._logger = logger_instance
+
+        def set_correlation_id(self, correlation_id: str) -> FlextResult[None]:
+            """Set correlation ID with validation."""
+            if not correlation_id or not isinstance(correlation_id, str):
+                return FlextResult[None].fail("Correlation ID must be a non-empty string")
+            
+            self._logger._correlation_id = correlation_id
+            return FlextResult[None].ok(None)
+
+        def set_request_context(self, model: FlextModels.LoggerRequestContextModel) -> FlextResult[None]:
+            """Set request context using validated model."""
+            try:
+                if not hasattr(self._logger._local, "request_context"):
+                    self._logger._local.request_context = {}
+                
+                if model.clear_existing:
+                    self._logger._local.request_context.clear()
+                
+                self._logger._local.request_context.update(model.request_context)
+                
+                if model.correlation_id:
+                    self._logger._correlation_id = model.correlation_id
+                
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to set request context: {e}")
+
+        def clear_request_context(self) -> FlextResult[None]:
+            """Clear request context safely."""
+            try:
+                if hasattr(self._logger._local, "request_context"):
+                    self._logger._local.request_context.clear()
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to clear request context: {e}")
+
+        def set_permanent_context(self, model: FlextModels.LoggerPermanentContextModel) -> FlextResult[None]:
+            """Set permanent context using validated model."""
+            try:
+                if not hasattr(self._logger, "_permanent_context"):
+                    self._logger._permanent_context: FlextTypes.Core.Dict = {}
+                
+                if model.replace_existing or model.merge_strategy == "replace":
+                    self._logger._permanent_context = dict(model.permanent_context)
+                elif model.merge_strategy == "update":
+                    self._logger._permanent_context.update(model.permanent_context)
+                elif model.merge_strategy == "merge_deep":
+                    self._deep_merge_context(self._logger._permanent_context, model.permanent_context)
+                
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to set permanent context: {e}")
+
+        def bind_context(self, model: FlextModels.LoggerContextBindingModel) -> FlextResult["FlextLogger"]:
+            """Create bound logger instance using validated model."""
+            try:
+                # Create new logger instance
+                bound_logger = FlextLogger(
+                    name=self._logger._name,
+                    level=self._logger._level,
+                    service_name=getattr(self._logger, "_service_name", None),
+                    service_version=getattr(self._logger, "_service_version", None),
+                    correlation_id=getattr(self._logger, "_correlation_id", None),
+                    _force_new=model.force_new_instance,
+                )
+
+                # Copy request context if requested
+                if model.copy_request_context and hasattr(self._logger._local, "request_context"):
+                    context_model = FlextModels.LoggerRequestContextModel(
+                        request_context=self._logger._local.request_context
+                    )
+                    bound_logger._context_manager.set_request_context(context_model)
+
+                # Copy permanent context if requested
+                if model.copy_permanent_context and hasattr(self._logger, "_permanent_context"):
+                    permanent_model = FlextModels.LoggerPermanentContextModel(
+                        permanent_context=self._logger._permanent_context
+                    )
+                    bound_logger._context_manager.set_permanent_context(permanent_model)
+
+                # Add new bound context
+                if model.context_data:
+                    new_context_model = FlextModels.LoggerRequestContextModel(
+                        request_context=model.context_data
+                    )
+                    bound_logger._context_manager.set_request_context(new_context_model)
+
+                return FlextResult["FlextLogger"].ok(bound_logger)
+            except Exception as e:
+                return FlextResult["FlextLogger"].fail(f"Failed to bind context: {e}")
+
+        def get_consolidated_context(self) -> dict[str, object]:
+            """Get all context data consolidated for log entry building."""
+            consolidated = {}
+            
+            # Add request context
+            if hasattr(self._logger._local, "request_context"):
+                consolidated.update(self._logger._local.request_context)
+            
+            # Add permanent context
+            if hasattr(self._logger, "_permanent_context"):
+                consolidated.update(self._logger._permanent_context)
+            
+            return consolidated
+
+        def _deep_merge_context(self, target: dict[str, object], source: dict[str, object]) -> None:
+            """Deep merge context dictionaries."""
+            for key, value in source.items():
+                if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+                    self._deep_merge_context(target[key], value)  # type: ignore
+                else:
+                    target[key] = value
+
     @staticmethod
     def _validated_log_level(level: str) -> FlextTypes.Config.LogLevel:
         """Validate and coerce a raw string to Flext log level without casts."""
@@ -1155,6 +1330,5 @@ class FlextLogger:
 
 
 __all__: FlextTypes.Core.StringList = [
-    "FlextConsoleRenderer",
     "FlextLogger",
 ]

@@ -28,7 +28,7 @@ from itertools import starmap
 from typing import Protocol, Self, cast
 
 
-class FlextTestsMatchers:
+class FlextTestsMatchers:  # noqa: PLR0904
     """Comprehensive test matching utilities following unified class pattern.
 
     Single unified class containing all test matching protocols and utilities
@@ -120,12 +120,20 @@ class FlextTestsMatchers:
     # CORE MATCHERS - FlextResult and object testing
     # =========================================================================
 
-    class CoreMatchers:
+    class CoreMatchers:  # noqa: PLR0904
         """Core matching utilities for FlextResult and common objects."""
 
         @staticmethod
         def be_success(result: object) -> bool:
-            """Check if result indicates success."""
+            """Check if result indicates success.
+
+            Args:
+                result: The result object to check
+
+            Returns:
+                bool: True if result indicates success, False otherwise
+
+            """
             if hasattr(result, "is_success"):
                 is_success_attr = getattr(result, "is_success", None)
                 if is_success_attr is not None:
@@ -138,7 +146,15 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_failure(result: object) -> bool:
-            """Check if result indicates failure."""
+            """Check if result indicates failure.
+
+            Args:
+                result: The result object to check
+
+            Returns:
+                bool: True if result indicates failure, False otherwise
+
+            """
             if hasattr(result, "is_failure"):
                 is_failure_attr = getattr(result, "is_failure", None)
                 if is_failure_attr is not None:
@@ -151,7 +167,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def have_error(result: object, expected_error: str | None = None) -> bool:
-            """Check if result has error message."""
+            """Check if result has error message.
+
+            Args:
+                result: The result object to check
+                expected_error: Expected error message to match
+
+            Returns:
+                bool: True if result has error message, False otherwise
+
+            """
             if not hasattr(result, "error"):
                 return False
 
@@ -166,7 +191,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def have_error_code(result: object, expected_code: str) -> bool:
-            """Check if result has specific error code."""
+            """Check if result has specific error code.
+
+            Args:
+                result: The result object to check
+                expected_code: Expected error code to match
+
+            Returns:
+                bool: True if result has the expected error code, False otherwise
+
+            """
             if not hasattr(result, "error_code"):
                 return False
 
@@ -178,7 +212,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def have_value(result: object, expected_value: object = None) -> bool:
-            """Check if result has expected value."""
+            """Check if result has expected value.
+
+            Args:
+                result: The result object to check
+                expected_value: Expected value to match
+
+            Returns:
+                bool: True if result has the expected value, False otherwise
+
+            """
             # Try value first, then data for backward compatibility
             actual_value: object = None
             if hasattr(result, "value"):
@@ -199,7 +242,15 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_empty(container: object) -> bool:
-            """Check if container is empty."""
+            """Check if container is empty.
+
+            Args:
+                container: The container object to check
+
+            Returns:
+                bool: True if container is empty, False otherwise
+
+            """
             if hasattr(container, "__len__"):
                 # Type guard: if it has __len__, treat it as Sized
                 sized_container = cast("Sized", container)
@@ -212,7 +263,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def contain_item(container: object, item: object) -> bool:
-            """Check if container contains item."""
+            """Check if container contains item.
+
+            Args:
+                container: The container object to check
+                item: The item to search for
+
+            Returns:
+                bool: True if container contains the item, False otherwise
+
+            """
             if hasattr(container, "__contains__"):
                 # Type guard: if it has __contains__, treat it as Container
                 container_obj = cast("Container[object]", container)
@@ -225,27 +285,71 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_instance_of(obj: object, expected_type: type[object]) -> bool:
-            """Check if object is instance of expected type."""
+            """Check if object is instance of expected type.
+
+            Args:
+                obj: The object to check
+                expected_type: The expected type
+
+            Returns:
+                bool: True if object is instance of expected type, False otherwise
+
+            """
             return isinstance(obj, expected_type)
 
         @staticmethod
         def have_attribute(obj: object, attr_name: str) -> bool:
-            """Check if object has attribute."""
+            """Check if object has attribute.
+
+            Args:
+                obj: The object to check
+                attr_name: The attribute name to check for
+
+            Returns:
+                bool: True if object has the attribute, False otherwise
+
+            """
             return hasattr(obj, attr_name)
 
         @staticmethod
         def have_method(obj: object, method_name: str) -> bool:
-            """Check if object has callable method."""
+            """Check if object has callable method.
+
+            Args:
+                obj: The object to check
+                method_name: The method name to check for
+
+            Returns:
+                bool: True if object has the callable method, False otherwise
+
+            """
             return hasattr(obj, method_name) and callable(getattr(obj, method_name))
 
         @staticmethod
         def be_callable(obj: object) -> bool:
-            """Check if object is callable."""
+            """Check if object is callable.
+
+            Args:
+                obj: The object to check
+
+            Returns:
+                bool: True if object is callable, False otherwise
+
+            """
             return callable(obj)
 
         @staticmethod
         def satisfy_predicate(obj: object, predicate: object) -> bool:
-            """Check if object satisfies predicate function."""
+            """Check if object satisfies predicate function.
+
+            Args:
+                obj: The object to check
+                predicate: The predicate function to apply
+
+            Returns:
+                bool: True if object satisfies the predicate, False otherwise
+
+            """
             if not callable(predicate):
                 return False
             try:
@@ -257,7 +361,15 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_json_serializable(obj: object) -> bool:
-            """Check if object is JSON serializable."""
+            """Check if object is JSON serializable.
+
+            Args:
+                obj: The object to check
+
+            Returns:
+                bool: True if object is JSON serializable, False otherwise
+
+            """
             try:
                 json.dumps(obj)
                 return True
@@ -266,7 +378,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def match_regex(text: str, pattern: str) -> bool:
-            """Check if text matches regex pattern."""
+            """Check if text matches regex pattern.
+
+            Args:
+                text: The text to check
+                pattern: The regex pattern to match
+
+            Returns:
+                bool: True if text matches the pattern, False otherwise
+
+            """
             try:
                 return bool(re.search(pattern, text))
             except re.error:
@@ -274,7 +395,15 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_valid_uuid(value: str) -> bool:
-            """Check if string is valid UUID."""
+            """Check if string is valid UUID.
+
+            Args:
+                value: The string value to check
+
+            Returns:
+                bool: True if string is valid UUID, False otherwise
+
+            """
             try:
                 uuid.UUID(value)
                 return True
@@ -283,13 +412,29 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_valid_email(email: str) -> bool:
-            """Check if string is valid email format."""
+            """Check if string is valid email format.
+
+            Args:
+                email: The email string to check
+
+            Returns:
+                bool: True if string is valid email, False otherwise
+
+            """
             pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
             return bool(re.match(pattern, email))
 
         @staticmethod
         def be_positive_number(value: str | float) -> bool:
-            """Check if value is positive number."""
+            """Check if value is positive number.
+
+            Args:
+                value: The value to check
+
+            Returns:
+                bool: True if value is positive number, False otherwise
+
+            """
             try:
                 return float(value) > 0
             except (TypeError, ValueError):
@@ -297,7 +442,17 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_within_range(value: str | float, min_val: float, max_val: float) -> bool:
-            """Check if value is within numeric range."""
+            """Check if value is within numeric range.
+
+            Args:
+                value: The value to check
+                min_val: Minimum allowed value
+                max_val: Maximum allowed value
+
+            Returns:
+                bool: True if value is within range, False otherwise
+
+            """
             try:
                 num_value = float(value)
                 return min_val <= num_value <= max_val
@@ -306,7 +461,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def have_length(container: object, expected_length: int) -> bool:
-            """Check if container has expected length."""
+            """Check if container has expected length.
+
+            Args:
+                container: The container object to check
+                expected_length: The expected length
+
+            Returns:
+                bool: True if container has expected length, False otherwise
+
+            """
             if not hasattr(container, "__len__"):
                 return False
             # Type guard: if it has __len__, treat it as Sized
@@ -315,7 +479,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def be_sorted(sequence: Sequence[object], *, reverse: bool = False) -> bool:
-            """Check if sequence is sorted."""
+            """Check if sequence is sorted.
+
+            Args:
+                sequence: The sequence to check
+                reverse: Whether to check for reverse order
+
+            Returns:
+                bool: True if sequence is sorted, False otherwise
+
+            """
             if not hasattr(sequence, "__getitem__") or not hasattr(sequence, "__len__"):
                 return False
 
@@ -337,7 +510,16 @@ class FlextTestsMatchers:
             container: Iterable[object],
             predicate: Callable[[object], object],
         ) -> bool:
-            """Check if all items in container satisfy predicate."""
+            """Check if all items in container satisfy predicate.
+
+            Args:
+                container: The container to check
+                predicate: The predicate function to apply
+
+            Returns:
+                bool: True if all items satisfy predicate, False otherwise
+
+            """
             try:
                 return all(bool(predicate(item)) for item in container)
             except Exception:
@@ -348,7 +530,16 @@ class FlextTestsMatchers:
             container: Iterable[object],
             predicate: Callable[[object], object],
         ) -> bool:
-            """Check if any item in container satisfies predicate."""
+            """Check if any item in container satisfies predicate.
+
+            Args:
+                container: The container to check
+                predicate: The predicate function to apply
+
+            Returns:
+                bool: True if any item satisfies predicate, False otherwise
+
+            """
             try:
                 return any(bool(predicate(item)) for item in container)
             except Exception:
@@ -361,14 +552,34 @@ class FlextTestsMatchers:
             msg: str = "",
             message: str = "",
         ) -> None:
-            """Assert that actual value is greater than expected."""
+            """Assert that actual value is greater than expected.
+
+            Args:
+                actual: The actual value
+                expected: The expected value
+                msg: Optional error message
+                message: Optional error message (alias for msg)
+
+            Raises:
+                AssertionError: If actual is not greater than expected
+
+            """
             if actual <= expected:
                 error_msg = msg or message or f"Expected {actual} > {expected}"
                 raise AssertionError(error_msg)
 
         @staticmethod
         def be_equivalent_to(obj1: object, obj2: object) -> bool:
-            """Check if objects are equivalent (handles complex comparisons)."""
+            """Check if objects are equivalent (handles complex comparisons).
+
+            Args:
+                obj1: First object to compare
+                obj2: Second object to compare
+
+            Returns:
+                bool: True if objects are equivalent, False otherwise
+
+            """
             if obj1 == obj2:
                 return True
 
@@ -406,7 +617,15 @@ class FlextTestsMatchers:
             self.result = result
 
         def with_value(self, expected_value: object) -> bool:
-            """Check success result has expected value."""
+            """Check success result has expected value.
+
+            Args:
+                expected_value: The expected value
+
+            Returns:
+                bool: True if result has expected value, False otherwise
+
+            """
             return FlextTestsMatchers.CoreMatchers.have_value(
                 self.result,
                 expected_value,
@@ -420,7 +639,15 @@ class FlextTestsMatchers:
             self.result = result
 
         def with_error(self, expected_error: str) -> bool:
-            """Check failure result has expected error."""
+            """Check failure result has expected error.
+
+            Args:
+                expected_error: The expected error message
+
+            Returns:
+                bool: True if result has expected error, False otherwise
+
+            """
             return FlextTestsMatchers.CoreMatchers.have_error(
                 self.result,
                 expected_error,
@@ -435,7 +662,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def execute_within_time(func: object, max_time: float) -> bool:
-            """Check if function executes within time limit."""
+            """Check if function executes within time limit.
+
+            Args:
+                func: The function to execute
+                max_time: Maximum execution time in seconds
+
+            Returns:
+                bool: True if function executes within time limit, False otherwise
+
+            """
             if not callable(func):
                 return False
 
@@ -449,7 +685,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def memory_usage_within_limit(func: object, max_memory_mb: float) -> bool:
-            """Check if function uses memory within limit."""
+            """Check if function uses memory within limit.
+
+            Args:
+                func: The function to execute
+                max_memory_mb: Maximum memory usage in MB
+
+            Returns:
+                bool: True if function uses memory within limit, False otherwise
+
+            """
             if not callable(func):
                 return False
 
@@ -470,7 +715,17 @@ class FlextTestsMatchers:
             iterations: int,
             min_ops_per_sec: float,
         ) -> bool:
-            """Check if function throughput is above threshold."""
+            """Check if function throughput is above threshold.
+
+            Args:
+                func: The function to benchmark
+                iterations: Number of iterations to run
+                min_ops_per_sec: Minimum operations per second threshold
+
+            Returns:
+                bool: True if throughput is above threshold, False otherwise
+
+            """
             if not callable(func):
                 return False
 
@@ -486,7 +741,16 @@ class FlextTestsMatchers:
 
         @staticmethod
         def scale_linearly(func: object, input_sizes: list[int]) -> bool:
-            """Check if function execution time scales linearly with input size."""
+            """Check if function execution time scales linearly with input size.
+
+            Args:
+                func: The function to benchmark
+                input_sizes: List of input sizes to test
+
+            Returns:
+                bool: True if function scales linearly, False otherwise
+
+            """
             if not callable(func) or len(input_sizes) < 2:
                 return False
 
@@ -523,11 +787,21 @@ class FlextTestsMatchers:
             self.results: list[float] = []
 
         def add_measurement(self, duration: float) -> None:
-            """Add performance measurement."""
+            """Add performance measurement.
+
+            Args:
+                duration: The duration measurement to add
+
+            """
             self.results.append(duration)
 
         def average_time(self) -> float:
-            """Calculate average execution time."""
+            """Calculate average execution time.
+
+            Returns:
+                float: Average execution time in seconds
+
+            """
             return sum(self.results) / len(self.results) if self.results else 0.0
 
         def max_time(self) -> float:

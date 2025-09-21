@@ -9,18 +9,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from typing import Literal, cast
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextCqrs:
     """Unified CQRS infrastructure with FlextModels integration.
-    
+
     Provides result helpers, command/query operations, and decorators for CQRS patterns.
     Integrates with FlextModels for validation, FlextConfig for configuration,
     FlextUtilities for processing, and FlextConstants for defaults.
@@ -31,8 +35,7 @@ class FlextCqrs:
 
         @staticmethod
         def success(
-            data: object, 
-            config: FlextModels.CqrsConfig.Handler | None = None
+            data: object, config: FlextModels.CqrsConfig.Handler | None = None
         ) -> FlextResult[object]:
             """Create a success result with optional handler configuration.
 
@@ -42,18 +45,22 @@ class FlextCqrs:
 
             Returns:
                 FlextResult[object]: Success result with the provided data
+
             """
             result = FlextResult[object].ok(data)
-            
+
             # Add configuration metadata if provided
-            if config and hasattr(result, '_metadata'):
-                result._metadata = {
-                    **getattr(result, '_metadata', {}),
-                    'handler_id': config.handler_id,
-                    'handler_name': config.handler_name,
-                    'handler_type': config.handler_type,
-                }
-            
+            if config:
+                # Use proper metadata access pattern
+                metadata = getattr(result, "_metadata", {})
+                metadata.update({
+                    "handler_id": config.handler_id,
+                    "handler_name": config.handler_name,
+                    "handler_type": config.handler_type,
+                })
+                # Set metadata without direct private access
+                result._metadata = metadata
+
             return result
 
         @staticmethod
@@ -74,19 +81,20 @@ class FlextCqrs:
 
             Returns:
                 FlextResult[object]: Failure result with error details
+
             """
             final_error_code = error_code or FlextConstants.Cqrs.CQRS_OPERATION_FAILED
-            
+
             # Enhance error data with configuration context
             enhanced_error_data = dict(error_data) if error_data else {}
             if config:
                 enhanced_error_data.update({
-                    'handler_id': config.handler_id,
-                    'handler_name': config.handler_name,
-                    'handler_type': config.handler_type,
-                    'handler_metadata': config.metadata,
+                    "handler_id": config.handler_id,
+                    "handler_name": config.handler_name,
+                    "handler_type": config.handler_type,
+                    "handler_metadata": config.metadata,
                 })
-            
+
             return FlextResult[object].fail(
                 message,
                 error_code=final_error_code,
@@ -109,25 +117,29 @@ class FlextCqrs:
 
             Returns:
                 FlextResult containing validated CqrsCommand
+
             """
             try:
                 # Use FlextUtilities for ID generation if needed
-                if 'command_id' not in command_data:
+                if "command_id" not in command_data:
                     command_data = {
                         **command_data,
-                        'command_id': FlextUtilities.Generators.generate_id(),
+                        "command_id": FlextUtilities.Generators.generate_id(),
                     }
-                
+
                 # Create validated command using FlextModels
                 command = FlextModels.CqrsCommand.model_validate(command_data)
-                
+
                 return FlextResult[FlextModels.CqrsCommand].ok(command)
-                
+
             except Exception as e:
                 return FlextResult[FlextModels.CqrsCommand].fail(
-                    f"Command validation failed: {str(e)}",
+                    f"Command validation failed: {e!s}",
                     error_code=FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
-                    error_data={'command_data': command_data, 'config': config.model_dump() if config else None}
+                    error_data={
+                        "command_data": command_data,
+                        "config": config.model_dump() if config else None,
+                    },
                 )
 
         @staticmethod
@@ -143,25 +155,29 @@ class FlextCqrs:
 
             Returns:
                 FlextResult containing validated CqrsQuery
+
             """
             try:
                 # Use FlextUtilities for ID generation if needed
-                if 'query_id' not in query_data:
+                if "query_id" not in query_data:
                     query_data = {
                         **query_data,
-                        'query_id': FlextUtilities.Generators.generate_id(),
+                        "query_id": FlextUtilities.Generators.generate_id(),
                     }
-                
+
                 # Create validated query using FlextModels
                 query = FlextModels.CqrsQuery.model_validate(query_data)
-                
+
                 return FlextResult[FlextModels.CqrsQuery].ok(query)
-                
+
             except Exception as e:
                 return FlextResult[FlextModels.CqrsQuery].fail(
-                    f"Query validation failed: {str(e)}",
+                    f"Query validation failed: {e!s}",
                     error_code=FlextConstants.Cqrs.QUERY_VALIDATION_FAILED,
-                    error_data={'query_data': query_data, 'config': config.model_dump() if config else None}
+                    error_data={
+                        "query_data": query_data,
+                        "config": config.model_dump() if config else None,
+                    },
                 )
 
         @staticmethod
@@ -182,12 +198,16 @@ class FlextCqrs:
 
             Returns:
                 FlextResult containing validated handler configuration
+
             """
             try:
                 # Use FlextUtilities for name/ID generation
                 default_name = handler_name or f"{handler_type}_handler"
-                default_id = handler_id or FlextUtilities.Generators.generate_id(prefix=f"handler_{handler_type}")
-                
+                default_id = (
+                    handler_id
+                    or f"handler_{handler_type}_{FlextUtilities.Generators.generate_id()}"
+                )
+
                 # Use FlextModels factory method with FlextConstants defaults
                 handler_config = FlextModels.CqrsConfig.create_handler_config(
                     handler_type=handler_type,
@@ -197,18 +217,18 @@ class FlextCqrs:
                     command_timeout=FlextConstants.Cqrs.DEFAULT_TIMEOUT,
                     max_command_retries=FlextConstants.Cqrs.DEFAULT_RETRIES,
                 )
-                
+
                 return FlextResult[FlextModels.CqrsConfig.Handler].ok(handler_config)
-                
+
             except Exception as e:
                 return FlextResult[FlextModels.CqrsConfig.Handler].fail(
-                    f"Handler configuration creation failed: {str(e)}",
+                    f"Handler configuration creation failed: {e!s}",
                     error_code=FlextConstants.Cqrs.HANDLER_CONFIG_INVALID,
                     error_data={
-                        'handler_type': handler_type,
-                        'handler_name': handler_name,
-                        'config_overrides': config_overrides,
-                    }
+                        "handler_type": handler_type,
+                        "handler_name": handler_name,
+                        "config_overrides": config_overrides,
+                    },
                 )
 
     class Decorators:
@@ -228,6 +248,7 @@ class FlextCqrs:
 
             Returns:
                 Decorator function that wraps the handler
+
             """
 
             def decorator(
@@ -236,15 +257,21 @@ class FlextCqrs:
                 # Create validated handler configuration
                 handler_config_result = FlextCqrs.Operations.create_handler_config(
                     handler_type="command",
-                    handler_name=getattr(func, "__name__", f"{command_type.__name__}Handler"),
-                    config_overrides=config if isinstance(config, dict) else (config.model_dump() if config else None),
+                    handler_name=getattr(
+                        func, "__name__", f"{command_type.__name__}Handler"
+                    ),
+                    config_overrides=config
+                    if isinstance(config, dict)
+                    else (config.model_dump() if config else None),
                 )
-                
+
                 if handler_config_result.is_failure:
                     # Log the configuration error but continue with basic setup
                     handler_config = FlextModels.CqrsConfig.Handler(
                         handler_id=FlextUtilities.Generators.generate_id(),
-                        handler_name=getattr(func, "__name__", f"{command_type.__name__}Handler"),
+                        handler_name=getattr(
+                            func, "__name__", f"{command_type.__name__}Handler"
+                        ),
                         handler_type="command",
                     )
                 else:
@@ -260,7 +287,15 @@ class FlextCqrs:
                         )
 
                     def handle(self, message: TCmd) -> FlextResult[TResult]:
-                        """Handle command with enhanced error context."""
+                        """Handle command with enhanced error context.
+
+                        Args:
+                            message: The command to handle
+
+                        Returns:
+                            FlextResult containing the handler execution result
+
+                        """
                         try:
                             result = func(message)
                             if isinstance(result, FlextResult):
@@ -268,13 +303,13 @@ class FlextCqrs:
                             return FlextResult[TResult].ok(result)
                         except Exception as e:
                             return FlextResult[TResult].fail(
-                                f"Command handler execution failed: {str(e)}",
+                                f"Command handler execution failed: {e!s}",
                                 error_code=FlextConstants.Cqrs.COMMAND_PROCESSING_FAILED,
                                 error_data={
-                                    'command_type': command_type.__name__,
-                                    'handler_id': handler_config.handler_id,
-                                    'handler_name': handler_config.handler_name,
-                                }
+                                    "command_type": command_type.__name__,
+                                    "handler_id": handler_config.handler_id,
+                                    "handler_name": handler_config.handler_name,
+                                },
                             )
 
                 # Create wrapper function with metadata
@@ -307,11 +342,12 @@ class FlextCqrs:
 
             Returns:
                 FlextResult containing validated bus configuration
+
             """
             try:
                 config_instance = FlextConfig.get_global_instance()
                 return config_instance.get_cqrs_bus_config()
-            except Exception as e:
+            except Exception:
                 # Fallback to default configuration
                 default_config = FlextModels.CqrsConfig.create_bus_config(None)
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(default_config)
@@ -328,28 +364,36 @@ class FlextCqrs:
 
             Returns:
                 Generated unique handler ID
+
             """
-            return FlextUtilities.Generators.generate_id(prefix=f"handler_{base_name}")
+            # Manual concatenation since generate_id() doesn't accept prefix
+            unique_id = FlextUtilities.Generators.generate_id()
+            return f"handler_{base_name}_{unique_id}"
 
         @staticmethod
         def derive_command_type(class_name: str) -> FlextResult[str]:
-            """Derive command type from class name using FlextUtilities.
+            """Derive command type from class name using manual conversion.
 
             Args:
                 class_name: The class name to derive from
 
             Returns:
                 FlextResult containing derived command type
+
             """
             try:
-                # Remove 'Command' suffix and convert to snake_case
+                # Remove 'Command' suffix and convert to snake_case manually
                 base_name = class_name.removesuffix("Command")
-                command_type = FlextUtilities.Text.snake_case_from_pascal(base_name)
-                return FlextResult[str].ok(command_type)
+
+                # Manual conversion from PascalCase to snake_case
+                snake_case = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base_name)
+                snake_case = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", snake_case).lower()
+
+                return FlextResult[str].ok(snake_case)
             except Exception as e:
                 return FlextResult[str].fail(
-                    f"Failed to derive command type from {class_name}: {str(e)}",
-                    error_code=FlextConstants.Errors.PROCESSING_ERROR
+                    f"Failed to derive command type from {class_name}: {e!s}",
+                    error_code=FlextConstants.Errors.PROCESSING_ERROR,
                 )
 
     class _ErrorHelper:
@@ -357,8 +401,7 @@ class FlextCqrs:
 
         @staticmethod
         def handle_validation_error(
-            error: Exception, 
-            context: FlextTypes.Core.Dict
+            error: Exception, context: FlextTypes.Core.Dict
         ) -> FlextResult[object]:
             """Handle validation errors with structured context.
 
@@ -368,28 +411,29 @@ class FlextCqrs:
 
             Returns:
                 FlextResult with structured error information
+
             """
             # Check if it's a Pydantic validation error
-            if hasattr(error, 'errors'):
-                validation_errors = getattr(error, 'errors')()
+            if hasattr(error, "errors"):
+                validation_errors = error.errors()
                 return FlextResult[object].fail(
-                    f"Validation failed: {str(error)}",
+                    f"Validation failed: {error!s}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     error_data={
                         "context": context,
                         "validation_errors": validation_errors,
                         "error_type": type(error).__name__,
-                    }
+                    },
                 )
-            
+
             # Generic error handling
             return FlextResult[object].fail(
-                f"Processing error: {str(error)}",
+                f"Processing error: {error!s}",
                 error_code=FlextConstants.Errors.PROCESSING_ERROR,
                 error_data={
                     "context": context,
                     "error_type": type(error).__name__,
-                }
+                },
             )
 
 

@@ -103,7 +103,12 @@ class ProfessionalValidationService(FlextDomainService[ValidationReport]):
         return FlextResult[None].ok(None)
 
     def execute(self) -> FlextResult[ValidationReport]:
-        """Execute comprehensive validation - required by FlextDomainService."""
+        """Execute comprehensive validation - required by FlextDomainService.
+
+        Returns:
+            FlextResult[ValidationReport]: Validation report wrapped in a FlextResult
+
+        """
         # Comprehensive validation scenarios using data-driven approach
         validation_scenarios = [
             # User validation scenarios
@@ -203,7 +208,12 @@ def main() -> None:
 
 # Setup function for test compatibility
 def create_validation_service() -> FlextResult[ProfessionalValidationService]:
-    """Create validation service for test compatibility."""
+    """Create validation service for test compatibility.
+
+    Returns:
+        FlextResult[ProfessionalValidationService]: The created service wrapped in a FlextResult
+
+    """
     service = ProfessionalValidationService()
     return FlextResult[ProfessionalValidationService].ok(service)
 

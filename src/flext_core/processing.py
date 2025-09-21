@@ -8,6 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from flext_core.config import FlextConfig
+from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
 
@@ -20,11 +24,75 @@ class FlextProcessing:
     ``FlextDispatcher`` without bespoke glue code.
     """
 
+    class Config:
+        """Configuration settings for FlextProcessing using FlextConfig defaults."""
+
+        @classmethod
+        def get_default_timeout(cls) -> float:
+            """Get default timeout from configuration or constants.
+
+            Returns:
+                float: Default timeout in seconds, from configuration or
+                fallback to constants.
+
+            """
+            try:
+                config = FlextConfig.get_global_instance()
+                return float(
+                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT)
+                )
+            except Exception:
+                return float(FlextConstants.Defaults.TIMEOUT)
+
+        @classmethod
+        def get_max_batch_size(cls) -> int:
+            """Get maximum batch size from configuration or constants.
+
+            Returns:
+                int: Maximum batch size configured or the default constant.
+
+            """
+            try:
+                config = FlextConfig.get_global_instance()
+                return int(
+                    getattr(
+                        config,
+                        "max_batch_size",
+                        FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+                    )
+                )
+            except Exception:
+                return FlextConstants.Performance.DEFAULT_BATCH_SIZE
+
+        @classmethod
+        def get_max_handlers(cls) -> int:
+            """Get maximum number of handlers from configuration or constants.
+
+            Returns:
+                int: Maximum handlers configured or the default constant.
+
+            """
+            try:
+                config = FlextConfig.get_global_instance()
+                return int(
+                    getattr(
+                        config, "max_handlers", FlextConstants.Container.MAX_SERVICES
+                    )
+                )
+            except Exception:
+                return FlextConstants.Container.MAX_SERVICES
+
     class Handler:
         """Minimal handler base returning modernization-compliant results."""
 
         def handle(self, request: object) -> FlextResult[object]:
-            """Handle a request."""
+            """Handle a request.
+
+            Returns:
+                FlextResult[object]: A successful FlextResult wrapping handler
+                output.
+
+            """
             return FlextResult[object].ok(f"Base handler processed: {request}")
 
     class HandlerRegistry:
@@ -34,21 +102,64 @@ class FlextProcessing:
             """Initialize handler registry."""
             self._handlers: dict[str, object] = {}
 
-        def register(self, name: str, handler: object) -> FlextResult[None]:
-            """Register a handler."""
-            if name in self._handlers:
-                return FlextResult[None].fail(f"Handler '{name}' already registered")
-            self._handlers[name] = handler
+        def register(
+            self, registration: FlextModels.HandlerRegistration
+        ) -> FlextResult[None]:
+            """Register a handler using Pydantic model validation.
+
+            Returns:
+                FlextResult[None]: Success when registration is stored or a
+                failed FlextResult with a validation/exists error.
+
+            """
+            if registration.name in self._handlers:
+                return FlextResult[None].fail(
+                    f"Handler '{registration.name}' already registered",
+                    error_code="HANDLER_ALREADY_EXISTS"
+                )
+
+            # Check handler registry size limits
+            max_handlers = FlextProcessing.Config.get_max_handlers()
+            if len(self._handlers) >= max_handlers:
+                return FlextResult[None].fail(
+                    f"Handler registry full: {len(self._handlers)}/{max_handlers} handlers registered",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            # Validate handler safety
+            if not FlextProcessing.is_handler_safe(registration.handler):
+                return FlextResult[None].fail(
+                    f"Handler '{registration.name}' is not safe (must have handle method or be callable)",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            # Validate handler using the model's built-in validation
+            self._handlers[registration.name] = registration.handler
             return FlextResult[None].ok(None)
 
         def get(self, name: str) -> FlextResult[object]:
-            """Get a handler."""
+            """Get a handler.
+
+            Returns:
+                FlextResult[object]: The handler instance wrapped in a
+                successful FlextResult, or a failed result if not found.
+
+            """
             if name not in self._handlers:
-                return FlextResult[object].fail(f"Handler '{name}' not found")
+                return FlextResult[object].fail(
+                    f"Handler '{name}' not found",
+                    error_code="NOT_FOUND_ERROR"
+                )
             return FlextResult[object].ok(self._handlers[name])
 
         def execute(self, name: str, request: object) -> FlextResult[object]:
-            """Execute a handler by name using railway pattern."""
+            """Execute a handler by name using railway pattern.
+
+            Returns:
+                FlextResult[object]: Result of handler execution or failure
+                indicating handler not found or execution error.
+
+            """
             return self.get(name).flat_map(
                 lambda handler: self._execute_handler_safely(handler, request, name)
             )
@@ -56,7 +167,13 @@ class FlextProcessing:
         def _execute_handler_safely(
             self, handler: object, request: object, name: str
         ) -> FlextResult[object]:
-            """Execute handler with proper method resolution and error handling."""
+            """Execute handler with proper method resolution and error handling.
+
+            Returns:
+                FlextResult[object]: The result returned by the handler, or a
+                failed FlextResult with a ProcessingError on exception.
+
+            """
             try:
                 # Check for handle method first
                 if hasattr(handler, "handle"):
@@ -79,65 +196,138 @@ class FlextProcessing:
                     )
 
                 return FlextResult[object].fail(
-                    f"Handler '{name}' does not implement handle method"
+                    f"Handler '{name}' does not implement handle method",
+                    error_code="NOT_FOUND_ERROR"
                 )
             except Exception as e:
-                return FlextResult[object].fail(f"Handler execution failed: {e}")
+                return FlextResult[object].fail(
+                    f"Handler execution failed: {e}",
+                    error_code="PROCESSING_ERROR"
+                )
 
         def count(self) -> int:
-            """Get the number of registered handlers."""
+            """Get the number of registered handlers.
+
+            Returns:
+                int: The number of handlers registered.
+
+            """
             return len(self._handlers)
 
         def exists(self, name: str) -> bool:
-            """Check if a handler exists."""
+            """Check if a handler exists.
+
+            Returns:
+                bool: True if a handler with `name` is registered.
+
+            """
             return name in self._handlers
 
         def get_optional(self, name: str) -> object | None:
-            """Get a handler optionally, returning None if not found."""
+            """Get a handler optionally, returning None if not found.
+
+            Returns:
+                object | None: Handler instance or None when not registered.
+
+            """
             return self._handlers.get(name)
 
         def execute_with_timeout(
-            self, name: str, request: object, timeout_seconds: float = 30.0
+            self, config: FlextModels.HandlerExecutionConfig
         ) -> FlextResult[object]:
-            """Execute handler with timeout using advanced railway patterns."""
+            """Execute handler with timeout using HandlerExecutionConfig model.
+
+            Returns:
+                FlextResult[object]: The result of handler execution wrapped in
+                a FlextResult, possibly a failure on timeout.
+
+            """
+            timeout_seconds = getattr(
+                config, "timeout_seconds", FlextProcessing.Config.get_default_timeout()
+            )
             return FlextResult.ok(None).with_timeout(
-                timeout_seconds, lambda _: self.execute(name, request)
+                timeout_seconds,
+                lambda _: self.execute(config.handler_name, config.request_data),
             )
 
         def execute_with_fallback(
-            self, primary_name: str, request: object, *fallback_names: str
+            self, config: FlextModels.HandlerExecutionConfig
         ) -> FlextResult[object]:
-            """Execute handler with fallback handlers using railway patterns."""
+            """Execute handler with fallback handlers using HandlerExecutionConfig model.
+
+            Returns:
+                FlextResult[object]: The first successful handler result or the
+                final failure if all fallbacks fail.
+
+            """
             return FlextUtilities.Reliability.with_fallback(
-                lambda: self.execute(primary_name, request),
+                lambda: self.execute(config.handler_name, config.request_data),
                 *[
-                    lambda: self.execute(fallback, request)
-                    for fallback in fallback_names
+                    (lambda fallback=fallback: self.execute(fallback, config.request_data))
+                    for fallback in config.fallback_handlers
                 ],
             )
 
         def execute_batch(
-            self,
-            handler_requests: list[tuple[str, object]],
-            fail_fast: bool = True,
+            self, config: FlextModels.BatchProcessingConfig
         ) -> FlextResult[list[object]]:
-            """Execute multiple handlers using advanced railway patterns."""
+            """Execute multiple handlers using BatchProcessingConfig model.
+
+            Returns:
+                FlextResult[list[object]]: List of handler results or a failed
+                FlextResult if validation or batch processing fails.
+
+            """
+            # Use Pydantic validation from the model
+            validation_result = config.validate_batch()
+            if validation_result.is_failure:
+                return FlextResult[list[object]].fail(
+                    f"Batch processing configuration validation failed: {validation_result.error}",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            # Validate batch size limits
+            max_batch_size = FlextProcessing.Config.get_max_batch_size()
+            if len(config.data_items) > max_batch_size:
+                return FlextResult[list[object]].fail(
+                    f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            # Convert data_items to handler execution tuples
+            # Assume data_items contains tuples of (handler_name, request_data)
+            handler_requests = []
+            for item in config.data_items:
+                if isinstance(item, tuple) and len(item) == 2:
+                    handler_requests.append(item)
+                else:
+                    return FlextResult[list[object]].fail(
+                        "Each data item must be a tuple of (handler_name, request_data)",
+                        error_code="VALIDATION_ERROR"
+                    )
+
             return FlextResult.parallel_map(
                 handler_requests,
                 lambda item: self.execute(item[0], item[1]),
-                fail_fast=fail_fast,
+                fail_fast=config.fail_fast,
             )
 
         def register_with_validation(
             self,
-            name: str,
-            handler: object,
+            registration: FlextModels.HandlerRegistration,
             validator: Callable[[object], FlextResult[None]] | None = None,
         ) -> FlextResult[None]:
-            """Register handler with optional validation using railway patterns."""
+            """Register handler with optional validation using HandlerRegistration model.
+
+            Returns:
+                FlextResult[None]: Result of registration, success or failure.
+
+            """
             if validator:
-                return validator(handler) >> (lambda _: self.register(name, handler))
-            return self.register(name, handler)
+                return validator(registration.handler) >> (
+                    lambda _: self.register(registration)
+                )
+            return self.register(registration)
 
     class Pipeline:
         """Advanced processing pipeline using monadic composition."""
@@ -160,40 +350,89 @@ class FlextProcessing:
             self._steps.append(step)
 
         def process(self, data: object) -> FlextResult[object]:
-            """Process data through pipeline using advanced railway pattern."""
+            """Process data through pipeline using advanced railway pattern.
+
+            Returns:
+                FlextResult[object]: Result of pipeline processing.
+
+            """
             return FlextResult.pipeline(
                 data, *[self._process_step(step) for step in self._steps]
             )
 
         def process_conditionally(
             self,
-            data: object,
+            request: FlextModels.ProcessingRequest,
             condition: Callable[[object], bool],
         ) -> FlextResult[object]:
-            """Process data conditionally using railway patterns."""
-            return FlextResult.ok(data).when(condition) >> (self.process)
+            """Process data conditionally using railway patterns.
+
+            Returns:
+                FlextResult[object]: Result of conditional processing.
+
+            """
+            return FlextResult.ok(request.data).when(condition) >> (
+                lambda data: self.process(
+                    FlextModels.ProcessingRequest(
+                        data=data,
+                        context=request.context,
+                        timeout_seconds=request.timeout_seconds,
+                    )
+                )
+            )
 
         def process_with_timeout(
-            self,
-            data: object,
-            timeout_seconds: float = 30.0,
+            self, request: FlextModels.ProcessingRequest
         ) -> FlextResult[object]:
-            """Process data with timeout using advanced railway patterns."""
-            return FlextResult.ok(data).with_timeout(timeout_seconds, self.process)
+            """Process data with timeout using ProcessingRequest model.
+
+            Returns:
+                FlextResult[object]: Result of processing or timeout error.
+
+            """
+            timeout_seconds = getattr(
+                request, "timeout_seconds", FlextProcessing.Config.get_default_timeout()
+            )
+
+            # Validate timeout bounds
+            if timeout_seconds < FlextConstants.Container.MIN_TIMEOUT_SECONDS:
+                return FlextResult[object].fail(
+                    f"Timeout {timeout_seconds} is below minimum {FlextConstants.Container.MIN_TIMEOUT_SECONDS}",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            if timeout_seconds > FlextConstants.Container.MAX_TIMEOUT_SECONDS:
+                return FlextResult[object].fail(
+                    f"Timeout {timeout_seconds} exceeds maximum {FlextConstants.Container.MAX_TIMEOUT_SECONDS}",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            return FlextResult.ok(request.data).with_timeout(
+                timeout_seconds, self.process
+            )
 
         def process_with_fallback(
             self,
-            data: object,
+            request: FlextModels.ProcessingRequest,
             *fallback_pipelines: FlextProcessing.Pipeline,
         ) -> FlextResult[object]:
-            """Process with fallback pipelines using railway patterns."""
+            """Process with fallback pipelines using ProcessingRequest model.
+
+            Returns:
+                FlextResult[object]: Result from the first successful pipeline or
+                the final failure.
+
+            """
             return FlextUtilities.Reliability.with_fallback(
-                lambda: self.process(data),
-                *[lambda: pipeline.process(data) for pipeline in fallback_pipelines],
+                lambda: self.process(request.data),
+                *[
+                    (lambda pipeline=pipeline: pipeline.process(request.data))
+                    for pipeline in fallback_pipelines
+                ],
             )
 
         def process_batch(
-            self, config: FlextModels.Processing.BatchProcessingConfig
+            self, config: FlextModels.BatchProcessingConfig
         ) -> FlextResult[list[object]]:
             """Process batch of data using validated BatchProcessingConfig model.
 
@@ -201,13 +440,24 @@ class FlextProcessing:
                 config: BatchProcessingConfig model with data items and processing options
 
             Returns:
-                FlextResult containing list of processed data items
+                FlextResult[list[object]]: List of processed data items or a failure.
 
             """
             # Use Pydantic validation from the model
             validation_result = config.validate_batch()
             if validation_result.is_failure:
-                return FlextResult[list[object]].fail(validation_result.error)
+                return FlextResult[list[object]].fail(
+                    f"Batch processing configuration validation failed: {validation_result.error}",
+                    error_code="VALIDATION_ERROR"
+                )
+
+            # Validate batch size limits
+            max_batch_size = FlextProcessing.Config.get_max_batch_size()
+            if len(config.data_items) > max_batch_size:
+                return FlextResult[list[object]].fail(
+                    f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
+                    error_code="VALIDATION_ERROR"
+                )
 
             # Process all data items using parallel processing
             return FlextResult.parallel_map(
@@ -216,16 +466,31 @@ class FlextProcessing:
 
         def process_with_validation(
             self,
-            data: object,
+            request: FlextModels.ProcessingRequest,
             *validators: Callable[[object], FlextResult[None]],
         ) -> FlextResult[object]:
-            """Process with comprehensive validation pipeline."""
-            return FlextResult.validate_all(data, *validators) >> (self.process)
+            """Process with comprehensive validation pipeline using ProcessingRequest model.
+
+            Returns:
+                FlextResult[object]: Result of validation-then-processing or processing directly.
+
+            """
+            # Apply validation if enabled in the request
+            if request.enable_validation:
+                return FlextResult.validate_all(request.data, *validators) >> (
+                    self.process
+                )
+            return self.process(request.data)
 
         def _process_step(
             self, step: object
         ) -> Callable[[object], FlextResult[object]]:
-            """Convert pipeline step to FlextResult-returning function."""
+            """Convert pipeline step to FlextResult-returning function.
+
+            Returns:
+                Callable[[object], FlextResult[object]]: Adapter that wraps step execution.
+
+            """
 
             def step_processor(current: object) -> FlextResult[object]:
                 return FlextResult.from_exception(
@@ -235,7 +500,12 @@ class FlextProcessing:
             return step_processor
 
         def _execute_step(self, step: object, current: object) -> object:
-            """Execute a single pipeline step."""
+            """Execute a single pipeline step.
+
+            Returns:
+                object: Result of step execution; may be a FlextResult unwrapped.
+
+            """
             # Handle callable steps
             if callable(step):
                 result = step(current)
@@ -253,17 +523,32 @@ class FlextProcessing:
     # Factory methods for convenience
     @staticmethod
     def create_handler_registry() -> HandlerRegistry:
-        """Create a new handler registry."""
+        """Create a new handler registry.
+
+        Returns:
+            HandlerRegistry: A fresh handler registry instance.
+
+        """
         return FlextProcessing.HandlerRegistry()
 
     @staticmethod
     def create_pipeline() -> Pipeline:
-        """Create a new processing pipeline."""
+        """Create a new processing pipeline.
+
+        Returns:
+            Pipeline: A new processing pipeline instance.
+
+        """
         return FlextProcessing.Pipeline()
 
     @staticmethod
     def is_handler_safe(handler: object) -> bool:
-        """Check if a handler is safe (has handle method or is callable)."""
+        """Check if a handler is safe (has handle method or is callable).
+
+        Returns:
+            bool: True if handler is safe to execute.
+
+        """
         if hasattr(handler, "handle"):
             handle_method = getattr(handler, "handle", None)
             if handle_method is not None and callable(handle_method):
@@ -290,7 +575,12 @@ class FlextProcessing:
                 return self.name
 
             def handle(self, request: object) -> FlextResult[str]:
-                """Handle request."""
+                """Handle request.
+
+                Returns:
+                    FlextResult[str]: Successful result wrapping a string message.
+
+                """
                 result = f"Handled by {self.name}: {request}"
                 return FlextResult[str].ok(result)
 
@@ -309,11 +599,21 @@ class FlextProcessing:
                 self._handlers[name] = handler
 
             def get(self, name: str) -> object | None:
-                """Get handler by name."""
+                """Get handler by name.
+
+                Returns:
+                    object | None: The handler instance or None if not found.
+
+                """
                 return self._handlers.get(name)
 
             def get_optional(self, name: str) -> object | None:
-                """Get handler optionally, returning None if not found."""
+                """Get handler optionally, returning None if not found.
+
+                Returns:
+                    object | None: The handler instance or None when not present.
+
+                """
                 return self._handlers.get(name)
 
     class Patterns:
@@ -332,7 +632,12 @@ class FlextProcessing:
                 self._handlers.append(handler)
 
             def handle(self, request: object) -> FlextResult[object]:
-                """Handle request by executing all handlers in chain."""
+                """Handle request by executing all handlers in chain.
+
+                Returns:
+                    FlextResult[object]: Result after processing through the chain.
+
+                """
                 result = request
                 for handler in self._handlers:
                     if hasattr(handler, "handle"):
@@ -364,5 +669,10 @@ class FlextProcessing:
                 self.name = name
 
             def handle(self, request: object) -> object:
-                """Handle request in chain."""
+                """Handle request in chain.
+
+                Returns:
+                    object: Handler output as a plain object.
+
+                """
                 return f"Chain handled by {self.name}: {request}"

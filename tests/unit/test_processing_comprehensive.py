@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
-from flext_core import FlextProcessing, FlextResult
+from flext_core import FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
 
 
@@ -58,8 +58,11 @@ class TestFlextProcessingHandlerRegistry:
     def test_register_handler_success(self) -> None:
         """Test successful handler registration."""
         handler_name = "test_handler"
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=self.mock_handler
+        )
 
-        result = self.registry.register(handler_name, self.mock_handler)
+        result = self.registry.register(registration)
 
         FlextTestsMatchers.assert_result_success(result)
         assert self.registry.count() == 1
@@ -68,12 +71,15 @@ class TestFlextProcessingHandlerRegistry:
     def test_register_duplicate_handler_failure(self) -> None:
         """Test registering duplicate handler fails."""
         handler_name = "test_handler"
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=self.mock_handler
+        )
 
         # Register first handler
-        self.registry.register(handler_name, self.mock_handler)
+        self.registry.register(registration)
 
         # Try to register again
-        result = self.registry.register(handler_name, self.mock_handler)
+        result = self.registry.register(registration)
 
         FlextTestsMatchers.assert_result_failure(result)
         assert f"Handler '{handler_name}' already registered" in str(result.error)
@@ -81,7 +87,10 @@ class TestFlextProcessingHandlerRegistry:
     def test_get_existing_handler_success(self) -> None:
         """Test retrieving existing handler."""
         handler_name = "test_handler"
-        self.registry.register(handler_name, self.mock_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=self.mock_handler
+        )
+        self.registry.register(registration)
 
         result = self.registry.get(handler_name)
 
@@ -104,7 +113,10 @@ class TestFlextProcessingHandlerRegistry:
         expected_result = "handled_result"
 
         self.mock_handler.handle.return_value = FlextResult[str].ok(expected_result)
-        self.registry.register(handler_name, self.mock_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=self.mock_handler
+        )
+        self.registry.register(registration)
 
         result = self.registry.execute(handler_name, request)
 
@@ -121,7 +133,10 @@ class TestFlextProcessingHandlerRegistry:
         def callable_handler(_req: object) -> str:
             return expected_result
 
-        self.registry.register(handler_name, callable_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=callable_handler
+        )
+        self.registry.register(registration)
 
         result = self.registry.execute(handler_name, request)
 
@@ -137,7 +152,10 @@ class TestFlextProcessingHandlerRegistry:
         def result_handler(_req: object) -> FlextResult[str]:
             return FlextResult[str].ok(expected_result)
 
-        self.registry.register(handler_name, result_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=result_handler
+        )
+        self.registry.register(registration)
 
         result = self.registry.execute(handler_name, request)
 
@@ -149,7 +167,10 @@ class TestFlextProcessingHandlerRegistry:
         handler_name = "invalid_handler"
         invalid_handler = "not_a_handler"
 
-        self.registry.register(handler_name, invalid_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=invalid_handler
+        )
+        self.registry.register(registration)
 
         result = self.registry.execute(handler_name, "request")
 
@@ -167,7 +188,10 @@ class TestFlextProcessingHandlerRegistry:
             msg = "Handler failed"
             raise ValueError(msg)
 
-        self.registry.register(handler_name, failing_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=failing_handler
+        )
+        self.registry.register(registration)
 
         result = self.registry.execute(handler_name, "request")
 
@@ -189,10 +213,16 @@ class TestFlextProcessingHandlerRegistry:
         """Test counting registered handlers."""
         assert self.registry.count() == 0
 
-        self.registry.register("handler1", self.mock_handler)
+        registration1 = FlextModels.HandlerRegistration(
+            name="handler1", handler=self.mock_handler
+        )
+        self.registry.register(registration1)
         assert self.registry.count() == 1
 
-        self.registry.register("handler2", self.mock_handler)
+        registration2 = FlextModels.HandlerRegistration(
+            name="handler2", handler=self.mock_handler
+        )
+        self.registry.register(registration2)
         assert self.registry.count() == 2
 
     def test_exists_method(self) -> None:
@@ -201,7 +231,10 @@ class TestFlextProcessingHandlerRegistry:
 
         assert not self.registry.exists(handler_name)
 
-        self.registry.register(handler_name, self.mock_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=self.mock_handler
+        )
+        self.registry.register(registration)
         assert self.registry.exists(handler_name)
 
     def test_get_optional_method(self) -> None:
@@ -210,7 +243,10 @@ class TestFlextProcessingHandlerRegistry:
 
         assert self.registry.get_optional(handler_name) is None
 
-        self.registry.register(handler_name, self.mock_handler)
+        registration = FlextModels.HandlerRegistration(
+            name=handler_name, handler=self.mock_handler
+        )
+        self.registry.register(registration)
         assert self.registry.get_optional(handler_name) == self.mock_handler
 
 
@@ -524,7 +560,11 @@ class TestFlextProcessingIntegration:
         def transform_handler(data: object) -> str:
             return f"transformed_{data}"
 
-        registry.register("transformer", transform_handler)
+        # Use new HandlerRegistration model
+        registration = FlextModels.HandlerRegistration(
+            name="transformer", handler=transform_handler
+        )
+        registry.register(registration)
 
         # Create pipeline that uses registry
         pipeline = FlextProcessing.create_pipeline()
