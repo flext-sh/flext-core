@@ -102,7 +102,6 @@ class TestFlextMixins100Percent:
         assert hasattr(obj, "validated")
         assert obj.validated is True
 
-
     def test_clear_cache(self) -> None:
         """Test clear_cache - lines 80."""
         obj = Mock()

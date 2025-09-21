@@ -54,7 +54,9 @@ class FlextResultUtils:
         values = []
         for result in results:
             if result.is_failure:
-                return FlextResult[list[TCombine]].fail(result.error)
+                return FlextResult[list[TCombine]].fail(
+                    result.error or "Combine operation failed"
+                )
             values.append(result.value)
         return FlextResult[list[TCombine]].ok(values)
 
@@ -209,11 +211,13 @@ class FlextResultCollections:
     ) -> FlextResult[UValidate]:
         """Validate a result then execute if valid."""
         if result.is_failure:
-            return FlextResult[UValidate].fail(result.error)
+            return FlextResult[UValidate].fail(result.error or "Validation failed")
 
         validation = validator(result.value)
         if validation.is_failure:
-            return FlextResult[UValidate].fail(validation.error)
+            return FlextResult[UValidate].fail(
+                validation.error or "Validation check failed"
+            )
 
         return executor(result.value)
 

@@ -47,7 +47,17 @@ class FlextTestsPerformance:
             input_sizes: list[int],
             operation_name: str = "operation",
         ) -> FlextTypes.Core.Dict:
-            """Measure function performance across different input sizes."""
+            """Measure function performance across different input sizes.
+
+            Args:
+                function: The function to measure
+                input_sizes: List of input sizes to test
+                operation_name: Name of the operation being measured
+
+            Returns:
+                FlextTypes.Core.Dict: Performance measurement results
+
+            """
             results: list[FlextTypes.Core.Dict] = []
 
             for size in input_sizes:
@@ -84,7 +94,15 @@ class FlextTestsPerformance:
             self,
             results: list[FlextTypes.Core.Dict],
         ) -> FlextTypes.Core.Dict:
-            """Analyze if the performance follows common complexity patterns."""
+            """Analyze if the performance follows common complexity patterns.
+
+            Args:
+                results: List of performance measurement results
+
+            Returns:
+                FlextTypes.Core.Dict: Complexity pattern analysis
+
+            """
             if len(results) < 2:
                 return {"pattern": "insufficient_data"}
 
@@ -135,7 +153,18 @@ class FlextTestsPerformance:
             _concurrent: bool = False,  # Currently unused but reserved for future use
             operation_name: str = "load_test",
         ) -> FlextTypes.Core.Dict:
-            """Run load test with specified iterations."""
+            """Run load test with specified iterations.
+
+            Args:
+                function: The function to test
+                iterations: Number of iterations to run
+                _concurrent: Whether to run concurrently (reserved for future use)
+                operation_name: Name of the operation being tested
+
+            Returns:
+                FlextTypes.Core.Dict: Load test results
+
+            """
             start_time = time.perf_counter()
             failures = 0
             successes = 0
@@ -174,7 +203,17 @@ class FlextTestsPerformance:
             duration_seconds: float = 60.0,
             operation_name: str = "endurance_test",
         ) -> FlextTypes.Core.Dict:
-            """Run endurance test for specified duration."""
+            """Run endurance test for specified duration.
+
+            Args:
+                function: The function to test
+                duration_seconds: Duration of the test in seconds
+                operation_name: Name of the operation being tested
+
+            Returns:
+                FlextTypes.Core.Dict: Endurance test results
+
+            """
             start_time = time.perf_counter()
             end_time = start_time + duration_seconds
 
@@ -217,7 +256,15 @@ class FlextTestsPerformance:
 
         @contextmanager
         def profile_memory(self, operation_name: str = "operation") -> Generator[None]:
-            """Profile memory usage during operation."""
+            """Profile memory usage during operation.
+
+            Args:
+                operation_name: Name of the operation being profiled
+
+            Yields:
+                None: Context manager for profiling
+
+            """
             tracemalloc.start()
             gc.collect()  # Clean up before measurement
 
@@ -251,7 +298,16 @@ class FlextTestsPerformance:
             max_memory_mb: float = 10.0,
             operation_name: str | None = None,
         ) -> None:
-            """Assert last operation was memory efficient."""
+            """Assert last operation was memory efficient.
+
+            Args:
+                max_memory_mb: Maximum allowed memory usage in MB
+                operation_name: Expected operation name to validate
+
+            Raises:
+                AssertionError: If memory usage exceeds limit or operation name mismatch
+
+            """
             if not self.measurements:
                 msg = "No measurements recorded"
                 raise AssertionError(msg)
@@ -284,7 +340,19 @@ class FlextTestsPerformance:
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> T:
-            """Benchmark function with warmup rounds for consistent results."""
+            """Benchmark function with warmup rounds for consistent results.
+
+            Args:
+                benchmark: Benchmark protocol instance
+                func: Function to benchmark
+                warmup_rounds: Number of warmup rounds
+                *args: Positional arguments for the function
+                **kwargs: Keyword arguments for the function
+
+            Returns:
+                T: Benchmark result
+
+            """
             # Warmup rounds
             for _ in range(warmup_rounds):
                 func(*args, **kwargs)
@@ -299,7 +367,18 @@ class FlextTestsPerformance:
             sizes: list[int],
             expected_complexity: str = "O(n)",
         ) -> FlextTypes.Core.Dict:
-            """Benchmark function complexity across different input sizes."""
+            """Benchmark function complexity across different input sizes.
+
+            Args:
+                benchmark: Benchmark protocol instance
+                func: Function to benchmark
+                sizes: List of input sizes to test
+                expected_complexity: Expected complexity class
+
+            Returns:
+                FlextTypes.Core.Dict: Complexity benchmark results
+
+            """
             results: dict[int, FlextTypes.Core.Dict] = {}
 
             for size in sizes:
@@ -336,7 +415,16 @@ class FlextTestsPerformance:
             results: dict[int, FlextTypes.Core.Dict],
             expected: str,
         ) -> FlextTypes.Core.Dict:
-            """Analyze time complexity from benchmark results."""
+            """Analyze time complexity from benchmark results.
+
+            Args:
+                results: Benchmark results by input size
+                expected: Expected complexity class
+
+            Returns:
+                FlextTypes.Core.Dict: Complexity analysis results
+
+            """
             sizes = sorted(results.keys())
             times: list[float] = []
             for size in sizes:
@@ -393,7 +481,20 @@ class FlextTestsPerformance:
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> T:
-            """Benchmark with regression detection."""
+            """Benchmark with regression detection.
+
+            Args:
+                benchmark: Benchmark protocol instance
+                func: Function to benchmark
+                baseline_time: Baseline execution time for comparison
+                tolerance_percent: Tolerance percentage for regression detection
+                *args: Positional arguments for the function
+                **kwargs: Keyword arguments for the function
+
+            Returns:
+                T: Benchmark result
+
+            """
             result = benchmark(func, *args, **kwargs)
             stats = getattr(benchmark, "stats", None)
             current_time = getattr(stats, "mean", 0.0) if stats else 0.0
@@ -419,13 +520,33 @@ class FlextTestsPerformance:
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> dict[int, FlextTypes.Core.Dict]:
-            """Benchmark function with different thread counts."""
+            """Benchmark function with different thread counts.
+
+            Args:
+                benchmark: Benchmark protocol instance
+                func: Function to benchmark
+                thread_counts: List of thread counts to test
+                *args: Positional arguments for the function
+                **kwargs: Keyword arguments for the function
+
+            Returns:
+                dict[int, FlextTypes.Core.Dict]: Parallel benchmark results
+
+            """
             results: dict[int, FlextTypes.Core.Dict] = {}
 
             for thread_count in thread_counts:
 
                 def parallel_execution(workers: int = thread_count) -> list[T]:
-                    """parallel_execution method."""
+                    """parallel_execution method.
+
+                    Args:
+                        workers: Number of worker threads
+
+                    Returns:
+                        list[T]: List of execution results
+
+                    """
                     with concurrent.futures.ThreadPoolExecutor(
                         max_workers=workers,
                     ) as executor:
@@ -460,7 +581,15 @@ class FlextTestsPerformance:
         @staticmethod
         @contextmanager
         def track_memory_leaks(max_increase_mb: float = 5.0) -> Generator[None]:
-            """Context manager to detect memory leaks."""
+            """Context manager to detect memory leaks.
+
+            Args:
+                max_increase_mb: Maximum allowed memory increase in MB
+
+            Yields:
+                None: Context manager for memory leak tracking
+
+            """
             gc.collect()
             tracemalloc.start()
 
@@ -495,7 +624,22 @@ class FlextTestsPerformance:
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> T:
-            """Stress test function for memory stability."""
+            """Stress test function for memory stability.
+
+            Args:
+                func: Function to stress test
+                iterations: Number of iterations to run
+                max_memory_growth_mb: Maximum allowed memory growth in MB
+                *args: Positional arguments for the function
+                **kwargs: Keyword arguments for the function
+
+            Returns:
+                T: Function result
+
+            Raises:
+                RuntimeError: If memory growth exceeds limit
+
+            """
             with FlextTestsPerformance.MemoryProfiler.track_memory_leaks(
                 max_memory_growth_mb,
             ):
@@ -522,7 +666,18 @@ class FlextTestsPerformance:
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> dict[str, float]:
-            """Benchmark async function."""
+            """Benchmark async function.
+
+            Args:
+                func: Async function to benchmark
+                iterations: Number of iterations to run
+                *args: Positional arguments for the function
+                **kwargs: Keyword arguments for the function
+
+            Returns:
+                dict[str, float]: Benchmark statistics
+
+            """
             times: list[float] = []
 
             for _ in range(iterations):
@@ -550,7 +705,18 @@ class FlextTestsPerformance:
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> dict[int, FlextTypes.Core.Dict]:
-            """Benchmark async function with different concurrency levels."""
+            """Benchmark async function with different concurrency levels.
+
+            Args:
+                func: Async function to benchmark
+                concurrency_levels: List of concurrency levels to test
+                *args: Positional arguments for the function
+                **kwargs: Keyword arguments for the function
+
+            Returns:
+                dict[int, FlextTypes.Core.Dict]: Concurrency benchmark results
+
+            """
             results: dict[int, FlextTypes.Core.Dict] = {}
 
             for concurrency in concurrency_levels:
@@ -558,7 +724,15 @@ class FlextTestsPerformance:
                 async def concurrent_execution(
                     workers: int = concurrency,
                 ) -> FlextTypes.Core.List:
-                    """concurrent_execution method."""
+                    """concurrent_execution method.
+
+                    Args:
+                        workers: Number of concurrent workers
+
+                    Returns:
+                        FlextTypes.Core.List: List of concurrent execution results
+
+                    """
                     tasks = [func(*args, **kwargs) for _ in range(workers)]
                     return await asyncio.gather(*tasks)
 
@@ -593,54 +767,113 @@ class FlextTestsPerformance:
 
         @staticmethod
         def complexity(expected: str) -> pytest.MarkDecorator:
-            """Mark test with expected complexity."""
+            """Mark test with expected complexity.
+
+            Args:
+                expected: Expected complexity class (e.g., "O(n)", "O(log n)")
+
+            Returns:
+                pytest.MarkDecorator: Pytest marker for complexity
+
+            """
             return pytest.mark.complexity(expected=expected)
 
         @staticmethod
         def memory_limit(mb: float) -> pytest.MarkDecorator:
-            """Mark test with memory limit."""
+            """Mark test with memory limit.
+
+            Args:
+                mb: Memory limit in megabytes
+
+            Returns:
+                pytest.MarkDecorator: Pytest marker for memory limit
+
+            """
             return pytest.mark.memory_limit(mb=mb)
 
         @staticmethod
         def timeout(seconds: float) -> pytest.MarkDecorator:
-            """Mark test with timeout."""
+            """Mark test with timeout.
+
+            Args:
+                seconds: Timeout in seconds
+
+            Returns:
+                pytest.MarkDecorator: Pytest marker for timeout
+
+            """
             return pytest.mark.timeout(seconds)
 
     # === Convenience Factory Methods ===
 
     @staticmethod
     def create_complexity_analyzer() -> FlextTestsPerformance.ComplexityAnalyzer:
-        """Create ComplexityAnalyzer instance."""
+        """Create ComplexityAnalyzer instance.
+
+        Returns:
+            FlextTestsPerformance.ComplexityAnalyzer: New complexity analyzer instance
+
+        """
         return FlextTestsPerformance.ComplexityAnalyzer()
 
     @staticmethod
     def create_stress_runner() -> FlextTestsPerformance.StressTestRunner:
-        """Create StressTestRunner instance."""
+        """Create StressTestRunner instance.
+
+        Returns:
+            FlextTestsPerformance.StressTestRunner: New stress test runner instance
+
+        """
         return FlextTestsPerformance.StressTestRunner()
 
     @staticmethod
     def create_profiler() -> FlextTestsPerformance.PerformanceProfiler:
-        """Create PerformanceProfiler instance."""
+        """Create PerformanceProfiler instance.
+
+        Returns:
+            FlextTestsPerformance.PerformanceProfiler: New performance profiler instance
+
+        """
         return FlextTestsPerformance.PerformanceProfiler()
 
     @staticmethod
     def create_benchmark_utils() -> FlextTestsPerformance.BenchmarkUtils:
-        """Create BenchmarkUtils instance."""
+        """Create BenchmarkUtils instance.
+
+        Returns:
+            FlextTestsPerformance.BenchmarkUtils: New benchmark utils instance
+
+        """
         return FlextTestsPerformance.BenchmarkUtils()
 
     @staticmethod
     def create_memory_profiler() -> FlextTestsPerformance.MemoryProfiler:
-        """Create MemoryProfiler instance."""
+        """Create MemoryProfiler instance.
+
+        Returns:
+            FlextTestsPerformance.MemoryProfiler: New memory profiler instance
+
+        """
         return FlextTestsPerformance.MemoryProfiler()
 
     @staticmethod
     def create_async_benchmark() -> FlextTestsPerformance.AsyncBenchmark:
-        """Create AsyncBenchmark instance."""
+        """Create AsyncBenchmark instance.
+
+        Returns:
+            FlextTestsPerformance.AsyncBenchmark: New async benchmark instance
+
+        """
         return FlextTestsPerformance.AsyncBenchmark()
 
     @staticmethod
     def create_markers() -> FlextTestsPerformance.PerformanceMarkers:
-        """Create PerformanceMarkers instance."""
+        """Create PerformanceMarkers instance.
+
+        Returns:
+            FlextTestsPerformance.PerformanceMarkers: New performance markers instance
+
+        """
         return FlextTestsPerformance.PerformanceMarkers()
 
     # === Quick Access Methods ===
@@ -649,7 +882,15 @@ class FlextTestsPerformance:
     def quick_memory_profile(
         operation_name: str = "operation",
     ) -> _GeneratorContextManager[None]:
-        """Quick access to memory profiling."""
+        """Quick access to memory profiling.
+
+        Args:
+            operation_name: Name of the operation being profiled
+
+        Returns:
+            _GeneratorContextManager[None]: Memory profiling context manager
+
+        """
         profiler = FlextTestsPerformance.PerformanceProfiler()
         return profiler.profile_memory(operation_name)
 
@@ -659,7 +900,17 @@ class FlextTestsPerformance:
         iterations: int = 1000,
         operation_name: str = "load_test",
     ) -> FlextTypes.Core.Dict:
-        """Quick access to stress testing."""
+        """Quick access to stress testing.
+
+        Args:
+            func: Function to stress test
+            iterations: Number of iterations to run
+            operation_name: Name of the operation being tested
+
+        Returns:
+            FlextTypes.Core.Dict: Stress test results
+
+        """
         runner = FlextTestsPerformance.StressTestRunner()
         return runner.run_load_test(func, iterations, operation_name=operation_name)
 
@@ -669,7 +920,17 @@ class FlextTestsPerformance:
         input_sizes: list[int],
         operation_name: str = "operation",
     ) -> FlextTypes.Core.Dict:
-        """Quick access to complexity analysis."""
+        """Quick access to complexity analysis.
+
+        Args:
+            function: Function to analyze
+            input_sizes: List of input sizes to test
+            operation_name: Name of the operation being analyzed
+
+        Returns:
+            FlextTypes.Core.Dict: Complexity analysis results
+
+        """
         analyzer = FlextTestsPerformance.ComplexityAnalyzer()
         return analyzer.measure_complexity(function, input_sizes, operation_name)
 

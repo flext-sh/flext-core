@@ -87,7 +87,15 @@ class FlextBus(FlextMixins):
         cls,
         bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
     ) -> FlextBus:
-        """Create factory helper mirroring the documented ``create_command_bus`` API."""
+        """Create factory helper mirroring the documented ``create_command_bus`` API.
+
+        Args:
+            bus_config: Bus configuration or None for defaults
+
+        Returns:
+            FlextBus: Configured command bus instance
+
+        """
         return cls(bus_config=bus_config)
 
     @staticmethod
@@ -97,7 +105,16 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a bare callable into a CQRS command handler with validation."""
+        """Wrap a bare callable into a CQRS command handler with validation.
+
+        Args:
+            handler_func: The callable function to wrap
+            handler_config: Handler configuration or None for defaults
+
+        Returns:
+            FlextHandlers: Configured command handler instance
+
+        """
 
         class SimpleHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
@@ -129,7 +146,16 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a callable into a CQRS query handler that returns `FlextResult`."""
+        """Wrap a callable into a CQRS query handler that returns `FlextResult`.
+
+        Args:
+            handler_func: The callable function to wrap
+            handler_config: Handler configuration or None for defaults
+
+        Returns:
+            FlextHandlers: Configured query handler instance
+
+        """
 
         class SimpleQueryHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
@@ -155,7 +181,15 @@ class FlextBus(FlextMixins):
         return SimpleQueryHandler()
 
     def register_handler(self, *args: object) -> FlextResult[None]:
-        """Register a handler instance (single or paired registration forms)."""
+        """Register a handler instance (single or paired registration forms).
+
+        Args:
+            *args: Handler instance(s) to register
+
+        Returns:
+            FlextResult: Success or failure result
+
+        """
         if len(args) == 1:
             handler = args[0]
             if handler is None:
@@ -231,7 +265,15 @@ class FlextBus(FlextMixins):
         return FlextResult[None].fail(msg)
 
     def find_handler(self, command: object) -> object | None:
-        """Locate the handler that can process the provided message."""
+        """Locate the handler that can process the provided message.
+
+        Args:
+            command: The command/query object to find handler for
+
+        Returns:
+            object | None: The handler instance or None if not found
+
+        """
         command_type = type(command)
         command_name = command_type.__name__
 
@@ -248,7 +290,15 @@ class FlextBus(FlextMixins):
         return None
 
     def execute(self, command: object) -> FlextResult[object]:
-        """Execute a command/query through middleware and the resolved handler."""
+        """Execute a command/query through middleware and the resolved handler.
+
+        Args:
+            command: The command or query object to execute
+
+        Returns:
+            FlextResult: Execution result
+
+        """
         # Check if bus is enabled
         if not self._config_model.enable_middleware and self._middleware:
             return FlextResult[object].fail(
@@ -334,7 +384,16 @@ class FlextBus(FlextMixins):
         command: object,
         handler: object,
     ) -> FlextResult[None]:
-        """Run the configured middleware pipeline for the current message."""
+        """Run the configured middleware pipeline for the current message.
+
+        Args:
+            command: The command/query to process
+            handler: The handler that will execute the command
+
+        Returns:
+            FlextResult: Middleware processing result
+
+        """
         if not self._config_model.enable_middleware:
             return FlextResult[None].ok(None)
 
@@ -396,7 +455,16 @@ class FlextBus(FlextMixins):
         handler: object,
         command: object,
     ) -> FlextResult[object]:
-        """Execute the handler while normalizing return types to `FlextResult`."""
+        """Execute the handler while normalizing return types to `FlextResult`.
+
+        Args:
+            handler: The handler instance to execute
+            command: The command/query to process
+
+        Returns:
+            FlextResult: Handler execution result
+
+        """
         self.logger.debug(
             "Delegating to handler",
             handler_type=handler.__class__.__name__,
@@ -430,7 +498,16 @@ class FlextBus(FlextMixins):
         middleware: object,
         middleware_config: dict[str, object] | None = None,
     ) -> FlextResult[None]:
-        """Append middleware with validated configuration metadata."""
+        """Append middleware with validated configuration metadata.
+
+        Args:
+            middleware: The middleware instance to add
+            middleware_config: Configuration for the middleware
+
+        Returns:
+            FlextResult: Success or failure result
+
+        """
         if not self._config_model.enable_middleware:
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
@@ -461,11 +538,24 @@ class FlextBus(FlextMixins):
         return FlextResult[None].ok(None)
 
     def get_all_handlers(self) -> FlextTypes.Core.List:
-        """Return all registered handler instances."""
+        """Return all registered handler instances.
+
+        Returns:
+            FlextTypes.Core.List: List of all registered handlers
+
+        """
         return list(self._handlers.values())
 
     def unregister_handler(self, command_type: type | str) -> bool:
-        """Remove a handler registration by type or name."""
+        """Remove a handler registration by type or name.
+
+        Args:
+            command_type: The command type or name to unregister
+
+        Returns:
+            bool: True if handler was removed, False otherwise
+
+        """
         for key in list(self._handlers.keys()):
             # Handle both class objects and string comparisons
             if key == command_type:
@@ -494,11 +584,24 @@ class FlextBus(FlextMixins):
         return False
 
     def send_command(self, command: object) -> FlextResult[object]:
-        """Compatibility shim that delegates to :meth:`execute`."""
+        """Compatibility shim that delegates to :meth:`execute`.
+
+        Args:
+            command: The command to send
+
+        Returns:
+            FlextResult: Execution result
+
+        """
         return self.execute(command)
 
     def get_registered_handlers(self) -> FlextTypes.Core.Dict:
-        """Expose the handler registry keyed by command identifiers."""
+        """Expose the handler registry keyed by command identifiers.
+
+        Returns:
+            FlextTypes.Core.Dict: Dictionary of registered handlers
+
+        """
         return {str(k): v for k, v in self._handlers.items()}
 
 

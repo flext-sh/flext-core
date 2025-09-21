@@ -1,9 +1,3 @@
-"""Factory Boy declarations type stubs - FLEXT testing declarations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from collections.abc import Callable
 
 class LazyAttribute:

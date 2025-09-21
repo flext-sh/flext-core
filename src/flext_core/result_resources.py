@@ -131,34 +131,34 @@ class FlextResultResources:
 
             # Add timing metadata
             if operation_result.is_success:
-                enhanced_data = (
+                success_metadata = (
                     dict(operation_result.error_data)
                     if operation_result.error_data
                     else {}
                 )
-                enhanced_data["execution_time"] = elapsed
+                success_metadata["execution_time"] = elapsed
                 return FlextResult[TTimeout].ok(operation_result.unwrap())
-            enhanced_data = (
+            failure_metadata = (
                 dict(operation_result.error_data) if operation_result.error_data else {}
             )
-            enhanced_data["execution_time"] = elapsed
+            failure_metadata["execution_time"] = elapsed
             return FlextResult[TTimeout].fail(
                 operation_result.error or "Timed operation failed",
                 error_code=operation_result.error_code,
-                error_data=enhanced_data,
+                error_data=failure_metadata,
             )
         except TimeoutError as e:
             signal.alarm(0)  # Clear timeout
 
-            # Add timing metadata
-            enhanced_data: dict[str, object] = {
+            # Add timing metadata for timeout error
+            timeout_metadata: dict[str, object] = {
                 "timeout_seconds": timeout_seconds,
                 "execution_time": time.time() - start_time,
             }
             return FlextResult[TTimeout].fail(
                 str(e),
                 error_code="TIMEOUT_ERROR",
-                error_data=enhanced_data,
+                error_data=timeout_metadata,
             )
         except Exception as e:
             signal.alarm(0)  # Clear timeout

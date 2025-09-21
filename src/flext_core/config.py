@@ -28,6 +28,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
@@ -115,7 +116,12 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
             self,
             prefix: str,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Get all environment variables with given prefix."""
+            """Get all environment variables with given prefix.
+
+            Returns:
+                FlextResult containing dictionary of environment variables with the prefix
+
+            """
             try:
                 env_vars: FlextTypes.Core.Dict = {
                     key[len(prefix) :]: value
@@ -143,7 +149,12 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
 
         @staticmethod
         def validate_runtime_requirements(config: FlextConfig) -> FlextResult[None]:
-            """Validate runtime requirements using consolidated patterns."""
+            """Validate runtime requirements using consolidated patterns.
+
+            Returns:
+                FlextResult indicating validation success or failure
+
+            """
             # Validate critical runtime parameters using railway composition
             return (
                 FlextUtilities.Validation.validate_positive_integer(
@@ -169,7 +180,12 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
 
         @staticmethod
         def validate_business_rules(config: FlextConfig) -> FlextResult[None]:
-            """Validate business rules using consolidated railway patterns."""
+            """Validate business rules using consolidated railway patterns.
+
+            Returns:
+                FlextResult indicating validation success or failure
+
+            """
 
             # Define business rule validators
             def validate_cache_consistency(cfg: FlextConfig) -> FlextResult[None]:
@@ -233,7 +249,7 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
                 FlextResult indicating save operation success or failure
 
             """
-            try:
+            try:  # noqa: PLR1702
                 # Extract data as dict
                 if hasattr(data, "model_dump"):
                     # FlextConfig or other BaseModel
@@ -793,6 +809,67 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
         le=100000,
     )
 
+    # FlextMixins Configuration - Timestamp Management
+    use_utc_timestamps: bool = Field(
+        default=True,
+        description="Use UTC timestamps in FlextMixins operations",
+    )
+
+    timestamp_auto_update: bool = Field(
+        default=True,
+        description="Automatically update timestamps on object changes",
+    )
+
+    # FlextMixins Configuration - Serialization Settings
+    json_indent: int | None = Field(
+        default=2,
+        description="JSON indentation level for FlextMixins serialization",
+        ge=0,
+        le=8,
+    )
+
+    json_sort_keys: bool = Field(
+        default=False,
+        description="Sort JSON keys in FlextMixins serialization output",
+    )
+
+    ensure_json_serializable: bool = Field(
+        default=True,
+        description="Ensure objects are JSON serializable in FlextMixins",
+    )
+
+    serialization_encoding: str = Field(
+        default="utf-8",
+        description="Default character encoding for FlextMixins serialization",
+        pattern=r"^(utf-8|ascii|latin-1|utf-16|utf-32)$",
+    )
+
+    # =============================================================================
+    # DISPATCHER CONFIGURATION - For FlextDispatcher optimization
+    # =============================================================================
+
+    dispatcher_auto_context: bool = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_AUTO_CONTEXT,
+        description="Enable automatic context management in dispatcher",
+    )
+
+    dispatcher_enable_logging: bool = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_LOGGING,
+        description="Enable dispatcher operation logging",
+    )
+
+    dispatcher_enable_metrics: bool = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_METRICS,
+        description="Enable dispatcher metrics collection",
+    )
+
+    dispatcher_timeout_seconds: int = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
+        ge=FlextConstants.Dispatcher.MIN_TIMEOUT_SECONDS,
+        le=FlextConstants.Dispatcher.MAX_TIMEOUT_SECONDS,
+        description="Default timeout for dispatcher operations in seconds",
+    )
+
     # Internal state management
     _metadata: FlextTypes.Core.Headers = PrivateAttr(default_factory=dict)
     _sealed: bool = PrivateAttr(default=False)
@@ -877,6 +954,10 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
 
         Pydantic BaseSettings automatically handles the priority:
         - Default values < Config files (passed as kwargs) < .env files < Environment variables
+
+        Returns:
+            FlextConfig: The loaded configuration instance
+
         """
         # Load .env file from current directory only (not parent directories)
         # This ensures tests in temp dirs don't pick up project .env files
@@ -943,7 +1024,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, value: str) -> str:
-        """Validate environment using consolidated validation patterns."""
+        """Validate environment using consolidated validation patterns.
+
+        Returns:
+            str: The validated environment value
+
+        Raises:
+            ValueError: If the environment value is invalid
+
+        """
         allowed_environments = FlextConstants.Config.ENVIRONMENTS
         result = FlextUtilities.Validation.validate_environment_value(
             value, allowed_environments
@@ -958,7 +1047,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("debug")
     @classmethod
     def validate_debug(cls, value: object) -> bool:
-        """Validate debug flag using consolidated validation patterns."""
+        """Validate debug flag using consolidated validation patterns.
+
+        Returns:
+            bool: The validated debug flag value
+
+        Raises:
+            ValueError: If the debug value is invalid
+
+        """
         # Cast to expected type for to_bool
         if isinstance(value, (str, bool, int)) or value is None:
             result = FlextUtilities.Conversions.to_bool(value)
@@ -974,7 +1071,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, value: str) -> str:
-        """Validate log level using consolidated validation patterns."""
+        """Validate log level using consolidated validation patterns.
+
+        Returns:
+            str: The validated log level value
+
+        Raises:
+            ValueError: If the log level value is invalid
+
+        """
         result = FlextUtilities.Validation.validate_log_level(value)
 
         if result.is_failure:
@@ -986,7 +1091,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("config_source")
     @classmethod
     def validate_config_source(cls, value: str) -> str:
-        """Validate config source using consolidated validation patterns."""
+        """Validate config source using consolidated validation patterns.
+
+        Returns:
+            str: The validated config source value
+
+        Raises:
+            ValueError: If the config source value is invalid
+
+        """
         allowed_sources = ["environment", "file", "cli", "default"]
         result = FlextUtilities.Validation.validate_environment_value(
             value, allowed_sources
@@ -1017,7 +1130,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     )
     @classmethod
     def validate_positive_integers(cls, value: int) -> int:
-        """Validate positive integers using consolidated validation patterns."""
+        """Validate positive integers using consolidated validation patterns.
+
+        Returns:
+            int: The validated positive integer value
+
+        Raises:
+            ValueError: If the value is not a positive integer
+
+        """
         result = FlextUtilities.Validation.validate_positive_integer(value, "value")
 
         if result.is_failure:
@@ -1029,7 +1150,16 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("command_retry_delay")
     @classmethod
     def validate_positive_float(cls, value: float) -> float:
-        """Validate positive float values."""
+        """Validate positive float values.
+
+        Returns:
+            float: The validated positive float value
+
+        Raises:
+            TypeError: If the value is not int or float
+            ValueError: If the value is not positive
+
+        """
         if not isinstance(value, (int, float)):
             msg = (
                 f"Invalid positive float. value must be int or float, got {type(value)}"
@@ -1046,7 +1176,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("port")
     @classmethod
     def validate_non_negative_integers(cls, value: int) -> int:
-        """Validate non-negative integers using consolidated validation patterns."""
+        """Validate non-negative integers using consolidated validation patterns.
+
+        Returns:
+            int: The validated non-negative integer value
+
+        Raises:
+            ValueError: If the value is not a non-negative integer
+
+        """
         result = FlextUtilities.Validation.validate_non_negative_integer(value, "port")
 
         if result.is_failure:
@@ -1058,7 +1196,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("host")
     @classmethod
     def validate_host(cls, value: str) -> str:
-        """Validate host using consolidated validation patterns."""
+        """Validate host using consolidated validation patterns.
+
+        Returns:
+            str: The validated host value
+
+        Raises:
+            ValueError: If the host value is invalid
+
+        """
         result = FlextUtilities.Validation.validate_host(value)
 
         if result.is_failure:
@@ -1070,7 +1216,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     @field_validator("base_url")
     @classmethod
     def validate_base_url(cls, value: str) -> str:
-        """Validate base URL using consolidated validation patterns."""
+        """Validate base URL using consolidated validation patterns.
+
+        Returns:
+            str: The validated base URL value
+
+        Raises:
+            ValueError: If the base URL value is invalid
+
+        """
         result = FlextUtilities.Validation.validate_url(value)
 
         if result.is_failure:
@@ -1081,7 +1235,15 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
 
     # Provide a runtime-callable method for tests and a Pydantic model validator
     def validate_configuration_consistency(self) -> Self:
-        """Validate cross-field configuration consistency at runtime."""
+        """Validate cross-field configuration consistency at runtime.
+
+        Returns:
+            Self: The validated configuration instance
+
+        Raises:
+            ValueError: If the configuration is inconsistent
+
+        """
         if self.environment == "development" and self.log_level in {
             "CRITICAL",
             "ERROR",
@@ -1092,7 +1254,12 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
 
     @model_validator(mode="after")
     def _validate_configuration_consistency_model(self) -> Self:  # pragma: no cover
-        """Pydantic model validator that delegates to the runtime method."""
+        """Pydantic model validator that delegates to the runtime method.
+
+        Returns:
+            Self: The validated configuration instance
+
+        """
         return self.validate_configuration_consistency()
 
     # =============================================================================
@@ -1327,11 +1494,21 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
     # =============================================================================
 
     def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate runtime requirements using consolidated patterns."""
+        """Validate runtime requirements using consolidated patterns.
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """
         return self.RuntimeValidator.validate_runtime_requirements(self)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules using consolidated patterns."""
+        """Validate business rules using consolidated patterns.
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """
         return self.BusinessValidator.validate_business_rules(self)
 
     def validate_all(self) -> FlextResult[None]:
@@ -1476,11 +1653,21 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
             )
 
     def is_sealed(self) -> bool:
-        """Check if configuration is sealed against modifications."""
+        """Check if configuration is sealed against modifications.
+
+        Returns:
+            bool: True if configuration is sealed, False otherwise
+
+        """
         return self._sealed
 
     def get_metadata(self) -> FlextTypes.Core.Headers:
-        """Get configuration creation and modification metadata."""
+        """Get configuration creation and modification metadata.
+
+        Returns:
+            FlextTypes.Core.Headers: Dictionary containing metadata
+
+        """
         return dict(self._metadata)
 
     def set_metadata(self, key: str, value: str) -> None:
@@ -1488,7 +1675,16 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
         self._metadata[key] = value
 
     def __setattr__(self, name: str, value: object) -> None:
-        """Prevent modification of sealed configuration fields."""
+        """Prevent modification of sealed configuration fields.
+
+        Args:
+            name: Attribute name
+            value: Attribute value
+
+        Raises:
+            AttributeError: If trying to modify a sealed configuration field
+
+        """
         if (
             getattr(self, "_sealed", False)
             and name in cast("BaseModel", self).model_fields
@@ -1550,7 +1746,16 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
         indent: int | None = None,
         by_alias: bool = True,
     ) -> str:
-        """Export configuration as JSON string with consistent formatting."""
+        """Export configuration as JSON string with consistent formatting.
+
+        Args:
+            indent: JSON indentation level
+            by_alias: Whether to use field aliases
+
+        Returns:
+            str: JSON string representation of configuration
+
+        """
         return cast("BaseModel", self).model_dump_json(
             exclude={"_metadata", "_sealed"},
             by_alias=by_alias,
@@ -1568,6 +1773,13 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
         This "safe" loader prioritizes resiliency over strict validation to
         satisfy tests that expect graceful handling of partially invalid input.
         It creates a baseline instance and applies provided, non-None fields.
+
+        Args:
+            _data: Configuration data as dictionary or JSON string
+
+        Returns:
+            FlextResult containing loaded configuration or error details
+
         """
         try:
             # Support JSON string input for convenience
@@ -1724,6 +1936,14 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
 
         The override dictionary takes precedence over values from the base
         configuration. Returns a new validated configuration instance.
+
+        Args:
+            _base: Base configuration instance
+            _override: Override values dictionary
+
+        Returns:
+            FlextResult containing merged configuration or error details
+
         """
         try:
             base_dict = _base.to_dict()
@@ -1747,6 +1967,33 @@ class FlextConfig(BaseSettings):  # noqa: PLR0904
                 f"Configuration merge failed: {error}",
                 error_code="CONFIG_MERGE_ERROR",
             )
+
+    def get_cqrs_bus_config(self) -> FlextResult[object]:
+        """Get CQRS bus configuration from current FlextConfig instance.
+
+        Returns:
+            FlextResult containing validated bus configuration
+
+        """
+        try:
+            # Create bus configuration using current instance values
+            bus_config = FlextModels.CqrsConfig.create_bus_config({
+                "enable_middleware": self.enable_middleware,
+                "enable_metrics": self.bus_enable_metrics,
+                "enable_caching": self.bus_enable_caching,
+                "command_timeout": self.command_timeout,
+                "max_command_retries": self.max_command_retries,
+                "command_retry_delay": self.command_retry_delay,
+                "cache_enabled": self.cache_enabled,
+                "cache_ttl": self.cache_ttl,
+                "max_cache_size": self.max_cache_size,
+                "middleware_execution_timeout": self.middleware_execution_timeout,
+            })
+            return FlextResult[object].ok(bus_config)
+        except Exception:
+            # Fallback to default configuration
+            default_config = FlextModels.CqrsConfig.create_bus_config(None)
+            return FlextResult[object].ok(default_config)
 
 
 __all__ = ["FlextConfig"]

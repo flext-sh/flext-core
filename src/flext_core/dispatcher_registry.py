@@ -60,7 +60,7 @@ class FlextDispatcherRegistry:
         Re-registration is ignored and treated as success to guarantee
         idempotent behaviour when multiple packages attempt to register
         the same handler.
-        
+
         Returns:
             FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
@@ -81,7 +81,7 @@ class FlextDispatcherRegistry:
         handlers: Iterable[FlextHandlers[MessageT, ResultT]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
         """Register multiple handlers in one shot using railway pattern.
-        
+
         Returns:
             FlextResult[FlextDispatcherRegistry.Summary]: Success result with registration summary.
 
@@ -101,7 +101,7 @@ class FlextDispatcherRegistry:
         summary: FlextDispatcherRegistry.Summary,
     ) -> FlextResult[None]:
         """Process a single handler registration.
-        
+
         Returns:
             FlextResult[None]: Success result if registration succeeds.
 
@@ -139,7 +139,7 @@ class FlextDispatcherRegistry:
         summary: FlextDispatcherRegistry.Summary,
     ) -> str:
         """Add registration error to summary.
-        
+
         Returns:
             str: The error message that was added.
 
@@ -152,7 +152,7 @@ class FlextDispatcherRegistry:
         summary: FlextDispatcherRegistry.Summary,
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
         """Finalize summary based on error state.
-        
+
         Returns:
             FlextResult[FlextDispatcherRegistry.Summary]: Success result with summary or failure result with errors.
 
@@ -168,7 +168,7 @@ class FlextDispatcherRegistry:
         bindings: Sequence[tuple[type[MessageT], FlextHandlers[MessageT, ResultT]]],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
         """Register handlers bound to explicit message types.
-        
+
         Returns:
             FlextResult[FlextDispatcherRegistry.Summary]: Success result with registration summary.
 
@@ -214,7 +214,7 @@ class FlextDispatcherRegistry:
         ],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
         """Register plain callables or pre-built handlers for message types.
-        
+
         Returns:
             FlextResult[FlextDispatcherRegistry.Summary]: Success result with registration summary.
 

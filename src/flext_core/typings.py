@@ -297,6 +297,15 @@ TResult = TypeVar("TResult")
 TUtil = TypeVar("TUtil")
 TValueObject = TypeVar("TValueObject")
 
+# Additional TypeVars for result extension modules
+TResource = TypeVar("TResource")
+TTimeout = TypeVar("TTimeout")
+UResource = TypeVar("UResource")
+TConcurrent = TypeVar("TConcurrent")
+TAccumulate = TypeVar("TAccumulate")
+TParallel = TypeVar("TParallel")
+UParallel = TypeVar("UParallel")
+
 # Type alias for Optional to avoid Union syntax (module-level export)
 type Optional[T] = T | None
 
@@ -313,8 +322,10 @@ __all__: list[str] = [
     "P",
     "R",
     "T",
+    "TAccumulate",
     "TAggregate",
     "TCommand",
+    "TConcurrent",
     "TDomain",
     "TDomainResult",
     "TEntity",
@@ -323,15 +334,20 @@ __all__: list[str] = [
     "TItem",
     "TMessage",
     "TOutput_co",
+    "TParallel",
     "TQuery",
     "TRequest",
+    "TResource",
     "TResponse",
     "TResult",
+    "TTimeout",
     "TUtil",
     "TValueObject",
     "T_Service",
     "T_co",
     "T_contra",
     "U",
+    "UParallel",
+    "UResource",
     "V",
 ]

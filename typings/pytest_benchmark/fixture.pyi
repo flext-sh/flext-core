@@ -1,9 +1,3 @@
-"""Pytest benchmark fixture type stubs - FLEXT performance testing fixtures.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from collections.abc import Callable
 from typing import TypeVar
 
