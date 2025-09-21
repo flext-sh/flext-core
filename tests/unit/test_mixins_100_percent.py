@@ -102,10 +102,6 @@ class TestFlextMixins100Percent:
         assert hasattr(obj, "validated")
         assert obj.validated is True
 
-    def test_start_timing(self) -> None:
-        """Test start_timing - lines 76."""
-        obj = Mock()
-        FlextMixins.start_timing(obj)  # Should not raise
 
     def test_clear_cache(self) -> None:
         """Test clear_cache - lines 80."""

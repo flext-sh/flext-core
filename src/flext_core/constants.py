@@ -227,5 +227,55 @@ class FlextConstants:
             NORMAL = "normal"  # Usage count: 0
             RELAXED = "relaxed"  # Usage count: 0
 
+    class Cqrs:
+        """CQRS (Command Query Responsibility Segregation) constants."""
+
+        # Handler types
+        DEFAULT_HANDLER_TYPE: Final[str] = "command"
+        COMMAND_HANDLER_TYPE: Final[str] = "command"
+        QUERY_HANDLER_TYPE: Final[str] = "query"
+
+        # Timeout constants
+        DEFAULT_TIMEOUT: Final[int] = 30000  # milliseconds
+        MIN_TIMEOUT: Final[int] = 1000      # milliseconds
+        MAX_TIMEOUT: Final[int] = 300000    # milliseconds (5 minutes)
+
+        # Retry constants
+        DEFAULT_RETRIES: Final[int] = 0
+        MIN_RETRIES: Final[int] = 0
+        MAX_RETRIES: Final[int] = 5
+
+        # Pagination constants
+        DEFAULT_PAGE_SIZE: Final[int] = 10
+        MAX_PAGE_SIZE: Final[int] = 1000
+
+    class Container:
+        """Container configuration constants for FlextContainer."""
+
+        # Worker configuration
+        MAX_WORKERS: Final[int] = 4
+        MIN_WORKERS: Final[int] = 1
+        DEFAULT_WORKERS: Final[int] = 2
+
+        # Timeout configuration
+        TIMEOUT_SECONDS: Final[float] = 30.0
+        MIN_TIMEOUT_SECONDS: Final[float] = 0.1
+        MAX_TIMEOUT_SECONDS: Final[float] = 600.0
+
+        # Registration limits
+        MAX_SERVICES: Final[int] = 1000
+        MAX_FACTORIES: Final[int] = 500
+
+    class Logging:
+        """Logging configuration constants."""
+
+        # Log levels
+        DEFAULT_LEVEL: Final[str] = "INFO"
+        VALID_LEVELS: Final[set[str]] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+
+        # Log formatting
+        DEFAULT_FORMAT: Final[str] = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        DATE_FORMAT: Final[str] = "%Y-%m-%d %H:%M:%S"
+
 
 __all__ = ["FlextConstants"]

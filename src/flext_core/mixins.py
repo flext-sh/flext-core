@@ -92,10 +92,6 @@ class FlextMixins:
             setattr(obj, "validated", True)
 
     @staticmethod
-    def start_timing(obj: object) -> None:
-        """Start timing for object."""
-
-    @staticmethod
     def clear_cache(obj: object) -> None:
         """Clear cache for object."""
 

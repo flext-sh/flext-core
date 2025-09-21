@@ -33,7 +33,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextConfig(BaseSettings):
+class FlextConfig(BaseSettings):  # noqa: PLR0904
     """Canonical configuration manager mandated by the modernization plan.
 
     The class merges environment variables, dotenv files, and typed runtime
@@ -72,7 +72,12 @@ class FlextConfig(BaseSettings):
             self,
             prefix: str,
         ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Get all environment variables with given prefix."""
+            """Get all environment variables with given prefix.
+
+            Returns:
+                FlextResult containing dictionary of environment variables with the prefix
+
+            """
 
     class DefaultEnvironmentAdapter(EnvironmentConfigAdapter):
         """Default adapter that resolves values from ``os.environ``.
