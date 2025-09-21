@@ -157,7 +157,7 @@ class FlextModels:
                 event_type=event_name,
                 aggregate_id=self.id,
                 data=data,
-                occurred_at=datetime.now(UTC)
+                occurred_at=datetime.now(UTC),
             )
             self.domain_events.append(domain_event)
 
@@ -1518,6 +1518,8 @@ class FlextModels:
         headers: dict[str, str] = Field(default_factory=dict)
         query_params: dict[str, str] = Field(default_factory=dict)
         correlation_id: str | None = None
+        user_id: str | None = None
+        endpoint: str | None = None
 
         @model_validator(mode="after")
         def validate_request_context(self) -> Self:

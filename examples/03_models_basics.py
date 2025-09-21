@@ -55,7 +55,7 @@ class Email(FlextModels.Value):
         return FlextResult[None].ok(None)
 
     @classmethod
-    def create(cls, *args: object, **kwargs: object) -> FlextResult[Email]:  # type: ignore[override]
+    def create(cls, *args: object, **kwargs: object) -> FlextResult[Email]:
         """Factory method with validation."""
         address = cast("str", args[0] if args else kwargs.get("address", ""))
         email = cls(address=address.lower().strip())
@@ -171,7 +171,7 @@ class Customer(FlextModels.Entity):
         # Convert object values to proper types for Pydantic
         typed_data: dict[str, object] = dict(data.items())
 
-        super().__init__(**typed_data)  # type: ignore[misc]
+        super().__init__(**typed_data)
 
     def can_purchase(self, amount: Money) -> FlextResult[bool]:
         """Check if customer can make purchase."""
@@ -263,7 +263,7 @@ class Order(FlextModels.AggregateRoot):
         # Convert object values to proper types for Pydantic
         typed_data: dict[str, object] = dict(data.items())
 
-        super().__init__(**typed_data)  # type: ignore[misc]
+        super().__init__(**typed_data)
 
     def add_line(self, product: Product, quantity: int) -> FlextResult[None]:
         """Add order line with stock validation."""
