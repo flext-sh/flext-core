@@ -520,15 +520,15 @@ class FlextContainer:
     def _apply_config_to_container(
         self, normalized_config: dict[str, object]
     ) -> FlextResult[object]:
-        """Apply normalized configuration to container."""
-        config_result = FlextConfig.create(constants=normalized_config)
-        if config_result.is_failure:
-            return FlextResult[object].fail(
-                f"Configuration creation failed: {config_result.error}"
-            )
+        """Apply normalized configuration to container.
 
-        self._flext_config = config_result.value
-        return FlextResult[object].ok("Container configured successfully")
+        Returns:
+            FlextResult containing configuration application result or error
+
+        """
+        # This method is now deprecated - configuration is handled directly
+        # in configure_container using Pydantic models
+        return FlextResult[object].ok("Configuration applied via Pydantic model")
 
     @property
     def database_config(self) -> FlextTypes.Core.Dict | None:

@@ -193,13 +193,25 @@ class FlextProcessing:
             )
 
         def process_batch(
-            self,
-            data_items: list[object],
-            fail_fast: bool = True,
+            self, config: FlextModels.Processing.BatchProcessingConfig
         ) -> FlextResult[list[object]]:
-            """Process batch of data using advanced railway patterns."""
+            """Process batch of data using validated BatchProcessingConfig model.
+
+            Args:
+                config: BatchProcessingConfig model with data items and processing options
+
+            Returns:
+                FlextResult containing list of processed data items
+
+            """
+            # Use Pydantic validation from the model
+            validation_result = config.validate_batch()
+            if validation_result.is_failure:
+                return FlextResult[list[object]].fail(validation_result.error)
+
+            # Process all data items using parallel processing
             return FlextResult.parallel_map(
-                data_items, self.process, fail_fast=fail_fast
+                config.data_items, self.process, fail_fast=config.fail_fast
             )
 
         def process_with_validation(

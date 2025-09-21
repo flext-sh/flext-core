@@ -229,7 +229,7 @@ class FlextDispatcher:
         self,
         metadata: FlextTypes.Core.Dict | None = None,
     ) -> Generator[None]:
-        if not self._auto_context:
+        if not self._config.auto_context:
             yield
             return
 
@@ -238,19 +238,21 @@ class FlextDispatcher:
         with FlextContext.Correlation.inherit_correlation() as correlation_id:
             if metadata:
                 metadata_token = metadata_var.set(metadata)
-            self._logger.debug(
-                "dispatch_context_entered",
-                correlation_id=correlation_id,
-            )
+            if self._config.enable_logging:
+                self._logger.debug(
+                    "dispatch_context_entered",
+                    correlation_id=correlation_id,
+                )
             try:
                 yield
             finally:
                 if metadata_token is not None:
                     metadata_var.reset(metadata_token)
-                self._logger.debug(
-                    "dispatch_context_exited",
-                    correlation_id=correlation_id,
-                )
+                if self._config.enable_logging:
+                    self._logger.debug(
+                        "dispatch_context_exited",
+                        correlation_id=correlation_id,
+                    )
 
 
 __all__ = ["FlextDispatcher"]
