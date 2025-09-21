@@ -102,9 +102,9 @@ class TestFlextContainer100Percent:
         result1 = container.register_factory("test_factory", test_factory)
         FlextTestsMatchers.assert_result_success(result1)
 
-        # Try to register same factory again - this should succeed (overwrites)
+        # Try to register same factory again - this should fail (no overwrites allowed)
         result2 = container.register_factory("test_factory", test_factory)
-        FlextTestsMatchers.assert_result_success(result2)
+        FlextTestsMatchers.assert_result_failure(result2)
 
     def test_create_module_utilities_comprehensive(self) -> None:
         """Test module utilities creation comprehensively."""
@@ -306,7 +306,7 @@ class TestFlextContainer100Percent:
 
     def test_complex_dependency_injection_scenario(self) -> None:
         """Test complex dependency injection scenarios."""
-        container = FlextTestsBuilders().create_test_container()
+        container = FlextContainer()  # Use clean container to avoid pre-registered services
 
         # Create complex service with dependencies
         config = FlextTestsDomains.create_configuration()
