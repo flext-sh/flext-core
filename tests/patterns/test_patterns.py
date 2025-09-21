@@ -23,6 +23,7 @@ import pytest
 from hypothesis import assume, given, strategies as st
 
 from flext_core import FlextTypes, T
+from flext_core.constants import FlextConstants
 from flext_tests import (
     FlextTestsAsyncs,
     FlextTestsHypothesis,
@@ -880,7 +881,7 @@ class TestRealWorldScenarios:
         assert config["timeout_seconds"] > 0
 
         # Validate environment
-        assert config["environment"] in {"development", "staging", "production"}
+        assert config["environment"] in set(FlextConstants.Config.ENVIRONMENTS)
 
         # Build test scenario for this configuration
         scenario = (
