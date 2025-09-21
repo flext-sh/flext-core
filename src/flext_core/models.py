@@ -1477,21 +1477,33 @@ class FlextModels:
 
         app_name: str
         app_version: str
-        environment: str
+        environment: FlextTypes.Config.Environment
         host: str | None = None
         metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
         permanent_context: FlextTypes.Core.Dict = Field(default_factory=dict)
         replace_existing: bool = False
         merge_strategy: Literal["replace", "update", "merge_deep"] = "update"
 
-        @model_validator(mode="after")
-        def validate_permanent_context(self) -> Self:
-            """Validate permanent context."""
-            valid_envs = {"development", "testing", "staging", "production"}
-            if self.environment.lower() not in valid_envs:
-                msg = f"Invalid environment: {self.environment}"
+        @field_validator("environment", mode="before")
+        @classmethod
+        def normalize_environment(
+            cls, value: str | FlextTypes.Config.Environment
+        ) -> FlextTypes.Config.Environment:
+            """Normalize and validate environment against shared constants."""
+
+            if not isinstance(value, str):
+                msg = "Environment must be provided as a string"
                 raise ValueError(msg)
-            return self
+
+            normalized = value.lower()
+            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
+            if normalized not in valid_envs:
+                msg = (
+                    "Environment must be one of "
+                    f"{sorted(valid_envs)}"
+                )
+                raise ValueError(msg)
+            return cast("FlextTypes.Config.Environment", normalized)
 
     class OperationTrackingModel(ArbitraryTypesModel):
         """Operation tracking model."""
