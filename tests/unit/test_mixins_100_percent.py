@@ -155,7 +155,10 @@ class TestFlextMixins100Percent:
         """Test initialize_state - lines 110-111."""
         obj = Mock()
         obj.state = None
-        FlextMixins.initialize_state(obj, "active")
+        request = FlextModels.StateInitializationRequest(
+            data=obj, state_key="state", initial_value="active", state="active"
+        )
+        FlextMixins.initialize_state(request)
         assert obj.state == "active"
 
     def test_to_dict_with_model_dump(self) -> None:

@@ -669,7 +669,7 @@ class TestFlextModelsUrlValidationEdgeCases:
         for url in valid_urls:
             result = FlextModels.Url.create(url)
             assert result.success
-            assert result.data is not None and result.data.value == url
+            assert result.data is not None and result.data.url == url
 
 
 class TestHelperFunctionsRealFunctionality:
@@ -1475,7 +1475,7 @@ class TestFlextModelsValidationFunctionsMissingCoverage:
         """Test create_validated_email with valid email."""
         result = FlextModels.create_validated_email("test@example.com")
         assert result.is_success
-        assert result.value == "test@example.com"
+        assert result.value.address == "test@example.com"
 
     def test_create_validated_email_failure(self) -> None:
         """Test create_validated_email with invalid email."""
@@ -1570,7 +1570,7 @@ class TestFlextModelsValidationFunctionsMissingCoverage:
         """Test create_validated_directory_path with valid directory."""
         result = FlextModels.create_validated_directory_path("src")
         assert result.is_success
-        assert result.value == "src"
+        assert str(result.value) == "src"
 
     def test_create_validated_directory_path_failure(self) -> None:
         """Test create_validated_directory_path with invalid directory."""

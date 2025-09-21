@@ -169,7 +169,7 @@ class Customer(FlextModels.Entity):
         # Convert object values to proper types for Pydantic
         typed_data: dict[str, object] = dict(data.items())
 
-        super().__init__(**typed_data)  # type: ignore[arg-type]
+        super().__init__(**typed_data)
 
     def can_purchase(self, amount: Money) -> FlextResult[bool]:
         """Check if customer can make purchase."""
@@ -261,7 +261,7 @@ class Order(FlextModels.AggregateRoot):
         # Convert object values to proper types for Pydantic
         typed_data: dict[str, object] = dict(data.items())
 
-        super().__init__(**typed_data)  # type: ignore[arg-type]
+        super().__init__(**typed_data)
 
     def add_line(self, product: Product, quantity: int) -> FlextResult[None]:
         """Add order line with stock validation."""
