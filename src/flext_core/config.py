@@ -21,6 +21,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
@@ -430,11 +431,11 @@ class FlextConfig(BaseSettings):
             self.environment == FlextConstants.Environment.ConfigEnvironment.PRODUCTION
         )
 
-    def get_logging_config(self) -> dict[str, object]:
+    def get_logging_config(self) -> FlextTypes.Core.Dict:
         """Get logging configuration dictionary using FlextConstants.Logging defaults.
 
         Returns:
-            dict[str, object]: Logging configuration dictionary.
+            FlextTypes.Core.Dict: Logging configuration dictionary.
 
         """
         return {
@@ -457,11 +458,11 @@ class FlextConfig(BaseSettings):
             "log_verbosity": self.log_verbosity,
         }
 
-    def get_database_config(self) -> dict[str, object]:
+    def get_database_config(self) -> FlextTypes.Core.Dict:
         """Get database configuration dictionary.
 
         Returns:
-            dict[str, object]: Database configuration dictionary.
+            FlextTypes.Core.Dict: Database configuration dictionary.
 
         """
         return {
@@ -469,11 +470,11 @@ class FlextConfig(BaseSettings):
             "pool_size": self.database_pool_size,
         }
 
-    def get_cache_config(self) -> dict[str, object]:
+    def get_cache_config(self) -> FlextTypes.Core.Dict:
         """Get cache configuration dictionary.
 
         Returns:
-            dict[str, object]: Cache configuration dictionary.
+            FlextTypes.Core.Dict: Cache configuration dictionary.
 
         """
         return {
@@ -537,11 +538,11 @@ class FlextConfig(BaseSettings):
 
         return cls.model_validate(config_data)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         """Convert configuration to dictionary.
 
         Returns:
-            dict[str, object]: Configuration as dictionary.
+            FlextTypes.Core.Dict: Configuration as dictionary.
 
         """
         return self.model_dump()
@@ -555,11 +556,11 @@ class FlextConfig(BaseSettings):
         """
         return self.model_dump_json(indent=2)
 
-    def merge(self, other: FlextConfig | dict[str, object]) -> FlextConfig:
+    def merge(self, other: FlextConfig | FlextTypes.Core.Dict) -> FlextConfig:
         """Merge with another configuration, returning new instance.
 
         Args:
-            other: Another FlextConfig instance or dictionary to merge with.
+            other: Another FlextConfig instance or FlextTypes.Core.Dict to merge with.
 
         Returns:
             FlextConfig: New configuration instance with merged values.
@@ -602,11 +603,11 @@ class FlextConfig(BaseSettings):
         with cls._global_lock:
             cls._global_instance = None
 
-    def get_cqrs_bus_config(self) -> object:
+    def get_cqrs_bus_config(self) -> FlextTypes.Core.Dict:
         """Get CQRS bus configuration.
 
         Returns:
-            dict: CQRS bus configuration dictionary.
+            FlextTypes.Core.Dict: CQRS bus configuration dictionary.
 
         """
         return {
@@ -629,11 +630,11 @@ class FlextConfig(BaseSettings):
         """
         return cls.model_validate(kwargs)
 
-    def get_metadata(self) -> dict[str, object]:
+    def get_metadata(self) -> FlextTypes.Core.Dict:
         """Get configuration metadata.
 
         Returns:
-            dict[str, object]: Configuration metadata dictionary.
+            FlextTypes.Core.Dict: Configuration metadata dictionary.
 
         """
         return {
