@@ -15,12 +15,14 @@ from typing import ClassVar, Self
 import yaml
 from pydantic import (
     Field,
+    ValidationError,
     field_validator,
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 
 
 class FlextConfig(BaseSettings):
@@ -534,6 +536,27 @@ class FlextConfig(BaseSettings):
         current_data = self.to_dict()
         merged_data = {**current_data, **other_data}
         return self.__class__.model_validate(merged_data)
+
+    def validate_all(self) -> FlextResult[Self]:
+        """Re-run validation on the current configuration state."""
+
+        try:
+            validated = self.__class__.model_validate(self.model_dump())
+        except ValidationError as exc:
+            error_messages = "; ".join(
+                ".".join(str(part) for part in error.get("loc", [])) + ": " + error.get("msg", "")
+                if error.get("loc")
+                else error.get("msg", "")
+                for error in exc.errors()
+            )
+            error_messages = error_messages or str(exc)
+            return FlextResult[Self].fail(
+                f"Configuration validation failed: {error_messages}",
+                error_code="CONFIG_VALIDATION_ERROR",
+                error_data={"errors": exc.errors()},
+            )
+
+        return FlextResult[Self].ok(validated)
 
     # Global instance management
     _global_instance: ClassVar[FlextConfig | None] = None

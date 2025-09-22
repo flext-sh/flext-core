@@ -56,10 +56,12 @@ class TestStandardizedExample:
 
         assert config.app_name == "fixture_test"
 
-        # Test config validation - FlextConfig validates via Pydantic, not validate_all method
-        # The configuration is already validated during creation
-        assert config.app_name == "fixture_test"
-        assert config.environment in {
+        # Validate configuration state using the dedicated API and ensure it succeeds
+        validation_result = config.validate_all()
+        FlextTestsMatchers.assert_result_success(validation_result)
+        assert isinstance(validation_result.unwrap(), FlextConfig)
+        assert validation_result.unwrap().app_name == "fixture_test"
+        assert validation_result.unwrap().environment in {
             "development",
             "staging",
             "production",

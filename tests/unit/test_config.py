@@ -18,7 +18,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextConfig, FlextConstants
+from flext_core import FlextConfig, FlextConstants, FlextResult
 
 
 class TestFlextConfigBasics:
@@ -285,6 +285,33 @@ class TestFlextConfigInstanceMethods:
         assert merged.max_workers == 8
         assert merged.timeout_seconds == 60
         assert merged.version == "1.0.0"  # Preserved from base
+
+    def test_validate_all_success(self) -> None:
+        """Validate all returns success when configuration state is valid."""
+
+        config = FlextConfig(app_name="validate_success")
+
+        result = config.validate_all()
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success is True
+        validated = result.unwrap()
+        assert isinstance(validated, FlextConfig)
+        assert validated.app_name == "validate_success"
+
+    def test_validate_all_failure(self) -> None:
+        """Validate all returns descriptive failure when data becomes invalid."""
+
+        config = FlextConfig()
+        config.__dict__["log_level"] = "invalid"
+
+        result = config.validate_all()
+
+        assert result.is_failure is True
+        assert result.error is not None
+        assert "Configuration validation failed" in result.error
+        assert result.error_code == "CONFIG_VALIDATION_ERROR"
+        assert result.error_data.get("errors")
 
 
 class TestFlextConfigGlobalInstance:
