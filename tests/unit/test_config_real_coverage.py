@@ -170,6 +170,7 @@ class TestFlextConfigRealCoverage:
             json_output=True,
             include_source=False,
             structured_output=True,
+            log_verbosity="full",
             database_url="postgresql://user:pass@localhost/db",
             database_pool_size=20,
             cache_ttl=600,
@@ -183,6 +184,7 @@ class TestFlextConfigRealCoverage:
         assert logging_config["json_output"] is True
         assert logging_config["include_source"] is False
         assert logging_config["structured_output"] is True
+        assert logging_config["log_verbosity"] == FlextConstants.Logging.VERBOSITY
 
         # Test get_database_config
         db_config = config.get_database_config()
@@ -198,6 +200,7 @@ class TestFlextConfigRealCoverage:
         # Test get_cqrs_bus_config
         cqrs_config = config.get_cqrs_bus_config()
         assert isinstance(cqrs_config, dict)
+        assert cqrs_config["log_verbosity"] == "full"
 
     def test_create_for_environment(self) -> None:
         """Test create_for_environment class method."""
