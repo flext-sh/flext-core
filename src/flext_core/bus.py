@@ -497,14 +497,19 @@ class FlextBus(FlextMixins):
         # Try different handler methods in order of preference
         handler_methods = ["execute", "handle", "process_command"]
 
+        last_failure: FlextResult[object] | None = None
+
         for method_name in handler_methods:
             method = getattr(handler, method_name, None)
             if callable(method):
                 try:
                     result = method(command)
                     if isinstance(result, FlextResult):
-                        # Result is already a FlextResult, just return it
-                        return cast("FlextResult[object]", result)
+                        typed_result = cast("FlextResult[object]", result)
+                        if typed_result.is_success:
+                            return typed_result
+                        last_failure = typed_result
+                        continue
                     return FlextResult[object].ok(result)
                 except Exception as e:
                     return FlextResult[object].fail(
@@ -513,6 +518,9 @@ class FlextBus(FlextMixins):
                     )
 
         # No valid handler method found
+        if last_failure is not None:
+            return last_failure
+
         return FlextResult[object].fail(
             "Handler has no callable execute, handle, or process_command method",
             error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
@@ -583,42 +591,61 @@ class FlextBus(FlextMixins):
         """
         return list(self._handlers.values())
 
-    def unregister_handler(self, command_type: type | str) -> bool:
+    def unregister_handler(self, command_type: type | str) -> FlextResult[None]:
         """Remove a handler registration by type or name.
 
         Args:
-            command_type: The command type or name to unregister
+            command_type: The command type or name to unregister.
 
         Returns:
-            bool: True if handler was removed, False otherwise
+            FlextResult[None]: Success when the handler was removed with contextual
+            metadata, or failure when no matching handler exists.
 
         """
+        command_identifier = (
+            command_type
+            if isinstance(command_type, str)
+            else getattr(command_type, "__name__", str(command_type))
+        )
+
         for key in list(self._handlers.keys()):
-            # Handle both class objects and string comparisons
-            if key == command_type:
-                # Direct match (class object)
+            key_identifier = getattr(key, "__name__", str(key))
+            direct_match = key == command_type
+            name_match = isinstance(command_type, str) and (
+                key_identifier == command_type or str(key) == command_type
+            )
+
+            if direct_match or name_match:
                 del self._handlers[key]
+                remaining = len(self._handlers)
+                message = f"Handler '{key_identifier}' unregistered"
+
                 self.logger.info(
                     "Handler unregistered",
-                    command_type=getattr(command_type, "__name__", str(command_type)),
-                    remaining_handlers=len(self._handlers),
+                    command_type=key_identifier,
+                    remaining_handlers=remaining,
                 )
-                return True
-            if isinstance(command_type, str):
-                # String comparison
-                key_name = getattr(key, "__name__", None)
-                if (key_name is not None and key_name == command_type) or str(
-                    key,
-                ) == command_type:
-                    del self._handlers[key]
-                    self.logger.info(
-                        "Handler unregistered",
-                        command_type=command_type,
-                        remaining_handlers=len(self._handlers),
-                    )
-                    return True
 
-        return False
+                return FlextResult[None](
+                    data=None,
+                    error_data={
+                        "message": message,
+                        "command_type": key_identifier,
+                        "remaining_handlers": remaining,
+                    },
+                )
+
+        failure_message = f"No handler registered for {command_identifier}"
+        self.logger.warning(
+            "Handler unregistration failed",
+            command_type=command_identifier,
+        )
+
+        return FlextResult[None].fail(
+            failure_message,
+            error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
+            error_data={"command_type": command_identifier},
+        )
 
     def send_command(self, command: object) -> FlextResult[object]:
         """Compatibility shim that delegates to :meth:`execute`.
