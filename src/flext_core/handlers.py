@@ -485,7 +485,18 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             elif isinstance(slots, (list, tuple)):
                 slot_names = tuple(slots)
             else:
-                slot_names = (str(slots),)
+                raise FlextExceptions.TypeError(
+                    f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}",
+                    expected_type="str, list, or tuple",
+                    actual_type=type(slots).__name__,
+                    context={
+                        "operation": context_operation,
+                        "message_type": type(message).__name__,
+                        "validation_type": "serializable_check",
+                        "__slots__": repr(slots),
+                    },
+                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                )
 
             return {
                 slot_name: getattr(message, slot_name)
