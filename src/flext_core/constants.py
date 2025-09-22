@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, Final
 
+from .typings import FlextTypes
+
 
 class FlextConstants:
     """Essential constants mirroring the modernization plan defaults.
@@ -603,7 +605,7 @@ class FlextConstants:
         class Environment:
             """Environment-specific logging configuration overrides."""
 
-            DEVELOPMENT: Final[dict[str, object]] = {
+            DEVELOPMENT: Final[FlextTypes.Core.Dict] = {
                 "level": "DEBUG",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -612,7 +614,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            STAGING: Final[dict[str, object]] = {
+            STAGING: Final[FlextTypes.Core.Dict] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -621,7 +623,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            PRODUCTION: Final[dict[str, object]] = {
+            PRODUCTION: Final[FlextTypes.Core.Dict] = {
                 "level": "WARNING",
                 "console_enabled": False,
                 "file_enabled": True,
@@ -630,7 +632,7 @@ class FlextConstants:
                 "track_performance": False,
             }
 
-            TESTING: Final[dict[str, object]] = {
+            TESTING: Final[FlextTypes.Core.Dict] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": False,
