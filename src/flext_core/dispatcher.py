@@ -538,9 +538,8 @@ class FlextDispatcher:
             # Use provided correlation ID or the inherited one
             effective_correlation_id = correlation_id or active_correlation_id
 
-            normalized_metadata = self._normalize_context_metadata(metadata)
-            if normalized_metadata:
-                metadata_token = metadata_var.set(normalized_metadata)
+            if metadata:
+                metadata_token = metadata_var.set(metadata)
 
             if self._config.get("enable_logging"):
                 self._logger.debug(
