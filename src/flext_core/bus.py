@@ -145,7 +145,6 @@ class FlextBus(FlextMixins):
             mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
             handler_config=handler_config,
             handler_name=handler_name,
-        )
 
     @staticmethod
     def create_query_handler(
@@ -154,7 +153,16 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a callable into a CQRS query handler that returns `FlextResult`."""
+        """Wrap a callable into a CQRS query handler that returns `FlextResult`.
+
+        Args:
+            handler_func: The callable function to wrap
+            handler_config: Handler configuration or None for defaults
+
+        Returns:
+            FlextHandlers: Configured query handler instance
+
+        """
 
         handler_name = getattr(handler_func, "__name__", "SimpleQueryHandler")
 
@@ -163,7 +171,6 @@ class FlextBus(FlextMixins):
             mode=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
             handler_config=handler_config,
             handler_name=handler_name,
-        )
 
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance (single or paired registration forms).

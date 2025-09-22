@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import time
 from abc import abstractmethod
-from typing import Literal, get_origin, get_type_hints
+from typing import Callable, Literal, cast, get_origin
 from collections.abc import Callable
 from typing import Literal, cast, get_origin
 
@@ -671,14 +671,15 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         )
 
         # Use railway pattern for validation chain
-        return FlextResult.chain_validations(
+        validation_result = FlextResult.chain_validations(
             lambda: self._validate_mode(operation),
             lambda: self._validate_can_handle(message),
             lambda: self._validate_message(message, operation=operation),
-        ).flat_map(
-            lambda _: self._execute_with_timing(message, message_type, identifier)
         )
 
+        return validation_result.flat_map(
+            lambda _: self._execute_with_timing(message, message_type, identifier)
+        )
     def _validate_mode(
         self, operation: HandlerTypeLiteral
     ) -> FlextResult[None]:
@@ -921,6 +922,91 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 error_code=critical_error.error_code,
                 error_data={"exception_context": critical_error.context},
             )
+
+    @staticmethod
+    def from_callable(
+        handler_func: Callable[[object], object | FlextResult[object]],
+        *,
+        mode: Literal["command", "query"],
+        handler_config: FlextModels.CqrsConfig.Handler
+        | dict[str, object]
+        | None = None,
+        handler_name: str | None = None,
+    ) -> "FlextHandlers[object, object]":
+        """Create a ``FlextHandlers`` instance from a plain callable.
+
+        Args:
+            handler_func: Callable implementing the handler logic.
+            mode: Operation mode (``"command"`` or ``"query"``).
+            handler_config: Optional handler configuration payload.
+            handler_name: Optional explicit handler name override.
+
+        Returns:
+            A ``FlextHandlers`` instance wrapping ``handler_func``.
+
+        Raises:
+            ValueError: If ``mode`` is not a supported handler type.
+        """
+
+        valid_modes = {
+            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+        }
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid handler mode: {mode}")
+
+        resolved_name = handler_name or getattr(
+            handler_func,
+            "__name__",
+            "FunctionHandler",
+        )
+
+        class CallableHandler(FlextHandlers[object, object]):
+            def __init__(self) -> None:
+                super().__init__(
+                    handler_mode=mode,
+                    handler_name=resolved_name,
+                    handler_config=handler_config,
+                )
+                self._handler_func = handler_func
+
+            def handle(self, message: object) -> FlextResult[object]:
+                try:
+                    result = self._handler_func(message)
+                except FlextExceptions.BaseError as exc:  # pragma: no cover - defensive
+                    return FlextResult[object].fail(
+                        str(exc),
+                        error_code=getattr(exc, "error_code", None),
+                        error_data={
+                            "exception_context": getattr(exc, "context", {}),
+                        },
+                    )
+                except Exception as exc:
+                    processing_error = FlextExceptions.ProcessingError(
+                        f"Handler callable raised: {exc}",
+                        business_rule=f"{mode}_handler_callable",
+                        operation=f"handle_{mode}",
+                        context={
+                            "handler_name": resolved_name,
+                            "message_type": type(message).__name__,
+                        },
+                    )
+                    return FlextResult[object].fail(
+                        str(processing_error),
+                        error_code=processing_error.error_code,
+                        error_data={
+                            "exception_context": processing_error.context,
+                        },
+                    )
+
+                if isinstance(result, FlextResult):
+                    return cast("FlextResult[object]", result)
+                return FlextResult[object].ok(result)
+
+            def __call__(self, message: object) -> FlextResult[object]:
+                return self.handle(message)
+
+        return CallableHandler()
 
 
 __all__: FlextTypes.Core.StringList = [

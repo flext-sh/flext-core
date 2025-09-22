@@ -657,6 +657,9 @@ class TestFlextCqrsComprehensive:
         handler = FlextBus.create_simple_handler(test_handler_func)
         assert handler is not None
         assert isinstance(handler, FlextHandlers)
+        handler_result = handler.handle({"payload": "data"})
+        assert handler_result.is_success
+        assert handler_result.unwrap() == "processed_{'payload': 'data'}"
 
     # =========================================================================
     # HANDLER TYPE RESOLUTION
