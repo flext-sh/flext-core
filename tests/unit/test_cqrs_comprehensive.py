@@ -18,6 +18,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from flext_core import (
+    FlextBus,
     FlextConstants,
     FlextCqrs,
     FlextHandlers,
@@ -556,6 +557,126 @@ class TestFlextCqrsIntegration:
         assert result.error_code == FlextConstants.Errors.VALIDATION_ERROR
         assert "validation_errors" in result.error_data
         assert result.error_data["context"] == context
+
+
+class TestFlextBusMiddlewarePipeline:
+    """Tests for middleware execution ordering and filtering on the bus."""
+
+    def test_middleware_execution_respects_configured_order(self) -> None:
+        """Middlewares should execute following their configured order values."""
+
+        class SampleCommand:
+            pass
+
+        class RecordingMiddleware:
+            def __init__(self, name: str, recorder: list[str]) -> None:
+                self.name = name
+                self._recorder = recorder
+
+            def process(self, command: object, handler: object) -> FlextResult[None]:
+                self._recorder.append(self.name)
+                return FlextResult[None].ok(None)
+
+        class RecordingHandler:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def handle(self, command: object) -> FlextResult[str]:
+                self.calls += 1
+                return FlextResult[str].ok("handled")
+
+        call_order: list[str] = []
+        bus = FlextBus()
+        handler = RecordingHandler()
+        bus.register_handler(SampleCommand, handler)
+
+        bus.add_middleware(
+            RecordingMiddleware("mw_a", call_order),
+            {
+                "middleware_id": "mw_a",
+                "middleware_type": "recording",
+                "order": 2,
+                "enabled": True,
+            },
+        )
+        bus.add_middleware(
+            RecordingMiddleware("mw_b", call_order),
+            {
+                "middleware_id": "mw_b",
+                "middleware_type": "recording",
+                "order": 1,
+                "enabled": True,
+            },
+        )
+        bus.add_middleware(
+            RecordingMiddleware("mw_c", call_order),
+            {
+                "middleware_id": "mw_c",
+                "middleware_type": "recording",
+                "order": 3,
+                "enabled": True,
+            },
+        )
+
+        result = bus.execute(SampleCommand())
+
+        assert result.is_success
+        assert call_order == ["mw_b", "mw_a", "mw_c"]
+        assert handler.calls == 1
+
+    def test_disabled_middleware_is_skipped(self) -> None:
+        """Middlewares flagged as disabled should not execute."""
+
+        @dataclass
+        class DisabledCommand:
+            payload: str = "data"
+
+        class RecordingMiddleware:
+            def __init__(self, name: str, recorder: list[str]) -> None:
+                self.name = name
+                self._recorder = recorder
+
+            def process(self, command: object, handler: object) -> FlextResult[None]:
+                self._recorder.append(self.name)
+                return FlextResult[None].ok(None)
+
+        class RecordingHandler:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def handle(self, command: object) -> FlextResult[str]:
+                self.calls += 1
+                return FlextResult[str].ok("handled")
+
+        call_order: list[str] = []
+        bus = FlextBus()
+        handler = RecordingHandler()
+        bus.register_handler(DisabledCommand, handler)
+
+        bus.add_middleware(
+            RecordingMiddleware("mw_disabled", call_order),
+            {
+                "middleware_id": "mw_disabled",
+                "middleware_type": "recording",
+                "order": 1,
+                "enabled": False,
+            },
+        )
+        bus.add_middleware(
+            RecordingMiddleware("mw_enabled", call_order),
+            {
+                "middleware_id": "mw_enabled",
+                "middleware_type": "recording",
+                "order": 2,
+                "enabled": True,
+            },
+        )
+
+        result = bus.execute(DisabledCommand())
+
+        assert result.is_success
+        assert call_order == ["mw_enabled"]
+        assert handler.calls == 1
 
 
 if __name__ == "__main__":
