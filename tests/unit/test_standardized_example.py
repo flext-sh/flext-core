@@ -49,16 +49,23 @@ class TestStandardizedExample:
 
     def test_config_with_fixtures(self) -> None:
         """Demonstrate proper config testing with fixtures."""
-        # Test config creation using fixtures
-        config_result = FlextConfig.create(constants={"app_name": "fixture_test"})
-        FlextTestsMatchers.assert_result_success(config_result)
+        # Test config creation using correct API
+        config = FlextConfig.create(app_name="fixture_test")
+        # FlextConfig.create returns a FlextConfig instance, not FlextResult
+        assert isinstance(config, FlextConfig)
 
-        config = config_result.unwrap()
         assert config.app_name == "fixture_test"
 
-        # Test config validation using actual API
-        validation_result = config.validate_all()
-        FlextTestsMatchers.assert_result_success(validation_result)
+        # Test config validation - FlextConfig validates via Pydantic, not validate_all method
+        # The configuration is already validated during creation
+        assert config.app_name == "fixture_test"
+        assert config.environment in {
+            "development",
+            "staging",
+            "production",
+            "test",
+            "local",
+        }
 
         # FlextValidations was completely removed - using direct validation patterns
         result = FlextResult[dict[str, object]].fail(
