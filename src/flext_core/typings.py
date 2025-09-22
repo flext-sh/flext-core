@@ -15,6 +15,8 @@ from collections.abc import (
 from enum import StrEnum
 from typing import Literal, ParamSpec, TypeVar
 
+from .constants import FlextConstants
+
 
 class FlextTypes:
     """Namespace of shared type aliases locked for the 1.0.0 lifecycle.
@@ -174,15 +176,22 @@ class FlextTypes:
 
         # Environment type (used in config, handlers, commands)
         type Environment = Literal[
-            "development",
-            "production",
-            "staging",
-            "test",
-            "local",
+            FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT,
+            FlextConstants.Environment.ConfigEnvironment.STAGING,
+            FlextConstants.Environment.ConfigEnvironment.PRODUCTION,
+            FlextConstants.Environment.ConfigEnvironment.TESTING,
+            FlextConstants.Config.ENVIRONMENTS[-2],  # e.g., "CUSTOM"
+            FlextConstants.Config.ENVIRONMENTS[-1],  # e.g., "LEGACY"
         ]
 
         # Logging levels (used in loggings, handlers, observability)
-        type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        type LogLevel = Literal[
+            FlextConstants.Logging.DEBUG,
+            FlextConstants.Logging.INFO,
+            FlextConstants.Logging.WARNING,
+            FlextConstants.Logging.ERROR,
+            FlextConstants.Logging.CRITICAL,
+        ]
 
         # Config serialization
         type ConfigSerializer = Callable[[ConfigDict], str]

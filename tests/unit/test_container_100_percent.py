@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Never
 
-from flext_core import FlextContainer
+from flext_core import FlextConfig, FlextContainer
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -36,6 +36,74 @@ class MockFactory:
 
         """
         return MockService()
+
+
+class TestFlextContainerConfiguration:
+    """Integration-style tests for FlextContainer configuration behavior."""
+
+    def test_container_config_uses_flext_config_env(self, monkeypatch) -> None:
+        """Ensure FlextContainer reflects environment-driven FlextConfig values."""
+        FlextConfig.reset_global_instance()
+        monkeypatch.setenv("FLEXT_MAX_WORKERS", "7")
+        monkeypatch.setenv("FLEXT_TIMEOUT_SECONDS", "45")
+        monkeypatch.setenv("FLEXT_ENVIRONMENT", "staging")
+
+        try:
+            container = FlextContainer()
+            config = container.get_config()
+
+            assert config["max_workers"] == 7
+            assert config["timeout_seconds"] == 45.0
+            assert config["environment"] == "staging"
+        finally:
+            FlextConfig.reset_global_instance()
+
+    def test_container_config_uses_flext_config_override(self) -> None:
+        """Ensure FlextContainer consumes explicitly overridden FlextConfig instance."""
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig.create(
+            max_workers=11,
+            timeout_seconds=120,
+            environment="production",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            container = FlextContainer()
+            config = container.get_config()
+
+            assert config["max_workers"] == 11
+            assert config["timeout_seconds"] == 120.0
+            assert config["environment"] == "production"
+        finally:
+            FlextConfig.reset_global_instance()
+
+    def test_container_config_preserves_user_overrides(self) -> None:
+        """Verify user overrides remain merged with FlextConfig-derived values."""
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig.create(
+            max_workers=5,
+            timeout_seconds=75,
+            environment="production",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            container = FlextContainer()
+
+            first_result = container.configure_container({"max_workers": 10})
+            assert first_result.is_success
+
+            second_result = container.configure_container({"environment": "staging"})
+            assert second_result.is_success
+
+            config = container.get_config()
+
+            assert config["max_workers"] == 10
+            assert config["timeout_seconds"] == 75.0
+            assert config["environment"] == "staging"
+        finally:
+            FlextConfig.reset_global_instance()
 
 
 class TestFlextContainer100Percent:
@@ -140,6 +208,29 @@ class TestFlextContainer100Percent:
         # This should handle error cases appropriately
         # Result success/failure depends on implementation details
 
+    def test_get_config_uses_global_flext_config_defaults(self) -> None:
+        """Container should reflect overrides from the global FlextConfig singleton."""
+
+        original_config = FlextConfig.get_global_instance()
+        custom_config = FlextConfig.create(
+            max_workers=8,
+            timeout_seconds=45,
+            environment="staging",
+        )
+
+        try:
+            FlextConfig.set_global_instance(custom_config)
+            container = FlextContainer()
+            container_config = container.get_config()
+
+            assert container_config["max_workers"] == custom_config.max_workers
+            assert float(container_config["timeout_seconds"]) == float(
+                custom_config.timeout_seconds
+            )
+            assert container_config["environment"] == custom_config.environment
+        finally:
+            FlextConfig.set_global_instance(original_config)
+
     def test_get_or_create_registration_failure(self) -> None:
         """Test get_or_create registration failure scenarios."""
         container = FlextTestsBuilders().create_test_container()
@@ -179,8 +270,9 @@ class TestFlextContainer100Percent:
         container = FlextContainer()  # Create truly empty container
 
         # Empty container should return empty list
-        service_names = container.get_service_names()
-        assert service_names == []
+        service_names_result = container.get_service_names()
+        FlextTestsMatchers.assert_result_success(service_names_result)
+        assert service_names_result.unwrap() == []
 
         service_count = container.get_service_count()
         assert service_count == 0
@@ -279,13 +371,15 @@ class TestFlextContainer100Percent:
         service1 = FlextTestsDomains.create_service(name="temp_service", port=8001)
         container.register("temp_service", service1)
 
-        names = container.get_service_names()
-        assert "temp_service" in names
+        names_result = container.get_service_names()
+        FlextTestsMatchers.assert_result_success(names_result)
+        assert "temp_service" in names_result.unwrap()
 
         # Remove service and check again
         container.unregister("temp_service")
-        names_after = container.get_service_names()
-        assert "temp_service" not in names_after
+        names_after_result = container.get_service_names()
+        FlextTestsMatchers.assert_result_success(names_after_result)
+        assert "temp_service" not in names_after_result.unwrap()
 
     def test_get_configuration_summary_error_handling(self) -> None:
         """Test configuration summary error handling."""
@@ -306,7 +400,9 @@ class TestFlextContainer100Percent:
 
     def test_complex_dependency_injection_scenario(self) -> None:
         """Test complex dependency injection scenarios."""
-        container = FlextContainer()  # Use clean container to avoid pre-registered services
+        container = (
+            FlextContainer()
+        )  # Use clean container to avoid pre-registered services
 
         # Create complex service with dependencies
         config = FlextTestsDomains.create_configuration()
