@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 
 from pydantic import ConfigDict
 
+from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
@@ -85,7 +86,7 @@ class FlextDomainService[TDomainResult](
         validation_result = self.validate_with_request(request)
         if validation_result.is_failure:
             return FlextResult[TDomainResult].fail(
-                f"Validation failed: {validation_result.error}"
+                f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
             )
 
         return self.execute()
@@ -150,7 +151,10 @@ class FlextDomainService[TDomainResult](
             business_result = self.validate_business_rules()
             if business_result.is_failure:
                 return FlextResult[None].fail(
-                    f"Business validation failed: {business_result.error}"
+                    (
+                        f"{FlextConstants.Messages.VALIDATION_FAILED}"
+                        f" (business rules): {business_result.error}"
+                    )
                 )
 
         return FlextResult[None].ok(None)
@@ -177,7 +181,10 @@ class FlextDomainService[TDomainResult](
             validation_result = self.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[TDomainResult].fail(
-                    f"Pre-execution validation failed: {validation_result.error}"
+                    (
+                        f"{FlextConstants.Messages.VALIDATION_FAILED}"
+                        f" (pre-execution): {validation_result.error}"
+                    )
                 )
 
         # Execute the main operation
@@ -371,7 +378,7 @@ class FlextDomainService[TDomainResult](
             validation_result = self.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[TDomainResult].fail(
-                    f"Validation failed: {validation_result.error}"
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
                 )
 
         # Execute after successful validation
