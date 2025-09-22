@@ -10,9 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import time
 from abc import abstractmethod
-from typing import Literal, get_origin
+from typing import Literal, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -103,6 +104,10 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self.handler_id = self._config_model.handler_id
         self._start_time: float | None = None
         self._metrics_state: FlextTypes.Core.Dict | None = None
+        self._accepted_message_types: tuple[object, ...] = (
+            self._compute_accepted_message_types()
+        )
+        self._handler_type_warning_logged = False
 
     def _resolve_mode(
         self,
@@ -166,14 +171,87 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             message_type_name=getattr(message_type, "__name__", str(message_type)),
         )
 
-        orig_bases = getattr(self, "__orig_bases__", None)
-        if orig_bases is not None:
-            for base in orig_bases:
-                if self._check_base_compatibility(base, message_type):
-                    return True
+        for expected_type in self._accepted_message_types:
+            can_handle_result = self._evaluate_type_compatibility(
+                expected_type, message_type
+            )
+            self.logger.debug(
+                "handler_type_check",
+                can_handle=can_handle_result,
+                expected_type=getattr(
+                    expected_type, "__name__", str(expected_type)
+                ),
+            )
+            if can_handle_result:
+                return True
 
-        self.logger.info("handler_type_constraints_unknown")
-        return True
+        if not self._accepted_message_types and not self._handler_type_warning_logged:
+            self.logger.warning("handler_type_constraints_unknown")
+            self._handler_type_warning_logged = True
+
+        return False
+
+    def _compute_accepted_message_types(self) -> tuple[object, ...]:
+        """Compute message types accepted by this handler using cached introspection."""
+
+        message_types: list[object] = []
+
+        message_types.extend(self._extract_generic_message_types())
+
+        if not message_types:
+            explicit_type = self._extract_message_type_from_handle()
+            if explicit_type is not None:
+                message_types.append(explicit_type)
+
+        return tuple(message_types)
+
+    def _extract_generic_message_types(self) -> list[object]:
+        """Extract message types from generic base annotations."""
+
+        message_types: list[object] = []
+        for base in getattr(self.__class__, "__orig_bases__", ()) or ():
+            origin = get_origin(base)
+            if origin is FlextHandlers:
+                args = getattr(base, "__args__", ())
+                if args:
+                    message_types.append(args[0])
+        return message_types
+
+    def _extract_message_type_from_handle(self) -> object | None:
+        """Extract message type from handle method annotations when generics are absent."""
+
+        handle_method = getattr(self.__class__, "handle", None)
+        if handle_method is None:
+            return None
+
+        try:
+            signature = inspect.signature(handle_method)
+        except (TypeError, ValueError):
+            return None
+
+        try:
+            type_hints = get_type_hints(
+                handle_method,
+                globalns=getattr(handle_method, "__globals__", {}),
+                localns=dict(vars(self.__class__)),
+            )
+        except Exception:
+            type_hints = {}
+
+        for name, parameter in signature.parameters.items():
+            if name == "self":
+                continue
+
+            if name in type_hints:
+                return type_hints[name]
+
+            annotation = parameter.annotation
+            if annotation is not inspect.Signature.empty:
+                return annotation
+
+            break
+
+        return None
 
     def _check_base_compatibility(self, base: object, message_type: object) -> bool:
         """Check if a base type is compatible with the message type.
