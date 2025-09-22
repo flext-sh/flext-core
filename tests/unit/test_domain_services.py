@@ -152,6 +152,46 @@ class ComplexTypeService(FlextDomainService[dict[str, object]]):
         })
 
 
+class BatchEnabledService(FlextDomainService[int]):
+    """Service supporting batch execution with dynamic parameters."""
+
+    def execute(
+        self,
+        *,
+        base: int = 0,
+        increment: int = 0,
+        should_fail: bool = False,
+    ) -> FlextResult[int]:
+        """Execute using parameters provided by batch operations."""
+
+        if should_fail:
+            return FlextResult[int].fail("requested failure")
+        return FlextResult[int].ok(base + increment)
+
+
+class OperationRequestBatchService(FlextDomainService[int]):
+    """Service that consumes OperationExecutionRequest payloads."""
+
+    def execute(self) -> FlextResult[int]:
+        """Default execution returning sentinel value."""
+
+        return FlextResult[int].ok(-1)
+
+    def execute_operation(
+        self, operation: FlextModels.OperationExecutionRequest
+    ) -> FlextResult[int]:
+        """Execute the provided callable using keyword arguments."""
+
+        try:
+            value = operation.operation_callable(
+                *operation.arguments if isinstance(operation.arguments, (list, tuple)) else (),
+                **operation.keyword_arguments,
+            )
+        except Exception as exc:  # pragma: no cover - defensive guard
+            return FlextResult[int].fail(str(exc))
+        return FlextResult[int].ok(value)
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -579,6 +619,94 @@ class TestDomainServicesFixed:
 
         assert "extra_field" in str(exc_info.value)
         assert "Extra inputs are not permitted" in str(exc_info.value)
+
+    def test_execute_batch_with_request_uses_operation_payload(self) -> None:
+        """Test batch execution honors payload from request operations."""
+
+        service = BatchEnabledService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch-test",
+            operations=[
+                {"base": 1, "increment": 2},
+                {"base": 5, "increment": 3},
+            ],
+            batch_size=10,
+            stop_on_error=False,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_success
+        assert result.unwrap() == [3, 8]
+
+    def test_execute_batch_with_request_continue_on_failure(self) -> None:
+        """Test batch execution continues when continue_on_failure is set."""
+
+        service = BatchEnabledService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch-test",
+            operations=[
+                {"base": 1, "increment": 1},
+                {"base": 0, "increment": 0, "should_fail": True},
+                {"base": 2, "increment": 2},
+            ],
+            batch_size=10,
+            stop_on_error=False,
+            continue_on_failure=True,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_success
+        assert result.unwrap() == [2, 4]
+
+    def test_execute_batch_with_request_stops_on_failure(self) -> None:
+        """Test batch execution stops on first failure by default."""
+
+        service = BatchEnabledService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch-test",
+            operations=[
+                {"base": 1, "increment": 1},
+                {"base": 0, "increment": 0, "should_fail": True},
+                {"base": 2, "increment": 2},
+            ],
+            batch_size=10,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "Batch item 1" in result.error
+        assert "requested failure" in result.error
+
+    def test_execute_batch_with_operation_request_objects(self) -> None:
+        """Test batch execution using OperationExecutionRequest payloads."""
+
+        service = OperationRequestBatchService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="operation-batch",
+            operations=[
+                {
+                    "operation_name": "add",
+                    "operation_callable": lambda *, base, delta: base + delta,
+                    "keyword_arguments": {"base": 2, "delta": 3},
+                },
+                {
+                    "operation_name": "subtract",
+                    "operation_callable": lambda *, base, delta: base - delta,
+                    "keyword_arguments": {"base": 7, "delta": 2},
+                },
+            ],
+            batch_size=10,
+            stop_on_error=False,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_success
+        assert result.unwrap() == [5, 5]
 
 
 class TestDomainServiceStaticMethods:

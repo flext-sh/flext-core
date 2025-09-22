@@ -17,7 +17,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, ValidationError
 
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
@@ -262,21 +262,101 @@ class FlextDomainService[TDomainResult](
         results: list[TDomainResult] = []
         errors: list[str] = []
 
-        for i in range(request.batch_size):
-            try:
-                result = self.execute()
-                if result.is_success:
-                    results.append(result.value)
+        continue_on_failure = getattr(request, "continue_on_failure", None)
+        if continue_on_failure is None:
+            continue_on_failure = not getattr(request, "stop_on_error", True)
+
+        max_operations = min(request.batch_size, len(request.operations))
+
+        def _execute_single_operation(
+            operation_data: object,
+        ) -> FlextResult[TDomainResult]:
+            if isinstance(operation_data, FlextModels.OperationExecutionRequest):
+                return self.execute_operation(operation_data)
+
+            if isinstance(operation_data, dict):
+                if "operation_request" in operation_data:
+                    op_request = operation_data["operation_request"]
+                    if isinstance(op_request, FlextModels.OperationExecutionRequest):
+                        return self.execute_operation(op_request)
+                    if isinstance(op_request, dict):
+                        try:
+                            normalized_request = FlextModels.OperationExecutionRequest(
+                                **op_request
+                            )
+                        except ValidationError as exc:
+                            return FlextResult[TDomainResult].fail(
+                                f"Invalid operation configuration: {exc}"
+                            )
+                        return self.execute_operation(normalized_request)
+
+                if "operation_callable" in operation_data or "operation_name" in operation_data:
+                    try:
+                        op_request = FlextModels.OperationExecutionRequest(
+                            **operation_data
+                        )
+                    except ValidationError as exc:
+                        return FlextResult[TDomainResult].fail(
+                            f"Invalid operation configuration: {exc}"
+                        )
+                    return self.execute_operation(op_request)
+
+                args_source = operation_data.get("args", operation_data.get("arguments"))
+                if args_source is None:
+                    args: tuple[object, ...] = ()
+                elif isinstance(args_source, (list, tuple)):
+                    args = tuple(args_source)
                 else:
-                    errors.append(f"Batch item {i}: {result.error}")
-                    if not getattr(request, "continue_on_failure", False):
+                    args = (args_source,)
+
+                kwargs_source = operation_data.get(
+                    "kwargs", operation_data.get("keyword_arguments")
+                )
+                if kwargs_source is None:
+                    kwargs: dict[str, object] = {}
+                elif isinstance(kwargs_source, dict):
+                    kwargs = dict(kwargs_source)
+                else:
+                    return FlextResult[TDomainResult].fail(
+                        "Keyword arguments must be a mapping"
+                    )
+
+                reserved_keys = {
+                    "operation_request",
+                    "args",
+                    "arguments",
+                    "kwargs",
+                    "keyword_arguments",
+                }
+                fallback_kwargs = {
+                    key: value
+                    for key, value in operation_data.items()
+                    if key not in reserved_keys
+                }
+                if fallback_kwargs:
+                    kwargs = {**fallback_kwargs, **kwargs}
+
+                return self.execute(*args, **kwargs)  # type: ignore[misc]
+
+            return self.execute()
+
+        for index, operation_data in enumerate(request.operations):
+            if index >= max_operations:
+                break
+            try:
+                operation_result = _execute_single_operation(operation_data)
+                if operation_result.is_success:
+                    results.append(operation_result.value)
+                else:
+                    errors.append(f"Batch item {index}: {operation_result.error}")
+                    if not continue_on_failure:
                         break
-            except Exception as e:
-                errors.append(f"Batch item {i}: {e}")
-                if not getattr(request, "continue_on_failure", False):
+            except Exception as exc:  # pragma: no cover - defensive guard
+                errors.append(f"Batch item {index}: {exc}")
+                if not continue_on_failure:
                     break
 
-        if errors and not getattr(request, "continue_on_failure", False):
+        if errors and not continue_on_failure:
             return FlextResult[list[TDomainResult]].fail(
                 f"Batch execution failed: {'; '.join(errors)}"
             )
