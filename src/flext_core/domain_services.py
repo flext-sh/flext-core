@@ -13,7 +13,7 @@ from __future__ import annotations
 import signal
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
@@ -262,26 +262,68 @@ class FlextDomainService[TDomainResult](
         results: list[TDomainResult] = []
         errors: list[str] = []
 
-        for i in range(request.batch_size):
+        operations = list(getattr(request, "operations", []))
+        if getattr(request, "batch_size", None) is not None:
+            operations = operations[: request.batch_size]
+
+        continue_on_failure = getattr(
+            request,
+            "continue_on_failure",
+            not getattr(request, "stop_on_error", True),
+        )
+
+        for index, operation in enumerate(operations):
             try:
-                result = self.execute()
+                result = self._execute_batch_operation(operation)
                 if result.is_success:
                     results.append(result.value)
                 else:
-                    errors.append(f"Batch item {i}: {result.error}")
-                    if not getattr(request, "continue_on_failure", False):
+                    errors.append(f"Batch item {index}: {result.error}")
+                    if not continue_on_failure:
                         break
             except Exception as e:
-                errors.append(f"Batch item {i}: {e}")
-                if not getattr(request, "continue_on_failure", False):
+                errors.append(f"Batch item {index}: {e}")
+                if not continue_on_failure:
                     break
 
-        if errors and not getattr(request, "continue_on_failure", False):
+        if errors and not continue_on_failure:
             return FlextResult[list[TDomainResult]].fail(
                 f"Batch execution failed: {'; '.join(errors)}"
             )
 
         return FlextResult[list[TDomainResult]].ok(results)
+
+    def _execute_batch_operation(
+        self, operation: object
+    ) -> FlextResult[TDomainResult]:
+        """Execute a single batch operation honoring provided data."""
+
+        if isinstance(operation, FlextModels.OperationExecutionRequest):
+            return self.execute_operation(operation)
+
+        if isinstance(operation, FlextModels.DomainServiceExecutionRequest):
+            return self.execute_with_request(operation)
+
+        if isinstance(operation, dict):
+            if "operation_callable" in operation or "operation_name" in operation:
+                operation_request = FlextModels.OperationExecutionRequest(**operation)
+                return self.execute_operation(operation_request)
+
+            if "args" in operation or "kwargs" in operation:
+                args = operation.get("args", [])
+                kwargs = operation.get("kwargs", {})
+                if not isinstance(args, Sequence) or isinstance(args, (str, bytes)):
+                    args = [args]
+                if not isinstance(kwargs, dict):
+                    kwargs = dict(kwargs)
+                return self.execute(*args, **kwargs)
+
+            return self.execute(**operation)
+
+        if isinstance(operation, Sequence) and not isinstance(operation, (str, bytes, dict)):
+            return self.execute(*operation)
+
+        return self.execute(operation)
 
     def execute_with_metrics_request(
         self, _request: FlextModels.DomainServiceMetricsRequest

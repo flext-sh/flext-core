@@ -149,6 +149,19 @@ class ComplexTypeService(FlextDomainService[dict]):
         return FlextResult[dict].ok({"data": self.data, "items": self.items})
 
 
+class BatchTrackingService(FlextDomainService[int]):
+    """Service capturing batch operations for testing."""
+
+    processed_values: list[int] = Field(default_factory=list)
+
+    def execute(self, *, value: int, fail: bool = False) -> FlextResult[int]:
+        """Execute using provided batch payload."""
+        self.processed_values.append(value)
+        if fail:
+            return FlextResult[int].fail(f"Operation failed for {value}")
+        return FlextResult[int].ok(value)
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -644,3 +657,63 @@ class TestDomainServiceStaticMethods:
         result = service.execute()
         assert result.is_failure
         assert result.error is not None
+
+
+class TestDomainServiceBatchExecution:
+    """Batch execution scenarios for FlextDomainService."""
+
+    def test_execute_batch_with_operations_uses_payload(self) -> None:
+        """Batch execution should honor payload data for each operation."""
+
+        service = BatchTrackingService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch-service",
+            operations=[{"value": 1}, {"value": 2}, {"value": 3}],
+            batch_size=3,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_success
+        assert result.value == [1, 2, 3]
+        assert service.processed_values == [1, 2, 3]
+
+    def test_execute_batch_stops_on_failure_when_requested(self) -> None:
+        """Batch execution should stop on first failure when configured."""
+
+        service = BatchTrackingService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch-service",
+            operations=[
+                {"value": 1},
+                {"value": 2, "fail": True},
+                {"value": 3},
+            ],
+            stop_on_error=True,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_failure
+        assert "Batch item 1" in (result.error or "")
+        assert service.processed_values == [1, 2]
+
+    def test_execute_batch_continues_on_failure_when_allowed(self) -> None:
+        """Batch execution should continue after failures when permitted."""
+
+        service = BatchTrackingService()
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch-service",
+            operations=[
+                {"value": 1},
+                {"value": 2, "fail": True},
+                {"value": 3},
+            ],
+            stop_on_error=False,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_success
+        assert result.value == [1, 3]
+        assert service.processed_values == [1, 2, 3]
