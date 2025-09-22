@@ -255,7 +255,7 @@ class FlextTestsFixtures:
 
         def __init__(self) -> None:
             """Initialize session service."""
-            self._data: FlextTypes.Core.NestedDict = {}
+            self._data: dict[str, FlextTypes.Core.Dict] = {}
 
         def create_session(
             self,
