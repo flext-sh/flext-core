@@ -242,7 +242,10 @@ class FlextDispatcher:
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
         handler_config: dict[str, object] | None = None,
-        mode: Literal["command", "query"] = "command",
+        mode: Literal[
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+        ] = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
     ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
 
@@ -286,7 +289,10 @@ class FlextDispatcher:
         self,
         handler_func: Callable[[object], object | FlextResult[object]],
         handler_config: dict[str, object] | None,
-        mode: Literal["command", "query"],
+        mode: Literal[
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+        ],
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
