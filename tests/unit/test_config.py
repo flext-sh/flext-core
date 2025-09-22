@@ -255,15 +255,15 @@ class TestFlextConfigInstanceMethods:
             max_workers=10,
         )
 
-        # Test to_dict
-        config_dict = config.to_dict()
+        # Test model_dump
+        config_dict = config.model_dump()
         assert isinstance(config_dict, dict)
         assert config_dict["app_name"] == "serialize_test"
         assert config_dict["version"] == "4.0.0"
         assert config_dict["max_workers"] == 10
 
-        # Test to_json
-        json_str = config.to_json()
+        # Test model_dump_json
+        json_str = config.model_dump_json(indent=2)
         assert isinstance(json_str, str)
         parsed = json.loads(json_str)
         assert parsed["app_name"] == "serialize_test"

@@ -270,7 +270,7 @@ class TestFlextConfigRealCoverage:
             Path(txt_path).unlink(missing_ok=True)
 
     def test_serialization_methods(self) -> None:
-        """Test to_dict and to_json methods."""
+        """Test model_dump and model_dump_json methods."""
         config = FlextConfig(
             app_name="serialize_test",
             version="2.0.0",
@@ -278,15 +278,15 @@ class TestFlextConfigRealCoverage:
             environment="development",
         )
 
-        # Test to_dict
-        config_dict = config.to_dict()
+        # Test model_dump
+        config_dict = config.model_dump()
         assert isinstance(config_dict, dict)
         assert config_dict["app_name"] == "serialize_test"
         assert config_dict["version"] == "2.0.0"
         assert config_dict["debug"] is True
 
-        # Test to_json
-        json_str = config.to_json()
+        # Test model_dump_json
+        json_str = config.model_dump_json(indent=2)
         assert isinstance(json_str, str)
         parsed = json.loads(json_str)
         assert parsed["app_name"] == "serialize_test"
