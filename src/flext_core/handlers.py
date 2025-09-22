@@ -496,15 +496,9 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             lambda: self._validate_message(message, operation=operation),
         )
 
-        if validation_result.is_failure:
-            return FlextResult[ResultT].fail(
-                validation_result.error or "Validation chain failed",
-                error_code=validation_result.error_code,
-                error_data=validation_result.error_data,
-            )
-
-        return self._execute_with_timing(message, message_type, identifier)
-
+        return validation_result.flat_map(
+            lambda _: self._execute_with_timing(message, message_type, identifier)
+        )
     def _validate_mode(
         self, operation: Literal["command", "query"]
     ) -> FlextResult[None]:
