@@ -13,6 +13,9 @@ from __future__ import annotations
 import inspect
 import time
 from abc import abstractmethod
+from typing import Literal, get_origin, get_type_hints
+from dataclasses import asdict as dataclasses_asdict, is_dataclass
+from typing import Callable, Literal, cast, get_origin
 from collections.abc import Callable
 from dataclasses import asdict as dataclasses_asdict, is_dataclass
 from typing import Literal, cast, get_origin
@@ -277,10 +280,21 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             message_type_name=getattr(message_type, "__name__", str(message_type)),
         )
 
+        if not self._accepted_message_types:
+            if not self._type_warning_emitted:
+                self.logger.warning(
+                    "handler_type_constraints_unknown",
+                    handler_name=self.handler_name,
+                    handler_class=self.__class__.__name__,
+                )
+                self._type_warning_emitted = True
+            return False
+
         for expected_type in self._accepted_message_types:
             can_handle_result = self._evaluate_type_compatibility(
                 expected_type, message_type
             )
+
             self.logger.debug(
                 "handler_type_check",
                 can_handle=can_handle_result,
@@ -352,30 +366,85 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
             break
 
-        return None
+        return False
 
-    def _check_base_compatibility(self, base: object, message_type: object) -> bool:
-        """Check if a base type is compatible with the message type.
+    def _resolve_message_types(self) -> tuple[object, ...]:
+        """Determine the accepted message types for this handler instance."""
 
-        Returns:
-            bool: True if base type is compatible with message type, False otherwise.
+        message_types: list[object] = []
 
-        """
+        for cls in self.__class__.__mro__:
+            orig_bases = getattr(cls, "__orig_bases__", ())
+            for base in orig_bases or ():
+                message_types.extend(self._extract_message_types_from_base(base))
+
+        if not message_types:
+            message_types.extend(self._resolve_message_types_from_hints())
+
+        return self._normalise_message_types(message_types)
+
+    def _extract_message_types_from_base(self, base: object) -> list[object]:
+        """Extract message type arguments from a generic base definition."""
+
         args = getattr(base, "__args__", None)
-        if args is None or len(args) < 1:
-            return False
+        if not args:
+            return []
 
-        expected_type = args[0]
-        can_handle_result = self._evaluate_type_compatibility(
-            expected_type, message_type
+        origin = get_origin(base) or getattr(base, "__origin__", None) or base
+
+        try:
+            if isinstance(origin, type) and issubclass(origin, FlextHandlers):
+                return [args[0]]
+        except TypeError:
+            return []
+
+        return []
+
+    def _resolve_message_types_from_hints(self) -> list[object]:
+        """Resolve message types from explicit type hints when generics are absent."""
+
+        hint_sources = (
+            ("handle", "message"),
+            ("handle_command", "command"),
+            ("handle_query", "query"),
         )
 
-        self.logger.debug(
-            "handler_type_check",
-            can_handle=can_handle_result,
-            expected_type=getattr(expected_type, "__name__", str(expected_type)),
-        )
-        return can_handle_result
+        resolved: list[object] = []
+
+        for method_name, parameter_name in hint_sources:
+            method = getattr(self.__class__, method_name, None)
+            if method is None:
+                continue
+
+            try:
+                type_hints = get_type_hints(method, include_extras=True)
+            except Exception:
+                continue
+
+            hint = type_hints.get(parameter_name)
+            if hint is not None:
+                resolved.append(hint)
+
+        return resolved
+
+    def _normalise_message_types(self, message_types: list[object]) -> tuple[object, ...]:
+        """Deduplicate and filter inferred message types."""
+
+        unique: list[object] = []
+        for message_type in message_types:
+            if message_type is None:
+                continue
+            if message_type is Any:
+                continue
+            if message_type is object:
+                continue
+            if isinstance(message_type, TypeVar):
+                continue
+            if message_type in unique:
+                continue
+            unique.append(message_type)
+
+        return tuple(unique)
 
     def _evaluate_type_compatibility(
         self, expected_type: object, message_type: object
@@ -785,7 +854,9 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             lambda _: self._execute_with_timing(message, message_type, identifier)
         )
 
-    def _validate_mode(self, operation: HandlerTypeLiteral) -> FlextResult[None]:
+    def _validate_mode(
+        self, operation: HandlerTypeLiteral
+    ) -> FlextResult[None]:
         """Validate handler mode matches operation type using FlextConstants.
 
         Returns:
