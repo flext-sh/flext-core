@@ -53,6 +53,7 @@ class FlextDispatcher:
         # Use provided config or create from global configuration
         if config is None:
             global_config = FlextConfig.get_global_instance()
+            bus_config = dict(global_config.get_cqrs_bus_config())
             config = {
                 "auto_context": getattr(global_config, "dispatcher_auto_context", True),
                 "timeout_seconds": getattr(
@@ -66,16 +67,43 @@ class FlextDispatcher:
                 "enable_logging": getattr(
                     global_config, "dispatcher_enable_logging", True
                 ),
-                "bus_config": None,
+                "bus_config": bus_config,
+                "execution_timeout": bus_config.get("execution_timeout"),
             }
+        else:
+            config = dict(config)
+            bus_config = config.get("bus_config")
+
+            if bus_config is None:
+                global_config = FlextConfig.get_global_instance()
+                default_bus_config = dict(global_config.get_cqrs_bus_config())
+
+                if "execution_timeout" in config:
+                    default_bus_config["execution_timeout"] = cast(
+                        "object", config["execution_timeout"]
+                    )
+                elif "timeout_seconds" in config:
+                    default_bus_config["execution_timeout"] = cast(
+                        "object", config["timeout_seconds"]
+                    )
+
+                bus_config = default_bus_config
+                config["bus_config"] = bus_config
+
+            if isinstance(bus_config, dict):
+                config.setdefault("execution_timeout", bus_config.get("execution_timeout"))
+            elif hasattr(bus_config, "execution_timeout"):
+                config.setdefault(
+                    "execution_timeout",
+                    cast("object", getattr(bus_config, "execution_timeout")),
+                )
 
         self._config = config
-        bus_config = config.get("bus_config")
-        self._bus = bus or FlextBus.create_command_bus(
-            bus_config=cast("dict[str, object] | None", bus_config)
-            if isinstance(bus_config, (dict, type(None)))
-            else None
-        )
+        resolved_bus_config = config.get("bus_config")
+        if resolved_bus_config is None:
+            resolved_bus_config = FlextConfig.get_global_instance().get_cqrs_bus_config()
+
+        self._bus = bus or FlextBus.create_command_bus(bus_config=resolved_bus_config)
         self._logger = FlextLogger(self.__class__.__name__)
 
     @property
