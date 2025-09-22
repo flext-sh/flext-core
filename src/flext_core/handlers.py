@@ -24,6 +24,15 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+HandlerModeLiteral = Literal[
+    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+    FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+]
+HandlerTypeLiteral = Literal[
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+]
+
 
 class FlextHandlers[MessageT, ResultT](FlextMixins):
     """Generic base that normalises command/query handler behaviour.
@@ -43,7 +52,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         *,
         config: FlextModels.CqrsConfig.Handler | None = None,
         # Legacy parameter support for backward compatibility (will be deprecated)
-        handler_mode: Literal["command", "query"] | None = None,
+        handler_mode: HandlerModeLiteral | None = None,
         handler_name: str | None = None,
         handler_id: str | None = None,
         handler_config: FlextModels.CqrsConfig.Handler
@@ -106,9 +115,9 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
     def _resolve_mode(
         self,
-        handler_mode: Literal["command", "query"] | None,
+        handler_mode: HandlerModeLiteral | None,
         handler_config: FlextModels.CqrsConfig.Handler | dict[str, object] | None,
-    ) -> Literal["command", "query"]:
+    ) -> HandlerTypeLiteral:
         """Resolve handler mode using FlextConstants defaults.
 
         Returns:
@@ -131,7 +140,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
 
     @property
-    def mode(self) -> Literal["command", "query"]:
+    def mode(self) -> HandlerTypeLiteral:
         """Return configured handler mode from the config model."""
         return self._config_model.handler_type
 
@@ -280,7 +289,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self,
         message: object,
         *,
-        operation: Literal["command", "query"],
+        operation: HandlerTypeLiteral,
     ) -> FlextResult[None]:
         """Validate message using Pydantic model validation, FlextUtilities, and FlextExceptions.
 
@@ -464,7 +473,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self,
         message: MessageT,
         *,
-        operation: Literal["command", "query"],
+        operation: HandlerTypeLiteral,
     ) -> FlextResult[ResultT]:
         """Execute handler pipeline using railway-oriented programming.
 
@@ -499,7 +508,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         )
 
     def _validate_mode(
-        self, operation: Literal["command", "query"]
+        self, operation: HandlerTypeLiteral
     ) -> FlextResult[None]:
         """Validate handler mode matches operation type using FlextConstants.
 
