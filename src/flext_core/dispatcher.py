@@ -334,36 +334,11 @@ class FlextDispatcher:
 
         """
         try:
-            # Create a simple handler class that wraps the function
-            class FunctionHandler(FlextHandlers[object, object]):
-                def __init__(self) -> None:
-                    super().__init__(
-                        handler_config=handler_config,
-                        handler_mode=mode,
-                    )
-                    self._handler_func = handler_func
-
-                def handle(self, message: object) -> FlextResult[object]:
-                    """Handle message using wrapped function.
-
-                    Args:
-                        message: Message to process
-
-                    Returns:
-                        FlextResult with processing result or error
-
-                    """
-                    try:
-                        result = self._handler_func(message)
-                        if isinstance(result, FlextResult):
-                            return cast("FlextResult[object]", result)
-                        return FlextResult[object].ok(result)
-                    except Exception as error:
-                        return FlextResult[object].fail(
-                            f"Function handler failed: {error}"
-                        )
-
-            handler = FunctionHandler()
+            handler = FlextHandlers.from_callable(
+                handler_func,
+                mode=mode,
+                handler_config=handler_config,
+            )
             return FlextResult[FlextHandlers[object, object]].ok(handler)
 
         except Exception as error:
