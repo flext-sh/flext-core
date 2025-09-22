@@ -884,7 +884,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             except ValueError:
                 candidate = None
 
-        if candidate is None or candidate <= minimum:
+        if candidate is None or candidate < minimum:
             return default
 
         return candidate
