@@ -306,7 +306,9 @@ class TestFlextContainer100Percent:
 
     def test_complex_dependency_injection_scenario(self) -> None:
         """Test complex dependency injection scenarios."""
-        container = FlextContainer()  # Use clean container to avoid pre-registered services
+        container = (
+            FlextContainer()
+        )  # Use clean container to avoid pre-registered services
 
         # Create complex service with dependencies
         config = FlextTestsDomains.create_configuration()

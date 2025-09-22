@@ -97,7 +97,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # Configuration integration with FlextConfig singleton
         self._global_config = {
             "max_workers": 4,
-            "timeout_seconds": 30.0,
+            "timeout_seconds": FlextConstants.Container.TIMEOUT_SECONDS,
             "environment": "development",
         }
         self._flext_config = FlextConfig.get_global_instance()
