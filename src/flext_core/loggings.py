@@ -508,7 +508,6 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
         # Add additional context if provided and enabled
         if self._include_context_enabled:
-            entry["context"] = {}
             if context is not None:
                 context_dict: dict[str, object] | None = None
                 if isinstance(context, Mapping):
