@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
+from typing import cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -21,7 +22,7 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
 
-class FlextContainer(FlextProtocols.Infrastructure.Configurable):
+class FlextContainer:
     """Global container providing the standardized FLEXT service contract.
 
     Optimized implementation using FlextResult railway patterns for 75% code reduction
@@ -131,6 +132,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "services": list(self._services.keys()),
             "factories": list(self._factories.keys()),
         }
+
+    def as_configurable(self) -> FlextProtocols.Infrastructure.Configurable:
+        """Return the container as a ``Configurable`` protocol instance."""
+
+        return cast(FlextProtocols.Infrastructure.Configurable, self)
 
     # =========================================================================
     # CORE SERVICE MANAGEMENT - Primary operations with railway patterns

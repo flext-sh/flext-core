@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Never
 
-from flext_core import FlextContainer
+from flext_core import FlextContainer, FlextProtocols
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -50,6 +50,20 @@ class TestFlextContainer100Percent:
         # Test invalid service key (empty name)
         result2 = FlextContainer.ServiceKey.validate("")
         FlextTestsMatchers.assert_result_failure(result2)
+
+    def test_container_protocol_runtime_check(self) -> None:
+        """Container should satisfy the Configurable protocol at runtime."""
+
+        container = FlextContainer()
+
+        assert isinstance(
+            container, FlextProtocols.Infrastructure.Configurable
+        ), "Container must satisfy Configurable protocol"
+        # Helper ensures static type systems can treat the container as Configurable
+        configurable = container.as_configurable()
+        assert isinstance(
+            configurable, FlextProtocols.Infrastructure.Configurable
+        ), "Helper must return Configurable view"
 
     def test_commands_register_factory_error_handling(self) -> None:
         """Test Commands.RegisterFactory error handling - line 185."""
@@ -179,8 +193,9 @@ class TestFlextContainer100Percent:
         container = FlextContainer()  # Create truly empty container
 
         # Empty container should return empty list
-        service_names = container.get_service_names()
-        assert service_names == []
+        service_names_result = container.get_service_names()
+        FlextTestsMatchers.assert_result_success(service_names_result)
+        assert service_names_result.unwrap() == []
 
         service_count = container.get_service_count()
         assert service_count == 0
@@ -279,12 +294,16 @@ class TestFlextContainer100Percent:
         service1 = FlextTestsDomains.create_service(name="temp_service", port=8001)
         container.register("temp_service", service1)
 
-        names = container.get_service_names()
+        names_result = container.get_service_names()
+        FlextTestsMatchers.assert_result_success(names_result)
+        names = names_result.unwrap()
         assert "temp_service" in names
 
         # Remove service and check again
         container.unregister("temp_service")
-        names_after = container.get_service_names()
+        names_after_result = container.get_service_names()
+        FlextTestsMatchers.assert_result_success(names_after_result)
+        names_after = names_after_result.unwrap()
         assert "temp_service" not in names_after
 
     def test_get_configuration_summary_error_handling(self) -> None:
