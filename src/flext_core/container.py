@@ -95,7 +95,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._factories: dict[str, Callable[[], object]] = {}
 
         # Configuration integration with FlextConfig singleton
-        self._flext_config = FlextConfig.get_global_instance()
+        self._global_config = {
+            "max_workers": FlextConstants.Container.MAX_WORKERS,
+            "timeout_seconds": FlextConstants.Container.TIMEOUT_SECONDS,
+            "environment": FlextConstants.Config.DEFAULT_ENVIRONMENT,
+        }
         self._flext_config_snapshot = self._extract_config_snapshot(
             self._flext_config
         )
@@ -717,18 +721,28 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             normalized_config = self._normalize_config_fields(config)
             finalized_values = self._finalize_config_values(normalized_config)
 
-            for key in ("max_workers", "timeout_seconds", "environment"):
-                if key not in config:
-                    continue
+            # Create and store global configuration with proper type conversion
+            max_workers = normalized_config.get(
+                "max_workers", FlextConstants.Container.MAX_WORKERS
+            )
+            timeout_seconds = normalized_config.get(
+                "timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS
+            )
+            environment = normalized_config.get(
+                "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
+            )
 
-                raw_value = config[key]
-                if raw_value is None:
-                    self._user_overrides.pop(key, None)
-                    continue
-
-                self._user_overrides[key] = finalized_values[key]
-
-            self._refresh_global_config()
+            self._global_config = {
+                "max_workers": int(max_workers)
+                if isinstance(max_workers, (int, float))
+                else FlextConstants.Container.MAX_WORKERS,
+                "timeout_seconds": float(timeout_seconds)
+                if isinstance(timeout_seconds, (int, float))
+                else FlextConstants.Container.TIMEOUT_SECONDS,
+                "environment": str(environment)
+                if environment
+                else FlextConstants.Config.DEFAULT_ENVIRONMENT,
+            }
 
             return FlextResult[None].ok(None)
         except Exception as e:
