@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
@@ -200,6 +200,51 @@ class FlextBus(FlextMixins):
                 return self.handle(query)
 
         return SimpleQueryHandler()
+
+    @staticmethod
+    def _get_middleware_config_value(
+        config: Mapping[str, object] | object,
+        key: str,
+        default: object,
+    ) -> object:
+        """Safely obtain a middleware configuration value."""
+
+        if isinstance(config, Mapping):
+            return config.get(key, default)
+        return getattr(config, key, default)
+
+    @staticmethod
+    def _normalize_middleware_enabled(value: object, default: bool = True) -> bool:
+        """Normalize middleware enabled flags to booleans."""
+
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return default
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"false", "0", "no", "off"}:
+                return False
+            if lowered in {"true", "1", "yes", "on"}:
+                return True
+        return bool(value)
+
+    @staticmethod
+    def _normalize_middleware_order(value: object, default: int = 0) -> int:
+        """Normalize middleware ordering values to integers."""
+
+        if value is None:
+            return default
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+        if isinstance(value, str):
+            try:
+                return int(value.strip())
+            except ValueError:
+                return default
+        return default
 
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance (single or paired registration forms).
@@ -420,37 +465,53 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(m: dict[str, object]) -> int:
-            order = m.get("order", 0)
-            if isinstance(order, int):
-                return order
-            if isinstance(order, str):
-                try:
-                    return int(order)
-                except ValueError:
-                    return 0
-            else:
-                return 0
-
-        sorted_middleware = sorted(self._middleware, key=get_order)
+        sorted_middleware = sorted(
+            self._middleware,
+            key=lambda config: self._normalize_middleware_order(
+                self._get_middleware_config_value(config, "order", 0),
+            ),
+        )
 
         for middleware_config in sorted_middleware:
-            if not getattr(middleware_config, "enabled", True):
+            enabled = self._normalize_middleware_enabled(
+                self._get_middleware_config_value(middleware_config, "enabled", True),
+            )
+            if not enabled:
                 continue
 
             # Get actual middleware instance
-            middleware = self._middleware_instances.get(
-                str(getattr(middleware_config, "middleware_id", "")),
+            middleware_id = self._get_middleware_config_value(
+                middleware_config,
+                "middleware_id",
+                "",
             )
+            if not middleware_id:
+                continue
+
+            middleware = self._middleware_instances.get(str(middleware_id))
+            if middleware is None and callable(
+                getattr(middleware_config, "process", None)
+            ):
+                # Fallback for legacy scenarios where the config is the middleware instance
+                middleware = middleware_config
             if middleware is None:
                 # Skip middleware configs without instances
                 continue
 
+            middleware_type = self._get_middleware_config_value(
+                middleware_config,
+                "middleware_type",
+                type(middleware).__name__,
+            )
+            order_value = self._normalize_middleware_order(
+                self._get_middleware_config_value(middleware_config, "order", 0),
+            )
+
             self.logger.debug(
                 "Applying middleware",
-                middleware_id=getattr(middleware_config, "middleware_id", ""),
-                middleware_type=getattr(middleware_config, "middleware_type", ""),
-                order=getattr(middleware_config, "order", 0),
+                middleware_id=middleware_id,
+                middleware_type=middleware_type,
+                order=order_value,
             )
 
             process_method = getattr(middleware, "process", None)
@@ -459,11 +520,7 @@ class FlextBus(FlextMixins):
                 if isinstance(result, FlextResult) and result.is_failure:
                     self.logger.info(
                         "Middleware rejected command",
-                        middleware_type=getattr(
-                            middleware_config,
-                            "middleware_type",
-                            "",
-                        ),
+                        middleware_type=middleware_type,
                         error=result.error or "Unknown error",
                     )
                     return FlextResult[None].fail(
@@ -544,17 +601,66 @@ class FlextBus(FlextMixins):
                 "order": len(self._middleware),
             }
 
+        config_source: Mapping[str, object] | object
+        if middleware_config is None:
+            config_source = {}
+        else:
+            config_source = middleware_config
+
+        middleware_id = self._get_middleware_config_value(
+            config_source,
+            "middleware_id",
+            None,
+        )
+        if not middleware_id:
+            middleware_id = getattr(middleware, "middleware_id", None)
+        if not middleware_id:
+            middleware_id = f"mw_{len(self._middleware_instances)}"
+
+        middleware_type = self._get_middleware_config_value(
+            config_source,
+            "middleware_type",
+            type(middleware).__name__,
+        )
+        if not middleware_type:
+            middleware_type = type(middleware).__name__
+
+        enabled = self._normalize_middleware_enabled(
+            self._get_middleware_config_value(config_source, "enabled", True),
+            True,
+        )
+        order_value = self._normalize_middleware_order(
+            self._get_middleware_config_value(
+                config_source,
+                "order",
+                len(self._middleware),
+            ),
+            len(self._middleware),
+        )
+
+        if isinstance(config_source, Mapping):
+            config_dict = dict(config_source)
+        else:
+            config_dict = dict(getattr(config_source, "__dict__", {}))
+
+        config_dict.update(
+            {
+                "middleware_id": middleware_id,
+                "middleware_type": middleware_type,
+                "enabled": enabled,
+                "order": order_value,
+            }
+        )
+
         # Store both middleware and config
-        self._middleware.append(middleware_config)
+        self._middleware.append(config_dict)
         # Also store the actual middleware instance
-        self._middleware_instances[
-            str(getattr(middleware_config, "middleware_id", ""))
-        ] = middleware
+        self._middleware_instances[str(middleware_id)] = middleware
 
         self.logger.info(
             "Middleware added to pipeline",
-            middleware_type=getattr(middleware_config, "middleware_type", ""),
-            middleware_id=getattr(middleware_config, "middleware_id", ""),
+            middleware_type=middleware_type,
+            middleware_id=middleware_id,
             total_middleware=len(self._middleware),
         )
 
