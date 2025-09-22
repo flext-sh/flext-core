@@ -309,6 +309,11 @@ class FlextDispatcher:
                     )
                     self._handler_func = handler_func
 
+                def execute(self, message: object) -> FlextResult[object]:
+                    """Route execution directly through the wrapped callable."""
+
+                    return self.handle(message)
+
                 def handle(self, message: object) -> FlextResult[object]:
                     """Handle message using wrapped function.
 
@@ -362,13 +367,8 @@ class FlextDispatcher:
             )
 
         # Execute dispatch with context management
-        metadata_dict: dict[str, object] | None = None
         context_metadata = request.get("context_metadata")
-        if context_metadata and hasattr(context_metadata, "value"):
-            # Convert dict[str, str] to dict[str, object] for context scope
-            metadata_dict = dict(
-                cast("dict[str, object]", context_metadata.value).items()
-            )
+        metadata_dict = self._normalize_context_metadata(context_metadata)
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None
         with self._context_scope(metadata_dict, correlation_id_str):
@@ -469,6 +469,69 @@ class FlextDispatcher:
     # ------------------------------------------------------------------
     # Context management
     # ------------------------------------------------------------------
+    @staticmethod
+    def _normalize_context_metadata(
+        metadata: object | None,
+    ) -> FlextTypes.Core.Dict | None:
+        """Convert metadata payloads into context-friendly dictionaries.
+
+        Args:
+            metadata: Metadata payload supplied via dispatch request.
+
+        Returns:
+            Normalized dictionary suitable for context propagation or ``None``.
+        """
+
+        if metadata is None:
+            return None
+
+        normalized: FlextTypes.Core.Dict | None = None
+
+        if isinstance(metadata, dict):
+            normalized = dict(metadata)
+        elif isinstance(metadata, FlextModels.Metadata):
+            normalized = {
+                str(key): value for key, value in metadata.attributes.items()
+            }
+            metadata_dump = metadata.model_dump()
+            if isinstance(metadata_dump, dict):
+                for key, value in metadata_dump.items():
+                    if key == "attributes" or value is None:
+                        continue
+                    normalized.setdefault(str(key), value)
+        else:
+            attributes = getattr(metadata, "attributes", None)
+            if isinstance(attributes, dict):
+                normalized = {
+                    str(key): value for key, value in attributes.items()
+                }
+            else:
+                model_dump_fn = getattr(metadata, "model_dump", None)
+                if callable(model_dump_fn):
+                    try:
+                        dumped = model_dump_fn()
+                    except TypeError:
+                        dumped = None
+                    if isinstance(dumped, dict):
+                        normalized = {
+                            str(key): value
+                            for key, value in dumped.items()
+                            if value is not None
+                        }
+
+        if normalized is None and hasattr(metadata, "items"):
+            try:
+                normalized = {
+                    str(key): value for key, value in dict(metadata).items()
+                }
+            except Exception:  # pragma: no cover - defensive fallback
+                normalized = None
+
+        if normalized is None:
+            return None
+
+        return {str(key): value for key, value in normalized.items()}
+
     @contextmanager
     def _context_scope(
         self,

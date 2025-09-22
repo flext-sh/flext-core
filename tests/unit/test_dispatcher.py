@@ -14,6 +14,7 @@ from flext_core import (
     FlextDispatcher,
     FlextDispatcherRegistry,
     FlextHandlers,
+    FlextModels,
     FlextResult,
 )
 
@@ -32,6 +33,11 @@ class EchoHandler(FlextHandlers[EchoCommand, str]):
         """Initialize the echo handler."""
         super().__init__(handler_mode="command")
 
+    def execute(self, message: EchoCommand) -> FlextResult[str]:
+        """Bypass base pipeline to keep tests focused on dispatcher behavior."""
+
+        return self.handle(message)
+
     def handle(self, message: EchoCommand) -> FlextResult[str]:
         """Handle the echo command.
 
@@ -49,6 +55,11 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
         """Initialize the context aware handler."""
         super().__init__(handler_mode="command")
 
+    def execute(self, message: EchoCommand) -> FlextResult[str]:
+        """Route execution directly through handle for test stability."""
+
+        return self.handle(message)
+
     def handle(self, message: EchoCommand) -> FlextResult[str]:
         """Handle the echo command using correlation context.
 
@@ -61,6 +72,26 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
             return FlextResult[str].fail("Correlation ID missing")
         # Include message info in the response to use the parameter
         return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
+
+
+class MetadataCaptureHandler(FlextHandlers[EchoCommand, dict[str, object]]):
+    """Handler that captures operation metadata from the context."""
+
+    def __init__(self) -> None:
+        """Initialize the metadata capture handler."""
+        super().__init__(handler_mode="command")
+
+    def execute(self, message: EchoCommand) -> FlextResult[dict[str, object]]:
+        """Route execution directly through handle for metadata assertions."""
+
+        return self.handle(message)
+
+    def handle(self, message: EchoCommand) -> FlextResult[dict[str, object]]:
+        """Return a copy of the current operation metadata."""
+
+        metadata = FlextContext.Performance.get_operation_metadata()
+        captured = dict(metadata) if metadata else {}
+        return FlextResult[dict[str, object]].ok(captured)
 
 
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
@@ -131,6 +162,93 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.is_success
     assert isinstance(result.unwrap(), str)
     assert result.unwrap()
+
+
+def test_dispatcher_populates_context_metadata_from_model() -> None:
+    """Dispatch propagates metadata models into the context."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    handler = MetadataCaptureHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    metadata = {"tenant": "alpha", "request_id": "req-123"}
+    result = dispatcher.dispatch(EchoCommand(payload="metadata"), metadata=metadata)
+
+    assert result.is_success
+    captured_metadata = cast("dict[str, object]", result.unwrap())
+    assert captured_metadata["tenant"] == "alpha"
+    assert captured_metadata["request_id"] == "req-123"
+    assert "created_at" in captured_metadata
+    assert captured_metadata.get("tags") == []
+
+
+def test_dispatch_with_request_accepts_plain_metadata_dict() -> None:
+    """Structured dispatch accepts plain metadata dictionaries."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    handler = MetadataCaptureHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    request_metadata: dict[str, object] = {"stage": "unit", "attempt": "1"}
+    request = {
+        "message": EchoCommand(payload="structured"),
+        "context_metadata": request_metadata,
+        "request_id": "structured-req",
+    }
+
+    dispatch_result = dispatcher.dispatch_with_request(request)
+    assert dispatch_result.is_success
+
+    payload = dispatch_result.unwrap()
+    assert payload["success"] is True
+    captured_metadata = cast("dict[str, object]", payload["result"])
+    assert captured_metadata == request_metadata
+    assert "created_at" not in captured_metadata
+
+
+def test_dispatch_with_request_handles_metadata_model() -> None:
+    """Structured dispatch normalizes ``FlextModels.Metadata`` payloads."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    handler = MetadataCaptureHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    metadata_model = FlextModels.Metadata(
+        created_by="tester",
+        tags=["unit"],
+        attributes={"tenant": "beta"},
+    )
+    request = {
+        "message": EchoCommand(payload="model"),
+        "context_metadata": metadata_model,
+        "request_id": "model-req",
+    }
+
+    dispatch_result = dispatcher.dispatch_with_request(request)
+    assert dispatch_result.is_success
+
+    payload = dispatch_result.unwrap()
+    assert payload["success"] is True
+    captured_metadata = cast("dict[str, object]", payload["result"])
+    assert captured_metadata["tenant"] == "beta"
+    assert captured_metadata.get("tags") == ["unit"]
+    assert captured_metadata.get("created_by") == "tester"
+    assert "created_at" in captured_metadata
 
 
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
