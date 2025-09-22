@@ -152,6 +152,27 @@ class ComplexTypeService(FlextDomainService[dict[str, object]]):
         })
 
 
+class RequestDrivenService(FlextDomainService[str]):
+    """Service exercising execute_with_request dynamic dispatch."""
+
+    last_call: dict[str, object] = Field(default_factory=dict)
+
+    def execute(self) -> FlextResult[str]:
+        return FlextResult[str].ok("default")
+
+    def custom_method(self, value: int, *, context: dict[str, object]) -> str:
+        self.last_call = {"value": value, "context": context}
+        source = context.get("source", "unknown")
+        return f"value={value} source={source}"
+
+    def failing_method(self) -> None:
+        msg = "boom"
+        raise RuntimeError(msg)
+
+    def result_method(self, message: str) -> FlextResult[str]:
+        return FlextResult[str].ok(f"wrapped {message}")
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -191,6 +212,67 @@ class TestDomainServicesFixed:
         data = result.unwrap()
         assert data["user_id"] == "default_123"
         assert data["email"] == "test@example.com"
+
+    def test_execute_with_request_dynamic_method(self) -> None:
+        """Execute method resolved from request using parameters and context."""
+        service = RequestDrivenService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="RequestDrivenService",
+            method_name="custom_method",
+            parameters={"value": 42},
+            context={"source": "unit-test"},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_success
+        assert result.unwrap() == "value=42 source=unit-test"
+        assert service.last_call["value"] == 42
+        assert service.last_call["context"]["source"] == "unit-test"
+        assert "trace_id" in service.last_call["context"]
+
+    def test_execute_with_request_missing_method(self) -> None:
+        """Return failure when requested method does not exist."""
+        service = RequestDrivenService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="RequestDrivenService",
+            method_name="non_existent",
+            parameters={},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_failure
+        assert "non_existent" in (result.error or "")
+
+    def test_execute_with_request_method_exception(self) -> None:
+        """Convert method exceptions into FlextResult failures."""
+        service = RequestDrivenService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="RequestDrivenService",
+            method_name="failing_method",
+            parameters={},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_failure
+        assert "boom" in (result.error or "")
+        assert result.error_data.get("method_name") == "failing_method"
+
+    def test_execute_with_request_preserves_flext_result(self) -> None:
+        """Return FlextResult directly when method already yields one."""
+        service = RequestDrivenService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="RequestDrivenService",
+            method_name="result_method",
+            parameters={"message": "payload"},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_success
+        assert result.unwrap() == "wrapped payload"
 
     def test_is_valid_success(self) -> None:
         """Test is_valid with success."""

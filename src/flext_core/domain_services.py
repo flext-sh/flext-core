@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import signal
 import time
 from abc import ABC, abstractmethod
@@ -184,7 +185,7 @@ class FlextDomainService[TDomainResult](
         return self.execute()
 
     def execute_with_request(
-        self, _request: FlextModels.DomainServiceExecutionRequest
+        self, request: FlextModels.DomainServiceExecutionRequest
     ) -> FlextResult[TDomainResult]:
         """Execute with DomainServiceExecutionRequest model containing execution settings.
 
@@ -195,8 +196,45 @@ class FlextDomainService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with error
 
         """
-        # Execute the operation
-        return self.execute()
+        method_name = request.method_name
+
+        try:
+            method = getattr(self, method_name)
+        except AttributeError:
+            return FlextResult[TDomainResult].fail(
+                f"Method '{method_name}' not found on {self.__class__.__name__}"
+            )
+
+        if not callable(method):
+            return FlextResult[TDomainResult].fail(
+                f"Attribute '{method_name}' on {self.__class__.__name__} is not callable"
+            )
+
+        call_kwargs = dict(getattr(request, "parameters", {}) or {})
+
+        try:
+            signature = inspect.signature(method)
+        except (TypeError, ValueError):
+            signature = None
+
+        if signature and "context" in signature.parameters:
+            call_kwargs.setdefault("context", request.context)
+
+        try:
+            result = method(**call_kwargs)
+        except Exception as exc:  # noqa: BLE001 - convert to FlextResult failure
+            return FlextResult[TDomainResult].fail(
+                f"Execution failed for method '{method_name}': {exc}",
+                error_data={
+                    "exception_type": type(exc).__name__,
+                    "method_name": method_name,
+                },
+            )
+
+        if isinstance(result, FlextResult):
+            return result
+
+        return FlextResult[TDomainResult].ok(result)
 
     def execute_with_timeout(self, timeout_seconds: int) -> FlextResult[TDomainResult]:
         """Execute with timeout constraint.
