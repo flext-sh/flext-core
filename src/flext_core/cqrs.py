@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -20,6 +20,12 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+
+HandlerTypeLiteral = Literal[
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+]
 
 
 class FlextCqrs:
@@ -181,7 +187,7 @@ class FlextCqrs:
 
         @staticmethod
         def create_handler_config(
-            handler_type: Literal["command", "query"],
+            handler_type: HandlerTypeLiteral,
             *,
             handler_name: str | None = None,
             handler_id: str | None = None,
@@ -255,7 +261,7 @@ class FlextCqrs:
             ) -> Callable[[TCmd], TResult]:
                 # Create validated handler configuration
                 handler_config_result = FlextCqrs.Operations.create_handler_config(
-                    handler_type="command",
+                    handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                     handler_name=getattr(
                         func, "__name__", f"{command_type.__name__}Handler"
                     ),
@@ -271,8 +277,8 @@ class FlextCqrs:
                         handler_name=getattr(
                             func, "__name__", f"{command_type.__name__}Handler"
                         ),
-                        handler_type="command",
-                        handler_mode="command",
+                        handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                        handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     )
                 else:
                     handler_config = handler_config_result.value
@@ -281,7 +287,7 @@ class FlextCqrs:
                 class FunctionHandler(FlextHandlers[TCmd, TResult]):
                     def __init__(self) -> None:
                         super().__init__(
-                            handler_mode="command",
+                            handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                             handler_name=handler_config.handler_name,
                             handler_config={"metadata": handler_config.metadata},
                         )
@@ -347,12 +353,22 @@ class FlextCqrs:
             """
             try:
                 config_instance = FlextConfig.get_global_instance()
-                # Create CQRS config from FlextConfig fields
-                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config({
-                    "timeout_seconds": config_instance.dispatcher_timeout_seconds,
-                    "enable_metrics": config_instance.dispatcher_enable_metrics,
-                    "enable_logging": config_instance.dispatcher_enable_logging,
-                })
+                config_payload = config_instance.get_cqrs_bus_config()
+
+                # Support both raw dictionaries and FlextResult wrappers
+                if isinstance(config_payload, FlextResult):
+                    if config_payload.is_failure:
+                        raise ValueError("Failed to load CQRS bus configuration")
+                    config_payload = config_payload.value
+
+                if hasattr(config_payload, "model_dump") and callable(
+                    getattr(config_payload, "model_dump")
+                ):
+                    config_dict = cast("dict[str, object]", config_payload.model_dump())
+                else:
+                    config_dict = cast("dict[str, object] | None", config_payload)
+
+                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(config_dict)
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(bus_config)
             except Exception:
                 # Fallback to default configuration
