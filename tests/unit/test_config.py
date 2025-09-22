@@ -218,6 +218,7 @@ class TestFlextConfigInstanceMethods:
             json_output=True,
             include_source=False,
             structured_output=True,
+            log_verbosity="compact",
             database_url="postgresql://localhost/test",
             database_pool_size=20,
             cache_ttl=800,
@@ -231,6 +232,7 @@ class TestFlextConfigInstanceMethods:
         assert logging_config["json_output"] is True
         assert logging_config["include_source"] is False
         assert logging_config["structured_output"] is True
+        assert logging_config["log_verbosity"] == "compact"
 
         # Test get_database_config
         db_config = config.get_database_config()
@@ -481,7 +483,7 @@ class TestFlextConfigDefaults:
 
         # Core defaults
         assert config.app_name == "FLEXT Application"
-        assert config.version == "0.9.0"
+        assert config.version == FlextConstants.Core.VERSION
         assert config.environment == "development"
         assert config.debug is False
         assert config.trace is False
@@ -529,13 +531,13 @@ class TestFlextConfigEdgeCases:
         """Test empty string validation."""
         # Empty strings are allowed for most fields
         config1 = FlextConfig(app_name="")
-        assert config1.app_name == ""
+        assert config1.app_name == ""  # noqa: PLC1901
 
         config2 = FlextConfig(version="")
-        assert config2.version == ""
+        assert config2.version == ""  # noqa: PLC1901
 
         config3 = FlextConfig(database_url="")
-        assert config3.database_url == ""
+        assert config3.database_url == ""  # noqa: PLC1901
 
     def test_whitespace_handling(self) -> None:
         """Test whitespace handling in string fields."""

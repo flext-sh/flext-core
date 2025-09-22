@@ -200,6 +200,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         # Get CQRS bus configuration
         cqrs_config = config.get_cqrs_bus_config()
         print(f"CQRS bus config: {cqrs_config}")
+        print(f"CQRS log verbosity: {cqrs_config.get('log_verbosity')}")
 
         # Dispatcher settings relevant to CQRS
         print(f"Auto context propagation: {config.dispatcher_auto_context}")
@@ -256,7 +257,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
 
         # Simulate environment variables
         test_vars = {
-            "FLEXT_ENVIRONMENT": "testing",
+            "FLEXT_ENVIRONMENT": "test",
             "FLEXT_DEBUG": "true",
             "FLEXT_LOG_LEVEL": "INFO",
             "FLEXT_DATABASE_URL": "postgresql://localhost/db",
