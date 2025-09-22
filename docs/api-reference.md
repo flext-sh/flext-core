@@ -120,9 +120,13 @@ assert dispatcher.dispatch("modernization").unwrap() == "modernization"
 ```
 
 > **Note:** `FlextHandlers` trusts incoming Pydantic models and skips redundant
-> revalidation by default. Pass `revalidate_pydantic_messages=True` when
-> instantiating a handler if you need the framework to perform an extra
-> validation round.
+> revalidation by default.
+> 
+> There are two ways to enable extra validation:
+> 1. **Constructor flag:** Pass `revalidate_pydantic_messages=True` when instantiating a handler.
+> 2. **Handler config metadata key:** Set the `revalidate_pydantic_messages` key in the handler's config metadata. Accepted string values are `'true'`, `'false'`, `'1'`, `'0'`, `'yes'`, and `'no'` (case-insensitive).
+> 
+> **Precedence:** If both the constructor flag and the metadata key are set, the constructor flag takes precedence.
 
 `FlextDispatcherRegistry.Summary` exposes `registered`, `skipped`, and `errors` lists so CLI and connector packages can produce migration reports.
 
