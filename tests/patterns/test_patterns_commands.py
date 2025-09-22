@@ -558,6 +558,28 @@ class TestFlextCommandBus:
             raise AssertionError(f"Expected {handler1} in {all_handlers}")
         assert handler2 in all_handlers
 
+    def test_create_simple_handler_wrapper(self) -> None:
+        """Ensure create_simple_handler wraps callables consistently."""
+        def simple_callable(command: CreateUserCommand) -> str:
+            return f"user:{command.username}"
+
+        command = CreateUserCommand(username="wrapped", email="wrap@example.com")
+        handler = FlextCommandBus.create_simple_handler(simple_callable)
+        result = handler.handle(command)
+
+        if not result.is_success:
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        assert result.value == "user:wrapped"
+
+        def failing_callable(command: CreateUserCommand) -> str:  # pragma: no cover - raising path
+            raise RuntimeError("boom from callable")
+
+        failing_handler = FlextCommandBus.create_simple_handler(failing_callable)
+        failure_result = failing_handler.handle(command)
+
+        assert failure_result.is_failure
+        assert "boom from callable" in (failure_result.error or "")
+
 
 class TestFlextCommandResults:
     """Test FlextCommandResults functionality."""
