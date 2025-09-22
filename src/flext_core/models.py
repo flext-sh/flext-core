@@ -2383,58 +2383,6 @@ class FlextModels:
 
             return results
 
-    # Schema generation optimizer
-    class SchemaOptimizer:
-        """Optimized schema generation for models."""
-
-        @staticmethod
-        def get_optimized_schema(
-            model: type[BaseModel],
-            *,
-            by_alias: bool = True,
-            ref_template: str = "#/$defs/{model}",
-            mode: Literal["validation", "serialization"] = "validation",
-        ) -> FlextTypes.Core.Dict:
-            """Get optimized JSON schema for a model.
-
-            Args:
-                model: Pydantic model class
-                by_alias: Use field aliases in schema
-                ref_template: Template for schema references
-                mode: Schema mode
-
-            Returns:
-                Optimized JSON schema dict[str, object]
-
-            """
-            schema = model.model_json_schema(
-                by_alias=by_alias,
-                ref_template=ref_template,
-                mode=mode,
-                # Optimization settings
-            )
-
-            # Remove unnecessary schema elements
-            if "$defs" in schema and not schema["$defs"]:
-                del schema["$defs"]
-
-            # Optimize property definitions
-            if "properties" in schema:
-                for prop_schema in schema["properties"].values():
-                    # Remove redundant type arrays with single type
-                    if (
-                        "type" in prop_schema
-                        and isinstance(prop_schema["type"], list)
-                        and len(prop_schema["type"]) == 1
-                    ):
-                        prop_schema["type"] = prop_schema["type"][0]
-
-                    # Remove empty descriptions
-                    if "description" in prop_schema and not prop_schema["description"]:
-                        del prop_schema["description"]
-
-            return schema
-
     # Export control decorator
     # No exclude_from_export decorator needed - use Pydantic 2.11's native features:
     # 1. Field(exclude=True) to exclude fields permanently
