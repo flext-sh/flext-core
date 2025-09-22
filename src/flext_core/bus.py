@@ -138,7 +138,7 @@ class FlextBus(FlextMixins):
         class SimpleHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 super().__init__(
-                    handler_mode="command",
+                    handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     handler_name=getattr(
                         handler_func,
                         "__name__",
@@ -180,7 +180,7 @@ class FlextBus(FlextMixins):
         class SimpleQueryHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 super().__init__(
-                    handler_mode="query",
+                    handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
                     handler_name=getattr(
                         handler_func,
                         "__name__",
