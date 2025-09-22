@@ -1434,7 +1434,7 @@ class FlextTestsMatchers:
                 self.setup_func = setup_func
                 self.teardown_func = teardown_func
                 self.context_data: FlextTypes.Core.Dict = (
-                    dict(context_data) if context_data is not None else {}
+                    context_data or {}
                 )
                 self.result = None
 
