@@ -261,6 +261,7 @@ class FlextDomainService[TDomainResult](
         """
         results: list[TDomainResult] = []
         errors: list[str] = []
+        stop_on_error = getattr(request, "stop_on_error", True)
 
         for i in range(request.batch_size):
             try:
@@ -269,14 +270,14 @@ class FlextDomainService[TDomainResult](
                     results.append(result.value)
                 else:
                     errors.append(f"Batch item {i}: {result.error}")
-                    if not getattr(request, "continue_on_failure", False):
+                    if stop_on_error:
                         break
             except Exception as e:
                 errors.append(f"Batch item {i}: {e}")
-                if not getattr(request, "continue_on_failure", False):
+                if stop_on_error:
                     break
 
-        if errors and not getattr(request, "continue_on_failure", False):
+        if errors and stop_on_error:
             return FlextResult[list[TDomainResult]].fail(
                 f"Batch execution failed: {'; '.join(errors)}"
             )

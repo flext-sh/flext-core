@@ -149,6 +149,31 @@ class ComplexTypeService(FlextDomainService[dict]):
         return FlextResult[dict].ok({"data": self.data, "items": self.items})
 
 
+class SequencedBatchService(FlextDomainService[int]):
+    """Service that returns a predetermined sequence of results."""
+
+    def __init__(self, responses: list[FlextResult[int]]) -> None:
+        super().__init__()
+        object.__setattr__(self, "_responses", list(responses))
+        object.__setattr__(self, "_call_count", 0)
+
+    def execute(self) -> FlextResult[int]:
+        """Return the next response in the sequence or a default success."""
+        index = getattr(self, "_call_count")
+        responses = getattr(self, "_responses")
+        if index < len(responses):
+            result = responses[index]
+        else:
+            result = FlextResult[int].ok(index)
+        object.__setattr__(self, "_call_count", index + 1)
+        return result
+
+    @property
+    def call_count(self) -> int:
+        """Number of times execute has been called."""
+        return getattr(self, "_call_count")
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -550,6 +575,52 @@ class TestDomainServicesFixed:
 
         assert "extra_field" in str(exc_info.value)
         assert "Extra inputs are not permitted" in str(exc_info.value)
+
+    def test_execute_batch_stops_on_error(self) -> None:
+        """Batch execution should stop on first failure when configured."""
+        service = SequencedBatchService(
+            [
+                FlextResult[int].ok(1),
+                FlextResult[int].fail("boom"),
+                FlextResult[int].ok(3),
+            ]
+        )
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch_service",
+            operations=[{"id": 1}],
+            batch_size=3,
+            stop_on_error=True,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "Batch execution failed" in result.error
+        assert "Batch item 1" in result.error
+        assert service.call_count == 2
+
+    def test_execute_batch_continues_on_error(self) -> None:
+        """Batch execution should continue when stop_on_error is disabled."""
+        service = SequencedBatchService(
+            [
+                FlextResult[int].ok(1),
+                FlextResult[int].fail("boom"),
+                FlextResult[int].ok(5),
+            ]
+        )
+        request = FlextModels.DomainServiceBatchRequest(
+            service_name="batch_service",
+            operations=[{"id": 1}],
+            batch_size=3,
+            stop_on_error=False,
+        )
+
+        result = service.execute_batch_with_request(request)
+
+        assert result.is_success
+        assert result.unwrap() == [1, 5]
+        assert service.call_count == 3
 
 
 class TestDomainServiceStaticMethods:
