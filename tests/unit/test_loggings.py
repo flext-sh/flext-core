@@ -33,6 +33,7 @@ from flext_core import (
     FlextLogger,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import (
     FlextTestsMatchers,
 )
@@ -151,7 +152,7 @@ class TestFlextLoggerInitialization:
 
         # Test that environment is detected (should be development in testing)
         environment = logger._get_environment()
-        assert environment in {"development", "production", "staging"}, (
+        assert environment in set(FlextConstants.Config.ENVIRONMENTS), (
             f"Unexpected environment: {environment}"
         )
 

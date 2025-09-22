@@ -1559,15 +1559,40 @@ class FlextModels:
 
         app_name: str
         app_version: str
-        environment: str
+        environment: FlextTypes.Config.Environment
         host: str | None = None
         metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
         permanent_context: FlextTypes.Core.Dict = Field(default_factory=dict)
         replace_existing: bool = False
         merge_strategy: Literal["replace", "update", "merge_deep"] = "update"
 
-        @model_validator(mode="after")
-        def validate_permanent_context(self) -> Self:
+        @field_validator("environment", mode="before")
+        @classmethod
+        def normalize_environment(
+            cls, value: str | FlextTypes.Config.Environment
+        ) -> FlextTypes.Config.Environment:
+            """Normalize and validate environment against shared constants."""
+
+            # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
+            if not isinstance(value, str):
+                # If it's an Enum, get its value; otherwise, try str()
+                if hasattr(value, "value"):
+                    value = value.value
+                else:
+                    value = str(value)
+
+            normalized = value.lower()
+            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
+            if normalized not in valid_envs:
+                msg = (
+                    "Environment must be one of "
+                    f"{sorted(valid_envs)}"
+                )
+                raise ValueError(msg)
+            return cast("FlextTypes.Config.Environment", normalized)
+
+          @model_validator(mode="after")
+          def validate_permanent_context(self) -> Self:
             """Validate permanent context."""
             # Use only the enum values as the single source of truth for valid environments.
             valid_envs = {
@@ -1581,7 +1606,7 @@ class FlextModels:
                     f"Must be one of {sorted_envs}"
                 )
                 raise ValueError(msg)
-            return self
+            return cast("FlextTypes.Config.Environment", normalized)
 
     class OperationTrackingModel(ArbitraryTypesModel):
         """Operation tracking model."""
