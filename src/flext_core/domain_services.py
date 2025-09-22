@@ -13,7 +13,7 @@ from __future__ import annotations
 import signal
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
@@ -366,15 +366,82 @@ class FlextDomainService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with validation error
 
         """
-        # Perform validation based on config
-        if getattr(config, "enable_validation", True):
+        enable_validation = bool(getattr(config, "enable_validation", True))
+        should_run_business_rules = enable_validation and (
+            config.enable_strict_mode
+            or config.validate_on_assignment
+            or config.validate_on_read
+        )
+
+        if should_run_business_rules:
             validation_result = self.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[TDomainResult].fail(
                     f"Validation failed: {validation_result.error}"
                 )
 
-        # Execute after successful validation
+        custom_validator_errors: list[str] = []
+        raw_max_errors = getattr(config, "max_validation_errors", 0)
+        max_errors = max(int(raw_max_errors or 0), 0)
+        enforce_limit = max_errors > 0
+        validators: list[Callable[[object], object]] = getattr(
+            config, "custom_validators", []
+        )
+
+        for index, validator in enumerate(validators):
+            validator_label = getattr(validator, "__name__", f"validator_{index}")
+            try:
+                validator_result = validator(self)
+            except Exception as exc:
+                custom_validator_errors.append(
+                    f"Validator {validator_label} raised {type(exc).__name__}: {exc}"
+                )
+            else:
+                error_message: str | None = None
+                if isinstance(validator_result, FlextResult):
+                    if validator_result.is_failure:
+                        base_message = (
+                            validator_result.error or "Validator returned failure"
+                        )
+                        error_message = (
+                            f"Validator {validator_label} returned failure: {base_message}"
+                        )
+                elif isinstance(validator_result, bool):
+                    if not validator_result:
+                        error_message = (
+                            f"Validator {validator_label} returned False"
+                        )
+                elif isinstance(validator_result, str):
+                    if validator_result:
+                        error_message = (
+                            f"Validator {validator_label} reported error: {validator_result}"
+                        )
+                elif validator_result is None:
+                    error_message = None
+                elif not validator_result:
+                    error_message = (
+                        f"Validator {validator_label} returned falsy value"
+                    )
+
+                if error_message:
+                    custom_validator_errors.append(error_message)
+
+            if enforce_limit and len(custom_validator_errors) >= max_errors:
+                break
+
+        if custom_validator_errors:
+            error_summary = "; ".join(custom_validator_errors)
+            error_data = {
+                "validation_errors": custom_validator_errors,
+                "max_validation_errors": max_errors if enforce_limit else None,
+            }
+            if not enforce_limit:
+                error_data.pop("max_validation_errors")
+            return FlextResult[TDomainResult].fail(
+                f"Custom validation failed: {error_summary}",
+                error_data=error_data,
+            )
+
         return self.execute()
 
     # =============================================================================

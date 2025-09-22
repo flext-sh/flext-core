@@ -265,6 +265,65 @@ class TestDomainServicesFixed:
         assert result.is_failure
         assert "Name too long" in result.error
 
+    def test_validate_and_transform_skips_when_disabled(self) -> None:
+        """Test that business validation is skipped when configuration disables it."""
+
+        class SkipValidationService(FlextDomainService[str]):
+            validation_called: bool = False
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                self.validation_called = True
+                return FlextResult[None].fail("Should not run under disabled validation")
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("executed")
+
+        service = SkipValidationService()
+        config = FlextModels.ValidationConfiguration(
+            enable_strict_mode=False,
+            validate_on_assignment=False,
+            validate_on_read=False,
+        )
+
+        result = service.validate_and_transform(config)
+
+        assert result.is_success
+        assert result.unwrap() == "executed"
+        assert service.validation_called is False
+
+    def test_validate_and_transform_custom_validators_failure(self) -> None:
+        """Test that custom validators are evaluated and failures aggregated."""
+
+        class CustomValidatorService(FlextDomainService[str]):
+            executed: bool = False
+
+            def execute(self) -> FlextResult[str]:
+                self.executed = True
+                return FlextResult[str].ok("executed")
+
+        service = CustomValidatorService()
+
+        def validator_failure(_service: CustomValidatorService) -> FlextResult[None]:
+            return FlextResult[None].fail("first issue")
+
+        def validator_exception(_service: CustomValidatorService) -> None:
+            raise RuntimeError("second issue")
+
+        config = FlextModels.ValidationConfiguration(
+            enable_strict_mode=True,
+            custom_validators=[validator_failure, validator_exception],
+            max_validation_errors=5,
+        )
+
+        result = service.validate_and_transform(config)
+
+        assert result.is_failure
+        assert "validator_failure" in (result.error or "")
+        assert "validator_exception" in (result.error or "")
+        assert service.executed is False
+        assert len(result.error_data.get("validation_errors", [])) == 2
+        assert "first issue" in result.error_data.get("validation_errors", [""])[0]
+
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
         service = SampleUserService()
