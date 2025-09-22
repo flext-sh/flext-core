@@ -149,6 +149,47 @@ class ComplexTypeService(FlextDomainService[dict]):
         return FlextResult[dict].ok({"data": self.data, "items": self.items})
 
 
+class SampleOperationService(FlextDomainService[int]):
+    """Domain service capturing execution metadata for tests."""
+
+    validation_calls: int = 0
+    execute_with_request_calls: int = 0
+    invoked_method: str | None = None
+    captured_kwargs: dict[str, object] | None = None
+
+    def execute(self) -> FlextResult[int]:
+        """Default execute implementation returning sentinel result."""
+        return FlextResult[int].ok(-1)
+
+    def execute_with_request(
+        self, request: FlextModels.DomainServiceExecutionRequest
+    ) -> FlextResult[int]:
+        """Track execute_with_request usage while delegating to base implementation."""
+        self.execute_with_request_calls += 1
+        return super().execute_with_request(request)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Count validation invocations for assertions."""
+        self.validation_calls += 1
+        return FlextResult[None].ok(None)
+
+    def multiply(
+        self,
+        value: int,
+        *,
+        context: dict[str, object] | None = None,
+        timeout_seconds: int | None = None,
+    ) -> FlextResult[int]:
+        """Operation used in tests to verify request forwarding."""
+        self.invoked_method = "multiply"
+        self.captured_kwargs = {
+            "value": value,
+            "context": context,
+            "timeout_seconds": timeout_seconds,
+        }
+        return FlextResult[int].ok(value * 2)
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -540,6 +581,41 @@ class TestDomainServicesFixed:
 
         result = service.get_service_info()
         assert isinstance(result, dict)
+
+    def test_execute_with_full_validation_invokes_requested_method(self) -> None:
+        """Ensure validation path dispatches to the configured operation."""
+        service = SampleOperationService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="SampleOperationService",
+            method_name="multiply",
+            parameters={"value": 3},
+            context={
+                "trace_id": "trace-123",
+                "span_id": "span-456",
+                "custom": "value",
+            },
+            timeout_seconds=2,
+        )
+
+        result = service.execute_with_full_validation(request)
+
+        assert service.validation_calls == 1
+        assert service.execute_with_request_calls == 1
+        assert service.invoked_method == "multiply"
+
+        assert result.is_success
+        assert result.value == 6
+
+        assert service.captured_kwargs is not None
+        assert service.captured_kwargs["value"] == 3
+        context = service.captured_kwargs["context"]
+        assert isinstance(context, dict)
+        assert context["custom"] == "value"
+        assert context["trace_id"] == "trace-123"
+        assert context["span_id"] == "span-456"
+        assert context["service_type"] == "SampleOperationService"
+        assert "timestamp" in context
+        assert service.captured_kwargs["timeout_seconds"] == 2
 
     def test_service_extra_forbid(self) -> None:
         """Test service with extra fields forbidden."""
