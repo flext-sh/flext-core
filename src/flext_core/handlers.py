@@ -13,8 +13,9 @@ from __future__ import annotations
 import inspect
 import time
 from abc import abstractmethod
-from typing import Any, Literal, TypeVar, get_origin, get_type_hints
 from typing import Literal, get_origin, get_type_hints
+from dataclasses import asdict as dataclasses_asdict, is_dataclass
+from typing import Callable, Literal, cast, get_origin
 from collections.abc import Callable
 from typing import Literal, cast, get_origin
 
@@ -27,6 +28,17 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+try:  # pragma: no cover - optional dependency guard
+    import attr as _attr_module
+except ImportError:  # pragma: no cover - fallback when attrs is unavailable
+    _attr_module = None
+
+
+_SERIALIZABLE_MESSAGE_EXPECTATION = (
+    "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
+    "model_dump/dict/as_dict/__slots__ representations"
+)
 
 HandlerModeLiteral = Literal[
     FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
@@ -143,7 +155,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             self._revalidate_pydantic_messages = metadata_flag
         else:
             self._revalidate_pydantic_messages = False
-    
+
     def from_callable(
         cls,
         handler_func: Callable[[object], object | FlextResult[object]],
@@ -167,9 +179,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             )
             raise ValueError(msg)
 
-        resolved_name = handler_name or getattr(
-            handler_func, "__name__", cls.__name__
-        )
+        resolved_name = handler_name or getattr(handler_func, "__name__", cls.__name__)
         resolved_mode: Literal["command", "query"] = (
             FlextConstants.Cqrs.QUERY_HANDLER_TYPE
             if mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE
@@ -290,9 +300,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             self.logger.debug(
                 "handler_type_check",
                 can_handle=can_handle_result,
-                expected_type=getattr(
-                    expected_type, "__name__", str(expected_type)
-                ),
+                expected_type=getattr(expected_type, "__name__", str(expected_type)),
             )
             if can_handle_result:
                 return True
@@ -630,29 +638,130 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     error_data={"exception_context": pydantic_error.context},
                 )
 
-        # For non-Pydantic objects, basic validation using FlextExceptions
-        if not hasattr(message, "__dict__") and not isinstance(
-            message, (dict, str, int, float, bool)
-        ):
-            type_error = FlextExceptions.TypeError(
-                f"Invalid message type for {operation}: {type(message).__name__}",
-                expected_type="dict, str, int, float, bool, or object with __dict__",
-                actual_type=type(message).__name__,
-                context={
-                    "operation": operation,
-                    "message_type": type(message).__name__,
-                    "validation_type": "basic_type_check",
-                },
-                correlation_id=f"type_validation_{int(time.time() * 1000)}",
-            )
-
+        # For non-Pydantic objects, ensure a serializable representation can be constructed
+        try:
+            self._build_serializable_message_payload(message, operation=operation)
+        except FlextExceptions.TypeError as type_error:
             return FlextResult[None].fail(
                 str(type_error),
                 error_code=type_error.error_code,
                 error_data={"exception_context": type_error.context},
             )
+        except Exception as exc:  # pragma: no cover - defensive guard
+            fallback_error = FlextExceptions.TypeError(
+                f"Invalid message type for {operation}: {type(message).__name__}",
+                expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type=type(message).__name__,
+                context={
+                    "operation": operation,
+                    "message_type": type(message).__name__,
+                    "validation_type": "serializable_check",
+                    "original_exception": str(exc),
+                },
+                correlation_id=f"type_validation_{int(time.time() * 1000)}",
+            )
+
+            return FlextResult[None].fail(
+                str(fallback_error),
+                error_code=fallback_error.error_code,
+                error_data={"exception_context": fallback_error.context},
+            )
 
         return FlextResult[None].ok(None)
+
+    def _build_serializable_message_payload(
+        self,
+        message: object,
+        *,
+        operation: Literal["command", "query"] | None = None,
+    ) -> object:
+        """Build a serializable representation for message validation heuristics."""
+
+        operation_name = operation or "message"
+        context_operation = operation or "unknown"
+
+        if isinstance(message, (dict, str, int, float, bool)):
+            return message
+
+        if message is None:
+            raise FlextExceptions.TypeError(
+                f"Invalid message type for {operation_name}: NoneType",
+                expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type="NoneType",
+                context={
+                    "operation": context_operation,
+                    "message_type": "NoneType",
+                    "validation_type": "serializable_check",
+                },
+                correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+            )
+
+        if isinstance(message, BaseModel):
+            return message.model_dump()
+
+        if is_dataclass(message):
+            return dataclasses_asdict(message)
+
+        attrs_fields = getattr(message, "__attrs_attrs__", None)
+        if attrs_fields is not None:
+            if _attr_module is not None and hasattr(_attr_module, "asdict"):
+                return _attr_module.asdict(message)
+            return {
+                attr_field.name: getattr(message, attr_field.name)
+                for attr_field in attrs_fields
+                if hasattr(message, attr_field.name)
+            }
+
+        for method_name in ("model_dump", "dict", "as_dict"):
+            method = getattr(message, method_name, None)
+            if callable(method):
+                try:
+                    data = method()
+                except Exception:
+                    continue
+                if data is not None:
+                    return data
+
+        slots = getattr(message, "__slots__", None)
+        if slots:
+            if isinstance(slots, str):
+                slot_names = (slots,)
+            elif isinstance(slots, (list, tuple)):
+                slot_names = tuple(slots)
+            else:
+                raise FlextExceptions.TypeError(
+                    f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}",
+                    expected_type="str, list, or tuple",
+                    actual_type=type(slots).__name__,
+                    context={
+                        "operation": context_operation,
+                        "message_type": type(message).__name__,
+                        "validation_type": "serializable_check",
+                        "__slots__": repr(slots),
+                    },
+                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                )
+
+            return {
+                slot_name: getattr(message, slot_name)
+                for slot_name in slot_names
+                if hasattr(message, slot_name)
+            }
+
+        if hasattr(message, "__dict__"):
+            return vars(message)
+
+        raise FlextExceptions.TypeError(
+            f"Invalid message type for {operation_name}: {type(message).__name__}",
+            expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
+            actual_type=type(message).__name__,
+            context={
+                "operation": context_operation,
+                "message_type": type(message).__name__,
+                "validation_type": "serializable_check",
+            },
+            correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+        )
 
     @abstractmethod
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
@@ -747,6 +856,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         return validation_result.flat_map(
             lambda _: self._execute_with_timing(message, message_type, identifier)
         )
+
     def _validate_mode(
         self, operation: HandlerTypeLiteral
     ) -> FlextResult[None]:
@@ -989,6 +1099,91 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 error_code=critical_error.error_code,
                 error_data={"exception_context": critical_error.context},
             )
+
+    @staticmethod
+    def from_callable(
+        handler_func: Callable[[object], object | FlextResult[object]],
+        *,
+        mode: Literal["command", "query"],
+        handler_config: FlextModels.CqrsConfig.Handler
+        | dict[str, object]
+        | None = None,
+        handler_name: str | None = None,
+    ) -> "FlextHandlers[object, object]":
+        """Create a ``FlextHandlers`` instance from a plain callable.
+
+        Args:
+            handler_func: Callable implementing the handler logic.
+            mode: Operation mode (``"command"`` or ``"query"``).
+            handler_config: Optional handler configuration payload.
+            handler_name: Optional explicit handler name override.
+
+        Returns:
+            A ``FlextHandlers`` instance wrapping ``handler_func``.
+
+        Raises:
+            ValueError: If ``mode`` is not a supported handler type.
+        """
+
+        valid_modes = {
+            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+        }
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid handler mode: {mode}")
+
+        resolved_name = handler_name or getattr(
+            handler_func,
+            "__name__",
+            "FunctionHandler",
+        )
+
+        class CallableHandler(FlextHandlers[object, object]):
+            def __init__(self) -> None:
+                super().__init__(
+                    handler_mode=mode,
+                    handler_name=resolved_name,
+                    handler_config=handler_config,
+                )
+                self._handler_func = handler_func
+
+            def handle(self, message: object) -> FlextResult[object]:
+                try:
+                    result = self._handler_func(message)
+                except FlextExceptions.BaseError as exc:  # pragma: no cover - defensive
+                    return FlextResult[object].fail(
+                        str(exc),
+                        error_code=getattr(exc, "error_code", None),
+                        error_data={
+                            "exception_context": getattr(exc, "context", {}),
+                        },
+                    )
+                except Exception as exc:
+                    processing_error = FlextExceptions.ProcessingError(
+                        f"Handler callable raised: {exc}",
+                        business_rule=f"{mode}_handler_callable",
+                        operation=f"handle_{mode}",
+                        context={
+                            "handler_name": resolved_name,
+                            "message_type": type(message).__name__,
+                        },
+                    )
+                    return FlextResult[object].fail(
+                        str(processing_error),
+                        error_code=processing_error.error_code,
+                        error_data={
+                            "exception_context": processing_error.context,
+                        },
+                    )
+
+                if isinstance(result, FlextResult):
+                    return cast("FlextResult[object]", result)
+                return FlextResult[object].ok(result)
+
+            def __call__(self, message: object) -> FlextResult[object]:
+                return self.handle(message)
+
+        return CallableHandler()
 
 
 __all__: FlextTypes.Core.StringList = [

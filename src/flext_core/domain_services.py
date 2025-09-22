@@ -86,7 +86,9 @@ class FlextDomainService[TDomainResult](
         validation_result = self.validate_with_request(request)
         if validation_result.is_failure:
             return FlextResult[TDomainResult].fail(
-                f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}" if validation_result.error else FlextConstants.Messages.VALIDATION_FAILED
+                f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
+                if validation_result.error
+                else FlextConstants.Messages.VALIDATION_FAILED
             )
 
         return self.execute()
@@ -182,8 +184,11 @@ class FlextDomainService[TDomainResult](
             config_validation = self.validate_config()
             if config_validation.is_failure:
                 return FlextResult[TDomainResult].fail(
-                        f"{FlextConstants.Messages.VALIDATION_FAILED} (pre-execution)"
-                        + (f": {validation_result.error}" if validation_result.error else "")
+                    f"{FlextConstants.Messages.VALIDATION_FAILED} (pre-execution)"
+                    + (
+                        f": {validation_result.error}"
+                        if validation_result.error
+                        else ""
                     )
                 )
 
@@ -238,9 +243,7 @@ class FlextDomainService[TDomainResult](
             retry_config = None
 
         max_attempts = (
-            max(1, int(retry_config.max_attempts))
-            if retry_config is not None
-            else 1
+            max(1, int(retry_config.max_attempts)) if retry_config is not None else 1
         )
 
         base_delay = (
@@ -256,9 +259,7 @@ class FlextDomainService[TDomainResult](
         )
         max_delay_seconds = max(base_delay, max_delay_seconds)
         backoff_multiplier = (
-            float(retry_config.backoff_multiplier)
-            if retry_config is not None
-            else 1.0
+            float(retry_config.backoff_multiplier) if retry_config is not None else 1.0
         )
         if backoff_multiplier <= 0:
             backoff_multiplier = 1.0
@@ -289,9 +290,7 @@ class FlextDomainService[TDomainResult](
             if timeout_seconds <= 0:
                 return call_operation()
 
-            timeout_message = (
-                f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
-            )
+            timeout_message = f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
 
             def timeout_handler(_signum: int, _frame: object) -> None:
                 raise TimeoutError(timeout_message)
@@ -331,7 +330,7 @@ class FlextDomainService[TDomainResult](
             try:
                 result = call_with_timeout()
                 return FlextResult[TDomainResult].ok(result)  # type: ignore[arg-type]
-            except Exception as exc:  # noqa: PERF203 - simple retry loop
+            except Exception as exc:
                 last_exception = exc
                 if not should_retry(exc, attempt):
                     message = str(exc) or exc.__class__.__name__
@@ -558,7 +557,9 @@ class FlextDomainService[TDomainResult](
             validation_result = self.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[TDomainResult].fail(
-                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}" if validation_result.error else FlextConstants.Messages.VALIDATION_FAILED
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
+                    if validation_result.error
+                    else FlextConstants.Messages.VALIDATION_FAILED
                 )
 
         # Execute after successful validation
