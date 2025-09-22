@@ -17,6 +17,7 @@ from flext_core import (
     FlextBus,
     FlextCqrs,
     FlextHandlers,
+    FlextLogger,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -655,6 +656,64 @@ class TestFlextCqrsComprehensive:
         handler = FlextBus.create_simple_handler(test_handler_func)
         assert handler is not None
         assert isinstance(handler, FlextHandlers)
+
+    # =========================================================================
+    # HANDLER TYPE RESOLUTION
+    # =========================================================================
+
+    def test_handler_caches_generic_message_types(self) -> None:
+        """Handlers with generics should cache accepted types for reuse."""
+
+        class CachedTypeHandler(FlextHandlers[CreateUserCommand, UserCreatedEvent]):
+            def handle(
+                self, message: CreateUserCommand
+            ) -> FlextResult[UserCreatedEvent]:
+                return FlextResult[UserCreatedEvent].fail("not used in test")
+
+        handler = CachedTypeHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand) is True
+        assert handler.can_handle(UpdateUserCommand) is False
+
+    def test_handler_resolves_message_type_from_handle_annotations(self) -> None:
+        """Handlers without generics should fall back to handle() annotations."""
+
+        class AnnotatedHandler(FlextHandlers):
+            def handle(self, message: CreateUserCommand) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = AnnotatedHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand) is True
+        assert handler.can_handle(DeleteUserCommand) is False
+
+    def test_handler_without_type_hints_warns_once(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Handlers lacking hints should warn once and reject all messages."""
+
+        recorded_warnings: list[str] = []
+
+        def fake_warning(
+            self, message: str, *args: object, **context: object
+        ) -> None:
+            recorded_warnings.append(message)
+
+        monkeypatch.setattr(FlextLogger, "warning", fake_warning)
+
+        class UntypedHandler(FlextHandlers):
+            def handle(self, message) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = UntypedHandler()
+
+        assert handler._accepted_message_types == ()
+        assert handler.can_handle(CreateUserCommand) is False
+        assert handler._handler_type_warning_logged is True
+        assert handler.can_handle(UpdateUserCommand) is False
+        assert recorded_warnings == ["handler_type_constraints_unknown"]
 
     # =========================================================================
     # COMMAND FACTORIES AND DECORATORS
