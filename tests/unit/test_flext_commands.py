@@ -519,8 +519,10 @@ class TestFlextCqrsComprehensive:
         update_handler = UpdateUserHandler()
 
         # Register handlers
-        bus.register_handler(create_handler)
-        bus.register_handler(update_handler)
+        create_registration = bus.register_handler(create_handler)
+        FlextTestsMatchers.assert_result_success(create_registration)
+        update_registration = bus.register_handler(update_handler)
+        FlextTestsMatchers.assert_result_success(update_registration)
 
         # Execute commands through bus
         create_command = CreateUserCommand(username="bus_user", email="bus@example.com")
@@ -546,7 +548,8 @@ class TestFlextCqrsComprehensive:
         ]
 
         for handler in handlers:
-            bus.register_handler(handler)
+            registration_result = bus.register_handler(handler)
+            FlextTestsMatchers.assert_result_success(registration_result)
 
         # Benchmark command execution
         def execute_commands() -> list[FlextResult[object]]:
@@ -585,11 +588,13 @@ class TestFlextCqrsComprehensive:
                 return FlextResult[str].ok(message.value)
 
         # 1-arg form registers by handler id
-        bus.register_handler(EchoHandler())
+        auto_registration = bus.register_handler(EchoHandler())
+        FlextTestsMatchers.assert_result_success(auto_registration)
         assert bus.find_handler(EchoCmd(value="a")) is not None
 
         # 2-arg form registers by explicit command type
-        bus.register_handler(EchoCmd, EchoHandler())
+        explicit_registration = bus.register_handler(EchoCmd, EchoHandler())
+        FlextTestsMatchers.assert_result_success(explicit_registration)
         r = bus.execute(EchoCmd(value="hello"))
         assert r.success
         assert r.value == "hello"
@@ -620,7 +625,8 @@ class TestFlextCqrsComprehensive:
             def handle(self, message: EchoCmd) -> FlextResult[str]:
                 return FlextResult[str].ok(message.value.upper())
 
-        bus.register_handler(EchoCmd, OnlyProcess())
+        override_registration = bus.register_handler(EchoCmd, OnlyProcess())
+        FlextTestsMatchers.assert_result_success(override_registration)
         res2 = bus.execute(EchoCmd(value="ok"))
         assert res2.success
         assert res2.value == "OK"
@@ -751,7 +757,8 @@ class TestFlextCqrsComprehensive:
 
         # Register handler
         handler = CreateUserHandler()
-        bus.register_handler(handler)
+        middleware_registration = bus.register_handler(handler)
+        FlextTestsMatchers.assert_result_success(middleware_registration)
 
         # Execute command
         command = CreateUserCommand(
@@ -857,7 +864,8 @@ class TestFlextCqrsComprehensive:
                 )
 
         failing_handler = FailingHandler()
-        bus.register_handler(failing_handler)
+        failing_registration = bus.register_handler(failing_handler)
+        FlextTestsMatchers.assert_result_success(failing_registration)
 
         command = CreateUserCommand(username="fail_test", email="fail@example.com")
         result = bus.execute(command)

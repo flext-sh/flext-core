@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Generic, Protocol, overload, runtime_checkable
 
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T_contra, TInput_contra, TOutput_co
@@ -378,15 +378,48 @@ class FlextProtocols:
                 ...
 
         class CommandBus(Protocol):
-            """Protocol for command bus routing and execution."""
+            """Protocol for command bus routing and execution.
 
-            def register_handler(self, handler: object) -> None:
-                """Register a command handler.
+            Implementations must surface the same registration ergonomics as
+            :class:`flext_core.bus.FlextBus`: either pass a handler instance and
+            let the bus infer its capabilities, or explicitly bind a handler to a
+            command type. Both flows communicate success or failure using
+            :class:`flext_core.result.FlextResult` to align typing contracts with
+            runtime behavior.
+            """
+
+            @overload
+            def register_handler(self, handler: object) -> FlextResult[None]:
+                """Register a handler using the bus' auto-discovery semantics.
 
                 Args:
-                    handler: The handler to register
+                    handler: The handler instance to register.
 
+                Returns:
+                    FlextResult[None]: ``ok`` when the handler is registered (or
+                    already present) and ``fail`` when validation rejects the
+                    registration.
                 """
+                ...
+
+            @overload
+            def register_handler(
+                self, command_type: type[object] | str, handler: object
+            ) -> FlextResult[None]:
+                """Register a handler bound to a specific command type.
+
+                Args:
+                    command_type: Message or command type key for lookups.
+                    handler: The handler instance responsible for the command.
+
+                Returns:
+                    FlextResult[None]: ``ok`` when the binding is stored and
+                    ``fail`` when validation rejects the pair.
+                """
+                ...
+
+            def register_handler(self, *args: object) -> FlextResult[None]:
+                """Register a handler using either supported calling convention."""
                 ...
 
             def execute(self, command: object) -> object:
