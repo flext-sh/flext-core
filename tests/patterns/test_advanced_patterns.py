@@ -546,7 +546,7 @@ class TestAdvancedPatterns:
     def test_complex_test_data_generation(self) -> None:
         """Test complex test data generation."""
         # Generate multiple test scenarios
-        scenarios = []
+        scenarios: list[MockScenario] = []
         for i in range(3):
             scenario = (
                 GivenWhenThenBuilder(f"scenario_{i}")
