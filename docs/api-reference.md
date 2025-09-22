@@ -119,6 +119,11 @@ assert summary.is_success
 assert dispatcher.dispatch("modernization").unwrap() == "modernization"
 ```
 
+> **Note:** `FlextHandlers` trusts incoming Pydantic models and skips redundant
+> revalidation by default. Pass `revalidate_pydantic_messages=True` when
+> instantiating a handler if you need the framework to perform an extra
+> validation round.
+
 `FlextDispatcherRegistry.Summary` exposes `registered`, `skipped`, and `errors` lists so CLI and connector packages can produce migration reports.
 
 ---

@@ -49,6 +49,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         handler_config: FlextModels.CqrsConfig.Handler
         | dict[str, object]
         | None = None,
+        revalidate_pydantic_messages: bool | None = None,
         command_timeout: int = 0,
         max_command_retries: int = 0,
     ) -> None:
@@ -60,6 +61,8 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             handler_name: DEPRECATED - Handler name
             handler_id: DEPRECATED - Handler ID
             handler_config: DEPRECATED - Handler configuration
+            revalidate_pydantic_messages: Optional flag to force Pydantic
+                revalidation even when a model instance is provided
             command_timeout: DEPRECATED - Command timeout
             max_command_retries: DEPRECATED - Max retries
 
@@ -103,6 +106,26 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self.handler_id = self._config_model.handler_id
         self._start_time: float | None = None
         self._metrics_state: FlextTypes.Core.Dict | None = None
+
+        metadata = getattr(self._config_model, "metadata", None)
+        metadata_flag: bool | None = None
+        if isinstance(metadata, dict):
+            raw_flag = metadata.get("revalidate_pydantic_messages")
+            if isinstance(raw_flag, bool):
+                metadata_flag = raw_flag
+            elif isinstance(raw_flag, str):
+                normalized = raw_flag.strip().lower()
+                if normalized in {"1", "true", "yes"}:
+                    metadata_flag = True
+                elif normalized in {"0", "false", "no"}:
+                    metadata_flag = False
+
+        if revalidate_pydantic_messages is not None:
+            self._revalidate_pydantic_messages = revalidate_pydantic_messages
+        elif metadata_flag is not None:
+            self._revalidate_pydantic_messages = metadata_flag
+        else:
+            self._revalidate_pydantic_messages = False
 
     def _resolve_mode(
         self,
@@ -348,18 +371,19 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     error_data={"exception_context": validation_error.context},
                 )
 
-        # If message is a Pydantic model, it's already validated
+        # If message is a Pydantic model, assume it is already validated unless
+        # the explicit revalidation flag requests an additional check
         if isinstance(message, BaseModel):
+            if not self._revalidate_pydantic_messages:
+                return FlextResult[None].ok(None)
+
             try:
-                # Re-validate to ensure consistency
-                message_data = message.model_dump()
-                # Use the class's model_validate method
-                message.__class__.model_validate(message_data)
+                message.__class__.model_validate(message.model_dump(mode="python"))
                 return FlextResult[None].ok(None)
             except Exception as e:
                 # Use FlextExceptions.ValidationError for Pydantic validation failures
                 pydantic_error = FlextExceptions.ValidationError(
-                    f"Pydantic validation failed: {e}",
+                    f"Pydantic revalidation failed: {e}",
                     field="pydantic_model",
                     value=str(message)[:100]
                     if hasattr(message, "__str__")
@@ -367,11 +391,13 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     validation_details={
                         "pydantic_exception": str(e),
                         "model_class": message.__class__.__name__,
+                        "revalidated": True,
                     },
                     context={
                         "operation": operation,
                         "message_type": type(message).__name__,
-                        "validation_type": "pydantic",
+                        "validation_type": "pydantic_revalidation",
+                        "revalidate_pydantic_messages": self._revalidate_pydantic_messages,
                     },
                     correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
                 )
