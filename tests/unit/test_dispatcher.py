@@ -133,6 +133,93 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.unwrap()
 
 
+def test_dispatcher_dispatch_with_explicit_correlation_id_uses_provided_value() -> None:
+    """Dispatcher should expose the provided correlation ID within handlers."""
+    FlextContext.Utilities.clear_context()
+
+    class RecordingBus:
+        def __init__(self) -> None:
+            self.correlation_ids: list[str | None] = []
+            self.parent_ids: list[str | None] = []
+
+        def execute(self, message: object) -> FlextResult[object]:
+            self.correlation_ids.append(
+                FlextContext.Correlation.get_correlation_id()
+            )
+            self.parent_ids.append(
+                FlextContext.Correlation.get_parent_correlation_id()
+            )
+            return FlextResult[object].ok("handled")
+
+        def register_handler(
+            self, *args: object
+        ) -> FlextResult[dict[str, object]]:
+            return FlextResult[dict[str, object]].ok({})
+
+    bus = RecordingBus()
+    dispatcher = FlextDispatcher(bus=bus)
+
+    provided_correlation = "corr-explicit-123"
+    result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload="explicit"),
+        correlation_id=provided_correlation,
+    )
+
+    assert result.is_success
+    assert bus.correlation_ids == [provided_correlation]
+    assert bus.parent_ids == [None]
+
+    assert FlextContext.Correlation.get_correlation_id() is None
+    assert FlextContext.Correlation.get_parent_correlation_id() is None
+
+
+def test_dispatcher_dispatch_with_explicit_correlation_id_restores_previous_context() -> None:
+    """Explicit correlation IDs should be scoped without mutating outer context."""
+    FlextContext.Utilities.clear_context()
+
+    class RecordingBus:
+        def __init__(self) -> None:
+            self.correlation_ids: list[str | None] = []
+            self.parent_ids: list[str | None] = []
+
+        def execute(self, message: object) -> FlextResult[object]:
+            self.correlation_ids.append(
+                FlextContext.Correlation.get_correlation_id()
+            )
+            self.parent_ids.append(
+                FlextContext.Correlation.get_parent_correlation_id()
+            )
+            return FlextResult[object].ok("handled")
+
+        def register_handler(
+            self, *args: object
+        ) -> FlextResult[dict[str, object]]:
+            return FlextResult[dict[str, object]].ok({})
+
+    bus = RecordingBus()
+    dispatcher = FlextDispatcher(bus=bus)
+
+    existing_correlation = "corr-existing-456"
+    existing_parent = "corr-parent-789"
+    FlextContext.Correlation.set_correlation_id(existing_correlation)
+    FlextContext.Correlation.set_parent_correlation_id(existing_parent)
+
+    provided_correlation = "corr-explicit-nested"
+    result = dispatcher.dispatch(
+        EchoCommand(payload="restore"),
+        correlation_id=provided_correlation,
+    )
+
+    assert result.is_success
+    assert bus.correlation_ids == [provided_correlation]
+    assert bus.parent_ids == [existing_correlation]
+
+    assert FlextContext.Correlation.get_correlation_id() == existing_correlation
+    assert FlextContext.Correlation.get_parent_correlation_id() == existing_parent
+
+    FlextContext.Utilities.clear_context()
+
+
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
     """Registry returns success while avoiding duplicate registrations."""
     FlextContext.Utilities.clear_context()
