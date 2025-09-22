@@ -209,7 +209,9 @@ class TestFlextCqrsOperations:
         assert isinstance(query, FlextModels.Query)
         # Note: Query model doesn't have query_type attribute in current implementation
         assert query.filters == {"user_id": "123"}
-        assert query.pagination == {"page": 1, "size": 10}
+        assert isinstance(query.pagination, FlextModels.Pagination)
+        assert query.pagination.model_dump() == {"page": 1, "size": 10}
+        assert query.model_dump()["pagination"] == {"page": 1, "size": 10}
         # Check auto-generated query_id
         assert query.query_id is not None
 
@@ -229,6 +231,38 @@ class TestFlextCqrsOperations:
         assert result.is_success
         query = result.value
         assert query.query_id == custom_id
+
+    def test_query_validate_query_helper(self) -> None:
+        """Ensure FlextModels.Query.validate_query returns typed pagination."""
+
+        query_payload: dict[str, object] = {
+            "filters": {"status": "active"},
+            "pagination": {"page": "2", "size": 25},
+        }
+
+        result = FlextModels.Query.validate_query(query_payload)
+
+        assert result.is_success
+        query = result.value
+        assert isinstance(query.pagination, FlextModels.Pagination)
+        assert query.pagination.model_dump() == {"page": 2, "size": 25}
+        assert query.model_dump()["pagination"] == {"page": 2, "size": 25}
+
+    def test_query_validate_query_helper_invalid(self) -> None:
+        """Invalid pagination should surface validation errors."""
+
+        query_payload: dict[str, object] = {
+            "pagination": {
+                "page": 0,
+                "size": FlextConstants.Cqrs.MAX_PAGE_SIZE + 1,
+            }
+        }
+
+        result = FlextModels.Query.validate_query(query_payload)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "pagination" in result.error
 
     def test_create_query_validation_error(self) -> None:
         """Test query creation with invalid data."""
