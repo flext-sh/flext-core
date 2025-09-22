@@ -390,7 +390,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
         """
         if not FlextLogger._mask_sensitive_data_enabled:
-            return event_dict
+            return context
 
         sensitive_keys = {
             "password",
