@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
-from flext_core import FlextModels, FlextProcessing, FlextResult
+from flext_core import FlextConfig, FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
 
 
@@ -248,6 +248,24 @@ class TestFlextProcessingHandlerRegistry:
         )
         self.registry.register(registration)
         assert self.registry.get_optional(handler_name) == self.mock_handler
+
+
+class TestFlextProcessingConfig:
+    """Tests for FlextProcessing.Config utilities."""
+
+    def test_get_default_timeout_uses_timeout_seconds(self) -> None:
+        """Ensure custom timeout_seconds is returned from the singleton."""
+
+        FlextConfig.reset_global_instance()
+        custom_timeout = 42
+        custom_config = FlextConfig(timeout_seconds=custom_timeout)
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            timeout = FlextProcessing.Config.get_default_timeout()
+            assert timeout == float(custom_timeout)
+        finally:
+            FlextConfig.reset_global_instance()
 
 
 class TestFlextProcessingPipeline:
