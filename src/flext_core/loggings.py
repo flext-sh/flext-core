@@ -750,19 +750,41 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Clean up
         del self._local.operations[operation_id]
 
+    @staticmethod
+    def _split_logging_kwargs(
+        kwargs: Mapping[str, object],
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        """Split kwargs into contextual data and structlog control parameters."""
+
+        control_keys = {"exc_info", "stack_info", "stacklevel"}
+        context: dict[str, object] = {}
+        structlog_kwargs: dict[str, object] = {}
+
+        for key, value in kwargs.items():
+            if key in control_keys:
+                if value is not None:
+                    structlog_kwargs[key] = value
+            else:
+                context[key] = value
+
+        return context, structlog_kwargs
+
     # LoggerProtocol implementation - Standard logging methods with enhanced context
-    def trace(self, message: str, *args: object, **context: object) -> None:
+    def trace(self, message: str, *args: object, **kwargs: object) -> None:
         """Log trace message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
         entry = self._build_log_entry("TRACE", formatted_message, context)
         self._structlog_logger.debug(
             formatted_message,
             **entry,
+            **structlog_kwargs,
         )  # Use debug since structlog doesn't have trace
 
-    def debug(self, message: str, *args: object, **context: object) -> None:
+    def debug(self, message: str, *args: object, **kwargs: object) -> None:
         """Log debug message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -770,16 +792,25 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
 
         if not structured_output:
-            self._structlog_logger.debug(formatted_message, **context)
+            self._structlog_logger.debug(
+                formatted_message,
+                **context,
+                **structlog_kwargs,
+            )
         else:
             entry = self._build_log_entry(
                 FlextConstants.Logging.DEBUG, formatted_message, context
             )
-            self._structlog_logger.debug(formatted_message, **entry)
+            self._structlog_logger.debug(
+                formatted_message,
+                **entry,
+                **structlog_kwargs,
+            )
 
-    def info(self, message: str, *args: object, **context: object) -> None:
+    def info(self, message: str, *args: object, **kwargs: object) -> None:
         """Log info message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -787,16 +818,25 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
 
         if not structured_output:
-            self._structlog_logger.info(formatted_message, **context)
+            self._structlog_logger.info(
+                formatted_message,
+                **context,
+                **structlog_kwargs,
+            )
         else:
             entry = self._build_log_entry(
                 FlextConstants.Logging.INFO, formatted_message, context
             )
-            self._structlog_logger.info(formatted_message, **entry)
+            self._structlog_logger.info(
+                formatted_message,
+                **entry,
+                **structlog_kwargs,
+            )
 
-    def warning(self, message: str, *args: object, **context: object) -> None:
+    def warning(self, message: str, *args: object, **kwargs: object) -> None:
         """Log warning message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -804,27 +844,31 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
 
         if not structured_output:
-            self._structlog_logger.warning(formatted_message, **context)
+            self._structlog_logger.warning(
+                formatted_message,
+                **context,
+                **structlog_kwargs,
+            )
         else:
             entry = self._build_log_entry(
                 FlextConstants.Logging.WARNING, formatted_message, context
             )
-            self._structlog_logger.warning(formatted_message, **entry)
+            self._structlog_logger.warning(
+                formatted_message,
+                **entry,
+                **structlog_kwargs,
+            )
 
-    def error(self, message: str, **kwargs: object) -> None:
+    def error(self, message: str, *args: object, **kwargs: object) -> None:
         """Log error message with context and error details - LoggerProtocol implementation."""
-        # Extract special parameters from kwargs with proper typing
-        args = kwargs.pop("args", ())
-        error_obj = kwargs.pop("error", None)
-        context = kwargs
+        formatted_message = message % args if args else message
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
+        error_obj = context.pop("error", None)
 
         # Convert error to proper type
         error: Exception | str | None = None
         if error_obj is not None:
             error = error_obj if isinstance(error_obj, Exception) else str(error_obj)
-
-        # Handle args formatting
-        formatted_message = message % args if args else message
 
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
@@ -835,7 +879,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         if not structured_output:
             if error:
                 context["error"] = str(error)
-            self._structlog_logger.error(formatted_message, **context)
+            self._structlog_logger.error(
+                formatted_message,
+                **context,
+                **structlog_kwargs,
+            )
         else:
             entry = self._build_log_entry(
                 FlextConstants.Config.LogLevel.ERROR,
@@ -843,22 +891,22 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 context,
                 error,
             )
-            self._structlog_logger.error(formatted_message, **entry)
+            self._structlog_logger.error(
+                formatted_message,
+                **entry,
+                **structlog_kwargs,
+            )
 
-    def critical(self, message: str, **kwargs: object) -> None:
+    def critical(self, message: str, *args: object, **kwargs: object) -> None:
         """Log critical message with context and error details - LoggerProtocol implementation."""
-        # Extract special parameters from kwargs with proper typing
-        args = kwargs.pop("args", ())
-        error_obj = kwargs.pop("error", None)
-        context = kwargs
+        formatted_message = message % args if args else message
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
+        error_obj = context.pop("error", None)
 
         # Convert error to proper type
         error: Exception | str | None = None
         if error_obj is not None:
             error = error_obj if isinstance(error_obj, Exception) else str(error_obj)
-
-        # Handle args formatting
-        formatted_message = message % args if args else message
 
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
@@ -869,7 +917,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         if not structured_output:
             if error:
                 context["error"] = str(error)
-            self._structlog_logger.critical(formatted_message, **context)
+            self._structlog_logger.critical(
+                formatted_message,
+                **context,
+                **structlog_kwargs,
+            )
         else:
             entry = self._build_log_entry(
                 FlextConstants.Config.LogLevel.CRITICAL,
@@ -877,17 +929,37 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 context,
                 error,
             )
-            self._structlog_logger.critical(formatted_message, **entry)
+            self._structlog_logger.critical(
+                formatted_message,
+                **entry,
+                **structlog_kwargs,
+            )
 
-    def exception(self, message: str, *args: object, **context: object) -> None:
+    def exception(
+        self,
+        message: str,
+        *args: object,
+        exc_info: bool = True,
+        **kwargs: object,
+    ) -> None:
         """Log exception with stack trace and context - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        exc_info = sys.exc_info()
-        error = exc_info[1] if isinstance(exc_info[1], Exception) else None
+        context, structlog_kwargs = self._split_logging_kwargs(kwargs)
+        captured_exc_info = sys.exc_info()
+        error = (
+            captured_exc_info[1]
+            if isinstance(captured_exc_info[1], Exception)
+            else None
+        )
         entry = self._build_log_entry(
             FlextConstants.Config.LogLevel.ERROR, formatted_message, context, error
         )
-        self._structlog_logger.error(formatted_message, **entry)
+        structlog_kwargs["exc_info"] = exc_info
+        self._structlog_logger.error(
+            formatted_message,
+            **entry,
+            **structlog_kwargs,
+        )
 
     @classmethod
     def configure(
