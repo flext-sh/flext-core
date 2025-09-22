@@ -36,12 +36,15 @@ class FlextProcessing:
                 fallback to constants.
 
             """
+            config = FlextConfig.get_global_instance()
+            value = getattr(config, "timeout_seconds", None)
+            if value is None:
+                value = getattr(config, "default_timeout", None)
+            if value is None:
+                return float(FlextConstants.Defaults.TIMEOUT)
             try:
-                config = FlextConfig.get_global_instance()
-                return float(
-                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT)
-                )
-            except Exception:
+                return float(value)
+            except (TypeError, ValueError):
                 return float(FlextConstants.Defaults.TIMEOUT)
 
         @classmethod
@@ -52,16 +55,13 @@ class FlextProcessing:
                 int: Maximum batch size configured or the default constant.
 
             """
+            config = FlextConfig.get_global_instance()
+            value = getattr(config, "max_batch_size", None)
+            if value is None:
+                return FlextConstants.Performance.DEFAULT_BATCH_SIZE
             try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config,
-                        "max_batch_size",
-                        FlextConstants.Performance.DEFAULT_BATCH_SIZE,
-                    )
-                )
-            except Exception:
+                return int(value)
+            except (TypeError, ValueError):
                 return FlextConstants.Performance.DEFAULT_BATCH_SIZE
 
         @classmethod
@@ -72,14 +72,13 @@ class FlextProcessing:
                 int: Maximum handlers configured or the default constant.
 
             """
+            config = FlextConfig.get_global_instance()
+            value = getattr(config, "max_handlers", None)
+            if value is None:
+                return FlextConstants.Container.MAX_SERVICES
             try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config, "max_handlers", FlextConstants.Container.MAX_SERVICES
-                    )
-                )
-            except Exception:
+                return int(value)
+            except (TypeError, ValueError):
                 return FlextConstants.Container.MAX_SERVICES
 
     class Handler:

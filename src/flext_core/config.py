@@ -76,6 +76,11 @@ class FlextConfig(BaseSettings):
         description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Verbosity preset applied to structured logging outputs",
+    )
+
     json_output: bool | None = Field(
         default=FlextConstants.Logging.JSON_OUTPUT_DEFAULT,
         description="Use JSON output format for logging (auto-detected if None)",
@@ -200,6 +205,18 @@ class FlextConfig(BaseSettings):
         ge=1,
         le=FlextConstants.Performance.DEFAULT_TIMEOUT_LIMIT,
         description="Default timeout for operations in seconds",
+    )
+
+    max_batch_size: int = Field(
+        default=FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+        ge=1,
+        description="Maximum batch size for processing operations",
+    )
+
+    max_handlers: int = Field(
+        default=FlextConstants.Container.MAX_SERVICES,
+        ge=1,
+        description="Maximum number of handlers allowed in registries",
     )
 
     # Feature flags
@@ -534,6 +551,19 @@ class FlextConfig(BaseSettings):
         current_data = self.to_dict()
         merged_data = {**current_data, **other_data}
         return self.__class__.model_validate(merged_data)
+
+    # Compatibility aliases for legacy attribute names
+    @property
+    def default_timeout(self) -> int:
+        """Alias for :attr:`timeout_seconds` for backward compatibility."""
+
+        return self.timeout_seconds
+
+    @default_timeout.setter
+    def default_timeout(self, value: int) -> None:
+        """Update :attr:`timeout_seconds` when legacy alias is assigned."""
+
+        self.timeout_seconds = int(value)
 
     # Global instance management
     _global_instance: ClassVar[FlextConfig | None] = None

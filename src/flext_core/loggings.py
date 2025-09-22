@@ -1193,9 +1193,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 "structured_output",
                 FlextConstants.Logging.STRUCTURED_OUTPUT,
             ),
-            "log_verbosity": getattr(
-                global_config, "log_verbosity", FlextConstants.Logging.VERBOSITY
-            ),
+            "log_verbosity": global_config.log_verbosity,
         }
 
     @classmethod
