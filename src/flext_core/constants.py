@@ -221,7 +221,7 @@ class FlextConstants:
         HTTP_METHOD_PATCH: Final[str] = "PATCH"
         HTTP_METHOD_HEAD: Final[str] = "HEAD"
         HTTP_METHOD_OPTIONS: Final[str] = "OPTIONS"
-        
+
         VALID_HTTP_METHODS: Final[set[str]] = {
             HTTP_METHOD_GET,
             HTTP_METHOD_POST,

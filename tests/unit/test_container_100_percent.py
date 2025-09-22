@@ -43,7 +43,6 @@ class TestFlextContainerConfiguration:
 
     def test_container_config_uses_flext_config_env(self, monkeypatch) -> None:
         """Ensure FlextContainer reflects environment-driven FlextConfig values."""
-
         FlextConfig.reset_global_instance()
         monkeypatch.setenv("FLEXT_MAX_WORKERS", "7")
         monkeypatch.setenv("FLEXT_TIMEOUT_SECONDS", "45")
@@ -61,7 +60,6 @@ class TestFlextContainerConfiguration:
 
     def test_container_config_uses_flext_config_override(self) -> None:
         """Ensure FlextContainer consumes explicitly overridden FlextConfig instance."""
-
         FlextConfig.reset_global_instance()
         custom_config = FlextConfig.create(
             max_workers=11,
@@ -82,7 +80,6 @@ class TestFlextContainerConfiguration:
 
     def test_container_config_preserves_user_overrides(self) -> None:
         """Verify user overrides remain merged with FlextConfig-derived values."""
-
         FlextConfig.reset_global_instance()
         custom_config = FlextConfig.create(
             max_workers=5,

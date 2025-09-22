@@ -325,7 +325,7 @@ class FlextDomainService[TDomainResult](
             try:
                 result = call_with_timeout()
                 return FlextResult[TDomainResult].ok(result)  # type: ignore[arg-type]
-            except Exception as exc:  # noqa: PERF203 - simple retry loop
+            except Exception as exc:
                 last_exception = exc
                 if not should_retry(exc, attempt):
                     message = str(exc) or exc.__class__.__name__

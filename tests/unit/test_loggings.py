@@ -28,8 +28,8 @@ from typing import NoReturn, Self, cast
 import pytest
 
 from flext_core import (
-    FlextContext,
     FlextConfig,
+    FlextContext,
     FlextLogger,
     FlextTypes,
 )
@@ -965,7 +965,6 @@ class TestLoggerConfiguration:
 
     def test_global_log_verbosity_propagates_to_configuration(self) -> None:
         """Ensure global log verbosity updates are honored by configure."""
-
         config = FlextConfig.get_global_instance()
         original_verbosity = config.log_verbosity
         config.log_verbosity = "compact"

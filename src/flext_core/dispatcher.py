@@ -71,11 +71,17 @@ class FlextDispatcher:
 
         self._config = config
         bus_config = config.get("bus_config")
-        self._bus = bus or FlextBus.create_command_bus(
-            bus_config=cast("dict[str, object] | None", bus_config)
-            if isinstance(bus_config, (dict, type(None)))
-            else None
-        )
+
+        # Handle both dict and FlextModels.CqrsConfig.Bus for bus_config
+        if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
+            # Convert typed model to dict for FlextBus.create_command_bus
+            bus_config_dict = bus_config.model_dump()
+        elif isinstance(bus_config, dict):
+            bus_config_dict = bus_config
+        else:
+            bus_config_dict = None
+
+        self._bus = bus or FlextBus.create_command_bus(bus_config=bus_config_dict)
         self._logger = FlextLogger(self.__class__.__name__)
 
     @property
@@ -367,13 +373,28 @@ class FlextDispatcher:
                 FlextConstants.Dispatcher.ERROR_MESSAGE_REQUIRED
             )
 
-        # Execute dispatch with context management
+        # Get timeout from request override or config
+        timeout_override = request.get("timeout_override")
+        config_timeout = self._config.get("timeout_seconds")
+        timeout_seconds = timeout_override if timeout_override is not None else config_timeout
+
+        # Execute dispatch with context management and timeout enforcement
         context_metadata = request.get("context_metadata")
         metadata_dict = self._normalize_context_metadata(context_metadata)
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None
+
         with self._context_scope(metadata_dict, correlation_id_str):
-            result = self._bus.execute(request.get("message"))
+            # Execute with timeout if configured
+            if timeout_seconds and timeout_seconds > 0:
+                # Use FlextUtilities.Reliability.with_timeout for timeout enforcement
+                result = FlextUtilities.Reliability.with_timeout(
+                    lambda: self._bus.execute(request.get("message")),
+                    float(timeout_seconds)
+                )
+            else:
+                # No timeout configured, execute directly
+                result = self._bus.execute(request.get("message"))
 
             execution_time_ms = int((time.time() - start_time) * 1000)
 
@@ -385,6 +406,7 @@ class FlextDispatcher:
                     request_id=request.get("request_id"),
                     execution_time_ms=execution_time_ms,
                     correlation_id=request.get("correlation_id"),
+                    timeout_seconds=timeout_seconds,
                 )
 
                 if self._config.get("enable_logging"):
@@ -393,9 +415,11 @@ class FlextDispatcher:
                         request_id=request.get("request_id"),
                         message_type=type(request.get("message")).__name__,
                         execution_time_ms=execution_time_ms,
+                        timeout_seconds=timeout_seconds,
                     )
 
                 return FlextResult[dict[str, object]].ok(dispatch_result)
+
             dispatch_result = dict[str, object](
                 success=False,
                 result=None,
@@ -403,6 +427,7 @@ class FlextDispatcher:
                 request_id=request.get("request_id"),
                 execution_time_ms=execution_time_ms,
                 correlation_id=request.get("correlation_id"),
+                timeout_seconds=timeout_seconds,
             )
 
             if self._config.get("enable_logging"):
@@ -412,6 +437,7 @@ class FlextDispatcher:
                     message_type=type(request.get("message")).__name__,
                     error=dispatch_result.get("error_message"),
                     execution_time_ms=execution_time_ms,
+                    timeout_seconds=timeout_seconds,
                 )
 
             return FlextResult[dict[str, object]].ok(dispatch_result)
@@ -474,7 +500,6 @@ class FlextDispatcher:
         self, metadata: object | None
     ) -> FlextTypes.Core.Dict | None:
         """Normalize metadata payloads to plain dictionaries."""
-
         if metadata is None:
             return None
 

@@ -157,7 +157,6 @@ def test_dispatcher_provides_correlation_context() -> None:
 
 def test_dispatcher_propagates_metadata_model_to_context() -> None:
     """Dispatching with metadata model exposes attributes via context."""
-
     FlextContext.Utilities.clear_context()
     dispatcher = FlextDispatcher()
 
@@ -193,7 +192,6 @@ def test_dispatcher_propagates_metadata_model_to_context() -> None:
 
 def test_dispatcher_propagates_plain_metadata_dict_to_context() -> None:
     """Dispatching with plain metadata dict sets context metadata."""
-
     FlextContext.Utilities.clear_context()
     dispatcher = FlextDispatcher()
 
@@ -300,7 +298,6 @@ def test_dispatcher_registry_register_function_map() -> None:
 
 def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
     """Cache lookup remains active when metrics are disabled but caching is enabled."""
-
     FlextContext.Utilities.clear_context()
     dispatcher = FlextDispatcher(
         config={
@@ -317,7 +314,7 @@ def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
     handler = CachedQueryHandler()
     registration_result = dispatcher.register_command(
         CachedQuery,
-        cast(FlextHandlers[object, object], handler),
+        cast("FlextHandlers[object, object]", handler),
     )
     assert registration_result.is_success
 

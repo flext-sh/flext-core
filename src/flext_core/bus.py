@@ -41,7 +41,7 @@ class FlextBus(FlextMixins):
         bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
         *,
         enable_middleware: bool = True,
-        enable_metrics: bool = True,
+        enable_metrics: bool | None = None,
         enable_caching: bool = True,
         execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
         max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
@@ -578,18 +578,21 @@ class FlextBus(FlextMixins):
             bool: True if handler was removed, False otherwise
 
         """
+        handler_removed = False
+
+        # First, remove from _handlers (two-arg registration)
         for key in list(self._handlers.keys()):
             # Handle both class objects and string comparisons
             if key == command_type:
                 # Direct match (class object)
                 del self._handlers[key]
                 self.logger.info(
-                    "Handler unregistered",
+                    "Handler unregistered from main registry",
                     command_type=getattr(command_type, "__name__", str(command_type)),
                     remaining_handlers=len(self._handlers),
                 )
-                return True
-            if isinstance(command_type, str):
+                handler_removed = True
+            elif isinstance(command_type, str):
                 # String comparison
                 key_name = getattr(key, "__name__", None)
                 if (key_name is not None and key_name == command_type) or str(
@@ -597,13 +600,57 @@ class FlextBus(FlextMixins):
                 ) == command_type:
                     del self._handlers[key]
                     self.logger.info(
-                        "Handler unregistered",
+                        "Handler unregistered from main registry",
                         command_type=command_type,
                         remaining_handlers=len(self._handlers),
                     )
-                    return True
+                    handler_removed = True
 
-        return False
+        # Second, remove from _auto_handlers (single-arg registration)
+        # We need to identify handlers that match the command_type
+        auto_handlers_to_remove = []
+
+        for handler in self._auto_handlers:
+            # Check if this auto-handler matches the command_type
+            handler_key = getattr(handler, "handler_id", handler.__class__.__name__)
+
+            # Handle both class objects and string comparisons for auto-handlers
+            should_remove = False
+            if handler_key == command_type:
+                should_remove = True
+            elif isinstance(command_type, str):
+                handler_key_name = getattr(handler_key, "__name__", None)
+                if (handler_key_name is not None and handler_key_name == command_type) or str(
+                    handler_key,
+                ) == command_type:
+                    should_remove = True
+                # Also check handler class name directly
+                elif handler.__class__.__name__ == command_type:
+                    should_remove = True
+
+            if should_remove:
+                auto_handlers_to_remove.append(handler)
+
+        # Remove identified auto-handlers
+        for handler in auto_handlers_to_remove:
+            self._auto_handlers.remove(handler)
+            self.logger.info(
+                "Auto-handler unregistered",
+                handler_type=handler.__class__.__name__,
+                command_type=getattr(command_type, "__name__", str(command_type)),
+                remaining_auto_handlers=len(self._auto_handlers),
+            )
+            handler_removed = True
+
+        if handler_removed:
+            self.logger.info(
+                "Handler deregistration completed",
+                command_type=getattr(command_type, "__name__", str(command_type)),
+                total_handlers=len(self._handlers),
+                total_auto_handlers=len(self._auto_handlers),
+            )
+
+        return handler_removed
 
     def send_command(self, command: object) -> FlextResult[object]:
         """Compatibility shim that delegates to :meth:`execute`.
