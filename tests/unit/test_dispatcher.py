@@ -98,22 +98,27 @@ def test_dispatcher_register_command_binding() -> None:
 def test_dispatcher_register_function_helper() -> None:
     """Test the dispatcher registers a function helper."""
     FlextContext.Utilities.clear_context()
-    # dispatcher = FlextDispatcher()  # Commented out due to type compatibility issues
+    dispatcher = FlextDispatcher()
 
     def handle_echo(command: EchoCommand) -> str:
+        if command.payload == "boom":
+            raise RuntimeError("boom")
         return f"echo:{command.payload}"
 
-    # Note: register_function method has type compatibility issues with current implementation
-    # register_result = dispatcher.register_function(EchoCommand, handle_echo)
-    # assert register_result.is_success
+    register_result = dispatcher.register_function(EchoCommand, handle_echo)
+    assert register_result.is_success
 
-    # result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="ping"))
-    # assert result.is_success
-    # assert result.unwrap() == "echo:ping"
+    success_result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload="ping")
+    )
+    assert success_result.is_success
+    assert success_result.unwrap() == "echo:ping"
 
-    # For now, just test that the function works
-    test_result = handle_echo(EchoCommand(payload="ping"))
-    assert test_result == "echo:ping"
+    failure_result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload="boom")
+    )
+    assert failure_result.is_failure
+    assert "boom" in (failure_result.error or "")
 
 
 def test_dispatcher_provides_correlation_context() -> None:
