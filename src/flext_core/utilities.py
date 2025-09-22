@@ -23,7 +23,7 @@ from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.typings import T, U
+from flext_core.typings import FlextTypes, T, U
 
 # Module-level constants to avoid magic numbers - use FlextConstants where available
 MIN_TOKEN_LENGTH = 8  # Minimum length for security tokens and passwords
@@ -553,11 +553,11 @@ class FlextUtilities:
 
         @staticmethod
         def merge_dictionaries(
-            *dicts: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            *dicts: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Merge multiple dictionaries with conflict detection."""
             # Merge with conflict detection
-            result: dict[str, object] = {}
+            result: FlextTypes.Core.Dict = {}
             conflicts: list[str] = []
 
             for d in dicts:
@@ -567,15 +567,15 @@ class FlextUtilities:
                     result[key] = value
 
             if conflicts:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Dictionary merge conflicts: {'; '.join(conflicts)}"
                 )
 
-            return FlextResult[dict[str, object]].ok(result)
+            return FlextResult[FlextTypes.Core.Dict].ok(result)
 
         @staticmethod
         def deep_get(
-            data: dict[str, object], path: str, default: object = None
+            data: FlextTypes.Core.Dict, path: str, default: object = None
         ) -> FlextResult[object]:
             """Safely get nested dictionary value using dot notation."""
             try:
@@ -601,10 +601,10 @@ class FlextUtilities:
 
         @staticmethod
         def filter_none_values(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Remove None values from dictionary."""
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Core.Dict].ok({
                 k: v for k, v in data.items() if v is not None
             })
 
@@ -988,7 +988,9 @@ class FlextUtilities:
         """Data conversion utilities for table formatting and display."""
 
         @staticmethod
-        def to_table_format(data: object) -> FlextResult[list[dict[str, object]]]:
+        def to_table_format(
+            data: object,
+        ) -> FlextResult[list[FlextTypes.Core.Dict]]:
             """Convert various data types to table format (list of dictionaries).
 
             Handles:
@@ -1005,28 +1007,28 @@ class FlextUtilities:
 
             """
             if data is None:
-                return FlextResult[list[dict[str, object]]].ok([])
+                return FlextResult[list[FlextTypes.Core.Dict]].ok([])
 
             # Handle list of dictionaries (ideal case)
             if isinstance(data, list):
                 if not data:
-                    return FlextResult[list[dict[str, object]]].ok([])
+                    return FlextResult[list[FlextTypes.Core.Dict]].ok([])
 
                 if all(isinstance(item, dict) for item in data):
-                    return FlextResult[list[dict[str, object]]].ok(data)
+                    return FlextResult[list[FlextTypes.Core.Dict]].ok(data)
 
                 # Convert list of non-dict items to table
-                return FlextResult[list[dict[str, object]]].ok([
+                return FlextResult[list[FlextTypes.Core.Dict]].ok([
                     {"index": i, "value": str(item)} for i, item in enumerate(data)
                 ])
 
             # Handle single dictionary
             if isinstance(data, dict):
                 if not data:
-                    return FlextResult[list[dict[str, object]]].ok([])
+                    return FlextResult[list[FlextTypes.Core.Dict]].ok([])
 
                 # Convert to key-value table
-                return FlextResult[list[dict[str, object]]].ok([
+                return FlextResult[list[FlextTypes.Core.Dict]].ok([
                     {"key": str(key), "value": str(value)}
                     for key, value in data.items()
                 ])
@@ -1035,15 +1037,19 @@ class FlextUtilities:
             if hasattr(data, "__dict__"):
                 obj_dict = data.__dict__
                 if obj_dict:
-                    return FlextResult[list[dict[str, object]]].ok([
+                    return FlextResult[list[FlextTypes.Core.Dict]].ok([
                         {"attribute": str(key), "value": str(value)}
                         for key, value in obj_dict.items()
                         if not key.startswith("_")  # Skip private attributes
                     ])
-                return FlextResult[list[dict[str, object]]].ok([{"object": str(data)}])
+                return FlextResult[list[FlextTypes.Core.Dict]].ok([
+                    {"object": str(data)}
+                ])
 
             # Handle primitive values
-            return FlextResult[list[dict[str, object]]].ok([{"value": str(data)}])
+            return FlextResult[list[FlextTypes.Core.Dict]].ok([
+                {"value": str(data)}
+            ])
 
     class TypeGuards:
         """Type guard utilities for runtime type checking."""

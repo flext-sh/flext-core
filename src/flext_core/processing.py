@@ -13,6 +13,7 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
@@ -100,7 +101,7 @@ class FlextProcessing:
 
         def __init__(self) -> None:
             """Initialize handler registry."""
-            self._handlers: dict[str, object] = {}
+            self._handlers: FlextTypes.Core.Dict = {}
 
         def register(
             self, registration: FlextModels.HandlerRegistration
@@ -342,14 +343,14 @@ class FlextProcessing:
             """Initialize processing pipeline."""
             self._steps: list[
                 Callable[[object], FlextResult[object] | object]
-                | dict[str, object]
+                | FlextTypes.Core.Dict
                 | object
             ] = []
 
         def add_step(
             self,
             step: Callable[[object], FlextResult[object] | object]
-            | dict[str, object]
+            | FlextTypes.Core.Dict
             | object,
         ) -> None:
             """Add a processing step."""
@@ -377,12 +378,12 @@ class FlextProcessing:
                 FlextResult[object]: Result of conditional processing.
 
             """
-            return FlextResult[dict[str, object]].ok(request.data).when(condition) >> (
+            return FlextResult[FlextTypes.Core.Dict].ok(request.data).when(condition) >> (
                 cast(
-                    "Callable[[dict[str, object]], FlextResult[object]]",
+                    "Callable[[FlextTypes.Core.Dict], FlextResult[object]]",
                     lambda data: self.process(
                         FlextModels.ProcessingRequest(
-                            data=cast("dict[str, object]", data),
+                            data=cast("FlextTypes.Core.Dict", data),
                             context=request.context,
                             timeout_seconds=request.timeout_seconds,
                         )
@@ -524,7 +525,7 @@ class FlextProcessing:
 
             # Handle dictionary merging
             if isinstance(current, dict) and isinstance(step, dict):
-                merged_dict: dict[str, object] = {**current, **step}
+                merged_dict: FlextTypes.Core.Dict = {**current, **step}
                 return merged_dict
 
             # Replace current data
@@ -602,7 +603,7 @@ class FlextProcessing:
 
             def __init__(self) -> None:
                 """Initialize handler registry."""
-                self._handlers: dict[str, object] = {}
+                self._handlers: FlextTypes.Core.Dict = {}
 
             def register(self, name: str, handler: object) -> None:
                 """Register handler."""
