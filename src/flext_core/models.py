@@ -1363,7 +1363,7 @@ class FlextModels:
         """Logger initialization with advanced validation."""
 
         name: str
-        log_level: str = Field(
+        log_level: str | None = Field(
             default_factory=lambda: FlextConfig.get_global_instance().log_level
         )
         structured_output: bool = True
@@ -1372,10 +1372,12 @@ class FlextModels:
 
         @field_validator("log_level")
         @classmethod
-        def validate_log_level(cls, v: str) -> str:
+        def validate_log_level(cls, v: str | None) -> str:
             """Validate log level is valid."""
             valid_levels = FlextConstants.Logging.VALID_LEVELS
-            v_upper = v.upper()
+            if v is None:
+                v = FlextConfig.get_global_instance().log_level
+            v_upper = str(v).upper()
             if v_upper not in valid_levels:
                 msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
                 raise ValueError(msg)

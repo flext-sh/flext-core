@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import io
 import logging
+import sys
 import threading
 import time
 import uuid
@@ -26,8 +27,11 @@ from types import TracebackType
 from typing import NoReturn, Self, cast
 
 import pytest
+import structlog
 
 from flext_core import (
+    FlextConfig,
+    FlextConstants,
     FlextContext,
     FlextLogger,
     FlextTypes,
@@ -2185,3 +2189,117 @@ class TestCoverageTargetedTests:
 
         # Should have logged all messages at DEBUG level
         # Test completed successfully
+
+
+class TestFlextLoggerConfigurationIntegration:
+    """Integration tests verifying FlextConfig interactions with FlextLogger."""
+
+    def test_configure_uses_flextconfig_defaults(self) -> None:
+        """Ensure configure() pulls defaults from FlextConfig when args are None."""
+
+        original_config = FlextConfig.get_global_instance()
+        custom_config = FlextConfig.create(
+            log_level="ERROR",
+            include_source=False,
+            structured_output=False,
+            log_verbosity="detailed",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            structlog.reset_defaults()
+            FlextLogger._configured = False
+
+            root_logger = logging.getLogger()
+            for handler in list(root_logger.handlers):
+                root_logger.removeHandler(handler)
+            root_logger.setLevel(logging.NOTSET)
+
+            result = FlextLogger.configure()
+
+            assert result.is_success
+            assert logging.getLogger().level == logging.ERROR
+            assert structlog.is_configured()
+
+            processors = structlog.get_config().get("processors", [])
+            assert all(
+                not isinstance(processor, structlog.processors.CallsiteParameterAdder)
+                for processor in processors
+            )
+
+            console_renderers = [
+                processor
+                for processor in processors
+                if isinstance(processor, structlog.dev.ConsoleRenderer)
+            ]
+            assert console_renderers, "Expected console renderer configured from FlextConfig"
+            renderer = console_renderers[-1]
+            assert renderer._exception_formatter is structlog.dev.plain_traceback
+
+        finally:
+            FlextConfig.set_global_instance(original_config)
+            FlextLogger._configured = False
+            structlog.reset_defaults()
+            logging.getLogger().setLevel(logging.NOTSET)
+
+    def test_logger_initialization_respects_updated_config(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Verify logger instances honor FlextConfig changes when no overrides provided."""
+
+        structlog.reset_defaults()
+        FlextLogger._configured = False
+
+        config = FlextConfig.get_global_instance()
+        original_values = {
+            "log_level": config.log_level,
+            "structured_output": config.structured_output,
+            "environment": config.environment,
+        }
+
+        config.log_level = "ERROR"
+        config.structured_output = False
+        config.environment = "production"
+
+        monkeypatch.delenv(
+            FlextConstants.Platform.ENV_PYTEST_CURRENT_TEST, raising=False
+        )
+        monkeypatch.delitem(sys.modules, "pytest", raising=False)
+
+        calls: list[tuple[str, str, dict[str, object]]] = []
+
+        class StubLogger:
+            def info(self, message: str, **kwargs: object) -> None:
+                calls.append(("info", message, kwargs))
+
+            def debug(self, message: str, **kwargs: object) -> None:
+                calls.append(("debug", message, kwargs))
+
+            def warning(self, message: str, **kwargs: object) -> None:
+                calls.append(("warning", message, kwargs))
+
+            def error(self, message: str, **kwargs: object) -> None:
+                calls.append(("error", message, kwargs))
+
+            def critical(self, message: str, **kwargs: object) -> None:
+                calls.append(("critical", message, kwargs))
+
+        stub_logger = StubLogger()
+        monkeypatch.setattr(structlog, "get_logger", lambda name: stub_logger)
+
+        try:
+            logger = FlextLogger("config_init_test")
+
+            assert logger._level == "ERROR"
+
+            logger.info("Message from config", foo="bar")
+            assert calls[-1] == ("info", "Message from config", {"foo": "bar"})
+
+        finally:
+            config.log_level = original_values["log_level"]
+            config.structured_output = original_values["structured_output"]
+            config.environment = original_values["environment"]
+            FlextLogger._instances.pop("config_init_test", None)
+            FlextLogger._configured = False
+            structlog.reset_defaults()
+            logging.getLogger().setLevel(logging.NOTSET)

@@ -108,7 +108,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         try:
             init_model = FlextModels.LoggerInitializationModel(
                 name=name,
-                log_level=_level or "INFO",
+                log_level=_level,
             )
         except Exception as e:
             warnings.warn(
@@ -167,7 +167,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
         # Use validated model values if available, otherwise use original parameters
         validated_name = init_model.name if init_model else name
-        validated_level = init_model.log_level if init_model else _level
+        validated_level: str | None = None
+        if _level is not None:
+            if init_model is not None:
+                validated_level = init_model.log_level
+            elif isinstance(_level, str) and _level.strip():
+                validated_level = _level.strip()
         validated_service_name = _service_name  # Not in model, use parameter directly
         validated_service_version = (
             _service_version  # Not in model, use parameter directly
@@ -915,14 +920,50 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             FlextResult[None]: Success or failure with error details
 
         """
-        # Create configuration model with defaults
+        # Create configuration model with defaults sourced from FlextConfig when not provided
+        defaults = cls.get_configuration()
+        log_level_value = (
+            log_level
+            if log_level is not None
+            else str(defaults.get("log_level", FlextConstants.Logging.DEFAULT_LEVEL))
+        )
+        json_output_value = (
+            json_output
+            if json_output is not None
+            else cast(bool | None, defaults.get("json_output"))
+        )
+        include_source_value = (
+            include_source
+            if include_source is not None
+            else cast(
+                bool,
+                defaults.get(
+                    "include_source", FlextConstants.Logging.INCLUDE_SOURCE
+                ),
+            )
+        )
+        structured_output_value = (
+            structured_output
+            if structured_output is not None
+            else cast(
+                bool,
+                defaults.get(
+                    "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
+                ),
+            )
+        )
+        log_verbosity_value = (
+            log_verbosity
+            if log_verbosity is not None
+            else str(defaults.get("log_verbosity", FlextConstants.Logging.VERBOSITY))
+        )
+
         config_model = FlextModels.LoggerConfigurationModel(
-            log_level=log_level or "INFO",
-            json_output=json_output,
-            include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
-            structured_output=structured_output
-            or FlextConstants.Logging.STRUCTURED_OUTPUT,
-            log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
+            log_level=log_level_value,
+            json_output=json_output_value,
+            include_source=include_source_value,
+            structured_output=structured_output_value,
+            log_verbosity=log_verbosity_value,
         )
 
         # Reset if already configured (allow reconfiguration)
