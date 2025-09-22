@@ -109,19 +109,19 @@ class FlextTestsHttp:
             method: str,
             endpoint: str,
             data: object | None = None,
-            headers: dict[str, str] | None = None,
-        ) -> dict[str, object]:
-            """Create test request data.
+            headers: FlextTypes.Core.Headers | None = None,
+        ) -> FlextTypes.Core.Dict:
+            """Create test request data using ``FlextTypes.Core.Dict``.
 
             Returns:
-                dict[str, object]: Test request data dictionary
+                FlextTypes.Core.Dict: Test request payload expressed via the official alias
 
             """
-            request_headers = self.default_headers.copy()
+            request_headers: FlextTypes.Core.Headers = self.default_headers.copy()
             if headers:
                 request_headers.update(headers)
 
-            request_data: dict[str, object] = {
+            request_data: FlextTypes.Core.Dict = {
                 "method": method.upper(),
                 "url": self.build_url(endpoint),
                 "headers": request_headers,
@@ -151,7 +151,7 @@ class FlextTestsHttp:
             method: str = "GET",
             response_data: object | None = None,
             status_code: int = 200,
-            headers: dict[str, str] | None = None,
+            headers: FlextTypes.Core.Headers | None = None,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
             """Add successful request scenario.
 
@@ -159,7 +159,9 @@ class FlextTestsHttp:
                 FlextTestsHttp.HTTPScenarioBuilder: Self for method chaining
 
             """
-            response_headers = {"content-type": "application/json"}
+            response_headers: FlextTypes.Core.Headers = {
+                "content-type": "application/json"
+            }
             if headers:
                 response_headers.update(headers)
 
@@ -483,7 +485,9 @@ class FlextTestsHttp:
         headers: FlextTypes.Core.Dict | None = None,
     ) -> None:
         """Mock HTTPX response."""
-        response_headers: dict[str, str] = {"content-type": "application/json"}
+        response_headers: FlextTypes.Core.Headers = {
+            "content-type": "application/json"
+        }
         if headers:
             # Convert headers dict values to strings
             for key, value in headers.items():

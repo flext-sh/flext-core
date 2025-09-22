@@ -378,8 +378,8 @@ class FlextTestsFactories:
 
         @staticmethod
         def create(**overrides: object) -> FlextTypes.Core.Dict:
-            """Create service data."""
-            defaults: dict[str, object] = {
+            """Create service data using the ``FlextTypes.Core.Dict`` alias."""
+            defaults: FlextTypes.Core.Dict = {
                 "service_id": str(uuid.uuid4()),
                 "service_name": "Test Service",
                 "version": "1.0.0",
@@ -392,7 +392,7 @@ class FlextTestsFactories:
 
         @staticmethod
         def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
-            """Create batch of services."""
+            """Create service data batch using ``list[FlextTypes.Core.Dict]``."""
             return [
                 FlextTestsFactories.ServiceFactory.create(**kwargs) for _ in range(size)
             ]
@@ -406,8 +406,8 @@ class FlextTestsFactories:
 
         @staticmethod
         def create(**overrides: object) -> FlextTypes.Core.Dict:
-            """Create mock data."""
-            defaults: dict[str, object] = {
+            """Create mock payload using the ``FlextTypes.Core.Dict`` alias."""
+            defaults: FlextTypes.Core.Dict = {
                 "mock_id": str(uuid.uuid4()),
                 "mock_type": "test_mock",
                 "data": {"key": "value"},
@@ -418,7 +418,7 @@ class FlextTestsFactories:
 
         @staticmethod
         def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
-            """Create batch of mocks."""
+            """Create mock payload batch using ``list[FlextTypes.Core.Dict]``."""
             return [
                 FlextTestsFactories.MockFactory.create(**kwargs) for _ in range(size)
             ]

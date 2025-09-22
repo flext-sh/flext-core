@@ -46,7 +46,7 @@ class FlextTestsBuilders:
             self._container = None
 
         # Dynamic container attributes (set by methods when needed)
-        self._container_services: dict[str, object] = {}
+        self._container_services: FlextTypes.Core.Dict = {}
         self._container_factories: dict[str, Callable[[], object]] = {}
 
         # Attributes for deprecated builder patterns
@@ -208,7 +208,7 @@ class FlextTestsBuilders:
         if not field_name:
             field_name = field_id
 
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "required": required,
         }
 
