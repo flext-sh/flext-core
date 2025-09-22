@@ -27,6 +27,21 @@ Features:
 - Automatic type validation using Pydantic Settings.
 - Case-insensitive environment variable lookups by default.
 
+### Accessing individual parameters
+
+When an ad-hoc lookup is needed, instances expose `config.get("parameter", default=None)`
+which returns the stored value or falls back to a default. For shared access, the
+`FlextConfig.get_parameter("parameter", default=None)` classmethod delegates the lookup to
+the global configuration singleton:
+
+```python
+config = FlextConfig(app_name="docs")
+FlextConfig.set_global_instance(config)
+
+assert config.get("app_name") == "docs"
+assert FlextConfig.get_parameter("missing", default="fallback") == "fallback"
+```
+
 ---
 
 ## Injecting Configuration

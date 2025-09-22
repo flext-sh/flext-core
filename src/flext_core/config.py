@@ -607,5 +607,37 @@ class FlextConfig(BaseSettings):
             "created_at": getattr(self, "_created_at", None),
         }
 
+    def get(self, parameter: str, default: object | None = None) -> object | None:
+        """Return configuration value for a parameter with a default fallback.
+
+        Args:
+            parameter: The configuration parameter name to retrieve.
+            default: Optional default value returned when the parameter is absent.
+
+        Returns:
+            The parameter value when present; otherwise the provided default.
+
+        """
+
+        config_data = self.model_dump()
+        return config_data.get(parameter, default)
+
+    @classmethod
+    def get_parameter(
+        cls, parameter: str, default: object | None = None
+    ) -> object | None:
+        """Retrieve a configuration parameter from the global instance.
+
+        Args:
+            parameter: The configuration parameter name to retrieve.
+            default: Optional default value returned when the parameter is absent.
+
+        Returns:
+            The parameter value when present; otherwise the provided default.
+
+        """
+
+        return cls.get_global_instance().get(parameter, default)
+
 
 __all__ = ["FlextConfig"]

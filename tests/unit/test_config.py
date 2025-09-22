@@ -191,6 +191,15 @@ class TestFlextConfigClassMethods:
         finally:
             Path(txt_path).unlink(missing_ok=True)
 
+    def test_get_parameter_delegates_to_global_instance(self) -> None:
+        """Test get_parameter class method delegation to the global instance."""
+        config = FlextConfig(app_name="global-get")
+        FlextConfig.set_global_instance(config)
+
+        assert FlextConfig.get_parameter("app_name") == "global-get"
+        assert FlextConfig.get_parameter("missing", default="fallback") == "fallback"
+        FlextConfig.reset_global_instance()
+
 
 class TestFlextConfigInstanceMethods:
     """Test FlextConfig instance methods."""
@@ -242,6 +251,13 @@ class TestFlextConfigInstanceMethods:
         assert cache_config["ttl"] == 800
         assert cache_config["max_size"] == 3000
         assert cache_config["enabled"] is True
+
+    def test_get_method_returns_value_or_default(self) -> None:
+        """Test the general get helper for retrieving configuration values."""
+        config = FlextConfig(app_name="instance-get")
+
+        assert config.get("app_name") == "instance-get"
+        assert config.get("missing", default="fallback") == "fallback"
 
     def test_serialization_methods(self) -> None:
         """Test serialization methods."""
