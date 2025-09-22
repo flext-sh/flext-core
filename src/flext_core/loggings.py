@@ -108,7 +108,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         try:
             init_model = FlextModels.LoggerInitializationModel(
                 name=name,
-                log_level=_level or "INFO",
+                log_level=_level or FlextConstants.Config.LogLevel.INFO,
             )
         except Exception as e:
             warnings.warn(
@@ -892,7 +892,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     @classmethod
     def configure(
         cls,
-        log_level: str | None = None,
+        log_level: FlextTypes.Config.LogLevel | None = None,
         *,
         json_output: bool | None = None,
         include_source: bool | None = None,
@@ -917,7 +917,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         # Create configuration model with defaults
         config_model = FlextModels.LoggerConfigurationModel(
-            log_level=log_level or "INFO",
+            log_level=log_level or FlextConstants.Config.LogLevel.INFO,
             json_output=json_output,
             include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
             structured_output=structured_output

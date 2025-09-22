@@ -120,7 +120,7 @@ class TestFlextLogLevel:
     def test_log_level_values(self) -> None:
         """Test standard logging levels - FlextLogLevel was removed."""
         # Test standard Python logging levels instead of removed FlextLogLevel
-        assert logging.getLevelName(logging.DEBUG) == "DEBUG"
+        assert logging.getLevelName(logging.DEBUG) == FlextLogLevel.DEBUG
         assert logging.getLevelName(logging.INFO) == "INFO"
         assert logging.getLevelName(logging.WARNING) == "WARNING"
         assert logging.getLevelName(logging.ERROR) == "ERROR"
@@ -195,7 +195,7 @@ class TestFlextLogger:
     def test_configure_with_custom_settings(self) -> None:
         """Test configuring logger with custom settings."""
         FlextLogger.configure(
-            log_level="DEBUG",
+            log_level=FlextLogLevel.DEBUG,
             json_output=True,
             include_source=False,
         )

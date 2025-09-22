@@ -32,11 +32,14 @@ from flext_core import (
     FlextLogger,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import (
     FlextTestsMatchers,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
+
+FlextLogLevel = FlextConstants.Config.LogLevel
 
 
 class RealLogCapture:
@@ -101,7 +104,7 @@ class TestFlextLoggerInitialization:
         logger = FlextLogger("test_logger")
 
         assert logger._name == "test_logger"
-        assert logger._level == "WARNING"  # From test environment
+        assert logger._level == FlextLogLevel.WARNING  # From test environment
         assert logger._service_name == "flext-core"
         assert logger._service_version is not None
         assert logger._correlation_id is not None
@@ -110,13 +113,13 @@ class TestFlextLoggerInitialization:
         """Test logger creation with service metadata."""
         logger = FlextLogger(
             "test_service",
-            _level="DEBUG",
+            _level=FlextLogLevel.DEBUG,
             _service_name="payment-service",
             service_version="2.1.0",
         )
 
         assert logger._name == "test_service"
-        assert logger._level == "DEBUG"
+        assert logger._level == FlextLogLevel.DEBUG
         assert logger._service_name == "payment-service"
         assert logger._service_version == "2.1.0"
 
@@ -201,7 +204,7 @@ class TestStructuredLogging:
         logger = FlextLogger("test_service", _service_name="validation-test")
 
         # Test the real _build_log_entry method functionality
-        log_entry = logger._build_log_entry("INFO", "Test message", {"user_id": "123"})
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test message", {"user_id": "123"})
 
         # Verify entry is a dictionary with expected structure
         assert isinstance(log_entry, dict)
@@ -213,7 +216,7 @@ class TestStructuredLogging:
             assert field in log_entry, f"Required field {field} missing"
 
         # Verify field values are correct type and content
-        assert log_entry.get("level") == "INFO"
+        assert log_entry.get("level") == FlextLogLevel.INFO
         assert log_entry.get("message") == "Test message"
         assert log_entry.get("logger") == "test_service"
         correlation_id = log_entry.get("correlation_id")
@@ -268,7 +271,7 @@ class TestStructuredLogging:
             "customer_id": "CUST-456",
         }
 
-        log_entry = logger._build_log_entry("INFO", "Order processed", context_data)
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Order processed", context_data)
 
         # Verify message is correctly set
         assert log_entry.get("message") == "Order processed"
@@ -333,7 +336,7 @@ class TestCorrelationIdFunctionality:
         assert logger._correlation_id == test_correlation_id
 
         # Test that log entry includes correlation ID
-        log_entry = logger._build_log_entry("INFO", "Test message with correlation")
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test message with correlation")
         assert log_entry.get("correlation_id") == test_correlation_id
 
         # Test that real logging works with correlation ID
@@ -353,8 +356,8 @@ class TestCorrelationIdFunctionality:
         assert logger._correlation_id == test_correlation_id
 
         # Test that multiple log entries maintain the same correlation ID
-        entry1 = logger._build_log_entry("INFO", "First message")
-        entry2 = logger._build_log_entry("WARNING", "Second message")
+        entry1 = logger._build_log_entry(FlextLogLevel.INFO, "First message")
+        entry2 = logger._build_log_entry(FlextLogLevel.WARNING, "Second message")
         entry3 = logger._build_log_entry("ERROR", "Third message")
 
         # All entries should have the same correlation ID
@@ -534,7 +537,7 @@ class TestSecuritySanitization:
             )
 
         # Test that sanitization works in actual log entries
-        log_entry = logger._build_log_entry("INFO", "Test message", sensitive_context)
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test message", sensitive_context)
         assert isinstance(log_entry, dict)
         assert "context" in log_entry
         context = log_entry.get("context", {})
@@ -584,7 +587,7 @@ class TestSecuritySanitization:
         assert headers_data["authorization"] == "[REDACTED]"
 
         # Test that nested sanitization works in actual log building
-        log_entry = logger._build_log_entry("INFO", "Test nested", nested_context)
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test nested", nested_context)
         context = log_entry.get("context", {})
         nested_user = context["user"]
         assert isinstance(nested_user, dict)
@@ -613,7 +616,7 @@ class TestSecuritySanitization:
             "api_key": "should_also_be_hidden",
         }
 
-        log_entry = logger._build_log_entry("INFO", "User login attempt", context_data)
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "User login attempt", context_data)
 
         # Verify log entry was built correctly
         assert "context" in log_entry
@@ -792,7 +795,7 @@ class TestRequestContextManagement:
         assert request_context["endpoint"] == "/api/orders"
 
         # Test that log entry includes request context
-        log_entry = logger._build_log_entry("INFO", "Processing request")
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Processing request")
         assert isinstance(log_entry, dict)
         assert "request" in log_entry
         request_data = log_entry.get("request", {})
@@ -817,7 +820,7 @@ class TestRequestContextManagement:
         assert logger._local.request_context["request_id"] == "req_123"
 
         # Test that log entry includes context before clearing
-        log_entry_with_context = logger._build_log_entry("INFO", "With context")
+        log_entry_with_context = logger._build_log_entry(FlextLogLevel.INFO, "With context")
         assert "request" in log_entry_with_context
         assert log_entry_with_context["request"]["request_id"] == "req_123"
 
@@ -829,7 +832,7 @@ class TestRequestContextManagement:
         assert len(request_context) == 0
 
         # Test that log entry no longer includes cleared context
-        log_entry_without_context = logger._build_log_entry("INFO", "Without context")
+        log_entry_without_context = logger._build_log_entry(FlextLogLevel.INFO, "Without context")
         if "request" in log_entry_without_context:
             assert len(log_entry_without_context["request"]) == 0
 
@@ -908,7 +911,7 @@ class TestLoggerConfiguration:
 
         # Test that log entry building works correctly
         log_entry = logger._build_log_entry(
-            "INFO",
+            FlextLogLevel.INFO,
             "JSON test message",
             {"field1": "value1", "field2": 123},
         )
@@ -934,7 +937,7 @@ class TestLoggerConfiguration:
 
         # Test that log entry building works for console output
         log_entry = logger._build_log_entry(
-            "INFO",
+            FlextLogLevel.INFO,
             "Console test message",
             {"debug_info": "useful"},
         )
@@ -959,7 +962,7 @@ class TestLoggerConfiguration:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Test that correlation ID is properly included in log entries
-        log_entry = logger._build_log_entry("INFO", "Processor test")
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Processor test")
         assert log_entry.get("correlation_id") == test_correlation
 
 
@@ -1003,10 +1006,10 @@ class TestLoggingLevels:
 
     def test_all_logging_levels(self) -> None:
         """Test all logging levels work correctly using real functionality."""
-        logger = FlextLogger("level_test", _level="DEBUG")
+        logger = FlextLogger("level_test", _level=FlextLogLevel.DEBUG)
 
         # Verify logger level was set correctly
-        assert logger._level == "DEBUG"
+        assert logger._level == FlextLogLevel.DEBUG
 
         # Test that all logging methods exist and are callable
         assert callable(logger.trace)
@@ -1034,17 +1037,17 @@ class TestLoggingLevels:
             {"detail": "very_fine"},
         )
         debug_entry = logger._build_log_entry(
-            "DEBUG",
+            FlextLogLevel.DEBUG,
             "Debug message",
             {"component": "database"},
         )
         info_entry = logger._build_log_entry(
-            "INFO",
+            FlextLogLevel.INFO,
             "Info message",
             {"status": "normal"},
         )
         warning_entry = logger._build_log_entry(
-            "WARNING",
+            FlextLogLevel.WARNING,
             "Warning message",
             {"issue": "deprecated"},
         )
@@ -1061,18 +1064,18 @@ class TestLoggingLevels:
 
         # Verify all entries have correct levels
         assert trace_entry.get("level") == "TRACE"
-        assert debug_entry.get("level") == "DEBUG"
-        assert info_entry.get("level") == "INFO"
-        assert warning_entry.get("level") == "WARNING"
+        assert debug_entry.get("level") == FlextLogLevel.DEBUG
+        assert info_entry.get("level") == FlextLogLevel.INFO
+        assert warning_entry.get("level") == FlextLogLevel.WARNING
         assert error_entry.get("level") == "ERROR"
         assert critical_entry.get("level") == "CRITICAL"
 
     def test_level_filtering(self) -> None:
         """Test that level filtering works correctly using real functionality."""
-        logger = FlextLogger("filter_test", _level="WARNING")
+        logger = FlextLogger("filter_test", _level=FlextLogLevel.WARNING)
 
         # Verify logger level was set correctly
-        assert logger._level == "WARNING"
+        assert logger._level == FlextLogLevel.WARNING
 
         # Test that all logging methods still work without raising exceptions
         # (filtering happens at the structlog level, not in our methods)
@@ -1089,13 +1092,13 @@ class TestLoggingLevels:
         # Test that log entry building works regardless of level filtering
         # (filtering is handled by structlog processors, not by our entry building)
         trace_entry = logger._build_log_entry("TRACE", "Should be filtered")
-        warning_entry = logger._build_log_entry("WARNING", "Should appear")
+        warning_entry = logger._build_log_entry(FlextLogLevel.WARNING, "Should appear")
         error_entry = logger._build_log_entry("ERROR", "Should appear")
         critical_entry = logger._build_log_entry("CRITICAL", "Should appear")
 
         # All entries should be built correctly (filtering happens at output level)
         assert trace_entry.get("level") == "TRACE"
-        assert warning_entry.get("level") == "WARNING"
+        assert warning_entry.get("level") == FlextLogLevel.WARNING
         assert error_entry.get("level") == "ERROR"
         assert critical_entry.get("level") == "CRITICAL"
 
@@ -1217,7 +1220,7 @@ class TestRealWorldScenarios:
 
         # Test that log entry building works correctly for high throughput
         sample_entry = logger._build_log_entry(
-            "INFO",
+            FlextLogLevel.INFO,
             "Processing item 0",
             {"item_id": "item_0", "batch_id": "batch_001", "sequence": 0},
         )
@@ -1271,7 +1274,7 @@ class TestLoggingConfiguration:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Test that bound logger includes context in log entries
-        log_entry = bound_logger._build_log_entry("INFO", "Test bound logging")
+        log_entry = bound_logger._build_log_entry(FlextLogLevel.INFO, "Test bound logging")
         assert "request" in log_entry
         request_data = log_entry.get("request", {})
         assert request_data["user_id"] == "123"
@@ -1292,7 +1295,7 @@ class TestAdvancedLoggingFeatures:
         )
 
         # Should default to INFO level
-        assert logger._level == "WARNING"  # From test environment
+        assert logger._level == FlextLogLevel.WARNING  # From test environment
 
     def test_calling_function_extraction_error_handling(self) -> None:
         """Test error handling when extracting calling function information."""
@@ -1321,7 +1324,7 @@ class TestAdvancedLoggingFeatures:
         logger = FlextLogger("perf_test")
 
         # Test building log entry with None duration
-        entry = logger._build_log_entry("INFO", "Test message", {}, duration_ms=None)
+        entry = logger._build_log_entry(FlextLogLevel.INFO, "Test message", {}, duration_ms=None)
 
         # Performance section should not be included when duration is None
         assert "performance" not in entry
@@ -1331,7 +1334,7 @@ class TestAdvancedLoggingFeatures:
         logger = FlextLogger("perf_test")
 
         # Test building log entry with specific duration
-        entry = logger._build_log_entry("INFO", "Test message", {}, duration_ms=123.456)
+        entry = logger._build_log_entry(FlextLogLevel.INFO, "Test message", {}, duration_ms=123.456)
 
         # Performance section should be included with rounded duration
         assert "performance" in entry
@@ -1343,7 +1346,7 @@ class TestAdvancedLoggingFeatures:
         logger = FlextLogger("system_test")
 
         # Test that system information is included in log entries
-        entry = logger._build_log_entry("INFO", "Test message", {})
+        entry = logger._build_log_entry(FlextLogLevel.INFO, "Test message", {})
 
         # Check system metadata exists
         assert "system" in entry
@@ -1369,7 +1372,7 @@ class TestAdvancedLoggingFeatures:
         # Small delay to ensure uptime > 0
         time.sleep(0.01)
 
-        entry = logger._build_log_entry("INFO", "Test uptime", {})
+        entry = logger._build_log_entry(FlextLogLevel.INFO, "Test uptime", {})
 
         execution_data = entry.get("execution", {})
         uptime = execution_data.get("uptime_seconds", 0)
@@ -1420,7 +1423,7 @@ class TestAdvancedLoggingFeatures:
             _level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
         )
         assert (
-            logger._level == "WARNING"
+            logger._level == FlextLogLevel.WARNING
         )  # From test environment  # Should default to INFO
 
         # Test with empty string level - should default to INFO
@@ -1430,7 +1433,7 @@ class TestAdvancedLoggingFeatures:
             _level=cast("FlextTypes.Config.LogLevel", ""),
         )
         assert (
-            logger._level == "WARNING"
+            logger._level == FlextLogLevel.WARNING
         )  # From test environment  # Should default to INFO
 
         # Test with lowercase valid level - should convert to uppercase
@@ -1439,7 +1442,7 @@ class TestAdvancedLoggingFeatures:
             "level_edge_test",
             _level=cast("FlextTypes.Config.LogLevel", "debug"),
         )
-        assert logger._level == "DEBUG"  # Should convert to uppercase
+        assert logger._level == FlextLogLevel.DEBUG  # Should convert to uppercase
 
     def test_service_name_extraction_from_environment(self) -> None:
         """Test service name extraction from different sources."""
@@ -1848,7 +1851,7 @@ class TestCoverageTargetedTests:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Verify correlation ID is maintained in log entries
-        log_entry = logger._build_log_entry("INFO", "Test correlation processor")
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test correlation processor")
         assert log_entry.get("correlation_id") == test_correlation
 
     def test_edge_cases_for_remaining_coverage(self) -> None:
@@ -1895,7 +1898,7 @@ class TestCoverageTargetedTests:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Test that log entry building includes permanent context
-        log_entry = logger._build_log_entry("INFO", "Test with permanent context")
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test with permanent context")
         assert "permanent" in log_entry
         assert log_entry.get("permanent", {})["app_version"] == "1.0.0"
         assert log_entry.get("permanent", {})["deployment"] == "test"
@@ -1934,7 +1937,7 @@ class TestCoverageTargetedTests:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Test that log entry building includes proper execution context
-        log_entry = logger._build_log_entry("INFO", "Test normal frame handling")
+        log_entry = logger._build_log_entry(FlextLogLevel.INFO, "Test normal frame handling")
         # Real logging should have proper execution context
         assert "execution" in log_entry
         execution_context = log_entry.get("execution", {})
@@ -2020,7 +2023,7 @@ class TestCoverageTargetedTests:
 
         # Test that bound logger includes context in log entries
         log_entry = bound_logger._build_log_entry(
-            "INFO",
+            FlextLogLevel.INFO,
             "Test bound logger with complex data",
         )
         # Bound context data should be in the request field
@@ -2100,7 +2103,7 @@ class TestCoverageTargetedTests:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
         # Test that bound logger includes context in log entries
-        log_entry = bound_logger._build_log_entry("INFO", "Test with_context method")
+        log_entry = bound_logger._build_log_entry(FlextLogLevel.INFO, "Test with_context method")
         # Context data from bind/with_context should be in the 'request' field
         assert "request" in log_entry, (
             f"request field not found in log_entry: {list(log_entry.keys())}"
@@ -2171,7 +2174,7 @@ class TestCoverageTargetedTests:
         assert renderer is not None
 
         # Test with different log levels to potentially trigger different renderer paths
-        logger._level = "DEBUG"
+        logger._level = FlextLogLevel.DEBUG
         # Test real functionality
         try:
             logger.debug("Debug message")

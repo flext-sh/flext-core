@@ -35,6 +35,8 @@ from pydantic import (
     ConfigDict,
     Field,
     ValidationError,
+    AfterValidator,
+    BeforeValidator,
     computed_field,
     field_validator,
     model_validator,
@@ -44,6 +46,30 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
+from flext_core.utilities import FlextUtilities
+
+
+LogLevelLiteral = FlextTypes.Config.LogLevel
+
+
+def _normalize_log_level(
+    value: str | LogLevelLiteral,
+) -> LogLevelLiteral:
+    """Normalize and validate log level using shared FlextUtilities helpers."""
+
+    validation_result = FlextUtilities.Validation.validate_log_level(str(value))
+    if validation_result.is_success:
+        normalized = validation_result.value
+        return cast(LogLevelLiteral, normalized)
+    error_message = validation_result.error or "Invalid log level"
+    raise ValueError(error_message)
+
+
+LogLevelField = Annotated[
+    LogLevelLiteral,
+    BeforeValidator(_normalize_log_level),
+    AfterValidator(_normalize_log_level),
+]
 
 # Type alias for Pydantic's IncEx (include/exclude) parameter
 IncEx = Any  # Simplified to avoid complex recursive type issues
@@ -1363,28 +1389,17 @@ class FlextModels:
         """Logger initialization with advanced validation."""
 
         name: str
-        log_level: str = Field(
+        log_level: LogLevelField = Field(
             default_factory=lambda: FlextConfig.get_global_instance().log_level
         )
         structured_output: bool = True
         include_source: bool = True
         json_output: bool | None = None
 
-        @field_validator("log_level")
-        @classmethod
-        def validate_log_level(cls, v: str) -> str:
-            """Validate log level is valid."""
-            valid_levels = FlextConstants.Logging.VALID_LEVELS
-            v_upper = v.upper()
-            if v_upper not in valid_levels:
-                msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
-            return v_upper
-
     class LoggerConfigurationModel(ArbitraryTypesModel):
         """Logger configuration model for global configuration."""
 
-        log_level: str = Field(
+        log_level: LogLevelField = Field(
             default_factory=lambda: FlextConfig.get_global_instance().log_level
         )
         json_output: bool | None = None
@@ -1397,17 +1412,6 @@ class FlextModels:
         log_verbosity: str = Field(
             default_factory=lambda: FlextConstants.Logging.VERBOSITY
         )
-
-        @field_validator("log_level")
-        @classmethod
-        def validate_log_level(cls, v: str) -> str:
-            """Validate log level is valid."""
-            valid_levels = FlextConstants.Logging.VALID_LEVELS
-            v_upper = v.upper()
-            if v_upper not in valid_levels:
-                msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
-            return v_upper
 
     class LogContextModel(ArbitraryTypesModel):
         """Log context model with validation."""

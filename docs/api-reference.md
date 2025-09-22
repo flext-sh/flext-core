@@ -135,6 +135,18 @@ with logger.context(operation="sync", correlation_id="abc123"):
 
 Log records automatically include context metadata from `FlextContext`.
 
+`FlextModels.LoggerInitializationModel` and `LoggerConfigurationModel` accept the
+`FlextTypes.Config.LogLevel` literal and reuse shared validation helpers to
+normalise values:
+
+```python
+from flext_core import FlextConstants, FlextModels
+
+config = FlextModels.LoggerConfigurationModel(
+    log_level=FlextConstants.Config.LogLevel.DEBUG,
+)
+```
+
 ---
 
 ## Version Helpers
