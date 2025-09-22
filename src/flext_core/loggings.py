@@ -17,6 +17,7 @@ import platform
 import sys
 import threading
 import time
+import traceback
 import uuid
 import warnings
 from collections.abc import Mapping
@@ -58,6 +59,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     _global_correlation_id: ClassVar[str | None] = None
     _service_info: ClassVar[FlextTypes.Core.Dict] = {}
     _request_context: ClassVar[FlextTypes.Core.Dict] = {}
+    _track_performance_enabled: ClassVar[bool] = (
+        FlextConstants.Logging.TRACK_PERFORMANCE
+    )
+    _track_timing_enabled: ClassVar[bool] = FlextConstants.Logging.TRACK_TIMING
+    _include_context_enabled: ClassVar[bool] = FlextConstants.Logging.INCLUDE_CONTEXT
+    _include_correlation_id_enabled: ClassVar[bool] = (
+        FlextConstants.Logging.INCLUDE_CORRELATION_ID
+    )
+    _mask_sensitive_data_enabled: ClassVar[bool] = (
+        FlextConstants.Logging.MASK_SENSITIVE_DATA
+    )
 
     # Context manager for optimized operations
     _context_manager: _ContextManager
@@ -136,6 +148,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     "structured_output",
                     FlextConstants.Logging.STRUCTURED_OUTPUT,
                 ),
+                "log_verbosity": getattr(
+                    global_config,
+                    "log_verbosity",
+                    FlextConstants.Logging.VERBOSITY,
+                ),
             }
 
             # Call configure with proper typed arguments
@@ -154,6 +171,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 )
             )
 
+            log_verbosity = str(
+                config_kwargs.get(
+                    "log_verbosity", FlextConstants.Logging.VERBOSITY
+                )
+            )
+
             # Type-safe configure call
             json_output_typed: bool | None = (
                 None if json_output is None else bool(json_output)
@@ -163,6 +186,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 json_output=json_output_typed,
                 include_source=include_source,
                 structured_output=structured_output,
+                log_verbosity=log_verbosity,
             )
 
         # Use validated model values if available, otherwise use original parameters
@@ -179,6 +203,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         self._name = validated_name
         # Load configuration early so .env and FLEXT_* vars are available
         config = FlextConfig.get_global_instance()
+        type(self)._load_config_flags()
+
 
         # Resolve log level with strict precedence and deterministic behavior
         valid_levels = FlextConstants.Logging.VALID_LEVELS
@@ -368,6 +394,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             dict[str, object]: Sanitized context dictionary
 
         """
+        if not FlextLogger._mask_sensitive_data_enabled:
+            return context
+
         sensitive_keys = {
             "password",
             "passwd",
@@ -426,17 +455,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             "level": level.upper(),
             "message": str(message),
             "logger": self._name,
-            "correlation_id": self._correlation_id,
-            # Always include these containers for type predictability in tests
-            "request": {},
-            "context": {},
-            "service": {},
-            "system": {},
-            "execution": {},
         }
 
-        # Add service and system context
-        # Populate service and system from persistent context without broad update
+        if self._include_correlation_id_enabled and self._correlation_id is not None:
+            entry["correlation_id"] = self._correlation_id
+
+        # Add service and system context from persistent context without mutation
         service_ctx = self._persistent_context.get("service")
         system_ctx = self._persistent_context.get("system")
 
@@ -445,11 +469,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         if isinstance(system_ctx, dict) and system_ctx:
             entry["system"] = dict(cast("dict[str, object]", system_ctx))
 
-        # Add request context if available
+        # Add request context if available (always expose container for compatibility)
         request_context = cast(
             "dict[str, object] | None", getattr(self._local, "request_context", None)
         )
-        # Always set request (may be empty)
         entry["request"] = (
             dict(request_context) if isinstance(request_context, dict) else {}
         )
@@ -459,8 +482,23 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         if isinstance(permanent_context, dict) and permanent_context:
             entry["permanent"] = dict(cast("dict[str, object]", permanent_context))
 
-        # Add performance metrics
-        if duration_ms is not None:
+        # Add execution/timing information when enabled
+        if self._track_timing_enabled:
+            execution_info: dict[str, object] = {}
+            function_name = self._get_calling_function()
+            if function_name and function_name != "unknown":
+                execution_info["function"] = function_name
+            line_number = self._get_calling_line()
+            if line_number:
+                execution_info["line"] = line_number
+            uptime_seconds = round(time.time() - self._start_time, 3)
+            if uptime_seconds >= 0:
+                execution_info["uptime_seconds"] = uptime_seconds
+            if execution_info:
+                entry["execution"] = execution_info
+
+        # Add performance metrics when enabled
+        if duration_ms is not None and self._track_performance_enabled:
             entry["performance"] = {
                 "duration_ms": round(duration_ms, 3),
                 "timestamp": self._get_current_timestamp(),
@@ -469,18 +507,35 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Add error details if present
         if error is not None:
             if isinstance(error, Exception):
-                entry["error"] = {
+                error_entry: dict[str, object] = {
                     "type": error.__class__.__name__,
                     "message": str(error),
                     "details": getattr(error, "args", ()),
                 }
+                if error.__traceback__ is not None:
+                    error_entry["stack_trace"] = traceback.format_tb(error.__traceback__)
+                entry["error"] = error_entry
             else:
                 entry["error"] = {"message": str(error)}
 
-        # Add additional context if provided
-        if isinstance(context, dict) and context:
-            entry["context"] = dict(context)
+        # Add additional context if provided and enabled
+        if self._include_context_enabled:
+            if context is not None:
+                context_dict: dict[str, object] | None = None
+                if isinstance(context, Mapping):
+                    context_dict = dict(context)
+                else:
+                    try:
+                        context_dict = dict(context)
+                    except TypeError:
+                        context_dict = None
 
+                if context_dict:
+                    entry["context"] = (
+                        self._sanitize_context(context_dict)
+                        if self._mask_sensitive_data_enabled
+                        else dict(context_dict)
+                    )
         return entry
 
     def _get_calling_function(self) -> str:
@@ -543,6 +598,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             model_kwargs["method"] = str(context["method"])
         if "path" in context and context["path"] is not None:
             model_kwargs["path"] = str(context["path"])
+        if "user_id" in context and context["user_id"] is not None:
+            model_kwargs["user_id"] = str(context["user_id"])
+        if "endpoint" in context and context["endpoint"] is not None:
+            model_kwargs["endpoint"] = str(context["endpoint"])
         if "headers" in context and isinstance(context["headers"], dict):
             headers_dict = cast("dict[object, object]", context["headers"])
             model_kwargs["headers"] = {str(k): str(v) for k, v in headers_dict.items()}
@@ -563,6 +622,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             if model_kwargs.get("correlation_id")
             else None
         )
+        user_id = str(model_kwargs["user_id"]) if model_kwargs.get("user_id") else None
+        endpoint = (
+            str(model_kwargs["endpoint"]) if model_kwargs.get("endpoint") else None
+        )
 
         model = FlextModels.LoggerRequestContextModel(
             request_id=request_id,
@@ -571,6 +634,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             headers=headers,
             query_params=query_params,
             correlation_id=correlation_id,
+            user_id=user_id,
+            endpoint=endpoint,
         )
         result = self._context_manager.set_request_context(model)
         if result.is_failure:
@@ -890,6 +955,39 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         self._structlog_logger.error(formatted_message, **entry)
 
     @classmethod
+    def _load_config_flags(cls) -> None:
+        """Load logging feature flags from the global configuration."""
+
+        config = FlextConfig.get_global_instance()
+        cls._track_performance_enabled = bool(
+            getattr(
+                config,
+                "track_performance",
+                FlextConstants.Logging.TRACK_PERFORMANCE,
+            )
+        )
+        cls._track_timing_enabled = bool(
+            getattr(config, "track_timing", FlextConstants.Logging.TRACK_TIMING)
+        )
+        cls._include_context_enabled = bool(
+            getattr(config, "include_context", FlextConstants.Logging.INCLUDE_CONTEXT)
+        )
+        cls._include_correlation_id_enabled = bool(
+            getattr(
+                config,
+                "include_correlation_id",
+                FlextConstants.Logging.INCLUDE_CORRELATION_ID,
+            )
+        )
+        cls._mask_sensitive_data_enabled = bool(
+            getattr(
+                config,
+                "mask_sensitive_data",
+                FlextConstants.Logging.MASK_SENSITIVE_DATA,
+            )
+        )
+
+    @classmethod
     def configure(
         cls,
         log_level: str | None = None,
@@ -915,6 +1013,16 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             FlextResult[None]: Success or failure with error details
 
         """
+        cls._load_config_flags()
+        global_config = FlextConfig.get_global_instance()
+        resolved_log_verbosity = (
+            log_verbosity
+            if log_verbosity is not None
+            else getattr(
+                global_config, "log_verbosity", FlextConstants.Logging.VERBOSITY
+            )
+        )
+
         # Create configuration model with defaults
         config_model = FlextModels.LoggerConfigurationModel(
             log_level=log_level or "INFO",
@@ -922,7 +1030,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
             structured_output=structured_output
             or FlextConstants.Logging.STRUCTURED_OUTPUT,
-            log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
+            log_verbosity=resolved_log_verbosity,
         )
 
         # Reset if already configured (allow reconfiguration)
@@ -1017,7 +1125,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             EventDict: Modified event dictionary with correlation ID
 
         """
-        if FlextLogger._global_correlation_id:
+        if (
+            FlextLogger._include_correlation_id_enabled
+            and FlextLogger._global_correlation_id
+        ):
             event_dict["correlation_id"] = FlextLogger._global_correlation_id
         return event_dict
 
@@ -1062,6 +1173,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             EventDict: Sanitized event dictionary
 
         """
+        if not FlextLogger._mask_sensitive_data_enabled:
+            return event_dict
+
         sensitive_keys = {
             "password",
             "passwd",
@@ -1627,6 +1741,14 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     local.request_context["headers"] = model.headers
                 if model.query_params:
                     local.request_context["query_params"] = model.query_params
+                if model.user_id:
+                    local.request_context["user_id"] = model.user_id
+                if model.endpoint:
+                    local.request_context["endpoint"] = model.endpoint
+                # Add custom data fields to the request context
+                if model.custom_data:
+                    for key, value in model.custom_data.items():
+                        local.request_context[key] = value
                 if model.correlation_id:
                     self._logger.set_correlation_id_internal(model.correlation_id)
 
@@ -1762,6 +1884,24 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                             model.context_data["correlation_id"]
                         )
 
+                    # Collect any custom fields that aren't predefined
+                    predefined_fields = {
+                        "request_id",
+                        "method",
+                        "path",
+                        "headers",
+                        "query_params",
+                        "correlation_id",
+                        "user_id",
+                        "endpoint",
+                    }
+                    custom_data: dict[str, str] = {}
+                    for key, value in model.context_data.items():
+                        if key not in predefined_fields:
+                            custom_data[str(key)] = str(value)
+
+                    context_kwargs["custom_data"] = custom_data
+
                     new_context_model = FlextModels.LoggerRequestContextModel(
                         request_id=str(context_kwargs.get("request_id", "")),
                         method=str(context_kwargs.get("method"))
@@ -1783,6 +1923,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                         correlation_id=str(context_kwargs.get("correlation_id"))
                         if context_kwargs.get("correlation_id")
                         else None,
+                        custom_data=cast(
+                            "dict[str, str]", context_kwargs.get("custom_data", {})
+                        ),
                     )
                     bound_logger._context_manager.set_request_context(new_context_model)
 

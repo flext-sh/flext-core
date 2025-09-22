@@ -476,6 +476,38 @@ class TestFlextCommandBus:
         # Verify no handlers were registered
         assert len(bus.get_all_handlers()) == 0
 
+    def test_create_simple_handler_wrapper_behaviour(self) -> None:
+        """Ensure the simple handler factory wraps callables consistently."""
+        bus = FlextCommandBus()
+
+        def simple_callable(command: CreateUserCommand) -> str:
+            return command.username.upper()
+
+        handler = FlextCommandBus.create_simple_handler(simple_callable)
+        register_result = bus.register_handler(handler)
+        assert register_result.is_success
+
+        command = CreateUserCommand(username="carol", email="carol@example.com")
+        execution_result = bus.execute(command)
+        assert execution_result.is_success
+        assert execution_result.unwrap() == "CAROL"
+
+        def prebuilt_result(_: CreateUserCommand) -> FlextResult[str]:
+            return FlextResult[str].ok("from-result")
+
+        passthrough_handler = FlextCommandBus.create_simple_handler(prebuilt_result)
+        passthrough_outcome = passthrough_handler.handle(command)
+        assert passthrough_outcome.is_success
+        assert passthrough_outcome.unwrap() == "from-result"
+
+        def failing_callable(_: CreateUserCommand) -> str:
+            raise RuntimeError("callable boom")
+
+        failing_handler = FlextCommandBus.create_simple_handler(failing_callable)
+        failure_outcome = failing_handler.handle(command)
+        assert failure_outcome.is_failure
+        assert "callable boom" in (failure_outcome.error or "")
+
     def test_execute_command_success(self) -> None:
         """Test successful command execution."""
         bus = FlextCommandBus()
@@ -557,6 +589,28 @@ class TestFlextCommandBus:
         if handler1 not in all_handlers:
             raise AssertionError(f"Expected {handler1} in {all_handlers}")
         assert handler2 in all_handlers
+
+    def test_create_simple_handler_wrapper(self) -> None:
+        """Ensure create_simple_handler wraps callables consistently."""
+        def simple_callable(command: CreateUserCommand) -> str:
+            return f"user:{command.username}"
+
+        command = CreateUserCommand(username="wrapped", email="wrap@example.com")
+        handler = FlextCommandBus.create_simple_handler(simple_callable)
+        result = handler.handle(command)
+
+        if not result.is_success:
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        assert result.value == "user:wrapped"
+
+        def failing_callable(command: CreateUserCommand) -> str:  # pragma: no cover - raising path
+            raise RuntimeError("boom from callable")
+
+        failing_handler = FlextCommandBus.create_simple_handler(failing_callable)
+        failure_result = failing_handler.handle(command)
+
+        assert failure_result.is_failure
+        assert "boom from callable" in (failure_result.error or "")
 
 
 class TestFlextCommandResults:
