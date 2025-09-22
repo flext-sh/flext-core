@@ -23,7 +23,7 @@ from flext_core.typings import FlextTypes
 class ModelDumpable(Protocol):
     """Protocol for objects that have a model_dump method."""
 
-    def model_dump(self) -> dict[str, object]: ...
+    def model_dump(self) -> FlextTypes.Core.Dict: ...
 
 
 class FlextBus(FlextMixins):
@@ -38,7 +38,7 @@ class FlextBus(FlextMixins):
 
     def __init__(
         self,
-        bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
         *,
         enable_middleware: bool = True,
         enable_metrics: bool = True,
@@ -57,7 +57,7 @@ class FlextBus(FlextMixins):
         self._start_time = time.time()
 
         # Convert bus_config to dict if it's a Bus object
-        config_dict: dict[str, object] | None = None
+        config_dict: FlextTypes.Core.Dict | None = None
         if bus_config is not None:
             # Check if it's a Pydantic model with model_dump method
             if hasattr(bus_config, "model_dump") and callable(
@@ -85,7 +85,7 @@ class FlextBus(FlextMixins):
         # Handlers registry: command type -> handler instance
         self._handlers: FlextTypes.Core.Dict = {}
         # Middleware pipeline (controlled by config)
-        self._middleware: list[dict[str, object]] = []
+        self._middleware: list[FlextTypes.Core.Dict] = []
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Core.Dict = {}
         # Execution counter
@@ -104,7 +104,7 @@ class FlextBus(FlextMixins):
     @classmethod
     def create_command_bus(
         cls,
-        bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
     ) -> FlextBus:
         """Create factory helper mirroring the documented ``create_command_bus`` API.
 
@@ -121,7 +121,7 @@ class FlextBus(FlextMixins):
     def create_simple_handler(
         handler_func: Callable[[object], object],
         handler_config: FlextModels.CqrsConfig.Handler
-        | dict[str, object]
+        | FlextTypes.Core.Dict
         | None = None,
     ) -> FlextHandlers[object, object]:
         """Wrap a bare callable into a CQRS command handler with validation.
@@ -163,7 +163,7 @@ class FlextBus(FlextMixins):
     def create_query_handler(
         handler_func: Callable[[object], object],
         handler_config: FlextModels.CqrsConfig.Handler
-        | dict[str, object]
+        | FlextTypes.Core.Dict
         | None = None,
     ) -> FlextHandlers[object, object]:
         """Wrap a callable into a CQRS query handler that returns `FlextResult`.
@@ -420,7 +420,7 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(m: dict[str, object]) -> int:
+        def get_order(m: FlextTypes.Core.Dict) -> int:
             order = m.get("order", 0)
             if isinstance(order, int):
                 return order
@@ -519,7 +519,7 @@ class FlextBus(FlextMixins):
     def add_middleware(
         self,
         middleware: object,
-        middleware_config: dict[str, object] | None = None,
+        middleware_config: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[None]:
         """Append middleware with validated configuration metadata.
 
@@ -537,12 +537,17 @@ class FlextBus(FlextMixins):
 
         # Create config if not provided
         if middleware_config is None:
-            middleware_config = {
-                "middleware_id": f"mw_{len(self._middleware)}",
-                "middleware_type": type(middleware).__name__,
-                "enabled": True,
-                "order": len(self._middleware),
-            }
+            middleware_config = cast(
+                FlextTypes.Core.Dict,
+                {
+                    "middleware_id": f"mw_{len(self._middleware)}",
+                    "middleware_type": type(middleware).__name__,
+                    "enabled": True,
+                    "order": len(self._middleware),
+                },
+            )
+        else:
+            middleware_config = cast(FlextTypes.Core.Dict, middleware_config)
 
         # Store both middleware and config
         self._middleware.append(middleware_config)
