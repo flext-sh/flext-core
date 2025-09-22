@@ -182,8 +182,8 @@ class FlextDomainService[TDomainResult](
             if validation_result.is_failure:
                 return FlextResult[TDomainResult].fail(
                     (
-                        f"{FlextConstants.Messages.VALIDATION_FAILED}"
-                        f" (pre-execution): {validation_result.error}"
+                        f"{FlextConstants.Messages.VALIDATION_FAILED} (pre-execution)"
+                        + (f": {validation_result.error}" if validation_result.error else "")
                     )
                 )
 
