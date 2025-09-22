@@ -1135,10 +1135,14 @@ class FlextModels:
         if path_result.is_failure:
             return path_result
 
-        file_path = Path(path_result.unwrap())
+        validated_path = path_result.value_or_none
+        if validated_path is None:
+            return FlextResult[str].fail("Path validation returned None")
+
+        file_path = Path(validated_path)
         if not file_path.exists():
             return FlextResult[str].fail(f"Path does not exist: {path}")
-        return FlextResult[str].ok(path_result.unwrap())
+        return FlextResult[str].ok(validated_path)
 
     @staticmethod
     def create_validated_directory_path(path: str) -> FlextResult[str]:
@@ -1147,10 +1151,14 @@ class FlextModels:
         if path_result.is_failure:
             return path_result
 
-        dir_path = Path(path_result.unwrap())
+        validated_path = path_result.value_or_none
+        if validated_path is None:
+            return FlextResult[str].fail("Path validation returned None")
+
+        dir_path = Path(validated_path)
         if not dir_path.is_dir():
             return FlextResult[str].fail(f"Path is not a directory: {path}")
-        return FlextResult[str].ok(path_result.unwrap())
+        return FlextResult[str].ok(validated_path)
 
     # Additional domain models continue with advanced patterns...
     class FactoryRegistrationModel(StrictArbitraryTypesModel):
@@ -1480,7 +1488,6 @@ class FlextModels:
         @classmethod
         def validate_log_verbosity(cls, v: str) -> str:
             """Validate log verbosity option."""
-
             valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
             normalized = v.lower()
             if normalized not in valid_levels:
@@ -1884,7 +1891,9 @@ class FlextModels:
     class ValidationConfiguration(ArbitraryTypesModel):
         """Validation configuration."""
 
-        enable_strict_mode: bool = False
+        enable_strict_mode: bool = Field(
+            default_factory=lambda: FlextConfig.get_global_instance().validation_strict_mode
+        )
         max_validation_errors: int = Field(default=10)
         validate_on_assignment: bool = True
         validate_on_read: bool = False
@@ -2616,13 +2625,17 @@ class FlextModels:
                 bus_config: dict[str, object] | None = None,
                 *,
                 enable_middleware: bool = True,
-                enable_metrics: bool = True,
+                enable_metrics: bool | None = None,
                 enable_caching: bool = True,
                 execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
                 max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
                 implementation_path: str = "flext_core.bus:FlextBus",
             ) -> Self:
                 """Create bus configuration with defaults and overrides."""
+                # Use global config defaults when not explicitly provided
+                if enable_metrics is None:
+                    enable_metrics = FlextConfig.get_global_instance().enable_metrics
+
                 config_data: dict[str, object] = {
                     "enable_middleware": enable_middleware,
                     "enable_metrics": enable_metrics,
@@ -2642,18 +2655,12 @@ class FlextModels:
 
             handler_id: str = Field(description="Unique handler identifier")
             handler_name: str = Field(description="Human-readable handler name")
-            handler_type: Literal[
-                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            ] = Field(
-                default=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_type: Literal["command", "query"] = Field(
+                default="command",
                 description="Handler type",
             )
-            handler_mode: Literal[
-                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-            ] = Field(
-                default=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            handler_mode: Literal["command", "query"] = Field(
+                default="command",
                 description="Handler mode",
             )
             command_timeout: int = Field(default=0, description="Command timeout")
@@ -2667,10 +2674,7 @@ class FlextModels:
             @classmethod
             def create_handler_config(
                 cls,
-                handler_type: Literal[
-                    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-                ],
+                handler_type: Literal["command", "query"],
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
@@ -2708,19 +2712,13 @@ class FlextModels:
         """Registration details for handler registration tracking."""
 
         registration_id: str = Field(description="Unique registration identifier")
-        handler_mode: Literal[
-            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-        ] = Field(
-            default=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+        handler_mode: Literal["command", "query"] = Field(
+            default="command",
             description="Handler mode",
         )
         timestamp: str = Field(default="", description="Registration timestamp")
-        status: Literal[
-            FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-            FlextConstants.Dispatcher.REGISTRATION_STATUS_INACTIVE,
-        ] = Field(
-            default=FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+        status: Literal["active", "inactive"] = Field(
+            default="active",
             description="Registration status",
         )
 

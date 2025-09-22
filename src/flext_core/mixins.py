@@ -8,15 +8,17 @@ from __future__ import annotations
 
 import contextlib
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from pydantic import BaseModel
+
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
-from flext_core.utilities import FlextUtilities
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextMixins:
@@ -304,7 +306,7 @@ class FlextMixins:
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
             model_dump_method = getattr(obj, "model_dump")
             model_data: FlextTypes.Core.Dict = cast(
-                FlextTypes.Core.Dict, model_dump_method()
+                "FlextTypes.Core.Dict", model_dump_method()
             )
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
@@ -468,7 +470,5 @@ class FlextMixins:
             debug_mode = config.debug
             config.debug = True
             updated = config.model_copy(update={"timeout_seconds": 60})
+
         """
-
-        pass
-

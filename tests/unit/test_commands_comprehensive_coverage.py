@@ -773,7 +773,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -789,7 +790,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -805,7 +807,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -822,7 +825,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -838,7 +842,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)

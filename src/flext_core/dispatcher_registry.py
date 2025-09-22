@@ -21,7 +21,6 @@ from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 
-
 HandlerModeLiteral = Literal[
     FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
     FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
@@ -344,7 +343,7 @@ class FlextDispatcherRegistry:
                                 FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
                             }:
                                 handler_type_val = cast(
-                                    HandlerTypeLiteral, raw_type
+                                    "HandlerTypeLiteral", raw_type
                                 )
 
                         if isinstance(handler_config.get("handler_mode"), str):
@@ -354,7 +353,7 @@ class FlextDispatcherRegistry:
                                 FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
                             }:
                                 handler_mode_val = cast(
-                                    HandlerModeLiteral, raw_mode
+                                    "HandlerModeLiteral", raw_mode
                                 )
 
                         metadata_raw = handler_config.get("metadata", {})
@@ -378,13 +377,12 @@ class FlextDispatcherRegistry:
                             FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
                         }:
                             handler_mode = handler_mode_val
+                        elif handler_type_val == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
+                            handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                        elif handler_type_val == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
+                            handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_QUERY
                         else:
-                            if handler_type_val == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
-                                handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
-                            elif handler_type_val == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
-                                handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_QUERY
-                            else:
-                                handler_mode = handler_mode_val  # fallback
+                            handler_mode = handler_mode_val  # fallback
                     except Exception:
                         config_obj = None
 

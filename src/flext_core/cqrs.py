@@ -21,7 +21,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-
 HandlerTypeLiteral = Literal[
     FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
@@ -350,12 +349,11 @@ class FlextCqrs:
             """
             try:
                 config_instance = FlextConfig.get_global_instance()
-                # Create CQRS config from FlextConfig fields
-                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config({
-                    "timeout_seconds": config_instance.dispatcher_timeout_seconds,
-                    "enable_metrics": config_instance.dispatcher_enable_metrics,
-                    "enable_logging": config_instance.dispatcher_enable_logging,
-                })
+                # Use FlextConfig.get_cqrs_bus_config() as single source of truth
+                bus_config_dict = config_instance.get_cqrs_bus_config()
+
+                # Create CQRS config from properly delegated FlextConfig
+                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(bus_config_dict)
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(bus_config)
             except Exception:
                 # Fallback to default configuration
