@@ -54,6 +54,7 @@ class FlextBus(FlextMixins):
         self._max_cache_size: int = 0
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self, "bus_config")
+        self._cache: dict[str, FlextResult[object]] = {}
         FlextMixins.clear_cache(self)
         # Timestampable mixin initialization
         self._created_at = datetime.now(UTC)
@@ -131,40 +132,26 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a bare callable into a CQRS command handler with validation.
+        """
+        Wrap a bare callable into a CQRS command handler with validation.
 
         Args:
-            handler_func: The callable function to wrap
-            handler_config: Handler configuration or None for defaults
+            handler_func: A callable that takes a single argument (the command payload) and returns a result.
+                The function should implement the business logic for the command.
+            handler_config: Optional handler configuration, either as a `FlextModels.CqrsConfig.Handler` instance
+                or a dictionary. If None, default configuration is used.
 
         Returns:
-            FlextHandlers: Configured command handler instance
-
+            FlextHandlers[object, object]: A CQRS command handler that wraps the provided callable,
+                with input/output validation and result wrapping. See `FlextHandlers.from_callable` for details.
         """
+        handler_name = getattr(handler_func, "__name__", "SimpleHandler")
 
-        class SimpleHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                super().__init__(
-                    handler_mode="command",
-                    handler_name=getattr(
-                        handler_func,
-                        "__name__",
-                        self.__class__.__name__,
-                    ),
-                    handler_config=handler_config,
-                )
-
-            def handle(self, message: object) -> FlextResult[object]:
-                result = handler_func(message)
-                if isinstance(result, FlextResult):
-                    # Result is already a FlextResult, just return it
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
-
-            def __call__(self, command: object) -> FlextResult[object]:
-                return self.handle(command)
-
-        return SimpleHandler()
+        return FlextHandlers.from_callable(
+            handler_func,
+            mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_config=handler_config,
+            handler_name=handler_name,
 
     @staticmethod
     def create_query_handler(
@@ -184,29 +171,13 @@ class FlextBus(FlextMixins):
 
         """
 
-        class SimpleQueryHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                super().__init__(
-                    handler_mode="query",
-                    handler_name=getattr(
-                        handler_func,
-                        "__name__",
-                        self.__class__.__name__,
-                    ),
-                    handler_config=handler_config,
-                )
+        handler_name = getattr(handler_func, "__name__", "SimpleQueryHandler")
 
-            def handle(self, message: object) -> FlextResult[object]:
-                result = handler_func(message)
-                if isinstance(result, FlextResult):
-                    # Result is already a FlextResult, just return it
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
-
-            def __call__(self, query: object) -> FlextResult[object]:
-                return self.handle(query)
-
-        return SimpleQueryHandler()
+        return FlextHandlers.from_callable(
+            handler_func,
+            mode=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            handler_config=handler_config,
+            handler_name=handler_name,
 
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance (single or paired registration forms).
@@ -350,7 +321,7 @@ class FlextBus(FlextMixins):
             cached_result = self._cache.get(cache_key)
             if cached_result is not None:
                 self._cache.move_to_end(cache_key)
-                self.logger.info(
+                self.logger.debug(
                     "Returning cached query result",
                     command_type=command_type.__name__,
                     cache_key=cache_key,
@@ -436,37 +407,56 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(m: dict[str, object]) -> int:
-            order = m.get("order", 0)
-            if isinstance(order, int):
-                return order
-            if isinstance(order, str):
+        def get_order(m: dict[str, object] | object) -> int:
+            if isinstance(m, dict):
+                order_value = m.get("order", 0)
+            else:
+                order_value = getattr(m, "order", 0)
+
+            if isinstance(order_value, int):
+                return order_value
+            if isinstance(order_value, str):
                 try:
-                    return int(order)
+                    return int(order_value)
                 except ValueError:
                     return 0
-            else:
-                return 0
+            return 0
 
         sorted_middleware = sorted(self._middleware, key=get_order)
 
         for middleware_config in sorted_middleware:
-            if not getattr(middleware_config, "enabled", True):
+            if isinstance(middleware_config, dict):
+                enabled = middleware_config.get("enabled", True)
+                middleware_id_value = middleware_config.get("middleware_id")
+                middleware_type_value = middleware_config.get("middleware_type", "")
+                order_value = middleware_config.get("order", 0)
+            else:
+                enabled = getattr(middleware_config, "enabled", True)
+                middleware_id_value = getattr(middleware_config, "middleware_id", "")
+                middleware_type_value = getattr(
+                    middleware_config,
+                    "middleware_type",
+                    "",
+                )
+                order_value = getattr(middleware_config, "order", 0)
+
+            if not enabled:
                 continue
 
             # Get actual middleware instance
-            middleware = self._middleware_instances.get(
-                str(getattr(middleware_config, "middleware_id", "")),
+            middleware_id_str = (
+                "" if middleware_id_value is None else str(middleware_id_value)
             )
+            middleware = self._middleware_instances.get(middleware_id_str)
             if middleware is None:
                 # Skip middleware configs without instances
                 continue
 
             self.logger.debug(
                 "Applying middleware",
-                middleware_id=getattr(middleware_config, "middleware_id", ""),
-                middleware_type=getattr(middleware_config, "middleware_type", ""),
-                order=getattr(middleware_config, "order", 0),
+                middleware_id=middleware_id_value if middleware_id_value is not None else "",
+                middleware_type=middleware_type_value,
+                order=order_value,
             )
 
             process_method = getattr(middleware, "process", None)
@@ -475,11 +465,7 @@ class FlextBus(FlextMixins):
                 if isinstance(result, FlextResult) and result.is_failure:
                     self.logger.info(
                         "Middleware rejected command",
-                        middleware_type=getattr(
-                            middleware_config,
-                            "middleware_type",
-                            "",
-                        ),
+                        middleware_type=middleware_type_value,
                         error=result.error or "Unknown error",
                     )
                     return FlextResult[None].fail(
@@ -560,17 +546,29 @@ class FlextBus(FlextMixins):
                 "order": len(self._middleware),
             }
 
+        # Ensure middleware config has a usable identifier
+        middleware_id_value = middleware_config.get("middleware_id")
+        if middleware_id_value in (None, ""):
+            middleware_id_value = getattr(
+                middleware,
+                "middleware_id",
+                f"mw_{len(self._middleware_instances)}",
+            )
+            middleware_config["middleware_id"] = middleware_id_value
+
+        middleware_key = (
+            "" if middleware_id_value is None else str(middleware_id_value)
+        )
+
         # Store both middleware and config
         self._middleware.append(middleware_config)
         # Also store the actual middleware instance
-        self._middleware_instances[
-            str(getattr(middleware_config, "middleware_id", ""))
-        ] = middleware
+        self._middleware_instances[middleware_key] = middleware
 
         self.logger.info(
             "Middleware added to pipeline",
-            middleware_type=getattr(middleware_config, "middleware_type", ""),
-            middleware_id=getattr(middleware_config, "middleware_id", ""),
+            middleware_type=middleware_config.get("middleware_type", ""),
+            middleware_id=middleware_config.get("middleware_id", ""),
             total_middleware=len(self._middleware),
         )
 
