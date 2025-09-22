@@ -24,12 +24,15 @@ from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 from types import TracebackType
 from typing import NoReturn, Self, cast
+from unittest.mock import patch
 
 import pytest
 
 from flext_core import (
     FlextContext,
     FlextLogger,
+    FlextModels,
+    FlextResult,
     FlextTypes,
 )
 from flext_tests import (
@@ -806,6 +809,27 @@ class TestRequestContextManagement:
             logger.info("Processing request")
         except Exception as e:
             pytest.fail(f"Logging should not raise exceptions: {e}")
+
+    def test_request_context_propagates_correlation_id(self) -> None:
+        """Ensure correlation ID is forwarded to the context manager model."""
+        logger = FlextLogger("context_test")
+        correlation_uuid = uuid.uuid4()
+
+        with patch.object(
+            logger._context_manager,
+            "set_request_context",
+        ) as mocked_set_request_context:
+            mocked_set_request_context.return_value = FlextResult[None].ok(None)
+
+            logger.set_request_context(correlation_id=correlation_uuid)
+
+        mocked_set_request_context.assert_called_once()
+        call_args = mocked_set_request_context.call_args
+        assert call_args is not None
+        passed_model = call_args.args[0]
+
+        assert isinstance(passed_model, FlextModels.LoggerRequestContextModel)
+        assert passed_model.correlation_id == str(correlation_uuid)
 
     def test_request_context_clearing(self) -> None:
         """Test clearing request-specific context using real functionality."""

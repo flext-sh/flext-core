@@ -547,6 +547,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             model_kwargs["user_id"] = str(context["user_id"])
         if "endpoint" in context and context["endpoint"] is not None:
             model_kwargs["endpoint"] = str(context["endpoint"])
+        if "correlation_id" in context and context["correlation_id"] is not None:
+            model_kwargs["correlation_id"] = str(context["correlation_id"])
         if "headers" in context and isinstance(context["headers"], dict):
             headers_dict = cast("dict[object, object]", context["headers"])
             model_kwargs["headers"] = {str(k): str(v) for k, v in headers_dict.items()}
