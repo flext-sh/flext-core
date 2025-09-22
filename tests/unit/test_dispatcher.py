@@ -20,6 +20,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
+from pydantic import BaseModel
 
 
 @dataclass
@@ -125,6 +126,111 @@ class CachedQueryHandler:
         """Handle the cached query while counting invocations."""
         self.calls += 1
         return FlextResult[str].ok(f"{message.payload}:{self.calls}")
+
+
+def test_dispatcher_cache_hits_for_equivalent_dataclass_queries() -> None:
+    """Repeated dataclass queries with reordered payloads reuse the cached result."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    @dataclass
+    class StructuredQuery:
+        filters: dict[str, int]
+        limits: tuple[int, ...]
+
+    class StructuredQueryHandler:
+        def __init__(self) -> None:
+            self.call_count = 0
+
+        def can_handle(self, command_type: type[object]) -> bool:
+            return command_type is StructuredQuery
+
+        def handle(self, message: StructuredQuery) -> FlextResult[dict[str, int]]:
+            self.call_count += 1
+            total = sum(message.filters.values()) + sum(message.limits)
+            return FlextResult[dict[str, int]].ok({"total": total})
+
+    handler = StructuredQueryHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    dispatcher.bus._cache.clear()
+
+    first_query = StructuredQuery(filters={"a": 1, "b": 2}, limits=(3, 4))
+    second_query = StructuredQuery(
+        filters=dict([("b", 2), ("a", 1)]),
+        limits=(3, 4),
+    )
+
+    first_result = dispatcher.dispatch(first_query)
+    assert first_result.is_success
+    assert handler.call_count == 1
+    assert len(dispatcher.bus._cache) == 1
+
+    second_result = dispatcher.dispatch(second_query)
+    assert second_result.is_success
+    assert handler.call_count == 1
+    assert len(dispatcher.bus._cache) == 1
+    assert second_result.unwrap() == {"total": 10}
+    cached_result = next(iter(dispatcher.bus._cache.values()))
+    assert cached_result.unwrap() == {"total": 10}
+
+
+def test_dispatcher_cache_hits_for_equivalent_pydantic_queries() -> None:
+    """Pydantic-based queries share cache entries when payload ordering differs."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    class CachedQuery(BaseModel):
+        filters: dict[str, int]
+        offsets: list[int]
+
+    class CachedQueryHandler:
+        def __init__(self) -> None:
+            self.call_count = 0
+
+        def can_handle(self, command_type: type[object]) -> bool:
+            return command_type is CachedQuery
+
+        def handle(self, message: CachedQuery) -> FlextResult[dict[str, int]]:
+            self.call_count += 1
+            total = sum(message.filters.values()) + sum(message.offsets)
+            return FlextResult[dict[str, int]].ok({"total": total})
+
+    handler = CachedQueryHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    # Avoid accessing private _cache directly; prefer a public API.
+    if hasattr(dispatcher.bus, "clear_cache") and callable(dispatcher.bus.clear_cache):
+        dispatcher.bus.clear_cache()
+    else:
+        raise RuntimeError(
+            "dispatcher.bus does not provide a public 'clear_cache' method. "
+            "Please add a public API to clear the cache instead of accessing _cache directly."
+        )
+
+    first_query = CachedQuery(filters={"c": 3, "d": 4}, offsets=[1, 2])
+    second_query = CachedQuery(filters={"d": 4, "c": 3}, offsets=[1, 2])
+
+    first_result = dispatcher.dispatch(first_query)
+    assert first_result.is_success
+    assert handler.call_count == 1
+    assert len(dispatcher.bus._cache) == 1
+
+    second_result = dispatcher.dispatch(second_query)
+    assert second_result.is_success
+    assert handler.call_count == 1
+    assert len(dispatcher.bus._cache) == 1
+    assert second_result.unwrap() == {"total": 10}
+    cached_result = next(iter(dispatcher.bus._cache.values()))
+    assert cached_result.unwrap() == {"total": 10}
 
 
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
