@@ -1491,9 +1491,13 @@ class FlextModels:
         ) -> FlextTypes.Config.Environment:
             """Normalize and validate environment against shared constants."""
 
+            # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
             if not isinstance(value, str):
-                msg = "Environment must be provided as a string"
-                raise ValueError(msg)
+                # If it's an Enum, get its value; otherwise, try str()
+                if hasattr(value, "value"):
+                    value = value.value
+                else:
+                    value = str(value)
 
             normalized = value.lower()
             valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
