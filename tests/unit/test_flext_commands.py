@@ -15,6 +15,7 @@ from pydantic import Field, ValidationError
 
 from flext_core import (
     FlextBus,
+    FlextConstants,
     FlextCqrs,
     FlextHandlers,
     FlextModels,
@@ -584,6 +585,9 @@ class TestFlextCqrsComprehensive:
             def handle(self, message: EchoCmd) -> FlextResult[str]:
                 return FlextResult[str].ok(message.value)
 
+            def execute(self, message: EchoCmd) -> FlextResult[str]:
+                return self.handle(message)
+
         # 1-arg form registers by handler id
         bus.register_handler(EchoHandler())
         assert bus.find_handler(EchoCmd(value="a")) is not None
@@ -599,8 +603,25 @@ class TestFlextCqrsComprehensive:
         assert all(isinstance(k, str) for k in handlers_map)
 
         # Unregister existing and missing
-        assert bus.unregister_handler("EchoCmd") is True
-        assert bus.unregister_handler("MissingCmd") is False
+        existing_unregistration = bus.unregister_handler("EchoCmd")
+        FlextTestsMatchers.assert_result_success(existing_unregistration)
+        assert (
+            existing_unregistration.error_data.get("message")
+            == "Handler 'EchoCmd' unregistered"
+        )
+        assert existing_unregistration.error_data.get("command_type") == "EchoCmd"
+
+        missing_unregistration = bus.unregister_handler("MissingCmd")
+        FlextTestsMatchers.assert_result_failure(missing_unregistration)
+        assert (
+            missing_unregistration.error
+            == "No handler registered for MissingCmd"
+        )
+        assert (
+            missing_unregistration.error_code
+            == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
+        )
+        assert missing_unregistration.error_data.get("command_type") == "MissingCmd"
 
         # Middleware rejection
         class RejectingMiddleware:
