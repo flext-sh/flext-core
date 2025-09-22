@@ -30,6 +30,7 @@ import pytest
 from flext_core import (
     FlextContext,
     FlextLogger,
+    FlextProtocols,
     FlextTypes,
 )
 from flext_tests import (
@@ -105,6 +106,15 @@ class TestFlextLoggerInitialization:
         assert logger._service_name == "flext-core"
         assert logger._service_version is not None
         assert logger._correlation_id is not None
+
+    def test_logger_protocol_runtime_compliance(self) -> None:
+        """Ensure FlextLogger instances satisfy the runtime logger protocol."""
+        logger = FlextLogger("protocol_runtime_test", _force_new=True)
+
+        assert isinstance(
+            logger,
+            FlextProtocols.Infrastructure.LoggerProtocol,
+        )
 
     def test_logger_creation_with_service_info(self) -> None:
         """Test logger creation with service metadata."""
