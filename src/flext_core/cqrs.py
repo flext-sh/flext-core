@@ -171,10 +171,7 @@ class FlextCqrs:
 
             except Exception as e:
                 return FlextResult[FlextModels.Query].fail(
-                    (
-                        f"{FlextConstants.Messages.VALIDATION_FAILED}:"
-                        f" Query validation failed: {e!s}"
-                    ),
+                    f"{FlextConstants.Messages.VALIDATION_FAILED} (query): {e!s}",
                     error_code=FlextConstants.Cqrs.QUERY_VALIDATION_FAILED,
                     error_data={
                         "query_data": query_data,
