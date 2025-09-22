@@ -267,6 +267,34 @@ class TestFlextConfigInstanceMethods:
         assert parsed["app_name"] == "serialize_test"
         assert parsed["version"] == "4.0.0"
 
+    def test_validate_all_success(self) -> None:
+        """Validate that validate_all returns success for valid configuration."""
+
+        config = FlextConfig(app_name="validate_all_success")
+
+        result = config.validate_all()
+
+        assert result.is_success
+        validated = result.unwrap()
+        assert isinstance(validated, FlextConfig)
+        assert validated == config
+
+    def test_validate_all_failure(self) -> None:
+        """Validate that validate_all returns failure when data becomes invalid."""
+
+        config = FlextConfig()
+
+        # Bypass assignment validation to introduce an invalid state
+        object.__setattr__(config, "environment", "invalid_env")
+
+        result = config.validate_all()
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "environment" in result.error
+        assert result.error_code == "CONFIG_VALIDATION_FAILED"
+        assert result.error_data.get("error_count") == 1
+
     def test_merge_method(self) -> None:
         """Test merge method."""
         base_config = FlextConfig(app_name="base", version="1.0.0", max_workers=4)
