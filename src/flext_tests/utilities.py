@@ -14,7 +14,13 @@ import warnings
 from collections.abc import Callable
 from typing import ClassVar, Generic, Protocol, cast, runtime_checkable
 
-from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes, T
+from flext_core import (
+    FlextConstants,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+    T,
+)
 
 
 class FlextTestsUtilities:
@@ -615,7 +621,7 @@ class FlextTestsUtilities:
         retries: int = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
         # Build base_url without deep dynamic __import__ chains to avoid runtime errors
 
-        base_url: str = "http://localhost:8000"
+        base_url: str = f"http://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.FLEXT_API_PORT}"
         headers: ClassVar[dict[str, str]] = {}
 
     # === UTILITY FUNCTIONS ===
