@@ -21,7 +21,7 @@ import uuid
 import warnings
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Self, TypedDict, cast
+from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, cast
 
 import structlog
 from structlog.typing import EventDict, Processor
@@ -30,13 +30,12 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
+class FlextLogger:
     """High-performance structured logger with comprehensive context management.
 
     Optimized implementation with Pydantic validation, centralized context management,
@@ -879,11 +878,20 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             )
             self._structlog_logger.critical(formatted_message, **entry)
 
-    def exception(self, message: str, *args: object, **context: object) -> None:
+    def exception(
+        self,
+        message: str,
+        *args: object,
+        exc_info: bool = True,
+        **context: object,
+    ) -> None:
         """Log exception with stack trace and context - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        exc_info = sys.exc_info()
-        error = exc_info[1] if isinstance(exc_info[1], Exception) else None
+        error: Exception | None = None
+        if exc_info:
+            _, exc_value, _ = sys.exc_info()
+            if isinstance(exc_value, Exception):
+                error = exc_value
         entry = self._build_log_entry(
             FlextConstants.Config.LogLevel.ERROR, formatted_message, context, error
         )
@@ -1880,6 +1888,14 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         return f"FlextLogger(name='{self._name}', level='{self._level}')"
 
+
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextProtocols
+
+    _protocol_logger_check = cast(
+        FlextProtocols.Infrastructure.LoggerProtocol,
+        FlextLogger("protocol_check", _force_new=True),
+    )
 
 __all__: FlextTypes.Core.StringList = [
     "FlextLogger",
