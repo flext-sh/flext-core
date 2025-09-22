@@ -1224,7 +1224,7 @@ class FlextModels:
         @classmethod
         def validate_max_workers(cls, v: int) -> int:
             """Validate max workers is reasonable."""
-            max_workers_limit = 50
+            max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
             if v > max_workers_limit:
                 msg = f"Max workers cannot exceed {max_workers_limit}"
                 raise ValueError(msg)
@@ -1487,9 +1487,15 @@ class FlextModels:
         @model_validator(mode="after")
         def validate_permanent_context(self) -> Self:
             """Validate permanent context."""
-            valid_envs = {"development", "testing", "staging", "production"}
+            valid_envs = {
+                env.value for env in FlextConstants.Environment.ConfigEnvironment
+            }
             if self.environment.lower() not in valid_envs:
-                msg = f"Invalid environment: {self.environment}"
+                expected_envs = ", ".join(sorted(valid_envs))
+                msg = (
+                    f"Invalid environment: {self.environment}. "
+                    f"Expected one of: {expected_envs}"
+                )
                 raise ValueError(msg)
             return self
 
