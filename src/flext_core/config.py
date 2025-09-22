@@ -156,11 +156,6 @@ class FlextConfig(BaseSettings):
         description="Mask sensitive data in log messages",
     )
 
-    log_verbosity: str = Field(
-        default=FlextConstants.Logging.VERBOSITY,
-        description="Console log verbosity level (compact, detailed, full)",
-    )
-
     # Database configuration
     database_url: str | None = Field(
         default=None,
@@ -359,7 +354,6 @@ class FlextConfig(BaseSettings):
     @classmethod
     def validate_log_verbosity(cls, v: str) -> str:
         """Validate log verbosity is supported."""
-
         valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
         v_lower = v.lower()
         if v_lower not in valid_levels:
@@ -384,17 +378,6 @@ class FlextConfig(BaseSettings):
             msg = f"Environment must be one of {valid_environments}"
             raise ValueError(msg)
         return v.lower()
-
-    @field_validator("log_verbosity")
-    @classmethod
-    def validate_log_verbosity(cls, v: str) -> str:
-        """Validate log verbosity against supported options."""
-        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
-        normalized = v.lower()
-        if normalized not in valid_levels:
-            msg = f"Log verbosity must be one of {valid_levels}"
-            raise ValueError(msg)
-        return normalized
 
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
@@ -469,7 +452,6 @@ class FlextConfig(BaseSettings):
             "include_context": self.include_context,
             "include_correlation_id": self.include_correlation_id,
             "mask_sensitive_data": self.mask_sensitive_data,
-            "log_verbosity": self.log_verbosity,
         }
 
     def get_database_config(self) -> FlextTypes.Core.Dict:
@@ -568,7 +550,11 @@ class FlextConfig(BaseSettings):
             str: Configuration as formatted JSON string.
 
         """
-        return self.model_dump_json(indent=2)
+        # Honor json_sort_keys and json_indent configuration parameters
+        import json
+
+        data = self.model_dump()
+        return json.dumps(data, indent=self.json_indent, sort_keys=self.json_sort_keys)
 
     def merge(self, other: FlextConfig | FlextTypes.Core.Dict) -> FlextConfig:
         """Merge with another configuration, returning new instance.

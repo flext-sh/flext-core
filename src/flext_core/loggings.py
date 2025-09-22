@@ -64,6 +64,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         FlextConstants.Logging.TRACK_PERFORMANCE
     )
     _track_timing_enabled: ClassVar[bool] = FlextConstants.Logging.TRACK_TIMING
+    _enable_tracing_enabled: ClassVar[bool] = FlextConstants.Logging.ENABLE_TRACING
     _include_context_enabled: ClassVar[bool] = FlextConstants.Logging.INCLUDE_CONTEXT
     _include_correlation_id_enabled: ClassVar[bool] = (
         FlextConstants.Logging.INCLUDE_CORRELATION_ID
@@ -80,6 +81,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     _console_color_enabled: ClassVar[bool] = True
     _track_performance: ClassVar[bool] = False
     _track_timing: ClassVar[bool] = False
+    _enable_tracing: ClassVar[bool] = False
     _include_context: ClassVar[bool] = True
     _include_correlation_id: ClassVar[bool] = True
     _mask_sensitive_data: ClassVar[bool] = True
@@ -533,23 +535,22 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 entry["error"] = {"message": str(error)}
 
         # Add additional context if provided and enabled
-        if self._include_context_enabled:
-            if context is not None:
-                context_dict: dict[str, object] | None = None
-                if isinstance(context, Mapping):
+        if self._include_context_enabled and context is not None:
+            context_dict: dict[str, object] | None = None
+            if isinstance(context, Mapping):
+                context_dict = dict(context)
+            else:
+                try:
                     context_dict = dict(context)
-                else:
-                    try:
-                        context_dict = dict(context)
-                    except TypeError:
-                        context_dict = None
+                except TypeError:
+                    context_dict = None
 
-                if context_dict:
-                    entry["context"] = (
-                        self._sanitize_context(context_dict)
-                        if self._mask_sensitive_data_enabled
-                        else dict(context_dict)
-                    )
+            if context_dict:
+                entry["context"] = (
+                    self._sanitize_context(context_dict)
+                    if self._mask_sensitive_data_enabled
+                    else dict(context_dict)
+                )
         return entry
 
     def _get_calling_function(self) -> str:
@@ -850,6 +851,54 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             **entry,
         )  # Use debug since structlog doesn't have trace
 
+    def start_trace(self, operation_name: str, **context: object) -> str | None:
+        """Start a distributed trace if tracing is enabled.
+
+        Args:
+            operation_name: Name of the operation being traced
+            **context: Additional context for the trace
+
+        Returns:
+            str | None: Trace ID if tracing enabled, None otherwise
+
+        """
+        if not FlextLogger._enable_tracing_enabled:
+            return None
+
+        # Simple trace implementation - generate trace ID and log start
+        import uuid
+
+        trace_id = str(uuid.uuid4())[:8]
+
+        self.debug(
+            f"TRACE_START: {operation_name}",
+            trace_id=trace_id,
+            operation=operation_name,
+            **context,
+        )
+        return trace_id
+
+    def end_trace(
+        self, trace_id: str | None, operation_name: str, **context: object
+    ) -> None:
+        """End a distributed trace if tracing is enabled.
+
+        Args:
+            trace_id: Trace ID from start_trace
+            operation_name: Name of the operation being traced
+            **context: Additional context for the trace
+
+        """
+        if not FlextLogger._enable_tracing_enabled or trace_id is None:
+            return
+
+        self.debug(
+            f"TRACE_END: {operation_name}",
+            trace_id=trace_id,
+            operation=operation_name,
+            **context,
+        )
+
     def debug(self, message: str, *args: object, **context: object) -> None:
         """Log debug message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
@@ -992,7 +1041,6 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     @classmethod
     def _load_config_flags(cls) -> None:
         """Load logging feature flags from the global configuration."""
-
         config = FlextConfig.get_global_instance()
         cls._track_performance_enabled = bool(
             getattr(
@@ -1003,6 +1051,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
         cls._track_timing_enabled = bool(
             getattr(config, "track_timing", FlextConstants.Logging.TRACK_TIMING)
+        )
+        cls._enable_tracing_enabled = bool(
+            getattr(config, "enable_tracing", FlextConstants.Logging.ENABLE_TRACING)
         )
         cls._include_context_enabled = bool(
             getattr(config, "include_context", FlextConstants.Logging.INCLUDE_CONTEXT)

@@ -235,7 +235,6 @@ class TestFlextCqrsOperations:
 
     def test_query_validate_query_helper(self) -> None:
         """Ensure FlextModels.Query.validate_query returns typed pagination."""
-
         query_payload: dict[str, object] = {
             "filters": {"status": "active"},
             "pagination": {"page": "2", "size": 25},
@@ -251,7 +250,6 @@ class TestFlextCqrsOperations:
 
     def test_query_validate_query_helper_invalid(self) -> None:
         """Invalid pagination should surface validation errors."""
-
         query_payload: dict[str, object] = {
             "pagination": {
                 "page": 0,

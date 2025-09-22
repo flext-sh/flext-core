@@ -10,10 +10,11 @@ import contextlib
 import json
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import cast
 
 from pydantic import BaseModel
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
@@ -171,8 +172,14 @@ class FlextMixins:
         """
         obj = config.obj
 
-        # Only update the updated_at field if auto_update is enabled
-        if config.auto_update:
+        # Check global configuration for auto-update setting
+        global_config = FlextConfig.get_global_instance()
+        global_auto_update = getattr(global_config, "timestamp_auto_update", False)
+
+        # Only update the updated_at field if auto_update is enabled (either locally or globally)
+        auto_update_enabled = config.auto_update or global_auto_update
+
+        if auto_update_enabled:
             timezone = UTC if config.use_utc else None
             current_time = datetime.now(timezone)
 
@@ -365,7 +372,9 @@ class FlextMixins:
                 validated_instance: BaseModel = model_validate_method(current_data)
 
                 # Update all fields from the validated instance
-                validated_dump: dict[str, Any] = validated_instance.model_dump()
+                validated_dump: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", validated_instance.model_dump()
+                )
                 for field_name, field_value in validated_dump.items():
                     setattr(obj, field_name, field_value)
 

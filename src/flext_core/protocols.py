@@ -481,6 +481,7 @@ class FlextProtocols:
 
             def handle(self, query: QueryT) -> FlextResult[ResultT]:
                 """Handle a query and return a :class:`FlextResult` wrapper.
+
                 Args:
                     query: The query to handle
 

@@ -100,7 +100,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "timeout_seconds": FlextConstants.Container.TIMEOUT_SECONDS,
             "environment": FlextConstants.Config.DEFAULT_ENVIRONMENT,
         }
-        self._flext_config_snapshot = self._extract_config_snapshot(self._flext_config)
+        # Extract snapshot from actual FlextConfig instance, if available
+        try:
+            from flext_core.config import FlextConfig
+            config_instance = FlextConfig.get_global_instance()
+            self._flext_config_snapshot = self._extract_config_snapshot(config_instance)
+        except Exception:
+            # Fallback if FlextConfig is not available during initialization
+            self._flext_config_snapshot = {}
         self._user_overrides: dict[str, object] = {}
         self._global_config = self._build_global_config()
 
@@ -727,7 +734,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 )
 
             normalized_config = self._normalize_config_fields(config)
-            finalized_values = self._finalize_config_values(normalized_config)
+            self._finalize_config_values(normalized_config)
 
             # Create and store global configuration with proper type conversion
             max_workers = normalized_config.get(
@@ -825,9 +832,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Merge FlextConfig snapshot and user overrides into final container config."""
         merged: dict[str, object] = {}
         for source in (self._flext_config_snapshot, self._user_overrides):
-            for key, value in source.items():
-                if value is not None:
-                    merged[key] = value
+            merged.update({key: value for key, value in source.items() if value is not None})
 
         normalized = self._normalize_config_fields(merged)
         return self._finalize_config_values(normalized)
@@ -867,7 +872,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Coerce value to positive integer with fallback."""
         candidate: int | None = None
 
-        if isinstance(value, bool) or isinstance(value, (int, float)):
+        if isinstance(value, (bool, int, float)):
             candidate = int(value)
         elif isinstance(value, str):
             try:
@@ -887,7 +892,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Coerce value to positive float with fallback."""
         candidate: float | None = None
 
-        if isinstance(value, bool) or isinstance(value, (int, float)):
+        if isinstance(value, (bool, int, float)):
             candidate = float(value)
         elif isinstance(value, str):
             try:

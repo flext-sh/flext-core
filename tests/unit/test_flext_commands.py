@@ -717,7 +717,6 @@ class TestFlextCqrsComprehensive:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Handlers lacking hints should warn once and reject all messages."""
-
         recorded_warnings: list[str] = []
 
         def fake_warning(self, message: str, *args: object, **context: object) -> None:

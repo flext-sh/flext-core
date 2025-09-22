@@ -432,7 +432,8 @@ class TestDomainServicesFixed:
         def flaky_operation() -> str:
             if attempts["count"] == 0:
                 attempts["count"] += 1
-                raise RuntimeError("temporary failure")
+                msg = "temporary failure"
+                raise RuntimeError(msg)
             return "recovered"
 
         operation_request = FlextModels.OperationExecutionRequest(

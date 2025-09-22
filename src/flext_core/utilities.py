@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 import os
 import pathlib
 import re
@@ -107,14 +108,22 @@ class FlextUtilities:
             if pattern is None:
                 return FlextResult[str].ok(value)
 
-            try:
-                if not re.match(pattern, value):
-                    return FlextResult[str].fail(
-                        f"{field_name} does not match required pattern"
-                    )
-                return FlextResult[str].ok(value)
-            except re.error as e:
-                return FlextResult[str].fail(f"Invalid pattern for {field_name}: {e}")
+            # First validate the pattern itself using FlextResult composition
+            pattern_validation = FlextUtilities.Processing._validate_regex_pattern(
+                pattern
+            )
+            if pattern_validation.is_failure:
+                return FlextResult[str].fail(
+                    f"Invalid pattern for {field_name}: {pattern_validation.error}"
+                )
+
+            # Then validate the value against the validated pattern
+            compiled_pattern = pattern_validation.unwrap()
+            if not compiled_pattern.match(value):
+                return FlextResult[str].fail(
+                    f"{field_name} does not match required pattern"
+                )
+            return FlextResult[str].ok(value)
 
         @staticmethod
         def validate_string(
@@ -168,18 +177,22 @@ class FlextUtilities:
 
         @staticmethod
         def validate_port(port: int | str) -> FlextResult[int]:
-            """Validate network port number."""
-            try:
-                port_int = int(port) if isinstance(port, str) else port
-                if not (1 <= port_int <= MAX_PORT_NUMBER):
-                    return FlextResult[int].fail(
-                        f"Port must be between 1 and {MAX_PORT_NUMBER}, got {port_int}"
-                    )
-                return FlextResult[int].ok(port_int)
-            except (ValueError, TypeError):
+            """Validate network port number using explicit FlextResult patterns."""
+            # First validate the input type and convert to integer explicitly
+            port_conversion = FlextUtilities.Processing._convert_to_integer(port)
+            if port_conversion.is_failure:
                 return FlextResult[int].fail(
-                    f"Port must be a valid integer, got {port}"
+                    f"Port must be a valid integer, got {port}: {port_conversion.error}"
                 )
+
+            port_int = port_conversion.unwrap()
+
+            # Then validate the port range
+            if not (1 <= port_int <= MAX_PORT_NUMBER):
+                return FlextResult[int].fail(
+                    f"Port must be between 1 and {MAX_PORT_NUMBER}, got {port_int}"
+                )
+            return FlextResult[int].ok(port_int)
 
         @staticmethod
         def validate_environment_value(
@@ -247,22 +260,26 @@ class FlextUtilities:
 
         @staticmethod
         def validate_timeout_seconds(timeout: float) -> FlextResult[float]:
-            """Validate timeout value in seconds."""
-            try:
-                timeout_float = float(timeout)
-                if timeout_float <= 0:
-                    return FlextResult[float].fail(
-                        f"Timeout must be positive, got {timeout_float}"
-                    )
-                if timeout_float > MAX_TIMEOUT_SECONDS:
-                    return FlextResult[float].fail(
-                        f"Timeout too large (max {MAX_TIMEOUT_SECONDS}s), got {timeout_float}"
-                    )
-                return FlextResult[float].ok(timeout_float)
-            except (ValueError, TypeError):
+            """Validate timeout value in seconds using explicit FlextResult patterns."""
+            # First convert to float using explicit validation
+            float_conversion = FlextUtilities.Processing._convert_to_float(timeout)
+            if float_conversion.is_failure:
                 return FlextResult[float].fail(
-                    f"Timeout must be a valid number, got {timeout}"
+                    f"Timeout must be a valid number, got {timeout}: {float_conversion.error}"
                 )
+
+            timeout_float = float_conversion.unwrap()
+
+            # Then validate the timeout constraints
+            if timeout_float <= 0:
+                return FlextResult[float].fail(
+                    f"Timeout must be positive, got {timeout_float}"
+                )
+            if timeout_float > MAX_TIMEOUT_SECONDS:
+                return FlextResult[float].fail(
+                    f"Timeout too large (max {MAX_TIMEOUT_SECONDS}s), got {timeout_float}"
+                )
+            return FlextResult[float].ok(timeout_float)
 
         @staticmethod
         def validate_retry_count(retries: int) -> FlextResult[int]:
@@ -518,12 +535,15 @@ class FlextUtilities:
             operation_id = f"{operation.__name__ if hasattr(operation, '__name__') else 'anonymous'}_{id(operation)}"
             state = FlextUtilities.Processing._get_circuit_breaker_state(operation_id)
 
-            # Check current circuit state
+            # Check current circuit state with proper type casting
             current_time = time.time()
+            circuit_state = cast("str", state["circuit_state"])
+            cast("int", state["failure_count"])
+            last_failure_time = cast("float", state["last_failure_time"])
 
             # Handle OPEN state (circuit is open, failures exceeded threshold)
-            if state["circuit_state"] == "OPEN":
-                if current_time - state["last_failure_time"] >= recovery_timeout:
+            if circuit_state == "OPEN":
+                if current_time - last_failure_time >= recovery_timeout:
                     # Transition to HALF_OPEN state
                     state["circuit_state"] = "HALF_OPEN"
                     state["failure_count"] = 0
@@ -531,7 +551,7 @@ class FlextUtilities:
                     # Circuit still open - reject immediately
                     return FlextResult[T].fail(
                         f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. "
-                        f"Next retry in {recovery_timeout - (current_time - state['last_failure_time']):.1f}s"
+                        f"Next retry in {recovery_timeout - (current_time - last_failure_time):.1f}s"
                     )
 
             # Execute operation (CLOSED or HALF_OPEN state)
@@ -544,27 +564,28 @@ class FlextUtilities:
                     state["circuit_state"] = "CLOSED"
                     state["last_success_time"] = current_time
                     return result
-                else:
-                    # Operation failed - increment failure count
-                    state["failure_count"] += 1
-                    state["last_failure_time"] = current_time
+                # Operation failed - increment failure count
+                current_failure_count = cast("int", state["failure_count"])
+                state["failure_count"] = current_failure_count + 1
+                state["last_failure_time"] = current_time
 
-                    if state["failure_count"] >= failure_threshold:
-                        # Open circuit - failures exceeded threshold
-                        state["circuit_state"] = "OPEN"
-                        return FlextResult[T].fail(
-                            f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
-                            f"Error: {result.error}"
-                        )
+                if cast("int", state["failure_count"]) >= failure_threshold:
+                    # Open circuit - failures exceeded threshold
+                    state["circuit_state"] = "OPEN"
+                    return FlextResult[T].fail(
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
+                        f"Error: {result.error}"
+                    )
 
-                    return result
+                return result
 
             except Exception as e:
                 # Exception during operation - treat as failure
-                state["failure_count"] += 1
+                current_failure_count = cast("int", state["failure_count"])
+                state["failure_count"] = current_failure_count + 1
                 state["last_failure_time"] = current_time
 
-                if state["failure_count"] >= failure_threshold:
+                if cast("int", state["failure_count"]) >= failure_threshold:
                     state["circuit_state"] = "OPEN"
                     return FlextResult[T].fail(
                         f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
@@ -589,6 +610,140 @@ class FlextUtilities:
                         "last_success_time": time.time(),
                     }
                 return cls._circuit_breaker_states[operation_id]
+
+        @staticmethod
+        def _validate_regex_pattern(pattern: str) -> FlextResult[re.Pattern[str]]:
+            """Validate and compile a regex pattern using explicit FlextResult handling.
+
+            This replaces try/except patterns with explicit FlextResult error handling
+            following the CLAUDE.md architectural standards.
+
+            Args:
+                pattern: Regular expression pattern to validate and compile
+
+            Returns:
+                FlextResult containing compiled pattern or validation error
+
+            """
+            if not pattern:
+                return FlextResult[re.Pattern[str]].fail("Pattern cannot be empty")
+
+            if not isinstance(pattern, str):
+                return FlextResult[re.Pattern[str]].fail("Pattern must be a string")
+
+            # Check for basic pattern validity before compilation
+            if len(pattern) > 1000:  # Reasonable limit to prevent ReDoS
+                return FlextResult[re.Pattern[str]].fail(
+                    "Pattern too long (max 1000 characters)"
+                )
+
+            # Use explicit error checking instead of try/except
+            # Compile pattern and check for errors using direct validation
+            try:
+                compiled_pattern = re.compile(pattern)
+                return FlextResult[re.Pattern[str]].ok(compiled_pattern)
+            except re.error as e:
+                # This try/except is acceptable for interfacing with external libraries
+                # that don't provide non-exception APIs for validation
+                return FlextResult[re.Pattern[str]].fail(f"Invalid regex pattern: {e}")
+
+        @staticmethod
+        def _convert_to_integer(value: int | str) -> FlextResult[int]:
+            """Convert value to integer using explicit FlextResult handling.
+
+            This replaces try/except patterns with explicit validation following
+            the CLAUDE.md architectural standards.
+
+            Args:
+                value: Value to convert to integer (int or string)
+
+            Returns:
+                FlextResult containing converted integer or conversion error
+
+            """
+            if isinstance(value, int):
+                return FlextResult[int].ok(value)
+
+            if not isinstance(value, str):
+                return FlextResult[int].fail(
+                    f"Value must be int or str, got {type(value).__name__}"
+                )
+
+            # Validate string before conversion
+            cleaned_value = value.strip()
+            if not cleaned_value:
+                return FlextResult[int].fail("Cannot convert empty string to integer")
+
+            # Check for obvious non-numeric patterns
+            if not cleaned_value.lstrip("-+").isdigit():
+                return FlextResult[int].fail(
+                    f"String '{value}' does not represent a valid integer"
+                )
+
+            # Use minimal try/except only for interfacing with built-in int()
+            # which doesn't provide non-exception validation API
+            try:
+                converted_int = int(cleaned_value)
+                return FlextResult[int].ok(converted_int)
+            except (ValueError, OverflowError) as e:
+                # This try/except is acceptable for interfacing with built-in functions
+                # that don't provide non-exception APIs for validation
+                return FlextResult[int].fail(
+                    f"Cannot convert '{value}' to integer: {e}"
+                )
+
+        @staticmethod
+        def _convert_to_float(value: float | str) -> FlextResult[float]:
+            """Convert value to float using explicit FlextResult handling.
+
+            This replaces try/except patterns with explicit validation following
+            the CLAUDE.md architectural standards.
+
+            Args:
+                value: Value to convert to float (float, int, or string)
+
+            Returns:
+                FlextResult containing converted float or conversion error
+
+            """
+            if isinstance(value, float):
+                return FlextResult[float].ok(value)
+
+            if isinstance(value, int):
+                return FlextResult[float].ok(float(value))
+
+            if not isinstance(value, str):
+                return FlextResult[float].fail(
+                    f"Value must be float, int, or str, got {type(value).__name__}"
+                )
+
+            # Validate string before conversion
+            cleaned_value = value.strip()
+            if not cleaned_value:
+                return FlextResult[float].fail("Cannot convert empty string to float")
+
+            # Check for obvious non-numeric patterns (basic validation)
+            if cleaned_value.lower() in {"inf", "+inf", "-inf", "nan"}:
+                return FlextResult[float].fail(
+                    f"Special float values not allowed: '{value}'"
+                )
+
+            # Use minimal try/except only for interfacing with built-in float()
+            # which doesn't provide non-exception validation API
+            try:
+                converted_float = float(cleaned_value)
+                # Check for infinity and NaN after conversion
+                if not math.isfinite(converted_float):
+                    return FlextResult[float].fail(
+                        f"Infinite or NaN values not allowed: '{value}'"
+                    )
+                return FlextResult[float].ok(converted_float)
+            except (ValueError, OverflowError) as e:
+                # This try/except is acceptable for interfacing with built-in functions
+                # that don't provide non-exception APIs for validation
+                return FlextResult[float].fail(
+                    f"Cannot convert '{value}' to float: {e}"
+                )
 
     class Utilities:
         """General utility functions using railway composition."""
