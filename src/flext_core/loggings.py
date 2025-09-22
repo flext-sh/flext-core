@@ -136,6 +136,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     "structured_output",
                     FlextConstants.Logging.STRUCTURED_OUTPUT,
                 ),
+                "log_verbosity": getattr(
+                    global_config,
+                    "log_verbosity",
+                    FlextConstants.Logging.VERBOSITY,
+                ),
             }
 
             # Call configure with proper typed arguments
@@ -154,6 +159,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 )
             )
 
+            log_verbosity = str(
+                config_kwargs.get(
+                    "log_verbosity", FlextConstants.Logging.VERBOSITY
+                )
+            )
+
             # Type-safe configure call
             json_output_typed: bool | None = (
                 None if json_output is None else bool(json_output)
@@ -163,6 +174,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 json_output=json_output_typed,
                 include_source=include_source,
                 structured_output=structured_output,
+                log_verbosity=log_verbosity,
             )
 
         # Use validated model values if available, otherwise use original parameters
@@ -925,6 +937,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             FlextResult[None]: Success or failure with error details
 
         """
+        global_config = FlextConfig.get_global_instance()
+
+        resolved_log_verbosity = (
+            log_verbosity
+            or getattr(
+                global_config,
+                "log_verbosity",
+                FlextConstants.Logging.VERBOSITY,
+            )
+        )
+
         # Create configuration model with defaults
         config_model = FlextModels.LoggerConfigurationModel(
             log_level=log_level or "INFO",
@@ -932,7 +955,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
             structured_output=structured_output
             or FlextConstants.Logging.STRUCTURED_OUTPUT,
-            log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
+            log_verbosity=resolved_log_verbosity,
         )
 
         # Reset if already configured (allow reconfiguration)

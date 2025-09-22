@@ -344,6 +344,7 @@ class ComprehensiveLoggingService(FlextDomainService[dict[str, str]]):
         print(f"Current log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
         print(f"Include source: {config.include_source}")
+        print(f"Log verbosity: {config.log_verbosity}")
 
     # ========== LOG FILTERING ==========
 

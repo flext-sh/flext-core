@@ -1476,6 +1476,18 @@ class FlextModels:
                 raise ValueError(msg)
             return v_upper
 
+        @field_validator("log_verbosity")
+        @classmethod
+        def validate_log_verbosity(cls, v: str) -> str:
+            """Validate log verbosity option."""
+
+            valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+            normalized = v.lower()
+            if normalized not in valid_levels:
+                msg = f"Invalid log verbosity: {v}. Must be one of {valid_levels}"
+                raise ValueError(msg)
+            return normalized
+
     class LogContextModel(ArbitraryTypesModel):
         """Log context model with validation."""
 
@@ -1557,9 +1569,17 @@ class FlextModels:
         @model_validator(mode="after")
         def validate_permanent_context(self) -> Self:
             """Validate permanent context."""
-            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
+            # Use only the enum values as the single source of truth for valid environments.
+            valid_envs = {
+                env.value.lower()
+                for env in FlextConstants.Environment.ConfigEnvironment
+            }
             if self.environment.lower() not in valid_envs:
-                msg = f"Invalid environment: {self.environment}"
+                sorted_envs = sorted(valid_envs)
+                msg = (
+                    f"Invalid environment: {self.environment}. "
+                    f"Must be one of {sorted_envs}"
+                )
                 raise ValueError(msg)
             return self
 
@@ -2622,12 +2642,18 @@ class FlextModels:
 
             handler_id: str = Field(description="Unique handler identifier")
             handler_name: str = Field(description="Human-readable handler name")
-            handler_type: Literal["command", "query"] = Field(
-                default="command",
+            handler_type: Literal[
+                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            ] = Field(
+                default=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                 description="Handler type",
             )
-            handler_mode: Literal["command", "query"] = Field(
-                default="command",
+            handler_mode: Literal[
+                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+            ] = Field(
+                default=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                 description="Handler mode",
             )
             command_timeout: int = Field(default=0, description="Command timeout")
@@ -2641,7 +2667,10 @@ class FlextModels:
             @classmethod
             def create_handler_config(
                 cls,
-                handler_type: Literal["command", "query"],
+                handler_type: Literal[
+                    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+                ],
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
@@ -2650,12 +2679,17 @@ class FlextModels:
                 max_command_retries: int = 0,
             ) -> Self:
                 """Create handler configuration with defaults and overrides."""
+                handler_mode_value = (
+                    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                    if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                    else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                )
                 config_data: dict[str, object] = {
                     "handler_id": default_id
                     or f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
                     "handler_name": default_name or f"{handler_type.title()} Handler",
                     "handler_type": handler_type,
-                    "handler_mode": handler_type,
+                    "handler_mode": handler_mode_value,
                     "command_timeout": command_timeout,
                     "max_command_retries": max_command_retries,
                     "metadata": {},
@@ -2674,12 +2708,19 @@ class FlextModels:
         """Registration details for handler registration tracking."""
 
         registration_id: str = Field(description="Unique registration identifier")
-        handler_mode: Literal["command", "query"] = Field(
-            default="command", description="Handler mode"
+        handler_mode: Literal[
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+        ] = Field(
+            default=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            description="Handler mode",
         )
         timestamp: str = Field(default="", description="Registration timestamp")
-        status: Literal["active", "inactive"] = Field(
-            default="active",
+        status: Literal[
+            FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+            FlextConstants.Dispatcher.REGISTRATION_STATUS_INACTIVE,
+        ] = Field(
+            default=FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
             description="Registration status",
         )
 

@@ -559,6 +559,7 @@ class FlextConstants:
         INCLUDE_SOURCE: Final[bool] = True
         STRUCTURED_OUTPUT: Final[bool] = True
         VERBOSITY: Final[str] = "detailed"
+        VALID_VERBOSITY_LEVELS: Final[set[str]] = {"compact", "detailed", "full"}
 
         # Output configuration
         JSON_OUTPUT_DEFAULT: Final[None] = None  # Auto-detect
