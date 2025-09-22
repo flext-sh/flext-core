@@ -42,6 +42,7 @@ from pydantic import (
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
@@ -168,11 +169,12 @@ class FlextModels:
                 try:
                     handler_method = getattr(self, handler_method_name)
                     handler_method(data)
-                except Exception:
+                except Exception as e:
                     # Exception handling as expected by test line 357-358
                     # This is intentional - some domain events may not have corresponding handlers
-                    # The exception is silently ignored as per test requirements
-                    pass
+                    # Log the exception for debugging but continue execution as per test requirements
+                    msg = f"Error applying domain event: {e}"
+                    raise FlextExceptions.ProcessingError(msg) from e
 
             # Increment version after adding domain event
             self.increment_version()
@@ -888,12 +890,13 @@ class FlextModels:
         @computed_field
         def kilobytes(self) -> float:
             """Convert to KB."""
-            return self.bytes / 1024.0
+            return self.bytes / float(FlextConstants.Utilities.BYTES_PER_KB)
 
         @computed_field
         def megabytes(self) -> float:
             """Convert to MB."""
-            return self.bytes / (1024.0 * 1024.0)
+            bytes_per_mb = FlextConstants.Utilities.BYTES_PER_KB * FlextConstants.Utilities.BYTES_PER_KB
+            return self.bytes / float(bytes_per_mb)
 
     class Project(Entity):
         """Enhanced project entity with advanced validation."""
@@ -942,7 +945,8 @@ class FlextModels:
                 raise ValueError(msg)
 
             # Size validation
-            if self.total_size_bytes > 10 * 1024 * 1024 * 1024:  # 10GB
+            max_workspace_size = 10 * FlextConstants.Utilities.BYTES_PER_KB ** 3  # 10GB
+            if self.total_size_bytes > max_workspace_size:
                 msg = "Workspace too large"
                 raise ValueError(msg)
 
@@ -1013,7 +1017,12 @@ class FlextModels:
             return FlextResult[FlextModels.Url].fail(
                 "URL must start with http:// or https://"
             )
-        return FlextModels.create_validated_url(url)
+        url_result = FlextModels.create_validated_url(url)
+        return url_result >> (
+            lambda validated_url: FlextResult[FlextModels.Url].ok(
+                FlextModels.Url(url=validated_url)
+            )
+        )
 
     @staticmethod
     def create_validated_http_method(method: str) -> FlextResult[str]:
@@ -1049,7 +1058,7 @@ class FlextModels:
             # Validate basic phone format (optional + prefix, digits, spaces, hyphens)
             import re
 
-            phone_pattern = r"^[+]?[\d\s\-()]+$"
+            phone_pattern = FlextConstants.Platform.PATTERN_PHONE_NUMBER
             if not re.match(phone_pattern, phone_clean):
                 return FlextResult[str].fail("Invalid phone number format")
 
@@ -1467,6 +1476,18 @@ class FlextModels:
                 raise ValueError(msg)
             return v_upper
 
+        @field_validator("log_verbosity")
+        @classmethod
+        def validate_log_verbosity(cls, v: str) -> str:
+            """Validate log verbosity option."""
+
+            valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+            normalized = v.lower()
+            if normalized not in valid_levels:
+                msg = f"Invalid log verbosity: {v}. Must be one of {valid_levels}"
+                raise ValueError(msg)
+            return normalized
+
     class LogContextModel(ArbitraryTypesModel):
         """Log context model with validation."""
 
@@ -1520,6 +1541,7 @@ class FlextModels:
         correlation_id: str | None = None
         user_id: str | None = None
         endpoint: str | None = None
+        custom_data: dict[str, str] = Field(default_factory=dict)
 
         @model_validator(mode="after")
         def validate_request_context(self) -> Self:
@@ -1537,21 +1559,54 @@ class FlextModels:
 
         app_name: str
         app_version: str
-        environment: str
+        environment: FlextTypes.Config.Environment
         host: str | None = None
         metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
         permanent_context: FlextTypes.Core.Dict = Field(default_factory=dict)
         replace_existing: bool = False
         merge_strategy: Literal["replace", "update", "merge_deep"] = "update"
 
-        @model_validator(mode="after")
-        def validate_permanent_context(self) -> Self:
-            """Validate permanent context."""
-            valid_envs = {"development", "testing", "staging", "production"}
-            if self.environment.lower() not in valid_envs:
-                msg = f"Invalid environment: {self.environment}"
+        @field_validator("environment", mode="before")
+        @classmethod
+        def normalize_environment(
+            cls, value: str | FlextTypes.Config.Environment
+        ) -> FlextTypes.Config.Environment:
+            """Normalize and validate environment against shared constants."""
+
+            # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
+            if not isinstance(value, str):
+                # If it's an Enum, get its value; otherwise, try str()
+                if hasattr(value, "value"):
+                    value = value.value
+                else:
+                    value = str(value)
+
+            normalized = value.lower()
+            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
+            if normalized not in valid_envs:
+                msg = (
+                    "Environment must be one of "
+                    f"{sorted(valid_envs)}"
+                )
                 raise ValueError(msg)
-            return self
+            return cast("FlextTypes.Config.Environment", normalized)
+
+          @model_validator(mode="after")
+          def validate_permanent_context(self) -> Self:
+            """Validate permanent context."""
+            # Use only the enum values as the single source of truth for valid environments.
+            valid_envs = {
+                env.value.lower()
+                for env in FlextConstants.Environment.ConfigEnvironment
+            }
+            if self.environment.lower() not in valid_envs:
+                sorted_envs = sorted(valid_envs)
+                msg = (
+                    f"Invalid environment: {self.environment}. "
+                    f"Must be one of {sorted_envs}"
+                )
+                raise ValueError(msg)
+            return cast("FlextTypes.Config.Environment", normalized)
 
     class OperationTrackingModel(ArbitraryTypesModel):
         """Operation tracking model."""
@@ -1840,8 +1895,8 @@ class FlextModels:
         )
         sliding_window_size: int = Field(default=100)
         minimum_throughput: int = Field(default=10)
-        slow_call_duration_seconds: float = Field(default=1.0, gt=0)
-        slow_call_rate_threshold: float = Field(default=50.0)
+        slow_call_duration_seconds: float = Field(default=FlextConstants.Performance.DEFAULT_DELAY_SECONDS, gt=0)
+        slow_call_rate_threshold: float = Field(default=FlextConstants.Validation.MAX_PERCENTAGE / 2.0)  # 50%
 
         @model_validator(mode="after")
         def validate_circuit_breaker_consistency(self) -> Self:
@@ -2013,7 +2068,7 @@ class FlextModels:
         max_fallback_attempts: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
-        fallback_delay_seconds: float = Field(default=0.1, ge=0)
+        fallback_delay_seconds: float = Field(default=FlextConstants.Performance.DEFAULT_FALLBACK_DELAY, ge=0)
 
         @field_validator("fallback_services")
         @classmethod
@@ -2612,12 +2667,18 @@ class FlextModels:
 
             handler_id: str = Field(description="Unique handler identifier")
             handler_name: str = Field(description="Human-readable handler name")
-            handler_type: Literal["command", "query"] = Field(
-                default="command",
+            handler_type: Literal[
+                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            ] = Field(
+                default=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                 description="Handler type",
             )
-            handler_mode: Literal["command", "query"] = Field(
-                default="command",
+            handler_mode: Literal[
+                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+            ] = Field(
+                default=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                 description="Handler mode",
             )
             command_timeout: int = Field(default=0, description="Command timeout")
@@ -2631,7 +2692,10 @@ class FlextModels:
             @classmethod
             def create_handler_config(
                 cls,
-                handler_type: Literal["command", "query"],
+                handler_type: Literal[
+                    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+                ],
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
@@ -2640,12 +2704,17 @@ class FlextModels:
                 max_command_retries: int = 0,
             ) -> Self:
                 """Create handler configuration with defaults and overrides."""
+                handler_mode_value = (
+                    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                    if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                    else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                )
                 config_data: dict[str, object] = {
                     "handler_id": default_id
                     or f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
                     "handler_name": default_name or f"{handler_type.title()} Handler",
                     "handler_type": handler_type,
-                    "handler_mode": handler_type,
+                    "handler_mode": handler_mode_value,
                     "command_timeout": command_timeout,
                     "max_command_retries": max_command_retries,
                     "metadata": {},
@@ -2664,12 +2733,19 @@ class FlextModels:
         """Registration details for handler registration tracking."""
 
         registration_id: str = Field(description="Unique registration identifier")
-        handler_mode: Literal["command", "query"] = Field(
-            default="command", description="Handler mode"
+        handler_mode: Literal[
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+        ] = Field(
+            default=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            description="Handler mode",
         )
         timestamp: str = Field(default="", description="Registration timestamp")
-        status: Literal["active", "inactive"] = Field(
-            default="active",
+        status: Literal[
+            FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+            FlextConstants.Dispatcher.REGISTRATION_STATUS_INACTIVE,
+        ] = Field(
+            default=FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
             description="Registration status",
         )
 
