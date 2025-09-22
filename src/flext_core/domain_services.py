@@ -335,24 +335,117 @@ class FlextDomainService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with resource error
 
         """
-        acquired_resources: list[str] = []
+        resource_type = request.resource_type
+        action = request.action
+
+        acquired_resources: list[dict[str, object]] = []
+        object.__setattr__(self, "_resource_registry", acquired_resources)
+
+        def _collect_identifiers_from_mapping(
+            mapping: FlextTypes.Core.Dict,
+        ) -> list[str]:
+            identifiers: list[str] = []
+
+            def _walk(value: object, key_hint: str | None) -> None:
+                hint = key_hint.lower() if key_hint else ""
+                if isinstance(value, dict):
+                    for nested_key, nested_value in value.items():
+                        _walk(nested_value, nested_key)
+                elif isinstance(value, (list, tuple, set)):
+                    for item in value:
+                        _walk(item, key_hint)
+                else:
+                    if hint and "id" in hint:
+                        if isinstance(value, str) and value:
+                            identifiers.append(value)
+                        elif isinstance(value, (int, float, bool)):
+                            identifiers.append(str(value))
+
+            for key, value in mapping.items():
+                _walk(value, key)
+
+            return identifiers
+
+        if request.resource_id:
+            resource_identifiers = [request.resource_id]
+        else:
+            derived_identifiers: list[str] = []
+            for candidate in (request.filters, request.data):
+                derived_identifiers.extend(_collect_identifiers_from_mapping(candidate))
+
+            seen: set[str] = set()
+            resource_identifiers = []
+            for identifier in derived_identifiers:
+                if identifier not in seen:
+                    seen.add(identifier)
+                    resource_identifiers.append(identifier)
+
+        if not resource_identifiers:
+            summary_parts: list[str] = []
+            if request.filters:
+                filters_summary = ", ".join(
+                    f"{key}={repr(value)}"
+                    for key, value in sorted(request.filters.items(), key=lambda item: item[0])
+                )
+                summary_parts.append(f"filters[{filters_summary}]")
+            if request.data:
+                data_summary = ", ".join(
+                    f"{key}={repr(value)}"
+                    for key, value in sorted(request.data.items(), key=lambda item: item[0])
+                )
+                summary_parts.append(f"data[{data_summary}]")
+            summary = " | ".join(summary_parts) if summary_parts else "default"
+            resource_identifiers = [f"{resource_type}:{action}:{summary}"]
 
         try:
-            # Acquire resources
-            required_resources = getattr(request, "required_resources", [])
-            acquired_resources = list(required_resources)
+            for identifier in resource_identifiers:
+                context = self._prepare_resource_context(
+                    resource_type=resource_type,
+                    resource_id=identifier,
+                    action=action,
+                    request=request,
+                )
+                acquired_resources.append(context)
 
-            # Execute with acquired resources
             return self.execute()
 
         except Exception as e:
             return FlextResult[TDomainResult].fail(f"Resource execution error: {e}")
 
         finally:
-            # Always cleanup resources
-            for _resource_id in acquired_resources:
-                # Simulate resource cleanup
-                pass
+            for resource_context in reversed(acquired_resources):
+                try:
+                    self._cleanup_resource_context(resource_context)
+                except Exception:
+                    continue
+
+            acquired_resources.clear()
+
+    def _prepare_resource_context(
+        self,
+        *,
+        resource_type: str,
+        resource_id: str,
+        action: str,
+        request: FlextModels.DomainServiceResourceRequest,
+    ) -> dict[str, object]:
+        """Create the resource context stored for cleanup."""
+
+        return {
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "action": action,
+            "data": request.data,
+            "filters": request.filters,
+        }
+
+    def _cleanup_resource_context(self, resource_context: dict[str, object]) -> None:
+        """Cleanup hook for acquired resources.
+
+        Subclasses can override this to integrate with concrete resource managers.
+        """
+
+        _ = resource_context
 
     def validate_and_transform(
         self, config: FlextModels.ValidationConfiguration

@@ -149,6 +149,46 @@ class ComplexTypeService(FlextDomainService[dict]):
         return FlextResult[dict].ok({"data": self.data, "items": self.items})
 
 
+class ResourceTrackingService(FlextDomainService[str]):
+    """Service that records resource acquisition and cleanup steps."""
+
+    acquisitions: list[dict[str, object]] = Field(default_factory=list)
+    cleanups: list[dict[str, object]] = Field(default_factory=list)
+    should_fail: bool = False
+
+    def execute(self) -> FlextResult[str]:
+        """Execute operation, optionally simulating a failure."""
+
+        if self.should_fail:
+            msg = "Simulated execution failure"
+            raise RuntimeError(msg)
+        return FlextResult[str].ok("resource-executed")
+
+    def _prepare_resource_context(
+        self,
+        *,
+        resource_type: str,
+        resource_id: str,
+        action: str,
+        request: FlextModels.DomainServiceResourceRequest,
+    ) -> dict[str, object]:
+        """Record each resource context prepared by the base implementation."""
+
+        context = super()._prepare_resource_context(
+            resource_type=resource_type,
+            resource_id=resource_id,
+            action=action,
+            request=request,
+        )
+        self.acquisitions.append(context)
+        return context
+
+    def _cleanup_resource_context(self, resource_context: dict[str, object]) -> None:
+        """Track cleanup execution for assertions."""
+
+        self.cleanups.append(resource_context)
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -550,6 +590,71 @@ class TestDomainServicesFixed:
 
         assert "extra_field" in str(exc_info.value)
         assert "Extra inputs are not permitted" in str(exc_info.value)
+
+    def test_execute_with_resource_request_tracks_resource_type(self) -> None:
+        """Ensure resource execution uses the declared resource type."""
+
+        service = ResourceTrackingService()
+        request = FlextModels.DomainServiceResourceRequest(
+            service_name="resource-tracker",
+            resource_type="cache",
+            resource_id="session-42",
+            action="get",
+            data={"payload": True},
+        )
+
+        result = service.execute_with_resource_request(request)
+
+        assert result.is_success
+        assert [ctx["resource_type"] for ctx in service.acquisitions] == ["cache"]
+        assert [ctx["resource_id"] for ctx in service.cleanups] == ["session-42"]
+
+    def test_execute_with_resource_request_cleanup_on_failure(self) -> None:
+        """Ensure cleanup executes even when the domain logic fails."""
+
+        service = ResourceTrackingService(should_fail=True)
+        request = FlextModels.DomainServiceResourceRequest(
+            service_name="resource-tracker",
+            resource_type="database",
+            action="update",
+            filters={"ids": ["user-1", "user-2"]},
+        )
+
+        result = service.execute_with_resource_request(request)
+
+        assert result.is_failure
+        assert len(service.acquisitions) == 2
+        assert len(service.cleanups) == 2
+        assert {ctx["resource_id"] for ctx in service.cleanups} == {
+            "user-1",
+            "user-2",
+        }
+
+    def test_execute_with_resource_request_derives_collection(self) -> None:
+        """Derive resource identifiers from provided filters and data."""
+
+        service = ResourceTrackingService()
+        request = FlextModels.DomainServiceResourceRequest(
+            service_name="resource-tracker",
+            resource_type="queue",
+            action="list[object]",
+            filters={"ids": ["item-1", "item-2"]},
+            data={"metadata": {"id": "meta-9"}},
+        )
+
+        result = service.execute_with_resource_request(request)
+
+        assert result.is_success
+        assert [ctx["resource_id"] for ctx in service.acquisitions] == [
+            "item-1",
+            "item-2",
+            "meta-9",
+        ]
+        assert [ctx["resource_id"] for ctx in service.cleanups] == [
+            "meta-9",
+            "item-2",
+            "item-1",
+        ]
 
 
 class TestDomainServiceStaticMethods:
