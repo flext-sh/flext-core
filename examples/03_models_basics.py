@@ -25,6 +25,7 @@ from __future__ import annotations
 import warnings
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import cast
 from uuid import uuid4
 
 from pydantic import Field
@@ -54,8 +55,9 @@ class Email(FlextModels.Value):
         return FlextResult[None].ok(None)
 
     @classmethod
-    def create(cls, address: str) -> FlextResult[Email]:
+    def create(cls, *args: object, **kwargs: object) -> FlextResult[Email]:
         """Factory method with validation."""
+        address = cast("str", args[0] if args else kwargs.get("address", ""))
         email = cls(address=address.lower().strip())
         validation = email.validate_email()
         if validation.is_failure:

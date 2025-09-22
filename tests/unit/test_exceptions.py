@@ -249,20 +249,22 @@ class TestExceptions100PercentCoverage:
 
     def test_error_codes_access_lines_1199_1216(self) -> None:
         """Test ErrorCodes access lines 1199-1216."""
-        # Test actual error code constants
+        # Test actual error code constants from FlextConstants.Errors
+        from flext_core.constants import FlextConstants
+
         error_codes = [
-            FlextExceptions.ErrorCodes.VALIDATION_ERROR,
-            FlextExceptions.ErrorCodes.CONFIGURATION_ERROR,
-            FlextExceptions.ErrorCodes.CONNECTION_ERROR,
-            FlextExceptions.ErrorCodes.PROCESSING_ERROR,
-            FlextExceptions.ErrorCodes.TIMEOUT_ERROR,
-            FlextExceptions.ErrorCodes.NOT_FOUND,
-            FlextExceptions.ErrorCodes.ALREADY_EXISTS,
-            FlextExceptions.ErrorCodes.PERMISSION_ERROR,
-            FlextExceptions.ErrorCodes.AUTHENTICATION_ERROR,
-            FlextExceptions.ErrorCodes.TYPE_ERROR,
-            FlextExceptions.ErrorCodes.GENERIC_ERROR,
-            FlextExceptions.ErrorCodes.CRITICAL_ERROR,
+            FlextConstants.Errors.VALIDATION_ERROR,
+            FlextConstants.Errors.CONFIGURATION_ERROR,
+            FlextConstants.Errors.CONNECTION_ERROR,
+            FlextConstants.Errors.PROCESSING_ERROR,
+            FlextConstants.Errors.TIMEOUT_ERROR,
+            FlextConstants.Errors.NOT_FOUND,
+            FlextConstants.Errors.ALREADY_EXISTS,
+            FlextConstants.Errors.PERMISSION_ERROR,
+            FlextConstants.Errors.AUTHENTICATION_ERROR,
+            FlextConstants.Errors.TYPE_ERROR,
+            FlextConstants.Errors.GENERIC_ERROR,
+            FlextConstants.Errors.CRITICAL_ERROR,
         ]
 
         for code in error_codes:

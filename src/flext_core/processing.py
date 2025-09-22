@@ -519,7 +519,15 @@ class FlextProcessing:
             if callable(step):
                 result = step(current)
                 if isinstance(result, FlextResult):
-                    return cast("object", result.unwrap())  # Will raise if failed
+                    if result.is_failure:
+                        # Explicitly raise the error to be caught by from_exception wrapper
+                        raise RuntimeError(f"Pipeline step failed: {result.error}")
+                    step_result = result.value_or_none
+                    if step_result is None:
+                        raise RuntimeError(
+                            "Pipeline step returned None despite success"
+                        )
+                    return cast("object", step_result)
                 return result
 
             # Handle dictionary merging
@@ -650,8 +658,9 @@ class FlextProcessing:
                 """
                 result = request
                 for handler in self._handlers:
-                    if hasattr(handler, "handle"):
-                        handle_method = getattr(handler, "handle", None)
+                    handle_method_name = FlextConstants.Mixins.METHOD_HANDLE
+                    if hasattr(handler, handle_method_name):
+                        handle_method = getattr(handler, handle_method_name, None)
                         if handle_method is not None:
                             handler_result = handle_method(result)
                             if (
@@ -672,17 +681,90 @@ class FlextProcessing:
         """Handler protocols for examples."""
 
         class ChainableHandler:
-            """Chainable handler for examples."""
+            """Chainable handler for examples - Application.Handler protocol implementation."""
 
             def __init__(self, name: str) -> None:
                 """Initialize chainable handler with name."""
                 self.name = name
 
-            def handle(self, request: object) -> object:
+            def handle(self, request: object) -> FlextResult[object]:
                 """Handle request in chain.
 
                 Returns:
-                    object: Handler output as a plain object.
+                    FlextResult[object]: Handler output wrapped in FlextResult.
 
                 """
-                return f"Chain handled by {self.name}: {request}"
+                result = f"Chain handled by {self.name}: {request}"
+                return FlextResult[object].ok(result)
+
+            def can_handle(self, message_type: object) -> bool:
+                """Check if handler can process this message type.
+
+                Args:
+                    message_type: The message type to check
+
+                Returns:
+                    bool: True since this is a generic example handler
+
+                """
+                return True
+
+            def execute(self, message: object) -> FlextResult[object]:
+                """Execute the handler with the given message.
+
+                Args:
+                    message: The input message to execute
+
+                Returns:
+                    FlextResult[object]: Execution result
+
+                """
+                return self.handle(message)
+
+            def validate_command(self, command: object) -> FlextResult[None]:
+                """Validate a command message.
+
+                Args:
+                    command: The command to validate
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                if command is None:
+                    return FlextResult[None].fail("Command cannot be None")
+                return FlextResult[None].ok(None)
+
+            def validate_query(self, query: object) -> FlextResult[None]:
+                """Validate a query message.
+
+                Args:
+                    query: The query to validate
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                if query is None:
+                    return FlextResult[None].fail("Query cannot be None")
+                return FlextResult[None].ok(None)
+
+            @property
+            def handler_name(self) -> str:
+                """Get the handler name.
+
+                Returns:
+                    str: Handler name
+
+                """
+                return self.name
+
+            @property
+            def mode(self) -> str:
+                """Get the handler mode (command/query).
+
+                Returns:
+                    str: Handler mode
+
+                """
+                return "command"

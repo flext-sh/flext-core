@@ -14,7 +14,12 @@ from urllib.parse import urljoin
 from pydantic import BaseModel
 from pytest_httpx import HTTPXMock
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import (
+    FlextConstants,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
 
 logger = FlextLogger(__name__)
 
@@ -35,7 +40,7 @@ class FlextTestsHttp:
             """Initialize API test client."""
             self.base_url = base_url
             self.default_headers = {
-                "content-type": "application/json",
+                "content-type": FlextConstants.Platform.MIME_TYPE_JSON,
                 "user-agent": "flext-test-client/1.0",
             }
 
@@ -109,19 +114,19 @@ class FlextTestsHttp:
             method: str,
             endpoint: str,
             data: object | None = None,
-            headers: dict[str, str] | None = None,
-        ) -> dict[str, object]:
-            """Create test request data.
+            headers: FlextTypes.Core.Headers | None = None,
+        ) -> FlextTypes.Core.Dict:
+            """Create test request data using ``FlextTypes.Core.Dict``.
 
             Returns:
-                dict[str, object]: Test request data dictionary
+                FlextTypes.Core.Dict: Test request payload expressed via the official alias
 
             """
-            request_headers = self.default_headers.copy()
+            request_headers: FlextTypes.Core.Headers = self.default_headers.copy()
             if headers:
                 request_headers.update(headers)
 
-            request_data: dict[str, object] = {
+            request_data: FlextTypes.Core.Dict = {
                 "method": method.upper(),
                 "url": self.build_url(endpoint),
                 "headers": request_headers,
@@ -151,7 +156,7 @@ class FlextTestsHttp:
             method: str = "GET",
             response_data: object | None = None,
             status_code: int = 200,
-            headers: dict[str, str] | None = None,
+            headers: FlextTypes.Core.Headers | None = None,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
             """Add successful request scenario.
 
@@ -159,7 +164,7 @@ class FlextTestsHttp:
                 FlextTestsHttp.HTTPScenarioBuilder: Self for method chaining
 
             """
-            response_headers = {"content-type": "application/json"}
+            response_headers = {"content-type": FlextConstants.Platform.MIME_TYPE_JSON}
             if headers:
                 response_headers.update(headers)
 
@@ -212,7 +217,7 @@ class FlextTestsHttp:
                 url=url,
                 json=error_response,
                 status_code=status_code,
-                headers={"content-type": "application/json"},
+                headers={"content-type": FlextConstants.Platform.MIME_TYPE_JSON},
             )
 
             self.scenarios.append(
@@ -250,7 +255,7 @@ class FlextTestsHttp:
                         "error": {"code": "TEMPORARY_ERROR", "message": "Retry needed"},
                     },
                     status_code=503,
-                    headers={"content-type": "application/json"},
+                    headers={"content-type": FlextConstants.Platform.MIME_TYPE_JSON},
                 )
 
             # Add success
@@ -259,7 +264,7 @@ class FlextTestsHttp:
                 url=url,
                 json={"status": "success", "retry_count": success_after_retries},
                 status_code=200,
-                headers={"content-type": "application/json"},
+                headers={"content-type": FlextConstants.Platform.MIME_TYPE_JSON},
             )
 
             self.scenarios.append(
@@ -294,7 +299,7 @@ class FlextTestsHttp:
                     url=url,
                     json={"error": {"code": "CIRCUIT_BREAKER_TRIGGERED"}},
                     status_code=503,
-                    headers={"content-type": "application/json"},
+                    headers={"content-type": FlextConstants.Platform.MIME_TYPE_JSON},
                 )
 
             self.scenarios.append(
@@ -396,7 +401,7 @@ class FlextTestsHttp:
         url: str
         headers: FlextTypes.Core.Dict | None = None
         data: object | None = None
-        timeout: float = 30.0
+        timeout: float = float(FlextConstants.Defaults.TIMEOUT)
 
     class HTTPTestResponse(BaseModel):
         """HTTP test response model."""
@@ -483,7 +488,9 @@ class FlextTestsHttp:
         headers: FlextTypes.Core.Dict | None = None,
     ) -> None:
         """Mock HTTPX response."""
-        response_headers: dict[str, str] = {"content-type": "application/json"}
+        response_headers: dict[str, str] = {
+            "content-type": FlextConstants.Platform.MIME_TYPE_JSON
+        }
         if headers:
             # Convert headers dict values to strings
             for key, value in headers.items():

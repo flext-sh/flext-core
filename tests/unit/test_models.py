@@ -23,7 +23,7 @@ from typing import TypeGuard, cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from flext_tests import FlextTestsMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -146,6 +146,16 @@ class ConfigurationModel(FlextModels.Configuration):
 
     name: str = "test_config"
     enabled: bool = True
+    database_url: str | None = None
+    api_timeout: int = Field(default=30, ge=1, description="API timeout in seconds")
+    debug_mode: bool = False
+    features: list[str] = Field(default_factory=list)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate configuration business rules."""
+        if self.api_timeout < 1:
+            return FlextResult[None].fail("API timeout must be positive")
+        return FlextResult[None].ok(None)
 
 
 class DataRootModel(FlextModels.Value):
@@ -750,13 +760,7 @@ class TestModelsIntegrationRealFunctionality:
             "registration_type": "standard",
             "source": "integration_test",
         }
-        user.add_domain_event(
-            FlextModels.DomainEvent(
-                event_type="UserCreated",
-                payload=dict(event_data),
-                aggregate_id="user-123",
-            ),
-        )
+        user.add_domain_event("UserCreated", event_data)
         assert len(user.domain_events) == 1
 
         # Increment version (new API)
@@ -811,13 +815,7 @@ class TestModelsIntegrationRealFunctionality:
             "source": "serialization_test",
             "timestamp": datetime.now(UTC).isoformat(),
         }
-        user.add_domain_event(
-            FlextModels.DomainEvent(
-                event_type="UserCreated",
-                payload=dict(event_data),
-                aggregate_id="user-123",
-            ),
-        )
+        user.add_domain_event("UserCreated", event_data)
 
         # Serialize to dict (new API)
         user_dict = user.model_dump()
@@ -1004,13 +1002,7 @@ class TestModelsPerformance:
                 "event_id": f"event_{i}",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-            user.add_domain_event(
-                FlextModels.DomainEvent(
-                    event_type="UserCreated",
-                    payload=cast("dict[str, object]", event_data),
-                    aggregate_id="user-123",
-                ),
-            )
+            user.add_domain_event("UserCreated", cast("dict[str, object]", event_data))
 
         start_time = time.time()
         result = user.model_dump()
@@ -1292,13 +1284,7 @@ class TestFlextModelsAggregateRootApplyEvent:
         }
 
         # Apply event - this should add the event and increment version
-        root.add_domain_event(
-            FlextModels.DomainEvent(
-                event_type="TestEvent",
-                payload=dict(test_event),
-                aggregate_id="test-aggregate",
-            ),
-        )
+        root.add_domain_event("TestEvent", test_event)
 
         # Verify event was added and version incremented
         assert len(root.domain_events) == 1
@@ -1329,13 +1315,7 @@ class TestFlextModelsAggregateRootApplyEvent:
 
         # Apply domain event - this should not raise an exception
         # The add_domain_event method just adds the event to the list and increments version
-        root.add_domain_event(
-            FlextModels.DomainEvent(
-                event_type="FailingEvent",
-                payload=dict(failing_event),
-                aggregate_id="test-aggregate",
-            ),
-        )
+        root.add_domain_event("FailingEvent", failing_event)
 
         # Verify the event was added successfully
         assert len(root.domain_events) == 1
@@ -1540,7 +1520,7 @@ class TestFlextModelsValidationFunctionsMissingCoverage:
         """Test create_validated_directory_path with valid directory."""
         result = FlextModels.create_validated_directory_path("src")
         assert result.is_success
-        assert str(result.value) == "src"
+        assert result.value == "src"
 
     def test_create_validated_directory_path_failure(self) -> None:
         """Test create_validated_directory_path with invalid directory."""
@@ -1570,3 +1550,39 @@ class TestFlextModelsValidationFunctionsMissingCoverage:
         """Test create_validated_date_range with invalid date range (end before start)."""
         result = FlextModels.create_validated_date_range("2024-12-31", "2024-01-01")
         assert result.is_failure
+
+
+class TestBatchProcessingConfigModel:
+    """Tests for BatchProcessingConfig specific validation."""
+
+    def test_max_workers_uses_configured_threshold(self) -> None:
+        """Ensure the max workers limit aligns with FlextConstants."""
+
+        max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextModels.BatchProcessingConfig(max_workers=max_workers_limit + 1)
+
+        assert f"Max workers cannot exceed {max_workers_limit}" in str(exc_info.value)
+
+
+class TestLoggerPermanentContextModelValidation:
+    """Tests for LoggerPermanentContextModel environment validation."""
+
+    def test_invalid_environment_message_lists_allowed_values(self) -> None:
+        """Ensure invalid environments surface the expected constant-backed message."""
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextModels.LoggerPermanentContextModel(
+                app_name="test-app",
+                app_version="1.0.0",
+                environment="qa",
+            )
+
+        valid_envs = {
+            env.value for env in FlextConstants.Environment.ConfigEnvironment
+        }
+        expected_fragment = ", ".join(sorted(valid_envs))
+
+        assert expected_fragment in str(exc_info.value)
+        assert "Invalid environment: qa" in str(exc_info.value)
