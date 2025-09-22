@@ -189,10 +189,7 @@ class MessagingPatternsService(FlextDomainService[FlextTypes.Core.Dict]):
                     "date_from": "2025-01-01",
                     "date_to": "2025-12-31",
                 },
-                "pagination": {
-                    "page": 1,
-                    "page_size": 20,
-                },
+                "pagination": FlextModels.Pagination(page=1, size=20).model_dump(),
             },
             metadata={
                 "source_service": "web_api",
