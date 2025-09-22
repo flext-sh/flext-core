@@ -650,7 +650,7 @@ class TestFixturesIntegration:
 
         # Create processing command with config
         command = FlextTestsFixtures.CommandFactory.create_processing_command(
-            test_config.to_dict(),
+            test_config.model_dump(),
         )
 
         assert "config" in command
