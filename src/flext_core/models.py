@@ -42,6 +42,7 @@ from pydantic import (
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
@@ -168,11 +169,12 @@ class FlextModels:
                 try:
                     handler_method = getattr(self, handler_method_name)
                     handler_method(data)
-                except Exception:
+                except Exception as e:
                     # Exception handling as expected by test line 357-358
                     # This is intentional - some domain events may not have corresponding handlers
-                    # The exception is silently ignored as per test requirements
-                    pass
+                    # Log the exception for debugging but continue execution as per test requirements
+                    msg = f"Error applying domain event: {e}"
+                    raise FlextExceptions.ProcessingError(msg) from e
 
             # Increment version after adding domain event
             self.increment_version()
@@ -253,50 +255,32 @@ class FlextModels:
                 return cls.__name__
             return v
 
+    class Pagination(ArbitraryTypesModel):
+        """Strongly typed pagination model shared across queries."""
+
+        page: int = Field(
+            default=FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
+            ge=FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
+        )
+        size: int = Field(
+            default=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+            ge=FlextConstants.Performance.MIN_TAKE,
+            le=FlextConstants.Cqrs.MAX_PAGE_SIZE,
+        )
+
     class Query(ArbitraryTypesModel):
         """Base class for CQRS queries with pagination."""
 
         query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        pagination: dict[str, int] = Field(
-            default_factory=lambda: {
-                "page": FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
-                "size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-            }
+        pagination: "FlextModels.Pagination" = Field(
+            default_factory=lambda: cast(
+                "FlextModels.Pagination",
+                globals()["FlextModels"].Pagination(),
+            )
         )
         filters: FlextTypes.Core.Dict = Field(default_factory=dict)
         sort_by: str | None = None
         sort_order: Literal["asc", "desc"] = "asc"
-
-        @field_validator("pagination")
-        @classmethod
-        def validate_pagination(cls, v: dict[str, object]) -> dict[str, object]:
-            """Validate pagination parameters using FlextConstants."""
-            page = v.get("page", FlextConstants.Performance.DEFAULT_PAGE_NUMBER)
-            size = v.get("size", FlextConstants.Performance.DEFAULT_PAGE_SIZE)
-
-            # Ensure types are integers
-            if not isinstance(page, int):
-                page = (
-                    int(page)
-                    if isinstance(page, (str, float))
-                    else FlextConstants.Performance.DEFAULT_PAGE_NUMBER
-                )
-            if not isinstance(size, int):
-                size = (
-                    int(size)
-                    if isinstance(size, (str, float))
-                    else FlextConstants.Performance.DEFAULT_PAGE_SIZE
-                )
-
-            if page < 1:
-                msg = "pagination.page must be a positive integer"
-                raise ValueError(msg)
-
-            if size < 1 or size > FlextConstants.Cqrs.MAX_PAGE_SIZE:
-                msg = f"pagination.size must be between 1 and {FlextConstants.Cqrs.MAX_PAGE_SIZE}"
-                raise ValueError(msg)
-
-            return {"page": page, "size": size}
 
         @model_validator(mode="after")
         def validate_query_consistency(self) -> Self:
@@ -888,12 +872,16 @@ class FlextModels:
         @computed_field
         def kilobytes(self) -> float:
             """Convert to KB."""
-            return self.bytes / 1024.0
+            return self.bytes / float(FlextConstants.Utilities.BYTES_PER_KB)
 
         @computed_field
         def megabytes(self) -> float:
             """Convert to MB."""
-            return self.bytes / (1024.0 * 1024.0)
+            bytes_per_mb = (
+                FlextConstants.Utilities.BYTES_PER_KB
+                * FlextConstants.Utilities.BYTES_PER_KB
+            )
+            return self.bytes / float(bytes_per_mb)
 
     class Project(Entity):
         """Enhanced project entity with advanced validation."""
@@ -942,7 +930,8 @@ class FlextModels:
                 raise ValueError(msg)
 
             # Size validation
-            if self.total_size_bytes > 10 * 1024 * 1024 * 1024:  # 10GB
+            max_workspace_size = 10 * FlextConstants.Utilities.BYTES_PER_KB**3  # 10GB
+            if self.total_size_bytes > max_workspace_size:
                 msg = "Workspace too large"
                 raise ValueError(msg)
 
@@ -1013,7 +1002,12 @@ class FlextModels:
             return FlextResult[FlextModels.Url].fail(
                 "URL must start with http:// or https://"
             )
-        return FlextModels.create_validated_url(url)
+        url_result = FlextModels.create_validated_url(url)
+        return url_result >> (
+            lambda validated_url: FlextResult[FlextModels.Url].ok(
+                FlextModels.Url(url=validated_url)
+            )
+        )
 
     @staticmethod
     def create_validated_http_method(method: str) -> FlextResult[str]:
@@ -1049,7 +1043,7 @@ class FlextModels:
             # Validate basic phone format (optional + prefix, digits, spaces, hyphens)
             import re
 
-            phone_pattern = r"^[+]?[\d\s\-()]+$"
+            phone_pattern = FlextConstants.Platform.PATTERN_PHONE_NUMBER
             if not re.match(phone_pattern, phone_clean):
                 return FlextResult[str].fail("Invalid phone number format")
 
@@ -1126,10 +1120,14 @@ class FlextModels:
         if path_result.is_failure:
             return path_result
 
-        file_path = Path(path_result.unwrap())
+        validated_path = path_result.value_or_none
+        if validated_path is None:
+            return FlextResult[str].fail("Path validation returned None")
+
+        file_path = Path(validated_path)
         if not file_path.exists():
             return FlextResult[str].fail(f"Path does not exist: {path}")
-        return FlextResult[str].ok(path_result.unwrap())
+        return FlextResult[str].ok(validated_path)
 
     @staticmethod
     def create_validated_directory_path(path: str) -> FlextResult[str]:
@@ -1138,10 +1136,14 @@ class FlextModels:
         if path_result.is_failure:
             return path_result
 
-        dir_path = Path(path_result.unwrap())
+        validated_path = path_result.value_or_none
+        if validated_path is None:
+            return FlextResult[str].fail("Path validation returned None")
+
+        dir_path = Path(validated_path)
         if not dir_path.is_dir():
             return FlextResult[str].fail(f"Path is not a directory: {path}")
-        return FlextResult[str].ok(path_result.unwrap())
+        return FlextResult[str].ok(validated_path)
 
     # Additional domain models continue with advanced patterns...
     class FactoryRegistrationModel(StrictArbitraryTypesModel):
@@ -1467,6 +1469,17 @@ class FlextModels:
                 raise ValueError(msg)
             return v_upper
 
+        @field_validator("log_verbosity")
+        @classmethod
+        def validate_log_verbosity(cls, v: str) -> str:
+            """Validate log verbosity option."""
+            valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+            normalized = v.lower()
+            if normalized not in valid_levels:
+                msg = f"Invalid log verbosity: {v}. Must be one of {valid_levels}"
+                raise ValueError(msg)
+            return normalized
+
     class LogContextModel(ArbitraryTypesModel):
         """Log context model with validation."""
 
@@ -1520,6 +1533,7 @@ class FlextModels:
         correlation_id: str | None = None
         user_id: str | None = None
         endpoint: str | None = None
+        custom_data: dict[str, str] = Field(default_factory=dict)
 
         @model_validator(mode="after")
         def validate_request_context(self) -> Self:
@@ -1537,21 +1551,51 @@ class FlextModels:
 
         app_name: str
         app_version: str
-        environment: str
+        environment: FlextTypes.Config.Environment
         host: str | None = None
         metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
         permanent_context: FlextTypes.Core.Dict = Field(default_factory=dict)
         replace_existing: bool = False
         merge_strategy: Literal["replace", "update", "merge_deep"] = "update"
 
+        @field_validator("environment", mode="before")
+        @classmethod
+        def normalize_environment(
+            cls, value: str | FlextTypes.Config.Environment
+        ) -> FlextTypes.Config.Environment:
+            """Normalize and validate environment against shared constants."""
+
+            # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
+            if not isinstance(value, str):
+                # If it's an Enum, get its value; otherwise, try str()
+                if hasattr(value, "value"):
+                    value = value.value
+                else:
+                    value = str(value)
+
+            normalized = value.lower()
+            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
+            if normalized not in valid_envs:
+                msg = f"Environment must be one of {sorted(valid_envs)}"
+                raise ValueError(msg)
+            return cast("FlextTypes.Config.Environment", normalized)
+
         @model_validator(mode="after")
         def validate_permanent_context(self) -> Self:
             """Validate permanent context."""
-            valid_envs = {"development", "testing", "staging", "production"}
+            # Use only the enum values as the single source of truth for valid environments.
+            valid_envs = {
+                env.value.lower()
+                for env in FlextConstants.Environment.ConfigEnvironment
+            }
             if self.environment.lower() not in valid_envs:
-                msg = f"Invalid environment: {self.environment}"
+                sorted_envs = sorted(valid_envs)
+                msg = (
+                    f"Invalid environment: {self.environment}. "
+                    f"Must be one of {sorted_envs}"
+                )
                 raise ValueError(msg)
-            return self
+            return cast("FlextTypes.Config.Environment", normalized)
 
     class OperationTrackingModel(ArbitraryTypesModel):
         """Operation tracking model."""
@@ -1840,8 +1884,12 @@ class FlextModels:
         )
         sliding_window_size: int = Field(default=100)
         minimum_throughput: int = Field(default=10)
-        slow_call_duration_seconds: float = Field(default=1.0, gt=0)
-        slow_call_rate_threshold: float = Field(default=50.0)
+        slow_call_duration_seconds: float = Field(
+            default=FlextConstants.Performance.DEFAULT_DELAY_SECONDS, gt=0
+        )
+        slow_call_rate_threshold: float = Field(
+            default=FlextConstants.Validation.MAX_PERCENTAGE / 2.0
+        )  # 50%
 
         @model_validator(mode="after")
         def validate_circuit_breaker_consistency(self) -> Self:
@@ -1854,7 +1902,9 @@ class FlextModels:
     class ValidationConfiguration(ArbitraryTypesModel):
         """Validation configuration."""
 
-        enable_strict_mode: bool = False
+        enable_strict_mode: bool = Field(
+            default_factory=lambda: FlextConfig.get_global_instance().validation_strict_mode
+        )
         max_validation_errors: int = Field(default=10)
         validate_on_assignment: bool = True
         validate_on_read: bool = False
@@ -2013,7 +2063,9 @@ class FlextModels:
         max_fallback_attempts: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
-        fallback_delay_seconds: float = Field(default=0.1, ge=0)
+        fallback_delay_seconds: float = Field(
+            default=FlextConstants.Performance.DEFAULT_FALLBACK_DELAY, ge=0
+        )
 
         @field_validator("fallback_services")
         @classmethod
@@ -2586,13 +2638,17 @@ class FlextModels:
                 bus_config: dict[str, object] | None = None,
                 *,
                 enable_middleware: bool = True,
-                enable_metrics: bool = True,
+                enable_metrics: bool | None = None,
                 enable_caching: bool = True,
                 execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
                 max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
                 implementation_path: str = "flext_core.bus:FlextBus",
             ) -> Self:
                 """Create bus configuration with defaults and overrides."""
+                # Use global config defaults when not explicitly provided
+                if enable_metrics is None:
+                    enable_metrics = FlextConfig.get_global_instance().enable_metrics
+
                 config_data: dict[str, object] = {
                     "enable_middleware": enable_middleware,
                     "enable_metrics": enable_metrics,
@@ -2640,12 +2696,17 @@ class FlextModels:
                 max_command_retries: int = 0,
             ) -> Self:
                 """Create handler configuration with defaults and overrides."""
+                handler_mode_value = (
+                    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                    if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                    else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                )
                 config_data: dict[str, object] = {
                     "handler_id": default_id
                     or f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
                     "handler_name": default_name or f"{handler_type.title()} Handler",
                     "handler_type": handler_type,
-                    "handler_mode": handler_type,
+                    "handler_mode": handler_mode_value,
                     "command_timeout": command_timeout,
                     "max_command_retries": max_command_retries,
                     "metadata": {},
@@ -2665,7 +2726,8 @@ class FlextModels:
 
         registration_id: str = Field(description="Unique registration identifier")
         handler_mode: Literal["command", "query"] = Field(
-            default="command", description="Handler mode"
+            default="command",
+            description="Handler mode",
         )
         timestamp: str = Field(default="", description="Registration timestamp")
         status: Literal["active", "inactive"] = Field(
