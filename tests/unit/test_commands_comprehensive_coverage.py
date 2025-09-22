@@ -773,7 +773,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -789,7 +790,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -805,7 +807,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -822,7 +825,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -838,7 +842,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         bus = FlextBus()
         handler = TestHandler()
-        bus.register_handler(handler)
+        # Use two-arg form to register handler for Command type
+        bus.register_handler("Command", handler)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
@@ -932,6 +937,9 @@ class TestFlextCqrsBusManagement:
 
         result = bus.unregister_handler("test-handler")
         FlextTestsMatchers.assert_result_success(result)
+        assert result.error_data.get("message") == "Handler 'test-handler' unregistered"
+        assert result.error_data.get("remaining_handlers") == 0
+        assert result.error_data.get("command_type") == "test-handler"
         assert "test-handler" not in bus._handlers
 
     def test_bus_unregister_handler_not_found(self) -> None:
@@ -940,6 +948,9 @@ class TestFlextCqrsBusManagement:
 
         result = bus.unregister_handler("non-existent-handler")
         FlextTestsMatchers.assert_result_failure(result)
+        assert result.error == "No handler registered for non-existent-handler"
+        assert result.error_code == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
+        assert result.error_data.get("command_type") == "non-existent-handler"
 
     def test_bus_send_command_delegates_to_execute(self) -> None:
         """Test Bus send_command delegates to execute."""
