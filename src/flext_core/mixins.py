@@ -300,7 +300,7 @@ class FlextMixins:
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
             model_dump_method = getattr(obj, "model_dump")
             model_data: FlextTypes.Core.Dict = cast(
-                "FlextTypes.Core.Dict", model_dump_method()
+                FlextTypes.Core.Dict, model_dump_method()
             )
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
