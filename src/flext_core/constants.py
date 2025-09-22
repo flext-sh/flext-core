@@ -570,6 +570,7 @@ class FlextConstants:
         TRACK_PERFORMANCE: Final[bool] = True
         TRACK_MEMORY: Final[bool] = False
         TRACK_TIMING: Final[bool] = True
+        ENABLE_TRACING: Final[bool] = False  # Distributed tracing disabled by default
         PERFORMANCE_THRESHOLD_WARNING: Final[float] = 1000.0  # milliseconds
         PERFORMANCE_THRESHOLD_CRITICAL: Final[float] = 5000.0  # milliseconds
 

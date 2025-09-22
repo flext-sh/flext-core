@@ -153,10 +153,8 @@ class FlextDomainService[TDomainResult](
             business_result = self.validate_business_rules()
             if business_result.is_failure:
                 return FlextResult[None].fail(
-                    (
-                        f"{FlextConstants.Messages.VALIDATION_FAILED}"
-                        f" (business rules): {business_result.error}"
-                    )
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}"
+                    f" (business rules): {business_result.error}"
                 )
 
         return FlextResult[None].ok(None)
@@ -186,8 +184,8 @@ class FlextDomainService[TDomainResult](
                 return FlextResult[TDomainResult].fail(
                     f"{FlextConstants.Messages.VALIDATION_FAILED} (pre-execution)"
                     + (
-                        f": {validation_result.error}"
-                        if validation_result.error
+                        f": {config_validation.error}"
+                        if config_validation.error
                         else ""
                     )
                 )
@@ -316,9 +314,12 @@ class FlextDomainService[TDomainResult](
                     if isinstance(exc, allowed):
                         return True
                 elif isinstance(allowed, str):
-                    raise ValueError(
+                    msg = (
                         f"String-based exception filter '{allowed}' is not supported. "
                         "Please use exception classes instead."
+                    )
+                    raise ValueError(
+                        msg
                     )
             return False
 

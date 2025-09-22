@@ -13,9 +13,8 @@ from __future__ import annotations
 import inspect
 import time
 from abc import abstractmethod
-from dataclasses import asdict as dataclasses_asdict, is_dataclass
-from typing import Callable, Literal, cast, get_origin
 from collections.abc import Callable
+from dataclasses import asdict as dataclasses_asdict, is_dataclass
 from typing import Literal, cast, get_origin
 
 from pydantic import BaseModel
@@ -156,7 +155,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             self._revalidate_pydantic_messages = False
 
     def from_callable(
-        cls,
+        self,
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
         mode: Literal["command", "query"],
@@ -166,11 +165,10 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         handler_name: str | None = None,
     ) -> FlextHandlers[object, object]:
         """Create a ``FlextHandlers`` wrapper around a bare callable."""
-
-        if mode not in (
+        if mode not in {
             FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
             FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-        ):
+        }:
             msg = (
                 f"Invalid mode '{mode}'. Expected "
                 f"'{FlextConstants.Cqrs.COMMAND_HANDLER_TYPE}' or "
@@ -178,14 +176,14 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             )
             raise ValueError(msg)
 
-        resolved_name = handler_name or getattr(handler_func, "__name__", cls.__name__)
+        resolved_name = handler_name or getattr(handler_func, "__name__", self.__name__)
         resolved_mode: Literal["command", "query"] = (
             FlextConstants.Cqrs.QUERY_HANDLER_TYPE
             if mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE
             else FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
         )
 
-        class CallableHandler(cls[object, object]):
+        class CallableHandler(self[object, object]):
             def __init__(self) -> None:
                 super().__init__(
                     handler_mode=resolved_mode,
@@ -204,10 +202,8 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                         handler_name=self.handler_name,
                     )
                     return FlextResult[object].fail(
-                        (
-                            f"Handler callable '{resolved_name}' raised "
-                            f"{type(exc).__name__}: {exc}"
-                        )
+                        f"Handler callable '{resolved_name}' raised "
+                        f"{type(exc).__name__}: {exc}"
                     )
 
                 if isinstance(result, FlextResult):
@@ -301,7 +297,6 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
     def _compute_accepted_message_types(self) -> tuple[object, ...]:
         """Compute message types accepted by this handler using cached introspection."""
-
         message_types: list[object] = []
 
         message_types.extend(self._extract_generic_message_types())
@@ -315,7 +310,6 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
     def _extract_generic_message_types(self) -> list[object]:
         """Extract message types from generic base annotations."""
-
         message_types: list[object] = []
         for base in getattr(self.__class__, "__orig_bases__", ()) or ():
             origin = get_origin(base)
@@ -327,7 +321,6 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
     def _extract_message_type_from_handle(self) -> object | None:
         """Extract message type from handle method annotations when generics are absent."""
-
         handle_method = getattr(self.__class__, "handle", None)
         if handle_method is None:
             return None
@@ -609,7 +602,6 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         operation: Literal["command", "query"] | None = None,
     ) -> object:
         """Build a serializable representation for message validation heuristics."""
-
         operation_name = operation or "message"
         context_operation = operation or "unknown"
 
@@ -617,8 +609,9 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             return message
 
         if message is None:
+            msg = f"Invalid message type for {operation_name}: NoneType"
             raise FlextExceptions.TypeError(
-                f"Invalid message type for {operation_name}: NoneType",
+                msg,
                 expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
                 actual_type="NoneType",
                 context={
@@ -662,8 +655,9 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             elif isinstance(slots, (list, tuple)):
                 slot_names = tuple(slots)
             else:
+                msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
                 raise FlextExceptions.TypeError(
-                    f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}",
+                    msg,
                     expected_type="str, list, or tuple",
                     actual_type=type(slots).__name__,
                     context={
@@ -684,8 +678,9 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         if hasattr(message, "__dict__"):
             return vars(message)
 
+        msg = f"Invalid message type for {operation_name}: {type(message).__name__}"
         raise FlextExceptions.TypeError(
-            f"Invalid message type for {operation_name}: {type(message).__name__}",
+            msg,
             expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
             actual_type=type(message).__name__,
             context={
@@ -1040,7 +1035,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         | dict[str, object]
         | None = None,
         handler_name: str | None = None,
-    ) -> "FlextHandlers[object, object]":
+    ) -> FlextHandlers[object, object]:
         """Create a ``FlextHandlers`` instance from a plain callable.
 
         Args:
@@ -1054,14 +1049,15 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
         Raises:
             ValueError: If ``mode`` is not a supported handler type.
-        """
 
+        """
         valid_modes = {
             FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
             FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
         }
         if mode not in valid_modes:
-            raise ValueError(f"Invalid handler mode: {mode}")
+            msg = f"Invalid handler mode: {mode}"
+            raise ValueError(msg)
 
         resolved_name = handler_name or getattr(
             handler_func,

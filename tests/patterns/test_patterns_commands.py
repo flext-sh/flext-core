@@ -501,7 +501,8 @@ class TestFlextCommandBus:
         assert passthrough_outcome.unwrap() == "from-result"
 
         def failing_callable(_: CreateUserCommand) -> str:
-            raise RuntimeError("callable boom")
+            msg = "callable boom"
+            raise RuntimeError(msg)
 
         failing_handler = FlextCommandBus.create_simple_handler(failing_callable)
         failure_outcome = failing_handler.handle(command)
@@ -607,7 +608,8 @@ class TestFlextCommandBus:
         def failing_callable(
             command: CreateUserCommand,
         ) -> str:  # pragma: no cover - raising path
-            raise RuntimeError("boom from callable")
+            msg = "boom from callable"
+            raise RuntimeError(msg)
 
         failing_handler = FlextCommandBus.create_simple_handler(failing_callable)
         failure_result = failing_handler.handle(command)

@@ -6,10 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from types import MethodType
-from typing import Callable, Literal, cast
+from typing import Literal, cast
 from unittest.mock import Mock
+
+from pydantic import BaseModel
 
 from flext_core import (
     FlextBus,
@@ -20,7 +23,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
-from pydantic import BaseModel
 
 
 @dataclass
@@ -130,7 +132,6 @@ class CachedQueryHandler:
 
 def test_dispatcher_cache_hits_for_equivalent_dataclass_queries() -> None:
     """Repeated dataclass queries with reordered payloads reuse the cached result."""
-
     FlextContext.Utilities.clear_context()
     dispatcher = FlextDispatcher()
 
@@ -161,7 +162,7 @@ def test_dispatcher_cache_hits_for_equivalent_dataclass_queries() -> None:
 
     first_query = StructuredQuery(filters={"a": 1, "b": 2}, limits=(3, 4))
     second_query = StructuredQuery(
-        filters=dict([("b", 2), ("a", 1)]),
+        filters={"b": 2, "a": 1},
         limits=(3, 4),
     )
 
@@ -181,7 +182,6 @@ def test_dispatcher_cache_hits_for_equivalent_dataclass_queries() -> None:
 
 def test_dispatcher_cache_hits_for_equivalent_pydantic_queries() -> None:
     """Pydantic-based queries share cache entries when payload ordering differs."""
-
     FlextContext.Utilities.clear_context()
     dispatcher = FlextDispatcher()
 
@@ -211,9 +211,12 @@ def test_dispatcher_cache_hits_for_equivalent_pydantic_queries() -> None:
     if hasattr(dispatcher.bus, "clear_cache") and callable(dispatcher.bus.clear_cache):
         dispatcher.bus.clear_cache()
     else:
-        raise RuntimeError(
+        msg = (
             "dispatcher.bus does not provide a public 'clear_cache' method. "
             "Please add a public API to clear the cache instead of accessing _cache directly."
+        )
+        raise RuntimeError(
+            msg
         )
 
     first_query = CachedQuery(filters={"c": 3, "d": 4}, offsets=[1, 2])
@@ -272,7 +275,8 @@ def test_dispatcher_register_function_helper() -> None:
 
     def handle_echo(command: EchoCommand) -> str:
         if command.payload == "boom":
-            raise RuntimeError("boom")
+            msg = "boom"
+            raise RuntimeError(msg)
         return f"echo:{command.payload}"
 
     register_result = dispatcher.register_function(EchoCommand, handle_echo)

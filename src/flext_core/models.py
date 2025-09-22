@@ -206,7 +206,7 @@ class FlextModels:
             return hash(tuple(self.model_dump().items()))
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[Any]:
+        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
             """Create value object instance with validation, returns FlextResult."""
             try:
                 # Handle single argument case for simple value objects
@@ -218,9 +218,9 @@ class FlextModels:
                         args = ()
 
                 instance = cls(*args, **kwargs)
-                return FlextResult[Any].ok(instance)
+                return FlextResult[object].ok(instance)
             except Exception as e:
-                return FlextResult[Any].fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""
@@ -272,7 +272,7 @@ class FlextModels:
         """Base class for CQRS queries with pagination."""
 
         query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        pagination: "FlextModels.Pagination" = Field(
+        pagination: FlextModels.Pagination = Field(
             default_factory=lambda: cast(
                 "FlextModels.Pagination",
                 globals()["FlextModels"].Pagination(),
@@ -1564,14 +1564,10 @@ class FlextModels:
             cls, value: str | FlextTypes.Config.Environment
         ) -> FlextTypes.Config.Environment:
             """Normalize and validate environment against shared constants."""
-
             # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
             if not isinstance(value, str):
                 # If it's an Enum, get its value; otherwise, try str()
-                if hasattr(value, "value"):
-                    value = value.value
-                else:
-                    value = str(value)
+                value = value.value if hasattr(value, "value") else str(value)
 
             normalized = value.lower()
             valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
@@ -1595,7 +1591,7 @@ class FlextModels:
                     f"Must be one of {sorted_envs}"
                 )
                 raise ValueError(msg)
-            return cast("FlextTypes.Config.Environment", normalized)
+            return self
 
     class OperationTrackingModel(ArbitraryTypesModel):
         """Operation tracking model."""
@@ -2366,8 +2362,8 @@ class FlextModels:
 
             # Add pagination
             if self.pagination:
-                params["page"] = self.pagination.get("page", 1)
-                params["size"] = self.pagination.get("size", 10)
+                params["page"] = self.pagination.page
+                params["size"] = self.pagination.size
 
             # Add filters
             for key, value in self.filters.items():
@@ -2387,6 +2383,22 @@ class FlextModels:
     # Batch serialization optimizer
     class BatchSerializer:
         """Optimized batch serialization for collections of models."""
+
+        @staticmethod
+        def _validate_json_serializable(model: BaseModel) -> None:
+            """Validate model is JSON serializable if configuration requires it."""
+            from flext_core.config import FlextConfig
+
+            config = FlextConfig.get_global_instance()
+            if not getattr(config, "ensure_json_serializable", True):
+                return
+
+            try:
+                # Simple validation - attempt to serialize
+                model.model_dump_json()
+            except Exception as e:
+                msg = f"Model not JSON serializable: {e}"
+                raise ValueError(msg) from e
 
         @staticmethod
         def serialize_batch(
@@ -2411,8 +2423,13 @@ class FlextModels:
             if not models:
                 return [] if output_format == "dict" else "[]"
 
+            # Validate JSON serializability if required by configuration
+            if output_format == "json":
+                for model in models:
+                    FlextModels.BatchSerializer._validate_json_serializable(model)
+
             # Serialization kwargs
-            dump_kwargs: dict[str, Any] = {}
+            dump_kwargs: FlextTypes.Core.Dict = {}
             if compact:
                 dump_kwargs = {
                     "exclude_unset": True,

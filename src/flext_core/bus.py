@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import operator
 import time
-from collections.abc import Callable, Mapping
 from collections import OrderedDict
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
@@ -31,13 +32,11 @@ class ModelDumpable(Protocol):
 
 def _cache_sort_key(value: object) -> str:
     """Return a deterministic string for ordering normalized cache components."""
-
     return json.dumps(value, sort_keys=True, default=str)
 
 
 def _normalize_cache_component(value: object) -> object:
     """Normalize arbitrary objects into cache-friendly deterministic structures."""
-
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
 
@@ -85,14 +84,13 @@ def _normalize_cache_component(value: object) -> object:
 
     normalized_vars = tuple(
         (key, _normalize_cache_component(val))
-        for key, val in sorted(value_vars.items(), key=lambda item: item[0])
+        for key, val in sorted(value_vars.items(), key=operator.itemgetter(0))
     )
     return ("vars", normalized_vars)
 
 
 def _make_cache_key(command: object) -> str:
     """Create a deterministic cache key for the provided command/query."""
-
     normalized_command = _normalize_cache_component(command)
     serialized_command = json.dumps(normalized_command, sort_keys=True)
     command_type = f"{command.__class__.__module__}.{command.__class__.__qualname__}"
@@ -204,8 +202,7 @@ class FlextBus(FlextMixins):
         | FlextTypes.Core.Dict
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """
-        Wrap a bare callable into a CQRS command handler with validation.
+        """Wrap a bare callable into a CQRS command handler with validation.
 
         Args:
             handler_func: A callable that takes a single argument (the command payload) and returns a result.
@@ -216,6 +213,7 @@ class FlextBus(FlextMixins):
         Returns:
             FlextHandlers[object, object]: A CQRS command handler that wraps the provided callable,
                 with input/output validation and result wrapping. See `FlextHandlers.from_callable` for details.
+
         """
         handler_name = getattr(handler_func, "__name__", "SimpleHandler")
 
@@ -243,7 +241,6 @@ class FlextBus(FlextMixins):
             FlextHandlers: Configured query handler instance
 
         """
-
         handler_name = getattr(handler_func, "__name__", "SimpleQueryHandler")
 
         return FlextHandlers.from_callable(
@@ -625,7 +622,7 @@ class FlextBus(FlextMixins):
         # Create config if not provided
         if middleware_config is None:
             middleware_config = cast(
-                FlextTypes.Core.Dict,
+                "FlextTypes.Core.Dict",
                 {
                     "middleware_id": f"mw_{len(self._middleware)}",
                     "middleware_type": type(middleware).__name__,
@@ -634,11 +631,11 @@ class FlextBus(FlextMixins):
                 },
             )
         else:
-            middleware_config = cast(FlextTypes.Core.Dict, middleware_config)
+            middleware_config = cast("FlextTypes.Core.Dict", middleware_config)
 
         # Ensure middleware config has a usable identifier
         middleware_id_value = middleware_config.get("middleware_id")
-        if middleware_id_value in (None, ""):
+        if middleware_id_value in {None, ""}:
             middleware_id_value = getattr(
                 middleware,
                 "middleware_id",
@@ -690,8 +687,7 @@ class FlextBus(FlextMixins):
 
             if direct_match or name_match:
                 del self._handlers[key]
-                remaining = len(self._handlers)
-                message = f"Handler '{key_identifier}' unregistered"
+                len(self._handlers)
 
                 self.logger.info(
                     "Handler unregistered",

@@ -357,7 +357,8 @@ class FlextCqrs:
                 # Support both raw dictionaries and FlextResult wrappers
                 if isinstance(config_payload, FlextResult):
                     if config_payload.is_failure:
-                        raise ValueError("Failed to load CQRS bus configuration")
+                        msg = "Failed to load CQRS bus configuration"
+                        raise ValueError(msg)
                     config_payload = config_payload.value
 
                 if hasattr(config_payload, "model_dump") and callable(

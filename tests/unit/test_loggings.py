@@ -322,7 +322,6 @@ class TestLoggingFeatureFlags:
         expected_password: str | None,
     ) -> None:
         """Ensure context inclusion and masking follow FlextConfig settings."""
-
         FlextConfig.set_global_instance(
             FlextConfig.create(
                 include_context=include_context,
@@ -346,7 +345,6 @@ class TestLoggingFeatureFlags:
     @pytest.mark.parametrize("include_correlation_id", [True, False])
     def test_correlation_id_flag(self, include_correlation_id: bool) -> None:
         """Ensure correlation ID is optional based on configuration."""
-
         FlextConfig.set_global_instance(
             FlextConfig.create(include_correlation_id=include_correlation_id)
         )
@@ -362,7 +360,6 @@ class TestLoggingFeatureFlags:
     @pytest.mark.parametrize("track_performance", [True, False])
     def test_performance_flag(self, track_performance: bool) -> None:
         """Verify performance block obeys tracking configuration."""
-
         FlextConfig.set_global_instance(
             FlextConfig.create(track_performance=track_performance)
         )
@@ -384,7 +381,6 @@ class TestLoggingFeatureFlags:
     @pytest.mark.parametrize("track_timing", [True, False])
     def test_timing_flag(self, track_timing: bool) -> None:
         """Ensure execution metadata respects timing tracker configuration."""
-
         FlextConfig.set_global_instance(FlextConfig.create(track_timing=track_timing))
 
         logger = FlextLogger("flag_test_timing")
@@ -1025,7 +1021,6 @@ class TestLoggerConfiguration:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Ensure global config log_verbosity flows into FlextLogger.configure."""
-
         config = FlextConfig.get_global_instance()
         original_verbosity = config.log_verbosity
         config.log_verbosity = "full"

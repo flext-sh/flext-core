@@ -521,11 +521,13 @@ class FlextProcessing:
                 if isinstance(result, FlextResult):
                     if result.is_failure:
                         # Explicitly raise the error to be caught by from_exception wrapper
-                        raise RuntimeError(f"Pipeline step failed: {result.error}")
+                        msg = f"Pipeline step failed: {result.error}"
+                        raise RuntimeError(msg)
                     step_result = result.value_or_none
                     if step_result is None:
+                        msg = "Pipeline step returned None despite success"
                         raise RuntimeError(
-                            "Pipeline step returned None despite success"
+                            msg
                         )
                     return cast("object", step_result)
                 return result
