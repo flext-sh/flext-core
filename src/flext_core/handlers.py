@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from abc import abstractmethod
-from typing import Literal, get_origin
+from typing import Any, Literal, TypeVar, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -103,6 +103,8 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self.handler_id = self._config_model.handler_id
         self._start_time: float | None = None
         self._metrics_state: FlextTypes.Core.Dict | None = None
+        self._accepted_message_types = self._resolve_message_types()
+        self._type_warning_emitted = False
 
     def _resolve_mode(
         self,
@@ -166,37 +168,109 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             message_type_name=getattr(message_type, "__name__", str(message_type)),
         )
 
-        orig_bases = getattr(self, "__orig_bases__", None)
-        if orig_bases is not None:
-            for base in orig_bases:
-                if self._check_base_compatibility(base, message_type):
-                    return True
-
-        self.logger.info("handler_type_constraints_unknown")
-        return True
-
-    def _check_base_compatibility(self, base: object, message_type: object) -> bool:
-        """Check if a base type is compatible with the message type.
-
-        Returns:
-            bool: True if base type is compatible with message type, False otherwise.
-
-        """
-        args = getattr(base, "__args__", None)
-        if args is None or len(args) < 1:
+        if not self._accepted_message_types:
+            if not self._type_warning_emitted:
+                self.logger.warning(
+                    "handler_type_constraints_unknown",
+                    handler_name=self.handler_name,
+                    handler_class=self.__class__.__name__,
+                )
+                self._type_warning_emitted = True
             return False
 
-        expected_type = args[0]
-        can_handle_result = self._evaluate_type_compatibility(
-            expected_type, message_type
+        for expected_type in self._accepted_message_types:
+            can_handle_result = self._evaluate_type_compatibility(
+                expected_type, message_type
+            )
+
+            self.logger.debug(
+                "handler_type_check",
+                can_handle=can_handle_result,
+                expected_type=getattr(expected_type, "__name__", str(expected_type)),
+            )
+
+            if can_handle_result:
+                return True
+
+        return False
+
+    def _resolve_message_types(self) -> tuple[object, ...]:
+        """Determine the accepted message types for this handler instance."""
+
+        message_types: list[object] = []
+
+        for cls in self.__class__.__mro__:
+            orig_bases = getattr(cls, "__orig_bases__", ())
+            for base in orig_bases or ():
+                message_types.extend(self._extract_message_types_from_base(base))
+
+        if not message_types:
+            message_types.extend(self._resolve_message_types_from_hints())
+
+        return self._normalise_message_types(message_types)
+
+    def _extract_message_types_from_base(self, base: object) -> list[object]:
+        """Extract message type arguments from a generic base definition."""
+
+        args = getattr(base, "__args__", None)
+        if not args:
+            return []
+
+        origin = get_origin(base) or getattr(base, "__origin__", None) or base
+
+        try:
+            if isinstance(origin, type) and issubclass(origin, FlextHandlers):
+                return [args[0]]
+        except TypeError:
+            return []
+
+        return []
+
+    def _resolve_message_types_from_hints(self) -> list[object]:
+        """Resolve message types from explicit type hints when generics are absent."""
+
+        hint_sources = (
+            ("handle", "message"),
+            ("handle_command", "command"),
+            ("handle_query", "query"),
         )
 
-        self.logger.debug(
-            "handler_type_check",
-            can_handle=can_handle_result,
-            expected_type=getattr(expected_type, "__name__", str(expected_type)),
-        )
-        return can_handle_result
+        resolved: list[object] = []
+
+        for method_name, parameter_name in hint_sources:
+            method = getattr(self.__class__, method_name, None)
+            if method is None:
+                continue
+
+            try:
+                type_hints = get_type_hints(method, include_extras=True)
+            except Exception:
+                continue
+
+            hint = type_hints.get(parameter_name)
+            if hint is not None:
+                resolved.append(hint)
+
+        return resolved
+
+    def _normalise_message_types(self, message_types: list[object]) -> tuple[object, ...]:
+        """Deduplicate and filter inferred message types."""
+
+        unique: list[object] = []
+        for message_type in message_types:
+            if message_type is None:
+                continue
+            if message_type is Any:
+                continue
+            if message_type is object:
+                continue
+            if isinstance(message_type, TypeVar):
+                continue
+            if message_type in unique:
+                continue
+            unique.append(message_type)
+
+        return tuple(unique)
 
     def _evaluate_type_compatibility(
         self, expected_type: object, message_type: object
@@ -490,13 +564,20 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         )
 
         # Use railway pattern for validation chain
-        return FlextResult.chain_validations(
+        validation_result = FlextResult.chain_validations(
             lambda: self._validate_mode(operation),
             lambda: self._validate_can_handle(message),
             lambda: self._validate_message(message, operation=operation),
-        ).flat_map(
-            lambda _: self._execute_with_timing(message, message_type, identifier)
         )
+
+        if validation_result.is_failure:
+            return FlextResult[ResultT].fail(
+                validation_result.error or "Validation chain failed",
+                error_code=validation_result.error_code,
+                error_data=validation_result.error_data,
+            )
+
+        return self._execute_with_timing(message, message_type, identifier)
 
     def _validate_mode(
         self, operation: Literal["command", "query"]

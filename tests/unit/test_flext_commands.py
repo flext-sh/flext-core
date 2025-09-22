@@ -21,6 +21,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
+from flext_core.loggings import FlextLogger
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 
@@ -389,6 +390,87 @@ class TestFlextCqrsComprehensive:
     # =========================================================================
     # COMMAND HANDLER TESTING - Full business logic
     # =========================================================================
+
+    def test_handler_caches_generic_message_type(self) -> None:
+        """Handlers with generic parameters should cache accepted message types."""
+
+        handler = CreateUserHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler._type_warning_emitted is False
+        assert handler.can_handle(CreateUserCommand)
+        assert handler.can_handle(UpdateUserCommand) is False
+
+    def test_handler_infers_message_type_from_handle_hint(self) -> None:
+        """Handlers without generics fall back to handle() type hints."""
+
+        class HintOnlyHandler(FlextHandlers):
+            def handle(
+                self, message: CreateUserCommand
+            ) -> FlextResult[UserCreatedEvent]:
+                return FlextResult[UserCreatedEvent].ok(
+                    UserCreatedEvent(
+                        user_id="generated",
+                        username=message.username,
+                        email=message.email,
+                    )
+                )
+
+        handler = HintOnlyHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand)
+        assert handler.can_handle(UpdateUserCommand) is False
+
+    def test_handler_infers_message_type_from_handle_command_hint(self) -> None:
+        """Handlers can derive types from handle_command annotations."""
+
+        class CommandMethodOnlyHandler(FlextHandlers):
+            def handle(self, message: object) -> FlextResult[UserCreatedEvent]:
+                return self.handle_command(cast(CreateUserCommand, message))
+
+            def handle_command(
+                self, command: CreateUserCommand
+            ) -> FlextResult[UserCreatedEvent]:
+                return FlextResult[UserCreatedEvent].ok(
+                    UserCreatedEvent(
+                        user_id="generated",
+                        username=command.username,
+                        email=command.email,
+                    )
+                )
+
+        handler = CommandMethodOnlyHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand)
+        assert handler.can_handle(UpdateUserCommand) is False
+
+    def test_handler_without_type_hints_warns_once_and_rejects(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Handlers without type information should warn once and reject messages."""
+
+        class UntypedHandler(FlextHandlers):
+            def handle(self, message: object) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        captured_warnings: list[str] = []
+
+        def capture_warning(
+            self: FlextLogger, message: str, *args: object, **context: object
+        ) -> None:
+            captured_warnings.append(message)
+
+        monkeypatch.setattr(FlextLogger, "warning", capture_warning)
+
+        handler = UntypedHandler()
+
+        assert handler._accepted_message_types == ()
+        assert handler.can_handle(CreateUserCommand) is False
+        assert handler._type_warning_emitted is True
+        assert handler.can_handle(CreateUserCommand) is False
+        assert captured_warnings == ["handler_type_constraints_unknown"]
 
     def test_create_user_handler_success_flow(self) -> None:
         """Test complete user creation handler success flow with real implementations."""
