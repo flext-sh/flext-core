@@ -534,14 +534,10 @@ class FlextUtilities:
 
                 # For other types, try to cast directly
                 try:
-                    # Type construction - handle object type specially
-                    if target_type is object:
-                        converted_value = value
-                    else:
-                        # For other types with constructors, try calling them
-                        # Use type ignore to handle mypy's overly strict object constructor check
-                        converted_value = target_type(value)  # type: ignore[call-arg]
-                    return FlextResult[T].ok(cast("T", converted_value))
+                    # For other types with constructors, try calling them
+                    # Use type ignore to handle mypy's overly strict object constructor check
+                    converted_value = target_type(value)
+                    return FlextResult[T].ok(converted_value)
                 except (TypeError, ValueError):
                     # If constructor fails, return the value with type ignore
                     return FlextResult[T].ok(cast("T", value))
