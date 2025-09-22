@@ -143,7 +143,14 @@ def test_dispatcher_cache_hits_for_equivalent_pydantic_queries() -> None:
     )
     assert register_result.is_success
 
-    dispatcher.bus._cache.clear()
+    # Avoid accessing private _cache directly; prefer a public API.
+    if hasattr(dispatcher.bus, "clear_cache") and callable(dispatcher.bus.clear_cache):
+        dispatcher.bus.clear_cache()
+    else:
+        raise RuntimeError(
+            "dispatcher.bus does not provide a public 'clear_cache' method. "
+            "Please add a public API to clear the cache instead of accessing _cache directly."
+        )
 
     first_query = CachedQuery(filters={"c": 3, "d": 4}, offsets=[1, 2])
     second_query = CachedQuery(filters={"d": 4, "c": 3}, offsets=[1, 2])
