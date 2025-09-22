@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
+from typing import cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -21,7 +22,7 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
 
-class FlextContainer(FlextProtocols.Infrastructure.Configurable):
+class FlextContainer:
     """Global container providing the standardized FLEXT service contract.
 
     Optimized implementation using FlextResult railway patterns for 75% code reduction
@@ -131,6 +132,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "services": list(self._services.keys()),
             "factories": list(self._factories.keys()),
         }
+
+    @staticmethod
+    def _as_configurable(
+        container: FlextContainer,
+    ) -> FlextProtocols.Infrastructure.Configurable:
+        """Cast helper to satisfy static protocol checks while keeping runtime concrete."""
+
+        return cast(FlextProtocols.Infrastructure.Configurable, container)
 
     # =========================================================================
     # CORE SERVICE MANAGEMENT - Primary operations with railway patterns
@@ -863,8 +872,10 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 "Module name must be non-empty string"
             )
 
+        container = cls.get_global()
+
         return FlextResult[FlextTypes.Core.Dict].ok({
-            "container": cls.get_global(),
+            "container": cls._as_configurable(container),
             "module": module_name,
             "logger": f"flext.{module_name}",
         })
