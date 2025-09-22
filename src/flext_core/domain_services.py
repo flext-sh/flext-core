@@ -13,6 +13,7 @@ from __future__ import annotations
 import signal
 import time
 from abc import ABC, abstractmethod
+import inspect
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -88,7 +89,7 @@ class FlextDomainService[TDomainResult](
                 f"Validation failed: {validation_result.error}"
             )
 
-        return self.execute()
+        return self.execute_with_request(request)
 
     def is_valid(self) -> bool:
         """Check if the domain service is in a valid state.
@@ -184,7 +185,7 @@ class FlextDomainService[TDomainResult](
         return self.execute()
 
     def execute_with_request(
-        self, _request: FlextModels.DomainServiceExecutionRequest
+        self, request: FlextModels.DomainServiceExecutionRequest
     ) -> FlextResult[TDomainResult]:
         """Execute with DomainServiceExecutionRequest model containing execution settings.
 
@@ -195,8 +196,68 @@ class FlextDomainService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with error
 
         """
-        # Execute the operation
-        return self.execute()
+        method_name = getattr(request, "method_name", "execute") or "execute"
+        method = getattr(self, method_name, None)
+        if method is None or not callable(method):
+            return FlextResult[TDomainResult].fail(
+                f"Method '{method_name}' not found on {self.__class__.__name__}"
+            )
+
+        call_parameters: dict[str, object] = dict(
+            getattr(request, "parameters", {}) or {}
+        )
+        context = getattr(request, "context", None)
+        timeout_seconds = getattr(request, "timeout_seconds", None)
+
+        try:
+            method_signature = inspect.signature(method)
+        except (TypeError, ValueError):  # pragma: no cover - builtins without signature
+            method_signature = None
+
+        has_var_kwargs = (
+            method_signature is not None
+            and any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in method_signature.parameters.values()
+            )
+        )
+
+        def inject_kwarg(name: str, value: object) -> None:
+            if value is None or name in call_parameters:
+                return
+            if method_signature is None or has_var_kwargs:
+                call_parameters[name] = value
+                return
+            if name in method_signature.parameters:
+                call_parameters[name] = value
+
+        inject_kwarg("context", context)
+        inject_kwarg("timeout_seconds", timeout_seconds)
+
+        @contextmanager
+        def timeout_context(seconds: int) -> Generator[None]:
+            def timeout_handler(_signum: int, _frame: object) -> None:
+                msg = f"Operation timed out after {seconds} seconds"
+                raise TimeoutError(msg)
+
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(seconds)
+            try:
+                yield
+            finally:
+                signal.alarm(0)
+
+        def invoke_operation() -> FlextResult[TDomainResult]:
+            return method(**call_parameters)
+
+        if timeout_seconds and timeout_seconds > 0:
+            try:
+                with timeout_context(int(timeout_seconds)):
+                    return invoke_operation()
+            except TimeoutError as exc:
+                return FlextResult[TDomainResult].fail(str(exc))
+
+        return invoke_operation()
 
     def execute_with_timeout(self, timeout_seconds: int) -> FlextResult[TDomainResult]:
         """Execute with timeout constraint.

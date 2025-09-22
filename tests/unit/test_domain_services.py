@@ -152,6 +152,42 @@ class ComplexTypeService(FlextDomainService[dict[str, object]]):
         })
 
 
+class RequestAwareService(FlextDomainService[dict[str, object]]):
+    """Service that records validation and request details for testing."""
+
+    validation_calls: int = 0
+
+    def __init__(self, **data: object) -> None:
+        super().__init__(**data)
+        object.__setattr__(self, "validation_calls", 0)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Record validation invocations and always pass."""
+        object.__setattr__(self, "validation_calls", self.validation_calls + 1)
+        return FlextResult[None].ok(None)
+
+    def execute(self) -> FlextResult[dict[str, object]]:
+        """Default execute returning method identifier."""
+        return FlextResult[dict[str, object]].ok({"method": "execute"})
+
+    def custom_operation(
+        self,
+        value: int,
+        *,
+        context: dict[str, object] | None = None,
+        timeout_seconds: int | None = None,
+    ) -> FlextResult[dict[str, object]]:
+        """Return the parameters received for assertion."""
+        return FlextResult[dict[str, object]].ok(
+            {
+                "method": "custom_operation",
+                "value": value,
+                "context": context,
+                "timeout_seconds": timeout_seconds,
+            }
+        )
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -267,6 +303,32 @@ class TestDomainServicesFixed:
         result = service.validate_config()
         assert result.is_failure
         assert result.error is not None and "Name too long" in result.error
+
+    def test_execute_with_full_validation_uses_request_parameters(self) -> None:
+        """Ensure execute_with_full_validation forwards the request data."""
+        service = RequestAwareService()
+        request_context = {
+            "trace_id": "trace-123",
+            "span_id": "span-456",
+            "request_id": "req-789",
+        }
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="RequestAwareService",
+            method_name="custom_operation",
+            parameters={"value": 42},
+            context=request_context,
+            timeout_seconds=1,
+        )
+
+        result = service.execute_with_full_validation(request)
+
+        assert service.validation_calls == 1
+        assert result.is_success
+        payload = result.unwrap()
+        assert payload["method"] == "custom_operation"
+        assert payload["value"] == 42
+        assert payload["timeout_seconds"] == 1
+        assert payload["context"] == request_context
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
