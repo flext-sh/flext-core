@@ -273,7 +273,7 @@ class FlextTestsFixtures:
 
             """
             session_data: FlextTypes.Core.Dict = (
-                dict(data) if data is not None else {}
+                data or {}
             )
             session_data["id"] = session_id
             session_data["created_at"] = "2024-01-01T00:00:00Z"
