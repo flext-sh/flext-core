@@ -473,7 +473,7 @@ class FlextBus(FlextMixins):
 
             # Get actual middleware instance
             middleware_id = config_data.get("middleware_id")
-            if middleware_id is None:
+            if middleware_id is None or not isinstance(middleware_id, str):
                 continue
 
             middleware = self._middleware_instances.get(middleware_id)
