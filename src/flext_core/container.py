@@ -49,7 +49,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Type annotation guarantees name is str, so no isinstance check needed
             normalized = name.strip().lower()
             if not normalized:
-                return FlextResult[str].fail("Service name cannot be empty")
+                return FlextResult[str].fail(
+                    FlextConstants.Messages.SERVICE_NAME_EMPTY
+                )
 
             # Additional validation for special characters
             if any(char in normalized for char in [".", "/", "\\"]):
