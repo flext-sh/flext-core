@@ -491,10 +491,12 @@ class TestFlextCqrsIntegration:
         # Mock FlextConfig behavior
         mock_instance = Mock()
         mock_config.return_value = mock_instance
-        mock_bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(None)
-        mock_instance.get_cqrs_bus_config.return_value = FlextResult[
-            FlextModels.CqrsConfig.Bus
-        ].ok(mock_bus_config)
+        expected_timeout = 90
+        mock_instance.get_cqrs_bus_config.return_value = {
+            "execution_timeout": expected_timeout,
+            "enable_metrics": True,
+            "enable_logging": True,
+        }
 
         # Test configuration helper
         config_result = FlextCqrs._ConfigurationHelper.get_default_cqrs_config()
@@ -502,6 +504,7 @@ class TestFlextCqrsIntegration:
         assert config_result.is_success
         mock_config.assert_called_once()
         mock_instance.get_cqrs_bus_config.assert_called_once()
+        assert config_result.value.execution_timeout == expected_timeout
 
     def test_utility_integration(self) -> None:
         """Test integration with FlextUtilities for ID generation."""
