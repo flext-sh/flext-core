@@ -358,14 +358,16 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         return datetime.now(UTC).isoformat()
 
-    def _sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
+    def _sanitize_context(
+        self, context: FlextTypes.Core.Dict
+    ) -> FlextTypes.Core.Dict:
         """Sanitize context by redacting sensitive data.
 
         Args:
             context: Context dictionary to sanitize
 
         Returns:
-            dict[str, object]: Sanitized context dictionary
+            FlextTypes.Core.Dict: Sanitized context dictionary
 
         """
         sensitive_keys = {
@@ -385,14 +387,14 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             "cookie",
         }
 
-        sanitized: dict[str, object] = {}
+        sanitized: FlextTypes.Core.Dict = {}
         for key, value in context.items():
             key_lower = str(key).lower()
             if any(sensitive in key_lower for sensitive in sensitive_keys):
                 sanitized[key] = "[REDACTED]"
             elif isinstance(value, dict):
                 sanitized[key] = self._sanitize_context(
-                    cast("dict[str, object]", value)
+                    cast("FlextTypes.Core.Dict", value)
                 )
             else:
                 sanitized[key] = value
@@ -403,7 +405,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         self,
         level: str,
         message: str,
-        context: Mapping[str, object] | None = None,
+        context: FlextTypes.Core.Dict | Mapping[str, object] | None = None,
         error: Exception | str | None = None,
         duration_ms: float | None = None,
     ) -> FlextLogger.LogEntry:
@@ -441,13 +443,14 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         system_ctx = self._persistent_context.get("system")
 
         if isinstance(service_ctx, dict) and service_ctx:
-            entry["service"] = dict(cast("dict[str, object]", service_ctx))
+            entry["service"] = dict(cast("FlextTypes.Core.Dict", service_ctx))
         if isinstance(system_ctx, dict) and system_ctx:
-            entry["system"] = dict(cast("dict[str, object]", system_ctx))
+            entry["system"] = dict(cast("FlextTypes.Core.Dict", system_ctx))
 
         # Add request context if available
         request_context = cast(
-            "dict[str, object] | None", getattr(self._local, "request_context", None)
+            "FlextTypes.Core.Dict | None",
+            getattr(self._local, "request_context", None),
         )
         # Always set request (may be empty)
         entry["request"] = (
@@ -457,7 +460,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Add permanent context if available
         permanent_context = getattr(self, "_persistent_context", None)
         if isinstance(permanent_context, dict) and permanent_context:
-            entry["permanent"] = dict(cast("dict[str, object]", permanent_context))
+            entry["permanent"] = dict(
+                cast("FlextTypes.Core.Dict", permanent_context)
+            )
 
         # Add performance metrics
         if duration_ms is not None:
@@ -536,7 +541,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     def set_request_context(self, **context: object) -> None:
         """Set request-specific context - optimized through context manager."""
         # Extract known fields from context
-        model_kwargs: dict[str, object] = {}
+        model_kwargs: FlextTypes.Core.Dict = {}
         if "request_id" in context:
             model_kwargs["request_id"] = str(context["request_id"])
         if "method" in context and context["method"] is not None:
@@ -643,7 +648,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     ) -> None:
         """Set persistent context data - optimized through context manager."""
         # Merge context_dict and kwargs
-        final_context: dict[str, object] = {}
+        final_context: FlextTypes.Core.Dict = {}
         if context_dict is not None:
             final_context.update(context_dict)
         final_context.update(context)
@@ -1138,18 +1143,18 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         return self._local
 
-    def get_persistent_context(self) -> dict[str, object]:
+    def get_persistent_context(self) -> FlextTypes.Core.Dict:
         """Get persistent context dictionary.
 
         Returns:
-            dict[str, object]: Persistent context dictionary
+            FlextTypes.Core.Dict: Persistent context dictionary
 
         """
         if not hasattr(self, "_persistent_context"):
             self._persistent_context = {}
         return self._persistent_context
 
-    def set_persistent_context_dict(self, context: dict[str, object]) -> None:
+    def set_persistent_context_dict(self, context: FlextTypes.Core.Dict) -> None:
         """Set persistent context dictionary (internal use).
 
         Args:
@@ -1158,11 +1163,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         self._persistent_context = context
 
-    def get_logger_attributes(self) -> dict[str, object]:
+    def get_logger_attributes(self) -> FlextTypes.Core.Dict:
         """Get logger attributes for binding.
 
         Returns:
-            dict[str, object]: Logger attributes dictionary
+            FlextTypes.Core.Dict: Logger attributes dictionary
 
         """
         return {
@@ -1174,7 +1179,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         }
 
     @classmethod
-    def get_configuration(cls) -> dict[str, object]:
+    def get_configuration(cls) -> FlextTypes.Core.Dict:
         """Get current logging configuration from FlextConfig singleton.
 
         Returns:
@@ -1276,8 +1281,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 str: Formatted log entry string
 
             """
-            # Convert EventDict to dict[str, object] for type safety
-            typed_event_dict: dict[str, object] = dict(event_dict)
+            # Convert EventDict to FlextTypes.Core.Dict for type safety
+            typed_event_dict: FlextTypes.Core.Dict = dict(event_dict)
             return self._format_event(typed_event_dict)
 
         def _format_event(self, event_dict: FlextTypes.Core.Dict) -> str:
@@ -1303,7 +1308,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             service_info = event_dict.get("service", {})
             if isinstance(service_info, dict):
                 service_name = str(
-                    cast("dict[str, object]", service_info).get("name", logger_name)
+                    cast("FlextTypes.Core.Dict", service_info).get(
+                        "name", logger_name
+                    )
                 )
             else:
                 service_name = logger_name
@@ -1420,11 +1427,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 # Format context info
                 context_parts: list[str] = []
                 if isinstance(context_raw, dict) and context_raw:
-                    context = cast("dict[str, object]", context_raw)
+                    context = cast("FlextTypes.Core.Dict", context_raw)
                     # Extract meaningful context data
                     extra_dict = context
                     extra = (
-                        cast("dict[str, object]", extra_dict.get("extra", {}))
+                        cast("FlextTypes.Core.Dict", extra_dict.get("extra", {}))
                         if isinstance(extra_dict.get("extra"), dict)
                         else {}
                     )
@@ -1446,7 +1453,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             # Format execution info
             execution_parts: list[str] = []
             if isinstance(execution_raw, dict) and execution_raw:
-                execution = cast("dict[str, object]", execution_raw)
+                execution = cast("FlextTypes.Core.Dict", execution_raw)
                 func_name = str(execution.get("function", ""))
                 line_num = str(execution.get("line", ""))
                 uptime = str(execution.get("uptime_seconds", ""))
@@ -1494,10 +1501,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             lines.append(main_line)
 
             # Extract all sections
-            context = cast("dict[str, object]", event_dict.get("context", {}))
-            execution = cast("dict[str, object]", event_dict.get("execution", {}))
-            service = cast("dict[str, object]", event_dict.get("service", {}))
-            system = cast("dict[str, object]", event_dict.get("system", {}))
+            context = cast("FlextTypes.Core.Dict", event_dict.get("context", {}))
+            execution = cast("FlextTypes.Core.Dict", event_dict.get("execution", {}))
+            service = cast("FlextTypes.Core.Dict", event_dict.get("service", {}))
+            system = cast("FlextTypes.Core.Dict", event_dict.get("system", {}))
 
             # Color setup
             context_color = self._info_colors["context"]
@@ -1509,7 +1516,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             # Format context
             if context:
                 extra = (
-                    cast("dict[str, object]", context.get("extra", {}))
+                    cast("FlextTypes.Core.Dict", context.get("extra", {}))
                     if isinstance(context.get("extra"), dict)
                     else {}
                 )
@@ -1731,7 +1738,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 # Add new bound context
                 if model.context_data:
                     # Extract known fields from context_data
-                    context_kwargs: dict[str, object] = {
+                    context_kwargs: FlextTypes.Core.Dict = {
                         "request_id": str(uuid.uuid4())
                     }
                     if "method" in model.context_data:
@@ -1790,19 +1797,21 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             except Exception as e:
                 return FlextResult[FlextLogger].fail(f"Failed to bind context: {e}")
 
-        def get_consolidated_context(self) -> dict[str, object]:
+        def get_consolidated_context(self) -> FlextTypes.Core.Dict:
             """Get all context data consolidated for log entry building.
 
             Returns:
-                dict[str, object]: Consolidated context data
+                FlextTypes.Core.Dict: Consolidated context data
 
             """
-            consolidated: dict[str, object] = {}
+            consolidated: FlextTypes.Core.Dict = {}
 
             # Add request context
             local = self._logger.get_local_storage()
             if hasattr(local, "request_context"):
-                consolidated.update(cast("dict[str, object]", local.request_context))
+                consolidated.update(
+                    cast("FlextTypes.Core.Dict", local.request_context)
+                )
 
             # Add permanent context
             persistent_context = self._logger.get_persistent_context()
@@ -1811,7 +1820,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             return consolidated
 
         def _deep_merge_context(
-            self, target: dict[str, object], source: dict[str, object]
+            self, target: FlextTypes.Core.Dict, source: FlextTypes.Core.Dict
         ) -> None:
             """Deep merge context dictionaries."""
             for key, value in source.items():
@@ -1821,8 +1830,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     and isinstance(value, dict)
                 ):
                     self._deep_merge_context(
-                        cast("dict[str, object]", target[key]),
-                        cast("dict[str, object]", value),
+                        cast("FlextTypes.Core.Dict", target[key]),
+                        cast("FlextTypes.Core.Dict", value),
                     )
                 else:
                     target[key] = value
