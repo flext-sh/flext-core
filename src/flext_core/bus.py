@@ -523,17 +523,32 @@ class FlextBus(FlextMixins):
     ) -> FlextResult[None]:
         """Append middleware with validated configuration metadata.
 
+        Returns a failure result when the middleware pipeline is disabled via
+        configuration, otherwise records the middleware definition and
+        instance.
+
         Args:
             middleware: The middleware instance to add
             middleware_config: Configuration for the middleware
 
         Returns:
-            FlextResult: Success or failure result
+            FlextResult: Success when middleware is tracked or failure when the
+                pipeline is disabled
 
         """
         if not self._config_model.enable_middleware:
-            # Middleware pipeline is disabled, skip adding
-            return FlextResult[None].ok(None)
+            message = (
+                "Middleware pipeline is disabled by configuration; cannot add middleware"
+            )
+            self.logger.warning(
+                message,
+                middleware_type=type(middleware).__name__,
+                middleware_id=getattr(middleware, "middleware_id", None),
+            )
+            return FlextResult[None].fail(
+                message,
+                error_code=FlextConstants.Errors.CONFIG_ERROR,
+            )
 
         # Create config if not provided
         if middleware_config is None:
