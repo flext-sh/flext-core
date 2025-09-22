@@ -136,6 +136,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     "structured_output",
                     FlextConstants.Logging.STRUCTURED_OUTPUT,
                 ),
+                "log_verbosity": getattr(
+                    global_config,
+                    "log_verbosity",
+                    FlextConstants.Logging.VERBOSITY,
+                ),
             }
 
             # Call configure with proper typed arguments
@@ -154,6 +159,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 )
             )
 
+            log_verbosity = str(
+                config_kwargs.get(
+                    "log_verbosity", FlextConstants.Logging.VERBOSITY
+                )
+            )
+
             # Type-safe configure call
             json_output_typed: bool | None = (
                 None if json_output is None else bool(json_output)
@@ -163,6 +174,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 json_output=json_output_typed,
                 include_source=include_source,
                 structured_output=structured_output,
+                log_verbosity=log_verbosity,
             )
 
         # Use validated model values if available, otherwise use original parameters
@@ -543,6 +555,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             model_kwargs["method"] = str(context["method"])
         if "path" in context and context["path"] is not None:
             model_kwargs["path"] = str(context["path"])
+        if "user_id" in context and context["user_id"] is not None:
+            model_kwargs["user_id"] = str(context["user_id"])
+        if "endpoint" in context and context["endpoint"] is not None:
+            model_kwargs["endpoint"] = str(context["endpoint"])
         if "headers" in context and isinstance(context["headers"], dict):
             headers_dict = cast("dict[object, object]", context["headers"])
             model_kwargs["headers"] = {str(k): str(v) for k, v in headers_dict.items()}
@@ -563,6 +579,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             if model_kwargs.get("correlation_id")
             else None
         )
+        user_id = str(model_kwargs["user_id"]) if model_kwargs.get("user_id") else None
+        endpoint = (
+            str(model_kwargs["endpoint"]) if model_kwargs.get("endpoint") else None
+        )
 
         model = FlextModels.LoggerRequestContextModel(
             request_id=request_id,
@@ -571,6 +591,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             headers=headers,
             query_params=query_params,
             correlation_id=correlation_id,
+            user_id=user_id,
+            endpoint=endpoint,
         )
         result = self._context_manager.set_request_context(model)
         if result.is_failure:
@@ -915,6 +937,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             FlextResult[None]: Success or failure with error details
 
         """
+        global_config = FlextConfig.get_global_instance()
+
+        resolved_log_verbosity = (
+            log_verbosity
+            or getattr(
+                global_config,
+                "log_verbosity",
+                FlextConstants.Logging.VERBOSITY,
+            )
+        )
+
         # Create configuration model with defaults
         config_model = FlextModels.LoggerConfigurationModel(
             log_level=log_level or "INFO",
@@ -922,7 +955,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
             structured_output=structured_output
             or FlextConstants.Logging.STRUCTURED_OUTPUT,
-            log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
+            log_verbosity=resolved_log_verbosity,
         )
 
         # Reset if already configured (allow reconfiguration)
@@ -1627,6 +1660,14 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     local.request_context["headers"] = model.headers
                 if model.query_params:
                     local.request_context["query_params"] = model.query_params
+                if model.user_id:
+                    local.request_context["user_id"] = model.user_id
+                if model.endpoint:
+                    local.request_context["endpoint"] = model.endpoint
+                # Add custom data fields to the request context
+                if model.custom_data:
+                    for key, value in model.custom_data.items():
+                        local.request_context[key] = value
                 if model.correlation_id:
                     self._logger.set_correlation_id_internal(model.correlation_id)
 
@@ -1762,6 +1803,24 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                             model.context_data["correlation_id"]
                         )
 
+                    # Collect any custom fields that aren't predefined
+                    predefined_fields = {
+                        "request_id",
+                        "method",
+                        "path",
+                        "headers",
+                        "query_params",
+                        "correlation_id",
+                        "user_id",
+                        "endpoint",
+                    }
+                    custom_data: dict[str, str] = {}
+                    for key, value in model.context_data.items():
+                        if key not in predefined_fields:
+                            custom_data[str(key)] = str(value)
+
+                    context_kwargs["custom_data"] = custom_data
+
                     new_context_model = FlextModels.LoggerRequestContextModel(
                         request_id=str(context_kwargs.get("request_id", "")),
                         method=str(context_kwargs.get("method"))
@@ -1783,6 +1842,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                         correlation_id=str(context_kwargs.get("correlation_id"))
                         if context_kwargs.get("correlation_id")
                         else None,
+                        custom_data=cast(
+                            "dict[str, str]", context_kwargs.get("custom_data", {})
+                        ),
                     )
                     bound_logger._context_manager.set_request_context(new_context_model)
 

@@ -29,6 +29,7 @@ import pytest
 
 from flext_core import (
     FlextContext,
+    FlextConfig,
     FlextLogger,
     FlextTypes,
 )
@@ -113,7 +114,7 @@ class TestFlextLoggerInitialization:
             "test_service",
             _level="DEBUG",
             _service_name="payment-service",
-            service_version="2.1.0",
+            _service_version="2.1.0",
         )
 
         assert logger._name == "test_service"
@@ -963,6 +964,23 @@ class TestLoggerConfiguration:
         log_entry = logger._build_log_entry("INFO", "Processor test")
         assert log_entry.get("correlation_id") == test_correlation
 
+    def test_global_log_verbosity_propagates_to_configuration(self) -> None:
+        """Ensure global log verbosity updates are honored by configure."""
+
+        config = FlextConfig.get_global_instance()
+        original_verbosity = config.log_verbosity
+        config.log_verbosity = "compact"
+
+        try:
+            FlextLogger._configured = False
+            result = FlextLogger.configure()
+            assert result.is_success
+
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_verbosity"] == "compact"
+        finally:
+            config.log_verbosity = original_verbosity
+
 
 class TestConvenienceFunctions:
     """Test convenience functions and factory methods."""
@@ -980,7 +998,7 @@ class TestConvenienceFunctions:
         logger = FlextLogger(
             "versioned_test",
             _service_name="test-service",
-            service_version="1.2.3",
+            _service_version="1.2.3",
         )
 
         assert logger._service_version == "1.2.3"
