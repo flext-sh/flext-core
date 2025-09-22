@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -294,12 +295,12 @@ class TestFlextConfigRealCoverage:
         base_config = FlextConfig(app_name="base", version="1.0.0", debug=False)
 
         # Test merge with dict
-        override_dict: dict[str, object] = {
+        override_dict: dict[str, str | bool | int] = {
             "app_name": "merged",
             "debug": True,
             "max_workers": 16,
         }
-        merged = base_config.merge(override_dict)
+        merged = base_config.merge(cast("dict[str, object]", override_dict))
 
         assert merged.app_name == "merged"
         assert merged.debug is True

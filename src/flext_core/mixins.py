@@ -9,11 +9,14 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import UTC, datetime
+from typing import Any, Callable, cast
 
+from pydantic import BaseModel
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.utilities import FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class FlextMixins:
@@ -76,14 +79,14 @@ class FlextMixins:
         )
 
     @staticmethod
-    def to_dict(request: FlextModels.SerializationRequest) -> dict[str, object]:
+    def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Core.Dict:
         """Convert object to dictionary using SerializationRequest model.
 
         Args:
             request: SerializationRequest containing object and serialization options
 
         Returns:
-            Dictionary representation of the object
+            Dictionary representation of the object as FlextTypes.Core.Dict
 
         """
         obj = request.data
@@ -95,17 +98,23 @@ class FlextMixins:
                 result = model_dump_method()
                 if isinstance(result, dict):
                     # Type-safe conversion with explicit casting
-                    return cast("dict[str, object]", result)
-                return {"model_dump": result}
+                    return cast("FlextTypes.Core.Dict", result)
+                return cast(
+                    "FlextTypes.Core.Dict",
+                    {"model_dump": result},
+                )
 
         # Try __dict__ method with proper type casting
         if hasattr(obj, "__dict__"):
             obj_dict = obj.__dict__
-            # obj.__dict__ is always a dict[str, object], so we can safely cast it
-            return cast("dict[str, object]", obj_dict)
+            # obj.__dict__ is always a FlextTypes.Core.Dict, so we can safely cast it
+            return cast("FlextTypes.Core.Dict", obj_dict)
 
         # Fallback to type and value representation
-        return {"type": type(obj).__name__, "value": str(obj)}
+        return cast(
+            "FlextTypes.Core.Dict",
+            {"type": type(obj).__name__, "value": str(obj)},
+        )
 
     # =============================================================================
     # VALIDATION METHODS - Direct Pydantic implementation
@@ -192,17 +201,22 @@ class FlextMixins:
             **config.context,
         }
 
-        # Log based on level - match Literal values exactly
-        if config.level == "DEBUG":
-            logger.debug(f"Operation: {config.operation}", extra=context)
-        elif config.level == "INFO":
-            logger.info(f"Operation: {config.operation}", extra=context)
-        elif config.level == "WARNING":
-            logger.warning(f"Operation: {config.operation}", extra=context)
-        elif config.level == "ERROR":
-            logger.error(f"Operation: {config.operation}", extra=context)
-        elif config.level == "CRITICAL":
-            logger.critical(f"Operation: {config.operation}", extra=context)
+        normalized_level = str(config.level).upper()
+        level_method_map: dict[str, Callable[..., None]] = {
+            FlextConstants.Logging.DEBUG: logger.debug,
+            FlextConstants.Logging.INFO: logger.info,
+            FlextConstants.Logging.WARNING: logger.warning,
+            FlextConstants.Logging.ERROR: logger.error,
+            FlextConstants.Logging.CRITICAL: logger.critical,
+        }
+
+        log_method = level_method_map.get(normalized_level)
+
+        if log_method is None:
+            normalized_level = FlextConstants.Logging.DEFAULT_LEVEL
+            log_method = level_method_map.get(normalized_level, logger.info)
+
+        log_method(f"Operation: {config.operation}", extra=context)
 
     # =============================================================================
     # STATE MANAGEMENT METHODS - Direct Pydantic implementation
@@ -257,6 +271,173 @@ class FlextMixins:
                 # Use FlextUtilities to generate ID
                 new_id = FlextUtilities.Generators.generate_id()
                 setattr(obj, FlextConstants.Mixins.FIELD_ID, new_id)
+
+    # =============================================================================
+    # CONFIGURATION METHODS - Direct Pydantic implementation
+    # =============================================================================
+
+    @staticmethod
+    def get_config_parameter(obj: object, parameter: str) -> object:
+        """Get any parameter value from a Pydantic configuration object.
+
+        This method works seamlessly with Pydantic Settings by using
+        the model's model_dump method for safe parameter access.
+        The parameter MUST be defined in the model - no default fallback.
+
+        Args:
+            obj: The configuration object (must have model_dump method)
+            parameter: The parameter name to retrieve (must exist in model)
+
+        Returns:
+            The parameter value
+
+        Raises:
+            KeyError: If parameter is not defined in the model
+
+        Example:
+            config = FlextConfig.get_global_instance()
+            debug_mode = FlextMixins.get_config_parameter(config, 'debug')
+            log_level = FlextMixins.get_config_parameter(config, 'log_level')
+
+        """
+        # Use Pydantic's model_dump to get all fields as dict
+        if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
+            model_dump_method = getattr(obj, "model_dump")
+            model_data: FlextTypes.Core.Dict = cast(
+                FlextTypes.Core.Dict, model_dump_method()
+            )
+            if parameter not in model_data:
+                msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+                raise KeyError(msg)
+            return model_data[parameter]
+
+        # Fallback for non-Pydantic objects - check if attribute exists
+        if not hasattr(obj, parameter):
+            msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+            raise KeyError(msg)
+        return getattr(obj, parameter)
+
+    @staticmethod
+    def set_config_parameter(obj: object, parameter: str, value: object) -> bool:
+        """Set any parameter value on a Pydantic configuration object with full validation.
+
+        This method works with Pydantic Settings and maintains all validation,
+        including field validators, model validators, and secrets handling.
+
+        Args:
+            obj: The configuration object (Pydantic BaseSettings instance)
+            parameter: The parameter name to set
+            value: The new value to set (will be validated by Pydantic)
+
+        Returns:
+            True if successful, False if validation failed or parameter doesn't exist
+
+        Example:
+            config = FlextConfig.get_global_instance()
+            success = FlextMixins.set_config_parameter(config, 'debug', True)
+            success = FlextMixins.set_config_parameter(config, 'log_level', 'DEBUG')
+
+        """
+        try:
+            # Check if the parameter exists in the model fields
+            if hasattr(obj, "model_fields"):
+                model_fields: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", getattr(obj, "model_fields")
+                )
+                if parameter not in model_fields:
+                    return False
+
+            # Use Pydantic's setattr which triggers validation
+            setattr(obj, parameter, value)
+
+            # If the object has model validation, trigger it
+            if hasattr(obj, "model_validate") and hasattr(obj, "model_dump"):
+                # Get current model data and re-validate to ensure consistency
+                model_dump_method = getattr(obj, "model_dump")
+                current_data: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", model_dump_method()
+                )
+                current_data[parameter] = value
+                # This will trigger all field and model validators
+                model_validate_method = getattr(obj.__class__, "model_validate")
+                validated_instance: BaseModel = model_validate_method(current_data)
+
+                # Update all fields from the validated instance
+                validated_dump: dict[str, Any] = validated_instance.model_dump()
+                for field_name, field_value in validated_dump.items():
+                    setattr(obj, field_name, field_value)
+
+            return True
+
+        except Exception:
+            # Validation failed or other error occurred
+            return False
+
+    @staticmethod
+    def get_singleton_parameter(singleton_class: type, parameter: str) -> object:
+        """Get any parameter from a singleton configuration instance.
+
+        This method assumes the singleton class has a get_global_instance() method
+        and uses FlextMixins.get_config_parameter internally.
+        The parameter MUST be defined in the model.
+
+        Args:
+            singleton_class: The singleton class (e.g., FlextConfig)
+            parameter: The parameter name to retrieve (must exist in model)
+
+        Returns:
+            The parameter value
+
+        Raises:
+            KeyError: If parameter is not defined in the model
+            AttributeError: If class doesn't have get_global_instance method
+
+        Example:
+            debug_mode = FlextMixins.get_singleton_parameter(FlextConfig, 'debug')
+            log_level = FlextMixins.get_singleton_parameter(FlextConfig, 'log_level')
+
+        """
+        if hasattr(singleton_class, "get_global_instance"):
+            get_global_instance_method = getattr(singleton_class, "get_global_instance")
+            instance = get_global_instance_method()
+            return FlextMixins.get_config_parameter(instance, parameter)
+
+        msg = (
+            f"Class {singleton_class.__name__} does not have get_global_instance method"
+        )
+        raise AttributeError(msg)
+
+    @staticmethod
+    def set_singleton_parameter(
+        singleton_class: type, parameter: str, value: object
+    ) -> bool:
+        """Set any parameter on a singleton configuration instance with validation.
+
+        This method assumes the singleton class has a get_global_instance() method
+        and uses FlextMixins.set_config_parameter internally with full Pydantic validation.
+
+        Args:
+            singleton_class: The singleton class (e.g., FlextConfig)
+            parameter: The parameter name to set
+            value: The new value to set (will be validated by Pydantic)
+
+        Returns:
+            True if successful, False if validation failed or parameter doesn't exist
+
+        Example:
+            success = FlextMixins.set_singleton_parameter(FlextConfig, 'debug', True)
+            success = FlextMixins.set_singleton_parameter(FlextConfig, 'log_level', 'DEBUG')
+
+        """
+        if hasattr(singleton_class, "get_global_instance"):
+            get_global_instance_method = getattr(singleton_class, "get_global_instance")
+            instance = get_global_instance_method()
+            return FlextMixins.set_config_parameter(instance, parameter, value)
+
+        msg = (
+            f"Class {singleton_class.__name__} does not have get_global_instance method"
+        )
+        raise AttributeError(msg)
 
     # =============================================================================
     # MIXIN CLASSES - For inheritance hierarchy support
