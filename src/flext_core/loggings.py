@@ -555,6 +555,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             model_kwargs["method"] = str(context["method"])
         if "path" in context and context["path"] is not None:
             model_kwargs["path"] = str(context["path"])
+        if "user_id" in context and context["user_id"] is not None:
+            model_kwargs["user_id"] = str(context["user_id"])
+        if "endpoint" in context and context["endpoint"] is not None:
+            model_kwargs["endpoint"] = str(context["endpoint"])
         if "headers" in context and isinstance(context["headers"], dict):
             headers_dict = cast("dict[object, object]", context["headers"])
             model_kwargs["headers"] = {str(k): str(v) for k, v in headers_dict.items()}
@@ -575,6 +579,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             if model_kwargs.get("correlation_id")
             else None
         )
+        user_id = str(model_kwargs["user_id"]) if model_kwargs.get("user_id") else None
+        endpoint = str(model_kwargs["endpoint"]) if model_kwargs.get("endpoint") else None
 
         model = FlextModels.LoggerRequestContextModel(
             request_id=request_id,
@@ -583,6 +589,8 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             headers=headers,
             query_params=query_params,
             correlation_id=correlation_id,
+            user_id=user_id,
+            endpoint=endpoint,
         )
         result = self._context_manager.set_request_context(model)
         if result.is_failure:
@@ -1650,6 +1658,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     local.request_context["headers"] = model.headers
                 if model.query_params:
                     local.request_context["query_params"] = model.query_params
+                if model.user_id:
+                    local.request_context["user_id"] = model.user_id
+                if model.endpoint:
+                    local.request_context["endpoint"] = model.endpoint
                 if model.correlation_id:
                     self._logger.set_correlation_id_internal(model.correlation_id)
 

@@ -113,7 +113,7 @@ class TestFlextLoggerInitialization:
             "test_service",
             _level="DEBUG",
             _service_name="payment-service",
-            service_version="2.1.0",
+            _service_version="2.1.0",
         )
 
         assert logger._name == "test_service"
@@ -997,7 +997,7 @@ class TestConvenienceFunctions:
         logger = FlextLogger(
             "versioned_test",
             _service_name="test-service",
-            service_version="1.2.3",
+            _service_version="1.2.3",
         )
 
         assert logger._service_version == "1.2.3"
