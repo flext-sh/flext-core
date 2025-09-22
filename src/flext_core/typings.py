@@ -180,8 +180,8 @@ class FlextTypes:
             FlextConstants.Environment.ConfigEnvironment.STAGING,
             FlextConstants.Environment.ConfigEnvironment.PRODUCTION,
             FlextConstants.Environment.ConfigEnvironment.TESTING,
-            FlextConstants.Config.ENVIRONMENTS[-2],
-            FlextConstants.Config.ENVIRONMENTS[-1],
+            FlextConstants.Config.ENVIRONMENTS[-2],  # e.g., "CUSTOM"
+            FlextConstants.Config.ENVIRONMENTS[-1],  # e.g., "LEGACY"
         ]
 
         # Logging levels (used in loggings, handlers, observability)
