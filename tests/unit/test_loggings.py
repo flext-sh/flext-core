@@ -28,6 +28,8 @@ from typing import NoReturn, Self, cast
 import pytest
 
 from flext_core import (
+    FlextConfig,
+    FlextConstants,
     FlextContext,
     FlextLogger,
     FlextTypes,
@@ -2185,3 +2187,136 @@ class TestCoverageTargetedTests:
 
         # Should have logged all messages at DEBUG level
         # Test completed successfully
+
+
+class TestFlextLoggerConfigCaching:
+    """Validate caching of structured logging flags from FlextConfig."""
+
+    def setup_method(self) -> None:
+        FlextLogger._instances.clear()
+        FlextLogger._configured = False
+        FlextConfig.reset_global_instance()
+        FlextLogger.refresh_cached_settings(
+            structured_output=FlextConstants.Logging.STRUCTURED_OUTPUT
+        )
+
+    def teardown_method(self) -> None:
+        FlextLogger._instances.clear()
+        FlextLogger._configured = False
+        FlextConfig.reset_global_instance()
+        FlextLogger.refresh_cached_settings(
+            structured_output=FlextConstants.Logging.STRUCTURED_OUTPUT
+        )
+
+    def test_set_global_instance_updates_structured_output_cache(self) -> None:
+        """Ensure cached structured_output flag follows FlextConfig updates."""
+
+        FlextConfig.set_global_instance(FlextConfig.create(structured_output=True))
+        logger = FlextLogger("cache_update_test")
+        assert logger._structured_output_enabled is True
+
+        original_build = logger._build_log_entry
+
+        class DummyStructLogger:
+            def __init__(self) -> None:
+                self.calls: list[tuple[str, str, dict[str, object]]] = []
+
+            def info(self, message: str, **kwargs: object) -> None:
+                self.calls.append(("info", message, dict(kwargs)))
+
+        dummy_plain = DummyStructLogger()
+
+        try:
+            FlextConfig.set_global_instance(
+                FlextConfig.create(structured_output=False)
+            )
+            assert logger._structured_output_enabled is False
+
+            def fail_build(*_args: object, **_kwargs: object) -> dict[str, object]:
+                raise AssertionError("Structured output disabled should skip builder")
+
+            logger._structlog_logger = dummy_plain  # type: ignore[assignment]
+            logger._build_log_entry = fail_build  # type: ignore[assignment]
+            logger.info("plain", extra="value")
+            assert dummy_plain.calls == [("info", "plain", {"extra": "value"})]
+        finally:
+            logger._build_log_entry = original_build
+
+        dummy_structured = DummyStructLogger()
+        structured_calls: list[tuple[str, str, dict[str, object]]] = []
+
+        def stub_build(
+            level: str,
+            message: str,
+            context: dict[str, object] | None = None,
+            error: Exception | str | None = None,
+            duration_ms: float | None = None,
+        ) -> dict[str, object]:
+            structured_calls.append((level, message, dict(context or {})))
+            return {"structured": True}
+
+        try:
+            FlextConfig.set_global_instance(
+                FlextConfig.create(structured_output=True)
+            )
+            assert logger._structured_output_enabled is True
+            logger._structlog_logger = dummy_structured  # type: ignore[assignment]
+            logger._build_log_entry = stub_build  # type: ignore[assignment]
+            logger.info("structured", field="value")
+        finally:
+            logger._build_log_entry = original_build
+
+        assert structured_calls
+        assert structured_calls[0][0] == FlextConstants.Logging.INFO
+        assert dummy_structured.calls == [
+            ("info", "structured", {"structured": True})
+        ]
+
+    def test_configure_updates_structured_output_cache(self) -> None:
+        """configure() must refresh cached structured_output values."""
+
+        FlextConfig.set_global_instance(FlextConfig.create(structured_output=True))
+        logger = FlextLogger("configure_cache_test")
+
+        class DummyStructLogger:
+            def __init__(self) -> None:
+                self.calls: list[tuple[str, str, dict[str, object]]] = []
+
+            def info(self, message: str, **kwargs: object) -> None:
+                self.calls.append(("info", message, dict(kwargs)))
+
+        dummy_logger = DummyStructLogger()
+        original_build = logger._build_log_entry
+
+        try:
+            def structured_build(
+                level: str,
+                message: str,
+                context: dict[str, object] | None = None,
+                error: Exception | str | None = None,
+                duration_ms: float | None = None,
+            ) -> dict[str, object]:
+                return {"structured": True, "context": dict(context or {})}
+
+            logger._structlog_logger = dummy_logger  # type: ignore[assignment]
+            logger._build_log_entry = structured_build  # type: ignore[assignment]
+
+            logger.info("before", sample="value")
+            assert dummy_logger.calls == [
+                ("info", "before", {"structured": True, "context": {"sample": "value"}})
+            ]
+
+            dummy_logger.calls.clear()
+
+            result = FlextLogger.configure(structured_output=False)
+            assert result.is_success
+            assert logger._structured_output_enabled is False
+
+            def fail_build(*_args: object, **_kwargs: object) -> dict[str, object]:
+                raise AssertionError("configure should disable structured builder")
+
+            logger._build_log_entry = fail_build  # type: ignore[assignment]
+            logger.info("after", foo="bar")
+            assert dummy_logger.calls == [("info", "after", {"foo": "bar"})]
+        finally:
+            logger._build_log_entry = original_build

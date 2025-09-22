@@ -552,6 +552,7 @@ class FlextConfig(BaseSettings):
                 if cls._global_instance is None:
                     # Create default instance from environment
                     cls._global_instance = cls()
+                    cls._notify_logger_cache_update(cls._global_instance)
         return cls._global_instance
 
     @classmethod
@@ -559,12 +560,31 @@ class FlextConfig(BaseSettings):
         """Set the global FlextConfig instance."""
         with cls._global_lock:
             cls._global_instance = instance
+        cls._notify_logger_cache_update(instance)
 
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global FlextConfig instance (mainly for testing)."""
         with cls._global_lock:
             cls._global_instance = None
+        cls._notify_logger_cache_update(None)
+
+    @classmethod
+    def _notify_logger_cache_update(cls, config: FlextConfig | None) -> None:
+        """Notify FlextLogger that configuration flags may have changed."""
+
+        try:
+            from flext_core.loggings import FlextLogger
+        except Exception:
+            return
+
+        if config is None:
+            FlextLogger.refresh_cached_settings(
+                structured_output=FlextConstants.Logging.STRUCTURED_OUTPUT
+            )
+            return
+
+        FlextLogger.refresh_cached_settings(config=config)
 
     def get_cqrs_bus_config(self) -> object:
         """Get CQRS bus configuration.

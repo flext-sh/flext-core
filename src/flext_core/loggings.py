@@ -58,6 +58,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     _global_correlation_id: ClassVar[str | None] = None
     _service_info: ClassVar[FlextTypes.Core.Dict] = {}
     _request_context: ClassVar[FlextTypes.Core.Dict] = {}
+    _cache_lock: ClassVar[threading.Lock] = threading.Lock()
+    _cached_structured_output: ClassVar[bool] = (
+        FlextConstants.Logging.STRUCTURED_OUTPUT
+    )
 
     # Context manager for optimized operations
     _context_manager: _ContextManager
@@ -69,6 +73,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     _name: str
     _level: FlextTypes.Config.LogLevel
     _environment: FlextTypes.Config.Environment
+    _structured_output_enabled: bool
 
     def __new__(
         cls,
@@ -179,6 +184,21 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         self._name = validated_name
         # Load configuration early so .env and FLEXT_* vars are available
         config = FlextConfig.get_global_instance()
+
+        # Cache structured logging flag for hot path usage
+        structured_output_enabled = bool(
+            getattr(
+                config,
+                "structured_output",
+                FlextConstants.Logging.STRUCTURED_OUTPUT,
+            )
+        )
+        type(self).refresh_cached_settings(
+            config=config,
+            structured_output=structured_output_enabled,
+            update_instances=False,
+        )
+        self._structured_output_enabled = structured_output_enabled
 
         # Resolve log level with strict precedence and deterministic behavior
         valid_levels = FlextConstants.Logging.VALID_LEVELS
@@ -398,6 +418,32 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 sanitized[key] = value
 
         return sanitized
+
+    @classmethod
+    def refresh_cached_settings(
+        cls,
+        config: FlextConfig | None = None,
+        *,
+        structured_output: bool | None = None,
+        update_instances: bool = True,
+    ) -> None:
+        """Update cached configuration flags used by hot path logging methods."""
+
+        if structured_output is None:
+            config_instance = config or FlextConfig.get_global_instance()
+            structured_output = bool(
+                getattr(
+                    config_instance,
+                    "structured_output",
+                    FlextConstants.Logging.STRUCTURED_OUTPUT,
+                )
+            )
+
+        with cls._cache_lock:
+            cls._cached_structured_output = structured_output
+            if update_instances:
+                for instance in cls._instances.values():
+                    instance._structured_output_enabled = structured_output
 
     def _build_log_entry(
         self,
@@ -754,22 +800,19 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     def trace(self, message: str, *args: object, **context: object) -> None:
         """Log trace message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("TRACE", formatted_message, context)
-        self._structlog_logger.debug(
-            formatted_message,
-            **entry,
-        )  # Use debug since structlog doesn't have trace
+        if not self._structured_output_enabled:
+            self._structlog_logger.debug(formatted_message, **context)
+        else:
+            entry = self._build_log_entry("TRACE", formatted_message, context)
+            self._structlog_logger.debug(
+                formatted_message,
+                **entry,
+            )  # Use debug since structlog doesn't have trace
 
     def debug(self, message: str, *args: object, **context: object) -> None:
         """Log debug message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        # Get structured_output setting from FlextConfig singleton
-        global_config = FlextConfig.get_global_instance()
-        structured_output = getattr(
-            global_config, "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
-        )
-
-        if not structured_output:
+        if not self._structured_output_enabled:
             self._structlog_logger.debug(formatted_message, **context)
         else:
             entry = self._build_log_entry(
@@ -780,13 +823,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     def info(self, message: str, *args: object, **context: object) -> None:
         """Log info message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        # Get structured_output setting from FlextConfig singleton
-        global_config = FlextConfig.get_global_instance()
-        structured_output = getattr(
-            global_config, "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
-        )
-
-        if not structured_output:
+        if not self._structured_output_enabled:
             self._structlog_logger.info(formatted_message, **context)
         else:
             entry = self._build_log_entry(
@@ -797,13 +834,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     def warning(self, message: str, *args: object, **context: object) -> None:
         """Log warning message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        # Get structured_output setting from FlextConfig singleton
-        global_config = FlextConfig.get_global_instance()
-        structured_output = getattr(
-            global_config, "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
-        )
-
-        if not structured_output:
+        if not self._structured_output_enabled:
             self._structlog_logger.warning(formatted_message, **context)
         else:
             entry = self._build_log_entry(
@@ -826,13 +857,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Handle args formatting
         formatted_message = message % args if args else message
 
-        # Get structured_output setting from FlextConfig singleton
-        global_config = FlextConfig.get_global_instance()
-        structured_output = getattr(
-            global_config, "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
-        )
-
-        if not structured_output:
+        if not self._structured_output_enabled:
             if error:
                 context["error"] = str(error)
             self._structlog_logger.error(formatted_message, **context)
@@ -860,13 +885,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Handle args formatting
         formatted_message = message % args if args else message
 
-        # Get structured_output setting from FlextConfig singleton
-        global_config = FlextConfig.get_global_instance()
-        structured_output = getattr(
-            global_config, "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
-        )
-
-        if not structured_output:
+        if not self._structured_output_enabled:
             if error:
                 context["error"] = str(error)
             self._structlog_logger.critical(formatted_message, **context)
@@ -884,10 +903,19 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         formatted_message = message % args if args else message
         exc_info = sys.exc_info()
         error = exc_info[1] if isinstance(exc_info[1], Exception) else None
-        entry = self._build_log_entry(
-            FlextConstants.Config.LogLevel.ERROR, formatted_message, context, error
-        )
-        self._structlog_logger.error(formatted_message, **entry)
+        if not self._structured_output_enabled:
+            context_with_error = dict(context)
+            if error is not None:
+                context_with_error["error"] = str(error)
+            self._structlog_logger.error(formatted_message, **context_with_error)
+        else:
+            entry = self._build_log_entry(
+                FlextConstants.Config.LogLevel.ERROR,
+                formatted_message,
+                context,
+                error,
+            )
+            self._structlog_logger.error(formatted_message, **entry)
 
     @classmethod
     def configure(
@@ -919,9 +947,16 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         config_model = FlextModels.LoggerConfigurationModel(
             log_level=log_level or "INFO",
             json_output=json_output,
-            include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
-            structured_output=structured_output
-            or FlextConstants.Logging.STRUCTURED_OUTPUT,
+            include_source=(
+                FlextConstants.Logging.INCLUDE_SOURCE
+                if include_source is None
+                else include_source
+            ),
+            structured_output=(
+                FlextConstants.Logging.STRUCTURED_OUTPUT
+                if structured_output is None
+                else structured_output
+            ),
             log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
         )
 
@@ -994,6 +1029,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
             # Store configuration
             cls._configured = True
+            cls.refresh_cached_settings(
+                structured_output=bool(config_model.structured_output)
+            )
 
             return FlextResult[None].ok(None)
 
