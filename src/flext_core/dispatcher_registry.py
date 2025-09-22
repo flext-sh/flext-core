@@ -19,6 +19,7 @@ from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextDispatcherRegistry:
@@ -261,7 +262,7 @@ class FlextDispatcherRegistry:
             FlextHandlers[object, object]
             | tuple[
                 Callable[[object], object | FlextResult[object]],
-                dict[str, object] | None,
+                FlextTypes.Core.Dict | None,
             ],
         ],
     ) -> FlextResult[FlextDispatcherRegistry.Summary]:
@@ -279,7 +280,8 @@ class FlextDispatcherRegistry:
                 continue
 
             if isinstance(entry, tuple):
-                handler_func, handler_config = entry
+                handler_func, handler_config_raw = entry
+                handler_config: FlextTypes.Core.Dict | None = handler_config_raw
                 # Convert function to handler object for registration
 
                 # Convert dict config to proper Handler config or use None
@@ -308,9 +310,9 @@ class FlextDispatcherRegistry:
 
                         metadata_raw = handler_config.get("metadata", {})
                         if not isinstance(metadata_raw, dict):
-                            metadata_val: dict[str, object] = {}
+                            metadata_val: FlextTypes.Core.Dict = {}
                         else:
-                            metadata_val = cast("dict[str, object]", metadata_raw)
+                            metadata_val = cast("FlextTypes.Core.Dict", metadata_raw)
 
                         config_obj = FlextModels.CqrsConfig.Handler(
                             handler_id=str(handler_config.get("handler_id", "default")),
@@ -326,7 +328,7 @@ class FlextDispatcherRegistry:
                         config_obj = None
 
                 # Convert config_obj to dict if it's a Handler object
-                config_dict = None
+                config_dict: FlextTypes.Core.Dict | None = None
                 if config_obj is not None:
                     if hasattr(config_obj, "model_dump"):
                         config_dict = config_obj.model_dump()
@@ -394,7 +396,7 @@ class FlextDispatcherRegistry:
         entry: FlextHandlers[object, object]
         | tuple[
             Callable[[object], object | FlextResult[object]],
-            dict[str, object] | None,
+            FlextTypes.Core.Dict | None,
         ],
         message_type: type[object],
     ) -> str:
