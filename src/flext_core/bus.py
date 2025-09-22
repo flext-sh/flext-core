@@ -6,8 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
+import json
 import time
 from collections.abc import Callable, Mapping
+from collections import OrderedDict
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
@@ -23,7 +26,77 @@ from flext_core.typings import FlextTypes
 class ModelDumpable(Protocol):
     """Protocol for objects that have a model_dump method."""
 
-    def model_dump(self) -> dict[str, object]: ...
+    def model_dump(self) -> FlextTypes.Core.Dict: ...
+
+
+def _cache_sort_key(value: object) -> str:
+    """Return a deterministic string for ordering normalized cache components."""
+
+    return json.dumps(value, sort_keys=True, default=str)
+
+
+def _normalize_cache_component(value: object) -> object:
+    """Normalize arbitrary objects into cache-friendly deterministic structures."""
+
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+
+    if isinstance(value, bytes):
+        return ("bytes", value.hex())
+
+    if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
+        try:
+            dumped = value.model_dump()
+        except TypeError:
+            dumped = None
+        if isinstance(dumped, Mapping):
+            return ("pydantic", _normalize_cache_component(dumped))
+
+    if dataclasses.is_dataclass(value):
+        return ("dataclass", _normalize_cache_component(dataclasses.asdict(value)))
+
+    if isinstance(value, Mapping):
+        # Normalize keys and values, and sort by a deterministic key
+        normalized_items = tuple(
+            (normalized_key, _normalize_cache_component(val))
+            for normalized_key, val in sorted(
+                ((_normalize_cache_component(key), val) for key, val in value.items()),
+                key=lambda item: _cache_sort_key(item[0]),
+            )
+        )
+        return ("mapping", normalized_items)
+
+    if isinstance(value, (list, tuple)):
+        return ("sequence", tuple(_normalize_cache_component(item) for item in value))
+
+    if isinstance(value, set):
+        normalized_set = tuple(
+            sorted(
+                (_normalize_cache_component(item) for item in value),
+                key=_cache_sort_key,
+            )
+        )
+        return ("set", normalized_set)
+
+    try:
+        value_vars = vars(value)
+    except TypeError:
+        return ("repr", repr(value))
+
+    normalized_vars = tuple(
+        (key, _normalize_cache_component(val))
+        for key, val in sorted(value_vars.items(), key=lambda item: item[0])
+    )
+    return ("vars", normalized_vars)
+
+
+def _make_cache_key(command: object) -> str:
+    """Create a deterministic cache key for the provided command/query."""
+
+    normalized_command = _normalize_cache_component(command)
+    serialized_command = json.dumps(normalized_command, sort_keys=True)
+    command_type = f"{command.__class__.__module__}.{command.__class__.__qualname__}"
+    return f"{command_type}:{serialized_command}"
 
 
 class FlextBus(FlextMixins):
@@ -38,10 +111,10 @@ class FlextBus(FlextMixins):
 
     def __init__(
         self,
-        bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
         *,
         enable_middleware: bool = True,
-        enable_metrics: bool = True,
+        enable_metrics: bool | None = None,
         enable_caching: bool = True,
         execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
         max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
@@ -49,15 +122,18 @@ class FlextBus(FlextMixins):
     ) -> None:
         """Initialise the bus using the CQRS configuration models."""
         super().__init__()
+        self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
+        self._max_cache_size: int = 0
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self, "bus_config")
+        self._cache: dict[str, FlextResult[object]] = {}
         FlextMixins.clear_cache(self)
         # Timestampable mixin initialization
         self._created_at = datetime.now(UTC)
         self._start_time = time.time()
 
         # Convert bus_config to dict if it's a Bus object
-        config_dict: dict[str, object] | None = None
+        config_dict: FlextTypes.Core.Dict | None = None
         if bus_config is not None:
             # Check if it's a Pydantic model with model_dump method
             if hasattr(bus_config, "model_dump") and callable(
@@ -81,11 +157,15 @@ class FlextBus(FlextMixins):
 
         self._config_model = config_model
         self._config = config_model.model_dump()
+        if config_model.enable_caching and config_model.max_cache_size > 0:
+            self._max_cache_size = config_model.max_cache_size
+        else:
+            self._max_cache_size = 0
 
         # Handlers registry: command type -> handler instance
         self._handlers: FlextTypes.Core.Dict = {}
         # Middleware pipeline (controlled by config)
-        self._middleware: list[dict[str, object]] = []
+        self._middleware: list[FlextTypes.Core.Dict] = []
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Core.Dict = {}
         # Execution counter
@@ -104,7 +184,7 @@ class FlextBus(FlextMixins):
     @classmethod
     def create_command_bus(
         cls,
-        bus_config: FlextModels.CqrsConfig.Bus | dict[str, object] | None = None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
     ) -> FlextBus:
         """Create factory helper mirroring the documented ``create_command_bus`` API.
 
@@ -121,49 +201,36 @@ class FlextBus(FlextMixins):
     def create_simple_handler(
         handler_func: Callable[[object], object],
         handler_config: FlextModels.CqrsConfig.Handler
-        | dict[str, object]
+        | FlextTypes.Core.Dict
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a bare callable into a CQRS command handler with validation.
+        """
+        Wrap a bare callable into a CQRS command handler with validation.
 
         Args:
-            handler_func: The callable function to wrap
-            handler_config: Handler configuration or None for defaults
+            handler_func: A callable that takes a single argument (the command payload) and returns a result.
+                The function should implement the business logic for the command.
+            handler_config: Optional handler configuration, either as a `FlextModels.CqrsConfig.Handler` instance
+                or a dictionary. If None, default configuration is used.
 
         Returns:
-            FlextHandlers: Configured command handler instance
-
+            FlextHandlers[object, object]: A CQRS command handler that wraps the provided callable,
+                with input/output validation and result wrapping. See `FlextHandlers.from_callable` for details.
         """
+        handler_name = getattr(handler_func, "__name__", "SimpleHandler")
 
-        class SimpleHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                super().__init__(
-                    handler_mode="command",
-                    handler_name=getattr(
-                        handler_func,
-                        "__name__",
-                        self.__class__.__name__,
-                    ),
-                    handler_config=handler_config,
-                )
-
-            def handle(self, message: object) -> FlextResult[object]:
-                result = handler_func(message)
-                if isinstance(result, FlextResult):
-                    # Result is already a FlextResult, just return it
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
-
-            def __call__(self, command: object) -> FlextResult[object]:
-                return self.handle(command)
-
-        return SimpleHandler()
+        return FlextHandlers.from_callable(
+            handler_func,
+            mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_config=handler_config,
+            handler_name=handler_name,
+        )
 
     @staticmethod
     def create_query_handler(
         handler_func: Callable[[object], object],
         handler_config: FlextModels.CqrsConfig.Handler
-        | dict[str, object]
+        | FlextTypes.Core.Dict
         | None = None,
     ) -> FlextHandlers[object, object]:
         """Wrap a callable into a CQRS query handler that returns `FlextResult`.
@@ -177,29 +244,37 @@ class FlextBus(FlextMixins):
 
         """
 
-        class SimpleQueryHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                super().__init__(
-                    handler_mode="query",
-                    handler_name=getattr(
-                        handler_func,
-                        "__name__",
-                        self.__class__.__name__,
-                    ),
-                    handler_config=handler_config,
-                )
+        handler_name = getattr(handler_func, "__name__", "SimpleQueryHandler")
 
-            def handle(self, message: object) -> FlextResult[object]:
-                result = handler_func(message)
-                if isinstance(result, FlextResult):
-                    # Result is already a FlextResult, just return it
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
+        return FlextHandlers.from_callable(
+            handler_func,
+            mode=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            handler_config=handler_config,
+            handler_name=handler_name,
+        )
 
-            def __call__(self, query: object) -> FlextResult[object]:
-                return self.handle(query)
+    @staticmethod
+    def _normalize_command_key(command_type_obj: object) -> str:
+        """Create a comparable key for command identifiers."""
 
-        return SimpleQueryHandler()
+        if hasattr(command_type_obj, "__origin__") and hasattr(
+            command_type_obj, "__args__"
+        ):
+            origin_attr = getattr(command_type_obj, "__origin__", None)
+            args_attr = getattr(command_type_obj, "__args__", None)
+            if origin_attr is not None and args_attr is not None:
+                origin_name = getattr(origin_attr, "__name__", str(origin_attr))
+                if args_attr:
+                    args_str = ", ".join(
+                        getattr(arg, "__name__", str(arg)) for arg in args_attr
+                    )
+                    return f"{origin_name}[{args_str}]"
+                return origin_name
+
+        name_attr = getattr(command_type_obj, "__name__", None)
+        if name_attr is not None:
+            return name_attr
+        return str(command_type_obj)
 
     def _normalize_middleware_config(
         self, middleware_config: object | None
@@ -249,9 +324,13 @@ class FlextBus(FlextMixins):
                 msg = "Handler cannot be None"
                 return FlextResult[None].fail(msg)
 
-            handle_method = getattr(handler, "handle", None)
+            handle_method_name = FlextConstants.Mixins.METHOD_HANDLE
+            handle_method = getattr(handler, handle_method_name, None)
             if not callable(handle_method):
-                msg = "Invalid handler: must have callable 'handle' method"
+                msg = (
+                    "Invalid handler: must have callable "
+                    f"'{handle_method_name}' method"
+                )
                 return FlextResult[None].fail(msg)
 
             key = getattr(handler, "handler_id", handler.__class__.__name__)
@@ -282,29 +361,7 @@ class FlextBus(FlextMixins):
                 return FlextResult[None].fail(msg)
 
             # Compute key for local registry visibility
-            # Handle parameterized generics first before checking __name__
-            if hasattr(command_type_obj, "__origin__") and hasattr(
-                command_type_obj, "__args__"
-            ):
-                # Type guard: check if attributes exist and are not None
-                origin_attr = getattr(command_type_obj, "__origin__", None)
-                args_attr = getattr(command_type_obj, "__args__", None)
-                if origin_attr is not None and args_attr is not None:
-                    # Reconstruct the string representation for parameterized generics
-                    origin_name = getattr(origin_attr, "__name__", str(origin_attr))
-                    if args_attr:
-                        args_str = ", ".join(
-                            getattr(arg, "__name__", str(arg)) for arg in args_attr
-                        )
-                        key = f"{origin_name}[{args_str}]"
-                    else:
-                        key = origin_name
-                else:
-                    name_attr = getattr(command_type_obj, "__name__", None)
-                    key = name_attr if name_attr is not None else str(command_type_obj)
-            else:
-                name_attr = getattr(command_type_obj, "__name__", None)
-                key = name_attr if name_attr is not None else str(command_type_obj)
+            key = self._normalize_command_key(command_type_obj)
             self._handlers[key] = handler
             self.logger.info(
                 "Handler registered for command type",
@@ -362,14 +419,21 @@ class FlextBus(FlextMixins):
         self._execution_count = int(self._execution_count) + 1
         command_type = type(command)
 
-        # Check cache for query results if this is a query (and if metrics are enabled)
-        if self._config_model.enable_metrics and (
-            hasattr(command, "query_id") or "Query" in command_type.__name__
-        ):
+        is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
+
+        should_consider_cache = (
+            self._config_model.enable_caching
+            and self._config_model.enable_metrics
+            and self._max_cache_size > 0
+            and is_query
+        )
+        cache_key: str | None = None
+        if should_consider_cache:
             cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            cached_result = getattr(self, "_cache", {}).get(cache_key)
+            cached_result = self._cache.get(cache_key)
             if cached_result is not None:
-                self.logger.info(
+                self._cache.move_to_end(cache_key)
+                self.logger.debug(
                     "Returning cached query result",
                     command_type=command_type.__name__,
                     cache_key=cache_key,
@@ -417,13 +481,16 @@ class FlextBus(FlextMixins):
         elapsed = time.time() - self._start_time
 
         # Cache successful query results
-        if (
-            result.is_success
-            and self._config_model.enable_caching
-            and (hasattr(command, "query_id") or "Query" in command_type.__name__)
-        ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            getattr(self, "_cache", {}).setdefault(cache_key, result)
+        if result.is_success and should_consider_cache and cache_key is not None:
+            self._cache[cache_key] = result
+            self._cache.move_to_end(cache_key)
+            while len(self._cache) > self._max_cache_size:
+                evicted_key, _ = self._cache.popitem(last=False)
+                self.logger.debug(
+                    "Evicted cached query result",
+                    command_type=command_type.__name__,
+                    cache_key=evicted_key,
+                )
             self.logger.debug(
                 "Cached query result",
                 command_type=command_type.__name__,
@@ -455,11 +522,14 @@ class FlextBus(FlextMixins):
         def get_order(middleware_item: object) -> int:
             config_data = self._normalize_middleware_config(middleware_item)
             order = config_data.get("order", 0)
-            if isinstance(order, int):
-                return order
-            if isinstance(order, str):
+            if isinstance(m, dict):
+                order_value = m.get("order", 0)
+            else:
+                order_value = getattr(m, "order", 0)
+
+            if isinstance(order_value, str):
                 try:
-                    return int(order)
+                    return int(order_value)
                 except ValueError:
                     return 0
             return 0
@@ -468,22 +538,38 @@ class FlextBus(FlextMixins):
 
         for middleware_config in sorted_middleware:
             config_data = self._normalize_middleware_config(middleware_config)
+            if isinstance(middleware_config, dict):
+                enabled = middleware_config.get("enabled", True)
+                middleware_id_value = middleware_config.get("middleware_id")
+                middleware_type_value = middleware_config.get("middleware_type", "")
+                order_value = middleware_config.get("order", 0)
+            else:
+                enabled = getattr(middleware_config, "enabled", True)
+                middleware_id_value = getattr(middleware_config, "middleware_id", "")
+                middleware_type_value = getattr(
+                    middleware_config,
+                    "middleware_type",
+                    "",
+                )
+                order_value = getattr(middleware_config, "order", 0)
+
             if not config_data.get("enabled", True):
                 continue
 
             # Get actual middleware instance
-            middleware_id = config_data.get("middleware_id")
-            if middleware_id is None or not isinstance(middleware_id, str):
-                continue
-
-            middleware = self._middleware_instances.get(middleware_id)
+            middleware_id_str = (
+                "" if middleware_id_value is None else str(middleware_id_value)
+            )
+            middleware = self._middleware_instances.get(middleware_id_str)
             if middleware is None:
                 # Skip middleware configs without instances
                 continue
 
             self.logger.debug(
                 "Applying middleware",
-                middleware_id=middleware_id,
+                middleware_id=middleware_id_value
+                if middleware_id_value is not None
+                else "",
                 middleware_type=config_data.get("middleware_type", ""),
                 order=config_data.get("order", 0),
             )
@@ -524,7 +610,13 @@ class FlextBus(FlextMixins):
         )
 
         # Try different handler methods in order of preference
-        handler_methods = ["execute", "handle", "process_command"]
+        handler_methods = [
+            FlextConstants.Mixins.METHOD_EXECUTE,
+            FlextConstants.Mixins.METHOD_HANDLE,
+            FlextConstants.Mixins.METHOD_PROCESS_COMMAND,
+        ]
+
+        last_failure: FlextResult[object] | None = None
 
         for method_name in handler_methods:
             method = getattr(handler, method_name, None)
@@ -532,8 +624,11 @@ class FlextBus(FlextMixins):
                 try:
                     result = method(command)
                     if isinstance(result, FlextResult):
-                        # Result is already a FlextResult, just return it
-                        return cast("FlextResult[object]", result)
+                        typed_result = cast("FlextResult[object]", result)
+                        if typed_result.is_success:
+                            return typed_result
+                        last_failure = typed_result
+                        continue
                     return FlextResult[object].ok(result)
                 except Exception as e:
                     return FlextResult[object].fail(
@@ -542,15 +637,24 @@ class FlextBus(FlextMixins):
                     )
 
         # No valid handler method found
+        if not handler_methods:
+            formatted_methods = "handler method"
+        elif len(handler_methods) > 1:
+            formatted_methods = f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+        else:
+            formatted_methods = handler_methods[0]
+        if last_failure is not None:
+            return last_failure
+
         return FlextResult[object].fail(
-            "Handler has no callable execute, handle, or process_command method",
+            f"Handler has no callable {formatted_methods} method",
             error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
         )
 
     def add_middleware(
         self,
         middleware: object,
-        middleware_config: dict[str, object] | None = None,
+        middleware_config: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[None]:
         """Append middleware with validated configuration metadata.
 
@@ -604,40 +708,42 @@ class FlextBus(FlextMixins):
         """
         return list(self._handlers.values())
 
-    def unregister_handler(self, command_type: type | str) -> bool:
+    def unregister_handler(self, command_type: type | str) -> FlextResult[None]:
         """Remove a handler registration by type or name.
 
         Args:
-            command_type: The command type or name to unregister
+            command_type: The command type or name to unregister.
 
         Returns:
             bool: True if handler was removed, False otherwise
 
         """
         for key in list(self._handlers.keys()):
-            # Handle both class objects and string comparisons
-            if key == command_type:
-                # Direct match (class object)
+            candidate_names: set[str] = {str(key)}
+            key_name = getattr(key, "__name__", None)
+            if isinstance(key_name, str):
+                candidate_names.add(key_name)
+
+            direct_match = isinstance(command_type, type) and key == command_type
+            command_names: set[str] = {str(command_type)}
+            command_name_attr = getattr(command_type, "__name__", None)
+            if isinstance(command_name_attr, str):
+                command_names.add(command_name_attr)
+            normalized_command = self._normalize_command_key(command_type)
+            if isinstance(normalized_command, str):
+                command_names.add(normalized_command)
+
+            if direct_match or candidate_names.intersection(command_names):
                 del self._handlers[key]
+                remaining = len(self._handlers)
+                message = f"Handler '{key_identifier}' unregistered"
+
                 self.logger.info(
                     "Handler unregistered",
-                    command_type=getattr(command_type, "__name__", str(command_type)),
+                    command_type=normalized_command,
                     remaining_handlers=len(self._handlers),
                 )
                 return True
-            if isinstance(command_type, str):
-                # String comparison
-                key_name = getattr(key, "__name__", None)
-                if (key_name is not None and key_name == command_type) or str(
-                    key,
-                ) == command_type:
-                    del self._handlers[key]
-                    self.logger.info(
-                        "Handler unregistered",
-                        command_type=command_type,
-                        remaining_handlers=len(self._handlers),
-                    )
-                    return True
 
         return False
 

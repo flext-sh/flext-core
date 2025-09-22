@@ -97,21 +97,23 @@ class FlextTestsFixtures:
             return [str(i) for i in range(actual_length)]
 
         @staticmethod
-        def create_timeline_events(count: int = 5) -> list[dict[str, object]]:
-            """Create timeline events for testing.
+        def create_timeline_events(
+            count: int = 5,
+        ) -> list[FlextTypes.Core.Dict]:
+            """Create timeline events using ``list[FlextTypes.Core.Dict]``.
 
             Args:
                 count: Number of events to create
 
             Returns:
-                List of event dictionaries
+                list[FlextTypes.Core.Dict]: Event payloads leveraging the official alias
 
             """
             base_time = datetime.now(UTC)
-            events = []
+            events: list[FlextTypes.Core.Dict] = []
 
             for i in range(count):
-                event = {
+                event: FlextTypes.Core.Dict = {
                     "id": f"event_{i}",
                     "timestamp": base_time + timedelta(hours=i),
                     "type": "test_event",
@@ -125,14 +127,14 @@ class FlextTestsFixtures:
         """Factory for creating performance test data."""
 
         @staticmethod
-        def create_large_payload(size_mb: float = 1.0) -> dict[str, object]:
-            """Create a large payload for performance testing.
+        def create_large_payload(size_mb: float = 1.0) -> FlextTypes.Core.Dict:
+            """Create a large payload via the ``FlextTypes.Core.Dict`` alias.
 
             Args:
                 size_mb: Size in megabytes
 
             Returns:
-                Dictionary with large data
+                FlextTypes.Core.Dict: Large payload data using the official alias
 
             """
             # Calculate approximate size in bytes
@@ -151,18 +153,18 @@ class FlextTestsFixtures:
             }
 
         @staticmethod
-        def create_nested_structure(depth: int = 3) -> dict[str, object]:
-            """Create a nested data structure for testing.
+        def create_nested_structure(depth: int = 3) -> FlextTypes.Core.Dict:
+            """Create a nested data structure with ``FlextTypes.Core.Dict``.
 
             Args:
                 depth: Nesting depth
 
             Returns:
-                Nested dictionary
+                FlextTypes.Core.Dict: Nested payload expressed with the alias
 
             """
 
-            def create_nested(current_depth: int) -> dict[str, object]:
+            def create_nested(current_depth: int) -> FlextTypes.Core.Dict:
                 if current_depth <= 1:
                     return {"value": f"depth_{current_depth}"}
 
@@ -208,17 +210,17 @@ class FlextTestsFixtures:
             return ValueError("Simulated validation error for testing")
 
         @staticmethod
-        def create_error_scenario(error_type: str) -> dict[str, object]:
-            """Create an error scenario for testing.
+        def create_error_scenario(error_type: str) -> FlextTypes.Core.Dict:
+            """Create an error scenario using ``FlextTypes.Core.Dict``.
 
             Args:
                 error_type: Type of error scenario
 
             Returns:
-                Error scenario dictionary
+                FlextTypes.Core.Dict: Error scenario payload with official alias
 
             """
-            scenarios = {
+            scenarios: dict[str, FlextTypes.Core.Dict] = {
                 "ValidationError": {
                     "type": "validation",
                     "message": "Validation failed",
@@ -240,7 +242,7 @@ class FlextTestsFixtures:
             }
 
             if error_type in scenarios:
-                return cast("dict[str, object]", scenarios[error_type])
+                return cast("FlextTypes.Core.Dict", scenarios[error_type])
             return {
                 "type": "unknown",
                 "message": "Unknown error",
@@ -253,27 +255,29 @@ class FlextTestsFixtures:
 
         def __init__(self) -> None:
             """Initialize session service."""
-            self._data: dict[str, dict[str, object]] = {}
+            self._data: dict[str, FlextTypes.Core.Dict] = {}
 
         def create_session(
             self,
             session_id: str,
-            data: dict[str, object] | None = None,
-        ) -> dict[str, object]:
-            """Create a new session.
+            data: FlextTypes.Core.Dict | None = None,
+        ) -> FlextTypes.Core.Dict:
+            """Create a new session using ``FlextTypes.Core.Dict``.
 
             Args:
                 session_id: Session identifier
                 data: Initial session data
 
             Returns:
-                Session data
+                FlextTypes.Core.Dict: Session payload stored with the official alias
 
             """
-            session_data = data or {}
+            session_data: FlextTypes.Core.Dict = (
+                data or {}
+            )
             session_data["id"] = session_id
             session_data["created_at"] = "2024-01-01T00:00:00Z"
-            session: dict[str, object] = {
+            session: FlextTypes.Core.Dict = {
                 "id": session_id,
                 "created_at": "2024-01-01T00:00:00Z",
                 "data": session_data,
@@ -281,24 +285,28 @@ class FlextTestsFixtures:
             self._data[session_id] = session
             return session
 
-        def get_session(self, session_id: str) -> dict[str, object] | None:
-            """Get session by ID.
+        def get_session(self, session_id: str) -> FlextTypes.Core.Dict | None:
+            """Get session by ID using ``FlextTypes.Core.Dict``.
 
             Args:
                 session_id: Session identifier
 
             Returns:
-                Session data or None
+                FlextTypes.Core.Dict | None: Stored session data if present
 
             """
             return self._data.get(session_id)
 
-        def update_session(self, session_id: str, data: dict[str, object]) -> bool:
-            """Update session data.
+        def update_session(
+            self,
+            session_id: str,
+            data: FlextTypes.Core.Dict,
+        ) -> bool:
+            """Update session data expressed as ``FlextTypes.Core.Dict``.
 
             Args:
                 session_id: Session identifier
-                data: Data to update
+                data: Data to update using the official alias
 
             Returns:
                 True if updated, False otherwise
@@ -503,7 +511,7 @@ class FlextTestsFixtures:
 
         def __init__(self) -> None:
             """Initialize test data service."""
-            self._data_store: dict[str, object] = {}
+            self._data_store: FlextTypes.Core.Dict = {}
             self._call_count = 0
             self._operations_log: list[str] = []
 
@@ -621,7 +629,7 @@ class FlextTestsFixtures:
 
     @staticmethod
     def create_test_data() -> FlextTypes.Core.Dict:
-        """Create test data dictionary."""
+        """Create test data using the ``FlextTypes.Core.Dict`` alias."""
         return {
             "id": FlextTestsFixtures.generate_test_id(),
             "name": "test_data",
@@ -651,10 +659,12 @@ class FlextTestsFixtures:
 
         @staticmethod
         def create_processing_command(
-            data: dict[str, object] | None = None,
-        ) -> dict[str, object]:
-            """Create processing command for testing."""
-            command_data = data or {"test": "value"}
+            data: FlextTypes.Core.Dict | None = None,
+        ) -> FlextTypes.Core.Dict:
+            """Create processing command using ``FlextTypes.Core.Dict``."""
+            command_data: FlextTypes.Core.Dict = (
+                data or {"test": "value"}
+            )
 
             return {
                 "command": "process",

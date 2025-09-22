@@ -473,13 +473,13 @@ class FlextTestsAsyncs:
 
         # This would typically create an async HTTP client or similar
         class AsyncTestClient:
-            async def get(self, url: str) -> dict[str, object]:
-                """Get method."""
+            async def get(self, url: str) -> FlextTypes.Core.Dict:
+                """Get method returning ``FlextTypes.Core.Dict`` payloads."""
                 await asyncio.sleep(0.01)  # Simulate network delay
                 return {"url": url, "status": 200}
 
-            async def post(self, url: str, data: object) -> dict[str, object]:
-                """Post method."""
+            async def post(self, url: str, data: object) -> FlextTypes.Core.Dict:
+                """Post method returning ``FlextTypes.Core.Dict`` payloads."""
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
 
