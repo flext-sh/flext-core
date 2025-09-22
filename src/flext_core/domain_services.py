@@ -86,7 +86,7 @@ class FlextDomainService[TDomainResult](
         validation_result = self.validate_with_request(request)
         if validation_result.is_failure:
             return FlextResult[TDomainResult].fail(
-                f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
+                f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}" if validation_result.error else FlextConstants.Messages.VALIDATION_FAILED
             )
 
         return self.execute()
