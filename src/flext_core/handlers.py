@@ -122,7 +122,11 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
             FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
         ):
-            msg = "mode must be 'command' or 'query'"
+            msg = (
+                f"Invalid mode '{mode}'. Expected "
+                f"'{FlextConstants.Cqrs.COMMAND_HANDLER_TYPE}' or "
+                f"'{FlextConstants.Cqrs.QUERY_HANDLER_TYPE}'."
+            )
             raise ValueError(msg)
 
         resolved_name = handler_name or getattr(
