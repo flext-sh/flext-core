@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -350,12 +350,22 @@ class FlextCqrs:
             """
             try:
                 config_instance = FlextConfig.get_global_instance()
-                # Create CQRS config from FlextConfig fields
-                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config({
-                    "timeout_seconds": config_instance.dispatcher_timeout_seconds,
-                    "enable_metrics": config_instance.dispatcher_enable_metrics,
-                    "enable_logging": config_instance.dispatcher_enable_logging,
-                })
+                config_payload = config_instance.get_cqrs_bus_config()
+
+                # Support both raw dictionaries and FlextResult wrappers
+                if isinstance(config_payload, FlextResult):
+                    if config_payload.is_failure:
+                        raise ValueError("Failed to load CQRS bus configuration")
+                    config_payload = config_payload.value
+
+                if hasattr(config_payload, "model_dump") and callable(
+                    getattr(config_payload, "model_dump")
+                ):
+                    config_dict = cast("dict[str, object]", config_payload.model_dump())
+                else:
+                    config_dict = cast("dict[str, object] | None", config_payload)
+
+                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(config_dict)
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(bus_config)
             except Exception:
                 # Fallback to default configuration
