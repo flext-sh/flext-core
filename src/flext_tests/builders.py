@@ -187,8 +187,8 @@ class FlextTestsBuilders:
             else:
                 config_data[key] = str(value)
 
-        # Create configuration using factory method - returns FlextConfig directly
-        return FlextConfig.create(**config_data)
+        # Create configuration directly - factory method removed
+        return FlextConfig(**config_data)
 
     # === Field Builder Methods (Unified) ===
 

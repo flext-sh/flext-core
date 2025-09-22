@@ -262,10 +262,8 @@ class TestFlextConfigFactory:
 
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
-        # Config now uses singleton, environment should be "testing" for test config
-        assert (
-            config.environment == "testing"
-        )  # Corrected to match valid environment value
+        # Config now uses singleton, environment should be "test" for test config
+        assert config.environment == "test"
         assert hasattr(config, "debug")
         assert (
             config.debug is True

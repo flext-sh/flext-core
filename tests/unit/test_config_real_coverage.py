@@ -96,7 +96,7 @@ class TestFlextConfigRealCoverage:
     def test_environment_validation(self) -> None:
         """Test environment field validation."""
         # Valid environments
-        valid_envs = ["development", "testing", "staging", "production"]
+        valid_envs = ["development", "test", "staging", "production"]
         for env in valid_envs:
             config = FlextConfig(app_name="test", environment=env)
             assert config.environment == env
@@ -198,15 +198,15 @@ class TestFlextConfigRealCoverage:
         cqrs_config = config.get_cqrs_bus_config()
         assert isinstance(cqrs_config, dict)
 
-    def test_create_for_environment(self) -> None:
-        """Test create_for_environment class method."""
+    def test_environment_specific_initialization(self) -> None:
+        """Direct initialization replaces create_for_environment."""
         # Test basic creation
-        config = FlextConfig.create_for_environment("development")
+        config = FlextConfig(environment="development")
         assert config.environment == "development"
 
         # Test with overrides
-        config = FlextConfig.create_for_environment(
-            "staging",
+        config = FlextConfig(
+            environment="staging",
             app_name="staging_app",
             debug=True,
             max_workers=16,
@@ -222,7 +222,7 @@ class TestFlextConfigRealCoverage:
         config_data = {
             "app_name": "json_app",
             "version": "2.0.0",
-            "environment": "testing",
+            "environment": "test",
             "debug": True,
             "log_level": "DEBUG",
         }
@@ -240,7 +240,7 @@ class TestFlextConfigRealCoverage:
             config = FlextConfig.from_file(json_path)
             assert config.app_name == "json_app"
             assert config.version == "2.0.0"
-            assert config.environment == "testing"
+            assert config.environment == "test"
             assert config.debug is True
             assert config.log_level == "DEBUG"
         finally:
@@ -289,8 +289,8 @@ class TestFlextConfigRealCoverage:
         assert parsed["version"] == "2.0.0"
         assert parsed["debug"] is True
 
-    def test_merge_method(self) -> None:
-        """Test merge method."""
+    def test_model_copy_update_replaces_merge(self) -> None:
+        """Test model_copy(update=...) replaces merge helper."""
         base_config = FlextConfig(app_name="base", version="1.0.0", debug=False)
 
         # Test merge with dict
@@ -299,7 +299,7 @@ class TestFlextConfigRealCoverage:
             "debug": True,
             "max_workers": 16,
         }
-        merged = base_config.merge(override_dict)
+        merged = base_config.model_copy(update=override_dict)
 
         assert merged.app_name == "merged"
         assert merged.debug is True
@@ -310,16 +310,16 @@ class TestFlextConfigRealCoverage:
         override_config = FlextConfig(
             app_name="override", trace=True, debug=True, environment="development"
         )
-        merged2 = base_config.merge(override_config)
+        merged2 = base_config.model_copy(update=override_config.model_dump())
 
         assert merged2.app_name == "override"
         assert merged2.trace is True
         assert merged2.environment == "development"
         assert merged2.version == "0.9.0"  # Default version from override_config
 
-    def test_create_class_method(self) -> None:
-        """Test create class method."""
-        config = FlextConfig.create(
+    def test_direct_initialization_replaces_create(self) -> None:
+        """Direct initialization replaces the removed create helper."""
+        config = FlextConfig(
             app_name="created_app",
             version="3.0.0",
             environment="staging",
@@ -403,7 +403,7 @@ class TestFlextConfigRealCoverage:
             # Core fields
             app_name="comprehensive_test",
             version="1.2.3",
-            environment="testing",
+            environment="test",
             debug=True,
             trace=True,
             # Logging fields
@@ -448,7 +448,7 @@ class TestFlextConfigRealCoverage:
         # Verify all fields are set correctly
         assert config.app_name == "comprehensive_test"
         assert config.version == "1.2.3"
-        assert config.environment == "testing"
+        assert config.environment == "test"
         assert config.debug is True
         assert config.trace is True
         assert config.log_level == "DEBUG"

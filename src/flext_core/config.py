@@ -447,23 +447,6 @@ class FlextConfig(BaseSettings):
         }
 
     @classmethod
-    def create_for_environment(
-        cls, environment: str, **overrides: object
-    ) -> FlextConfig:
-        """Create configuration for specific environment with overrides.
-
-        Args:
-            environment: The target environment name.
-            **overrides: Configuration parameter overrides.
-
-        Returns:
-            FlextConfig: New configuration instance for the specified environment.
-
-        """
-        config_data = {"environment": environment, **overrides}
-        return cls.model_validate(config_data)
-
-    @classmethod
     def from_file(cls, config_file: Path | str) -> FlextConfig:
         """Load configuration from file (TOML, JSON, or YAML).
 
@@ -519,22 +502,6 @@ class FlextConfig(BaseSettings):
         """
         return self.model_dump_json(indent=2)
 
-    def merge(self, other: FlextConfig | dict[str, object]) -> FlextConfig:
-        """Merge with another configuration, returning new instance.
-
-        Args:
-            other: Another FlextConfig instance or dictionary to merge with.
-
-        Returns:
-            FlextConfig: New configuration instance with merged values.
-
-        """
-        other_data = other.to_dict() if isinstance(other, FlextConfig) else other
-
-        current_data = self.to_dict()
-        merged_data = {**current_data, **other_data}
-        return self.__class__.model_validate(merged_data)
-
     # Global instance management
     _global_instance: ClassVar[FlextConfig | None] = None
     _global_lock: ClassVar[threading.Lock] = threading.Lock()
@@ -578,19 +545,6 @@ class FlextConfig(BaseSettings):
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
         }
-
-    @classmethod
-    def create(cls, **kwargs: object) -> FlextConfig:
-        """Create configuration with provided parameters.
-
-        Args:
-            **kwargs: Configuration parameters.
-
-        Returns:
-            FlextConfig: New configuration instance.
-
-        """
-        return cls.model_validate(kwargs)
 
     def get_metadata(self) -> dict[str, object]:
         """Get configuration metadata.

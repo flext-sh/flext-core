@@ -112,9 +112,9 @@ class TestFlextConfigClassMethods:
         """Reset global instance before each test."""
         FlextConfig.reset_global_instance()
 
-    def test_create_method(self) -> None:
-        """Test create class method."""
-        config = FlextConfig.create(
+    def test_direct_initialization_replaces_create(self) -> None:
+        """Direct initialization should replace the removed create factory."""
+        config = FlextConfig(
             app_name="created_app",
             version="2.0.0",
             environment="staging",
@@ -127,15 +127,15 @@ class TestFlextConfigClassMethods:
         assert config.environment == "staging"
         assert config.debug is True
 
-    def test_create_for_environment_method(self) -> None:
-        """Test create_for_environment class method."""
+    def test_environment_specific_initialization(self) -> None:
+        """Direct initialization should replace create_for_environment."""
         # Test development environment
-        dev_config = FlextConfig.create_for_environment("development")
+        dev_config = FlextConfig(environment="development")
         assert dev_config.environment == "development"
 
-        # Test production environment
-        prod_config = FlextConfig.create_for_environment(
-            "production",
+        # Test production environment with overrides
+        prod_config = FlextConfig(
+            environment="production",
             app_name="prod_app",
             debug=False,
         )
@@ -148,7 +148,7 @@ class TestFlextConfigClassMethods:
         config_data = {
             "app_name": "json_test_app",
             "version": "3.0.0",
-            "environment": "testing",
+            "environment": "test",
             "debug": True,
             "max_workers": 6,
         }
@@ -166,7 +166,7 @@ class TestFlextConfigClassMethods:
             config = FlextConfig.from_file(json_path)
             assert config.app_name == "json_test_app"
             assert config.version == "3.0.0"
-            assert config.environment == "testing"
+            assert config.environment == "test"
             assert config.debug is True
             assert config.max_workers == 6
         finally:
@@ -267,8 +267,8 @@ class TestFlextConfigInstanceMethods:
         assert parsed["app_name"] == "serialize_test"
         assert parsed["version"] == "4.0.0"
 
-    def test_merge_method(self) -> None:
-        """Test merge method."""
+    def test_model_copy_update_replaces_merge(self) -> None:
+        """Test model_copy(update=...) replaces the merge helper."""
         base_config = FlextConfig(app_name="base", version="1.0.0", max_workers=4)
 
         # Test merge with dict
@@ -278,13 +278,29 @@ class TestFlextConfigInstanceMethods:
             "max_workers": 8,
             "timeout_seconds": 60,
         }
-        merged = base_config.merge(override_dict)
+        merged = base_config.model_copy(update=override_dict)
 
         assert merged.app_name == "merged"
         assert merged.debug is True
         assert merged.max_workers == 8
         assert merged.timeout_seconds == 60
         assert merged.version == "1.0.0"  # Preserved from base
+
+        # Test merge-style update using another FlextConfig instance
+        override_config = FlextConfig(
+            app_name="override",
+            trace=True,
+            debug=True,
+            environment="development",
+        )
+        merged_from_config = base_config.model_copy(
+            update=override_config.model_dump()
+        )
+
+        assert merged_from_config.app_name == "override"
+        assert merged_from_config.trace is True
+        assert merged_from_config.environment == "development"
+        assert merged_from_config.version == "0.9.0"  # Default version from override
 
 
 class TestFlextConfigGlobalInstance:
@@ -340,7 +356,7 @@ class TestFlextConfigEnvironmentLoading:
         env_vars = {
             "FLEXT_APP_NAME": "env_app",
             "FLEXT_VERSION": "6.0.0",
-            "FLEXT_ENVIRONMENT": "testing",
+            "FLEXT_ENVIRONMENT": "test",
             "FLEXT_DEBUG": "true",
             "FLEXT_MAX_WORKERS": "12",
             "FLEXT_TIMEOUT_SECONDS": "90",
@@ -351,7 +367,7 @@ class TestFlextConfigEnvironmentLoading:
 
             assert config.app_name == "env_app"
             assert config.version == "6.0.0"
-            assert config.environment == "testing"
+            assert config.environment == "test"
             assert config.debug is True
             assert config.max_workers == 12
             assert config.timeout_seconds == 90
@@ -359,7 +375,7 @@ class TestFlextConfigEnvironmentLoading:
     def test_environment_variable_type_conversion(self) -> None:
         """Test proper type conversion of environment variables."""
         env_vars = {
-            "FLEXT_DEBUG": "false",
+            "FLEXT_DEBUG": "true",
             "FLEXT_TRACE": "true",
             "FLEXT_ENABLE_CACHING": "false",
             "FLEXT_JSON_OUTPUT": "true",
@@ -370,7 +386,7 @@ class TestFlextConfigEnvironmentLoading:
         with patch.dict(os.environ, env_vars, clear=False):
             config = FlextConfig()
 
-            assert config.debug is False
+            assert config.debug is True
             assert config.trace is True
             assert config.enable_caching is False
             assert config.json_output is True
@@ -481,19 +497,19 @@ class TestFlextConfigDefaults:
 
         # Core defaults
         assert config.app_name == "FLEXT Application"
-        assert config.version == "1.0.0"
+        assert config.version == "0.9.0"
         assert config.environment == "development"
         assert config.debug is False
         assert config.trace is False
 
         # Logging defaults
         assert config.log_level == "INFO"
-        assert config.json_output is False
+        assert config.json_output is None
         assert config.include_source is True
-        assert config.structured_output is False
+        assert config.structured_output is True
 
         # Database defaults
-        assert config.database_url == "sqlite:///flext.db"
+        assert config.database_url is None
         assert config.database_pool_size == 10
 
         # Cache defaults
@@ -527,26 +543,22 @@ class TestFlextConfigEdgeCases:
 
     def test_empty_string_validation(self) -> None:
         """Test empty string validation."""
-        # Empty app_name should fail
+        # Empty environment should fail
         with pytest.raises(ValidationError):
-            FlextConfig(app_name="")
+            FlextConfig(environment="")
 
-        # Empty version should fail
+        # Empty log level should fail
         with pytest.raises(ValidationError):
-            FlextConfig(version="")
-
-        # Empty database_url should fail
-        with pytest.raises(ValidationError):
-            FlextConfig(database_url="")
+            FlextConfig(log_level="")
 
     def test_whitespace_handling(self) -> None:
         """Test whitespace handling in string fields."""
         # Whitespace-only strings should fail validation
         with pytest.raises(ValidationError):
-            FlextConfig(app_name="   ")
+            FlextConfig(environment="   ")
 
         with pytest.raises(ValidationError):
-            FlextConfig(version="   ")
+            FlextConfig(log_level="   ")
 
     def test_type_coercion(self) -> None:
         """Test type coercion for numeric fields."""

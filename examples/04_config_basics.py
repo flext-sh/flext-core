@@ -255,7 +255,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
 
         # Simulate environment variables
         test_vars = {
-            "FLEXT_ENVIRONMENT": "testing",
+            "FLEXT_ENVIRONMENT": "test",
             "FLEXT_DEBUG": "true",
             "FLEXT_LOG_LEVEL": "INFO",
             "FLEXT_DATABASE_URL": "postgresql://localhost/db",
@@ -313,13 +313,13 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
 
         FlextConfig.get_global_instance()
 
-        # FlextConfig is based on Pydantic Settings, which is immutable
-        print("Note: FlextConfig is immutable after initialization")
-        print("To change config, create new instance with environment variables")
+        # FlextConfig follows Pydantic Settings patterns for immutability
+        print("Note: FlextConfig is effectively immutable after initialization")
+        print("To change config, create a new instance or use model_copy(update=...)")
 
         # You can create new instances for different environments
         print("\nCreating config for different environment:")
-        test_config = FlextConfig.create_for_environment("test")
+        test_config = FlextConfig(environment="test")
         print(f"Test environment config: {test_config.environment}")
         print(f"Test debug mode: {test_config.debug}")
 
@@ -369,9 +369,8 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         print("  - get_database_config(): Returns database configuration")
         print("  - get_cache_config(): Returns cache configuration")
         print("  - get_cqrs_bus_config(): Returns CQRS bus configuration")
-        print(
-            "  - create_for_environment(env): Creates config for specific environment"
-        )
+        print("  - FlextConfig(environment=...): Create config for specific environment")
+        print("  - config.model_copy(update=...): Derive config with overrides")
 
     # ========== DEPRECATED PATTERNS ==========
 

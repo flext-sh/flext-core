@@ -50,7 +50,8 @@ class TestStandardizedExample:
     def test_config_with_fixtures(self) -> None:
         """Demonstrate proper config testing with fixtures."""
         # Test config creation using fixtures
-        config_result = FlextConfig.create(constants={"app_name": "fixture_test"})
+        config = FlextConfig(app_name="fixture_test")
+        config_result = FlextResult[FlextConfig].ok(config)
         FlextTestsMatchers.assert_result_success(config_result)
 
         config = config_result.unwrap()

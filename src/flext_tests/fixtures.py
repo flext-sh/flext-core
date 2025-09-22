@@ -359,7 +359,7 @@ class FlextTestsFixtures:
                 FlextConfig: Test configuration instance
 
             """
-            return FlextConfig.create(
+            return FlextConfig(
                 environment=FlextConstants.Environment.ConfigEnvironment.TESTING,
                 debug=True,
             )
@@ -372,7 +372,7 @@ class FlextTestsFixtures:
                 FlextConfig: Development configuration instance
 
             """
-            return FlextConfig.create(
+            return FlextConfig(
                 environment=FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT,
                 debug=True,
             )
@@ -385,7 +385,7 @@ class FlextTestsFixtures:
                 FlextConfig: Production configuration instance
 
             """
-            return FlextConfig.create(environment="production", debug=False)
+            return FlextConfig(environment="production", debug=False)
 
     # === Command Classes ===
 

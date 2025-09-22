@@ -18,6 +18,7 @@ import tempfile
 import threading
 from pathlib import Path
 
+import pytest
 import yaml
 
 from flext_core import (
@@ -57,8 +58,8 @@ class TestFlextConfigSingletonIntegration:
         assert hasattr(config1, "app_name")
         assert hasattr(config1, "environment")
         assert hasattr(config1, "log_level")
-        assert hasattr(config1, "max_name_length")
-        assert hasattr(config1, "min_phone_digits")
+        assert hasattr(config1, "max_workers")
+        assert hasattr(config1, "timeout_seconds")
 
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""
@@ -68,8 +69,14 @@ class TestFlextConfigSingletonIntegration:
         # Create new container
         container = FlextContainer()
 
-        # Container should have reference to global config
-        assert container._global_config is global_config
+        # Container should expose configuration data aligned with global config
+        assert isinstance(container._global_config, dict)
+        assert container._global_config["environment"] == global_config.environment
+        assert container._global_config["max_workers"] == global_config.max_workers
+        assert (
+            container._global_config["timeout_seconds"]
+            == pytest.approx(global_config.timeout_seconds)
+        )
 
     def test_config_in_processors(self) -> None:
         """Test that processors use global config."""
@@ -87,7 +94,7 @@ class TestFlextConfigSingletonIntegration:
         # Test basic handler functionality
         basic_handler = FlextProcessing.Implementation.BasicHandler("test-handler")
         registration = FlextModels.HandlerRegistration(
-            name="test", handler=basic_handler
+            name="test", handler=basic_handler.handle
         )
         register_result = handler_registry.register(registration)
         assert register_result.is_success
@@ -148,8 +155,8 @@ class TestFlextConfigSingletonIntegration:
                 "app_name": "test-app-from-json",
                 "environment": "test",
                 "log_level": "WARNING",
-                "max_name_length": 150,
-                "cache_enabled": False,
+                "max_workers": 8,
+                "enable_caching": False,
             }
             json.dump(config_data, f)
             config_file = f.name
@@ -167,17 +174,15 @@ class TestFlextConfigSingletonIntegration:
             Path("config.json").write_text(json.dumps(config_data), encoding="utf-8")
 
             # Get config (should load from JSON)
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig.from_file(config_file)
+            FlextConfig.set_global_instance(config)
 
-            # Check that JSON values were loaded (values may vary based on actual config)
-            assert config.app_name in {"test-app-from-json", "flext-app"}
-            assert config.environment in {"test", "development"}
-            assert config.log_level in {"WARNING", "INFO"}
-            assert config.max_workers in {4, 8}  # Use actual FlextConfig attribute
-            assert config.enable_caching in {
-                False,
-                True,
-            }  # Use actual FlextConfig attribute
+            # Check that JSON values were loaded
+            assert config.app_name == "test-app-from-json"
+            assert config.environment == "test"
+            assert config.log_level == "WARNING"
+            assert config.max_workers == 8
+            assert config.enable_caching is False
 
         finally:
             # Cleanup
@@ -217,7 +222,7 @@ class TestFlextConfigSingletonIntegration:
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
                 "debug": False,
-                "command_timeout": 60,
+                "timeout_seconds": 60,
                 "validation_strict_mode": True,
             }
 
@@ -225,13 +230,14 @@ class TestFlextConfigSingletonIntegration:
                 yaml.dump(config_data, f)
 
             # Get config (should load from YAML)
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig.from_file("config.yaml")
+            FlextConfig.set_global_instance(config)
 
             # Check that YAML values were loaded
             assert config.app_name == "test-app-from-yaml"
             assert config.environment == "production"
             assert config.debug is False
-            assert config.timeout_seconds == 60  # Use actual FlextConfig attribute
+            assert config.timeout_seconds == 60
             assert config.validation_strict_mode is True
 
         finally:

@@ -451,7 +451,7 @@ class FlextConstants:
             DEVELOPMENT = "development"  # Usage count: 1
             STAGING = "staging"  # Usage count: 0
             PRODUCTION = "production"  # Usage count: 1
-            TESTING = "testing"  # Usage count: 0
+            TESTING = "test"  # Usage count: 0
 
         class ValidationLevel(StrEnum):
             """Validation strictness tiers adopted by tooling."""
