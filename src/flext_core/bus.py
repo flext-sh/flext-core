@@ -55,12 +55,13 @@ def _normalize_cache_component(value: object) -> object:
         return ("dataclass", _normalize_cache_component(dataclasses.asdict(value)))
 
     if isinstance(value, Mapping):
+        # Normalize keys and values, and sort by a deterministic key
         normalized_items = tuple(
-            (
-                f"{type(key).__name__}:{key}",
-                _normalize_cache_component(val),
+            (normalized_key, _normalize_cache_component(val))
+            for normalized_key, val in sorted(
+                (( _normalize_cache_component(key), val ) for key, val in value.items()),
+                key=lambda item: _cache_sort_key(item[0])
             )
-            for key, val in sorted(value.items(), key=lambda item: str(item[0]))
         )
         return ("mapping", normalized_items)
 
