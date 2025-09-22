@@ -95,12 +95,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._factories: dict[str, Callable[[], object]] = {}
 
         # Configuration integration with FlextConfig singleton
-        self._global_config = {
-            "max_workers": 4,
-            "timeout_seconds": 30.0,
-            "environment": "development",
-        }
         self._flext_config = FlextConfig.get_global_instance()
+        self._config_snapshot: dict[str, object] = {
+            "max_workers": getattr(self._flext_config, "max_workers", None),
+            "timeout_seconds": getattr(self._flext_config, "timeout_seconds", None),
+            "environment": getattr(self._flext_config, "environment", None),
+        }
+        self._config_overrides: dict[str, object] = {}
+        self._global_config = self._build_effective_config()
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -123,10 +125,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             dict[str, object]: Current container configuration
 
         """
+        effective_config = self._build_effective_config()
+        self._global_config = effective_config
+
         return {
-            "max_workers": self._global_config["max_workers"],
-            "timeout_seconds": self._global_config["timeout_seconds"],
-            "environment": self._global_config["environment"],
+            "max_workers": effective_config["max_workers"],
+            "timeout_seconds": effective_config["timeout_seconds"],
+            "environment": effective_config["environment"],
             "service_count": self.get_service_count(),
             "services": list(self._services.keys()),
             "factories": list(self._factories.keys()),
@@ -713,23 +718,15 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     validation_result.error or "Config validation failed"
                 )
 
-            # Normalize configuration fields
-            normalized_config = self._normalize_config_fields(config)
+            current_config = self._build_effective_config()
+            normalized_config = self._normalize_config_fields(
+                config, current_config
+            )
 
-            # Create and store global configuration with proper type conversion
-            max_workers = normalized_config.get("max_workers", 4)
-            timeout_seconds = normalized_config.get("timeout_seconds", 30.0)
-            environment = normalized_config.get("environment", "development")
+            if normalized_config:
+                self._config_overrides.update(normalized_config)
 
-            self._global_config = {
-                "max_workers": int(max_workers)
-                if isinstance(max_workers, (int, float))
-                else 4,
-                "timeout_seconds": float(timeout_seconds)
-                if isinstance(timeout_seconds, (int, float))
-                else 30.0,
-                "environment": str(environment) if environment else "development",
-            }
+            self._global_config = self._build_effective_config()
 
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -748,45 +745,124 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # Additional validation can be added here if needed for specific dict structure
         return FlextResult[None].ok(None)
 
-    def _normalize_config_fields(self, config: dict[str, object]) -> dict[str, object]:
-        """Normalize configuration fields with proper defaults and validation.
+    def _build_effective_config(self) -> dict[str, object]:
+        """Combine FlextConfig snapshot and overrides with defaults applied."""
 
-        Returns:
-            dict[str, object]: Normalized configuration dictionary.
+        combined: dict[str, object] = {
+            "max_workers": self._config_snapshot.get("max_workers"),
+            "timeout_seconds": self._config_snapshot.get("timeout_seconds"),
+            "environment": self._config_snapshot.get("environment"),
+        }
+        combined.update(self._config_overrides)
 
-        """
-        # Create normalized config with defaults from FlextConstants.Container
-        normalized = {
-            "max_workers": config.get(
-                "max_workers", FlextConstants.Container.MAX_WORKERS
+        return {
+            "max_workers": self._normalize_max_workers(
+                combined.get("max_workers"),
+                FlextConstants.Container.MAX_WORKERS,
             ),
-            "timeout_seconds": config.get(
-                "timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS
+            "timeout_seconds": self._normalize_timeout_seconds(
+                combined.get("timeout_seconds"),
+                FlextConstants.Container.TIMEOUT_SECONDS,
             ),
-            "environment": config.get(
-                "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
+            "environment": self._normalize_environment(
+                combined.get("environment"),
+                FlextConstants.Config.DEFAULT_ENVIRONMENT,
             ),
         }
 
-        # Validate and fix max_workers
-        if (
-            isinstance(normalized["max_workers"], int)
-            and normalized["max_workers"] <= 0
-        ):
-            normalized["max_workers"] = FlextConstants.Container.MAX_WORKERS
+    def _normalize_config_fields(
+        self,
+        config: dict[str, object],
+        current: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        """Normalize configuration overrides while preserving existing values."""
 
-        # Validate and fix timeout_seconds
-        if (
-            isinstance(normalized["timeout_seconds"], (int, float))
-            and normalized["timeout_seconds"] <= 0
-        ):
-            normalized["timeout_seconds"] = FlextConstants.Container.TIMEOUT_SECONDS
+        current_values = current or self._build_effective_config()
+        normalized: dict[str, object] = {}
 
-        # Set default environment if empty or invalid
-        if not normalized["environment"]:
-            normalized["environment"] = FlextConstants.Config.DEFAULT_ENVIRONMENT
+        if "max_workers" in config:
+            normalized["max_workers"] = self._normalize_max_workers(
+                config.get("max_workers"),
+                current_values.get(
+                    "max_workers", FlextConstants.Container.MAX_WORKERS
+                ),
+            )
+
+        if "timeout_seconds" in config:
+            normalized["timeout_seconds"] = self._normalize_timeout_seconds(
+                config.get("timeout_seconds"),
+                current_values.get(
+                    "timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS
+                ),
+            )
+
+        if "environment" in config:
+            normalized["environment"] = self._normalize_environment(
+                config.get("environment"),
+                current_values.get(
+                    "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
+                ),
+            )
 
         return normalized
+
+    def _normalize_max_workers(self, value: object, fallback: int) -> int:
+        candidate = self._to_int(value)
+        if candidate is None or candidate <= 0:
+            return fallback
+        return candidate
+
+    def _normalize_timeout_seconds(self, value: object, fallback: float) -> float:
+        candidate = self._to_float(value)
+        if candidate is None or candidate <= 0:
+            return fallback
+        return candidate
+
+    def _normalize_environment(self, value: object, fallback: str) -> str:
+        candidate = self._to_str(value)
+        return candidate if candidate is not None else fallback
+
+    @staticmethod
+    def _to_int(value: object) -> int | None:
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return None
+            try:
+                return int(stripped)
+            except ValueError:
+                try:
+                    return int(float(stripped))
+                except ValueError:
+                    return None
+        return None
+
+    @staticmethod
+    def _to_float(value: object) -> float | None:
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return None
+            try:
+                return float(stripped)
+            except ValueError:
+                return None
+        return None
+
+    @staticmethod
+    def _to_str(value: object) -> str | None:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return None
 
     # =========================================================================
     # GLOBAL CONTAINER MANAGEMENT - Singleton pattern with thread safety
