@@ -408,12 +408,18 @@ class FlextBus(FlextMixins):
     ) -> FlextResult[None]:
         """Run the configured middleware pipeline for the current message.
 
+        Each middleware receives the command and resolved handler, enabling it
+        to inspect context, perform side effects, or even invoke the handler
+        proactively. Implementations must return a ``FlextResult`` whose
+        failure state represents a rejection that short-circuits the pipeline.
+
         Args:
             command: The command/query to process
             handler: The handler that will execute the command
 
         Returns:
-            FlextResult: Middleware processing result
+            FlextResult: Middleware processing result signalling acceptance or
+                rejection
 
         """
         if not self._config_model.enable_middleware:

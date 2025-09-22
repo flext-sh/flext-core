@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Generic, Protocol, runtime_checkable
 
@@ -305,10 +304,16 @@ class FlextProtocols:
 
             def process(
                 self,
-                request: object,
-                _next_handler: Callable[[object], object],
-            ) -> object:
-                """Process request with middleware logic."""
+                command: object,
+                handler: object,
+            ) -> FlextResult[None]:
+                """Inspect the command/handler pair and gate execution.
+
+                Middleware can perform auditing, validation, or even trigger
+                the handler itself before allowing the bus to continue. A
+                ``FlextResult.ok`` indicates acceptance while a failure
+                result rejects the command and halts the pipeline.
+                """
                 ...
 
         @runtime_checkable
