@@ -11,6 +11,9 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
+import pytest
+from pydantic import ValidationError
+
 from flext_core import FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
 
@@ -163,22 +166,16 @@ class TestFlextProcessingHandlerRegistry:
         assert result.unwrap() == expected_result
 
     def test_execute_handler_without_handle_method_or_callable(self) -> None:
-        """Test executing handler that's neither callable nor has handle method."""
+        """Test creating handler registration with invalid handler type."""
         handler_name = "invalid_handler"
         invalid_handler = "not_a_handler"
 
-        registration = FlextModels.HandlerRegistration(
-            name=handler_name, handler=invalid_handler
-        )
-        self.registry.register(registration)
+        # Pydantic validation should prevent creation of invalid handler registration
+        with pytest.raises(ValidationError) as exc_info:
+            FlextModels.HandlerRegistration(name=handler_name, handler=invalid_handler)
 
-        result = self.registry.execute(handler_name, "request")
-
-        FlextTestsMatchers.assert_result_failure(result)
-        assert result.error is not None
-        assert (
-            f"Handler '{handler_name}' does not implement handle method" in result.error
-        )
+        # Verify the validation error is about callable type
+        assert "callable" in str(exc_info.value).lower()
 
     def test_execute_handler_with_exception(self) -> None:
         """Test executing handler that raises exception."""

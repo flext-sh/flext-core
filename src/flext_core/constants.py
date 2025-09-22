@@ -200,6 +200,7 @@ class FlextConstants:
 
         FLEXT_API_PORT: Final[int] = 8000  # Usage count: 4
         DEFAULT_HOST: Final[str] = "localhost"  # Usage count: 0
+        LOOPBACK_IP: Final[str] = "127.0.0.1"  # Localhost IP address
 
         # Database defaults
         POSTGRES_DEFAULT_PORT: Final[int] = 5432
@@ -213,14 +214,22 @@ class FlextConstants:
         MAX_HTTP_STATUS_CODE: Final[int] = 599
 
         # HTTP methods
+        HTTP_METHOD_GET: Final[str] = "GET"
+        HTTP_METHOD_POST: Final[str] = "POST"
+        HTTP_METHOD_PUT: Final[str] = "PUT"
+        HTTP_METHOD_DELETE: Final[str] = "DELETE"
+        HTTP_METHOD_PATCH: Final[str] = "PATCH"
+        HTTP_METHOD_HEAD: Final[str] = "HEAD"
+        HTTP_METHOD_OPTIONS: Final[str] = "OPTIONS"
+
         VALID_HTTP_METHODS: Final[set[str]] = {
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "PATCH",
-            "HEAD",
-            "OPTIONS",
+            HTTP_METHOD_GET,
+            HTTP_METHOD_POST,
+            HTTP_METHOD_PUT,
+            HTTP_METHOD_DELETE,
+            HTTP_METHOD_PATCH,
+            HTTP_METHOD_HEAD,
+            HTTP_METHOD_OPTIONS,
         }
 
         # Common MIME types
@@ -306,6 +315,9 @@ class FlextConstants:
         HEADER_USER_AGENT: Final[str] = "User-Agent"
         HEADER_ACCEPT: Final[str] = "Accept"
         HEADER_CACHE_CONTROL: Final[str] = "Cache-Control"
+        HEADER_API_KEY: Final[str] = "X-API-Key"
+        HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
+        HEADER_CORRELATION_ID: Final[str] = "X-Correlation-ID"
 
         # HTTP status codes
         HTTP_STATUS_OK: Final[int] = 200
@@ -547,6 +559,7 @@ class FlextConstants:
         INCLUDE_SOURCE: Final[bool] = True
         STRUCTURED_OUTPUT: Final[bool] = True
         VERBOSITY: Final[str] = "detailed"
+        VALID_VERBOSITY_LEVELS: Final[set[str]] = {"compact", "detailed", "full"}
 
         # Output configuration
         JSON_OUTPUT_DEFAULT: Final[None] = None  # Auto-detect
