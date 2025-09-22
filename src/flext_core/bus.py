@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Protocol, cast
@@ -49,6 +50,8 @@ class FlextBus(FlextMixins):
     ) -> None:
         """Initialise the bus using the CQRS configuration models."""
         super().__init__()
+        self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
+        self._max_cache_size: int = 0
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self, "bus_config")
         FlextMixins.clear_cache(self)
@@ -81,6 +84,10 @@ class FlextBus(FlextMixins):
 
         self._config_model = config_model
         self._config = config_model.model_dump()
+        if config_model.enable_caching and config_model.max_cache_size > 0:
+            self._max_cache_size = int(config_model.max_cache_size)
+        else:
+            self._max_cache_size = 0
 
         # Handlers registry: command type -> handler instance
         self._handlers: FlextTypes.Core.Dict = {}
@@ -330,13 +337,19 @@ class FlextBus(FlextMixins):
         self._execution_count = int(self._execution_count) + 1
         command_type = type(command)
 
-        # Check cache for query results if this is a query (and if metrics are enabled)
-        if self._config_model.enable_metrics and (
-            hasattr(command, "query_id") or "Query" in command_type.__name__
-        ):
+        is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
+        should_consider_cache = (
+            self._config_model.enable_caching
+            and self._config_model.enable_metrics
+            and self._max_cache_size > 0
+            and is_query
+        )
+        cache_key: str | None = None
+        if should_consider_cache:
             cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            cached_result = getattr(self, "_cache", {}).get(cache_key)
+            cached_result = self._cache.get(cache_key)
             if cached_result is not None:
+                self._cache.move_to_end(cache_key)
                 self.logger.info(
                     "Returning cached query result",
                     command_type=command_type.__name__,
@@ -385,13 +398,16 @@ class FlextBus(FlextMixins):
         elapsed = time.time() - self._start_time
 
         # Cache successful query results
-        if (
-            result.is_success
-            and self._config_model.enable_caching
-            and (hasattr(command, "query_id") or "Query" in command_type.__name__)
-        ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            getattr(self, "_cache", {}).setdefault(cache_key, result)
+        if result.is_success and should_consider_cache and cache_key is not None:
+            self._cache[cache_key] = result
+            self._cache.move_to_end(cache_key)
+            while len(self._cache) > self._max_cache_size:
+                evicted_key, _ = self._cache.popitem(last=False)
+                self.logger.debug(
+                    "Evicted cached query result",
+                    command_type=command_type.__name__,
+                    cache_key=evicted_key,
+                )
             self.logger.debug(
                 "Cached query result",
                 command_type=command_type.__name__,
