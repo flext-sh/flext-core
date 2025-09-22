@@ -21,20 +21,30 @@ class FlextTestsMatchers:
 
     @runtime_checkable
     class ResultLike(Protocol):
-        def __bool__(self) -> bool: ...
+        """Protocol for result-like objects that support boolean evaluation."""
+
+        def __bool__(self) -> bool:
+            """Return boolean evaluation of the result."""
+            ...
 
     @runtime_checkable
     class SuccessResultLike(Protocol):
+        """Protocol for result-like objects that have success indicators."""
+
         is_success: bool
         success: bool
 
     @runtime_checkable
     class FailureResultLike(Protocol):
+        """Protocol for result-like objects that have failure indicators."""
+
         is_failure: bool
         failure: bool
 
     @runtime_checkable
     class FlextResultLike(Protocol):
+        """Protocol for FlextResult-like objects with standard attributes."""
+
         is_success: bool
         is_failure: bool
         value: object
@@ -42,27 +52,43 @@ class FlextTestsMatchers:
 
     @runtime_checkable
     class ContainerLike(Protocol):
-        def __len__(self) -> int: ...
+        """Protocol for container-like objects that support length checking."""
+
+        def __len__(self) -> int:
+            """Return the length of the container."""
+            ...
 
     @runtime_checkable
     class ErrorResultLike(Protocol):
+        """Protocol for result-like objects that have error information."""
+
         error: str | None
 
     @runtime_checkable
     class ErrorCodeResultLike(Protocol):
+        """Protocol for result-like objects that have error codes."""
+
         error_code: str | None
 
     @runtime_checkable
     class ValueResultLike(Protocol):
+        """Protocol for result-like objects that have value attributes."""
+
         value: object
 
     @runtime_checkable
     class DataResultLike(Protocol):
+        """Protocol for result-like objects that have data attributes."""
+
         data: object
 
     @runtime_checkable
     class EmptyCheckable(Protocol):
-        def __len__(self) -> int: ...
+        """Protocol for objects that can be checked for emptiness via length."""
+
+        def __len__(self) -> int:
+            """Return the length for emptiness checking."""
+            ...
 
 
 class TestFlextTestsMatchers:
