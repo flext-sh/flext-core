@@ -28,6 +28,7 @@ from typing import NoReturn, Self, cast
 import pytest
 
 from flext_core import (
+    FlextConfig,
     FlextContext,
     FlextLogger,
     FlextTypes,
@@ -80,6 +81,9 @@ def reset_logging_state() -> Generator[None]:
     # Reset correlation ID (clear any existing ID)
     FlextContext.Utilities.clear_context()
 
+    # Reset configuration state so each test can control feature flags
+    FlextConfig.reset_global_instance()
+
     # Reset global correlation ID to ensure test isolation
     FlextLogger._global_correlation_id = None
 
@@ -91,6 +95,7 @@ def reset_logging_state() -> Generator[None]:
     # Clean up
     FlextLogger._configured = False
     FlextLogger._global_correlation_id = None
+    FlextConfig.reset_global_instance()
 
 
 class TestFlextLoggerInitialization:
@@ -293,6 +298,102 @@ class TestStructuredLogging:
             )
         except Exception as e:
             pytest.fail(f"Logging should not raise exceptions: {e}")
+
+
+class TestLoggingFeatureFlags:
+    """Validate feature-flag driven logging behaviour."""
+
+    @pytest.mark.parametrize(
+        ("include_context", "mask_sensitive_data", "expected_password"),
+        [
+            (True, True, "[REDACTED]"),
+            (True, False, "secret123"),
+            (False, True, None),
+            (False, False, None),
+        ],
+    )
+    def test_context_and_mask_flags(
+        self,
+        include_context: bool,
+        mask_sensitive_data: bool,
+        expected_password: str | None,
+    ) -> None:
+        """Ensure context inclusion and masking follow FlextConfig settings."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(
+                include_context=include_context,
+                mask_sensitive_data=mask_sensitive_data,
+            )
+        )
+
+        logger = FlextLogger("flag_test_context")
+        context_data = {"password": "secret123", "username": "alice"}
+
+        entry = logger._build_log_entry("INFO", "Context flag", context_data)
+
+        if include_context:
+            assert "context" in entry
+            context_payload = entry["context"]
+            assert context_payload["username"] == "alice"
+            assert context_payload.get("password") == expected_password
+        else:
+            assert "context" not in entry
+
+    @pytest.mark.parametrize("include_correlation_id", [True, False])
+    def test_correlation_id_flag(self, include_correlation_id: bool) -> None:
+        """Ensure correlation ID is optional based on configuration."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(include_correlation_id=include_correlation_id)
+        )
+
+        logger = FlextLogger("flag_test_correlation")
+        entry = logger._build_log_entry("INFO", "Correlation flag")
+
+        if include_correlation_id:
+            assert entry.get("correlation_id") == logger._correlation_id
+        else:
+            assert "correlation_id" not in entry
+
+    @pytest.mark.parametrize("track_performance", [True, False])
+    def test_performance_flag(self, track_performance: bool) -> None:
+        """Verify performance block obeys tracking configuration."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(track_performance=track_performance)
+        )
+
+        logger = FlextLogger("flag_test_performance")
+        entry = logger._build_log_entry(
+            "INFO",
+            "Performance flag",
+            {},
+            duration_ms=42.5,
+        )
+
+        if track_performance:
+            performance = entry.get("performance", {})
+            assert performance["duration_ms"] == 42.5
+        else:
+            assert "performance" not in entry
+
+    @pytest.mark.parametrize("track_timing", [True, False])
+    def test_timing_flag(self, track_timing: bool) -> None:
+        """Ensure execution metadata respects timing tracker configuration."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(track_timing=track_timing)
+        )
+
+        logger = FlextLogger("flag_test_timing")
+        entry = logger._build_log_entry("INFO", "Timing flag")
+
+        if track_timing:
+            execution = entry.get("execution", {})
+            assert "uptime_seconds" in execution
+        else:
+            assert "execution" not in entry
 
 
 class TestCorrelationIdFunctionality:
