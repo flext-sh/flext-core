@@ -63,6 +63,32 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
         return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
 
 
+@dataclass
+class CacheableQuery:
+    """Query used to validate dispatcher cache integration."""
+
+    query_id: str
+    value: int
+
+
+class CountingQueryHandler(FlextHandlers[CacheableQuery, int]):
+    """Query handler that tracks invocations for cache assertions."""
+
+    def __init__(self, counter: list[int]) -> None:
+        """Initialize handler with shared invocation counter."""
+        super().__init__(handler_mode="query")
+        self._counter = counter
+
+    def handle(self, message: CacheableQuery) -> FlextResult[int]:
+        """Increment counter and return deterministic result."""
+        self._counter[0] += 1
+        return FlextResult[int].ok(message.value * 2)
+
+    def execute(self, message: CacheableQuery) -> FlextResult[int]:
+        """Bypass the validation pipeline to keep the test focused on caching."""
+        return self.handle(message)
+
+
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
     """Test the dispatcher registers a handler and dispatches a command."""
     FlextContext.Utilities.clear_context()
@@ -131,6 +157,39 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.is_success
     assert isinstance(result.unwrap(), str)
     assert result.unwrap()
+
+
+def test_dispatcher_caches_queries_when_metrics_disabled() -> None:
+    """Cache hits should occur even when metrics collection is disabled."""
+    FlextContext.Utilities.clear_context()
+    counter = [0]
+    dispatcher = FlextDispatcher(
+        config={
+            "auto_context": False,
+            "enable_logging": False,
+            "enable_metrics": False,
+            "bus_config": {"enable_metrics": False, "enable_caching": True},
+        }
+    )
+
+    handler = CountingQueryHandler(counter)
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler),
+        handler_mode="query",
+    )
+    assert register_result.is_success
+
+    query = CacheableQuery(query_id="cacheable", value=21)
+
+    first_result = dispatcher.dispatch(query)
+    assert first_result.is_success
+    assert first_result.unwrap() == 42
+
+    second_result = dispatcher.dispatch(query)
+    assert second_result.is_success
+    assert second_result.unwrap() == 42
+
+    assert counter[0] == 1
 
 
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:

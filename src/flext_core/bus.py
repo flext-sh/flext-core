@@ -51,6 +51,8 @@ class FlextBus(FlextMixins):
         super().__init__()
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self, "bus_config")
+        # Internal cache store for query responses
+        self._cache: dict[str, FlextResult[object]] = {}
         FlextMixins.clear_cache(self)
         # Timestampable mixin initialization
         self._created_at = datetime.now(UTC)
@@ -330,14 +332,19 @@ class FlextBus(FlextMixins):
         self._execution_count = int(self._execution_count) + 1
         command_type = type(command)
 
-        # Check cache for query results if this is a query (and if metrics are enabled)
-        if self._config_model.enable_metrics and (
-            hasattr(command, "query_id") or "Query" in command_type.__name__
+        is_query_message = hasattr(command, "query_id") or "Query" in command_type.__name__
+        cache_key: str | None = (
+            f"{command_type.__name__}_{hash(str(command))}" if is_query_message else None
+        )
+
+        # Check cache for query results when caching is enabled
+        if (
+            cache_key is not None
+            and self._config_model.enable_caching
         ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            cached_result = getattr(self, "_cache", {}).get(cache_key)
+            cached_result = self._cache.get(cache_key)
             if cached_result is not None:
-                self.logger.info(
+                self.logger.debug(
                     "Returning cached query result",
                     command_type=command_type.__name__,
                     cache_key=cache_key,
@@ -388,10 +395,9 @@ class FlextBus(FlextMixins):
         if (
             result.is_success
             and self._config_model.enable_caching
-            and (hasattr(command, "query_id") or "Query" in command_type.__name__)
+            and cache_key is not None
         ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            getattr(self, "_cache", {}).setdefault(cache_key, result)
+            self._cache.setdefault(cache_key, result)
             self.logger.debug(
                 "Cached query result",
                 command_type=command_type.__name__,
