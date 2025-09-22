@@ -21,7 +21,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-
 HandlerTypeLiteral = Literal[
     FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     FlextConstants.Cqrs.QUERY_HANDLER_TYPE,

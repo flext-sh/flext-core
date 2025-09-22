@@ -285,8 +285,8 @@ class TestDomainServicesFixed:
 
         result = service.execute_operation(operation_request)
         assert result.is_success is True
-        # The result should be a dict with the operation result
-        assert isinstance(result.unwrap(), dict)
+        # The result should be the return value of operator.add (5 + 3 = 8)
+        assert result.unwrap() == 8
 
     def test_execute_operation_with_kwargs(self) -> None:
         """Test execute_operation with keyword arguments."""
@@ -304,8 +304,8 @@ class TestDomainServicesFixed:
 
         result = service.execute_operation(operation_request)
         assert result.is_success is True
-        # The result should be a dict with the operation result
-        assert isinstance(result.unwrap(), dict)
+        # The result should be the return value of test_operation
+        assert result.unwrap() == "test: 20"
 
     def test_execute_operation_config_validation_failure(self) -> None:
         """Test execute_operation with config validation failure."""
@@ -375,6 +375,7 @@ class TestDomainServicesFixed:
         # Create operation request
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="type_error_op", operation_callable=type_error_operation
+        )
 
         result = service.execute_operation(operation_request)
         assert result.is_failure
@@ -543,10 +544,12 @@ class TestDomainServicesFixed:
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers",
             operation_callable=test_operation,
+            arguments={"x": 15, "y": 25},
+        )
         result = service.execute_operation(operation_request)
         assert result.is_success
-        # The result should be a dict, not a direct value
-        assert isinstance(result.unwrap(), dict)
+        # The result should be the return value of operator.add (15 + 25 = 40)
+        assert result.unwrap() == 40
 
     def test_complex_service_execution_business_rule_failure(self) -> None:
         """Test complex service execution with business rule failure."""
@@ -567,6 +570,7 @@ class TestDomainServicesFixed:
             result.error is not None
             and "Business rules validation failed" in result.error
         )
+
     def test_complex_service_execution_config_failure(self) -> None:
         """Test complex service execution with config failure."""
         test_operation = operator.add
