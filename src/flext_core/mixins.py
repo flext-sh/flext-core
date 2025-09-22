@@ -12,7 +12,6 @@ from datetime import UTC, datetime
 from typing import Any, Callable, cast
 
 from pydantic import BaseModel
-
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
@@ -457,53 +456,19 @@ class FlextMixins:
         """
 
     class Configurable:
-        """Mixin for configuration access capabilities.
+        """Mixin for configuration capabilities.
 
-        Provides the get() method for objects that can access configuration
-        parameters using FlextMixins methods.
+        Components inheriting from this mixin should use native Pydantic accessors
+        for configuration management. Retrieve values with direct attribute access
+        (``config.debug``) or ``getattr`` and produce validated updates with
+        attribute assignment or ``model_copy(update=...)``.
+
+        Example:
+            config = FlextConfig.get_global_instance()
+            debug_mode = config.debug
+            config.debug = True
+            updated = config.model_copy(update={"timeout_seconds": 60})
         """
 
-        def get(self, parameter: str) -> object:
-            """Get any parameter value from this configuration instance.
+        pass
 
-            This method uses FlextMixins.get_config_parameter internally
-            to provide Pydantic-compatible parameter access.
-            The parameter MUST be defined in the model.
-
-            Args:
-                parameter: The parameter name to retrieve (must exist in model)
-
-            Returns:
-                The parameter value
-
-            Raises:
-                KeyError: If parameter is not defined in the model
-
-            Example:
-                # For any class that inherits from FlextMixins.Configurable
-                debug_mode = config.get('debug')
-                log_level = config.get('log_level')
-
-            """
-            return FlextMixins.get_config_parameter(self, parameter)
-
-        def set(self, parameter: str, value: object) -> bool:
-            """Set any parameter value on this configuration instance with validation.
-
-            This method uses FlextMixins.set_config_parameter internally
-            to provide Pydantic-compatible parameter setting with full validation.
-
-            Args:
-                parameter: The parameter name to set
-                value: The new value to set (will be validated by Pydantic)
-
-            Returns:
-                True if successful, False if validation failed or parameter doesn't exist
-
-            Example:
-                # For any class that inherits from FlextMixins.Configurable
-                success = config.set('debug', True)
-                success = config.set('log_level', 'DEBUG')
-
-            """
-            return FlextMixins.set_config_parameter(self, parameter, value)
