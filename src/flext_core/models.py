@@ -1337,7 +1337,7 @@ class FlextModels:
             default_factory=lambda: FlextConfig.get_global_instance().use_utc_timestamps
         )
         auto_update: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().use_utc_timestamps
+            default_factory=lambda: FlextConfig.get_global_instance().timestamp_auto_update
         )
         format: str = "%Y-%m-%dT%H:%M:%S.%fZ"
         timezone: str | None = None
