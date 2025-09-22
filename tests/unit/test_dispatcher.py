@@ -516,6 +516,27 @@ def test_dispatcher_registry_register_bindings() -> None:
     assert dispatch_result.unwrap() == "BOUND"
 
 
+def test_dispatcher_unregisters_handler_registered_with_command_type() -> None:
+    """Handlers registered via the two-arg form can be removed by type."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    handler = EchoHandler()
+    register_result = dispatcher.register_command(
+        EchoCommand, cast("FlextHandlers[object, object]", handler)
+    )
+
+    assert register_result.is_success
+    assert handler in dispatcher.bus.get_all_handlers()
+    assert "EchoCommand" in dispatcher.bus.get_registered_handlers()
+
+    removed = dispatcher.bus.unregister_handler(EchoCommand)
+    assert removed is True
+    assert handler not in dispatcher.bus.get_all_handlers()
+    assert "EchoCommand" not in dispatcher.bus.get_registered_handlers()
+
+
 def test_dispatcher_registry_register_function_map() -> None:
     """Registry accepts function mappings for registration."""
     FlextContext.Utilities.clear_context()

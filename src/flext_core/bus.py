@@ -253,6 +253,29 @@ class FlextBus(FlextMixins):
             handler_name=handler_name,
         )
 
+    @staticmethod
+    def _normalize_command_key(command_type_obj: object) -> str:
+        """Create a comparable key for command identifiers."""
+
+        if hasattr(command_type_obj, "__origin__") and hasattr(
+            command_type_obj, "__args__"
+        ):
+            origin_attr = getattr(command_type_obj, "__origin__", None)
+            args_attr = getattr(command_type_obj, "__args__", None)
+            if origin_attr is not None and args_attr is not None:
+                origin_name = getattr(origin_attr, "__name__", str(origin_attr))
+                if args_attr:
+                    args_str = ", ".join(
+                        getattr(arg, "__name__", str(arg)) for arg in args_attr
+                    )
+                    return f"{origin_name}[{args_str}]"
+                return origin_name
+
+        name_attr = getattr(command_type_obj, "__name__", None)
+        if name_attr is not None:
+            return name_attr
+        return str(command_type_obj)
+
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance (single or paired registration forms).
 
@@ -302,29 +325,7 @@ class FlextBus(FlextMixins):
                 return FlextResult[None].fail(msg)
 
             # Compute key for local registry visibility
-            # Handle parameterized generics first before checking __name__
-            if hasattr(command_type_obj, "__origin__") and hasattr(
-                command_type_obj, "__args__"
-            ):
-                # Type guard: check if attributes exist and are not None
-                origin_attr = getattr(command_type_obj, "__origin__", None)
-                args_attr = getattr(command_type_obj, "__args__", None)
-                if origin_attr is not None and args_attr is not None:
-                    # Reconstruct the string representation for parameterized generics
-                    origin_name = getattr(origin_attr, "__name__", str(origin_attr))
-                    if args_attr:
-                        args_str = ", ".join(
-                            getattr(arg, "__name__", str(arg)) for arg in args_attr
-                        )
-                        key = f"{origin_name}[{args_str}]"
-                    else:
-                        key = origin_name
-                else:
-                    name_attr = getattr(command_type_obj, "__name__", None)
-                    key = name_attr if name_attr is not None else str(command_type_obj)
-            else:
-                name_attr = getattr(command_type_obj, "__name__", None)
-                key = name_attr if name_attr is not None else str(command_type_obj)
+            key = self._normalize_command_key(command_type_obj)
             self._handlers[key] = handler
             self.logger.info(
                 "Handler registered for command type",
@@ -682,36 +683,31 @@ class FlextBus(FlextMixins):
 
         """
         for key in list(self._handlers.keys()):
-            key_identifier = getattr(key, "__name__", str(key))
-            direct_match = key == command_type
-            name_match = isinstance(command_type, str) and (
-                key_identifier == command_type or str(key) == command_type
-            )
+            candidate_names: set[str] = {str(key)}
+            key_name = getattr(key, "__name__", None)
+            if isinstance(key_name, str):
+                candidate_names.add(key_name)
 
-            if direct_match or name_match:
+            direct_match = isinstance(command_type, type) and key == command_type
+            command_names: set[str] = {str(command_type)}
+            command_name_attr = getattr(command_type, "__name__", None)
+            if isinstance(command_name_attr, str):
+                command_names.add(command_name_attr)
+            normalized_command = self._normalize_command_key(command_type)
+            if isinstance(normalized_command, str):
+                command_names.add(normalized_command)
+
+            if direct_match or candidate_names.intersection(command_names):
                 del self._handlers[key]
                 remaining = len(self._handlers)
                 message = f"Handler '{key_identifier}' unregistered"
 
                 self.logger.info(
                     "Handler unregistered",
-                    command_type=getattr(command_type, "__name__", str(command_type)),
+                    command_type=normalized_command,
                     remaining_handlers=len(self._handlers),
                 )
                 return True
-            if isinstance(command_type, str):
-                # String comparison
-                key_name = getattr(key, "__name__", None)
-                if (key_name is not None and key_name == command_type) or str(
-                    key,
-                ) == command_type:
-                    del self._handlers[key]
-                    self.logger.info(
-                        "Handler unregistered",
-                        command_type=command_type,
-                        remaining_handlers=len(self._handlers),
-                    )
-                    return True
 
         return False
 
