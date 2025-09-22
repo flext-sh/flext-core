@@ -690,8 +690,9 @@ class TestFlextCqrsBusMiddleware:
 
         bus = FlextBus(bus_config=config)
         command = FlextModels.Command(command_id="test", command_type="test-type")
+        handler = object()
 
-        result = bus._apply_middleware(command)
+        result = bus._apply_middleware(command, handler)
         FlextTestsMatchers.assert_result_success(result)
 
     def test_bus_apply_middleware_success(self) -> None:
@@ -700,19 +701,112 @@ class TestFlextCqrsBusMiddleware:
 
         class TestMiddleware:
             def __init__(self) -> None:
-                self.middleware_id = "test-middleware"
+                self.calls: list[tuple[object, object]] = []
 
-            def process(self, command: object) -> FlextResult[object]:
+            def process(self, command: object, handler: object) -> FlextResult[object]:
+                self.calls.append((command, handler))
                 return FlextResult[object].ok(command)
 
         bus = FlextBus(bus_config=config)
         middleware = TestMiddleware()
-        bus._middleware.append(middleware)
+        bus.add_middleware(
+            middleware,
+            middleware_config={
+                "middleware_id": "test-middleware",
+                "enabled": True,
+                "order": 1,
+            },
+        )
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
-        result = bus._apply_middleware(command)
+        handler = object()
+        result = bus._apply_middleware(command, handler)
 
         FlextTestsMatchers.assert_result_success(result)
+        assert middleware.calls == [(command, handler)]
+
+    def test_bus_apply_middleware_skips_disabled_entry(self) -> None:
+        """Ensure disabled middleware entries are ignored by the pipeline."""
+
+        class RecordingMiddleware:
+            def __init__(self, middleware_id: str) -> None:
+                self.middleware_id = middleware_id
+                self.called = False
+
+            def process(self, command: object, handler: object) -> FlextResult[object]:
+                self.called = True
+                return FlextResult[object].ok(command)
+
+        bus = FlextBus(bus_config={"enable_middleware": True})
+        disabled = RecordingMiddleware("disabled")
+        active = RecordingMiddleware("active")
+
+        bus.add_middleware(
+            disabled,
+            middleware_config={
+                "middleware_id": "disabled",
+                "enabled": False,
+                "order": 1,
+            },
+        )
+        bus.add_middleware(
+            active,
+            middleware_config={
+                "middleware_id": "active",
+                "enabled": True,
+                "order": 2,
+            },
+        )
+
+        command = FlextModels.Command(command_id="cmd", command_type="cmd-type")
+        handler = object()
+        result = bus._apply_middleware(command, handler)
+
+        FlextTestsMatchers.assert_result_success(result)
+        assert disabled.called is False
+        assert active.called is True
+
+    def test_bus_apply_middleware_runs_multiple_middlewares(self) -> None:
+        """Ensure multiple middleware entries execute in order."""
+
+        execution_order: list[str] = []
+
+        class OrderedMiddleware:
+            def __init__(self, name: str) -> None:
+                self.middleware_id = name
+                self.name = name
+
+            def process(self, command: object, handler: object) -> FlextResult[object]:
+                execution_order.append(self.name)
+                return FlextResult[object].ok(command)
+
+        bus = FlextBus(bus_config={"enable_middleware": True})
+        first = OrderedMiddleware("first")
+        second = OrderedMiddleware("second")
+
+        bus.add_middleware(
+            first,
+            middleware_config={
+                "middleware_id": "first",
+                "enabled": True,
+                "order": 1,
+            },
+        )
+        bus.add_middleware(
+            second,
+            middleware_config={
+                "middleware_id": "second",
+                "enabled": True,
+                "order": 2,
+            },
+        )
+
+        command = FlextModels.Command(command_id="cmd", command_type="cmd-type")
+        handler = object()
+        result = bus._apply_middleware(command, handler)
+
+        FlextTestsMatchers.assert_result_success(result)
+        assert execution_order == ["first", "second"]
 
     def test_bus_apply_middleware_rejection(self) -> None:
         """Test Bus _apply_middleware rejection."""
@@ -722,15 +816,23 @@ class TestFlextCqrsBusMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "rejecting-middleware"
 
-            def process(self, _command: object) -> FlextResult[object]:
+            def process(self, _command: object, _handler: object) -> FlextResult[object]:
                 return FlextResult[object].fail("Middleware rejected command")
 
         bus = FlextBus(bus_config=config)
         middleware = RejectingMiddleware()
-        bus._middleware.append(middleware)
+        bus.add_middleware(
+            middleware,
+            middleware_config={
+                "middleware_id": "rejecting-middleware",
+                "enabled": True,
+                "order": 1,
+            },
+        )
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
-        result = bus._apply_middleware(command)
+        handler = object()
+        result = bus._apply_middleware(command, handler)
 
         FlextTestsMatchers.assert_result_failure(result)
 
