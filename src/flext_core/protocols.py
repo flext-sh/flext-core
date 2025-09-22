@@ -103,12 +103,12 @@ class FlextProtocols:
         class Handler(Protocol, Generic[TInput_contra, TOutput_co]):
             """Application handler with validation."""
 
-            def __call__(self, input_data: TInput_contra) -> object:
-                """Process input and return output."""
+            def __call__(self, input_data: TInput_contra) -> FlextResult[TOutput_co]:
+                """Process input and return a ``FlextResult`` containing the output."""
                 ...
 
-            def validate(self, data: TInput_contra) -> object:
-                """Validate input before processing."""
+            def validate(self, data: TInput_contra) -> FlextResult[None]:
+                """Validate input before processing and wrap the outcome in ``FlextResult``."""
                 ...
 
     # =========================================================================
