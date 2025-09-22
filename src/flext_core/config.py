@@ -501,24 +501,6 @@ class FlextConfig(BaseSettings):
 
         return cls.model_validate(config_data)
 
-    def to_dict(self) -> dict[str, object]:
-        """Convert configuration to dictionary.
-
-        Returns:
-            dict[str, object]: Configuration as dictionary.
-
-        """
-        return self.model_dump()
-
-    def to_json(self) -> str:
-        """Convert configuration to JSON string.
-
-        Returns:
-            str: Configuration as formatted JSON string.
-
-        """
-        return self.model_dump_json(indent=2)
-
     def merge(self, other: FlextConfig | dict[str, object]) -> FlextConfig:
         """Merge with another configuration, returning new instance.
 
@@ -529,9 +511,11 @@ class FlextConfig(BaseSettings):
             FlextConfig: New configuration instance with merged values.
 
         """
-        other_data = other.to_dict() if isinstance(other, FlextConfig) else other
+        other_data = (
+            other.model_dump() if isinstance(other, FlextConfig) else other
+        )
 
-        current_data = self.to_dict()
+        current_data = self.model_dump()
         merged_data = {**current_data, **other_data}
         return self.__class__.model_validate(merged_data)
 
