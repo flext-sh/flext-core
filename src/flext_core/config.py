@@ -566,9 +566,11 @@ class FlextConfig(BaseSettings):
             FlextConfig: New configuration instance with merged values.
 
         """
-        other_data = other.to_dict() if isinstance(other, FlextConfig) else other
+        other_data = (
+            other.model_dump() if isinstance(other, FlextConfig) else other
+        )
 
-        current_data = self.to_dict()
+        current_data = self.model_dump()
         merged_data = {**current_data, **other_data}
         return self.__class__.model_validate(merged_data)
 

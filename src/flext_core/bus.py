@@ -250,6 +250,61 @@ class FlextBus(FlextMixins):
             handler_name=handler_name,
         )
 
+    @staticmethod
+    def _normalize_command_key(command_type_obj: object) -> str:
+        """Create a comparable key for command identifiers."""
+
+        if hasattr(command_type_obj, "__origin__") and hasattr(
+            command_type_obj, "__args__"
+        ):
+            origin_attr = getattr(command_type_obj, "__origin__", None)
+            args_attr = getattr(command_type_obj, "__args__", None)
+            if origin_attr is not None and args_attr is not None:
+                origin_name = getattr(origin_attr, "__name__", str(origin_attr))
+                if args_attr:
+                    args_str = ", ".join(
+                        getattr(arg, "__name__", str(arg)) for arg in args_attr
+                    )
+                    return f"{origin_name}[{args_str}]"
+                return origin_name
+
+        name_attr = getattr(command_type_obj, "__name__", None)
+        if name_attr is not None:
+            return name_attr
+        return str(command_type_obj)
+
+    def _normalize_middleware_config(
+        self, middleware_config: object | None
+    ) -> dict[str, object]:
+        """Convert middleware configuration into a dictionary."""
+
+        if middleware_config is None:
+            return {}
+
+        if isinstance(middleware_config, Mapping):
+            return dict(middleware_config)
+
+        for attr_name in ("model_dump", "dict"):
+            method = getattr(middleware_config, attr_name, None)
+            if callable(method):
+                try:
+                    result = method()
+                except TypeError:
+                    continue
+                if isinstance(result, Mapping):
+                    return dict(result)
+                if isinstance(result, dict):
+                    return cast("dict[str, object]", result)
+
+        normalized: dict[str, object] = {}
+        sentinel = object()
+        for key in ("middleware_id", "middleware_type", "enabled", "order"):
+            value = getattr(middleware_config, key, sentinel)
+            if value is not sentinel:
+                normalized[key] = value
+
+        return normalized
+
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance (single or paired registration forms).
 
@@ -266,9 +321,13 @@ class FlextBus(FlextMixins):
                 msg = "Handler cannot be None"
                 return FlextResult[None].fail(msg)
 
-            handle_method = getattr(handler, "handle", None)
+            handle_method_name = FlextConstants.Mixins.METHOD_HANDLE
+            handle_method = getattr(handler, handle_method_name, None)
             if not callable(handle_method):
-                msg = "Invalid handler: must have callable 'handle' method"
+                msg = (
+                    "Invalid handler: must have callable "
+                    f"'{handle_method_name}' method"
+                )
                 return FlextResult[None].fail(msg)
 
             key = getattr(handler, "handler_id", handler.__class__.__name__)
@@ -299,29 +358,7 @@ class FlextBus(FlextMixins):
                 return FlextResult[None].fail(msg)
 
             # Compute key for local registry visibility
-            # Handle parameterized generics first before checking __name__
-            if hasattr(command_type_obj, "__origin__") and hasattr(
-                command_type_obj, "__args__"
-            ):
-                # Type guard: check if attributes exist and are not None
-                origin_attr = getattr(command_type_obj, "__origin__", None)
-                args_attr = getattr(command_type_obj, "__args__", None)
-                if origin_attr is not None and args_attr is not None:
-                    # Reconstruct the string representation for parameterized generics
-                    origin_name = getattr(origin_attr, "__name__", str(origin_attr))
-                    if args_attr:
-                        args_str = ", ".join(
-                            getattr(arg, "__name__", str(arg)) for arg in args_attr
-                        )
-                        key = f"{origin_name}[{args_str}]"
-                    else:
-                        key = origin_name
-                else:
-                    name_attr = getattr(command_type_obj, "__name__", None)
-                    key = name_attr if name_attr is not None else str(command_type_obj)
-            else:
-                name_attr = getattr(command_type_obj, "__name__", None)
-                key = name_attr if name_attr is not None else str(command_type_obj)
+            key = self._normalize_command_key(command_type_obj)
             self._handlers[key] = handler
             self.logger.info(
                 "Handler registered for command type",
@@ -479,14 +516,14 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(m: FlextTypes.Core.Dict) -> int:
+        def get_order(middleware_item: object) -> int:
+            config_data = self._normalize_middleware_config(middleware_item)
+            order = config_data.get("order", 0)
             if isinstance(m, dict):
                 order_value = m.get("order", 0)
             else:
                 order_value = getattr(m, "order", 0)
 
-            if isinstance(order_value, int):
-                return order_value
             if isinstance(order_value, str):
                 try:
                     return int(order_value)
@@ -497,6 +534,7 @@ class FlextBus(FlextMixins):
         sorted_middleware = sorted(self._middleware, key=get_order)
 
         for middleware_config in sorted_middleware:
+            config_data = self._normalize_middleware_config(middleware_config)
             if isinstance(middleware_config, dict):
                 enabled = middleware_config.get("enabled", True)
                 middleware_id_value = middleware_config.get("middleware_id")
@@ -512,7 +550,7 @@ class FlextBus(FlextMixins):
                 )
                 order_value = getattr(middleware_config, "order", 0)
 
-            if not enabled:
+            if not config_data.get("enabled", True):
                 continue
 
             # Get actual middleware instance
@@ -529,8 +567,8 @@ class FlextBus(FlextMixins):
                 middleware_id=middleware_id_value
                 if middleware_id_value is not None
                 else "",
-                middleware_type=middleware_type_value,
-                order=order_value,
+                middleware_type=config_data.get("middleware_type", ""),
+                order=config_data.get("order", 0),
             )
 
             process_method = getattr(middleware, "process", None)
@@ -539,7 +577,7 @@ class FlextBus(FlextMixins):
                 if isinstance(result, FlextResult) and result.is_failure:
                     self.logger.info(
                         "Middleware rejected command",
-                        middleware_type=middleware_type_value,
+                        middleware_type=config_data.get("middleware_type", ""),
                         error=result.error or "Unknown error",
                     )
                     return FlextResult[None].fail(
@@ -569,7 +607,11 @@ class FlextBus(FlextMixins):
         )
 
         # Try different handler methods in order of preference
-        handler_methods = ["execute", "handle", "process_command"]
+        handler_methods = [
+            FlextConstants.Mixins.METHOD_EXECUTE,
+            FlextConstants.Mixins.METHOD_HANDLE,
+            FlextConstants.Mixins.METHOD_PROCESS_COMMAND,
+        ]
 
         last_failure: FlextResult[object] | None = None
 
@@ -592,11 +634,17 @@ class FlextBus(FlextMixins):
                     )
 
         # No valid handler method found
+        if not handler_methods:
+            formatted_methods = "handler method"
+        elif len(handler_methods) > 1:
+            formatted_methods = f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+        else:
+            formatted_methods = handler_methods[0]
         if last_failure is not None:
             return last_failure
 
         return FlextResult[object].fail(
-            "Handler has no callable execute, handle, or process_command method",
+            f"Handler has no callable {formatted_methods} method",
             error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
         )
 
@@ -619,41 +667,30 @@ class FlextBus(FlextMixins):
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
 
-        # Create config if not provided
-        if middleware_config is None:
-            middleware_config = cast(
-                "FlextTypes.Core.Dict",
-                {
-                    "middleware_id": f"mw_{len(self._middleware)}",
-                    "middleware_type": type(middleware).__name__,
-                    "enabled": True,
-                    "order": len(self._middleware),
-                },
-            )
-        else:
-            middleware_config = cast("FlextTypes.Core.Dict", middleware_config)
+        config_data = self._normalize_middleware_config(middleware_config)
+        if not config_data:
+            config_data = {}
 
-        # Ensure middleware config has a usable identifier
-        middleware_id_value = middleware_config.get("middleware_id")
-        if middleware_id_value in {None, ""}:
-            middleware_id_value = getattr(
-                middleware,
-                "middleware_id",
-                f"mw_{len(self._middleware_instances)}",
+        middleware_id = config_data.get("middleware_id")
+        if middleware_id is None:
+            middleware_id = getattr(
+                middleware, "middleware_id", f"mw_{len(self._middleware)}"
             )
-            middleware_config["middleware_id"] = middleware_id_value
+            config_data["middleware_id"] = middleware_id
 
-        middleware_key = "" if middleware_id_value is None else str(middleware_id_value)
+        config_data.setdefault("middleware_type", type(middleware).__name__)
+        config_data.setdefault("enabled", True)
+        config_data.setdefault("order", len(self._middleware))
 
         # Store both middleware and config
-        self._middleware.append(middleware_config)
-        # Also store the actual middleware instance
-        self._middleware_instances[middleware_key] = middleware
+        self._middleware.append(config_data)
+        # Also store the actual middleware instance using the resolved ID
+        self._middleware_instances[middleware_id] = middleware
 
         self.logger.info(
             "Middleware added to pipeline",
-            middleware_type=middleware_config.get("middleware_type", ""),
-            middleware_id=middleware_config.get("middleware_id", ""),
+            middleware_type=config_data.get("middleware_type", ""),
+            middleware_id=config_data.get("middleware_id", ""),
             total_middleware=len(self._middleware),
         )
 
@@ -679,35 +716,30 @@ class FlextBus(FlextMixins):
 
         """
         for key in list(self._handlers.keys()):
-            key_identifier = getattr(key, "__name__", str(key))
-            direct_match = key == command_type
-            name_match = isinstance(command_type, str) and (
-                key_identifier == command_type or str(key) == command_type
-            )
+            candidate_names: set[str] = {str(key)}
+            key_name = getattr(key, "__name__", None)
+            if isinstance(key_name, str):
+                candidate_names.add(key_name)
 
-            if direct_match or name_match:
+            direct_match = isinstance(command_type, type) and key == command_type
+            command_names: set[str] = {str(command_type)}
+            command_name_attr = getattr(command_type, "__name__", None)
+            if isinstance(command_name_attr, str):
+                command_names.add(command_name_attr)
+            normalized_command = self._normalize_command_key(command_type)
+            if isinstance(normalized_command, str):
+                command_names.add(normalized_command)
+
+            if direct_match or candidate_names.intersection(command_names):
                 del self._handlers[key]
                 len(self._handlers)
 
                 self.logger.info(
                     "Handler unregistered",
-                    command_type=getattr(command_type, "__name__", str(command_type)),
+                    command_type=normalized_command,
                     remaining_handlers=len(self._handlers),
                 )
                 return True
-            if isinstance(command_type, str):
-                # String comparison
-                key_name = getattr(key, "__name__", None)
-                if (key_name is not None and key_name == command_type) or str(
-                    key,
-                ) == command_type:
-                    del self._handlers[key]
-                    self.logger.info(
-                        "Handler unregistered",
-                        command_type=command_type,
-                        remaining_handlers=len(self._handlers),
-                    )
-                    return True
 
         return False
 

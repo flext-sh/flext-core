@@ -27,6 +27,8 @@ from collections.abc import Awaitable, Callable, Container, Iterable, Sequence, 
 from itertools import starmap
 from typing import Protocol, Self, cast
 
+from flext_core.types import FlextTypes
+
 
 class FlextTestsMatchers:
     """Comprehensive test matching utilities following unified class pattern.
@@ -1177,7 +1179,7 @@ class FlextTestsMatchers:
     async def measure_concurrency_performance(
         func: Callable[[], object],
         concurrency_level: int,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Ultra-simple for test compatibility - measures concurrency performance.
 
         Args:
@@ -1185,7 +1187,7 @@ class FlextTestsMatchers:
             concurrency_level: Number of concurrent executions
 
         Returns:
-            dict[str, object]: Performance measurement results
+            FlextTypes.Core.Dict: Performance measurement results using the official alias
 
         """
         start_time = time.time()
@@ -1408,14 +1410,14 @@ class FlextTestsMatchers:
     async def create_test_context(
         setup_func: object = None,
         teardown_func: object = None,
-        context_data: dict[str, object] | None = None,
+        context_data: FlextTypes.Core.Dict | None = None,
     ) -> object:
         """Create async context manager for test compatibility.
 
         Args:
             setup_func: Function to run during setup
             teardown_func: Function to run during teardown
-            context_data: Additional context data
+            context_data: Additional context data using ``FlextTypes.Core.Dict``
 
         Returns:
             object: Test context manager
@@ -1427,11 +1429,13 @@ class FlextTestsMatchers:
                 self,
                 setup_func: object = None,
                 teardown_func: object = None,
-                context_data: dict[str, object] | None = None,
+                context_data: FlextTypes.Core.Dict | None = None,
             ) -> None:
                 self.setup_func = setup_func
                 self.teardown_func = teardown_func
-                self.context_data = context_data or {}
+                self.context_data: FlextTypes.Core.Dict = (
+                    context_data or {}
+                )
                 self.result = None
 
             async def __aenter__(self) -> Self:

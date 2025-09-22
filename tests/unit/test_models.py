@@ -23,7 +23,7 @@ from typing import TypeGuard, cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 from flext_tests import FlextTestsMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -1550,3 +1550,39 @@ class TestFlextModelsValidationFunctionsMissingCoverage:
         """Test create_validated_date_range with invalid date range (end before start)."""
         result = FlextModels.create_validated_date_range("2024-12-31", "2024-01-01")
         assert result.is_failure
+
+
+class TestBatchProcessingConfigModel:
+    """Tests for BatchProcessingConfig specific validation."""
+
+    def test_max_workers_uses_configured_threshold(self) -> None:
+        """Ensure the max workers limit aligns with FlextConstants."""
+
+        max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextModels.BatchProcessingConfig(max_workers=max_workers_limit + 1)
+
+        assert f"Max workers cannot exceed {max_workers_limit}" in str(exc_info.value)
+
+
+class TestLoggerPermanentContextModelValidation:
+    """Tests for LoggerPermanentContextModel environment validation."""
+
+    def test_invalid_environment_message_lists_allowed_values(self) -> None:
+        """Ensure invalid environments surface the expected constant-backed message."""
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextModels.LoggerPermanentContextModel(
+                app_name="test-app",
+                app_version="1.0.0",
+                environment="qa",
+            )
+
+        valid_envs = {
+            env.value for env in FlextConstants.Environment.ConfigEnvironment
+        }
+        expected_fragment = ", ".join(sorted(valid_envs))
+
+        assert expected_fragment in str(exc_info.value)
+        assert "Invalid environment: qa" in str(exc_info.value)

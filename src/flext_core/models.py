@@ -1284,7 +1284,7 @@ class FlextModels:
         @classmethod
         def validate_max_workers(cls, v: int) -> int:
             """Validate max workers is reasonable."""
-            max_workers_limit = 50
+            max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
             if v > max_workers_limit:
                 msg = f"Max workers cannot exceed {max_workers_limit}"
                 raise ValueError(msg)
