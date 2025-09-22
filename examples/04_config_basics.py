@@ -257,7 +257,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
 
         # Simulate environment variables
         test_vars = {
-            "FLEXT_ENVIRONMENT": "testing",
+            "FLEXT_ENVIRONMENT": "test",
             "FLEXT_DEBUG": "true",
             "FLEXT_LOG_LEVEL": "INFO",
             "FLEXT_DATABASE_URL": "postgresql://localhost/db",
