@@ -11,8 +11,29 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
-from flext_core import FlextModels, FlextProcessing, FlextResult
+from flext_core import FlextConfig, FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
+
+
+class TestFlextProcessingConfig:
+    """Test configuration helpers for FlextProcessing."""
+
+    def test_get_default_timeout_uses_timeout_seconds(self) -> None:
+        """Ensure timeout_seconds overrides the default timeout."""
+
+        original_config = FlextConfig.get_global_instance()
+        custom_timeout = original_config.timeout_seconds + 5
+
+        try:
+            custom_config = FlextConfig(timeout_seconds=custom_timeout)
+            FlextConfig.set_global_instance(custom_config)
+
+            assert (
+                FlextProcessing.Config.get_default_timeout()
+                == float(custom_timeout)
+            )
+        finally:
+            FlextConfig.set_global_instance(original_config)
 
 
 class TestFlextProcessingHandler:

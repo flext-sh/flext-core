@@ -39,7 +39,7 @@ class FlextProcessing:
             try:
                 config = FlextConfig.get_global_instance()
                 return float(
-                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT)
+                    getattr(config, "timeout_seconds", FlextConstants.Defaults.TIMEOUT)
                 )
             except Exception:
                 return float(FlextConstants.Defaults.TIMEOUT)
