@@ -27,7 +27,7 @@ from collections.abc import Awaitable, Callable, Container, Iterable, Sequence, 
 from itertools import starmap
 from typing import Protocol, Self, cast
 
-from flext_core import FlextTypes
+from flext_core.types import FlextTypes
 
 
 class FlextTestsMatchers:
