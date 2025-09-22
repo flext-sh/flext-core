@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Protocol, cast
@@ -92,6 +93,10 @@ class FlextBus(FlextMixins):
         self._execution_count: int = 0
         # Auto-discovery handlers (single-arg registration)
         self._auto_handlers: FlextTypes.Core.List = []
+        # Query cache store respecting max_cache_size limits
+        self._cache: OrderedDict[
+            str, tuple[float, FlextResult[object]]
+        ] = OrderedDict()
 
         # Add logger
         self.logger = FlextLogger(self.__class__.__name__)
@@ -330,20 +335,42 @@ class FlextBus(FlextMixins):
         self._execution_count = int(self._execution_count) + 1
         command_type = type(command)
 
-        # Check cache for query results if this is a query (and if metrics are enabled)
-        if self._config_model.enable_metrics and (
-            hasattr(command, "query_id") or "Query" in command_type.__name__
-        ):
+        cache_enabled = (
+            self._config_model.enable_caching
+            and int(self._config_model.max_cache_size) > 0
+        )
+        is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
+        cache_key: str | None = None
+        cache_ttl_seconds = max(int(self._config_model.execution_timeout), 0)
+
+        if cache_enabled and is_query:
             cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            cached_result = getattr(self, "_cache", {}).get(cache_key)
-            if cached_result is not None:
-                self.logger.info(
-                    "Returning cached query result",
-                    command_type=command_type.__name__,
-                    cache_key=cache_key,
-                )
-                # cached_result is already FlextResult[object]
-                return cast("FlextResult[object]", cached_result)
+            now = time.time()
+
+            # Drop expired cache entries before lookup
+            if cache_ttl_seconds:
+                expired_keys = [
+                    key
+                    for key, (stored_at, _) in self._cache.items()
+                    if now - stored_at > cache_ttl_seconds
+                ]
+                for expired_key in expired_keys:
+                    self._cache.pop(expired_key, None)
+
+            cached_entry = self._cache.get(cache_key)
+            if cached_entry is not None:
+                stored_at, cached_result = cached_entry
+                if cache_ttl_seconds and now - stored_at > cache_ttl_seconds:
+                    self._cache.pop(cache_key, None)
+                else:
+                    # Maintain recency order for simple LRU behaviour
+                    self._cache.move_to_end(cache_key)
+                    self.logger.info(
+                        "Returning cached query result",
+                        command_type=command_type.__name__,
+                        cache_key=cache_key,
+                    )
+                    return cast("FlextResult[object]", cached_result)
 
         self.logger.debug(
             "execute_command",
@@ -385,13 +412,34 @@ class FlextBus(FlextMixins):
         elapsed = time.time() - self._start_time
 
         # Cache successful query results
-        if (
-            result.is_success
-            and self._config_model.enable_caching
-            and (hasattr(command, "query_id") or "Query" in command_type.__name__)
-        ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            getattr(self, "_cache", {}).setdefault(cache_key, result)
+        if result.is_success and cache_enabled and is_query:
+            cache_key = cache_key or f"{command_type.__name__}_{hash(str(command))}"
+            now = time.time()
+
+            if cache_ttl_seconds:
+                expired_keys = [
+                    key
+                    for key, (stored_at, _) in self._cache.items()
+                    if now - stored_at > cache_ttl_seconds
+                ]
+                for expired_key in expired_keys:
+                    self._cache.pop(expired_key, None)
+
+            # Remove existing entry for this key before reinserting
+            if cache_key in self._cache:
+                self._cache.pop(cache_key, None)
+
+            # Evict oldest entries when exceeding max_cache_size
+            max_cache_size = int(self._config_model.max_cache_size)
+            while len(self._cache) >= max_cache_size and self._cache:
+                evicted_key, _ = self._cache.popitem(last=False)
+                self.logger.debug(
+                    "Evicted cached query result",
+                    command_type=command_type.__name__,
+                    cache_key=evicted_key,
+                )
+
+            self._cache[cache_key] = (now, result)
             self.logger.debug(
                 "Cached query result",
                 command_type=command_type.__name__,

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from flext_core import (
+    FlextBus,
     FlextContext,
     FlextDispatcher,
     FlextDispatcherRegistry,
@@ -21,6 +22,13 @@ from flext_core import (
 @dataclass
 class EchoCommand:
     """Simple command used for dispatcher tests."""
+
+    payload: str
+
+
+@dataclass
+class CachedQuery:
+    """Query object used to validate caching behaviour."""
 
     payload: str
 
@@ -61,6 +69,19 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
             return FlextResult[str].fail("Correlation ID missing")
         # Include message info in the response to use the parameter
         return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
+
+
+class CountingQueryHandler(FlextHandlers[CachedQuery, object]):
+    """Query handler that tracks execution count for caching tests."""
+
+    def __init__(self) -> None:
+        super().__init__(handler_mode="query")
+        self.call_count = 0
+
+    def handle(self, message: CachedQuery) -> FlextResult[object]:
+        self.call_count += 1
+        # Return a unique object so identity comparisons detect caching
+        return FlextResult[object].ok(object())
 
 
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
@@ -206,3 +227,61 @@ def test_dispatcher_registry_register_function_map() -> None:
     result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="fn"))
     assert result.is_success
     assert result.unwrap() == "fn:fn"
+
+
+def test_dispatcher_query_cache_reuses_result_without_reexecution() -> None:
+    """Query dispatch returns cached result object without re-running handler."""
+
+    FlextContext.Utilities.clear_context()
+    bus = FlextBus(max_cache_size=3)
+    dispatcher = FlextDispatcher(bus=bus)
+
+    handler = CountingQueryHandler()
+    registration = dispatcher.register_query(
+        CachedQuery, cast("FlextHandlers[object, object]", handler)
+    )
+    assert registration.is_success
+
+    query = CachedQuery(payload="cache-me")
+
+    first_result = dispatcher.bus.execute(query)
+    assert first_result.is_success
+    first_value = first_result.unwrap()
+    assert handler.call_count == 1
+
+    second_result = dispatcher.bus.execute(query)
+    assert second_result.is_success
+    assert handler.call_count == 1
+    assert second_result is first_result
+    assert second_result.unwrap() is first_value
+
+
+def test_dispatcher_query_cache_respects_max_size_policy() -> None:
+    """Cache eviction honours the configured max_cache_size limit."""
+
+    FlextContext.Utilities.clear_context()
+    bus = FlextBus(max_cache_size=1)
+    dispatcher = FlextDispatcher(bus=bus)
+
+    handler = CountingQueryHandler()
+    registration = dispatcher.register_query(
+        CachedQuery, cast("FlextHandlers[object, object]", handler)
+    )
+    assert registration.is_success
+
+    first_query = CachedQuery(payload="first")
+    second_query = CachedQuery(payload="second")
+
+    first_result = dispatcher.bus.execute(first_query)
+    assert first_result.is_success
+    assert handler.call_count == 1
+
+    second_result = dispatcher.bus.execute(second_query)
+    assert second_result.is_success
+    assert handler.call_count == 2
+
+    third_result = dispatcher.bus.execute(first_query)
+    assert third_result.is_success
+    assert handler.call_count == 3
+    assert third_result is not first_result
+    assert third_result.unwrap() is not first_result.unwrap()

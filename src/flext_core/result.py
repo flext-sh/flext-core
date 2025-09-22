@@ -16,7 +16,7 @@ import signal
 import time
 import types
 from collections.abc import Callable, Iterator
-from typing import TypeGuard, overload, override
+from typing import TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import T1, T2, T3, FlextTypes, TItem, TResult, TUtil, U, V
@@ -601,18 +601,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
             data = self._data
 
-            # For success case, data is guaranteed to be T_co (which may include None)
-            # We can't check if T_co is None-compatible at runtime, so we trust the type system
-            if data is not None:
-                # Normal case where data has concrete value
-                return func(data)
-
-            # Handle None data - this is valid for FlextResult[None]
-            # For None type, we call the function directly without type ignore
-            # The type system should handle this properly
-            if self._data is None:
-                return FlextResult[U].fail("Cannot apply function to None data")
-            return func(self._data)
+            # Allow chaining even when the payload is ``None`` - callers can
+            # decide whether ``None`` is acceptable within ``func``.
+            return func(cast("T_co", data))
 
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
