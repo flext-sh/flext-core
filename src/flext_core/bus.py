@@ -135,29 +135,11 @@ class FlextBus(FlextMixins):
 
         """
 
-        class SimpleHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                super().__init__(
-                    handler_mode="command",
-                    handler_name=getattr(
-                        handler_func,
-                        "__name__",
-                        self.__class__.__name__,
-                    ),
-                    handler_config=handler_config,
-                )
-
-            def handle(self, message: object) -> FlextResult[object]:
-                result = handler_func(message)
-                if isinstance(result, FlextResult):
-                    # Result is already a FlextResult, just return it
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
-
-            def __call__(self, command: object) -> FlextResult[object]:
-                return self.handle(command)
-
-        return SimpleHandler()
+        return FlextHandlers.from_callable(
+            handler_func,
+            mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_config=handler_config,
+        )
 
     @staticmethod
     def create_query_handler(
@@ -177,29 +159,11 @@ class FlextBus(FlextMixins):
 
         """
 
-        class SimpleQueryHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                super().__init__(
-                    handler_mode="query",
-                    handler_name=getattr(
-                        handler_func,
-                        "__name__",
-                        self.__class__.__name__,
-                    ),
-                    handler_config=handler_config,
-                )
-
-            def handle(self, message: object) -> FlextResult[object]:
-                result = handler_func(message)
-                if isinstance(result, FlextResult):
-                    # Result is already a FlextResult, just return it
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
-
-            def __call__(self, query: object) -> FlextResult[object]:
-                return self.handle(query)
-
-        return SimpleQueryHandler()
+        return FlextHandlers.from_callable(
+            handler_func,
+            mode=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            handler_config=handler_config,
+        )
 
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance (single or paired registration forms).
