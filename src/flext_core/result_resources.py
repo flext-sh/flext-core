@@ -15,7 +15,7 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from flext_core.typings import T_co, TResource, TTimeout, UResource
+from flext_core.typings import FlextTypes, T_co, TResource, TTimeout, UResource
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
@@ -131,14 +131,14 @@ class FlextResultResources:
 
             # Add timing metadata
             if operation_result.is_success:
-                success_metadata = (
+                success_metadata: FlextTypes.Core.Dict = (
                     dict(operation_result.error_data)
                     if operation_result.error_data
                     else {}
                 )
                 success_metadata["execution_time"] = elapsed
                 return FlextResult[TTimeout].ok(operation_result.unwrap())
-            failure_metadata = (
+            failure_metadata: FlextTypes.Core.Dict = (
                 dict(operation_result.error_data) if operation_result.error_data else {}
             )
             failure_metadata["execution_time"] = elapsed
@@ -151,7 +151,7 @@ class FlextResultResources:
             signal.alarm(0)  # Clear timeout
 
             # Add timing metadata for timeout error
-            timeout_metadata: dict[str, object] = {
+            timeout_metadata: FlextTypes.Core.Dict = {
                 "timeout_seconds": timeout_seconds,
                 "execution_time": time.time() - start_time,
             }
