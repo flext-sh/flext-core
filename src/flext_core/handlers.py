@@ -235,7 +235,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                 globalns=getattr(handle_method, "__globals__", {}),
                 localns=dict(vars(self.__class__)),
             )
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             type_hints = {}
 
         for name, parameter in signature.parameters.items():
