@@ -157,6 +157,10 @@ class FlextProtocols:
                 """
                 ...
 
+            def __call__(self, input_data: TInput_contra) -> FlextResult[TOutput_co]:
+                """Process input and return a ``FlextResult`` containing the output."""
+                ...
+
             def can_handle(self, message_type: object) -> bool:
                 """Check if handler can process this message type.
 
@@ -191,6 +195,10 @@ class FlextProtocols:
                     FlextResult[None]: Success if valid, failure with error details
 
                 """
+                ...
+
+            def validate(self, data: TInput_contra) -> FlextResult[None]:
+                """Validate input before processing and wrap the outcome in ``FlextResult``."""
                 ...
 
             def validate_query(self, query: TInput_contra) -> FlextResult[None]:
