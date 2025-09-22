@@ -101,7 +101,7 @@ class FlextDispatcher:
         self._config = config
         resolved_bus_config = config.get("bus_config")
         if resolved_bus_config is None:
-            resolved_bus_config = FlextConfig.get_global_instance().get_cqrs_bus_config()
+            resolved_bus_config = dict(FlextConfig.get_global_instance().get_cqrs_bus_config())
 
         self._bus = bus or FlextBus.create_command_bus(bus_config=resolved_bus_config)
         self._logger = FlextLogger(self.__class__.__name__)
