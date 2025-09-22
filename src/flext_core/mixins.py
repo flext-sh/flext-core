@@ -17,6 +17,7 @@ from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.utilities import FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class FlextMixins:
@@ -79,14 +80,14 @@ class FlextMixins:
         )
 
     @staticmethod
-    def to_dict(request: FlextModels.SerializationRequest) -> dict[str, object]:
+    def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Core.Dict:
         """Convert object to dictionary using SerializationRequest model.
 
         Args:
             request: SerializationRequest containing object and serialization options
 
         Returns:
-            Dictionary representation of the object
+            Dictionary representation of the object as FlextTypes.Core.Dict
 
         """
         obj = request.data
@@ -98,17 +99,23 @@ class FlextMixins:
                 result = model_dump_method()
                 if isinstance(result, dict):
                     # Type-safe conversion with explicit casting
-                    return cast("dict[str, object]", result)
-                return {"model_dump": result}
+                    return cast("FlextTypes.Core.Dict", result)
+                return cast(
+                    "FlextTypes.Core.Dict",
+                    {"model_dump": result},
+                )
 
         # Try __dict__ method with proper type casting
         if hasattr(obj, "__dict__"):
             obj_dict = obj.__dict__
-            # obj.__dict__ is always a dict[str, object], so we can safely cast it
-            return cast("dict[str, object]", obj_dict)
+            # obj.__dict__ is always a FlextTypes.Core.Dict, so we can safely cast it
+            return cast("FlextTypes.Core.Dict", obj_dict)
 
         # Fallback to type and value representation
-        return {"type": type(obj).__name__, "value": str(obj)}
+        return cast(
+            "FlextTypes.Core.Dict",
+            {"type": type(obj).__name__, "value": str(obj)},
+        )
 
     # =============================================================================
     # VALIDATION METHODS - Direct Pydantic implementation
@@ -292,8 +299,8 @@ class FlextMixins:
         # Use Pydantic's model_dump to get all fields as dict
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
             model_dump_method = getattr(obj, "model_dump")
-            model_data: dict[str, object] = cast(
-                "dict[str, object]", model_dump_method()
+            model_data: FlextTypes.Core.Dict = cast(
+                FlextTypes.Core.Dict, model_dump_method()
             )
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
@@ -330,8 +337,8 @@ class FlextMixins:
         try:
             # Check if the parameter exists in the model fields
             if hasattr(obj, "model_fields"):
-                model_fields: dict[str, object] = cast(
-                    "dict[str, object]", getattr(obj, "model_fields")
+                model_fields: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", getattr(obj, "model_fields")
                 )
                 if parameter not in model_fields:
                     return False
@@ -343,8 +350,8 @@ class FlextMixins:
             if hasattr(obj, "model_validate") and hasattr(obj, "model_dump"):
                 # Get current model data and re-validate to ensure consistency
                 model_dump_method = getattr(obj, "model_dump")
-                current_data: dict[str, object] = cast(
-                    "dict[str, object]", model_dump_method()
+                current_data: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", model_dump_method()
                 )
                 current_data[parameter] = value
                 # This will trigger all field and model validators
