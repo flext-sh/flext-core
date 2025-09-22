@@ -931,15 +931,36 @@ class TestFlextCqrsBusManagement:
         assert "test-handler" in bus._handlers
 
         result = bus.unregister_handler("test-handler")
-        FlextTestsMatchers.assert_result_success(result)
+        assert result is True
         assert "test-handler" not in bus._handlers
+
+    def test_bus_unregister_handler_by_command_type(self) -> None:
+        """Test unregistering a handler using the command class reference."""
+
+        class SampleCommand:
+            """Dummy command type for registration tests."""
+
+        class CommandHandler:
+            def handle(self, message: object) -> FlextResult[str]:
+                return FlextResult[str].ok("handled")
+
+        bus = FlextBus()
+        handler = CommandHandler()
+
+        register_result = bus.register_handler(SampleCommand, handler)
+        FlextTestsMatchers.assert_result_success(register_result)
+        assert "SampleCommand" in bus._handlers
+
+        result = bus.unregister_handler(SampleCommand)
+        assert result is True
+        assert "SampleCommand" not in bus._handlers
 
     def test_bus_unregister_handler_not_found(self) -> None:
         """Test Bus unregister_handler not found."""
         bus = FlextBus()
 
         result = bus.unregister_handler("non-existent-handler")
-        FlextTestsMatchers.assert_result_failure(result)
+        assert result is False
 
     def test_bus_send_command_delegates_to_execute(self) -> None:
         """Test Bus send_command delegates to execute."""

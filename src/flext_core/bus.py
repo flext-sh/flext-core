@@ -579,32 +579,52 @@ class FlextBus(FlextMixins):
             bool: True if handler was removed, False otherwise
 
         """
-        for key in list(self._handlers.keys()):
-            # Handle both class objects and string comparisons
-            if key == command_type:
-                # Direct match (class object)
-                del self._handlers[key]
-                self.logger.info(
-                    "Handler unregistered",
-                    command_type=getattr(command_type, "__name__", str(command_type)),
-                    remaining_handlers=len(self._handlers),
-                )
-                return True
-            if isinstance(command_type, str):
-                # String comparison
-                key_name = getattr(key, "__name__", None)
-                if (key_name is not None and key_name == command_type) or str(
-                    key,
-                ) == command_type:
-                    del self._handlers[key]
-                    self.logger.info(
-                        "Handler unregistered",
-                        command_type=command_type,
-                        remaining_handlers=len(self._handlers),
-                    )
-                    return True
 
-        return False
+        def _normalize_identifier(identifier: type | str) -> str:
+            if isinstance(identifier, str):
+                return identifier
+            if hasattr(identifier, "__origin__") and hasattr(identifier, "__args__"):
+                origin_attr = getattr(identifier, "__origin__", None)
+                args_attr = getattr(identifier, "__args__", None)
+                if origin_attr is not None:
+                    origin_name = getattr(origin_attr, "__name__", str(origin_attr))
+                    if args_attr:
+                        args_str = ", ".join(
+                            getattr(arg, "__name__", str(arg)) for arg in args_attr
+                        )
+                        return f"{origin_name}[{args_str}]"
+                    return origin_name
+            name_attr = getattr(identifier, "__name__", None)
+            if name_attr is not None:
+                return name_attr
+            return str(identifier)
+
+        normalized_key = _normalize_identifier(command_type)
+        keys_to_try: list[type | str] = [normalized_key]
+        if not isinstance(command_type, str):
+            keys_to_try.append(command_type)
+
+        removed_handler = None
+        for key in keys_to_try:
+            if key in self._handlers:
+                removed_handler = self._handlers.pop(key)
+                break
+
+        if removed_handler is None:
+            return False
+
+        if removed_handler in self._auto_handlers:
+            try:
+                self._auto_handlers.remove(removed_handler)
+            except ValueError:
+                pass
+
+        self.logger.info(
+            "Handler unregistered",
+            command_type=normalized_key,
+            remaining_handlers=len(self._handlers),
+        )
+        return True
 
     def send_command(self, command: object) -> FlextResult[object]:
         """Compatibility shim that delegates to :meth:`execute`.
