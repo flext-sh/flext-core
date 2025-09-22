@@ -562,9 +562,18 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def reset_global_instance(cls) -> None:
-        """Reset the global FlextConfig instance (mainly for testing)."""
+        """Reset the global FlextConfig instance (mainly for testing).
+
+        Also available via :meth:`clear_global_instance` for consumers that
+        prefer a ``clear`` verb when working with singleton state.
+        """
         with cls._global_lock:
             cls._global_instance = None
+
+    @classmethod
+    def clear_global_instance(cls) -> None:
+        """Alias for :meth:`reset_global_instance`."""
+        cls.reset_global_instance()
 
     def get_cqrs_bus_config(self) -> object:
         """Get CQRS bus configuration.

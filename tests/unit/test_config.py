@@ -327,6 +327,21 @@ class TestFlextConfigGlobalInstance:
         assert new_instance is not custom_config
         assert new_instance.app_name == "FLEXT Application"  # Default
 
+    def test_clear_global_instance_alias(self) -> None:
+        """Test clear_global_instance delegates to reset behavior."""
+        # Set a custom instance
+        custom_config = FlextConfig(app_name="custom-clear")
+        FlextConfig.set_global_instance(custom_config)
+
+        # Clear via the alias and verify a new instance is lazily created
+        FlextConfig.clear_global_instance()
+        recreated_instance = FlextConfig.get_global_instance()
+        assert recreated_instance is not custom_config
+
+        # Ensure subsequent calls reuse the new singleton instance
+        subsequent_instance = FlextConfig.get_global_instance()
+        assert subsequent_instance is recreated_instance
+
 
 class TestFlextConfigEnvironmentLoading:
     """Test FlextConfig environment variable loading."""
