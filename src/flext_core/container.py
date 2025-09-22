@@ -91,11 +91,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def __init__(self) -> None:
         """Initialize container with optimized data structures."""
         # Core service storage with type safety
-        self._services: dict[str, object] = {}
-        self._factories: dict[str, Callable[[], object]] = {}
+        self._services: FlextTypes.Core.Dict = {}
+        self._factories: FlextTypes.Core.Dict = {}
 
         # Configuration integration with FlextConfig singleton
-        self._global_config = {
+        self._global_config: FlextTypes.Core.Dict = {
             "max_workers": 4,
             "timeout_seconds": 30.0,
             "environment": "development",
@@ -106,7 +106,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
     # =========================================================================
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         """Configure component with provided settings - Configurable protocol implementation.
 
         Returns:
@@ -116,20 +116,23 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         result = self.configure_container(config)
         return result.unwrap() if result.is_success else result.error
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get current configuration - Configurable protocol implementation.
 
         Returns:
-            dict[str, object]: Current container configuration
+            FlextTypes.Core.Dict: Current container configuration
 
         """
+        services_list: FlextTypes.Core.StringList = list(self._services.keys())
+        factories_list: FlextTypes.Core.StringList = list(self._factories.keys())
+
         return {
             "max_workers": self._global_config["max_workers"],
             "timeout_seconds": self._global_config["timeout_seconds"],
             "environment": self._global_config["environment"],
             "service_count": self.get_service_count(),
-            "services": list(self._services.keys()),
-            "factories": list(self._factories.keys()),
+            "services": services_list,
+            "factories": factories_list,
         }
 
     # =========================================================================
@@ -308,7 +311,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # BATCH OPERATIONS - Efficient bulk service management
     # =========================================================================
 
-    def batch_register(self, services: dict[str, object]) -> FlextResult[None]:
+    def batch_register(self, services: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Register multiple services atomically with rollback on failure.
 
         Returns:
@@ -347,7 +350,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         }
 
     def _process_batch_registrations(
-        self, services: dict[str, object]
+        self, services: FlextTypes.Core.Dict
     ) -> FlextResult[None]:
         """Process batch registrations with proper error handling.
 
@@ -372,7 +375,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         return FlextResult[None].ok(None)
 
-    def _restore_registry_snapshot(self, snapshot: dict[str, object]) -> None:
+    def _restore_registry_snapshot(self, snapshot: FlextTypes.Core.Dict) -> None:
         """Restore registry state from snapshot with type safety."""
         # Direct assignment - snapshot already has correct types
         services_snapshot = snapshot.get("services")
@@ -592,19 +595,19 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         validated_name = normalized.unwrap()
         return validated_name in self._services or validated_name in self._factories
 
-    def list_services(self) -> FlextResult[list[dict[str, object]]]:
+    def list_services(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
         """List all registered services with metadata.
 
         Returns:
-            FlextResult[list[dict[str, object]]]: Success with service list or failure with error.
+            FlextResult[list[FlextTypes.Core.Dict]]: Success with service list or failure with error.
 
         """
         try:
-            services: list[dict[str, object]] = []
+            services: list[FlextTypes.Core.Dict] = []
             for name in sorted(
                 set(self._services.keys()) | set(self._factories.keys())
             ):
-                service_info: dict[str, object] = {
+                service_info: FlextTypes.Core.Dict = {
                     FlextConstants.Mixins.FIELD_NAME: name,
                     FlextConstants.Mixins.FIELD_TYPE: "instance"
                     if name in self._services
@@ -613,24 +616,27 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 }
                 services.append(service_info)
 
-            return FlextResult[list[dict[str, object]]].ok(services)
+            return FlextResult[list[FlextTypes.Core.Dict]].ok(services)
         except Exception as e:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[FlextTypes.Core.Dict]].fail(
                 f"Failed to list services: {e}"
             )
 
-    def get_service_names(self) -> FlextResult[list[str]]:
+    def get_service_names(self) -> FlextResult[FlextTypes.Core.StringList]:
         """Get sorted list of all service names.
 
         Returns:
-            FlextResult[list[str]]: Success with sorted service names or failure with error.
+            FlextResult[FlextTypes.Core.StringList]: Success with sorted service names or failure with error.
 
         """
         try:
             all_names = set(self._services.keys()) | set(self._factories.keys())
-            return FlextResult[list[str]].ok(sorted(all_names))
+            sorted_names: FlextTypes.Core.StringList = sorted(all_names)
+            return FlextResult[FlextTypes.Core.StringList].ok(sorted_names)
         except Exception as e:
-            return FlextResult[list[str]].fail(f"Failed to get service names: {e}")
+            return FlextResult[FlextTypes.Core.StringList].fail(
+                f"Failed to get service names: {e}"
+            )
 
     def get_service_count(self) -> int:
         """Get total count of registered services and factories.
@@ -698,7 +704,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # CONFIGURATION MANAGEMENT - FlextConfig integration
     # =========================================================================
 
-    def configure_container(self, config: dict[str, object]) -> FlextResult[None]:
+    def configure_container(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Configure container with validated settings.
 
         Returns:
@@ -748,15 +754,17 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # Additional validation can be added here if needed for specific dict structure
         return FlextResult[None].ok(None)
 
-    def _normalize_config_fields(self, config: dict[str, object]) -> dict[str, object]:
+    def _normalize_config_fields(
+        self, config: FlextTypes.Core.Dict
+    ) -> FlextTypes.Core.Dict:
         """Normalize configuration fields with proper defaults and validation.
 
         Returns:
-            dict[str, object]: Normalized configuration dictionary.
+            FlextTypes.Core.Dict: Normalized configuration dictionary.
 
         """
         # Create normalized config with defaults from FlextConstants.Container
-        normalized = {
+        normalized: FlextTypes.Core.Dict = {
             "max_workers": config.get(
                 "max_workers", FlextConstants.Container.MAX_WORKERS
             ),
