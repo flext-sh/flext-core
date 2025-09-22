@@ -221,50 +221,32 @@ class FlextModels:
                 return cls.__name__
             return v
 
+    class Pagination(ArbitraryTypesModel):
+        """Strongly typed pagination model shared across queries."""
+
+        page: int = Field(
+            default=FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
+            ge=FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
+        )
+        size: int = Field(
+            default=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+            ge=FlextConstants.Performance.MIN_TAKE,
+            le=FlextConstants.Cqrs.MAX_PAGE_SIZE,
+        )
+
     class Query(ArbitraryTypesModel):
         """Base class for CQRS queries with pagination."""
 
         query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        pagination: dict[str, int] = Field(
-            default_factory=lambda: {
-                "page": FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
-                "size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-            }
+        pagination: "FlextModels.Pagination" = Field(
+            default_factory=lambda: cast(
+                "FlextModels.Pagination",
+                globals()["FlextModels"].Pagination(),
+            )
         )
         filters: FlextTypes.Core.Dict = Field(default_factory=dict)
         sort_by: str | None = None
         sort_order: Literal["asc", "desc"] = "asc"
-
-        @field_validator("pagination")
-        @classmethod
-        def validate_pagination(cls, v: dict[str, object]) -> dict[str, object]:
-            """Validate pagination parameters using FlextConstants."""
-            page = v.get("page", FlextConstants.Performance.DEFAULT_PAGE_NUMBER)
-            size = v.get("size", FlextConstants.Performance.DEFAULT_PAGE_SIZE)
-
-            # Ensure types are integers
-            if not isinstance(page, int):
-                page = (
-                    int(page)
-                    if isinstance(page, (str, float))
-                    else FlextConstants.Performance.DEFAULT_PAGE_NUMBER
-                )
-            if not isinstance(size, int):
-                size = (
-                    int(size)
-                    if isinstance(size, (str, float))
-                    else FlextConstants.Performance.DEFAULT_PAGE_SIZE
-                )
-
-            if page < 1:
-                msg = "pagination.page must be a positive integer"
-                raise ValueError(msg)
-
-            if size < 1 or size > FlextConstants.Cqrs.MAX_PAGE_SIZE:
-                msg = f"pagination.size must be between 1 and {FlextConstants.Cqrs.MAX_PAGE_SIZE}"
-                raise ValueError(msg)
-
-            return {"page": page, "size": size}
 
         @model_validator(mode="after")
         def validate_query_consistency(self) -> Self:
