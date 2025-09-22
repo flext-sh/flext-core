@@ -27,7 +27,7 @@ from flext_core.typings import FlextTypes
 
 try:  # pragma: no cover - optional dependency guard
     import attr as _attr_module
-except Exception:  # pragma: no cover - fallback when attrs is unavailable
+except ImportError:  # pragma: no cover - fallback when attrs is unavailable
     _attr_module = None
 
 
