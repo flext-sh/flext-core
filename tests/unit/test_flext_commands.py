@@ -610,10 +610,7 @@ class TestFlextCqrsComprehensive:
 
         missing_unregistration = bus.unregister_handler("MissingCmd")
         FlextTestsMatchers.assert_result_failure(missing_unregistration)
-        assert (
-            missing_unregistration.error
-            == "No handler registered for MissingCmd"
-        )
+        assert missing_unregistration.error == "No handler registered for MissingCmd"
         assert (
             missing_unregistration.error_code
             == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
