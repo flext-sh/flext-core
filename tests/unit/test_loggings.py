@@ -29,6 +29,7 @@ import pytest
 
 from flext_core import (
     FlextContext,
+    FlextConfig,
     FlextLogger,
     FlextTypes,
 )
@@ -961,6 +962,23 @@ class TestLoggerConfiguration:
         # Test that correlation ID is properly included in log entries
         log_entry = logger._build_log_entry("INFO", "Processor test")
         assert log_entry.get("correlation_id") == test_correlation
+
+    def test_global_log_verbosity_propagates_to_configuration(self) -> None:
+        """Ensure global log verbosity updates are honored by configure."""
+
+        config = FlextConfig.get_global_instance()
+        original_verbosity = config.log_verbosity
+        config.log_verbosity = "compact"
+
+        try:
+            FlextLogger._configured = False
+            result = FlextLogger.configure()
+            assert result.is_success
+
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_verbosity"] == "compact"
+        finally:
+            config.log_verbosity = original_verbosity
 
 
 class TestConvenienceFunctions:

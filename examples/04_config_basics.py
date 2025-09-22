@@ -112,6 +112,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         print(f"Log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
         print(f"Include source: {config.include_source}")
+        print(f"Log verbosity: {config.log_verbosity}")
         print(f"Include context: {config.include_context}")
         print(f"Include correlation ID: {config.include_correlation_id}")
 
@@ -199,6 +200,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         # Get CQRS bus configuration
         cqrs_config = config.get_cqrs_bus_config()
         print(f"CQRS bus config: {cqrs_config}")
+        print(f"CQRS log verbosity: {cqrs_config.get('log_verbosity')}")
 
         # Dispatcher settings relevant to CQRS
         print(f"Auto context propagation: {config.dispatcher_auto_context}")
