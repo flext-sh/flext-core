@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
-from flext_core import FlextModels, FlextProcessing, FlextResult
+from flext_core import FlextConfig, FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
 
 
@@ -635,3 +635,26 @@ class TestFlextProcessingIntegration:
 
         FlextTestsMatchers.assert_result_success(result)
         assert result.unwrap() == "chainable_result"
+
+
+class TestFlextProcessingConfigurationSettings:
+    """Ensure FlextProcessing helpers respect FlextConfig overrides."""
+
+    def teardown_method(self) -> None:
+        """Reset global configuration after each test."""
+        FlextConfig.reset_global_instance()
+
+    def test_custom_batch_and_handler_limits_are_used(self) -> None:
+        """FlextProcessing.Config should return custom configuration limits."""
+
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig(max_batch_size=25, max_handlers=15)
+        FlextConfig.set_global_instance(custom_config)
+
+        max_batch_size = FlextProcessing.Config.get_max_batch_size()
+        max_handlers = FlextProcessing.Config.get_max_handlers()
+
+        assert max_batch_size == 25
+        assert isinstance(max_batch_size, int)
+        assert max_handlers == 15
+        assert isinstance(max_handlers, int)

@@ -74,6 +74,17 @@ Helper functions within `config.py` (for example `merge_settings`) simplify over
 
 ---
 
+## FlextProcessing Limits
+
+`FlextProcessing` consults `FlextConfig` for two limits that govern runtime behaviour:
+
+- `max_batch_size` &ndash; caps how many items a pipeline processes in a single batch. The default mirrors `FlextConstants.Performance.DEFAULT_BATCH_SIZE` and must be at least `1`.
+- `max_handlers` &ndash; restricts how many handlers can be registered in a processing registry. The default aligns with `FlextConstants.Container.MAX_SERVICES` and also requires a minimum value of `1`.
+
+Update these fields on your configuration subclass (or via environment variables) to tune processing throughput without editing helper code. Tests that depend on different limits can override them by instantiating a custom `FlextConfig` and setting it as the global instance.
+
+---
+
 ## Modernization Checklist
 
 1. Downstream packages load settings through `FlextConfig` subclasses – no bespoke loaders.

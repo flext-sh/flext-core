@@ -202,6 +202,19 @@ class FlextConfig(BaseSettings):
         description="Default timeout for operations in seconds",
     )
 
+    # Processing configuration
+    max_batch_size: int = Field(
+        default=FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+        ge=1,
+        description="Maximum number of items processed per batch",
+    )
+
+    max_handlers: int = Field(
+        default=FlextConstants.Container.MAX_SERVICES,
+        ge=1,
+        description="Maximum number of handlers registered for processing",
+    )
+
     # Feature flags
     enable_caching: bool = Field(
         default=True,
