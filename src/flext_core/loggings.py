@@ -17,6 +17,7 @@ import platform
 import sys
 import threading
 import time
+import traceback
 import uuid
 import warnings
 from collections.abc import Mapping
@@ -469,10 +470,14 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Add error details if present
         if error is not None:
             if isinstance(error, Exception):
+                stack_trace = traceback.format_exception(
+                    error.__class__, error, error.__traceback__
+                )
                 entry["error"] = {
                     "type": error.__class__.__name__,
                     "message": str(error),
                     "details": getattr(error, "args", ()),
+                    "stack_trace": stack_trace,
                 }
             else:
                 entry["error"] = {"message": str(error)}
@@ -482,6 +487,29 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             entry["context"] = dict(context)
 
         return entry
+
+    def _normalize_message_args(
+        self,
+        args: tuple[object, ...],
+        context: dict[str, object],
+    ) -> tuple[object, ...]:
+        """Normalize message formatting arguments, supporting legacy ``args`` usage."""
+
+        if args:
+            return args
+
+        if "args" not in context:
+            return ()
+
+        raw_args = context.pop("args")
+        if raw_args is None:
+            return ()
+        if isinstance(raw_args, tuple):
+            return raw_args
+        if isinstance(raw_args, list):
+            return tuple(raw_args)
+
+        return (raw_args,)
 
     def _get_calling_function(self) -> str:
         """Get the name of the calling function.
@@ -759,18 +787,26 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         del self._local.operations[operation_id]
 
     # LoggerProtocol implementation - Standard logging methods with enhanced context
-    def trace(self, message: str, *args: object, **context: object) -> None:
+    def trace(self, message: str, *args: object, **kwargs: object) -> None:
         """Log trace message - LoggerProtocol implementation."""
-        formatted_message = message % args if args else message
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
+        )
         entry = self._build_log_entry("TRACE", formatted_message, context)
         self._structlog_logger.debug(
             formatted_message,
             **entry,
         )  # Use debug since structlog doesn't have trace
 
-    def debug(self, message: str, *args: object, **context: object) -> None:
+    def debug(self, message: str, *args: object, **kwargs: object) -> None:
         """Log debug message - LoggerProtocol implementation."""
-        formatted_message = message % args if args else message
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
+        )
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -785,9 +821,13 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             )
             self._structlog_logger.debug(formatted_message, **entry)
 
-    def info(self, message: str, *args: object, **context: object) -> None:
+    def info(self, message: str, *args: object, **kwargs: object) -> None:
         """Log info message - LoggerProtocol implementation."""
-        formatted_message = message % args if args else message
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
+        )
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -802,9 +842,13 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             )
             self._structlog_logger.info(formatted_message, **entry)
 
-    def warning(self, message: str, *args: object, **context: object) -> None:
+    def warning(self, message: str, *args: object, **kwargs: object) -> None:
         """Log warning message - LoggerProtocol implementation."""
-        formatted_message = message % args if args else message
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
+        )
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
         structured_output = getattr(
@@ -819,20 +863,29 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             )
             self._structlog_logger.warning(formatted_message, **entry)
 
-    def error(self, message: str, **kwargs: object) -> None:
+    def error(
+        self,
+        message: str,
+        *args: object,
+        error: object | None = None,
+        **kwargs: object,
+    ) -> None:
         """Log error message with context and error details - LoggerProtocol implementation."""
-        # Extract special parameters from kwargs with proper typing
-        args = kwargs.pop("args", ())
-        error_obj = kwargs.pop("error", None)
-        context = kwargs
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
+        )
 
-        # Convert error to proper type
-        error: Exception | str | None = None
+        error_obj = error
+        if error_obj is None and "error" in context:
+            error_obj = context.pop("error")
+
+        processed_error: Exception | str | None = None
         if error_obj is not None:
-            error = error_obj if isinstance(error_obj, Exception) else str(error_obj)
-
-        # Handle args formatting
-        formatted_message = message % args if args else message
+            processed_error = (
+                error_obj if isinstance(error_obj, Exception) else str(error_obj)
+            )
 
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
@@ -841,32 +894,41 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
 
         if not structured_output:
-            if error:
-                context["error"] = str(error)
+            if processed_error is not None:
+                context.setdefault("error", str(processed_error))
             self._structlog_logger.error(formatted_message, **context)
         else:
             entry = self._build_log_entry(
                 FlextConstants.Config.LogLevel.ERROR,
                 formatted_message,
                 context,
-                error,
+                processed_error,
             )
             self._structlog_logger.error(formatted_message, **entry)
 
-    def critical(self, message: str, **kwargs: object) -> None:
+    def critical(
+        self,
+        message: str,
+        *args: object,
+        error: object | None = None,
+        **kwargs: object,
+    ) -> None:
         """Log critical message with context and error details - LoggerProtocol implementation."""
-        # Extract special parameters from kwargs with proper typing
-        args = kwargs.pop("args", ())
-        error_obj = kwargs.pop("error", None)
-        context = kwargs
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
+        )
 
-        # Convert error to proper type
-        error: Exception | str | None = None
+        error_obj = error
+        if error_obj is None and "error" in context:
+            error_obj = context.pop("error")
+
+        processed_error: Exception | str | None = None
         if error_obj is not None:
-            error = error_obj if isinstance(error_obj, Exception) else str(error_obj)
-
-        # Handle args formatting
-        formatted_message = message % args if args else message
+            processed_error = (
+                error_obj if isinstance(error_obj, Exception) else str(error_obj)
+            )
 
         # Get structured_output setting from FlextConfig singleton
         global_config = FlextConfig.get_global_instance()
@@ -875,27 +937,54 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
 
         if not structured_output:
-            if error:
-                context["error"] = str(error)
+            if processed_error is not None:
+                context.setdefault("error", str(processed_error))
             self._structlog_logger.critical(formatted_message, **context)
         else:
             entry = self._build_log_entry(
                 FlextConstants.Config.LogLevel.CRITICAL,
                 formatted_message,
                 context,
-                error,
+                processed_error,
             )
             self._structlog_logger.critical(formatted_message, **entry)
 
-    def exception(self, message: str, *args: object, **context: object) -> None:
+    def exception(
+        self,
+        message: str,
+        *args: object,
+        exc_info: bool = True,
+        **kwargs: object,
+    ) -> None:
         """Log exception with stack trace and context - LoggerProtocol implementation."""
-        formatted_message = message % args if args else message
-        exc_info = sys.exc_info()
-        error = exc_info[1] if isinstance(exc_info[1], Exception) else None
-        entry = self._build_log_entry(
-            FlextConstants.Config.LogLevel.ERROR, formatted_message, context, error
+        context: dict[str, object] = dict(kwargs)
+        normalized_args = self._normalize_message_args(args, context)
+        formatted_message = (
+            message % normalized_args if normalized_args else message
         )
-        self._structlog_logger.error(formatted_message, **entry)
+
+        error: Exception | str | None = None
+        if "error" in context:
+            error_obj = context.pop("error")
+            if isinstance(error_obj, Exception):
+                error = error_obj
+            elif error_obj is not None:
+                error = str(error_obj)
+        elif exc_info:
+            current_exc = sys.exc_info()
+            if isinstance(current_exc[1], Exception):
+                error = current_exc[1]
+        entry = self._build_log_entry(
+            FlextConstants.Config.LogLevel.ERROR,
+            formatted_message,
+            context,
+            error,
+        )
+        self._structlog_logger.error(
+            formatted_message,
+            exc_info=exc_info,
+            **entry,
+        )
 
     @classmethod
     def configure(
