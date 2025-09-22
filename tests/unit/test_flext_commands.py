@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from typing import Protocol, cast
 
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import (
     FlextBus,
@@ -122,6 +122,30 @@ class DeleteUserCommand(FlextModels.TimestampedModel):
     user_id: str
     force: bool = False
     reason: str = "User requested deletion"
+
+
+class SimplePydanticCommand(BaseModel):
+    """Minimal Pydantic command used to validate handler pipeline behaviour."""
+
+    value: int
+
+
+class NonSerializablePayload:
+    """Payload that is intentionally not serialisable for dumping tests."""
+
+    def __init__(self) -> None:
+        self.marker = object()
+
+
+class NonSerializableCommand(BaseModel):
+    """Pydantic command whose dump routine raises to simulate serialisation failures."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    payload: NonSerializablePayload
+
+    def model_dump(self, *args: object, **kwargs: object) -> dict[str, object]:  # type: ignore[override]
+        raise RuntimeError("NonSerializableCommand cannot be serialised")
 
 
 class UserCreatedEvent(FlextModels.TimestampedModel):
@@ -806,6 +830,63 @@ class TestFlextCqrsComprehensive:
         event = result.value
         assert event.username == "async_user"
         assert "async_user_async_user" in event.user_id
+
+    # =========================================================================
+    # HANDLER VALIDATION PIPELINE BEHAVIOUR
+    # =========================================================================
+
+    def test_pydantic_message_skips_revalidation_by_default(self) -> None:
+        """Ensure BaseModel payloads are trusted unless opt-in revalidation is enabled."""
+
+        class SimpleHandler(FlextHandlers[SimplePydanticCommand, int]):
+            def handle(self, message: SimplePydanticCommand) -> FlextResult[int]:
+                return FlextResult[int].ok(message.value + 1)
+
+        handler = SimpleHandler()
+        command = SimplePydanticCommand(value=41)
+
+        result = handler.execute(command)
+
+        assert result.is_success
+        assert result.value == 42
+
+    def test_pydantic_message_with_failing_dump_succeeds_without_revalidation(self) -> None:
+        """Handlers must accept payloads whose dump routines raise when skipping revalidation."""
+
+        class NonSerializableHandler(
+            FlextHandlers[NonSerializableCommand, NonSerializablePayload]
+        ):
+            def handle(
+                self, message: NonSerializableCommand
+            ) -> FlextResult[NonSerializablePayload]:
+                return FlextResult[NonSerializablePayload].ok(message.payload)
+
+        handler = NonSerializableHandler()
+        command = NonSerializableCommand(payload=NonSerializablePayload())
+
+        result = handler.execute(command)
+
+        assert result.is_success
+        assert isinstance(result.value, NonSerializablePayload)
+
+    def test_explicit_pydantic_revalidation_can_be_enabled(self) -> None:
+        """Opt-in revalidation should surface serialisation errors when requested."""
+
+        class RevalidatingHandler(FlextHandlers[NonSerializableCommand, None]):
+            def __init__(self) -> None:
+                super().__init__(revalidate_pydantic_messages=True)
+
+            def handle(self, message: NonSerializableCommand) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = RevalidatingHandler()
+        command = NonSerializableCommand(payload=NonSerializablePayload())
+
+        result = handler.execute(command)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "Pydantic validation failed" in result.error
 
     # =========================================================================
     # ERROR SCENARIOS AND EDGE CASES

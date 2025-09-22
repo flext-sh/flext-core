@@ -51,6 +51,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         | None = None,
         command_timeout: int = 0,
         max_command_retries: int = 0,
+        revalidate_pydantic_messages: bool = False,
     ) -> None:
         """Initialize handler with consolidated Pydantic validation.
 
@@ -62,6 +63,11 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             handler_config: DEPRECATED - Handler configuration
             command_timeout: DEPRECATED - Command timeout
             max_command_retries: DEPRECATED - Max retries
+            revalidate_pydantic_messages: When True, force BaseModel payloads through
+                ``model_validate`` again. By default the handler trusts that inbound
+                Pydantic objects have already been validated by their creators to avoid
+                the cost (and potential serialization failures) of re-validating them
+                inside the execution pipeline.
 
         """
         super().__init__()
@@ -103,6 +109,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self.handler_id = self._config_model.handler_id
         self._start_time: float | None = None
         self._metrics_state: FlextTypes.Core.Dict | None = None
+        self._revalidate_pydantic_messages = revalidate_pydantic_messages
 
     def _resolve_mode(
         self,
@@ -350,11 +357,11 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
 
         # If message is a Pydantic model, it's already validated
         if isinstance(message, BaseModel):
+            if not self._revalidate_pydantic_messages:
+                return FlextResult[None].ok(None)
+
             try:
-                # Re-validate to ensure consistency
-                message_data = message.model_dump()
-                # Use the class's model_validate method
-                message.__class__.model_validate(message_data)
+                message.__class__.model_validate(message.model_dump())
                 return FlextResult[None].ok(None)
             except Exception as e:
                 # Use FlextExceptions.ValidationError for Pydantic validation failures
@@ -489,14 +496,23 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             message_id=identifier,
         )
 
-        # Use railway pattern for validation chain
-        return FlextResult.chain_validations(
+        # Use railway pattern for validation chain. Avoid flat_map(None) edge cases by
+        # explicitly propagating validation failures before executing the handler.
+        validation_result = FlextResult.chain_validations(
             lambda: self._validate_mode(operation),
             lambda: self._validate_can_handle(message),
             lambda: self._validate_message(message, operation=operation),
-        ).flat_map(
-            lambda _: self._execute_with_timing(message, message_type, identifier)
         )
+
+        if validation_result.is_failure:
+            return FlextResult[ResultT].fail(
+                validation_result.error
+                or f"{operation.title()} validation chain failed",
+                error_code=validation_result.error_code,
+                error_data=validation_result.error_data,
+            )
+
+        return self._execute_with_timing(message, message_type, identifier)
 
     def _validate_mode(
         self, operation: Literal["command", "query"]
