@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import cast
+from unittest.mock import Mock
 
 from flext_core import (
     FlextContext,
     FlextDispatcher,
     FlextDispatcherRegistry,
     FlextHandlers,
+    FlextModels,
     FlextResult,
 )
 
@@ -131,6 +133,74 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.is_success
     assert isinstance(result.unwrap(), str)
     assert result.unwrap()
+
+
+def test_dispatcher_propagates_metadata_model_to_context() -> None:
+    """Dispatching with metadata model exposes attributes via context."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    metadata = FlextModels.Metadata(
+        created_by="tester",
+        attributes={"tenant": "acme", "retry": 2},
+    )
+    expected_metadata = dict(metadata.attributes)
+
+    mock_execute = Mock()
+
+    def fake_execute(message: object) -> FlextResult[object]:
+        metadata_from_context = FlextContext.Performance.get_operation_metadata()
+        assert metadata_from_context == expected_metadata
+        return FlextResult[object].ok(dict(metadata_from_context))
+
+    mock_execute.side_effect = fake_execute
+    setattr(dispatcher._bus, "execute", mock_execute)
+
+    request: dict[str, object] = {
+        "message": EchoCommand(payload="metadata"),
+        "context_metadata": metadata,
+    }
+
+    dispatch_result = dispatcher.dispatch_with_request(request)
+    assert dispatch_result.is_success
+    payload = dispatch_result.unwrap()
+    assert payload["success"] is True
+    assert payload["result"] == expected_metadata
+    assert "created_by" not in payload["result"]
+    mock_execute.assert_called_once()
+
+
+def test_dispatcher_propagates_plain_metadata_dict_to_context() -> None:
+    """Dispatching with plain metadata dict sets context metadata."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    metadata = {"tenant": "beta", "attempt": 1, 3: "three"}
+    expected_metadata = {"tenant": "beta", "attempt": 1, "3": "three"}
+
+    mock_execute = Mock()
+
+    def fake_execute(message: object) -> FlextResult[object]:
+        metadata_from_context = FlextContext.Performance.get_operation_metadata()
+        assert metadata_from_context == expected_metadata
+        return FlextResult[object].ok(dict(metadata_from_context))
+
+    mock_execute.side_effect = fake_execute
+    setattr(dispatcher._bus, "execute", mock_execute)
+
+    request: dict[str, object] = {
+        "message": EchoCommand(payload="metadata"),
+        "context_metadata": metadata,
+    }
+
+    dispatch_result = dispatcher.dispatch_with_request(request)
+    assert dispatch_result.is_success
+    payload = dispatch_result.unwrap()
+    assert payload["success"] is True
+    assert payload["result"] == expected_metadata
+    mock_execute.assert_called_once()
 
 
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
