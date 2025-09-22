@@ -1547,7 +1547,10 @@ class FlextModels:
         @model_validator(mode="after")
         def validate_permanent_context(self) -> Self:
             """Validate permanent context."""
-            valid_envs = {"development", "testing", "staging", "production"}
+            valid_envs = {
+                env.value.lower()
+                for env in FlextConstants.Environment.ConfigEnvironment
+            }
             if self.environment.lower() not in valid_envs:
                 msg = f"Invalid environment: {self.environment}"
                 raise ValueError(msg)
