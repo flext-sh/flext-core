@@ -7,9 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
+import attr
 import pytest
 from pydantic import Field, ValidationError
 
@@ -903,6 +905,61 @@ class TestFlextCqrsComprehensive:
         assert successes + failures == 100
         # Most should be successful (depends on mock behavior)
         assert successes >= 50 or failures >= 50  # Either outcome is valid
+
+
+@dataclass(slots=True)
+class SlotsOnlyCommand:
+    """Simple dataclass command using slots to avoid __dict__."""
+
+    request_id: str
+    quantity: int
+
+
+@attr.define(slots=True)
+class AttrStyleQuery:
+    """attrs-based query object that relies on slots for storage."""
+
+    topic: str
+    include_archived: bool = False
+
+
+class _ValidationProbeHandler(FlextHandlers[object, object]):
+    """Minimal handler used to expose internal validation helpers in tests."""
+
+    def handle(self, message: object) -> FlextResult[object]:
+        return FlextResult[object].ok(message)
+
+
+class TestMessageValidationCompatibility:
+    """Ensure slot/dataclass and attrs messages pass validation heuristics."""
+
+    def test_validate_command_accepts_slots_dataclass(self) -> None:
+        handler = _ValidationProbeHandler()
+        command = SlotsOnlyCommand(request_id="req-1", quantity=5)
+
+        assert not hasattr(command, "__dict__")
+
+        payload = handler._build_serializable_message_payload(
+            command, operation="command"
+        )
+        assert isinstance(payload, dict)
+        assert payload["request_id"] == "req-1"
+
+        result = handler.validate_command(command)
+        assert result.is_success
+
+    def test_validate_query_accepts_attrs_slots(self) -> None:
+        handler = _ValidationProbeHandler()
+        query = AttrStyleQuery(topic="users", include_archived=True)
+
+        assert not hasattr(query, "__dict__")
+
+        payload = handler._build_serializable_message_payload(query, operation="query")
+        assert isinstance(payload, dict)
+        assert payload["topic"] == "users"
+
+        result = handler.validate_query(query)
+        assert result.is_success
 
 
 if __name__ == "__main__":
