@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Never
 
-from flext_core import FlextContainer
+from flext_core import FlextConfig, FlextContainer
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -36,6 +36,77 @@ class MockFactory:
 
         """
         return MockService()
+
+
+class TestFlextContainerConfiguration:
+    """Integration-style tests for FlextContainer configuration behavior."""
+
+    def test_container_config_uses_flext_config_env(self, monkeypatch) -> None:
+        """Ensure FlextContainer reflects environment-driven FlextConfig values."""
+
+        FlextConfig.reset_global_instance()
+        monkeypatch.setenv("FLEXT_MAX_WORKERS", "7")
+        monkeypatch.setenv("FLEXT_TIMEOUT_SECONDS", "45")
+        monkeypatch.setenv("FLEXT_ENVIRONMENT", "staging")
+
+        try:
+            container = FlextContainer()
+            config = container.get_config()
+
+            assert config["max_workers"] == 7
+            assert config["timeout_seconds"] == 45.0
+            assert config["environment"] == "staging"
+        finally:
+            FlextConfig.reset_global_instance()
+
+    def test_container_config_uses_flext_config_override(self) -> None:
+        """Ensure FlextContainer consumes explicitly overridden FlextConfig instance."""
+
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig.create(
+            max_workers=11,
+            timeout_seconds=120,
+            environment="production",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            container = FlextContainer()
+            config = container.get_config()
+
+            assert config["max_workers"] == 11
+            assert config["timeout_seconds"] == 120.0
+            assert config["environment"] == "production"
+        finally:
+            FlextConfig.reset_global_instance()
+
+    def test_container_config_preserves_user_overrides(self) -> None:
+        """Verify user overrides remain merged with FlextConfig-derived values."""
+
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig.create(
+            max_workers=5,
+            timeout_seconds=75,
+            environment="production",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            container = FlextContainer()
+
+            first_result = container.configure_container({"max_workers": 10})
+            assert first_result.is_success
+
+            second_result = container.configure_container({"environment": "staging"})
+            assert second_result.is_success
+
+            config = container.get_config()
+
+            assert config["max_workers"] == 10
+            assert config["timeout_seconds"] == 75.0
+            assert config["environment"] == "staging"
+        finally:
+            FlextConfig.reset_global_instance()
 
 
 class TestFlextContainer100Percent:
@@ -179,8 +250,9 @@ class TestFlextContainer100Percent:
         container = FlextContainer()  # Create truly empty container
 
         # Empty container should return empty list
-        service_names = container.get_service_names()
-        assert service_names == []
+        service_names_result = container.get_service_names()
+        assert service_names_result.is_success
+        assert service_names_result.unwrap() == []
 
         service_count = container.get_service_count()
         assert service_count == 0
