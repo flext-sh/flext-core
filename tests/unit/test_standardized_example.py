@@ -21,9 +21,13 @@ class TestStandardizedExample:
         return FlextTestsFixtures()
 
     @pytest.fixture
-    def test_config(self, fixtures: FlextTestsFixtures) -> FlextConfig:
-        """Provide a test configuration using fixtures."""
-        return fixtures.FlextConfigFactory.create_test_config()
+    def test_config(self) -> FlextConfig:
+        """Provide a test configuration using supported overrides."""
+        return FlextConfig.create(
+            app_name="fixture_test",
+            environment="test",
+            debug=True,
+        )
 
     def test_flext_result_standardized_usage(
         self,
@@ -47,18 +51,19 @@ class TestStandardizedExample:
             expected_error="test_error",
         )
 
-    def test_config_with_fixtures(self) -> None:
+    def test_config_with_fixtures(self, test_config: FlextConfig) -> None:
         """Demonstrate proper config testing with fixtures."""
-        # Test config creation using correct API
-        config = FlextConfig.create(app_name="fixture_test")
         # FlextConfig.create returns a FlextConfig instance, not FlextResult
+        config = test_config
         assert isinstance(config, FlextConfig)
 
+        # Assert supported overrides were applied directly on the config instance
         assert config.app_name == "fixture_test"
+        assert config.environment == "test"
+        assert config.debug is True
 
         # Test config validation - FlextConfig validates via Pydantic, not validate_all method
         # The configuration is already validated during creation
-        assert config.app_name == "fixture_test"
         assert config.environment in {
             "development",
             "staging",
