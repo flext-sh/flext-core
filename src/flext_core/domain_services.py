@@ -17,7 +17,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, ValidationError
 
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
@@ -133,6 +133,15 @@ class FlextDomainService[TDomainResult](
         """
         return FlextResult[None].ok(None)
 
+    def validate_permissions(self) -> FlextResult[None]:
+        """Validate service permissions.
+
+        Returns:
+            FlextResult[None]: Success if permissions are valid, failure with error details
+
+        """
+        return FlextResult[None].ok(None)
+
     def validate_with_request(
         self, request: FlextModels.DomainServiceExecutionRequest
     ) -> FlextResult[None]:
@@ -145,13 +154,65 @@ class FlextDomainService[TDomainResult](
             FlextResult[None]: Success if valid, failure with validation error
 
         """
-        # Validate business rules if requested
-        if getattr(request, "enable_validation", True):
+        validation_payload: object | None = None
+        validation_keys = ("validation", "validation_request")
+
+        for container in (getattr(request, "parameters", None), getattr(request, "context", None)):
+            if not isinstance(container, dict):
+                continue
+            for key in validation_keys:
+                if key in container:
+                    validation_payload = container[key]
+                    break
+            if validation_payload is not None:
+                break
+
+        try:
+            if isinstance(validation_payload, FlextModels.DomainServiceValidationRequest):
+                validation_request = validation_payload
+            elif isinstance(validation_payload, dict):
+                validation_request = FlextModels.DomainServiceValidationRequest.model_validate(
+                    validation_payload
+                )
+            elif validation_payload is None:
+                entity: dict[str, object] = {}
+                if isinstance(request.parameters, dict):
+                    potential_entity = request.parameters.get("entity")
+                    if isinstance(potential_entity, dict):
+                        entity = potential_entity
+                validation_request = FlextModels.DomainServiceValidationRequest(entity=entity)
+            else:
+                return FlextResult[None].fail(
+                    "Validation payload must be a dict or DomainServiceValidationRequest"
+                )
+        except ValidationError as exc:
+            return FlextResult[None].fail(f"Invalid validation request: {exc}")
+
+        failures: list[str] = []
+
+        if validation_request.validate_business_rules:
             business_result = self.validate_business_rules()
             if business_result.is_failure:
-                return FlextResult[None].fail(
+                failures.append(
                     f"Business validation failed: {business_result.error}"
                 )
+
+        if validation_request.validate_integrity:
+            config_result = self.validate_config()
+            if config_result.is_failure:
+                failures.append(
+                    f"Integrity validation failed: {config_result.error}"
+                )
+
+        if validation_request.validate_permissions:
+            permissions_result = self.validate_permissions()
+            if permissions_result.is_failure:
+                failures.append(
+                    f"Permissions validation failed: {permissions_result.error}"
+                )
+
+        if failures:
+            return FlextResult[None].fail("; ".join(failures))
 
         return FlextResult[None].ok(None)
 

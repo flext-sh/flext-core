@@ -152,6 +152,37 @@ class ComplexTypeService(FlextDomainService[dict[str, object]]):
         })
 
 
+class TrackingValidationService(FlextDomainService[None]):
+    """Service used to track which validation helpers are executed."""
+
+    business_calls: int = 0
+    config_calls: int = 0
+    permission_calls: int = 0
+
+    def execute(self) -> FlextResult[None]:
+        """No-op execute returning success."""
+
+        return FlextResult[None].ok(None)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Record business validation usage."""
+
+        object.__setattr__(self, "business_calls", self.business_calls + 1)
+        return FlextResult[None].ok(None)
+
+    def validate_config(self) -> FlextResult[None]:
+        """Record config validation usage."""
+
+        object.__setattr__(self, "config_calls", self.config_calls + 1)
+        return FlextResult[None].ok(None)
+
+    def validate_permissions(self) -> FlextResult[None]:
+        """Record permissions validation usage."""
+
+        object.__setattr__(self, "permission_calls", self.permission_calls + 1)
+        return FlextResult[None].ok(None)
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -267,6 +298,75 @@ class TestDomainServicesFixed:
         result = service.validate_config()
         assert result.is_failure
         assert result.error is not None and "Name too long" in result.error
+
+    def test_validate_with_request_skips_business_rules_when_disabled(self) -> None:
+        """Ensure business validation helper is skipped when disabled in the request."""
+
+        service = TrackingValidationService()
+        validation_request = FlextModels.DomainServiceValidationRequest(
+            entity={"id": "123"},
+            validate_business_rules=False,
+            validate_integrity=True,
+            validate_permissions=False,
+        )
+        execution_request = FlextModels.DomainServiceExecutionRequest(
+            service_name="tracking",
+            method_name="execute",
+            parameters={"validation": validation_request},
+        )
+
+        result = service.validate_with_request(execution_request)
+
+        assert result.is_success
+        assert service.business_calls == 0
+        assert service.config_calls == 1
+        assert service.permission_calls == 0
+
+    def test_validate_with_request_skips_integrity_when_disabled(self) -> None:
+        """Ensure config validation helper is skipped when integrity flag is disabled."""
+
+        service = TrackingValidationService()
+        validation_payload = {
+            "entity": {"id": "456"},
+            "validate_business_rules": True,
+            "validate_integrity": False,
+            "validate_permissions": True,
+        }
+        execution_request = FlextModels.DomainServiceExecutionRequest(
+            service_name="tracking",
+            method_name="execute",
+            context={"validation": validation_payload},
+        )
+
+        result = service.validate_with_request(execution_request)
+
+        assert result.is_success
+        assert service.business_calls == 1
+        assert service.config_calls == 0
+        assert service.permission_calls == 1
+
+    def test_validate_with_request_skips_permissions_when_disabled(self) -> None:
+        """Ensure permissions validation helper is skipped when disabled."""
+
+        service = TrackingValidationService()
+        validation_request = FlextModels.DomainServiceValidationRequest(
+            entity={"id": "789"},
+            validate_business_rules=True,
+            validate_integrity=True,
+            validate_permissions=False,
+        )
+        execution_request = FlextModels.DomainServiceExecutionRequest(
+            service_name="tracking",
+            method_name="execute",
+            parameters={"validation_request": validation_request},
+        )
+
+        result = service.validate_with_request(execution_request)
+
+        assert result.is_success
+        assert service.business_calls == 1
+        assert service.config_calls == 1
+        assert service.permission_calls == 0
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
