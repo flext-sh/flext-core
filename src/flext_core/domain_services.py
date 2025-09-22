@@ -102,11 +102,11 @@ class FlextDomainService[TDomainResult](
         except Exception:
             return False
 
-    def get_service_info(self) -> dict[str, object]:
+    def get_service_info(self) -> FlextTypes.Core.Dict:
         """Get service information for diagnostics.
 
         Returns:
-            dict[str, object]: Service information including type and configuration
+            FlextTypes.Core.Dict: Service information including type and configuration
 
         """
         return {"service_type": self.__class__.__name__}
@@ -296,7 +296,7 @@ class FlextDomainService[TDomainResult](
 
         """
         start_time = time.time()
-        metrics_data: dict[str, object] = {}
+        metrics_data: FlextTypes.Core.Dict = {}
 
         try:
             # Collect pre-execution metrics
@@ -400,7 +400,7 @@ class FlextDomainService[TDomainResult](
         """Nested execution helper - no loose functions."""
 
         @staticmethod
-        def prepare_execution_context(service: object) -> dict[str, object]:
+        def prepare_execution_context(service: object) -> FlextTypes.Core.Dict:
             """Prepare execution context for the service."""
             return {
                 "service_type": service.__class__.__name__,
@@ -409,7 +409,7 @@ class FlextDomainService[TDomainResult](
 
         @staticmethod
         def cleanup_execution_context(
-            service: object, context: dict[str, object]
+            service: object, context: FlextTypes.Core.Dict
         ) -> None:
             """Cleanup execution context after service execution."""
             # Default implementation - can be extended by subclasses
@@ -418,9 +418,9 @@ class FlextDomainService[TDomainResult](
         """Nested metadata helper - no loose functions."""
 
         @staticmethod
-        def extract_service_metadata(service: object) -> dict[str, object]:
+        def extract_service_metadata(service: object) -> FlextTypes.Core.Dict:
             """Extract metadata from service instance."""
-            metadata: dict[str, object] = {
+            metadata: FlextTypes.Core.Dict = {
                 "service_class": service.__class__.__name__,
                 "service_module": service.__class__.__module__,
             }
@@ -434,7 +434,9 @@ class FlextDomainService[TDomainResult](
             return metadata
 
         @staticmethod
-        def format_service_info(_service: object, metadata: dict[str, object]) -> str:
+        def format_service_info(
+            _service: object, metadata: FlextTypes.Core.Dict
+        ) -> str:
             """Format service information for display."""
             return f"Service: {metadata.get('service_class', 'Unknown')} ({metadata.get('service_module', 'Unknown')})"
 
