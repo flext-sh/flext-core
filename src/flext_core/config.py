@@ -21,6 +21,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
@@ -94,6 +95,11 @@ class FlextConfig(BaseSettings):
         validate_default=True,
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console logging verbosity (compact, detailed, full)",
+    )
+
     # Additional logging configuration fields using FlextConstants.Logging.
     log_format: str = Field(
         default=FlextConstants.Logging.DEFAULT_FORMAT,
@@ -148,6 +154,11 @@ class FlextConfig(BaseSettings):
     mask_sensitive_data: bool = Field(
         default=FlextConstants.Logging.MASK_SENSITIVE_DATA,
         description="Mask sensitive data in log messages",
+    )
+
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console log verbosity level (compact, detailed, full)",
     )
 
     # Database configuration
@@ -329,6 +340,18 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return v.upper()
 
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity is supported."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        v_lower = v.lower()
+        if v_lower not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return v_lower
+
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v: str) -> str:
@@ -346,6 +369,18 @@ class FlextConfig(BaseSettings):
             msg = f"Environment must be one of {valid_environments}"
             raise ValueError(msg)
         return v.lower()
+
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity against supported options."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        normalized = v.lower()
+        if normalized not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return normalized
 
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
@@ -396,11 +431,11 @@ class FlextConfig(BaseSettings):
             self.environment == FlextConstants.Environment.ConfigEnvironment.PRODUCTION
         )
 
-    def get_logging_config(self) -> dict[str, object]:
+    def get_logging_config(self) -> FlextTypes.Core.Dict:
         """Get logging configuration dictionary using FlextConstants.Logging defaults.
 
         Returns:
-            dict[str, object]: Logging configuration dictionary.
+            FlextTypes.Core.Dict: Logging configuration dictionary.
 
         """
         return {
@@ -408,6 +443,7 @@ class FlextConfig(BaseSettings):
             "json_output": self.json_output,
             "include_source": self.include_source,
             "structured_output": self.structured_output,
+            "log_verbosity": self.log_verbosity,
             "format": self.log_format,
             "log_file": self.log_file,
             "log_file_max_size": self.log_file_max_size,
@@ -419,13 +455,14 @@ class FlextConfig(BaseSettings):
             "include_context": self.include_context,
             "include_correlation_id": self.include_correlation_id,
             "mask_sensitive_data": self.mask_sensitive_data,
+            "log_verbosity": self.log_verbosity,
         }
 
-    def get_database_config(self) -> dict[str, object]:
+    def get_database_config(self) -> FlextTypes.Core.Dict:
         """Get database configuration dictionary.
 
         Returns:
-            dict[str, object]: Database configuration dictionary.
+            FlextTypes.Core.Dict: Database configuration dictionary.
 
         """
         return {
@@ -433,11 +470,11 @@ class FlextConfig(BaseSettings):
             "pool_size": self.database_pool_size,
         }
 
-    def get_cache_config(self) -> dict[str, object]:
+    def get_cache_config(self) -> FlextTypes.Core.Dict:
         """Get cache configuration dictionary.
 
         Returns:
-            dict[str, object]: Cache configuration dictionary.
+            FlextTypes.Core.Dict: Cache configuration dictionary.
 
         """
         return {
@@ -501,11 +538,11 @@ class FlextConfig(BaseSettings):
 
         return cls.model_validate(config_data)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         """Convert configuration to dictionary.
 
         Returns:
-            dict[str, object]: Configuration as dictionary.
+            FlextTypes.Core.Dict: Configuration as dictionary.
 
         """
         return self.model_dump()
@@ -519,11 +556,11 @@ class FlextConfig(BaseSettings):
         """
         return self.model_dump_json(indent=2)
 
-    def merge(self, other: FlextConfig | dict[str, object]) -> FlextConfig:
+    def merge(self, other: FlextConfig | FlextTypes.Core.Dict) -> FlextConfig:
         """Merge with another configuration, returning new instance.
 
         Args:
-            other: Another FlextConfig instance or dictionary to merge with.
+            other: Another FlextConfig instance or FlextTypes.Core.Dict to merge with.
 
         Returns:
             FlextConfig: New configuration instance with merged values.
@@ -566,17 +603,18 @@ class FlextConfig(BaseSettings):
         with cls._global_lock:
             cls._global_instance = None
 
-    def get_cqrs_bus_config(self) -> object:
+    def get_cqrs_bus_config(self) -> FlextTypes.Core.Dict:
         """Get CQRS bus configuration.
 
         Returns:
-            dict: CQRS bus configuration dictionary.
+            FlextTypes.Core.Dict: CQRS bus configuration dictionary.
 
         """
         return {
-            "timeout_seconds": self.dispatcher_timeout_seconds,
+            "execution_timeout": self.dispatcher_timeout_seconds,
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
+            "log_verbosity": self.log_verbosity,
         }
 
     @classmethod
@@ -592,11 +630,11 @@ class FlextConfig(BaseSettings):
         """
         return cls.model_validate(kwargs)
 
-    def get_metadata(self) -> dict[str, object]:
+    def get_metadata(self) -> FlextTypes.Core.Dict:
         """Get configuration metadata.
 
         Returns:
-            dict[str, object]: Configuration metadata dictionary.
+            FlextTypes.Core.Dict: Configuration metadata dictionary.
 
         """
         return {
