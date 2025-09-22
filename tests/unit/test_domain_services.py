@@ -551,6 +551,92 @@ class TestDomainServicesFixed:
         assert "extra_field" in str(exc_info.value)
         assert "Extra inputs are not permitted" in str(exc_info.value)
 
+    def test_execute_conditionally_runs_true_action_when_condition_passes(
+        self,
+    ) -> None:
+        """Ensure conditional execution triggers true_action when predicate is true."""
+
+        service = SampleComplexService(name="conditional", value=10, enabled=True)
+        true_invocations: list[str] = []
+        false_invocations: list[str] = []
+
+        def true_action(
+            svc: SampleComplexService, ctx: dict[str, object]
+        ) -> FlextResult[str]:
+            true_invocations.append(f"{svc.name}:{ctx['suffix']}")
+            return FlextResult[str].ok(f"{svc.name}:{ctx['suffix']}")
+
+        def false_action(
+            svc: SampleComplexService, ctx: dict[str, object]
+        ) -> FlextResult[str]:
+            false_invocations.append("called")
+            return FlextResult[str].fail("unexpected false path")
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=lambda svc, ctx: svc.value > ctx["threshold"],
+            true_action=true_action,
+            false_action=false_action,
+            context={"threshold": 5, "suffix": "passed"},
+        )
+
+        result = service.execute_conditionally(request)
+
+        assert result.is_success
+        assert result.unwrap() == "conditional:passed"
+        assert true_invocations == ["conditional:passed"]
+        assert false_invocations == []
+
+    def test_execute_conditionally_runs_false_action_when_condition_fails(
+        self,
+    ) -> None:
+        """Ensure conditional execution triggers false_action when predicate is false."""
+
+        service = SampleComplexService(name="conditional", value=2, enabled=True)
+        true_invocations: list[str] = []
+        false_invocations: list[str] = []
+
+        def true_action(
+            svc: SampleComplexService, ctx: dict[str, object]
+        ) -> FlextResult[str]:
+            true_invocations.append("called")
+            return FlextResult[str].ok(f"{svc.name}:{ctx['suffix']}")
+
+        def false_action(
+            svc: SampleComplexService, ctx: dict[str, object]
+        ) -> FlextResult[str]:
+            false_invocations.append(f"{svc.name}:{ctx['reason']}")
+            return FlextResult[str].fail(f"skipped::{ctx['reason']}")
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=lambda svc, ctx: svc.value > ctx["threshold"],
+            true_action=true_action,
+            false_action=false_action,
+            context={"threshold": 5, "suffix": "passed", "reason": "value too low"},
+        )
+
+        result = service.execute_conditionally(request)
+
+        assert result.is_failure
+        assert result.error == "skipped::value too low"
+        assert true_invocations == []
+        assert false_invocations == ["conditional:value too low"]
+
+    def test_execute_conditionally_returns_skip_when_false_action_missing(self) -> None:
+        """Return a failure when condition is false and no false_action is supplied."""
+
+        service = SampleComplexService(name="conditional", value=1, enabled=True)
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=lambda svc, ctx: svc.value > ctx.get("threshold", 0),
+            true_action=lambda svc, ctx: FlextResult[str].ok("should not run"),
+            context={"threshold": 5},
+        )
+
+        result = service.execute_conditionally(request)
+
+        assert result.is_failure
+        assert result.error == "Conditional execution skipped"
+
 
 class TestDomainServiceStaticMethods:
     """Tests for domain service static methods and configuration."""

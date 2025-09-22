@@ -10,10 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import signal
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
@@ -240,12 +241,110 @@ class FlextDomainService[TDomainResult](
             FlextResult[TDomainResult]: Success with result, failure, or skipped
 
         """
-        # Check condition by looking at enable flags
-        if not getattr(condition, "enable_execution", True):
-            return FlextResult[TDomainResult].fail("Execution condition not met")
 
-        # Execute if condition is met
-        return self.execute()
+        def _invoke_with_context(
+            func: Callable[..., object], *, context: object
+        ) -> object:
+            if not callable(func):
+                msg = "Provided function is not callable"
+                raise TypeError(msg)
+
+            ctx = context if context is not None else {}
+            try:
+                signature = inspect.signature(func)
+            except (TypeError, ValueError):
+                signature = None
+
+            ctx_kwargs = ctx if isinstance(ctx, dict) else {}
+            candidates: list[tuple[tuple[object, ...], dict[str, object]]] = [
+                ((self, ctx), {}),
+                ((self,), {"context": ctx}),
+                ((self,), {}),
+                ((ctx,), {}),
+                ((), {"service": self, "context": ctx}),
+                ((), {"service": self}),
+                ((), {"context": ctx}),
+                ((), {}),
+            ]
+
+            if isinstance(ctx, dict) and ctx:
+                dict_ctx = dict(ctx_kwargs)
+                candidates.extend(
+                    [
+                        ((self,), dict_ctx),
+                        ((), dict_ctx),
+                        ((), {"service": self, **dict_ctx}),
+                    ]
+                )
+
+            if signature is not None:
+                for args, kwargs in candidates:
+                    try:
+                        signature.bind(*args, **kwargs)
+                    except TypeError:
+                        continue
+                    return func(*args, **kwargs)
+
+                msg = (
+                    "Unable to bind callable with provided service/context combination"
+                )
+                raise TypeError(msg)
+
+            last_error: Exception | None = None
+            for args, kwargs in candidates:
+                try:
+                    return func(*args, **kwargs)
+                except TypeError as exc:
+                    last_error = exc
+                    continue
+
+            if last_error is not None:
+                raise last_error
+
+            msg = "Callable invocation failed"
+            raise RuntimeError(msg)
+
+        def _normalize_action_result(result: object) -> FlextResult[TDomainResult]:
+            if isinstance(result, FlextResult):
+                return result
+            return FlextResult[TDomainResult].ok(result)  # type: ignore[arg-type]
+
+        context = getattr(condition, "context", {})
+
+        try:
+            predicate_result = _invoke_with_context(
+                condition.condition, context=context
+            )
+        except Exception as exc:  # noqa: BLE001 - surface callable errors
+            return FlextResult[TDomainResult].fail(
+                f"Conditional evaluation failed: {exc}"
+            )
+
+        should_execute = bool(predicate_result)
+
+        if should_execute:
+            try:
+                action_result = _invoke_with_context(
+                    condition.true_action, context=context
+                )
+            except Exception as exc:  # noqa: BLE001 - surface callable errors
+                return FlextResult[TDomainResult].fail(
+                    f"Conditional true_action failed: {exc}"
+                )
+            return _normalize_action_result(action_result)
+
+        if condition.false_action is not None:
+            try:
+                false_result = _invoke_with_context(
+                    condition.false_action, context=context
+                )
+            except Exception as exc:  # noqa: BLE001 - surface callable errors
+                return FlextResult[TDomainResult].fail(
+                    f"Conditional false_action failed: {exc}"
+                )
+            return _normalize_action_result(false_result)
+
+        return FlextResult[TDomainResult].fail("Conditional execution skipped")
 
     def execute_batch_with_request(
         self, request: FlextModels.DomainServiceBatchRequest
