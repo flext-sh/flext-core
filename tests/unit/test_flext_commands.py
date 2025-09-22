@@ -15,6 +15,7 @@ from pydantic import Field, ValidationError
 
 from flext_core import (
     FlextBus,
+    FlextConstants,
     FlextCqrs,
     FlextHandlers,
     FlextModels,
@@ -584,6 +585,9 @@ class TestFlextCqrsComprehensive:
             def handle(self, message: EchoCmd) -> FlextResult[str]:
                 return FlextResult[str].ok(message.value)
 
+            def execute(self, message: EchoCmd) -> FlextResult[str]:
+                return self.handle(message)
+
         # 1-arg form registers by handler id
         bus.register_handler(EchoHandler())
         assert bus.find_handler(EchoCmd(value="a")) is not None
@@ -599,8 +603,20 @@ class TestFlextCqrsComprehensive:
         assert all(isinstance(k, str) for k in handlers_map)
 
         # Unregister existing and missing
-        assert bus.unregister_handler("EchoCmd") is True
-        assert bus.unregister_handler("MissingCmd") is False
+        removal_result = bus.unregister_handler(EchoCmd)
+        FlextTestsMatchers.assert_result_success(removal_result)
+        assert removal_result.error_data.get("message") == (
+            "Handler unregistered for command 'EchoCmd'"
+        )
+        assert removal_result.error_data.get("removed_key") == "EchoCmd"
+
+        missing_result = bus.unregister_handler("MissingCmd")
+        FlextTestsMatchers.assert_result_failure(
+            missing_result,
+            "No handler registered for command 'MissingCmd'",
+        )
+        assert missing_result.error_code == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
+        assert missing_result.error_data.get("command_type") == "MissingCmd"
 
         # Middleware rejection
         class RejectingMiddleware:
@@ -619,6 +635,9 @@ class TestFlextCqrsComprehensive:
         class OnlyProcess(FlextHandlers[EchoCmd, str]):
             def handle(self, message: EchoCmd) -> FlextResult[str]:
                 return FlextResult[str].ok(message.value.upper())
+
+            def execute(self, message: EchoCmd) -> FlextResult[str]:
+                return self.handle(message)
 
         bus.register_handler(EchoCmd, OnlyProcess())
         res2 = bus.execute(EchoCmd(value="ok"))

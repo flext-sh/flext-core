@@ -443,8 +443,17 @@ class BusMessagingService(FlextDomainService[dict[str, object]]):
         print(f"\nRegistered message types: {registered}")
 
         # Unregister handler
-        bus.unregister_handler(Command2)
-        print(f"\nAfter unregistering Command2: {len(bus.get_all_handlers())} handlers")
+        removal_result = bus.unregister_handler(Command2)
+        if removal_result.is_failure:
+            print(
+                "\nFailed to unregister Command2:",
+                removal_result.error,
+            )
+        else:
+            print(
+                "\nAfter unregistering Command2:",
+                f"{len(bus.get_all_handlers())} handlers",
+            )
 
     # ========== AUTO HANDLERS ==========
 

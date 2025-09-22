@@ -906,6 +906,10 @@ class TestFlextCqrsBusManagement:
 
         result = bus.unregister_handler("test-handler")
         FlextTestsMatchers.assert_result_success(result)
+        assert result.error_data.get("message") == (
+            "Handler unregistered for command 'test-handler'"
+        )
+        assert result.error_data.get("removed_key") == "test-handler"
         assert "test-handler" not in bus._handlers
 
     def test_bus_unregister_handler_not_found(self) -> None:
@@ -913,7 +917,12 @@ class TestFlextCqrsBusManagement:
         bus = FlextBus()
 
         result = bus.unregister_handler("non-existent-handler")
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(
+            result,
+            "No handler registered for command 'non-existent-handler'",
+        )
+        assert result.error_code == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
+        assert result.error_data.get("command_type") == "non-existent-handler"
 
     def test_bus_send_command_delegates_to_execute(self) -> None:
         """Test Bus send_command delegates to execute."""
