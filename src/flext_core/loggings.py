@@ -69,6 +69,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     _name: str
     _level: FlextTypes.Config.LogLevel
     _environment: FlextTypes.Config.Environment
+    _service_environment_label: str
 
     def __new__(
         cls,
@@ -259,17 +260,21 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
         self._structlog_logger = structlog.get_logger(validated_name)
 
+        environment_variable = FlextConstants.Platform.ENV_ENVIRONMENT
+        environment_value = (
+            os.environ.get(environment_variable)
+            or os.environ.get("ENV")
+            or FlextConstants.Config.DEFAULT_ENVIRONMENT
+        )
+        self._service_environment_label = str(environment_value).lower()
+
         # Initialize persistent context
         self._persistent_context: FlextTypes.Core.Dict = {
             "service": {
                 "name": self._service_name,
                 "version": self._service_version,
                 "instance_id": f"{platform.node()}-{os.getpid()}",
-                "environment": (
-                    os.environ.get("ENVIRONMENT")
-                    or os.environ.get("ENV")
-                    or "development"
-                ).lower(),
+                "environment": self._service_environment_label,
             },
             "system": {
                 "hostname": platform.node(),
@@ -1718,10 +1723,20 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 if model.copy_permanent_context:
                     persistent_context = self._logger.get_persistent_context()
                     if persistent_context:
+                        service_context = cast(
+                            "dict[str, object]",
+                            persistent_context.get("service", {}),
+                        )
+                        environment_label = str(
+                            service_context.get(
+                                "environment",
+                                self._logger._service_environment_label,
+                            )
+                        )
                         persistent_model = FlextModels.LoggerPermanentContextModel(
                             app_name="flext-core",
                             app_version=FlextConstants.Core.VERSION,
-                            environment="development",
+                            environment=environment_label,
                             permanent_context=persistent_context,
                         )
                         bound_logger._context_manager.set_persistent_context(
