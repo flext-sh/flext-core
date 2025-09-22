@@ -1395,7 +1395,7 @@ class FlextModels:
             default_factory=lambda: FlextConfig.get_global_instance().use_utc_timestamps
         )
         auto_update: bool = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().use_utc_timestamps
+            default_factory=lambda: FlextConfig.get_global_instance().timestamp_auto_update
         )
         format: str = "%Y-%m-%dT%H:%M:%S.%fZ"
         timezone: str | None = None
@@ -1416,6 +1416,20 @@ class FlextModels:
                 msg = f"Invalid field name: {v}"
                 raise ValueError(msg)
             return v
+
+        @model_validator(mode="after")
+        def synchronize_field_names(self) -> Self:
+            """Ensure field name aliases stay aligned across attributes and mappings."""
+
+            created_field = self.field_names.get("created_at", self.created_at_field)
+            updated_field = self.field_names.get("updated_at", self.updated_at_field)
+
+            self.field_names["created_at"] = created_field
+            self.field_names["updated_at"] = updated_field
+
+            object.__setattr__(self, "created_at_field", created_field)
+            object.__setattr__(self, "updated_at_field", updated_field)
+            return self
 
     class LoggerInitializationModel(ArbitraryTypesModel):
         """Logger initialization with advanced validation."""

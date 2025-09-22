@@ -144,12 +144,16 @@ class FlextMixins:
         current_time = datetime.now(timezone)
 
         # Create created_at field if it exists and is not set
-        created_field = config.field_names.get("created_at", "created_at")
+        created_field = config.field_names.get("created_at", config.created_at_field)
+        config.created_at_field = created_field
+        config.field_names["created_at"] = created_field
         if hasattr(obj, created_field) and getattr(obj, created_field, None) is None:
             setattr(obj, created_field, current_time)
 
         # Create updated_at field if it exists and auto_update is enabled
-        updated_field = config.field_names.get("updated_at", "updated_at")
+        updated_field = config.field_names.get("updated_at", config.updated_at_field)
+        config.updated_at_field = updated_field
+        config.field_names["updated_at"] = updated_field
         if hasattr(obj, updated_field) and config.auto_update:
             setattr(obj, updated_field, current_time)
 
@@ -168,7 +172,11 @@ class FlextMixins:
             timezone = UTC if config.use_utc else None
             current_time = datetime.now(timezone)
 
-            updated_field = config.field_names.get("updated_at", "updated_at")
+            updated_field = config.field_names.get(
+                "updated_at", config.updated_at_field
+            )
+            config.updated_at_field = updated_field
+            config.field_names["updated_at"] = updated_field
             if hasattr(obj, updated_field):
                 setattr(obj, updated_field, current_time)
 
