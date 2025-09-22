@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from contextvars import Token
 from typing import Literal, cast
@@ -329,6 +329,11 @@ class FlextDispatcher:
                             f"Function handler failed: {error}"
                         )
 
+                def execute(self, message: object) -> FlextResult[object]:
+                    """Delegate execution to the wrapped function handler."""
+
+                    return self.handle(message)
+
             handler = FunctionHandler()
             return FlextResult[FlextHandlers[object, object]].ok(handler)
 
@@ -364,11 +369,20 @@ class FlextDispatcher:
         # Execute dispatch with context management
         metadata_dict: dict[str, object] | None = None
         context_metadata = request.get("context_metadata")
-        if context_metadata and hasattr(context_metadata, "value"):
-            # Convert dict[str, str] to dict[str, object] for context scope
-            metadata_dict = dict(
-                cast("dict[str, object]", context_metadata.value).items()
-            )
+        if context_metadata:
+            metadata_source: Mapping[str, object] | None = None
+            if isinstance(context_metadata, FlextModels.Metadata):
+                metadata_source = context_metadata.attributes
+            elif isinstance(context_metadata, Mapping):
+                metadata_source = context_metadata
+            else:
+                attributes = getattr(context_metadata, "attributes", None)
+                if isinstance(attributes, Mapping):
+                    metadata_source = attributes
+
+            if metadata_source:
+                # Convert Mapping[str, object] to dict[str, object] for context scope
+                metadata_dict = dict(metadata_source.items())
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None
         with self._context_scope(metadata_dict, correlation_id_str):
@@ -438,11 +452,8 @@ class FlextDispatcher:
         # Create structured request
         metadata_obj = None
         if metadata:
-            # Convert dict[str, object] to dict[str, object] for Metadata model
-            string_metadata: dict[str, object] = {
-                k: str(v) for k, v in metadata.items()
-            }
-            metadata_obj = FlextModels.Metadata(attributes=string_metadata)
+            # Copy metadata so downstream mutations don't affect the caller
+            metadata_obj = FlextModels.Metadata(attributes=metadata.copy())
         request = dict[str, object](
             message=message,
             context_metadata=metadata_obj,

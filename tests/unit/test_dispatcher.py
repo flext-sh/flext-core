@@ -41,6 +41,11 @@ class EchoHandler(FlextHandlers[EchoCommand, str]):
         """
         return FlextResult[str].ok(message.payload.upper())
 
+    def execute(self, message: EchoCommand) -> FlextResult[str]:
+        """Delegate execution to the simplified handle implementation."""
+
+        return self.handle(message)
+
 
 class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
     """Handler that inspects correlation context."""
@@ -61,6 +66,34 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
             return FlextResult[str].fail("Correlation ID missing")
         # Include message info in the response to use the parameter
         return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
+
+    def execute(self, message: EchoCommand) -> FlextResult[str]:
+        """Delegate execution to the handle implementation for testing."""
+
+        return self.handle(message)
+
+
+class MetadataAwareHandler(FlextHandlers[EchoCommand, dict[str, object]]):
+    """Handler that inspects metadata propagated through the context."""
+
+    def __init__(self) -> None:
+        """Initialize the metadata aware handler."""
+        super().__init__(handler_mode="command")
+
+    def handle(self, message: EchoCommand) -> FlextResult[dict[str, object]]:
+        """Return operation metadata observed in the context."""
+
+        metadata = FlextContext.Performance.get_operation_metadata()
+        if metadata is None:
+            return FlextResult[dict[str, object]].fail("Metadata missing")
+        # Touch payload to avoid unused argument warnings under strict linters
+        _ = message.payload
+        return FlextResult[dict[str, object]].ok(metadata.copy())
+
+    def execute(self, message: EchoCommand) -> FlextResult[dict[str, object]]:
+        """Delegate execution to the handle implementation for testing."""
+
+        return self.handle(message)
 
 
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
@@ -131,6 +164,27 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.is_success
     assert isinstance(result.unwrap(), str)
     assert result.unwrap()
+
+
+def test_dispatcher_propagates_metadata_into_context() -> None:
+    """Metadata passed to dispatch should be accessible within handlers."""
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    handler = MetadataAwareHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    metadata = {"tenant": "acme", "attempt": 2}
+    result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload="metadata"), metadata=metadata
+    )
+
+    assert result.is_success
+    observed = cast("dict[str, object]", result.unwrap())
+    assert observed == metadata
 
 
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
