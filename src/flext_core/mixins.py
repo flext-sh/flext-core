@@ -208,7 +208,7 @@ class FlextMixins:
 
         if log_method is None:
             normalized_level = FlextConstants.Logging.DEFAULT_LEVEL
-            log_method = level_method_map[normalized_level]
+            log_method = level_method_map.get(normalized_level, logger.info)
 
         log_method(f"Operation: {config.operation}", extra=context)
 
