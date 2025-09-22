@@ -580,6 +580,113 @@ class TestDomainServicesFixed:
         assert "extra_field" in str(exc_info.value)
         assert "Extra inputs are not permitted" in str(exc_info.value)
 
+    def test_execute_conditionally_runs_true_action(self) -> None:
+        """Execute the true action when the predicate evaluates to True."""
+
+        domain_service = SampleUserService()
+        context_payload = {"should_run": True}
+        call_order: list[str] = []
+
+        def predicate(
+            *, service: SampleUserService, context: dict[str, object]
+        ) -> bool:
+            call_order.append("predicate")
+            assert service is domain_service
+            assert context == context_payload
+            return context["should_run"]
+
+        def true_action(
+            *, service: SampleUserService, context: dict[str, object]
+        ) -> FlextResult[FlextTypes.Core.Headers]:
+            call_order.append("true_action")
+            assert service is domain_service
+            assert context == context_payload
+            return service.execute()
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=predicate,
+            true_action=true_action,
+            context=context_payload,
+        )
+
+        result = domain_service.execute_conditionally(request)
+
+        assert call_order == ["predicate", "true_action"]
+        assert result.is_success
+        headers = result.unwrap()
+        assert headers["user_id"] == "default_123"
+
+    def test_execute_conditionally_runs_false_action_when_condition_false(
+        self,
+    ) -> None:
+        """Execute the false action when the predicate evaluates to False."""
+
+        domain_service = SampleUserService()
+        context_payload = {"should_run": False}
+        call_order: list[str] = []
+
+        def predicate(
+            *, service: SampleUserService, context: dict[str, object]
+        ) -> bool:
+            call_order.append("predicate")
+            assert service is domain_service
+            assert context == context_payload
+            return context["should_run"]
+
+        def true_action(
+            *, service: SampleUserService, context: dict[str, object]
+        ) -> FlextResult[FlextTypes.Core.Headers]:
+            call_order.append("true_action")
+            return service.execute()
+
+        def false_action(
+            *, service: SampleUserService, context: dict[str, object]
+        ) -> FlextResult[FlextTypes.Core.Headers]:
+            call_order.append("false_action")
+            assert service is domain_service
+            assert context == context_payload
+            return FlextResult[FlextTypes.Core.Headers].fail(
+                "condition prevented execution"
+            )
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=predicate,
+            true_action=true_action,
+            false_action=false_action,
+            context=context_payload,
+        )
+
+        result = domain_service.execute_conditionally(request)
+
+        assert call_order == ["predicate", "false_action"]
+        assert result.is_failure
+        assert result.error == "condition prevented execution"
+
+    def test_execute_conditionally_returns_failure_without_false_action(self) -> None:
+        """Return a clear failure when the predicate is False without false action."""
+
+        domain_service = SampleUserService()
+        predicate_calls: list[str] = []
+
+        def predicate(service: SampleUserService) -> bool:
+            predicate_calls.append("predicate")
+            return False
+
+        def true_action(service: SampleUserService) -> FlextResult[FlextTypes.Core.Headers]:
+            return service.execute()
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=predicate,
+            true_action=true_action,
+        )
+
+        result = domain_service.execute_conditionally(request)
+
+        assert predicate_calls == ["predicate"]
+        assert result.is_failure
+        assert result.error is not None
+        assert "Conditional execution skipped" in result.error
+
 
 class TestDomainServiceStaticMethods:
     """Tests for domain service static methods and configuration."""

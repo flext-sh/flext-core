@@ -13,7 +13,8 @@ from __future__ import annotations
 import signal
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+import inspect
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
@@ -231,21 +232,90 @@ class FlextDomainService[TDomainResult](
     def execute_conditionally(
         self, condition: FlextModels.ConditionalExecutionRequest
     ) -> FlextResult[TDomainResult]:
-        """Execute only if condition is met using ConditionalExecutionRequest model.
+        """Execute only if the provided predicate evaluates to truthy."""
 
-        Args:
-            condition: ConditionalExecutionRequest containing condition logic
+        context_data = condition.context or {}
 
-        Returns:
-            FlextResult[TDomainResult]: Success with result, failure, or skipped
+        def call_with_context(func: Callable[..., object]) -> object:
+            """Invoke callable passing the current service and contextual data."""
 
-        """
-        # Check condition by looking at enable flags
-        if not getattr(condition, "enable_execution", True):
-            return FlextResult[TDomainResult].fail("Execution condition not met")
+            try:
+                func_signature = inspect.signature(func)
+            except (TypeError, ValueError):
+                func_signature = None
 
-        # Execute if condition is met
-        return self.execute()
+            candidate_calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
+
+            context_kwargs = dict(context_data)
+
+            service_and_context_kwargs = dict(context_kwargs)
+            service_and_context_kwargs.setdefault("service", self)
+            candidate_calls.append(((), service_and_context_kwargs))
+
+            candidate_calls.append(((), {"service": self, "context": context_data}))
+            candidate_calls.append(((), {"service": self}))
+
+            if context_kwargs:
+                candidate_calls.append(((self,), dict(context_kwargs)))
+                candidate_calls.append(((), dict(context_kwargs)))
+
+            candidate_calls.append(((self,), {"context": context_data}))
+            candidate_calls.append(((self, context_data), {}))
+            candidate_calls.append(((self,), {}))
+            candidate_calls.append(((context_data,), {}))
+            candidate_calls.append(((), {"context": context_data}))
+            candidate_calls.append(((), {}))
+
+            if func_signature is not None:
+                for args, kwargs in candidate_calls:
+                    try:
+                        func_signature.bind(*args, **kwargs)
+                    except TypeError:
+                        continue
+                    return func(*args, **kwargs)
+
+                msg = "Unable to invoke conditional callable with available arguments"
+                raise TypeError(msg)
+
+            last_type_error: TypeError | None = None
+            for args, kwargs in candidate_calls:
+                try:
+                    return func(*args, **kwargs)
+                except TypeError as exc:  # pragma: no cover - safety fallback
+                    last_type_error = exc
+                    continue
+
+            if last_type_error is not None:
+                raise last_type_error
+
+            msg = "Unable to invoke conditional callable with available arguments"
+            raise TypeError(msg)
+
+        predicate_result = call_with_context(condition.condition)
+        if isinstance(predicate_result, FlextResult):
+            if predicate_result.is_failure:
+                return FlextResult[TDomainResult].fail(
+                    predicate_result.error or "Condition evaluation failed",
+                    error_code=predicate_result.error_code,
+                    error_data=predicate_result.error_data,
+                )
+            should_execute = bool(predicate_result.value)
+        else:
+            should_execute = bool(predicate_result)
+
+        if should_execute:
+            true_result = call_with_context(condition.true_action)
+            if isinstance(true_result, FlextResult):
+                return true_result
+            return FlextResult[TDomainResult].ok(true_result)  # type: ignore[arg-type]
+
+        if condition.false_action is not None:
+            false_result = call_with_context(condition.false_action)
+            if isinstance(false_result, FlextResult):
+                return false_result
+            return FlextResult[TDomainResult].ok(false_result)  # type: ignore[arg-type]
+
+        return FlextResult[TDomainResult].fail("Conditional execution skipped")
 
     def execute_batch_with_request(
         self, request: FlextModels.DomainServiceBatchRequest
