@@ -705,6 +705,7 @@ class TestFlextCqrsBusMiddleware:
         command = TestCommand()
         result = bus.execute(command)
 
+        assert isinstance(result, FlextResult)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error
         assert result.error is not None
@@ -717,7 +718,10 @@ class TestFlextCqrsBusMiddleware:
         bus = FlextBus(bus_config=config)
         command = FlextModels.Command(command_id="test", command_type="test-type")
 
-        result = bus._apply_middleware(command)
+        handler = object()
+        result = bus._apply_middleware(command, handler)
+
+        assert isinstance(result, FlextResult)
         FlextTestsMatchers.assert_result_success(result)
 
     def test_bus_apply_middleware_success(self) -> None:
@@ -727,18 +731,46 @@ class TestFlextCqrsBusMiddleware:
         class TestMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "test-middleware"
+                self.seen_command: object | None = None
+                self.seen_handler: object | None = None
 
-            def process(self, command: object) -> FlextResult[object]:
-                return FlextResult[object].ok(command)
+            def process(
+                self, command: object, handler: object
+            ) -> FlextResult[None]:
+                self.seen_command = command
+                self.seen_handler = handler
+                return FlextResult[None].ok(None)
+
+        class TestHandler:
+            def handle(self, _command: object) -> FlextResult[str]:
+                return FlextResult[str].ok("handled")
 
         bus = FlextBus(bus_config=config)
         middleware = TestMiddleware()
-        bus._middleware.append(middleware)
+        middleware_config = {
+            "middleware_id": middleware.middleware_id,
+            "middleware_type": type(middleware).__name__,
+            "enabled": True,
+            "order": 0,
+        }
+        bus._middleware.append(middleware_config)
+        bus._middleware_instances[middleware.middleware_id] = middleware
+
+        handler = TestHandler()
+        registration_result = bus.register_handler(FlextModels.Command, handler)
+        assert isinstance(registration_result, FlextResult)
+        FlextTestsMatchers.assert_result_success(registration_result)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
-        result = bus._apply_middleware(command)
+        middleware_result = bus._apply_middleware(command, handler)
+        assert isinstance(middleware_result, FlextResult)
+        FlextTestsMatchers.assert_result_success(middleware_result)
 
-        FlextTestsMatchers.assert_result_success(result)
+        execute_result = bus.execute(command)
+        assert isinstance(execute_result, FlextResult)
+        FlextTestsMatchers.assert_result_success(execute_result)
+        assert middleware.seen_command is command
+        assert middleware.seen_handler is handler
 
     def test_bus_apply_middleware_rejection(self) -> None:
         """Test Bus _apply_middleware rejection."""
@@ -747,18 +779,46 @@ class TestFlextCqrsBusMiddleware:
         class RejectingMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "rejecting-middleware"
+                self.seen_command: object | None = None
+                self.seen_handler: object | None = None
 
-            def process(self, _command: object) -> FlextResult[object]:
-                return FlextResult[object].fail("Middleware rejected command")
+            def process(
+                self, command: object, handler: object
+            ) -> FlextResult[None]:
+                self.seen_command = command
+                self.seen_handler = handler
+                return FlextResult[None].fail("Middleware rejected command")
 
         bus = FlextBus(bus_config=config)
         middleware = RejectingMiddleware()
-        bus._middleware.append(middleware)
+        middleware_config = {
+            "middleware_id": middleware.middleware_id,
+            "middleware_type": type(middleware).__name__,
+            "enabled": True,
+            "order": 0,
+        }
+        bus._middleware.append(middleware_config)
+        bus._middleware_instances[middleware.middleware_id] = middleware
+
+        class RejectingHandler:
+            def handle(self, _command: object) -> FlextResult[str]:
+                return FlextResult[str].ok("should not execute")
+
+        handler = RejectingHandler()
+        registration_result = bus.register_handler(FlextModels.Command, handler)
+        assert isinstance(registration_result, FlextResult)
+        FlextTestsMatchers.assert_result_success(registration_result)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
-        result = bus._apply_middleware(command)
+        middleware_result = bus._apply_middleware(command, handler)
+        assert isinstance(middleware_result, FlextResult)
+        FlextTestsMatchers.assert_result_failure(middleware_result)
 
-        FlextTestsMatchers.assert_result_failure(result)
+        execute_result = bus.execute(command)
+        assert isinstance(execute_result, FlextResult)
+        FlextTestsMatchers.assert_result_failure(execute_result)
+        assert middleware.seen_command is command
+        assert middleware.seen_handler is handler
 
 
 class TestFlextCqrsBusHandlerMethods:
@@ -1145,18 +1205,22 @@ class TestFlextCqrsIntegration:
                 self.middleware_id = "logging"
                 self.logs: list[str] = []
 
-            def process(self, command: object, handler: object) -> FlextResult[object]:
+            def process(
+                self, command: object, handler: object
+            ) -> FlextResult[None]:
                 self.logs.append(f"Processing command: {command}")
-                return FlextResult[object].ok(command)
+                return FlextResult[None].ok(None)
 
         class ValidationMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "validation"
 
-            def process(self, command: object, handler: object) -> FlextResult[object]:
+            def process(
+                self, command: object, handler: object
+            ) -> FlextResult[None]:
                 if isinstance(command, FlextModels.Command):
-                    return FlextResult[object].ok(command)
-                return FlextResult[object].fail("Invalid command type")
+                    return FlextResult[None].ok(None)
+                return FlextResult[None].fail("Invalid command type")
 
         config: dict[str, object] = {"enable_middleware": True}
         bus = FlextBus(bus_config=config)
@@ -1190,11 +1254,14 @@ class TestFlextCqrsIntegration:
                 return command_type.__name__ == "Command"
 
         handler = TestHandler()
-        bus.register_handler(handler)
+        registration_result = bus.register_handler(handler)
+        assert isinstance(registration_result, FlextResult)
+        FlextTestsMatchers.assert_result_success(registration_result)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = bus.execute(command)
 
+        assert isinstance(result, FlextResult)
         FlextTestsMatchers.assert_result_success(result)
         # NOTE: Due to a bug in FlextBus middleware handling (dict vs object attribute access),
         # the middleware may not be called. For now, verify the core functionality works.

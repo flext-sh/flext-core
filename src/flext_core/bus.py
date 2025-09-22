@@ -208,7 +208,7 @@ class FlextBus(FlextMixins):
             *args: Handler instance(s) to register
 
         Returns:
-            FlextResult: Success or failure result
+            FlextResult[None]: Success or failure result
 
         """
         if len(args) == 1:
@@ -317,7 +317,7 @@ class FlextBus(FlextMixins):
             command: The command or query object to execute
 
         Returns:
-            FlextResult: Execution result
+            FlextResult[object]: Execution result
 
         """
         # Check if bus is enabled
@@ -413,7 +413,7 @@ class FlextBus(FlextMixins):
             handler: The handler that will execute the command
 
         Returns:
-            FlextResult: Middleware processing result
+            FlextResult[None]: Middleware processing result
 
         """
         if not self._config_model.enable_middleware:
