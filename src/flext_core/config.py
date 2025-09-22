@@ -94,6 +94,11 @@ class FlextConfig(BaseSettings):
         validate_default=True,
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console logging verbosity (compact, detailed, full)",
+    )
+
     # Additional logging configuration fields using FlextConstants.Logging.
     log_format: str = Field(
         default=FlextConstants.Logging.DEFAULT_FORMAT,
@@ -148,6 +153,11 @@ class FlextConfig(BaseSettings):
     mask_sensitive_data: bool = Field(
         default=FlextConstants.Logging.MASK_SENSITIVE_DATA,
         description="Mask sensitive data in log messages",
+    )
+
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console log verbosity level (compact, detailed, full)",
     )
 
     # Database configuration
@@ -329,6 +339,18 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return v.upper()
 
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity is supported."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        v_lower = v.lower()
+        if v_lower not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return v_lower
+
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v: str) -> str:
@@ -346,6 +368,18 @@ class FlextConfig(BaseSettings):
             msg = f"Environment must be one of {valid_environments}"
             raise ValueError(msg)
         return v.lower()
+
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity against supported options."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        normalized = v.lower()
+        if normalized not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return normalized
 
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
@@ -408,6 +442,7 @@ class FlextConfig(BaseSettings):
             "json_output": self.json_output,
             "include_source": self.include_source,
             "structured_output": self.structured_output,
+            "log_verbosity": self.log_verbosity,
             "format": self.log_format,
             "log_file": self.log_file,
             "log_file_max_size": self.log_file_max_size,
@@ -419,6 +454,7 @@ class FlextConfig(BaseSettings):
             "include_context": self.include_context,
             "include_correlation_id": self.include_correlation_id,
             "mask_sensitive_data": self.mask_sensitive_data,
+            "log_verbosity": self.log_verbosity,
         }
 
     def get_database_config(self) -> dict[str, object]:
@@ -574,9 +610,10 @@ class FlextConfig(BaseSettings):
 
         """
         return {
-            "timeout_seconds": self.dispatcher_timeout_seconds,
+            "execution_timeout": self.dispatcher_timeout_seconds,
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
+            "log_verbosity": self.log_verbosity,
         }
 
     @classmethod
