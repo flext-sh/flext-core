@@ -21,7 +21,7 @@ import uuid
 import warnings
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Self, TypedDict, cast
+from typing import TYPE_CHECKING, ClassVar, Self, TypedDict, cast
 
 import structlog
 from structlog.typing import EventDict, Processor
@@ -36,7 +36,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
+class FlextLogger:
     """High-performance structured logger with comprehensive context management.
 
     Optimized implementation with Pydantic validation, centralized context management,
@@ -1892,6 +1892,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         return f"FlextLogger(name='{self._name}', level='{self._level}')"
 
+
+if TYPE_CHECKING:
+    # Ensure static type checkers recognize protocol compliance without inheritance
+    _protocol_verification: FlextProtocols.Infrastructure.LoggerProtocol = FlextLogger(
+        "_protocol_check_"
+    )
 
 __all__: FlextTypes.Core.StringList = [
     "FlextLogger",
