@@ -610,7 +610,7 @@ class FlextConfig(BaseSettings):
 
         """
         return {
-            "timeout_seconds": self.dispatcher_timeout_seconds,
+            "execution_timeout": self.dispatcher_timeout_seconds,
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
             "log_verbosity": self.log_verbosity,

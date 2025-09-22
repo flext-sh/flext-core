@@ -11,6 +11,7 @@ from typing import cast
 from unittest.mock import Mock
 
 from flext_core import (
+    FlextConfig,
     FlextContext,
     FlextDispatcher,
     FlextDispatcherRegistry,
@@ -296,6 +297,23 @@ def test_dispatcher_registry_register_function_map() -> None:
     result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="fn"))
     assert result.is_success
     assert result.unwrap() == "fn:fn"
+
+
+def test_dispatcher_uses_global_execution_timeout_for_bus() -> None:
+    """Dispatcher maps global timeout configuration onto the bus."""
+    FlextContext.Utilities.clear_context()
+    FlextConfig.reset_global_instance()
+
+    try:
+        custom_timeout = 123
+        FlextConfig.set_global_instance(
+            FlextConfig(dispatcher_timeout_seconds=custom_timeout)
+        )
+
+        dispatcher = FlextDispatcher()
+        assert dispatcher.bus.config.execution_timeout == custom_timeout
+    finally:
+        FlextConfig.reset_global_instance()
 
 
 def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
