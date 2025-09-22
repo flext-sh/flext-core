@@ -938,13 +938,11 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
         """
         global_config = FlextConfig.get_global_instance()
-
         resolved_log_verbosity = (
             log_verbosity
-            or getattr(
-                global_config,
-                "log_verbosity",
-                FlextConstants.Logging.VERBOSITY,
+            if log_verbosity is not None
+            else getattr(
+                global_config, "log_verbosity", FlextConstants.Logging.VERBOSITY
             )
         )
 
