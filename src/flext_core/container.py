@@ -95,12 +95,27 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._factories: dict[str, Callable[[], object]] = {}
 
         # Configuration integration with FlextConfig singleton
-        self._global_config = {
-            "max_workers": 4,
-            "timeout_seconds": FlextConstants.Container.TIMEOUT_SECONDS,
-            "environment": "development",
-        }
         self._flext_config = FlextConfig.get_global_instance()
+        environment_default = str(
+            getattr(
+                self._flext_config,
+                "environment",
+                FlextConstants.Config.DEFAULT_ENVIRONMENT,
+            )
+        ).strip().lower()
+        self._global_config = {
+            "max_workers": int(
+                getattr(self._flext_config, "max_workers", 4)
+            ),
+            "timeout_seconds": float(
+                getattr(
+                    self._flext_config,
+                    "timeout_seconds",
+                    FlextConstants.Container.TIMEOUT_SECONDS,
+                )
+            ),
+            "environment": environment_default,
+        }
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -717,18 +732,55 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             normalized_config = self._normalize_config_fields(config)
 
             # Create and store global configuration with proper type conversion
-            max_workers = normalized_config.get("max_workers", 4)
-            timeout_seconds = normalized_config.get("timeout_seconds", 30.0)
-            environment = normalized_config.get("environment", "development")
+            fallback_max_workers = int(
+                getattr(
+                    self._flext_config,
+                    "max_workers",
+                    self._global_config.get("max_workers", 4),
+                )
+            )
+            fallback_timeout = float(
+                getattr(
+                    self._flext_config,
+                    "timeout_seconds",
+                    self._global_config.get("timeout_seconds", 30.0),
+                )
+            )
+            fallback_environment = str(
+                getattr(
+                    self._flext_config,
+                    "environment",
+                    self._global_config.get("environment", "development"),
+                )
+            )
+
+            max_workers = normalized_config.get("max_workers", fallback_max_workers)
+            timeout_seconds = normalized_config.get(
+                "timeout_seconds", fallback_timeout
+            )
+            environment = normalized_config.get("environment", fallback_environment)
+
+            coerced_max_workers = fallback_max_workers
+            if isinstance(max_workers, (int, float)):
+                candidate_workers = int(max_workers)
+                if candidate_workers > 0:
+                    coerced_max_workers = candidate_workers
+
+            coerced_timeout = fallback_timeout
+            if isinstance(timeout_seconds, (int, float)):
+                candidate_timeout = float(timeout_seconds)
+                if candidate_timeout > 0:
+                    coerced_timeout = candidate_timeout
+
+            if isinstance(environment, str) and environment.strip():
+                coerced_environment = environment.strip().lower()
+            else:
+                coerced_environment = fallback_environment
 
             self._global_config = {
-                "max_workers": int(max_workers)
-                if isinstance(max_workers, (int, float))
-                else 4,
-                "timeout_seconds": float(timeout_seconds)
-                if isinstance(timeout_seconds, (int, float))
-                else 30.0,
-                "environment": str(environment) if environment else "development",
+                "max_workers": coerced_max_workers,
+                "timeout_seconds": coerced_timeout,
+                "environment": coerced_environment,
             }
 
             return FlextResult[None].ok(None)
@@ -755,36 +807,57 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             dict[str, object]: Normalized configuration dictionary.
 
         """
-        # Create normalized config with defaults from FlextConstants.Container
+        # Create normalized config with defaults from captured FlextConfig
+        fallback_max_workers = int(
+            getattr(
+                self._flext_config,
+                "max_workers",
+                self._global_config.get("max_workers", 4),
+            )
+        )
+        fallback_timeout = float(
+            getattr(
+                self._flext_config,
+                "timeout_seconds",
+                self._global_config.get("timeout_seconds", 30.0),
+            )
+        )
+        fallback_environment = str(
+            getattr(
+                self._flext_config,
+                "environment",
+                self._global_config.get("environment", "development"),
+            )
+        ).strip().lower()
+
         normalized = {
-            "max_workers": config.get(
-                "max_workers", FlextConstants.Container.MAX_WORKERS
-            ),
-            "timeout_seconds": config.get(
-                "timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS
-            ),
-            "environment": config.get(
-                "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
-            ),
+            "max_workers": config.get("max_workers", fallback_max_workers),
+            "timeout_seconds": config.get("timeout_seconds", fallback_timeout),
+            "environment": config.get("environment", fallback_environment),
         }
 
         # Validate and fix max_workers
-        if (
-            isinstance(normalized["max_workers"], int)
-            and normalized["max_workers"] <= 0
-        ):
-            normalized["max_workers"] = FlextConstants.Container.MAX_WORKERS
+        max_workers_value = normalized["max_workers"]
+        if isinstance(max_workers_value, (int, float)):
+            if max_workers_value <= 0:
+                normalized["max_workers"] = fallback_max_workers
+        else:
+            normalized["max_workers"] = fallback_max_workers
 
         # Validate and fix timeout_seconds
-        if (
-            isinstance(normalized["timeout_seconds"], (int, float))
-            and normalized["timeout_seconds"] <= 0
-        ):
-            normalized["timeout_seconds"] = FlextConstants.Container.TIMEOUT_SECONDS
+        timeout_value = normalized["timeout_seconds"]
+        if isinstance(timeout_value, (int, float)):
+            if timeout_value <= 0:
+                normalized["timeout_seconds"] = fallback_timeout
+        else:
+            normalized["timeout_seconds"] = fallback_timeout
 
         # Set default environment if empty or invalid
-        if not normalized["environment"]:
-            normalized["environment"] = FlextConstants.Config.DEFAULT_ENVIRONMENT
+        environment_value = normalized["environment"]
+        if isinstance(environment_value, str) and environment_value.strip():
+            normalized["environment"] = environment_value.strip().lower()
+        else:
+            normalized["environment"] = fallback_environment
 
         return normalized
 
