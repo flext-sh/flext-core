@@ -329,6 +329,10 @@ class FlextDispatcher:
                             f"Function handler failed: {error}"
                         )
 
+                def execute(self, message: object) -> FlextResult[object]:
+                    """Execute message by delegating to ``handle`` for tests."""
+                    return self.handle(message)
+
             handler = FunctionHandler()
             return FlextResult[FlextHandlers[object, object]].ok(handler)
 
@@ -364,10 +368,16 @@ class FlextDispatcher:
         # Execute dispatch with context management
         metadata_dict: dict[str, object] | None = None
         context_metadata = request.get("context_metadata")
-        if context_metadata and hasattr(context_metadata, "value"):
+        if isinstance(context_metadata, FlextModels.Metadata):
             # Convert dict[str, str] to dict[str, object] for context scope
             metadata_dict = dict(
-                cast("dict[str, object]", context_metadata.value).items()
+                cast("dict[str, object]", context_metadata.attributes).items()
+            )
+        elif isinstance(context_metadata, dict):
+            metadata_dict = dict(context_metadata.items())
+        elif context_metadata and hasattr(context_metadata, "attributes"):
+            metadata_dict = dict(
+                cast("dict[str, object]", context_metadata.attributes).items()
             )
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None

@@ -157,6 +157,10 @@ class FlextBus(FlextMixins):
             def __call__(self, command: object) -> FlextResult[object]:
                 return self.handle(command)
 
+            def execute(self, message: object) -> FlextResult[object]:
+                """Execute command by delegating to ``handle`` for simple handlers."""
+                return self.handle(message)
+
         return SimpleHandler()
 
     @staticmethod
@@ -198,6 +202,10 @@ class FlextBus(FlextMixins):
 
             def __call__(self, query: object) -> FlextResult[object]:
                 return self.handle(query)
+
+            def execute(self, message: object) -> FlextResult[object]:
+                """Execute query by delegating to ``handle`` for simple handlers."""
+                return self.handle(message)
 
         return SimpleQueryHandler()
 
