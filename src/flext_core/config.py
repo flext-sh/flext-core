@@ -10,17 +10,14 @@ import json
 import threading
 import tomllib
 from pathlib import Path
-from typing import ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
 import yaml
-from pydantic import (
-    Field,
-    field_validator,
-    model_validator,
-)
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
@@ -55,10 +52,13 @@ class FlextConfig(BaseSettings):
         description="Application version identifier",
     )
 
-    environment: str = Field(
-        default=FlextConstants.Defaults.ENVIRONMENT,
-        description="Deployment environment identifier",
-    )
+    environment: Annotated[
+        FlextTypes.Config.Environment,
+        Field(
+            default=FlextConstants.Defaults.ENVIRONMENT,
+            description="Deployment environment identifier",
+        ),
+    ]
 
     debug: bool = Field(
         default=False,  # Keep as False for production safety
@@ -71,10 +71,13 @@ class FlextConfig(BaseSettings):
     )
 
     # Logging Configuration Properties - Single Source of Truth using FlextConstants.Logging.
-    log_level: str = Field(
-        default=FlextConstants.Logging.DEFAULT_LEVEL,
-        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-    )
+    log_level: Annotated[
+        FlextTypes.Config.LogLevel,
+        Field(
+            default=FlextConstants.Logging.DEFAULT_LEVEL,
+            description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        ),
+    ]
 
     json_output: bool | None = Field(
         default=FlextConstants.Logging.JSON_OUTPUT_DEFAULT,
@@ -311,42 +314,6 @@ class FlextConfig(BaseSettings):
         description="Automatically update timestamps on model changes",
     )
 
-    @field_validator("log_level")
-    @classmethod
-    def validate_log_level(cls, v: str) -> str:
-        """Validate log level is a supported value using FlextConstants.Logging.
-
-        Returns:
-            The validated and normalized (uppercase) log level.
-
-        Raises:
-            ValueError: If the log level is not in the list of valid levels.
-
-        """
-        valid_levels = FlextConstants.Logging.VALID_LEVELS
-        if v.upper() not in valid_levels:
-            msg = f"Log level must be one of {valid_levels}"
-            raise ValueError(msg)
-        return v.upper()
-
-    @field_validator("environment")
-    @classmethod
-    def validate_environment(cls, v: str) -> str:
-        """Validate environment is a supported value using FlextConstants.
-
-        Returns:
-            The validated and normalized (lowercase) environment.
-
-        Raises:
-            ValueError: If the environment is not in the list of valid environments.
-
-        """
-        valid_environments = set(FlextConstants.Config.ENVIRONMENTS)
-        if v.lower() not in valid_environments:
-            msg = f"Environment must be one of {valid_environments}"
-            raise ValueError(msg)
-        return v.lower()
-
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
         """Validate overall configuration consistency.
@@ -448,7 +415,7 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def create_for_environment(
-        cls, environment: str, **overrides: object
+        cls, environment: FlextTypes.Config.Environment, **overrides: object
     ) -> FlextConfig:
         """Create configuration for specific environment with overrides.
 

@@ -111,11 +111,11 @@ class TestFlextConfigRealCoverage:
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         for level in valid_levels:
             config = FlextConfig(app_name="test", log_level=level)
-            assert config.log_level == level.upper()
+            assert config.log_level == level
 
-        # Case insensitive
-        config = FlextConfig(app_name="test", log_level="info")
-        assert config.log_level == "INFO"
+        # Case sensitive enforcement (Literal types)
+        with pytest.raises(ValidationError):
+            FlextConfig(app_name="test", log_level="info")
 
         # Invalid log level should raise ValidationError
         with pytest.raises(ValidationError):

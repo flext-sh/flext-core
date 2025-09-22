@@ -178,6 +178,7 @@ class FlextTypes:
             "production",
             "staging",
             "test",
+            "testing",
             "local",
         ]
 

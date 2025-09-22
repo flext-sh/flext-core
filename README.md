@@ -22,7 +22,8 @@ The FLEXT Core Modernization Plan identifies three pillars that must land for th
 - Singleton `FlextContainer` with typed service keys, container reset utilities, and dispatcher integration helpers.
 - Domain-driven patterns through `FlextModels` and `FlextDomainService` with context-aware logging.
 - Structured logging (`FlextLogger`) wired to `FlextContext` for correlation and latency metrics.
-- Layered configuration loader (`FlextConfig`) with `.env`, TOML, and YAML support.
+- Layered configuration loader (`FlextConfig`) with `.env`, TOML, and YAML support, now enforcing canonical environment and log
+  level values via literal types.
 - `FlextDispatcher` façade and registry to prepare CLI and connector packages for unified dispatch.
 
 ---
