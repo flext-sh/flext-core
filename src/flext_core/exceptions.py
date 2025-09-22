@@ -89,14 +89,22 @@ class FlextExceptions:
             message: str,
             *,
             code: str | None = None,
-            context: Mapping[str, object] | None = None,
+            context: FlextTypes.Core.Dict | Mapping[str, object] | None = None,
             correlation_id: str | None = None,
         ) -> None:
-            """Initialize structured exception."""
+            """Initialize structured exception.
+
+            Args:
+                message: Human-readable error message.
+                code: Optional error code tied to :class:`FlextConstants`.
+                context: Optional metadata payload expressed as
+                    :data:`FlextTypes.Core.Dict` for diagnostics.
+                correlation_id: Identifier used to correlate error occurrences.
+            """
             super().__init__(message)
             self.message = message
             self.code = code or FlextConstants.Errors.GENERIC_ERROR
-            self.context = dict(context or {})
+            self.context: FlextTypes.Core.Dict = dict(context or {})
             self.correlation_id = correlation_id or f"flext_{int(time.time() * 1000)}"
             self.timestamp = time.time()
             FlextExceptions.Metrics.record_exception(self.__class__.__name__)
@@ -127,9 +135,9 @@ class FlextExceptions:
         ) -> None:
             self.attribute_name = attribute_name
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict["attribute_name"] = attribute_name
@@ -159,9 +167,9 @@ class FlextExceptions:
         ) -> None:
             self.operation = operation
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict["operation"] = operation
@@ -190,9 +198,9 @@ class FlextExceptions:
             self.value = value
             self.validation_details = validation_details
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update(
@@ -230,9 +238,9 @@ class FlextExceptions:
             self.config_key = config_key
             self.config_file = config_file
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"config_key": config_key, "config_file": config_file})
@@ -259,9 +267,9 @@ class FlextExceptions:
             self.service = service
             self.endpoint = endpoint
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"service": service, "endpoint": endpoint})
@@ -288,9 +296,9 @@ class FlextExceptions:
             self.business_rule = business_rule
             self.operation = operation
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({
@@ -318,9 +326,9 @@ class FlextExceptions:
         ) -> None:
             self.timeout_seconds = timeout_seconds
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict["timeout_seconds"] = timeout_seconds
@@ -347,9 +355,9 @@ class FlextExceptions:
             self.resource_id = resource_id
             self.resource_type = resource_type
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({
@@ -379,9 +387,9 @@ class FlextExceptions:
             self.resource_id = resource_id
             self.resource_type = resource_type
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict["resource_id"] = resource_id
@@ -407,9 +415,9 @@ class FlextExceptions:
         ) -> None:
             self.required_permission = required_permission
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict["required_permission"] = required_permission
@@ -434,9 +442,9 @@ class FlextExceptions:
         ) -> None:
             self.auth_method = auth_method
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict["auth_method"] = auth_method
@@ -463,9 +471,9 @@ class FlextExceptions:
             self.expected_type = expected_type
             self.actual_type = actual_type
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
 
@@ -521,8 +529,8 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] | None = cast(
-                    "dict[str, object]", context_raw
+                context_dict: FlextTypes.Core.Dict | None = cast(
+                    "FlextTypes.Core.Dict", context_raw
                 )
             else:
                 context_dict = None
@@ -533,7 +541,7 @@ class FlextExceptions:
 
             # Add remaining kwargs to context for full functionality
             if context_dict is not None:
-                full_context: dict[str, object] = dict(context_dict)
+                full_context: FlextTypes.Core.Dict = dict(context_dict)
                 full_context.update(kwargs)
                 context_dict = full_context
             elif kwargs:
@@ -555,8 +563,8 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] | None = cast(
-                    "dict[str, object]", context_raw
+                context_dict: FlextTypes.Core.Dict | None = cast(
+                    "FlextTypes.Core.Dict", context_raw
                 )
             else:
                 context_dict = None
@@ -569,7 +577,7 @@ class FlextExceptions:
 
             # Add remaining kwargs to context for full functionality
             if context_dict is not None:
-                full_context: dict[str, object] = dict(context_dict)
+                full_context: FlextTypes.Core.Dict = dict(context_dict)
                 full_context.update(kwargs)
                 context_dict = full_context
             elif kwargs:
@@ -588,8 +596,8 @@ class FlextExceptions:
         def __init__(self, message: str, **kwargs: object) -> None:
             context_raw = kwargs.get("context", {})
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] | None = cast(
-                    "dict[str, object]", context_raw
+                context_dict: FlextTypes.Core.Dict | None = cast(
+                    "FlextTypes.Core.Dict", context_raw
                 )
             else:
                 context_dict = None
@@ -639,8 +647,8 @@ class FlextExceptions:
     ) -> BaseError:
         """Create exception with automatic type selection."""
         # Extract common kwargs that all exceptions understand
-        context: dict[str, object] = cast(
-            "dict[str, object]",
+        context: FlextTypes.Core.Dict = cast(
+            "FlextTypes.Core.Dict",
             (
                 kwargs.get("context", {})
                 if isinstance(kwargs.get("context", {}), (dict, type(None)))
