@@ -373,11 +373,20 @@ class FlextBus(FlextMixins):
 
         # Apply middleware pipeline
         middleware_result = self._apply_middleware(command, handler)
-        if middleware_result.is_failure:
-            return FlextResult[object].fail(
-                middleware_result.error or "Middleware rejected command",
-                error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
+        if isinstance(middleware_result, FlextResult):
+            if middleware_result.is_failure:
+                self.logger.info(
+                    "Middleware rejected command",
+                    command_type=command_type.__name__,
+                    error=middleware_result.error or "Unknown error",
+                )
+                return middleware_result
+
+            self.logger.debug(
+                "Middleware short-circuited execution",
+                command_type=command_type.__name__,
             )
+            return cast("FlextResult[object]", middleware_result)
 
         # Execute the handler with timing
         self._start_time = time.time()
@@ -404,73 +413,121 @@ class FlextBus(FlextMixins):
     def _apply_middleware(
         self,
         command: object,
-        handler: object,
-    ) -> FlextResult[None]:
+        handler: object | None = None,
+    ) -> FlextResult[object] | None:
         """Run the configured middleware pipeline for the current message.
 
         Args:
             command: The command/query to process
-            handler: The handler that will execute the command
+            handler: The handler that will execute the command, if resolved
 
         Returns:
-            FlextResult: Middleware processing result
+            ``None`` when execution should continue to the handler, otherwise a
+            :class:`FlextResult` containing either the short-circuited response or
+            a failure from the middleware layer.
 
         """
         if not self._config_model.enable_middleware:
-            return FlextResult[None].ok(None)
+            return None
 
-        # Sort middleware by order
-        def get_order(m: dict[str, object]) -> int:
-            order = m.get("order", 0)
-            if isinstance(order, int):
-                return order
-            if isinstance(order, str):
+        # Sort middleware by order while supporting config dicts and instances
+        def get_order(middleware_entry: object) -> int:
+            if isinstance(middleware_entry, dict):
+                order_value = middleware_entry.get("order", 0)
+            else:
+                order_value = getattr(middleware_entry, "order", 0)
+
+            if isinstance(order_value, int):
+                return order_value
+            if isinstance(order_value, str):
                 try:
-                    return int(order)
+                    return int(order_value)
                 except ValueError:
                     return 0
-            else:
-                return 0
+            return 0
 
         sorted_middleware = sorted(self._middleware, key=get_order)
 
         for middleware_config in sorted_middleware:
-            if not getattr(middleware_config, "enabled", True):
+            enabled = (
+                middleware_config.get("enabled", True)
+                if isinstance(middleware_config, dict)
+                else getattr(middleware_config, "enabled", True)
+            )
+            if not bool(enabled):
                 continue
 
-            # Get actual middleware instance
-            middleware = self._middleware_instances.get(
-                str(getattr(middleware_config, "middleware_id", "")),
-            )
+            if isinstance(middleware_config, dict):
+                middleware_id = str(middleware_config.get("middleware_id", ""))
+                middleware_type = str(middleware_config.get("middleware_type", ""))
+                middleware = self._middleware_instances.get(middleware_id)
+            else:
+                middleware = middleware_config
+                middleware_id = str(getattr(middleware_config, "middleware_id", ""))
+                middleware_type = getattr(
+                    middleware_config,
+                    "middleware_type",
+                    middleware.__class__.__name__,
+                )
+
             if middleware is None:
                 # Skip middleware configs without instances
                 continue
 
             self.logger.debug(
                 "Applying middleware",
-                middleware_id=getattr(middleware_config, "middleware_id", ""),
-                middleware_type=getattr(middleware_config, "middleware_type", ""),
-                order=getattr(middleware_config, "order", 0),
+                middleware_id=middleware_id,
+                middleware_type=middleware_type,
+                order=get_order(middleware_config),
             )
 
             process_method = getattr(middleware, "process", None)
-            if callable(process_method):
+            if not callable(process_method):
+                continue
+
+            try:
                 result = process_method(command, handler)
-                if isinstance(result, FlextResult) and result.is_failure:
+            except TypeError:
+                # Backwards compatibility for middlewares that ignore handler arg
+                result = process_method(command)
+
+            if result is None:
+                continue
+
+            if isinstance(result, FlextResult):
+                typed_result = cast("FlextResult[object]", result)
+                if typed_result.is_failure:
+                    error_message = str(
+                        typed_result.error or "Middleware rejected command"
+                    )
                     self.logger.info(
                         "Middleware rejected command",
-                        middleware_type=getattr(
-                            middleware_config,
-                            "middleware_type",
-                            "",
-                        ),
-                        error=result.error or "Unknown error",
+                        middleware_type=middleware_type,
+                        error=error_message,
                     )
-                    return FlextResult[None].fail(
-                        str(result.error or "Middleware rejected command"),
+                    return FlextResult[object].fail(
+                        error_message,
+                        error_code=(
+                            typed_result.error_code
+                            or FlextConstants.Errors.COMMAND_BUS_ERROR
+                        ),
+                        error_data=typed_result.error_data,
                     )
 
-        return FlextResult[None].ok(None)
+                self.logger.debug(
+                    "Middleware returned response",
+                    middleware_type=middleware_type,
+                )
+                return typed_result
+
+            # Non-FlextResult return is treated as a successful short circuit
+            self.logger.debug(
+                "Middleware returned raw response",
+                middleware_type=middleware_type,
+            )
+            return FlextResult[object].ok(result)
+
+        return None
 
     def _execute_handler(
         self,

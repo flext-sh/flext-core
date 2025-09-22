@@ -604,8 +604,10 @@ class TestFlextCqrsComprehensive:
 
         # Middleware rejection
         class RejectingMiddleware:
-            def process(self, _command: object, _handler: object) -> FlextResult[None]:
-                return FlextResult[None].fail("rejected")
+            def process(
+                self, _command: object, _handler: object
+            ) -> FlextResult[object] | None:
+                return FlextResult[object].fail("rejected")
 
         bus.add_middleware(RejectingMiddleware())
         res = bus.execute(EchoCmd(value="m"))
@@ -730,17 +732,21 @@ class TestFlextCqrsComprehensive:
             def __init__(self) -> None:
                 self.executed_commands: FlextTypes.Core.List = []
 
-            def process(self, _command: object, _handler: object) -> FlextResult[None]:
+            def process(
+                self, _command: object, _handler: object
+            ) -> FlextResult[object] | None:
                 self.executed_commands.append(command)
-                return FlextResult[None].ok(None)
+                return None
 
         class ValidationMiddleware:
-            def process(self, _command: object, _handler: object) -> FlextResult[None]:
+            def process(
+                self, _command: object, _handler: object
+            ) -> FlextResult[object] | None:
                 if hasattr(command, "validate_command"):
                     validation = command.validate_command()
                     if validation.is_failure:
-                        return FlextResult[None].fail("Middleware validation failed")
-                return FlextResult[None].ok(None)
+                        return FlextResult[object].fail("Middleware validation failed")
+                return None
 
         audit_middleware = AuditMiddleware()
         validation_middleware = ValidationMiddleware()

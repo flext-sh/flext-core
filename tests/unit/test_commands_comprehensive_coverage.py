@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import (
@@ -691,8 +693,8 @@ class TestFlextCqrsBusMiddleware:
         bus = FlextBus(bus_config=config)
         command = FlextModels.Command(command_id="test", command_type="test-type")
 
-        result = bus._apply_middleware(command)
-        FlextTestsMatchers.assert_result_success(result)
+        result = bus._apply_middleware(command, handler=object())
+        assert result is None
 
     def test_bus_apply_middleware_success(self) -> None:
         """Test Bus _apply_middleware success."""
@@ -702,7 +704,9 @@ class TestFlextCqrsBusMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "test-middleware"
 
-            def process(self, command: object) -> FlextResult[object]:
+            def process(
+                self, command: object, _handler: object | None
+            ) -> FlextResult[object] | None:
                 return FlextResult[object].ok(command)
 
         bus = FlextBus(bus_config=config)
@@ -710,9 +714,12 @@ class TestFlextCqrsBusMiddleware:
         bus._middleware.append(middleware)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
-        result = bus._apply_middleware(command)
+        result = bus._apply_middleware(command, handler=object())
 
-        FlextTestsMatchers.assert_result_success(result)
+        assert result is not None
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", result)
+        )
 
     def test_bus_apply_middleware_rejection(self) -> None:
         """Test Bus _apply_middleware rejection."""
@@ -722,7 +729,9 @@ class TestFlextCqrsBusMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "rejecting-middleware"
 
-            def process(self, _command: object) -> FlextResult[object]:
+            def process(
+                self, _command: object, _handler: object | None
+            ) -> FlextResult[object] | None:
                 return FlextResult[object].fail("Middleware rejected command")
 
         bus = FlextBus(bus_config=config)
@@ -730,9 +739,12 @@ class TestFlextCqrsBusMiddleware:
         bus._middleware.append(middleware)
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
-        result = bus._apply_middleware(command)
+        result = bus._apply_middleware(command, handler=object())
 
-        FlextTestsMatchers.assert_result_failure(result)
+        assert result is not None
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", result)
+        )
 
 
 class TestFlextCqrsBusHandlerMethods:
@@ -1119,17 +1131,21 @@ class TestFlextCqrsIntegration:
                 self.middleware_id = "logging"
                 self.logs: list[str] = []
 
-            def process(self, command: object) -> FlextResult[object]:
+            def process(
+                self, command: object, _handler: object | None
+            ) -> FlextResult[object] | None:
                 self.logs.append(f"Processing command: {command}")
-                return FlextResult[object].ok(command)
+                return None
 
         class ValidationMiddleware:
             def __init__(self) -> None:
                 self.middleware_id = "validation"
 
-            def process(self, command: object) -> FlextResult[object]:
+            def process(
+                self, command: object, _handler: object | None
+            ) -> FlextResult[object] | None:
                 if isinstance(command, FlextModels.Command):
-                    return FlextResult[object].ok(command)
+                    return None
                 return FlextResult[object].fail("Invalid command type")
 
         config: dict[str, object] = {"enable_middleware": True}

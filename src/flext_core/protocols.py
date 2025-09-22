@@ -380,23 +380,26 @@ class FlextProtocols:
         class CommandBus(Protocol):
             """Protocol for command bus routing and execution."""
 
-            def register_handler(self, handler: object) -> None:
+            def register_handler(self, handler: object) -> FlextResult[None]:
                 """Register a command handler.
 
                 Args:
                     handler: The handler to register
 
+                Returns:
+                    A :class:`FlextResult` communicating success or failure.
+
                 """
                 ...
 
-            def execute(self, command: object) -> object:
+            def execute(self, command: object) -> FlextResult[object]:
                 """Execute a command through registered handlers.
 
                 Args:
                     command: The command to execute
 
                 Returns:
-                    The result of command execution
+                    A :class:`FlextResult` wrapping the command outcome.
 
                 """
                 ...
@@ -404,7 +407,9 @@ class FlextProtocols:
         class Middleware(Protocol):
             """Protocol for command bus middleware."""
 
-            def process(self, command: object, handler: object) -> object:
+            def process(
+                self, command: object, handler: object
+            ) -> FlextResult[object] | None:
                 """Process command through middleware.
 
                 Args:
@@ -412,7 +417,8 @@ class FlextProtocols:
                     handler: The handler that will process the command
 
                 Returns:
-                    The result of middleware processing
+                    A :class:`FlextResult` with the middleware result, or ``None``
+                    to delegate execution to the next handler.
 
                 """
                 ...
