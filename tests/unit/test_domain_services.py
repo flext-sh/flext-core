@@ -149,6 +149,29 @@ class ComplexTypeService(FlextDomainService[dict]):
         return FlextResult[dict].ok({"data": self.data, "items": self.items})
 
 
+class ExecuteWithRequestService(FlextDomainService[str]):
+    """Service used to validate execute_with_request behaviour."""
+
+    last_context: dict[str, object] | None = None
+    last_value: int | None = None
+
+    def execute(self) -> FlextResult[str]:
+        """Default execute implementation for the service."""
+        return FlextResult[str].ok("default")
+
+    def custom_operation(self, *, value: int, context: dict[str, object]) -> str:
+        """Custom operation capturing provided parameters."""
+        self.last_value = value
+        self.last_context = context
+        trace_id = context.get("trace_id", "unknown")
+        return f"{value}-{trace_id}"
+
+    def failing_operation(self, *, value: int) -> str:
+        """Operation that raises an exception to test error handling."""
+        msg = f"failure for {value}"
+        raise RuntimeError(msg)
+
+
 class TestDomainServicesFixed:
     """Fixed comprehensive tests for FlextDomainService."""
 
@@ -188,6 +211,56 @@ class TestDomainServicesFixed:
         data = result.unwrap()
         assert data["user_id"] == "default_123"
         assert data["email"] == "test@example.com"
+
+    def test_execute_with_request_calls_named_method(self) -> None:
+        """Execute_with_request should invoke the requested method with parameters."""
+        service = ExecuteWithRequestService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="ExecuteWithRequestService",
+            method_name="custom_operation",
+            parameters={"value": 99},
+            context={"trace_id": "trace-123", "span_id": "span-456"},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_success
+        assert result.value == "99-trace-123"
+        assert service.last_value == 99
+        assert service.last_context == {
+            "trace_id": "trace-123",
+            "span_id": "span-456",
+        }
+
+    def test_execute_with_request_missing_method(self) -> None:
+        """Return failure when requested method does not exist."""
+        service = ExecuteWithRequestService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="ExecuteWithRequestService",
+            method_name="missing_operation",
+            parameters={},
+            context={"trace_id": "trace-abc", "span_id": "span-def"},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_failure
+        assert "missing_operation" in (result.error or "")
+
+    def test_execute_with_request_method_exception(self) -> None:
+        """Return failure when requested method raises an exception."""
+        service = ExecuteWithRequestService()
+        request = FlextModels.DomainServiceExecutionRequest(
+            service_name="ExecuteWithRequestService",
+            method_name="failing_operation",
+            parameters={"value": 7},
+            context={"trace_id": "trace-xyz", "span_id": "span-uvw"},
+        )
+
+        result = service.execute_with_request(request)
+
+        assert result.is_failure
+        assert "failure for 7" in (result.error or "")
 
     def test_is_valid_success(self) -> None:
         """Test is_valid with success."""
