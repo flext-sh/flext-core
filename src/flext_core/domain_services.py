@@ -17,7 +17,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, ValidationError
 
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
@@ -133,6 +133,15 @@ class FlextDomainService[TDomainResult](
         """
         return FlextResult[None].ok(None)
 
+    def validate_permissions(self) -> FlextResult[None]:
+        """Validate permissions for the domain service.
+
+        Returns:
+            FlextResult[None]: Success if permissions are valid, failure with error details
+
+        """
+        return FlextResult[None].ok(None)
+
     def validate_with_request(
         self, request: FlextModels.DomainServiceExecutionRequest
     ) -> FlextResult[None]:
@@ -145,13 +154,79 @@ class FlextDomainService[TDomainResult](
             FlextResult[None]: Success if valid, failure with validation error
 
         """
-        # Validate business rules if requested
-        if getattr(request, "enable_validation", True):
+        parameters = getattr(request, "parameters", {}) or {}
+        context = getattr(request, "context", {}) or {}
+
+        validation_payload: object | None = None
+        for candidate in (parameters, context):
+            if not isinstance(candidate, dict):
+                continue
+            if "validation_request" in candidate:
+                validation_payload = candidate["validation_request"]
+                break
+            if "validation" in candidate:
+                validation_payload = candidate["validation"]
+                break
+
+        try:
+            if isinstance(validation_payload, FlextModels.DomainServiceValidationRequest):
+                validation_request = validation_payload
+            elif isinstance(validation_payload, dict):
+                validation_request = FlextModels.DomainServiceValidationRequest(
+                    **validation_payload
+                )
+            elif validation_payload is None:
+                validation_request = FlextModels.DomainServiceValidationRequest(
+                    entity=parameters or context or {}
+                )
+            else:
+                msg = (
+                    "Validation request must be a DomainServiceValidationRequest or mapping"
+                )
+                return FlextResult[None].fail(msg)
+        except ValidationError as exc:
+            return FlextResult[None].fail(
+                f"Invalid validation request: {exc}",
+                error_data={"validation_errors": exc.errors()},
+            )
+
+        failures: dict[str, str] = {}
+        failure_messages: list[str] = []
+
+        if validation_request.validate_business_rules:
             business_result = self.validate_business_rules()
             if business_result.is_failure:
-                return FlextResult[None].fail(
-                    f"Business validation failed: {business_result.error}"
+                error_message = business_result.error or "Unknown business rule error"
+                failures["business_rules"] = error_message
+                failure_messages.append(
+                    f"Business rules validation failed: {error_message}"
                 )
+
+        if validation_request.validate_integrity:
+            config_result = self.validate_config()
+            if config_result.is_failure:
+                error_message = config_result.error or "Unknown integrity error"
+                failures["integrity"] = error_message
+                failure_messages.append(
+                    f"Integrity validation failed: {error_message}"
+                )
+
+        if validation_request.validate_permissions:
+            permissions_result = self.validate_permissions()
+            if permissions_result.is_failure:
+                error_message = (
+                    permissions_result.error or "Unknown permissions error"
+                )
+                failures["permissions"] = error_message
+                failure_messages.append(
+                    f"Permissions validation failed: {error_message}"
+                )
+
+        if failures:
+            return FlextResult[None].fail(
+                "; ".join(failure_messages),
+                error_data={"validation_failures": failures},
+            )
 
         return FlextResult[None].ok(None)
 
