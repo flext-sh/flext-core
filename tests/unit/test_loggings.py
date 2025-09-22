@@ -26,12 +26,17 @@ from types import TracebackType
 from typing import NoReturn, Self, cast
 
 import pytest
+import structlog
 
 from flext_core import (
+    FlextConfig,
     FlextContext,
+    FlextConfig,
     FlextLogger,
+    FlextModels,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import (
     FlextTestsMatchers,
 )
@@ -112,7 +117,7 @@ class TestFlextLoggerInitialization:
             "test_service",
             _level="DEBUG",
             _service_name="payment-service",
-            service_version="2.1.0",
+            _service_version="2.1.0",
         )
 
         assert logger._name == "test_service"
@@ -150,7 +155,7 @@ class TestFlextLoggerInitialization:
 
         # Test that environment is detected (should be development in testing)
         environment = logger._get_environment()
-        assert environment in {"development", "production", "staging"}, (
+        assert environment in set(FlextConstants.Config.ENVIRONMENTS), (
             f"Unexpected environment: {environment}"
         )
 
@@ -919,6 +924,51 @@ class TestLoggerConfiguration:
         assert context["field1"] == "value1"
         assert context["field2"] == 123
 
+    def test_configure_uses_global_log_verbosity(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ensure global config log_verbosity flows into FlextLogger.configure."""
+
+        config = FlextConfig.get_global_instance()
+        original_verbosity = config.log_verbosity
+        config.log_verbosity = "full"
+
+        FlextLogger._configured = False
+        structlog.reset_defaults()
+
+        captured_kwargs: dict[str, object] = {}
+        original_model = FlextModels.LoggerConfigurationModel
+
+        def capture_logger_configuration_model(
+            *args: object, **kwargs: object
+        ) -> FlextModels.LoggerConfigurationModel:
+            captured_kwargs.clear()
+            captured_kwargs.update(kwargs)
+            return original_model(*args, **kwargs)
+
+        monkeypatch.setattr(
+            FlextModels, "LoggerConfigurationModel", capture_logger_configuration_model
+        )
+
+        try:
+            result = FlextLogger.configure(
+                log_level="INFO",
+                json_output=False,
+                include_source=True,
+                structured_output=True,
+            )
+
+            assert result.is_success
+            assert FlextLogger._configured is True
+            assert captured_kwargs.get("log_verbosity") == "full"
+
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_verbosity"] == "full"
+        finally:
+            config.log_verbosity = original_verbosity
+            structlog.reset_defaults()
+            FlextLogger._configured = False
+
     def test_development_console_output(self) -> None:
         """Test development console output configuration."""
         # Reset configuration
@@ -962,6 +1012,23 @@ class TestLoggerConfiguration:
         log_entry = logger._build_log_entry("INFO", "Processor test")
         assert log_entry.get("correlation_id") == test_correlation
 
+    def test_global_log_verbosity_propagates_to_configuration(self) -> None:
+        """Ensure global log verbosity updates are honored by configure."""
+
+        config = FlextConfig.get_global_instance()
+        original_verbosity = config.log_verbosity
+        config.log_verbosity = "compact"
+
+        try:
+            FlextLogger._configured = False
+            result = FlextLogger.configure()
+            assert result.is_success
+
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_verbosity"] == "compact"
+        finally:
+            config.log_verbosity = original_verbosity
+
 
 class TestConvenienceFunctions:
     """Test convenience functions and factory methods."""
@@ -979,7 +1046,7 @@ class TestConvenienceFunctions:
         logger = FlextLogger(
             "versioned_test",
             _service_name="test-service",
-            service_version="1.2.3",
+            _service_version="1.2.3",
         )
 
         assert logger._service_version == "1.2.3"

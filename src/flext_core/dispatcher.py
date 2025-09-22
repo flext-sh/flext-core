@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from contextvars import Token
 from typing import Literal, cast
@@ -53,6 +53,7 @@ class FlextDispatcher:
         # Use provided config or create from global configuration
         if config is None:
             global_config = FlextConfig.get_global_instance()
+            bus_config = dict(global_config.get_cqrs_bus_config())
             config = {
                 "auto_context": getattr(global_config, "dispatcher_auto_context", True),
                 "timeout_seconds": getattr(
@@ -66,16 +67,43 @@ class FlextDispatcher:
                 "enable_logging": getattr(
                     global_config, "dispatcher_enable_logging", True
                 ),
-                "bus_config": None,
+                "bus_config": bus_config,
+                "execution_timeout": bus_config.get("execution_timeout"),
             }
+        else:
+            config = dict(config)
+            bus_config = config.get("bus_config")
+
+            if bus_config is None:
+                global_config = FlextConfig.get_global_instance()
+                default_bus_config = dict(global_config.get_cqrs_bus_config())
+
+                if "execution_timeout" in config:
+                    default_bus_config["execution_timeout"] = cast(
+                        "object", config["execution_timeout"]
+                    )
+                elif "timeout_seconds" in config:
+                    default_bus_config["execution_timeout"] = cast(
+                        "object", config["timeout_seconds"]
+                    )
+
+                bus_config = default_bus_config
+                config["bus_config"] = bus_config
+
+            if isinstance(bus_config, dict):
+                config.setdefault("execution_timeout", bus_config.get("execution_timeout"))
+            elif hasattr(bus_config, "execution_timeout"):
+                config.setdefault(
+                    "execution_timeout",
+                    cast("object", getattr(bus_config, "execution_timeout")),
+                )
 
         self._config = config
-        bus_config = config.get("bus_config")
-        self._bus = bus or FlextBus.create_command_bus(
-            bus_config=cast("dict[str, object] | None", bus_config)
-            if isinstance(bus_config, (dict, type(None)))
-            else None
-        )
+        resolved_bus_config = config.get("bus_config")
+        if resolved_bus_config is None:
+            resolved_bus_config = dict(FlextConfig.get_global_instance().get_cqrs_bus_config())
+
+        self._bus = bus or FlextBus.create_command_bus(bus_config=resolved_bus_config)
         self._logger = FlextLogger(self.__class__.__name__)
 
     @property
@@ -242,7 +270,10 @@ class FlextDispatcher:
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
         handler_config: dict[str, object] | None = None,
-        mode: Literal["command", "query"] = "command",
+        mode: Literal[
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+        ] = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
     ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
 
@@ -286,7 +317,10 @@ class FlextDispatcher:
         self,
         handler_func: Callable[[object], object | FlextResult[object]],
         handler_config: dict[str, object] | None,
-        mode: Literal["command", "query"],
+        mode: Literal[
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+        ],
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
@@ -362,13 +396,8 @@ class FlextDispatcher:
             )
 
         # Execute dispatch with context management
-        metadata_dict: dict[str, object] | None = None
         context_metadata = request.get("context_metadata")
-        if context_metadata and hasattr(context_metadata, "value"):
-            # Convert dict[str, str] to dict[str, object] for context scope
-            metadata_dict = dict(
-                cast("dict[str, object]", context_metadata.value).items()
-            )
+        metadata_dict = self._normalize_context_metadata(context_metadata)
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None
         with self._context_scope(metadata_dict, correlation_id_str):
@@ -469,6 +498,56 @@ class FlextDispatcher:
     # ------------------------------------------------------------------
     # Context management
     # ------------------------------------------------------------------
+    def _normalize_context_metadata(
+        self, metadata: object | None
+    ) -> FlextTypes.Core.Dict | None:
+        """Normalize metadata payloads to plain dictionaries."""
+
+        if metadata is None:
+            return None
+
+        raw_metadata: Mapping[object, object] | None = None
+
+        if isinstance(metadata, FlextModels.Metadata):
+            attributes = metadata.attributes
+            if isinstance(attributes, Mapping) and attributes:
+                raw_metadata = attributes
+            else:
+                try:
+                    dumped = metadata.model_dump()
+                except Exception:
+                    dumped = None
+                if isinstance(dumped, Mapping):
+                    attributes_section = dumped.get("attributes")
+                    if isinstance(attributes_section, Mapping) and attributes_section:
+                        raw_metadata = attributes_section
+                    else:
+                        raw_metadata = dumped
+        elif isinstance(metadata, Mapping):
+            raw_metadata = metadata
+        else:
+            attributes_value = getattr(metadata, "attributes", None)
+            if isinstance(attributes_value, Mapping) and attributes_value:
+                raw_metadata = attributes_value
+            else:
+                model_dump = getattr(metadata, "model_dump", None)
+                if callable(model_dump):
+                    try:
+                        dumped = model_dump()
+                    except Exception:
+                        dumped = None
+                    if isinstance(dumped, Mapping):
+                        raw_metadata = dumped
+
+        if raw_metadata is None:
+            return None
+
+        normalized: FlextTypes.Core.Dict = {
+            str(key): value for key, value in raw_metadata.items()
+        }
+
+        return dict(normalized)
+
     @contextmanager
     def _context_scope(
         self,
