@@ -141,12 +141,21 @@ class TestFlextUtilitiesTextProcessor:
 
     def test_clean_text_basic(self) -> None:
         """Test TextProcessor.clean_text basic functionality."""
-        assert FlextUtilities.TextProcessor.clean_text("  hello  ") == "hello"
-        assert FlextUtilities.TextProcessor.clean_text("test\nstring") == "test string"
-        assert FlextUtilities.TextProcessor.clean_text("test\tstring") == "test string"
-        assert (
-            FlextUtilities.TextProcessor.clean_text("test\r\nstring") == "test string"
-        )
+        result1 = FlextUtilities.TextProcessor.clean_text("  hello  ")
+        assert result1.is_success
+        assert result1.unwrap() == "hello"
+
+        result2 = FlextUtilities.TextProcessor.clean_text("test\nstring")
+        assert result2.is_success
+        assert result2.unwrap() == "test string"
+
+        result3 = FlextUtilities.TextProcessor.clean_text("test\tstring")
+        assert result3.is_success
+        assert result3.unwrap() == "test string"
+
+        result4 = FlextUtilities.TextProcessor.clean_text("test\r\nstring")
+        assert result4.is_success
+        assert result4.unwrap() == "test string"
 
     def test_clean_text_none_input(self) -> None:
         """Test TextProcessor.clean_text with None input."""

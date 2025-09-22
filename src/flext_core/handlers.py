@@ -10,9 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import time
 from abc import abstractmethod
 from typing import Callable, Literal, cast, get_origin
+from collections.abc import Callable
+from typing import Literal, cast, get_origin
 
 from pydantic import BaseModel
 
@@ -23,6 +26,15 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+HandlerModeLiteral = Literal[
+    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+    FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+]
+HandlerTypeLiteral = Literal[
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+]
 
 
 class FlextHandlers[MessageT, ResultT](FlextMixins):
@@ -43,12 +55,13 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         *,
         config: FlextModels.CqrsConfig.Handler | None = None,
         # Legacy parameter support for backward compatibility (will be deprecated)
-        handler_mode: Literal["command", "query"] | None = None,
+        handler_mode: HandlerModeLiteral | None = None,
         handler_name: str | None = None,
         handler_id: str | None = None,
         handler_config: FlextModels.CqrsConfig.Handler
         | dict[str, object]
         | None = None,
+        revalidate_pydantic_messages: bool | None = None,
         command_timeout: int = 0,
         max_command_retries: int = 0,
     ) -> None:
@@ -60,6 +73,8 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             handler_name: DEPRECATED - Handler name
             handler_id: DEPRECATED - Handler ID
             handler_config: DEPRECATED - Handler configuration
+            revalidate_pydantic_messages: Optional flag to force Pydantic
+                revalidation even when a model instance is provided
             command_timeout: DEPRECATED - Command timeout
             max_command_retries: DEPRECATED - Max retries
 
@@ -103,12 +118,102 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self.handler_id = self._config_model.handler_id
         self._start_time: float | None = None
         self._metrics_state: FlextTypes.Core.Dict | None = None
+        self._accepted_message_types: tuple[object, ...] = (
+            self._compute_accepted_message_types()
+        )
+        self._handler_type_warning_logged = False
+
+        metadata = getattr(self._config_model, "metadata", None)
+        metadata_flag: bool | None = None
+        if isinstance(metadata, dict):
+            raw_flag = metadata.get("revalidate_pydantic_messages")
+            if isinstance(raw_flag, bool):
+                metadata_flag = raw_flag
+            elif isinstance(raw_flag, str):
+                normalized = raw_flag.strip().lower()
+                if normalized in {"1", "true", "yes"}:
+                    metadata_flag = True
+                elif normalized in {"0", "false", "no"}:
+                    metadata_flag = False
+
+        if revalidate_pydantic_messages is not None:
+            self._revalidate_pydantic_messages = revalidate_pydantic_messages
+        elif metadata_flag is not None:
+            self._revalidate_pydantic_messages = metadata_flag
+        else:
+            self._revalidate_pydantic_messages = False
+    
+    def from_callable(
+        cls,
+        handler_func: Callable[[object], object | FlextResult[object]],
+        *,
+        mode: Literal["command", "query"],
+        handler_config: FlextModels.CqrsConfig.Handler
+        | dict[str, object]
+        | None = None,
+        handler_name: str | None = None,
+    ) -> FlextHandlers[object, object]:
+        """Create a ``FlextHandlers`` wrapper around a bare callable."""
+
+        if mode not in (
+            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+        ):
+            msg = (
+                f"Invalid mode '{mode}'. Expected "
+                f"'{FlextConstants.Cqrs.COMMAND_HANDLER_TYPE}' or "
+                f"'{FlextConstants.Cqrs.QUERY_HANDLER_TYPE}'."
+            )
+            raise ValueError(msg)
+
+        resolved_name = handler_name or getattr(
+            handler_func, "__name__", cls.__name__
+        )
+        resolved_mode: Literal["command", "query"] = (
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+            if mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+            else FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+        )
+
+        class CallableHandler(cls[object, object]):
+            def __init__(self) -> None:
+                super().__init__(
+                    handler_mode=resolved_mode,
+                    handler_name=resolved_name,
+                    handler_config=handler_config,
+                )
+                self._handler_func = handler_func
+
+            def handle(self, message: object) -> FlextResult[object]:
+                try:
+                    result = self._handler_func(message)
+                except Exception as exc:  # pragma: no cover - logging path
+                    self.logger.exception(
+                        "callable_handler_exception",
+                        handler_mode=self.mode,
+                        handler_name=self.handler_name,
+                    )
+                    return FlextResult[object].fail(
+                        (
+                            f"Handler callable '{resolved_name}' raised "
+                            f"{type(exc).__name__}: {exc}"
+                        )
+                    )
+
+                if isinstance(result, FlextResult):
+                    return cast("FlextResult[object]", result)
+                return FlextResult[object].ok(result)
+
+            def __call__(self, message: object) -> FlextResult[object]:
+                return self.handle(message)
+
+        return CallableHandler()
 
     def _resolve_mode(
         self,
-        handler_mode: Literal["command", "query"] | None,
+        handler_mode: HandlerModeLiteral | None,
         handler_config: FlextModels.CqrsConfig.Handler | dict[str, object] | None,
-    ) -> Literal["command", "query"]:
+    ) -> HandlerTypeLiteral:
         """Resolve handler mode using FlextConstants defaults.
 
         Returns:
@@ -131,7 +236,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
 
     @property
-    def mode(self) -> Literal["command", "query"]:
+    def mode(self) -> HandlerTypeLiteral:
         """Return configured handler mode from the config model."""
         return self._config_model.handler_type
 
@@ -166,14 +271,87 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             message_type_name=getattr(message_type, "__name__", str(message_type)),
         )
 
-        orig_bases = getattr(self, "__orig_bases__", None)
-        if orig_bases is not None:
-            for base in orig_bases:
-                if self._check_base_compatibility(base, message_type):
-                    return True
+        for expected_type in self._accepted_message_types:
+            can_handle_result = self._evaluate_type_compatibility(
+                expected_type, message_type
+            )
+            self.logger.debug(
+                "handler_type_check",
+                can_handle=can_handle_result,
+                expected_type=getattr(
+                    expected_type, "__name__", str(expected_type)
+                ),
+            )
+            if can_handle_result:
+                return True
 
-        self.logger.info("handler_type_constraints_unknown")
-        return True
+        if not self._accepted_message_types and not self._handler_type_warning_logged:
+            self.logger.warning("handler_type_constraints_unknown")
+            self._handler_type_warning_logged = True
+
+        return False
+
+    def _compute_accepted_message_types(self) -> tuple[object, ...]:
+        """Compute message types accepted by this handler using cached introspection."""
+
+        message_types: list[object] = []
+
+        message_types.extend(self._extract_generic_message_types())
+
+        if not message_types:
+            explicit_type = self._extract_message_type_from_handle()
+            if explicit_type is not None:
+                message_types.append(explicit_type)
+
+        return tuple(message_types)
+
+    def _extract_generic_message_types(self) -> list[object]:
+        """Extract message types from generic base annotations."""
+
+        message_types: list[object] = []
+        for base in getattr(self.__class__, "__orig_bases__", ()) or ():
+            origin = get_origin(base)
+            if origin is FlextHandlers:
+                args = getattr(base, "__args__", ())
+                if args:
+                    message_types.append(args[0])
+        return message_types
+
+    def _extract_message_type_from_handle(self) -> object | None:
+        """Extract message type from handle method annotations when generics are absent."""
+
+        handle_method = getattr(self.__class__, "handle", None)
+        if handle_method is None:
+            return None
+
+        try:
+            signature = inspect.signature(handle_method)
+        except (TypeError, ValueError):
+            return None
+
+        try:
+            type_hints = get_type_hints(
+                handle_method,
+                globalns=getattr(handle_method, "__globals__", {}),
+                localns=dict(vars(self.__class__)),
+            )
+        except (NameError, AttributeError, TypeError):
+            type_hints = {}
+
+        for name, parameter in signature.parameters.items():
+            if name == "self":
+                continue
+
+            if name in type_hints:
+                return type_hints[name]
+
+            annotation = parameter.annotation
+            if annotation is not inspect.Signature.empty:
+                return annotation
+
+            break
+
+        return None
 
     def _check_base_compatibility(self, base: object, message_type: object) -> bool:
         """Check if a base type is compatible with the message type.
@@ -280,7 +458,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self,
         message: object,
         *,
-        operation: Literal["command", "query"],
+        operation: HandlerTypeLiteral,
     ) -> FlextResult[None]:
         """Validate message using Pydantic model validation, FlextUtilities, and FlextExceptions.
 
@@ -348,18 +526,19 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     error_data={"exception_context": validation_error.context},
                 )
 
-        # If message is a Pydantic model, it's already validated
+        # If message is a Pydantic model, assume it is already validated unless
+        # the explicit revalidation flag requests an additional check
         if isinstance(message, BaseModel):
+            if not self._revalidate_pydantic_messages:
+                return FlextResult[None].ok(None)
+
             try:
-                # Re-validate to ensure consistency
-                message_data = message.model_dump()
-                # Use the class's model_validate method
-                message.__class__.model_validate(message_data)
+                message.__class__.model_validate(message.model_dump(mode="python"))
                 return FlextResult[None].ok(None)
             except Exception as e:
                 # Use FlextExceptions.ValidationError for Pydantic validation failures
                 pydantic_error = FlextExceptions.ValidationError(
-                    f"Pydantic validation failed: {e}",
+                    f"Pydantic revalidation failed: {e}",
                     field="pydantic_model",
                     value=str(message)[:100]
                     if hasattr(message, "__str__")
@@ -367,11 +546,13 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     validation_details={
                         "pydantic_exception": str(e),
                         "model_class": message.__class__.__name__,
+                        "revalidated": True,
                     },
                     context={
                         "operation": operation,
                         "message_type": type(message).__name__,
-                        "validation_type": "pydantic",
+                        "validation_type": "pydantic_revalidation",
+                        "revalidate_pydantic_messages": self._revalidate_pydantic_messages,
                     },
                     correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
                 )
@@ -464,7 +645,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         self,
         message: MessageT,
         *,
-        operation: Literal["command", "query"],
+        operation: HandlerTypeLiteral,
     ) -> FlextResult[ResultT]:
         """Execute handler pipeline using railway-oriented programming.
 
@@ -500,7 +681,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             lambda _: self._execute_with_timing(message, message_type, identifier)
         )
     def _validate_mode(
-        self, operation: Literal["command", "query"]
+        self, operation: HandlerTypeLiteral
     ) -> FlextResult[None]:
         """Validate handler mode matches operation type using FlextConstants.
 
