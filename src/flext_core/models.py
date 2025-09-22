@@ -1487,12 +1487,11 @@ class FlextModels:
         @model_validator(mode="after")
         def validate_permanent_context(self) -> Self:
             """Validate permanent context."""
-            config_envs = {env.lower() for env in FlextConstants.Config.ENVIRONMENTS}
-            enum_envs = {
+            # Use only the enum values as the single source of truth for valid environments.
+            valid_envs = {
                 env.value.lower()
                 for env in FlextConstants.Environment.ConfigEnvironment
             }
-            valid_envs = config_envs | enum_envs
             if self.environment.lower() not in valid_envs:
                 sorted_envs = sorted(valid_envs)
                 msg = (
