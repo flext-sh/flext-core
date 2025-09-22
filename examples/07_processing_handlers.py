@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import time
 import warnings
+from typing import cast
 
 from flext_core import (
     FlextContainer,
@@ -72,7 +73,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = request
+                request_dict: dict[str, object] = cast("dict[str, object]", request)
 
                 email_value: object | None = request_dict.get("email")
                 if not email_value:
@@ -129,7 +130,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = request
+                request_dict: dict[str, object] = cast("dict[str, object]", request)
 
                 token_value: object | None = request_dict.get("token")
                 if not token_value:
@@ -162,7 +163,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = request
+                request_dict: dict[str, object] = cast("dict[str, object]", request)
 
                 authenticated_value: object | None = request_dict.get("authenticated")
                 if not authenticated_value:
@@ -192,7 +193,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = request
+                request_dict: dict[str, object] = cast("dict[str, object]", request)
 
                 authorized_value: object | None = request_dict.get("authorized")
                 if not authorized_value:
@@ -569,7 +570,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = request
+                request_dict: dict[str, object] = cast("dict[str, object]", request)
 
                 # Simulate processing
                 force_fail_value: object = request_dict.get("force_fail", False)
