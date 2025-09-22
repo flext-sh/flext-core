@@ -9,7 +9,6 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import UTC, datetime
-from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
