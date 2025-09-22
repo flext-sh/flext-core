@@ -247,7 +247,7 @@ def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
     handler = CachedQueryHandler()
     registration_result = dispatcher.register_command(
         CachedQuery,
-        cast("FlextHandlers[object, object]", handler),
+        cast(FlextHandlers[object, object], handler),
     )
     assert registration_result.is_success
 
