@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from typing import Protocol, cast
 
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import (
     FlextBus,
@@ -21,6 +21,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 
@@ -806,6 +807,82 @@ class TestFlextCqrsComprehensive:
         event = result.value
         assert event.username == "async_user"
         assert "async_user_async_user" in event.user_id
+
+    # =========================================================================
+    # VALIDATION PIPELINE CUSTOMIZATION
+    # =========================================================================
+
+    def test_pydantic_validation_skips_revalidation_by_default(self) -> None:
+        """Ensure handlers trust Pydantic models without extra validation."""
+
+        class MutableCommand(BaseModel):
+            model_config = ConfigDict(validate_assignment=False)
+            value: int
+
+        class MutableHandler(FlextHandlers[MutableCommand, str]):
+            def handle(self, message: MutableCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(str(message.value))
+
+        handler = MutableHandler()
+        command = MutableCommand(value=1)
+        command.value = "not-an-int"  # type: ignore[assignment]
+
+        validation = handler.validate_command(command)
+        assert validation.is_success
+
+        result = handler.execute(command)
+        assert result.success
+        assert result.value == "not-an-int"
+
+    def test_pydantic_revalidation_flag_enforces_constraints(self) -> None:
+        """Enabling the revalidation flag should surface invalid mutations."""
+
+        class MutableCommand(BaseModel):
+            model_config = ConfigDict(validate_assignment=False)
+            value: int
+
+        class StrictHandler(FlextHandlers[MutableCommand, str]):
+            def __init__(self) -> None:
+                super().__init__(revalidate_pydantic_messages=True)
+
+            def handle(self, message: MutableCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(str(message.value))
+
+        handler = StrictHandler()
+        command = MutableCommand(value=1)
+        command.value = "invalid"  # type: ignore[assignment]
+
+        validation = handler.validate_command(command)
+        assert validation.is_failure
+        assert validation.error_code == FlextConstants.Errors.VALIDATION_ERROR
+        assert validation.error is not None
+        assert "Pydantic revalidation failed" in validation.error
+
+    def test_handler_with_recursive_payload_does_not_break_pipeline(self) -> None:
+        """Handlers must process recursive or non-serializable payloads safely."""
+
+        class RecursiveCommand(BaseModel):
+            model_config = ConfigDict(
+                arbitrary_types_allowed=True,
+                extra="allow",
+                validate_assignment=False,
+            )
+            payload: object | None = None
+
+        class RecursiveHandler(FlextHandlers[RecursiveCommand, object]):
+            def handle(self, message: RecursiveCommand) -> FlextResult[object]:
+                return FlextResult[object].ok(message.payload)
+
+        handler = RecursiveHandler()
+        command = RecursiveCommand(payload="seed")
+        command.payload = command  # Create recursive reference that defies serialization
+
+        validation = handler.validate_command(command)
+        assert validation.is_success
+
+        result = handler.execute(command)
+        assert result.success
+        assert result.value is command
 
     # =========================================================================
     # ERROR SCENARIOS AND EDGE CASES
