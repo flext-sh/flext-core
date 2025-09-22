@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Never
 
-from flext_core import FlextContainer
+from flext_core import FlextConfig, FlextContainer
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsDomains,
@@ -233,6 +233,29 @@ class TestFlextContainer100Percent:
             config = container.get_config()
             # Should return valid configuration or handle errors
             assert isinstance(config, dict)
+
+    def test_get_config_uses_global_flext_config_defaults(self) -> None:
+        """Container get_config should reflect global FlextConfig overrides."""
+
+        original_config = FlextConfig.get_global_instance()
+        custom_config = FlextConfig.create(
+            max_workers=12,
+            timeout_seconds=45,
+            environment="staging",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            container = FlextContainer()
+            config = container.get_config()
+
+            assert config["max_workers"] == custom_config.max_workers
+            assert config["timeout_seconds"] == float(
+                custom_config.timeout_seconds
+            )
+            assert config["environment"] == custom_config.environment
+        finally:
+            FlextConfig.set_global_instance(original_config)
 
     def test_auto_wire_missing_dependencies(self) -> None:
         """Test auto-wire with missing dependencies."""
