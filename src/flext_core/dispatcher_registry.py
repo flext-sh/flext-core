@@ -15,10 +15,24 @@ from dataclasses import dataclass, field
 from typing import Literal, cast
 
 # No cast needed - using proper type checking
+from flext_core.constants import FlextConstants
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+
+HandlerModeLiteral = Literal[
+    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+    FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+]
+HandlerTypeLiteral = Literal[
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+]
+RegistrationStatusLiteral = Literal[
+    FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+    FlextConstants.Dispatcher.REGISTRATION_STATUS_INACTIVE,
+]
 
 
 class FlextDispatcherRegistry:
@@ -49,19 +63,19 @@ class FlextDispatcherRegistry:
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
-    def _safe_get_handler_mode(self, value: object) -> Literal["command", "query"]:
+    def _safe_get_handler_mode(self, value: object) -> HandlerModeLiteral:
         """Safely extract and validate handler mode from dict value."""
-        if value == "query":
-            return "query"
-        # Default to "command" for all other cases
-        return "command"
+        if value == FlextConstants.Dispatcher.HANDLER_MODE_QUERY:
+            return FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+        # Default to command mode for all other cases
+        return FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
 
-    def _safe_get_status(self, value: object) -> Literal["active", "inactive"]:
+    def _safe_get_status(self, value: object) -> RegistrationStatusLiteral:
         """Safely extract and validate status from dict value."""
-        if value == "inactive":
-            return "inactive"
-        # Default to "active" for all other cases
-        return "active"
+        if value == FlextConstants.Dispatcher.REGISTRATION_STATUS_INACTIVE:
+            return FlextConstants.Dispatcher.REGISTRATION_STATUS_INACTIVE
+        # Default to active status for all other cases
+        return FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE
 
     # ------------------------------------------------------------------
     # Public API
@@ -86,9 +100,9 @@ class FlextDispatcherRegistry:
             return FlextResult[FlextModels.RegistrationDetails].ok(
                 FlextModels.RegistrationDetails(
                     registration_id=key,
-                    handler_mode="command",
+                    handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     timestamp="",  # Will be set by model if needed
-                    status="active",
+                    status=FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
                 )
             )
 
@@ -101,10 +115,18 @@ class FlextDispatcherRegistry:
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
                 handler_mode=self._safe_get_handler_mode(
-                    reg_data.get("handler_mode", "command")
+                    reg_data.get(
+                        "handler_mode",
+                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                    )
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
-                status=self._safe_get_status(reg_data.get("status", "active")),
+                status=self._safe_get_status(
+                    reg_data.get(
+                        "status",
+                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+                    )
+                ),
             )
             return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
         return FlextResult[FlextModels.RegistrationDetails].fail(
@@ -154,10 +176,18 @@ class FlextDispatcherRegistry:
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
                 handler_mode=self._safe_get_handler_mode(
-                    reg_data.get("handler_mode", "command")
+                    reg_data.get(
+                        "handler_mode",
+                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                    )
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
-                status=self._safe_get_status(reg_data.get("status", "active")),
+                status=self._safe_get_status(
+                    reg_data.get(
+                        "status",
+                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+                    )
+                ),
             )
             self._add_successful_registration(key, reg_details, summary)
             return FlextResult[None].ok(None)
@@ -241,10 +271,18 @@ class FlextDispatcherRegistry:
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
                 handler_mode=self._safe_get_handler_mode(
-                    reg_data.get("handler_mode", "command")
+                    reg_data.get(
+                        "handler_mode",
+                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                    )
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
-                status=self._safe_get_status(reg_data.get("status", "active")),
+                status=self._safe_get_status(
+                    reg_data.get(
+                        "status",
+                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+                    )
+                ),
             )
             summary.registered.append(reg_details)
 
@@ -284,27 +322,35 @@ class FlextDispatcherRegistry:
 
                 # Convert dict config to proper Handler config or use None
                 config_obj = None
-                handler_mode: Literal["command", "query"] = "command"
+                handler_mode: HandlerModeLiteral = (
+                    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                )
 
                 if handler_config:
                     try:
                         # Ensure proper types for literal fields
-                        handler_type_val: Literal["command", "query"] = "command"
-                        handler_mode_val: Literal["command", "query"] = "command"
+                        handler_type_val: HandlerTypeLiteral = (
+                            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                        )
+                        handler_mode_val: HandlerModeLiteral = (
+                            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                        )
 
                         if isinstance(handler_config.get("handler_type"), str):
                             raw_type = handler_config.get("handler_type")
-                            if raw_type in {"command", "query"}:
-                                handler_type_val = cast(
-                                    "Literal['command', 'query']", raw_type
-                                )
+                            if raw_type in {
+                                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+                            }:
+                                handler_type_val = cast("HandlerTypeLiteral", raw_type)
 
                         if isinstance(handler_config.get("handler_mode"), str):
                             raw_mode = handler_config.get("handler_mode")
-                            if raw_mode in {"command", "query"}:
-                                handler_mode_val = cast(
-                                    "Literal['command', 'query']", raw_mode
-                                )
+                            if raw_mode in {
+                                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                                FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+                            }:
+                                handler_mode_val = cast("HandlerModeLiteral", raw_mode)
 
                         metadata_raw = handler_config.get("metadata", {})
                         if not isinstance(metadata_raw, dict):
@@ -321,7 +367,27 @@ class FlextDispatcherRegistry:
                             handler_mode=handler_mode_val,
                             metadata=metadata_val,
                         )
-                        handler_mode = handler_type_val
+                        # Derive handler_mode from handler_type if not explicitly set
+                        if (
+                            "handler_mode" in handler_config
+                            and isinstance(handler_config.get("handler_mode"), str)
+                            and handler_config.get("handler_mode")
+                            in {
+                                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                                FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+                            }
+                        ):
+                            handler_mode = handler_mode_val
+                        elif (
+                            handler_type_val == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                        ):
+                            handler_mode = (
+                                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                            )
+                        elif handler_type_val == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
+                            handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                        else:
+                            handler_mode = handler_mode_val  # fallback
                     except Exception:
                         config_obj = None
 
@@ -359,10 +425,18 @@ class FlextDispatcherRegistry:
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
                 handler_mode=self._safe_get_handler_mode(
-                    reg_data.get("handler_mode", "command")
+                    reg_data.get(
+                        "handler_mode",
+                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                    )
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
-                status=self._safe_get_status(reg_data.get("status", "active")),
+                status=self._safe_get_status(
+                    reg_data.get(
+                        "status",
+                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+                    )
+                ),
             )
             summary.registered.append(reg_details)
 

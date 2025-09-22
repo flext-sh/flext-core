@@ -21,6 +21,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
@@ -94,6 +95,11 @@ class FlextConfig(BaseSettings):
         validate_default=True,
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console logging verbosity (compact, detailed, full)",
+    )
+
     # Additional logging configuration fields using FlextConstants.Logging.
     log_format: str = Field(
         default=FlextConstants.Logging.DEFAULT_FORMAT,
@@ -148,6 +154,11 @@ class FlextConfig(BaseSettings):
     mask_sensitive_data: bool = Field(
         default=FlextConstants.Logging.MASK_SENSITIVE_DATA,
         description="Mask sensitive data in log messages",
+    )
+
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console log verbosity level (compact, detailed, full)",
     )
 
     # Database configuration
@@ -308,7 +319,22 @@ class FlextConfig(BaseSettings):
 
     timestamp_auto_update: bool = Field(
         default=FlextConstants.Mixins.DEFAULT_AUTO_UPDATE,
-        description="Automatically update timestamps on model changes",
+        description="Automatically update timestamps on changes",
+    )
+
+    # Validation configuration - using FlextConstants for defaults
+    max_name_length: int = Field(
+        default=100,
+        ge=1,
+        le=500,
+        description="Maximum allowed name length for validation",
+    )
+
+    min_phone_digits: int = Field(
+        default=10,
+        ge=7,
+        le=15,
+        description="Minimum phone number digit count for validation",
     )
 
     @field_validator("log_level")
@@ -329,6 +355,18 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return v.upper()
 
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity is supported."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        v_lower = v.lower()
+        if v_lower not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return v_lower
+
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v: str) -> str:
@@ -346,6 +384,17 @@ class FlextConfig(BaseSettings):
             msg = f"Environment must be one of {valid_environments}"
             raise ValueError(msg)
         return v.lower()
+
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity against supported options."""
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        normalized = v.lower()
+        if normalized not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return normalized
 
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
@@ -396,11 +445,11 @@ class FlextConfig(BaseSettings):
             self.environment == FlextConstants.Environment.ConfigEnvironment.PRODUCTION
         )
 
-    def get_logging_config(self) -> dict[str, object]:
+    def get_logging_config(self) -> FlextTypes.Core.Dict:
         """Get logging configuration dictionary using FlextConstants.Logging defaults.
 
         Returns:
-            dict[str, object]: Logging configuration dictionary.
+            FlextTypes.Core.Dict: Logging configuration dictionary.
 
         """
         return {
@@ -408,6 +457,7 @@ class FlextConfig(BaseSettings):
             "json_output": self.json_output,
             "include_source": self.include_source,
             "structured_output": self.structured_output,
+            "log_verbosity": self.log_verbosity,
             "format": self.log_format,
             "log_file": self.log_file,
             "log_file_max_size": self.log_file_max_size,
@@ -419,13 +469,14 @@ class FlextConfig(BaseSettings):
             "include_context": self.include_context,
             "include_correlation_id": self.include_correlation_id,
             "mask_sensitive_data": self.mask_sensitive_data,
+            "log_verbosity": self.log_verbosity,
         }
 
-    def get_database_config(self) -> dict[str, object]:
+    def get_database_config(self) -> FlextTypes.Core.Dict:
         """Get database configuration dictionary.
 
         Returns:
-            dict[str, object]: Database configuration dictionary.
+            FlextTypes.Core.Dict: Database configuration dictionary.
 
         """
         return {
@@ -433,11 +484,11 @@ class FlextConfig(BaseSettings):
             "pool_size": self.database_pool_size,
         }
 
-    def get_cache_config(self) -> dict[str, object]:
+    def get_cache_config(self) -> FlextTypes.Core.Dict:
         """Get cache configuration dictionary.
 
         Returns:
-            dict[str, object]: Cache configuration dictionary.
+            FlextTypes.Core.Dict: Cache configuration dictionary.
 
         """
         return {
@@ -501,37 +552,21 @@ class FlextConfig(BaseSettings):
 
         return cls.model_validate(config_data)
 
-    def to_dict(self) -> dict[str, object]:
-        """Convert configuration to dictionary.
-
-        Returns:
-            dict[str, object]: Configuration as dictionary.
-
-        """
-        return self.model_dump()
-
-    def to_json(self) -> str:
-        """Convert configuration to JSON string.
-
-        Returns:
-            str: Configuration as formatted JSON string.
-
-        """
-        return self.model_dump_json(indent=2)
-
-    def merge(self, other: FlextConfig | dict[str, object]) -> FlextConfig:
+    def merge(self, other: FlextConfig | FlextTypes.Core.Dict) -> FlextConfig:
         """Merge with another configuration, returning new instance.
 
         Args:
-            other: Another FlextConfig instance or dictionary to merge with.
+            other: Another FlextConfig instance or FlextTypes.Core.Dict to merge with.
 
         Returns:
             FlextConfig: New configuration instance with merged values.
 
         """
-        other_data = other.to_dict() if isinstance(other, FlextConfig) else other
+        other_data = (
+            other.model_dump() if isinstance(other, FlextConfig) else other
+        )
 
-        current_data = self.to_dict()
+        current_data = self.model_dump()
         merged_data = {**current_data, **other_data}
         return self.__class__.model_validate(merged_data)
 
@@ -540,8 +575,123 @@ class FlextConfig(BaseSettings):
     _global_lock: ClassVar[threading.Lock] = threading.Lock()
 
     @classmethod
+    def _auto_load_config_files(cls) -> dict[str, object] | None:
+        """Auto-load configuration from files in current directory.
+
+        File precedence: .env < config.yaml < config.toml < config.json
+
+        Returns:
+            dict[str, object] | None: Merged configuration data or None if no files found.
+
+        """
+        config_data: dict[str, object] = {}
+        current_dir = Path.cwd()
+
+        # Define file precedence order (lowest to highest priority)
+        config_files = [
+            current_dir / "config.yaml",
+            current_dir / "config.yml",
+            current_dir / "config.toml",
+            current_dir / "config.json",
+        ]
+
+        for config_file in config_files:
+            if config_file.exists():
+                try:
+                    file_data = cls._load_config_file(config_file)
+                    if file_data:
+                        # Merge with existing data (higher precedence overwrites)
+                        config_data.update(file_data)
+                except Exception as e:
+                    # Log configuration file errors but continue with other files
+                    # This maintains backward compatibility while providing debugging info
+                    import logging
+
+                    logging.getLogger(__name__).debug(
+                        f"Failed to load config file {config_file}: {e}"
+                    )
+                    continue
+
+        return config_data or None
+
+    @classmethod
+    def _load_config_file(cls, config_file: Path) -> dict[str, object] | None:
+        """Load and normalize configuration from a single file.
+
+        Args:
+            config_file: Path to the configuration file to load.
+
+        Returns:
+            dict[str, object] | None: Normalized configuration data or None if failed.
+
+        """
+        try:
+            content = config_file.read_text(
+                encoding=FlextConstants.Mixins.DEFAULT_ENCODING
+            )
+
+            if config_file.suffix.lower() == FlextConstants.Platform.EXT_TOML:
+                raw_data = tomllib.loads(content)
+            elif config_file.suffix.lower() == FlextConstants.Platform.EXT_JSON:
+                raw_data = json.loads(content)
+            elif config_file.suffix.lower() in {
+                FlextConstants.Platform.EXT_YAML,
+                FlextConstants.Platform.EXT_YML,
+            }:
+                raw_data = yaml.safe_load(content)
+            else:
+                return None
+
+            # Normalize keys for FlextConfig compatibility
+            return cls._normalize_config_keys(raw_data) if raw_data else None
+
+        except Exception:
+            return None
+
+    @classmethod
+    def _normalize_config_keys(
+        cls, config_data: dict[str, object]
+    ) -> dict[str, object]:
+        """Normalize configuration keys for FlextConfig compatibility.
+
+        Handles common aliases like command_timeout -> timeout_seconds.
+
+        Args:
+            config_data: Raw configuration data with potentially mismatched keys.
+
+        Returns:
+            dict[str, object]: Configuration data with normalized keys.
+
+        """
+        normalized = dict(config_data)
+
+        # Define key mappings for common aliases
+        key_mappings = {
+            "command_timeout": "timeout_seconds",
+            "cmd_timeout": "timeout_seconds",
+            "request_timeout": "timeout_seconds",
+            "execution_timeout": "timeout_seconds",
+            "log_level": "log_level",  # Keep as-is
+            "logging_level": "log_level",
+            "debug_mode": "debug",
+            "trace_mode": "trace",
+            "env": "environment",
+            "stage": "environment",
+        }
+
+        # Apply key mappings
+        for old_key, new_key in key_mappings.items():
+            if old_key in normalized and new_key not in normalized:
+                normalized[new_key] = normalized.pop(old_key)
+
+        return normalized
+
+    @classmethod
     def get_global_instance(cls) -> FlextConfig:
         """Get or create the global FlextConfig instance (singleton pattern).
+
+        Automatically loads configuration from files if available in current directory.
+        File precedence: .env < config.yaml < config.toml < config.json
 
         Returns:
             FlextConfig: The global singleton configuration instance.
@@ -550,8 +700,15 @@ class FlextConfig(BaseSettings):
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
-                    # Create default instance from environment
-                    cls._global_instance = cls()
+                    # Try to auto-load configuration from files
+                    config_data = cls._auto_load_config_files()
+
+                    # Create instance with loaded configuration data
+                    if config_data:
+                        cls._global_instance = cls.model_validate(config_data)
+                    else:
+                        # Create default instance from environment only
+                        cls._global_instance = cls()
         return cls._global_instance
 
     @classmethod
@@ -566,17 +723,24 @@ class FlextConfig(BaseSettings):
         with cls._global_lock:
             cls._global_instance = None
 
-    def get_cqrs_bus_config(self) -> object:
+    @classmethod
+    def clear_global_instance(cls) -> None:
+        """Clear the global FlextConfig instance (alias for reset_global_instance)."""
+        cls.reset_global_instance()
+
+    def get_cqrs_bus_config(self) -> FlextTypes.Core.Dict:
         """Get CQRS bus configuration.
 
         Returns:
-            dict: CQRS bus configuration dictionary.
+            FlextTypes.Core.Dict: CQRS bus configuration dictionary aligned with FlextModels.CqrsConfig.Bus.
 
         """
         return {
-            "timeout_seconds": self.dispatcher_timeout_seconds,
+            "execution_timeout": self.dispatcher_timeout_seconds,
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
+            "enable_middleware": True,  # Default middleware enabled
+            "enable_caching": True,  # Default caching enabled
         }
 
     @classmethod
@@ -592,11 +756,11 @@ class FlextConfig(BaseSettings):
         """
         return cls.model_validate(kwargs)
 
-    def get_metadata(self) -> dict[str, object]:
+    def get_metadata(self) -> FlextTypes.Core.Dict:
         """Get configuration metadata.
 
         Returns:
-            dict[str, object]: Configuration metadata dictionary.
+            FlextTypes.Core.Dict: Configuration metadata dictionary.
 
         """
         return {
