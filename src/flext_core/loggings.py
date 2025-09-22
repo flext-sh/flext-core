@@ -21,7 +21,7 @@ import uuid
 import warnings
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Self, TypedDict, cast
+from typing import ClassVar, Literal, Self, TypedDict, cast
 
 import structlog
 from structlog.typing import EventDict, Processor
@@ -647,32 +647,74 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     def set_context(
         self,
         context_dict: FlextTypes.Core.Dict | None = None,
+        *,
+        replace_existing: bool | None = None,
+        merge_strategy: Literal["replace", "update", "merge_deep"] | None = None,
         **context: object,
     ) -> None:
-        """Set persistent context data - optimized through context manager."""
+        """Set persistent context data via the validated model and context manager."""
         # Merge context_dict and kwargs
         final_context: dict[str, object] = {}
         if context_dict is not None:
             final_context.update(context_dict)
         final_context.update(context)
 
-        # Since LoggerPermanentContextModel doesn't exist, skip the model-based approach
-        # and directly set the context using a simpler method
+        # Resolve merge behaviour while preserving historic defaults
+        if replace_existing is not None:
+            replace_flag = replace_existing
+        elif merge_strategy is not None:
+            replace_flag = merge_strategy == "replace"
+        else:
+            replace_flag = context_dict is not None
+
+        resolved_merge_strategy = (
+            merge_strategy if merge_strategy is not None else ("replace" if replace_flag else "update")
+        )
+
+        # Build permanent context model populated from configuration/attributes
+        config = FlextConfig.get_global_instance()
+        app_name = getattr(config, "app_name", None) or getattr(self, "_service_name", self._name)
+        app_version = getattr(config, "version", None) or getattr(
+            self, "_service_version", FlextConstants.Core.VERSION
+        )
+        environment_value = str(
+            getattr(config, "environment", getattr(self, "_environment", "development"))
+        )
+
+        env_map = {
+            "dev": "development",
+            "development": "development",
+            "local": "development",
+            "test": "testing",
+            "testing": "testing",
+            "stage": "staging",
+            "staging": "staging",
+            "prod": "production",
+            "production": "production",
+        }
+        normalized_environment = env_map.get(environment_value.lower(), environment_value.lower())
+        if normalized_environment not in {"development", "testing", "staging", "production"}:
+            normalized_environment = "development"
+
         try:
-            # Directly update persistent context without model validation
-            if not hasattr(self, "_persistent_context"):
-                self._persistent_context = {}
-
-            if context_dict is not None:
-                # Replace mode
-                self._persistent_context = final_context.copy()
-            else:
-                # Update mode
-                self._persistent_context.update(final_context)
-
-            result = FlextResult[None].ok(None)
+            model = FlextModels.LoggerPermanentContextModel(
+                app_name=str(app_name),
+                app_version=str(app_version),
+                environment=normalized_environment,
+                host=platform.node(),
+                permanent_context=final_context,
+                replace_existing=replace_flag,
+                merge_strategy=resolved_merge_strategy,
+            )
         except Exception as e:
-            result = FlextResult[None].fail(f"Failed to set persistent context: {e}")
+            warnings.warn(
+                f"Failed to validate persistent context: {e}",
+                UserWarning,
+                stacklevel=2,
+            )
+            return
+
+        result = self._context_manager.set_persistent_context(model)
         if result.is_failure:
             warnings.warn(
                 f"Failed to set persistent context: {result.error}",

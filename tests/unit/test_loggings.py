@@ -2061,30 +2061,44 @@ class TestCoverageTargetedTests:
         assert bound_logger._permanent_context is not logger._permanent_context
         assert bound_logger._permanent_context["shared_key"] == "original_value"
 
-    def test_set_context_initialization_and_branches(self) -> None:
-        """Test set_context method to cover lines 505-515."""
+    def test_set_context_respects_replacement_and_update_modes(self) -> None:
+        """Ensure set_context honours replacement and update strategies."""
         logger = FlextLogger("context_test")
 
-        # Remove _permanent_context to test initialization (line 505-506)
-        if hasattr(logger, "_permanent_context"):
-            delattr(logger, "_permanent_context")
-
-        # Test with context_dict parameter (lines 508-512)
+        # Passing a context dictionary should replace existing persistent context by default
         logger.set_context({"dict_key": "dict_value"}, extra_key="extra_value")
-        assert logger._permanent_context["dict_key"] == "dict_value"
-        assert logger._permanent_context["extra_key"] == "extra_value"
+        assert logger._persistent_context == {
+            "dict_key": "dict_value",
+            "extra_key": "extra_value",
+        }
 
-        # Test with None context_dict (lines 514-515)
-        logger.set_context(None, another_key="another_value")
-        assert logger._permanent_context["another_key"] == "another_value"
+        # Default behaviour without explicit replacement updates the existing context
+        logger.set_context(additional_key="additional_value")
+        assert logger._persistent_context["dict_key"] == "dict_value"
+        assert logger._persistent_context["extra_key"] == "extra_value"
+        assert logger._persistent_context["additional_key"] == "additional_value"
 
-        # Test real functionality
+        # Explicit replacement flag should override defaults even without context_dict
+        logger.set_context(replace_existing=True, final_key="final_value")
+        assert logger._persistent_context == {"final_key": "final_value"}
+
         try:
             logger.info("Test context")
         except Exception as e:
             pytest.fail(f"Logging should not raise exceptions: {e}")
 
-        # pass  # Test completed successfully
+    def test_set_context_merge_deep_strategy(self) -> None:
+        """Verify deep merge strategy maintains existing nested context."""
+        logger = FlextLogger("context_merge_test")
+
+        logger.set_context({"nested": {"level": {"existing": 1}}})
+        logger.set_context(
+            merge_strategy="merge_deep",
+            nested={"level": {"new": 2}},
+        )
+
+        assert logger._persistent_context["nested"]["level"]["existing"] == 1
+        assert logger._persistent_context["nested"]["level"]["new"] == 2
 
     def test_with_context_method_coverage(self) -> None:
         """Test with_context method to cover line 542."""
