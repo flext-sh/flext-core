@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Generic, Protocol, overload, runtime_checkable
 
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T_contra, TInput_contra, TOutput_co
@@ -48,26 +48,66 @@ class FlextProtocols:
 
         # Domain protocols providing service and repository patterns
 
+        @runtime_checkable
         class Service(Protocol):
-            """Domain service contract used across modernization-aligned services."""
-
-            def __call__(self, *args: object, **kwargs: object) -> object:
-                """Execute the service entry point with modernization semantics."""
-                ...
+            """Domain service contract aligned with FlextDomainService implementation."""
 
             @abstractmethod
-            def start(self) -> object:
-                """Start the service using the standardized lifecycle hooks."""
+            def execute(self) -> FlextResult[object]:
+                """Execute the main domain operation.
+
+                Returns:
+                    FlextResult[object]: Success with domain result or failure with error
+
+                """
                 ...
 
-            @abstractmethod
-            def stop(self) -> object:
-                """Stop the service following the modernization shutdown guidance."""
+            def is_valid(self) -> bool:
+                """Check if the domain service is in a valid state.
+
+                Returns:
+                    bool: True if valid, False otherwise
+
+                """
                 ...
 
-            @abstractmethod
-            def health_check(self) -> object:
-                """Report modernization-compliant health status."""
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules for the domain service.
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                ...
+
+            def validate_config(self) -> FlextResult[None]:
+                """Validate service configuration.
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                ...
+
+            def execute_operation(self, operation: object) -> FlextResult[object]:
+                """Execute operation using OperationExecutionRequest model.
+
+                Args:
+                    operation: OperationExecutionRequest containing operation settings
+
+                Returns:
+                    FlextResult[object]: Success with result or failure with error
+
+                """
+                ...
+
+            def get_service_info(self) -> FlextTypes.Core.Dict:
+                """Get service information and metadata.
+
+                Returns:
+                    FlextTypes.Core.Dict: Service information dictionary
+
+                """
                 ...
 
         class Repository(Protocol, Generic[T_contra]):
@@ -100,15 +140,97 @@ class FlextProtocols:
     class Application:
         """Application layer protocols - use cases and handlers."""
 
+        @runtime_checkable
         class Handler(Protocol, Generic[TInput_contra, TOutput_co]):
-            """Application handler with validation."""
+            """Application handler protocol aligned with FlextHandlers implementation."""
 
-            def __call__(self, input_data: TInput_contra) -> object:
-                """Process input and return output."""
+            @abstractmethod
+            def handle(self, message: TInput_contra) -> FlextResult[TOutput_co]:
+                """Handle the message and return result.
+
+                Args:
+                    message: The input message to process
+
+                Returns:
+                    FlextResult[TOutput_co]: Success with result or failure with error
+
+                """
                 ...
 
-            def validate(self, data: TInput_contra) -> object:
-                """Validate input before processing."""
+            def __call__(self, input_data: TInput_contra) -> FlextResult[TOutput_co]:
+                """Process input and return a ``FlextResult`` containing the output."""
+                ...
+
+            def can_handle(self, message_type: object) -> bool:
+                """Check if handler can process this message type.
+
+                Args:
+                    message_type: The message type to check
+
+                Returns:
+                    bool: True if handler can process the message type, False otherwise
+
+                """
+                ...
+
+            def execute(self, message: TInput_contra) -> FlextResult[TOutput_co]:
+                """Execute the handler with the given message.
+
+                Args:
+                    message: The input message to execute
+
+                Returns:
+                    FlextResult[TOutput_co]: Execution result
+
+                """
+                ...
+
+            def validate_command(self, command: TInput_contra) -> FlextResult[None]:
+                """Validate a command message.
+
+                Args:
+                    command: The command to validate
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                ...
+
+            def validate(self, data: TInput_contra) -> FlextResult[None]:
+                """Validate input before processing and wrap the outcome in ``FlextResult``."""
+                ...
+
+            def validate_query(self, query: TInput_contra) -> FlextResult[None]:
+                """Validate a query message.
+
+                Args:
+                    query: The query to validate
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                ...
+
+            @property
+            def handler_name(self) -> str:
+                """Get the handler name.
+
+                Returns:
+                    str: Handler name
+
+                """
+                ...
+
+            @property
+            def mode(self) -> str:
+                """Get the handler mode (command/query).
+
+                Returns:
+                    str: Handler mode
+
+                """
                 ...
 
     # =========================================================================
@@ -141,7 +263,7 @@ class FlextProtocols:
         class Configurable(Protocol):
             """Configurable component protocol."""
 
-            def configure(self, config: FlextTypes.Core.Dict) -> object:
+            def configure(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
                 """Configure component with provided settings."""
                 ...
 
@@ -338,14 +460,14 @@ class FlextProtocols:
         class CommandHandler[CommandT, ResultT](Protocol):
             """Protocol for command handlers in CQRS pattern."""
 
-            def handle(self, command: CommandT) -> ResultT:
-                """Handle a command and return result.
+            def handle(self, command: CommandT) -> FlextResult[ResultT]:
+                """Handle a command and return a :class:`FlextResult` wrapper.
 
                 Args:
                     command: The command to handle
 
                 Returns:
-                    The result of handling the command
+                    FlextResult containing the command handling outcome
 
                 """
                 ...
@@ -365,26 +487,58 @@ class FlextProtocols:
         class QueryHandler[QueryT, ResultT](Protocol):
             """Protocol for query handlers in CQRS pattern."""
 
-            def handle(self, query: QueryT) -> ResultT:
-                """Handle a query and return result.
-
+            def handle(self, query: QueryT) -> FlextResult[ResultT]:
+                """Handle a query and return a :class:`FlextResult` wrapper.
                 Args:
                     query: The query to handle
 
                 Returns:
-                    The result of handling the query
+                    FlextResult containing the query handling outcome
 
                 """
                 ...
 
+        @runtime_checkable
         class CommandBus(Protocol):
             """Protocol for command bus routing and execution."""
 
-            def register_handler(self, handler: object) -> None:
-                """Register a command handler.
+            @overload
+            def register_handler(self, handler: Callable, /) -> FlextResult[None]: ...
+
+            @overload
+            def register_handler(
+                self,
+                command_type: type,
+                handler: Callable,
+                /,
+            ) -> FlextResult[None]: ...
+
+            def register_handler(self, *args: object) -> FlextResult[None]:
+                """Register a command handler using one of two supported signatures.
+
+                The command bus accepts both ``register_handler(handler)`` for
+                auto-discoverable handlers and
+                ``register_handler(command_type, handler)`` when explicitly
+                binding a handler to a message type.
 
                 Args:
-                    handler: The handler to register
+                    *args: Positional arguments matching one of the supported
+                        registration signatures.
+
+                Returns:
+                    FlextResult[None]: Outcome of the registration attempt.
+
+                """
+                ...
+
+            def unregister_handler(self, command_type: type | str) -> bool:
+                """Remove a handler registration by type or name.
+
+                Args:
+                    command_type: The command type or name to unregister
+
+                Returns:
+                    bool: True if handler was removed, False otherwise
 
                 """
                 ...
