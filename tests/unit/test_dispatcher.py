@@ -133,6 +133,29 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.unwrap()
 
 
+def test_dispatcher_dispatch_uses_provided_correlation_id() -> None:
+    """Dispatch applies provided correlation ID within the handler scope."""
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    handler = ContextAwareHandler()
+    register_result = dispatcher.register_handler(
+        cast("FlextHandlers[object, object]", handler)
+    )
+    assert register_result.is_success
+
+    provided_correlation_id = "corr-123"
+    payload = "custom"
+    result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload=payload),
+        correlation_id=provided_correlation_id,
+    )
+
+    assert result.is_success
+    assert result.unwrap() == f"{provided_correlation_id}:{payload}"
+    assert FlextContext.Correlation.get_correlation_id() is None
+
+
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
     """Registry returns success while avoiding duplicate registrations."""
     FlextContext.Utilities.clear_context()

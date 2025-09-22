@@ -487,11 +487,24 @@ class FlextDispatcher:
             return
 
         metadata_token: Token[FlextTypes.Core.Dict | None] | None = None
+        correlation_token: Token[str | None] | None = None
+        parent_token: Token[str | None] | None = None
         metadata_var = FlextContext.Variables.Performance.OPERATION_METADATA
+        correlation_var = FlextContext.Variables.Correlation.CORRELATION_ID
+        parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
+        existing_correlation_id = correlation_var.get()
 
         with FlextContext.Correlation.inherit_correlation() as active_correlation_id:
             # Use provided correlation ID or the inherited one
             effective_correlation_id = correlation_id or active_correlation_id
+
+            if correlation_id is not None:
+                correlation_token = correlation_var.set(correlation_id)
+                if (
+                    existing_correlation_id is not None
+                    and existing_correlation_id != correlation_id
+                ):
+                    parent_token = parent_var.set(existing_correlation_id)
 
             if metadata:
                 metadata_token = metadata_var.set(metadata)
@@ -506,6 +519,12 @@ class FlextDispatcher:
             finally:
                 if metadata_token is not None:
                     metadata_var.reset(metadata_token)
+
+                if correlation_token is not None:
+                    correlation_var.reset(correlation_token)
+
+                if parent_token is not None:
+                    parent_var.reset(parent_token)
 
                 if self._config.get("enable_logging"):
                     self._logger.debug(
