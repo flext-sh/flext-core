@@ -502,7 +502,6 @@ class FlextDispatcher:
             ):
                 parent_token = parent_var.set(current_correlation)
 
-        effective_correlation_id = correlation_id
         try:
             with FlextContext.Correlation.inherit_correlation() as active_correlation_id:
                 # Use provided correlation ID or the inherited one
