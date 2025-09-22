@@ -53,14 +53,7 @@ class FlextProcessing:
 
             """
             try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config,
-                        "max_batch_size",
-                        FlextConstants.Performance.DEFAULT_BATCH_SIZE,
-                    )
-                )
+                return int(FlextConfig.get_global_instance().max_batch_size)
             except Exception:
                 return FlextConstants.Performance.DEFAULT_BATCH_SIZE
 
@@ -73,12 +66,7 @@ class FlextProcessing:
 
             """
             try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config, "max_handlers", FlextConstants.Container.MAX_SERVICES
-                    )
-                )
+                return int(FlextConfig.get_global_instance().max_handlers)
             except Exception:
                 return FlextConstants.Container.MAX_SERVICES
 

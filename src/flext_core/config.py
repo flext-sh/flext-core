@@ -188,6 +188,18 @@ class FlextConfig(BaseSettings):
     )
 
     # Service configuration using FlextConstants
+    max_batch_size: int = Field(
+        default=FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+        ge=1,
+        description="Maximum batch size for processing operations",
+    )
+
+    max_handlers: int = Field(
+        default=FlextConstants.Container.MAX_SERVICES,
+        ge=1,
+        description="Maximum number of handlers supported by processing helpers",
+    )
+
     max_retry_attempts: int = Field(
         default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         ge=0,

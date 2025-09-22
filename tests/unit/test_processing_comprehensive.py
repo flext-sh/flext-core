@@ -11,8 +11,35 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
-from flext_core import FlextModels, FlextProcessing, FlextResult
+from flext_core import FlextConfig, FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
+
+
+class TestFlextProcessingConfigAccess:
+    """Validate configuration helpers that drive processing safeguards."""
+
+    def setup_method(self) -> None:
+        """Store and preserve the original global configuration instance."""
+        self._original_config = FlextConfig.get_global_instance()
+        FlextConfig.set_global_instance(self._original_config)
+
+    def teardown_method(self) -> None:
+        """Restore the original global configuration instance after each test."""
+        FlextConfig.set_global_instance(self._original_config)
+
+    def test_get_max_batch_size_uses_config_value(self) -> None:
+        """Ensure FlextProcessing respects configured max batch size."""
+        custom_config = FlextConfig(max_batch_size=42)
+        FlextConfig.set_global_instance(custom_config)
+
+        assert FlextProcessing.Config.get_max_batch_size() == 42
+
+    def test_get_max_handlers_uses_config_value(self) -> None:
+        """Ensure FlextProcessing respects configured handler limit."""
+        custom_config = FlextConfig(max_handlers=7)
+        FlextConfig.set_global_instance(custom_config)
+
+        assert FlextProcessing.Config.get_max_handlers() == 7
 
 
 class TestFlextProcessingHandler:

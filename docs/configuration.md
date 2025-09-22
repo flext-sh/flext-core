@@ -27,6 +27,19 @@ Features:
 - Automatic type validation using Pydantic Settings.
 - Case-insensitive environment variable lookups by default.
 
+### Processing Defaults
+
+`FlextConfig` exposes processing-oriented knobs that keep dispatcher helpers
+aligned with runtime expectations:
+
+- `max_batch_size` defaults to `FlextConstants.Performance.DEFAULT_BATCH_SIZE`
+  and caps how many items helper pipelines attempt to process at once.
+- `max_handlers` defaults to `FlextConstants.Container.MAX_SERVICES` and limits
+  how many handlers registries will accept before signalling saturation.
+
+Override these values in environment variables or configuration files to tune
+bulk workflows without modifying application code.
+
 ---
 
 ## Injecting Configuration

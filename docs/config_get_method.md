@@ -128,6 +128,7 @@ All FlextConfig fields can be accessed, including:
 - `max_retry_attempts`, `timeout_seconds`
 - `enable_metrics`, `enable_tracing`
 - `max_workers`
+- `max_batch_size`, `max_handlers`
 - And all other defined fields...
 
 ## Example Files

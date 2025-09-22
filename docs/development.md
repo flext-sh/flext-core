@@ -35,7 +35,9 @@ make validate     # Runs format check, lint, type-check, and tests
 
 1. **Dispatcher First** – new orchestration code should interact with `FlextDispatcher`/`FlextDispatcherRegistry` rather than direct bus invocations unless a strong justification is documented.
 2. **Context Awareness** – logging and telemetry must push correlation/request metadata through `FlextContext` helpers.
-3. **Configuration Alignment** – bootstrap logic pulls settings from `FlextConfig` and registers them in the container.
+3. **Configuration Alignment** – bootstrap logic pulls settings from `FlextConfig` and registers them in the container. Honour the
+   shared limits (`max_batch_size`, `max_handlers`) when building processing or dispatcher integrations so helper utilities stay
+   in sync.
 4. **Doc Synchronisation** – README pages, docs, and docstrings must stay aligned; update them as part of every behavioural change.
 5. **Tests** – add or update tests in `tests/unit`, `tests/integration`, or `tests/patterns` to cover new behaviour.
 
