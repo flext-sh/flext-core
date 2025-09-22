@@ -338,14 +338,15 @@ class FlextProtocols:
         class CommandHandler[CommandT, ResultT](Protocol):
             """Protocol for command handlers in CQRS pattern."""
 
-            def handle(self, command: CommandT) -> ResultT:
-                """Handle a command and return result.
+            def handle(self, command: CommandT) -> FlextResult[ResultT]:
+                """Handle a command and return a ``FlextResult``.
 
                 Args:
                     command: The command to handle
 
                 Returns:
-                    The result of handling the command
+                    A ``FlextResult`` containing the command handling outcome
+                    or failure details
 
                 """
                 ...
@@ -365,14 +366,15 @@ class FlextProtocols:
         class QueryHandler[QueryT, ResultT](Protocol):
             """Protocol for query handlers in CQRS pattern."""
 
-            def handle(self, query: QueryT) -> ResultT:
-                """Handle a query and return result.
+            def handle(self, query: QueryT) -> FlextResult[ResultT]:
+                """Handle a query and return a ``FlextResult``.
 
                 Args:
                     query: The query to handle
 
                 Returns:
-                    The result of handling the query
+                    A ``FlextResult`` containing the query handling outcome
+                    or failure details
 
                 """
                 ...
