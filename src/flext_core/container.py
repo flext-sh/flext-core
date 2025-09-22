@@ -96,9 +96,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         # Configuration integration with FlextConfig singleton
         self._global_config = {
-            "max_workers": 4,
-            "timeout_seconds": 30.0,
-            "environment": "development",
+            "max_workers": FlextConstants.Container.MAX_WORKERS,
+            "timeout_seconds": FlextConstants.Container.TIMEOUT_SECONDS,
+            "environment": FlextConstants.Config.DEFAULT_ENVIRONMENT,
         }
         self._flext_config = FlextConfig.get_global_instance()
 
@@ -717,18 +717,26 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             normalized_config = self._normalize_config_fields(config)
 
             # Create and store global configuration with proper type conversion
-            max_workers = normalized_config.get("max_workers", 4)
-            timeout_seconds = normalized_config.get("timeout_seconds", 30.0)
-            environment = normalized_config.get("environment", "development")
+            max_workers = normalized_config.get(
+                "max_workers", FlextConstants.Container.MAX_WORKERS
+            )
+            timeout_seconds = normalized_config.get(
+                "timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS
+            )
+            environment = normalized_config.get(
+                "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
+            )
 
             self._global_config = {
                 "max_workers": int(max_workers)
                 if isinstance(max_workers, (int, float))
-                else 4,
+                else FlextConstants.Container.MAX_WORKERS,
                 "timeout_seconds": float(timeout_seconds)
                 if isinstance(timeout_seconds, (int, float))
-                else 30.0,
-                "environment": str(environment) if environment else "development",
+                else FlextConstants.Container.TIMEOUT_SECONDS,
+                "environment": str(environment)
+                if environment
+                else FlextConstants.Config.DEFAULT_ENVIRONMENT,
             }
 
             return FlextResult[None].ok(None)
