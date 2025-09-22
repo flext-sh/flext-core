@@ -943,10 +943,7 @@ class TestFlextCqrsBusManagement:
 
         result = bus.unregister_handler("non-existent-handler")
         FlextTestsMatchers.assert_result_failure(result)
-        assert (
-            result.error
-            == "No handler registered for non-existent-handler"
-        )
+        assert result.error == "No handler registered for non-existent-handler"
         assert result.error_code == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
         assert result.error_data.get("command_type") == "non-existent-handler"
 
