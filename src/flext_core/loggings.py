@@ -1892,10 +1892,8 @@ class FlextLogger:
 if TYPE_CHECKING:
     from flext_core.protocols import FlextProtocols
 
-    _protocol_logger_check = cast(
-        FlextProtocols.Infrastructure.LoggerProtocol,
-        FlextLogger("protocol_check", _force_new=True),
-    )
+    _protocol_logger_check: FlextProtocols.Infrastructure.LoggerProtocol
+    _protocol_logger_check = None  # type: ignore[assignment]
 
 __all__: FlextTypes.Core.StringList = [
     "FlextLogger",
