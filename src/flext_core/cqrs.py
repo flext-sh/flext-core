@@ -22,6 +22,12 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
+HandlerTypeLiteral = Literal[
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+]
+
+
 class FlextCqrs:
     """Unified CQRS infrastructure with FlextModels integration.
 
@@ -178,7 +184,7 @@ class FlextCqrs:
 
         @staticmethod
         def create_handler_config(
-            handler_type: Literal["command", "query"],
+            handler_type: HandlerTypeLiteral,
             *,
             handler_name: str | None = None,
             handler_id: str | None = None,
@@ -252,7 +258,7 @@ class FlextCqrs:
             ) -> Callable[[TCmd], TResult]:
                 # Create validated handler configuration
                 handler_config_result = FlextCqrs.Operations.create_handler_config(
-                    handler_type="command",
+                    handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                     handler_name=getattr(
                         func, "__name__", f"{command_type.__name__}Handler"
                     ),
@@ -268,8 +274,8 @@ class FlextCqrs:
                         handler_name=getattr(
                             func, "__name__", f"{command_type.__name__}Handler"
                         ),
-                        handler_type="command",
-                        handler_mode="command",
+                        handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                        handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     )
                 else:
                     handler_config = handler_config_result.value
@@ -278,7 +284,7 @@ class FlextCqrs:
                 class FunctionHandler(FlextHandlers[TCmd, TResult]):
                     def __init__(self) -> None:
                         super().__init__(
-                            handler_mode="command",
+                            handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                             handler_name=handler_config.handler_name,
                             handler_config={"metadata": handler_config.metadata},
                         )

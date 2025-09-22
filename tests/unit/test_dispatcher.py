@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import cast
+from unittest.mock import Mock
 
 from flext_core import (
     FlextConfig,
@@ -15,6 +16,7 @@ from flext_core import (
     FlextDispatcher,
     FlextDispatcherRegistry,
     FlextHandlers,
+    FlextModels,
     FlextResult,
 )
 
@@ -62,6 +64,26 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
             return FlextResult[str].fail("Correlation ID missing")
         # Include message info in the response to use the parameter
         return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
+
+
+@dataclass
+class CachedQuery:
+    """Query object used to exercise dispatcher caching."""
+
+    payload: str
+
+
+class CachedQueryHandler:
+    """Lightweight handler that tracks invocation count to validate caching."""
+
+    def __init__(self) -> None:
+        """Initialize the cached query handler."""
+        self.calls = 0
+
+    def handle(self, message: CachedQuery) -> FlextResult[str]:
+        """Handle the cached query while counting invocations."""
+        self.calls += 1
+        return FlextResult[str].ok(f"{message.payload}:{self.calls}")
 
 
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
@@ -132,6 +154,74 @@ def test_dispatcher_provides_correlation_context() -> None:
     assert result.is_success
     assert isinstance(result.unwrap(), str)
     assert result.unwrap()
+
+
+def test_dispatcher_propagates_metadata_model_to_context() -> None:
+    """Dispatching with metadata model exposes attributes via context."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    metadata = FlextModels.Metadata(
+        created_by="tester",
+        attributes={"tenant": "acme", "retry": 2},
+    )
+    expected_metadata = dict(metadata.attributes)
+
+    mock_execute = Mock()
+
+    def fake_execute(message: object) -> FlextResult[object]:
+        metadata_from_context = FlextContext.Performance.get_operation_metadata()
+        assert metadata_from_context == expected_metadata
+        return FlextResult[object].ok(dict(metadata_from_context))
+
+    mock_execute.side_effect = fake_execute
+    setattr(dispatcher._bus, "execute", mock_execute)
+
+    request: dict[str, object] = {
+        "message": EchoCommand(payload="metadata"),
+        "context_metadata": metadata,
+    }
+
+    dispatch_result = dispatcher.dispatch_with_request(request)
+    assert dispatch_result.is_success
+    payload = dispatch_result.unwrap()
+    assert payload["success"] is True
+    assert payload["result"] == expected_metadata
+    assert "created_by" not in payload["result"]
+    mock_execute.assert_called_once()
+
+
+def test_dispatcher_propagates_plain_metadata_dict_to_context() -> None:
+    """Dispatching with plain metadata dict sets context metadata."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher()
+
+    metadata = {"tenant": "beta", "attempt": 1, 3: "three"}
+    expected_metadata = {"tenant": "beta", "attempt": 1, "3": "three"}
+
+    mock_execute = Mock()
+
+    def fake_execute(message: object) -> FlextResult[object]:
+        metadata_from_context = FlextContext.Performance.get_operation_metadata()
+        assert metadata_from_context == expected_metadata
+        return FlextResult[object].ok(dict(metadata_from_context))
+
+    mock_execute.side_effect = fake_execute
+    setattr(dispatcher._bus, "execute", mock_execute)
+
+    request: dict[str, object] = {
+        "message": EchoCommand(payload="metadata"),
+        "context_metadata": metadata,
+    }
+
+    dispatch_result = dispatcher.dispatch_with_request(request)
+    assert dispatch_result.is_success
+    payload = dispatch_result.unwrap()
+    assert payload["success"] is True
+    assert payload["result"] == expected_metadata
+    mock_execute.assert_called_once()
 
 
 def test_dispatcher_registry_prevents_duplicate_handler_registration() -> None:
@@ -224,3 +314,41 @@ def test_dispatcher_uses_global_execution_timeout_for_bus() -> None:
         assert dispatcher.bus.config.execution_timeout == custom_timeout
     finally:
         FlextConfig.reset_global_instance()
+
+
+def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
+    """Cache lookup remains active when metrics are disabled but caching is enabled."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher(
+        config={
+            "auto_context": False,
+            "enable_logging": False,
+            "enable_metrics": False,
+            "bus_config": {
+                "enable_metrics": False,
+                "enable_caching": True,
+            },
+        }
+    )
+
+    handler = CachedQueryHandler()
+    registration_result = dispatcher.register_command(
+        CachedQuery,
+        cast(FlextHandlers[object, object], handler),
+    )
+    assert registration_result.is_success
+
+    first_result: FlextResult[object] = dispatcher.dispatch(
+        CachedQuery(payload="cache")
+    )
+    assert first_result.is_success
+    assert handler.calls == 1
+    first_value = first_result.unwrap()
+
+    second_result: FlextResult[object] = dispatcher.dispatch(
+        CachedQuery(payload="cache")
+    )
+    assert second_result.is_success
+    assert handler.calls == 1
+    assert second_result.unwrap() == first_value
