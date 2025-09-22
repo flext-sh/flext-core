@@ -130,7 +130,10 @@ class FlextCqrs:
 
             except Exception as e:
                 return FlextResult[FlextModels.Command].fail(
-                    f"Command validation failed: {e!s}",
+                    (
+                        f"{FlextConstants.Messages.VALIDATION_FAILED}:"
+                        f" Command validation failed: {e!s}"
+                    ),
                     error_code=FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
                     error_data={
                         "command_data": command_data,
@@ -168,7 +171,10 @@ class FlextCqrs:
 
             except Exception as e:
                 return FlextResult[FlextModels.Query].fail(
-                    f"Query validation failed: {e!s}",
+                    (
+                        f"{FlextConstants.Messages.VALIDATION_FAILED}:"
+                        f" Query validation failed: {e!s}"
+                    ),
                     error_code=FlextConstants.Cqrs.QUERY_VALIDATION_FAILED,
                     error_data={
                         "query_data": query_data,
@@ -421,7 +427,7 @@ class FlextCqrs:
             if hasattr(error, "errors") and callable(getattr(error, "errors", None)):
                 validation_errors = getattr(error, "errors")()
                 return FlextResult[object].fail(
-                    f"Validation failed: {error!s}",
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {error!s}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     error_data={
                         "context": context,
