@@ -193,13 +193,6 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         config = FlextConfig.get_global_instance()
         type(self)._load_config_flags()
 
-        self._track_performance_enabled = type(self)._track_performance_enabled
-        self._track_timing_enabled = type(self)._track_timing_enabled
-        self._include_context_enabled = type(self)._include_context_enabled
-        self._include_correlation_id_enabled = (
-            type(self)._include_correlation_id_enabled
-        )
-        self._mask_sensitive_data_enabled = type(self)._mask_sensitive_data_enabled
 
         # Resolve log level with strict precedence and deterministic behavior
         valid_levels = FlextConstants.Logging.VALID_LEVELS
