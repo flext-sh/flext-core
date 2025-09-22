@@ -243,6 +243,16 @@ class TestFlextConfigInstanceMethods:
         assert cache_config["max_size"] == 3000
         assert cache_config["enabled"] is True
 
+    def test_get_method_lookup_and_default(self) -> None:
+        """Test the dynamic get helper on configuration instances."""
+        config = FlextConfig(app_name="lookup_app", debug=True)
+
+        assert config.get("app_name") == "lookup_app"
+        assert config.get("debug") is True
+
+        sentinel = object()
+        assert config.get("nonexistent", sentinel) is sentinel
+
     def test_serialization_methods(self) -> None:
         """Test serialization methods."""
         config = FlextConfig(
@@ -326,6 +336,17 @@ class TestFlextConfigGlobalInstance:
         new_instance = FlextConfig.get_global_instance()
         assert new_instance is not custom_config
         assert new_instance.app_name == "FLEXT Application"  # Default
+
+    def test_get_parameter_uses_global_instance(self) -> None:
+        """Test get_parameter retrieves values from the global configuration."""
+        custom_config = FlextConfig(app_name="singleton_app", debug=True)
+        FlextConfig.set_global_instance(custom_config)
+
+        assert FlextConfig.get_parameter("app_name") == "singleton_app"
+        assert FlextConfig.get_parameter("debug") is True
+
+        fallback = object()
+        assert FlextConfig.get_parameter("undefined", fallback) is fallback
 
 
 class TestFlextConfigEnvironmentLoading:

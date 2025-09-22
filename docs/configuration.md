@@ -44,6 +44,26 @@ Using the container aligns with the modernization pillar that all domain service
 
 ---
 
+## Quick Lookups
+
+Although attribute access should remain the primary way of working with strongly typed settings, `FlextConfig` now exposes convenience helpers for dynamic lookups.
+
+```python
+settings = AppConfig(debug=True, max_workers=12)
+
+# Retrieve a parameter with an optional fallback value
+settings.get("max_workers", 4)
+settings.get("nonexistent", default="fallback")
+
+# Access the shared singleton without threading worries
+FlextConfig.set_global_instance(settings)
+FlextConfig.get_parameter("debug", default=False)
+```
+
+Both helpers rely on `model_dump` under the hood, ensuring the returned values mirror the validated state of the configuration instance.
+
+---
+
 ## Domain Services & Config
 
 ```python
