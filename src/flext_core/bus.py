@@ -124,8 +124,19 @@ class FlextBus(FlextMixins):
         | dict[str, object]
         | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a bare callable into a CQRS command handler with validation."""
+        """
+        Wrap a bare callable into a CQRS command handler with validation.
 
+        Args:
+            handler_func: A callable that takes a single argument (the command payload) and returns a result.
+                The function should implement the business logic for the command.
+            handler_config: Optional handler configuration, either as a `FlextModels.CqrsConfig.Handler` instance
+                or a dictionary. If None, default configuration is used.
+
+        Returns:
+            FlextHandlers[object, object]: A CQRS command handler that wraps the provided callable,
+                with input/output validation and result wrapping. See `FlextHandlers.from_callable` for details.
+        """
         handler_name = getattr(handler_func, "__name__", "SimpleHandler")
 
         return FlextHandlers.from_callable(
