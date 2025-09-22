@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from flext_core.constants import FlextConstants
 from flext_core.typings import TAccumulate, TItem, TParallel, TResult, TUtil, UParallel
 
 if TYPE_CHECKING:
@@ -264,7 +265,8 @@ class FlextResultCollections:
                 result = validator(value)
                 if result.is_failure:
                     return FlextResult[TValidate].fail(
-                        result.error or "Validation failed",
+                        result.error
+                        or f"{FlextConstants.Messages.VALIDATION_FAILED} (validator)",
                         error_code=result.error_code,
                         error_data=result.error_data,
                     )
