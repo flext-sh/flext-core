@@ -862,7 +862,13 @@ class TestFlextCqrsBusManagement:
         middleware = TestMiddleware()
         result = bus.add_middleware(middleware)
 
-        FlextTestsMatchers.assert_result_failure(result)
+        FlextTestsMatchers.assert_result_failure(
+            result,
+            expected_error=(
+                "Middleware pipeline is disabled by configuration; cannot add middleware."
+            ),
+        )
+        assert result.error_code == FlextConstants.Errors.CONFIGURATION_ERROR
 
     def test_bus_get_all_handlers(self) -> None:
         """Test Bus get_all_handlers."""
