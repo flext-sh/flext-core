@@ -1,173 +1,79 @@
-# FlextConfig Get Method Implementation
+# Accessing FlextConfig Parameters with Pydantic 2.11
 
 ## Overview
 
-Successfully implemented two methods in `FlextConfig` class to allow easy access to any configuration parameter from the singleton model:
-
-## Methods Added
-
-### 1. `get(parameter: str, default: object = None) -> object`
-
-Instance method that gets any parameter value from the configuration instance using Pydantic's `model_dump()`.
-
-**Usage:**
+FlextConfig is a standard Pydantic `BaseSettings` model. Previous releases exposed
+helper methods such as `config.get(...)` or mixin utilities that wrapped
+`model_dump()` lookups. Those wrappers have been removed in favor of the
+first-class attribute semantics provided by Pydantic 2.11. Applications should now
+read or update configuration values directly on the model instance using native
+Python attribute access.
 
 ```python
 from flext_core import FlextConfig
 
 config = FlextConfig.get_global_instance()
-debug_mode = config.get('debug', False)
-log_level = config.get('log_level', 'INFO')
-timeout = config.get('timeout_seconds', 30)
+print(config.environment)  # direct attribute access
 ```
 
-### 2. `get_parameter(parameter: str, default: object = None) -> object` (Class Method)
+## Reading Configuration Values
 
-Convenience class method that gets the global singleton instance and retrieves the specified parameter.
-
-**Usage:**
+Every field defined on `FlextConfig` is available as an attribute. Use attribute
+access for known fields or `getattr` when the field name is determined at
+runtime.
 
 ```python
-from flext_core import FlextConfig
+# Static access
+if config.debug:
+    enable_verbose_logging()
 
-# Direct class method usage - no need to get instance first
-debug_mode = FlextConfig.get_parameter('debug', False)
-log_level = FlextConfig.get_parameter('log_level', 'INFO')
-timeout = FlextConfig.get_parameter('timeout_seconds', 30)
+# Dynamic lookup
+field_name = "timeout_seconds"
+current_timeout = getattr(config, field_name)
 ```
 
-## Implementation Details
-
-### Location
-
-- **File**: `flext-core/src/flext_core/config.py`
-- **Class**: `FlextConfig`
-- **Lines**: Added after `get_metadata` method (around line 480-520)
-
-### Method Signatures
+`model_dump()` remains available when a dictionary view of the configuration is
+required for serialization or logging.
 
 ```python
-def get(self, parameter: str, default: object = None) -> object:
-    """Get any parameter value from the configuration instance.
-    
-    This method works seamlessly with Pydantic Settings by using
-    the model's field access rather than direct attribute access.
-    
-    Args:
-        parameter: The parameter name to retrieve
-        default: Default value if parameter doesn't exist
-        
-    Returns:
-        The parameter value or default if not found
-    """
-    # Use Pydantic's model_dump to get all fields as dict, then access safely
-    model_data = self.model_dump()
-    return model_data.get(parameter, default)
-
-@classmethod
-def get_parameter(cls, parameter: str, default: object = None) -> object:
-    """Get any parameter from the global singleton instance.
-    
-    This is a convenience class method that gets the global instance
-    and retrieves the specified parameter using Pydantic's model_dump.
-    
-    Args:
-        parameter: The parameter name to retrieve
-        default: Default value if parameter doesn't exist
-        
-    Returns:
-        The parameter value or default if not found
-    """
-    instance = cls.get_global_instance()
-    return instance.get(parameter, default)
+as_dict = config.model_dump()
 ```
 
-## Configuration Changes
+## Updating Configuration Values
 
-### Model Config Update
-
-Changed `extra="forbid"` to `extra="ignore"` in the `SettingsConfigDict` to allow extra environment variables without validation errors.
-
-**Before:**
+Pydantic validation runs automatically during assignment because
+`validate_assignment=True` in the `model_config`. You can therefore mutate
+individual fields safely or create derived copies with
+`model_copy(update=...)`.
 
 ```python
-model_config = SettingsConfigDict(
-    # ... other settings ...
-    extra="forbid",  # This caused validation errors
-    # ... other settings ...
-)
+# In-place updates with validation
+config.debug = True
+setattr(config, "timeout_seconds", 60)
+
+# Immutable style using model_copy
+updated_config = config.model_copy(update={"timeout_seconds": 45})
 ```
 
-**After:**
+Both approaches respect field types and validators defined on `FlextConfig`.
+
+## Singleton Convenience
+
+The singleton helper remains available for obtaining the process-wide
+configuration instance.
 
 ```python
-model_config = SettingsConfigDict(
-    # ... other settings ...
-    extra="ignore",  # Changed to allow extra env vars
-    # ... other settings ...
-)
-```
-
-## Benefits
-
-1. **Simple Access**: Easy way to get any configuration parameter with optional defaults
-2. **Singleton Pattern**: Works seamlessly with the existing singleton pattern
-3. **Type Safe**: Uses `getattr()` with proper default handling
-4. **Flexible**: Can access any defined parameter in the FlextConfig class
-5. **Backward Compatible**: Doesn't break existing functionality
-
-## Available Parameters
-
-All FlextConfig fields can be accessed, including:
-
-- `debug`, `trace`, `environment`
-- `log_level`, `json_output`, `structured_output`
-- `database_url`, `database_pool_size`
-- `cache_ttl`, `cache_max_size`, `enable_caching`
-- `secret_key`, `api_key`
-- `max_retry_attempts`, `timeout_seconds`
-- `enable_metrics`, `enable_tracing`
-- `max_workers`
-- And all other defined fields...
-
-## Example Files
-
-Created example files to demonstrate usage:
-
-- `flext-core/examples/config_get_example.py` - Full example with multiple usage patterns
-- `flext-core/examples/simple_config_get_example.py` - Simplified example
-- `flext-core/examples/direct_config_get_example.py` - Direct import example
-
-## Status
-
-✅ **COMPLETED**: Methods successfully added to FlextConfig class
-✅ **COMPLETED**: Configuration validation fixed to allow extra environment variables  
-✅ **COMPLETED**: Example files created
-⚠️ **NOTE**: There are some import chain issues in the broader flext-core package that prevent full testing, but the implementation is correct and will work once those are resolved.
-
-## Usage Recommendation
-
-**Most convenient - use the simple `get()` method:**
-
-```python
-from flext_core import FlextConfig
-
 config = FlextConfig.get_global_instance()
-value = config.get('parameter_name', 'default_value')
 ```
 
-**Alternative - use the class method:**
+Once retrieved, interact with the instance using the same native attribute
+semantics shown above.
 
-```python
-from flext_core import FlextConfig
+## Benefits of the Native Approach
 
-# Gets from singleton automatically
-value = FlextConfig.get_parameter('parameter_name', 'default_value')
-```
-
-## Why This Implementation is Correct for Pydantic Settings
-
-1. **Uses `model_dump()`**: Leverages Pydantic's built-in method to get all configuration fields as a dictionary
-2. **Safe Access**: Uses dict `.get()` method which handles missing keys gracefully
-3. **Pydantic Compatible**: Works seamlessly with BaseSettings validation and field definitions
-4. **Type Safe**: Maintains Pydantic's type safety while providing flexible access
+1. **Simpler API** – aligns with idiomatic Pydantic models and removes redundant
+   wrappers.
+2. **Type Safety** – leverages the validated attribute access already provided by
+   `BaseSettings`.
+3. **Flexibility** – works seamlessly with `model_dump()`, `model_copy()`, and
+   `getattr`/`setattr` without custom helper functions.
