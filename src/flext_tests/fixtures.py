@@ -663,7 +663,7 @@ class FlextTestsFixtures:
         ) -> FlextTypes.Core.Dict:
             """Create processing command using ``FlextTypes.Core.Dict``."""
             command_data: FlextTypes.Core.Dict = (
-                dict(data) if data is not None else {"test": "value"}
+                data or {"test": "value"}
             )
 
             return {
