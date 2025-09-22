@@ -381,12 +381,12 @@ class FlextProtocols:
             """Protocol for command bus routing and execution."""
 
             @overload
-            def register_handler(self, handler: object, /) -> FlextResult[None]:
+            def register_handler(self, handler: Callable, /) -> FlextResult[None]:
                 ...
 
             @overload
             def register_handler(
-                self, command_type: object, handler: object, /,
+                self, command_type: type, handler: Callable, /,
             ) -> FlextResult[None]:
                 ...
 
