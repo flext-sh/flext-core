@@ -6,8 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
+import json
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
@@ -24,6 +26,75 @@ class ModelDumpable(Protocol):
     """Protocol for objects that have a model_dump method."""
 
     def model_dump(self) -> dict[str, object]: ...
+
+
+def _cache_sort_key(value: object) -> str:
+    """Return a deterministic string for ordering normalized cache components."""
+
+    return json.dumps(value, sort_keys=True, default=str)
+
+
+def _normalize_cache_component(value: object) -> object:
+    """Normalize arbitrary objects into cache-friendly deterministic structures."""
+
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+
+    if isinstance(value, bytes):
+        return ("bytes", value.hex())
+
+    if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
+        try:
+            dumped = value.model_dump()
+        except TypeError:
+            dumped = None
+        if isinstance(dumped, Mapping):
+            return ("pydantic", _normalize_cache_component(dumped))
+
+    if dataclasses.is_dataclass(value):
+        return ("dataclass", _normalize_cache_component(dataclasses.asdict(value)))
+
+    if isinstance(value, Mapping):
+        normalized_items = tuple(
+            (
+                f"{type(key).__name__}:{key}",
+                _normalize_cache_component(val),
+            )
+            for key, val in sorted(value.items(), key=lambda item: str(item[0]))
+        )
+        return ("mapping", normalized_items)
+
+    if isinstance(value, (list, tuple)):
+        return ("sequence", tuple(_normalize_cache_component(item) for item in value))
+
+    if isinstance(value, set):
+        normalized_set = tuple(
+            sorted(
+                (_normalize_cache_component(item) for item in value),
+                key=_cache_sort_key,
+            )
+        )
+        return ("set", normalized_set)
+
+    try:
+        value_vars = vars(value)
+    except TypeError:
+        return ("repr", repr(value))
+
+    normalized_vars = tuple(
+        (key, _normalize_cache_component(val))
+        for key, val in sorted(value_vars.items(), key=lambda item: item[0])
+    )
+    return ("vars", normalized_vars)
+
+
+def _make_cache_key(command: object) -> str:
+    """Create a deterministic cache key for the provided command/query."""
+
+    normalized_command = _normalize_cache_component(command)
+    serialized_command = json.dumps(normalized_command, sort_keys=True)
+    command_type = f"{command.__class__.__module__}.{command.__class__.__qualname__}"
+    return f"{command_type}:{serialized_command}"
 
 
 class FlextBus(FlextMixins):
@@ -51,6 +122,7 @@ class FlextBus(FlextMixins):
         super().__init__()
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self, "bus_config")
+        self._cache: dict[str, FlextResult[object]] = {}
         FlextMixins.clear_cache(self)
         # Timestampable mixin initialization
         self._created_at = datetime.now(UTC)
@@ -330,12 +402,13 @@ class FlextBus(FlextMixins):
         self._execution_count = int(self._execution_count) + 1
         command_type = type(command)
 
+        is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
+        cache_key: str | None = None
+
         # Check cache for query results if this is a query (and if metrics are enabled)
-        if self._config_model.enable_metrics and (
-            hasattr(command, "query_id") or "Query" in command_type.__name__
-        ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            cached_result = getattr(self, "_cache", {}).get(cache_key)
+        if self._config_model.enable_metrics and is_query:
+            cache_key = _make_cache_key(command)
+            cached_result = self._cache.get(cache_key)
             if cached_result is not None:
                 self.logger.info(
                     "Returning cached query result",
@@ -385,13 +458,10 @@ class FlextBus(FlextMixins):
         elapsed = time.time() - self._start_time
 
         # Cache successful query results
-        if (
-            result.is_success
-            and self._config_model.enable_caching
-            and (hasattr(command, "query_id") or "Query" in command_type.__name__)
-        ):
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
-            getattr(self, "_cache", {}).setdefault(cache_key, result)
+        if result.is_success and self._config_model.enable_caching and is_query:
+            if cache_key is None:
+                cache_key = _make_cache_key(command)
+            self._cache.setdefault(cache_key, result)
             self.logger.debug(
                 "Cached query result",
                 command_type=command_type.__name__,
