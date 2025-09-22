@@ -85,7 +85,7 @@ class FlextBus(FlextMixins):
         self._config_model = config_model
         self._config = config_model.model_dump()
         if config_model.enable_caching and config_model.max_cache_size > 0:
-            self._max_cache_size = int(config_model.max_cache_size)
+            self._max_cache_size = config_model.max_cache_size
         else:
             self._max_cache_size = 0
 
