@@ -824,6 +824,7 @@ class FlextConstants:
         METHOD_HANDLE = "handle"
         METHOD_PROCESS = "process"
         METHOD_EXECUTE = "execute"
+        METHOD_PROCESS_COMMAND = "process_command"
 
         # Authentication types
         AUTH_BEARER = "bearer"
