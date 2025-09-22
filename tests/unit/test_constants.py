@@ -7,8 +7,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import get_args
 
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextTypes
+
+
+def test_config_environments_align_with_environment_literal() -> None:
+    """Ensure constants mirror the canonical environment literal."""
+
+    environments = FlextConstants.Config.ENVIRONMENTS
+    literal_values = list(get_args(FlextTypes.Config.Environment))
+
+    assert isinstance(environments, list)
+    assert environments == literal_values
 
 
 class TestConstantsLogLevel100PercentCoverage:

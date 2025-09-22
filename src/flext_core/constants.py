@@ -7,7 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Final
+from typing import ClassVar, Final, get_args
+
+from flext_core.typings import FlextTypes
 
 
 class FlextConstants:
@@ -130,13 +132,18 @@ class FlextConstants:
     class Config:
         """Configuration defaults anchoring the unified lifecycle."""
 
-        ENVIRONMENTS: Final[list[str]] = [  # Usage count: 3
-            "development",
-            "staging",
-            "production",
-            "test",
-            "local",
-        ]
+        _ENVIRONMENT_LITERAL_VALUES: ClassVar[tuple[str, ...]] = get_args(
+            FlextTypes.Config.Environment
+        )
+        ENVIRONMENTS: Final[list[str]] = list(
+            _ENVIRONMENT_LITERAL_VALUES
+        )  # Usage count: 3
+        assert ENVIRONMENTS == list(
+            _ENVIRONMENT_LITERAL_VALUES
+        ), (
+            "FlextTypes.Config.Environment and "
+            "FlextConstants.Config.ENVIRONMENTS must stay aligned"
+        )
         DEFAULT_ENVIRONMENT: Final[str] = "development"  # Usage count: 0
         DOTENV_FILES: Final[list[str]] = [
             ".env",

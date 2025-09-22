@@ -74,6 +74,19 @@ Helper functions within `config.py` (for example `merge_settings`) simplify over
 
 ---
 
+## Environment Enumerations
+
+- `FlextTypes.Config.Environment` is the single source of truth for the
+  supported runtime environments.
+- `FlextConstants.Config.ENVIRONMENTS` is generated dynamically via
+  `typing.get_args(FlextTypes.Config.Environment)` so call sites keep using a
+  list while staying perfectly aligned with the type literal.
+
+This alignment removes duplicated lists and guarantees new environments are
+reflected in both type hints and runtime checks.
+
+---
+
 ## Modernization Checklist
 
 1. Downstream packages load settings through `FlextConfig` subclasses – no bespoke loaders.

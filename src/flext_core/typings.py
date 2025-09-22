@@ -173,10 +173,13 @@ class FlextTypes:
         type ConfigDict = dict[str, ConfigValue]  # Core config dictionary type
 
         # Environment type (used in config, handlers, commands)
+        # NOTE: This literal is the single source of truth for the available
+        # runtime environments. Constants, config defaults, and factories
+        # derive from it to avoid drifting lists across the codebase.
         type Environment = Literal[
             "development",
-            "production",
             "staging",
+            "production",
             "test",
             "local",
         ]
