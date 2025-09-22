@@ -9,7 +9,7 @@ from __future__ import annotations
 import contextlib
 import json
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 from pydantic import BaseModel
 
@@ -202,17 +202,22 @@ class FlextMixins:
             **config.context,
         }
 
-        # Log based on level - match Literal values exactly
-        if config.level == "DEBUG":
-            logger.debug(f"Operation: {config.operation}", extra=context)
-        elif config.level == "INFO":
-            logger.info(f"Operation: {config.operation}", extra=context)
-        elif config.level == "WARNING":
-            logger.warning(f"Operation: {config.operation}", extra=context)
-        elif config.level == "ERROR":
-            logger.error(f"Operation: {config.operation}", extra=context)
-        elif config.level == "CRITICAL":
-            logger.critical(f"Operation: {config.operation}", extra=context)
+        normalized_level = str(config.level).upper()
+        level_method_map: dict[str, Callable[..., None]] = {
+            FlextConstants.Logging.DEBUG: logger.debug,
+            FlextConstants.Logging.INFO: logger.info,
+            FlextConstants.Logging.WARNING: logger.warning,
+            FlextConstants.Logging.ERROR: logger.error,
+            FlextConstants.Logging.CRITICAL: logger.critical,
+        }
+
+        log_method = level_method_map.get(normalized_level)
+
+        if log_method is None:
+            normalized_level = FlextConstants.Logging.DEFAULT_LEVEL
+            log_method = level_method_map.get(normalized_level, logger.info)
+
+        log_method(f"Operation: {config.operation}", extra=context)
 
     # =============================================================================
     # STATE MANAGEMENT METHODS - Direct Pydantic implementation
