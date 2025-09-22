@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -16,6 +17,7 @@ from pydantic import BaseModel
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
@@ -79,14 +81,14 @@ class FlextMixins:
         )
 
     @staticmethod
-    def to_dict(request: FlextModels.SerializationRequest) -> dict[str, object]:
+    def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Core.Dict:
         """Convert object to dictionary using SerializationRequest model.
 
         Args:
             request: SerializationRequest containing object and serialization options
 
         Returns:
-            Dictionary representation of the object
+            Dictionary representation of the object as FlextTypes.Core.Dict
 
         """
         obj = request.data
@@ -98,17 +100,23 @@ class FlextMixins:
                 result = model_dump_method()
                 if isinstance(result, dict):
                     # Type-safe conversion with explicit casting
-                    return cast("dict[str, object]", result)
-                return {"model_dump": result}
+                    return cast("FlextTypes.Core.Dict", result)
+                return cast(
+                    "FlextTypes.Core.Dict",
+                    {"model_dump": result},
+                )
 
         # Try __dict__ method with proper type casting
         if hasattr(obj, "__dict__"):
             obj_dict = obj.__dict__
-            # obj.__dict__ is always a dict[str, object], so we can safely cast it
-            return cast("dict[str, object]", obj_dict)
+            # obj.__dict__ is always a FlextTypes.Core.Dict, so we can safely cast it
+            return cast("FlextTypes.Core.Dict", obj_dict)
 
         # Fallback to type and value representation
-        return {"type": type(obj).__name__, "value": str(obj)}
+        return cast(
+            "FlextTypes.Core.Dict",
+            {"type": type(obj).__name__, "value": str(obj)},
+        )
 
     # =============================================================================
     # VALIDATION METHODS - Direct Pydantic implementation
@@ -195,17 +203,22 @@ class FlextMixins:
             **config.context,
         }
 
-        # Log based on level - match Literal values exactly
-        if config.level == "DEBUG":
-            logger.debug(f"Operation: {config.operation}", extra=context)
-        elif config.level == "INFO":
-            logger.info(f"Operation: {config.operation}", extra=context)
-        elif config.level == "WARNING":
-            logger.warning(f"Operation: {config.operation}", extra=context)
-        elif config.level == "ERROR":
-            logger.error(f"Operation: {config.operation}", extra=context)
-        elif config.level == "CRITICAL":
-            logger.critical(f"Operation: {config.operation}", extra=context)
+        normalized_level = str(config.level).upper()
+        level_method_map: dict[str, Callable[..., None]] = {
+            FlextConstants.Logging.DEBUG: logger.debug,
+            FlextConstants.Logging.INFO: logger.info,
+            FlextConstants.Logging.WARNING: logger.warning,
+            FlextConstants.Logging.ERROR: logger.error,
+            FlextConstants.Logging.CRITICAL: logger.critical,
+        }
+
+        log_method = level_method_map.get(normalized_level)
+
+        if log_method is None:
+            normalized_level = FlextConstants.Logging.DEFAULT_LEVEL
+            log_method = level_method_map.get(normalized_level, logger.info)
+
+        log_method(f"Operation: {config.operation}", extra=context)
 
     # =============================================================================
     # STATE MANAGEMENT METHODS - Direct Pydantic implementation
@@ -292,8 +305,8 @@ class FlextMixins:
         # Use Pydantic's model_dump to get all fields as dict
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
             model_dump_method = getattr(obj, "model_dump")
-            model_data: dict[str, object] = cast(
-                "dict[str, object]", model_dump_method()
+            model_data: FlextTypes.Core.Dict = cast(
+                "FlextTypes.Core.Dict", model_dump_method()
             )
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
@@ -330,8 +343,8 @@ class FlextMixins:
         try:
             # Check if the parameter exists in the model fields
             if hasattr(obj, "model_fields"):
-                model_fields: dict[str, object] = cast(
-                    "dict[str, object]", getattr(obj, "model_fields")
+                model_fields: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", getattr(obj, "model_fields")
                 )
                 if parameter not in model_fields:
                     return False
@@ -343,8 +356,8 @@ class FlextMixins:
             if hasattr(obj, "model_validate") and hasattr(obj, "model_dump"):
                 # Get current model data and re-validate to ensure consistency
                 model_dump_method = getattr(obj, "model_dump")
-                current_data: dict[str, object] = cast(
-                    "dict[str, object]", model_dump_method()
+                current_data: FlextTypes.Core.Dict = cast(
+                    "FlextTypes.Core.Dict", model_dump_method()
                 )
                 current_data[parameter] = value
                 # This will trigger all field and model validators
@@ -445,53 +458,17 @@ class FlextMixins:
         """
 
     class Configurable:
-        """Mixin for configuration access capabilities.
+        """Mixin for configuration capabilities.
 
-        Provides the get() method for objects that can access configuration
-        parameters using FlextMixins methods.
+        Components inheriting from this mixin should use native Pydantic accessors
+        for configuration management. Retrieve values with direct attribute access
+        (``config.debug``) or ``getattr`` and produce validated updates with
+        attribute assignment or ``model_copy(update=...)``.
+
+        Example:
+            config = FlextConfig.get_global_instance()
+            debug_mode = config.debug
+            config.debug = True
+            updated = config.model_copy(update={"timeout_seconds": 60})
+
         """
-
-        def get(self, parameter: str) -> object:
-            """Get any parameter value from this configuration instance.
-
-            This method uses FlextMixins.get_config_parameter internally
-            to provide Pydantic-compatible parameter access.
-            The parameter MUST be defined in the model.
-
-            Args:
-                parameter: The parameter name to retrieve (must exist in model)
-
-            Returns:
-                The parameter value
-
-            Raises:
-                KeyError: If parameter is not defined in the model
-
-            Example:
-                # For any class that inherits from FlextMixins.Configurable
-                debug_mode = config.get('debug')
-                log_level = config.get('log_level')
-
-            """
-            return FlextMixins.get_config_parameter(self, parameter)
-
-        def set(self, parameter: str, value: object) -> bool:
-            """Set any parameter value on this configuration instance with validation.
-
-            This method uses FlextMixins.set_config_parameter internally
-            to provide Pydantic-compatible parameter setting with full validation.
-
-            Args:
-                parameter: The parameter name to set
-                value: The new value to set (will be validated by Pydantic)
-
-            Returns:
-                True if successful, False if validation failed or parameter doesn't exist
-
-            Example:
-                # For any class that inherits from FlextMixins.Configurable
-                success = config.set('debug', True)
-                success = config.set('log_level', 'DEBUG')
-
-            """
-            return FlextMixins.set_config_parameter(self, parameter, value)

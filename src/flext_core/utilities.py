@@ -400,7 +400,11 @@ class FlextUtilities:
                 >> (
                     lambda name: FlextResult[str].ok(re.sub(r'[<>:"/\\|?*]', "_", name))
                 )
-                >> (lambda name: FlextResult[str].ok(name[:255]))  # Limit length
+                >> (
+                    lambda name: FlextResult[str].ok(
+                        name[: FlextConstants.Validation.MAX_EMAIL_LENGTH]
+                    )
+                )  # Limit length to max field length
             )
 
         @staticmethod
@@ -482,7 +486,18 @@ class FlextUtilities:
             failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
             recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
         ) -> FlextResult[T]:
-            """Simple circuit breaker pattern implementation."""
+            """Circuit breaker pattern implementation with config integration."""
+            from flext_core.config import FlextConfig
+
+            # Check if circuit breaker is enabled in configuration
+            config = FlextConfig.get_global_instance()
+            if not config.enable_circuit_breaker:
+                # Circuit breaker disabled - execute operation directly
+                try:
+                    return operation()
+                except Exception as e:
+                    return FlextResult[T].fail(f"Operation failed: {e}")
+
             threshold_validation = FlextUtilities.Validation.validate_retry_count(
                 failure_threshold
             )
@@ -499,12 +514,81 @@ class FlextUtilities:
                     f"Invalid recovery timeout: {timeout_validation.error}"
                 )
 
-            # Basic implementation - execute operation directly
-            # In production, would track failure count and state
+            # Get or create circuit breaker state for this operation
+            operation_id = f"{operation.__name__ if hasattr(operation, '__name__') else 'anonymous'}_{id(operation)}"
+            state = FlextUtilities.Processing._get_circuit_breaker_state(operation_id)
+
+            # Check current circuit state
+            current_time = time.time()
+
+            # Handle OPEN state (circuit is open, failures exceeded threshold)
+            if state["circuit_state"] == "OPEN":
+                if current_time - state["last_failure_time"] >= recovery_timeout:
+                    # Transition to HALF_OPEN state
+                    state["circuit_state"] = "HALF_OPEN"
+                    state["failure_count"] = 0
+                else:
+                    # Circuit still open - reject immediately
+                    return FlextResult[T].fail(
+                        f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. "
+                        f"Next retry in {recovery_timeout - (current_time - state['last_failure_time']):.1f}s"
+                    )
+
+            # Execute operation (CLOSED or HALF_OPEN state)
             try:
-                return operation()
+                result = operation()
+
+                if result.is_success:
+                    # Operation succeeded - reset failure count and close circuit
+                    state["failure_count"] = 0
+                    state["circuit_state"] = "CLOSED"
+                    state["last_success_time"] = current_time
+                    return result
+                else:
+                    # Operation failed - increment failure count
+                    state["failure_count"] += 1
+                    state["last_failure_time"] = current_time
+
+                    if state["failure_count"] >= failure_threshold:
+                        # Open circuit - failures exceeded threshold
+                        state["circuit_state"] = "OPEN"
+                        return FlextResult[T].fail(
+                            f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
+                            f"Error: {result.error}"
+                        )
+
+                    return result
+
             except Exception as e:
+                # Exception during operation - treat as failure
+                state["failure_count"] += 1
+                state["last_failure_time"] = current_time
+
+                if state["failure_count"] >= failure_threshold:
+                    state["circuit_state"] = "OPEN"
+                    return FlextResult[T].fail(
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
+                        f"Exception: {e}"
+                    )
+
                 return FlextResult[T].fail(f"Circuit breaker operation failed: {e}")
+
+        # Circuit breaker state management (class-level state)
+        _circuit_breaker_states: dict[str, dict[str, object]] = {}
+        _circuit_breaker_lock = threading.Lock()
+
+        @classmethod
+        def _get_circuit_breaker_state(cls, operation_id: str) -> dict[str, object]:
+            """Get or create circuit breaker state for an operation."""
+            with cls._circuit_breaker_lock:
+                if operation_id not in cls._circuit_breaker_states:
+                    cls._circuit_breaker_states[operation_id] = {
+                        "circuit_state": "CLOSED",  # CLOSED, OPEN, HALF_OPEN
+                        "failure_count": 0,
+                        "last_failure_time": 0.0,
+                        "last_success_time": time.time(),
+                    }
+                return cls._circuit_breaker_states[operation_id]
 
     class Utilities:
         """General utility functions using railway composition."""
@@ -534,14 +618,10 @@ class FlextUtilities:
 
                 # For other types, try to cast directly
                 try:
-                    # Type construction - handle object type specially
-                    if target_type is object:
-                        converted_value = value
-                    else:
-                        # For other types with constructors, try calling them
-                        # Use type ignore to handle mypy's overly strict object constructor check
-                        converted_value = target_type(value)  # type: ignore[call-arg]
-                    return FlextResult[T].ok(cast("T", converted_value))
+                    # For other types with constructors, try calling them
+                    # Use type ignore to handle mypy's overly strict object constructor check
+                    converted_value = target_type(value)  # type: ignore[call-arg]
+                    return FlextResult[T].ok(converted_value)
                 except (TypeError, ValueError):
                     # If constructor fails, return the value with type ignore
                     return FlextResult[T].ok(cast("T", value))
@@ -754,7 +834,7 @@ class FlextUtilities:
         @staticmethod
         def generate_correlation_id() -> str:
             """Generate a correlation ID for tracking."""
-            return f"corr-{str(uuid.uuid4())[:8]}"
+            return f"corr_{str(uuid.uuid4())[:8]}"
 
         @staticmethod
         def generate_short_id(length: int = 8) -> str:
@@ -962,15 +1042,25 @@ class FlextUtilities:
             failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
             recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
         ) -> FlextResult[TCircuit]:
-            """Circuit breaker pattern using railway composition."""
+            """Circuit breaker pattern using railway composition with config integration."""
+            from flext_core.config import FlextConfig
+
+            # Check if circuit breaker is enabled in configuration
+            config = FlextConfig.get_global_instance()
+            if not config.enable_circuit_breaker:
+                # Circuit breaker disabled - execute operation directly
+                return operation()
+
             # Validate parameters
             if failure_threshold <= 0:
                 return FlextResult[TCircuit].fail("Failure threshold must be positive")
             if recovery_timeout <= 0:
                 return FlextResult[TCircuit].fail("Recovery timeout must be positive")
 
-            # Simple implementation - could be enhanced with state management
-            return operation()
+            # Delegate to Processing circuit breaker with enhanced state management
+            return FlextUtilities.Processing.circuit_breaker(
+                operation, failure_threshold, recovery_timeout
+            )
 
         @staticmethod
         def with_fallback[TFallback](

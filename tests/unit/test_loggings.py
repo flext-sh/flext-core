@@ -26,12 +26,16 @@ from types import TracebackType
 from typing import NoReturn, Self, cast
 
 import pytest
+import structlog
 
 from flext_core import (
+    FlextConfig,
     FlextContext,
     FlextLogger,
+    FlextModels,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import (
     FlextTestsMatchers,
 )
@@ -80,6 +84,9 @@ def reset_logging_state() -> Generator[None]:
     # Reset correlation ID (clear any existing ID)
     FlextContext.Utilities.clear_context()
 
+    # Reset configuration state so each test can control feature flags
+    FlextConfig.reset_global_instance()
+
     # Reset global correlation ID to ensure test isolation
     FlextLogger._global_correlation_id = None
 
@@ -91,6 +98,7 @@ def reset_logging_state() -> Generator[None]:
     # Clean up
     FlextLogger._configured = False
     FlextLogger._global_correlation_id = None
+    FlextConfig.reset_global_instance()
 
 
 class TestFlextLoggerInitialization:
@@ -112,7 +120,7 @@ class TestFlextLoggerInitialization:
             "test_service",
             _level="DEBUG",
             _service_name="payment-service",
-            service_version="2.1.0",
+            _service_version="2.1.0",
         )
 
         assert logger._name == "test_service"
@@ -150,7 +158,7 @@ class TestFlextLoggerInitialization:
 
         # Test that environment is detected (should be development in testing)
         environment = logger._get_environment()
-        assert environment in {"development", "production", "staging"}, (
+        assert environment in set(FlextConstants.Config.ENVIRONMENTS), (
             f"Unexpected environment: {environment}"
         )
 
@@ -293,6 +301,100 @@ class TestStructuredLogging:
             )
         except Exception as e:
             pytest.fail(f"Logging should not raise exceptions: {e}")
+
+
+class TestLoggingFeatureFlags:
+    """Validate feature-flag driven logging behaviour."""
+
+    @pytest.mark.parametrize(
+        ("include_context", "mask_sensitive_data", "expected_password"),
+        [
+            (True, True, "[REDACTED]"),
+            (True, False, "secret123"),
+            (False, True, None),
+            (False, False, None),
+        ],
+    )
+    def test_context_and_mask_flags(
+        self,
+        include_context: bool,
+        mask_sensitive_data: bool,
+        expected_password: str | None,
+    ) -> None:
+        """Ensure context inclusion and masking follow FlextConfig settings."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(
+                include_context=include_context,
+                mask_sensitive_data=mask_sensitive_data,
+            )
+        )
+
+        logger = FlextLogger("flag_test_context")
+        context_data = {"password": "secret123", "username": "alice"}
+
+        entry = logger._build_log_entry("INFO", "Context flag", context_data)
+
+        if include_context:
+            assert "context" in entry
+            context_payload = entry["context"]
+            assert context_payload["username"] == "alice"
+            assert context_payload.get("password") == expected_password
+        else:
+            assert "context" not in entry
+
+    @pytest.mark.parametrize("include_correlation_id", [True, False])
+    def test_correlation_id_flag(self, include_correlation_id: bool) -> None:
+        """Ensure correlation ID is optional based on configuration."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(include_correlation_id=include_correlation_id)
+        )
+
+        logger = FlextLogger("flag_test_correlation")
+        entry = logger._build_log_entry("INFO", "Correlation flag")
+
+        if include_correlation_id:
+            assert entry.get("correlation_id") == logger._correlation_id
+        else:
+            assert "correlation_id" not in entry
+
+    @pytest.mark.parametrize("track_performance", [True, False])
+    def test_performance_flag(self, track_performance: bool) -> None:
+        """Verify performance block obeys tracking configuration."""
+
+        FlextConfig.set_global_instance(
+            FlextConfig.create(track_performance=track_performance)
+        )
+
+        logger = FlextLogger("flag_test_performance")
+        entry = logger._build_log_entry(
+            "INFO",
+            "Performance flag",
+            {},
+            duration_ms=42.5,
+        )
+
+        if track_performance:
+            performance = entry.get("performance", {})
+            assert performance["duration_ms"] == 42.5
+        else:
+            assert "performance" not in entry
+
+    @pytest.mark.parametrize("track_timing", [True, False])
+    def test_timing_flag(self, track_timing: bool) -> None:
+        """Ensure execution metadata respects timing tracker configuration."""
+
+        FlextConfig.set_global_instance(FlextConfig.create(track_timing=track_timing))
+
+        logger = FlextLogger("flag_test_timing")
+        entry = logger._build_log_entry("INFO", "Timing flag")
+
+        if track_timing:
+            execution = entry.get("execution", {})
+            assert "uptime_seconds" in execution
+        else:
+            assert "execution" not in entry
 
 
 class TestCorrelationIdFunctionality:
@@ -919,6 +1021,51 @@ class TestLoggerConfiguration:
         assert context["field1"] == "value1"
         assert context["field2"] == 123
 
+    def test_configure_uses_global_log_verbosity(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ensure global config log_verbosity flows into FlextLogger.configure."""
+
+        config = FlextConfig.get_global_instance()
+        original_verbosity = config.log_verbosity
+        config.log_verbosity = "full"
+
+        FlextLogger._configured = False
+        structlog.reset_defaults()
+
+        captured_kwargs: dict[str, object] = {}
+        original_model = FlextModels.LoggerConfigurationModel
+
+        def capture_logger_configuration_model(
+            *args: object, **kwargs: object
+        ) -> FlextModels.LoggerConfigurationModel:
+            captured_kwargs.clear()
+            captured_kwargs.update(kwargs)
+            return original_model(*args, **kwargs)
+
+        monkeypatch.setattr(
+            FlextModels, "LoggerConfigurationModel", capture_logger_configuration_model
+        )
+
+        try:
+            result = FlextLogger.configure(
+                log_level="INFO",
+                json_output=False,
+                include_source=True,
+                structured_output=True,
+            )
+
+            assert result.is_success
+            assert FlextLogger._configured is True
+            assert captured_kwargs.get("log_verbosity") == "full"
+
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_verbosity"] == "full"
+        finally:
+            config.log_verbosity = original_verbosity
+            structlog.reset_defaults()
+            FlextLogger._configured = False
+
     def test_development_console_output(self) -> None:
         """Test development console output configuration."""
         # Reset configuration
@@ -962,6 +1109,22 @@ class TestLoggerConfiguration:
         log_entry = logger._build_log_entry("INFO", "Processor test")
         assert log_entry.get("correlation_id") == test_correlation
 
+    def test_global_log_verbosity_propagates_to_configuration(self) -> None:
+        """Ensure global log verbosity updates are honored by configure."""
+        config = FlextConfig.get_global_instance()
+        original_verbosity = config.log_verbosity
+        config.log_verbosity = "compact"
+
+        try:
+            FlextLogger._configured = False
+            result = FlextLogger.configure()
+            assert result.is_success
+
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_verbosity"] == "compact"
+        finally:
+            config.log_verbosity = original_verbosity
+
 
 class TestConvenienceFunctions:
     """Test convenience functions and factory methods."""
@@ -979,7 +1142,7 @@ class TestConvenienceFunctions:
         logger = FlextLogger(
             "versioned_test",
             _service_name="test-service",
-            service_version="1.2.3",
+            _service_version="1.2.3",
         )
 
         assert logger._service_version == "1.2.3"
