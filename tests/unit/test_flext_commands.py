@@ -11,16 +11,18 @@ from datetime import UTC, datetime
 from typing import Protocol, cast
 
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import (
     FlextBus,
     FlextCqrs,
     FlextHandlers,
+    FlextLogger,
     FlextModels,
     FlextResult,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 
@@ -660,6 +662,64 @@ class TestFlextCqrsComprehensive:
         assert handler_result.unwrap() == "processed_{'payload': 'data'}"
 
     # =========================================================================
+    # HANDLER TYPE RESOLUTION
+    # =========================================================================
+
+    def test_handler_caches_generic_message_types(self) -> None:
+        """Handlers with generics should cache accepted types for reuse."""
+
+        class CachedTypeHandler(FlextHandlers[CreateUserCommand, UserCreatedEvent]):
+            def handle(
+                self, message: CreateUserCommand
+            ) -> FlextResult[UserCreatedEvent]:
+                return FlextResult[UserCreatedEvent].fail("not used in test")
+
+        handler = CachedTypeHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand) is True
+        assert handler.can_handle(UpdateUserCommand) is False
+
+    def test_handler_resolves_message_type_from_handle_annotations(self) -> None:
+        """Handlers without generics should fall back to handle() annotations."""
+
+        class AnnotatedHandler(FlextHandlers):
+            def handle(self, message: CreateUserCommand) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = AnnotatedHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand) is True
+        assert handler.can_handle(DeleteUserCommand) is False
+
+    def test_handler_without_type_hints_warns_once(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Handlers lacking hints should warn once and reject all messages."""
+
+        recorded_warnings: list[str] = []
+
+        def fake_warning(
+            self, message: str, *args: object, **context: object
+        ) -> None:
+            recorded_warnings.append(message)
+
+        monkeypatch.setattr(FlextLogger, "warning", fake_warning)
+
+        class UntypedHandler(FlextHandlers):
+            def handle(self, message) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = UntypedHandler()
+
+        assert handler._accepted_message_types == ()
+        assert handler.can_handle(CreateUserCommand) is False
+        assert handler._handler_type_warning_logged is True
+        assert handler.can_handle(UpdateUserCommand) is False
+        assert recorded_warnings == ["handler_type_constraints_unknown"]
+
+    # =========================================================================
     # COMMAND FACTORIES AND DECORATORS
     # =========================================================================
 
@@ -809,6 +869,82 @@ class TestFlextCqrsComprehensive:
         event = result.value
         assert event.username == "async_user"
         assert "async_user_async_user" in event.user_id
+
+    # =========================================================================
+    # VALIDATION PIPELINE CUSTOMIZATION
+    # =========================================================================
+
+    def test_pydantic_validation_skips_revalidation_by_default(self) -> None:
+        """Ensure handlers trust Pydantic models without extra validation."""
+
+        class MutableCommand(BaseModel):
+            model_config = ConfigDict(validate_assignment=False)
+            value: int
+
+        class MutableHandler(FlextHandlers[MutableCommand, str]):
+            def handle(self, message: MutableCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(str(message.value))
+
+        handler = MutableHandler()
+        command = MutableCommand(value=1)
+        command.value = "not-an-int"  # type: ignore[assignment]
+
+        validation = handler.validate_command(command)
+        assert validation.is_success
+
+        result = handler.execute(command)
+        assert result.success
+        assert result.value == "not-an-int"
+
+    def test_pydantic_revalidation_flag_enforces_constraints(self) -> None:
+        """Enabling the revalidation flag should surface invalid mutations."""
+
+        class MutableCommand(BaseModel):
+            model_config = ConfigDict(validate_assignment=False)
+            value: int
+
+        class StrictHandler(FlextHandlers[MutableCommand, str]):
+            def __init__(self) -> None:
+                super().__init__(revalidate_pydantic_messages=True)
+
+            def handle(self, message: MutableCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(str(message.value))
+
+        handler = StrictHandler()
+        command = MutableCommand(value=1)
+        command.value = "invalid"  # type: ignore[assignment]
+
+        validation = handler.validate_command(command)
+        assert validation.is_failure
+        assert validation.error_code == FlextConstants.Errors.VALIDATION_ERROR
+        assert validation.error is not None
+        assert "Pydantic revalidation failed" in validation.error
+
+    def test_handler_with_recursive_payload_does_not_break_pipeline(self) -> None:
+        """Handlers must process recursive or non-serializable payloads safely."""
+
+        class RecursiveCommand(BaseModel):
+            model_config = ConfigDict(
+                arbitrary_types_allowed=True,
+                extra="allow",
+                validate_assignment=False,
+            )
+            payload: object | None = None
+
+        class RecursiveHandler(FlextHandlers[RecursiveCommand, object]):
+            def handle(self, message: RecursiveCommand) -> FlextResult[object]:
+                return FlextResult[object].ok(message.payload)
+
+        handler = RecursiveHandler()
+        command = RecursiveCommand(payload="seed")
+        command.payload = command  # Create recursive reference that defies serialization
+
+        validation = handler.validate_command(command)
+        assert validation.is_success
+
+        result = handler.execute(command)
+        assert result.success
+        assert result.value is command
 
     # =========================================================================
     # ERROR SCENARIOS AND EDGE CASES
