@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import time
 from abc import abstractmethod
-from typing import Literal, get_origin
+from collections.abc import Callable
+from typing import Literal, cast, get_origin
 
 from pydantic import BaseModel
 
@@ -135,6 +136,72 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             self._revalidate_pydantic_messages = metadata_flag
         else:
             self._revalidate_pydantic_messages = False
+    
+    def from_callable(
+        cls,
+        handler_func: Callable[[object], object | FlextResult[object]],
+        *,
+        mode: Literal["command", "query"],
+        handler_config: FlextModels.CqrsConfig.Handler
+        | dict[str, object]
+        | None = None,
+        handler_name: str | None = None,
+    ) -> FlextHandlers[object, object]:
+        """Create a ``FlextHandlers`` wrapper around a bare callable."""
+
+        if mode not in (
+            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+        ):
+            msg = (
+                f"Invalid mode '{mode}'. Expected "
+                f"'{FlextConstants.Cqrs.COMMAND_HANDLER_TYPE}' or "
+                f"'{FlextConstants.Cqrs.QUERY_HANDLER_TYPE}'."
+            )
+            raise ValueError(msg)
+
+        resolved_name = handler_name or getattr(
+            handler_func, "__name__", cls.__name__
+        )
+        resolved_mode: Literal["command", "query"] = (
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+            if mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+            else FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+        )
+
+        class CallableHandler(cls[object, object]):
+            def __init__(self) -> None:
+                super().__init__(
+                    handler_mode=resolved_mode,
+                    handler_name=resolved_name,
+                    handler_config=handler_config,
+                )
+                self._handler_func = handler_func
+
+            def handle(self, message: object) -> FlextResult[object]:
+                try:
+                    result = self._handler_func(message)
+                except Exception as exc:  # pragma: no cover - logging path
+                    self.logger.exception(
+                        "callable_handler_exception",
+                        handler_mode=self.mode,
+                        handler_name=self.handler_name,
+                    )
+                    return FlextResult[object].fail(
+                        (
+                            f"Handler callable '{resolved_name}' raised "
+                            f"{type(exc).__name__}: {exc}"
+                        )
+                    )
+
+                if isinstance(result, FlextResult):
+                    return cast("FlextResult[object]", result)
+                return FlextResult[object].ok(result)
+
+            def __call__(self, message: object) -> FlextResult[object]:
+                return self.handle(message)
+
+        return CallableHandler()
 
     def _resolve_mode(
         self,
