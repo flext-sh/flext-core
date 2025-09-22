@@ -923,6 +923,15 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             FlextResult[None]: Success or failure with error details
 
         """
+        global_config = FlextConfig.get_global_instance()
+        resolved_log_verbosity = (
+            log_verbosity
+            if log_verbosity is not None
+            else getattr(
+                global_config, "log_verbosity", FlextConstants.Logging.VERBOSITY
+            )
+        )
+
         # Create configuration model with defaults
         config_model = FlextModels.LoggerConfigurationModel(
             log_level=log_level or "INFO",
@@ -930,7 +939,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             include_source=include_source or FlextConstants.Logging.INCLUDE_SOURCE,
             structured_output=structured_output
             or FlextConstants.Logging.STRUCTURED_OUTPUT,
-            log_verbosity=log_verbosity or FlextConstants.Logging.VERBOSITY,
+            log_verbosity=resolved_log_verbosity,
         )
 
         # Reset if already configured (allow reconfiguration)
