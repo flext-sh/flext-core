@@ -9,14 +9,16 @@ from __future__ import annotations
 import json
 import threading
 import tomllib
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self
 
 import yaml
 from pydantic import (
     Field,
     field_validator,
     model_validator,
+    PrivateAttr,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -311,6 +313,17 @@ class FlextConfig(BaseSettings):
         description="Automatically update timestamps on model changes",
     )
 
+    _created_at: datetime | None = PrivateAttr(default=None)
+    _loaded_from_file: bool = PrivateAttr(default=False)
+    _source_path: Path | None = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        """Stamp metadata after model initialization."""
+
+        super().model_post_init(__context)
+        if self._created_at is None:
+            self._created_at = datetime.now(timezone.utc)
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -499,7 +512,10 @@ class FlextConfig(BaseSettings):
             msg = f"Unsupported configuration file format: {config_path.suffix}"
             raise ValueError(msg)
 
-        return cls.model_validate(config_data)
+        config = cls.model_validate(config_data)
+        config._loaded_from_file = True
+        config._source_path = config_path
+        return config
 
     def to_dict(self) -> dict[str, object]:
         """Convert configuration to dictionary.
@@ -534,6 +550,27 @@ class FlextConfig(BaseSettings):
         current_data = self.to_dict()
         merged_data = {**current_data, **other_data}
         return self.__class__.model_validate(merged_data)
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the timestamp when the configuration instance was created."""
+
+        if self._created_at is None:
+            msg = "Configuration creation timestamp is not initialized"
+            raise AttributeError(msg)
+        return self._created_at
+
+    @property
+    def loaded_from_file(self) -> bool:
+        """Return whether the configuration was sourced from a file."""
+
+        return self._loaded_from_file
+
+    @property
+    def source_path(self) -> Path | None:
+        """Return the configuration file path when loaded from disk."""
+
+        return self._source_path
 
     # Global instance management
     _global_instance: ClassVar[FlextConfig | None] = None
@@ -605,6 +642,7 @@ class FlextConfig(BaseSettings):
             "environment": self.environment,
             "loaded_from_file": getattr(self, "_loaded_from_file", False),
             "created_at": getattr(self, "_created_at", None),
+            "source_path": getattr(self, "_source_path", None),
         }
 
 

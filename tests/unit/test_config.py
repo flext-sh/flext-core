@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -55,6 +56,19 @@ class TestFlextConfigBasics:
         assert config.debug is False
         assert config.max_workers == 8
         assert config.log_level == "DEBUG"
+
+    def test_flext_config_metadata_created_at(self) -> None:
+        """Ensure FlextConfig instances expose creation metadata."""
+
+        config = FlextConfig()
+
+        metadata = config.get_metadata()
+        assert metadata["created_at"] is not None
+        assert isinstance(metadata["created_at"], datetime)
+        assert metadata["loaded_from_file"] is False
+        assert config.created_at == metadata["created_at"]
+        assert config.loaded_from_file is False
+        assert config.source_path is None
 
     def test_flext_config_validation_errors(self) -> None:
         """Test FlextConfig validation errors."""
@@ -169,6 +183,13 @@ class TestFlextConfigClassMethods:
             assert config.environment == "test"
             assert config.debug is True
             assert config.max_workers == 6
+            metadata = config.get_metadata()
+            assert metadata["loaded_from_file"] is True
+            assert metadata["source_path"] == Path(json_path)
+            assert isinstance(metadata["created_at"], datetime)
+            assert config.loaded_from_file is True
+            assert config.source_path == Path(json_path)
+            assert config.created_at == metadata["created_at"]
         finally:
             Path(json_path).unlink(missing_ok=True)
 
