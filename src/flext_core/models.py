@@ -65,7 +65,7 @@ class ModelDumpKwargs(TypedDict, total=False):
     serialize_as_any: bool
     indent: int | None
     mode: Literal["json", "python"]
-    context: dict[str, object] | None
+    context: FlextTypes.Core.Dict | None
 
 
 class FlextModels:
@@ -168,7 +168,7 @@ class FlextModels:
             return False
 
         def __hash__(self) -> int:
-            """Hash based on values for use in sets/dict[str, object]s."""
+            """Hash based on values for use in sets/FlextTypes.Core.Dict collections."""
             return hash(tuple(self.model_dump().items()))
 
         @classmethod
@@ -237,7 +237,9 @@ class FlextModels:
 
         @field_validator("pagination")
         @classmethod
-        def validate_pagination(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_pagination(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate pagination parameters using FlextConstants."""
             page = v.get("page", FlextConstants.Performance.DEFAULT_PAGE_NUMBER)
             size = v.get("size", FlextConstants.Performance.DEFAULT_PAGE_SIZE)
@@ -330,7 +332,7 @@ class FlextModels:
         """Saga pattern for distributed transactions."""
 
         saga_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        steps: list[dict[str, object]] = Field(default_factory=list)
+        steps: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         current_step: int = Field(
             default=FlextConstants.Performance.DEFAULT_CURRENT_STEP,
             ge=FlextConstants.Performance.MIN_CURRENT_STEP,
@@ -406,7 +408,7 @@ class FlextModels:
 
         name: str
         description: str | None = None
-        rules: list[dict[str, object]] = Field(default_factory=list)
+        rules: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         enabled: bool = True
         priority: int = Field(
             default=FlextConstants.Performance.DEFAULT_PRIORITY,
@@ -520,7 +522,7 @@ class FlextModels:
         """Queue model for message processing."""
 
         name: str
-        messages: list[dict[str, object]] = Field(default_factory=list)
+        messages: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         max_size: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().cache_max_size
         )
@@ -605,7 +607,7 @@ class FlextModels:
         """Pipeline model."""
 
         name: str
-        stages: list[dict[str, object]] = Field(default_factory=list)
+        stages: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         current_stage: int = 0
         status: Literal["idle", "running", "completed", "failed"] = "idle"
 
@@ -614,7 +616,7 @@ class FlextModels:
 
         workflow_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         name: str
-        steps: list[dict[str, object]] = Field(default_factory=list)
+        steps: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         current_step: int = 0
         context: FlextTypes.Core.Dict = Field(default_factory=dict)
 
@@ -1163,7 +1165,9 @@ class FlextModels:
 
         @field_validator("context")
         @classmethod
-        def validate_context(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_context(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate context has required fields."""
             if "correlation_id" not in v:
                 v["correlation_id"] = str(uuid.uuid4())
@@ -1270,7 +1274,7 @@ class FlextModels:
         """Pipeline configuration with advanced validation."""
 
         name: str = Field(min_length=FlextConstants.Performance.MIN_NAME_LENGTH)
-        steps: list[dict[str, object]] = Field(default_factory=list)
+        steps: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         parallel_execution: bool = False
         stop_on_error: bool = True
         max_parallel: int = Field(gt=0, default=4)
@@ -1420,7 +1424,9 @@ class FlextModels:
 
         @field_validator("extra")
         @classmethod
-        def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_context_data(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate context data is serializable."""
             # Ensure all values are JSON serializable
             try:
@@ -1443,7 +1449,9 @@ class FlextModels:
 
         @field_validator("context_data")
         @classmethod
-        def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_context_data(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate context data."""
             max_context_keys = 100
             if len(v) > max_context_keys:
@@ -1505,7 +1513,9 @@ class FlextModels:
 
         @field_validator("metadata")
         @classmethod
-        def validate_metadata(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_metadata(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate metadata is not too large."""
             max_metadata_size = FlextConstants.Performance.MAX_METADATA_SIZE
             if len(str(v)) > max_metadata_size:
@@ -1567,7 +1577,9 @@ class FlextModels:
 
         @field_validator("context")
         @classmethod
-        def validate_context(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_context(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Ensure context has required fields."""
             if "trace_id" not in v:
                 v["trace_id"] = str(uuid.uuid4())
@@ -1612,7 +1624,7 @@ class FlextModels:
         """Domain service batch request."""
 
         service_name: str
-        operations: list[dict[str, object]] = Field(default_factory=list)
+        operations: list[FlextTypes.Core.Dict] = Field(default_factory=list)
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(default=100)
@@ -1868,7 +1880,9 @@ class FlextModels:
 
         @field_validator("transitions")
         @classmethod
-        def validate_transitions(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_transitions(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate state transitions."""
             if not v:
                 msg = "Transitions cannot be empty"
@@ -1877,7 +1891,10 @@ class FlextModels:
             # Validate transition structure
             for state, transitions in v.items():
                 if not isinstance(transitions, dict):
-                    msg = f"Transitions for state {state} must be a dict[str, object]"
+                    msg = (
+                        "Transitions for state"
+                        f" {state} must be a FlextTypes.Core.Dict"
+                    )
                     raise TypeError(msg)
                 for event, next_state in cast(
                     "dict[object, object]", transitions
@@ -1918,7 +1935,9 @@ class FlextModels:
 
         @field_validator("dimensions")
         @classmethod
-        def validate_metrics_collector(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_metrics_collector(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate dimensions."""
             max_dimensions = FlextConstants.Performance.MAX_DIMENSIONS
             if len(v) > max_dimensions:
@@ -2120,9 +2139,9 @@ class FlextModels:
 
         @classmethod
         def _get_serialization_context(
-            cls, context: dict[str, object] | None
-        ) -> dict[str, object]:
-            """Extract serialization context from context dict[str, object]."""
+            cls, context: FlextTypes.Core.Dict | None
+        ) -> FlextTypes.Core.Dict:
+            """Extract serialization context from a FlextTypes.Core.Dict."""
             if not context:
                 return {
                     "include_sensitive": False,
@@ -2161,7 +2180,7 @@ class FlextModels:
             """Context-aware model dump."""
             if context and isinstance(context, dict):
                 ser_context = self._get_serialization_context(
-                    cast("dict[str, object]", context)
+                    cast("FlextTypes.Core.Dict", context)
                 )
 
                 # Apply context settings
@@ -2207,7 +2226,7 @@ class FlextModels:
                 warnings=warnings,
                 serialize_as_any=serialize_as_any,
                 mode=mode,
-                context=cast("dict[str, object] | None", context),
+                context=cast("FlextTypes.Core.Dict | None", context),
                 fallback=fallback,
             )
 
@@ -2283,17 +2302,17 @@ class FlextModels:
             *,
             compact: bool = False,
             parallel: bool = False,
-        ) -> list[dict[str, object]] | str:
+        ) -> list[FlextTypes.Core.Dict] | str:
             """Serialize a batch of models efficiently.
 
             Args:
                 models: List of Pydantic models to serialize
-                output_format: Output format ('dict[str, object]' or 'json')
+                output_format: Output format ('FlextTypes.Core.Dict' or 'json')
                 compact: Use compact serialization
                 parallel: Use parallel processing for large batches
 
             Returns:
-                List of dict[str, object]s or JSON array string
+                List of FlextTypes.Core.Dict items or JSON array string
 
             """
             if not models:
@@ -2316,7 +2335,7 @@ class FlextModels:
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     if output_format == "dict":
 
-                        def serialize_to_dict(m: BaseModel) -> dict[str, object]:
+                        def serialize_to_dict(m: BaseModel) -> FlextTypes.Core.Dict:
                             return m.model_dump(
                                 exclude_unset=cast(
                                     "bool", dump_kwargs.get("exclude_unset", False)
@@ -2404,7 +2423,7 @@ class FlextModels:
                 mode: Schema mode
 
             Returns:
-                Optimized JSON schema dict[str, object]
+                Optimized JSON schema FlextTypes.Core.Dict
 
             """
             schema = model.model_json_schema(
@@ -2480,7 +2499,7 @@ class FlextModels:
         validation_type: str = Field(
             default="general", description="Type of validation to perform"
         )
-        context: dict[str, object] = Field(
+        context: FlextTypes.Core.Dict = Field(
             default_factory=dict, description="Validation context"
         )
 
@@ -2514,7 +2533,7 @@ class FlextModels:
             @classmethod
             def create_bus_config(
                 cls,
-                bus_config: dict[str, object] | None = None,
+                bus_config: FlextTypes.Core.Dict | None = None,
                 *,
                 enable_middleware: bool = True,
                 enable_metrics: bool = True,
@@ -2524,7 +2543,7 @@ class FlextModels:
                 implementation_path: str = "flext_core.bus:FlextBus",
             ) -> Self:
                 """Create bus configuration with defaults and overrides."""
-                config_data: dict[str, object] = {
+                config_data: FlextTypes.Core.Dict = {
                     "enable_middleware": enable_middleware,
                     "enable_metrics": enable_metrics,
                     "enable_caching": enable_caching,
@@ -2555,7 +2574,7 @@ class FlextModels:
             max_command_retries: int = Field(
                 default=0, description="Maximum retry attempts"
             )
-            metadata: dict[str, object] = Field(
+            metadata: FlextTypes.Core.Dict = Field(
                 default_factory=dict, description="Handler metadata"
             )
 
@@ -2566,12 +2585,12 @@ class FlextModels:
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
-                handler_config: dict[str, object] | None = None,
+                handler_config: FlextTypes.Core.Dict | None = None,
                 command_timeout: int = 0,
                 max_command_retries: int = 0,
             ) -> Self:
                 """Create handler configuration with defaults and overrides."""
-                config_data: dict[str, object] = {
+                config_data: FlextTypes.Core.Dict = {
                     "handler_id": default_id
                     or f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
                     "handler_name": default_name or f"{handler_type.title()} Handler",
