@@ -63,6 +63,26 @@ class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
         return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
 
 
+@dataclass
+class CachedQuery:
+    """Query object used to exercise dispatcher caching."""
+
+    payload: str
+
+
+class CachedQueryHandler:
+    """Lightweight handler that tracks invocation count to validate caching."""
+
+    def __init__(self) -> None:
+        """Initialize the cached query handler."""
+        self.calls = 0
+
+    def handle(self, message: CachedQuery) -> FlextResult[str]:
+        """Handle the cached query while counting invocations."""
+        self.calls += 1
+        return FlextResult[str].ok(f"{message.payload}:{self.calls}")
+
+
 def test_dispatcher_registers_handler_and_dispatches_command() -> None:
     """Test the dispatcher registers a handler and dispatches a command."""
     FlextContext.Utilities.clear_context()
@@ -206,3 +226,41 @@ def test_dispatcher_registry_register_function_map() -> None:
     result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="fn"))
     assert result.is_success
     assert result.unwrap() == "fn:fn"
+
+
+def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
+    """Cache lookup remains active when metrics are disabled but caching is enabled."""
+
+    FlextContext.Utilities.clear_context()
+    dispatcher = FlextDispatcher(
+        config={
+            "auto_context": False,
+            "enable_logging": False,
+            "enable_metrics": False,
+            "bus_config": {
+                "enable_metrics": False,
+                "enable_caching": True,
+            },
+        }
+    )
+
+    handler = CachedQueryHandler()
+    registration_result = dispatcher.register_command(
+        CachedQuery,
+        cast("FlextHandlers[object, object]", handler),
+    )
+    assert registration_result.is_success
+
+    first_result: FlextResult[object] = dispatcher.dispatch(
+        CachedQuery(payload="cache")
+    )
+    assert first_result.is_success
+    assert handler.calls == 1
+    first_value = first_result.unwrap()
+
+    second_result: FlextResult[object] = dispatcher.dispatch(
+        CachedQuery(payload="cache")
+    )
+    assert second_result.is_success
+    assert handler.calls == 1
+    assert second_result.unwrap() == first_value
