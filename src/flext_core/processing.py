@@ -658,8 +658,9 @@ class FlextProcessing:
                 """
                 result = request
                 for handler in self._handlers:
-                    if hasattr(handler, "handle"):
-                        handle_method = getattr(handler, "handle", None)
+                    handle_method_name = FlextConstants.Mixins.METHOD_HANDLE
+                    if hasattr(handler, handle_method_name):
+                        handle_method = getattr(handler, handle_method_name, None)
                         if handle_method is not None:
                             handler_result = handle_method(result)
                             if (
