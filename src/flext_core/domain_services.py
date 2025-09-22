@@ -310,8 +310,11 @@ class FlextDomainService[TDomainResult](
                 if isinstance(allowed, type) and issubclass(allowed, Exception):
                     if isinstance(exc, allowed):
                         return True
-                elif isinstance(allowed, str) and allowed == exc.__class__.__name__:
-                    return True
+                elif isinstance(allowed, str):
+                    raise ValueError(
+                        f"String-based exception filter '{allowed}' is not supported. "
+                        "Please use exception classes instead."
+                    )
             return False
 
         current_delay = base_delay
