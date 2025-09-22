@@ -14,7 +14,7 @@ import warnings
 from collections.abc import Callable
 from typing import ClassVar, Generic, Protocol, cast, runtime_checkable
 
-from flext_core import FlextModels, FlextResult, FlextTypes, T
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes, T
 
 
 class FlextTestsUtilities:
@@ -611,8 +611,8 @@ class FlextTestsUtilities:
         """Test configuration model."""
 
         debug: bool = False
-        timeout: int = 30
-        retries: int = 3
+        timeout: int = FlextConstants.Defaults.TIMEOUT
+        retries: int = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
         # Build base_url without deep dynamic __import__ chains to avoid runtime errors
 
         base_url: str = "http://localhost:8000"
@@ -659,7 +659,7 @@ class FlextTestsUtilities:
             "bind_password": "testpass",
             "base_dn": "dc=test,dc=com",
             "use_ssl": False,
-            "timeout": 30,
+            "timeout": FlextConstants.Defaults.TIMEOUT,
         }
 
     @staticmethod
