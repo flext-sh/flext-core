@@ -149,12 +149,11 @@ class FlextUtilities:
         @staticmethod
         def validate_email(email: str) -> FlextResult[str]:
             """Validate email format using railway composition."""
-            email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
             return FlextUtilities.Validation.validate_string(
                 email,
                 min_length=5,
-                max_length=254,
-                pattern=email_pattern,
+                max_length=FlextConstants.Validation.MAX_EMAIL_LENGTH,
+                pattern=FlextConstants.Platform.PATTERN_EMAIL,
                 field_name="email",
             )
 
@@ -171,9 +170,10 @@ class FlextUtilities:
             """Validate network port number."""
             try:
                 port_int = int(port) if isinstance(port, str) else port
-                if not (1 <= port_int <= MAX_PORT_NUMBER):
+                min_port = FlextConstants.Network.MIN_PORT
+                if not (min_port <= port_int <= MAX_PORT_NUMBER):
                     return FlextResult[int].fail(
-                        f"Port must be between 1 and {MAX_PORT_NUMBER}, got {port_int}"
+                        f"Port must be between {min_port} and {MAX_PORT_NUMBER}, got {port_int}"
                     )
                 return FlextResult[int].ok(port_int)
             except (ValueError, TypeError):
