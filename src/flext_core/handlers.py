@@ -473,7 +473,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             if callable(method):
                 try:
                     data = method()
-                except TypeError:
+                except Exception:
                     continue
                 if data is not None:
                     return data
