@@ -524,7 +524,9 @@ class FlextProcessing:
                         raise RuntimeError(f"Pipeline step failed: {result.error}")
                     step_result = result.value_or_none
                     if step_result is None:
-                        raise RuntimeError("Pipeline step returned None despite success")
+                        raise RuntimeError(
+                            "Pipeline step returned None despite success"
+                        )
                     return cast("object", step_result)
                 return result
 

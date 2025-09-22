@@ -89,9 +89,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def execute_operation(
-                self, operation: object
-            ) -> FlextResult[object]:
+            def execute_operation(self, operation: object) -> FlextResult[object]:
                 """Execute operation using OperationExecutionRequest model.
 
                 Args:
@@ -454,14 +452,14 @@ class FlextProtocols:
         class CommandHandler[CommandT, ResultT](Protocol):
             """Protocol for command handlers in CQRS pattern."""
 
-            def handle(self, command: CommandT) -> ResultT:
-                """Handle a command and return result.
+            def handle(self, command: CommandT) -> FlextResult[ResultT]:
+                """Handle a command and return a :class:`FlextResult` wrapper.
 
                 Args:
                     command: The command to handle
 
                 Returns:
-                    The result of handling the command
+                    FlextResult containing the command handling outcome
 
                 """
                 ...
@@ -481,14 +479,13 @@ class FlextProtocols:
         class QueryHandler[QueryT, ResultT](Protocol):
             """Protocol for query handlers in CQRS pattern."""
 
-            def handle(self, query: QueryT) -> ResultT:
-                """Handle a query and return result.
-
+            def handle(self, query: QueryT) -> FlextResult[ResultT]:
+                """Handle a query and return a :class:`FlextResult` wrapper.
                 Args:
                     query: The query to handle
 
                 Returns:
-                    The result of handling the query
+                    FlextResult containing the query handling outcome
 
                 """
                 ...
@@ -498,14 +495,15 @@ class FlextProtocols:
             """Protocol for command bus routing and execution."""
 
             @overload
-            def register_handler(self, handler: Callable, /) -> FlextResult[None]:
-                ...
+            def register_handler(self, handler: Callable, /) -> FlextResult[None]: ...
 
             @overload
             def register_handler(
-                self, command_type: type, handler: Callable, /,
-            ) -> FlextResult[None]:
-                ...
+                self,
+                command_type: type,
+                handler: Callable,
+                /,
+            ) -> FlextResult[None]: ...
 
             def register_handler(self, *args: object) -> FlextResult[None]:
                 """Register a command handler using one of two supported signatures.

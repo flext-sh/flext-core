@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -135,7 +135,10 @@ class FlextCqrs:
 
             except Exception as e:
                 return FlextResult[FlextModels.Command].fail(
-                    f"Command validation failed: {e!s}",
+                    (
+                        f"{FlextConstants.Messages.VALIDATION_FAILED}:"
+                        f" Command validation failed: {e!s}"
+                    ),
                     error_code=FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
                     error_data={
                         "command_data": command_data,
@@ -173,7 +176,7 @@ class FlextCqrs:
 
             except Exception as e:
                 return FlextResult[FlextModels.Query].fail(
-                    f"Query validation failed: {e!s}",
+                    f"{FlextConstants.Messages.VALIDATION_FAILED} (query): {e!s}",
                     error_code=FlextConstants.Cqrs.QUERY_VALIDATION_FAILED,
                     error_data={
                         "query_data": query_data,
@@ -349,11 +352,22 @@ class FlextCqrs:
             """
             try:
                 config_instance = FlextConfig.get_global_instance()
-                # Use FlextConfig.get_cqrs_bus_config() as single source of truth
-                bus_config_dict = config_instance.get_cqrs_bus_config()
+                config_payload = config_instance.get_cqrs_bus_config()
 
-                # Create CQRS config from properly delegated FlextConfig
-                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(bus_config_dict)
+                # Support both raw dictionaries and FlextResult wrappers
+                if isinstance(config_payload, FlextResult):
+                    if config_payload.is_failure:
+                        raise ValueError("Failed to load CQRS bus configuration")
+                    config_payload = config_payload.value
+
+                if hasattr(config_payload, "model_dump") and callable(
+                    getattr(config_payload, "model_dump")
+                ):
+                    config_dict = cast("dict[str, object]", config_payload.model_dump())
+                else:
+                    config_dict = cast("dict[str, object] | None", config_payload)
+
+                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(config_dict)
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(bus_config)
             except Exception:
                 # Fallback to default configuration
@@ -425,7 +439,7 @@ class FlextCqrs:
             if hasattr(error, "errors") and callable(getattr(error, "errors", None)):
                 validation_errors = getattr(error, "errors")()
                 return FlextResult[object].fail(
-                    f"Validation failed: {error!s}",
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {error!s}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     error_data={
                         "context": context,

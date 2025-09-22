@@ -53,6 +53,7 @@ class FlextDispatcher:
         # Use provided config or create from global configuration
         if config is None:
             global_config = FlextConfig.get_global_instance()
+            bus_config = dict(global_config.get_cqrs_bus_config())
             config = {
                 "auto_context": getattr(global_config, "dispatcher_auto_context", True),
                 "timeout_seconds": getattr(
@@ -66,8 +67,38 @@ class FlextDispatcher:
                 "enable_logging": getattr(
                     global_config, "dispatcher_enable_logging", True
                 ),
-                "bus_config": None,
+                "bus_config": bus_config,
+                "execution_timeout": bus_config.get("execution_timeout"),
             }
+        else:
+            config = dict(config)
+            bus_config = config.get("bus_config")
+
+            if bus_config is None:
+                global_config = FlextConfig.get_global_instance()
+                default_bus_config = dict(global_config.get_cqrs_bus_config())
+
+                if "execution_timeout" in config:
+                    default_bus_config["execution_timeout"] = cast(
+                        "object", config["execution_timeout"]
+                    )
+                elif "timeout_seconds" in config:
+                    default_bus_config["execution_timeout"] = cast(
+                        "object", config["timeout_seconds"]
+                    )
+
+                bus_config = default_bus_config
+                config["bus_config"] = bus_config
+
+            if isinstance(bus_config, dict):
+                config.setdefault(
+                    "execution_timeout", bus_config.get("execution_timeout")
+                )
+            elif hasattr(bus_config, "execution_timeout"):
+                config.setdefault(
+                    "execution_timeout",
+                    cast("object", getattr(bus_config, "execution_timeout")),
+                )
 
         self._config = config
         bus_config = config.get("bus_config")
@@ -312,36 +343,11 @@ class FlextDispatcher:
 
         """
         try:
-            # Create a simple handler class that wraps the function
-            class FunctionHandler(FlextHandlers[object, object]):
-                def __init__(self) -> None:
-                    super().__init__(
-                        handler_config=handler_config,
-                        handler_mode=mode,
-                    )
-                    self._handler_func = handler_func
-
-                def handle(self, message: object) -> FlextResult[object]:
-                    """Handle message using wrapped function.
-
-                    Args:
-                        message: Message to process
-
-                    Returns:
-                        FlextResult with processing result or error
-
-                    """
-                    try:
-                        result = self._handler_func(message)
-                        if isinstance(result, FlextResult):
-                            return cast("FlextResult[object]", result)
-                        return FlextResult[object].ok(result)
-                    except Exception as error:
-                        return FlextResult[object].fail(
-                            f"Function handler failed: {error}"
-                        )
-
-            handler = FunctionHandler()
+            handler = FlextHandlers.from_callable(
+                handler_func,
+                mode=mode,
+                handler_config=handler_config,
+            )
             return FlextResult[FlextHandlers[object, object]].ok(handler)
 
         except Exception as error:
@@ -376,7 +382,9 @@ class FlextDispatcher:
         # Get timeout from request override or config
         timeout_override = request.get("timeout_override")
         config_timeout = self._config.get("timeout_seconds")
-        timeout_seconds = timeout_override if timeout_override is not None else config_timeout
+        timeout_seconds = (
+            timeout_override if timeout_override is not None else config_timeout
+        )
 
         # Execute dispatch with context management and timeout enforcement
         context_metadata = request.get("context_metadata")
@@ -390,7 +398,7 @@ class FlextDispatcher:
                 # Use FlextUtilities.Reliability.with_timeout for timeout enforcement
                 result = FlextUtilities.Reliability.with_timeout(
                     lambda: self._bus.execute(request.get("message")),
-                    float(timeout_seconds)
+                    float(timeout_seconds),
                 )
             else:
                 # No timeout configured, execute directly
@@ -563,31 +571,52 @@ class FlextDispatcher:
             return
 
         metadata_token: Token[FlextTypes.Core.Dict | None] | None = None
+        correlation_token: Token[str | None] | None = None
+        parent_token: Token[str | None] | None = None
         metadata_var = FlextContext.Variables.Performance.OPERATION_METADATA
+        correlation_var = FlextContext.Variables.Correlation.CORRELATION_ID
+        parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
 
-        with FlextContext.Correlation.inherit_correlation() as active_correlation_id:
-            # Use provided correlation ID or the inherited one
-            effective_correlation_id = correlation_id or active_correlation_id
+        if correlation_id is not None:
+            current_correlation = correlation_var.get()
+            correlation_token = correlation_var.set(correlation_id)
+            if (
+                current_correlation is not None
+                and current_correlation != correlation_id
+            ):
+                parent_token = parent_var.set(current_correlation)
 
-            if metadata:
-                metadata_token = metadata_var.set(metadata)
+        try:
+            with (
+                FlextContext.Correlation.inherit_correlation() as active_correlation_id
+            ):
+                # Use provided correlation ID or the inherited one
+                effective_correlation_id = correlation_id or active_correlation_id
 
-            if self._config.get("enable_logging"):
-                self._logger.debug(
-                    "dispatch_context_entered",
-                    correlation_id=effective_correlation_id,
-                )
-            try:
-                yield
-            finally:
-                if metadata_token is not None:
-                    metadata_var.reset(metadata_token)
+                if metadata:
+                    metadata_token = metadata_var.set(metadata)
 
                 if self._config.get("enable_logging"):
                     self._logger.debug(
-                        "dispatch_context_exited",
+                        "dispatch_context_entered",
                         correlation_id=effective_correlation_id,
                     )
+                try:
+                    yield
+                finally:
+                    if metadata_token is not None:
+                        metadata_var.reset(metadata_token)
+
+                    if self._config.get("enable_logging"):
+                        self._logger.debug(
+                            "dispatch_context_exited",
+                            correlation_id=effective_correlation_id,
+                        )
+        finally:
+            if correlation_token is not None:
+                correlation_var.reset(correlation_token)
+            if parent_token is not None:
+                parent_var.reset(parent_token)
 
     # ------------------------------------------------------------------
     # Factory methods

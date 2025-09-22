@@ -255,50 +255,32 @@ class FlextModels:
                 return cls.__name__
             return v
 
+    class Pagination(ArbitraryTypesModel):
+        """Strongly typed pagination model shared across queries."""
+
+        page: int = Field(
+            default=FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
+            ge=FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
+        )
+        size: int = Field(
+            default=FlextConstants.Performance.DEFAULT_PAGE_SIZE,
+            ge=FlextConstants.Performance.MIN_TAKE,
+            le=FlextConstants.Cqrs.MAX_PAGE_SIZE,
+        )
+
     class Query(ArbitraryTypesModel):
         """Base class for CQRS queries with pagination."""
 
         query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        pagination: dict[str, int] = Field(
-            default_factory=lambda: {
-                "page": FlextConstants.Performance.DEFAULT_PAGE_NUMBER,
-                "size": FlextConstants.Performance.DEFAULT_PAGE_SIZE,
-            }
+        pagination: "FlextModels.Pagination" = Field(
+            default_factory=lambda: cast(
+                "FlextModels.Pagination",
+                globals()["FlextModels"].Pagination(),
+            )
         )
         filters: FlextTypes.Core.Dict = Field(default_factory=dict)
         sort_by: str | None = None
         sort_order: Literal["asc", "desc"] = "asc"
-
-        @field_validator("pagination")
-        @classmethod
-        def validate_pagination(cls, v: dict[str, object]) -> dict[str, object]:
-            """Validate pagination parameters using FlextConstants."""
-            page = v.get("page", FlextConstants.Performance.DEFAULT_PAGE_NUMBER)
-            size = v.get("size", FlextConstants.Performance.DEFAULT_PAGE_SIZE)
-
-            # Ensure types are integers
-            if not isinstance(page, int):
-                page = (
-                    int(page)
-                    if isinstance(page, (str, float))
-                    else FlextConstants.Performance.DEFAULT_PAGE_NUMBER
-                )
-            if not isinstance(size, int):
-                size = (
-                    int(size)
-                    if isinstance(size, (str, float))
-                    else FlextConstants.Performance.DEFAULT_PAGE_SIZE
-                )
-
-            if page < 1:
-                msg = "pagination.page must be a positive integer"
-                raise ValueError(msg)
-
-            if size < 1 or size > FlextConstants.Cqrs.MAX_PAGE_SIZE:
-                msg = f"pagination.size must be between 1 and {FlextConstants.Cqrs.MAX_PAGE_SIZE}"
-                raise ValueError(msg)
-
-            return {"page": page, "size": size}
 
         @model_validator(mode="after")
         def validate_query_consistency(self) -> Self:
@@ -895,7 +877,10 @@ class FlextModels:
         @computed_field
         def megabytes(self) -> float:
             """Convert to MB."""
-            bytes_per_mb = FlextConstants.Utilities.BYTES_PER_KB * FlextConstants.Utilities.BYTES_PER_KB
+            bytes_per_mb = (
+                FlextConstants.Utilities.BYTES_PER_KB
+                * FlextConstants.Utilities.BYTES_PER_KB
+            )
             return self.bytes / float(bytes_per_mb)
 
     class Project(Entity):
@@ -945,7 +930,7 @@ class FlextModels:
                 raise ValueError(msg)
 
             # Size validation
-            max_workspace_size = 10 * FlextConstants.Utilities.BYTES_PER_KB ** 3  # 10GB
+            max_workspace_size = 10 * FlextConstants.Utilities.BYTES_PER_KB**3  # 10GB
             if self.total_size_bytes > max_workspace_size:
                 msg = "Workspace too large"
                 raise ValueError(msg)
@@ -1566,12 +1551,34 @@ class FlextModels:
 
         app_name: str
         app_version: str
-        environment: str
+        environment: FlextTypes.Config.Environment
         host: str | None = None
         metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
         permanent_context: FlextTypes.Core.Dict = Field(default_factory=dict)
         replace_existing: bool = False
         merge_strategy: Literal["replace", "update", "merge_deep"] = "update"
+
+        @field_validator("environment", mode="before")
+        @classmethod
+        def normalize_environment(
+            cls, value: str | FlextTypes.Config.Environment
+        ) -> FlextTypes.Config.Environment:
+            """Normalize and validate environment against shared constants."""
+
+            # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
+            if not isinstance(value, str):
+                # If it's an Enum, get its value; otherwise, try str()
+                if hasattr(value, "value"):
+                    value = value.value
+                else:
+                    value = str(value)
+
+            normalized = value.lower()
+            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
+            if normalized not in valid_envs:
+                msg = f"Environment must be one of {sorted(valid_envs)}"
+                raise ValueError(msg)
+            return cast("FlextTypes.Config.Environment", normalized)
 
         @model_validator(mode="after")
         def validate_permanent_context(self) -> Self:
@@ -1588,7 +1595,7 @@ class FlextModels:
                     f"Must be one of {sorted_envs}"
                 )
                 raise ValueError(msg)
-            return self
+            return cast("FlextTypes.Config.Environment", normalized)
 
     class OperationTrackingModel(ArbitraryTypesModel):
         """Operation tracking model."""
@@ -1877,8 +1884,12 @@ class FlextModels:
         )
         sliding_window_size: int = Field(default=100)
         minimum_throughput: int = Field(default=10)
-        slow_call_duration_seconds: float = Field(default=FlextConstants.Performance.DEFAULT_DELAY_SECONDS, gt=0)
-        slow_call_rate_threshold: float = Field(default=FlextConstants.Validation.MAX_PERCENTAGE / 2.0)  # 50%
+        slow_call_duration_seconds: float = Field(
+            default=FlextConstants.Performance.DEFAULT_DELAY_SECONDS, gt=0
+        )
+        slow_call_rate_threshold: float = Field(
+            default=FlextConstants.Validation.MAX_PERCENTAGE / 2.0
+        )  # 50%
 
         @model_validator(mode="after")
         def validate_circuit_breaker_consistency(self) -> Self:
@@ -2052,7 +2063,9 @@ class FlextModels:
         max_fallback_attempts: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
-        fallback_delay_seconds: float = Field(default=FlextConstants.Performance.DEFAULT_FALLBACK_DELAY, ge=0)
+        fallback_delay_seconds: float = Field(
+            default=FlextConstants.Performance.DEFAULT_FALLBACK_DELAY, ge=0
+        )
 
         @field_validator("fallback_services")
         @classmethod

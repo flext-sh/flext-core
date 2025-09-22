@@ -228,7 +228,8 @@ class FlextResultCollections:
                 result = validator()
                 if result.is_failure:
                     return FlextResult[None].fail(
-                        result.error or "Validation chain failed",
+                        result.error
+                        or f"{FlextConstants.Messages.VALIDATION_FAILED} (chain)",
                         error_code=result.error_code,
                         error_data=result.error_data,
                     )
@@ -245,12 +246,15 @@ class FlextResultCollections:
     ) -> FlextResult[UValidate]:
         """Validate a result then execute if valid."""
         if result.is_failure:
-            return FlextResult[UValidate].fail(result.error or "Validation failed")
+            return FlextResult[UValidate].fail(
+                result.error or FlextConstants.Messages.VALIDATION_FAILED
+            )
 
         validation = validator(result.value)
         if validation.is_failure:
             return FlextResult[UValidate].fail(
-                validation.error or "Validation check failed",
+                validation.error
+                or f"{FlextConstants.Messages.VALIDATION_FAILED} (check)",
             )
 
         return executor(result.value)
@@ -374,7 +378,7 @@ class FlextResultCollections:
         if errors:
             combined_error = "; ".join(errors)
             return FlextResult[TValidateAll].fail(
-                f"Validation failed: {combined_error}",
+                f"{FlextConstants.Messages.VALIDATION_FAILED}: {combined_error}",
                 error_code="VALIDATION_FAILED",
                 error_data={"validation_errors": errors, "error_count": len(errors)},
             )
@@ -1061,7 +1065,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         try:
             if predicate(self.unwrap()):
                 return self
-            return FlextResult[T_co].fail("Predicate validation failed")
+            return FlextResult[T_co].fail(
+                f"{FlextConstants.Messages.VALIDATION_FAILED} (predicate)"
+            )
         except Exception as e:
             return FlextResult[T_co].fail(f"Predicate evaluation failed: {e}")
 
@@ -1105,7 +1111,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 result = validator()
                 if result.is_failure:
                     return FlextResult[None].fail(
-                        result.error or "Validation chain failed",
+                        result.error
+                        or f"{FlextConstants.Messages.VALIDATION_FAILED} (chain)",
                         error_code=result.error_code,
                         error_data=result.error_data,
                     )

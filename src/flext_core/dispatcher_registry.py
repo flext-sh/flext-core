@@ -342,9 +342,7 @@ class FlextDispatcherRegistry:
                                 FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                                 FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
                             }:
-                                handler_type_val = cast(
-                                    "HandlerTypeLiteral", raw_type
-                                )
+                                handler_type_val = cast("HandlerTypeLiteral", raw_type)
 
                         if isinstance(handler_config.get("handler_mode"), str):
                             raw_mode = handler_config.get("handler_mode")
@@ -352,9 +350,7 @@ class FlextDispatcherRegistry:
                                 FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                                 FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
                             }:
-                                handler_mode_val = cast(
-                                    "HandlerModeLiteral", raw_mode
-                                )
+                                handler_mode_val = cast("HandlerModeLiteral", raw_mode)
 
                         metadata_raw = handler_config.get("metadata", {})
                         if not isinstance(metadata_raw, dict):
@@ -372,13 +368,22 @@ class FlextDispatcherRegistry:
                             metadata=metadata_val,
                         )
                         # Derive handler_mode from handler_type if not explicitly set
-                        if "handler_mode" in handler_config and isinstance(handler_config.get("handler_mode"), str) and handler_config.get("handler_mode") in {
-                            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-                        }:
+                        if (
+                            "handler_mode" in handler_config
+                            and isinstance(handler_config.get("handler_mode"), str)
+                            and handler_config.get("handler_mode")
+                            in {
+                                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                                FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+                            }
+                        ):
                             handler_mode = handler_mode_val
-                        elif handler_type_val == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
-                            handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                        elif (
+                            handler_type_val == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                        ):
+                            handler_mode = (
+                                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                            )
                         elif handler_type_val == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
                             handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_QUERY
                         else:

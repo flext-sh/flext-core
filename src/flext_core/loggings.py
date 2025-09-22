@@ -18,6 +18,7 @@ import platform
 import sys
 import threading
 import time
+import traceback
 import uuid
 import warnings
 from collections.abc import Mapping
@@ -59,6 +60,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
     _global_correlation_id: ClassVar[str | None] = None
     _service_info: ClassVar[FlextTypes.Core.Dict] = {}
     _request_context: ClassVar[FlextTypes.Core.Dict] = {}
+    _track_performance_enabled: ClassVar[bool] = (
+        FlextConstants.Logging.TRACK_PERFORMANCE
+    )
+    _track_timing_enabled: ClassVar[bool] = FlextConstants.Logging.TRACK_TIMING
+    _include_context_enabled: ClassVar[bool] = FlextConstants.Logging.INCLUDE_CONTEXT
+    _include_correlation_id_enabled: ClassVar[bool] = (
+        FlextConstants.Logging.INCLUDE_CORRELATION_ID
+    )
+    _mask_sensitive_data_enabled: ClassVar[bool] = (
+        FlextConstants.Logging.MASK_SENSITIVE_DATA
+    )
 
     # Configuration storage for runtime logging settings
     _log_file: ClassVar[str | None] = None
@@ -143,21 +155,47 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
             # Call configure with all logging configuration parameters
             type(self).configure(
-                log_level=str(logging_config.get("level", FlextConstants.Logging.DEFAULT_LEVEL)),
+                log_level=str(
+                    logging_config.get("level", FlextConstants.Logging.DEFAULT_LEVEL)
+                ),
                 json_output=cast("bool | None", logging_config.get("json_output")),
-                include_source=bool(logging_config.get("include_source", FlextConstants.Logging.INCLUDE_SOURCE)),
-                structured_output=bool(logging_config.get("structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT)),
-                log_verbosity=str(logging_config.get("log_verbosity", FlextConstants.Logging.VERBOSITY)),
+                include_source=bool(
+                    logging_config.get(
+                        "include_source", FlextConstants.Logging.INCLUDE_SOURCE
+                    )
+                ),
+                structured_output=bool(
+                    logging_config.get(
+                        "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
+                    )
+                ),
+                log_verbosity=str(
+                    logging_config.get(
+                        "log_verbosity", FlextConstants.Logging.VERBOSITY
+                    )
+                ),
                 log_file=cast("str | None", logging_config.get("log_file")),
-                log_file_max_size=int(cast("int", logging_config.get("log_file_max_size", 10 * 1024 * 1024))),
-                log_file_backup_count=int(cast("int", logging_config.get("log_file_backup_count", 5))),
+                log_file_max_size=int(
+                    cast(
+                        "int", logging_config.get("log_file_max_size", 10 * 1024 * 1024)
+                    )
+                ),
+                log_file_backup_count=int(
+                    cast("int", logging_config.get("log_file_backup_count", 5))
+                ),
                 console_enabled=bool(logging_config.get("console_enabled", True)),
-                console_color_enabled=bool(logging_config.get("console_color_enabled", True)),
+                console_color_enabled=bool(
+                    logging_config.get("console_color_enabled", True)
+                ),
                 track_performance=bool(logging_config.get("track_performance", False)),
                 track_timing=bool(logging_config.get("track_timing", False)),
                 include_context=bool(logging_config.get("include_context", True)),
-                include_correlation_id=bool(logging_config.get("include_correlation_id", True)),
-                mask_sensitive_data=bool(logging_config.get("mask_sensitive_data", True)),
+                include_correlation_id=bool(
+                    logging_config.get("include_correlation_id", True)
+                ),
+                mask_sensitive_data=bool(
+                    logging_config.get("mask_sensitive_data", True)
+                ),
             )
 
         # Use validated model values if available, otherwise use original parameters
@@ -174,6 +212,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         self._name = validated_name
         # Load configuration early so .env and FLEXT_* vars are available
         config = FlextConfig.get_global_instance()
+        type(self)._load_config_flags()
 
         # Resolve log level with strict precedence and deterministic behavior
         valid_levels = FlextConstants.Logging.VALID_LEVELS
@@ -367,6 +406,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             dict[str, object]: Sanitized context dictionary
 
         """
+        if not FlextLogger._mask_sensitive_data_enabled:
+            return context
+
         sensitive_keys = {
             "password",
             "passwd",
@@ -425,17 +467,12 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             "level": level.upper(),
             "message": str(message),
             "logger": self._name,
-            "correlation_id": self._correlation_id,
-            # Always include these containers for type predictability in tests
-            "request": {},
-            "context": {},
-            "service": {},
-            "system": {},
-            "execution": {},
         }
 
-        # Add service and system context
-        # Populate service and system from persistent context without broad update
+        if self._include_correlation_id_enabled and self._correlation_id is not None:
+            entry["correlation_id"] = self._correlation_id
+
+        # Add service and system context from persistent context without mutation
         service_ctx = self._persistent_context.get("service")
         system_ctx = self._persistent_context.get("system")
 
@@ -444,11 +481,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         if isinstance(system_ctx, dict) and system_ctx:
             entry["system"] = dict(cast("dict[str, object]", system_ctx))
 
-        # Add request context if available
+        # Add request context if available (always expose container for compatibility)
         request_context = cast(
             "dict[str, object] | None", getattr(self._local, "request_context", None)
         )
-        # Always set request (may be empty)
         entry["request"] = (
             dict(request_context) if isinstance(request_context, dict) else {}
         )
@@ -458,8 +494,23 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         if isinstance(permanent_context, dict) and permanent_context:
             entry["permanent"] = dict(cast("dict[str, object]", permanent_context))
 
-        # Add performance metrics
-        if duration_ms is not None:
+        # Add execution/timing information when enabled
+        if self._track_timing_enabled:
+            execution_info: dict[str, object] = {}
+            function_name = self._get_calling_function()
+            if function_name and function_name != "unknown":
+                execution_info["function"] = function_name
+            line_number = self._get_calling_line()
+            if line_number:
+                execution_info["line"] = line_number
+            uptime_seconds = round(time.time() - self._start_time, 3)
+            if uptime_seconds >= 0:
+                execution_info["uptime_seconds"] = uptime_seconds
+            if execution_info:
+                entry["execution"] = execution_info
+
+        # Add performance metrics when enabled
+        if duration_ms is not None and self._track_performance_enabled:
             entry["performance"] = {
                 "duration_ms": round(duration_ms, 3),
                 "timestamp": self._get_current_timestamp(),
@@ -468,18 +519,37 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         # Add error details if present
         if error is not None:
             if isinstance(error, Exception):
-                entry["error"] = {
+                error_entry: dict[str, object] = {
                     "type": error.__class__.__name__,
                     "message": str(error),
                     "details": getattr(error, "args", ()),
                 }
+                if error.__traceback__ is not None:
+                    error_entry["stack_trace"] = traceback.format_tb(
+                        error.__traceback__
+                    )
+                entry["error"] = error_entry
             else:
                 entry["error"] = {"message": str(error)}
 
-        # Add additional context if provided
-        if isinstance(context, dict) and context:
-            entry["context"] = dict(context)
+        # Add additional context if provided and enabled
+        if self._include_context_enabled:
+            if context is not None:
+                context_dict: dict[str, object] | None = None
+                if isinstance(context, Mapping):
+                    context_dict = dict(context)
+                else:
+                    try:
+                        context_dict = dict(context)
+                    except TypeError:
+                        context_dict = None
 
+                if context_dict:
+                    entry["context"] = (
+                        self._sanitize_context(context_dict)
+                        if self._mask_sensitive_data_enabled
+                        else dict(context_dict)
+                    )
         return entry
 
     def _get_calling_function(self) -> str:
@@ -909,13 +979,48 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """Log exception with stack trace and context - LoggerProtocol implementation."""
         if exc_info:
             exc_info_tuple = sys.exc_info()
-            error = exc_info_tuple[1] if isinstance(exc_info_tuple[1], Exception) else None
+            error = (
+                exc_info_tuple[1] if isinstance(exc_info_tuple[1], Exception) else None
+            )
         else:
             error = None
         entry = self._build_log_entry(
             FlextConstants.Config.LogLevel.ERROR, message, kwargs, error
         )
         self._structlog_logger.error(message, **entry)
+
+    @classmethod
+    def _load_config_flags(cls) -> None:
+        """Load logging feature flags from the global configuration."""
+
+        config = FlextConfig.get_global_instance()
+        cls._track_performance_enabled = bool(
+            getattr(
+                config,
+                "track_performance",
+                FlextConstants.Logging.TRACK_PERFORMANCE,
+            )
+        )
+        cls._track_timing_enabled = bool(
+            getattr(config, "track_timing", FlextConstants.Logging.TRACK_TIMING)
+        )
+        cls._include_context_enabled = bool(
+            getattr(config, "include_context", FlextConstants.Logging.INCLUDE_CONTEXT)
+        )
+        cls._include_correlation_id_enabled = bool(
+            getattr(
+                config,
+                "include_correlation_id",
+                FlextConstants.Logging.INCLUDE_CORRELATION_ID,
+            )
+        )
+        cls._mask_sensitive_data_enabled = bool(
+            getattr(
+                config,
+                "mask_sensitive_data",
+                FlextConstants.Logging.MASK_SENSITIVE_DATA,
+            )
+        )
 
     @classmethod
     def configure(
@@ -964,13 +1069,23 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             FlextResult[None]: Success or failure with error details
 
         """
+        cls._load_config_flags()
         global_config = FlextConfig.get_global_instance()
 
         # Get complete logging configuration from FlextConfig as single source of truth
         logging_config = global_config.get_logging_config()
+        resolved_log_verbosity = (
+            log_verbosity
+            if log_verbosity is not None
+            else getattr(
+                global_config, "log_verbosity", FlextConstants.Logging.VERBOSITY
+            )
+        )
 
         # Resolve all configuration parameters with proper type handling
-        resolved_log_level = log_level or str(logging_config.get("level", FlextConstants.Logging.DEFAULT_LEVEL))
+        resolved_log_level = log_level or str(
+            logging_config.get("level", FlextConstants.Logging.DEFAULT_LEVEL)
+        )
 
         # Handle json_output with proper type casting
         config_json_output = logging_config.get("json_output")
@@ -982,13 +1097,27 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             resolved_json_output = None
 
         # Handle boolean fields with proper type casting
-        config_include_source = logging_config.get("include_source", FlextConstants.Logging.INCLUDE_SOURCE)
-        resolved_include_source = include_source if include_source is not None else bool(config_include_source)
+        config_include_source = logging_config.get(
+            "include_source", FlextConstants.Logging.INCLUDE_SOURCE
+        )
+        resolved_include_source = (
+            include_source
+            if include_source is not None
+            else bool(config_include_source)
+        )
 
-        config_structured_output = logging_config.get("structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT)
-        resolved_structured_output = structured_output if structured_output is not None else bool(config_structured_output)
+        config_structured_output = logging_config.get(
+            "structured_output", FlextConstants.Logging.STRUCTURED_OUTPUT
+        )
+        resolved_structured_output = (
+            structured_output
+            if structured_output is not None
+            else bool(config_structured_output)
+        )
 
-        resolved_log_verbosity = log_verbosity or str(logging_config.get("log_verbosity", FlextConstants.Logging.VERBOSITY))
+        resolved_log_verbosity = log_verbosity or str(
+            logging_config.get("log_verbosity", FlextConstants.Logging.VERBOSITY)
+        )
 
         # Create configuration model with resolved parameters
         config_model = FlextModels.LoggerConfigurationModel(
@@ -1001,34 +1130,70 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
 
         # Store additional configuration for runtime use with proper type casting
         config_log_file = logging_config.get("log_file")
-        cls._log_file = log_file if log_file is not None else (str(config_log_file) if config_log_file is not None else None)
+        cls._log_file = (
+            log_file
+            if log_file is not None
+            else (str(config_log_file) if config_log_file is not None else None)
+        )
 
         config_max_size = logging_config.get("log_file_max_size", 10 * 1024 * 1024)
-        cls._log_file_max_size = log_file_max_size if log_file_max_size is not None else int(config_max_size)
+        cls._log_file_max_size = (
+            log_file_max_size if log_file_max_size is not None else int(config_max_size)
+        )
 
         config_backup_count = logging_config.get("log_file_backup_count", 5)
-        cls._log_file_backup_count = log_file_backup_count if log_file_backup_count is not None else int(config_backup_count)
+        cls._log_file_backup_count = (
+            log_file_backup_count
+            if log_file_backup_count is not None
+            else int(config_backup_count)
+        )
 
         config_console_enabled = logging_config.get("console_enabled", True)
-        cls._console_enabled = console_enabled if console_enabled is not None else bool(config_console_enabled)
+        cls._console_enabled = (
+            console_enabled
+            if console_enabled is not None
+            else bool(config_console_enabled)
+        )
 
         config_console_color = logging_config.get("console_color_enabled", True)
-        cls._console_color_enabled = console_color_enabled if console_color_enabled is not None else bool(config_console_color)
+        cls._console_color_enabled = (
+            console_color_enabled
+            if console_color_enabled is not None
+            else bool(config_console_color)
+        )
 
         config_track_perf = logging_config.get("track_performance", False)
-        cls._track_performance = track_performance if track_performance is not None else bool(config_track_perf)
+        cls._track_performance = (
+            track_performance
+            if track_performance is not None
+            else bool(config_track_perf)
+        )
 
         config_track_timing = logging_config.get("track_timing", False)
-        cls._track_timing = track_timing if track_timing is not None else bool(config_track_timing)
+        cls._track_timing = (
+            track_timing if track_timing is not None else bool(config_track_timing)
+        )
 
         config_include_context = logging_config.get("include_context", True)
-        cls._include_context = include_context if include_context is not None else bool(config_include_context)
+        cls._include_context = (
+            include_context
+            if include_context is not None
+            else bool(config_include_context)
+        )
 
         config_include_corr = logging_config.get("include_correlation_id", True)
-        cls._include_correlation_id = include_correlation_id if include_correlation_id is not None else bool(config_include_corr)
+        cls._include_correlation_id = (
+            include_correlation_id
+            if include_correlation_id is not None
+            else bool(config_include_corr)
+        )
 
         config_mask_sensitive = logging_config.get("mask_sensitive_data", True)
-        cls._mask_sensitive_data = mask_sensitive_data if mask_sensitive_data is not None else bool(config_mask_sensitive)
+        cls._mask_sensitive_data = (
+            mask_sensitive_data
+            if mask_sensitive_data is not None
+            else bool(config_mask_sensitive)
+        )
 
         # Reset if already configured (allow reconfiguration)
         if cls._configured and structlog.is_configured():
@@ -1077,8 +1242,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             elif config_model.log_verbosity == "compact":
                 processors.append(
                     structlog.dev.ConsoleRenderer(
-                        colors=cls._console_color_enabled,
-                        repr_native_str=False
+                        colors=cls._console_color_enabled, repr_native_str=False
                     )
                 )
             elif config_model.log_verbosity == "detailed":
@@ -1112,13 +1276,17 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 file_handler = logging.handlers.RotatingFileHandler(
                     cls._log_file,
                     maxBytes=cls._log_file_max_size,
-                    backupCount=cls._log_file_backup_count
+                    backupCount=cls._log_file_backup_count,
                 )
-                file_handler.setLevel(getattr(logging, config_model.log_level.upper(), logging.INFO))
+                file_handler.setLevel(
+                    getattr(logging, config_model.log_level.upper(), logging.INFO)
+                )
 
                 # Set up root logger with both console and file handlers
                 root_logger = logging.getLogger()
-                root_logger.setLevel(getattr(logging, config_model.log_level.upper(), logging.INFO))
+                root_logger.setLevel(
+                    getattr(logging, config_model.log_level.upper(), logging.INFO)
+                )
 
                 # Clear existing handlers
                 root_logger.handlers.clear()
@@ -1129,7 +1297,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 # Add console handler if enabled
                 if cls._console_enabled:
                     console_handler = logging.StreamHandler()
-                    console_handler.setLevel(getattr(logging, config_model.log_level.upper(), logging.INFO))
+                    console_handler.setLevel(
+                        getattr(logging, config_model.log_level.upper(), logging.INFO)
+                    )
                     root_logger.addHandler(console_handler)
             # Set root logger level for console-only logging
             elif cls._console_enabled:
@@ -1162,7 +1332,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             EventDict: Modified event dictionary with correlation ID
 
         """
-        if FlextLogger._global_correlation_id:
+        if (
+            FlextLogger._include_correlation_id_enabled
+            and FlextLogger._global_correlation_id
+        ):
             event_dict["correlation_id"] = FlextLogger._global_correlation_id
         return event_dict
 
@@ -1207,6 +1380,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             EventDict: Sanitized event dictionary
 
         """
+        if not FlextLogger._mask_sensitive_data_enabled:
+            return event_dict
+
         sensitive_keys = {
             "password",
             "passwd",
