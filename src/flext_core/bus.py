@@ -217,9 +217,13 @@ class FlextBus(FlextMixins):
                 msg = "Handler cannot be None"
                 return FlextResult[None].fail(msg)
 
-            handle_method = getattr(handler, "handle", None)
+            handle_method_name = FlextConstants.Mixins.METHOD_HANDLE
+            handle_method = getattr(handler, handle_method_name, None)
             if not callable(handle_method):
-                msg = "Invalid handler: must have callable 'handle' method"
+                msg = (
+                    "Invalid handler: must have callable "
+                    f"'{handle_method_name}' method"
+                )
                 return FlextResult[None].fail(msg)
 
             key = getattr(handler, "handler_id", handler.__class__.__name__)
@@ -493,7 +497,11 @@ class FlextBus(FlextMixins):
         )
 
         # Try different handler methods in order of preference
-        handler_methods = ["execute", "handle", "process_command"]
+        handler_methods = [
+            FlextConstants.Mixins.METHOD_EXECUTE,
+            FlextConstants.Mixins.METHOD_HANDLE,
+            FlextConstants.Mixins.METHOD_PROCESS_COMMAND,
+        ]
 
         for method_name in handler_methods:
             method = getattr(handler, method_name, None)
@@ -511,8 +519,14 @@ class FlextBus(FlextMixins):
                     )
 
         # No valid handler method found
+        formatted_methods = (
+            f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+            if len(handler_methods) > 1
+            else handler_methods[0]
+        )
+
         return FlextResult[object].fail(
-            "Handler has no callable execute, handle, or process_command method",
+            f"Handler has no callable {formatted_methods} method",
             error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
         )
 
