@@ -519,11 +519,12 @@ class FlextBus(FlextMixins):
                     )
 
         # No valid handler method found
-        formatted_methods = (
-            f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
-            if len(handler_methods) > 1
-            else handler_methods[0]
-        )
+        if not handler_methods:
+            formatted_methods = "handler method"
+        elif len(handler_methods) > 1:
+            formatted_methods = f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+        else:
+            formatted_methods = handler_methods[0]
 
         return FlextResult[object].fail(
             f"Handler has no callable {formatted_methods} method",
