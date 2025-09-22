@@ -372,7 +372,19 @@ class FlextDispatcherRegistry:
                             handler_mode=handler_mode_val,
                             metadata=metadata_val,
                         )
-                        handler_mode = handler_mode_val
+                        # Derive handler_mode from handler_type if not explicitly set
+                        if "handler_mode" in handler_config and isinstance(handler_config.get("handler_mode"), str) and handler_config.get("handler_mode") in {
+                            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+                        }:
+                            handler_mode = handler_mode_val
+                        else:
+                            if handler_type_val == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
+                                handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                            elif handler_type_val == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
+                                handler_mode = FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                            else:
+                                handler_mode = handler_mode_val  # fallback
                     except Exception:
                         config_obj = None
 
