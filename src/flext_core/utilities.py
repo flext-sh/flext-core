@@ -400,7 +400,7 @@ class FlextUtilities:
                 >> (
                     lambda name: FlextResult[str].ok(re.sub(r'[<>:"/\\|?*]', "_", name))
                 )
-                >> (lambda name: FlextResult[str].ok(name[:255]))  # Limit length
+                >> (lambda name: FlextResult[str].ok(name[:FlextConstants.Validation.MAX_EMAIL_LENGTH]))  # Limit length to max field length
             )
 
         @staticmethod
@@ -536,7 +536,7 @@ class FlextUtilities:
                 try:
                     # For other types with constructors, try calling them
                     # Use type ignore to handle mypy's overly strict object constructor check
-                    converted_value = target_type(value)
+                    converted_value = target_type(value)  # type: ignore[call-arg]
                     return FlextResult[T].ok(converted_value)
                 except (TypeError, ValueError):
                     # If constructor fails, return the value with type ignore
@@ -750,7 +750,7 @@ class FlextUtilities:
         @staticmethod
         def generate_correlation_id() -> str:
             """Generate a correlation ID for tracking."""
-            return f"corr-{str(uuid.uuid4())[:8]}"
+            return f"corr_{str(uuid.uuid4())[:8]}"
 
         @staticmethod
         def generate_short_id(length: int = 8) -> str:

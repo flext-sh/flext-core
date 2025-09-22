@@ -568,7 +568,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             else None
         )
         user_id = str(model_kwargs["user_id"]) if model_kwargs.get("user_id") else None
-        endpoint = str(model_kwargs["endpoint"]) if model_kwargs.get("endpoint") else None
+        endpoint = (
+            str(model_kwargs["endpoint"]) if model_kwargs.get("endpoint") else None
+        )
 
         model = FlextModels.LoggerRequestContextModel(
             request_id=request_id,
@@ -1639,6 +1641,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                     local.request_context["user_id"] = model.user_id
                 if model.endpoint:
                     local.request_context["endpoint"] = model.endpoint
+                # Add custom data fields to the request context
+                if model.custom_data:
+                    for key, value in model.custom_data.items():
+                        local.request_context[key] = value
                 if model.correlation_id:
                     self._logger.set_correlation_id_internal(model.correlation_id)
 
@@ -1774,6 +1780,24 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                             model.context_data["correlation_id"]
                         )
 
+                    # Collect any custom fields that aren't predefined
+                    predefined_fields = {
+                        "request_id",
+                        "method",
+                        "path",
+                        "headers",
+                        "query_params",
+                        "correlation_id",
+                        "user_id",
+                        "endpoint",
+                    }
+                    custom_data: dict[str, str] = {}
+                    for key, value in model.context_data.items():
+                        if key not in predefined_fields:
+                            custom_data[str(key)] = str(value)
+
+                    context_kwargs["custom_data"] = custom_data
+
                     new_context_model = FlextModels.LoggerRequestContextModel(
                         request_id=str(context_kwargs.get("request_id", "")),
                         method=str(context_kwargs.get("method"))
@@ -1795,6 +1819,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                         correlation_id=str(context_kwargs.get("correlation_id"))
                         if context_kwargs.get("correlation_id")
                         else None,
+                        custom_data=cast(
+                            "dict[str, str]", context_kwargs.get("custom_data", {})
+                        ),
                     )
                     bound_logger._context_manager.set_request_context(new_context_model)
 
