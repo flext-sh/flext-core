@@ -47,7 +47,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
         handler_name: str | None = None,
         handler_id: str | None = None,
         handler_config: FlextModels.CqrsConfig.Handler
-        | dict[str, object]
+        | FlextTypes.Core.Dict
         | None = None,
         command_timeout: int = 0,
         max_command_retries: int = 0,
@@ -74,8 +74,8 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
             resolved_name = handler_name or self.__class__.__name__
             resolved_mode = self._resolve_mode(handler_mode, handler_config)
 
-            # Convert handler_config to dict if it's a Handler object
-            config_dict: dict[str, object] | None = None
+            # Convert handler_config to a FlextTypes.Core.Dict if it's a Handler object
+            config_dict: FlextTypes.Core.Dict | None = None
             if handler_config is not None:
                 if isinstance(handler_config, dict):
                     config_dict = handler_config
@@ -84,7 +84,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     try:
                         dump_result = handler_config.model_dump()
                         config_dict = (
-                            dump_result  # model_dump() always returns dict[str, object]
+                            dump_result  # model_dump() always returns FlextTypes.Core.Dict
                         )
                     except Exception:
                         config_dict = {}
@@ -107,7 +107,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
     def _resolve_mode(
         self,
         handler_mode: Literal["command", "query"] | None,
-        handler_config: FlextModels.CqrsConfig.Handler | dict[str, object] | None,
+        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Core.Dict | None,
     ) -> Literal["command", "query"]:
         """Resolve handler mode using FlextConstants defaults.
 
