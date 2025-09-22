@@ -94,6 +94,11 @@ class FlextConfig(BaseSettings):
         validate_default=True,
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console logging verbosity (compact, detailed, full)",
+    )
+
     # Additional logging configuration fields using FlextConstants.Logging.
     log_format: str = Field(
         default=FlextConstants.Logging.DEFAULT_FORMAT,
@@ -347,6 +352,18 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return v.lower()
 
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity against supported options."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        normalized = v.lower()
+        if normalized not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return normalized
+
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
         """Validate overall configuration consistency.
@@ -408,6 +425,7 @@ class FlextConfig(BaseSettings):
             "json_output": self.json_output,
             "include_source": self.include_source,
             "structured_output": self.structured_output,
+            "log_verbosity": self.log_verbosity,
             "format": self.log_format,
             "log_file": self.log_file,
             "log_file_max_size": self.log_file_max_size,
@@ -577,6 +595,7 @@ class FlextConfig(BaseSettings):
             "timeout_seconds": self.dispatcher_timeout_seconds,
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
+            "log_verbosity": self.log_verbosity,
         }
 
     @classmethod
