@@ -605,10 +605,7 @@ class TestFlextCqrsComprehensive:
         # Unregister existing and missing
         existing_unregistration = bus.unregister_handler("EchoCmd")
         FlextTestsMatchers.assert_result_success(existing_unregistration)
-        assert (
-            existing_unregistration.error_data.get("message")
-            == "Handler 'EchoCmd' unregistered"
-        )
+        assert existing_unregistration.error_data.get("message") == "Handler 'EchoCmd' unregistered"
         assert existing_unregistration.error_data.get("command_type") == "EchoCmd"
 
         missing_unregistration = bus.unregister_handler("MissingCmd")
