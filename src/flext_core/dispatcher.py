@@ -40,7 +40,7 @@ class FlextDispatcher:
     def __init__(
         self,
         *,
-        config: dict[str, object] | None = None,
+        config: FlextTypes.Core.Dict | None = None,
         bus: FlextBus | None = None,
     ) -> None:
         """Initialize dispatcher with Pydantic configuration model.
@@ -51,9 +51,10 @@ class FlextDispatcher:
 
         """
         # Use provided config or create from global configuration
+        config_data: FlextTypes.Core.Dict
         if config is None:
             global_config = FlextConfig.get_global_instance()
-            config = {
+            config_data = {
                 "auto_context": getattr(global_config, "dispatcher_auto_context", True),
                 "timeout_seconds": getattr(
                     global_config,
@@ -68,18 +69,20 @@ class FlextDispatcher:
                 ),
                 "bus_config": None,
             }
+        else:
+            config_data = config
 
-        self._config = config
-        bus_config = config.get("bus_config")
+        self._config: FlextTypes.Core.Dict = config_data
+        bus_config = config_data.get("bus_config")
         self._bus = bus or FlextBus.create_command_bus(
-            bus_config=cast("dict[str, object] | None", bus_config)
+            bus_config=cast(FlextTypes.Core.Dict | None, bus_config)
             if isinstance(bus_config, (dict, type(None)))
             else None
         )
         self._logger = FlextLogger(self.__class__.__name__)
 
     @property
-    def config(self) -> dict[str, object]:
+    def config(self) -> FlextTypes.Core.Dict:
         """Access the dispatcher configuration."""
         return self._config
 
@@ -93,8 +96,8 @@ class FlextDispatcher:
     # ------------------------------------------------------------------
     def register_handler_with_request(
         self,
-        request: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        request: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Register handler using structured request model.
 
         Args:
@@ -109,13 +112,13 @@ class FlextDispatcher:
             request.get("handler_mode")
             not in FlextConstants.Dispatcher.VALID_HANDLER_MODES
         ):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE
             )
 
         # Validate handler is provided
         if request.get("handler") is None:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 FlextConstants.Dispatcher.ERROR_HANDLER_REQUIRED
             )
 
@@ -129,12 +132,12 @@ class FlextDispatcher:
         )
 
         if bus_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Bus registration failed: {bus_result.error}"
             )
 
         # Create registration details
-        details = {
+        details: FlextTypes.Core.Dict = {
             "registration_id": request.get("registration_id"),
             "message_type_name": getattr(request.get("message_type"), "__name__", None)
             if request.get("message_type")
@@ -152,15 +155,15 @@ class FlextDispatcher:
                 message_type=details.get("message_type_name"),
             )
 
-        return FlextResult[dict[str, object]].ok(details)
+        return FlextResult[FlextTypes.Core.Dict].ok(details)
 
     def register_handler(
         self,
         handler: FlextHandlers[object, object],
         *,
         handler_mode: str = FlextConstants.Dispatcher.DEFAULT_HANDLER_MODE,
-        handler_config: dict[str, object] | None = None,
-    ) -> FlextResult[dict[str, object]]:
+        handler_config: FlextTypes.Core.Dict | None = None,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Register handler with minimal parameters using structured model internally.
 
         Args:
@@ -173,12 +176,12 @@ class FlextDispatcher:
 
         """
         # Create structured request
-        request = dict[str, object](
-            handler=handler,
-            message_type=None,
-            handler_mode=handler_mode,
-            handler_config=handler_config,
-        )
+        request: FlextTypes.Core.Dict = {
+            "handler": handler,
+            "message_type": None,
+            "handler_mode": handler_mode,
+            "handler_config": handler_config,
+        }
 
         return self.register_handler_with_request(request)
 
@@ -187,8 +190,8 @@ class FlextDispatcher:
         command_type: type[object],
         handler: FlextHandlers[object, object],
         *,
-        handler_config: dict[str, object] | None = None,
-    ) -> FlextResult[dict[str, object]]:
+        handler_config: FlextTypes.Core.Dict | None = None,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Register command handler using structured model internally.
 
         Args:
@@ -200,12 +203,12 @@ class FlextDispatcher:
             FlextResult with registration details or error
 
         """
-        request = dict[str, object](
-            handler=handler,
-            message_type=command_type,
-            handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-            handler_config=handler_config,
-        )
+        request: FlextTypes.Core.Dict = {
+            "handler": handler,
+            "message_type": command_type,
+            "handler_mode": FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            "handler_config": handler_config,
+        }
 
         return self.register_handler_with_request(request)
 
@@ -214,8 +217,8 @@ class FlextDispatcher:
         query_type: type[object],
         handler: FlextHandlers[object, object],
         *,
-        handler_config: dict[str, object] | None = None,
-    ) -> FlextResult[dict[str, object]]:
+        handler_config: FlextTypes.Core.Dict | None = None,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Register query handler using structured model internally.
 
         Args:
@@ -227,12 +230,12 @@ class FlextDispatcher:
             FlextResult with registration details or error
 
         """
-        request = dict[str, object](
-            handler=handler,
-            message_type=query_type,
-            handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-            handler_config=handler_config,
-        )
+        request: FlextTypes.Core.Dict = {
+            "handler": handler,
+            "message_type": query_type,
+            "handler_mode": FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+            "handler_config": handler_config,
+        }
 
         return self.register_handler_with_request(request)
 
@@ -241,9 +244,9 @@ class FlextDispatcher:
         message_type: type[object],
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
-        handler_config: dict[str, object] | None = None,
+        handler_config: FlextTypes.Core.Dict | None = None,
         mode: Literal["command", "query"] = "command",
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Register function as handler using factory pattern.
 
         Args:
@@ -258,7 +261,7 @@ class FlextDispatcher:
         """
         # Validate mode
         if mode not in FlextConstants.Dispatcher.VALID_HANDLER_MODES:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE
             )
 
@@ -268,24 +271,24 @@ class FlextDispatcher:
         )
 
         if handler_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Handler creation failed: {handler_result.error}"
             )
 
         # Register the created handler
-        request = dict[str, object](
-            handler=handler_result.value,
-            message_type=message_type,
-            handler_mode=mode,
-            handler_config=handler_config,
-        )
+        request: FlextTypes.Core.Dict = {
+            "handler": handler_result.value,
+            "message_type": message_type,
+            "handler_mode": mode,
+            "handler_config": handler_config,
+        }
 
         return self.register_handler_with_request(request)
 
     def _create_handler_from_function(
         self,
         handler_func: Callable[[object], object | FlextResult[object]],
-        handler_config: dict[str, object] | None,
+        handler_config: FlextTypes.Core.Dict | None,
         mode: Literal["command", "query"],
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
@@ -342,8 +345,8 @@ class FlextDispatcher:
     # ------------------------------------------------------------------
     def dispatch_with_request(
         self,
-        request: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        request: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Dispatch using structured request model.
 
         Args:
@@ -357,17 +360,17 @@ class FlextDispatcher:
 
         # Validate request
         if request.get("message") is None:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 FlextConstants.Dispatcher.ERROR_MESSAGE_REQUIRED
             )
 
         # Execute dispatch with context management
-        metadata_dict: dict[str, object] | None = None
+        metadata_dict: FlextTypes.Core.Dict | None = None
         context_metadata = request.get("context_metadata")
         if context_metadata and hasattr(context_metadata, "value"):
-            # Convert dict[str, str] to dict[str, object] for context scope
+            # Normalize metadata attributes to FlextTypes.Core.Dict for context scope
             metadata_dict = dict(
-                cast("dict[str, object]", context_metadata.value).items()
+                cast(FlextTypes.Core.Dict, context_metadata.value).items()
             )
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None
@@ -377,14 +380,14 @@ class FlextDispatcher:
             execution_time_ms = int((time.time() - start_time) * 1000)
 
             if result.is_success:
-                dispatch_result = dict[str, object](
-                    success=True,
-                    result=result.value,
-                    error_message=None,
-                    request_id=request.get("request_id"),
-                    execution_time_ms=execution_time_ms,
-                    correlation_id=request.get("correlation_id"),
-                )
+                dispatch_result: FlextTypes.Core.Dict = {
+                    "success": True,
+                    "result": result.value,
+                    "error_message": None,
+                    "request_id": request.get("request_id"),
+                    "execution_time_ms": execution_time_ms,
+                    "correlation_id": request.get("correlation_id"),
+                }
 
                 if self._config.get("enable_logging"):
                     self._logger.debug(
@@ -394,26 +397,26 @@ class FlextDispatcher:
                         execution_time_ms=execution_time_ms,
                     )
 
-                return FlextResult[dict[str, object]].ok(dispatch_result)
-            dispatch_result = dict[str, object](
-                success=False,
-                result=None,
-                error_message=result.error or "Unknown error",
-                request_id=request.get("request_id"),
-                execution_time_ms=execution_time_ms,
-                correlation_id=request.get("correlation_id"),
-            )
+                return FlextResult[FlextTypes.Core.Dict].ok(dispatch_result)
+            dispatch_failure: FlextTypes.Core.Dict = {
+                "success": False,
+                "result": None,
+                "error_message": result.error or "Unknown error",
+                "request_id": request.get("request_id"),
+                "execution_time_ms": execution_time_ms,
+                "correlation_id": request.get("correlation_id"),
+            }
 
             if self._config.get("enable_logging"):
                 self._logger.error(
                     "dispatch_failed",
                     request_id=request.get("request_id"),
                     message_type=type(request.get("message")).__name__,
-                    error=dispatch_result.get("error_message"),
+                    error=dispatch_failure.get("error_message"),
                     execution_time_ms=execution_time_ms,
                 )
 
-            return FlextResult[dict[str, object]].ok(dispatch_result)
+            return FlextResult[FlextTypes.Core.Dict].ok(dispatch_failure)
 
     def dispatch(
         self,
@@ -438,17 +441,17 @@ class FlextDispatcher:
         # Create structured request
         metadata_obj = None
         if metadata:
-            # Convert dict[str, object] to dict[str, object] for Metadata model
-            string_metadata: dict[str, object] = {
+            # Normalize metadata to FlextTypes.Core.Dict for Metadata model
+            string_metadata: FlextTypes.Core.Dict = {
                 k: str(v) for k, v in metadata.items()
             }
             metadata_obj = FlextModels.Metadata(attributes=string_metadata)
-        request = dict[str, object](
-            message=message,
-            context_metadata=metadata_obj,
-            correlation_id=correlation_id,
-            timeout_override=timeout_override,
-        )
+        request: FlextTypes.Core.Dict = {
+            "message": message,
+            "context_metadata": metadata_obj,
+            "correlation_id": correlation_id,
+            "timeout_override": timeout_override,
+        }
 
         # Execute structured dispatch
         structured_result = self.dispatch_with_request(request)
@@ -519,7 +522,7 @@ class FlextDispatcher:
     @classmethod
     def create_with_config(
         cls,
-        config: dict[str, object] | None = None,
+        config: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[FlextDispatcher]:
         """Create dispatcher with explicit configuration model.
 
