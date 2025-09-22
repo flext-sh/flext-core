@@ -179,8 +179,9 @@ class TestFlextContainer100Percent:
         container = FlextContainer()  # Create truly empty container
 
         # Empty container should return empty list
-        service_names = container.get_service_names()
-        assert service_names == []
+        service_names_result = container.get_service_names()
+        assert service_names_result.is_success
+        assert service_names_result.unwrap() == []
 
         service_count = container.get_service_count()
         assert service_count == 0
