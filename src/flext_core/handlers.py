@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import time
 from abc import abstractmethod
+from dataclasses import asdict as dataclasses_asdict, is_dataclass
 from typing import Literal, get_origin
 
 from pydantic import BaseModel
@@ -23,6 +24,17 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+try:  # pragma: no cover - optional dependency guard
+    import attr as _attr_module
+except Exception:  # pragma: no cover - fallback when attrs is unavailable
+    _attr_module = None
+
+
+_SERIALIZABLE_MESSAGE_EXPECTATION = (
+    "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
+    "model_dump/dict/as_dict/__slots__ representations"
+)
 
 
 class FlextHandlers[MessageT, ResultT](FlextMixins):
@@ -382,29 +394,119 @@ class FlextHandlers[MessageT, ResultT](FlextMixins):
                     error_data={"exception_context": pydantic_error.context},
                 )
 
-        # For non-Pydantic objects, basic validation using FlextExceptions
-        if not hasattr(message, "__dict__") and not isinstance(
-            message, (dict, str, int, float, bool)
-        ):
-            type_error = FlextExceptions.TypeError(
-                f"Invalid message type for {operation}: {type(message).__name__}",
-                expected_type="dict, str, int, float, bool, or object with __dict__",
-                actual_type=type(message).__name__,
-                context={
-                    "operation": operation,
-                    "message_type": type(message).__name__,
-                    "validation_type": "basic_type_check",
-                },
-                correlation_id=f"type_validation_{int(time.time() * 1000)}",
-            )
-
+        # For non-Pydantic objects, ensure a serializable representation can be constructed
+        try:
+            self._build_serializable_message_payload(message, operation=operation)
+        except FlextExceptions.TypeError as type_error:
             return FlextResult[None].fail(
                 str(type_error),
                 error_code=type_error.error_code,
                 error_data={"exception_context": type_error.context},
             )
+        except Exception as exc:  # pragma: no cover - defensive guard
+            fallback_error = FlextExceptions.TypeError(
+                f"Invalid message type for {operation}: {type(message).__name__}",
+                expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type=type(message).__name__,
+                context={
+                    "operation": operation,
+                    "message_type": type(message).__name__,
+                    "validation_type": "serializable_check",
+                    "original_exception": str(exc),
+                },
+                correlation_id=f"type_validation_{int(time.time() * 1000)}",
+            )
+
+            return FlextResult[None].fail(
+                str(fallback_error),
+                error_code=fallback_error.error_code,
+                error_data={"exception_context": fallback_error.context},
+            )
 
         return FlextResult[None].ok(None)
+
+    def _build_serializable_message_payload(
+        self,
+        message: object,
+        *,
+        operation: Literal["command", "query"] | None = None,
+    ) -> object:
+        """Build a serializable representation for message validation heuristics."""
+
+        operation_name = operation or "message"
+        context_operation = operation or "unknown"
+
+        if isinstance(message, (dict, str, int, float, bool)):
+            return message
+
+        if message is None:
+            raise FlextExceptions.TypeError(
+                f"Invalid message type for {operation_name}: NoneType",
+                expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type="NoneType",
+                context={
+                    "operation": context_operation,
+                    "message_type": "NoneType",
+                    "validation_type": "serializable_check",
+                },
+                correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+            )
+
+        if isinstance(message, BaseModel):
+            return message.model_dump()
+
+        if is_dataclass(message):
+            return dataclasses_asdict(message)
+
+        attrs_fields = getattr(message, "__attrs_attrs__", None)
+        if attrs_fields is not None:
+            if _attr_module is not None and hasattr(_attr_module, "asdict"):
+                return _attr_module.asdict(message)
+            return {
+                attr_field.name: getattr(message, attr_field.name)
+                for attr_field in attrs_fields
+                if hasattr(message, attr_field.name)
+            }
+
+        for method_name in ("model_dump", "dict", "as_dict"):
+            method = getattr(message, method_name, None)
+            if callable(method):
+                try:
+                    data = method()
+                except TypeError:
+                    continue
+                if data is not None:
+                    return data
+
+        slots = getattr(message, "__slots__", None)
+        if slots:
+            if isinstance(slots, str):
+                slot_names = (slots,)
+            elif isinstance(slots, (list, tuple)):
+                slot_names = tuple(slots)
+            else:
+                slot_names = (str(slots),)
+
+            return {
+                slot_name: getattr(message, slot_name)
+                for slot_name in slot_names
+                if hasattr(message, slot_name)
+            }
+
+        if hasattr(message, "__dict__"):
+            return vars(message)
+
+        raise FlextExceptions.TypeError(
+            f"Invalid message type for {operation_name}: {type(message).__name__}",
+            expected_type=_SERIALIZABLE_MESSAGE_EXPECTATION,
+            actual_type=type(message).__name__,
+            context={
+                "operation": context_operation,
+                "message_type": type(message).__name__,
+                "validation_type": "serializable_check",
+            },
+            correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+        )
 
     @abstractmethod
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
