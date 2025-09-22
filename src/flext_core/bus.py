@@ -585,9 +585,6 @@ class FlextBus(FlextMixins):
             key_name = getattr(key, "__name__", None)
             if isinstance(key_name, str):
                 candidate_names.add(key_name)
-            normalized_key = self._normalize_command_key(key)
-            if isinstance(normalized_key, str):
-                candidate_names.add(normalized_key)
 
             direct_match = isinstance(command_type, type) and key == command_type
             command_names: set[str] = {str(command_type)}
