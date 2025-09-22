@@ -52,6 +52,14 @@ result = (
 print(result.value)  # 4 (legacy `.data` also supported)
 ```
 
+### `FlextModels.Value`
+
+Value objects expose a `create` factory that now returns `FlextResult[Self]`,
+preserving the specific subclass type when validation succeeds. This means
+callers no longer need casts when working with helpers such as
+`FlextModels.EmailAddress.create(...)`—the wrapped result is typed to the
+concrete value object automatically.
+
 ### `FlextContainer`
 
 ```python

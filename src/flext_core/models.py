@@ -172,7 +172,9 @@ class FlextModels:
             return hash(tuple(self.model_dump().items()))
 
         @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[Any]:
+        def create(
+            cls: type[Self], *args: object, **kwargs: object
+        ) -> FlextResult[Self]:
             """Create value object instance with validation, returns FlextResult."""
             try:
                 # Handle single argument case for simple value objects
@@ -184,9 +186,9 @@ class FlextModels:
                         args = ()
 
                 instance = cls(*args, **kwargs)
-                return FlextResult[Any].ok(instance)
+                return FlextResult[Self].ok(instance)
             except Exception as e:
-                return FlextResult[Any].fail(str(e))
+                return FlextResult[Self].fail(str(e))
 
     class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""
