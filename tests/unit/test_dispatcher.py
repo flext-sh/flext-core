@@ -124,10 +124,24 @@ def test_dispatcher_register_function_helper() -> None:
     dispatcher = FlextDispatcher()
 
     def handle_echo(command: EchoCommand) -> str:
+        if command.payload == "boom":
+            raise RuntimeError("boom")
         return f"echo:{command.payload}"
 
     register_result = dispatcher.register_function(EchoCommand, handle_echo)
     assert register_result.is_success
+
+    success_result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload="ping")
+    )
+    assert success_result.is_success
+    assert success_result.unwrap() == "echo:ping"
+
+    failure_result: FlextResult[object] = dispatcher.dispatch(
+        EchoCommand(payload="boom")
+    )
+    assert failure_result.is_failure
+    assert "boom" in (failure_result.error or "")
 
     handler = dispatcher.bus.find_handler(EchoCommand(payload="ping"))
     assert handler is not None
