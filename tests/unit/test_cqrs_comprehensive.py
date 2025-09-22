@@ -596,6 +596,64 @@ class TestFlextCqrsIntegration:
         assert result.error_data["context"] == context
 
 
+class TestFlextCqrsBusMiddlewarePipeline:
+    """Tests for FlextBus middleware ordering and enablement."""
+
+    def test_middleware_executes_in_configured_order(self) -> None:
+        """Ensure multiple middleware run respecting their configured order."""
+
+        bus = FlextBus()
+        calls: list[str] = []
+
+        @dataclass
+        class SampleCommand:
+            command_id: str = "cmd-order"
+
+        class RecordingMiddleware:
+            def __init__(self, name: str) -> None:
+                self.name = name
+
+            def process(
+                self, _command: object, _handler: object
+            ) -> FlextResult[None]:
+                calls.append(self.name)
+                return FlextResult[None].ok(None)
+
+        class RecordingHandler:
+            def handle(self, _command: object) -> FlextResult[str]:
+                calls.append("handler")
+                return FlextResult[str].ok("handled")
+
+        handler = RecordingHandler()
+        registration = bus.register_handler(SampleCommand, handler)
+        assert registration.is_success
+
+        first_middleware = RecordingMiddleware("first")
+        second_middleware = RecordingMiddleware("second")
+
+        add_first = bus.add_middleware(
+            first_middleware,
+            {
+                "middleware_id": "mw-first",
+                "middleware_type": "RecordingMiddleware",
+                "enabled": True,
+                "order": 2,
+            },
+        )
+        add_second = bus.add_middleware(
+            second_middleware,
+            {
+                "middleware_id": "mw-second",
+                "middleware_type": "RecordingMiddleware",
+                "enabled": True,
+                "order": 1,
+            },
+        )
+
+        assert add_first.is_success
+        assert add_second.is_success
+
+
 class TestFlextBusMiddlewarePipeline:
     """Tests for middleware execution ordering and filtering on the bus."""
 
@@ -658,6 +716,66 @@ class TestFlextBusMiddlewarePipeline:
         result = bus.execute(SampleCommand())
 
         assert result.is_success
+        assert calls == ["second", "first", "handler"]
+
+    def test_disabled_middleware_is_ignored(self) -> None:
+        """Verify disabled middleware entries do not execute."""
+
+        bus = FlextBus()
+        calls: list[str] = []
+
+        @dataclass
+        class SampleCommand:
+            command_id: str = "cmd-disabled"
+
+        class RecordingMiddleware:
+            def __init__(self, name: str) -> None:
+                self.name = name
+
+            def process(
+                self, _command: object, _handler: object
+            ) -> FlextResult[None]:
+                calls.append(self.name)
+                return FlextResult[None].ok(None)
+
+        class RecordingHandler:
+            def handle(self, _command: object) -> FlextResult[str]:
+                calls.append("handler")
+                return FlextResult[str].ok("handled")
+
+        handler = RecordingHandler()
+        registration = bus.register_handler(SampleCommand, handler)
+        assert registration.is_success
+
+        disabled_middleware = RecordingMiddleware("disabled")
+        enabled_middleware = RecordingMiddleware("enabled")
+
+        add_disabled = bus.add_middleware(
+            disabled_middleware,
+            {
+                "middleware_id": "mw-disabled",
+                "middleware_type": "RecordingMiddleware",
+                "enabled": False,
+                "order": 1,
+            },
+        )
+        add_enabled = bus.add_middleware(
+            enabled_middleware,
+            {
+                "middleware_id": "mw-enabled",
+                "middleware_type": "RecordingMiddleware",
+                "enabled": True,
+                "order": 2,
+            },
+        )
+
+        assert add_disabled.is_success
+        assert add_enabled.is_success
+
+        result = bus.execute(SampleCommand())
+
+        assert result.is_success
+        assert calls == ["enabled", "handler"]
         assert call_order == ["mw_b", "mw_a", "mw_c"]
         assert handler.calls == 1
 
@@ -714,7 +832,6 @@ class TestFlextBusMiddlewarePipeline:
         assert result.is_success
         assert call_order == ["mw_enabled"]
         assert handler.calls == 1
-
 
 if __name__ == "__main__":
     pytest.main([__file__])
