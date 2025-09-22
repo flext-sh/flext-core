@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -169,6 +170,7 @@ class TestFlextConfigRealCoverage:
             json_output=True,
             include_source=False,
             structured_output=True,
+            log_verbosity="full",
             database_url="postgresql://user:pass@localhost/db",
             database_pool_size=20,
             cache_ttl=600,
@@ -182,6 +184,7 @@ class TestFlextConfigRealCoverage:
         assert logging_config["json_output"] is True
         assert logging_config["include_source"] is False
         assert logging_config["structured_output"] is True
+        assert logging_config["log_verbosity"] == "full"
 
         # Test get_database_config
         db_config = config.get_database_config()
@@ -197,6 +200,7 @@ class TestFlextConfigRealCoverage:
         # Test get_cqrs_bus_config
         cqrs_config = config.get_cqrs_bus_config()
         assert isinstance(cqrs_config, dict)
+        assert cqrs_config["log_verbosity"] == "full"
 
     def test_create_for_environment(self) -> None:
         """Test create_for_environment class method."""
@@ -294,12 +298,12 @@ class TestFlextConfigRealCoverage:
         base_config = FlextConfig(app_name="base", version="1.0.0", debug=False)
 
         # Test merge with dict
-        override_dict: dict[str, object] = {
+        override_dict: dict[str, str | bool | int] = {
             "app_name": "merged",
             "debug": True,
             "max_workers": 16,
         }
-        merged = base_config.merge(override_dict)
+        merged = base_config.merge(cast("dict[str, object]", override_dict))
 
         assert merged.app_name == "merged"
         assert merged.debug is True
