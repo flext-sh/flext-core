@@ -1467,6 +1467,18 @@ class FlextModels:
                 raise ValueError(msg)
             return v_upper
 
+        @field_validator("log_verbosity")
+        @classmethod
+        def validate_log_verbosity(cls, v: str) -> str:
+            """Validate log verbosity level."""
+
+            valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+            v_lower = v.lower()
+            if v_lower not in valid_levels:
+                msg = f"Invalid log verbosity: {v}. Must be one of {valid_levels}"
+                raise ValueError(msg)
+            return v_lower
+
     class LogContextModel(ArbitraryTypesModel):
         """Log context model with validation."""
 

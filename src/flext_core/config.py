@@ -150,6 +150,11 @@ class FlextConfig(BaseSettings):
         description="Mask sensitive data in log messages",
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Console log verbosity level (compact, detailed, full)",
+    )
+
     # Database configuration
     database_url: str | None = Field(
         default=None,
@@ -329,6 +334,18 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return v.upper()
 
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity is supported."""
+
+        valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
+        v_lower = v.lower()
+        if v_lower not in valid_levels:
+            msg = f"Log verbosity must be one of {valid_levels}"
+            raise ValueError(msg)
+        return v_lower
+
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v: str) -> str:
@@ -419,6 +436,7 @@ class FlextConfig(BaseSettings):
             "include_context": self.include_context,
             "include_correlation_id": self.include_correlation_id,
             "mask_sensitive_data": self.mask_sensitive_data,
+            "log_verbosity": self.log_verbosity,
         }
 
     def get_database_config(self) -> dict[str, object]:
@@ -577,6 +595,7 @@ class FlextConfig(BaseSettings):
             "timeout_seconds": self.dispatcher_timeout_seconds,
             "enable_metrics": self.dispatcher_enable_metrics,
             "enable_logging": self.dispatcher_enable_logging,
+            "log_verbosity": self.log_verbosity,
         }
 
     @classmethod

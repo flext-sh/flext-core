@@ -121,7 +121,7 @@ model_config = SettingsConfigDict(
 All FlextConfig fields can be accessed, including:
 
 - `debug`, `trace`, `environment`
-- `log_level`, `json_output`, `structured_output`
+- `log_level`, `json_output`, `structured_output`, `log_verbosity`
 - `database_url`, `database_pool_size`
 - `cache_ttl`, `cache_max_size`, `enable_caching`
 - `secret_key`, `api_key`

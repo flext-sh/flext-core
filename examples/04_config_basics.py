@@ -112,6 +112,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         print(f"Log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
         print(f"Include source: {config.include_source}")
+        print(f"Log verbosity: {config.log_verbosity}")
         print(f"Include context: {config.include_context}")
         print(f"Include correlation ID: {config.include_correlation_id}")
 
