@@ -95,10 +95,12 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._factories: dict[str, Callable[[], object]] = {}
 
         # Configuration integration with FlextConfig singleton
-        self._flext_config = FlextConfig.get_global_instance()
-        self._flext_config_snapshot = self._extract_config_snapshot(
-            self._flext_config
-        )
+        self._global_config = {
+            "max_workers": FlextConstants.Container.MAX_WORKERS,
+            "timeout_seconds": FlextConstants.Container.TIMEOUT_SECONDS,
+            "environment": FlextConstants.Config.DEFAULT_ENVIRONMENT,
+        }
+        self._flext_config_snapshot = self._extract_config_snapshot(self._flext_config)
         self._user_overrides: dict[str, object] = {}
         self._global_config = self._build_global_config()
 
@@ -524,7 +526,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             name = name_result.value_or_none
             if name is None:
                 return FlextResult[T].fail("Name resolution returned None")
-            
+
             register_result = self.register(name, service)
 
             if register_result.is_failure:
@@ -538,37 +540,37 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return FlextResult[T].fail(f"Service instantiation failed: {e}")
 
     def _instantiate_and_register_service_typed(
-    self,
-    service_class: type[T],
-    dependencies: FlextTypes.Core.Dict,
-    expected_type: type[T],
-) -> FlextResult[T]:
-    """Instantiate and register service with explicit type validation.
+        self,
+        service_class: type[T],
+        dependencies: FlextTypes.Core.Dict,
+        expected_type: type[T],
+    ) -> FlextResult[T]:
+        """Instantiate and register service with explicit type validation.
 
-    Returns:
-        FlextResult[T]: Success with validated service or failure with error.
+        Returns:
+            FlextResult[T]: Success with validated service or failure with error.
 
-    """
-    instantiation_result = self._instantiate_and_register_service(
-        service_class, dependencies
-    )
-
-    if instantiation_result.is_failure:
-        return instantiation_result
-
-    service = instantiation_result.value_or_none
-    if service is None:
-        return FlextResult[T].fail(
-            "Service instantiation returned None despite success state"
+        """
+        instantiation_result = self._instantiate_and_register_service(
+            service_class, dependencies
         )
 
-    if not isinstance(service, expected_type):
-        return FlextResult[T].fail(
-            f"Auto-wired service type mismatch: expected {expected_type.__name__}, "
-            f"got {type(service).__name__}"
-        )
+        if instantiation_result.is_failure:
+            return instantiation_result
 
-    return FlextResult[T].ok(service)
+        service = instantiation_result.value_or_none
+        if service is None:
+            return FlextResult[T].fail(
+                "Service instantiation returned None despite success state"
+            )
+
+        if not isinstance(service, expected_type):
+            return FlextResult[T].fail(
+                f"Auto-wired service type mismatch: expected {expected_type.__name__}, "
+                f"got {type(service).__name__}"
+            )
+
+        return FlextResult[T].ok(service)
 
     # =========================================================================
     # INSPECTION AND UTILITIES - Container introspection and management
@@ -727,18 +729,28 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             normalized_config = self._normalize_config_fields(config)
             finalized_values = self._finalize_config_values(normalized_config)
 
-            for key in ("max_workers", "timeout_seconds", "environment"):
-                if key not in config:
-                    continue
+            # Create and store global configuration with proper type conversion
+            max_workers = normalized_config.get(
+                "max_workers", FlextConstants.Container.MAX_WORKERS
+            )
+            timeout_seconds = normalized_config.get(
+                "timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS
+            )
+            environment = normalized_config.get(
+                "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
+            )
 
-                raw_value = config[key]
-                if raw_value is None:
-                    self._user_overrides.pop(key, None)
-                    continue
-
-                self._user_overrides[key] = finalized_values[key]
-
-            self._refresh_global_config()
+            self._global_config = {
+                "max_workers": int(max_workers)
+                if isinstance(max_workers, (int, float))
+                else FlextConstants.Container.MAX_WORKERS,
+                "timeout_seconds": float(timeout_seconds)
+                if isinstance(timeout_seconds, (int, float))
+                else FlextConstants.Container.TIMEOUT_SECONDS,
+                "environment": str(environment)
+                if environment
+                else FlextConstants.Config.DEFAULT_ENVIRONMENT,
+            }
 
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -797,9 +809,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         return normalized
 
-    def _extract_config_snapshot(
-        self, config: FlextConfig | None
-    ) -> dict[str, object]:
+    def _extract_config_snapshot(self, config: FlextConfig | None) -> dict[str, object]:
         """Extract relevant configuration values from FlextConfig instance."""
         if config is None:
             return {}
@@ -838,7 +848,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         environment_raw = config.get("environment")
         if isinstance(environment_raw, str):
-            environment = environment_raw.strip() or FlextConstants.Config.DEFAULT_ENVIRONMENT
+            environment = (
+                environment_raw.strip() or FlextConstants.Config.DEFAULT_ENVIRONMENT
+            )
         elif environment_raw is not None:
             environment = str(environment_raw)
         else:
@@ -851,9 +863,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         }
 
     @staticmethod
-    def _coerce_positive_int(
-        value: object, *, default: int, minimum: int
-    ) -> int:
+    def _coerce_positive_int(value: object, *, default: int, minimum: int) -> int:
         """Coerce value to positive integer with fallback."""
         candidate: int | None = None
 

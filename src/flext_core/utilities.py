@@ -400,7 +400,11 @@ class FlextUtilities:
                 >> (
                     lambda name: FlextResult[str].ok(re.sub(r'[<>:"/\\|?*]', "_", name))
                 )
-                >> (lambda name: FlextResult[str].ok(name[:FlextConstants.Validation.MAX_EMAIL_LENGTH]))  # Limit length to max field length
+                >> (
+                    lambda name: FlextResult[str].ok(
+                        name[: FlextConstants.Validation.MAX_EMAIL_LENGTH]
+                    )
+                )  # Limit length to max field length
             )
 
         @staticmethod

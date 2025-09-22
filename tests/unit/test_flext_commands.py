@@ -7,20 +7,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
+import attr
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import (
     FlextBus,
+    FlextConstants,
     FlextCqrs,
     FlextHandlers,
+    FlextLogger,
     FlextModels,
     FlextResult,
     FlextTypes,
 )
+from flext_core.constants import FlextConstants
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 
@@ -584,6 +589,9 @@ class TestFlextCqrsComprehensive:
             def handle(self, message: EchoCmd) -> FlextResult[str]:
                 return FlextResult[str].ok(message.value)
 
+            def execute(self, message: EchoCmd) -> FlextResult[str]:
+                return self.handle(message)
+
         # 1-arg form registers by handler id
         bus.register_handler(EchoHandler())
         assert bus.find_handler(EchoCmd(value="a")) is not None
@@ -599,8 +607,22 @@ class TestFlextCqrsComprehensive:
         assert all(isinstance(k, str) for k in handlers_map)
 
         # Unregister existing and missing
-        assert bus.unregister_handler("EchoCmd") is True
-        assert bus.unregister_handler("MissingCmd") is False
+        existing_unregistration = bus.unregister_handler("EchoCmd")
+        FlextTestsMatchers.assert_result_success(existing_unregistration)
+        assert (
+            existing_unregistration.error_data.get("message")
+            == "Handler 'EchoCmd' unregistered"
+        )
+        assert existing_unregistration.error_data.get("command_type") == "EchoCmd"
+
+        missing_unregistration = bus.unregister_handler("MissingCmd")
+        FlextTestsMatchers.assert_result_failure(missing_unregistration)
+        assert missing_unregistration.error == "No handler registered for MissingCmd"
+        assert (
+            missing_unregistration.error_code
+            == FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND
+        )
+        assert missing_unregistration.error_data.get("command_type") == "MissingCmd"
 
         # Middleware rejection
         class RejectingMiddleware:
@@ -655,6 +677,65 @@ class TestFlextCqrsComprehensive:
         handler = FlextBus.create_simple_handler(test_handler_func)
         assert handler is not None
         assert isinstance(handler, FlextHandlers)
+        handler_result = handler.handle({"payload": "data"})
+        assert handler_result.is_success
+        assert handler_result.unwrap() == "processed_{'payload': 'data'}"
+
+    # =========================================================================
+    # HANDLER TYPE RESOLUTION
+    # =========================================================================
+
+    def test_handler_caches_generic_message_types(self) -> None:
+        """Handlers with generics should cache accepted types for reuse."""
+
+        class CachedTypeHandler(FlextHandlers[CreateUserCommand, UserCreatedEvent]):
+            def handle(
+                self, message: CreateUserCommand
+            ) -> FlextResult[UserCreatedEvent]:
+                return FlextResult[UserCreatedEvent].fail("not used in test")
+
+        handler = CachedTypeHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand) is True
+        assert handler.can_handle(UpdateUserCommand) is False
+
+    def test_handler_resolves_message_type_from_handle_annotations(self) -> None:
+        """Handlers without generics should fall back to handle() annotations."""
+
+        class AnnotatedHandler(FlextHandlers):
+            def handle(self, message: CreateUserCommand) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = AnnotatedHandler()
+
+        assert handler._accepted_message_types == (CreateUserCommand,)
+        assert handler.can_handle(CreateUserCommand) is True
+        assert handler.can_handle(DeleteUserCommand) is False
+
+    def test_handler_without_type_hints_warns_once(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Handlers lacking hints should warn once and reject all messages."""
+
+        recorded_warnings: list[str] = []
+
+        def fake_warning(self, message: str, *args: object, **context: object) -> None:
+            recorded_warnings.append(message)
+
+        monkeypatch.setattr(FlextLogger, "warning", fake_warning)
+
+        class UntypedHandler(FlextHandlers):
+            def handle(self, message) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        handler = UntypedHandler()
+
+        assert handler._accepted_message_types == ()
+        assert handler.can_handle(CreateUserCommand) is False
+        assert handler._handler_type_warning_logged is True
+        assert handler.can_handle(UpdateUserCommand) is False
+        assert recorded_warnings == ["handler_type_constraints_unknown"]
 
     # =========================================================================
     # COMMAND FACTORIES AND DECORATORS
@@ -808,6 +889,84 @@ class TestFlextCqrsComprehensive:
         assert "async_user_async_user" in event.user_id
 
     # =========================================================================
+    # VALIDATION PIPELINE CUSTOMIZATION
+    # =========================================================================
+
+    def test_pydantic_validation_skips_revalidation_by_default(self) -> None:
+        """Ensure handlers trust Pydantic models without extra validation."""
+
+        class MutableCommand(BaseModel):
+            model_config = ConfigDict(validate_assignment=False)
+            value: int
+
+        class MutableHandler(FlextHandlers[MutableCommand, str]):
+            def handle(self, message: MutableCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(str(message.value))
+
+        handler = MutableHandler()
+        command = MutableCommand(value=1)
+        command.value = "not-an-int"  # type: ignore[assignment]
+
+        validation = handler.validate_command(command)
+        assert validation.is_success
+
+        result = handler.execute(command)
+        assert result.success
+        assert result.value == "not-an-int"
+
+    def test_pydantic_revalidation_flag_enforces_constraints(self) -> None:
+        """Enabling the revalidation flag should surface invalid mutations."""
+
+        class MutableCommand(BaseModel):
+            model_config = ConfigDict(validate_assignment=False)
+            value: int
+
+        class StrictHandler(FlextHandlers[MutableCommand, str]):
+            def __init__(self) -> None:
+                super().__init__(revalidate_pydantic_messages=True)
+
+            def handle(self, message: MutableCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(str(message.value))
+
+        handler = StrictHandler()
+        command = MutableCommand(value=1)
+        command.value = "invalid"  # type: ignore[assignment]
+
+        validation = handler.validate_command(command)
+        assert validation.is_failure
+        assert validation.error_code == FlextConstants.Errors.VALIDATION_ERROR
+        assert validation.error is not None
+        assert "Pydantic revalidation failed" in validation.error
+
+    def test_handler_with_recursive_payload_does_not_break_pipeline(self) -> None:
+        """Handlers must process recursive or non-serializable payloads safely."""
+
+        class RecursiveCommand(BaseModel):
+            model_config = ConfigDict(
+                arbitrary_types_allowed=True,
+                extra="allow",
+                validate_assignment=False,
+            )
+            payload: object | None = None
+
+        class RecursiveHandler(FlextHandlers[RecursiveCommand, object]):
+            def handle(self, message: RecursiveCommand) -> FlextResult[object]:
+                return FlextResult[object].ok(message.payload)
+
+        handler = RecursiveHandler()
+        command = RecursiveCommand(payload="seed")
+        command.payload = (
+            command  # Create recursive reference that defies serialization
+        )
+
+        validation = handler.validate_command(command)
+        assert validation.is_success
+
+        result = handler.execute(command)
+        assert result.success
+        assert result.value is command
+
+    # =========================================================================
     # ERROR SCENARIOS AND EDGE CASES
     # =========================================================================
 
@@ -903,6 +1062,61 @@ class TestFlextCqrsComprehensive:
         assert successes + failures == 100
         # Most should be successful (depends on mock behavior)
         assert successes >= 50 or failures >= 50  # Either outcome is valid
+
+
+@dataclass(slots=True)
+class SlotsOnlyCommand:
+    """Simple dataclass command using slots to avoid __dict__."""
+
+    request_id: str
+    quantity: int
+
+
+@attr.define(slots=True)
+class AttrStyleQuery:
+    """attrs-based query object that relies on slots for storage."""
+
+    topic: str
+    include_archived: bool = False
+
+
+class _ValidationProbeHandler(FlextHandlers[object, object]):
+    """Minimal handler used to expose internal validation helpers in tests."""
+
+    def handle(self, message: object) -> FlextResult[object]:
+        return FlextResult[object].ok(message)
+
+
+class TestMessageValidationCompatibility:
+    """Ensure slot/dataclass and attrs messages pass validation heuristics."""
+
+    def test_validate_command_accepts_slots_dataclass(self) -> None:
+        handler = _ValidationProbeHandler()
+        command = SlotsOnlyCommand(request_id="req-1", quantity=5)
+
+        assert not hasattr(command, "__dict__")
+
+        payload = handler._build_serializable_message_payload(
+            command, operation="command"
+        )
+        assert isinstance(payload, dict)
+        assert payload["request_id"] == "req-1"
+
+        result = handler.validate_command(command)
+        assert result.is_success
+
+    def test_validate_query_accepts_attrs_slots(self) -> None:
+        handler = _ValidationProbeHandler()
+        query = AttrStyleQuery(topic="users", include_archived=True)
+
+        assert not hasattr(query, "__dict__")
+
+        payload = handler._build_serializable_message_payload(query, operation="query")
+        assert isinstance(payload, dict)
+        assert payload["topic"] == "users"
+
+        result = handler.validate_query(query)
+        assert result.is_success
 
 
 if __name__ == "__main__":

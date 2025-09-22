@@ -172,9 +172,7 @@ class TestFlextProcessingHandlerRegistry:
 
         # Pydantic validation should prevent creation of invalid handler registration
         with pytest.raises(ValidationError) as exc_info:
-            FlextModels.HandlerRegistration(
-                name=handler_name, handler=invalid_handler
-            )
+            FlextModels.HandlerRegistration(name=handler_name, handler=invalid_handler)
 
         # Verify the validation error is about callable type
         assert "callable" in str(exc_info.value).lower()

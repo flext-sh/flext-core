@@ -184,7 +184,7 @@ class TestFlextConfigRealCoverage:
         assert logging_config["json_output"] is True
         assert logging_config["include_source"] is False
         assert logging_config["structured_output"] is True
-        assert logging_config["log_verbosity"] == "full"
+        assert logging_config["log_verbosity"] == FlextConstants.Logging.VERBOSITY
 
         # Test get_database_config
         db_config = config.get_database_config()
