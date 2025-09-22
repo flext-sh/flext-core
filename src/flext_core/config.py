@@ -94,6 +94,11 @@ class FlextConfig(BaseSettings):
         validate_default=True,
     )
 
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Logging verbosity setting (compact, detailed, or full)",
+    )
+
     # Additional logging configuration fields using FlextConstants.Logging.
     log_format: str = Field(
         default=FlextConstants.Logging.DEFAULT_FORMAT,
@@ -200,6 +205,18 @@ class FlextConfig(BaseSettings):
         ge=1,
         le=FlextConstants.Performance.DEFAULT_TIMEOUT_LIMIT,
         description="Default timeout for operations in seconds",
+    )
+
+    max_batch_size: int = Field(
+        default=FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+        ge=1,
+        description="Maximum batch size for processing operations",
+    )
+
+    max_handlers: int = Field(
+        default=FlextConstants.Container.MAX_SERVICES,
+        ge=1,
+        description="Maximum number of handlers allowed in registries",
     )
 
     # Feature flags
@@ -311,6 +328,18 @@ class FlextConfig(BaseSettings):
         description="Automatically update timestamps on model changes",
     )
 
+    @property
+    def default_timeout(self) -> int:
+        """Alias for timeout_seconds to maintain backwards compatibility."""
+
+        return self.timeout_seconds
+
+    @default_timeout.setter
+    def default_timeout(self, value: int) -> None:
+        """Allow updating timeout via default_timeout alias."""
+
+        self.timeout_seconds = value
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -419,6 +448,7 @@ class FlextConfig(BaseSettings):
             "include_context": self.include_context,
             "include_correlation_id": self.include_correlation_id,
             "mask_sensitive_data": self.mask_sensitive_data,
+            "verbosity": self.log_verbosity,
         }
 
     def get_database_config(self) -> dict[str, object]:

@@ -36,13 +36,8 @@ class FlextProcessing:
                 fallback to constants.
 
             """
-            try:
-                config = FlextConfig.get_global_instance()
-                return float(
-                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT)
-                )
-            except Exception:
-                return float(FlextConstants.Defaults.TIMEOUT)
+            config = FlextConfig.get_global_instance()
+            return float(config.default_timeout)
 
         @classmethod
         def get_max_batch_size(cls) -> int:
@@ -52,17 +47,8 @@ class FlextProcessing:
                 int: Maximum batch size configured or the default constant.
 
             """
-            try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config,
-                        "max_batch_size",
-                        FlextConstants.Performance.DEFAULT_BATCH_SIZE,
-                    )
-                )
-            except Exception:
-                return FlextConstants.Performance.DEFAULT_BATCH_SIZE
+            config = FlextConfig.get_global_instance()
+            return int(config.max_batch_size)
 
         @classmethod
         def get_max_handlers(cls) -> int:
@@ -72,15 +58,8 @@ class FlextProcessing:
                 int: Maximum handlers configured or the default constant.
 
             """
-            try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config, "max_handlers", FlextConstants.Container.MAX_SERVICES
-                    )
-                )
-            except Exception:
-                return FlextConstants.Container.MAX_SERVICES
+            config = FlextConfig.get_global_instance()
+            return int(config.max_handlers)
 
     class Handler:
         """Minimal handler base returning modernization-compliant results."""

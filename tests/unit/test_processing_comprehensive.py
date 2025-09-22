@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Never
 from unittest.mock import Mock
 
-from flext_core import FlextModels, FlextProcessing, FlextResult
+from flext_core import FlextConfig, FlextModels, FlextProcessing, FlextResult
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
 
 
@@ -38,6 +38,28 @@ class TestFlextProcessingHandler:
             result = handler.handle(request)
             FlextTestsMatchers.assert_result_success(result)
             assert "Base handler processed:" in str(result.unwrap())
+
+
+class TestFlextProcessingConfigOverrides:
+    """Ensure FlextProcessing reads overrides from FlextConfig."""
+
+    def test_processing_config_uses_flext_config_overrides(self) -> None:
+        """Overrides in FlextConfig should flow into processing helpers."""
+
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig(
+            timeout_seconds=45,
+            max_batch_size=250,
+            max_handlers=12,
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            assert FlextProcessing.Config.get_default_timeout() == 45.0
+            assert FlextProcessing.Config.get_max_batch_size() == 250
+            assert FlextProcessing.Config.get_max_handlers() == 12
+        finally:
+            FlextConfig.reset_global_instance()
 
 
 class TestFlextProcessingHandlerRegistry:

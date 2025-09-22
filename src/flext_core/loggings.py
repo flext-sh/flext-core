@@ -1192,18 +1192,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         global_config = FlextConfig.get_global_instance()
         return {
             "log_level": global_config.log_level,
-            "json_output": getattr(global_config, "json_output", None),
-            "include_source": getattr(
-                global_config, "include_source", FlextConstants.Logging.INCLUDE_SOURCE
-            ),
-            "structured_output": getattr(
-                global_config,
-                "structured_output",
-                FlextConstants.Logging.STRUCTURED_OUTPUT,
-            ),
-            "log_verbosity": getattr(
-                global_config, "log_verbosity", FlextConstants.Logging.VERBOSITY
-            ),
+            "json_output": global_config.json_output,
+            "include_source": global_config.include_source,
+            "structured_output": global_config.structured_output,
+            "log_verbosity": global_config.log_verbosity,
         }
 
     @classmethod

@@ -28,6 +28,7 @@ from typing import NoReturn, Self, cast
 import pytest
 
 from flext_core import (
+    FlextConfig,
     FlextContext,
     FlextLogger,
     FlextTypes,
@@ -91,6 +92,33 @@ def reset_logging_state() -> Generator[None]:
     # Clean up
     FlextLogger._configured = False
     FlextLogger._global_correlation_id = None
+
+
+class TestFlextLoggerConfigurationIntegration:
+    """Verify FlextLogger honors FlextConfig overrides."""
+
+    def test_get_configuration_uses_flext_config_overrides(self) -> None:
+        """Overrides applied to FlextConfig should surface in logging config."""
+
+        FlextConfig.reset_global_instance()
+        custom_config = FlextConfig(
+            log_level="error",
+            json_output=True,
+            include_source=False,
+            structured_output=False,
+            log_verbosity="compact",
+        )
+        FlextConfig.set_global_instance(custom_config)
+
+        try:
+            configuration = FlextLogger.get_configuration()
+            assert configuration["log_level"] == "ERROR"
+            assert configuration["json_output"] is True
+            assert configuration["include_source"] is False
+            assert configuration["structured_output"] is False
+            assert configuration["log_verbosity"] == "compact"
+        finally:
+            FlextConfig.reset_global_instance()
 
 
 class TestFlextLoggerInitialization:
