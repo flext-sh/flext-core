@@ -155,7 +155,7 @@ strict = true
 
 # FLEXT ecosystem compatibility overrides
 # disallow_any_decorated = false      # Allow object in decorators for framework compatibility
-# disallow_any_explicit = false       # Allow explicit object for FLEXT ecosystem
+disallow_any_explicit = false       # Allow explicit object for FLEXT ecosystem
 disallow_any_expr = false # Allow object expressions for real-world usage
 # disallow_any_unimported = false     # Allow unimported object for FLEXT dependencies
 # disallow_subclassing_any = false    # Allow subclassing object for FLEXT base classes

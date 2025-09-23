@@ -24,9 +24,8 @@ from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
 from itertools import starmap
-from typing import Any, ClassVar, cast, get_origin, get_type_hints
+from typing import ClassVar, cast, get_origin, get_type_hints
 
-import attr
 from pydantic import BaseModel
 
 from flext_core.config import FlextConfig
@@ -1852,17 +1851,24 @@ class FlextUtilities:
             if isinstance(message, BaseModel):
                 return message.model_dump()
 
-            if is_dataclass(message):
-                # Cast to Any since dataclasses.asdict expects a dataclass instance
-                # and is_dataclass() confirms this is a dataclass
-                return asdict(cast("Any", message))
+            if is_dataclass(message) and not isinstance(message, type):
+                # is_dataclass() confirms this is a dataclass instance, so we can safely call asdict
+                return asdict(message)
 
             # Handle attrs classes with proper type annotation
             attrs_fields = getattr(message, "__attrs_attrs__", None)
-            if attrs_fields is not None:
-                # attrs.asdict expects an attrs instance - since we checked __attrs_attrs__ exists,
-                # we can safely call asdict
-                return attr.asdict(cast("Any", message))
+            if attrs_fields is not None and not isinstance(message, type):
+                # Check if the object has the required attrs methods
+                if hasattr(message, "__attrs_attrs__") and hasattr(
+                    message, "__class__"
+                ):
+                    # This is an attrs instance, convert to dict manually
+                    result = {}
+                    for attr_field in attrs_fields:
+                        field_name = attr_field.name
+                        if hasattr(message, field_name):
+                            result[field_name] = getattr(message, field_name)
+                    return result
 
             # Try common serialization methods
             logger = FlextLogger(__name__)

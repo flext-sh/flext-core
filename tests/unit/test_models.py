@@ -498,7 +498,7 @@ class TestFlextEntityRealFunctionality:
         assert len(user.domain_events) == 0
 
         # Add domain event (new API)
-        event_data: FlextTypes.Core.JsonObject = {
+        event_data: dict[str, object] = {
             "event_type": "UserCreated",
             "user_id": str(user.id),
             "created_at": datetime.now(UTC).isoformat(),
@@ -675,7 +675,8 @@ class TestFlextModelsUrlValidationEdgeCases:
         for url in valid_urls:
             result = FlextModels.Url.create(url)
             assert result.is_success
-            assert result.data is not None and result.data.url == url
+            url_obj = result.unwrap()
+            assert isinstance(url_obj, FlextModels.Url) and url_obj.url == url
 
 
 class TestHelperFunctionsRealFunctionality:
@@ -770,7 +771,7 @@ class TestModelsIntegrationRealFunctionality:
         assert len(user.domain_events) == 0  # no events initially
 
         # Add business event (new API)
-        event_data: FlextTypes.Core.JsonObject = {
+        event_data: dict[str, object] = {
             "event_type": "UserRegistered",
             "registration_type": "standard",
             "source": "integration_test",
@@ -827,7 +828,7 @@ class TestModelsIntegrationRealFunctionality:
         )
 
         # Add domain event (new API)
-        event_data: FlextTypes.Core.JsonObject = {
+        event_data: dict[str, object] = {
             "event_type": "UserCreated",
             "source": "serialization_test",
             "timestamp": datetime.now(UTC).isoformat(),
@@ -1120,7 +1121,11 @@ class TestFlextModelsRootModelValidation:
         """Test EntityId validation trims whitespace."""
         result = FlextModels.EntityId.create("  entity_123  ")
         assert result.is_success
-        assert result.data is not None and result.data.value == "entity_123"
+        entity_id = result.unwrap()
+        assert (
+            isinstance(entity_id, FlextModels.EntityId)
+            and entity_id.value == "entity_123"
+        )
 
     # NOTE: Timestamp class not implemented yet
     # def test_timestamp_ensure_utc_naive_datetime(self) -> None:
@@ -1144,7 +1149,11 @@ class TestFlextModelsRootModelValidation:
         # Test valid email
         result = FlextModels.EmailAddress.create("test@example.com")
         assert result.is_success
-        assert result.data is not None and result.data.address == "test@example.com"
+        email = result.unwrap()
+        assert (
+            isinstance(email, FlextModels.EmailAddress)
+            and email.address == "test@example.com"
+        )
 
         # Test invalid email - no @ symbol
         result = FlextModels.EmailAddress.create("invalid-email")
@@ -1171,12 +1180,14 @@ class TestFlextModelsRootModelValidation:
         # Test valid host
         result = FlextModels.Host.create("example.com")
         assert result.is_success
-        assert result.data is not None and result.data.hostname == "example.com"
+        host = result.unwrap()
+        assert isinstance(host, FlextModels.Host) and host.hostname == "example.com"
 
         # Test host trimming
         result = FlextModels.Host.create("  EXAMPLE.COM  ")
         assert result.is_success
-        assert result.data is not None and result.data.hostname == "example.com"
+        host = result.unwrap()
+        assert isinstance(host, FlextModels.Host) and host.hostname == "example.com"
 
         # Test invalid host - empty after trimming
         result = FlextModels.Host.create("   ")
@@ -1197,7 +1208,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=future_time,
         )
         # Explicitly check the boolean value
-        is_expired_result: bool = payload.is_expired
+        is_expired_result: bool = payload.is_expired()
         assert not is_expired_result
 
         # Test expired payload
@@ -1209,7 +1220,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=past_time,
         )
         # Explicitly check the boolean value
-        is_expired_result2: bool = expired_payload.is_expired
+        is_expired_result2: bool = expired_payload.is_expired()
         assert is_expired_result2
 
         # Test payload without expiration
@@ -1218,7 +1229,7 @@ class TestFlextModelsRootModelValidation:
             message_type="test_message",
             source_service="test_service",
         )
-        assert not no_expiry_payload.is_expired
+        assert not no_expiry_payload.is_expired()
 
     # NOTE: JsonData class not implemented yet
     # def test_json_data_validation_serializable(self) -> None:
@@ -1275,6 +1286,8 @@ class TestFlextModelsEntityClearDomainEvents:
 
         # Verify returned events contain the original events
         assert len(returned_events) == 2
+        assert isinstance(returned_events[0], FlextModels.DomainEvent)
+        assert isinstance(returned_events[1], FlextModels.DomainEvent)
         assert returned_events[0].event_type == "Event1"
         assert returned_events[1].event_type == "Event2"
 
@@ -1301,10 +1314,10 @@ class TestFlextModelsAggregateRootApplyEvent:
                 """Test event handler - note lowercase as per line 351."""
                 self.handler_called = True
 
-        root = TestAggregateRoot(id="test_id", name="Test Root")
+        root = TestAggregateRoot(id="test_id", name="Test Root", domain_events=[])
 
         # Add event that should trigger handler
-        test_event: FlextTypes.Core.JsonObject = {
+        test_event: dict[str, object] = {
             "event_type": "testevent",
             "data": "test",
         }
@@ -1331,10 +1344,10 @@ class TestFlextModelsAggregateRootApplyEvent:
                 msg = "Handler failed"
                 raise ValueError(msg)
 
-        root = FailingAggregateRoot(id="test_id", name="Test Root")
+        root = FailingAggregateRoot(id="test_id", name="Test Root", domain_events=[])
 
         # Apply event that triggers failing handler
-        failing_event: FlextTypes.Core.JsonObject = {
+        failing_event: dict[str, object] = {
             "event_type": "FailingEvent",
             "data": "test",
         }
@@ -1345,6 +1358,7 @@ class TestFlextModelsAggregateRootApplyEvent:
 
         # Verify the event was added successfully
         assert len(root.domain_events) == 1
+        assert isinstance(root.domain_events[0], FlextModels.DomainEvent)
         assert root.domain_events[0].event_type == "FailingEvent"
 
 
@@ -1604,7 +1618,7 @@ class TestLoggerPermanentContextModelValidation:
             FlextLogger.LoggerPermanentContextModel(
                 app_name="test-app",
                 app_version="1.0.0",
-                environment="qa",
+                environment="qa",  # type: ignore[arg-type]
             )
 
         # Check actual environments from FlextConstants.Config.ENVIRONMENTS

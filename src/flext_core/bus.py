@@ -13,7 +13,7 @@ import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -57,13 +57,10 @@ def _normalize_cache_component(value: object) -> object:
         # Ensure we have a dataclass instance, not a class
         if isinstance(value, type):
             return ("dataclass_class", str(value))
-        # Cast value to object for dataclasses.asdict - it's a dataclass instance at this point
-        dataclass_instance = cast("object", value)
+        # Use the value directly since it's already a dataclass instance
         return (
             "dataclass",
-            _normalize_cache_component(
-                dataclasses.asdict(cast("Any", dataclass_instance))
-            ),
+            _normalize_cache_component(dataclasses.asdict(value)),
         )
 
     if isinstance(value, Mapping):
@@ -765,11 +762,8 @@ class FlextBus(FlextMixins):
                 candidate_names.add(key_name)
 
             # Direct match only if both are types (not str and type comparison)
-            direct_match = (
-                isinstance(command_type, type)
-                and isinstance(key, type)
-                and key == command_type
-            )
+            # Since _handlers has str keys, we can only match by name
+            direct_match = False
             command_names: set[str] = {str(command_type)}
             command_name_attr = getattr(command_type, "__name__", None)
             if isinstance(command_name_attr, str):

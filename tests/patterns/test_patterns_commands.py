@@ -442,8 +442,11 @@ class TestFlextCommandHandler:
 
     def test_process_command_handling_failure(self) -> None:
         """Test processing when handler fails."""
+        config = FlextModels.CqrsConfig.Handler.create_handler_config(
+            handler_type="command", default_name="FailingCommandHandler"
+        )
         handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler(
-            config={}
+            config=config
         )
         command: FailingCommand = FailingCommand()
 
@@ -494,8 +497,10 @@ class TestFlextCommandBus:
         """Ensure the simple handler factory wraps callables consistently."""
         bus = FlextCommandBus()
 
-        def simple_callable(command: CreateUserCommand) -> str:
-            return command.username.upper()
+        def simple_callable(command: object) -> object:
+            if isinstance(command, CreateUserCommand):
+                return command.username.upper()
+            return ""
 
         handler = FlextCommandBus.create_simple_handler(simple_callable)
         register_result = bus.register_handler(handler)
@@ -506,7 +511,7 @@ class TestFlextCommandBus:
         assert execution_result.is_success
         assert execution_result.unwrap() == "CAROL"
 
-        def prebuilt_result(_: CreateUserCommand) -> FlextResult[str]:
+        def prebuilt_result(_: object) -> object:
             return FlextResult[str].ok("from-result")
 
         passthrough_handler = FlextCommandBus.create_simple_handler(prebuilt_result)
@@ -514,7 +519,7 @@ class TestFlextCommandBus:
         assert passthrough_outcome.is_success
         assert passthrough_outcome.unwrap() == "from-result"
 
-        def failing_callable(_: CreateUserCommand) -> str:
+        def failing_callable(_: object) -> object:
             msg = "callable boom"
             raise RuntimeError(msg)
 
@@ -608,8 +613,10 @@ class TestFlextCommandBus:
     def test_create_simple_handler_wrapper(self) -> None:
         """Ensure create_simple_handler wraps callables consistently."""
 
-        def simple_callable(command: CreateUserCommand) -> str:
-            return f"user:{command.username}"
+        def simple_callable(command: object) -> object:
+            if isinstance(command, CreateUserCommand):
+                return f"user:{command.username}"
+            return ""
 
         command = CreateUserCommand(username="wrapped", email="wrap@example.com")
         handler = FlextCommandBus.create_simple_handler(simple_callable)
@@ -620,8 +627,8 @@ class TestFlextCommandBus:
         assert result.value == "user:wrapped"
 
         def failing_callable(
-            _command: CreateUserCommand,
-        ) -> str:  # pragma: no cover - raising path
+            _command: object,
+        ) -> object:  # pragma: no cover - raising path
             msg = "boom from callable"
             raise RuntimeError(msg)
 
@@ -637,7 +644,7 @@ class TestFlextCommandResults:
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
-        result_data = {"id": "123", "username": "test"}
+        result_data: dict[str, object] = {"id": "123", "username": "test"}
 
         command_result: FlextResult[dict[str, object]] = FlextResult.ok(result_data)
 
@@ -805,7 +812,10 @@ class TestCommandPatternIntegration:
             raise AssertionError(f"Expected True, got {result.is_failure}")
 
         # Test 2: Handler that fails processing
-        failing_handler = FailingCommandHandler(config={})
+        config2 = FlextModels.CqrsConfig.Handler.create_handler_config(
+            handler_type="command", default_name="FailingCommandHandler"
+        )
+        failing_handler = FailingCommandHandler(config=config2)
         bus.register_handler(failing_handler)
 
         failing_command = FailingCommand()

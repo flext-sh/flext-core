@@ -322,7 +322,7 @@ class FlextRegistry:
                     continue
 
                 if isinstance(entry, tuple):
-                    tuple_handler_func: Callable[..., object] = entry[0]
+                    tuple_handler_func: Callable[[object], object] = entry[0]
                     tuple_handler_config: FlextTypes.Core.Dict | None = entry[1]
                     # Convert function to handler object for registration
 
@@ -407,18 +407,14 @@ class FlextRegistry:
                                 handler_mode = "command"
                             elif handler_type_val == "query":
                                 handler_mode = "query"
-                            else:
-                                handler_mode = handler_mode_val  # fallback
+                            # If neither handler_mode nor handler_type_val are valid, use default
                         except Exception:
                             config_obj = None
 
                     # Convert config_obj to dict if it's a Handler object
                     config_dict = None
-                    if config_obj is not None:
-                        if hasattr(config_obj, "model_dump"):
-                            config_dict = config_obj.model_dump()
-                        elif isinstance(config_obj, dict):
-                            config_dict = config_obj
+                    if config_obj is not None and hasattr(config_obj, "model_dump"):
+                        config_dict = config_obj.model_dump()
 
                     # Create a handler wrapper for the function
                     handler_result = self._dispatcher.register_function(
@@ -429,8 +425,8 @@ class FlextRegistry:
                     )
                 elif isinstance(entry, dict) and "handler" in entry:
                     # Handle the test case format: {"handler": ..., "metadata": ...}
-                    dict_handler_func: Callable[..., object] = cast(
-                        "Callable[..., object]", entry["handler"]
+                    dict_handler_func: Callable[[object], object] = cast(
+                        "Callable[[object], object]", entry["handler"]
                     )
 
                     def _get_default(_k: str, d: object) -> object:

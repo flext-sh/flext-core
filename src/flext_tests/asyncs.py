@@ -442,7 +442,9 @@ class FlextTestsAsyncs:
             if isinstance(side_effect, Exception):
                 raise side_effect
             if callable(side_effect):
-                result = cast("Callable[..., object]", side_effect)(*args, **kwargs)
+                result = cast("Callable[[object], object]", side_effect)(
+                    *args, **kwargs
+                )
                 if asyncio.iscoroutine(result):
                     return await result
                 return result
