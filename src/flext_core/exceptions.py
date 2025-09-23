@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
@@ -110,6 +110,7 @@ class FlextExceptions:
             self.timestamp = time.time()
             FlextExceptions.record_exception(self.__class__.__name__)
 
+        @override
         def __str__(self) -> str:
             """Return string representation with error code and message."""
             return f"[{self.code}] {self.message}"

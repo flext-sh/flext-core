@@ -714,4 +714,4 @@ class TestMessageValidatorIntegration:
         # as it's a regular Python class, just with empty __dict__
         assert result.is_success
         # validate_message returns FlextResult[None], not the message itself
-        assert result.data is None
+        assert result.value is None

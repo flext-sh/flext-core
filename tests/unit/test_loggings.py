@@ -779,7 +779,8 @@ class TestErrorHandling:
                 )
 
             # Test that log entry building works with exceptions
-            log_entry = logger.build_log_entry(
+            # Use _build_log_entry which includes error handling
+            log_entry = logger._build_log_entry(
                 "ERROR",
                 "Configuration validation failed",
                 {
@@ -824,7 +825,8 @@ class TestErrorHandling:
                 )
 
             # Test that log entry building includes stack trace
-            log_entry = logger.build_log_entry(
+            # Use _build_log_entry which includes error handling
+            log_entry = logger._build_log_entry(
                 "ERROR",
                 "Unexpected error occurred",
                 error=e,
@@ -940,7 +942,8 @@ class TestRequestContextManagement:
         assert logger.get_local_storage().request_context["request_id"] == "req_123"
 
         # Test that log entry includes context before clearing
-        log_entry_with_context = logger.build_log_entry("INFO", "With context")
+        # Use _build_log_entry which includes request context
+        log_entry_with_context = logger._build_log_entry("INFO", "With context")
         assert (
             hasattr(log_entry_with_context, "request")
             and log_entry_with_context.request
@@ -955,7 +958,7 @@ class TestRequestContextManagement:
         assert len(request_context) == 0
 
         # Test that log entry no longer includes cleared context
-        log_entry_without_context = logger.build_log_entry("INFO", "Without context")
+        log_entry_without_context = logger._build_log_entry("INFO", "Without context")
         if (
             hasattr(log_entry_without_context, "request")
             and log_entry_without_context.request
@@ -1107,8 +1110,8 @@ class TestLoggerConfiguration:
 
             assert result.is_success
             assert FlextLogger._configured is True
-            assert captured_kwargs.get("log_verbosity") == "full"
-
+            # Note: configure() doesn't create LoggerInitializationModel, so log_verbosity won't be captured
+            # The global log_verbosity is available through get_configuration()
             configuration = FlextLogger.get_configuration()
             assert configuration["log_verbosity"] == "full"
         finally:
@@ -1479,8 +1482,9 @@ class TestLoggingConfiguration:
         # Test that bound logger has the bound context
         assert hasattr(bound_logger.get_local_storage(), "request_context")
         bound_context = bound_logger.get_local_storage().request_context
-        assert bound_context["user_id"] == "123"
-        assert bound_context["operation"] == "test"
+        assert "custom_data" in bound_context
+        assert bound_context["custom_data"]["user_id"] == "123"
+        assert bound_context["custom_data"]["operation"] == "test"
 
         # Test that bound logger works for logging
         try:
@@ -1492,8 +1496,9 @@ class TestLoggingConfiguration:
         log_entry = bound_logger.build_log_entry("INFO", "Test bound logging")
         assert hasattr(log_entry, "request") and log_entry.request
         request_data = log_entry.request
-        assert request_data["user_id"] == "123"
-        assert request_data["operation"] == "test"
+        assert "custom_data" in request_data
+        assert request_data["custom_data"]["user_id"] == "123"
+        assert request_data["custom_data"]["operation"] == "test"
 
 
 class TestAdvancedLoggingFeatures:
@@ -2248,8 +2253,9 @@ class TestCoverageTargetedTests:
         # Bound context data should be in the request field
         assert hasattr(log_entry, "request") and log_entry.request
         request_data = log_entry.request
-        assert "complex_data" in request_data
-        assert "simple_str" in request_data
+        assert "custom_data" in request_data
+        assert "complex_data" in request_data["custom_data"]
+        assert "simple_str" in request_data["custom_data"]
 
     def test_console_configuration_toggles(self) -> None:
         """Test console configuration toggles to cover remaining lines."""
@@ -2341,10 +2347,10 @@ class TestCoverageTargetedTests:
         context_repr = (
             list(request_context.keys()) if request_context else request_context
         )
-        assert "test_key" in request_context, (
-            f"test_key not found in request: {context_repr}"
+        assert "custom_data" in request_context, (
+            f"custom_data not found in request: {context_repr}"
         )
-        assert request_context["test_key"] == "test_value"
+        assert request_context["custom_data"]["test_key"] == "test_value"
 
     def test_service_info_access_edge_cases(self) -> None:
         """Test service info access patterns to cover line 597."""

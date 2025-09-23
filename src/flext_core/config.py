@@ -23,6 +23,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -507,42 +508,60 @@ class FlextConfig(BaseSettings):
         return cls.model_validate(config_data)
 
     @classmethod
-    def from_file(cls, config_file: Path | str) -> FlextConfig:
+    def from_file(cls, config_file: Path | str) -> FlextResult[FlextConfig]:
         """Load configuration from file (TOML, JSON, or YAML).
 
         Args:
             config_file: Path to the configuration file.
 
         Returns:
-            FlextConfig: Configuration instance loaded from file.
-
-        Raises:
-            FileNotFoundError: If the configuration file does not exist.
-            ValueError: If the file format is not supported or contains invalid data.
+            FlextResult[FlextConfig]: Success result with config or failure with error.
 
         """
-        config_path = Path(config_file)
-        if not config_path.exists():
-            msg = f"Configuration file not found: {config_path}"
-            raise FileNotFoundError(msg)
+        try:
+            config_path = Path(config_file)
+            if not config_path.exists():
+                msg = f"Configuration file not found: {config_path}"
+                return FlextResult[FlextConfig].fail(f"Failed to load config: {msg}")
 
-        # Load based on file extension
-        content = config_path.read_text(encoding=FlextConstants.Mixins.DEFAULT_ENCODING)
+            # Load based on file extension
+            content = config_path.read_text(encoding=FlextConstants.Mixins.DEFAULT_ENCODING)
 
-        if config_path.suffix.lower() == FlextConstants.Platform.EXT_TOML:
-            config_data = tomllib.loads(content)
-        elif config_path.suffix.lower() == FlextConstants.Platform.EXT_JSON:
-            config_data = json.loads(content)
-        elif config_path.suffix.lower() in {
-            FlextConstants.Platform.EXT_YAML,
-            FlextConstants.Platform.EXT_YML,
-        }:
-            config_data = yaml.safe_load(content)
-        else:
-            msg = f"Unsupported configuration file format: {config_path.suffix}"
-            raise ValueError(msg)
+            if config_path.suffix.lower() == FlextConstants.Platform.EXT_TOML:
+                config_data = tomllib.loads(content)
+            elif config_path.suffix.lower() == FlextConstants.Platform.EXT_JSON:
+                config_data = json.loads(content)
+            elif config_path.suffix.lower() in {
+                FlextConstants.Platform.EXT_YAML,
+                FlextConstants.Platform.EXT_YML,
+            }:
+                config_data = yaml.safe_load(content)
+            else:
+                msg = f"Unsupported configuration file format: {config_path.suffix}"
+                return FlextResult[FlextConfig].fail(f"Failed to load config: {msg}")
 
-        return cls.model_validate(config_data)
+            # Normalize config keys to handle common aliases
+            normalized_data = cls._normalize_config_keys(config_data)
+            config = cls.model_validate(normalized_data)
+            return FlextResult[FlextConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextConfig].fail(f"Failed to load config: {e}")
+
+    @classmethod
+    def from_file_safe(cls, config_file: Path | str) -> FlextResult[FlextConfig]:
+        """Safely load configuration from file (TOML, JSON, or YAML).
+
+        This is a safer variant that wraps all exceptions in FlextResult.
+
+        Args:
+            config_file: Path to the configuration file.
+
+        Returns:
+            FlextResult[FlextConfig]: Success result with config or failure with error.
+
+        """
+        # from_file already returns FlextResult, so just call it directly
+        return cls.from_file(config_file)
 
     def to_dict(self) -> FlextTypes.Core.Dict:
         """Convert configuration to dictionary.
@@ -710,11 +729,28 @@ class FlextConfig(BaseSettings):
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
-                    # Create instance - Pydantic BaseSettings will automatically handle:
-                    # 1. Environment variables (highest priority)
-                    # 2. .env file (medium priority)
-                    # 3. Default values (lowest priority)
-                    cls._global_instance = cls()
+                    # Try to load from config files in current directory
+                    # File precedence: .env < config.yaml < config.toml < config.json
+                    config_files = ["config.yaml", "config.toml", "config.json"]
+                    loaded_config = None
+                    
+                    for config_file in config_files:
+                        config_path = Path(config_file)
+                        if config_path.exists():
+                            result = cls.from_file(config_path)
+                            if result.is_success:
+                                loaded_config = result.value
+                                break
+                    
+                    # If no config file was loaded, create default instance
+                    if loaded_config is None:
+                        # Create instance - Pydantic BaseSettings will automatically handle:
+                        # 1. Environment variables (highest priority)
+                        # 2. .env file (medium priority)
+                        # 3. Default values (lowest priority)
+                        loaded_config = cls()
+                    
+                    cls._global_instance = loaded_config
         return cls._global_instance
 
     @classmethod

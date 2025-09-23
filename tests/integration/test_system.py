@@ -64,7 +64,7 @@ class TestCompleteFlextSystemIntegration:
         """Test railway-oriented programming with FlextResult."""
         # Cenário de sucesso - criação e encadeamento
         success_result = FlextResult[str].ok("dados_iniciais")
-        assert success_result.success is True
+        assert success_result.is_success is True
         assert success_result.is_success is True
         assert success_result.is_failure is False
         assert success_result.value == "dados_iniciais"
@@ -77,12 +77,12 @@ class TestCompleteFlextSystemIntegration:
             .map(lambda x: x.replace("_", "-"))
         )
 
-        assert pipeline_result.success is True
+        assert pipeline_result.is_success is True
         assert pipeline_result.value == "processado-DADOS-INICIAIS"
 
         # Cenário de falha
         failure_result = FlextResult[str].fail("erro_de_processamento")
-        assert failure_result.success is False
+        assert failure_result.is_success is False
         assert failure_result.is_failure is True
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.value_or_none is None
@@ -94,12 +94,12 @@ class TestCompleteFlextSystemIntegration:
             return FlextResult[str].ok(f"validado_{data}")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
-        assert flat_map_success.success is True
+        assert flat_map_success.is_success is True
         assert flat_map_success.value == "validado_dados_iniciais"
 
         invalid_data = FlextResult[str].ok("dados_invalido")
         flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
-        assert flat_map_failure.success is False
+        assert flat_map_failure.is_success is False
         assert flat_map_failure.error == "dados_invalidos"
 
     def _test_constants_system(self) -> None:
@@ -181,17 +181,17 @@ class TestCompleteFlextSystemIntegration:
 
         # Registrar serviço
         register_result = container.register("test_service", "test_value")
-        assert register_result.success is True
+        assert register_result.is_success is True
 
         # Recuperar serviço registrado
         retrieved_service_result = container.get("test_service")
-        assert retrieved_service_result.success is True
+        assert retrieved_service_result.is_success is True
         retrieved_service = retrieved_service_result.value
         assert retrieved_service == "test_value"
 
         # Teste de serviço não encontrado
         not_found_result = container.get("servico_inexistente")
-        assert not_found_result.success is False
+        assert not_found_result.is_success is False
         assert not_found_result.error is not None
 
     def _test_complex_integration(self) -> None:
@@ -240,7 +240,7 @@ class TestCompleteFlextSystemIntegration:
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)
 
-        assert resultado_processamento.success is True
+        assert resultado_processamento.is_success is True
         dados_finais = resultado_processamento.value
         assert "processado_nome" in dados_finais
         assert "processado_email" in dados_finais
@@ -250,7 +250,7 @@ class TestCompleteFlextSystemIntegration:
         # Teste de validação de erro
         dados_invalidos = {"nome": "", "email": "joao@exemplo.com"}
         resultado_erro = processar_dados_usuario(dados_invalidos)
-        assert resultado_erro.success is False
+        assert resultado_erro.is_success is False
         assert (
             resultado_erro.error is not None
             and "não pode estar vazio" in resultado_erro.error
@@ -269,7 +269,7 @@ class TestCompleteFlextSystemIntegration:
         resultado_recuperado = resultado_com_erro.or_else_get(
             lambda: FlextResult[str].ok("valor_recuperado")
         )
-        assert resultado_recuperado.success is True
+        assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
         # Teste de múltiplas operações em cadeia com possibilidade de falha
@@ -293,7 +293,7 @@ class TestCompleteFlextSystemIntegration:
             .flat_map(operacao_3)
         )
 
-        assert pipeline_sucesso.success is True
+        assert pipeline_sucesso.is_success is True
         assert pipeline_sucesso.value == "final_etapa2_etapa1_dados_iniciais"
 
         # Pipeline com falha
@@ -305,7 +305,7 @@ class TestCompleteFlextSystemIntegration:
             .flat_map(operacao_3)
         )
 
-        assert pipeline_falha.success is False
+        assert pipeline_falha.is_success is False
         assert pipeline_falha.error == "erro_na_etapa2"
 
     def _validate_final_system(self) -> None:
@@ -323,5 +323,5 @@ class TestCompleteFlextSystemIntegration:
 
         # Teste final de integração
         resultado_final = FlextResult[str].ok("sistema_funcionando")
-        assert resultado_final.success is True
+        assert resultado_final.is_success is True
         assert resultado_final.value == "sistema_funcionando"

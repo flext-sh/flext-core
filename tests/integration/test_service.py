@@ -280,7 +280,7 @@ class TestServiceIntegrationPatterns:
         execution_time = time.perf_counter() - start_time
 
         # Assert - Performance and functionality
-        assert result.success is True
+        assert result.is_success is True
         assert execution_time < performance_threshold["serialization"]
         assert result.value is not None
         assert "pipeline_result" in result.value
@@ -365,8 +365,8 @@ class TestServiceIntegrationPatterns:
             notification_service_result = clean_container.get("notification_service")
 
             if (
-                not user_service_result.success
-                or not notification_service_result.success
+                not user_service_result.is_success
+                or not notification_service_result.is_success
             ):
                 return FlextResult[str].fail("Service unavailable")
 
@@ -381,7 +381,7 @@ class TestServiceIntegrationPatterns:
 
             # Get user data first
             user_result = retrieved_user_service.get_user(workflow_user_id)
-            if not user_result.success:
+            if not user_result.is_success:
                 return FlextResult[str].fail("User not found")
 
             # Send notification
@@ -391,7 +391,7 @@ class TestServiceIntegrationPatterns:
         result = user_notification_workflow(user_id)
 
         # Assert - Workflow success and service interaction
-        assert result.success is True
+        assert result.is_success is True
         assert result.value == "sent"
 
         # Functional validation - check actual service calls
@@ -433,16 +433,16 @@ class TestServiceIntegrationPatterns:
         config_result = clean_container.register("service_config", service_config)
 
         # Assert - Registration success
-        assert registration_result.success is True
-        assert config_result.success is True
+        assert registration_result.is_success is True
+        assert config_result.is_success is True
 
         # Act - Initialize service
         service_result = clean_container.get("lifecycle_service")
         config_fetch_result = clean_container.get("service_config")
 
         # Assert - Service retrieval
-        assert service_result.success is True
-        assert config_fetch_result.success is True
+        assert service_result.is_success is True
+        assert config_fetch_result.is_success is True
 
         service = cast(
             "FunctionalLifecycleService",
@@ -456,9 +456,9 @@ class TestServiceIntegrationPatterns:
         shutdown_result = service.shutdown()
 
         # Assert - Lifecycle operations
-        assert init_result.success is True
+        assert init_result.is_success is True
         assert health_status is True
-        assert shutdown_result.success is True
+        assert shutdown_result.is_success is True
 
         # Functional validation - check actual service state
         assert service.initialized is True

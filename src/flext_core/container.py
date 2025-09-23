@@ -14,6 +14,7 @@ from __future__ import annotations
 import inspect
 import threading
 from collections.abc import Callable
+from typing import override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -154,6 +155,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
     # =========================================================================
 
+    @override
     def configure(self, config: dict[str, object]) -> FlextResult[None]:
         """Configure component with provided settings - Configurable protocol implementation.
 
@@ -163,6 +165,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         return self.configure_container(config)
 
+    @override
     def get_config(self) -> dict[str, object]:
         """Get current configuration - Configurable protocol implementation.
 
@@ -1084,6 +1087,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "logger": f"flext.{module_name}",
         })
 
+    @override
     def __repr__(self) -> str:
         """String representation with service counts.
 

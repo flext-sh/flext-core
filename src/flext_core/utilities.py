@@ -1357,7 +1357,10 @@ class FlextUtilities:
                 except Exception as e:
                     exception_container[0] = e
 
-            thread = threading.Thread(target=run_operation)
+            # Copy current context to the new thread
+            import contextvars
+            context = contextvars.copy_context()
+            thread = threading.Thread(target=context.run, args=(run_operation,))
             thread.daemon = True
             thread.start()
             thread.join(timeout_seconds)
@@ -1857,17 +1860,18 @@ class FlextUtilities:
 
             # Handle attrs classes with proper type annotation
             attrs_fields = getattr(message, "__attrs_attrs__", None)
-            if attrs_fields is not None and not isinstance(message, type):
-                # Check if the object has the required attrs methods
-                if hasattr(message, "__attrs_attrs__") and hasattr(
-                    message, "__class__"
-                ):
-                    # This is an attrs instance, convert to dict manually
-                    result = {}
-                    for attr_field in attrs_fields:
-                        field_name = attr_field.name
-                        if hasattr(message, field_name):
-                            result[field_name] = getattr(message, field_name)
+            if (
+                attrs_fields is not None
+                and not isinstance(message, type)
+                and hasattr(message, "__attrs_attrs__")
+                and hasattr(message, "__class__")
+            ):
+                # This is an attrs instance, convert to dict manually
+                result = {}
+                for attr_field in attrs_fields:
+                    field_name = attr_field.name
+                    if hasattr(message, field_name):
+                        result[field_name] = getattr(message, field_name)
                     return result
 
             # Try common serialization methods

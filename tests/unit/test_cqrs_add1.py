@@ -685,7 +685,7 @@ class TestFlextCqrsComprehensive:
 
         # Verify bus execution
         assert (
-            create_result.success or create_result.is_failure
+            create_result.is_success or create_result.is_failure
         )  # Either outcome is valid for testing
 
     def test_command_bus_with_multiple_handlers(
@@ -765,7 +765,7 @@ class TestFlextCqrsComprehensive:
         # 2-arg form registers by explicit command type
         bus.register_handler(EchoCmd, EchoHandler())
         r = bus.execute(EchoCmd(value="hello"))
-        assert r.success
+        assert r.is_success
         assert r.value == "hello"
 
         # get_registered_handlers returns string keys
@@ -831,7 +831,7 @@ class TestFlextCqrsComprehensive:
 
         bus.register_handler(EchoCmd, OnlyProcess())
         res2 = bus.execute(EchoCmd(value="ok"))
-        assert res2.success
+        assert res2.is_success
         assert res2.value == "OK"
 
         class FailingHandler:
@@ -845,8 +845,8 @@ class TestFlextCqrsComprehensive:
         assert "boom" in (res3.error or "")
 
         # Results helpers
-        ok = FlextCqrs.Results.success({"k": 1})
-        assert ok.success
+        ok = FlextCqrs.Results.is_success({"k": 1})
+        assert ok.is_success
         assert ok.value == {"k": 1}
         fail = FlextCqrs.Results.failure("err", error_code="E1", error_data={"a": 2})
         assert fail.is_failure
@@ -1264,7 +1264,7 @@ class TestFlextCqrsComprehensive:
         result = handler.handle(edge_case_command)
 
         # Should handle edge cases gracefully
-        if result.success:
+        if result.is_success:
             event = result.value
             assert event.username == "user_with_special_chars_123!@#"
         else:
@@ -1340,7 +1340,7 @@ class TestFlextCqrsComprehensive:
         assert len(results) == 100
 
         # Count successes and failures
-        successes = sum(1 for r in results if r.success)
+        successes = sum(1 for r in results if r.is_success)
         failures = sum(1 for r in results if r.is_failure)
 
         assert successes + failures == 100

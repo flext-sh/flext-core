@@ -71,19 +71,19 @@ class TestFlextCoreWildcardExports:
         """Test that FlextResult is functional after wildcard import."""
         # Test success case
         success_result = FlextResult[str].ok("test_value")
-        assert success_result.success is True
+        assert success_result.is_success is True
         assert success_result.value == "test_value"
         assert success_result.error is None
 
         # Test failure case
         failure_result = FlextResult[str].fail("test_error")
-        assert failure_result.success is False
+        assert failure_result.is_success is False
         assert failure_result.error == "test_error"
         # Don't access .value on failed result as it raises TypeError
 
         # Test chaining operations
         chained_result = success_result.map(lambda x: x.upper())
-        assert chained_result.success is True
+        assert chained_result.is_success is True
         assert chained_result.value == "TEST_VALUE"
 
     def test_flext_utilities_functionality(self) -> None:
@@ -102,15 +102,11 @@ class TestFlextCoreWildcardExports:
         assert isinstance(timestamp, str)
         assert len(timestamp) > 0
 
-        # Test safe type conversion (using to_int since safe_int doesn't exist)
+        # Test safe type conversion (using to_int which returns FlextResult)
         int_result = FlextUtilities.Conversions.to_int("123")
-        if hasattr(int_result, "success"):
-            # FlextResult return type
-            assert int_result.success is True
-            assert int_result.value == 123
-        else:
-            # Direct conversion case
-            assert int_result == 123
+        # FlextResult return type
+        assert int_result.is_success is True
+        assert int_result.value == 123
 
     def test_flext_constants_access(self) -> None:
         """Test that FlextConstants hierarchy is accessible after wildcard import."""
@@ -156,7 +152,7 @@ class TestFlextCoreWildcardExports:
         # Test that FlextTypes module is available
         assert hasattr(FlextTypes, "Core")
         assert hasattr(FlextTypes, "Config")
-        assert hasattr(FlextTypes, "Result")
+        assert hasattr(FlextTypes, "Domain")
 
         # Test type annotations work
         # Verify FlextResult is generic
@@ -183,7 +179,7 @@ class TestFlextCoreWildcardExports:
         assert container.has("test_service")
 
         resolved_result = container.get("test_service")
-        assert resolved_result.success
+        assert resolved_result.is_success
         assert resolved_result.value == "test_value"
 
     def test_flext_commands_functionality(self) -> None:
@@ -269,21 +265,21 @@ class TestFlextCoreIntegrationScenarios:
         validation_result = bool(operation_id and operation_id.strip())
 
         assert validation_result is True
-        assert result.success is True
+        assert result.is_success is True
 
         # 3. Process the result through transformations
         processed_result = result.map(
             lambda data: {**data, "timestamp": datetime.now(UTC).isoformat()},
         )
 
-        assert processed_result.success is True
+        assert processed_result.is_success is True
         assert "timestamp" in processed_result.value
 
         # 4. Handle any potential errors using exception system
         def _handle_workflow_failure(
             result: FlextResult[FlextTypes.Core.Headers],
         ) -> None:
-            if not result.success:
+            if not result.is_success:
                 error_msg = "Workflow failed"
                 raise FlextExceptions.OperationError(error_msg)
 
@@ -298,7 +294,7 @@ class TestFlextCoreIntegrationScenarios:
             lambda data: {**data, "status": final_status},
         )
 
-        assert final_result.success is True
+        assert final_result.is_success is True
         assert final_result.value["status"] == "COMPLETED"
 
     def test_error_handling_integration(self) -> None:
@@ -339,8 +335,8 @@ class TestFlextCoreIntegrationScenarios:
         timeout_result = container.get("timeout")
         error_mapping_result = container.get("error_mapping")
 
-        assert timeout_result.success
-        assert error_mapping_result.success
+        assert timeout_result.is_success
+        assert error_mapping_result.is_success
 
         timeout = timeout_result.value
         error_mapping = error_mapping_result.value  # type: ignore[assignment]

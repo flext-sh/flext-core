@@ -158,7 +158,7 @@ class TestFlextContainer100Percent:
 
         service_names_result = container.get_service_names()
         assert service_names_result.is_success
-        assert "test_service" in service_names_result.data
+        assert "test_service" in service_names_result.value
 
         service_count = container.get_service_count()
         assert service_count == 1

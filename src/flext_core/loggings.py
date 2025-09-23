@@ -346,6 +346,8 @@ class FlextLogger:
     # Static class attributes
     _configured: bool = False
     _global_correlation_id: FlextTypes.Core.Optional[FlextTypes.Identifiers.Id] = None
+    _logger_cache: dict[str, FlextLogger] = {}
+    _cache_lock = threading.Lock()
 
     # Nested console renderer class
     class _ConsoleRenderer:
@@ -646,6 +648,26 @@ class FlextLogger:
         """Check if structlog is configured."""
         return self._configured
 
+    def __new__(cls, name: str, **kwargs) -> FlextLogger:
+        """Create logger instance with caching support.
+        
+        Args:
+            name: Logger name
+            **kwargs: Additional initialization parameters
+            
+        Returns:
+            FlextLogger: Cached or new logger instance
+        """
+        # Check cache first (unless forcing new instance)
+        if not kwargs.get('_force_new', False):
+            with cls._cache_lock:
+                if name in cls._logger_cache:
+                    return cls._logger_cache[name]
+        
+        # Create new instance
+        instance = super().__new__(cls)
+        return instance
+
     def __init__(
         self,
         name: str,
@@ -880,6 +902,11 @@ class FlextLogger:
         # Initialize centralized context manager - optimized context operations
         self._context_manager = self._ContextManager(self)
 
+        # Add to cache (unless forcing new instance)
+        if not _force_new:
+            with self._cache_lock:
+                self._logger_cache[name] = self
+
     def __eq__(self, other: object) -> bool:
         """Allow comparison with both logger objects and their string repr.
 
@@ -1087,21 +1114,15 @@ class FlextLogger:
             else {}
         )
 
-        # Build request context
-        request_context = cast(
-            "dict[str, object] | None", getattr(self._local, "request_context", None)
-        )
+        # Build request context - FIX: Access through local storage properly
+        local_storage = self.get_local_storage()
+        request_context = getattr(local_storage, "request_context", None)
         request_data = (
             dict(request_context) if isinstance(request_context, dict) else {}
         )
 
-        # Build permanent context
-        permanent_context = getattr(self, "_persistent_context", None)
-        permanent_data = (
-            dict(cast("dict[str, object]", permanent_context))
-            if isinstance(permanent_context, dict)
-            else {}
-        )
+        # Build permanent context - FIX: Access permanent context properly
+        permanent_data = dict(self._persistent_context)
 
         # Build execution context
         execution_info: FlextTypes.Core.Dict = {}
@@ -1118,7 +1139,7 @@ class FlextLogger:
                 execution_info["uptime_seconds"] = uptime_seconds
 
         # Build performance metrics
-        performance_data: FlextTypes.Core.Dict = {}
+        performance_data: FlextTypes.Core.Dict | None = None
         if duration_ms is not None and getattr(
             config, "track_performance", FlextConstants.Logging.TRACK_PERFORMANCE
         ):
@@ -1139,7 +1160,11 @@ class FlextLogger:
                 if error.__traceback__ is not None:
                     error_data["stack_trace"] = traceback.format_tb(error.__traceback__)
             else:
-                error_data = {"message": str(error)}
+                error_data = {
+                    "type": "StringError",
+                    "message": str(error),
+                    "stack_trace": None,
+                }
 
         # Build context data
         context_data: FlextTypes.Core.Dict = {}
@@ -1359,6 +1384,7 @@ class FlextLogger:
             bind_type="temporary",
             clear_existing=False,
             force_new_instance=True,  # Force creation of new instance for bind
+            copy_permanent_context=True,  # Copy permanent context to bound logger
         )
         result = self._context_manager.bind_context(model)
         if result.is_failure:
@@ -2081,63 +2107,13 @@ class FlextLogger:
         level: str,
         message: str,
         context: dict[str, object] | None = None,
-        **kwargs: object,
+        error: Exception | str | None = None,
+        duration_ms: float | None = None,
+        **_kwargs: object,
     ) -> FlextLogger.LogEntry:
         """Build log entry with provided parameters."""
-        # Get current configuration
-        config = FlextConfig.get_global_instance()
-
-        # Process context based on configuration
-        processed_context: dict[str, object] = {}
-        if config.include_context and context:
-            processed_context = context.copy()
-            # Apply sensitive data masking if enabled
-            if config.mask_sensitive_data:
-                processed_context = self.sanitize_context(processed_context)
-
-        # Create LogEntry with explicit parameters
-        entry = FlextLogger.LogEntry(
-            message=message,
-            level=level,
-            logger=self._name,
-            context=processed_context,
-        )
-
-        # Set correlation ID if available and enabled
-        if config.include_correlation_id:
-            correlation_id = self.get_correlation_id()
-            if correlation_id:
-                entry.correlation_id = correlation_id
-
-        # Populate service information
-        entry.service = {
-            "name": self._service_name,
-            "version": self._service_version,
-            "instance_id": f"{platform.node()}-{os.getpid()}",
-            "environment": self._environment,
-        }
-
-        # Populate system information
-        entry.system = {
-            "hostname": platform.node(),
-            "platform": platform.platform(),
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-        }
-
-        # Populate execution information based on timing flag
-        if config.track_timing:
-            entry.execution = {
-                "thread_id": threading.get_ident(),
-                "process_id": os.getpid(),
-                "uptime_seconds": time.time() - self._start_time,
-            }
-
-        # Handle performance data based on performance flag
-        if config.track_performance and "duration_ms" in kwargs:
-            entry.performance = {"duration_ms": kwargs["duration_ms"]}
-
-        # Return LogEntry object
-        return entry
+        # Use the internal _build_log_entry method to ensure proper context handling
+        return self._build_log_entry(level, message, context, error, duration_ms)
 
     def sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
         """Sanitize context data by removing sensitive information."""

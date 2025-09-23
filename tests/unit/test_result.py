@@ -986,4 +986,4 @@ class TestFlextResultCompleteCoverage:
         # Test special None handling cases
         none_result = FlextResult[str | None].ok(None)
         assert none_result.is_success
-        assert none_result.data is None
+        assert none_result.value is None

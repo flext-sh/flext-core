@@ -1133,16 +1133,16 @@ class TestFlextModelsRootModelValidation:
     #     # Create a naive datetime to test ensure_utc functionality
     #     naive_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
     #     result = FlextModels.Timestamp.create(naive_dt)
-    #     assert result.success
-    #     assert result.data is not None and result.data.value == naive_dt
+    #     assert result.is_success
+    #     assert result.value is not None and result.value.value == naive_dt
 
     # def test_timestamp_ensure_utc_timezone_aware(self) -> None:
     #     """Test Timestamp.ensure_utc with timezone-aware datetime."""
     #     eastern = zoneinfo.ZoneInfo("US/Eastern")
     #     aware_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=eastern)
     #     result = FlextModels.Timestamp.create(aware_dt)
-    #     assert result.success
-    #     assert result.data is not None and result.data.value == aware_dt
+    #     assert result.is_success
+    #     assert result.value is not None and result.value.value == aware_dt
 
     def test_email_address_validation_format_check(self) -> None:
         """Test EmailAddress validation format (lines 813-823)."""
@@ -1208,7 +1208,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=future_time,
         )
         # Explicitly check the boolean value
-        is_expired_result: bool = payload.is_expired()
+        is_expired_result: bool = payload.is_expired
         assert not is_expired_result
 
         # Test expired payload
@@ -1220,7 +1220,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=past_time,
         )
         # Explicitly check the boolean value
-        is_expired_result2: bool = expired_payload.is_expired()
+        is_expired_result2: bool = expired_payload.is_expired
         assert is_expired_result2
 
         # Test payload without expiration
@@ -1229,7 +1229,7 @@ class TestFlextModelsRootModelValidation:
             message_type="test_message",
             source_service="test_service",
         )
-        assert not no_expiry_payload.is_expired()
+        assert not no_expiry_payload.is_expired
 
     # NOTE: JsonData class not implemented yet
     # def test_json_data_validation_serializable(self) -> None:
@@ -1237,8 +1237,8 @@ class TestFlextModelsRootModelValidation:
     #     # Test valid JSON data
     #     valid_data: FlextTypes.Core.JsonObject = {"key": "value", "number": 42}
     #     result = FlextModels.JsonData.create(dict(valid_data))
-    #     assert result.success
-    #     assert result.data is not None and result.data.value == valid_data
+    #     assert result.is_success
+    #     assert result.value is not None and result.value.value == valid_data
 
     #     # Test invalid JSON data - function object
     #     def test_function() -> str:
@@ -1247,7 +1247,7 @@ class TestFlextModelsRootModelValidation:
     #     # Create a dict with function that can't be serialized
     #     invalid_data: dict[str, object] = {"func": test_function}
     #     result = FlextModels.JsonData.create(invalid_data)
-    #     assert not result.success
+    #     assert not result.is_success
 
     # NOTE: Metadata class not implemented yet
     # def test_metadata_validation_string_values(self) -> None:
@@ -1256,8 +1256,8 @@ class TestFlextModelsRootModelValidation:
     #     # but we need to trigger the validator to hit line 907
     #     valid_metadata = {"key1": "value1", "key2": "value2"}
     #     result = FlextModels.Metadata.create(valid_metadata)
-    #     assert result.success
-    #     assert result.data is not None and result.data.value == valid_metadata
+    #     assert result.is_success
+    #     assert result.value is not None and result.value.value == valid_metadata
 
 
 class TestFlextModelsEntityClearDomainEvents:
