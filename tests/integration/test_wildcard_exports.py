@@ -280,5 +280,5 @@ class TestFlextCoreSystemValidation:
             .map(lambda x: x + 5)  # Should not execute
         )
 
-        assert failed_chain.success is False
+        assert failed_chain.is_success is False
         assert failed_chain.error == "initial error"

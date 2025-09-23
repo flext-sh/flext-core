@@ -355,7 +355,7 @@ def test_dispatcher_dispatch_with_explicit_correlation_id_uses_provided_value() 
             self.correlation_ids: list[str | None] = []
             self.parent_ids: list[str | None] = []
 
-        def execute(self, message: object) -> FlextResult[object]:  # type: ignore[override]
+        def execute(self, _message: object) -> FlextResult[object]:  # type: ignore[override]
             self.correlation_ids.append(FlextContext.Correlation.get_correlation_id())
             self.parent_ids.append(FlextContext.Correlation.get_parent_correlation_id())
             return FlextResult[object].ok("handled")
@@ -392,7 +392,7 @@ def test_dispatcher_dispatch_with_explicit_correlation_id_restores_previous_cont
             self.correlation_ids: list[str | None] = []
             self.parent_ids: list[str | None] = []
 
-        def execute(self, message: object) -> FlextResult[object]:  # type: ignore[override]
+        def execute(self, _message: object) -> FlextResult[object]:  # type: ignore[override]
             self.correlation_ids.append(FlextContext.Correlation.get_correlation_id())
             self.parent_ids.append(FlextContext.Correlation.get_parent_correlation_id())
             return FlextResult[object].ok("handled")

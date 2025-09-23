@@ -36,8 +36,8 @@ class TestFlextConfigBasics:
         assert config.app_name == "FLEXT Application"
         assert config.environment == "development"
         assert config.debug is False
-        # Note: In test environment, FLEXT_LOG_LEVEL=DEBUG overrides the default INFO
-        assert config.log_level == "DEBUG"
+        # Default log level is INFO (unless overridden by environment variable)
+        assert config.log_level == "INFO"
         assert config.max_workers == 4
         assert config.timeout_seconds == 30
 
@@ -164,7 +164,9 @@ class TestFlextConfigClassMethods:
             json_path = f.name
 
         try:
-            config = FlextConfig.from_file(json_path)
+            result = FlextConfig.from_file(json_path)
+            assert result.is_success
+            config = result.unwrap()
             assert config.app_name == "json_test_app"
             assert config.version == "3.0.0"
             assert config.environment == "test"
@@ -175,20 +177,21 @@ class TestFlextConfigClassMethods:
 
     def test_from_file_error_cases(self) -> None:
         """Test from_file error handling."""
-        # Test nonexistent file
-        with pytest.raises(FileNotFoundError):
-            FlextConfig.from_file("/nonexistent/config.json")
+        # Test nonexistent file - should return failure FlextResult
+        result = FlextConfig.from_file("/nonexistent/config.json")
+        assert result.is_failure
+        assert result.error is not None
 
-        # Test unsupported format
+        # Test unsupported format - should return failure FlextResult
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
             f.write(b"invalid content")
             txt_path = f.name
 
         try:
-            with pytest.raises(
-                ValueError, match="Unsupported configuration file format"
-            ):
-                FlextConfig.from_file(txt_path)
+            result = FlextConfig.from_file(txt_path)
+            assert result.is_failure
+            assert result.error is not None
+            assert "Unsupported" in result.error or "format" in result.error
         finally:
             Path(txt_path).unlink(missing_ok=True)
 
@@ -532,13 +535,13 @@ class TestFlextConfigEdgeCases:
         """Test empty string validation."""
         # Empty strings are allowed for most fields
         config1 = FlextConfig(app_name="")
-        assert config1.app_name == ""
+        assert config1.app_name == ""  # noqa: PLC1901
 
         config2 = FlextConfig(version="")
-        assert config2.version == ""
+        assert config2.version == ""  # noqa: PLC1901
 
         config3 = FlextConfig(database_url="")
-        assert config3.database_url == ""
+        assert config3.database_url == ""  # noqa: PLC1901
 
     def test_whitespace_handling(self) -> None:
         """Test whitespace handling in string fields."""

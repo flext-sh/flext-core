@@ -607,11 +607,8 @@ class TestFlextHandlersFromCallable:
             return f"result: {x}"
 
         handler = FlextHandlers.from_callable(typed_function, mode="command")
-        # Should get default name for anonymous functions
-        assert (
-            "FunctionHandler" in handler.handler_name
-            or "lambda" in handler.handler_name
-        )
+        # Should use the function's name
+        assert handler.handler_name == "typed_function"
 
     def test_from_callable_handler_execution(self) -> None:
         """Test that created handler can execute successfully."""

@@ -112,7 +112,7 @@ class TestFlextTestsMatchers:
         if hasattr(success_result, "is_success"):
             assert success_result.is_success is True
         if hasattr(success_result, "success"):
-            assert success_result.success is True
+            assert success_result.is_success is True
 
         # Test FailureResultLike protocol
         if hasattr(failure_result, "is_failure"):
@@ -166,7 +166,7 @@ class TestFlextTestsMatchers:
 
         # Test DataResultLike protocol (legacy compatibility)
         if hasattr(result, "data"):
-            assert result.data == test_data
+            assert result.value == test_data
 
     def test_empty_checkable_protocols(self) -> None:
         """Test EmptyCheckable and HasIsEmpty protocols."""
@@ -232,7 +232,7 @@ class TestFlextTestsMatchers:
         def check_success_result_like(
             obj: FlextTestsMatchers.SuccessResultLike,
         ) -> bool:
-            return obj.is_success if hasattr(obj, "is_success") else obj.success
+            return obj.is_success
 
         def check_failure_result_like(
             obj: FlextTestsMatchers.FailureResultLike,

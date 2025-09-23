@@ -399,19 +399,19 @@ class TestFlextUtilitiesIntegration:
         processed_text_result = FlextUtilities.TextProcessor.clean_text(
             "  hello world  \n"
         )
-        assert processed_text_result.success is True
+        assert processed_text_result.is_success is True
         assert processed_text_result.value == "hello world"
 
     def test_conversions_and_type_guards_integration(self) -> None:
         """Test conversions with type guards."""
         # Convert and validate
         int_result = FlextUtilities.Conversions.to_int("123")
-        assert int_result.success is True
+        assert int_result.is_success is True
         converted_dict = {"converted_int": int_result.value}
         assert FlextUtilities.TypeGuards.is_dict_non_empty(converted_dict) is True
 
         bool_result = FlextUtilities.Conversions.to_bool(value="true")
-        assert bool_result.success is True
+        assert bool_result.is_success is True
         bool_list = [bool_result.value]
         assert FlextUtilities.TypeGuards.is_list_non_empty(bool_list) is True
 
@@ -424,12 +424,12 @@ class TestFlextUtilitiesIntegration:
         # Process and clean
         raw_text = "  User Registration Event  \n"
         clean_text_result = FlextUtilities.TextProcessor.clean_text(raw_text)
-        assert clean_text_result.success is True
+        assert clean_text_result.is_success is True
         clean_text = clean_text_result.value
 
         # Create data structure
         bool_result = FlextUtilities.Conversions.to_bool(value="true")
-        assert bool_result.success is True
+        assert bool_result.is_success is True
 
         event_data = {
             "entity_id": entity_id,

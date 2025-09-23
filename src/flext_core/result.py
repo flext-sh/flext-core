@@ -395,11 +395,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return self._error is None
 
     @property
-    def success(self) -> bool:
-        """Backward compatibility alias for is_success."""
-        return self.is_success
-
-    @property
     def is_failure(self) -> bool:
         """Return ``True`` when the result represents a failure."""
         return self._error is not None
@@ -413,11 +408,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         # For success case, _data contains the actual value (which may be None for FlextResult[None])
         # Cast to T_co since we know this is a success result
         return cast("T_co", self._data)
-
-    @property
-    def data(self) -> T_co:
-        """Return the success payload for backward compatibility (alias for value)."""
-        return self.value
 
     @property
     def error(self) -> str | None:

@@ -579,46 +579,50 @@ class FlextDispatcher:
         correlation_var = FlextContext.Variables.Correlation.CORRELATION_ID
         parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
 
+        # Store current context values for restoration
+        current_correlation = correlation_var.get()
+        _current_parent = parent_var.get()
+
+        # Set new correlation ID if provided
         if correlation_id is not None:
-            current_correlation = correlation_var.get()
             correlation_token = correlation_var.set(correlation_id)
-            if (
-                current_correlation is not None
-                and current_correlation != correlation_id
-            ):
+            # Set parent correlation ID if there was a previous one
+            if current_correlation is not None and current_correlation != correlation_id:
                 parent_token = parent_var.set(current_correlation)
 
         try:
-            with (
-                FlextContext.Correlation.inherit_correlation() as active_correlation_id
-            ):
-                # Use provided correlation ID or the inherited one
-                effective_correlation_id = correlation_id or active_correlation_id
+            # Set metadata if provided
+            if metadata:
+                metadata_token = metadata_var.set(metadata)
 
-                if metadata:
-                    metadata_token = metadata_var.set(metadata)
+            # Use provided correlation ID or generate one if needed
+            effective_correlation_id = correlation_id
+            if effective_correlation_id is None:
+                effective_correlation_id = FlextContext.Correlation.generate_correlation_id()
+
+            if self._config.get("enable_logging"):
+                self._logger.debug(
+                    "dispatch_context_entered",
+                    correlation_id=effective_correlation_id,
+                )
+            
+            try:
+                yield
+            finally:
+                if metadata_token is not None:
+                    metadata_var.reset(metadata_token)
 
                 if self._config.get("enable_logging"):
                     self._logger.debug(
-                        "dispatch_context_entered",
+                        "dispatch_context_exited",
                         correlation_id=effective_correlation_id,
                     )
-                try:
-                    yield
-                finally:
-                    if metadata_token is not None:
-                        metadata_var.reset(metadata_token)
-
-                    if self._config.get("enable_logging"):
-                        self._logger.debug(
-                            "dispatch_context_exited",
-                            correlation_id=effective_correlation_id,
-                        )
         finally:
-            if correlation_token is not None:
-                correlation_var.reset(correlation_token)
+            # Restore context in reverse order
             if parent_token is not None:
                 parent_var.reset(parent_token)
+            if correlation_token is not None:
+                correlation_var.reset(correlation_token)
 
     # ------------------------------------------------------------------
     # Factory methods

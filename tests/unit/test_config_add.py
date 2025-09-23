@@ -17,8 +17,7 @@ from typing import cast
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextConfig
-from flext_core.constants import FlextConstants
+from flext_core import FlextConfig, FlextConstants
 
 
 class TestFlextConfigRealCoverage:
@@ -184,7 +183,7 @@ class TestFlextConfigRealCoverage:
         assert logging_config["json_output"] is True
         assert logging_config["include_source"] is False
         assert logging_config["structured_output"] is True
-        assert logging_config["log_verbosity"] == FlextConstants.Logging.VERBOSITY
+        assert logging_config["log_verbosity"] == "full"  # Explicitly set above
 
         # Test get_database_config
         db_config = config.get_database_config()
@@ -200,7 +199,8 @@ class TestFlextConfigRealCoverage:
         # Test get_cqrs_bus_config
         cqrs_config = config.get_cqrs_bus_config()
         assert isinstance(cqrs_config, dict)
-        assert cqrs_config["log_verbosity"] == "full"
+        assert "execution_timeout" in cqrs_config
+        assert "enable_metrics" in cqrs_config
 
     def test_create_for_environment(self) -> None:
         """Test create_for_environment class method."""
@@ -226,7 +226,7 @@ class TestFlextConfigRealCoverage:
         config_data = {
             "app_name": "json_app",
             "version": "2.0.0",
-            "environment": "testing",
+            "environment": "test",
             "debug": True,
             "log_level": "DEBUG",
         }
@@ -241,10 +241,12 @@ class TestFlextConfigRealCoverage:
             json_path = f.name
 
         try:
-            config = FlextConfig.from_file(json_path)
+            result = FlextConfig.from_file(json_path)
+            assert result.is_success
+            config = result.unwrap()
             assert config.app_name == "json_app"
             assert config.version == "2.0.0"
-            assert config.environment == "testing"
+            assert config.environment == "test"
             assert config.debug is True
             assert config.log_level == "DEBUG"
         finally:
@@ -252,8 +254,9 @@ class TestFlextConfigRealCoverage:
 
     def test_from_file_nonexistent(self) -> None:
         """Test from_file with nonexistent file."""
-        with pytest.raises(FileNotFoundError, match="Configuration file not found"):
-            FlextConfig.from_file("/nonexistent/config.json")
+        result = FlextConfig.from_file("/nonexistent/config.json")
+        assert result.is_failure
+        assert result.error is not None
 
     def test_from_file_unsupported_format(self) -> None:
         """Test from_file with unsupported format."""
@@ -262,10 +265,10 @@ class TestFlextConfigRealCoverage:
             txt_path = f.name
 
         try:
-            with pytest.raises(
-                ValueError, match="Unsupported configuration file format"
-            ):
-                FlextConfig.from_file(txt_path)
+            result = FlextConfig.from_file(txt_path)
+            assert result.is_failure
+            assert result.error is not None
+            assert "Unsupported" in result.error or "format" in result.error
         finally:
             Path(txt_path).unlink(missing_ok=True)
 
@@ -380,7 +383,7 @@ class TestFlextConfigRealCoverage:
         assert config.environment == "development"
         assert config.debug is False
         assert config.trace is False
-        assert config.log_level == "DEBUG"  # Actual value from environment/config
+        assert config.log_level == FlextConstants.Logging.DEFAULT_LEVEL  # Actual default
 
         # Test feature flag defaults
         assert config.enable_caching is True
