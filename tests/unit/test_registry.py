@@ -185,7 +185,7 @@ class TestFlextRegistryEdgeCases:
 
         # This should be handled gracefully
         try:
-            result = registry.register_handler(None)
+            result = registry.register_handler(None)  # type: ignore[arg-type]
             # If it doesn't raise, it should fail gracefully
             assert result.is_failure
         except (TypeError, AttributeError):

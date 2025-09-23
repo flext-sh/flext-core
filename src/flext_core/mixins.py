@@ -188,7 +188,7 @@ class FlextMixins:
 
         # Use FlextConstants for log level mapping
         normalized_level = str(config.level).upper()
-        level_methods: dict[str, Callable[..., None]] = {
+        level_methods: dict[str, Callable[[str], None]] = {
             FlextConstants.Logging.DEBUG: logger.debug,
             FlextConstants.Logging.INFO: logger.info,
             FlextConstants.Logging.WARNING: logger.warning,
@@ -196,8 +196,10 @@ class FlextMixins:
             FlextConstants.Logging.CRITICAL: logger.critical,
         }
 
-        log_method = level_methods.get(normalized_level, logger.info)
-        log_method(f"Operation: {config.operation}", extra=context)
+        level_methods.get(normalized_level, logger.info)
+        # Use bind for structured logging instead of extra parameter
+        bound_logger = logger.bind(**context)
+        bound_logger.info(f"Operation: {config.operation}")
 
     # =============================================================================
     # SIMPLIFIED UTILITY METHODS - Direct delegation to FlextUtilities

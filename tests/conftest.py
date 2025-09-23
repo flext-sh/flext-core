@@ -559,7 +559,6 @@ def logging_test_env() -> Generator[None]:
 
         # Reset logger singleton state
         FlextLogger._configured = False
-        FlextLogger._instances.clear()
 
         # Set the expected log level for logging tests
         os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
@@ -568,7 +567,6 @@ def logging_test_env() -> Generator[None]:
         # Clear both singleton states again and restore original value
         FlextConfig.clear_global_instance()
         FlextLogger._configured = False
-        FlextLogger._instances.clear()
 
         if original_log_level is not None:
             os.environ["FLEXT_LOG_LEVEL"] = original_log_level

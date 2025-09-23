@@ -128,6 +128,7 @@ class TestCleanArchitecturePatterns:
                     id="user_123",
                     name=command.name,
                     email_obj=email_obj,
+                    domain_events=[],
                 )
                 user_result = user.validate_domain_rules()
 
@@ -272,6 +273,7 @@ class TestCleanArchitecturePatterns:
             id="order_123",
             order_id=order_id,
             total=money,
+            domain_events=[],
         )
 
     def _test_ddd_validation_and_behavior(self, order: object) -> None:

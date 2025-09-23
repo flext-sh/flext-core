@@ -67,7 +67,7 @@ class TestFlextResultCompleteCoverage:
     def test_chain_results_edge_cases(self) -> None:
         """Test chain_results with edge cases."""
         # Empty results
-        empty_chain = FlextResult.chain_results()
+        empty_chain: FlextResult[list[object]] = FlextResult.chain_results()
         assert empty_chain.is_success
         assert empty_chain.value == []
 

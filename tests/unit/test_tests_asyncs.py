@@ -191,7 +191,7 @@ class TestFlextTestsAsyncs:
     def test_type_guard_with_various_types(self) -> None:
         """Test type guard with various Python types."""
         # Test with built-in types
-        test_objects = [
+        test_objects: list[object] = [
             42,  # int
             math.pi,  # float
             "string",  # str
@@ -201,7 +201,7 @@ class TestFlextTestsAsyncs:
             (1, 2, 3),  # tuple
             True,  # bool
             None,  # NoneType
-            lambda x: x,  # function
+            (lambda x: x),  # function
             FlextTestsAsyncs,  # class
         ]
 

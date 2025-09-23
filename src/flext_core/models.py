@@ -1153,20 +1153,16 @@ class FlextModels:
         """Enhanced factory registration with advanced validation."""
 
         name: str
-        factory: Callable[..., object]
+        factory: Callable[[], object]
         singleton: bool = False
         dependencies: list[str] = Field(default_factory=list)
 
         @field_validator("factory")
         @classmethod
         def validate_factory_signature(
-            cls, v: Callable[..., object]
-        ) -> Callable[..., object]:
+            cls, v: Callable[[], object]
+        ) -> Callable[[], object]:
             """Validate factory is callable with proper signature."""
-            if not callable(v):
-                msg = "Factory must be callable"
-                raise TypeError(msg)
-
             # Check if it's a proper factory (no required args)
             sig = inspect.signature(v)
             required_params = [
@@ -1186,7 +1182,7 @@ class FlextModels:
         """Batch registration model with advanced validation."""
 
         services: FlextTypes.Core.Dict = Field(default_factory=dict)
-        factories: dict[str, Callable[..., object]] = Field(default_factory=dict)
+        factories: dict[str, Callable[[], object]] = Field(default_factory=dict)
         singletons: FlextTypes.Core.Dict = Field(default_factory=dict)
 
         @model_validator(mode="after")
@@ -1248,17 +1244,16 @@ class FlextModels:
         """Handler registration with advanced validation."""
 
         name: str
-        handler: Callable[..., object]
+        handler: Callable[[object], object]
         event_types: list[str] = Field(default_factory=list)
         priority: int = Field(default=0, ge=0, le=100)
 
         @field_validator("handler")
         @classmethod
-        def validate_handler(cls, v: Callable[..., object]) -> Callable[..., object]:
+        def validate_handler(
+            cls, v: Callable[[object], object]
+        ) -> Callable[[object], object]:
             """Validate handler is properly callable."""
-            if not callable(v):
-                msg = "Handler must be callable"
-                raise TypeError(msg)
             return v
 
     class BatchProcessingConfig(StrictArbitraryTypesModel):
@@ -1627,7 +1622,7 @@ class FlextModels:
         """Operation execution request."""
 
         operation_name: str
-        operation_callable: Callable[..., object]
+        operation_callable: Callable[[object], object]
         arguments: FlextTypes.Core.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Core.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
@@ -1650,12 +1645,9 @@ class FlextModels:
         @field_validator("operation_callable")
         @classmethod
         def validate_operation_callable(
-            cls, v: Callable[..., object]
-        ) -> Callable[..., object]:
+            cls, v: Callable[[object], object]
+        ) -> Callable[[object], object]:
             """Validate operation is callable."""
-            if not callable(v):
-                msg = "Operation must be callable"
-                raise TypeError(msg)
             return v
 
     class RetryConfiguration(ArbitraryTypesModel):
@@ -1749,7 +1741,7 @@ class FlextModels:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[Callable[..., object]], Field(default_factory=list)
+            list[Callable[[object], object]], Field(default_factory=list)
         ]
 
         @field_validator("custom_validators")
@@ -1795,19 +1787,16 @@ class FlextModels:
         """Conditional execution request."""
 
         condition: Callable[[object], bool]
-        true_action: Callable[..., object]
-        false_action: Callable[..., object] | None = None
+        true_action: Callable[[object], object]
+        false_action: Callable[[object], object] | None = None
         context: FlextTypes.Core.Dict = Field(default_factory=dict)
 
         @field_validator("condition", "true_action", "false_action")
         @classmethod
         def validate_condition(
-            cls, v: Callable[..., object] | None
-        ) -> Callable[..., object] | None:
+            cls, v: Callable[[object], object] | None
+        ) -> Callable[[object], object] | None:
             """Validate callables."""
-            if v is not None and not callable(v):
-                msg = "Must be callable"
-                raise ValueError(msg)
             return v
 
     class StateMachineRequest(ArbitraryTypesModel):
@@ -1889,20 +1878,17 @@ class FlextModels:
         @field_validator("transformer", "error_handler")
         @classmethod
         def validate_transformer(
-            cls, v: Callable[..., object] | None
-        ) -> Callable[..., object] | None:
+            cls, v: Callable[[object], object] | None
+        ) -> Callable[[object], object] | None:
             """Validate transformer functions."""
-            if v is not None and not callable(v):
-                msg = "Must be callable"
-                raise ValueError(msg)
             return v
 
     class FallbackConfiguration(ArbitraryTypesModel):
         """Fallback configuration."""
 
-        primary_service: Callable[..., object]
+        primary_service: Callable[[object], object]
         fallback_services: Annotated[
-            list[Callable[..., object]], Field(default_factory=list)
+            list[Callable[[object], object]], Field(default_factory=list)
         ]
         max_fallback_attempts: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts

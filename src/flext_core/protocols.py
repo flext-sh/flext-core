@@ -583,14 +583,14 @@ class FlextProtocols:
 
             @overload
             def register_handler(
-                self, handler: Callable[..., object], /
+                self, handler: Callable[[object], object], /
             ) -> FlextResult[None]: ...
 
             @overload
             def register_handler(
                 self,
                 command_type: type,
-                handler: Callable[..., object],
+                handler: Callable[[object], object],
                 /,
             ) -> FlextResult[None]: ...
 

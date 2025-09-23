@@ -17,8 +17,8 @@ class TestTypeChecker:
         """Test computing accepted message types from generic base classes."""
 
         class TestHandler(FlextHandlers[str, int]):
-            def handle(self, _message: str) -> FlextResult[int]:
-                return FlextResult[int].ok(len(_message))
+            def handle(self, message: str) -> FlextResult[int]:
+                return FlextResult[int].ok(len(message))
 
         result = FlextUtilities.TypeChecker.compute_accepted_message_types(TestHandler)
         assert result == (str,)
@@ -47,8 +47,8 @@ class TestTypeChecker:
         """Test computing accepted message types with no type annotations."""
 
         class TestHandler(FlextHandlers[object, str]):
-            def handle(self, _message: object) -> FlextResult[str]:  # No annotations
-                return FlextResult[str].ok("result")
+            def handle(self, message: object = "result") -> FlextResult[str]:
+                return FlextResult[str].ok(str(message))
 
         result = FlextUtilities.TypeChecker.compute_accepted_message_types(TestHandler)
         # Should return empty tuple when no type information is available
@@ -110,8 +110,8 @@ class TestTypeChecker:
         """Test extracting message type from handle method with type hints."""
 
         class TestHandler:
-            def handle(self, _message: str) -> FlextResult[int]:
-                return FlextResult[int].ok(42)
+            def handle(self, message: int) -> FlextResult[int]:
+                return FlextResult[int].ok(message)
 
         result = FlextUtilities.TypeChecker._extract_message_type_from_handle(
             TestHandler
@@ -121,11 +121,6 @@ class TestTypeChecker:
     def test_extract_message_type_from_handle_with_annotation_attr(self) -> None:
         """Test extracting message type from parameter annotation attribute."""
 
-        class TestHandler:
-            def handle(self, _message: object) -> FlextResult[int]:
-                return FlextResult[int].ok(42)
-
-        # Create a handler with the annotation we want to test
         class ModifiedHandler:
             def handle(self, _message: int) -> FlextResult[int]:
                 return FlextResult[int].ok(42)
@@ -322,8 +317,8 @@ class TestTypeCheckerIntegration:
             action: str
 
         class UserHandler(FlextHandlers[UserCommand, str]):
-            def handle(self, _message: UserCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Processed {_message.action}")
+            def handle(self, message: UserCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(f"Processed {message.action}")
 
         # Test type computation
         accepted_types = FlextUtilities.TypeChecker.compute_accepted_message_types(
@@ -343,8 +338,12 @@ class TestTypeCheckerIntegration:
         """Test TypeChecker integration with Union types."""
 
         class MultiHandler(FlextHandlers[str | int, bool]):
-            def handle(self, _message: str | int) -> FlextResult[bool]:
-                return FlextResult[bool].ok(True)
+            def handle(self, message: str | int) -> FlextResult[bool]:
+                # Process the message based on its type
+                if isinstance(message, str):
+                    return FlextResult[bool].ok(len(message) > 0)
+                # int
+                return FlextResult[bool].ok(message > 0)
 
         accepted_types = FlextUtilities.TypeChecker.compute_accepted_message_types(
             MultiHandler
@@ -355,8 +354,10 @@ class TestTypeCheckerIntegration:
         """Test TypeChecker integration with complex generic types."""
 
         class ComplexHandler(FlextHandlers[dict[str, list[int]], str]):
-            def handle(self, _message: dict[str, list[int]]) -> FlextResult[str]:
-                return FlextResult[str].ok("processed")
+            def handle(self, message: dict[str, list[int]]) -> FlextResult[str]:
+                # Process the complex dict structure
+                total_items = sum(len(value) for value in message.values())
+                return FlextResult[str].ok(f"processed {total_items} items")
 
         accepted_types = FlextUtilities.TypeChecker.compute_accepted_message_types(
             ComplexHandler
@@ -366,9 +367,10 @@ class TestTypeCheckerIntegration:
     def test_integration_with_no_generic_fallback(self) -> None:
         """Test TypeChecker integration when falling back to handle method."""
 
-        class FallbackHandler(FlextHandlers[bytes, str]):  # No generics
-            def handle(self, _message: bytes) -> FlextResult[str]:
-                return FlextResult[str].ok("processed")
+        class FallbackHandler(FlextHandlers[bytes, str]):
+            def handle(self, message: bytes) -> FlextResult[str]:
+                # Process the bytes message
+                return FlextResult[str].ok(f"processed {len(message)} bytes")
 
         accepted_types = FlextUtilities.TypeChecker.compute_accepted_message_types(
             FallbackHandler
@@ -379,8 +381,9 @@ class TestTypeCheckerIntegration:
         """Test TypeChecker integration with no type information available."""
 
         class UntypedHandler(FlextHandlers[object, str]):
-            def handle(self, _message: object) -> FlextResult[str]:  # No type hints
-                return FlextResult[str].ok("processed")
+            def handle(self, message: object) -> FlextResult[str]:
+                # Handle any object type - convert to string representation
+                return FlextResult[str].ok(f"processed {type(message).__name__}")
 
         accepted_types = FlextUtilities.TypeChecker.compute_accepted_message_types(
             UntypedHandler

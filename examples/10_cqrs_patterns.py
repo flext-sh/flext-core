@@ -266,9 +266,9 @@ class CqrsPatternService(FlextService[dict[str, object]]):
         if query_result.is_success:
             result_data = query_result.unwrap()
             if isinstance(result_data, dict):
-                data: str = str(result_data.get("data", "Unknown"))
+                query_data: str = str(result_data.get("data", "Unknown"))
                 metadata: str = str(result_data.get("metadata", "Unknown"))
-                print(f"  Data: {data}")
+                print(f"  Data: {query_data}")
                 print(f"  Metadata: {metadata}")
 
         # Batch result

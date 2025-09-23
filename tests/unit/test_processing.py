@@ -172,8 +172,9 @@ class TestFlextProcessingHandlerRegistry:
 
         FlextTestsMatchers.assert_result_success(result)
         # Real handler processes the request and includes it in the response
-        assert "Real handler processed:" in result.unwrap()
-        assert "test_request" in result.unwrap()
+        response = str(result.unwrap())
+        assert "Real handler processed:" in response
+        assert "test_request" in response
 
     def test_execute_callable_handler(self) -> None:
         """Test executing callable handler."""
@@ -220,7 +221,7 @@ class TestFlextProcessingHandlerRegistry:
 
         # Pydantic validation should prevent creation of invalid handler registration
         with pytest.raises(ValidationError) as exc_info:
-            FlextModels.HandlerRegistration(name=handler_name, handler=invalid_handler)
+            FlextModels.HandlerRegistration(name=handler_name, handler=invalid_handler)  # type: ignore[arg-type]
 
         # Verify the validation error is about callable type
         assert "callable" in str(exc_info.value).lower()
@@ -368,9 +369,9 @@ class TestFlextProcessingHandlerRegistry:
                 self.continue_on_error = True
 
         mock_config = MockBatchConfig()
-        result = registry.execute_batch(mock_config)
+        result = registry.execute_batch(mock_config)  # type: ignore[arg-type]
         FlextTestsMatchers.assert_result_failure(result)
-        assert "exceeds maximum" in result.error
+        assert result.error and "exceeds maximum" in result.error
 
     def test_register_with_validation_success(self) -> None:
         """Test register_with_validation with valid handler and validator."""
@@ -494,7 +495,7 @@ class TestFlextProcessingPipeline:
         result = self.pipeline.process("input")
 
         FlextTestsMatchers.assert_result_failure(result)
-        assert "Step failed" in result.error
+        assert result.error and "Step failed" in result.error
 
     def test_pipeline_with_dictionary_merging(self) -> None:
         """Test pipeline with dictionary merging."""
@@ -606,11 +607,11 @@ class TestFlextProcessingPipeline:
             data={"test": "data"}, timeout_seconds=30
         )
         # Manually set a value below minimum to test the processing logic
-        request.timeout_seconds = 0.001  # Below minimum for processing logic
+        request.timeout_seconds = 0  # Below minimum for processing logic
 
         result = self.pipeline.process_with_timeout(request)
         FlextTestsMatchers.assert_result_failure(result)
-        assert "below minimum" in result.error
+        assert result.error and "below minimum" in result.error
 
     def test_process_with_timeout_above_maximum(self) -> None:
         """Test process_with_timeout with timeout above maximum."""
@@ -624,7 +625,7 @@ class TestFlextProcessingPipeline:
 
         result = self.pipeline.process_with_timeout(request)
         FlextTestsMatchers.assert_result_failure(result)
-        assert "exceeds maximum" in result.error
+        assert result.error and "exceeds maximum" in result.error
 
     def test_process_with_fallback_success(self) -> None:
         """Test process_with_fallback with primary pipeline success."""
@@ -682,9 +683,9 @@ class TestFlextProcessingPipeline:
                 self.continue_on_error = True
 
         mock_config = MockBatchConfig()
-        result = self.pipeline.process_batch(mock_config)
+        result = self.pipeline.process_batch(mock_config)  # type: ignore[arg-type]
         FlextTestsMatchers.assert_result_failure(result)
-        assert "exceeds maximum" in result.error
+        assert result.error and "exceeds maximum" in result.error
 
     def test_process_with_validation_enabled(self) -> None:
         """Test process_with_validation with validation enabled."""
@@ -728,7 +729,7 @@ class TestFlextProcessingPipeline:
 
         result = self.pipeline.process_with_validation(request, always_fail_validator)
         FlextTestsMatchers.assert_result_failure(result)
-        assert "Validation failed" in result.error
+        assert result.error and "Validation failed" in result.error
 
     def test_pipeline_step_returning_none_despite_success(self) -> None:
         """Test pipeline step that returns FlextResult success but with None value."""
@@ -741,7 +742,7 @@ class TestFlextProcessingPipeline:
         result = self.pipeline.process({"test": "data"})
         # This should fail because step returned None despite success
         FlextTestsMatchers.assert_result_failure(result)
-        assert "returned None despite success" in result.error
+        assert result.error and "returned None despite success" in result.error
 
 
 class TestFlextProcessingFactoryMethods:
@@ -989,7 +990,7 @@ class TestFlextProcessingIntegration:
         # Test failure case
         result = pipeline.process("invalid")
         FlextTestsMatchers.assert_result_failure(result)
-        assert "Validation failed" in result.error
+        assert result.error and "Validation failed" in result.error
 
     def test_handler_chain_with_different_handler_types(self) -> None:
         """Test handler chain with mixed handler types using real functionality."""

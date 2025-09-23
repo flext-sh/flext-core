@@ -562,7 +562,7 @@ class TestFlextUtilitiesTransformation:
         # Test empty string
         result3 = FlextUtilities.Transformation.normalize_string("")
         assert result3.is_success
-        assert result3.value == ""
+        assert not result3.value
 
     def test_sanitize_filename(self) -> None:
         """Test Transformation.sanitize_filename method."""

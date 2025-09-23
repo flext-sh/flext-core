@@ -589,7 +589,12 @@ class TestAdvancedPatterns:
             AssertionBuilder([1, 2, 3, 4, 5])
             .assert_type(list)
             .assert_contains(3)
-            .satisfies(lambda x: len(x) == 5, "should have 5 elements")
+            .satisfies(
+                lambda x: len(x) == 5
+                if hasattr(x, "__len__") and isinstance(x, (list, tuple, str, dict))
+                else False,
+                "should have 5 elements",
+            )
         )
 
         # Execute the assertions

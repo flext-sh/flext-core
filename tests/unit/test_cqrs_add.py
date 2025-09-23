@@ -304,7 +304,7 @@ class TestFlextCqrsOperations:
         overrides = {"timeout": 5000, "retries": 3, "custom_field": "custom_value"}
 
         result = FlextCqrs.Operations.create_handler_config(
-            "command", config_overrides=cast("dict[str, object]", overrides)
+            "command", config_overrides=overrides
         )
 
         assert result.is_success
@@ -356,9 +356,7 @@ class TestFlextCqrsDecorators:
         """Test command handler decorator with configuration."""
         custom_config = {"timeout": 10000, "retries": 5, "metadata": {"version": "2.0"}}
 
-        @FlextCqrs.Decorators.command_handler(
-            MockCommand, config=cast("dict[str, object]", custom_config)
-        )
+        @FlextCqrs.Decorators.command_handler(MockCommand, config=custom_config)
         def configured_handler(command: MockCommand) -> bool:
             return command.action == "process"
 

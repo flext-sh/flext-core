@@ -310,15 +310,13 @@ class UpdateUserHandler(
             )
 
         # Mock update operation
-        updated_data = {"user_id": message.user_id, "updated": True}
+        updated_data: dict[str, object] = {"user_id": message.user_id, "updated": True}
         if message.username:
             updated_data["username"] = message.username
         if message.email:
             updated_data["email"] = message.email
 
-        return FlextResult[dict[str, object]].ok(
-            cast("dict[str, object]", updated_data)
-        )
+        return FlextResult[dict[str, object]].ok(updated_data)
 
 
 class DeleteUserHandler(FlextHandlers[DeleteUserCommand, bool]):

@@ -343,7 +343,7 @@ class TestFlextCoreIntegrationScenarios:
         assert error_mapping_result.success
 
         timeout = timeout_result.value
-        error_mapping: dict[str, str] = error_mapping_result.value
+        error_mapping = error_mapping_result.value  # type: ignore[assignment]
 
         assert isinstance(timeout, int)
         assert isinstance(error_mapping, dict)

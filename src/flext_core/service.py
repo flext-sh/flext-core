@@ -316,16 +316,7 @@ class FlextService[TDomainResult](
                 return False
             if not retry_exception_filters:
                 return True
-            for allowed in retry_exception_filters:
-                if isinstance(exc, allowed):
-                    return True
-                if isinstance(allowed, str):
-                    msg = (
-                        f"String-based exception filter '{allowed}' is not supported. "
-                        "Please use exception classes instead."
-                    )
-                    raise TypeError(msg)
-            return False
+            return any(isinstance(exc, allowed) for allowed in retry_exception_filters)
 
         current_delay = base_delay
         last_exception: Exception | None = None

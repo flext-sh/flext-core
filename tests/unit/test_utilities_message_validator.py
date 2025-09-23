@@ -14,8 +14,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextResult, FlextUtilities
-from flext_core.exceptions import FlextExceptions
+from flext_core import FlextExceptions, FlextResult, FlextUtilities
 
 
 class TestMessageValidator:

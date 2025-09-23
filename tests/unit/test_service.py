@@ -190,6 +190,7 @@ class TestDomainServicesFixed:
 
         assert result.is_success is True
         data = result.unwrap()
+        assert isinstance(data, dict)
         assert data["user_id"] == "default_123"
         assert data["email"] == "test@example.com"
 
@@ -461,7 +462,7 @@ class TestDomainServicesFixed:
         with pytest.raises(ValidationError) as exc_info:
             FlextModels.OperationExecutionRequest(
                 operation_name="not_callable",
-                operation_callable="not_callable",
+                operation_callable="not_callable",  # type: ignore[arg-type]
                 arguments={},
             )
 
