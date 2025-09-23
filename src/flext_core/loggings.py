@@ -26,7 +26,7 @@ from collections.abc import Mapping
 from datetime import UTC, date, datetime, time as datetime_time
 from decimal import Decimal
 from pathlib import Path
-from typing import Literal, Self, cast
+from typing import Literal, Self, cast, override
 
 import colorlog
 import structlog
@@ -907,6 +907,7 @@ class FlextLogger:
             with self._cache_lock:
                 self._logger_cache[name] = self
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Allow comparison with both logger objects and their string repr.
 
@@ -926,6 +927,7 @@ class FlextLogger:
             return str(self) == other
         return False
 
+    @override
     def __hash__(self) -> int:
         """Provide a stable hash consistent with __eq__ semantics.
 

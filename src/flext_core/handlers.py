@@ -34,7 +34,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Literal, TypeVar, cast
+from typing import Literal, TypeVar, cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -153,12 +153,14 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
         )
 
     @abstractmethod
+    @override
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
         """Handle the message and return result.
 
         Subclasses must override this method.
         """
 
+    @override
     def execute(self, message: MessageT) -> FlextResult[ResultT]:
         """Execute message with full validation and error handling."""
         return self._run_pipeline(message, operation=self.mode)
@@ -351,6 +353,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
                 super().__init__(config=typed_config)
                 self._handler_func = handler_func
 
+            @override
             def handle(self, message: object) -> FlextResult[object]:
                 try:
                     result = self._handler_func(message)
