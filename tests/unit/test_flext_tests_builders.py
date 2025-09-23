@@ -387,7 +387,7 @@ class TestFlextTestsBuilders:
         builders = FlextTestsBuilders()
 
         # Test with various edge case inputs
-        edge_cases = [
+        edge_cases: list[object] = [
             None,
             "",
             0,

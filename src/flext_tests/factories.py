@@ -34,7 +34,7 @@ class FlextTestsFactories:
         """Simple user factory using FlextTestsDomains."""
 
         @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
+        def create(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create user data with optional overrides.
 
             Returns:
@@ -46,7 +46,9 @@ class FlextTestsFactories:
         # build method removed - use create directly per FLEXT architectural principles
 
         @staticmethod
-        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+        def create_batch(
+            size: int, **kwargs: FlextTypes.Core.Dict
+        ) -> list[FlextTypes.Core.Dict]:
             """Create batch of users.
 
             Returns:
@@ -56,26 +58,30 @@ class FlextTestsFactories:
             return [FlextTestsDomains.create_user(**kwargs) for _ in range(size)]
 
         @staticmethod
-        def REDACTED_LDAP_BIND_PASSWORD_user(**overrides: object) -> FlextTypes.Core.Dict:
+        def REDACTED_LDAP_BIND_PASSWORD_user(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create REDACTED_LDAP_BIND_PASSWORD user.
 
             Returns:
                 FlextTypes.Core.Dict: Admin user data dictionary
 
             """
-            defaults = {"name": "Admin User", "email": "REDACTED_LDAP_BIND_PASSWORD@company.com", "age": 35}
+            defaults: FlextTypes.Core.Dict = {
+                "name": "Admin User",
+                "email": "REDACTED_LDAP_BIND_PASSWORD@company.com",
+                "age": 35,
+            }
             defaults.update(overrides)
             return FlextTestsDomains.create_user(**defaults)
 
         @staticmethod
-        def inactive_user(**overrides: object) -> FlextTypes.Core.Dict:
+        def inactive_user(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create inactive user.
 
             Returns:
                 FlextTypes.Core.Dict: Inactive user data dictionary
 
             """
-            defaults = {"active": False, "name": "Inactive User"}
+            defaults: FlextTypes.Core.Dict = {"active": False, "name": "Inactive User"}
             defaults.update(overrides)
             return FlextTestsDomains.create_user(**defaults)
 
@@ -90,7 +96,7 @@ class FlextTestsFactories:
         """Simple configuration factory."""
 
         @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
+        def create(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create configuration data.
 
             Returns:
@@ -100,14 +106,16 @@ class FlextTestsFactories:
             return FlextTestsDomains.create_configuration(**overrides)
 
         @staticmethod
-        def production_config(**overrides: object) -> FlextTypes.Core.Dict:
+        def production_config(
+            **overrides: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
             """Create production configuration.
 
             Returns:
                 FlextTypes.Core.Dict: Production configuration data dictionary
 
             """
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "debug": False,
                 "log_level": "ERROR",
                 "cache_enabled": True,
@@ -123,14 +131,14 @@ class FlextTestsFactories:
         """Simple field factory for validation testing."""
 
         @staticmethod
-        def string_field(**overrides: object) -> FlextTypes.Core.Dict:
+        def string_field(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create string field definition.
 
             Returns:
                 FlextTypes.Core.Dict: String field definition dictionary
 
             """
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "field_id": str(uuid.uuid4()),
                 "field_name": "test_string_field",
                 "field_type": "string",
@@ -143,14 +151,14 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def integer_field(**overrides: object) -> FlextTypes.Core.Dict:
+        def integer_field(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create integer field definition.
 
             Returns:
                 FlextTypes.Core.Dict: Integer field definition dictionary
 
             """
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "field_id": str(uuid.uuid4()),
                 "field_name": "test_integer_field",
                 "field_type": "integer",
@@ -163,14 +171,14 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def boolean_field(**overrides: object) -> FlextTypes.Core.Dict:
+        def boolean_field(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create boolean field definition.
 
             Returns:
                 FlextTypes.Core.Dict: Boolean field definition dictionary
 
             """
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "field_id": str(uuid.uuid4()),
                 "field_name": "test_boolean_field",
                 "field_type": "boolean",
@@ -182,14 +190,14 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def float_field(**overrides: object) -> FlextTypes.Core.Dict:
+        def float_field(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create float field definition.
 
             Returns:
                 FlextTypes.Core.Dict: Float field definition dictionary
 
             """
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "field_id": str(uuid.uuid4()),
                 "field_name": "test_float_field",
                 "field_type": "float",
@@ -205,7 +213,7 @@ class FlextTestsFactories:
         def create_batch(
             field_type: str,
             size: int,
-            **kwargs: object,
+            **kwargs: FlextTypes.Core.Dict,
         ) -> list[FlextTypes.Core.Dict]:
             """Create batch of fields by type.
 
@@ -234,14 +242,14 @@ class FlextTestsFactories:
         """Simple entity factory for domain testing."""
 
         @staticmethod
-        def test_entity(**overrides: object) -> FlextTypes.Core.Dict:
+        def test_entity(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create test entity.
 
             Returns:
                 FlextTypes.Core.Dict: Test entity data dictionary
 
             """
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "id": str(uuid.uuid4()),
                 "name": "Test Entity",
                 "created_at": datetime.now(UTC).isoformat(),
@@ -253,7 +261,9 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def test_value_object(**overrides: object) -> FlextTypes.Core.Dict:
+        def test_value_object(
+            **overrides: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
             """Create test value object."""
             defaults: FlextTypes.Core.Dict = {
                 "value": "test_value",
@@ -377,7 +387,7 @@ class FlextTestsFactories:
         """Simple service factory for testing service layer."""
 
         @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
+        def create(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create service data using the ``FlextTypes.Core.Dict`` alias."""
             defaults: FlextTypes.Core.Dict = {
                 "service_id": str(uuid.uuid4()),
@@ -391,7 +401,9 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+        def create_batch(
+            size: int, **kwargs: FlextTypes.Core.Dict
+        ) -> list[FlextTypes.Core.Dict]:
             """Create service data batch using ``list[FlextTypes.Core.Dict]``."""
             return [
                 FlextTestsFactories.ServiceFactory.create(**kwargs) for _ in range(size)
@@ -405,7 +417,7 @@ class FlextTestsFactories:
         """Simple mock factory for testing."""
 
         @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
+        def create(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create mock payload using the ``FlextTypes.Core.Dict`` alias."""
             defaults: FlextTypes.Core.Dict = {
                 "mock_id": str(uuid.uuid4()),
@@ -417,7 +429,9 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+        def create_batch(
+            size: int, **kwargs: FlextTypes.Core.Dict
+        ) -> list[FlextTypes.Core.Dict]:
             """Create mock payload batch using ``list[FlextTypes.Core.Dict]``."""
             return [
                 FlextTestsFactories.MockFactory.create(**kwargs) for _ in range(size)
@@ -431,9 +445,9 @@ class FlextTestsFactories:
         """Simple sequence factory for sequential data."""
 
         @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
+        def create(**overrides: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Create sequence data."""
-            defaults = {
+            defaults: FlextTypes.Core.Dict = {
                 "sequence_id": str(uuid.uuid4()),
                 "sequence_name": "Test Sequence",
                 "current_value": 1,
@@ -444,7 +458,9 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+        def create_batch(
+            size: int, **kwargs: FlextTypes.Core.Dict
+        ) -> list[FlextTypes.Core.Dict]:
             """Create batch of sequences."""
             return [
                 FlextTestsFactories.SequenceFactory.create(**kwargs)
@@ -459,9 +475,9 @@ class FlextTestsFactories:
         """Simple post factory for testing post/article functionality."""
 
         @staticmethod
-        def create(**overrides: object) -> FlextTypes.Core.Dict:
+        def create(**overrides: object) -> dict[str, object]:
             """Create post data."""
-            defaults = {
+            defaults: dict[str, object] = {
                 "post_id": str(uuid.uuid4()),
                 "title": "Test Post",
                 "content": "This is test content for the post.",
@@ -474,23 +490,28 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+        def create_batch(
+            size: int, **kwargs: FlextTypes.Core.Dict
+        ) -> list[FlextTypes.Core.Dict]:
             """Create batch of posts."""
             return [
                 FlextTestsFactories.PostFactory.create(**kwargs) for _ in range(size)
             ]
 
         @staticmethod
-        def draft_post(**overrides: object) -> FlextTypes.Core.Dict:
+        def draft_post(**overrides: dict[str, object]) -> dict[str, object]:
             """Create draft post."""
-            defaults = {"published": False, "title": "Draft Post"}
+            defaults: dict[str, object] = {"published": False, "title": "Draft Post"}
             defaults.update(overrides)
             return FlextTestsFactories.PostFactory.create(**defaults)
 
         @staticmethod
-        def published_post(**overrides: object) -> FlextTypes.Core.Dict:
+        def published_post(**overrides: dict[str, object]) -> dict[str, object]:
             """Create published post."""
-            defaults = {"published": True, "title": "Published Post"}
+            defaults: dict[str, object] = {
+                "published": True,
+                "title": "Published Post",
+            }
             defaults.update(overrides)
             return FlextTestsFactories.PostFactory.create(**defaults)
 

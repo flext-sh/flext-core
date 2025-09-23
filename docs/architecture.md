@@ -11,8 +11,8 @@ The architecture summary focuses on the three modernization pillars mandated for
 ```
 src/flext_core
 ├── Foundations         # result.py, typings.py, constants.py, version.py
-├── Runtime Surfaces    # container.py, domain_services.py, models.py, utilities.py
-├── Execution Flow      # bus.py, dispatcher.py, dispatcher_registry.py, handlers.py, processing.py, cqrs.py
+├── Runtime Surfaces    # container.py, service.py, models.py, utilities.py
+├── Execution Flow      # bus.py, dispatcher.py, registry.py, handlers.py, processing.py, cqrs.py
 ├── Context & Logging   # context.py, loggings.py, mixins.py
 └── Configuration       # config.py
 ```
@@ -28,7 +28,7 @@ src/flext_core
 ## Pillar 1: Unified Dispatcher Flow
 
 - `FlextDispatcher` orchestrates `FlextBus` execution, handler registration, and metadata propagation.
-- `FlextDispatcherRegistry` offers batch registration summaries for CLI/connector bootstraps.
+- `FlextRegistry` offers batch registration summaries for CLI/connector bootstraps.
 - `handlers.py` keeps handler contracts stable so downstream packages can migrate without rewrites.
 - Integration tests guard the exports: `tests/integration/test_wildcard_exports_clean.py`.
 
@@ -42,7 +42,7 @@ src/flext_core
 
 - `FlextConfig` centralises environment parsing, `.env` handling, and layered settings.
 - `FlextContainer` remains the singleton DI surface, now referenced directly by dispatcher/setup guides.
-- `FlextDomainService` and `FlextModels` ensure domain logic remains immutable, typed, and context-aware.
+- `FlextService` and `FlextModels` ensure domain logic remains immutable, typed, and context-aware.
 
 ---
 
@@ -58,6 +58,6 @@ src/flext_core
 
 1. Architecture changes must reference the modernization plan workstream (Phase 1–4).
 2. New modules update `src/flext_core/README.md` and the relevant pillar section above.
-3. Downstream migrations should leverage `FlextDispatcherRegistry` summaries to confirm handler state.
+3. Downstream migrations should leverage `FlextRegistry` summaries to confirm handler state.
 
 This architecture guide is the canonical reference point for the 1.0.0 release.

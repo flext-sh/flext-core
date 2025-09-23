@@ -1,4 +1,10 @@
-"""Shared constants backing the FLEXT-Core 1.0.0 modernization plan.
+"""Layer 0: Foundation constants backing the FLEXT-Core 1.0.0 modernization plan.
+
+This module provides the foundational constants for the entire FLEXT ecosystem.
+As Layer 0, it has NO dependencies and serves as the basis for all other modules.
+
+Dependency Layer: 0 (Foundation - No Dependencies)
+Used by: All other FlextCore modules and ecosystem projects
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,7 +17,26 @@ from typing import ClassVar, Final
 
 
 class FlextConstants:
-    """Essential constants mirroring the modernization plan defaults.
+    """Foundation constants providing ecosystem-wide defaults and values.
+
+    This class serves as the single source of truth for all constants across
+    the FLEXT ecosystem. Use FlextConstants directly for all constant access.
+
+    Usage:
+        ```python
+        from flext_core import FlextConstants
+
+        # Access logging constants
+        log_level = FlextConstants.Logging.DEFAULT_LEVEL
+
+        # Access configuration constants
+        timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+
+        # Access validation constants
+        max_retries = FlextConstants.Validation.MAX_RETRIES
+        ```
+
+    Layer 0 Foundation: No dependencies, used by all other modules.
 
     Each nested namespace lines up with limits, error codes, and defaults
     captured in ``README.md`` and ``docs/architecture.md`` so dependants share
@@ -43,6 +68,9 @@ class FlextConstants:
         MIN_PERCENTAGE: Final[float] = 0.0  # Usage count: 0
         MAX_PERCENTAGE: Final[float] = 100.0  # Usage count: 0
         MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
+
+        # Phone number validation
+        MIN_PHONE_DIGITS: Final[int] = 10  # Minimum phone number length
 
     class Errors:
         """Canonical error codes surfaced in telemetry narratives."""
@@ -454,6 +482,17 @@ class FlextConstants:
         MIN_BCRYPT_HASH_LENGTH: Final[int] = 32  # Minimum bcrypt hash length
         MAX_DAYS_FOR_MONTH_ADDITION: Final[int] = 28  # Safe days for month calculations
 
+        # JWT token expiry limits - Additional short-term option
+        SHORT_JWT_EXPIRY_MINUTES: Final[int] = 60  # 1 hour for short sessions
+
+        # BCrypt configuration
+        DEFAULT_BCRYPT_ROUNDS: Final[int] = 12  # Secure default for password hashing
+        MIN_BCRYPT_ROUNDS: Final[int] = 10  # Minimum acceptable rounds
+        MAX_BCRYPT_ROUNDS: Final[int] = 15  # Maximum reasonable rounds
+
+        # Default JWT secret for development/testing
+        DEFAULT_JWT_SECRET: Final[str] = "default-jwt-secret-change-in-production"
+
     class Environment:
         """Environment enumerations used by configuration profiles."""
 
@@ -463,7 +502,7 @@ class FlextConstants:
             DEVELOPMENT = "development"  # Usage count: 1
             STAGING = "staging"  # Usage count: 0
             PRODUCTION = "production"  # Usage count: 1
-            TESTING = "testing"  # Usage count: 0
+            TESTING = "test"  # Usage count: 0
 
         class ValidationLevel(StrEnum):
             """Validation strictness tiers adopted by tooling."""
@@ -526,6 +565,7 @@ class FlextConstants:
         """
 
         # Log Levels - Standard hierarchy
+        TRACE: Final[str] = "TRACE"
         DEBUG: Final[str] = "DEBUG"
         INFO: Final[str] = "INFO"
         WARNING: Final[str] = "WARNING"
@@ -539,7 +579,7 @@ class FlextConstants:
         DEFAULT_LEVEL_TESTING: Final[str] = INFO
 
         # Valid log levels set
-        VALID_LEVELS: Final[set[str]] = {DEBUG, INFO, WARNING, ERROR, CRITICAL}
+        VALID_LEVELS: Final[set[str]] = {TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL}
 
         # Log Formatting
         DEFAULT_FORMAT: Final[str] = (

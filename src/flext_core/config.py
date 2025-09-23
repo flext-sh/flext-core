@@ -7,10 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import tomllib
+import uuid
 from pathlib import Path
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 import yaml
 from pydantic import (
@@ -226,17 +228,17 @@ class FlextConfig(BaseSettings):
 
     # Authentication configuration
     jwt_expiry_minutes: int = Field(
-        default=60,
+        default=FlextConstants.Security.SHORT_JWT_EXPIRY_MINUTES,
         description="JWT token expiry time in minutes",
     )
 
     bcrypt_rounds: int = Field(
-        default=12,
+        default=FlextConstants.Security.DEFAULT_BCRYPT_ROUNDS,
         description="BCrypt hashing rounds",
     )
 
     jwt_secret: str = Field(
-        default="default-jwt-secret-change-in-production",
+        default=FlextConstants.Security.DEFAULT_JWT_SECRET,
         description="JWT secret key for token signing",
     )
 
@@ -319,14 +321,14 @@ class FlextConfig(BaseSettings):
 
     # Validation configuration - using FlextConstants for defaults
     max_name_length: int = Field(
-        default=100,
+        default=FlextConstants.Validation.MAX_NAME_LENGTH,
         ge=1,
         le=500,
         description="Maximum allowed name length for validation",
     )
 
     min_phone_digits: int = Field(
-        default=10,
+        default=FlextConstants.Validation.MIN_PHONE_DIGITS,
         ge=7,
         le=15,
         description="Minimum phone number digit count for validation",
@@ -335,7 +337,7 @@ class FlextConfig(BaseSettings):
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
-        """Validate log level is a supported value using FlextConstants.Logging.
+        """Validate log level against FlextConstants.Logging.VALID_LEVELS.
 
         Returns:
             The validated and normalized (uppercase) log level.
@@ -344,11 +346,19 @@ class FlextConfig(BaseSettings):
             ValueError: If the log level is not in the list of valid levels.
 
         """
-        valid_levels = FlextConstants.Logging.VALID_LEVELS
-        if v.upper() not in valid_levels:
-            msg = f"Log level must be one of {valid_levels}"
+        # Inline validation to break import cycle with utilities.py
+        if not v:
+            msg = "Log level cannot be empty"
             raise ValueError(msg)
-        return v.upper()
+
+        normalized_level = v.upper()
+        valid_levels = list(FlextConstants.Logging.VALID_LEVELS)
+
+        if normalized_level not in valid_levels:
+            msg = f"Log level must be one of {valid_levels}, got '{normalized_level}'"
+            raise ValueError(msg)
+
+        return normalized_level
 
     @field_validator("log_verbosity")
     @classmethod
@@ -551,7 +561,6 @@ class FlextConfig(BaseSettings):
 
         """
         # Honor json_sort_keys and json_indent configuration parameters
-        import json
 
         data = self.model_dump()
         return json.dumps(data, indent=self.json_indent, sort_keys=self.json_sort_keys)
@@ -566,9 +575,7 @@ class FlextConfig(BaseSettings):
             FlextConfig: New configuration instance with merged values.
 
         """
-        other_data = (
-            other.model_dump() if isinstance(other, FlextConfig) else other
-        )
+        other_data = other.model_dump() if isinstance(other, FlextConfig) else other
 
         current_data = self.model_dump()
         merged_data = {**current_data, **other_data}
@@ -609,7 +616,6 @@ class FlextConfig(BaseSettings):
                 except Exception as e:
                     # Log configuration file errors but continue with other files
                     # This maintains backward compatibility while providing debugging info
-                    import logging
 
                     logging.getLogger(__name__).debug(
                         f"Failed to load config file {config_file}: {e}"
@@ -704,15 +710,11 @@ class FlextConfig(BaseSettings):
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
-                    # Try to auto-load configuration from files
-                    config_data = cls._auto_load_config_files()
-
-                    # Create instance with loaded configuration data
-                    if config_data:
-                        cls._global_instance = cls.model_validate(config_data)
-                    else:
-                        # Create default instance from environment only
-                        cls._global_instance = cls()
+                    # Create instance - Pydantic BaseSettings will automatically handle:
+                    # 1. Environment variables (highest priority)
+                    # 2. .env file (medium priority)
+                    # 3. Default values (lowest priority)
+                    cls._global_instance = cls()
         return cls._global_instance
 
     @classmethod
@@ -774,6 +776,110 @@ class FlextConfig(BaseSettings):
             "loaded_from_file": getattr(self, "_loaded_from_file", False),
             "created_at": getattr(self, "_created_at", None),
         }
+
+    class HandlerConfiguration:
+        """Handler configuration resolver for FlextHandlers complexity reduction.
+
+        Extracts configuration resolution logic from FlextHandlers constructor
+        to simplify handler initialization and centralize configuration management.
+        """
+
+        @classmethod
+        def resolve_handler_mode(
+            cls,
+            handler_mode: str | None,
+            handler_config: object | dict[str, object] | None,
+        ) -> str:
+            """Resolve handler mode using FlextConstants defaults.
+
+            Args:
+                handler_mode: Explicit handler mode if provided
+                handler_config: Handler configuration object or dict
+
+            Returns:
+                Resolved handler mode (command or query)
+
+            """
+            if handler_mode in {
+                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            }:
+                return handler_mode
+
+            # Check if handler_config has handler_type attribute (duck typing to avoid import)
+            if hasattr(handler_config, "handler_type"):
+                handler_type = getattr(handler_config, "handler_type")
+                if isinstance(handler_type, str) and handler_type in {
+                    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+                }:
+                    return handler_type
+
+            if isinstance(handler_config, dict):
+                # Type-narrow to dict[str, object] after isinstance check
+                config_dict = cast("dict[str, object]", handler_config)
+                raw_mode = cast("str | None", config_dict.get("handler_type"))
+                if raw_mode == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
+                    return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                if raw_mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
+                    return FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+
+            return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
+
+        @classmethod
+        def create_handler_config(
+            cls,
+            handler_mode: str | None = None,
+            handler_name: str | None = None,
+            handler_id: str | None = None,
+            handler_config: dict[str, object] | None = None,
+            command_timeout: int = 0,
+            max_command_retries: int = 0,
+        ) -> object:
+            """Create consolidated handler configuration.
+
+            Args:
+                handler_mode: Handler mode (command/query)
+                handler_name: Handler name
+                handler_id: Handler ID
+                handler_config: Additional configuration
+                command_timeout: Command timeout
+                max_command_retries: Max retries
+
+            Returns:
+                Handler configuration dictionary (to be validated by models.py later)
+
+            """
+            resolved_mode = cls.resolve_handler_mode(handler_mode, handler_config)
+            resolved_name = handler_name or f"{resolved_mode.title()} Handler"
+            resolved_id = (
+                handler_id or f"{resolved_mode}_handler_{uuid.uuid4().hex[:8]}"
+            )
+
+            # Determine handler mode value based on type
+            handler_mode_value = (
+                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                if resolved_mode == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+            )
+
+            # Create base configuration data
+            config_data: dict[str, object] = {
+                "handler_id": resolved_id,
+                "handler_name": resolved_name,
+                "handler_type": resolved_mode,
+                "handler_mode": handler_mode_value,
+                "command_timeout": command_timeout,
+                "max_command_retries": max_command_retries,
+                "metadata": {},
+            }
+
+            # Apply any additional configuration
+            if handler_config is not None:
+                config_data.update(handler_config)
+
+            # Return raw dict - will be validated by models.py when needed
+            return config_data
 
 
 __all__ = ["FlextConfig"]

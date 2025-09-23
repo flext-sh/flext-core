@@ -25,16 +25,17 @@ import warnings
 
 from flext_core import (
     FlextConfig,
+    FlextConstants,
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextResult,
+    FlextService,
 )
 
 # ========== CONFIGURATION SERVICE ==========
 
 
-class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
+class ComprehensiveConfigService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextConfig patterns and methods."""
 
     def __init__(self) -> None:
@@ -44,7 +45,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         # This is a demonstration service, returns current config
         config = FlextConfig.get_global_instance()
         return FlextResult[dict[str, object]].ok({
@@ -259,7 +260,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
         test_vars = {
             "FLEXT_ENVIRONMENT": "test",
             "FLEXT_DEBUG": "true",
-            "FLEXT_LOG_LEVEL": "INFO",
+            "FLEXT_LOG_LEVEL": FlextConstants.Logging.INFO,
             "FLEXT_DATABASE_URL": "postgresql://localhost/db",
             "FLEXT_MAX_WORKERS": "4",
         }
@@ -294,7 +295,7 @@ class ComprehensiveConfigService(FlextDomainService[dict[str, object]]):
             ),
             (
                 "log_level",
-                config.log_level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
+                config.log_level in FlextConstants.Logging.VALID_LEVELS,
             ),
             ("timeout_seconds", config.timeout_seconds > 0),
             ("max_workers", config.max_workers > 0),

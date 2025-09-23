@@ -7,48 +7,57 @@ This directory contains comprehensive examples demonstrating ALL capabilities of
 ## 📚 Example Organization
 
 ### Foundation Examples (01-05)
+
 These examples demonstrate the core building blocks of the FLEXT ecosystem:
 
 #### 01_basic_result.py - FlextResult Railway Pattern
+
 - **Purpose**: Complete FlextResult[T] API demonstration
 - **Concepts**: Railway-oriented programming, error handling without exceptions
 - **Key Methods**: `ok()`, `fail()`, `map()`, `flat_map()`, `filter()`, `recover()`, `tap()`, `zip_with()`, `traverse()`
 - **Run**: `python examples/01_basic_result.py`
 
 #### 02_dependency_injection.py - FlextContainer DI
+
 - **Purpose**: Complete dependency injection and service management
 - **Concepts**: Service registration, resolution, auto-wiring, lifecycle management
 - **Key Methods**: `register()`, `get()`, `register_factory()`, `register_singleton()`, `auto_wire()`, `batch_register()`
 - **Run**: `python examples/02_dependency_injection.py`
 
 #### 03_models_basics.py - FlextModels DDD Patterns
+
 - **Purpose**: Domain-driven design with entities, values, and aggregates
 - **Concepts**: Value Objects, Entities, Aggregate Roots, Domain Events, Business Logic
 - **Key Classes**: `FlextModels.Value`, `FlextModels.Entity`, `FlextModels.AggregateRoot`
 - **Run**: `python examples/03_models_basics.py`
 
 #### 04_config_basics.py - FlextConfig Management
+
 - **Purpose**: Environment-aware configuration with Pydantic Settings
 - **Concepts**: Global singleton, environment detection, all configuration domains
 - **Key Features**: Database, cache, API, logging, performance, CQRS settings
 - **Run**: `python examples/04_config_basics.py`
 
 #### 05_logging_basics.py - FlextLogger Structured Logging
+
 - **Purpose**: Complete structured logging with context management
 - **Concepts**: Log levels, context binding, correlation tracking, performance metrics
 - **Key Methods**: `bind()`, `unbind()`, `contextualize()`, `configure()`, child loggers
 - **Run**: `python examples/05_logging_basics.py`
 
 ### Intermediate Examples (06-07)
+
 These examples show specialized patterns and processing:
 
 #### 06_messaging_patterns.py - Payload & Events
+
 - **Purpose**: Message passing and domain event patterns
 - **Concepts**: Generic payloads, domain events, message routing, correlation
 - **Key Classes**: `FlextModels.Payload[T]`, `FlextModels.DomainEvent`
 - **Run**: `python examples/06_messaging_patterns.py`
 
 #### 07_processing_handlers.py - FlextProcessing Patterns
+
 - **Purpose**: Handler pipelines and strategy patterns
 - **Concepts**: Chain of responsibility, strategy pattern, registry, error recovery
 - **Key Classes**: `FlextProcessing.Implementation.BasicHandler`
@@ -57,6 +66,7 @@ These examples show specialized patterns and processing:
 ### Integration Example (08)
 
 #### 08_integration_complete.py - Complete E-Commerce System
+
 - **Purpose**: All FLEXT components working together in a real-world scenario
 - **Concepts**: Order processing with DDD, DI, handlers, events, and logging
 - **Integration**: Demonstrates how all components interact seamlessly
@@ -65,18 +75,22 @@ These examples show specialized patterns and processing:
 ## 🚀 Running the Examples
 
 ### Prerequisites
+
 1. Ensure flext-core is installed:
+
    ```bash
    cd flext-core
    pip install -e .
    ```
 
 2. Or use the project's virtual environment:
+
    ```bash
    source .venv/bin/activate  # or equivalent for your shell
    ```
 
 ### Running Individual Examples
+
 Each example is self-contained and can be run directly:
 
 ```bash
@@ -96,6 +110,7 @@ python examples/08_integration_complete.py
 ```
 
 ### Running All Examples
+
 ```bash
 # Run all examples in sequence
 for f in examples/[0-9]*.py; do
@@ -108,17 +123,20 @@ done
 ## 📖 Learning Path
 
 ### For Beginners
+
 1. Start with **01_basic_result.py** to understand railway-oriented error handling
 2. Move to **02_dependency_injection.py** for service management
 3. Study **03_models_basics.py** for domain modeling patterns
 4. Review **04_config_basics.py** and **05_logging_basics.py** for infrastructure
 
 ### For Intermediate Users
+
 1. Study **06_messaging_patterns.py** for event-driven patterns
 2. Explore **07_processing_handlers.py** for processing pipelines
 3. Dive into **08_integration_complete.py** to see everything working together
 
 ### For Advanced Users
+
 1. Review **08_integration_complete.py** for architectural patterns
 2. Study the deprecation warnings in each example for anti-patterns
 3. Use these examples as templates for your own FLEXT applications
@@ -126,6 +144,7 @@ done
 ## 🏆 Best Practices Demonstrated
 
 ### ✅ DO (Shown in Examples)
+
 - Use `FlextResult[T]` for all error handling (no exceptions in business logic)
 - Access configuration via `FlextConfig.get_global_instance()`
 - Use `FlextContainer.get_global()` for dependency injection
@@ -135,6 +154,7 @@ done
 - Use type hints everywhere for type safety
 
 ### ❌ DON'T (Shown as Deprecation Warnings)
+
 - Don't use try/except for business logic (use FlextResult)
 - Don't use print() for logging (use FlextLogger)
 - Don't hard-code configuration (use FlextConfig)
@@ -146,6 +166,7 @@ done
 ## 🧪 Testing the Examples
 
 ### Quality Gates
+
 All examples pass the project's quality gates:
 
 ```bash
@@ -160,6 +181,7 @@ black --check examples/
 ```
 
 ### Example Tests
+
 The examples themselves serve as integration tests for the FLEXT Core API:
 
 ```bash
@@ -170,10 +192,12 @@ pytest tests/test_examples.py -v
 ## 📚 Additional Resources
 
 ### Support Files
+
 - **shared_example_strategies.py** - Shared utilities for examples (not meant to be run directly)
 - **.bak/** - Archived redundant examples for reference
 
 ### Documentation
+
 - [FLEXT Core README](../README.md) - Main project documentation
 - [FLEXT Core API Reference](../docs/api/) - Detailed API documentation
 - [FLEXT Workspace Standards](../../CLAUDE.md) - Development standards
@@ -190,6 +214,7 @@ pytest tests/test_examples.py -v
 ## 🔄 Version Compatibility
 
 These examples are compatible with:
+
 - **flext-core**: v0.9.9+ (preparing for 1.0.0 stable)
 - **Python**: 3.13+
 - **Pydantic**: v2.0+
@@ -197,6 +222,7 @@ These examples are compatible with:
 ## 📝 Contributing
 
 When adding new examples:
+
 1. Follow the numbered naming convention (XX_description.py)
 2. Include comprehensive docstrings
 3. Demonstrate ALL methods of the component being showcased
@@ -206,4 +232,4 @@ When adding new examples:
 
 ---
 
-*These examples represent the complete API surface and best practices of FLEXT Core v0.9.9, serving as both learning materials and integration tests for the foundation library preparing for its 1.0.0 stable release.*
+_These examples represent the complete API surface and best practices of FLEXT Core v0.9.9, serving as both learning materials and integration tests for the foundation library preparing for its 1.0.0 stable release._

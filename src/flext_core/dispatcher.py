@@ -50,6 +50,7 @@ class FlextDispatcher:
             bus: Optional bus instance (created if not provided)
 
         """
+        super().__init__()
         # Use provided config or create from global configuration
         if config is None:
             global_config = FlextConfig.get_global_instance()
@@ -72,47 +73,47 @@ class FlextDispatcher:
             }
         else:
             config = dict(config)
-            bus_config = config.get("bus_config")
+            bus_config_raw = config.get("bus_config")
 
-            if bus_config is None:
+            if not isinstance(bus_config_raw, dict):
                 global_config = FlextConfig.get_global_instance()
                 default_bus_config = dict(global_config.get_cqrs_bus_config())
 
                 if "execution_timeout" in config:
-                    default_bus_config["execution_timeout"] = cast(
-                        "object", config["execution_timeout"]
-                    )
+                    default_bus_config["execution_timeout"] = config[
+                        "execution_timeout"
+                    ]
                 elif "timeout_seconds" in config:
-                    default_bus_config["execution_timeout"] = cast(
-                        "object", config["timeout_seconds"]
-                    )
+                    default_bus_config["execution_timeout"] = config["timeout_seconds"]
 
-                bus_config = default_bus_config
-                config["bus_config"] = bus_config
+                bus_config_raw = default_bus_config
+                config["bus_config"] = bus_config_raw
 
-            if isinstance(bus_config, dict):
-                config.setdefault(
-                    "execution_timeout", bus_config.get("execution_timeout")
-                )
-            elif hasattr(bus_config, "execution_timeout"):
-                config.setdefault(
-                    "execution_timeout",
-                    cast("object", getattr(bus_config, "execution_timeout")),
-                )
+            # Type-narrow bus_config_raw to dict[str, object] - Python 3.13+ type narrowing
+            # At this point, bus_config_raw is guaranteed to be a dict due to the isinstance check above
+            typed_bus_config: dict[str, object] = cast(
+                "dict[str, object]", bus_config_raw
+            )
+
+            # typed_bus_config is already typed as dict[str, object]
+            config.setdefault(
+                "execution_timeout", typed_bus_config.get("execution_timeout")
+            )
 
         self._config = config
-        bus_config = config.get("bus_config")
+        bus_config_raw = config.get("bus_config")
 
         # Handle both dict and FlextModels.CqrsConfig.Bus for bus_config
-        if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
+        final_bus_config_dict: dict[str, object] | None
+        if isinstance(bus_config_raw, FlextModels.CqrsConfig.Bus):
             # Convert typed model to dict for FlextBus.create_command_bus
-            bus_config_dict = bus_config.model_dump()
-        elif isinstance(bus_config, dict):
-            bus_config_dict = bus_config
+            final_bus_config_dict = bus_config_raw.model_dump()
+        elif isinstance(bus_config_raw, dict):
+            final_bus_config_dict = cast("dict[str, object]", bus_config_raw)
         else:
-            bus_config_dict = None
+            final_bus_config_dict = None
 
-        self._bus = bus or FlextBus.create_command_bus(bus_config=bus_config_dict)
+        self._bus = bus or FlextBus.create_command_bus(bus_config=final_bus_config_dict)
         self._logger = FlextLogger(self.__class__.__name__)
 
     @property
@@ -279,10 +280,7 @@ class FlextDispatcher:
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
         handler_config: dict[str, object] | None = None,
-        mode: Literal[
-            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-        ] = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+        mode: Literal["command", "query"] = "command",
     ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
 
@@ -326,10 +324,7 @@ class FlextDispatcher:
         self,
         handler_func: Callable[[object], object | FlextResult[object]],
         handler_config: dict[str, object] | None,
-        mode: Literal[
-            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-        ],
+        mode: Literal["command", "query"],
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
@@ -394,7 +389,11 @@ class FlextDispatcher:
 
         with self._context_scope(metadata_dict, correlation_id_str):
             # Execute with timeout if configured
-            if timeout_seconds and timeout_seconds > 0:
+            if (
+                timeout_seconds
+                and isinstance(timeout_seconds, (int, float))
+                and timeout_seconds > 0
+            ):
                 # Use FlextUtilities.Reliability.with_timeout for timeout enforcement
                 result = FlextUtilities.Reliability.with_timeout(
                     lambda: self._bus.execute(request.get("message")),
@@ -511,11 +510,12 @@ class FlextDispatcher:
         if metadata is None:
             return None
 
-        raw_metadata: Mapping[object, object] | None = None
+        raw_metadata: Mapping[str, object] | None = None
 
         if isinstance(metadata, FlextModels.Metadata):
             attributes = metadata.attributes
-            if isinstance(attributes, Mapping) and attributes:
+            # Python 3.13+ type narrowing: attributes is already Mapping[str, object]
+            if attributes and len(attributes) > 0:
                 raw_metadata = attributes
             else:
                 try:
@@ -525,15 +525,17 @@ class FlextDispatcher:
                 if isinstance(dumped, Mapping):
                     attributes_section = dumped.get("attributes")
                     if isinstance(attributes_section, Mapping) and attributes_section:
-                        raw_metadata = attributes_section
+                        raw_metadata = cast("Mapping[str, object]", attributes_section)
                     else:
-                        raw_metadata = dumped
+                        raw_metadata = cast("Mapping[str, object]", dumped)
         elif isinstance(metadata, Mapping):
-            raw_metadata = metadata
+            # Python 3.13+ type narrowing: metadata is already Mapping[str, object]
+            raw_metadata = cast("Mapping[str, object]", metadata)
         else:
             attributes_value = getattr(metadata, "attributes", None)
             if isinstance(attributes_value, Mapping) and attributes_value:
-                raw_metadata = attributes_value
+                # Python 3.13+ type narrowing: attributes_value is already Mapping[str, object]
+                raw_metadata = cast("Mapping[str, object]", attributes_value)
             else:
                 model_dump = getattr(metadata, "model_dump", None)
                 if callable(model_dump):
@@ -542,7 +544,7 @@ class FlextDispatcher:
                     except Exception:
                         dumped = None
                     if isinstance(dumped, Mapping):
-                        raw_metadata = dumped
+                        raw_metadata = cast("Mapping[str, object]", dumped)
 
         if raw_metadata is None:
             return None

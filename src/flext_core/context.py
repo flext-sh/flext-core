@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import time
+import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
@@ -19,7 +21,6 @@ from datetime import UTC, datetime
 from typing import Final
 
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
 
 class FlextContext:
@@ -113,7 +114,7 @@ class FlextContext:
         @staticmethod
         def generate_correlation_id() -> str:
             """Generate unique correlation ID."""
-            correlation_id = FlextUtilities.Generators.generate_correlation_id()
+            correlation_id = f"corr_{str(uuid.uuid4())[:8]}"
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
             return correlation_id
 
@@ -136,7 +137,7 @@ class FlextContext:
             """Create correlation context scope."""
             # Generate correlation ID if not provided
             if correlation_id is None:
-                correlation_id = FlextUtilities.Generators.generate_correlation_id()
+                correlation_id = f"corr_{str(uuid.uuid4())[:8]}"
 
             # Save current context
             current_correlation = (
@@ -560,6 +561,85 @@ class FlextContext:
             return (
                 f"FlextContext({', '.join(parts)})" if parts else "FlextContext(empty)"
             )
+
+    class HandlerExecutionContext:
+        """Handler execution context for FlextHandlers complexity reduction.
+
+        Extracts execution context management from FlextHandlers to simplify
+        handler execution and provide reusable context management patterns.
+        """
+
+        def __init__(self, handler_name: str, handler_mode: str) -> None:
+            """Initialize handler execution context.
+
+            Args:
+                handler_name: Name of the handler
+                handler_mode: Mode of the handler (command/query)
+
+            """
+            super().__init__()
+            self.handler_name = handler_name
+            self.handler_mode = handler_mode
+            self._start_time: float | None = None
+            self._metrics_state: FlextTypes.Core.Dict | None = None
+
+        def start_execution(self) -> None:
+            """Start execution timing."""
+            self._start_time = time.time()
+
+        def get_execution_time_ms(self) -> float:
+            """Get execution time in milliseconds.
+
+            Returns:
+                Execution time in milliseconds, or 0 if not started
+
+            """
+            if self._start_time is None:
+                return 0.0
+
+            elapsed = time.time() - self._start_time
+            return round(elapsed * 1000, 2)
+
+        def get_metrics_state(self) -> FlextTypes.Core.Dict:
+            """Get current metrics state.
+
+            Returns:
+                Dictionary containing metrics state
+
+            """
+            if self._metrics_state is None:
+                self._metrics_state = {}
+            return self._metrics_state
+
+        def set_metrics_state(self, state: FlextTypes.Core.Dict) -> None:
+            """Set metrics state.
+
+            Args:
+                state: Metrics state to set
+
+            """
+            self._metrics_state = state
+
+        def reset(self) -> None:
+            """Reset execution context."""
+            self._start_time = None
+            self._metrics_state = None
+
+        @classmethod
+        def create_for_handler(
+            cls, handler_name: str, handler_mode: str
+        ) -> FlextContext.HandlerExecutionContext:
+            """Create execution context for a handler.
+
+            Args:
+                handler_name: Name of the handler
+                handler_mode: Mode of the handler (command/query)
+
+            Returns:
+                New HandlerExecutionContext instance
+
+            """
+            return cls(handler_name, handler_mode)
 
 
 __all__: FlextTypes.Core.StringList = [

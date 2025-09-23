@@ -290,10 +290,17 @@ class TestFlextTestsUtilities:
                     assert instance is not None
 
                     # Test any methods on nested class
+                    # Filter out Pydantic model field attributes that should be accessed on class
+                    pydantic_class_attrs = {
+                        "model_fields",
+                        "model_computed_fields",
+                        "model_config",
+                    }
                     nested_methods = [
                         method
                         for method in dir(instance)
                         if not method.startswith("_")
+                        and method not in pydantic_class_attrs
                         and callable(getattr(instance, method, None))
                     ]
 
@@ -389,7 +396,7 @@ class TestFlextTestsUtilities:
         utilities = FlextTestsUtilities()
 
         # Test with various edge case inputs
-        edge_cases = [
+        edge_cases: list[object] = [
             None,
             "",
             0,

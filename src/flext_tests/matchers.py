@@ -27,7 +27,7 @@ from collections.abc import Awaitable, Callable, Container, Iterable, Sequence, 
 from itertools import starmap
 from typing import Protocol, Self, cast
 
-from flext_core.types import FlextTypes
+from flext_core.typings import FlextTypes
 
 
 class FlextTestsMatchers:
@@ -587,17 +587,23 @@ class FlextTestsMatchers:
 
             # Handle dict comparison
             if isinstance(obj1, dict) and isinstance(obj2, dict):
-                return obj1.keys() == obj2.keys() and all(
-                    FlextTestsMatchers.CoreMatchers.be_equivalent_to(obj1[k], obj2[k])
-                    for k in obj1
+                # Type narrow the objects to dicts for proper inference
+                dict1 = cast("dict[object, object]", obj1)
+                dict2 = cast("dict[object, object]", obj2)
+                return dict1.keys() == dict2.keys() and all(
+                    FlextTestsMatchers.CoreMatchers.be_equivalent_to(dict1[k], dict2[k])
+                    for k in dict1
                 )
 
             # Handle list/tuple comparison
             if isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
-                return len(obj1) == len(obj2) and all(
+                # Type narrow for proper inference
+                seq1 = cast("list[object] | tuple[object, ...]", obj1)
+                seq2 = cast("list[object] | tuple[object, ...]", obj2)
+                return len(seq1) == len(seq2) and all(
                     starmap(
                         FlextTestsMatchers.CoreMatchers.be_equivalent_to,
-                        zip(obj1, obj2, strict=False),
+                        zip(seq1, seq2, strict=False),
                     ),
                 )
 
@@ -756,7 +762,7 @@ class FlextTestsMatchers:
             if not callable(func) or len(input_sizes) < 2:
                 return False
 
-            times = []
+            times: list[float] = []
             try:
                 for size in input_sizes:
                     start_time = time.time()
@@ -766,7 +772,7 @@ class FlextTestsMatchers:
 
                 # Simple linear scaling check
                 for i in range(1, len(times)):
-                    ratio = times[i] / times[0] if times[0] > 0 else 0
+                    ratio: float = times[i] / times[0] if times[0] > 0 else 0
                     size_ratio = input_sizes[i] / input_sizes[0]
                     # Allow 50% deviation from linear scaling
                     if not (0.5 * size_ratio <= ratio <= 1.5 * size_ratio):
@@ -1008,14 +1014,14 @@ class FlextTestsMatchers:
 
         for key in expected_keys:
             if key not in obj:
-                msg = f"Missing key '{key}' in {list(obj.keys())}"
+                msg = f"Missing key '{key}' in {list(cast('list[str]', obj.keys()))}"
                 raise AssertionError(msg)
 
         if exact_match:
-            obj_keys = set(obj.keys())
-            expected_keys_set = set(expected_keys)
+            obj_keys: set[str] = set(cast("list[str]", obj.keys()))
+            expected_keys_set: set[str] = set(expected_keys)
             if obj_keys != expected_keys_set:
-                extra_keys = obj_keys - expected_keys_set
+                extra_keys: set[str] = obj_keys - expected_keys_set
                 if extra_keys:
                     msg = f"Unexpected keys {list(extra_keys)} found in object"
                     raise AssertionError(msg)
@@ -1433,9 +1439,7 @@ class FlextTestsMatchers:
             ) -> None:
                 self.setup_func = setup_func
                 self.teardown_func = teardown_func
-                self.context_data: FlextTypes.Core.Dict = (
-                    context_data or {}
-                )
+                self.context_data: FlextTypes.Core.Dict = context_data or {}
                 self.result = None
 
             async def __aenter__(self) -> Self:

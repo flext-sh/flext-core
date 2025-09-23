@@ -20,20 +20,19 @@ from __future__ import annotations
 
 import time
 import warnings
-from typing import cast
 
 from flext_core import (
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextProcessing,
     FlextResult,
+    FlextService,
 )
 
 # ========== PROCESSING SERVICE ==========
 
 
-class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
+class ProcessingPatternsService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextProcessing patterns."""
 
     def __init__(self) -> None:
@@ -43,7 +42,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info("Executing processing demo")
         return FlextResult[dict[str, object]].ok({
             "status": "processed",
@@ -73,9 +72,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = cast("dict[str, object]", request)
-
-                email_value: object | None = request_dict.get("email")
+                email_value: str | None = request.get("email", None)
                 if not email_value:
                     return FlextResult[str].fail("Email required")
 
@@ -87,10 +84,8 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                     return FlextResult[str].fail("Invalid email format")
 
                 # Add validation timestamp
-                request_dict["validated_at"] = str(time.time())
-                return FlextResult[str].ok(
-                    f"Validation passed for {request_dict['email']}"
-                )
+                request["validated_at"] = str(time.time())
+                return FlextResult[str].ok(f"Validation passed for {request['email']}")
 
         # Create and use handler
         validator = ValidationHandler("EmailValidator")
@@ -130,9 +125,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = cast("dict[str, object]", request)
-
-                token_value: object | None = request_dict.get("token")
+                token_value: str | None = request.get("token", None)
                 if not token_value:
                     return FlextResult[str].fail("Authentication required")
 
@@ -144,7 +137,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if token_value != "valid-token":
                     return FlextResult[str].fail("Invalid token")
 
-                request_dict["authenticated"] = True
+                request["authenticated"] = True
                 return FlextResult[str].ok("Authentication successful")
 
         class AuthorizationHandler(FlextProcessing.Implementation.BasicHandler):
@@ -163,18 +156,16 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = cast("dict[str, object]", request)
-
-                authenticated_value: object | None = request_dict.get("authenticated")
+                authenticated_value: bool | None = request.get("authenticated", None)
                 if not authenticated_value:
                     return FlextResult[str].fail("Not authenticated")
 
                 # Check permissions
-                role_value: object | None = request_dict.get("role")
+                role_value: str | None = request.get("role", None)
                 if role_value != "REDACTED_LDAP_BIND_PASSWORD":
                     return FlextResult[str].fail("Insufficient permissions")
 
-                request_dict["authorized"] = True
+                request["authorized"] = True
                 return FlextResult[str].ok("Authorization successful")
 
         class ProcessingHandler(FlextProcessing.Implementation.BasicHandler):
@@ -193,16 +184,14 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = cast("dict[str, object]", request)
-
-                authorized_value: object | None = request_dict.get("authorized")
+                authorized_value: bool | None = request.get("authorized", None)
                 if not authorized_value:
                     return FlextResult[str].fail("Not authorized")
 
                 # Simulate processing
-                request_dict["processed"] = True
-                request_dict["result"] = "Operation completed successfully"
-                request_dict["timestamp"] = str(time.time())
+                request["processed"] = True
+                request["result"] = "Operation completed successfully"
+                request["timestamp"] = str(time.time())
 
                 return FlextResult[str].ok("Processing completed successfully")
 
@@ -448,7 +437,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: object = request.get("text", "")
+                text_value: str = request.get("text", "")
                 if not isinstance(text_value, str):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Uppercase: {text_value.upper()}")
@@ -461,7 +450,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: object = request.get("text", "")
+                text_value: str = request.get("text", "")
                 if not isinstance(text_value, str):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Lowercase: {text_value.lower()}")
@@ -474,7 +463,7 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: object = request.get("text", "")
+                text_value: str = request.get("text", "")
                 if not isinstance(text_value, str):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Reversed: {text_value[::-1]}")
@@ -570,10 +559,8 @@ class ProcessingPatternsService(FlextDomainService[dict[str, object]]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict: dict[str, object] = cast("dict[str, object]", request)
-
                 # Simulate processing
-                force_fail_value: object = request_dict.get("force_fail", False)
+                force_fail_value: bool = request.get("force_fail", False)
                 should_fail = bool(force_fail_value)
 
                 if should_fail:

@@ -28,7 +28,7 @@ Oracle Database Integration for the FLEXT Ecosystem providing Oracle connectivit
 ## Architecture
 
 - **Clean Architecture** with Domain-Driven Design
-- **FLEXT Integration**: Uses FlextResult, FlextContainer, FlextLogger, FlextDomainService
+- **FLEXT Integration**: Uses FlextResult, FlextContainer, FlextLogger, FlextService
 - **Zero Tolerance**: Single class per module, no aliases/wrappers, explicit error handling
 
 ## Source Structure

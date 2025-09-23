@@ -140,7 +140,7 @@
 - ✅ `FlextResult[T]` - Railway pattern with `.data`/`.value` compatibility
 - ✅ `FlextContainer.get_global()` - Dependency injection
 - ✅ `FlextModels.Entity/Value/AggregateRoot` - DDD patterns
-- ✅ `FlextDomainService` - Service base class
+- ✅ `FlextService` - Service base class
 - ✅ `FlextLogger(__name__)` - Structured logging
 
 #### **Backward Compatibility Promise**

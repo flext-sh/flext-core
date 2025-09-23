@@ -23,7 +23,7 @@ from typing import TypeGuard, cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextLogger, FlextModels, FlextResult, FlextTypes
 from flext_tests import FlextTestsMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -119,7 +119,7 @@ class UserEntity(FlextModels.Entity, FlextModels.TimestampedModel):
             "user_id": str(self.id),
             "activated_at": datetime.now(UTC).isoformat(),
         }
-        self.add_domain_event("UserActivated", event_data)
+        self.add_domain_event("UserActivated", cast("dict[str, object]", event_data))
 
         return FlextResult[None].ok(None)
 
@@ -136,7 +136,7 @@ class UserEntity(FlextModels.Entity, FlextModels.TimestampedModel):
             "user_id": str(self.id),
             "deactivated_at": datetime.now(UTC).isoformat(),
         }
-        self.add_domain_event("UserDeactivated", event_data)
+        self.add_domain_event("UserDeactivated", cast("dict[str, object]", event_data))
 
         return FlextResult[None].ok(None)
 
@@ -385,6 +385,7 @@ class TestFlextEntityRealFunctionality:
             name="John Doe",
             email="john@example.com",
             age=30,
+            domain_events=[],
         )
 
         assert str(user.id) == "user_123"
@@ -405,6 +406,7 @@ class TestFlextEntityRealFunctionality:
             name="Jane Doe",
             email="jane@example.com",
             age=25,
+            domain_events=[],
         )
 
         # Basic properties should work
@@ -421,18 +423,21 @@ class TestFlextEntityRealFunctionality:
             name="John Doe",
             email="john@example.com",
             age=30,
+            domain_events=[],
         )
         user2 = UserEntity(
             id="user_123",
             name="Jane Doe",
             email="jane@example.com",
             age=25,
+            domain_events=[],
         )  # Same ID, different data
         user3 = UserEntity(
             id="user_456",
             name="John Doe",
             email="john@example.com",
             age=30,
+            domain_events=[],
         )  # Different ID, same data
 
         # Same ID should be equal regardless of other attributes
@@ -450,6 +455,7 @@ class TestFlextEntityRealFunctionality:
             name="Bob Smith",
             email="bob@example.com",
             age=40,
+            domain_events=[],
         )
 
         assert user.version == 1
@@ -468,6 +474,7 @@ class TestFlextEntityRealFunctionality:
             name="Alice Johnson",
             email="alice@example.com",
             age=28,
+            domain_events=[],
         )
 
         # Test version management - new API doesn't have with_version
@@ -484,6 +491,7 @@ class TestFlextEntityRealFunctionality:
             name="Charlie Brown",
             email="charlie@example.com",
             age=22,
+            domain_events=[],
         )
 
         # Initially no events
@@ -506,6 +514,7 @@ class TestFlextEntityRealFunctionality:
             email="diana@example.com",
             age=35,
             is_active=False,
+            domain_events=[],
         )
 
         # Activate user
@@ -532,6 +541,7 @@ class TestFlextEntityRealFunctionality:
             name="Valid User",
             email="valid@example.com",
             age=30,
+            domain_events=[],
         )
         result = valid_user.validate_business_rules()
         assert result.is_success
@@ -543,6 +553,7 @@ class TestFlextEntityRealFunctionality:
             name=" ",  # Whitespace only name should fail business rules
             email="valid@example.com",
             age=25,
+            domain_events=[],
         )
         result = user_empty_name.validate_business_rules()
         assert result.is_failure
@@ -556,6 +567,7 @@ class TestFlextEntityRealFunctionality:
             name="Frank Castle",
             email="frank@example.com",
             age=45,
+            domain_events=[],
         )
 
         # Test __str__
@@ -584,6 +596,7 @@ class TestFlextFactoryRealFunctionality:
             name="Factory User",
             email="factory@example.com",
             age=28,
+            domain_events=[],
         )
 
         assert user.name == "Factory User"
@@ -601,6 +614,7 @@ class TestFlextFactoryRealFunctionality:
                 name=f"User {i}",
                 email=f"user{i}@example.com",
                 age=20 + i,
+                domain_events=[],
             )
             users.append(user)
 
@@ -627,28 +641,28 @@ class TestFlextModelsUrlValidationEdgeCases:
     def test_url_validation_empty_string(self) -> None:
         """Test URL validation with empty string."""
         result = FlextModels.Url.create("")
-        assert not result.success
+        assert result.is_failure
 
     def test_url_validation_whitespace_only(self) -> None:
         """Test URL validation with whitespace only."""
         result = FlextModels.Url.create("   ")
-        assert not result.success
+        assert result.is_failure
 
     def test_url_validation_invalid_format_no_scheme(self) -> None:
         """Test URL validation with no scheme."""
         result = FlextModels.Url.create("example.com")
-        assert not result.success
+        assert result.is_failure
 
     def test_url_validation_invalid_format_no_netloc(self) -> None:
         """Test URL validation with no netloc."""
         result = FlextModels.Url.create("http://")
-        assert not result.success
+        assert result.is_failure
 
     def test_url_validation_malformed_url(self) -> None:
         """Test URL validation with malformed URL that causes urlparse exception."""
         # This should trigger the exception handling path in lines 874-875
         result = FlextModels.Url.create("ht!@#$%^&*()tp://invalid")
-        assert not result.success
+        assert result.is_failure
 
     def test_url_validation_valid_urls(self) -> None:
         """Test URL validation with valid URLs."""
@@ -660,7 +674,7 @@ class TestFlextModelsUrlValidationEdgeCases:
 
         for url in valid_urls:
             result = FlextModels.Url.create(url)
-            assert result.success
+            assert result.is_success
             assert result.data is not None and result.data.url == url
 
 
@@ -748,6 +762,7 @@ class TestModelsIntegrationRealFunctionality:
             name="Integration User",
             email="integration@example.com",
             age=30,
+            domain_events=[],
         )
 
         # Validate creation
@@ -792,6 +807,7 @@ class TestModelsIntegrationRealFunctionality:
             name="Value Object User",
             email=email.address,  # Use value object data
             age=25,
+            domain_events=[],
         )
 
         # Both should be valid
@@ -807,6 +823,7 @@ class TestModelsIntegrationRealFunctionality:
             name="Serialization Test User",
             email="serialize@example.com",
             age=32,
+            domain_events=[],
         )
 
         # Add domain event (new API)
@@ -865,6 +882,7 @@ class TestModelsWithFlextMatchers:
             name="Matcher Test User",
             email="matcher@example.com",
             age=28,
+            domain_events=[],
         )
 
         result = user.validate_business_rules()
@@ -889,6 +907,7 @@ class TestModelsWithFlextMatchers:
             name="JSON Test User",
             email="json@example.com",
             age=30,
+            domain_events=[],
         )
 
         # Serialize and test structure
@@ -909,6 +928,7 @@ class TestModelsWithFlextMatchers:
             name="Regex Test User",
             email="regex@example.com",
             age=25,
+            domain_events=[],
         )
 
         # Test string representations contain expected patterns
@@ -926,6 +946,7 @@ class TestModelsWithFlextMatchers:
             name="Type Test User",
             email="type@example.com",
             age=27,
+            domain_events=[],
         )
 
         # Test type guards
@@ -951,6 +972,7 @@ class TestModelsPerformance:
             name="Performance Test User",
             email="performance@example.com",
             age=30,
+            domain_events=[],
         )
 
         end_time = time.time()
@@ -970,6 +992,7 @@ class TestModelsPerformance:
             name="Validation Performance User",
             email="validation@example.com",
             age=25,
+            domain_events=[],
         )
 
         start_time = time.time()
@@ -993,6 +1016,7 @@ class TestModelsPerformance:
             name="Serialization Performance User",
             email="serialization@example.com",
             age=35,
+            domain_events=[],
         )
 
         # Add some domain events for realistic serialization load
@@ -1030,6 +1054,7 @@ class TestModelsPerformance:
                 name=f"Bulk User {i}",
                 email=f"bulk{i}@example.com",
                 age=20 + (i % 50),
+                domain_events=[],
             )
             users.append(user)
 
@@ -1084,17 +1109,17 @@ class TestFlextModelsRootModelValidation:
     def test_entity_id_validation_empty_string(self) -> None:
         """Test EntityId validation with empty string (lines 780-781)."""
         result = FlextModels.EntityId.create("")
-        assert not result.success
+        assert result.is_failure
 
     def test_entity_id_validation_whitespace(self) -> None:
         """Test EntityId validation with whitespace only."""
         result = FlextModels.EntityId.create("   ")
-        assert not result.success
+        assert result.is_failure
 
     def test_entity_id_validation_trimming(self) -> None:
         """Test EntityId validation trims whitespace."""
         result = FlextModels.EntityId.create("  entity_123  ")
-        assert result.success
+        assert result.is_success
         assert result.data is not None and result.data.value == "entity_123"
 
     # NOTE: Timestamp class not implemented yet
@@ -1118,48 +1143,48 @@ class TestFlextModelsRootModelValidation:
         """Test EmailAddress validation format (lines 813-823)."""
         # Test valid email
         result = FlextModels.EmailAddress.create("test@example.com")
-        assert result.success
+        assert result.is_success
         assert result.data is not None and result.data.address == "test@example.com"
 
         # Test invalid email - no @ symbol
         result = FlextModels.EmailAddress.create("invalid-email")
-        assert not result.success
+        assert result.is_failure
 
         # Test invalid email - multiple @ symbols
         result = FlextModels.EmailAddress.create("test@@example.com")
-        assert not result.success
+        assert result.is_failure
 
         # Test invalid email - empty local part
         result = FlextModels.EmailAddress.create("@example.com")
-        assert not result.success
+        assert result.is_failure
 
         # Test invalid email - empty domain part
         result = FlextModels.EmailAddress.create("test@")
-        assert not result.success
+        assert result.is_failure
 
         # Test invalid email - no dot in domain
         result = FlextModels.EmailAddress.create("test@example")
-        assert not result.success
+        assert result.is_failure
 
     def test_host_validation_format_check(self) -> None:
         """Test Host validation format (lines 841-845)."""
         # Test valid host
         result = FlextModels.Host.create("example.com")
-        assert result.success
+        assert result.is_success
         assert result.data is not None and result.data.hostname == "example.com"
 
         # Test host trimming
         result = FlextModels.Host.create("  EXAMPLE.COM  ")
-        assert result.success
+        assert result.is_success
         assert result.data is not None and result.data.hostname == "example.com"
 
         # Test invalid host - empty after trimming
         result = FlextModels.Host.create("   ")
-        assert not result.success
+        assert result.is_failure
 
         # Test invalid host - contains space
         result = FlextModels.Host.create("example .com")
-        assert not result.success
+        assert result.is_failure
 
     def test_payload_expiration_checks(self) -> None:
         """Test Payload expiration logic (lines 856-876)."""
@@ -1234,6 +1259,7 @@ class TestFlextModelsEntityClearDomainEvents:
             name="Test User",
             email="test@example.com",
             age=30,
+            domain_events=[],
         )
 
         # Add some events
@@ -1460,7 +1486,8 @@ class TestFlextModelsValidationFunctionsMissingCoverage:
         """Test create_validated_http_url with valid HTTP URL."""
         result = FlextModels.create_validated_http_url("https://api.example.com")
         assert result.is_success
-        assert result.value == "https://api.example.com"
+        assert isinstance(result.value, FlextModels.Url)
+        assert result.value.url == "https://api.example.com"
 
     def test_create_validated_http_url_failure(self) -> None:
         """Test create_validated_http_url with invalid URL."""
@@ -1557,11 +1584,12 @@ class TestBatchProcessingConfigModel:
 
     def test_max_workers_uses_configured_threshold(self) -> None:
         """Ensure the max workers limit aligns with FlextConstants."""
-
         max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
 
         with pytest.raises(ValidationError) as exc_info:
-            FlextModels.BatchProcessingConfig(max_workers=max_workers_limit + 1)
+            FlextModels.BatchProcessingConfig(
+                max_workers=max_workers_limit + 1, data_items=[]
+            )
 
         assert f"Max workers cannot exceed {max_workers_limit}" in str(exc_info.value)
 
@@ -1571,18 +1599,18 @@ class TestLoggerPermanentContextModelValidation:
 
     def test_invalid_environment_message_lists_allowed_values(self) -> None:
         """Ensure invalid environments surface the expected constant-backed message."""
-
         with pytest.raises(ValidationError) as exc_info:
-            FlextModels.LoggerPermanentContextModel(
+            # FIXED: LoggerPermanentContextModel was moved to FlextLogger
+            FlextLogger.LoggerPermanentContextModel(
                 app_name="test-app",
                 app_version="1.0.0",
                 environment="qa",
             )
 
-        valid_envs = {
-            env.value for env in FlextConstants.Environment.ConfigEnvironment
-        }
-        expected_fragment = ", ".join(sorted(valid_envs))
+        # Check actual environments from FlextConstants.Config.ENVIRONMENTS
+        # which includes: ['development', 'local', 'production', 'staging', 'test']
+        valid_envs = FlextConstants.Config.ENVIRONMENTS
+        expected_fragment = ", ".join(f"'{env}'" for env in sorted(valid_envs))
 
         assert expected_fragment in str(exc_info.value)
-        assert "Invalid environment: qa" in str(exc_info.value)
+        assert "Environment must be one of" in str(exc_info.value)

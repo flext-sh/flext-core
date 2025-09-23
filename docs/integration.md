@@ -6,7 +6,7 @@ Guidance for integrating FLEXT Core into downstream projects while aligning with
 
 ## Core Principles
 
-1. **Dispatcher Unification** – adopt `FlextDispatcher` (or `FlextDispatcherRegistry`) as the single routing surface. Downstream packages should not implement bespoke match/case dispatchers.
+1. **Dispatcher Unification** – adopt `FlextDispatcher` (or `FlextRegistry`) as the single routing surface. Downstream packages should not implement bespoke match/case dispatchers.
 2. **Context-First Observability** – propagate correlation/request metadata via `FlextContext`. Loggers, metrics, and tracing hooks rely on this shared context.
 3. **Configuration Alignment** – boot applications with `FlextConfig` + `FlextContainer`, ensuring domain services consume the same configuration contract.
 
@@ -20,7 +20,7 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDispatcher,
-    FlextDispatcherRegistry,
+    FlextRegistry,
     FlextLogger,
     FlextResult,
 )
@@ -35,7 +35,7 @@ container.register(TargetConfig.__name__, config)
 container.register("logger", FlextLogger("connector"))
 
 dispatcher = FlextDispatcher()
-registry = FlextDispatcherRegistry(dispatcher)
+registry = FlextRegistry(dispatcher)
 
 class LoadBatchHandler:
     def handle(self, command: dict) -> FlextResult[str]:
@@ -62,7 +62,7 @@ with FlextContext.Operation.scope("legacy-import", metadata={"source": "legacy"}
     dispatcher.dispatch(command)
 ```
 
-3. Surface migration progress using `FlextDispatcherRegistry.summary` outputs (registered/skipped/errors).
+3. Surface migration progress using `FlextRegistry.summary` outputs (registered/skipped/errors).
 
 ---
 

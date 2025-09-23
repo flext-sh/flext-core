@@ -104,7 +104,13 @@ class CreateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize create user command handler."""
-        super().__init__(handler_mode="command", handler_id="create_user_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="create_user_handler",
+            handler_name="Create User Handler",
+            handler_type="command",
+            handler_mode="command",
+        )
+        super().__init__(config=config)
         self.created_users: list[FlextTypes.Core.Dict] = []
 
     def get_command_type(self) -> FlextCommandType:
@@ -144,7 +150,13 @@ class UpdateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize update user command handler."""
-        super().__init__(handler_id="update_user_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="update_user_handler",
+            handler_name="Update User Handler",
+            handler_type="command",
+            handler_mode="command",
+        )
+        super().__init__(config=config)
         self.updated_users: dict[str, FlextTypes.Core.Dict] = {}
 
     def get_command_type(self) -> FlextCommandType:
@@ -430,7 +442,9 @@ class TestFlextCommandHandler:
 
     def test_process_command_handling_failure(self) -> None:
         """Test processing when handler fails."""
-        handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler()
+        handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler(
+            config={}
+        )
         command: FailingCommand = FailingCommand()
 
         result = handler.handle(command)
@@ -606,7 +620,7 @@ class TestFlextCommandBus:
         assert result.value == "user:wrapped"
 
         def failing_callable(
-            command: CreateUserCommand,
+            _command: CreateUserCommand,
         ) -> str:  # pragma: no cover - raising path
             msg = "boom from callable"
             raise RuntimeError(msg)
@@ -791,7 +805,7 @@ class TestCommandPatternIntegration:
             raise AssertionError(f"Expected True, got {result.is_failure}")
 
         # Test 2: Handler that fails processing
-        failing_handler = FailingCommandHandler()
+        failing_handler = FailingCommandHandler(config={})
         bus.register_handler(failing_handler)
 
         failing_command = FailingCommand()

@@ -18,7 +18,7 @@ This directory implements the public API exported by `flext_core`. The structure
 | Module               | Responsibility                                            |
 | -------------------- | --------------------------------------------------------- |
 | `container.py`       | Global dependency container with typed service keys       |
-| `domain_services.py` | Base class for domain services (immutable, context-aware) |
+| `service.py` | Base class for domain services (immutable, context-aware) |
 | `models.py`          | Entities, values, aggregates, plus helper models          |
 | `utilities.py`       | Validation, ID generation, retry helpers                  |
 
@@ -28,7 +28,7 @@ This directory implements the public API exported by `flext_core`. The structure
 | ------------------------ | -------------------------------------------------- |
 | `bus.py`                 | Core command bus implementation                    |
 | `dispatcher.py`          | Dispatcher façade orchestrating bus + context      |
-| `dispatcher_registry.py` | Batch registration helpers for downstream packages |
+| `registry.py` | Batch registration helpers for downstream packages |
 | `handlers.py`            | Base classes for command/query handlers            |
 | `processing.py`          | Lightweight processing utilities and registries    |
 | `cqrs.py`                | CQRS adapters built on top of the bus/handlers     |

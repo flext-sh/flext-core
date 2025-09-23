@@ -13,9 +13,10 @@ from __future__ import annotations
 import signal
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from typing import cast
 
 from pydantic import ConfigDict
 
@@ -26,7 +27,7 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class FlextDomainService[TDomainResult](
+class FlextService[TDomainResult](
     FlextModels.ArbitraryTypesModel,
     FlextMixins.Serializable,
     FlextMixins.Loggable,
@@ -200,18 +201,22 @@ class FlextDomainService[TDomainResult](
         if raw_arguments is None:
             positional_arguments: tuple[object, ...] = ()
         elif isinstance(raw_arguments, (list, tuple, set)):
-            positional_arguments = tuple(raw_arguments)
+            positional_arguments = tuple(cast("Iterable[object]", raw_arguments))
         elif isinstance(raw_arguments, dict):
             if "args" in raw_arguments:
-                nested_args = raw_arguments.get("args")
+                nested_args: object = cast("dict[str, object]", raw_arguments).get(
+                    "args", None
+                )
                 if isinstance(nested_args, (list, tuple, set)):
-                    positional_arguments = tuple(nested_args)
+                    positional_arguments = tuple(cast("Iterable[object]", nested_args))
                 elif nested_args is None:
                     positional_arguments = ()
                 else:
                     positional_arguments = (nested_args,)
             else:
-                positional_arguments = tuple(raw_arguments.values())
+                positional_arguments = tuple(
+                    cast("Iterable[object]", raw_arguments.values())
+                )
         else:
             positional_arguments = (raw_arguments,)
 
@@ -219,10 +224,12 @@ class FlextDomainService[TDomainResult](
         if raw_keyword_arguments is None:
             keyword_arguments: dict[str, object] = {}
         elif isinstance(raw_keyword_arguments, dict):
-            keyword_arguments = dict(raw_keyword_arguments)
+            keyword_arguments = dict(
+                cast("Mapping[str, object]", raw_keyword_arguments)
+            )
         else:
             try:
-                keyword_arguments = dict(raw_keyword_arguments)  # type: ignore[arg-type]
+                keyword_arguments = dict(raw_keyword_arguments)
             except Exception as exc:  # pragma: no cover - defensive branch
                 return FlextResult[TDomainResult].fail(
                     f"Invalid keyword arguments for operation '{operation_name}': {exc}"
@@ -310,17 +317,14 @@ class FlextDomainService[TDomainResult](
             if not retry_exception_filters:
                 return True
             for allowed in retry_exception_filters:
-                if isinstance(allowed, type) and issubclass(allowed, Exception):
-                    if isinstance(exc, allowed):
-                        return True
-                elif isinstance(allowed, str):
+                if isinstance(exc, allowed):
+                    return True
+                if isinstance(allowed, str):
                     msg = (
                         f"String-based exception filter '{allowed}' is not supported. "
                         "Please use exception classes instead."
                     )
-                    raise ValueError(
-                        msg
-                    )
+                    raise TypeError(msg)
             return False
 
         current_delay = base_delay
@@ -330,7 +334,7 @@ class FlextDomainService[TDomainResult](
         while attempt <= max_attempts:
             try:
                 result = call_with_timeout()
-                return FlextResult[TDomainResult].ok(result)  # type: ignore[arg-type]
+                return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
             except Exception as exc:
                 last_exception = exc
                 if not should_retry(exc, attempt):
@@ -642,5 +646,5 @@ class FlextDomainService[TDomainResult](
 
 
 __all__: FlextTypes.Core.StringList = [
-    "FlextDomainService",
+    "FlextService",
 ]

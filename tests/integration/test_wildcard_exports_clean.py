@@ -237,7 +237,7 @@ class TestFlextCoreWildcardExports:
             "Types",  # FlextTypes
             "Config",  # FlextConfig
             "Container",  # FlextContainer
-            "Handler",  # FlextHandler, FlextQueryHandler
+            "Handler",  # FlextHandlers, FlextQueryHandler
             "Cqrs",  # FlextCqrs for CQRS patterns
         ]
 

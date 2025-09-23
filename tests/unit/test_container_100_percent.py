@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import Never
 
+import pytest
+
 from flext_core import FlextConfig, FlextContainer
 from flext_tests import (
     FlextTestsBuilders,
@@ -41,7 +43,9 @@ class MockFactory:
 class TestFlextContainerConfiguration:
     """Integration-style tests for FlextContainer configuration behavior."""
 
-    def test_container_config_uses_flext_config_env(self, monkeypatch) -> None:
+    def test_container_config_uses_flext_config_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Ensure FlextContainer reflects environment-driven FlextConfig values."""
         FlextConfig.reset_global_instance()
         monkeypatch.setenv("FLEXT_MAX_WORKERS", "7")
@@ -210,7 +214,6 @@ class TestFlextContainer100Percent:
 
     def test_get_config_uses_global_flext_config_defaults(self) -> None:
         """Container should reflect overrides from the global FlextConfig singleton."""
-
         original_config = FlextConfig.get_global_instance()
         custom_config = FlextConfig.create(
             max_workers=8,
@@ -224,7 +227,7 @@ class TestFlextContainer100Percent:
             container_config = container.get_config()
 
             assert container_config["max_workers"] == custom_config.max_workers
-            assert float(container_config["timeout_seconds"]) == float(
+            assert float(str(container_config["timeout_seconds"])) == float(
                 custom_config.timeout_seconds
             )
             assert container_config["environment"] == custom_config.environment

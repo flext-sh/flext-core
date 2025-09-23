@@ -113,7 +113,7 @@ Successfully completed surgical test fixes to improve FLEXT CLI from failing inf
 
 ## 📋 NEXT STEPS (For 75% Target)
 
-1. **Focus on domain_services.py** (14% → 80%+ coverage potential)
+1. **Focus on service.py** (14% → 80%+ coverage potential)
 2. **Expand client.py tests** (29% → 70%+ coverage potential)
 3. **Add core.py integration tests** (29% → 65%+ coverage potential)
 4. **Complete cli_main.py coverage** (70% → 90%+ coverage potential)

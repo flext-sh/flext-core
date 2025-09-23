@@ -26,10 +26,10 @@ from typing import Protocol
 from flext_core import (
     FlextConstants,
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextService,
 )
 
 # ========== SERVICE INTERFACES (PROTOCOLS) ==========
@@ -152,13 +152,18 @@ class User(FlextModels.Entity):
     is_active: bool = True
 
 
-class UserRepository:
+class UserRepository(FlextService[User]):
     """Repository pattern for User entities."""
 
-    def __init__(self, database: DatabaseServiceProtocol) -> None:
+    def __init__(self, database: DatabaseServiceProtocol, **data: object) -> None:
         """Initialize with database dependency."""
+        super().__init__(**data)
         self._database = database
         self._logger = FlextLogger(__name__)
+
+    def execute(self) -> FlextResult[User]:
+        """Execute the main domain operation - find default user."""
+        return self.find_by_id("default_user")
 
     def find_by_id(self, user_id: str) -> FlextResult[User]:
         """Find user by ID."""
@@ -173,7 +178,13 @@ class UserRepository:
             return FlextResult[User].fail(f"User not found: {user_id}")
 
         # Simulate user creation from data
-        user = User(id="user_1", name="John Doe", email="john@example.com", age=30)
+        user = User(
+            id="user_1",
+            name="John Doe",
+            email="john@example.com",
+            age=30,
+            domain_events=[],
+        )
         return FlextResult[User].ok(user)
 
     def save(self, user: User) -> FlextResult[None]:
@@ -186,19 +197,25 @@ class UserRepository:
 # ========== COMPREHENSIVE CONTAINER SERVICE ==========
 
 
-class ComprehensiveDIService(FlextDomainService[User]):
+class ComprehensiveDIService(FlextService[User]):
     """Service demonstrating ALL FlextContainer patterns and methods."""
 
-    def __init__(self) -> None:
+    def __init__(self, **data: object) -> None:
         """Initialize with FlextContainer."""
-        super().__init__()
+        super().__init__(**data)
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[User]:
-        """Execute the service - required by FlextDomainService."""
+        """Execute the service - required by FlextService."""
         return FlextResult[User].ok(
-            User(id="user_1", name="Demo User", email="demo@example.com", age=25)
+            User(
+                id="user_1",
+                name="Demo User",
+                email="demo@example.com",
+                age=25,
+                domain_events=[],
+            )
         )
 
     # ========== BASIC REGISTRATION ==========

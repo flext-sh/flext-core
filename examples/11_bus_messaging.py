@@ -29,16 +29,16 @@ from flext_core import (
     FlextBus,
     FlextConstants,
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextService,
 )
 
 # ========== BUS SERVICE ==========
 
 
-class BusMessagingService(FlextDomainService[dict[str, object]]):
+class BusMessagingService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextBus patterns."""
 
     def __init__(self) -> None:
@@ -48,7 +48,7 @@ class BusMessagingService(FlextDomainService[dict[str, object]]):
         self._container = FlextContainer.get_global()
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info(
             "Executing bus demo", extra={"data": {"demo": "bus_messaging"}}
         )

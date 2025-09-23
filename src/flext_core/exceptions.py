@@ -1,4 +1,12 @@
-"""Exception hierarchy aligned with the FLEXT 1.0.0 modernization charter.
+"""Layer 2: Exception hierarchy aligned with the FLEXT 1.0.0 modernization charter.
+
+This module provides structured exception classes with error codes and correlation
+tracking for the entire FLEXT ecosystem. Use FlextException hierarchy for all
+error handling throughout FLEXT applications.
+
+Dependency Layer: 2 (Early Foundation)
+Dependencies: FlextConstants, FlextTypes
+Used by: All FlextCore modules requiring structured error handling
 
 Error codes, correlation tracking, and structured payloads match the guidance
 in ``README.md`` and ``docs/architecture.md`` so diagnostics remain uniform
@@ -50,32 +58,33 @@ class FlextExceptions:
     # =============================================================================
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
-    # Exception tracking system for metrics collection
-    # Provides internal exception monitoring capabilities
 
-    class Metrics:
-        """Thread-safe exception metrics tracking system."""
+    _metrics: ClassVar[FlextTypes.Core.CounterDict] = {}
 
-        # Exception metrics tracking system for internal monitoring
-        # Provides basic metrics collection capabilities
+    # Type conversion mapping for cleaner type resolution
+    _TYPE_MAP: ClassVar[dict[str, type]] = {
+        "str": str,
+        "int": int,
+        "float": float,
+        "bool": bool,
+        "list": list,
+        "dict": dict,
+    }
 
-        _metrics: ClassVar[FlextTypes.Core.CounterDict] = {}  # Global exception counter
+    @classmethod
+    def record_exception(cls, exception_type: str) -> None:
+        """Record exception occurrence."""
+        cls._metrics[exception_type] = cls._metrics.get(exception_type, 0) + 1
 
-        @classmethod
-        def record_exception(cls, exception_type: str) -> None:
-            """Record exception occurrence."""
-            # Manual exception counting for internal metrics
-            cls._metrics[exception_type] = cls._metrics.get(exception_type, 0) + 1
+    @classmethod
+    def get_metrics(cls) -> FlextTypes.Core.CounterDict:
+        """Get exception counts."""
+        return dict(cls._metrics)
 
-        @classmethod
-        def get_metrics(cls) -> FlextTypes.Core.CounterDict:
-            """Get exception counts."""
-            return dict(cls._metrics)  # Return copy of metrics
-
-        @classmethod
-        def clear_metrics(cls) -> None:
-            """Clear all exception metrics."""
-            cls._metrics.clear()  # Clear all metrics
+    @classmethod
+    def clear_metrics(cls) -> None:
+        """Clear all exception metrics."""
+        cls._metrics.clear()
 
     # =============================================================================
     # BASE EXCEPTION CLASS - Clean hierarchical approach
@@ -99,7 +108,7 @@ class FlextExceptions:
             self.context = dict(context or {})
             self.correlation_id = correlation_id or f"flext_{int(time.time() * 1000)}"
             self.timestamp = time.time()
-            FlextExceptions.Metrics.record_exception(self.__class__.__name__)
+            FlextExceptions.record_exception(self.__class__.__name__)
 
         def __str__(self) -> str:
             """Return string representation with error code and message."""
@@ -109,6 +118,75 @@ class FlextExceptions:
         def error_code(self) -> str:
             """Get error code as string."""
             return str(self.code)
+
+        @staticmethod
+        def _build_context(
+            base_context: Mapping[str, object] | None,
+            **additional_context: object,
+        ) -> dict[str, object]:
+            """Build context dictionary from base context and additional items."""
+            context_dict = dict(base_context) if isinstance(base_context, dict) else {}
+            context_dict.update(additional_context)
+            return context_dict
+
+        @staticmethod
+        def _extract_common_kwargs(
+            kwargs: dict[str, object],
+        ) -> tuple[
+            dict[str, object] | None,
+            str | None,
+            str | None,
+        ]:
+            """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
+            context_raw = kwargs.get("context")
+            context = (
+                cast("dict[str, object]", context_raw)
+                if isinstance(context_raw, dict)
+                else None
+            )
+
+            correlation_id_raw = kwargs.get("correlation_id")
+            correlation_id = (
+                str(correlation_id_raw) if correlation_id_raw is not None else None
+            )
+
+            error_code_raw = kwargs.get("error_code")
+            error_code = str(error_code_raw) if error_code_raw is not None else None
+
+            return context, correlation_id, error_code
+
+        @staticmethod
+        def _convert_type_name(type_name: str | None) -> type | str:
+            """Convert type name string to actual type object."""
+            if not type_name:
+                return ""
+            return FlextExceptions._TYPE_MAP.get(type_name, type_name)
+
+    @staticmethod
+    def _extract_common_kwargs(
+        kwargs: dict[str, object],
+    ) -> tuple[
+        dict[str, object] | None,
+        str | None,
+        str | None,
+    ]:
+        """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
+        context_raw = kwargs.get("context")
+        context = (
+            cast("dict[str, object]", context_raw)
+            if isinstance(context_raw, dict)
+            else None
+        )
+
+        correlation_id_raw = kwargs.get("correlation_id")
+        correlation_id = (
+            str(correlation_id_raw) if correlation_id_raw is not None else None
+        )
+
+        error_code_raw = kwargs.get("error_code")
+        error_code = str(error_code_raw) if error_code_raw is not None else None
+
+        return context, correlation_id, error_code
 
     # =============================================================================
     # SPECIFIC EXCEPTION CLASSES - Clean subclass hierarchy
@@ -126,25 +204,22 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.attribute_name = attribute_name
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict["attribute_name"] = attribute_name
 
-            # Add attribute_context if provided (RESTORED FUNCTIONALITY)
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context_data: dict[str, object] = {"attribute_name": attribute_name}
             if attribute_context:
-                context_dict["attribute_context"] = dict(attribute_context)
+                context_data["attribute_context"] = dict(attribute_context)
+
+            context = self._build_context(base_context, **context_data)
 
             super().__init__(
                 message,
                 code=FlextConstants.Errors.OPERATION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _OperationError(BaseError, RuntimeError):
@@ -158,20 +233,18 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.operation = operation
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict["operation"] = operation
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(base_context, operation=operation)
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.OPERATION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _ValidationError(BaseError, ValueError):
@@ -189,31 +262,25 @@ class FlextExceptions:
             self.field = field
             self.value = value
             self.validation_details = validation_details
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict.update(
-                {
-                    "field": field,
-                    "value": value,
-                    "validation_details": validation_details,
-                },
+
+            # Extract common parameters using helper
+            base_context, correlation_id, error_code = self._extract_common_kwargs(
+                kwargs
             )
-            error_code = (
-                str(kwargs.get("error_code"))
-                if kwargs.get("error_code") is not None
-                else None
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                field=field,
+                value=value,
+                validation_details=validation_details,
             )
+
             super().__init__(
                 message,
                 code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _ConfigurationError(BaseError, ValueError):
@@ -462,56 +529,26 @@ class FlextExceptions:
         ) -> None:
             self.expected_type = expected_type
             self.actual_type = actual_type
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
 
-            # Convert type names to actual types for better functionality
-            expected_type_obj: type | str = expected_type or ""
-            actual_type_obj: type | str = actual_type or ""
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
 
-            if expected_type == "str":
-                expected_type_obj = str
-            elif expected_type == "int":
-                expected_type_obj = int
-            elif expected_type == "float":
-                expected_type_obj = float
-            elif expected_type == "bool":
-                expected_type_obj = bool
-            elif expected_type == "list":
-                expected_type_obj = list
-            elif expected_type == "dict":
-                expected_type_obj = dict
+            # Convert type names to actual types using helper
+            expected_type_obj = self._convert_type_name(expected_type)
+            actual_type_obj = self._convert_type_name(actual_type)
 
-            if actual_type == "str":
-                actual_type_obj = str
-            elif actual_type == "int":
-                actual_type_obj = int
-            elif actual_type == "float":
-                actual_type_obj = float
-            elif actual_type == "bool":
-                actual_type_obj = bool
-            elif actual_type == "list":
-                actual_type_obj = list
-            elif actual_type == "dict":
-                actual_type_obj = dict
-
-            context_dict.update(
-                {
-                    "expected_type": expected_type_obj,
-                    "actual_type": actual_type_obj,
-                },
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                expected_type=expected_type_obj,
+                actual_type=actual_type_obj,
             )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TYPE_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _CriticalError(BaseError, SystemError):
@@ -638,43 +675,35 @@ class FlextExceptions:
         **kwargs: object,
     ) -> BaseError:
         """Create exception with automatic type selection."""
-        # Extract common kwargs that all exceptions understand
-        context: dict[str, object] = cast(
-            "dict[str, object]",
-            (
-                kwargs.get("context", {})
-                if isinstance(kwargs.get("context", {}), (dict, type(None)))
-                else {}
-            ),
+        # Extract common parameters using helper
+        base_context, correlation_id, extracted_error_code = cls._extract_common_kwargs(
+            kwargs
         )
-        correlation_id = (
-            kwargs.get("correlation_id")
-            if isinstance(kwargs.get("correlation_id"), (str, type(None)))
-            else None
-        )
+        final_error_code = error_code or extracted_error_code
 
+        # Exception type mapping for cleaner selection
         if operation is not None:
             return cls._OperationError(
                 message,
                 operation=operation,
-                code=error_code,
-                context=context,
+                context=base_context,
                 correlation_id=correlation_id,
+                error_code=final_error_code,
             )
+
         if field is not None:
-            value = kwargs.get("value")
-            validation_details = kwargs.get("validation_details")
             return cls._ValidationError(
                 message,
                 field=field,
-                value=value,
-                validation_details=validation_details,
-                code=error_code,
-                context=context,
+                value=kwargs.get("value"),
+                validation_details=kwargs.get("validation_details"),
+                context=base_context,
                 correlation_id=correlation_id,
+                error_code=final_error_code,
             )
+
         if config_key is not None:
-            config_file: str | None = (
+            config_file = (
                 str(kwargs.get("config_file"))
                 if isinstance(kwargs.get("config_file"), str)
                 else None
@@ -683,31 +712,22 @@ class FlextExceptions:
                 message,
                 config_key=config_key,
                 config_file=config_file,
-                code=error_code,
-                context=context,
+                context=base_context,
                 correlation_id=correlation_id,
+                error_code=final_error_code,
             )
+
         # Default to general error
         return cls._Error(
             message,
-            code=error_code,
-            context=context,
+            context=base_context,
             correlation_id=correlation_id,
+            error_code=final_error_code,
         )
 
     # =============================================================================
     # UTILITY METHODS
     # =============================================================================
-
-    @classmethod
-    def get_metrics(cls) -> FlextTypes.Core.CounterDict:
-        """Get exception occurrence metrics."""
-        return cls.Metrics.get_metrics()
-
-    @classmethod
-    def clear_metrics(cls) -> None:
-        """Clear exception metrics."""
-        cls.Metrics.clear_metrics()
 
     @staticmethod
     def create_module_exception_classes(

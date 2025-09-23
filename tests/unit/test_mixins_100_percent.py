@@ -10,6 +10,8 @@ import json
 from datetime import datetime
 from unittest.mock import Mock
 
+import pytest
+
 from flext_core import FlextMixins, FlextModels
 
 
@@ -210,3 +212,210 @@ class TestFlextMixins100Percent:
         request = FlextModels.SerializationRequest(data=obj, use_model_dump=False)
         result = FlextMixins.to_dict(request)
         assert result == {"type": "str", "value": "test_string"}
+
+    def test_get_config_parameter_with_pydantic_model(self) -> None:
+        """Test get_config_parameter with Pydantic model - lines 273-281."""
+
+        class TestConfig:
+            def model_dump(self) -> dict[str, str]:
+                return {"debug": "true", "timeout": "30"}
+
+        config = TestConfig()
+        result = FlextMixins.get_config_parameter(config, "debug")
+        assert result == "true"
+
+    def test_get_config_parameter_missing_parameter_pydantic(self) -> None:
+        """Test get_config_parameter with missing parameter in Pydantic model - lines 278-280."""
+
+        class TestConfig:
+            def model_dump(self) -> dict[str, str]:
+                return {"debug": "true"}
+
+        config = TestConfig()
+        with pytest.raises(KeyError) as exc_info:
+            FlextMixins.get_config_parameter(config, "missing_param")
+
+        error_message = str(exc_info.value)
+        assert "missing_param" in error_message
+        assert "TestConfig" in error_message
+
+    def test_get_config_parameter_with_regular_object(self) -> None:
+        """Test get_config_parameter with regular object - lines 283-287."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.debug = True
+                self.timeout = 30
+
+        config = TestConfig()
+        result = FlextMixins.get_config_parameter(config, "debug")
+        assert result is True
+
+    def test_get_config_parameter_missing_attribute_regular_object(self) -> None:
+        """Test get_config_parameter with missing attribute in regular object - lines 284-286."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.debug = True
+
+        config = TestConfig()
+        with pytest.raises(KeyError) as exc_info:
+            FlextMixins.get_config_parameter(config, "missing_attr")
+
+        error_message = str(exc_info.value)
+        assert "missing_attr" in error_message
+        assert "TestConfig" in error_message
+
+    def test_set_config_parameter_with_pydantic_model_fields(self) -> None:
+        """Test set_config_parameter with Pydantic model_fields - lines 304-311."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.debug = False
+                self.model_fields: dict[str, dict[str, object]] = {
+                    "debug": {},
+                    "timeout": {},
+                }
+
+        config = TestConfig()
+        result = FlextMixins.set_config_parameter(config, "debug", True)
+        assert result is True
+        assert config.debug is True
+
+    def test_set_config_parameter_missing_field_in_model_fields(self) -> None:
+        """Test set_config_parameter with missing field in model_fields - lines 309-311."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.model_fields: dict[str, dict[str, object]] = {"debug": {}}
+
+        config = TestConfig()
+        result = FlextMixins.set_config_parameter(config, "missing_field", "value")
+        assert result is False
+
+    def test_set_config_parameter_without_model_fields(self) -> None:
+        """Test set_config_parameter without model_fields - lines 313-315."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.debug = False
+
+        config = TestConfig()
+        result = FlextMixins.set_config_parameter(config, "debug", True)
+        assert result is True
+        assert config.debug is True
+
+    def test_set_config_parameter_with_validation_error(self) -> None:
+        """Test set_config_parameter with validation error - lines 317-319."""
+
+        class TestConfig:
+            @property
+            def read_only_prop(self) -> str:
+                return "readonly"
+
+        config = TestConfig()
+        # Trying to set a read-only property should fail
+        result = FlextMixins.set_config_parameter(config, "read_only_prop", "new_value")
+        assert result is False
+
+    def test_get_singleton_parameter_with_valid_class(self) -> None:
+        """Test get_singleton_parameter with valid singleton class - lines 337-341."""
+
+        class MockSingleton:
+            def __init__(self) -> None:
+                self.debug: bool = False
+
+            @classmethod
+            def get_global_instance(cls) -> MockSingleton:
+                instance = cls()
+                instance.debug = True
+                return instance
+
+            def model_dump(self) -> dict[str, bool]:
+                return {"debug": True}
+
+        result = FlextMixins.get_singleton_parameter(MockSingleton, "debug")
+        assert result is True
+
+    def test_get_singleton_parameter_without_get_global_instance(self) -> None:
+        """Test get_singleton_parameter without get_global_instance method - lines 343-344."""
+
+        class InvalidClass:
+            pass
+
+        with pytest.raises(AttributeError) as exc_info:
+            FlextMixins.get_singleton_parameter(InvalidClass, "debug")
+
+        error_message = str(exc_info.value)
+        assert "get_global_instance" in error_message
+        assert "InvalidClass" in error_message
+
+    def test_set_singleton_parameter_with_valid_class(self) -> None:
+        """Test set_singleton_parameter with valid singleton class - lines 359-363."""
+
+        class MockSingleton:
+            def __init__(self) -> None:
+                self.debug = False
+                self.model_fields: dict[str, dict[str, object]] = {"debug": {}}
+
+            @classmethod
+            def get_global_instance(cls) -> MockSingleton:
+                return cls()
+
+        result = FlextMixins.set_singleton_parameter(MockSingleton, "debug", True)
+        assert result is True
+
+    def test_set_singleton_parameter_without_get_global_instance(self) -> None:
+        """Test set_singleton_parameter without get_global_instance method - lines 365."""
+
+        class InvalidClass:
+            pass
+
+        result = FlextMixins.set_singleton_parameter(InvalidClass, "debug", True)
+        assert result is False
+
+    def test_get_config_parameter_with_non_callable_model_dump(self) -> None:
+        """Test get_config_parameter with non-callable model_dump attribute."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.model_dump = "not_callable"
+                self.debug = True
+
+        config = TestConfig()
+        result = FlextMixins.get_config_parameter(config, "debug")
+        assert result is True
+
+    def test_set_config_parameter_with_none_model_fields(self) -> None:
+        """Test set_config_parameter with None model_fields."""
+
+        class TestConfig:
+            def __init__(self) -> None:
+                self.model_fields = None
+                self.debug = False
+
+        config = TestConfig()
+        result = FlextMixins.set_config_parameter(config, "debug", True)
+        assert result is True
+        assert config.debug is True
+
+    def test_get_singleton_parameter_with_non_callable_method(self) -> None:
+        """Test get_singleton_parameter with non-callable get_global_instance."""
+
+        class MockSingleton:
+            get_global_instance = "not_callable"
+
+        with pytest.raises(AttributeError) as exc_info:
+            FlextMixins.get_singleton_parameter(MockSingleton, "debug")
+
+        error_message = str(exc_info.value)
+        assert "get_global_instance" in error_message
+
+    def test_set_singleton_parameter_with_non_callable_method(self) -> None:
+        """Test set_singleton_parameter with non-callable get_global_instance."""
+
+        class MockSingleton:
+            get_global_instance = "not_callable"
+
+        result = FlextMixins.set_singleton_parameter(MockSingleton, "debug", True)
+        assert result is False

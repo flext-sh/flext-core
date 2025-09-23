@@ -11,9 +11,9 @@ import json
 import operator
 import time
 from collections import OrderedDict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -44,57 +44,84 @@ def _normalize_cache_component(value: object) -> object:
         return ("bytes", value.hex())
 
     if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
+        # Cast to ModelDumpable protocol to ensure type checker knows it has model_dump
+        model_obj = cast("ModelDumpable", value)
         try:
-            dumped = value.model_dump()
+            dumped: FlextTypes.Core.Dict = model_obj.model_dump()
         except TypeError:
-            dumped = None
-        if isinstance(dumped, Mapping):
-            return ("pydantic", _normalize_cache_component(dumped))
+            dumped = {}
+        # dumped is already a Dict from model_dump(), so it's always a Mapping
+        return ("pydantic", _normalize_cache_component(dumped))
 
     if dataclasses.is_dataclass(value):
-        return ("dataclass", _normalize_cache_component(dataclasses.asdict(value)))
+        # Ensure we have a dataclass instance, not a class
+        if isinstance(value, type):
+            return ("dataclass_class", str(value))
+        # Cast value to object for dataclasses.asdict - it's a dataclass instance at this point
+        dataclass_instance = cast("object", value)
+        return (
+            "dataclass",
+            _normalize_cache_component(
+                dataclasses.asdict(cast("Any", dataclass_instance))
+            ),
+        )
 
     if isinstance(value, Mapping):
         # Normalize keys and values, and sort by a deterministic key
-        normalized_items = tuple(
-            (normalized_key, _normalize_cache_component(val))
-            for normalized_key, val in sorted(
-                ((_normalize_cache_component(key), val) for key, val in value.items()),
-                key=lambda item: _cache_sort_key(item[0]),
-            )
-        )
+        # Create a list of tuples first to avoid generator type issues
+        mapping_items: list[tuple[object, object]] = []
+        # Cast the items to avoid unknown type issues
+        mapping_value = cast("Mapping[object, object]", value)
+        for key, val in mapping_value.items():
+            normalized_key = _normalize_cache_component(key)
+            normalized_val = _normalize_cache_component(val)
+            mapping_items.append((normalized_key, normalized_val))
+
+        # Sort by the first element (normalized key)
+        mapping_items.sort(key=lambda item: _cache_sort_key(item[0]))
+
+        normalized_items = tuple(mapping_items)
         return ("mapping", normalized_items)
 
     if isinstance(value, (list, tuple)):
-        return ("sequence", tuple(_normalize_cache_component(item) for item in value))
+        # Cast the sequence to avoid unknown type issues
+        sequence_value = cast("Sequence[object]", value)
+        # Create a list first to avoid generator type issues
+        sequence_items = [_normalize_cache_component(item) for item in sequence_value]
+        return ("sequence", tuple(sequence_items))
 
     if isinstance(value, set):
-        normalized_set = tuple(
-            sorted(
-                (_normalize_cache_component(item) for item in value),
-                key=_cache_sort_key,
-            )
-        )
+        # Cast the set to avoid unknown type issues
+        set_value = cast("set[object]", value)
+        # Create a list first to avoid generator type issues
+        set_items = [_normalize_cache_component(item) for item in set_value]
+
+        # Sort by cache sort key
+        set_items.sort(key=_cache_sort_key)
+
+        normalized_set = tuple(set_items)
         return ("set", normalized_set)
 
     try:
-        value_vars = vars(value)
+        # Cast to proper type for type checker
+        value_vars_dict = cast("dict[str, object]", vars(value))
     except TypeError:
         return ("repr", repr(value))
 
     normalized_vars = tuple(
         (key, _normalize_cache_component(val))
-        for key, val in sorted(value_vars.items(), key=operator.itemgetter(0))
+        for key, val in sorted(value_vars_dict.items(), key=operator.itemgetter(0))
     )
     return ("vars", normalized_vars)
 
 
-def _make_cache_key(command: object) -> str:
-    """Create a deterministic cache key for the provided command/query."""
-    normalized_command = _normalize_cache_component(command)
-    serialized_command = json.dumps(normalized_command, sort_keys=True)
-    command_type = f"{command.__class__.__module__}.{command.__class__.__qualname__}"
-    return f"{command_type}:{serialized_command}"
+# Note: _make_cache_key is reserved for future cache key implementation
+# def _make_cache_key(command: object) -> str:
+#     """Create a deterministic cache key for the provided command/query."""
+#     normalized_command = _normalize_cache_component(command)
+#     serialized_command = json.dumps(normalized_command, sort_keys=True)
+#     command_type = f"{command.__class__.__module__}.{command.__class__.__qualname__}"
+#     return f"{command_type}:{serialized_command}"
 
 
 class FlextBus(FlextMixins):
@@ -124,7 +151,6 @@ class FlextBus(FlextMixins):
         self._max_cache_size: int = 0
         # Initialize mixins manually since we don't inherit from them
         FlextMixins.initialize_validation(self, "bus_config")
-        self._cache: dict[str, FlextResult[object]] = {}
         FlextMixins.clear_cache(self)
         # Timestampable mixin initialization
         self._created_at = datetime.now(UTC)
@@ -253,7 +279,6 @@ class FlextBus(FlextMixins):
     @staticmethod
     def _normalize_command_key(command_type_obj: object) -> str:
         """Create a comparable key for command identifiers."""
-
         if hasattr(command_type_obj, "__origin__") and hasattr(
             command_type_obj, "__args__"
         ):
@@ -270,19 +295,19 @@ class FlextBus(FlextMixins):
 
         name_attr = getattr(command_type_obj, "__name__", None)
         if name_attr is not None:
-            return name_attr
+            return str(name_attr)
         return str(command_type_obj)
 
     def _normalize_middleware_config(
         self, middleware_config: object | None
     ) -> dict[str, object]:
         """Convert middleware configuration into a dictionary."""
-
         if middleware_config is None:
             return {}
 
         if isinstance(middleware_config, Mapping):
-            return dict(middleware_config)
+            # Cast to proper type for type checker
+            return dict(cast("Mapping[str, object]", middleware_config))
 
         for attr_name in ("model_dump", "dict"):
             method = getattr(middleware_config, attr_name, None)
@@ -292,7 +317,7 @@ class FlextBus(FlextMixins):
                 except TypeError:
                     continue
                 if isinstance(result, Mapping):
-                    return dict(result)
+                    return dict(cast("Mapping[str, object]", result))
                 if isinstance(result, dict):
                     return cast("dict[str, object]", result)
 
@@ -325,8 +350,7 @@ class FlextBus(FlextMixins):
             handle_method = getattr(handler, handle_method_name, None)
             if not callable(handle_method):
                 msg = (
-                    "Invalid handler: must have callable "
-                    f"'{handle_method_name}' method"
+                    f"Invalid handler: must have callable '{handle_method_name}' method"
                 )
                 return FlextResult[None].fail(msg)
 
@@ -436,7 +460,7 @@ class FlextBus(FlextMixins):
                     cache_key=cache_key,
                 )
                 # cached_result is already FlextResult[object]
-                return cast("FlextResult[object]", cached_result)
+                return cached_result
 
         self.logger.debug(
             "execute_command",
@@ -517,40 +541,54 @@ class FlextBus(FlextMixins):
 
         # Sort middleware by order
         def get_order(middleware_item: object) -> int:
-            config_data = self._normalize_middleware_config(middleware_item)
-            order = config_data.get("order", 0)
-            if isinstance(m, dict):
-                order_value = m.get("order", 0)
+            order_value: object
+            if isinstance(middleware_item, dict):
+                # Cast to proper dict type for type checker
+                middleware_dict = cast("dict[str, object]", middleware_item)
+                order_value = middleware_dict.get("order", 0)
             else:
-                order_value = getattr(m, "order", 0)
+                order_value = getattr(middleware_item, "order", 0)
 
             if isinstance(order_value, str):
                 try:
                     return int(order_value)
                 except ValueError:
                     return 0
+            elif isinstance(order_value, int):
+                return order_value
             return 0
 
         sorted_middleware = sorted(self._middleware, key=get_order)
 
         for middleware_config in sorted_middleware:
-            config_data = self._normalize_middleware_config(middleware_config)
-            if isinstance(middleware_config, dict):
-                enabled = middleware_config.get("enabled", True)
-                middleware_id_value = middleware_config.get("middleware_id")
-                middleware_type_value = middleware_config.get("middleware_type", "")
-                order_value = middleware_config.get("order", 0)
+            # Extract configuration values - middleware_config is from self._middleware which stores dicts
+            if hasattr(middleware_config, "get"):  # It's a dict-like object
+                config_dict = middleware_config
+                middleware_id_value = config_dict.get("middleware_id")
+                middleware_type_value = config_dict.get("middleware_type", "")
+                order_value = config_dict.get("order", 0)
+                enabled_value = config_dict.get(
+                    "enabled", True
+                )  # Default to True for backward compatibility
             else:
-                enabled = getattr(middleware_config, "enabled", True)
                 middleware_id_value = getattr(middleware_config, "middleware_id", "")
                 middleware_type_value = getattr(
-                    middleware_config,
-                    "middleware_type",
-                    "",
+                    middleware_config, "middleware_type", ""
                 )
                 order_value = getattr(middleware_config, "order", 0)
+                enabled_value = getattr(
+                    middleware_config, "enabled", True
+                )  # Default to True
 
-            if not config_data.get("enabled", True):
+            # Skip disabled middleware
+            if not enabled_value:
+                self.logger.debug(
+                    "Skipping disabled middleware",
+                    middleware_id=middleware_id_value
+                    if middleware_id_value is not None
+                    else "",
+                    middleware_type=str(middleware_type_value),
+                )
                 continue
 
             # Get actual middleware instance
@@ -567,8 +605,8 @@ class FlextBus(FlextMixins):
                 middleware_id=middleware_id_value
                 if middleware_id_value is not None
                 else "",
-                middleware_type=config_data.get("middleware_type", ""),
-                order=config_data.get("order", 0),
+                middleware_type=str(middleware_type_value),
+                order=order_value,
             )
 
             process_method = getattr(middleware, "process", None)
@@ -577,7 +615,7 @@ class FlextBus(FlextMixins):
                 if isinstance(result, FlextResult) and result.is_failure:
                     self.logger.info(
                         "Middleware rejected command",
-                        middleware_type=config_data.get("middleware_type", ""),
+                        middleware_type=str(middleware_type_value),
                         error=result.error or "Unknown error",
                     )
                     return FlextResult[None].fail(
@@ -637,7 +675,9 @@ class FlextBus(FlextMixins):
         if not handler_methods:
             formatted_methods = "handler method"
         elif len(handler_methods) > 1:
-            formatted_methods = f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+            formatted_methods = (
+                f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+            )
         else:
             formatted_methods = handler_methods[0]
         if last_failure is not None:
@@ -678,6 +718,9 @@ class FlextBus(FlextMixins):
             )
             config_data["middleware_id"] = middleware_id
 
+        # Ensure middleware_id is a string
+        middleware_id_str = str(middleware_id)
+
         config_data.setdefault("middleware_type", type(middleware).__name__)
         config_data.setdefault("enabled", True)
         config_data.setdefault("order", len(self._middleware))
@@ -685,7 +728,7 @@ class FlextBus(FlextMixins):
         # Store both middleware and config
         self._middleware.append(config_data)
         # Also store the actual middleware instance using the resolved ID
-        self._middleware_instances[middleware_id] = middleware
+        self._middleware_instances[middleware_id_str] = middleware
 
         self.logger.info(
             "Middleware added to pipeline",
@@ -712,7 +755,7 @@ class FlextBus(FlextMixins):
             command_type: The command type or name to unregister.
 
         Returns:
-            bool: True if handler was removed, False otherwise
+            FlextResult[None]: Success if handler was removed, failure otherwise
 
         """
         for key in list(self._handlers.keys()):
@@ -721,14 +764,19 @@ class FlextBus(FlextMixins):
             if isinstance(key_name, str):
                 candidate_names.add(key_name)
 
-            direct_match = isinstance(command_type, type) and key == command_type
+            # Direct match only if both are types (not str and type comparison)
+            direct_match = (
+                isinstance(command_type, type)
+                and isinstance(key, type)
+                and key == command_type
+            )
             command_names: set[str] = {str(command_type)}
             command_name_attr = getattr(command_type, "__name__", None)
             if isinstance(command_name_attr, str):
                 command_names.add(command_name_attr)
             normalized_command = self._normalize_command_key(command_type)
-            if isinstance(normalized_command, str):
-                command_names.add(normalized_command)
+            # normalized_command is always a str from _normalize_command_key
+            command_names.add(normalized_command)
 
             if direct_match or candidate_names.intersection(command_names):
                 del self._handlers[key]
@@ -739,9 +787,9 @@ class FlextBus(FlextMixins):
                     command_type=normalized_command,
                     remaining_handlers=len(self._handlers),
                 )
-                return True
+                return FlextResult[None].ok(None)
 
-        return False
+        return FlextResult[None].fail(f"Handler for {command_type} not found")
 
     def send_command(self, command: object) -> FlextResult[object]:
         """Compatibility shim that delegates to :meth:`execute`.

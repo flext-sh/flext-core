@@ -14,9 +14,9 @@ import inspect
 import logging
 import random
 import time
-from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
+from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine, Iterable
 from contextlib import asynccontextmanager, suppress
-from typing import Protocol, TypeGuard
+from typing import Protocol, TypeGuard, cast
 
 import pytest
 
@@ -427,7 +427,7 @@ class FlextTestsAsyncs:
         # Normalize list-like side effects
         sequence: FlextTypes.Core.List | None = None
         if isinstance(side_effect, (list, tuple)):
-            sequence = list(side_effect)
+            sequence = list(cast("Iterable[object]", side_effect))
 
         async def async_mock(*args: object, **kwargs: object) -> object:
             """async_mock method."""
@@ -442,7 +442,7 @@ class FlextTestsAsyncs:
             if isinstance(side_effect, Exception):
                 raise side_effect
             if callable(side_effect):
-                result = side_effect(*args, **kwargs)
+                result = cast("Callable[..., object]", side_effect)(*args, **kwargs)
                 if asyncio.iscoroutine(result):
                     return await result
                 return result
@@ -670,11 +670,11 @@ class FlextTestsAsyncs:
     ) -> list[object]:
         """Run the same async function concurrently and return results."""
         # Create coroutines and ensure they are proper coroutines
-        coroutines = []
+        coroutines: list[Coroutine[object, object, object]] = []
         for _ in range(concurrent_count):
             result = func()
             if asyncio.iscoroutine(result):
-                coroutines.append(result)
+                coroutines.append(cast("Coroutine[object, object, object]", result))
             else:
                 # Wrap non-coroutine awaitables
                 async def _wrapper(aw: Awaitable[object] = result) -> object:

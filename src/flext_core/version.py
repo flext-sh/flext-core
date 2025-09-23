@@ -73,6 +73,7 @@ class FlextVersionManager:
             recommendations: list[str],
         ) -> None:
             """Capture modernization-focused compatibility findings."""
+            super().__init__()
             self.is_compatible = is_compatible
             self.current_version = current_version
             self.required_version = required_version

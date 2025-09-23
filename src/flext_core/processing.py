@@ -242,13 +242,12 @@ class FlextProcessing:
             timeout_seconds = getattr(
                 config, "timeout_seconds", FlextProcessing.Config.get_default_timeout()
             )
-            return (
-                FlextResult[object]
-                .ok(None)
-                .with_timeout(
-                    timeout_seconds,
-                    lambda _: self.execute(config.handler_name, config.input_data),
-                )
+
+            # Create a dummy success result with valid data for timeout operation
+            dummy_result = FlextResult[str].ok("dummy")
+            return dummy_result.with_timeout(
+                timeout_seconds,
+                lambda _: self.execute(config.handler_name, config.input_data),
             )
 
         def execute_with_fallback(
@@ -330,9 +329,11 @@ class FlextProcessing:
 
             """
             if validator:
-                return validator(registration.handler) >> (
-                    lambda _: self.register(registration)
-                )
+
+                def register_handler(_: object) -> FlextResult[None]:
+                    return self.register(registration)
+
+                return validator(registration.handler) >> register_handler
             return self.register(registration)
 
     class Pipeline:
@@ -377,17 +378,19 @@ class FlextProcessing:
                 FlextResult[object]: Result of conditional processing.
 
             """
-            return FlextResult[dict[str, object]].ok(request.data).when(condition) >> (
-                cast(
-                    "Callable[[dict[str, object]], FlextResult[object]]",
-                    lambda data: self.process(
-                        FlextModels.ProcessingRequest(
-                            data=cast("dict[str, object]", data),
-                            context=request.context,
-                            timeout_seconds=request.timeout_seconds,
-                        )
-                    ),
+
+            def process_data(data: dict[str, object]) -> FlextResult[object]:
+                return self.process(
+                    FlextModels.ProcessingRequest(
+                        data=data,
+                        context=request.context,
+                        timeout_seconds=request.timeout_seconds,
+                    )
                 )
+
+            return (
+                FlextResult[dict[str, object]].ok(request.data).when(condition)
+                >> process_data
             )
 
         def process_with_timeout(
@@ -523,13 +526,14 @@ class FlextProcessing:
                         # Explicitly raise the error to be caught by from_exception wrapper
                         msg = f"Pipeline step failed: {result.error}"
                         raise RuntimeError(msg)
-                    step_result = result.value_or_none
+                    step_result: object | None = cast(
+                        "object | None",
+                        getattr(cast("object", result), "value_or_none", None),
+                    )
                     if step_result is None:
                         msg = "Pipeline step returned None despite success"
-                        raise RuntimeError(
-                            msg
-                        )
-                    return cast("object", step_result)
+                        raise RuntimeError(msg)
+                    return step_result
                 return result
 
             # Handle dictionary merging
@@ -603,6 +607,10 @@ class FlextProcessing:
                 """
                 result = f"Handled by {self.name}: {request}"
                 return FlextResult[str].ok(result)
+
+            def __call__(self, request: object) -> FlextResult[str]:
+                """Make handler callable by delegating to handle method."""
+                return self.handle(request)
 
     class Management:
         """Handler management utilities."""
@@ -699,11 +707,11 @@ class FlextProcessing:
                 result = f"Chain handled by {self.name}: {request}"
                 return FlextResult[object].ok(result)
 
-            def can_handle(self, message_type: object) -> bool:
+            def can_handle(self, _message_type: object) -> bool:
                 """Check if handler can process this message type.
 
                 Args:
-                    message_type: The message type to check
+                    _message_type: The message type to check (unused in generic handler)
 
                 Returns:
                     bool: True since this is a generic example handler

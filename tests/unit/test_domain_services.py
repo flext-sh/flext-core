@@ -1,4 +1,4 @@
-"""Fixed comprehensive tests for FlextDomainService to achieve 100% coverage.
+"""Fixed comprehensive tests for FlextService to achieve 100% coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,26 +11,25 @@ import pytest
 from pydantic import BaseModel, Field, ValidationError
 
 from flext_core import (
-    FlextDomainService,
     FlextMixins,
     FlextModels,
     FlextResult,
-    FlextTypes,
+    FlextService,
 )
 
 
 # Test Domain Service Implementations
-class SampleUserService(FlextDomainService[FlextTypes.Core.Headers]):
+class SampleUserService(FlextService[object]):
     """Sample service for user operations used in tests."""
 
-    def execute(self) -> FlextResult[FlextTypes.Core.Headers]:
+    def execute(self) -> FlextResult[object]:
         """Execute user operation.
 
         Returns:
-            FlextResult[FlextTypes.Core.Headers]: Success with user headers
+            FlextResult[object]: Success with user headers
 
         """
-        return FlextResult[FlextTypes.Core.Headers].ok(
+        return FlextResult[object].ok(
             {
                 "user_id": "default_123",
                 "email": "test@example.com",
@@ -38,7 +37,7 @@ class SampleUserService(FlextDomainService[FlextTypes.Core.Headers]):
         )
 
 
-class SampleComplexService(FlextDomainService[str]):
+class SampleComplexService(FlextService[object]):
     """Sample service with complex validation and operations used in tests."""
 
     name: str = "default_name"
@@ -85,21 +84,21 @@ class SampleComplexService(FlextDomainService[str]):
             return FlextResult[None].fail("Value too large")
         return FlextResult[None].ok(None)
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> FlextResult[object]:
         """Execute complex operation."""
         if not self.name:
-            return FlextResult[str].fail("Name is required")
+            return FlextResult[object].fail("Name is required")
         if self.value < 0:
-            return FlextResult[str].fail("Value must be non-negative")
+            return FlextResult[object].fail("Value must be non-negative")
         if len(self.name) > 50:
-            return FlextResult[str].fail("Name too long")
+            return FlextResult[object].fail("Name too long")
         if self.value > 1000:
-            return FlextResult[str].fail("Value too large")
+            return FlextResult[object].fail("Value too large")
 
-        return FlextResult[str].ok(f"Processed: {self.name} with value {self.value}")
+        return FlextResult[object].ok(f"Processed: {self.name} with value {self.value}")
 
 
-class SampleFailingService(FlextDomainService[None]):
+class SampleFailingService(FlextService[None]):
     """Sample service that fails validation, used in tests."""
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -111,7 +110,7 @@ class SampleFailingService(FlextDomainService[None]):
         return FlextResult[None].fail("Execution failed")
 
 
-class SampleExceptionService(FlextDomainService[str]):
+class SampleExceptionService(FlextService[str]):
     """Sample service that raises exceptions, used in tests."""
 
     should_raise: bool = False
@@ -139,7 +138,7 @@ class SampleExceptionService(FlextDomainService[str]):
         return FlextResult[str].ok("Success")
 
 
-class ComplexTypeService(FlextDomainService[dict[str, object]]):
+class ComplexTypeService(FlextService[dict[str, object]]):
     """Test service with complex types for testing."""
 
     data: dict[str, object] = Field(default_factory=dict)
@@ -154,12 +153,12 @@ class ComplexTypeService(FlextDomainService[dict[str, object]]):
 
 
 class TestDomainServicesFixed:
-    """Fixed comprehensive tests for FlextDomainService."""
+    """Fixed comprehensive tests for FlextService."""
 
     def test_basic_service_creation(self) -> None:
         """Test basic domain service creation."""
         service = SampleUserService()
-        assert isinstance(service, FlextDomainService)
+        assert isinstance(service, FlextService)
         # Ensure the service exposes Pydantic model configuration
         assert isinstance(service.model_config, dict)
         assert service.model_config.get("validate_assignment") is True
@@ -177,7 +176,7 @@ class TestDomainServicesFixed:
         """Test that execute method is abstract."""
 
         # Create a concrete implementation to test abstract behavior
-        class ConcreteService(FlextDomainService[str]):
+        class ConcreteService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult.ok("test")
 
@@ -189,7 +188,7 @@ class TestDomainServicesFixed:
         service = SampleUserService()
         result = service.execute()
 
-        assert result.success is True
+        assert result.is_success is True
         data = result.unwrap()
         assert data["user_id"] == "default_123"
         assert data["email"] == "test@example.com"
@@ -219,7 +218,7 @@ class TestDomainServicesFixed:
         """Test default business rules validation."""
         service = SampleUserService()
         result = service.validate_business_rules()
-        assert result.success is True
+        assert result.is_success is True
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test validate_business_rules with custom success."""
@@ -252,7 +251,7 @@ class TestDomainServicesFixed:
         """Test default configuration validation."""
         service = SampleUserService()
         result = service.validate_config()
-        assert result.success is True
+        assert result.is_success is True
 
     def test_validate_config_custom_success(self) -> None:
         """Test validate_config with custom success."""
@@ -343,7 +342,7 @@ class TestDomainServicesFixed:
         assert "Operation failed" in result.error
 
     def test_execute_operation_value_error(self) -> None:
-        """Test execute_operation - Note: FlextDomainService.execute_operation calls self.execute(), not the provided callable."""
+        """Test execute_operation - Note: FlextService.execute_operation calls self.execute(), not the provided callable."""
         service = SampleUserService()
 
         def value_error_operation() -> str:
@@ -588,7 +587,7 @@ class TestDomainServicesFixed:
         assert result.is_failure
         assert (
             result.error is not None
-            and "Configuration validation failed" in result.error
+            and "Validation failed (pre-execution)" in result.error
         )
 
     def test_service_model_config(self) -> None:
@@ -633,10 +632,10 @@ class TestDomainServicesFixed:
 class TestDomainServiceStaticMethods:
     """Tests for domain service static methods and configuration."""
 
-    def test_configure_domain_services_system(self) -> None:
+    def test_configure_service_system(self) -> None:
         """Test domain service configuration through inheritance."""
 
-        class TestDomainService(FlextDomainService[str]):
+        class TestDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Executed successfully")
 
@@ -648,10 +647,10 @@ class TestDomainServiceStaticMethods:
         assert result.is_success
         assert result.unwrap() == "Executed successfully"
 
-    def test_configure_domain_services_system_invalid_config(self) -> None:
+    def test_configure_service_system_invalid_config(self) -> None:
         """Test domain service with invalid configuration."""
 
-        class InvalidDomainService(FlextDomainService[str]):
+        class InvalidDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].fail("Invalid operation")
 
@@ -661,10 +660,10 @@ class TestDomainServiceStaticMethods:
         assert result.is_failure
         assert result.error is not None
 
-    def test_get_domain_services_system_config(self) -> None:
+    def test_get_service_system_config(self) -> None:
         """Test domain service configuration access."""
 
-        class ConfigDomainService(FlextDomainService[str]):
+        class ConfigDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Configured service")
 
@@ -674,14 +673,14 @@ class TestDomainServiceStaticMethods:
         assert isinstance(info, dict)
         assert "service_type" in info
 
-    def test_create_environment_domain_services_config(self) -> None:
+    def test_create_environment_service_config(self) -> None:
         """Test domain service environment configuration."""
 
-        class DevDomainService(FlextDomainService[str]):
+        class DevDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Dev: test")
 
-        class ProdDomainService(FlextDomainService[str]):
+        class ProdDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Prod: test")
 
@@ -697,10 +696,10 @@ class TestDomainServiceStaticMethods:
         assert result.is_success
         assert "Prod: test" in result.unwrap()
 
-    def test_optimize_domain_services_performance(self) -> None:
+    def test_optimize_service_performance(self) -> None:
         """Test domain service performance optimization."""
 
-        class OptimizedDomainService(FlextDomainService[str]):
+        class OptimizedDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 # Simulate optimized execution
                 return FlextResult[str].ok("Optimized: performance_test")
@@ -710,10 +709,10 @@ class TestDomainServiceStaticMethods:
         assert result.is_success
         assert "Optimized: performance_test" in result.unwrap()
 
-    def test_optimize_domain_services_performance_invalid_config(self) -> None:
+    def test_optimize_service_performance_invalid_config(self) -> None:
         """Test domain service with invalid operation."""
 
-        class ErrorDomainService(FlextDomainService[str]):
+        class ErrorDomainService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 # Simulate invalid operation for testing
                 return FlextResult[str].fail("Invalid operation")
