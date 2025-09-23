@@ -14,8 +14,8 @@ from flext_core import (
     FlextContext,
     FlextCqrs,
     FlextDispatcher,
-    FlextDispatcherRegistry,
-    FlextDomainService,
+    FlextRegistry,
+    FlextService,
     FlextExceptions,
     FlextHandlers,
     FlextLogger,
@@ -87,12 +87,12 @@ with FlextContext.Operation.scope("import-customers"):
     # Dispatch or log; handlers and loggers extract the metadata automatically
 ```
 
-### `FlextDomainService`
+### `FlextService`
 
 ```python
-from flext_core import FlextDomainService, FlextResult
+from flext_core import FlextService, FlextResult
 
-class ActivateAccount(FlextDomainService[FlextResult[None]]):
+class ActivateAccount(FlextService[FlextResult[None]]):
     def execute(self, account_id: str) -> FlextResult[None]:
         if not account_id:
             return FlextResult[None].fail("missing id")
@@ -105,10 +105,10 @@ class ActivateAccount(FlextDomainService[FlextResult[None]]):
 ## Dispatcher Registry Helpers
 
 ```python
-from flext_core import FlextDispatcher, FlextDispatcherRegistry, FlextHandlers, FlextResult
+from flext_core import FlextDispatcher, FlextRegistry, FlextHandlers, FlextResult
 
 dispatcher = FlextDispatcher()
-registry = FlextDispatcherRegistry(dispatcher)
+registry = FlextRegistry(dispatcher)
 
 class ExampleHandler(FlextHandlers[str, str]):
     def handle(self, message: str) -> FlextResult[str]:
@@ -121,14 +121,15 @@ assert dispatcher.dispatch("modernization").unwrap() == "modernization"
 
 > **Note:** `FlextHandlers` trusts incoming Pydantic models and skips redundant
 > revalidation by default.
-> 
+>
 > There are two ways to enable extra validation:
+>
 > 1. **Constructor flag:** Pass `revalidate_pydantic_messages=True` when instantiating a handler.
 > 2. **Handler config metadata key:** Set the `revalidate_pydantic_messages` key in the handler's config metadata. Accepted string values are `'true'`, `'false'`, `'1'`, `'0'`, `'yes'`, and `'no'` (case-insensitive).
-> 
+>
 > **Precedence:** If both the constructor flag and the metadata key are set, the constructor flag takes precedence.
 
-`FlextDispatcherRegistry.Summary` exposes `registered`, `skipped`, and `errors` lists so CLI and connector packages can produce migration reports.
+`FlextRegistry.Summary` exposes `registered`, `skipped`, and `errors` lists so CLI and connector packages can produce migration reports.
 
 ---
 

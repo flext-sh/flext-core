@@ -13,8 +13,6 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.cqrs import FlextCqrs
 from flext_core.dispatcher import FlextDispatcher
-from flext_core.dispatcher_registry import FlextDispatcherRegistry
-from flext_core.domain_services import FlextDomainService
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
@@ -22,7 +20,9 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.processing import FlextProcessing
 from flext_core.protocols import FlextProtocols
+from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
+from flext_core.service import FlextService
 from flext_core.typings import (
     E,
     F,
@@ -47,8 +47,6 @@ __all__ = [
     "FlextContext",
     "FlextCqrs",
     "FlextDispatcher",
-    "FlextDispatcherRegistry",
-    "FlextDomainService",
     "FlextExceptions",
     "FlextHandlers",
     "FlextLogger",
@@ -56,7 +54,9 @@ __all__ = [
     "FlextModels",
     "FlextProcessing",
     "FlextProtocols",
+    "FlextRegistry",
     "FlextResult",
+    "FlextService",
     "FlextTypes",
     "FlextUtilities",
     "FlextVersionManager",

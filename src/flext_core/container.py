@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import threading
 from collections.abc import Callable
 
@@ -22,7 +23,26 @@ from flext_core.typings import FlextTypes, T
 
 
 class FlextContainer(FlextProtocols.Infrastructure.Configurable):
-    """Global container providing the standardized FLEXT service contract.
+    """Global dependency injection container for the FLEXT ecosystem.
+
+    FlextContainer provides centralized service management using the singleton
+    pattern. Use FlextContainer.get_global() to access the global instance
+    throughout FLEXT applications for consistent dependency injection.
+
+    **ECOSYSTEM USAGE**: Access the global singleton directly:
+        ```python
+        from flext_core import FlextContainer
+
+        container = FlextContainer.get_global()
+        container.register("database", DatabaseService())
+
+        db_result = container.get("database")
+        if db_result.is_success:
+            db = db_result.unwrap()
+        ```
+
+    **UNIFIED ARCHITECTURE**: Single class design with nested helpers following
+    CLAUDE.md standards. All container functionality consolidated here.
 
     Optimized implementation using FlextResult railway patterns for 75% code reduction
     while maintaining identical functionality, API compatibility, and explicit Configurable
@@ -72,6 +92,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         def __init__(self) -> None:
             """Initialize the global container manager."""
+            super().__init__()
             self._container: FlextTypes.Core.Optional[FlextContainer] = None
             self._lock = threading.Lock()
 
@@ -90,23 +111,26 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     def __init__(self) -> None:
         """Initialize container with optimized data structures."""
+        super().__init__()
         # Core service storage with type safety
         self._services: dict[str, object] = {}
         self._factories: dict[str, Callable[[], object]] = {}
 
         # Configuration integration with FlextConfig singleton
-        self._flext_config = FlextConfig.get_global_instance()
-        environment_default = str(
-            getattr(
-                self._flext_config,
-                "environment",
-                FlextConstants.Config.DEFAULT_ENVIRONMENT,
+        self._flext_config: FlextConfig = FlextConfig.get_global_instance()
+        environment_default = (
+            str(
+                getattr(
+                    self._flext_config,
+                    "environment",
+                    FlextConstants.Config.DEFAULT_ENVIRONMENT,
+                )
             )
-        ).strip().lower()
+            .strip()
+            .lower()
+        )
         self._global_config = {
-            "max_workers": int(
-                getattr(self._flext_config, "max_workers", 4)
-            ),
+            "max_workers": int(getattr(self._flext_config, "max_workers", 4)),
             "timeout_seconds": float(
                 getattr(
                     self._flext_config,
@@ -118,7 +142,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         }
         # Extract snapshot from actual FlextConfig instance, if available
         try:
-            from flext_core.config import FlextConfig
             config_instance = FlextConfig.get_global_instance()
             self._flext_config_snapshot = self._extract_config_snapshot(config_instance)
         except Exception:
@@ -175,10 +198,29 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         name: str,
         service: object,
     ) -> FlextResult[None]:
-        """Register service with comprehensive validation and error handling.
+        """Register a service in the FlextContainer.
+
+        Use this method to register services for dependency injection throughout
+        FLEXT applications. Returns FlextResult for explicit error handling.
+
+        Args:
+            name: Service name for later retrieval
+            service: Service instance to register
 
         Returns:
-            FlextResult[None]: Success if registered or failure with error.
+            FlextResult[None]: Success if registered or failure with error details.
+
+        Example:
+            ```python
+            from flext_core import FlextContainer, FlextLogger
+
+            container = FlextContainer.get_global()
+            logger = FlextLogger(__name__)
+
+            result = container.register("logger", logger)
+            if result.is_failure:
+                print(f"Registration failed: {result.error}")
+            ```
 
         """
         return self._validate_service_name(name).flat_map(
@@ -324,8 +366,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         if not isinstance(service, expected_type):
             return FlextResult[T].fail(
-                f"Service type mismatch: expected {expected_type.__name__}, "
-                f"got {type(service).__name__}"
+                f"Service type mismatch: expected {expected_type.__name__}, got {type(service).__name__}"
             )
         return FlextResult[T].ok(service)
 
@@ -497,8 +538,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         try:
-            import inspect
-
             signature = inspect.signature(service_class.__init__)
             dependencies: FlextTypes.Core.Dict = {}
 
@@ -589,8 +628,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         if not isinstance(service, expected_type):
             return FlextResult[T].fail(
-                f"Auto-wired service type mismatch: expected {expected_type.__name__}, "
-                f"got {type(service).__name__}"
+                f"Auto-wired service type mismatch: expected {expected_type.__name__}, got {type(service).__name__}"
             )
 
         return FlextResult[T].ok(service)
@@ -749,60 +787,19 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     validation_result.error or "Config validation failed"
                 )
 
-            normalized_config = self._normalize_config_fields(config)
-            self._finalize_config_values(normalized_config)
-
-            # Create and store global configuration with proper type conversion
-            fallback_max_workers = int(
-                getattr(
-                    self._flext_config,
-                    "max_workers",
-                    self._global_config.get("max_workers", 4),
-                )
-            )
-            fallback_timeout = float(
-                getattr(
-                    self._flext_config,
-                    "timeout_seconds",
-                    self._global_config.get("timeout_seconds", 30.0),
-                )
-            )
-            fallback_environment = str(
-                getattr(
-                    self._flext_config,
-                    "environment",
-                    self._global_config.get("environment", "development"),
-                )
-            )
-
-            max_workers = normalized_config.get("max_workers", fallback_max_workers)
-            timeout_seconds = normalized_config.get(
-                "timeout_seconds", fallback_timeout
-            )
-            environment = normalized_config.get("environment", fallback_environment)
-
-            coerced_max_workers = fallback_max_workers
-            if isinstance(max_workers, (int, float)):
-                candidate_workers = int(max_workers)
-                if candidate_workers > 0:
-                    coerced_max_workers = candidate_workers
-
-            coerced_timeout = fallback_timeout
-            if isinstance(timeout_seconds, (int, float)):
-                candidate_timeout = float(timeout_seconds)
-                if candidate_timeout > 0:
-                    coerced_timeout = candidate_timeout
-
-            if isinstance(environment, str) and environment.strip():
-                coerced_environment = environment.strip().lower()
-            else:
-                coerced_environment = fallback_environment
-
-            self._global_config = {
-                "max_workers": coerced_max_workers,
-                "timeout_seconds": coerced_timeout,
-                "environment": coerced_environment,
+            # Only process the keys that were explicitly provided in config
+            # Don't auto-fill missing keys with defaults as that overwrites user overrides
+            # Use dictionary comprehension with set literal for efficiency
+            allowed_keys = {"max_workers", "timeout_seconds", "environment"}
+            processed_config = {
+                key: value for key, value in config.items() if key in allowed_keys
             }
+
+            # Update user overrides with only the provided values (preserve existing overrides)
+            self._user_overrides.update(processed_config)
+
+            # Rebuild global config from snapshot + user overrides
+            self._global_config = self._build_global_config()
 
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -829,27 +826,36 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         # Create normalized config with defaults from captured FlextConfig
-        fallback_max_workers = int(
-            getattr(
-                self._flext_config,
-                "max_workers",
-                self._global_config.get("max_workers", 4),
-            )
+        max_workers_attr = getattr(
+            self._flext_config,
+            "max_workers",
+            self._global_config.get("max_workers", 4),
         )
-        fallback_timeout = float(
-            getattr(
-                self._flext_config,
-                "timeout_seconds",
-                self._global_config.get("timeout_seconds", 30.0),
-            )
+        fallback_max_workers = (
+            int(max_workers_attr)
+            if isinstance(max_workers_attr, (int, float, str))
+            else 4
         )
-        fallback_environment = str(
-            getattr(
-                self._flext_config,
-                "environment",
-                self._global_config.get("environment", "development"),
-            )
-        ).strip().lower()
+
+        timeout_attr = getattr(
+            self._flext_config,
+            "timeout_seconds",
+            self._global_config.get("timeout_seconds", 30.0),
+        )
+        fallback_timeout = (
+            float(timeout_attr) if isinstance(timeout_attr, (int, float, str)) else 30.0
+        )
+
+        environment_attr = getattr(
+            self._flext_config,
+            "environment",
+            self._global_config.get("environment", "development"),
+        )
+        fallback_environment = (
+            str(environment_attr).strip().lower()
+            if environment_attr is not None
+            else "development"
+        )
 
         normalized = {
             "max_workers": config.get("max_workers", fallback_max_workers),
@@ -898,7 +904,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Merge FlextConfig snapshot and user overrides into final container config."""
         merged: dict[str, object] = {}
         for source in (self._flext_config_snapshot, self._user_overrides):
-            merged.update({key: value for key, value in source.items() if value is not None})
+            merged.update({
+                key: value for key, value in source.items() if value is not None
+            })
 
         normalized = self._normalize_config_fields(merged)
         return self._finalize_config_values(normalized)
@@ -993,10 +1001,30 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     @classmethod
     def get_global(cls) -> FlextContainer:
-        """Get the global container instance.
+        """Get the global FlextContainer singleton instance.
+
+        This is the primary way to access dependency injection throughout the
+        FLEXT ecosystem. Use FlextContainer.get_global() in all modules that
+        need service access for consistent dependency management.
 
         Returns:
-            FlextContainer: The global container instance.
+            FlextContainer: The global container singleton instance.
+
+        Example:
+            ```python
+            from flext_core import FlextContainer
+
+            # Get the global container
+            container = FlextContainer.get_global()
+
+            # Register a service
+            container.register("logger", FlextLogger(__name__))
+
+            # Retrieve a service
+            logger_result = container.get("logger")
+            if logger_result.is_success:
+                logger = logger_result.unwrap()
+            ```
 
         """
         manager = cls._ensure_global_manager()

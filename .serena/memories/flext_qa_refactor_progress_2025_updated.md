@@ -41,7 +41,7 @@
 
 **Lowest Coverage Modules (High Impact)**:
 
-- **`domain_services.py`**: 26% coverage (133 statements, 98 missed)
+- **`service.py`**: 26% coverage (133 statements, 98 missed)
 - **`client.py`**: 30% coverage (214 statements, 149 missed)
 - **`api.py`**: 52% coverage (362 statements, 172 missed)
 - **`cli.py`**: 50% coverage (347 statements, 175 missed)
@@ -68,7 +68,7 @@
 
 ### **Priority 1: Domain Services (26% → 75%+)**
 
-- **File**: `src/flext_cli/domain_services.py`
+- **File**: `src/flext_cli/service.py`
 - **Opportunity**: 98 uncovered statements
 - **Strategy**: Add domain service integration tests
 - **Impact**: +17% total coverage potential

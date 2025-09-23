@@ -28,15 +28,15 @@ from uuid import uuid4
 from flext_core import (
     FlextConfig,
     FlextContext,
-    FlextDomainService,
     FlextLogger,
     FlextResult,
+    FlextService,
 )
 
 # ========== CONTEXT SERVICE ==========
 
 
-class ContextManagementService(FlextDomainService[dict[str, str]]):
+class ContextManagementService(FlextService[dict[str, str]]):
     """Service demonstrating ALL FlextContext patterns."""
 
     def __init__(self) -> None:
@@ -46,7 +46,7 @@ class ContextManagementService(FlextDomainService[dict[str, str]]):
         self._config = FlextConfig.get_global_instance()
 
     def execute(self) -> FlextResult[dict[str, str]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info(
             "Executing context demo", extra={"data": {"demo": "context_management"}}
         )

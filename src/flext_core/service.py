@@ -1,0 +1,650 @@
+"""Domain service abstractions supporting the 1.0.0 alignment pillar.
+
+These bases codify the service ergonomics described in ``README.md`` and
+``docs/architecture.md``: immutable models, context-aware logging, and
+``FlextResult`` contracts that remain stable throughout the 1.x lifecycle.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import signal
+import time
+from abc import ABC, abstractmethod
+from collections.abc import Generator, Iterable, Mapping
+from contextlib import contextmanager
+from datetime import UTC, datetime
+from typing import cast
+
+from pydantic import ConfigDict
+
+from flext_core.constants import FlextConstants
+from flext_core.mixins import FlextMixins
+from flext_core.models import FlextModels
+from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
+
+
+class FlextService[TDomainResult](
+    FlextModels.ArbitraryTypesModel,
+    FlextMixins.Serializable,
+    FlextMixins.Loggable,
+    ABC,
+):
+    """Domain service base using railway patterns with Pydantic models.
+
+    Provides unified service pattern for FLEXT ecosystem:
+    - FlextResult[T] error handling with railway patterns
+    - Pydantic Generic[T] for type-safe domain operations
+    - Complete type annotations for ecosystem consistency
+    - Nested helper classes instead of loose functions
+    - Direct implementation without delegation layers
+
+    Generic[TDomainResult] provides type safety for execute() return types.
+    """
+
+    model_config = ConfigDict(
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
+        use_enum_values=True,
+    )
+
+    def __init__(self, **data: object) -> None:
+        """Initialize domain service with Pydantic validation."""
+        super().__init__(**data)
+
+    # =============================================================================
+    # ABSTRACT METHODS - Must be implemented by subclasses
+    # =============================================================================
+
+    @abstractmethod
+    def execute(self) -> FlextResult[TDomainResult]:
+        """Execute the main domain operation.
+
+        Returns:
+            FlextResult[TDomainResult]: Success with domain result or failure with error
+
+        """
+
+    # =============================================================================
+    # CORE DOMAIN OPERATIONS
+    # =============================================================================
+
+    def execute_with_full_validation(
+        self, request: FlextModels.DomainServiceExecutionRequest
+    ) -> FlextResult[TDomainResult]:
+        """Execute with comprehensive validation using DomainServiceExecutionRequest model.
+
+        Args:
+            request: DomainServiceExecutionRequest containing validation settings and context
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with validation error
+
+        """
+        validation_result = self.validate_with_request(request)
+        if validation_result.is_failure:
+            return FlextResult[TDomainResult].fail(
+                f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
+                if validation_result.error
+                else FlextConstants.Messages.VALIDATION_FAILED
+            )
+
+        return self.execute()
+
+    def is_valid(self) -> bool:
+        """Check if the domain service is in a valid state.
+
+        Returns:
+            bool: True if valid, False otherwise
+
+        """
+        try:
+            return self.validate_business_rules().is_success
+        except Exception:
+            return False
+
+    def get_service_info(self) -> dict[str, object]:
+        """Get service information for diagnostics.
+
+        Returns:
+            dict[str, object]: Service information including type and configuration
+
+        """
+        return {"service_type": self.__class__.__name__}
+
+    # =============================================================================
+    # VALIDATION METHODS
+    # =============================================================================
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for the domain service.
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error details
+
+        """
+        return FlextResult[None].ok(None)
+
+    def validate_config(self) -> FlextResult[None]:
+        """Validate service configuration.
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error details
+
+        """
+        return FlextResult[None].ok(None)
+
+    def validate_with_request(
+        self, request: FlextModels.DomainServiceExecutionRequest
+    ) -> FlextResult[None]:
+        """Validate using DomainServiceExecutionRequest model.
+
+        Args:
+            request: DomainServiceExecutionRequest containing validation settings
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with validation error
+
+        """
+        # Validate business rules if requested
+        if getattr(request, "enable_validation", True):
+            business_result = self.validate_business_rules()
+            if business_result.is_failure:
+                return FlextResult[None].fail(
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}"
+                    f" (business rules): {business_result.error}"
+                )
+
+        return FlextResult[None].ok(None)
+
+    # =============================================================================
+    # EXECUTION METHODS
+    # =============================================================================
+
+    def execute_operation(
+        self,
+        operation: FlextModels.OperationExecutionRequest,
+    ) -> FlextResult[TDomainResult]:
+        """Execute operation using OperationExecutionRequest model.
+
+        Args:
+            operation: OperationExecutionRequest containing operation settings
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with error
+
+        """
+        operation_name = getattr(operation, "operation_name", "operation")
+
+        if getattr(operation, "enable_validation", True):
+            config_validation = self.validate_config()
+            if config_validation.is_failure:
+                return FlextResult[TDomainResult].fail(
+                    f"{FlextConstants.Messages.VALIDATION_FAILED} (pre-execution)"
+                    + (
+                        f": {config_validation.error}"
+                        if config_validation.error
+                        else ""
+                    )
+                )
+
+            business_validation = self.validate_business_rules()
+            if business_validation.is_failure:
+                return FlextResult[TDomainResult].fail(
+                    f"Business rules validation failed: {business_validation.error}"
+                )
+
+        raw_arguments = getattr(operation, "arguments", None)
+        if raw_arguments is None:
+            positional_arguments: tuple[object, ...] = ()
+        elif isinstance(raw_arguments, (list, tuple, set)):
+            positional_arguments = tuple(cast("Iterable[object]", raw_arguments))
+        elif isinstance(raw_arguments, dict):
+            if "args" in raw_arguments:
+                nested_args: object = cast("dict[str, object]", raw_arguments).get(
+                    "args", None
+                )
+                if isinstance(nested_args, (list, tuple, set)):
+                    positional_arguments = tuple(cast("Iterable[object]", nested_args))
+                elif nested_args is None:
+                    positional_arguments = ()
+                else:
+                    positional_arguments = (nested_args,)
+            else:
+                positional_arguments = tuple(
+                    cast("Iterable[object]", raw_arguments.values())
+                )
+        else:
+            positional_arguments = (raw_arguments,)
+
+        raw_keyword_arguments = getattr(operation, "keyword_arguments", None)
+        if raw_keyword_arguments is None:
+            keyword_arguments: dict[str, object] = {}
+        elif isinstance(raw_keyword_arguments, dict):
+            keyword_arguments = dict(
+                cast("Mapping[str, object]", raw_keyword_arguments)
+            )
+        else:
+            try:
+                keyword_arguments = dict(raw_keyword_arguments)
+            except Exception as exc:  # pragma: no cover - defensive branch
+                return FlextResult[TDomainResult].fail(
+                    f"Invalid keyword arguments for operation '{operation_name}': {exc}"
+                )
+
+        retry_config_data = getattr(operation, "retry_config", {}) or {}
+        retry_config: FlextModels.RetryConfiguration | None
+        if retry_config_data:
+            try:
+                retry_config = FlextModels.RetryConfiguration(**retry_config_data)
+            except Exception as exc:
+                return FlextResult[TDomainResult].fail(
+                    f"Invalid retry configuration for operation '{operation_name}': {exc}"
+                )
+        else:
+            retry_config = None
+
+        max_attempts = (
+            max(1, int(retry_config.max_attempts)) if retry_config is not None else 1
+        )
+
+        base_delay = (
+            float(retry_config.initial_delay_seconds)
+            if retry_config is not None
+            else 0.0
+        )
+        base_delay = max(0.0, base_delay)
+        max_delay_seconds = (
+            float(retry_config.max_delay_seconds)
+            if retry_config is not None
+            else base_delay
+        )
+        max_delay_seconds = max(base_delay, max_delay_seconds)
+        backoff_multiplier = (
+            float(retry_config.backoff_multiplier) if retry_config is not None else 1.0
+        )
+        if backoff_multiplier <= 0:
+            backoff_multiplier = 1.0
+        exponential_backoff = bool(
+            retry_config.exponential_backoff if retry_config is not None else False
+        )
+        retry_exception_filters = (
+            tuple(retry_config.retry_on_exceptions)
+            if retry_config is not None and retry_config.retry_on_exceptions
+            else ()
+        )
+
+        raw_timeout = getattr(operation, "timeout_seconds", None)
+        try:
+            timeout_seconds = float(raw_timeout) if raw_timeout is not None else 0.0
+        except (TypeError, ValueError):  # pragma: no cover - defensive branch
+            timeout_seconds = 0.0
+        if timeout_seconds <= 0:
+            timeout_seconds = 0.0
+
+        def call_operation() -> object:
+            return operation.operation_callable(
+                *positional_arguments,
+                **keyword_arguments,
+            )
+
+        def call_with_timeout() -> object:
+            if timeout_seconds <= 0:
+                return call_operation()
+
+            timeout_message = f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
+
+            def timeout_handler(_signum: int, _frame: object) -> None:
+                raise TimeoutError(timeout_message)
+
+            previous_handler = signal.getsignal(signal.SIGALRM)
+            try:
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                return call_operation()
+            finally:
+                signal.setitimer(signal.ITIMER_REAL, 0)
+                signal.signal(signal.SIGALRM, previous_handler)
+
+        def should_retry(exc: Exception, attempt: int) -> bool:
+            if attempt >= max_attempts:
+                return False
+            if retry_config is None:
+                return False
+            if not retry_exception_filters:
+                return True
+            for allowed in retry_exception_filters:
+                if isinstance(exc, allowed):
+                    return True
+                if isinstance(allowed, str):
+                    msg = (
+                        f"String-based exception filter '{allowed}' is not supported. "
+                        "Please use exception classes instead."
+                    )
+                    raise TypeError(msg)
+            return False
+
+        current_delay = base_delay
+        last_exception: Exception | None = None
+
+        attempt = 1
+        while attempt <= max_attempts:
+            try:
+                result = call_with_timeout()
+                return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+            except Exception as exc:
+                last_exception = exc
+                if not should_retry(exc, attempt):
+                    message = str(exc) or exc.__class__.__name__
+                    if isinstance(exc, TimeoutError) and timeout_seconds > 0:
+                        return FlextResult[TDomainResult].fail(message)
+                    return FlextResult[TDomainResult].fail(
+                        f"Operation '{operation_name}' failed: {message}"
+                    )
+
+                if retry_config is not None and current_delay > 0:
+                    time.sleep(current_delay)
+
+                if retry_config is not None:
+                    if exponential_backoff:
+                        if current_delay <= 0:
+                            current_delay = base_delay
+                        else:
+                            next_delay = current_delay * backoff_multiplier
+                            if max_delay_seconds > 0:
+                                next_delay = min(next_delay, max_delay_seconds)
+                            current_delay = max(base_delay, next_delay)
+                    else:
+                        current_delay = base_delay
+
+                attempt += 1
+
+        if last_exception is not None:
+            message = str(last_exception) or last_exception.__class__.__name__
+            if isinstance(last_exception, TimeoutError) and timeout_seconds > 0:
+                return FlextResult[TDomainResult].fail(message)
+            return FlextResult[TDomainResult].fail(
+                f"Operation '{operation_name}' failed: {message}"
+            )
+
+        return FlextResult[TDomainResult].fail(
+            f"Operation '{operation_name}' failed without explicit error"
+        )
+
+    def execute_with_request(
+        self, _request: FlextModels.DomainServiceExecutionRequest
+    ) -> FlextResult[TDomainResult]:
+        """Execute with DomainServiceExecutionRequest model containing execution settings.
+
+        Args:
+            request: DomainServiceExecutionRequest containing execution configuration
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with error
+
+        """
+        # Execute the operation
+        return self.execute()
+
+    def execute_with_timeout(self, timeout_seconds: int) -> FlextResult[TDomainResult]:
+        """Execute with timeout constraint.
+
+        Args:
+            timeout_seconds: Maximum execution time in seconds
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with timeout error
+
+        """
+
+        @contextmanager
+        def timeout_context(seconds: int) -> Generator[None]:
+            def timeout_handler(_signum: int, _frame: object) -> None:
+                msg = f"Operation timed out after {seconds} seconds"
+                raise TimeoutError(msg)
+
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(seconds)
+            try:
+                yield
+            finally:
+                signal.alarm(0)
+
+        try:
+            with timeout_context(timeout_seconds):
+                return self.execute()
+        except TimeoutError as e:
+            return FlextResult[TDomainResult].fail(str(e))
+
+    def execute_conditionally(
+        self, condition: FlextModels.ConditionalExecutionRequest
+    ) -> FlextResult[TDomainResult]:
+        """Execute only if condition is met using ConditionalExecutionRequest model.
+
+        Args:
+            condition: ConditionalExecutionRequest containing condition logic
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result, failure, or skipped
+
+        """
+        # Check condition by looking at enable flags
+        if not getattr(condition, "enable_execution", True):
+            return FlextResult[TDomainResult].fail("Execution condition not met")
+
+        # Execute if condition is met
+        return self.execute()
+
+    def execute_batch_with_request(
+        self, request: FlextModels.DomainServiceBatchRequest
+    ) -> FlextResult[list[TDomainResult]]:
+        """Execute batch operations using DomainServiceBatchRequest model.
+
+        Args:
+            request: DomainServiceBatchRequest containing batch execution settings
+
+        Returns:
+            FlextResult[list[TDomainResult]]: Success with results list or failure with error
+
+        """
+        results: list[TDomainResult] = []
+        errors: list[str] = []
+
+        for i in range(request.batch_size):
+            try:
+                result = self.execute()
+                if result.is_success:
+                    results.append(result.value)
+                else:
+                    errors.append(f"Batch item {i}: {result.error}")
+                    if not getattr(request, "continue_on_failure", False):
+                        break
+            except Exception as e:
+                errors.append(f"Batch item {i}: {e}")
+                if not getattr(request, "continue_on_failure", False):
+                    break
+
+        if errors and not getattr(request, "continue_on_failure", False):
+            return FlextResult[list[TDomainResult]].fail(
+                f"Batch execution failed: {'; '.join(errors)}"
+            )
+
+        return FlextResult[list[TDomainResult]].ok(results)
+
+    def execute_with_metrics_request(
+        self, _request: FlextModels.DomainServiceMetricsRequest
+    ) -> FlextResult[TDomainResult]:
+        """Execute with metrics using DomainServiceMetricsRequest model.
+
+        Args:
+            request: DomainServiceMetricsRequest containing metrics collection configuration
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with metrics error
+
+        """
+        start_time = time.time()
+        metrics_data: dict[str, object] = {}
+
+        try:
+            # Collect pre-execution metrics
+            metrics_data["start_time"] = start_time
+            metrics_data["service_type"] = self.__class__.__name__
+
+            # Execute operation
+            result = self.execute()
+
+            # Collect post-execution metrics
+            end_time = time.time()
+            metrics_data["end_time"] = end_time
+            metrics_data["execution_time"] = end_time - start_time
+            metrics_data["success"] = result.is_success
+
+            return result
+
+        except Exception as e:
+            end_time = time.time()
+            metrics_data["end_time"] = end_time
+            metrics_data["execution_time"] = end_time - start_time
+            metrics_data["success"] = False
+            metrics_data["error"] = str(e)
+
+            return FlextResult[TDomainResult].fail(f"Metrics execution error: {e}")
+
+    def execute_with_resource_request(
+        self, request: FlextModels.DomainServiceResourceRequest
+    ) -> FlextResult[TDomainResult]:
+        """Execute with resource management using DomainServiceResourceRequest model.
+
+        Args:
+            request: DomainServiceResourceRequest containing resource management configuration
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with resource error
+
+        """
+        acquired_resources: list[str] = []
+
+        try:
+            # Acquire resources
+            required_resources = getattr(request, "required_resources", [])
+            acquired_resources = list(required_resources)
+
+            # Execute with acquired resources
+            return self.execute()
+
+        except Exception as e:
+            return FlextResult[TDomainResult].fail(f"Resource execution error: {e}")
+
+        finally:
+            # Always cleanup resources
+            for _resource_id in acquired_resources:
+                # Simulate resource cleanup
+                pass
+
+    def validate_and_transform(
+        self, config: FlextModels.ValidationConfiguration
+    ) -> FlextResult[TDomainResult]:
+        """Validate and transform using ValidationConfiguration model.
+
+        Args:
+            config: ValidationConfiguration containing validation and transformation settings
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with validation error
+
+        """
+        # Perform validation based on config
+        if getattr(config, "enable_validation", True):
+            validation_result = self.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult[TDomainResult].fail(
+                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
+                    if validation_result.error
+                    else FlextConstants.Messages.VALIDATION_FAILED
+                )
+
+        # Execute after successful validation
+        return self.execute()
+
+    # =============================================================================
+    # NESTED HELPER CLASSES - Following FLEXT unified class pattern
+    # =============================================================================
+
+    class _ValidationHelper:
+        """Nested validation helper - no loose functions."""
+
+        @staticmethod
+        def validate_domain_rules(_service: object) -> FlextResult[None]:
+            """Validate domain-specific business rules."""
+            # Default implementation - subclasses can override
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_state_consistency(_service: object) -> FlextResult[None]:
+            """Validate state consistency."""
+            # Default implementation - subclasses can override
+            return FlextResult[None].ok(None)
+
+    class _ExecutionHelper:
+        """Nested execution helper - no loose functions."""
+
+        @staticmethod
+        def prepare_execution_context(service: object) -> dict[str, object]:
+            """Prepare execution context for the service."""
+            return {
+                "service_type": service.__class__.__name__,
+                "timestamp": datetime.now(UTC),
+            }
+
+        @staticmethod
+        def cleanup_execution_context(
+            service: object, context: dict[str, object]
+        ) -> None:
+            """Cleanup execution context after service execution."""
+            # Default implementation - can be extended by subclasses
+
+    class _MetadataHelper:
+        """Nested metadata helper - no loose functions."""
+
+        @staticmethod
+        def extract_service_metadata(service: object) -> dict[str, object]:
+            """Extract metadata from service instance."""
+            metadata: dict[str, object] = {
+                "service_class": service.__class__.__name__,
+                "service_module": service.__class__.__module__,
+            }
+
+            # Add timestamp information if available
+            if hasattr(service, "created_at"):
+                metadata["created_at"] = getattr(service, "created_at")
+            if hasattr(service, "updated_at"):
+                metadata["updated_at"] = getattr(service, "updated_at")
+
+            return metadata
+
+        @staticmethod
+        def format_service_info(_service: object, metadata: dict[str, object]) -> str:
+            """Format service information for display."""
+            return f"Service: {metadata.get('service_class', 'Unknown')} ({metadata.get('service_module', 'Unknown')})"
+
+    # =============================================================================
+    # SERIALIZATION METHODS - Use FlextMixins pattern
+    # =============================================================================
+
+    def to_json_instance(self) -> str:
+        """Convert service to JSON using FlextMixins serialization."""
+        serialization_request = FlextModels.SerializationRequest(
+            data=self,
+            use_model_dump=True,
+            pretty_print=True,
+        )
+        return FlextMixins.to_json(serialization_request)
+
+
+__all__: FlextTypes.Core.StringList = [
+    "FlextService",
+]

@@ -28,16 +28,16 @@ from typing import cast
 
 from flext_core import (
     FlextConstants,
-    FlextDomainService,
     FlextLogger,
     FlextResult,
+    FlextService,
     FlextUtilities,
 )
 
 # ========== UTILITIES SERVICE ==========
 
 
-class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
+class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextUtilities patterns."""
 
     def __init__(self) -> None:
@@ -47,7 +47,7 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
         self._cache: dict[str, object] = {}
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info("Executing utilities demo")
         return FlextResult[dict[str, object]].ok({
             "status": "completed",
@@ -314,22 +314,25 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
             current: object = data
             for key in keys:
                 if isinstance(current, dict) and key in current:
-                    current = current[key]
+                    # Type narrowing: current is dict, so current[key] is object
+                    current = cast("object", current[key])
                 else:
                     return default
             # Type narrowing for return
             if isinstance(current, (str, int, bool)) or current is None:
                 return current
             if isinstance(current, dict):
-                # Ensure the dict has the correct type annotation
-                return cast("dict[str, object]", current)
+                # Type narrowing: current is dict, so we can safely cast
+                return dict(cast("dict[str, object]", current).items())
             return default
 
-        name = deep_get(cast("dict[str, object]", nested_data), "user.profile.name")
+        # Using nested data directly - cast to proper type for deep_get
+        nested_data_typed: dict[str, object] = dict(nested_data)
+        name = deep_get(nested_data_typed, "user.profile.name")
         print(f"  Deep get 'user.profile.name': {name}")
 
         missing = deep_get(
-            cast("dict[str, object]", nested_data),
+            nested_data_typed,
             "missing.key",
             default="default_value",
         )
@@ -561,16 +564,17 @@ class UtilitiesComprehensiveService(FlextDomainService[dict[str, object]]):
             elif isinstance(value, int):
                 checks.append("Number")
             elif isinstance(value, list):
-                # Cast to list[object] to avoid unknown type issues
-                list_value = cast("list[object]", value)
+                # Type narrowing: isinstance confirms it's a list, so len() is safe
+                # Use type narrowing with proper annotation for Python 3.13+
+                list_value: list[object] = cast("list[object]", value)
                 if len(list_value) > 0:
                     checks.append("Non-empty List")
                 else:
                     checks.append("Empty List")
             elif isinstance(value, dict):
-                # Type check is necessary here for validation
-                # Cast to dict[str, object] to avoid unknown type issues
-                dict_value = cast("dict[str, object]", value)
+                # Type narrowing: isinstance confirms it's a dict, so len() is safe
+                # Use type narrowing with proper annotation for Python 3.13+
+                dict_value: dict[str, object] = cast("dict[str, object]", value)
                 if len(dict_value) > 0:
                     checks.append("Non-empty Dict")
                 else:

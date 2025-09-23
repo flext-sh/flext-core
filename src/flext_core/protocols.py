@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Generic, Protocol, overload, runtime_checkable
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes, T_contra, TInput_contra, TOutput_co
+from flext_core.typings import FlextTypes, T_contra, TInput_contra, TResult
 
 if TYPE_CHECKING:
     from flext_core.config import FlextConfig
@@ -50,7 +50,7 @@ class FlextProtocols:
 
         @runtime_checkable
         class Service(Protocol):
-            """Domain service contract aligned with FlextDomainService implementation."""
+            """Domain service contract aligned with FlextService implementation."""
 
             @abstractmethod
             def execute(self) -> FlextResult[object]:
@@ -141,23 +141,23 @@ class FlextProtocols:
         """Application layer protocols - use cases and handlers."""
 
         @runtime_checkable
-        class Handler(Protocol, Generic[TInput_contra, TOutput_co]):
+        class Handler(Protocol, Generic[TInput_contra, TResult]):
             """Application handler protocol aligned with FlextHandlers implementation."""
 
             @abstractmethod
-            def handle(self, message: TInput_contra) -> FlextResult[TOutput_co]:
+            def handle(self, message: TInput_contra) -> FlextResult[TResult]:
                 """Handle the message and return result.
 
                 Args:
                     message: The input message to process
 
                 Returns:
-                    FlextResult[TOutput_co]: Success with result or failure with error
+                    FlextResult[TResult]: Success with result or failure with error
 
                 """
                 ...
 
-            def __call__(self, input_data: TInput_contra) -> FlextResult[TOutput_co]:
+            def __call__(self, input_data: TInput_contra) -> FlextResult[TResult]:
                 """Process input and return a ``FlextResult`` containing the output."""
                 ...
 
@@ -173,14 +173,14 @@ class FlextProtocols:
                 """
                 ...
 
-            def execute(self, message: TInput_contra) -> FlextResult[TOutput_co]:
+            def execute(self, message: TInput_contra) -> FlextResult[TResult]:
                 """Execute the handler with the given message.
 
                 Args:
                     message: The input message to execute
 
                 Returns:
-                    FlextResult[TOutput_co]: Execution result
+                    FlextResult[TResult]: Execution result
 
                 """
                 ...
@@ -307,6 +307,84 @@ class FlextProtocols:
                 **kwargs: object,
             ) -> None:
                 """Log exception message."""
+                ...
+
+        @runtime_checkable
+        class LogRenderer(Protocol):
+            """Log renderer protocol for formatting log entries."""
+
+            def __call__(
+                self, logger: object, method_name: str, event_dict: dict[str, object]
+            ) -> str:
+                """Render log entry to string format.
+
+                Args:
+                    logger: Logger instance
+                    method_name: Method name that generated the log
+                    event_dict: Event dictionary with log data
+
+                Returns:
+                    str: Formatted log entry string
+
+                """
+                ...
+
+        @runtime_checkable
+        class LogContextManager(Protocol):
+            """Log context manager protocol for managing logger context."""
+
+            def set_correlation_id(self, correlation_id: str) -> FlextResult[None]:
+                """Set correlation ID for request tracing.
+
+                Args:
+                    correlation_id: Correlation ID to set
+
+                Returns:
+                    FlextResult[None]: Success or failure result
+
+                """
+                ...
+
+            def set_request_context(self, model: object) -> FlextResult[None]:
+                """Set request-specific context data.
+
+                Args:
+                    model: Request context model to set
+
+                Returns:
+                    FlextResult[None]: Success or failure result
+
+                """
+                ...
+
+            def clear_request_context(self) -> FlextResult[None]:
+                """Clear request-specific context data.
+
+                Returns:
+                    FlextResult[None]: Success or failure result
+
+                """
+                ...
+
+            def bind_context(self, model: object) -> FlextResult[object]:
+                """Create bound logger instance with additional context.
+
+                Args:
+                    model: Context binding model to use
+
+                Returns:
+                    FlextResult[object]: Bound logger instance or error
+
+                """
+                ...
+
+            def get_consolidated_context(self) -> dict[str, object]:
+                """Get all context data consolidated for log entry building.
+
+                Returns:
+                    dict[str, object]: Consolidated context data
+
+                """
                 ...
 
         @runtime_checkable
@@ -504,33 +582,35 @@ class FlextProtocols:
             """Protocol for command bus routing and execution."""
 
             @overload
-            def register_handler(self, handler: Callable, /) -> FlextResult[None]: ...
+            def register_handler(
+                self, handler: Callable[..., object], /
+            ) -> FlextResult[None]: ...
 
             @overload
             def register_handler(
                 self,
                 command_type: type,
-                handler: Callable,
+                handler: Callable[..., object],
                 /,
             ) -> FlextResult[None]: ...
 
-            def register_handler(self, *args: object) -> FlextResult[None]:
-                """Register a command handler using one of two supported signatures.
+            def register_handler(self, *_args: object) -> FlextResult[None]:
+                """Register a command handler with the command bus.
 
                 The command bus accepts both ``register_handler(handler)`` for
-                auto-discoverable handlers and
-                ``register_handler(command_type, handler)`` when explicitly
-                binding a handler to a message type.
+                automatic type detection and ``register_handler(command_type, handler)``
+                for explicit type specification.
 
                 Args:
-                    *args: Positional arguments matching one of the supported
-                        registration signatures.
+                    handler: The handler function to register
+                    command_type: Optional command type for explicit registration
 
                 Returns:
-                    FlextResult[None]: Outcome of the registration attempt.
+                    FlextResult indicating success or failure
 
                 """
-                ...
+                # Implementation would go here
+                return FlextResult[None].ok(None)
 
             def unregister_handler(self, command_type: type | str) -> bool:
                 """Remove a handler registration by type or name.

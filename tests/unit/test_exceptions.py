@@ -232,19 +232,19 @@ class TestExceptions100PercentCoverage:
     def test_exception_metrics_lines_854_855_899(self) -> None:
         """Test exception metrics collection."""
         # Record some exceptions to trigger metrics
-        FlextExceptions.Metrics.record_exception("ValidationError")
-        FlextExceptions.Metrics.record_exception("ConfigurationError")
-        FlextExceptions.Metrics.record_exception("ValidationError")
+        FlextExceptions.record_exception("ValidationError")
+        FlextExceptions.record_exception("ConfigurationError")
+        FlextExceptions.record_exception("ValidationError")
 
         # Get metrics
-        metrics = FlextExceptions.Metrics.get_metrics()
+        metrics = FlextExceptions.get_metrics()
         assert isinstance(metrics, dict)
         assert "ValidationError" in metrics
         assert metrics["ValidationError"] >= 2
 
         # Clear metrics
-        FlextExceptions.Metrics.clear_metrics()
-        cleared_metrics = FlextExceptions.Metrics.get_metrics()
+        FlextExceptions.clear_metrics()
+        cleared_metrics = FlextExceptions.get_metrics()
         assert cleared_metrics == {} or all(v == 0 for v in cleared_metrics.values())
 
     def test_error_codes_access_lines_1199_1216(self) -> None:
@@ -334,10 +334,10 @@ class TestExceptionsIntegration100PercentCoverage:
 
             # Record exception for metrics
             exc_type = type(exc).__name__
-            FlextExceptions.Metrics.record_exception(exc_type)
+            FlextExceptions.record_exception(exc_type)
 
         # Verify metrics were recorded
-        metrics = FlextExceptions.Metrics.get_metrics()
+        metrics = FlextExceptions.get_metrics()
         assert len(metrics) > 0
 
     def test_exception_inheritance_and_properties(self) -> None:

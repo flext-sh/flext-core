@@ -33,7 +33,7 @@ make validate     # Runs format check, lint, type-check, and tests
 
 ## Contribution Guidelines
 
-1. **Dispatcher First** – new orchestration code should interact with `FlextDispatcher`/`FlextDispatcherRegistry` rather than direct bus invocations unless a strong justification is documented.
+1. **Dispatcher First** – new orchestration code should interact with `FlextDispatcher`/`FlextRegistry` rather than direct bus invocations unless a strong justification is documented.
 2. **Context Awareness** – logging and telemetry must push correlation/request metadata through `FlextContext` helpers.
 3. **Configuration Alignment** – bootstrap logic pulls settings from `FlextConfig` and registers them in the container.
 4. **Doc Synchronisation** – README pages, docs, and docstrings must stay aligned; update them as part of every behavioural change.

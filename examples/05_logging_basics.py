@@ -29,16 +29,17 @@ from uuid import uuid4
 
 from flext_core import (
     FlextConfig,
+    FlextConstants,
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextResult,
+    FlextService,
 )
 
 # ========== LOGGING SERVICE ==========
 
 
-class ComprehensiveLoggingService(FlextDomainService[dict[str, str]]):
+class ComprehensiveLoggingService(FlextService[dict[str, str]]):
     """Service demonstrating ALL FlextLogger patterns and methods."""
 
     def __init__(self) -> None:
@@ -49,7 +50,7 @@ class ComprehensiveLoggingService(FlextDomainService[dict[str, str]]):
         self._config = FlextConfig.get_global_instance()
 
     def execute(self) -> FlextResult[dict[str, str]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         # This is a demonstration service, logs and returns status
         self._logger.info(
             "Executing logging demonstration", extra={"data": {"demo": "logging"}}
@@ -226,16 +227,19 @@ class ComprehensiveLoggingService(FlextDomainService[dict[str, str]]):
 
         logger = FlextLogger(__name__)
 
-        # Log exceptions with traceback
-        try:
-            pass
-        except ZeroDivisionError:
-            logger.exception(
+        # Log exceptions with traceback using FlextResult pattern
+        def risky_division() -> int:
+            return 1 // 0  # Will raise ZeroDivisionError
+
+        result: FlextResult[int] = FlextResult.safe_call(risky_division)
+        if result.is_failure:
+            logger.error(
                 "Division failed",
                 extra={
                     "operation": "division",
                     "numerator": 1,
                     "denominator": 0,
+                    "error": result.error,
                 },
             )
 
@@ -247,7 +251,7 @@ class ComprehensiveLoggingService(FlextDomainService[dict[str, str]]):
 
         # Log with custom error details
         error_details = {
-            "error_code": "VALIDATION_ERROR",
+            "error_code": FlextConstants.Errors.VALIDATION_ERROR,
             "field": "email",
             "value": "invalid-email",
             "reason": "Missing @ symbol",
@@ -327,11 +331,11 @@ class ComprehensiveLoggingService(FlextDomainService[dict[str, str]]):
 
         # Configure all loggers globally
         result = FlextLogger.configure(
-            log_level="INFO",
+            log_level=FlextConstants.Logging.INFO,
             json_output=False,
             include_source=True,
             structured_output=True,
-            log_verbosity="detailed",
+            log_verbosity=FlextConstants.Logging.VERBOSITY,
         )
 
         if result.is_success:

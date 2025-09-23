@@ -1,8 +1,32 @@
-"""Domain models aligned with the FLEXT 1.0.0 modernization charter.
+"""Layer 8: Domain models aligned with the FLEXT 1.0.0 modernization charter.
+
+This module provides the complete FlextModels namespace with Entity, Value,
+AggregateRoot, and all configuration models for the FLEXT ecosystem. Use
+FlextModels for all domain modeling and data validation.
+
+Dependency Layer: 8 (Domain Foundation)
+Dependencies: FlextConstants, FlextTypes, FlextExceptions, FlextResult,
+              FlextConfig, FlextUtilities, FlextLoggings, FlextMixins
+Used by: All FlextCore application and infrastructure modules
 
 Entities, value objects, and aggregates mirror the design captured in
 ``README.md`` and ``docs/architecture.md`` so downstream packages share a
 consistent DDD foundation during the rollout.
+
+Usage:
+    ```python
+    from flext_core import FlextModels, FlextResult
+
+
+    class User(FlextModels.Entity):
+        name: str
+        email: str
+
+        def validate(self) -> FlextResult[None]:
+            if "@" not in self.email:
+                return FlextResult[None].fail("Invalid email")
+            return FlextResult[None].ok(None)
+    ```
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,17 +34,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import base64
 import inspect
-import json
+import logging
 import re
 import uuid
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from pathlib import Path
 from typing import (
     Annotated,
-    Any,
     ClassVar,
     Generic,
     Literal,
@@ -28,7 +53,7 @@ from typing import (
     TypedDict,
     cast,
 )
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from pydantic import (
     BaseModel,
@@ -39,17 +64,12 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.main import IncEx
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
-
-# Type alias for Pydantic's IncEx (include/exclude) parameter
-IncEx = Any  # Simplified to avoid complex recursive type issues
-
-# Using pure Pydantic 2.11 - no custom protocols needed
 
 
 class ModelDumpKwargs(TypedDict, total=False):
@@ -135,7 +155,7 @@ class FlextModels:
             default=FlextConstants.Performance.DEFAULT_VERSION,
             ge=FlextConstants.Performance.MIN_VERSION,
         )
-        domain_events: FlextTypes.Core.List = Field(default_factory=list)
+        domain_events: Annotated[list[object], Field(default_factory=list)]
 
         def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
@@ -170,11 +190,14 @@ class FlextModels:
                     handler_method = getattr(self, handler_method_name)
                     handler_method(data)
                 except Exception as e:
-                    # Exception handling as expected by test line 357-358
-                    # This is intentional - some domain events may not have corresponding handlers
-                    # Log the exception for debugging but continue execution as per test requirements
-                    msg = f"Error applying domain event: {e}"
-                    raise FlextExceptions.ProcessingError(msg) from e
+                    # Log exception but don't re-raise to maintain resilience
+                    # Domain events may not have corresponding handlers or handlers may fail
+                    # The important thing is that the event is still recorded
+
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"Domain event handler {handler_method_name} failed for event {event_name}: {e}"
+                    )
 
             # Increment version after adding domain event
             self.increment_version()
@@ -331,7 +354,7 @@ class FlextModels:
 
         criteria: FlextTypes.Core.Dict = Field(default_factory=dict)
         includes: list[str] = Field(default_factory=list)
-        order_by: list[tuple[str, str]] = Field(default_factory=list)
+        order_by: Annotated[list[tuple[str, str]], Field(default_factory=list)]
         skip: int = Field(
             default=FlextConstants.Performance.DEFAULT_SKIP,
             ge=FlextConstants.Performance.MIN_SKIP,
@@ -346,7 +369,7 @@ class FlextModels:
         """Saga pattern for distributed transactions."""
 
         saga_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        steps: list[dict[str, object]] = Field(default_factory=list)
+        steps: Annotated[list[dict[str, object]], Field(default_factory=list)]
         current_step: int = Field(
             default=FlextConstants.Performance.DEFAULT_CURRENT_STEP,
             ge=FlextConstants.Performance.MIN_CURRENT_STEP,
@@ -378,7 +401,7 @@ class FlextModels:
         """Validation result model."""
 
         is_valid: bool
-        errors: list[FlextModels.ErrorDetail] = Field(default_factory=list)
+        errors: Annotated[list[FlextModels.ErrorDetail], Field(default_factory=list)]
         warnings: list[str] = Field(default_factory=list)
 
     class Configuration(FrozenStrictModel):
@@ -422,7 +445,7 @@ class FlextModels:
 
         name: str
         description: str | None = None
-        rules: list[dict[str, object]] = Field(default_factory=list)
+        rules: Annotated[list[dict[str, object]], Field(default_factory=list)]
         enabled: bool = True
         priority: int = Field(
             default=FlextConstants.Performance.DEFAULT_PRIORITY,
@@ -499,7 +522,9 @@ class FlextModels:
 
         name: str
         description: str | None = None
-        permissions: list[FlextModels.Permission] = Field(default_factory=list)
+        permissions: Annotated[
+            list[FlextModels.Permission], Field(default_factory=list)
+        ]
 
     class User(Entity):
         """User entity model."""
@@ -536,7 +561,7 @@ class FlextModels:
         """Queue model for message processing."""
 
         name: str
-        messages: list[dict[str, object]] = Field(default_factory=list)
+        messages: Annotated[list[dict[str, object]], Field(default_factory=list)]
         max_size: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().cache_max_size
         )
@@ -603,7 +628,7 @@ class FlextModels:
         """Batch processing model."""
 
         batch_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        items: list[object] = Field(default_factory=list)
+        items: Annotated[list[object], Field(default_factory=list)]
         size: int = Field(
             default=FlextConstants.Performance.DEFAULT_BATCH_SIZE_SMALL, ge=1
         )
@@ -615,13 +640,13 @@ class FlextModels:
         stream_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         position: int = 0
         batch_size: int = FlextConstants.Performance.DEFAULT_STREAM_BATCH_SIZE
-        buffer: list[object] = Field(default_factory=list)
+        buffer: Annotated[list[object], Field(default_factory=list)]
 
     class Pipeline(ArbitraryTypesModel):
         """Pipeline model."""
 
         name: str
-        stages: list[dict[str, object]] = Field(default_factory=list)
+        stages: Annotated[list[dict[str, object]], Field(default_factory=list)]
         current_stage: int = 0
         status: Literal["idle", "running", "completed", "failed"] = "idle"
 
@@ -630,7 +655,7 @@ class FlextModels:
 
         workflow_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         name: str
-        steps: list[dict[str, object]] = Field(default_factory=list)
+        steps: Annotated[list[dict[str, object]], Field(default_factory=list)]
         current_step: int = 0
         context: FlextTypes.Core.Dict = Field(default_factory=dict)
 
@@ -676,11 +701,11 @@ class FlextModels:
         @field_validator("address")
         @classmethod
         def _validate_email_format(cls, v: str) -> str:
-            """Validate email format using simple regex validation."""
-            if "@" not in v or "." not in v.rsplit("@", maxsplit=1)[-1]:
-                msg = f"Invalid email format: {v}"
-                raise ValueError(msg)
-            return v.lower()
+            """Validate email format using centralized FlextUtilities.Validation."""
+            result = FlextModels.Validation.validate_email_address(v)
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.unwrap()
 
     class Host(Value):
         """Host/hostname value object."""
@@ -690,23 +715,11 @@ class FlextModels:
         @field_validator("hostname")
         @classmethod
         def validate_host_format(cls, v: str) -> str:
-            """Validate hostname format."""
-            # Trim whitespace first
-            v = v.strip()
-
-            # Check if empty after trimming
-            if not v:
-                msg = "Hostname cannot be empty"
-                raise ValueError(msg)
-
-            # Basic hostname validation
-            if len(v) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
-                msg = "Hostname too long"
-                raise ValueError(msg)
-            if not all(c.isalnum() or c in ".-" for c in v):
-                msg = "Invalid hostname characters"
-                raise ValueError(msg)
-            return v.lower()
+            """Validate hostname format using centralized FlextUtilities.Validation."""
+            result = FlextModels.Validation.validate_hostname(v)
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.unwrap()
 
     class EntityId(Value):
         """Entity identifier value object with validation."""
@@ -716,20 +729,11 @@ class FlextModels:
         @field_validator("value")
         @classmethod
         def validate_entity_id_format(cls, v: str) -> str:
-            """Validate entity ID format."""
-            # Trim whitespace first
-            v = v.strip()
-
-            # Check if empty after trimming
-            if not v:
-                msg = "Entity ID cannot be empty"
-                raise ValueError(msg)
-
-            # Allow UUIDs, alphanumeric with dashes/underscores
-            if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-                msg = "Invalid entity ID format"
-                raise ValueError(msg)
-            return v
+            """Validate entity ID format using centralized FlextUtilities.Validation."""
+            result = FlextModels.Validation.validate_entity_id(v)
+            if result.is_failure:
+                raise ValueError(result.error)
+            return result.unwrap()
 
     class Coordinates(Value):
         """Geographic coordinates value object."""
@@ -917,7 +921,7 @@ class FlextModels:
         workspace_id: str
         name: str
         root_path: str
-        projects: list[FlextModels.Project] = Field(default_factory=list)
+        projects: Annotated[list[FlextModels.Project], Field(default_factory=list)]
         total_files: int = 0
         total_size_bytes: int = 0
 
@@ -982,8 +986,6 @@ class FlextModels:
     def create_validated_url(url: str) -> FlextResult[str]:
         """Create a validated URL."""
         try:
-            from urllib.parse import urlparse
-
             parsed = urlparse(url)
             # Basic URL validation - must have scheme and netloc
             if not parsed.scheme or not parsed.netloc:
@@ -1003,11 +1005,13 @@ class FlextModels:
                 "URL must start with http:// or https://"
             )
         url_result = FlextModels.create_validated_url(url)
-        return url_result >> (
-            lambda validated_url: FlextResult[FlextModels.Url].ok(
-                FlextModels.Url(url=validated_url)
-            )
-        )
+
+        def create_url_from_validated(
+            validated_url: str,
+        ) -> FlextResult[FlextModels.Url]:
+            return FlextResult[FlextModels.Url].ok(FlextModels.Url(url=validated_url))
+
+        return url_result >> create_url_from_validated
 
     @staticmethod
     def create_validated_http_method(method: str) -> FlextResult[str]:
@@ -1041,7 +1045,6 @@ class FlextModels:
                 return FlextResult[str].fail("Phone number cannot be empty")
 
             # Validate basic phone format (optional + prefix, digits, spaces, hyphens)
-            import re
 
             phone_pattern = FlextConstants.Platform.PATTERN_PHONE_NUMBER
             if not re.match(phone_pattern, phone_clean):
@@ -1269,7 +1272,7 @@ class FlextModels:
             default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
         continue_on_error: bool = True
-        data_items: list[object] = Field(default_factory=list)
+        data_items: Annotated[list[object], Field(default_factory=list)]
 
         @field_validator("data_items")
         @classmethod
@@ -1298,7 +1301,9 @@ class FlextModels:
                 msg = f"Batch size cannot exceed {max_batch_size}"
                 raise ValueError(msg)
 
-            self.max_workers = min(self.max_workers, self.batch_size)  # Auto-adjust
+            # Use setattr to avoid recursion in Pydantic validation
+            adjusted_workers = min(self.max_workers, self.batch_size)
+            setattr(self, "max_workers", adjusted_workers)
 
             return self
 
@@ -1330,7 +1335,7 @@ class FlextModels:
         """Pipeline configuration with advanced validation."""
 
         name: str = Field(min_length=FlextConstants.Performance.MIN_NAME_LENGTH)
-        steps: list[dict[str, object]] = Field(default_factory=list)
+        steps: Annotated[list[dict[str, object]], Field(default_factory=list)]
         parallel_execution: bool = False
         stop_on_error: bool = True
         max_parallel: int = Field(gt=0, default=4)
@@ -1420,223 +1425,60 @@ class FlextModels:
             return v
 
     class LoggerInitializationModel(ArbitraryTypesModel):
-        """Logger initialization with advanced validation."""
+        """DEPRECATED: Moved to FlextLoggings.LoggerInitializationModel.
 
-        name: str
-        log_level: str = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().log_level
-        )
-        structured_output: bool = True
-        include_source: bool = True
-        json_output: bool | None = None
-
-        @field_validator("log_level")
-        @classmethod
-        def validate_log_level(cls, v: str) -> str:
-            """Validate log level is valid."""
-            valid_levels = FlextConstants.Logging.VALID_LEVELS
-            v_upper = v.upper()
-            if v_upper not in valid_levels:
-                msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
-            return v_upper
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class LoggerConfigurationModel(ArbitraryTypesModel):
-        """Logger configuration model for global configuration."""
+        """DEPRECATED: Moved to FlextLoggings.LoggerConfigurationModel.
 
-        log_level: str = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().log_level
-        )
-        json_output: bool | None = None
-        include_source: bool = Field(
-            default_factory=lambda: FlextConstants.Logging.INCLUDE_SOURCE
-        )
-        structured_output: bool = Field(
-            default_factory=lambda: FlextConstants.Logging.STRUCTURED_OUTPUT
-        )
-        log_verbosity: str = Field(
-            default_factory=lambda: FlextConstants.Logging.VERBOSITY
-        )
-
-        @field_validator("log_level")
-        @classmethod
-        def validate_log_level(cls, v: str) -> str:
-            """Validate log level is valid."""
-            valid_levels = FlextConstants.Logging.VALID_LEVELS
-            v_upper = v.upper()
-            if v_upper not in valid_levels:
-                msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
-            return v_upper
-
-        @field_validator("log_verbosity")
-        @classmethod
-        def validate_log_verbosity(cls, v: str) -> str:
-            """Validate log verbosity option."""
-            valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
-            normalized = v.lower()
-            if normalized not in valid_levels:
-                msg = f"Invalid log verbosity: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
-            return normalized
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class LogContextModel(ArbitraryTypesModel):
-        """Log context model with validation."""
+        """DEPRECATED: Moved to FlextLoggings.LogContextModel.
 
-        correlation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        request_id: str | None = None
-        user_id: str | None = None
-        session_id: str | None = None
-        extra: FlextTypes.Core.Dict = Field(default_factory=dict)
-
-        @field_validator("extra")
-        @classmethod
-        def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
-            """Validate context data is serializable."""
-            # Ensure all values are JSON serializable
-            try:
-                json.dumps(v)
-            except (TypeError, ValueError) as e:
-                msg = f"Context data must be JSON serializable: {e}"
-                raise ValueError(msg) from e
-            return v
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class LoggerContextBindingModel(ArbitraryTypesModel):
-        """Logger context binding model."""
+        """DEPRECATED: Moved to FlextLoggings.LoggerContextBindingModel.
 
-        logger_name: str
-        context_data: FlextTypes.Core.Dict = Field(default_factory=dict)
-        bind_type: Literal["temporary", "permanent"] = "temporary"
-        clear_existing: bool = False
-        force_new_instance: bool = False
-        copy_request_context: bool = False
-        copy_permanent_context: bool = False
-
-        @field_validator("context_data")
-        @classmethod
-        def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
-            """Validate context data."""
-            max_context_keys = 100
-            if len(v) > max_context_keys:
-                msg = f"Context data too large (max {max_context_keys} keys)"
-                raise ValueError(msg)
-            return v
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class LoggerRequestContextModel(ArbitraryTypesModel):
-        """Logger request context model."""
+        """DEPRECATED: Moved to FlextLoggings.LoggerRequestContextModel.
 
-        request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        method: str | None = None
-        path: str | None = None
-        headers: dict[str, str] = Field(default_factory=dict)
-        query_params: dict[str, str] = Field(default_factory=dict)
-        correlation_id: str | None = None
-        user_id: str | None = None
-        endpoint: str | None = None
-        custom_data: dict[str, str] = Field(default_factory=dict)
-
-        @model_validator(mode="after")
-        def validate_request_context(self) -> Self:
-            """Validate request context consistency."""
-            if (
-                self.method
-                and self.method not in FlextConstants.Platform.VALID_HTTP_METHODS
-            ):
-                msg = f"Invalid HTTP method: {self.method}"
-                raise ValueError(msg)
-            return self
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class LoggerPermanentContextModel(ArbitraryTypesModel):
-        """Logger permanent context model."""
+        """DEPRECATED: Moved to FlextLoggings.LoggerPermanentContextModel.
 
-        app_name: str
-        app_version: str
-        environment: FlextTypes.Config.Environment
-        host: str | None = None
-        metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
-        permanent_context: FlextTypes.Core.Dict = Field(default_factory=dict)
-        replace_existing: bool = False
-        merge_strategy: Literal["replace", "update", "merge_deep"] = "update"
-
-        @field_validator("environment", mode="before")
-        @classmethod
-        def normalize_environment(
-            cls, value: str | FlextTypes.Config.Environment
-        ) -> FlextTypes.Config.Environment:
-            """Normalize and validate environment against shared constants."""
-            # Accept both str and FlextTypes.Config.Environment (e.g., Enum)
-            if not isinstance(value, str):
-                # If it's an Enum, get its value; otherwise, try str()
-                value = value.value if hasattr(value, "value") else str(value)
-
-            normalized = value.lower()
-            valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
-            if normalized not in valid_envs:
-                msg = f"Environment must be one of {sorted(valid_envs)}"
-                raise ValueError(msg)
-            return cast("FlextTypes.Config.Environment", normalized)
-
-        @model_validator(mode="after")
-        def validate_permanent_context(self) -> Self:
-            """Validate permanent context."""
-            # Use only the enum values as the single source of truth for valid environments.
-            valid_envs = {
-                env.value.lower()
-                for env in FlextConstants.Environment.ConfigEnvironment
-            }
-            if self.environment.lower() not in valid_envs:
-                sorted_envs = sorted(valid_envs)
-                msg = (
-                    f"Invalid environment: {self.environment}. "
-                    f"Must be one of {sorted_envs}"
-                )
-                raise ValueError(msg)
-            return self
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class OperationTrackingModel(ArbitraryTypesModel):
-        """Operation tracking model."""
+        """DEPRECATED: Moved to FlextLoggings.OperationTrackingModel.
 
-        operation_name: str
-        start_time: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        end_time: datetime | None = None
-        success: bool | None = None
-        error_message: str | None = None
-        metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
-
-        @field_validator("metadata")
-        @classmethod
-        def validate_metadata(cls, v: dict[str, object]) -> dict[str, object]:
-            """Validate metadata is not too large."""
-            max_metadata_size = FlextConstants.Performance.MAX_METADATA_SIZE
-            if len(str(v)) > max_metadata_size:
-                msg = "Metadata too large"
-                raise ValueError(msg)
-            return v
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class PerformanceTrackingModel(ArbitraryTypesModel):
-        """Performance tracking model."""
+        """DEPRECATED: Moved to FlextLoggings.PerformanceTrackingModel.
 
-        operation: str
-        duration_ms: int
-        cpu_usage: float | None = None
-        memory_usage: float | None = None
-        io_operations: int = 0
-        cache_hits: int = 0
-        cache_misses: int = 0
-        is_critical: bool = False
-
-        @model_validator(mode="after")
-        def validate_critical_threshold(self) -> Self:
-            """Mark as critical if thresholds exceeded."""
-            critical_duration_ms = FlextConstants.Performance.CRITICAL_DURATION_MS
-            critical_usage_percent = FlextConstants.Performance.CRITICAL_USAGE_PERCENT
-            if self.duration_ms > critical_duration_ms:
-                self.is_critical = True
-            if self.cpu_usage and self.cpu_usage > critical_usage_percent:
-                self.is_critical = True
-            if self.memory_usage and self.memory_usage > critical_usage_percent:
-                self.is_critical = True
-            return self
+        This model has been moved to break circular dependencies.
+        Use FlextLogger internal models instead.
+        """
 
     class SerializationRequest(StrictArbitraryTypesModel):
         """Enhanced serialization request."""
@@ -1712,7 +1554,7 @@ class FlextModels:
         """Domain service batch request."""
 
         service_name: str
-        operations: list[dict[str, object]] = Field(default_factory=list)
+        operations: Annotated[list[dict[str, object]], Field(default_factory=list)]
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(default=100)
@@ -1832,8 +1674,10 @@ class FlextModels:
         backoff_multiplier: float = Field(
             default=FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER, ge=1.0
         )
-        retry_on_exceptions: list[type[Exception]] = Field(default_factory=list)
-        retry_on_status_codes: list[int] = Field(default_factory=list)
+        retry_on_exceptions: Annotated[
+            list[type[Exception]], Field(default_factory=list)
+        ]
+        retry_on_status_codes: Annotated[list[int], Field(default_factory=list)]
 
         @field_validator("retry_on_status_codes")
         @classmethod
@@ -1904,7 +1748,9 @@ class FlextModels:
         max_validation_errors: int = Field(default=10)
         validate_on_assignment: bool = True
         validate_on_read: bool = False
-        custom_validators: list[Callable[..., object]] = Field(default_factory=list)
+        custom_validators: Annotated[
+            list[Callable[..., object]], Field(default_factory=list)
+        ]
 
         @field_validator("custom_validators")
         @classmethod
@@ -2055,7 +1901,9 @@ class FlextModels:
         """Fallback configuration."""
 
         primary_service: Callable[..., object]
-        fallback_services: list[Callable[..., object]] = Field(default_factory=list)
+        fallback_services: Annotated[
+            list[Callable[..., object]], Field(default_factory=list)
+        ]
         max_fallback_attempts: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
@@ -2150,8 +1998,6 @@ class FlextModels:
         @staticmethod
         def encode_bytes(b: bytes) -> str:
             """Encode bytes to base64 string."""
-            import base64
-
             return base64.b64encode(b).decode("ascii")
 
     # Model serialization configuration
@@ -2160,6 +2006,7 @@ class FlextModels:
 
         Combines Pydantic BaseModel with SerializationMixin for enhanced
         serialization capabilities. Used by models requiring flexible export options.
+        Uses modern Pydantic v2 serialization instead of deprecated json_encoders.
         """
 
         model_config = ConfigDict(
@@ -2167,18 +2014,6 @@ class FlextModels:
             validate_assignment=True,
             use_enum_values=True,
             arbitrary_types_allowed=True,
-            # JSON serialization settings
-            json_encoders={
-                datetime: lambda dt: dt.isoformat(),
-                date: lambda d: d.isoformat(),
-                time: lambda t: t.isoformat(),
-                Decimal: str,
-                uuid.UUID: str,
-                Path: str,
-                bytes: lambda b: b.decode(FlextConstants.Mixins.DEFAULT_ENCODING)
-                if isinstance(b, bytes)
-                else str(b),
-            },
             # Field serialization settings
             ser_json_timedelta="iso8601",
             ser_json_bytes="base64",
@@ -2302,7 +2137,7 @@ class FlextModels:
                     exclude_set.update(["created_at", "updated_at", "version", "id"])
 
                 if exclude_set:
-                    exclude = exclude_set
+                    exclude = cast("IncEx", exclude_set)
 
             return super().model_dump(
                 include=include,
@@ -2356,8 +2191,6 @@ class FlextModels:
 
         def to_query_string(self) -> str:
             """Convert query to URL query string format."""
-            from urllib.parse import urlencode
-
             params: dict[str, str | int] = {}
 
             # Add pagination
@@ -2385,10 +2218,8 @@ class FlextModels:
         """Optimized batch serialization for collections of models."""
 
         @staticmethod
-        def _validate_json_serializable(model: BaseModel) -> None:
+        def validate_json_serializable(model: BaseModel) -> None:
             """Validate model is JSON serializable if configuration requires it."""
-            from flext_core.config import FlextConfig
-
             config = FlextConfig.get_global_instance()
             if not getattr(config, "ensure_json_serializable", True):
                 return
@@ -2426,7 +2257,7 @@ class FlextModels:
             # Validate JSON serializability if required by configuration
             if output_format == "json":
                 for model in models:
-                    FlextModels.BatchSerializer._validate_json_serializable(model)
+                    FlextModels.BatchSerializer.validate_json_serializable(model)
 
             # Serialization kwargs
             dump_kwargs: FlextTypes.Core.Dict = {}
@@ -2440,8 +2271,6 @@ class FlextModels:
             parallel_threshold = FlextConstants.Performance.PARALLEL_THRESHOLD
             if parallel and len(models) > parallel_threshold:
                 # Use thread pool for large batches
-                from concurrent.futures import ThreadPoolExecutor
-
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     if output_format == "dict":
 
@@ -2751,6 +2580,68 @@ class FlextModels:
             default="active",
             description="Registration status",
         )
+
+    # ============================================================================
+    # VALIDATION UTILITIES (moved from FlextUtilities to avoid circular imports)
+    # ============================================================================
+
+    class Validation:
+        """Local validation utilities to avoid circular imports."""
+
+        @staticmethod
+        def validate_email_address(email: str) -> FlextResult[str]:
+            """Enhanced email validation matching FlextModels.EmailAddress pattern."""
+            if not email:
+                return FlextResult[str].fail("Email cannot be empty")
+
+            # Use pattern from FlextConstants.Platform.PATTERN_EMAIL
+            if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
+                return FlextResult[str].fail(f"Invalid email format: {email}")
+
+            # Length validation using FlextConstants
+            if len(email) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                return FlextResult[str].fail(
+                    f"Email too long (max {FlextConstants.Validation.MAX_EMAIL_LENGTH} chars)"
+                )
+
+            return FlextResult[str].ok(email.lower())
+
+        @staticmethod
+        def validate_hostname(hostname: str) -> FlextResult[str]:
+            """Validate hostname format matching FlextModels.Host pattern."""
+            # Trim whitespace first
+            hostname = hostname.strip()
+
+            # Check if empty after trimming
+            if not hostname:
+                return FlextResult[str].fail("Hostname cannot be empty")
+
+            # Basic hostname validation
+            if len(hostname) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                return FlextResult[str].fail("Hostname too long")
+
+            if not all(c.isalnum() or c in ".-" for c in hostname):
+                return FlextResult[str].fail("Invalid hostname characters")
+
+            return FlextResult[str].ok(hostname.lower())
+
+        @staticmethod
+        def validate_entity_id(entity_id: str) -> FlextResult[str]:
+            """Validate entity ID format matching FlextModels.EntityId pattern."""
+            # Trim whitespace first
+            entity_id = entity_id.strip()
+
+            # Check if empty after trimming
+            if not entity_id:
+                return FlextResult[str].fail("Entity ID cannot be empty")
+
+            # Allow UUIDs, alphanumeric with dashes/underscores
+            import re
+
+            if not re.match(r"^[a-zA-Z0-9_-]+$", entity_id):
+                return FlextResult[str].fail("Invalid entity ID format")
+
+            return FlextResult[str].ok(entity_id)
 
     # ============================================================================
     # END OF PHASE 8: CQRS CONFIGURATION MODELS

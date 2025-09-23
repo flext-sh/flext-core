@@ -378,8 +378,8 @@ class TestFlextTestsAsyncs:
         """Test error handling robustness in various scenarios."""
 
         # Test with condition that returns non-boolean
-        def non_boolean_condition() -> str:
-            return "not a boolean"
+        def non_boolean_condition() -> bool:
+            return bool("not a boolean")  # Convert to bool for type safety
 
         # This should work because Python treats non-empty strings as truthy
         await FlextTestsAsyncs.wait_for_condition(
@@ -389,10 +389,10 @@ class TestFlextTestsAsyncs:
         # Test with condition that returns 0 (falsy)
         counter = 0
 
-        def eventually_truthy_condition() -> int:
+        def eventually_truthy_condition() -> bool:
             nonlocal counter
             counter += 1
-            return counter if counter >= 3 else 0
+            return bool(counter >= 3)  # Convert to bool for type safety
 
         await FlextTestsAsyncs.wait_for_condition(
             condition=eventually_truthy_condition,

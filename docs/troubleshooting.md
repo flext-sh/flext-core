@@ -6,7 +6,7 @@ Reference for common issues encountered while adopting the FLEXT Core 1.0.0 mode
 
 ## Dispatcher Registration Fails
 
-**Symptom**: `FlextDispatcher.register_command` returns a failure result or `FlextDispatcherRegistry` summary lists errors.
+**Symptom**: `FlextDispatcher.register_command` returns a failure result or `FlextRegistry` summary lists errors.
 
 **Fix**:
 

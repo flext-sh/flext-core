@@ -24,23 +24,22 @@ from __future__ import annotations
 import warnings
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import cast
 from uuid import uuid4
 
 from flext_core import (
     FlextConfig,
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextService,
     FlextTypes,
 )
 
 # ========== MESSAGING SERVICE ==========
 
 
-class MessagingPatternsService(FlextDomainService[FlextTypes.Core.Dict]):
+class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
     """Service demonstrating messaging and event patterns."""
 
     def __init__(self) -> None:
@@ -53,7 +52,7 @@ class MessagingPatternsService(FlextDomainService[FlextTypes.Core.Dict]):
         self._message_queue: list[FlextModels.Payload[FlextTypes.Core.Dict]] = []
 
     def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info("Executing messaging patterns demo")
         return FlextResult[FlextTypes.Core.Dict].ok({
             "status": "completed",
@@ -363,7 +362,14 @@ class MessagingPatternsService(FlextDomainService[FlextTypes.Core.Dict]):
             elif event.event_type == "ProfileUpdated":
                 user_state.update(event.data)
             elif event.event_type == "RoleGranted":
-                roles: list[str] = cast("list[str]", user_state.get("roles", []))
+                roles_raw = user_state.get("roles", [])
+                # Use Python 3.13+ type narrowing with explicit type annotation
+                roles: list[str] = (
+                    roles_raw
+                    if isinstance(roles_raw, list)
+                    and all(isinstance(r, str) for r in roles_raw)
+                    else []
+                )
                 role = event.data["role"]
                 if isinstance(role, str):
                     roles.append(role)

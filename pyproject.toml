@@ -32,6 +32,7 @@ dependencies = [
     "pyyaml (>=6.0.2,<7.0.0)",
     "structlog>=25.4.0",
     "typing-extensions>=4.12.0",
+    "colorlog (>=6.9.0)",
 ]
 keywords = [
     "clean-architecture",
@@ -223,46 +224,6 @@ init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 warn_untyped_fields = true
-
-[tool.pyright]
-# Basic configuration
-pythonVersion = "3.13"
-pythonPlatform = "Linux"
-typeCheckingMode = "strict"
-venvPath = "."
-venv = ".venv"
-
-# Include and exclude patterns - workspace-wide
-exclude = [
-    "**/__pycache__",
-    "**/.coverage.",
-    "**/.git",
-    "**/.meltano",
-    "**/.mypy_cache",
-    "**/.pytest_cache",
-    "**/.ruff_cache",
-    "**/.venv",
-    "**/build",
-    "**/dist",
-    "**/node_modules",
-    "**/proto",
-    "**/target",
-    "**/typings",
-    "**/vendor",
-]
-include = ["**/examples", "**/scripts", "**/src", "**/tests"]
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = ["**/src"]
-include = ["**/__init__.py"]
-reportWildcardImportFromLibrary = false
-root = "."
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = ["**/examples", "**/scripts", "**/tests"]
-reportImplicitRelativeImport = false
-reportPrivateUsage = false
-root = "."
 
 [tool.pytest.ini_options]
 addopts = [

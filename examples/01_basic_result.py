@@ -25,9 +25,8 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable
-from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextConstants, FlextLogger, FlextResult
 
 
 class ComprehensiveResultService:
@@ -35,6 +34,7 @@ class ComprehensiveResultService:
 
     def __init__(self) -> None:
         """Initialize with FlextLogger for structured logging."""
+        super().__init__()
         self._logger = FlextLogger(__name__)
 
     # ========== BASIC OPERATIONS ==========
@@ -50,7 +50,7 @@ class ComprehensiveResultService:
         # Failure creation with error code
         failure = FlextResult[str].fail(
             "Validation failed",
-            error_code="VALIDATION_ERROR",
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
             error_data={"field": "email"},
         )
         print(f"❌ .fail(): {failure}")
@@ -59,9 +59,7 @@ class ComprehensiveResultService:
         def risky_operation() -> int:
             return 1 // 0  # Will raise ZeroDivisionError
 
-        from_exc: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.safe_call(risky_operation)
-        )
+        from_exc = FlextResult[int].safe_call(risky_operation)
         print(f"🔥 .safe_call() for exceptions: {from_exc}")
 
     def demonstrate_value_extraction(self) -> None:
@@ -180,20 +178,14 @@ class ComprehensiveResultService:
         """Operations on collections of FlextResults."""
         print("\n=== Collection Operations ===")
 
-        results = [
+        results: list[FlextResult[int]] = [
             FlextResult[int].ok(1),
             FlextResult[int].ok(2),
             FlextResult[int].ok(3),
         ]
 
         # Sequence: convert list of results to result of list
-        def sequence_results(
-            results_list: list[FlextResult[int]],
-        ) -> FlextResult[list[int]]:
-            sequenced: FlextResult[list[int]] = FlextResult.sequence(results_list)
-            return sequenced
-
-        sequenced = sequence_results(results)
+        sequenced = FlextResult.sequence(results)
         print(f".sequence(): {sequenced.unwrap()}")
 
         # AllSuccess: check if all are successful
@@ -360,15 +352,12 @@ class ComprehensiveResultService:
             error_message = "Division by zero"
             raise ZeroDivisionError(error_message)  # Will raise
 
-        result: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.safe_call(risky_function)
-        )
+        result = FlextResult[int].safe_call(risky_function)
         print(f"FlextResult.safe_call(): {result}")
 
         # OLD: Multiple return types (DEPRECATED)
         warnings.warn(
-            "Returning Optional[T] or Union[T, None] is DEPRECATED! "
-            "Always return FlextResult[T].",
+            "Returning Optional[T] or Union[T, None] is DEPRECATED! Always return FlextResult[T].",
             DeprecationWarning,
             stacklevel=2,
         )

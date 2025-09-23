@@ -9,7 +9,7 @@
 - **No aliases, wrappers, or legacy access patterns**
 
 ```python
-class FlextDbOracleService(FlextDomainService):
+class FlextDbOracleService(FlextService):
     """Single responsibility class with nested helpers."""
 
     def __init__(self, **data) -> None:

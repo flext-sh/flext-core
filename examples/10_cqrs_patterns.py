@@ -24,22 +24,22 @@ import time
 import warnings
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import cast
 from uuid import uuid4
 
 from flext_core import (
+    FlextConstants,
     FlextContainer,
     FlextCqrs,
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextService,
 )
 
 # ========== CQRS SERVICE ==========
 
 
-class CqrsPatternService(FlextDomainService[dict[str, object]]):
+class CqrsPatternService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextCqrs patterns."""
 
     def __init__(self) -> None:
@@ -53,7 +53,7 @@ class CqrsPatternService(FlextDomainService[dict[str, object]]):
         self._event_store: list[FlextModels.DomainEvent] = []
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info("Executing CQRS demo")
         return FlextResult[dict[str, object]].ok({
             "status": "processed",
@@ -179,8 +179,7 @@ class CqrsPatternService(FlextDomainService[dict[str, object]]):
                 if not user:
                     return FlextResult[dict[str, object]].fail("User not found")
                 if isinstance(user, dict):
-                    user_dict = cast("dict[str, object]", user)
-                    return FlextResult[dict[str, object]].ok(user_dict)
+                    return FlextResult[dict[str, object]].ok(dict(user))
                 return FlextResult[dict[str, object]].fail("Invalid user data")
 
             def handle_list(
@@ -249,10 +248,12 @@ class CqrsPatternService(FlextDomainService[dict[str, object]]):
         if cmd_result.is_success:
             data = cmd_result.unwrap()
             if isinstance(data, dict):
-                data_dict = cast("dict[str, object]", data)
-                print(f"  Aggregate: {data_dict.get('aggregate_id', 'Unknown')}")
-                print(f"  Version: {data_dict.get('version', 'Unknown')}")
-                print(f"  Events: {data_dict.get('events', 'Unknown')}")
+                aggregate_id: str = str(data.get("aggregate_id", "Unknown"))
+                version: str = str(data.get("version", "Unknown"))
+                events: str = str(data.get("events", "Unknown"))
+                print(f"  Aggregate: {aggregate_id}")
+                print(f"  Version: {version}")
+                print(f"  Events: {events}")
 
         # Query result
         query_result = FlextCqrs.Results.success(
@@ -265,9 +266,10 @@ class CqrsPatternService(FlextDomainService[dict[str, object]]):
         if query_result.is_success:
             result_data = query_result.unwrap()
             if isinstance(result_data, dict):
-                result_dict = cast("dict[str, object]", result_data)
-                print(f"  Data: {result_dict.get('data', 'Unknown')}")
-                print(f"  Metadata: {result_dict.get('metadata', 'Unknown')}")
+                data: str = str(result_data.get("data", "Unknown"))
+                metadata: str = str(result_data.get("metadata", "Unknown"))
+                print(f"  Data: {data}")
+                print(f"  Metadata: {metadata}")
 
         # Batch result
         batch_result = FlextCqrs.Results.success(
@@ -284,14 +286,15 @@ class CqrsPatternService(FlextDomainService[dict[str, object]]):
         if batch_result.is_success:
             batch_data = batch_result.unwrap()
             if isinstance(batch_data, dict):
-                batch_dict = cast("dict[str, object]", batch_data)
-                print(f"  Succeeded: {batch_dict.get('succeeded', 'Unknown')}")
-                print(f"  Failed: {batch_dict.get('failed', 'Unknown')}")
+                succeeded: str = str(batch_data.get("succeeded", "Unknown"))
+                failed: str = str(batch_data.get("failed", "Unknown"))
+                print(f"  Succeeded: {succeeded}")
+                print(f"  Failed: {failed}")
 
         # Error result
         error_result = FlextCqrs.Results.failure(
             message="Invalid email format",
-            error_code="INVALID_EMAIL",
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
             error_data={"field": "email"},
         )
         print("\n❌ Error Result:")

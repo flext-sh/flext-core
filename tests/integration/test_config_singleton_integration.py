@@ -69,7 +69,7 @@ class TestFlextConfigSingletonIntegration:
         container = FlextContainer()
 
         # Container should have reference to global config
-        assert container._global_config is global_config
+        assert container._flext_config is global_config
 
     def test_config_in_processors(self) -> None:
         """Test that processors use global config."""

@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import time
 from decimal import Decimal
-from typing import cast
 from uuid import uuid4
 
 from pydantic import Field
@@ -30,12 +29,11 @@ from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextContext,
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextService,
 )
-from flext_core.constants import FlextConstants
 
 # ========== DOMAIN MODELS (Using FlextModels DDD patterns) ==========
 
@@ -169,9 +167,9 @@ class Order(FlextModels.AggregateRoot):
 
         return FlextResult[None].ok(None)
 
-    def get_domain_events(self) -> list[dict[str, str | int | float]]:
+    def get_domain_events(self) -> list[object]:
         """Get all domain events."""
-        return cast("list[dict[str, str | int | float]]", self.domain_events)
+        return self.domain_events
 
     def submit(self) -> FlextResult[None]:
         """Submit order for processing."""
@@ -195,10 +193,10 @@ class Order(FlextModels.AggregateRoot):
         return FlextResult[None].ok(None)
 
 
-# ========== SERVICES (Using FlextDomainService patterns) ==========
+# ========== SERVICES (Using FlextService patterns) ==========
 
 
-class InventoryService(FlextDomainService[dict[str, str | int | float]]):
+class InventoryService(FlextService[dict[str, str | int | float]]):
     """Inventory management service."""
 
     def __init__(self) -> None:
@@ -212,19 +210,25 @@ class InventoryService(FlextDomainService[dict[str, str | int | float]]):
         """Initialize sample products."""
         products = [
             Product(
+                id="PROD-001",
                 name="Laptop",
                 price=Money(amount=Decimal("999.99"), currency="USD"),
                 stock=10,
+                domain_events=[],
             ),
             Product(
+                id="PROD-002",
                 name="Mouse",
                 price=Money(amount=Decimal("29.99"), currency="USD"),
                 stock=50,
+                domain_events=[],
             ),
             Product(
+                id="PROD-003",
                 name="Keyboard",
                 price=Money(amount=Decimal("79.99"), currency="USD"),
                 stock=25,
+                domain_events=[],
             ),
         ]
         for product in products:
@@ -277,7 +281,7 @@ class InventoryService(FlextDomainService[dict[str, str | int | float]]):
         ].fail(f"Unknown operation: {operation}")
 
 
-class PaymentService(FlextDomainService[dict[str, str | int | float]]):
+class PaymentService(FlextService[dict[str, str | int | float]]):
     """Payment processing service using strategy pattern."""
 
     def __init__(self) -> None:
@@ -337,7 +341,7 @@ class PaymentService(FlextDomainService[dict[str, str | int | float]]):
         return FlextResult[dict[str, str | int]].ok({"status": "processed"})
 
 
-class OrderService(FlextDomainService[dict[str, str | int | float]]):
+class OrderService(FlextService[dict[str, str | int | float]]):
     """Order processing service - orchestrates the workflow."""
 
     def __init__(self) -> None:
@@ -356,13 +360,13 @@ class OrderService(FlextDomainService[dict[str, str | int | float]]):
         self._logger.info("Creating order", extra={"customer_id": customer_id})
 
         # Get services from container
-        inventory_result = self._container.get("inventory")
+        inventory_result = self._container.get_typed("inventory", InventoryService)
         if inventory_result.is_failure:
             return FlextResult[Order].fail("Inventory service not available")
-        inventory = cast("InventoryService", inventory_result.unwrap())
+        inventory = inventory_result.unwrap()
 
         # Create order
-        order = Order(customer_id=customer_id)
+        order = Order(customer_id=customer_id, domain_events=[])
 
         # Add items
         for item_data in items:
@@ -372,7 +376,7 @@ class OrderService(FlextDomainService[dict[str, str | int | float]]):
             if isinstance(product_id, str) and isinstance(quantity, int):
                 product_result = inventory.get_product(product_id)
                 if product_result.is_failure:
-                    self._logger.warning(f"Product not found: {product_id}")
+                    self._logger.info(f"Product not found: {product_id}")
                     continue
 
                 product = product_result.unwrap()
@@ -420,12 +424,12 @@ class OrderService(FlextDomainService[dict[str, str | int | float]]):
             )
 
         # Get payment service
-        payment_service_result = self._container.get("payment")
+        payment_service_result = self._container.get_typed("payment", PaymentService)
         if payment_service_result.is_failure:
             return FlextResult[dict[str, str | int | float]].fail(
                 "Payment service not available"
             )
-        payment = cast("PaymentService", payment_service_result.unwrap())
+        payment = payment_service_result.unwrap()
 
         # Process payment
         payment_result = payment.process_payment(order, payment_method)
@@ -671,9 +675,9 @@ def demonstrate_complete_integration() -> None:
     print("\n=== 4. Order Processing ===")
 
     # Get actual product IDs from inventory
-    inventory_result = container.get("inventory")
+    inventory_result = container.get_typed("inventory", InventoryService)
     if inventory_result.is_success:
-        inventory_service = cast("InventoryService", inventory_result.unwrap())
+        inventory_service = inventory_result.unwrap()
         # Access products through a public method instead of private attribute
         products: list[Product] = []
         for product_id in ["PROD-001", "PROD-002", "PROD-003"]:
@@ -817,27 +821,26 @@ def demonstrate_complete_integration() -> None:
     print("Events emitted during order processing:")
 
     # Create a simple order to show events
-    simple_order = Order(customer_id="CUST-789")
+    simple_order = Order(customer_id="CUST-789", domain_events=[])
     product = Product(
         id="PROD-TEST",
         name="Test Product",
         price=Money(amount=Decimal("10.00"), currency="USD"),
         stock=5,
+        domain_events=[],
     )
 
     simple_order.add_item(product, 2)
     simple_order.submit()
 
     for event in simple_order.get_domain_events():
-        event_name = event.get(FlextConstants.Mixins.FIELD_EVENT_NAME, "Unknown")
-        event_data_raw: dict[str, str | int | float] | str | int | float = event.get(
-            FlextConstants.Mixins.FIELD_DATA, {}
-        )
-        if isinstance(event_data_raw, dict):
-            event_data: dict[str, str | int | float] = event_data_raw
+        # Domain events are FlextModels.DomainEvent objects
+        if isinstance(event, FlextModels.DomainEvent):
+            event_name: str = event.event_type
+            event_data: dict[str, object] = event.data
             print(f"  📢 {event_name}: {event_data}")
         else:
-            print(f"  📢 {event_name}: {event_data_raw}")
+            print(f"  📢 Unexpected event format: {event}")
 
     # 8. Logging with correlation
     print("\n=== 8. Structured Logging ===")
@@ -857,7 +860,7 @@ def demonstrate_complete_integration() -> None:
                 "FlextConfig",
                 "FlextLogger",
                 "FlextProcessing",
-                "FlextDomainService",
+                "FlextService",
                 "Payload & Events",
             ],
         },

@@ -242,7 +242,7 @@ class FlextTestsFixtures:
             }
 
             if error_type in scenarios:
-                return cast("FlextTypes.Core.Dict", scenarios[error_type])
+                return scenarios[error_type]
             return {
                 "type": "unknown",
                 "message": "Unknown error",
@@ -272,9 +272,7 @@ class FlextTestsFixtures:
                 FlextTypes.Core.Dict: Session payload stored with the official alias
 
             """
-            session_data: FlextTypes.Core.Dict = (
-                data or {}
-            )
+            session_data: FlextTypes.Core.Dict = data or {}
             session_data["id"] = session_id
             session_data["created_at"] = "2024-01-01T00:00:00Z"
             session: FlextTypes.Core.Dict = {
@@ -315,7 +313,7 @@ class FlextTestsFixtures:
             if session_id in self._data:
                 session = self._data[session_id]
                 if "data" in session and isinstance(session["data"], dict):
-                    session["data"].update(data)
+                    cast("dict[str, object]", session["data"]).update(data)
                 else:
                     session["data"] = data
                 return True
@@ -368,7 +366,7 @@ class FlextTestsFixtures:
 
             """
             return FlextConfig.create(
-                environment=FlextConstants.Environment.ConfigEnvironment.TESTING,
+                environment="test",
                 debug=True,
             )
 
@@ -490,7 +488,7 @@ class FlextTestsFixtures:
             if not self._running:
                 await self.start()
 
-            tasks = []
+            tasks: list[asyncio.Task[object]] = []
             for coro in coros:
                 if not asyncio.iscoroutine(coro):
                     msg = f"Expected coroutine, got {type(coro)}"
@@ -499,7 +497,7 @@ class FlextTestsFixtures:
                 self._tasks.append(task)
                 tasks.append(task)
 
-            results = await asyncio.gather(*tasks)
+            results: list[object] = await asyncio.gather(*tasks)
             return list(results)
 
         def cleanup(self) -> None:
@@ -662,9 +660,7 @@ class FlextTestsFixtures:
             data: FlextTypes.Core.Dict | None = None,
         ) -> FlextTypes.Core.Dict:
             """Create processing command using ``FlextTypes.Core.Dict``."""
-            command_data: FlextTypes.Core.Dict = (
-                data or {"test": "value"}
-            )
+            command_data: FlextTypes.Core.Dict = data or {"test": "value"}
 
             return {
                 "command": "process",

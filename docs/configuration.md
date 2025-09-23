@@ -1,6 +1,6 @@
 # Configuration
 
-Centralised configuration is a cornerstone of the 1.0.0 release. `FlextConfig`, `FlextContainer`, and `FlextDomainService` combine to deliver a predictable runtime bootstrap for every package in the ecosystem.
+Centralised configuration is a cornerstone of the 1.0.0 release. `FlextConfig`, `FlextContainer`, and `FlextService` combine to deliver a predictable runtime bootstrap for every package in the ecosystem.
 
 ---
 
@@ -47,9 +47,9 @@ Using the container aligns with the modernization pillar that all domain service
 ## Domain Services & Config
 
 ```python
-from flext_core import FlextDomainService, FlextResult
+from flext_core import FlextService, FlextResult
 
-class SendWelcomeEmail(FlextDomainService[FlextResult[None]]):
+class SendWelcomeEmail(FlextService[FlextResult[None]]):
     def execute(self, user_email: str) -> FlextResult[None]:
         config = self.container.get(AppConfig.__name__).unwrap()
         if not config.debug:
@@ -57,7 +57,7 @@ class SendWelcomeEmail(FlextDomainService[FlextResult[None]]):
         return FlextResult[None].ok(None)
 ```
 
-`FlextDomainService` exposes `self.container` and `self.logger` to keep domain services aligned with container and context expectations.
+`FlextService` exposes `self.container` and `self.logger` to keep domain services aligned with container and context expectations.
 
 ---
 

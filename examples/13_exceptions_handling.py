@@ -28,16 +28,16 @@ from uuid import uuid4
 from flext_core import (
     FlextConstants,
     FlextContainer,
-    FlextDomainService,
     FlextExceptions,
     FlextLogger,
     FlextResult,
+    FlextService,
 )
 
 # ========== EXCEPTION SERVICE ==========
 
 
-class ComprehensiveExceptionService(FlextDomainService[dict[str, object]]):
+class ComprehensiveExceptionService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextExceptions patterns and methods."""
 
     def __init__(self) -> None:
@@ -47,7 +47,7 @@ class ComprehensiveExceptionService(FlextDomainService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         self._logger.info("Executing exception demonstration")
         return FlextResult[dict[str, object]].ok({
             "status": "completed",
@@ -451,10 +451,10 @@ class ComprehensiveExceptionService(FlextDomainService[dict[str, object]]):
         metrics = FlextExceptions.get_metrics()
         print(f"✅ Exception metrics: {metrics}")
 
-        # Demonstrate Metrics class directly
-        FlextExceptions.Metrics.record_exception("CustomError")
-        FlextExceptions.Metrics.record_exception("CustomError")
-        metrics2 = FlextExceptions.Metrics.get_metrics()
+        # Demonstrate metrics tracking directly
+        FlextExceptions.record_exception("CustomError")
+        FlextExceptions.record_exception("CustomError")
+        metrics2 = FlextExceptions.get_metrics()
         print(f"✅ Updated metrics: {metrics2}")
 
     # ========== MODULE-SPECIFIC EXCEPTIONS ==========

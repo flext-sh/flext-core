@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import math
 import os
 import pathlib
@@ -17,12 +18,21 @@ import secrets
 import string
 import threading
 import time
+import typing
 import uuid
 from collections.abc import Callable
+from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
-from typing import cast
+from itertools import starmap
+from typing import Any, ClassVar, cast, get_origin, get_type_hints
 
+import attr
+from pydantic import BaseModel
+
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.typings import T, U
 
@@ -36,6 +46,7 @@ MAX_RETRY_COUNT = (
     FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
 )  # Maximum retry attempts
 MAX_ERROR_DISPLAY = 5  # Maximum errors to display in batch processing
+MAX_REGEX_PATTERN_LENGTH = 1000  # Maximum regex pattern length to prevent ReDoS
 
 
 class FlextUtilities:
@@ -109,7 +120,7 @@ class FlextUtilities:
                 return FlextResult[str].ok(value)
 
             # First validate the pattern itself using FlextResult composition
-            pattern_validation = FlextUtilities.Processing._validate_regex_pattern(
+            pattern_validation = FlextUtilities.Processing.validate_regex_pattern(
                 pattern
             )
             if pattern_validation.is_failure:
@@ -134,26 +145,30 @@ class FlextUtilities:
             field_name: str = "string",
         ) -> FlextResult[str]:
             """Comprehensive string validation using railway composition."""
-            return (
-                FlextUtilities.Validation.validate_string_not_none(value, field_name)
-                >> (
-                    lambda s: FlextUtilities.Validation.validate_string_not_empty(
-                        s, field_name
-                    )
-                )
-                >> (
-                    lambda s: FlextUtilities.Validation.validate_string_length(
-                        s, min_length, max_length, field_name
-                    )
-                )
-                >> (
-                    lambda s: FlextUtilities.Validation.validate_string_pattern(
-                        s, pattern, field_name
-                    )
-                    if pattern
-                    else FlextResult[str].ok(s)
-                )
+            # Use explicit function calls instead of lambdas to avoid type inference issues
+            not_none_result = FlextUtilities.Validation.validate_string_not_none(
+                value, field_name
             )
+            if not_none_result.is_failure:
+                return not_none_result
+
+            not_empty_result = FlextUtilities.Validation.validate_string_not_empty(
+                not_none_result.unwrap(), field_name
+            )
+            if not_empty_result.is_failure:
+                return not_empty_result
+
+            length_result = FlextUtilities.Validation.validate_string_length(
+                not_empty_result.unwrap(), min_length, max_length, field_name
+            )
+            if length_result.is_failure:
+                return length_result
+
+            if pattern:
+                return FlextUtilities.Validation.validate_string_pattern(
+                    length_result.unwrap(), pattern, field_name
+                )
+            return FlextResult[str].ok(length_result.unwrap())
 
         @staticmethod
         def validate_email(email: str) -> FlextResult[str]:
@@ -179,7 +194,7 @@ class FlextUtilities:
         def validate_port(port: int | str) -> FlextResult[int]:
             """Validate network port number using explicit FlextResult patterns."""
             # First validate the input type and convert to integer explicitly
-            port_conversion = FlextUtilities.Processing._convert_to_integer(port)
+            port_conversion = FlextUtilities.Processing.convert_to_integer(port)
             if port_conversion.is_failure:
                 return FlextResult[int].fail(
                     f"Port must be a valid integer, got {port}: {port_conversion.error}"
@@ -199,14 +214,17 @@ class FlextUtilities:
             value: str, allowed_environments: list[str]
         ) -> FlextResult[str]:
             """Validate environment value against allowed list."""
-            return FlextUtilities.Validation.validate_string(
+            string_result = FlextUtilities.Validation.validate_string(
                 value, min_length=1, field_name="environment"
-            ) >> (
-                lambda env: FlextResult[str].ok(env)
-                if env in allowed_environments
-                else FlextResult[str].fail(
-                    f"Environment must be one of {allowed_environments}, got '{env}'"
-                )
+            )
+            if string_result.is_failure:
+                return string_result
+
+            env = string_result.unwrap()
+            if env in allowed_environments:
+                return FlextResult[str].ok(env)
+            return FlextResult[str].fail(
+                f"Environment must be one of {allowed_environments}, got '{env}'"
             )
 
         @staticmethod
@@ -238,31 +256,42 @@ class FlextUtilities:
             if "\x00" in path:
                 return FlextResult[str].fail("directory path cannot contain null bytes")
 
-            return FlextUtilities.Validation.validate_string(
+            string_result = FlextUtilities.Validation.validate_string(
                 path, min_length=1, field_name="directory path"
-            ) >> (lambda p: FlextResult[str].ok(os.path.normpath(p)))
+            )
+            if string_result.is_failure:
+                return string_result
+
+            return FlextResult[str].ok(os.path.normpath(string_result.unwrap()))
 
         @staticmethod
         def validate_file_path(path: str) -> FlextResult[str]:
             """Validate file path format."""
-            return FlextUtilities.Validation.validate_string(
+            string_result = FlextUtilities.Validation.validate_string(
                 path, min_length=1, field_name="file path"
-            ) >> (lambda p: FlextResult[str].ok(os.path.normpath(p)))
+            )
+            if string_result.is_failure:
+                return string_result
+
+            return FlextResult[str].ok(os.path.normpath(string_result.unwrap()))
 
         @staticmethod
         def validate_existing_file_path(path: str) -> FlextResult[str]:
             """Validate that file path exists on filesystem."""
-            return FlextUtilities.Validation.validate_file_path(path) >> (
-                lambda p: FlextResult[str].ok(p)
-                if pathlib.Path(p).is_file()
-                else FlextResult[str].fail(f"file does not exist: {p}")
-            )
+            file_path_result = FlextUtilities.Validation.validate_file_path(path)
+            if file_path_result.is_failure:
+                return file_path_result
+
+            p = file_path_result.unwrap()
+            if pathlib.Path(p).is_file():
+                return FlextResult[str].ok(p)
+            return FlextResult[str].fail(f"file does not exist: {p}")
 
         @staticmethod
         def validate_timeout_seconds(timeout: float) -> FlextResult[float]:
             """Validate timeout value in seconds using explicit FlextResult patterns."""
             # First convert to float using explicit validation
-            float_conversion = FlextUtilities.Processing._convert_to_float(timeout)
+            float_conversion = FlextUtilities.Processing.convert_to_float(timeout)
             if float_conversion.is_failure:
                 return FlextResult[float].fail(
                     f"Timeout must be a valid number, got {timeout}: {float_conversion.error}"
@@ -393,9 +422,115 @@ class FlextUtilities:
                 Value if validation passes, contextual error otherwise
 
             """
-            return validator(value).with_context(
-                lambda error: f"{context_name}: {error}"
-            ) >> (lambda _: FlextResult.ok(value))
+            validation_result = validator(value)
+            if validation_result.is_failure:
+                return FlextResult[TContext].fail(
+                    f"{context_name}: {validation_result.error}"
+                )
+            return FlextResult[TContext].ok(value)
+
+        @staticmethod
+        def validate_email_address(email: str) -> FlextResult[str]:
+            """Enhanced email validation matching FlextModels.EmailAddress pattern."""
+            if not email:
+                return FlextResult[str].fail("Email cannot be empty")
+
+            # Use pattern from FlextConstants.Platform.PATTERN_EMAIL
+            if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
+                return FlextResult[str].fail(f"Invalid email format: {email}")
+
+            # Length validation using FlextConstants
+            if len(email) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                return FlextResult[str].fail(
+                    f"Email too long (max {FlextConstants.Validation.MAX_EMAIL_LENGTH} chars)"
+                )
+
+            return FlextResult[str].ok(email.lower())
+
+        @staticmethod
+        def validate_hostname(hostname: str) -> FlextResult[str]:
+            """Validate hostname format matching FlextModels.Host pattern."""
+            # Trim whitespace first
+            hostname = hostname.strip()
+
+            # Check if empty after trimming
+            if not hostname:
+                return FlextResult[str].fail("Hostname cannot be empty")
+
+            # Basic hostname validation
+            if len(hostname) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                return FlextResult[str].fail("Hostname too long")
+
+            if not all(c.isalnum() or c in ".-" for c in hostname):
+                return FlextResult[str].fail("Invalid hostname characters")
+
+            return FlextResult[str].ok(hostname.lower())
+
+        @staticmethod
+        def validate_entity_id(entity_id: str) -> FlextResult[str]:
+            """Validate entity ID format matching FlextModels.EntityId pattern."""
+            # Trim whitespace first
+            entity_id = entity_id.strip()
+
+            # Check if empty after trimming
+            if not entity_id:
+                return FlextResult[str].fail("Entity ID cannot be empty")
+
+            # Allow UUIDs, alphanumeric with dashes/underscores
+
+            if not re.match(r"^[a-zA-Z0-9_-]+$", entity_id):
+                return FlextResult[str].fail("Invalid entity ID format")
+
+            return FlextResult[str].ok(entity_id)
+
+        @staticmethod
+        def validate_phone_number(phone: str) -> FlextResult[str]:
+            """Validate phone number with minimum digit requirement."""
+            if not phone:
+                return FlextResult[str].fail("Phone number cannot be empty")
+
+            # Extract digits only for length validation
+            digits_only = "".join(c for c in phone if c.isdigit())
+
+            if len(digits_only) < FlextConstants.Validation.MIN_PHONE_DIGITS:
+                return FlextResult[str].fail(
+                    f"Phone number must have at least {FlextConstants.Validation.MIN_PHONE_DIGITS} digits"
+                )
+
+            return FlextResult[str].ok(phone)
+
+        @staticmethod
+        def validate_name_length(name: str) -> FlextResult[str]:
+            """Validate name length using FlextConstants."""
+            if not name:
+                return FlextResult[str].fail("Name cannot be empty")
+
+            if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
+                return FlextResult[str].fail(
+                    f"Name too short (min {FlextConstants.Validation.MIN_NAME_LENGTH} chars)"
+                )
+
+            if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
+                return FlextResult[str].fail(
+                    f"Name too long (max {FlextConstants.Validation.MAX_NAME_LENGTH} chars)"
+                )
+
+            return FlextResult[str].ok(name.strip())
+
+        @staticmethod
+        def validate_bcrypt_rounds(rounds: int) -> FlextResult[int]:
+            """Validate BCrypt rounds using FlextConstants."""
+            if rounds < FlextConstants.Security.MIN_BCRYPT_ROUNDS:
+                return FlextResult[int].fail(
+                    f"BCrypt rounds too low (min {FlextConstants.Security.MIN_BCRYPT_ROUNDS})"
+                )
+
+            if rounds > FlextConstants.Security.MAX_BCRYPT_ROUNDS:
+                return FlextResult[int].fail(
+                    f"BCrypt rounds too high (max {FlextConstants.Security.MAX_BCRYPT_ROUNDS})"
+                )
+
+            return FlextResult[int].ok(rounds)
 
     class Transformation:
         """Data transformation utilities using railway composition."""
@@ -403,48 +538,52 @@ class FlextUtilities:
         @staticmethod
         def normalize_string(value: str) -> FlextResult[str]:
             """Normalize string by stripping whitespace and converting to lowercase."""
-            return FlextResult[str].ok(value) >> (
-                lambda s: FlextResult[str].ok(s.strip().lower())
-            )
+            return FlextResult[str].ok(value.strip().lower())
 
         @staticmethod
         def sanitize_filename(filename: str) -> FlextResult[str]:
             """Sanitize filename by removing/replacing invalid characters."""
-            return (
-                FlextUtilities.Validation.validate_string(
-                    filename, min_length=1, field_name="filename"
-                )
-                >> (
-                    lambda name: FlextResult[str].ok(re.sub(r'[<>:"/\\|?*]', "_", name))
-                )
-                >> (
-                    lambda name: FlextResult[str].ok(
-                        name[: FlextConstants.Validation.MAX_EMAIL_LENGTH]
-                    )
-                )  # Limit length to max field length
+            validation_result = FlextUtilities.Validation.validate_string(
+                filename, min_length=1, field_name="filename"
             )
+            if validation_result.is_failure:
+                return validation_result
+
+            name: str = validation_result.unwrap()
+            sanitized_name = re.sub(r'[<>:"/\\|?*]', "_", name)
+            limited_name = sanitized_name[: FlextConstants.Validation.MAX_EMAIL_LENGTH]
+
+            return FlextResult[str].ok(limited_name)
 
         @staticmethod
         def parse_comma_separated(value: str) -> FlextResult[list[str]]:
             """Parse comma-separated string into list."""
-            return FlextUtilities.Validation.validate_string(
+            validation_result = FlextUtilities.Validation.validate_string(
                 value, min_length=1, field_name="comma-separated value"
-            ) >> (
-                lambda v: FlextResult[list[str]].ok([
-                    item.strip() for item in v.split(",") if item.strip()
-                ])
             )
+            if validation_result.is_failure:
+                return FlextResult[list[str]].fail(
+                    validation_result.error or "Validation failed"
+                )
+
+            v: str = validation_result.unwrap()
+            items = [item.strip() for item in v.split(",") if item.strip()]
+            return FlextResult[list[str]].ok(items)
 
         @staticmethod
         def format_error_message(
             error: str, context: str | None = None
         ) -> FlextResult[str]:
             """Format error message with optional context."""
-            return FlextUtilities.Validation.validate_string(
+            validation_result = FlextUtilities.Validation.validate_string(
                 error, min_length=1, field_name="error message"
-            ) >> (
-                lambda msg: FlextResult[str].ok(f"{context}: {msg}" if context else msg)
             )
+            if validation_result.is_failure:
+                return validation_result
+
+            msg: str = validation_result.unwrap()
+            formatted_msg = f"{context}: {msg}" if context else msg
+            return FlextResult[str].ok(formatted_msg)
 
     class Processing:
         """Processing utilities with reliability patterns."""
@@ -489,23 +628,26 @@ class FlextUtilities:
             timeout_seconds: float = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS,
         ) -> FlextResult[T]:
             """Execute operation with timeout using advanced railway pattern."""
-            return FlextUtilities.Validation.validate_timeout_seconds(
+            # Validate timeout first
+            timeout_validation = FlextUtilities.Validation.validate_timeout_seconds(
                 timeout_seconds
-            ) >> (
-                lambda _: FlextResult.ok(None).with_timeout(
-                    timeout_seconds, lambda _: operation()
-                )
             )
+            if timeout_validation.is_failure:
+                return FlextResult[T].fail(
+                    timeout_validation.error or "Invalid timeout"
+                )
 
-        @staticmethod
+            # Use the reliability pattern instead of FlextResult.with_timeout
+            return FlextUtilities.Reliability.with_timeout(operation, timeout_seconds)
+
+        @classmethod
         def circuit_breaker(
+            cls,
             operation: Callable[[], FlextResult[T]],
             failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
             recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
         ) -> FlextResult[T]:
             """Circuit breaker pattern implementation with config integration."""
-            from flext_core.config import FlextConfig
-
             # Check if circuit breaker is enabled in configuration
             config = FlextConfig.get_global_instance()
             if not config.enable_circuit_breaker:
@@ -533,13 +675,22 @@ class FlextUtilities:
 
             # Get or create circuit breaker state for this operation
             operation_id = f"{operation.__name__ if hasattr(operation, '__name__') else 'anonymous'}_{id(operation)}"
-            state = FlextUtilities.Processing._get_circuit_breaker_state(operation_id)
+            state = cls._get_circuit_breaker_state(operation_id)
 
             # Check current circuit state with proper type casting
             current_time = time.time()
-            circuit_state = cast("str", state["circuit_state"])
-            cast("int", state["failure_count"])
-            last_failure_time = cast("float", state["last_failure_time"])
+            # Extract circuit state with type checking
+            circuit_state_raw = state["circuit_state"]
+            circuit_state = (
+                str(circuit_state_raw) if circuit_state_raw is not None else "CLOSED"
+            )
+
+            # Extract last failure time with type checking
+            last_failure_time_raw = state["last_failure_time"]
+            if isinstance(last_failure_time_raw, (int, float)):
+                last_failure_time = float(last_failure_time_raw)
+            else:
+                last_failure_time = 0.0
 
             # Handle OPEN state (circuit is open, failures exceeded threshold)
             if circuit_state == "OPEN":
@@ -565,11 +716,17 @@ class FlextUtilities:
                     state["last_success_time"] = current_time
                     return result
                 # Operation failed - increment failure count
-                current_failure_count = cast("int", state["failure_count"])
+                current_failure_count_raw = state["failure_count"]
+                current_failure_count = (
+                    int(current_failure_count_raw)
+                    if isinstance(current_failure_count_raw, (int, float))
+                    else 0
+                )
                 state["failure_count"] = current_failure_count + 1
                 state["last_failure_time"] = current_time
 
-                if cast("int", state["failure_count"]) >= failure_threshold:
+                new_failure_count = current_failure_count + 1
+                if new_failure_count >= failure_threshold:
                     # Open circuit - failures exceeded threshold
                     state["circuit_state"] = "OPEN"
                     return FlextResult[T].fail(
@@ -581,11 +738,17 @@ class FlextUtilities:
 
             except Exception as e:
                 # Exception during operation - treat as failure
-                current_failure_count = cast("int", state["failure_count"])
+                current_failure_count_raw = state["failure_count"]
+                current_failure_count = (
+                    int(current_failure_count_raw)
+                    if isinstance(current_failure_count_raw, (int, float))
+                    else 0
+                )
                 state["failure_count"] = current_failure_count + 1
                 state["last_failure_time"] = current_time
 
-                if cast("int", state["failure_count"]) >= failure_threshold:
+                new_failure_count = current_failure_count + 1
+                if new_failure_count >= failure_threshold:
                     state["circuit_state"] = "OPEN"
                     return FlextResult[T].fail(
                         f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
@@ -595,8 +758,8 @@ class FlextUtilities:
                 return FlextResult[T].fail(f"Circuit breaker operation failed: {e}")
 
         # Circuit breaker state management (class-level state)
-        _circuit_breaker_states: dict[str, dict[str, object]] = {}
-        _circuit_breaker_lock = threading.Lock()
+        _circuit_breaker_states: ClassVar[dict[str, dict[str, object]]] = {}
+        _circuit_breaker_lock: ClassVar[threading.Lock] = threading.Lock()
 
         @classmethod
         def _get_circuit_breaker_state(cls, operation_id: str) -> dict[str, object]:
@@ -612,7 +775,7 @@ class FlextUtilities:
                 return cls._circuit_breaker_states[operation_id]
 
         @staticmethod
-        def _validate_regex_pattern(pattern: str) -> FlextResult[re.Pattern[str]]:
+        def validate_regex_pattern(pattern: str) -> FlextResult[re.Pattern[str]]:
             """Validate and compile a regex pattern using explicit FlextResult handling.
 
             This replaces try/except patterns with explicit FlextResult error handling
@@ -628,11 +791,10 @@ class FlextUtilities:
             if not pattern:
                 return FlextResult[re.Pattern[str]].fail("Pattern cannot be empty")
 
-            if not isinstance(pattern, str):
-                return FlextResult[re.Pattern[str]].fail("Pattern must be a string")
+            # Type annotation guarantees pattern is str, isinstance check unnecessary
 
             # Check for basic pattern validity before compilation
-            if len(pattern) > 1000:  # Reasonable limit to prevent ReDoS
+            if len(pattern) > MAX_REGEX_PATTERN_LENGTH:
                 return FlextResult[re.Pattern[str]].fail(
                     "Pattern too long (max 1000 characters)"
                 )
@@ -648,7 +810,7 @@ class FlextUtilities:
                 return FlextResult[re.Pattern[str]].fail(f"Invalid regex pattern: {e}")
 
         @staticmethod
-        def _convert_to_integer(value: int | str) -> FlextResult[int]:
+        def convert_to_integer(value: int | str) -> FlextResult[int]:
             """Convert value to integer using explicit FlextResult handling.
 
             This replaces try/except patterns with explicit validation following
@@ -664,10 +826,8 @@ class FlextUtilities:
             if isinstance(value, int):
                 return FlextResult[int].ok(value)
 
-            if not isinstance(value, str):
-                return FlextResult[int].fail(
-                    f"Value must be int or str, got {type(value).__name__}"
-                )
+            # value is str at this point due to type annotation int | str
+            # Type checking already ensures this
 
             # Validate string before conversion
             cleaned_value = value.strip()
@@ -693,7 +853,7 @@ class FlextUtilities:
                 )
 
         @staticmethod
-        def _convert_to_float(value: float | str) -> FlextResult[float]:
+        def convert_to_float(value: float | str) -> FlextResult[float]:
             """Convert value to float using explicit FlextResult handling.
 
             This replaces try/except patterns with explicit validation following
@@ -712,10 +872,8 @@ class FlextUtilities:
             if isinstance(value, int):
                 return FlextResult[float].ok(float(value))
 
-            if not isinstance(value, str):
-                return FlextResult[float].fail(
-                    f"Value must be float, int, or str, got {type(value).__name__}"
-                )
+            # value is str at this point due to type annotation float | str
+            # Type checking already ensures this
 
             # Validate string before conversion
             cleaned_value = value.strip()
@@ -759,26 +917,37 @@ class FlextUtilities:
 
                 # For object type, return value as-is
                 if target_type is object:
+                    # Type safety: object type can hold any value
                     return FlextResult[T].ok(cast("T", value))
 
                 # For basic types, try to construct with value
                 if target_type is str:
-                    return FlextResult[T].ok(cast("T", str(value)))
+                    converted_str = str(value)
+                    return FlextResult[T].ok(cast("T", converted_str))
                 if target_type is int:
-                    return FlextResult[T].ok(cast("T", int(str(value))))
+                    converted_int = int(str(value))
+                    return FlextResult[T].ok(cast("T", converted_int))
                 if target_type is float:
-                    return FlextResult[T].ok(cast("T", float(str(value))))
+                    converted_float = float(str(value))
+                    return FlextResult[T].ok(cast("T", converted_float))
                 if target_type is bool:
-                    return FlextResult[T].ok(cast("T", bool(value)))
+                    converted_bool = bool(value)
+                    return FlextResult[T].ok(cast("T", converted_bool))
 
                 # For other types, try to cast directly
                 try:
                     # For other types with constructors, try calling them
-                    # Use type ignore to handle mypy's overly strict object constructor check
-                    converted_value = target_type(value)  # type: ignore[call-arg]
-                    return FlextResult[T].ok(converted_value)
+                    # Skip object type as it doesn't accept arguments
+                    if callable(target_type) and target_type is not object:
+                        # Use type ignore for the constructor call since MyPy can't verify all types
+                        converted_value = cast("Callable[[object], T]", target_type)(
+                            value
+                        )
+                        return FlextResult[T].ok(converted_value)
+                    # If no constructor or object type, return the value with explicit type annotation
+                    return FlextResult[T].ok(cast("T", value))
                 except (TypeError, ValueError):
-                    # If constructor fails, return the value with type ignore
+                    # If constructor fails, return the value with explicit type annotation
                     return FlextResult[T].ok(cast("T", value))
 
             except (ValueError, TypeError) as e:
@@ -815,10 +984,10 @@ class FlextUtilities:
             """Safely get nested dictionary value using dot notation."""
             try:
                 keys = path.split(".")
-                current: object = data
+                current: object = data  # Start with the data object
                 for key in keys:
                     if isinstance(current, dict) and key in current:
-                        current = current[key]
+                        current = cast("object", current[key])
                     else:
                         return FlextResult[object].ok(default)
                 return FlextResult[object].ok(current)
@@ -829,7 +998,7 @@ class FlextUtilities:
         def ensure_list(value: object) -> FlextResult[list[object]]:
             """Ensure value is a list, wrapping single values."""
             if isinstance(value, list):
-                return FlextResult[list[object]].ok(value)
+                return FlextResult[list[object]].ok(cast("list[object]", value))
             if value is None:
                 return FlextResult[list[object]].ok([])
             return FlextResult[list[object]].ok([value])
@@ -860,13 +1029,12 @@ class FlextUtilities:
                 fail_fast: If True, stop on first error; if False, accumulate all errors
 
             """
-            # Validate batch size using railway pattern
-            return FlextResult.ok(batch_size).filter(
-                lambda x: x > 0, "Batch size must be positive"
-            ) >> (
-                lambda _: FlextUtilities.Utilities.process_batches_railway(
-                    items, processor, batch_size, fail_fast=fail_fast
-                )
+            # Validate batch size
+            if batch_size <= 0:
+                return FlextResult[list[U]].fail("Batch size must be positive")
+
+            return FlextUtilities.Utilities.process_batches_railway(
+                items, processor, batch_size, fail_fast=fail_fast
             )
 
         @staticmethod
@@ -889,15 +1057,37 @@ class FlextUtilities:
             # Process each batch using railway patterns
             if fail_fast:
                 # Use sequence for early termination
-                batch_results = [
-                    FlextResult.sequence([processor(item) for item in batch])
+                def _identity(x: list[FlextResult[U]]) -> list[FlextResult[U]]:
+                    return x
+
+                batch_results: list[FlextResult[list[U]]] = [
+                    typing.cast(
+                        "FlextResult[list[U]]",
+                        getattr(FlextResult, "sequence", _identity)([
+                            processor(item) for item in batch
+                        ]),
+                    )
                     for batch in batches
                 ]
-                return FlextResult.sequence(batch_results).map(
-                    lambda nested_results: [
+
+                def flatten_results(nested_results: list[list[U]]) -> list[U]:
+                    return [
                         item for batch_result in nested_results for item in batch_result
                     ]
+
+                from typing import cast
+
+                def _identity2(
+                    x: list[FlextResult[list[U]]],
+                ) -> list[FlextResult[list[U]]]:
+                    return x
+
+                # Fix: The sequence returns FlextResult[list[list[U]]] so we need the correct type annotation
+                sequence_result: FlextResult[list[list[U]]] = cast(
+                    "FlextResult[list[list[U]]]",
+                    getattr(FlextResult, "sequence", _identity2)(batch_results),
                 )
+                return sequence_result.map(flatten_results)
             # Use accumulate_errors for collecting all errors
             all_results = [processor(item) for batch in batches for item in batch]
             return FlextResult.accumulate_errors(*all_results)
@@ -1198,8 +1388,6 @@ class FlextUtilities:
             recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
         ) -> FlextResult[TCircuit]:
             """Circuit breaker pattern using railway composition with config integration."""
-            from flext_core.config import FlextConfig
-
             # Check if circuit breaker is enabled in configuration
             config = FlextConfig.get_global_instance()
             if not config.enable_circuit_breaker:
@@ -1258,12 +1446,21 @@ class FlextUtilities:
                     return FlextResult[list[dict[str, object]]].ok([])
 
                 if all(isinstance(item, dict) for item in data):
-                    return FlextResult[list[dict[str, object]]].ok(data)
+                    return FlextResult[list[dict[str, object]]].ok(
+                        cast("list[dict[str, object]]", data)
+                    )
 
                 # Convert list of non-dict items to table
-                return FlextResult[list[dict[str, object]]].ok([
-                    {"index": i, "value": str(item)} for i, item in enumerate(data)
-                ])
+                def convert_item_to_dict(i: int, item: object) -> dict[str, object]:
+                    return {"index": i, "value": str(item)}
+
+                return FlextResult[list[dict[str, object]]].ok(
+                    list(
+                        starmap(
+                            convert_item_to_dict, enumerate(cast("list[object]", data))
+                        )
+                    )
+                )
 
             # Handle single dictionary
             if isinstance(data, dict):
@@ -1271,10 +1468,16 @@ class FlextUtilities:
                     return FlextResult[list[dict[str, object]]].ok([])
 
                 # Convert to key-value table
-                return FlextResult[list[dict[str, object]]].ok([
-                    {"key": str(key), "value": str(value)}
-                    for key, value in data.items()
-                ])
+                def convert_kv_to_dict(key: object, value: object) -> dict[str, object]:
+                    return {"key": str(key), "value": str(value)}
+
+                return FlextResult[list[dict[str, object]]].ok(
+                    list(
+                        starmap(
+                            convert_kv_to_dict, cast("dict[str, object]", data).items()
+                        )
+                    )
+                )
 
             # Handle objects with __dict__ attribute
             if hasattr(data, "__dict__"):
@@ -1301,9 +1504,428 @@ class FlextUtilities:
         @staticmethod
         def is_dict_non_empty(value: object) -> bool:
             """Check if value is a non-empty dictionary."""
-            return isinstance(value, dict) and len(value) > 0
+            return isinstance(value, dict) and len(cast("dict[str, object]", value)) > 0
 
         @staticmethod
         def is_list_non_empty(value: object) -> bool:
             """Check if value is a non-empty list."""
-            return isinstance(value, list) and len(value) > 0
+            return isinstance(value, list) and len(cast("list[object]", value)) > 0
+
+    class TypeChecker:
+        """Handler type checking utilities for FlextHandlers complexity reduction.
+
+        Extracts type introspection and compatibility logic from FlextHandlers
+        to simplify handler initialization and provide reusable type checking.
+        """
+
+        @classmethod
+        def compute_accepted_message_types(
+            cls, handler_class: type
+        ) -> tuple[object, ...]:
+            """Compute message types accepted by a handler using cached introspection.
+
+            Args:
+                handler_class: Handler class to analyze
+
+            Returns:
+                Tuple of accepted message types
+
+            """
+            message_types: list[object] = []
+            message_types.extend(cls._extract_generic_message_types(handler_class))
+
+            if not message_types:
+                explicit_type = cls._extract_message_type_from_handle(handler_class)
+                if explicit_type is not None:
+                    message_types.append(explicit_type)
+
+            return tuple(message_types)
+
+        @classmethod
+        def _extract_generic_message_types(cls, handler_class: type) -> list[object]:
+            """Extract message types from generic base annotations.
+
+            Args:
+                handler_class: Handler class to analyze
+
+            Returns:
+                List of message types from generic annotations
+
+            """
+            message_types: list[object] = []
+            for base in getattr(handler_class, "__orig_bases__", ()) or ():
+                origin = get_origin(base)
+                # Check by name to avoid circular import
+                if origin and origin.__name__ == "FlextHandlers":
+                    args = getattr(base, "__args__", ())
+                    if args:
+                        message_types.append(args[0])
+            return message_types
+
+        @classmethod
+        def _extract_message_type_from_handle(
+            cls, handler_class: type
+        ) -> object | None:
+            """Extract message type from handle method annotations when generics are absent.
+
+            Args:
+                handler_class: Handler class to analyze
+
+            Returns:
+                Message type from handle method or None
+
+            """
+            handle_method = getattr(handler_class, "handle", None)
+            if handle_method is None:
+                return None
+
+            try:
+                signature = inspect.signature(handle_method)
+            except (TypeError, ValueError):
+                return None
+
+            try:
+                type_hints = get_type_hints(
+                    handle_method,
+                    globalns=getattr(handle_method, "__globals__", {}),
+                    localns=dict(vars(handler_class)),
+                )
+            except (NameError, AttributeError, TypeError):
+                type_hints = {}
+
+            for name, parameter in signature.parameters.items():
+                if name == "self":
+                    continue
+
+                if name in type_hints:
+                    # Cast the object type hint to object for return type compatibility
+                    return cast("object", type_hints[name])
+
+                annotation = parameter.annotation
+                if annotation is not inspect.Signature.empty:
+                    return cast("object", annotation)
+
+                break
+
+            return None
+
+        @classmethod
+        def can_handle_message_type(
+            cls,
+            accepted_types: tuple[object, ...],
+            message_type: object,
+        ) -> bool:
+            """Check if handler can process this message type.
+
+            Args:
+                accepted_types: Types accepted by handler
+                message_type: Type to check
+
+            Returns:
+                True if handler can process this message type
+
+            """
+            if not accepted_types:
+                return False
+
+            for expected_type in accepted_types:
+                if cls._evaluate_type_compatibility(expected_type, message_type):
+                    return True
+            return False
+
+        @classmethod
+        def _evaluate_type_compatibility(
+            cls, expected_type: object, message_type: object
+        ) -> bool:
+            """Evaluate compatibility between expected and actual message types.
+
+            Args:
+                expected_type: Expected message type
+                message_type: Actual message type
+
+            Returns:
+                True if types are compatible
+
+            """
+            origin_type = get_origin(expected_type) or expected_type
+            message_origin = get_origin(message_type) or message_type
+
+            if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
+                return cls._handle_type_or_origin_check(
+                    expected_type, message_type, origin_type, message_origin
+                )
+            return cls._handle_instance_check(message_type, origin_type)
+
+        @classmethod
+        def _handle_type_or_origin_check(
+            cls,
+            expected_type: object,
+            message_type: object,
+            origin_type: object,
+            message_origin: object,
+        ) -> bool:
+            """Handle type checking for types or objects with __origin__.
+
+            Args:
+                expected_type: Expected type
+                message_type: Message type
+                origin_type: Origin of expected type
+                message_origin: Origin of message type
+
+            Returns:
+                True if types are compatible
+
+            """
+            try:
+                if hasattr(message_type, "__origin__"):
+                    return message_origin == origin_type
+                if isinstance(message_type, type) and isinstance(origin_type, type):
+                    return issubclass(message_type, origin_type)
+                return message_type == expected_type
+            except TypeError:
+                return message_type == expected_type
+
+        @classmethod
+        def _handle_instance_check(
+            cls, message_type: object, origin_type: object
+        ) -> bool:
+            """Handle instance checking for non-type objects.
+
+            Args:
+                message_type: Message type to check
+                origin_type: Origin type to check against
+
+            Returns:
+                True if instance check passes
+
+            """
+            try:
+                if isinstance(origin_type, type):
+                    return isinstance(message_type, origin_type)
+                return True
+            except TypeError:
+                return True
+
+    class MessageValidator:
+        """Message validation utilities for FlextHandlers complexity reduction.
+
+        Extracts message validation and serialization logic from FlextHandlers
+        to simplify handler validation and provide reusable validation patterns.
+        """
+
+        _SERIALIZABLE_MESSAGE_EXPECTATION = (
+            "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
+            "model_dump/dict/as_dict/__slots__ representations"
+        )
+
+        @classmethod
+        def validate_command(cls, command: object) -> FlextResult[None]:
+            """Validate command using enhanced Pydantic 2 validation and FlextExceptions."""
+            return cls.validate_message(
+                command,
+                operation="command",
+            )
+
+        @classmethod
+        def validate_query(cls, query: object) -> FlextResult[None]:
+            """Validate query using enhanced Pydantic 2 validation and FlextExceptions."""
+            return cls.validate_message(
+                query,
+                operation="query",
+            )
+
+        @classmethod
+        def validate_message(
+            cls,
+            message: object,
+            *,
+            operation: str,
+            revalidate_pydantic_messages: bool = False,
+        ) -> FlextResult[None]:
+            """Validate a message for the given operation.
+
+            Args:
+                message: The message object to validate
+                operation: The operation name for context
+                revalidate_pydantic_messages: Whether to revalidate Pydantic models
+
+            Returns:
+                FlextResult[None]: Success if valid, failure with error details if invalid
+
+            """
+            # If message is a Pydantic model, assume it is already validated unless
+            # the explicit revalidation flag requests an additional check
+            if isinstance(message, BaseModel):
+                if not revalidate_pydantic_messages:
+                    return FlextResult[None].ok(None)
+
+                try:
+                    message.__class__.model_validate(message.model_dump(mode="python"))
+                    return FlextResult[None].ok(None)
+                except Exception as e:
+                    validation_error = FlextExceptions.ValidationError(
+                        f"Pydantic revalidation failed: {e}",
+                        field="pydantic_model",
+                        value=str(message)[:100]
+                        if hasattr(message, "__str__")
+                        else "unknown",
+                        validation_details={
+                            "pydantic_exception": str(e),
+                            "model_class": message.__class__.__name__,
+                            "revalidated": True,
+                        },
+                        context={
+                            "operation": operation,
+                            "message_type": type(message).__name__,
+                            "validation_type": "pydantic_revalidation",
+                            "revalidate_pydantic_messages": revalidate_pydantic_messages,
+                        },
+                        correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
+                    )
+
+                    return FlextResult[None].fail(
+                        str(validation_error),
+                        error_code=validation_error.error_code,
+                        error_data={"exception_context": validation_error.context},
+                    )
+
+            # For non-Pydantic objects, ensure a serializable representation can be constructed
+            try:
+                cls.build_serializable_message_payload(message, operation=operation)
+            except Exception as exc:
+                if isinstance(exc, FlextExceptions.TypeError):
+                    return FlextResult[None].fail(
+                        str(exc),
+                        error_code=exc.error_code,
+                        error_data={"exception_context": exc.context},
+                    )
+
+                fallback_error = FlextExceptions.TypeError(
+                    f"Invalid message type for {operation}: {type(message).__name__}",
+                    expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
+                    actual_type=type(message).__name__,
+                    context={
+                        "operation": operation,
+                        "message_type": type(message).__name__,
+                        "validation_type": "serializable_check",
+                        "original_exception": str(exc),
+                    },
+                    correlation_id=f"type_validation_{int(time.time() * 1000)}",
+                )
+
+                return FlextResult[None].fail(
+                    str(fallback_error),
+                    error_code=fallback_error.error_code,
+                    error_data={"exception_context": fallback_error.context},
+                )
+
+            return FlextResult[None].ok(None)
+
+        @classmethod
+        def build_serializable_message_payload(
+            cls,
+            message: object,
+            *,
+            operation: str | None = None,
+        ) -> object:
+            """Build a serializable representation for message validation heuristics."""
+            operation_name = operation or "message"
+            context_operation = operation or "unknown"
+
+            if isinstance(message, (dict, str, int, float, bool)):
+                return cast("dict[str, object] | str | int | float | bool", message)
+
+            if message is None:
+                msg = f"Invalid message type for {operation_name}: NoneType"
+                raise FlextExceptions.TypeError(
+                    msg,
+                    expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
+                    actual_type="NoneType",
+                    context={
+                        "operation": context_operation,
+                        "message_type": "NoneType",
+                        "validation_type": "serializable_check",
+                    },
+                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                )
+
+            if isinstance(message, BaseModel):
+                return message.model_dump()
+
+            if is_dataclass(message):
+                # Cast to Any since dataclasses.asdict expects a dataclass instance
+                # and is_dataclass() confirms this is a dataclass
+                return asdict(cast("Any", message))
+
+            # Handle attrs classes with proper type annotation
+            attrs_fields = getattr(message, "__attrs_attrs__", None)
+            if attrs_fields is not None:
+                # attrs.asdict expects an attrs instance - since we checked __attrs_attrs__ exists,
+                # we can safely call asdict
+                return attr.asdict(cast("Any", message))
+
+            # Try common serialization methods
+            logger = FlextLogger(__name__)
+            for method_name in ("model_dump", "dict", "as_dict"):
+                method = getattr(message, method_name, None)
+                if callable(method):
+                    try:
+                        data = method()
+                    except Exception as e:
+                        # Log the exception for debugging purposes as required by S112
+                        logger.debug(
+                            f"Serialization method '{method_name}' failed for {type(message).__name__}: {e}",
+                            method_name=method_name,
+                            message_type=type(message).__name__,
+                            error=str(e),
+                        )
+                        continue
+                    if data is not None:
+                        return data
+
+            # Handle __slots__
+            slots = getattr(message, "__slots__", None)
+            if slots:
+                if isinstance(slots, str):
+                    slot_names: tuple[str, ...] = (slots,)
+                elif isinstance(slots, (list, tuple)):
+                    slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
+                else:
+                    msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
+                    raise FlextExceptions.TypeError(
+                        msg,
+                        expected_type="str, list, or tuple",
+                        actual_type=type(slots).__name__,
+                        context={
+                            "operation": context_operation,
+                            "message_type": type(message).__name__,
+                            "validation_type": "serializable_check",
+                            "__slots__": repr(slots),
+                        },
+                        correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                    )
+
+                def get_slot_value(slot_name: str) -> object:
+                    return getattr(message, slot_name)
+
+                return {
+                    slot_name: get_slot_value(slot_name)
+                    for slot_name in slot_names
+                    if hasattr(message, slot_name)
+                }
+
+            if hasattr(message, "__dict__"):
+                return vars(message)
+
+            msg = f"Invalid message type for {operation_name}: {type(message).__name__}"
+            raise FlextExceptions.TypeError(
+                msg,
+                expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type=type(message).__name__,
+                context={
+                    "operation": context_operation,
+                    "message_type": type(message).__name__,
+                    "validation_type": "serializable_check",
+                },
+                correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+            )

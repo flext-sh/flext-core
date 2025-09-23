@@ -5,7 +5,7 @@
 ### 1. Unified Class Pattern (MANDATORY)
 
 ```python
-class UnifiedProjectService(FlextDomainService):
+class UnifiedProjectService(FlextService):
     """Single responsibility class with nested helpers."""
 
     def __init__(self, **data) -> None:
@@ -68,7 +68,7 @@ src/flext_core/
 │   └── constants.py        # Constants and enums
 ├── Domain Layer (Depends on Foundation)
 │   ├── models.py           # FlextModels (Entity/Value/AggregateRoot)
-│   └── domain_services.py  # Domain service patterns
+│   └── service.py  # Domain service patterns
 └── Application Layer (Depends on Domain)
     ├── commands.py         # CQRS patterns
     └── handlers.py         # Handler registry

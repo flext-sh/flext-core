@@ -7,7 +7,7 @@ FLEXT-CORE is the **foundation library** for the entire FLEXT ecosystem, serving
 - Railway Pattern Foundation (FlextResult[T])
 - Dependency Injection (FlextContainer)
 - Domain Models (FlextModels - Entity/Value/AggregateRoot)
-- Service Architecture (FlextDomainService)
+- Service Architecture (FlextService)
 - Complete type safety for ecosystem
 
 ## Current Status

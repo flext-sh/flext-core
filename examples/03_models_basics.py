@@ -25,17 +25,16 @@ from __future__ import annotations
 import warnings
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import cast
 from uuid import uuid4
 
 from pydantic import Field
 
 from flext_core import (
     FlextContainer,
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextService,
 )
 
 # ========== VALUE OBJECTS ==========
@@ -55,9 +54,10 @@ class Email(FlextModels.Value):
         return FlextResult[None].ok(None)
 
     @classmethod
-    def create(cls, *args: object, **kwargs: object) -> FlextResult[Email]:
+    def create_email(cls, *args: object, **kwargs: object) -> FlextResult[Email]:
         """Factory method with validation."""
-        address = cast("str", args[0] if args else kwargs.get("address", ""))
+        address_raw = args[0] if args else kwargs.get("address", "")
+        address = str(address_raw) if address_raw is not None else ""
         email = cls(address=address.lower().strip())
         validation = email.validate_email()
         if validation.is_failure:
@@ -162,16 +162,10 @@ class Customer(FlextModels.Entity):
     is_vip: bool = False
     created_at: datetime = datetime.now(UTC)
 
-    def __init__(self, **data: object) -> None:
-        """Initialize with timestamp."""
-        if "created_at" not in data:
-            data["created_at"] = datetime.now(UTC)
-
-        # Initialize parent class with type-safe data
-        # Convert object values to proper types for Pydantic
-        typed_data: dict[str, object] = dict(data.items())
-
-        super().__init__(**typed_data)
+    def model_post_init(self, /, __context: object) -> None:
+        """Initialize with timestamp after Pydantic model creation."""
+        if not hasattr(self, "created_at"):
+            self.created_at = datetime.now(UTC)
 
     def can_purchase(self, amount: Money) -> FlextResult[bool]:
         """Check if customer can make purchase."""
@@ -250,20 +244,14 @@ class Order(FlextModels.AggregateRoot):
     created_at: datetime = datetime.now(UTC)
     shipped_at: datetime | None = None
 
-    def __init__(self, **data: object) -> None:
-        """Initialize with defaults."""
-        if "lines" not in data:
-            data["lines"] = []
-        if "created_at" not in data:
-            data["created_at"] = datetime.now(UTC)
-        if "total_amount" not in data:
-            data["total_amount"] = Money(amount=Decimal(0), currency="USD")
-
-        # Initialize parent class with type-safe data
-        # Convert object values to proper types for Pydantic
-        typed_data: dict[str, object] = dict(data.items())
-
-        super().__init__(**typed_data)
+    def model_post_init(self, /, __context: object) -> None:
+        """Initialize with defaults after Pydantic model creation."""
+        if not self.lines:
+            self.lines = []
+        if not hasattr(self, "created_at"):
+            self.created_at = datetime.now(UTC)
+        if not hasattr(self, "total_amount"):
+            self.total_amount = Money(amount=Decimal(0), currency="USD")
 
     def add_line(self, product: Product, quantity: int) -> FlextResult[None]:
         """Add order line with stock validation."""
@@ -408,7 +396,7 @@ class Order(FlextModels.AggregateRoot):
 # ========== COMPREHENSIVE MODELS SERVICE ==========
 
 
-class ComprehensiveModelsService(FlextDomainService[Order]):
+class ComprehensiveModelsService(FlextService[Order]):
     """Service demonstrating ALL FlextModels patterns and methods."""
 
     def __init__(self) -> None:
@@ -418,12 +406,13 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
         self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[Order]:
-        """Execute method required by FlextDomainService."""
+        """Execute method required by FlextService."""
         # This is a demonstration service, execute creates a sample order
         order = Order(
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number=f"ORD-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}",
+            domain_events=[],
         )
         return FlextResult[Order].ok(order)
 
@@ -434,9 +423,9 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
         print("\n=== Value Objects ===")
 
         # Create value objects
-        email_result = Email.create("john@example.com")
+        email_result = Email.create_email("john@example.com")
         if email_result.is_success:
-            email = email_result.unwrap()
+            email: Email = email_result.unwrap()
             print(f"✅ Email created: {email.address}")
 
         money = Money(amount=Decimal("100.50"), currency="USD")
@@ -454,7 +443,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
         print(f"Value equality: {email1 == email2}")  # True
-        print(f"Same instance: {email1 is email2}")  # False
+        print(f"Same instance: {email1 is email2}")  # False  # False
 
     def demonstrate_value_object_operations(self) -> None:
         """Show value object business operations."""
@@ -495,6 +484,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             price=Money(amount=Decimal("999.99"), currency="USD"),
             sku="LAP-001",
             stock=10,
+            domain_events=[],
         )
         print(f"Product: {product.name} (ID: {product.id})")
 
@@ -523,6 +513,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             name="Same Product",
             price=Money(amount=Decimal(100), currency="USD"),
             sku="PROD-001",
+            domain_events=[],
         )
 
         product2 = Product(
@@ -530,6 +521,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             name="Different Name",
             price=Money(amount=Decimal(200), currency="USD"),
             sku="PROD-002",
+            domain_events=[],
         )
 
         print(f"Same ID equality: {product1 == product2}")  # True (same ID)
@@ -539,6 +531,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             name="Same Product",
             price=Money(amount=Decimal(100), currency="USD"),
             sku="PROD-001",
+            domain_events=[],
         )
 
         print(f"Different ID equality: {product1 == product3}")  # False (different ID)
@@ -554,6 +547,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number="ORD-2025-001",
+            domain_events=[],
         )
         print(f"Order created: {order.order_number}")
 
@@ -564,6 +558,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             price=Money(amount=Decimal("999.99"), currency="USD"),
             sku="LAP-001",
             stock=5,
+            domain_events=[],
         )
 
         mouse = Product(
@@ -572,6 +567,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             price=Money(amount=Decimal("29.99"), currency="USD"),
             sku="MOU-001",
             stock=20,
+            domain_events=[],
         )
 
         # Add lines to order (aggregate maintains consistency)
@@ -620,6 +616,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             ),
             credit_limit=Money(amount=Decimal(5000), currency="USD"),
             current_balance=Money(amount=Decimal(1000), currency="USD"),
+            domain_events=[],
         )
 
         # Check purchase ability
@@ -661,6 +658,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
                 ),
             ],
             total_amount=Money(amount=Decimal(100), currency="USD"),
+            domain_events=[],
         )
 
         # Serialize to dict
@@ -717,6 +715,7 @@ class ComprehensiveModelsService(FlextDomainService[Order]):
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number="ORD-2025-003",
+            domain_events=[],
         )
 
         # Save

@@ -1,4 +1,11 @@
-"""FLEXT type system underpinning the 1.0.0 modernization guarantees.
+"""Layer 1: Foundation type system underpinning the 1.0.0 modernization guarantees.
+
+This module provides type aliases and generic type variables used throughout
+the FLEXT ecosystem. Only built-in type aliases to maintain ABI stability.
+
+Dependency Layer: 1 (Foundation - Depends only on FlextConstants)
+Dependencies: FlextConstants
+Used by: All other FlextCore modules requiring type definitions
 
 The module only defines aliases and generics backed by built-in types to keep
 ABI guarantees stable across the entire 1.x series.
@@ -15,7 +22,7 @@ from collections.abc import (
 from enum import StrEnum
 from typing import Literal, ParamSpec, TypeVar
 
-from .constants import FlextConstants
+from flext_core.constants import FlextConstants
 
 
 class FlextTypes:
@@ -180,18 +187,12 @@ class FlextTypes:
             FlextConstants.Environment.ConfigEnvironment.STAGING,
             FlextConstants.Environment.ConfigEnvironment.PRODUCTION,
             FlextConstants.Environment.ConfigEnvironment.TESTING,
-            FlextConstants.Config.ENVIRONMENTS[-2],  # e.g., "CUSTOM"
-            FlextConstants.Config.ENVIRONMENTS[-1],  # e.g., "LEGACY"
+            "test",  # ENVIRONMENTS[-2]
+            "local",  # ENVIRONMENTS[-1]
         ]
 
         # Logging levels (used in loggings, handlers, observability)
-        type LogLevel = Literal[
-            FlextConstants.Logging.DEBUG,
-            FlextConstants.Logging.INFO,
-            FlextConstants.Logging.WARNING,
-            FlextConstants.Logging.ERROR,
-            FlextConstants.Logging.CRITICAL,
-        ]
+        type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
         # Config serialization
         type ConfigSerializer = Callable[[ConfigDict], str]

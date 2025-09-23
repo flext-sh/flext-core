@@ -59,8 +59,8 @@ class TestFlextTestsFactories:
             if hasattr(result_factory, "success_result"):
                 result = result_factory.success_result("test_data")
                 assert isinstance(result, FlextResult)
-                assert result.success
-                assert result.data == "test_data"
+                assert result.is_success
+                assert result.value == "test_data"
 
     def test_result_factory_failure(self) -> None:
         """Test FlextResult factory for failure cases."""
@@ -69,7 +69,7 @@ class TestFlextTestsFactories:
             if hasattr(result_factory, "failure_result"):
                 result = result_factory.failure_result("test_error")
                 assert isinstance(result, FlextResult)
-                assert not result.success
+                assert result.is_failure
                 assert result.error == "test_error"
 
     def test_service_factory(self) -> None:

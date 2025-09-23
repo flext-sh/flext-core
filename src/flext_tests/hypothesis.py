@@ -13,11 +13,12 @@ import math
 import string
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import cast
 from uuid import uuid4
 
 from hypothesis import strategies as st
 
-from flext_core import FlextTypes
+from flext_core.typings import FlextTypes
 
 
 class FlextTestsHypothesis:
@@ -363,7 +364,7 @@ class FlextTestsHypothesis:
             return f"{z:05d}"
 
         @staticmethod
-        def addresses() -> st.SearchStrategy[FlextTypes.Core.Headers]:
+        def addresses() -> st.SearchStrategy[dict[str, object]]:
             """Generate address objects."""
             street_names = [
                 "Main St",
@@ -401,18 +402,21 @@ class FlextTestsHypothesis:
                 "MI",
             ]
 
-            return st.builds(
-                dict,
-                street=st.builds(
-                    FlextTestsHypothesis.BusinessDomainStrategies._build_street_address,
-                    num=st.integers(min_value=1, max_value=9999),
-                    name=st.sampled_from(street_names),
-                ),
-                city=st.sampled_from(cities),
-                state=st.sampled_from(states),
-                zip_code=st.builds(
-                    FlextTestsHypothesis.BusinessDomainStrategies._format_zip_code,
-                    z=st.integers(min_value=10000, max_value=99999),
+            return cast(
+                "st.SearchStrategy[dict[str, object]]",
+                st.builds(
+                    dict,
+                    street=st.builds(
+                        FlextTestsHypothesis.BusinessDomainStrategies._build_street_address,
+                        num=st.integers(min_value=1, max_value=9999),
+                        name=st.sampled_from(street_names),
+                    ),
+                    city=st.sampled_from(cities),
+                    state=st.sampled_from(states),
+                    zip_code=st.builds(
+                        FlextTestsHypothesis.BusinessDomainStrategies._format_zip_code,
+                        z=st.integers(min_value=10000, max_value=99999),
+                    ),
                 ),
             )
 

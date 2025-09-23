@@ -10,9 +10,9 @@ Foundation library for the FLEXT ecosystem that provides railway-oriented progra
 
 The FLEXT Core Modernization Plan identifies three pillars that must land for the 1.0.0 release. Every README, doc page, and docstring in this repository now reflects these commitments:
 
-1. **Unified Dispatcher Flow** – `FlextDispatcher` and `FlextDispatcherRegistry` standardise command/query routing across CLI and connector packages while preserving existing `FlextBus` semantics.
+1. **Unified Dispatcher Flow** – `FlextDispatcher` and `FlextRegistry` standardise command/query routing across CLI and connector packages while preserving existing `FlextBus` semantics.
 2. **Context-First Observability** – `FlextContext` becomes the single entry point for correlation IDs, request metadata, and latency tracking. Legacy ad-hoc context helpers are considered migration candidates.
-3. **Configuration & Domain Service Alignment** – `FlextConfig`, `FlextContainer`, and `FlextDomainService` define the default runtime contract so every project shares the same configuration lifecycle and domain-service ergonomics.
+3. **Configuration & Domain Service Alignment** – `FlextConfig`, `FlextContainer`, and `FlextService` define the default runtime contract so every project shares the same configuration lifecycle and domain-service ergonomics.
 
 ---
 
@@ -20,7 +20,7 @@ The FLEXT Core Modernization Plan identifies three pillars that must land for th
 
 - `FlextResult[T]` railway pattern with dual `.value`/`.data` access maintained for ABI stability.
 - Singleton `FlextContainer` with typed service keys, container reset utilities, and dispatcher integration helpers.
-- Domain-driven patterns through `FlextModels` and `FlextDomainService` with context-aware logging.
+- Domain-driven patterns through `FlextModels` and `FlextService` with context-aware logging.
 - Structured logging (`FlextLogger`) wired to `FlextContext` for correlation and latency metrics.
 - Layered configuration loader (`FlextConfig`) with `.env`, TOML, and YAML support.
 - `FlextDispatcher` façade and registry to prepare CLI and connector packages for unified dispatch.
@@ -61,8 +61,8 @@ print(response.unwrap())
 | Area                        | Modules                                                                             | Release Focus                      |
 | --------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------- |
 | **Foundation**              | `result.py`, `typings.py`, `constants.py`                                           | Maintain ABI and type guarantees   |
-| **Runtime Surfaces**        | `container.py`, `domain_services.py`, `models.py`, `utilities.py`                   | Shared service and domain patterns |
-| **Execution Flow**          | `bus.py`, `dispatcher.py`, `dispatcher_registry.py`, `handlers.py`, `processing.py` | Unified dispatcher roadmap         |
+| **Runtime Surfaces**        | `container.py`, `service.py`, `models.py`, `utilities.py`                   | Shared service and domain patterns |
+| **Execution Flow**          | `bus.py`, `dispatcher.py`, `registry.py`, `handlers.py`, `processing.py` | Unified dispatcher roadmap         |
 | **Context & Observability** | `context.py`, `loggings.py`                                                         | Context-first adoption and metrics |
 | **Configuration**           | `config.py`, `version.py`                                                           | Single configuration lifecycle     |
 

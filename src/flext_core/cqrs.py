@@ -21,10 +21,7 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-HandlerTypeLiteral = Literal[
-    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-    FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-]
+HandlerTypeLiteral = Literal["command", "query"]
 
 
 class FlextCqrs:
@@ -276,8 +273,8 @@ class FlextCqrs:
                         handler_name=getattr(
                             func, "__name__", f"{command_type.__name__}Handler"
                         ),
-                        handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                        handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                        handler_type="command",
+                        handler_mode="command",
                     )
                 else:
                     handler_config = handler_config_result.value
@@ -285,11 +282,17 @@ class FlextCqrs:
                 # Create handler class from function using FlextHandlers
                 class FunctionHandler(FlextHandlers[TCmd, TResult]):
                     def __init__(self) -> None:
-                        super().__init__(
-                            handler_mode=FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                        # Create proper Handler config object
+                        config = FlextModels.CqrsConfig.Handler(
+                            handler_id=handler_config.handler_name,
                             handler_name=handler_config.handler_name,
-                            handler_config={"metadata": handler_config.metadata},
+                            handler_type="command",
+                            handler_mode="command",
+                            command_timeout=0,
+                            max_command_retries=0,
+                            metadata=handler_config.metadata or {},
                         )
+                        super().__init__(config=config)
 
                     def handle(self, message: TCmd) -> FlextResult[TResult]:
                         """Handle command with enhanced error context.
@@ -305,7 +308,7 @@ class FlextCqrs:
                             result = func(message)
                             if isinstance(result, FlextResult):
                                 # Result is already a FlextResult, just return it
-                                return result
+                                return cast("FlextResult[TResult]", result)
                             return FlextResult[TResult].ok(result)
                         except Exception as e:
                             return FlextResult[TResult].fail(
@@ -352,21 +355,35 @@ class FlextCqrs:
             """
             try:
                 config_instance = FlextConfig.get_global_instance()
-                config_payload = config_instance.get_cqrs_bus_config()
+                raw_config_payload: (
+                    FlextTypes.Core.Dict | FlextResult[FlextTypes.Core.Dict]
+                ) = config_instance.get_cqrs_bus_config()
 
                 # Support both raw dictionaries and FlextResult wrappers
-                if isinstance(config_payload, FlextResult):
-                    if config_payload.is_failure:
+                config_payload: FlextTypes.Core.Dict
+                if isinstance(raw_config_payload, FlextResult):
+                    if raw_config_payload.is_failure:
                         msg = "Failed to load CQRS bus configuration"
                         raise ValueError(msg)
-                    config_payload = config_payload.value
-
-                if hasattr(config_payload, "model_dump") and callable(
-                    getattr(config_payload, "model_dump")
-                ):
-                    config_dict = cast("dict[str, object]", config_payload.model_dump())
+                    # Get value from FlextResult - type is guaranteed by FlextResult[FlextTypes.Core.Dict]
+                    config_payload = cast(
+                        "FlextTypes.Core.Dict", getattr(raw_config_payload, "value", {})
+                    )
                 else:
-                    config_dict = cast("dict[str, object] | None", config_payload)
+                    config_payload = raw_config_payload
+
+                # Ensure config_payload is a dictionary with proper type checking
+                config_dict: FlextTypes.Core.Dict
+                if hasattr(config_payload, "model_dump") and callable(
+                    getattr(config_payload, "model_dump", None)
+                ):
+                    # Handle Pydantic models or similar objects with model_dump method
+                    model_dump_method = getattr(config_payload, "model_dump")
+                    dumped_data: FlextTypes.Core.Dict = model_dump_method()
+                    config_dict = dumped_data
+                else:
+                    # config_payload is already a dict, use it directly
+                    config_dict = config_payload
 
                 bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(config_dict)
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(bus_config)
