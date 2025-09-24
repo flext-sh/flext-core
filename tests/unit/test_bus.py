@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
-from flext_core import FlextLogger, FlextModels, FlextResult
-from flext_core.bus import FlextBus
+from flext_core import FlextBus, FlextLogger, FlextModels, FlextResult
 
 
 class BusTestCommand:

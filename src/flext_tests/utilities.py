@@ -339,10 +339,10 @@ class FlextTestsUtilities:
     # === FUNCTIONAL TEST IMPLEMENTATIONS ===
 
     class FunctionalTestService:
-        """Functional test service that uses FlextProcessing for DI."""
+        """Functional test service that uses FlextProcessors for DI."""
 
         def __init__(self, service_type: str = "generic", **config: object) -> None:
-            """Initialize functional test service using FlextProcessing."""
+            """Initialize functional test service using FlextProcessors."""
             self.service_type = service_type
             self.config = config
             self.call_history: list[

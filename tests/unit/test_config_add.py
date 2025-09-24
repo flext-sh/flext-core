@@ -383,7 +383,9 @@ class TestFlextConfigRealCoverage:
         assert config.environment == "development"
         assert config.debug is False
         assert config.trace is False
-        assert config.log_level == FlextConstants.Logging.DEFAULT_LEVEL  # Actual default
+        assert (
+            config.log_level == FlextConstants.Logging.DEFAULT_LEVEL
+        )  # Actual default
 
         # Test feature flag defaults
         assert config.enable_caching is True

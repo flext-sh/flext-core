@@ -10,7 +10,7 @@ Integrates:
 - FlextModels for domain modeling (entities, values, aggregates)
 - FlextConfig for environment-aware configuration
 - FlextLogger for structured logging with correlation tracking
-- FlextProcessing for handler pipelines and strategy patterns
+- FlextProcessors for handler pipelines and strategy patterns
 - FlextModels.Payload and DomainEvent for messaging
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -522,7 +522,7 @@ class OrderService(FlextService[dict[str, str | int | float]]):
         )
 
 
-# ========== HANDLER PIPELINE (Using FlextProcessing) ==========
+# ========== HANDLER PIPELINE (Using FlextProcessors) ==========
 
 
 class OrderValidationHandler:
@@ -859,7 +859,7 @@ def demonstrate_complete_integration() -> None:
                 "FlextModels",
                 "FlextConfig",
                 "FlextLogger",
-                "FlextProcessing",
+                "FlextProcessors",
                 "FlextService",
                 "Payload & Events",
             ],

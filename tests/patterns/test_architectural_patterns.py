@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from flext_core import (
     FlextModels,
-    FlextProcessing,
+    FlextProcessors,
     FlextResult,
     FlextTypes,
 )
@@ -80,7 +80,7 @@ class TestCleanArchitecturePatterns:
             name: str
             email: str
 
-        class CreateUserHandler(FlextProcessing.Implementation.BasicHandler):
+        class CreateUserHandler(FlextProcessors.Implementation.BasicHandler):
             """Application command handler."""
 
             @property
@@ -284,7 +284,7 @@ class TestCleanArchitecturePatterns:
             validation_result = (
                 validate_method() if validate_method else FlextResult[None].ok(None)
             )
-            assert hasattr(validation_result, "success")
+            assert hasattr(validation_result, "is_success")
             assert validation_result.is_success
 
         # Test domain behavior
@@ -293,7 +293,7 @@ class TestCleanArchitecturePatterns:
             confirm_result = (
                 confirm_method() if confirm_method else FlextResult[None].ok(None)
             )
-            assert hasattr(confirm_result, "success")
+            assert hasattr(confirm_result, "is_success")
             assert confirm_result.is_success
 
     @pytest.mark.architecture
@@ -307,7 +307,7 @@ class TestCleanArchitecturePatterns:
             user_id: str
             name: str
 
-        class UpdateUserHandler(FlextProcessing.Handler):
+        class UpdateUserHandler(FlextProcessors.Handler):
             """Handler for user update commands."""
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -329,7 +329,7 @@ class TestCleanArchitecturePatterns:
 
             user_id: str
 
-        class GetUserHandler(FlextProcessing.Handler):
+        class GetUserHandler(FlextProcessors.Handler):
             """Handler for user queries."""
 
             def handle(self, request: object) -> FlextResult[object]:

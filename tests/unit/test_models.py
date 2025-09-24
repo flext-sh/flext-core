@@ -1208,8 +1208,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=future_time,
         )
         # Explicitly check the boolean value
-        is_expired_result: bool = payload.is_expired
-        assert not is_expired_result
+        assert not payload.is_expired  # type: ignore[truthy-function]
 
         # Test expired payload
         past_time = datetime.now(UTC) - timedelta(hours=1)
@@ -1220,8 +1219,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=past_time,
         )
         # Explicitly check the boolean value
-        is_expired_result2: bool = expired_payload.is_expired
-        assert is_expired_result2
+        assert expired_payload.is_expired
 
         # Test payload without expiration
         no_expiry_payload = FlextModels.Payload(

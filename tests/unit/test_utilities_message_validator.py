@@ -620,11 +620,12 @@ class TestMessageValidatorEdgeCases:
 
         message = MockAttrsClass()
 
-        # attrs.asdict will fail for missing fields, expect it to raise AttributeError
-        with pytest.raises(AttributeError, match="no attribute 'missing_field'"):
-            FlextUtilities.MessageValidator.build_serializable_message_payload(
-                message, operation="test"
-            )
+        # The method should gracefully handle missing fields by skipping them
+        result = FlextUtilities.MessageValidator.build_serializable_message_payload(
+            message, operation="test"
+        )
+        # Should only include existing fields, not missing ones
+        assert result == {"existing_field": "value"}
 
 
 class TestMessageValidatorIntegration:

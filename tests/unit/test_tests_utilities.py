@@ -518,7 +518,10 @@ class TestFlextTestsUtilities:
                 result = method()
                 if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
                     # It's a context manager, test basic usage
-                    with result:  # type: ignore[misc]
+                    from contextlib import AbstractContextManager
+                    from typing import cast
+                    context_manager = cast("AbstractContextManager[object]", result)
+                    with context_manager:
                         pass  # Just verify it works as a context manager
             except (TypeError, AttributeError):
                 # Method might require arguments or not return a context manager

@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from unittest.mock import Mock
 
-from flext_core import FlextResult
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.registry import FlextRegistry
+from flext_core import FlextDispatcher, FlextRegistry, FlextResult
 
 
 class TestFlextRegistry:
@@ -185,7 +183,7 @@ class TestFlextRegistryEdgeCases:
 
         # This should be handled gracefully
         try:
-            result = registry.register_handler(None)  # type: ignore[arg-type]
+            result = registry.register_handler(None)
             # If it doesn't raise, it should fail gracefully
             assert result.is_failure
         except (TypeError, AttributeError):

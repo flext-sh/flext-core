@@ -86,7 +86,7 @@ class FlextRegistry:
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        handler: FlextHandlers[object, object],
+        handler: FlextHandlers[object, object] | None,
     ) -> FlextResult[FlextModels.RegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -98,6 +98,12 @@ class FlextRegistry:
             FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
         """
+        # Validate handler is not None
+        if handler is None:
+            return FlextResult[FlextModels.RegistrationDetails].fail(
+                "Handler cannot be None"
+            )
+
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
             # Return successful registration details for idempotent registration

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""07 - FlextProcessing: Handler Pipeline and Strategy Patterns.
+"""07 - FlextProcessors: Handler Pipeline and Strategy Patterns.
 
-This example demonstrates the COMPLETE FlextProcessing API for building
+This example demonstrates the COMPLETE FlextProcessors API for building
 handler pipelines, strategy patterns, and message processing systems.
 
 Key Concepts Demonstrated:
@@ -24,7 +24,7 @@ import warnings
 from flext_core import (
     FlextContainer,
     FlextLogger,
-    FlextProcessing,
+    FlextProcessors,
     FlextResult,
     FlextService,
 )
@@ -33,7 +33,7 @@ from flext_core import (
 
 
 class ProcessingPatternsService(FlextService[dict[str, object]]):
-    """Service demonstrating ALL FlextProcessing patterns."""
+    """Service demonstrating ALL FlextProcessors patterns."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
@@ -56,7 +56,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         print("\n=== Basic Handler Patterns ===")
 
         # Create a basic handler
-        class ValidationHandler(FlextProcessing.Implementation.BasicHandler):
+        class ValidationHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler for data validation."""
 
             def __init__(self, name: str) -> None:
@@ -109,7 +109,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         print("\n=== Handler Pipeline ===")
 
         # Create pipeline of handlers
-        class AuthenticationHandler(FlextProcessing.Implementation.BasicHandler):
+        class AuthenticationHandler(FlextProcessors.Implementation.BasicHandler):
             """Authenticate the request."""
 
             def __init__(self, name: str) -> None:
@@ -140,7 +140,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 request["authenticated"] = True
                 return FlextResult[str].ok("Authentication successful")
 
-        class AuthorizationHandler(FlextProcessing.Implementation.BasicHandler):
+        class AuthorizationHandler(FlextProcessors.Implementation.BasicHandler):
             """Authorize the request."""
 
             def __init__(self, name: str) -> None:
@@ -168,7 +168,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 request["authorized"] = True
                 return FlextResult[str].ok("Authorization successful")
 
-        class ProcessingHandler(FlextProcessing.Implementation.BasicHandler):
+        class ProcessingHandler(FlextProcessors.Implementation.BasicHandler):
             """Process the authorized request."""
 
             def __init__(self, name: str) -> None:
@@ -370,12 +370,12 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             def __init__(self) -> None:
                 """Initialize registry."""
                 self._handlers: dict[
-                    str, FlextProcessing.Implementation.BasicHandler
+                    str, FlextProcessors.Implementation.BasicHandler
                 ] = {}
                 self._logger = FlextLogger(__name__)
 
             def register(
-                self, name: str, handler: FlextProcessing.Implementation.BasicHandler
+                self, name: str, handler: FlextProcessors.Implementation.BasicHandler
             ) -> FlextResult[None]:
                 """Register a handler."""
                 if name in self._handlers:
@@ -396,15 +396,15 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
             def get(
                 self, name: str
-            ) -> FlextResult[FlextProcessing.Implementation.BasicHandler]:
+            ) -> FlextResult[FlextProcessors.Implementation.BasicHandler]:
                 """Get a handler by name."""
                 handler = self._handlers.get(name)
                 if not handler:
                     return FlextResult[
-                        FlextProcessing.Implementation.BasicHandler
+                        FlextProcessors.Implementation.BasicHandler
                     ].fail(f"Handler {name} not found")
 
-                return FlextResult[FlextProcessing.Implementation.BasicHandler].ok(
+                return FlextResult[FlextProcessors.Implementation.BasicHandler].ok(
                     handler
                 )
 
@@ -429,7 +429,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         registry = HandlerRegistry()
 
         # Register various handlers
-        class UpperCaseHandler(FlextProcessing.Implementation.BasicHandler):
+        class UpperCaseHandler(FlextProcessors.Implementation.BasicHandler):
             """Convert text to uppercase."""
 
             def handle(self, request: object) -> FlextResult[str]:
@@ -442,7 +442,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Uppercase: {text_value.upper()}")
 
-        class LowerCaseHandler(FlextProcessing.Implementation.BasicHandler):
+        class LowerCaseHandler(FlextProcessors.Implementation.BasicHandler):
             """Convert text to lowercase."""
 
             def handle(self, request: object) -> FlextResult[str]:
@@ -455,7 +455,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Lowercase: {text_value.lower()}")
 
-        class ReverseHandler(FlextProcessing.Implementation.BasicHandler):
+        class ReverseHandler(FlextProcessors.Implementation.BasicHandler):
             """Reverse text."""
 
             def handle(self, request: object) -> FlextResult[str]:
@@ -509,7 +509,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         print("\n=== Error Recovery Patterns ===")
 
         # Handler with retry logic
-        class RetryableHandler(FlextProcessing.Implementation.BasicHandler):
+        class RetryableHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler that can retry on failure."""
 
             def __init__(self, name: str, max_retries: int = 3) -> None:
@@ -538,7 +538,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 return FlextResult[str].ok(f"Success on attempt {self._attempt}")
 
         # Circuit breaker pattern
-        class CircuitBreakerHandler(FlextProcessing.Implementation.BasicHandler):
+        class CircuitBreakerHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler with circuit breaker pattern."""
 
             def __init__(self, name: str, threshold: int = 3) -> None:
@@ -676,11 +676,11 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextProcessing capabilities."""
+    """Main entry point demonstrating all FlextProcessors capabilities."""
     service = ProcessingPatternsService()
 
     print("=" * 60)
-    print("FLEXTPROCESSING COMPLETE API DEMONSTRATION")
+    print("FlextProcessors COMPLETE API DEMONSTRATION")
     print("Handler Pipelines and Strategy Patterns")
     print("=" * 60)
 
@@ -699,7 +699,7 @@ def main() -> None:
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 60)
-    print("✅ ALL FlextProcessing patterns demonstrated!")
+    print("✅ ALL FlextProcessors patterns demonstrated!")
     print("🎯 Next: See 08_*.py for additional advanced patterns")
     print("=" * 60)
 

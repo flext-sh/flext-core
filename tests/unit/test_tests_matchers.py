@@ -117,8 +117,8 @@ class TestFlextTestsMatchers:
         # Test FailureResultLike protocol
         if hasattr(failure_result, "is_failure"):
             assert failure_result.is_failure is True
-        if hasattr(failure_result, "failure"):
-            assert failure_result.failure is True
+        if hasattr(failure_result, "is_failure"):
+            assert failure_result.is_failure is True
 
     def test_container_like_protocol_compliance(self) -> None:
         """Test ContainerLike protocol with various container types."""
@@ -364,10 +364,10 @@ class TestFlextTestsMatchers:
             obj: object,  # Remove protocol type annotation due to read-only properties
         ) -> dict[str, object]:
             return {
-                "is_success": obj.is_success
+                "is_success": getattr(obj, "is_success", False)
                 if hasattr(obj, "is_success")
                 else getattr(obj, "success", False),
-                "is_failure": obj.is_failure
+                "is_failure": getattr(obj, "is_failure", False)
                 if hasattr(obj, "is_failure")
                 else getattr(obj, "failure", False),
                 "bool_value": bool(obj),

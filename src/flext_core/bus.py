@@ -437,17 +437,49 @@ class FlextBus(FlextMixins):
         self._execution_count = int(self._execution_count) + 1
         command_type = type(command)
 
+        # Validate command if it has custom validation method (not Pydantic field validator)
+        if hasattr(command, "validate_command"):
+            validation_method = getattr(command, "validate_command")
+            # Check if it's a custom validation method (callable without parameters)
+            # and returns a FlextResult (not a Pydantic field validator)
+            if callable(validation_method):
+                try:
+                    # Try to call without parameters to see if it's a custom method
+                    import inspect
+
+                    sig = inspect.signature(validation_method)
+                    if (
+                        len(sig.parameters) == 0
+                    ):  # No parameters = custom validation method
+                        validation_result = validation_method()
+                        if (
+                            hasattr(validation_result, "is_failure")
+                            and hasattr(validation_result, "error")
+                            and getattr(validation_result, "is_failure", False)
+                        ):
+                            self.logger.warning(
+                                "Command validation failed",
+                                command_type=command_type.__name__,
+                                validation_error=getattr(validation_result, "error", "Unknown validation error"),
+                            )
+                            return FlextResult[object].fail(
+                                getattr(validation_result, "error", "Command validation failed") or "Command validation failed",
+                                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                            )
+                except Exception as e:
+                    # If calling without parameters fails, it's likely a Pydantic field validator
+                    # Skip custom validation in this case
+                    self.logger.debug(f"Skipping Pydantic field validator: {e}")
+
         is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
 
         should_consider_cache = (
-            self._config_model.enable_caching
-            and self._config_model.enable_metrics
-            and self._max_cache_size > 0
-            and is_query
+            self._config_model.enable_caching and self._max_cache_size > 0 and is_query
         )
         cache_key: str | None = None
         if should_consider_cache:
-            cache_key = f"{command_type.__name__}_{hash(str(command))}"
+            # Generate a more deterministic cache key
+            cache_key = self._generate_cache_key(command, command_type)
             cached_result = self._cache.get(cache_key)
             if cached_result is not None:
                 self._cache.move_to_end(cache_key)
@@ -620,6 +652,63 @@ class FlextBus(FlextMixins):
                     )
 
         return FlextResult[None].ok(None)
+
+    def _generate_cache_key(self, command: object, command_type: type[object]) -> str:
+        """Generate a deterministic cache key for the command.
+
+        Args:
+            command: The command/query object
+            command_type: The type of the command
+
+        Returns:
+            str: Deterministic cache key
+
+        """
+        try:
+            # For Pydantic models, use model_dump with sorted keys
+            if hasattr(command, "model_dump"):
+                model_dump_method = getattr(command, "model_dump")
+                data = model_dump_method(mode="python")
+                # Sort keys recursively for deterministic ordering
+                sorted_data = self._sort_dict_keys(data)
+                return f"{command_type.__name__}_{hash(str(sorted_data))}"
+
+            # For dataclasses, use asdict with sorted keys
+            if hasattr(command, "__dataclass_fields__"):
+                from dataclasses import asdict, is_dataclass
+
+                if is_dataclass(command) and not isinstance(command, type):
+                    data = asdict(command)
+                    sorted_data = self._sort_dict_keys(data)
+                    return f"{command_type.__name__}_{hash(str(sorted_data))}"
+
+            # For dictionaries, sort keys
+            if isinstance(command, dict):
+                sorted_data = self._sort_dict_keys(command)
+                return f"{command_type.__name__}_{hash(str(sorted_data))}"
+
+            # For other objects, use string representation
+            return f"{command_type.__name__}_{hash(str(command))}"
+
+        except Exception:
+            # Fallback to string representation if anything fails
+            return f"{command_type.__name__}_{hash(str(command))}"
+
+    def _sort_dict_keys(self, obj: object) -> object:
+        """Recursively sort dictionary keys for deterministic ordering.
+
+        Args:
+            obj: Object to sort (dict, list, or other)
+
+        Returns:
+            Object with sorted keys
+
+        """
+        if isinstance(obj, dict):
+            return {k: self._sort_dict_keys(v) for k, v in sorted(obj.items())}
+        if isinstance(obj, (list, tuple)):
+            return type(obj)(self._sort_dict_keys(item) for item in obj)
+        return obj
 
     def _execute_handler(
         self,

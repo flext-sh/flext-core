@@ -24,7 +24,7 @@ from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextModels,
-    FlextProcessing,
+    FlextProcessors,
 )
 
 
@@ -76,16 +76,16 @@ class TestFlextConfigSingletonIntegration:
         # Get global config
         global_config = FlextConfig.get_global_instance()
 
-        # Test with available FlextProcessing classes
-        handler_registry = FlextProcessing.create_handler_registry()
-        pipeline = FlextProcessing.create_pipeline()
+        # Test with available FlextProcessors classes
+        handler_registry = FlextProcessors.create_handler_registry()
+        pipeline = FlextProcessors.create_pipeline()
 
         # These should work with the current API
         assert handler_registry is not None
         assert pipeline is not None
 
         # Test basic handler functionality
-        basic_handler = FlextProcessing.Implementation.BasicHandler("test-handler")
+        basic_handler = FlextProcessors.Implementation.BasicHandler("test-handler")
         registration = FlextModels.HandlerRegistration(
             name="test", handler=basic_handler
         )

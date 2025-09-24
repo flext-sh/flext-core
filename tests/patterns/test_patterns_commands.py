@@ -646,7 +646,9 @@ class TestFlextCommandResults:
         """Test creating successful command result."""
         result_data: dict[str, object] = {"id": "123", "username": "test"}
 
-        command_result: FlextResult[dict[str, object]] = FlextResult.ok(result_data)
+        command_result: FlextResult[dict[str, object]] = FlextResult[
+            dict[str, object]
+        ].ok(result_data)
 
         if not command_result.is_success:
             raise AssertionError(f"Expected True, got {command_result.is_success}")

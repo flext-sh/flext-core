@@ -789,7 +789,19 @@ class FlextModels:
         @field_validator("url")
         @classmethod
         def _validate_url_format(cls, v: str) -> str:
-            """Validate URL format."""
+            """Validate URL format.
+
+            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+            ❌ CRITICAL ISSUE: URL validation should be centralized in FlextModels.Validation
+            ❌ INLINE VALIDATION: This contains inline validation logic that should be centralized
+
+            🔧 REQUIRED ACTION:
+            - Move this validation logic to FlextModels.Validation.validate_url()
+            - Use centralized validation patterns for URL validation
+            - Remove inline validation from field validators
+
+            📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_url()
+            """
             try:
                 result = urlparse(v)
                 if not all([result.scheme, result.netloc]):
@@ -1268,17 +1280,20 @@ class FlextModels:
         """Handler registration with advanced validation."""
 
         name: str
-        handler: Callable[[object], object]
+        handler: object
         event_types: list[str] = Field(default_factory=list)
         priority: int = Field(default=0, ge=0, le=100)
 
         @field_validator("handler")
         @classmethod
         def validate_handler(
-            cls, v: Callable[[object], object]
+            cls, v: object
         ) -> Callable[[object], object]:
             """Validate handler is properly callable."""
-            return v
+            if not callable(v):
+                error_msg = "Handler must be callable"
+                raise ValueError(error_msg)  # noqa: TRY004
+            return cast("Callable[[object], object]", v)
 
     class BatchProcessingConfig(StrictArbitraryTypesModel):
         """Enhanced batch processing configuration."""
@@ -1320,9 +1335,10 @@ class FlextModels:
                 msg = f"Batch size cannot exceed {max_batch_size}"
                 raise ValueError(msg)
 
-            # Use setattr to avoid recursion in Pydantic validation
+            # Adjust max_workers to not exceed batch_size without triggering validation
             adjusted_workers = min(self.max_workers, self.batch_size)
-            setattr(self, "max_workers", adjusted_workers)
+            # Use object.__setattr__ to bypass Pydantic validation and prevent recursion
+            object.__setattr__(self, "max_workers", adjusted_workers)  # noqa: PLC2801
 
             return self
 
@@ -1646,7 +1662,7 @@ class FlextModels:
         """Operation execution request."""
 
         operation_name: str
-        operation_callable: Callable[[object], object]
+        operation_callable: object
         arguments: FlextTypes.Core.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Core.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
@@ -1669,10 +1685,13 @@ class FlextModels:
         @field_validator("operation_callable")
         @classmethod
         def validate_operation_callable(
-            cls, v: Callable[[object], object]
-        ) -> Callable[[object], object]:
+            cls, v: object
+        ) -> Callable[..., object]:
             """Validate operation is callable."""
-            return v
+            if not callable(v):
+                error_msg = "Operation must be callable"
+                raise ValueError(error_msg)  # noqa: TRY004
+            return cast("Callable[..., object]", v)
 
     class RetryConfiguration(ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
@@ -2172,7 +2191,6 @@ class FlextModels:
             return {"password", "secret_key", "api_key", "token", "credentials"}
 
         @classmethod
-        @override
         def _get_internal_fields(cls) -> set[str]:
             """Get set of internal field names to exclude."""
             # Override in subclasses to define internal fields
@@ -2195,7 +2213,6 @@ class FlextModels:
         """Command with compact serialization for messaging."""
 
         @classmethod
-        @override
         def _get_internal_fields(cls) -> set[str]:
             """Exclude command metadata from default serialization."""
             return {"command_id", "issued_at", "issuer_id"}

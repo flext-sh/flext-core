@@ -1,4 +1,4 @@
-"""Comprehensive test coverage for FlextProcessing module.
+"""Comprehensive test coverage for FlextProcessors module.
 
 Uses flext_tests patterns for standardized testing.
 
@@ -15,59 +15,59 @@ from pydantic import ValidationError
 
 from flext_core import (
     FlextModels,
-    FlextProcessing,
+    FlextProcessors,
     FlextResult,
 )
 from flext_tests import FlextTestsFactories, FlextTestsMatchers
 
 
-class TestFlextProcessingConfig:
-    """Test FlextProcessing.Config class methods."""
+class TestFlextProcessorConfig:
+    """Test FlextProcessors.Config class methods."""
 
     def test_get_default_timeout_success(self) -> None:
         """Test get_default_timeout with valid configuration."""
-        timeout = FlextProcessing.Config.get_default_timeout()
+        timeout = FlextProcessors.Config.get_default_timeout()
         assert isinstance(timeout, float)
         assert timeout > 0
 
     def test_get_default_timeout_exception_fallback(self) -> None:
         """Test get_default_timeout exception handling."""
         # This should still work even if config fails
-        timeout = FlextProcessing.Config.get_default_timeout()
+        timeout = FlextProcessors.Config.get_default_timeout()
         assert isinstance(timeout, float)
         assert timeout > 0
 
     def test_get_max_batch_size_success(self) -> None:
         """Test get_max_batch_size with valid configuration."""
-        batch_size = FlextProcessing.Config.get_max_batch_size()
+        batch_size = FlextProcessors.Config.get_max_batch_size()
         assert isinstance(batch_size, int)
         assert batch_size > 0
 
     def test_get_max_batch_size_exception_fallback(self) -> None:
         """Test get_max_batch_size exception handling."""
-        batch_size = FlextProcessing.Config.get_max_batch_size()
+        batch_size = FlextProcessors.Config.get_max_batch_size()
         assert isinstance(batch_size, int)
         assert batch_size > 0
 
     def test_get_max_handlers_success(self) -> None:
         """Test get_max_handlers with valid configuration."""
-        max_handlers = FlextProcessing.Config.get_max_handlers()
+        max_handlers = FlextProcessors.Config.get_max_handlers()
         assert isinstance(max_handlers, int)
         assert max_handlers > 0
 
     def test_get_max_handlers_exception_fallback(self) -> None:
         """Test get_max_handlers exception handling."""
-        max_handlers = FlextProcessing.Config.get_max_handlers()
+        max_handlers = FlextProcessors.Config.get_max_handlers()
         assert isinstance(max_handlers, int)
         assert max_handlers > 0
 
 
-class TestFlextProcessingHandler:
-    """Test FlextProcessing.Handler class."""
+class TestFlextProcessorHandler:
+    """Test FlextProcessors.Handler class."""
 
     def test_handler_base_handle_method(self) -> None:
         """Test basic handler handle method."""
-        handler = FlextProcessing.Handler()
+        handler = FlextProcessors.Handler()
         request = "test_request"
 
         result = handler.handle(request)
@@ -77,7 +77,7 @@ class TestFlextProcessingHandler:
 
     def test_handler_with_different_request_types(self) -> None:
         """Test handler with various request types using factories."""
-        handler = FlextProcessing.Handler()
+        handler = FlextProcessors.Handler()
 
         # Test with different data types from factory
         test_data = FlextTestsFactories.create_test_dataset()
@@ -87,12 +87,12 @@ class TestFlextProcessingHandler:
             assert "Base handler processed:" in str(result.unwrap())
 
 
-class TestFlextProcessingHandlerRegistry:
-    """Test FlextProcessing.HandlerRegistry class."""
+class TestFlextProcessorHandlerRegistry:
+    """Test FlextProcessors.HandlerRegistry class."""
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.registry = FlextProcessing.HandlerRegistry()
+        self.registry = FlextProcessors.HandlerRegistry()
         # Use callable handler that returns FlextResult
 
         def real_handler(request: object) -> FlextResult[str]:
@@ -102,7 +102,7 @@ class TestFlextProcessingHandlerRegistry:
 
     def test_registry_initialization(self) -> None:
         """Test handler registry initialization."""
-        registry = FlextProcessing.HandlerRegistry()
+        registry = FlextProcessors.HandlerRegistry()
         assert registry.count() == 0
         assert not registry.exists("any_handler")
 
@@ -221,7 +221,7 @@ class TestFlextProcessingHandlerRegistry:
 
         # Pydantic validation should prevent creation of invalid handler registration
         with pytest.raises(ValidationError) as exc_info:
-            FlextModels.HandlerRegistration(name=handler_name, handler=invalid_handler)  # type: ignore[arg-type]
+            FlextModels.HandlerRegistration(name=handler_name, handler=invalid_handler)
 
         # Verify the validation error is about callable type
         assert "callable" in str(exc_info.value).lower()
@@ -297,7 +297,7 @@ class TestFlextProcessingHandlerRegistry:
 
     def test_execute_with_timeout_success(self) -> None:
         """Test execute_with_timeout with valid handler."""
-        handler = FlextProcessing.Implementation.BasicHandler("timeout_test")
+        handler = FlextProcessors.Implementation.BasicHandler("timeout_test")
         registration = FlextModels.HandlerRegistration(
             name="timeout_handler", handler=handler
         )
@@ -314,8 +314,8 @@ class TestFlextProcessingHandlerRegistry:
 
     def test_execute_with_fallback_success(self) -> None:
         """Test execute_with_fallback with valid handlers."""
-        primary_handler = FlextProcessing.Implementation.BasicHandler("primary")
-        fallback_handler = FlextProcessing.Implementation.BasicHandler("fallback")
+        primary_handler = FlextProcessors.Implementation.BasicHandler("primary")
+        fallback_handler = FlextProcessors.Implementation.BasicHandler("fallback")
 
         registration1 = FlextModels.HandlerRegistration(
             name="primary_handler", handler=primary_handler
@@ -338,7 +338,7 @@ class TestFlextProcessingHandlerRegistry:
 
     def test_execute_batch_success(self) -> None:
         """Test execute_batch with valid batch configuration."""
-        handler = FlextProcessing.Implementation.BasicHandler("batch_test")
+        handler = FlextProcessors.Implementation.BasicHandler("batch_test")
         registration = FlextModels.HandlerRegistration(
             name="batch_handler", handler=handler
         )
@@ -360,7 +360,7 @@ class TestFlextProcessingHandlerRegistry:
         """Test execute_batch with batch size exceeding limits."""
         # Test the method directly without creating problematic config
         # Just call the method with a large number to test the size check logic
-        registry = FlextProcessing.HandlerRegistry()
+        registry = FlextProcessors.HandlerRegistry()
 
         # Test by creating a mock config object that bypasses validation
         class MockBatchConfig:
@@ -369,13 +369,13 @@ class TestFlextProcessingHandlerRegistry:
                 self.continue_on_error = True
 
         mock_config = MockBatchConfig()
-        result = registry.execute_batch(mock_config)  # type: ignore[arg-type]
+        result = registry.execute_batch(mock_config)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error and "exceeds maximum" in result.error
 
     def test_register_with_validation_success(self) -> None:
         """Test register_with_validation with valid handler and validator."""
-        handler = FlextProcessing.Implementation.BasicHandler("validation_test")
+        handler = FlextProcessors.Implementation.BasicHandler("validation_test")
         registration = FlextModels.HandlerRegistration(
             name="validated_handler", handler=handler
         )
@@ -392,7 +392,7 @@ class TestFlextProcessingHandlerRegistry:
 
     def test_register_with_validation_failure(self) -> None:
         """Test register_with_validation with failing validator."""
-        handler = FlextProcessing.Implementation.BasicHandler("validation_fail")
+        handler = FlextProcessors.Implementation.BasicHandler("validation_fail")
         registration = FlextModels.HandlerRegistration(
             name="invalid_handler", handler=handler
         )
@@ -409,7 +409,7 @@ class TestFlextProcessingHandlerRegistry:
 
     def test_register_with_validation_no_validator(self) -> None:
         """Test register_with_validation without validator (should work normally)."""
-        handler = FlextProcessing.Implementation.BasicHandler("no_validator")
+        handler = FlextProcessors.Implementation.BasicHandler("no_validator")
         registration = FlextModels.HandlerRegistration(
             name="normal_handler", handler=handler
         )
@@ -421,11 +421,11 @@ class TestFlextProcessingHandlerRegistry:
     def test_registry_size_limits(self) -> None:
         """Test handler registry size limits."""
         # Test that we can't exceed the maximum number of handlers
-        max_handlers = FlextProcessing.Config.get_max_handlers()
+        max_handlers = FlextProcessors.Config.get_max_handlers()
 
         # Register handlers up to the limit
         for i in range(min(max_handlers, 10)):  # Limit to 10 for test performance
-            handler = FlextProcessing.Implementation.BasicHandler(f"handler_{i}")
+            handler = FlextProcessors.Implementation.BasicHandler(f"handler_{i}")
             registration = FlextModels.HandlerRegistration(
                 name=f"test_handler_{i}", handler=handler
             )
@@ -442,16 +442,16 @@ class TestFlextProcessingHandlerRegistry:
             FlextModels.HandlerRegistration(name="unsafe", handler=unsafe_handler)
 
 
-class TestFlextProcessingPipeline:
-    """Test FlextProcessing.Pipeline class."""
+class TestFlextProcessorPipeline:
+    """Test FlextProcessors.Pipeline class."""
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.pipeline = FlextProcessing.Pipeline()
+        self.pipeline = FlextProcessors.Pipeline()
 
     def test_pipeline_initialization(self) -> None:
         """Test pipeline initialization."""
-        pipeline = FlextProcessing.Pipeline()
+        pipeline = FlextProcessors.Pipeline()
 
         # Test with empty pipeline
         result = pipeline.process("test_data")
@@ -620,8 +620,8 @@ class TestFlextProcessingPipeline:
             data={"test": "data"},
             timeout_seconds=3600,  # At model maximum
         )
-        # Manually set higher value to test processing bounds
-        request.timeout_seconds = 9999  # Above processing maximum
+        # Use object.__setattr__ to bypass Pydantic validation
+        object.__setattr__(request, "timeout_seconds", 9999)  # Above processing maximum  # noqa: PLC2801
 
         result = self.pipeline.process_with_timeout(request)
         FlextTestsMatchers.assert_result_failure(result)
@@ -631,7 +631,7 @@ class TestFlextProcessingPipeline:
         """Test process_with_fallback with primary pipeline success."""
         self.pipeline.add_step(lambda x: f"primary: {x}")
 
-        fallback_pipeline = FlextProcessing.Pipeline()
+        fallback_pipeline = FlextProcessors.Pipeline()
         fallback_pipeline.add_step(lambda x: f"fallback: {x}")
 
         request = FlextModels.ProcessingRequest(data={"test": "data"})
@@ -648,7 +648,7 @@ class TestFlextProcessingPipeline:
         )
 
         # Fallback pipeline that succeeds
-        fallback_pipeline = FlextProcessing.Pipeline()
+        fallback_pipeline = FlextProcessors.Pipeline()
         fallback_pipeline.add_step(lambda x: f"fallback: {x}")
 
         request = FlextModels.ProcessingRequest(data={"test": "data"})
@@ -683,7 +683,7 @@ class TestFlextProcessingPipeline:
                 self.continue_on_error = True
 
         mock_config = MockBatchConfig()
-        result = self.pipeline.process_batch(mock_config)  # type: ignore[arg-type]
+        result = self.pipeline.process_batch(mock_config)
         FlextTestsMatchers.assert_result_failure(result)
         assert result.error and "exceeds maximum" in result.error
 
@@ -745,27 +745,27 @@ class TestFlextProcessingPipeline:
         assert result.error and "returned None despite success" in result.error
 
 
-class TestFlextProcessingFactoryMethods:
-    """Test FlextProcessing factory methods."""
+class TestFlextProcessorFactoryMethods:
+    """Test FlextProcessors factory methods."""
 
     def test_create_handler_registry(self) -> None:
         """Test creating handler registry."""
-        registry = FlextProcessing.create_handler_registry()
+        registry = FlextProcessors.create_handler_registry()
 
-        assert isinstance(registry, FlextProcessing.HandlerRegistry)
+        assert isinstance(registry, FlextProcessors.HandlerRegistry)
         assert registry.count() == 0
 
     def test_create_pipeline(self) -> None:
         """Test creating processing pipeline."""
-        pipeline = FlextProcessing.create_pipeline()
+        pipeline = FlextProcessors.create_pipeline()
 
-        assert isinstance(pipeline, FlextProcessing.Pipeline)
+        assert isinstance(pipeline, FlextProcessors.Pipeline)
 
     def test_is_handler_safe_with_handle_method(self) -> None:
         """Test is_handler_safe with object having handle method."""
-        real_handler = FlextProcessing.Handler()
+        real_handler = FlextProcessors.Handler()
 
-        assert FlextProcessing.is_handler_safe(real_handler)
+        assert FlextProcessors.is_handler_safe(real_handler)
 
     def test_is_handler_safe_with_callable(self) -> None:
         """Test is_handler_safe with callable object."""
@@ -773,22 +773,22 @@ class TestFlextProcessingFactoryMethods:
         def callable_handler(x: object) -> object:
             return x
 
-        assert FlextProcessing.is_handler_safe(callable_handler)
+        assert FlextProcessors.is_handler_safe(callable_handler)
 
     def test_is_handler_safe_with_invalid_handler(self) -> None:
         """Test is_handler_safe with invalid handler."""
         invalid_handler = "not_a_handler"
 
-        assert not FlextProcessing.is_handler_safe(invalid_handler)
+        assert not FlextProcessors.is_handler_safe(invalid_handler)
 
 
-class TestFlextProcessingImplementation:
-    """Test FlextProcessing.Implementation classes."""
+class TestFlextProcessorImplementation:
+    """Test FlextProcessors.Implementation classes."""
 
     def test_basic_handler_initialization(self) -> None:
         """Test BasicHandler initialization."""
         handler_name = "test_handler"
-        handler = FlextProcessing.Implementation.BasicHandler(handler_name)
+        handler = FlextProcessors.Implementation.BasicHandler(handler_name)
 
         assert handler.name == handler_name
         assert handler.handler_name == handler_name
@@ -796,7 +796,7 @@ class TestFlextProcessingImplementation:
     def test_basic_handler_handle_method(self) -> None:
         """Test BasicHandler handle method."""
         handler_name = "test_handler"
-        handler = FlextProcessing.Implementation.BasicHandler(handler_name)
+        handler = FlextProcessors.Implementation.BasicHandler(handler_name)
         request = "test_request"
 
         result = handler.handle(request)
@@ -806,22 +806,22 @@ class TestFlextProcessingImplementation:
         assert result.unwrap() == expected
 
 
-class TestFlextProcessingManagement:
-    """Test FlextProcessing.Management classes."""
+class TestFlextProcessorManagement:
+    """Test FlextProcessors.Management classes."""
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.registry = FlextProcessing.Management.HandlerRegistry()
+        self.registry = FlextProcessors.Management.HandlerRegistry()
 
     def test_management_registry_initialization(self) -> None:
         """Test Management.HandlerRegistry initialization."""
-        registry = FlextProcessing.Management.HandlerRegistry()
-        assert isinstance(registry, FlextProcessing.Management.HandlerRegistry)
+        registry = FlextProcessors.Management.HandlerRegistry()
+        assert isinstance(registry, FlextProcessors.Management.HandlerRegistry)
 
     def test_management_registry_register(self) -> None:
         """Test registering handler in management registry."""
         handler_name = "test_handler"
-        handler = FlextProcessing.Handler()
+        handler = FlextProcessors.Handler()
 
         self.registry.register(handler_name, handler)
 
@@ -835,7 +835,7 @@ class TestFlextProcessingManagement:
     def test_management_registry_get_optional(self) -> None:
         """Test get_optional method."""
         handler_name = "test_handler"
-        handler = FlextProcessing.Handler()
+        handler = FlextProcessors.Handler()
 
         assert self.registry.get_optional("nonexistent") is None
 
@@ -843,23 +843,23 @@ class TestFlextProcessingManagement:
         assert self.registry.get_optional(handler_name) == handler
 
 
-class TestFlextProcessingPatterns:
-    """Test FlextProcessing.Patterns classes."""
+class TestFlextProcessorPatterns:
+    """Test FlextProcessors.Patterns classes."""
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.chain = FlextProcessing.Patterns.HandlerChain("test_chain")
+        self.chain = FlextProcessors.Patterns.HandlerChain("test_chain")
 
     def test_handler_chain_initialization(self) -> None:
         """Test HandlerChain initialization."""
         chain_name = "test_chain"
-        chain = FlextProcessing.Patterns.HandlerChain(chain_name)
+        chain = FlextProcessors.Patterns.HandlerChain(chain_name)
 
         assert chain.name == chain_name
 
     def test_handler_chain_add_handler(self) -> None:
         """Test adding handler to chain."""
-        handler = FlextProcessing.Handler()
+        handler = FlextProcessors.Handler()
 
         self.chain.add_handler(handler)
 
@@ -870,8 +870,8 @@ class TestFlextProcessingPatterns:
     def test_handler_chain_handle_with_successful_handlers(self) -> None:
         """Test handler chain with successful handlers."""
         # Use real handlers instead of mocks
-        handler1 = FlextProcessing.Handler()
-        handler2 = FlextProcessing.Handler()
+        handler1 = FlextProcessors.Handler()
+        handler2 = FlextProcessors.Handler()
 
         self.chain.add_handler(handler1)
         self.chain.add_handler(handler2)
@@ -908,20 +908,20 @@ class TestFlextProcessingPatterns:
         assert result.unwrap() == "request"
 
 
-class TestFlextProcessingProtocols:
-    """Test FlextProcessing.Protocols classes."""
+class TestFlextProcessorProtocols:
+    """Test FlextProcessors.Protocols classes."""
 
     def test_chainable_handler_initialization(self) -> None:
         """Test ChainableHandler initialization."""
         handler_name = "test_chainable"
-        handler = FlextProcessing.Protocols.ChainableHandler(handler_name)
+        handler = FlextProcessors.Protocols.ChainableHandler(handler_name)
 
         assert handler.name == handler_name
 
     def test_chainable_handler_handle(self) -> None:
         """Test ChainableHandler handle method."""
         handler_name = "test_chainable"
-        handler = FlextProcessing.Protocols.ChainableHandler(handler_name)
+        handler = FlextProcessors.Protocols.ChainableHandler(handler_name)
         request = "test_request"
 
         result = handler.handle(request)
@@ -935,13 +935,13 @@ class TestFlextProcessingProtocols:
             assert result == expected
 
 
-class TestFlextProcessingIntegration:
-    """Integration tests for FlextProcessing components."""
+class TestFlextProcessorIntegration:
+    """Integration tests for FlextProcessors components."""
 
     def test_end_to_end_handler_registry_pipeline(self) -> None:
         """Test complete flow: handler registry + pipeline."""
         # Create registry and handlers
-        registry = FlextProcessing.create_handler_registry()
+        registry = FlextProcessors.create_handler_registry()
 
         def transform_handler(data: object) -> str:
             return f"transformed_{data}"
@@ -953,7 +953,7 @@ class TestFlextProcessingIntegration:
         registry.register(registration)
 
         # Create pipeline that uses registry
-        pipeline = FlextProcessing.create_pipeline()
+        pipeline = FlextProcessors.create_pipeline()
 
         def registry_step(data: object) -> object:
             result = registry.execute("transformer", data)
@@ -969,7 +969,7 @@ class TestFlextProcessingIntegration:
 
     def test_complex_pipeline_with_error_handling(self) -> None:
         """Test complex pipeline with proper error handling."""
-        pipeline = FlextProcessing.create_pipeline()
+        pipeline = FlextProcessors.create_pipeline()
 
         def validate_step(data: object) -> FlextResult[str]:
             if not data or data == "invalid":
@@ -994,11 +994,11 @@ class TestFlextProcessingIntegration:
 
     def test_handler_chain_with_different_handler_types(self) -> None:
         """Test handler chain with mixed handler types using real functionality."""
-        chain = FlextProcessing.Patterns.HandlerChain("mixed_chain")
+        chain = FlextProcessors.Patterns.HandlerChain("mixed_chain")
 
         # Use real handlers instead of mocks
-        basic_handler = FlextProcessing.Implementation.BasicHandler("basic")
-        chainable_handler = FlextProcessing.Protocols.ChainableHandler("chainable")
+        basic_handler = FlextProcessors.Implementation.BasicHandler("basic")
+        chainable_handler = FlextProcessors.Protocols.ChainableHandler("chainable")
 
         chain.add_handler(basic_handler)
         chain.add_handler(chainable_handler)

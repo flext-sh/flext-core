@@ -229,11 +229,13 @@ class TestLibraryIntegration:
         result = FlextResult[str].ok(entity_id)
 
         assert result.is_success
-        # Entity ID is a valid hex string (8 chars)
+        # Entity ID is a valid UUID string (36 chars)
         assert isinstance(result.value, str)
-        assert len(result.value) == 8  # IDs are 8 character hex strings
-        # Verify it's hex
-        int(result.value, 16)  # Will raise if not valid hex
+        assert len(result.value) == 36  # UUIDs are 36 character strings
+        # Verify it's a valid UUID format (contains hyphens at expected positions)
+        assert (
+            result.value.count("-") == 4
+        )  # UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
     def test_version_info_available(self) -> None:
         """Test that version info is available."""

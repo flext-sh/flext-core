@@ -292,6 +292,61 @@ The flext-core library has **excellent foundation** but **CRITICAL VALIDATION VI
 ---
 
 **Plan Created**: 2025-01-XX  
-**Last Updated**: 2025-01-XX  
+**Last Updated**: 2025-01-XX (Incremental audit with inline comments)  
 **Next Review**: Weekly during implementation  
 **Status**: ⚠️ **CRITICAL VALIDATION VIOLATIONS - BLOCKED**
+
+---
+
+## INCREMENTAL AUDIT UPDATE
+
+### Added Inline Validation Violation Comments
+
+**Date**: 2025-01-XX  
+**Scope**: Added detailed inline docstrings and comments identifying validation violations
+
+#### Validation Violations Identified with Inline Comments:
+
+##### 🚨 CRITICAL VIOLATIONS (utilities.py)
+- **FlextUtilities.Validation class**: Entire class violates FLEXT principles
+- **validate_string_not_none()**: Should be in FlextModels.Validation
+- **validate_string_not_empty()**: Should be in FlextModels.Validation
+- **validate_email()**: Should be in FlextModels.Validation
+- **MessageValidator class**: Entire class violates FLEXT principles
+- **validate_command()**: Should be in FlextModels.Validation
+
+##### 🚨 CRITICAL VIOLATIONS (handlers.py)
+- **validate_command()**: Should use FlextModels.Command validation
+- **validate_query()**: Should use FlextModels.Query validation
+
+##### 🚨 MINOR VIOLATIONS (service.py)
+- **validate_business_rules()**: Should be in FlextModels.Validation
+- **validate_config()**: Should be in FlextConfig.Validation
+
+##### 🚨 CRITICAL VIOLATIONS (config.py)
+- **validate_log_level()**: Should be in FlextConfig.Validation
+- **validate_log_verbosity()**: Should be in FlextConfig.Validation
+- **validate_environment()**: Should be in FlextConfig.Validation
+- **validate_configuration_consistency()**: Should be in FlextConfig.Validation
+
+##### 🚨 MINOR VIOLATIONS (models.py)
+- **_validate_url_format()**: Contains inline validation logic, should use FlextModels.Validation
+
+##### 🚨 CRITICAL VIOLATIONS (processing.py)
+- **validate_command()**: Should be in FlextModels.Validation
+- **validate_query()**: Should be in FlextModels.Validation
+
+#### Inline Comments Format:
+```python
+# 🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+# ❌ CRITICAL ISSUE: Validation should be centralized in FlextConfig/FlextModels ONLY
+# 🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_method()
+# 📍 SHOULD BE USED INSTEAD: FlextModels.Field validators for Pydantic validation
+```
+
+#### Updated Impact Assessment:
+- **Total Violations**: 20+ validation methods across 6 modules
+- **Severity**: CRITICAL - Blocks production deployment
+- **Required Actions**: Immediate refactoring to centralized validation
+
+**Impact**: All validation violations now clearly documented with specific remediation steps and target locations. The audit provides a comprehensive roadmap for resolving the critical validation architectural violations that are blocking production deployment.

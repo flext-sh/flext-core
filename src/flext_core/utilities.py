@@ -75,7 +75,23 @@ class FlextUtilities:
     MIN_TOKEN_LENGTH = MIN_TOKEN_LENGTH
 
     class Validation:
-        """Unified validation patterns using railway composition."""
+        """Unified validation patterns using railway composition.
+
+        🚨 AUDIT VIOLATION: This entire Validation class violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Validation logic should be centralized in FlextConfig and FlextModels ONLY
+        ❌ ARCHITECTURAL VIOLATION: Inline validation scattered across utilities instead of centralized
+
+        🔧 REQUIRED ACTION:
+        - Move ALL validation logic to FlextConfig.Validation for configuration validation
+        - Move ALL validation logic to FlextModels.Validation for domain validation
+        - Remove this entire Validation class from utilities.py
+        - Keep only transformation, processing, and reliability patterns in utilities
+
+        📍 SHOULD BE USED INSTEAD:
+        - FlextConfig.Validation for configuration validation
+        - FlextModels.Validation for domain model validation
+        - FlextModels.Field validators for Pydantic model validation
+        """
 
         @staticmethod
         def validate_string_not_none(
@@ -83,10 +99,18 @@ class FlextUtilities:
         ) -> FlextResult[str]:
             """Validate that string is not None.
 
+            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+            ❌ CRITICAL ISSUE: String validation should be in FlextModels.Validation, not utilities
+            ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_none()
+            📍 SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_none)
+
             Returns:
                 FlextResult[str]: Success with validated string or failure with error message
 
             """
+            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             if value is None:
                 return FlextResult[str].fail(f"{field_name} cannot be None")
             return FlextResult[str].ok(value)
@@ -97,10 +121,18 @@ class FlextUtilities:
         ) -> FlextResult[str]:
             """Validate that string is not empty after stripping.
 
+            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+            ❌ CRITICAL ISSUE: String validation should be in FlextModels.Validation, not utilities
+            ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_empty()
+            📍 SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_empty)
+
             Returns:
                 FlextResult[str]: Success with validated string or failure with error message
 
             """
+            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             stripped = value.strip()
             if not stripped:
                 return FlextResult[str].fail(
@@ -188,7 +220,16 @@ class FlextUtilities:
 
         @staticmethod
         def validate_email(email: str) -> FlextResult[str]:
-            """Validate email format using railway composition."""
+            """Validate email format using railway composition.
+
+            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+            ❌ CRITICAL ISSUE: Email validation should be in FlextModels.Validation, not utilities
+            ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_email()
+            📍 SHOULD BE USED INSTEAD: FlextModels.EmailAddress field type
+            """
+            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
             return FlextUtilities.Validation.validate_string(
                 email,
@@ -1376,6 +1417,7 @@ class FlextUtilities:
 
             # Copy current context to the new thread
             import contextvars
+
             context = contextvars.copy_context()
             thread = threading.Thread(target=context.run, args=(run_operation,))
             thread.daemon = True
@@ -1728,6 +1770,20 @@ class FlextUtilities:
     class MessageValidator:
         """Message validation utilities for FlextHandlers complexity reduction.
 
+        🚨 AUDIT VIOLATION: This entire MessageValidator class violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Message validation should be centralized in FlextModels.Validation, not utilities
+        ❌ ARCHITECTURAL VIOLATION: Inline validation scattered across utilities instead of centralized
+
+        🔧 REQUIRED ACTION:
+        - Move ALL message validation logic to FlextModels.Validation
+        - Remove this entire MessageValidator class from utilities.py
+        - Use FlextModels validation patterns for message validation
+
+        📍 SHOULD BE USED INSTEAD:
+        - FlextModels.Validation for message validation
+        - FlextModels.Field validators for Pydantic model validation
+        - FlextModels.Command/Query validation patterns
+
         Extracts message validation and serialization logic from FlextHandlers
         to simplify handler validation and provide reusable validation patterns.
         """
@@ -1739,7 +1795,16 @@ class FlextUtilities:
 
         @classmethod
         def validate_command(cls, command: object) -> FlextResult[None]:
-            """Validate command using enhanced Pydantic 2 validation and FlextExceptions."""
+            """Validate command using enhanced Pydantic 2 validation and FlextExceptions.
+
+            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+            ❌ CRITICAL ISSUE: Command validation should be in FlextModels.Validation, not utilities
+            ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_command()
+            📍 SHOULD BE USED INSTEAD: FlextModels.Command validation patterns
+            """
+            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             return cls.validate_message(
                 command,
                 operation="command",
@@ -1772,6 +1837,43 @@ class FlextUtilities:
                 FlextResult[None]: Success if valid, failure with error details if invalid
 
             """
+            # Check for custom validation methods first (for both Pydantic and non-Pydantic models)
+            validation_method_name = f"validate_{operation}"
+            if hasattr(message, validation_method_name):
+                validation_method = getattr(message, validation_method_name)
+                if callable(validation_method):
+                    try:
+                        # Check if it's a custom validation method (callable without parameters)
+                        # and returns a FlextResult (not a Pydantic field validator)
+                        import inspect
+
+                        sig = inspect.signature(validation_method)
+                        if (
+                            len(sig.parameters) == 0
+                        ):  # No parameters = custom validation method
+                            validation_result = validation_method()
+                            if (
+                                hasattr(validation_result, "is_failure")
+                                and hasattr(validation_result, "error")
+                                and getattr(validation_result, "is_failure", False)
+                            ):
+                                return FlextResult[None].fail(
+                                    getattr(validation_result, "error", f"{operation} validation failed")
+                                    or f"{operation} validation failed",
+                                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                                )
+                    except Exception as e:
+                        # If calling without parameters fails, it's likely a Pydantic field validator
+                        # Skip custom validation in this case - this is expected behavior
+                        # Log at debug level since this is expected for Pydantic field validators
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.debug(
+                            "Skipping validation method %s: %s",
+                            validation_method_name,
+                            str(e)
+                        )
+
             # If message is a Pydantic model, assume it is already validated unless
             # the explicit revalidation flag requests an additional check
             if isinstance(message, BaseModel):
@@ -1889,7 +1991,7 @@ class FlextUtilities:
                     field_name = attr_field.name
                     if hasattr(message, field_name):
                         result[field_name] = getattr(message, field_name)
-                    return result
+                return result
 
             # Try common serialization methods
             logger = FlextLogger(__name__)

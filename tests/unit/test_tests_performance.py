@@ -248,7 +248,10 @@ class TestFlextTestsPerformance:
             result = method()
             if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
                 # It's a context manager, test basic usage
-                with result:  # type: ignore[misc]
+                from contextlib import AbstractContextManager
+                from typing import cast
+                context_manager = cast("AbstractContextManager[object]", result)
+                with context_manager:
                     pass  # Just verify it works as a context manager
 
     def test_decorator_utilities_if_present(self) -> None:
@@ -272,8 +275,11 @@ class TestFlextTestsPerformance:
 
             # Test if it can be used as a decorator
             try:
+                from collections.abc import Callable
+                from typing import cast
+                decorator = cast("Callable[[Callable[..., object]], Callable[..., object]]", method)
 
-                @method
+                @decorator
                 def test_decorated_function() -> int:
                     return 42
 
@@ -363,7 +369,7 @@ class TestFlextTestsPerformance:
         for operation in operations:
             # Basic timing measurement
             start_time = time.time()
-            result = operation()
+            result = operation()  # type: ignore[no-untyped-call]
             end_time = time.time()
             execution_time = end_time - start_time
 
