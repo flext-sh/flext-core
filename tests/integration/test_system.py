@@ -242,10 +242,12 @@ class TestCompleteFlextSystemIntegration:
 
         assert resultado_processamento.is_success is True
         dados_finais = resultado_processamento.value
-        assert "processado_nome" in dados_finais
-        assert "processado_email" in dados_finais
+        assert "nome" in dados_finais
+        assert "email" in dados_finais
         assert "processado_em" in dados_finais
         assert "processado_por" in dados_finais
+        assert dados_finais["nome"] == "processado_João"
+        assert dados_finais["email"] == "processado_joao@exemplo.com"
 
         # Teste de validação de erro
         dados_invalidos = {"nome": "", "email": "joao@exemplo.com"}

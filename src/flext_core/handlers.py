@@ -7,7 +7,7 @@ handler implementations in FLEXT applications.
 Dependency Layer: 13 (Application Services)
 Dependencies: FlextConstants, FlextTypes, FlextExceptions, FlextResult,
               FlextConfig, FlextUtilities, FlextLoggings, FlextMixins,
-              FlextModels, FlextContainer, FlextProcessing, FlextCqrs
+              FlextModels, FlextContainer, FlextProcessors, FlextCqrs
 Used by: FlextBus, FlextDispatcher, FlextRegistry, and ecosystem handler implementations
 
 Simplified and refactored to use extracted components for reduced complexity
@@ -137,7 +137,20 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
         )
 
     def validate_command(self, command: object) -> FlextResult[None]:
-        """Validate command using extracted validation logic."""
+        """Validate command using extracted validation logic.
+
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Command validation should be centralized in FlextModels.Validation
+        ❌ INLINE VALIDATION: This delegates to utilities validation instead of centralized validation
+
+        🔧 REQUIRED ACTION:
+        - Remove this validation method from handlers
+        - Use FlextModels.Command validation patterns directly
+        - Centralize validation in FlextModels.Validation
+
+        📍 SHOULD BE USED INSTEAD: FlextModels.Command validation patterns
+        """
+        # 🚨 AUDIT VIOLATION: Delegating to utilities validation - should use FlextModels.Validation
         return FlextUtilities.MessageValidator.validate_message(
             command,
             operation="command",
@@ -145,7 +158,20 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
         )
 
     def validate_query(self, query: object) -> FlextResult[None]:
-        """Validate query using extracted validation logic."""
+        """Validate query using extracted validation logic.
+
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Query validation should be centralized in FlextModels.Validation
+        ❌ INLINE VALIDATION: This delegates to utilities validation instead of centralized validation
+
+        🔧 REQUIRED ACTION:
+        - Remove this validation method from handlers
+        - Use FlextModels.Query validation patterns directly
+        - Centralize validation in FlextModels.Validation
+
+        📍 SHOULD BE USED INSTEAD: FlextModels.Query validation patterns
+        """
+        # 🚨 AUDIT VIOLATION: Delegating to utilities validation - should use FlextModels.Validation
         return FlextUtilities.MessageValidator.validate_message(
             query,
             operation="query",
@@ -153,14 +179,12 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
         )
 
     @abstractmethod
-    @override
     def handle(self, message: MessageT) -> FlextResult[ResultT]:
         """Handle the message and return result.
 
         Subclasses must override this method.
         """
 
-    @override
     def execute(self, message: MessageT) -> FlextResult[ResultT]:
         """Execute message with full validation and error handling."""
         return self._run_pipeline(message, operation=self.mode)
@@ -181,11 +205,18 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
     ) -> FlextResult[ResultT]:
         """Execute handler pipeline using railway-oriented programming."""
         message_type = type(message).__name__
-        identifier = getattr(
-            message,
-            f"{operation}_id",
-            getattr(message, "id", FlextConstants.Messages.UNKNOWN_ERROR),
-        )
+        # Extract identifier from message, handling both object attributes and dict keys
+        if isinstance(message, dict):
+            identifier = message.get(
+                f"{operation}_id",
+                message.get("id", FlextConstants.Messages.UNKNOWN_ERROR),
+            )
+        else:
+            identifier = getattr(
+                message,
+                f"{operation}_id",
+                getattr(message, "id", FlextConstants.Messages.UNKNOWN_ERROR),
+            )
 
         # Log start using extracted metrics
         FlextHandlers.Metrics.log_handler_start(
@@ -309,7 +340,7 @@ class FlextHandlers[MessageT, ResultT](FlextMixins, ABC):
     def from_callable(
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
-        mode: Literal["command", "query"],
+        mode: str,
         handler_config: FlextModels.CqrsConfig.Handler
         | dict[str, object]
         | None = None,

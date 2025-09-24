@@ -14,11 +14,11 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import (
+    FlextHandlers,
     FlextModels,
     FlextResult,
     FlextUtilities,
 )
-from flext_core.handlers import FlextHandlers
 
 
 class ConcreteTestHandler(FlextHandlers[str, str]):
@@ -589,7 +589,7 @@ class TestFlextHandlersFromCallable:
             return message
 
         with pytest.raises(ValueError, match="Invalid handler mode"):
-            FlextHandlers.from_callable(test_function, mode="invalid")  # type: ignore[arg-type]
+            FlextHandlers.from_callable(test_function, mode="invalid")
 
     def test_from_callable_defaults_handler_name(self) -> None:
         """Test that handler name defaults to function name."""

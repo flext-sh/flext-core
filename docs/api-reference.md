@@ -21,7 +21,7 @@ from flext_core import (
     FlextLogger,
     FlextMixins,
     FlextModels,
-    FlextProcessing,
+    FlextProcessors,
     FlextProtocols,
     FlextResult,
     FlextTypes,

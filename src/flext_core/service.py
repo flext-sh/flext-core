@@ -137,19 +137,43 @@ class FlextService[TDomainResult](
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for the domain service.
 
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Business rules validation should be centralized in FlextModels.Validation
+        ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+        🔧 REQUIRED ACTION:
+        - Move business rules validation to FlextModels.Validation
+        - Use FlextModels validation patterns for domain validation
+        - Remove inline validation from service base class
+
+        📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_business_rules()
+
         Returns:
             FlextResult[None]: Success if valid, failure with error details
 
         """
+        # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
         return FlextResult[None].ok(None)
 
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration.
 
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Configuration validation should be centralized in FlextConfig.Validation
+        ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+        🔧 REQUIRED ACTION:
+        - Move configuration validation to FlextConfig.Validation
+        - Use FlextConfig validation patterns for configuration validation
+        - Remove inline validation from service base class
+
+        📍 SHOULD BE USED INSTEAD: FlextConfig.Validation.validate_service_config()
+
         Returns:
             FlextResult[None]: Success if valid, failure with error details
 
         """
+        # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextConfig.Validation
         return FlextResult[None].ok(None)
 
     def validate_with_request(
@@ -301,7 +325,9 @@ class FlextService[TDomainResult](
             timeout_seconds = 0.0
 
         def call_operation() -> object:
-            return operation.operation_callable(
+            from collections.abc import Callable
+            callable_op = cast("Callable[..., object]", operation.operation_callable)
+            return callable_op(
                 *positional_arguments,
                 **keyword_arguments,
             )

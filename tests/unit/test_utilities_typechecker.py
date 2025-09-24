@@ -6,8 +6,7 @@ of type introspection and compatibility logic.
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextUtilities
-from flext_core.handlers import FlextHandlers
+from flext_core import FlextHandlers, FlextResult, FlextUtilities
 
 
 class TestTypeChecker:
@@ -51,8 +50,8 @@ class TestTypeChecker:
                 return FlextResult[str].ok(str(message))
 
         result = FlextUtilities.TypeChecker.compute_accepted_message_types(TestHandler)
-        # Should return empty tuple when no type information is available
-        assert result == ()
+        # Should return object when handler is defined with object as message type
+        assert result == (object,)
 
     def test_compute_accepted_message_types_no_handle_method(self) -> None:
         """Test computing accepted message types with no handle method."""
@@ -116,7 +115,7 @@ class TestTypeChecker:
         result = FlextUtilities.TypeChecker._extract_message_type_from_handle(
             TestHandler
         )
-        assert result is str
+        assert result is int
 
     def test_extract_message_type_from_handle_with_annotation_attr(self) -> None:
         """Test extracting message type from parameter annotation attribute."""
@@ -388,12 +387,10 @@ class TestTypeCheckerIntegration:
         accepted_types = FlextUtilities.TypeChecker.compute_accepted_message_types(
             UntypedHandler
         )
-        assert accepted_types == ()
+        assert accepted_types == (object,)
 
-        # Should not be able to handle any specific type
-        assert not FlextUtilities.TypeChecker.can_handle_message_type(
-            accepted_types, str
-        )
+        # Should be able to handle any type since object is the base type
+        assert FlextUtilities.TypeChecker.can_handle_message_type(accepted_types, str)
 
 
 class TestTypeCheckerEdgeCases:

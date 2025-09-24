@@ -56,11 +56,11 @@ These examples show specialized patterns and processing:
 - **Key Classes**: `FlextModels.Payload[T]`, `FlextModels.DomainEvent`
 - **Run**: `python examples/06_messaging_patterns.py`
 
-#### 07_processing_handlers.py - FlextProcessing Patterns
+#### 07_processing_handlers.py - FlextProcessors Patterns
 
 - **Purpose**: Handler pipelines and strategy patterns
 - **Concepts**: Chain of responsibility, strategy pattern, registry, error recovery
-- **Key Classes**: `FlextProcessing.Implementation.BasicHandler`
+- **Key Classes**: `FlextProcessors.Implementation.BasicHandler`
 - **Run**: `python examples/07_processing_handlers.py`
 
 ### Integration Example (08)

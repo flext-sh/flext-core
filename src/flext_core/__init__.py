@@ -18,7 +18,7 @@ from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.processing import FlextProcessing
+from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
@@ -52,7 +52,7 @@ __all__ = [
     "FlextLogger",
     "FlextMixins",
     "FlextModels",
-    "FlextProcessing",
+    "FlextProcessors",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",

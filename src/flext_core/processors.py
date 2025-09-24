@@ -16,7 +16,7 @@ from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
 
 
-class FlextProcessing:
+class FlextProcessors:
     """Processing convenience namespace aligned with dispatcher workflows.
 
     Registries, pipelines, and handler helpers mirror the ergonomics promoted in
@@ -25,7 +25,7 @@ class FlextProcessing:
     """
 
     class Config:
-        """Configuration settings for FlextProcessing using FlextConfig defaults."""
+        """Configuration settings for FlextProcessors using FlextConfig defaults."""
 
         @classmethod
         def get_default_timeout(cls) -> float:
@@ -119,7 +119,7 @@ class FlextProcessing:
                 )
 
             # Check handler registry size limits
-            max_handlers = FlextProcessing.Config.get_max_handlers()
+            max_handlers = FlextProcessors.Config.get_max_handlers()
             if len(self._handlers) >= max_handlers:
                 return FlextResult[None].fail(
                     f"Handler registry full: {len(self._handlers)}/{max_handlers} handlers registered",
@@ -127,7 +127,7 @@ class FlextProcessing:
                 )
 
             # Validate handler safety
-            if not FlextProcessing.is_handler_safe(registration.handler):
+            if not FlextProcessors.is_handler_safe(registration.handler):
                 return FlextResult[None].fail(
                     f"Handler '{registration.name}' is not safe (must have handle method or be callable)",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -240,7 +240,7 @@ class FlextProcessing:
 
             """
             timeout_seconds = getattr(
-                config, "timeout_seconds", FlextProcessing.Config.get_default_timeout()
+                config, "timeout_seconds", FlextProcessors.Config.get_default_timeout()
             )
 
             # Create a dummy success result with valid data for timeout operation
@@ -273,7 +273,7 @@ class FlextProcessing:
             )
 
         def execute_batch(
-            self, config: FlextModels.BatchProcessingConfig
+            self, config: FlextModels.BatchProcessingConfig | object
         ) -> FlextResult[list[object]]:
             """Execute multiple handlers using BatchProcessingConfig model.
 
@@ -282,14 +282,29 @@ class FlextProcessing:
                 FlextResult if validation or batch processing fails.
 
             """
-            # Pydantic validation is automatic when the model is created
-            # No need to call validate_batch() manually
+            # Validate config is a BatchProcessingConfig or has required attributes
+            if not isinstance(config, FlextModels.BatchProcessingConfig):
+                # For mock objects, validate they have required attributes
+                if not hasattr(config, 'data_items'):
+                    return FlextResult[list[object]].fail(
+                        "Config must be BatchProcessingConfig or have data_items attribute",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+                # Type narrowing for mock objects
+                if not hasattr(config, 'data_items'):
+                    error_msg = "Config object must have data_items attribute"
+                    raise TypeError(error_msg)
+                data_items = getattr(config, 'data_items')
+                continue_on_error = getattr(config, 'continue_on_error', True)
+            else:
+                data_items = config.data_items
+                continue_on_error = config.continue_on_error
 
             # Validate batch size limits
-            max_batch_size = FlextProcessing.Config.get_max_batch_size()
-            if len(config.data_items) > max_batch_size:
+            max_batch_size = FlextProcessors.Config.get_max_batch_size()
+            if len(data_items) > max_batch_size:
                 return FlextResult[list[object]].fail(
-                    f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
+                    f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
@@ -297,7 +312,7 @@ class FlextProcessing:
             # Assume data_items contains tuples of (handler_name, request_data)
             handler_requests: list[tuple[str, object]] = []
             expected_tuple_length = FlextConstants.Performance.EXPECTED_TUPLE_LENGTH
-            for item in config.data_items:
+            for item in data_items:
                 if (
                     isinstance(item, tuple)
                     and len(cast("tuple[object, ...]", item)) == expected_tuple_length
@@ -314,7 +329,7 @@ class FlextProcessing:
             return FlextResult.parallel_map(
                 handler_requests,
                 lambda item: self.execute(item[0], item[1]),
-                fail_fast=not config.continue_on_error,
+                fail_fast=not continue_on_error,
             )
 
         def register_with_validation(
@@ -403,7 +418,7 @@ class FlextProcessing:
 
             """
             timeout_seconds = getattr(
-                request, "timeout_seconds", FlextProcessing.Config.get_default_timeout()
+                request, "timeout_seconds", FlextProcessors.Config.get_default_timeout()
             )
 
             # Validate timeout bounds
@@ -428,7 +443,7 @@ class FlextProcessing:
         def process_with_fallback(
             self,
             request: FlextModels.ProcessingRequest,
-            *fallback_pipelines: FlextProcessing.Pipeline,
+            *fallback_pipelines: FlextProcessors.Pipeline,
         ) -> FlextResult[object]:
             """Process with fallback pipelines using ProcessingRequest model.
 
@@ -446,7 +461,7 @@ class FlextProcessing:
             )
 
         def process_batch(
-            self, config: FlextModels.BatchProcessingConfig
+            self, config: FlextModels.BatchProcessingConfig | object
         ) -> FlextResult[list[object]]:
             """Process batch of data using validated BatchProcessingConfig model.
 
@@ -457,20 +472,35 @@ class FlextProcessing:
                 FlextResult[list[object]]: List of processed data items or a failure.
 
             """
-            # Pydantic validation is automatic when the model is created
-            # No need to call validate_batch() manually
+            # Validate config is a BatchProcessingConfig or has required attributes
+            if not isinstance(config, FlextModels.BatchProcessingConfig):
+                # For mock objects, validate they have required attributes
+                if not hasattr(config, 'data_items'):
+                    return FlextResult[list[object]].fail(
+                        "Config must be BatchProcessingConfig or have data_items attribute",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+                # Type narrowing for mock objects
+                if not hasattr(config, 'data_items'):
+                    error_msg = "Config object must have data_items attribute"
+                    raise TypeError(error_msg)
+                data_items = getattr(config, 'data_items')
+                continue_on_error = getattr(config, 'continue_on_error', True)
+            else:
+                data_items = config.data_items
+                continue_on_error = config.continue_on_error
 
             # Validate batch size limits
-            max_batch_size = FlextProcessing.Config.get_max_batch_size()
-            if len(config.data_items) > max_batch_size:
+            max_batch_size = FlextProcessors.Config.get_max_batch_size()
+            if len(data_items) > max_batch_size:
                 return FlextResult[list[object]].fail(
-                    f"Batch size {len(config.data_items)} exceeds maximum {max_batch_size}",
+                    f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Process all data items using parallel processing
             return FlextResult.parallel_map(
-                config.data_items, self.process, fail_fast=not config.continue_on_error
+                data_items, self.process, fail_fast=not continue_on_error
             )
 
         def process_with_validation(
@@ -553,7 +583,7 @@ class FlextProcessing:
             HandlerRegistry: A fresh handler registry instance.
 
         """
-        return FlextProcessing.HandlerRegistry()
+        return FlextProcessors.HandlerRegistry()
 
     @staticmethod
     def create_pipeline() -> Pipeline:
@@ -563,7 +593,7 @@ class FlextProcessing:
             Pipeline: A new processing pipeline instance.
 
         """
-        return FlextProcessing.Pipeline()
+        return FlextProcessors.Pipeline()
 
     @staticmethod
     def is_handler_safe(handler: object) -> bool:
@@ -674,17 +704,19 @@ class FlextProcessing:
                         if handle_method is not None:
                             handler_result = handle_method(result)
                             if (
-                                hasattr(handler_result, "success")
-                                and not handler_result.success
+                                hasattr(handler_result, "is_success")
+                                and not handler_result.is_success
                             ):
                                 return FlextResult[object].fail(
                                     f"Handler failed: {handler_result.error}",
                                 )
-                            result = (
-                                handler_result.data
-                                if hasattr(handler_result, "data")
-                                else handler_result
-                            )
+                            # Extract the actual data from FlextResult if it's a FlextResult
+                            if hasattr(handler_result, "value") and hasattr(
+                                handler_result, "is_success"
+                            ):
+                                result = handler_result.value
+                            else:
+                                result = handler_result
                 return FlextResult[object].ok(result)
 
     class Protocols:
@@ -704,7 +736,13 @@ class FlextProcessing:
                     FlextResult[object]: Handler output wrapped in FlextResult.
 
                 """
-                result = f"Chain handled by {self.name}: {request}"
+                # Extract data from FlextResult if it's a FlextResult
+                if hasattr(request, "value") and hasattr(request, "is_success"):
+                    actual_request = getattr(request, "value")
+                else:
+                    actual_request = request
+
+                result = f"Chain handled by {self.name}: {actual_request}"
                 return FlextResult[object].ok(result)
 
             def can_handle(self, _message_type: object) -> bool:
@@ -734,6 +772,17 @@ class FlextProcessing:
             def validate_command(self, command: object) -> FlextResult[None]:
                 """Validate a command message.
 
+                🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+                ❌ CRITICAL ISSUE: Command validation should be centralized in FlextModels.Validation
+                ❌ INLINE VALIDATION: This contains inline validation logic that should be centralized
+
+                🔧 REQUIRED ACTION:
+                - Move this validation logic to FlextModels.Validation.validate_command()
+                - Use centralized validation patterns for command validation
+                - Remove inline validation from processing classes
+
+                📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_command()
+
                 Args:
                     command: The command to validate
 
@@ -747,6 +796,17 @@ class FlextProcessing:
 
             def validate_query(self, query: object) -> FlextResult[None]:
                 """Validate a query message.
+
+                🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+                ❌ CRITICAL ISSUE: Query validation should be centralized in FlextModels.Validation
+                ❌ INLINE VALIDATION: This contains inline validation logic that should be centralized
+
+                🔧 REQUIRED ACTION:
+                - Move this validation logic to FlextModels.Validation.validate_query()
+                - Use centralized validation patterns for query validation
+                - Remove inline validation from processing classes
+
+                📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_query()
 
                 Args:
                     query: The query to validate

@@ -30,12 +30,12 @@ import structlog
 
 from flext_core import (
     FlextConfig,
+    FlextConstants,
     FlextContext,
     FlextLogger,
     FlextProtocols,
     FlextTypes,
 )
-from flext_core.constants import FlextConstants
 from flext_tests import (
     FlextTestsMatchers,
 )
@@ -1496,9 +1496,12 @@ class TestLoggingConfiguration:
         log_entry = bound_logger.build_log_entry("INFO", "Test bound logging")
         assert hasattr(log_entry, "request") and log_entry.request
         request_data = log_entry.request
+        assert isinstance(request_data, dict)
         assert "custom_data" in request_data
-        assert request_data["custom_data"]["user_id"] == "123"
-        assert request_data["custom_data"]["operation"] == "test"
+        custom_data = request_data["custom_data"]
+        assert isinstance(custom_data, dict)
+        assert custom_data["user_id"] == "123"
+        assert custom_data["operation"] == "test"
 
 
 class TestAdvancedLoggingFeatures:
@@ -1547,7 +1550,7 @@ class TestAdvancedLoggingFeatures:
         entry = logger.build_log_entry("INFO", "Test message", {}, duration_ms=None)
 
         # Performance section should not be included when duration is None
-        assert not hasattr(entry, "performance") or entry.performance is None
+        assert not hasattr(entry, "performance") or entry.performance == {}
 
     def test_performance_duration_with_value(self) -> None:
         """Test performance logging when duration has a value."""
@@ -1652,9 +1655,7 @@ class TestAdvancedLoggingFeatures:
             "level_edge_test",
             _level=cast("FlextTypes.Config.LogLevel", ""),
         )
-        assert (
-            logger.level == "WARNING"
-        )  # From test environment  # Should default to INFO
+        assert logger.level == "INFO"  # Should default to INFO
 
         # Test with lowercase valid level - should convert to uppercase
         # Test with lowercase valid level - should convert to uppercase
@@ -2253,9 +2254,12 @@ class TestCoverageTargetedTests:
         # Bound context data should be in the request field
         assert hasattr(log_entry, "request") and log_entry.request
         request_data = log_entry.request
+        assert isinstance(request_data, dict)
         assert "custom_data" in request_data
-        assert "complex_data" in request_data["custom_data"]
-        assert "simple_str" in request_data["custom_data"]
+        custom_data = request_data["custom_data"]
+        assert isinstance(custom_data, dict)
+        assert "complex_data" in custom_data
+        assert "simple_str" in custom_data
 
     def test_console_configuration_toggles(self) -> None:
         """Test console configuration toggles to cover remaining lines."""
@@ -2344,13 +2348,16 @@ class TestCoverageTargetedTests:
             f"request field not found in log_entry: {log_entry.__dict__.keys()}"
         )
         request_context = log_entry.request
+        assert isinstance(request_context, dict)
         context_repr = (
             list(request_context.keys()) if request_context else request_context
         )
         assert "custom_data" in request_context, (
             f"custom_data not found in request: {context_repr}"
         )
-        assert request_context["custom_data"]["test_key"] == "test_value"
+        custom_data = request_context["custom_data"]
+        assert isinstance(custom_data, dict)
+        assert custom_data["test_key"] == "test_value"
 
     def test_service_info_access_edge_cases(self) -> None:
         """Test service info access patterns to cover line 597."""

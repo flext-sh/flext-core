@@ -845,7 +845,7 @@ class TestFlextCqrsComprehensive:
         assert "boom" in (res3.error or "")
 
         # Results helpers
-        ok = FlextCqrs.Results.is_success({"k": 1})
+        ok = FlextCqrs.Results.success({"k": 1})
         assert ok.is_success
         assert ok.value == {"k": 1}
         fail = FlextCqrs.Results.failure("err", error_code="E1", error_data={"a": 2})

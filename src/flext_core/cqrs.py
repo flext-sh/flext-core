@@ -61,7 +61,7 @@ class FlextCqrs:
                     "handler_type": config.handler_type,
                 }
                 # Store metadata in a way that tests can access it
-                result._metadata = metadata  # type: ignore[attr-defined]  # noqa: SLF001
+                setattr(result, "_metadata", metadata)
 
             return result
 

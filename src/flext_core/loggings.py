@@ -26,7 +26,7 @@ from collections.abc import Mapping
 from datetime import UTC, date, datetime, time as datetime_time
 from decimal import Decimal
 from pathlib import Path
-from typing import Literal, Self, cast, override
+from typing import ClassVar, Literal, Self, cast, override
 
 import colorlog
 import structlog
@@ -346,7 +346,7 @@ class FlextLogger:
     # Static class attributes
     _configured: bool = False
     _global_correlation_id: FlextTypes.Core.Optional[FlextTypes.Identifiers.Id] = None
-    _logger_cache: dict[str, FlextLogger] = {}
+    _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock = threading.Lock()
 
     # Nested console renderer class
@@ -648,25 +648,25 @@ class FlextLogger:
         """Check if structlog is configured."""
         return self._configured
 
-    def __new__(cls, name: str, **kwargs) -> FlextLogger:
+    def __new__(cls, name: str, **kwargs: object) -> Self:
         """Create logger instance with caching support.
-        
+
         Args:
             name: Logger name
             **kwargs: Additional initialization parameters
-            
+
         Returns:
             FlextLogger: Cached or new logger instance
+
         """
         # Check cache first (unless forcing new instance)
-        if not kwargs.get('_force_new', False):
+        if not kwargs.get("_force_new"):
             with cls._cache_lock:
                 if name in cls._logger_cache:
-                    return cls._logger_cache[name]
-        
+                    return cast("Self", cls._logger_cache[name])
+
         # Create new instance
-        instance = super().__new__(cls)
-        return instance
+        return super().__new__(cls)
 
     def __init__(
         self,
@@ -1141,7 +1141,7 @@ class FlextLogger:
                 execution_info["uptime_seconds"] = uptime_seconds
 
         # Build performance metrics
-        performance_data: FlextTypes.Core.Dict | None = None
+        performance_data: FlextTypes.Core.Dict = {}
         if duration_ms is not None and getattr(
             config, "track_performance", FlextConstants.Logging.TRACK_PERFORMANCE
         ):
@@ -1154,10 +1154,19 @@ class FlextLogger:
         error_data: FlextTypes.Core.Dict = {}
         if error is not None:
             if isinstance(error, Exception):
+                # Ensure all error data is JSON serializable
+                error_args = getattr(error, "args", ())
+                serializable_args = []
+                for arg in error_args:
+                    if isinstance(arg, (str, int, float, bool, type(None))):
+                        serializable_args.append(arg)
+                    else:
+                        serializable_args.append(str(arg))
+
                 error_data = {
                     "type": error.__class__.__name__,
                     "message": str(error),
-                    "details": getattr(error, "args", ()),
+                    "details": serializable_args,
                 }
                 if error.__traceback__ is not None:
                     error_data["stack_trace"] = traceback.format_tb(error.__traceback__)
@@ -1178,15 +1187,8 @@ class FlextLogger:
             context_dict = dict(context)
 
             if context_dict:
-                context_data = (
-                    self._sanitize_context(context_dict)
-                    if getattr(
-                        config,
-                        "mask_sensitive_data",
-                        FlextConstants.Logging.MASK_SENSITIVE_DATA,
-                    )
-                    else dict(context_dict)
-                )
+                # Always sanitize context for JSON serialization, regardless of masking setting
+                context_data = self._sanitize_context(context_dict)
 
         # Determine correlation ID
         correlation_id = None

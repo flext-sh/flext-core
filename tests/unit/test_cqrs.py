@@ -116,7 +116,7 @@ class TestFlextCqrsModels:
             FlextModels.Command(
                 command_id="cmd123",
                 command_type="test_command",
-                issuer_id=123,
+                issuer_id=123,  # type: ignore[arg-type]
             )  # issuer_id should be str | None, not int
 
     def test_command_model_validation_error(self) -> None:
@@ -211,7 +211,8 @@ class TestFlextCqrsHandlers:
     def test_command_handler_initialization_default(self) -> None:
         """Test command handler initialization with default config."""
         test_command_handler = self._create_test_command_handler()
-        handler = test_command_handler(config={})
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_command_handler(config=config)
 
         assert isinstance(handler, test_command_handler)
         assert handler._config_model is not None
@@ -220,7 +221,11 @@ class TestFlextCqrsHandlers:
     def test_command_handler_initialization_with_config(self) -> None:
         """Test command handler initialization with custom config."""
         test_command_handler = self._create_test_command_handler()
-        config = {"custom_setting": "value", "timeout": 30}
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id",
+            handler_name="test_handler",
+            command_timeout=30
+        )
         handler = test_command_handler(config=config)
 
         # Check that the config was applied (the exact structure may vary)
@@ -230,7 +235,8 @@ class TestFlextCqrsHandlers:
     def test_command_handler_logger_property(self) -> None:
         """Test command handler logger property."""
         test_command_handler = self._create_test_command_handler()
-        handler = test_command_handler(config={})
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_command_handler(config=config)
         logger = handler.logger
 
         assert logger is not None
@@ -262,7 +268,8 @@ class TestFlextCqrsHandlers:
     def test_command_handler_validate_command_without_validation_method(self) -> None:
         """Test command handler validate_command without validation method."""
         test_command_handler = self._create_test_command_handler()
-        handler = test_command_handler()
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_command_handler(config=config)
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = handler.validate_command(command)
 
@@ -314,7 +321,8 @@ class TestFlextCqrsHandlers:
     def test_command_handler_can_handle_no_type_constraints(self) -> None:
         """Test command handler can_handle with no type constraints."""
         test_command_handler = self._create_test_command_handler()
-        handler = test_command_handler()
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_command_handler(config=config)
         result = handler.can_handle(FlextModels.Command)
 
         assert result is True
@@ -377,7 +385,9 @@ class TestFlextCqrsHandlers:
                 # Call validation directly in handle method
                 validation = self.validate_custom(message)
                 if validation.is_failure:
-                    return FlextResult[str].fail(validation.error or "Validation failed")
+                    return FlextResult[str].fail(
+                        validation.error or "Validation failed"
+                    )
                 return FlextResult[str].ok("test_result")
 
             def validate_custom(self, command: object) -> FlextResult[None]:
@@ -439,16 +449,21 @@ class TestFlextCqrsHandlers:
     def test_query_handler_initialization_default(self) -> None:
         """Test query handler initialization with default config."""
         test_query_handler = self._create_test_query_handler()
-        handler = test_query_handler()
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_query_handler(config=config)
 
         assert isinstance(handler, test_query_handler)
         assert handler._config_model is not None
 
     def test_query_handler_initialization_with_config(self) -> None:
         """Test query handler initialization with custom config."""
-        config = {"cache_enabled": True, "timeout": 60}
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id",
+            handler_name="test_handler",
+            command_timeout=60
+        )
         test_query_handler = self._create_test_query_handler()
-        handler = test_query_handler(handler_config=config)
+        handler = test_query_handler(config=config)
 
         # Check that the config was applied (the exact structure may vary)
         assert handler._config_model is not None
@@ -457,7 +472,8 @@ class TestFlextCqrsHandlers:
     def test_query_handler_can_handle_default(self) -> None:
         """Test query handler can_handle default behavior."""
         test_query_handler = self._create_test_query_handler()
-        handler = test_query_handler()
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_query_handler(config=config)
         result = handler.can_handle(FlextModels.Query)
 
         assert result is True
@@ -491,7 +507,8 @@ class TestFlextCqrsHandlers:
     def test_query_handler_validate_query_without_validation_method(self) -> None:
         """Test query handler validate_query without validation method."""
         test_query_handler = self._create_test_query_handler()
-        handler = test_query_handler()
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_query_handler(config=config)
         query = FlextModels.Query(query_id="test")
         result = handler.validate_query(query)
 
@@ -540,7 +557,9 @@ class TestFlextCqrsHandlers:
                 # Integrate validation into handle method
                 validation = self.validate_custom(message)
                 if validation.is_failure:
-                    return FlextResult[str].fail(validation.error or "Validation failed")
+                    return FlextResult[str].fail(
+                        validation.error or "Validation failed"
+                    )
                 return FlextResult[str].ok("handled")
 
             def validate_custom(self, query: object) -> FlextResult[None]:
@@ -900,7 +919,8 @@ class TestFlextCqrsBusMiddleware:
         bus = FlextBus(bus_config=config)
         middleware = RejectingMiddleware()
         # Add middleware to bus for testing
-        bus._middleware.append(middleware)
+        middleware_config = {"middleware_id": "rejecting-middleware", "enabled": True}
+        bus._middleware.append(middleware_config)
         bus._middleware_instances["rejecting-middleware"] = middleware
 
         command = FlextModels.Command(command_id="test", command_type="test-type")
@@ -1222,7 +1242,8 @@ class TestFlextCqrsFactories:
             return "handled"
 
         test_command_handler = self._create_test_command_handler()
-        handler = test_command_handler(config={})
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_command_handler(config=config)
         assert isinstance(handler, test_command_handler)
 
     def test_create_simple_handler_with_flext_result(self) -> None:
@@ -1232,7 +1253,8 @@ class TestFlextCqrsFactories:
             return FlextResult[str].ok("handled")
 
         test_command_handler = self._create_test_command_handler()
-        handler = test_command_handler(config={})
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_command_handler(config=config)
         assert isinstance(handler, test_command_handler)
 
     def test_create_query_handler(self) -> None:
@@ -1242,7 +1264,8 @@ class TestFlextCqrsFactories:
             return "query result"
 
         test_query_handler = self._create_test_query_handler()
-        handler = test_query_handler(config={})
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_query_handler(config=config)
         assert isinstance(handler, test_query_handler)
 
     def test_create_query_handler_with_flext_result(self) -> None:
@@ -1252,7 +1275,8 @@ class TestFlextCqrsFactories:
             return FlextResult[str].ok("query result")
 
         test_query_handler = self._create_test_query_handler()
-        handler = test_query_handler(config={})
+        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        handler = test_query_handler(config=config)
         assert isinstance(handler, test_query_handler)
 
     def _create_test_command_handler(

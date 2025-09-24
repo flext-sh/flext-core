@@ -41,7 +41,9 @@ class TestUtilitiesCoverage:
         result = FlextUtilities.Validation.validate_email("invalid-email")
         assert not result.is_success
         assert result.error is not None
-        assert "email" in result.error.lower() and ("pattern" in result.error or "valid" in result.error)
+        assert "email" in result.error.lower() and (
+            "pattern" in result.error or "valid" in result.error
+        )
 
     def test_url_validation_invalid_format(self) -> None:
         """Test URL validation with invalid format."""
@@ -49,7 +51,10 @@ class TestUtilitiesCoverage:
         assert not result.is_success
         assert result.error is not None
         # URL validation checks length first
-        assert "URL must be at least" in result.error or "must be a valid URL" in result.error
+        assert (
+            "URL must be at least" in result.error
+            or "must be a valid URL" in result.error
+        )
 
     def test_port_number_validation_out_of_range(self) -> None:
         """Test port number validation outside valid range."""
@@ -222,7 +227,7 @@ class TestModelsCoverage:
             invalid_config = FlextModels.CqrsConfig.Handler(
                 handler_id="test_id",
                 handler_name="test_name",
-                handler_type="invalid",
+                handler_type="invalid",  # pyright: ignore[reportArgumentType]
                 handler_mode="command",
             )
             # If validation doesn't catch it, that's also useful coverage

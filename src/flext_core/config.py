@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 import tomllib
 import uuid
@@ -340,6 +341,17 @@ class FlextConfig(BaseSettings):
     def validate_log_level(cls, v: str) -> str:
         """Validate log level against FlextConstants.Logging.VALID_LEVELS.
 
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Configuration validation should be centralized in FlextConfig.Validation
+        ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+        🔧 REQUIRED ACTION:
+        - Move this validation to FlextConfig.Validation.validate_log_level()
+        - Use centralized validation patterns for configuration validation
+        - Remove inline validation from config models
+
+        📍 SHOULD BE USED INSTEAD: FlextConfig.Validation.validate_log_level()
+
         Returns:
             The validated and normalized (uppercase) log level.
 
@@ -347,6 +359,7 @@ class FlextConfig(BaseSettings):
             ValueError: If the log level is not in the list of valid levels.
 
         """
+        # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextConfig.Validation
         # Inline validation to break import cycle with utilities.py
         if not v:
             msg = "Log level cannot be empty"
@@ -364,7 +377,19 @@ class FlextConfig(BaseSettings):
     @field_validator("log_verbosity")
     @classmethod
     def validate_log_verbosity(cls, v: str) -> str:
-        """Validate log verbosity is supported."""
+        """Validate log verbosity is supported.
+
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Configuration validation should be centralized in FlextConfig.Validation
+        ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+        🔧 REQUIRED ACTION:
+        - Move this validation to FlextConfig.Validation.validate_log_verbosity()
+        - Use centralized validation patterns for configuration validation
+        - Remove inline validation from config models
+
+        📍 SHOULD BE USED INSTEAD: FlextConfig.Validation.validate_log_verbosity()
+        """
         valid_levels = FlextConstants.Logging.VALID_VERBOSITY_LEVELS
         v_lower = v.lower()
         if v_lower not in valid_levels:
@@ -376,6 +401,17 @@ class FlextConfig(BaseSettings):
     @classmethod
     def validate_environment(cls, v: str) -> str:
         """Validate environment is a supported value using FlextConstants.
+
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Configuration validation should be centralized in FlextConfig.Validation
+        ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+        🔧 REQUIRED ACTION:
+        - Move this validation to FlextConfig.Validation.validate_environment()
+        - Use centralized validation patterns for configuration validation
+        - Remove inline validation from config models
+
+        📍 SHOULD BE USED INSTEAD: FlextConfig.Validation.validate_environment()
 
         Returns:
             The validated and normalized (lowercase) environment.
@@ -393,6 +429,17 @@ class FlextConfig(BaseSettings):
     @model_validator(mode="after")
     def validate_configuration_consistency(self) -> Self:
         """Validate overall configuration consistency.
+
+        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
+        ❌ CRITICAL ISSUE: Configuration validation should be centralized in FlextConfig.Validation
+        ❌ INLINE VALIDATION: This is inline validation that should be centralized
+
+        🔧 REQUIRED ACTION:
+        - Move this validation to FlextConfig.Validation.validate_configuration_consistency()
+        - Use centralized validation patterns for configuration validation
+        - Remove inline validation from config models
+
+        📍 SHOULD BE USED INSTEAD: FlextConfig.Validation.validate_configuration_consistency()
 
         Returns:
             Self: The validated configuration instance.
@@ -525,7 +572,9 @@ class FlextConfig(BaseSettings):
                 return FlextResult[FlextConfig].fail(f"Failed to load config: {msg}")
 
             # Load based on file extension
-            content = config_path.read_text(encoding=FlextConstants.Mixins.DEFAULT_ENCODING)
+            content = config_path.read_text(
+                encoding=FlextConstants.Mixins.DEFAULT_ENCODING
+            )
 
             if config_path.suffix.lower() == FlextConstants.Platform.EXT_TOML:
                 config_data = tomllib.loads(content)
@@ -733,23 +782,37 @@ class FlextConfig(BaseSettings):
                     # File precedence: .env < config.yaml < config.toml < config.json
                     config_files = ["config.yaml", "config.toml", "config.json"]
                     loaded_config = None
-                    
-                    for config_file in config_files:
-                        config_path = Path(config_file)
-                        if config_path.exists():
-                            result = cls.from_file(config_path)
-                            if result.is_success:
-                                loaded_config = result.value
-                                break
-                    
-                    # If no config file was loaded, create default instance
-                    if loaded_config is None:
-                        # Create instance - Pydantic BaseSettings will automatically handle:
-                        # 1. Environment variables (highest priority)
-                        # 2. .env file (medium priority)
-                        # 3. Default values (lowest priority)
+
+                    # Check if there are any relevant environment variables set
+                    # If there are, let Pydantic Settings handle everything (env vars have priority)
+                    env_prefix = cls.model_config.get("env_prefix", "")
+                    has_env_vars = any(key.startswith(env_prefix) for key in os.environ)
+
+                    if has_env_vars:
+                        # Environment variables are set, let Pydantic Settings handle precedence
                         loaded_config = cls()
-                    
+                    else:
+                        # No environment variables, try to load from config files
+                        file_data = None
+                        for config_file in config_files:
+                            config_path = Path(config_file)
+                            if config_path.exists():
+                                result = cls.from_file(config_path)
+                                if result.is_success:
+                                    file_data = result.value.model_dump(
+                                        exclude_unset=True
+                                    )
+                                    break
+
+                        if file_data:
+                            # Load from config file
+                            temp_instance = cls()
+                            merged_data = {**temp_instance.model_dump(), **file_data}
+                            loaded_config = cls(**merged_data)
+                        else:
+                            # No config file, create default instance
+                            loaded_config = cls()
+
                     cls._global_instance = loaded_config
         return cls._global_instance
 

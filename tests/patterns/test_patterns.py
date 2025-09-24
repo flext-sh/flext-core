@@ -22,8 +22,7 @@ from typing import cast
 import pytest
 from hypothesis import assume, given, strategies as st
 
-from flext_core import FlextTypes, T
-from flext_core.constants import FlextConstants
+from flext_core import FlextConstants, FlextTypes, T
 from flext_tests import (
     FlextTestsAsyncs,
     FlextTestsHypothesis,

@@ -587,7 +587,10 @@ class FlextDispatcher:
         if correlation_id is not None:
             correlation_token = correlation_var.set(correlation_id)
             # Set parent correlation ID if there was a previous one
-            if current_correlation is not None and current_correlation != correlation_id:
+            if (
+                current_correlation is not None
+                and current_correlation != correlation_id
+            ):
                 parent_token = parent_var.set(current_correlation)
 
         try:
@@ -598,14 +601,16 @@ class FlextDispatcher:
             # Use provided correlation ID or generate one if needed
             effective_correlation_id = correlation_id
             if effective_correlation_id is None:
-                effective_correlation_id = FlextContext.Correlation.generate_correlation_id()
+                effective_correlation_id = (
+                    FlextContext.Correlation.generate_correlation_id()
+                )
 
             if self._config.get("enable_logging"):
                 self._logger.debug(
                     "dispatch_context_entered",
                     correlation_id=effective_correlation_id,
                 )
-            
+
             try:
                 yield
             finally:
