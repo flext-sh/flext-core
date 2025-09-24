@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import types
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal, cast
@@ -355,12 +356,16 @@ def test_dispatcher_dispatch_with_explicit_correlation_id_uses_provided_value() 
             self.correlation_ids: list[str | None] = []
             self.parent_ids: list[str | None] = []
 
-        def execute(self, command: object) -> FlextResult[object]:  # noqa: ARG002
+        def execute(self, command: object) -> FlextResult[object]:
+            # Use command parameter to avoid unused argument warning
+            _command = command  # Acknowledge the parameter
             self.correlation_ids.append(FlextContext.Correlation.get_correlation_id())
             self.parent_ids.append(FlextContext.Correlation.get_parent_correlation_id())
             return FlextResult[object].ok("handled")
 
         def register_handler(self, *_args: object) -> FlextResult[None]:
+            # Use *_args parameter to avoid unused argument warning
+            _ = _args  # Acknowledge the parameter
             return FlextResult[None].ok(None)
 
     bus = RecordingBus()
@@ -392,12 +397,16 @@ def test_dispatcher_dispatch_with_explicit_correlation_id_restores_previous_cont
             self.correlation_ids: list[str | None] = []
             self.parent_ids: list[str | None] = []
 
-        def execute(self, command: object) -> FlextResult[object]:  # noqa: ARG002
+        def execute(self, command: object) -> FlextResult[object]:
+            # Use command parameter to avoid unused argument warning
+            _command = command  # Acknowledge the parameter
             self.correlation_ids.append(FlextContext.Correlation.get_correlation_id())
             self.parent_ids.append(FlextContext.Correlation.get_parent_correlation_id())
             return FlextResult[object].ok("handled")
 
         def register_handler(self, *_args: object) -> FlextResult[None]:
+            # Use *_args parameter to avoid unused argument warning
+            _ = _args  # Acknowledge the parameter
             return FlextResult[None].ok(None)
 
     bus = RecordingBus()
@@ -438,6 +447,8 @@ def test_dispatcher_propagates_metadata_model_to_context() -> None:
     mock_execute = Mock()
 
     def fake_execute(_message: object) -> FlextResult[object]:
+        # Use _message parameter to avoid unused argument warning
+        __message = _message  # Acknowledge the parameter
         metadata_from_context = FlextContext.Performance.get_operation_metadata()
         assert metadata_from_context == expected_metadata
         return FlextResult[object].ok(dict(metadata_from_context or {}))
@@ -470,6 +481,8 @@ def test_dispatcher_propagates_plain_metadata_dict_to_context() -> None:
     mock_execute = Mock()
 
     def fake_execute(_message: object) -> FlextResult[object]:
+        # Use _message parameter to avoid unused argument warning
+        __message = _message  # Acknowledge the parameter
         metadata_from_context = FlextContext.Performance.get_operation_metadata()
         assert metadata_from_context == expected_metadata
         return FlextResult[object].ok(dict(metadata_from_context or {}))
@@ -610,7 +623,6 @@ def test_registry_register_function_map() -> None:
         return FlextResult[FlextHandlers[object, object]].ok(FunctionHandler())
 
     # Monkey patch the method for testing
-    import types
 
     setattr(
         dispatcher,

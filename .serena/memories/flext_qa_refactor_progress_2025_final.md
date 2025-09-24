@@ -52,7 +52,7 @@ def format(self, data: object, console: Console) -> None:
 
 ### Infrastructure Stabilization
 
-- FlextCliFormatters: Complete Rich abstraction with proper error handling
+- FlextCliOutput: Complete Rich abstraction with proper error handling
 - FlextResult patterns: Consistent error handling across all operations
 - Test patterns: Comprehensive test coverage for all formatter types
 

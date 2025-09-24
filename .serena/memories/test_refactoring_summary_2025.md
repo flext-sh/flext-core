@@ -45,7 +45,7 @@ Renamed test helper service classes in test_service.py:
 
 ### Before Refactoring
 
-- Test collection errors due to Test* classes with **init**
+- Test collection errors due to Test\* classes with **init**
 - Multiple duplicate test files causing confusion
 - FlextModels.Config AttributeError
 
@@ -58,7 +58,7 @@ Renamed test helper service classes in test_service.py:
 
 ## Key Improvements
 
-1. **Clean Test Structure**: No more pytest collection warnings about Test* classes
+1. **Clean Test Structure**: No more pytest collection warnings about Test\* classes
 2. **No Duplicates**: Removed 5 duplicate test files, reducing confusion
 3. **Proper Naming**: Helper classes now clearly marked as Mock*or Sample*
 4. **API Alignment**: Tests now use correct FlextModels.Configuration

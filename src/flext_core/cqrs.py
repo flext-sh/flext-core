@@ -13,7 +13,7 @@ import re
 from collections.abc import Callable
 from typing import Literal, cast, override
 
-from flext_core.config import FlextConfig
+from flext_core.config import CqrsBusConfigDict, FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
@@ -49,7 +49,7 @@ class FlextCqrs:
                 FlextResult[object]: Success result with the provided data
 
             """
-            result = FlextResult[object].ok(data)
+            result: FlextResult[object] = FlextResult[object].ok(data)
 
             # Add configuration metadata if provided
             if config:
@@ -88,7 +88,9 @@ class FlextCqrs:
             final_error_code = error_code or FlextConstants.Cqrs.CQRS_OPERATION_FAILED
 
             # Enhance error data with configuration context
-            enhanced_error_data = dict(error_data) if error_data else {}
+            enhanced_error_data: dict[str, object] = (
+                dict(error_data) if error_data else {}
+            )
             if config:
                 enhanced_error_data.update({
                     "handler_id": config.handler_id,
@@ -287,14 +289,16 @@ class FlextCqrs:
                 class FunctionHandler(FlextHandlers[TCmd, TResult]):
                     def __init__(self) -> None:
                         # Create proper Handler config object
-                        config = FlextModels.CqrsConfig.Handler(
-                            handler_id=handler_config.handler_name,
-                            handler_name=handler_config.handler_name,
-                            handler_type="command",
-                            handler_mode="command",
-                            command_timeout=0,
-                            max_command_retries=0,
-                            metadata=handler_config.metadata or {},
+                        config: FlextModels.CqrsConfig.Handler = (
+                            FlextModels.CqrsConfig.Handler(
+                                handler_id=handler_config.handler_name,
+                                handler_name=handler_config.handler_name,
+                                handler_type="command",
+                                handler_mode="command",
+                                command_timeout=0,
+                                max_command_retries=0,
+                                metadata=handler_config.metadata or {},
+                            )
                         )
                         super().__init__(config=config)
 
@@ -359,42 +363,23 @@ class FlextCqrs:
 
             """
             try:
-                config_instance = FlextConfig.get_global_instance()
-                raw_config_payload: (
-                    FlextTypes.Core.Dict | FlextResult[FlextTypes.Core.Dict]
-                ) = config_instance.get_cqrs_bus_config()
+                config_instance: FlextConfig = FlextConfig.get_global_instance()
+                raw_config_payload: CqrsBusConfigDict = (
+                    config_instance.get_cqrs_bus_config()
+                )
 
-                # Support both raw dictionaries and FlextResult wrappers
-                config_payload: FlextTypes.Core.Dict
-                if isinstance(raw_config_payload, FlextResult):
-                    if raw_config_payload.is_failure:
-                        msg = "Failed to load CQRS bus configuration"
-                        raise ValueError(msg)
-                    # Get value from FlextResult - type is guaranteed by FlextResult[FlextTypes.Core.Dict]
-                    config_payload = cast(
-                        "FlextTypes.Core.Dict", getattr(raw_config_payload, "value", {})
-                    )
-                else:
-                    config_payload = raw_config_payload
+                # Convert TypedDict to regular dict for model validation
+                config_dict: FlextTypes.Core.Dict = dict(raw_config_payload)
 
-                # Ensure config_payload is a dictionary with proper type checking
-                config_dict: FlextTypes.Core.Dict
-                if hasattr(config_payload, "model_dump") and callable(
-                    getattr(config_payload, "model_dump", None)
-                ):
-                    # Handle Pydantic models or similar objects with model_dump method
-                    model_dump_method = getattr(config_payload, "model_dump")
-                    dumped_data: FlextTypes.Core.Dict = model_dump_method()
-                    config_dict = dumped_data
-                else:
-                    # config_payload is already a dict, use it directly
-                    config_dict = config_payload
-
-                bus_config = FlextModels.CqrsConfig.Bus.create_bus_config(config_dict)
+                bus_config: FlextModels.CqrsConfig.Bus = (
+                    FlextModels.CqrsConfig.Bus.create_bus_config(config_dict)
+                )
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(bus_config)
             except Exception:
                 # Fallback to default configuration
-                default_config = FlextModels.CqrsConfig.Bus.create_bus_config(None)
+                default_config: FlextModels.CqrsConfig.Bus = (
+                    FlextModels.CqrsConfig.Bus.create_bus_config(None)
+                )
                 return FlextResult[FlextModels.CqrsConfig.Bus].ok(default_config)
 
     class _ProcessingHelper:

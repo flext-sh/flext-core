@@ -7,6 +7,7 @@ All tests use real FlextCore APIs without mocks, following FLEXT development sta
 from __future__ import annotations
 
 import pathlib
+import tempfile
 
 from flext_core import (
     FlextConfig,
@@ -68,12 +69,12 @@ class TestUtilitiesCoverage:
         # Test with empty string input
         result = FlextUtilities.Transformation.normalize_string("")
         assert result.is_success
-        assert result.value == ""  # noqa: PLC1901
+        assert not result.value
 
         # Test with whitespace
         result = FlextUtilities.Transformation.normalize_string("  \t\n  ")
         assert result.is_success
-        assert result.value == ""  # noqa: PLC1901
+        assert not result.value
 
     def test_generators_with_custom_prefixes(self) -> None:
         """Test ID generators with custom prefixes."""
@@ -100,7 +101,6 @@ class TestConfigCoverage:
     def test_config_invalid_json_format(self) -> None:
         """Test config loading with invalid JSON."""
         # Create temporary invalid JSON file
-        import tempfile
 
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".json", delete=False, encoding="utf-8"

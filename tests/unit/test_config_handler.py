@@ -6,7 +6,7 @@ of configuration resolution logic.
 
 from __future__ import annotations
 
-from typing import cast
+from dataclasses import dataclass
 from unittest.mock import patch
 
 from flext_core import FlextConfig, FlextConstants, FlextModels
@@ -32,7 +32,6 @@ class TestHandlerConfiguration:
     def test_resolve_handler_mode_from_config_object_attribute(self) -> None:
         """Test resolving handler mode from config object handler_type attribute."""
         # Create a mock config object with handler_type
-        from dataclasses import dataclass
 
         @dataclass
         class MockConfig:
@@ -135,7 +134,7 @@ class TestHandlerConfiguration:
             result = FlextConfig.HandlerConfiguration.create_handler_config()
 
             assert isinstance(result, dict)
-            config_dict = cast("dict[str, object]", result)
+            config_dict = result
             assert config_dict["handler_id"] == "command_handler_abcd1234"
             assert config_dict["handler_name"] == "Command Handler"
             assert config_dict["handler_type"] == "command"
@@ -156,7 +155,7 @@ class TestHandlerConfiguration:
         )
 
         assert isinstance(result, dict)
-        config_dict = cast("dict[str, object]", result)
+        config_dict = result
         assert config_dict["handler_id"] == "custom_handler_123"
         assert config_dict["handler_name"] == "CustomHandler"
         assert config_dict["handler_type"] == "query"
@@ -172,7 +171,7 @@ class TestHandlerConfiguration:
             handler_mode="query"
         )
 
-        config_dict = cast("dict[str, object]", result)
+        config_dict = result
         assert config_dict["handler_type"] == "query"
         assert config_dict["handler_mode"] == "query"
 
@@ -182,7 +181,7 @@ class TestHandlerConfiguration:
             handler_mode="command"
         )
 
-        config_dict = cast("dict[str, object]", result)
+        config_dict = result
         assert config_dict["handler_type"] == "command"
         assert config_dict["handler_mode"] == "command"
 
@@ -198,7 +197,7 @@ class TestHandlerConfiguration:
             handler_config=additional_config
         )
 
-        config_dict = cast("dict[str, object]", result)
+        config_dict = result
         assert config_dict["custom_setting"] == "value"
         assert config_dict["another_setting"] == 42
         # Additional config should override base metadata
@@ -217,7 +216,7 @@ class TestHandlerConfiguration:
             handler_config=additional_config,
         )
 
-        config_dict = cast("dict[str, object]", result)
+        config_dict = result
         # Additional config should override the provided parameters
         assert config_dict["handler_name"] == "OverrideHandler"
         assert config_dict["command_timeout"] == 9999
@@ -227,8 +226,8 @@ class TestHandlerConfiguration:
         result1 = FlextConfig.HandlerConfiguration.create_handler_config()
         result2 = FlextConfig.HandlerConfiguration.create_handler_config()
 
-        config1 = cast("dict[str, object]", result1)
-        config2 = cast("dict[str, object]", result2)
+        config1 = result1
+        config2 = result2
 
         # Handler IDs should be different
         assert config1["handler_id"] != config2["handler_id"]
@@ -243,7 +242,7 @@ class TestHandlerConfiguration:
             handler_mode="query", handler_config=None
         )
 
-        config_dict = cast("dict[str, object]", result)
+        config_dict = result
         assert config_dict["handler_type"] == "query"
         assert "metadata" in config_dict
 
@@ -303,7 +302,7 @@ class TestHandlerConfigurationEdgeCases:
                 handler_name="", handler_id=""
             )
 
-            config_dict = cast("dict[str, object]", result)
+            config_dict = result
             # Empty strings should be replaced with defaults
             assert config_dict["handler_name"] == "Command Handler"
             assert config_dict["handler_id"] == "command_handler_test1234"
@@ -317,6 +316,6 @@ class TestHandlerConfigurationEdgeCases:
                 handler_name=None, handler_id=None
             )
 
-            config_dict = cast("dict[str, object]", result)
+            config_dict = result
             assert config_dict["handler_name"] == "Command Handler"
             assert config_dict["handler_id"] == "command_handler_none1234"

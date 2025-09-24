@@ -32,12 +32,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     **ECOSYSTEM USAGE**: Access the global singleton directly:
         ```python
-        from flext_core import FlextContainer
+        from flext_core.result import FlextResult
+        from flext_core.container import FlextContainer
 
         container = FlextContainer.get_global()
         container.register("database", DatabaseService())
 
-        db_result = container.get("database")
+        db_result: FlextResult[object] = container.get("database")
         if db_result.is_success:
             db = db_result.unwrap()
         ```
@@ -159,11 +160,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # Extract snapshot from actual FlextConfig instance, if available
         try:
             config_instance = FlextConfig.get_global_instance()
-            self._flext_config_snapshot = self._extract_config_snapshot(config_instance)
+            self._flext_config_snapshot: dict[str, object] = (
+                self._extract_config_snapshot(config_instance)
+            )
         except Exception:
             # Fallback if FlextConfig is not available during initialization
             self._flext_config_snapshot = {}
         self._user_overrides: dict[str, object] = {}
+        # Update global config with snapshot and user overrides
         self._global_config = self._build_global_config()
 
     # =========================================================================
@@ -230,12 +234,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         Example:
             ```python
-            from flext_core import FlextContainer, FlextLogger
+            from flext_core.result import FlextResult
+        from flext_core.container import FlextContainer, FlextLogger
 
             container = FlextContainer.get_global()
             logger = FlextLogger(__name__)
 
-            result = container.register("logger", logger)
+            result: FlextResult[object] = container.register("logger", logger)
             if result.is_failure:
                 print(f"Registration failed: {result.error}")
             ```
@@ -482,7 +487,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             FlextResult[object]: Success with service instance or failure with error.
 
         """
-        service_result = self.get(name)
+        service_result: FlextResult[object] = self.get(name)
 
         if service_result.is_success:
             return service_result
@@ -567,7 +572,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     continue
 
                 # Try to resolve dependency from container
-                dep_result = self.get(param_name)
+                dep_result: FlextResult[object] = self.get(param_name)
                 if dep_result.is_success:
                     # Use value_or_none for safe extraction, handling FlextResult[None] cases
                     dependencies[param_name] = dep_result.value_or_none
@@ -607,7 +612,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             if name is None:
                 return FlextResult[T].fail("Name resolution returned None")
 
-            register_result = self.register(name, service)
+            register_result = self.register(str(name), service)
 
             if register_result.is_failure:
                 return FlextResult[T].fail(
@@ -1030,7 +1035,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         Example:
             ```python
-            from flext_core import FlextContainer
+            from flext_core.result import FlextResult
+        from flext_core.container import FlextContainer
 
             # Get the global container
             container = FlextContainer.get_global()
@@ -1039,7 +1045,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             container.register("logger", FlextLogger(__name__))
 
             # Retrieve a service
-            logger_result = container.get("logger")
+            logger_result: FlextResult[object] = container.get("logger")
             if logger_result.is_success:
                 logger = logger_result.unwrap()
             ```

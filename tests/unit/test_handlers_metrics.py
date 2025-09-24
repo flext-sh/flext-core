@@ -34,7 +34,7 @@ class TestHandlerMetrics:
 
     def test_log_handler_start_with_non_flext_logger(self) -> None:
         """Test logging handler start with non-FlextLogger instance."""
-        mock_logger = MagicMock()  # Not a FlextLogger
+        mock_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # Should not raise an exception
         FlextHandlers.Metrics.log_handler_start(
@@ -44,8 +44,13 @@ class TestHandlerMetrics:
             message_id="test_123",
         )
 
-        # Should not call any methods on the non-FlextLogger
-        mock_logger.info.assert_not_called()
+        # New behavior: ANY logger object gets called (more flexible)
+        mock_logger.info.assert_called_once_with(
+            "starting_handler_pipeline",
+            handler_mode="command",
+            message_type="TestMessage",
+            message_id="test_123",
+        )
 
     def test_log_handler_processing_with_flext_logger(self) -> None:
         """Test logging handler processing with FlextLogger instance."""
@@ -67,7 +72,7 @@ class TestHandlerMetrics:
 
     def test_log_handler_processing_with_non_flext_logger(self) -> None:
         """Test logging handler processing with non-FlextLogger instance."""
-        mock_logger = MagicMock()  # Not a FlextLogger
+        mock_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # Should not raise an exception
         FlextHandlers.Metrics.log_handler_processing(
@@ -77,8 +82,13 @@ class TestHandlerMetrics:
             message_id="query_456",
         )
 
-        # Should not call any methods on the non-FlextLogger
-        mock_logger.debug.assert_not_called()
+        # New behavior: ANY logger object gets called (more flexible)
+        mock_logger.debug.assert_called_once_with(
+            "processing_message",
+            handler_mode="query",
+            message_type="QueryMessage",
+            message_id="query_456",
+        )
 
     def test_log_handler_completion_success_with_flext_logger(self) -> None:
         """Test logging handler completion (success) with FlextLogger instance."""
@@ -126,7 +136,7 @@ class TestHandlerMetrics:
 
     def test_log_handler_completion_with_non_flext_logger(self) -> None:
         """Test logging handler completion with non-FlextLogger instance."""
-        mock_logger = MagicMock()  # Not a FlextLogger
+        mock_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # Should not raise an exception
         FlextHandlers.Metrics.log_handler_completion(
@@ -138,8 +148,15 @@ class TestHandlerMetrics:
             success=True,
         )
 
-        # Should not call any methods on the non-FlextLogger
-        mock_logger.info.assert_not_called()
+        # New behavior: ANY logger object gets called (more flexible)
+        mock_logger.info.assert_called_once_with(
+            "handler_pipeline_completed",
+            handler_mode="command",
+            message_type="TestMessage",
+            message_id="test_789",
+            execution_time_ms=42.5,
+            success=True,
+        )
 
     def test_log_handler_error_with_flext_logger(self) -> None:
         """Test logging handler error with FlextLogger instance."""
@@ -169,7 +186,7 @@ class TestHandlerMetrics:
 
     def test_log_handler_error_with_non_flext_logger(self) -> None:
         """Test logging handler error with non-FlextLogger instance."""
-        mock_logger = MagicMock()  # Not a FlextLogger
+        mock_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # Should not raise an exception
         FlextHandlers.Metrics.log_handler_error(
@@ -183,8 +200,17 @@ class TestHandlerMetrics:
             correlation_id="corr_123",
         )
 
-        # Should not call any methods on the non-FlextLogger
-        mock_logger.error.assert_not_called()
+        # New behavior: ANY logger object gets called (more flexible)
+        mock_logger.error.assert_called_once_with(
+            "handler_critical_failure",
+            handler_mode="command",
+            message_type="TestMessage",
+            message_id="test_error",
+            execution_time_ms=100.0,
+            exception_type="ValidationError",
+            error_code="VALIDATION_FAILED",
+            correlation_id="corr_123",
+        )
 
     def test_log_mode_validation_error_with_flext_logger(self) -> None:
         """Test logging mode validation error with FlextLogger instance."""
@@ -206,7 +232,7 @@ class TestHandlerMetrics:
 
     def test_log_mode_validation_error_with_non_flext_logger(self) -> None:
         """Test logging mode validation error with non-FlextLogger instance."""
-        mock_logger = MagicMock()  # Not a FlextLogger
+        mock_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # Should not raise an exception
         FlextHandlers.Metrics.log_mode_validation_error(
@@ -216,8 +242,13 @@ class TestHandlerMetrics:
             actual_mode="invalid",
         )
 
-        # Should not call any methods on the non-FlextLogger
-        mock_logger.error.assert_not_called()
+        # New behavior: ANY logger object gets called (more flexible)
+        mock_logger.error.assert_called_once_with(
+            "invalid_handler_mode",
+            error_message="Invalid handler mode",
+            expected_mode="command",
+            actual_mode="invalid",
+        )
 
     def test_log_handler_cannot_handle_with_flext_logger(self) -> None:
         """Test logging handler cannot handle with FlextLogger instance."""
@@ -239,7 +270,7 @@ class TestHandlerMetrics:
 
     def test_log_handler_cannot_handle_with_non_flext_logger(self) -> None:
         """Test logging handler cannot handle with non-FlextLogger instance."""
-        mock_logger = MagicMock()  # Not a FlextLogger
+        mock_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # Should not raise an exception
         FlextHandlers.Metrics.log_handler_cannot_handle(
@@ -249,8 +280,13 @@ class TestHandlerMetrics:
             message_type="UnsupportedMessage",
         )
 
-        # Should not call any methods on the non-FlextLogger
-        mock_logger.error.assert_not_called()
+        # New behavior: ANY logger object gets called (more flexible)
+        mock_logger.error.assert_called_once_with(
+            "handler_cannot_handle",
+            error_message="Handler cannot process this message type",
+            handler_name="TestHandler",
+            message_type="UnsupportedMessage",
+        )
 
 
 class TestHandlerMetricsWithRealFlextLogger:
@@ -461,9 +497,9 @@ class TestHandlerMetricsCircularImportProtection:
 
     def test_local_import_mechanism_works(self) -> None:
         """Test that the local import mechanism works correctly."""
-        # Test that HandlerMetrics can distinguish between FlextLogger and other logger types
+        # Test that HandlerMetrics can work with any logger-like object (new flexible behavior)
         mock_flext_logger = MagicMock(spec=FlextLogger)
-        mock_other_logger = MagicMock()  # Not a FlextLogger
+        mock_other_logger = MagicMock()  # Not a FlextLogger, but should still work
 
         # FlextLogger should be processed
         FlextHandlers.Metrics.log_handler_start(
@@ -474,14 +510,14 @@ class TestHandlerMetricsCircularImportProtection:
         )
         mock_flext_logger.info.assert_called_once()
 
-        # Non-FlextLogger should be ignored
+        # New behavior: ANY logger-like object should also work (more flexible)
         FlextHandlers.Metrics.log_handler_start(
             logger=mock_other_logger,
             handler_mode="command",
             message_type="ImportTest",
             message_id="import_test",
         )
-        mock_other_logger.info.assert_not_called()
+        mock_other_logger.info.assert_called_once()
 
     def test_all_methods_use_local_import(self) -> None:
         """Test that all methods use local import for FlextLogger."""

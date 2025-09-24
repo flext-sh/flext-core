@@ -15,14 +15,15 @@ consistent DDD foundation during the rollout.
 
 Usage:
     ```python
-    from flext_core import FlextModels, FlextResult
+    from flext_core.result import FlextResult
+    from flext_core.models import FlextModels
 
 
     class User(FlextModels.Entity):
         name: str
         email: str
 
-        def validate(self) -> FlextResult[None]:
+        def validate(self: object) -> FlextResult[None]:
             if "@" not in self.email:
                 return FlextResult[None].fail("Invalid email")
             return FlextResult[None].ok(None)
@@ -36,7 +37,6 @@ from __future__ import annotations
 
 import base64
 import inspect
-import logging
 import re
 import uuid
 from collections.abc import Callable
@@ -49,12 +49,13 @@ from typing import (
     ClassVar,
     Generic,
     Literal,
+    Protocol,
     Self,
     TypedDict,
     cast,
     override,
 )
-from urllib.parse import urlencode, urlparse
+from urllib.parse import ParseResult, urlencode, urlparse
 
 from pydantic import (
     BaseModel,
@@ -69,8 +70,17 @@ from pydantic.main import IncEx
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
+
+
+class OperationCallable(Protocol):
+    """Protocol for operation callables."""
+
+    def __call__(self, *args: object, **kwargs: object) -> object:
+        """Execute the operation callable."""
+        ...
 
 
 class ModelDumpKwargs(TypedDict, total=False):
@@ -121,28 +131,78 @@ class FlextModels:
     """
 
     # Enhanced validation using FlextUtilities and FlextConstants
-    # Base model classes for configuration consolidation
+    # Base model classes for configuration consolidation with Pydantic 2.11 features
     class ArbitraryTypesModel(BaseModel):
         """Most common pattern: validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True.
 
-        Used by 17+ models in the codebase.
-        """
-
-        model_config = ConfigDict(
-            validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True
-        )
-
-    class StrictArbitraryTypesModel(BaseModel):
-        """Strict pattern: forbid extra fields, arbitrary types allowed.
-
-        Used by domain service models requiring strict validation.
+        Enhanced with comprehensive Pydantic 2.11 features for better validation and serialization.
+        Used by 17+ models in the codebase. This is the recommended base class for all FLEXT models.
         """
 
         model_config = ConfigDict(
             validate_assignment=True,
             use_enum_values=True,
             arbitrary_types_allowed=True,
-            extra="forbid",
+            # Pydantic 2.11 enhanced features
+            validate_return=True,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            # Enhanced serialization
+            serialize_by_alias=True,
+            populate_by_name=True,
+            # String processing features
+            str_strip_whitespace=True,  # Automatically strip whitespace from strings
+            str_to_lower=False,  # Keep case sensitivity
+            str_to_upper=False,  # Keep case sensitivity
+            # Performance optimizations
+            defer_build=False,  # Build schema immediately for better error messages
+            # Type coercion features
+            coerce_numbers_to_str=False,  # Keep strict typing
+            # Validation features
+            validate_default=True,  # Validate default values
+            # Serialization features
+            json_encoders={
+                # Custom encoders for complex types
+                Path: str,
+                # Add more custom encoders as needed
+            },
+        )
+
+    class StrictArbitraryTypesModel(BaseModel):
+        """Strict pattern: forbid extra fields, arbitrary types allowed.
+
+        Used by domain service models requiring strict validation.
+        Enhanced with comprehensive Pydantic 2.11 features.
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",  # Strict validation - no extra fields allowed
+            # Pydantic 2.11 enhanced features
+            validate_return=True,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            # Enhanced serialization
+            serialize_by_alias=True,
+            populate_by_name=True,
+            # String processing features
+            str_strip_whitespace=True,  # Automatically strip whitespace from strings
+            str_to_lower=False,  # Keep case sensitivity
+            str_to_upper=False,  # Keep case sensitivity
+            # Performance optimizations
+            defer_build=False,  # Build schema immediately for better error messages
+            # Type coercion features
+            coerce_numbers_to_str=False,  # Keep strict typing
+            # Validation features
+            validate_default=True,  # Validate default values
+            # Serialization features
+            json_encoders={
+                # Custom encoders for complex types
+                Path: str,
+                # Add more custom encoders as needed
+            },
         )
 
     class FrozenStrictModel(BaseModel):
@@ -214,7 +274,7 @@ class FlextModels:
                     # Domain events may not have corresponding handlers or handlers may fail
                     # The important thing is that the event is still recorded
 
-                    logger = logging.getLogger(__name__)
+                    logger = FlextLogger(__name__)
                     logger.warning(
                         f"Domain event handler {handler_method_name} failed for event {event_name}: {e}"
                     )
@@ -222,9 +282,9 @@ class FlextModels:
             # Increment version after adding domain event
             self.increment_version()
 
-        def clear_domain_events(self) -> FlextTypes.Core.List:
+        def clear_domain_events(self) -> list[object]:
             """Clear and return domain events."""
-            events = self.domain_events.copy()
+            events: list[object] = self.domain_events.copy()
             self.domain_events.clear()
             return events
 
@@ -272,7 +332,7 @@ class FlextModels:
 
         _invariants: ClassVar[list[Callable[[], bool]]] = []
 
-        def check_invariants(self) -> None:
+        def check_invariants(self: FlextModels.AggregateRoot) -> None:
             """Check all business invariants."""
             for invariant in self._invariants:
                 if not invariant():
@@ -519,7 +579,7 @@ class FlextModels:
         message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
         @computed_field
-        def is_expired(self) -> bool:
+        def is_expired(self: FlextModels.Payload[T]) -> bool:
             """Computed property to check if payload is expired."""
             if self.expires_at is None:
                 return False
@@ -725,7 +785,7 @@ class FlextModels:
         @classmethod
         def _validate_email_format(cls, v: str) -> str:
             """Validate email format using centralized FlextUtilities.Validation."""
-            result = FlextModels.Validation.validate_email_address(v)
+            result: FlextResult[str] = FlextModels.Validation.validate_email_address(v)
             if result.is_failure:
                 raise ValueError(result.error)
             return result.unwrap()
@@ -739,7 +799,7 @@ class FlextModels:
         @classmethod
         def validate_host_format(cls, v: str) -> str:
             """Validate hostname format using centralized FlextUtilities.Validation."""
-            result = FlextModels.Validation.validate_hostname(v)
+            result: FlextResult[str] = FlextModels.Validation.validate_hostname(v)
             if result.is_failure:
                 raise ValueError(result.error)
             return result.unwrap()
@@ -803,7 +863,7 @@ class FlextModels:
             📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_url()
             """
             try:
-                result = urlparse(v)
+                result: ParseResult = urlparse(v)
                 if not all([result.scheme, result.netloc]):
                     msg = f"Invalid URL format: {v}"
                     raise ValueError(msg)
@@ -1040,7 +1100,7 @@ class FlextModels:
             return FlextResult[FlextModels.Url].fail(
                 "URL must start with http:// or https://"
             )
-        url_result = FlextModels.create_validated_url(url)
+        url_result: FlextResult[str] = FlextModels.create_validated_url(url)
 
         def create_url_from_validated(
             validated_url: str,
@@ -1163,10 +1223,10 @@ class FlextModels:
         if validated_path is None:
             return FlextResult[str].fail("Path validation returned None")
 
-        file_path = Path(validated_path)
+        file_path = Path(str(validated_path))
         if not file_path.exists():
             return FlextResult[str].fail(f"Path does not exist: {path}")
-        return FlextResult[str].ok(validated_path)
+        return FlextResult[str].ok(str(validated_path))
 
     @staticmethod
     def create_validated_directory_path(path: str) -> FlextResult[str]:
@@ -1179,10 +1239,10 @@ class FlextModels:
         if validated_path is None:
             return FlextResult[str].fail("Path validation returned None")
 
-        dir_path = Path(validated_path)
+        dir_path = Path(str(validated_path))
         if not dir_path.is_dir():
             return FlextResult[str].fail(f"Path is not a directory: {path}")
-        return FlextResult[str].ok(validated_path)
+        return FlextResult[str].ok(str(validated_path))
 
     # Additional domain models continue with advanced patterns...
     class FactoryRegistrationModel(StrictArbitraryTypesModel):
@@ -1286,13 +1346,11 @@ class FlextModels:
 
         @field_validator("handler")
         @classmethod
-        def validate_handler(
-            cls, v: object
-        ) -> Callable[[object], object]:
+        def validate_handler(cls, v: object) -> Callable[[object], object]:
             """Validate handler is properly callable."""
             if not callable(v):
                 error_msg = "Handler must be callable"
-                raise ValueError(error_msg)  # noqa: TRY004
+                raise TypeError(error_msg)
             return cast("Callable[[object], object]", v)
 
     class BatchProcessingConfig(StrictArbitraryTypesModel):
@@ -1337,8 +1395,8 @@ class FlextModels:
 
             # Adjust max_workers to not exceed batch_size without triggering validation
             adjusted_workers = min(self.max_workers, self.batch_size)
-            # Use object.__setattr__ to bypass Pydantic validation and prevent recursion
-            object.__setattr__(self, "max_workers", adjusted_workers)  # noqa: PLC2801
+            # Use setattr to bypass Pydantic validation and prevent recursion
+            setattr(self, "max_workers", adjusted_workers)
 
             return self
 
@@ -1541,6 +1599,7 @@ class FlextModels:
             default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
         async_execution: bool = False
+        enable_validation: bool = True
 
         @field_validator("context")
         @classmethod
@@ -1642,9 +1701,10 @@ class FlextModels:
     class DomainServiceResourceRequest(ArbitraryTypesModel):
         """Domain service resource request."""
 
-        service_name: str
-        resource_type: str
+        service_name: str = "default_service"
+        resource_type: str = "default_resource"
         resource_id: str | None = None
+        resource_limit: int = 1000
         action: Literal["get", "create", "update", "delete", "list[object]"] = "get"
         data: FlextTypes.Core.Dict = Field(default_factory=dict)
         filters: FlextTypes.Core.Dict = Field(default_factory=dict)
@@ -1655,6 +1715,15 @@ class FlextModels:
             """Validate resource type format."""
             if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", v):
                 msg = "Resource type must be valid identifier"
+                raise ValueError(msg)
+            return v
+
+        @field_validator("resource_limit")
+        @classmethod
+        def validate_resource_limit(cls, v: int) -> int:
+            """Validate resource limit is positive."""
+            if v <= 0:
+                msg = "Resource limit must be positive"
                 raise ValueError(msg)
             return v
 
@@ -1682,16 +1751,16 @@ class FlextModels:
                 raise ValueError(msg)
             return v
 
-        @field_validator("operation_callable")
+        @field_validator("operation_callable", mode="plain")
         @classmethod
-        def validate_operation_callable(
-            cls, v: object
-        ) -> Callable[..., object]:
+        def validate_operation_callable(cls, v: object) -> OperationCallable:
             """Validate operation is callable."""
             if not callable(v):
                 error_msg = "Operation must be callable"
-                raise ValueError(error_msg)  # noqa: TRY004
-            return cast("Callable[..., object]", v)
+                raise TypeError(
+                    error_msg
+                )  # Pydantic wraps TypeError in ValidationError
+            return cast("OperationCallable", v)
 
     class RetryConfiguration(ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
@@ -2667,8 +2736,6 @@ class FlextModels:
                 return FlextResult[str].fail("Entity ID cannot be empty")
 
             # Allow UUIDs, alphanumeric with dashes/underscores
-            import re
-
             if not re.match(r"^[a-zA-Z0-9_-]+$", entity_id):
                 return FlextResult[str].fail("Invalid entity ID format")
 

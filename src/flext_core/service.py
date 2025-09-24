@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from typing import cast
+from typing import Protocol, cast
 
 from pydantic import ConfigDict
 
@@ -25,6 +25,12 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+
+class OperationCallable(Protocol):
+    """Protocol for operation callables."""
+
+    def __call__(self, *args: object, **kwargs: object) -> object: ...
 
 
 class FlextService[TDomainResult](
@@ -99,7 +105,7 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with validation error
 
         """
-        validation_result = self.validate_with_request(request)
+        validation_result: FlextResult[None] = self.validate_with_request(request)
         if validation_result.is_failure:
             return FlextResult[TDomainResult].fail(
                 f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
@@ -274,11 +280,16 @@ class FlextService[TDomainResult](
                     f"Invalid keyword arguments for operation '{operation_name}': {exc}"
                 )
 
-        retry_config_data = getattr(operation, "retry_config", {}) or {}
+        retry_config_data: dict[str, object] = (
+            getattr(operation, "retry_config", {}) or {}
+        )
         retry_config: FlextModels.RetryConfiguration | None
         if retry_config_data:
             try:
-                retry_config = FlextModels.RetryConfiguration(**retry_config_data)
+                # Use Pydantic model_validate for proper type conversion
+                retry_config = FlextModels.RetryConfiguration.model_validate(
+                    retry_config_data
+                )
             except Exception as exc:
                 return FlextResult[TDomainResult].fail(
                     f"Invalid retry configuration for operation '{operation_name}': {exc}"
@@ -324,15 +335,23 @@ class FlextService[TDomainResult](
         if timeout_seconds <= 0:
             timeout_seconds = 0.0
 
-        def call_operation() -> object:
-            from collections.abc import Callable
-            callable_op = cast("Callable[..., object]", operation.operation_callable)
-            return callable_op(
+        def call_operation() -> FlextResult[TDomainResult]:
+            # operation_callable is already validated as Callable[..., object] in the model
+            operation_callable = cast("OperationCallable", operation.operation_callable)
+            result: object = operation_callable(
                 *positional_arguments,
                 **keyword_arguments,
             )
+            # Convert the result to FlextResult if it's not already
+            if isinstance(result, FlextResult):
+                # Cast to FlextResult[TDomainResult] to ensure type compatibility
+                typed_result: FlextResult[TDomainResult] = cast(
+                    "FlextResult[TDomainResult]", result
+                )
+                return typed_result
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
 
-        def call_with_timeout() -> object:
+        def call_with_timeout() -> FlextResult[TDomainResult]:
             if timeout_seconds <= 0:
                 return call_operation()
 
@@ -365,8 +384,7 @@ class FlextService[TDomainResult](
         attempt = 1
         while attempt <= max_attempts:
             try:
-                result = call_with_timeout()
-                return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+                return call_with_timeout()
             except Exception as exc:
                 last_exception = exc
                 if not should_retry(exc, attempt):
@@ -563,7 +581,7 @@ class FlextService[TDomainResult](
         try:
             # Acquire resources
             required_resources = getattr(request, "required_resources", [])
-            acquired_resources = list(required_resources)
+            acquired_resources = [str(resource) for resource in required_resources]
 
             # Execute with acquired resources
             return self.execute()

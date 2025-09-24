@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import builders
-from flext_tests.builders import FlextTestsBuilders
+from flext_tests import FlextTestsBuilders, builders
 
 
 class TestFlextTestsBuilders:

@@ -10,6 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core.models import FlextModels
+
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, cast
@@ -155,7 +160,7 @@ class FlextRegistry:
         """
         summary = FlextRegistry.Summary()
         for handler in handlers:
-            result = self._process_single_handler(handler, summary)
+            result: FlextResult[None] = self._process_single_handler(handler, summary)
             if result.is_failure:
                 return FlextResult[FlextRegistry.Summary].fail(
                     result.error or "Handler processing failed"
@@ -179,7 +184,9 @@ class FlextRegistry:
             return FlextResult[None].ok(None)
 
         # Handler is already the correct type
-        registration_result = self._dispatcher.register_handler(handler)
+        registration_result: FlextResult[dict[str, object]] = (
+            self._dispatcher.register_handler(handler)
+        )
         if registration_result.is_success:
             # Convert dict to RegistrationDetails
             reg_data = registration_result.value
@@ -418,15 +425,15 @@ class FlextRegistry:
                             config_obj = None
 
                     # Convert config_obj to dict if it's a Handler object
-                    config_dict = None
+                    handler_config_dict = None
                     if config_obj is not None and hasattr(config_obj, "model_dump"):
-                        config_dict = config_obj.model_dump()
+                        handler_config_dict = config_obj.model_dump()
 
                     # Create a handler wrapper for the function
                     handler_result = self._dispatcher.register_function(
                         message_type,
                         tuple_handler_func,
-                        handler_config=config_dict,
+                        handler_config=handler_config_dict,
                         mode=handler_mode,
                     )
                 elif isinstance(entry, dict) and "handler" in entry:

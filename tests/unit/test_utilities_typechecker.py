@@ -6,6 +6,8 @@ of type introspection and compatibility logic.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from flext_core import FlextHandlers, FlextResult, FlextUtilities
 
 
@@ -308,7 +310,6 @@ class TestTypeCheckerIntegration:
 
     def test_integration_with_typed_handler(self) -> None:
         """Test TypeChecker integration with properly typed handler."""
-        from dataclasses import dataclass
 
         @dataclass
         class UserCommand:

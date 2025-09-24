@@ -7,11 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import dataclasses
+import inspect
 import json
 import operator
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
@@ -27,7 +29,7 @@ from flext_core.typings import FlextTypes
 class ModelDumpable(Protocol):
     """Protocol for objects that have a model_dump method."""
 
-    def model_dump(self) -> FlextTypes.Core.Dict: ...
+    def model_dump(self: object) -> FlextTypes.Core.Dict: ...
 
 
 def _cache_sort_key(value: object) -> str:
@@ -101,7 +103,7 @@ def _normalize_cache_component(value: object) -> object:
 
     try:
         # Cast to proper type for type checker
-        value_vars_dict = cast("dict[str, object]", vars(value))
+        value_vars_dict: dict[str, object] = cast("dict[str, object]", vars(value))
     except TypeError:
         return ("repr", repr(value))
 
@@ -154,7 +156,7 @@ class FlextBus(FlextMixins):
         self._start_time = time.time()
 
         # Convert bus_config to dict if it's a Bus object
-        config_dict: FlextTypes.Core.Dict | None = None
+        config_dict: dict[str, object] | None = None
         if bus_config is not None:
             # Check if it's a Pydantic model with model_dump method
             if hasattr(bus_config, "model_dump") and callable(
@@ -176,8 +178,8 @@ class FlextBus(FlextMixins):
             implementation_path=implementation_path,
         )
 
-        self._config_model = config_model
-        self._config = config_model.model_dump()
+        self._config_model: FlextModels.CqrsConfig.Bus = config_model
+        self._config: dict[str, object] = config_model.model_dump()
         if config_model.enable_caching and config_model.max_cache_size > 0:
             self._max_cache_size = config_model.max_cache_size
         else:
@@ -241,10 +243,10 @@ class FlextBus(FlextMixins):
         handler_name = getattr(handler_func, "__name__", "SimpleHandler")
 
         return FlextHandlers.from_callable(
-            handler_func,
-            mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            handler_config=handler_config,
+            callable_func=handler_func,
             handler_name=handler_name,
+            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_config=handler_config,
         )
 
     @staticmethod
@@ -267,10 +269,10 @@ class FlextBus(FlextMixins):
         handler_name = getattr(handler_func, "__name__", "SimpleQueryHandler")
 
         return FlextHandlers.from_callable(
-            handler_func,
-            mode=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            handler_config=handler_config,
+            callable_func=handler_func,
             handler_name=handler_name,
+            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            handler_config=handler_config,
         )
 
     @staticmethod
@@ -310,7 +312,7 @@ class FlextBus(FlextMixins):
             method = getattr(middleware_config, attr_name, None)
             if callable(method):
                 try:
-                    result = method()
+                    result: object = method()
                 except TypeError:
                     continue
                 if isinstance(result, Mapping):
@@ -351,23 +353,25 @@ class FlextBus(FlextMixins):
                 )
                 return FlextResult[None].fail(msg)
 
-            key = getattr(handler, "handler_id", handler.__class__.__name__)
-            if key in self._handlers:
-                self.logger.info(
-                    "Handler already registered",
-                    command_type=str(key),
-                    existing_handler=self._handlers[key].__class__.__name__,
-                )
-                return FlextResult[None].ok(None)
-
-            self._handlers[key] = handler
+            # Always add to auto_handlers for discovery
             self._auto_handlers.append(handler)
-            self.logger.info(
-                "Handler registered successfully",
-                command_type=str(key),
-                handler_type=handler.__class__.__name__,
-                total_handlers=len(self._handlers),
-            )
+
+            # Additionally, if handler has handler_id attribute, register in _handlers dict
+            handler_id = getattr(handler, "handler_id", None)
+            if handler_id is not None:
+                self._handlers[str(handler_id)] = handler
+                self.logger.info(
+                    "Handler registered successfully",
+                    handler_type=handler.__class__.__name__,
+                    handler_id=str(handler_id),
+                    total_handlers=len(self._handlers),
+                )
+            else:
+                self.logger.info(
+                    "Handler registered successfully",
+                    handler_type=handler.__class__.__name__,
+                    total_handlers=len(self._auto_handlers),
+                )
             return FlextResult[None].ok(None)
 
         # Two-arg form: (command_type, handler)
@@ -389,7 +393,8 @@ class FlextBus(FlextMixins):
             )
             return FlextResult[None].ok(None)
 
-        msg = "register_handler() takes 1 or 2 positional arguments"
+        # Error: Unsupported argument count
+        msg = f"register_handler takes 1 or 2 positional arguments but {len(args)} were given"
         return FlextResult[None].fail(msg)
 
     def find_handler(self, command: object) -> object | None:
@@ -445,13 +450,11 @@ class FlextBus(FlextMixins):
             if callable(validation_method):
                 try:
                     # Try to call without parameters to see if it's a custom method
-                    import inspect
-
                     sig = inspect.signature(validation_method)
                     if (
                         len(sig.parameters) == 0
                     ):  # No parameters = custom validation method
-                        validation_result = validation_method()
+                        validation_result: object = validation_method()
                         if (
                             hasattr(validation_result, "is_failure")
                             and hasattr(validation_result, "error")
@@ -460,10 +463,19 @@ class FlextBus(FlextMixins):
                             self.logger.warning(
                                 "Command validation failed",
                                 command_type=command_type.__name__,
-                                validation_error=getattr(validation_result, "error", "Unknown validation error"),
+                                validation_error=getattr(
+                                    validation_result,
+                                    "error",
+                                    "Unknown validation error",
+                                ),
                             )
                             return FlextResult[object].fail(
-                                getattr(validation_result, "error", "Command validation failed") or "Command validation failed",
+                                getattr(
+                                    validation_result,
+                                    "error",
+                                    "Command validation failed",
+                                )
+                                or "Command validation failed",
                                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
                             )
                 except Exception as e:
@@ -480,7 +492,7 @@ class FlextBus(FlextMixins):
         if should_consider_cache:
             # Generate a more deterministic cache key
             cache_key = self._generate_cache_key(command, command_type)
-            cached_result = self._cache.get(cache_key)
+            cached_result: FlextResult[object] | None = self._cache.get(cache_key)
             if cached_result is not None:
                 self._cache.move_to_end(cache_key)
                 self.logger.debug(
@@ -518,7 +530,7 @@ class FlextBus(FlextMixins):
             )
 
         # Apply middleware pipeline
-        middleware_result = self._apply_middleware(command, handler)
+        middleware_result: FlextResult[None] = self._apply_middleware(command, handler)
         if middleware_result.is_failure:
             return FlextResult[object].fail(
                 middleware_result.error or "Middleware rejected command",
@@ -527,7 +539,7 @@ class FlextBus(FlextMixins):
 
         # Execute the handler with timing
         self._start_time = time.time()
-        result = self._execute_handler(handler, command)
+        result: FlextResult[object] = self._execute_handler(handler, command)
         elapsed = time.time() - self._start_time
 
         # Cache successful query results
@@ -573,7 +585,9 @@ class FlextBus(FlextMixins):
             order_value: object
             if isinstance(middleware_item, dict):
                 # Cast to proper dict type for type checker
-                middleware_dict = cast("dict[str, object]", middleware_item)
+                middleware_dict: dict[str, object] = cast(
+                    "dict[str, object]", middleware_item
+                )
                 order_value = middleware_dict.get("order", 0)
             else:
                 order_value = getattr(middleware_item, "order", 0)
@@ -641,15 +655,17 @@ class FlextBus(FlextMixins):
             process_method = getattr(middleware, "process", None)
             if callable(process_method):
                 result = process_method(command, handler)
-                if isinstance(result, FlextResult) and result.is_failure:
-                    self.logger.info(
-                        "Middleware rejected command",
-                        middleware_type=str(middleware_type_value),
-                        error=result.error or "Unknown error",
-                    )
-                    return FlextResult[None].fail(
-                        str(result.error or "Middleware rejected command"),
-                    )
+                if isinstance(result, FlextResult):
+                    result_typed = cast("FlextResult[object]", result)
+                    if result_typed.is_failure:
+                        self.logger.info(
+                            "Middleware rejected command",
+                            middleware_type=str(middleware_type_value),
+                            error=result_typed.error or "Unknown error",
+                        )
+                        return FlextResult[None].fail(
+                            str(result_typed.error or "Middleware rejected command"),
+                        )
 
         return FlextResult[None].ok(None)
 
@@ -674,25 +690,37 @@ class FlextBus(FlextMixins):
                 return f"{command_type.__name__}_{hash(str(sorted_data))}"
 
             # For dataclasses, use asdict with sorted keys
-            if hasattr(command, "__dataclass_fields__"):
-                from dataclasses import asdict, is_dataclass
-
-                if is_dataclass(command) and not isinstance(command, type):
-                    data = asdict(command)
-                    sorted_data = self._sort_dict_keys(data)
-                    return f"{command_type.__name__}_{hash(str(sorted_data))}"
+            if (
+                hasattr(command, "__dataclass_fields__")
+                and is_dataclass(command)
+                and not isinstance(command, type)
+            ):
+                dataclass_data = asdict(command)
+                dataclass_sorted_data = self._sort_dict_keys(dataclass_data)
+                return f"{command_type.__name__}_{hash(str(dataclass_sorted_data))}"
 
             # For dictionaries, sort keys
             if isinstance(command, dict):
-                sorted_data = self._sort_dict_keys(command)
-                return f"{command_type.__name__}_{hash(str(sorted_data))}"
+                dict_sorted_data = self._sort_dict_keys(
+                    cast("FlextTypes.Core.Dict", command)
+                )
+                return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"
 
             # For other objects, use string representation
-            return f"{command_type.__name__}_{hash(str(command))}"
+            command_str = str(command) if command is not None else "None"
+            command_hash = hash(command_str)
+            return f"{command_type.__name__}_{command_hash}"
 
         except Exception:
             # Fallback to string representation if anything fails
-            return f"{command_type.__name__}_{hash(str(command))}"
+            # Handle complex types by being more explicit about type handling
+            command_str_fallback = str(command) if command is not None else "None"
+            try:
+                command_hash_fallback = hash(command_str_fallback)
+                return f"{command_type.__name__}_{command_hash_fallback}"
+            except TypeError:
+                # If hash fails, use a deterministic fallback
+                return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode('utf-8')))}"
 
     def _sort_dict_keys(self, obj: object) -> object:
         """Recursively sort dictionary keys for deterministic ordering.
@@ -705,9 +733,18 @@ class FlextBus(FlextMixins):
 
         """
         if isinstance(obj, dict):
-            return {k: self._sort_dict_keys(v) for k, v in sorted(obj.items())}
-        if isinstance(obj, (list, tuple)):
-            return type(obj)(self._sort_dict_keys(item) for item in obj)
+            # Type-safe dict processing with explicit type annotations
+            dict_obj: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", obj)
+            sorted_items: list[tuple[object, object]] = sorted(
+                dict_obj.items(), key=lambda x: str(x[0])
+            )
+            return {str(k): self._sort_dict_keys(v) for k, v in sorted_items}
+        if isinstance(obj, list):
+            obj_list: list[object] = cast("list[object]", obj)
+            return [self._sort_dict_keys(item) for item in obj_list]
+        if isinstance(obj, tuple):
+            obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
+            return tuple(self._sort_dict_keys(item) for item in obj_tuple)
         return obj
 
     def _execute_handler(
@@ -745,12 +782,15 @@ class FlextBus(FlextMixins):
                 try:
                     result = method(command)
                     if isinstance(result, FlextResult):
-                        typed_result = cast("FlextResult[object]", result)
+                        # Cast to FlextResult[object] to ensure type compatibility
+                        typed_result: FlextResult[object] = cast(
+                            "FlextResult[object]", result
+                        )
                         if typed_result.is_success:
                             return typed_result
                         last_failure = typed_result
-                        continue
-                    return FlextResult[object].ok(result)
+                    else:
+                        return FlextResult[object].ok(result)
                 except Exception as e:
                     return FlextResult[object].fail(
                         f"Handler execution failed: {e}",
@@ -793,7 +833,9 @@ class FlextBus(FlextMixins):
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
 
-        config_data = self._normalize_middleware_config(middleware_config)
+        config_data: dict[str, object] = self._normalize_middleware_config(
+            middleware_config
+        )
         if not config_data:
             config_data = {}
 

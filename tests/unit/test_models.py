@@ -1208,7 +1208,8 @@ class TestFlextModelsRootModelValidation:
             expires_at=future_time,
         )
         # Explicitly check the boolean value
-        assert not payload.is_expired  # type: ignore[truthy-function]
+        # Test that payload is not expired
+        assert not payload.is_expired  # type: ignore[truthy-function] # Pydantic computed_field
 
         # Test expired payload
         past_time = datetime.now(UTC) - timedelta(hours=1)
@@ -1219,7 +1220,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=past_time,
         )
         # Explicitly check the boolean value
-        assert expired_payload.is_expired
+        assert expired_payload.is_expired  # Pydantic computed_field
 
         # Test payload without expiration
         no_expiry_payload = FlextModels.Payload(
@@ -1227,7 +1228,7 @@ class TestFlextModelsRootModelValidation:
             message_type="test_message",
             source_service="test_service",
         )
-        assert not no_expiry_payload.is_expired
+        assert not no_expiry_payload.is_expired  # Pydantic computed_field
 
     # NOTE: JsonData class not implemented yet
     # def test_json_data_validation_serializable(self) -> None:
@@ -1616,7 +1617,7 @@ class TestLoggerPermanentContextModelValidation:
             FlextLogger.LoggerPermanentContextModel(
                 app_name="test-app",
                 app_version="1.0.0",
-                environment="qa",  # type: ignore[arg-type]
+                environment="test",
             )
 
         # Check actual environments from FlextConstants.Config.ENVIRONMENTS

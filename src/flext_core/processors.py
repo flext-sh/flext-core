@@ -180,17 +180,25 @@ class FlextProcessors:
                         handler, FlextConstants.Mixins.METHOD_HANDLE, None
                     )
                     if handle_method is not None and callable(handle_method):
-                        result = handle_method(request)
+                        result: object = handle_method(request)
                         if isinstance(result, FlextResult):
-                            return cast("FlextResult[object]", result)
+                            # Cast to FlextResult[object] to ensure type compatibility
+                            typed_result: FlextResult[object] = cast(
+                                "FlextResult[object]", result
+                            )
+                            return typed_result
                         return FlextResult[object].ok(result)
 
                 # Check if handler itself is callable
                 if callable(handler):
-                    result = handler(request)
-                    if isinstance(result, FlextResult):
-                        return cast("FlextResult[object]", result)
-                    return FlextResult[object].ok(result)
+                    handler_result: object = handler(request)
+                    if isinstance(handler_result, FlextResult):
+                        # Cast to FlextResult[object] to ensure type compatibility
+                        handler_typed_result: FlextResult[object] = cast(
+                            "FlextResult[object]", handler_result
+                        )
+                        return handler_typed_result
+                    return FlextResult[object].ok(handler_result)
 
                 return FlextResult[object].fail(
                     f"Handler '{name}' does not implement handle method",
@@ -285,17 +293,17 @@ class FlextProcessors:
             # Validate config is a BatchProcessingConfig or has required attributes
             if not isinstance(config, FlextModels.BatchProcessingConfig):
                 # For mock objects, validate they have required attributes
-                if not hasattr(config, 'data_items'):
+                if not hasattr(config, "data_items"):
                     return FlextResult[list[object]].fail(
                         "Config must be BatchProcessingConfig or have data_items attribute",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 # Type narrowing for mock objects
-                if not hasattr(config, 'data_items'):
+                if not hasattr(config, "data_items"):
                     error_msg = "Config object must have data_items attribute"
                     raise TypeError(error_msg)
-                data_items = getattr(config, 'data_items')
-                continue_on_error = getattr(config, 'continue_on_error', True)
+                data_items = getattr(config, "data_items")
+                continue_on_error = getattr(config, "continue_on_error", True)
             else:
                 data_items = config.data_items
                 continue_on_error = config.continue_on_error
@@ -475,17 +483,17 @@ class FlextProcessors:
             # Validate config is a BatchProcessingConfig or has required attributes
             if not isinstance(config, FlextModels.BatchProcessingConfig):
                 # For mock objects, validate they have required attributes
-                if not hasattr(config, 'data_items'):
+                if not hasattr(config, "data_items"):
                     return FlextResult[list[object]].fail(
                         "Config must be BatchProcessingConfig or have data_items attribute",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 # Type narrowing for mock objects
-                if not hasattr(config, 'data_items'):
+                if not hasattr(config, "data_items"):
                     error_msg = "Config object must have data_items attribute"
                     raise TypeError(error_msg)
-                data_items = getattr(config, 'data_items')
-                continue_on_error = getattr(config, 'continue_on_error', True)
+                data_items = getattr(config, "data_items")
+                continue_on_error = getattr(config, "continue_on_error", True)
             else:
                 data_items = config.data_items
                 continue_on_error = config.continue_on_error
@@ -532,11 +540,8 @@ class FlextProcessors:
             """
 
             def step_processor(current: object) -> FlextResult[object]:
-                return cast(
-                    "FlextResult[object]",
-                    FlextResult.from_exception(
-                        lambda: self._execute_step(step, current)
-                    ),
+                return FlextResult[object].from_exception(
+                    lambda: self._execute_step(step, current)
                 )
 
             return step_processor
@@ -556,6 +561,7 @@ class FlextProcessors:
                         # Explicitly raise the error to be caught by from_exception wrapper
                         msg = f"Pipeline step failed: {result.error}"
                         raise RuntimeError(msg)
+                    # result.is_success is True here
                     step_result: object | None = cast(
                         "object | None",
                         getattr(cast("object", result), "value_or_none", None),
@@ -564,6 +570,7 @@ class FlextProcessors:
                         msg = "Pipeline step returned None despite success"
                         raise RuntimeError(msg)
                     return step_result
+                # result is not a FlextResult, return it directly
                 return result
 
             # Handle dictionary merging
@@ -702,7 +709,7 @@ class FlextProcessors:
                     if hasattr(handler, handle_method_name):
                         handle_method = getattr(handler, handle_method_name, None)
                         if handle_method is not None:
-                            handler_result = handle_method(result)
+                            handler_result: FlextResult[object] = handle_method(result)
                             if (
                                 hasattr(handler_result, "is_success")
                                 and not handler_result.is_success

@@ -6,6 +6,7 @@ middleware pipeline, caching, and error handling with FlextResult patterns.
 
 from __future__ import annotations
 
+from typing import Generic, TypeVar
 from unittest.mock import Mock, patch
 
 from flext_core import FlextBus, FlextLogger, FlextModels, FlextResult
@@ -155,8 +156,6 @@ class TestFlextBus:
 
     def test_command_key_normalization_generic(self) -> None:
         """Test command key normalization with generic types through public API."""
-        from typing import Generic, TypeVar
-
         T = TypeVar("T")
 
         class GenericCommand(Generic[T]):

@@ -195,7 +195,7 @@ class ComprehensiveResultService:
         # Add a failure
         results.append(FlextResult[int].fail("error"))
 
-        # AnySuccess: check if any is successful
+        # objectSuccess: check if any is successful
         any_ok = FlextResult.any_success(*results)  # Unpack list
         print(f".any_success(): {any_ok}")
 

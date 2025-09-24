@@ -12,8 +12,10 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import (
+    FlextExceptions,
     FlextHandlers,
     FlextModels,
     FlextResult,
@@ -653,7 +655,6 @@ class TestFlextHandlersFromCallable:
 
     def test_from_callable_handler_with_flext_exceptions(self) -> None:
         """Test handler with FlextExceptions."""
-        from flext_core.exceptions import FlextExceptions
 
         def process_message(message: object) -> str:
             if message == "business_error":
@@ -760,7 +761,6 @@ class TestFlextHandlersIntegration:
 
     def test_handler_with_pydantic_message(self) -> None:
         """Test handler with Pydantic message model."""
-        from pydantic import BaseModel
 
         class UserCommand(BaseModel):
             user_id: str

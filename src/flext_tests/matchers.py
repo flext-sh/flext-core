@@ -44,7 +44,7 @@ class FlextTestsMatchers:
     class ResultLike(Protocol):
         """Protocol for result-like objects."""
 
-        def __bool__(self) -> bool:
+        def __bool__(self: object) -> bool:
             """Return boolean representation of the result."""
             ...
 
@@ -71,7 +71,7 @@ class FlextTestsMatchers:
     class ContainerLike(Protocol):
         """Protocol for container-like objects."""
 
-        def __len__(self) -> int:
+        def __len__(self: object) -> int:
             """Return length of the container."""
             ...
 
@@ -93,18 +93,18 @@ class FlextTestsMatchers:
         """Protocol for objects with value or data attributes."""
 
         @property
-        def value(self) -> object: ...
+        def value(self: object) -> object: ...
 
     class DataResultLike(Protocol):
         """Protocol for objects with data attributes."""
 
         @property
-        def data(self) -> object: ...
+        def data(self: object) -> object: ...
 
     class EmptyCheckable(Protocol):
         """Protocol for objects that can be checked for emptiness."""
 
-        def __len__(self) -> int:
+        def __len__(self: object) -> int:
             """Return length of the object."""
             ...
 
@@ -231,7 +231,7 @@ class FlextTestsMatchers:
                 if value_attr is not None:
                     actual_value = value_attr
             elif hasattr(result, "data"):
-                data_attr = getattr(result, "data", None)
+                data_attr: object = getattr(result, "data", None)
                 if data_attr is not None:
                     actual_value = data_attr
             else:
@@ -588,8 +588,12 @@ class FlextTestsMatchers:
             # Handle dict comparison
             if isinstance(obj1, dict) and isinstance(obj2, dict):
                 # Type narrow the objects to dicts for proper inference
-                dict1 = cast("dict[object, object]", obj1)
-                dict2 = cast("dict[object, object]", obj2)
+                dict1: dict[str, object] = {
+                    str(k): v for k, v in cast("dict[object, object]", obj1).items()
+                }
+                dict2: dict[str, object] = {
+                    str(k): v for k, v in cast("dict[object, object]", obj2).items()
+                }
                 return dict1.keys() == dict2.keys() and all(
                     FlextTestsMatchers.CoreMatchers.be_equivalent_to(dict1[k], dict2[k])
                     for k in dict1
@@ -854,7 +858,7 @@ class FlextTestsMatchers:
     class MockProtocol:
         """Protocol for mock object testing."""
 
-        def reset(self) -> None:
+        def reset(self: object) -> None:
             """Reset mock state."""
 
     # =========================================================================
@@ -1203,7 +1207,7 @@ class FlextTestsMatchers:
             for _ in range(concurrency_level)
         ]
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results: list[object] = await asyncio.gather(*tasks, return_exceptions=True)
         end_time = time.time()
 
         return {
@@ -1290,7 +1294,7 @@ class FlextTestsMatchers:
                     if isinstance(self.side_effect, Exception):
                         raise self.side_effect
                     if callable(self.side_effect):
-                        result = self.side_effect(*args, **kwargs)
+                        result: object = self.side_effect(*args, **kwargs)
                         if asyncio.iscoroutine(result):
                             return await result
                         return result
@@ -1440,11 +1444,11 @@ class FlextTestsMatchers:
                 self.setup_func = setup_func
                 self.teardown_func = teardown_func
                 self.context_data: FlextTypes.Core.Dict = context_data or {}
-                self.result = None
+                self.result: object = None
 
             async def __aenter__(self) -> Self:
                 if self.setup_func and callable(self.setup_func):
-                    result = self.setup_func()
+                    result: object = self.setup_func()
                     if asyncio.iscoroutine(result):
                         self.result = await result
                     else:
@@ -1458,7 +1462,7 @@ class FlextTestsMatchers:
                 exc_tb: object,
             ) -> None:
                 if self.teardown_func and callable(self.teardown_func):
-                    cleanup_result = self.teardown_func()
+                    cleanup_result: object = self.teardown_func()
                     if asyncio.iscoroutine(cleanup_result):
                         await cleanup_result
 

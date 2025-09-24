@@ -54,7 +54,7 @@ class FlextDispatcher:
         # Use provided config or create from global configuration
         if config is None:
             global_config = FlextConfig.get_global_instance()
-            bus_config = dict(global_config.get_cqrs_bus_config())
+            bus_config: dict[str, object] = dict(global_config.get_cqrs_bus_config())
             config = {
                 "auto_context": getattr(global_config, "dispatcher_auto_context", True),
                 "timeout_seconds": getattr(
@@ -77,7 +77,9 @@ class FlextDispatcher:
 
             if not isinstance(bus_config_raw, dict):
                 global_config = FlextConfig.get_global_instance()
-                default_bus_config = dict(global_config.get_cqrs_bus_config())
+                default_bus_config: dict[str, object] = dict(
+                    global_config.get_cqrs_bus_config()
+                )
 
                 if "execution_timeout" in config:
                     default_bus_config["execution_timeout"] = config[
@@ -89,31 +91,27 @@ class FlextDispatcher:
                 bus_config_raw = default_bus_config
                 config["bus_config"] = bus_config_raw
 
-            # Type-narrow bus_config_raw to dict[str, object] - Python 3.13+ type narrowing
             # At this point, bus_config_raw is guaranteed to be a dict due to the isinstance check above
-            typed_bus_config: dict[str, object] = cast(
-                "dict[str, object]", bus_config_raw
+            bus_config_dict = cast("dict[str, object]", bus_config_raw)
+            execution_timeout_value: object | None = bus_config_dict.get(
+                "execution_timeout"
             )
+            config.setdefault("execution_timeout", execution_timeout_value)
 
-            # typed_bus_config is already typed as dict[str, object]
-            config.setdefault(
-                "execution_timeout", typed_bus_config.get("execution_timeout")
-            )
-
-        self._config = config
+        self._config: dict[str, object] = config
         bus_config_raw = config.get("bus_config")
 
         # Handle both dict and FlextModels.CqrsConfig.Bus for bus_config
-        final_bus_config_dict: dict[str, object] | None
+        bus_config_dict_final: dict[str, object] | None
         if isinstance(bus_config_raw, FlextModels.CqrsConfig.Bus):
             # Convert typed model to dict for FlextBus.create_command_bus
-            final_bus_config_dict = bus_config_raw.model_dump()
+            bus_config_dict_final = bus_config_raw.model_dump()
         elif isinstance(bus_config_raw, dict):
-            final_bus_config_dict = cast("dict[str, object]", bus_config_raw)
+            bus_config_dict_final = cast("dict[str, object]", bus_config_raw)
         else:
-            final_bus_config_dict = None
+            bus_config_dict_final = None
 
-        self._bus = bus or FlextBus.create_command_bus(bus_config=final_bus_config_dict)
+        self._bus = bus or FlextBus.create_command_bus(bus_config=bus_config_dict_final)
         self._logger = FlextLogger(self.__class__.__name__)
 
     @property
@@ -339,8 +337,9 @@ class FlextDispatcher:
         """
         try:
             handler = FlextHandlers.from_callable(
-                handler_func,
-                mode=mode,
+                callable_func=handler_func,
+                handler_name=getattr(handler_func, "__name__", "FunctionHandler"),
+                handler_type=mode,
                 handler_config=handler_config,
             )
             return FlextResult[FlextHandlers[object, object]].ok(handler)
@@ -383,7 +382,8 @@ class FlextDispatcher:
 
         # Execute dispatch with context management and timeout enforcement
         context_metadata = request.get("context_metadata")
-        metadata_dict = self._normalize_context_metadata(context_metadata)
+        normalized_metadata = self._normalize_context_metadata(context_metadata)
+        metadata_dict = normalized_metadata if normalized_metadata is not None else {}
         correlation_id = request.get("correlation_id")
         correlation_id_str = str(correlation_id) if correlation_id is not None else None
 
@@ -395,20 +395,20 @@ class FlextDispatcher:
                 and timeout_seconds > 0
             ):
                 # Use FlextUtilities.Reliability.with_timeout for timeout enforcement
-                result = FlextUtilities.Reliability.with_timeout(
+                execution_result = FlextUtilities.Reliability.with_timeout(
                     lambda: self._bus.execute(request.get("message")),
                     float(timeout_seconds),
                 )
             else:
                 # No timeout configured, execute directly
-                result = self._bus.execute(request.get("message"))
+                execution_result = self._bus.execute(request.get("message"))
 
             execution_time_ms = int((time.time() - start_time) * 1000)
 
-            if result.is_success:
+            if execution_result.is_success:
                 dispatch_result = dict[str, object](
                     success=True,
-                    result=result.value,
+                    result=execution_result.value,
                     error_message=None,
                     request_id=request.get("request_id"),
                     execution_time_ms=execution_time_ms,
@@ -430,7 +430,7 @@ class FlextDispatcher:
             dispatch_result = dict[str, object](
                 success=False,
                 result=None,
-                error_message=result.error or "Unknown error",
+                error_message=execution_result.error or "Unknown error",
                 request_id=request.get("request_id"),
                 execution_time_ms=execution_time_ms,
                 correlation_id=request.get("correlation_id"),
@@ -476,7 +476,10 @@ class FlextDispatcher:
             string_metadata: dict[str, object] = {
                 k: str(v) for k, v in metadata.items()
             }
-            metadata_obj = FlextModels.Metadata(attributes=string_metadata)
+            metadata_model: FlextModels.Metadata = FlextModels.Metadata(
+                attributes=string_metadata
+            )
+            metadata_obj = metadata_model
         request = dict[str, object](
             message=message,
             context_metadata=metadata_obj,
@@ -485,7 +488,9 @@ class FlextDispatcher:
         )
 
         # Execute structured dispatch
-        structured_result = self.dispatch_with_request(request)
+        structured_result: FlextResult[dict[str, object]] = self.dispatch_with_request(
+            request
+        )
 
         if structured_result.is_failure:
             return FlextResult[object].fail(
@@ -494,10 +499,12 @@ class FlextDispatcher:
 
         dispatch_result = structured_result.value
 
-        if dispatch_result.get("success"):
+        if dispatch_result and dispatch_result.get("success"):
             return FlextResult[object].ok(dispatch_result.get("result"))
         return FlextResult[object].fail(
-            str(dispatch_result.get("error_message")) or "Unknown error"
+            str(dispatch_result.get("error_message"))
+            if dispatch_result
+            else "Unknown error"
         )
 
     # ------------------------------------------------------------------
@@ -596,7 +603,7 @@ class FlextDispatcher:
         try:
             # Set metadata if provided
             if metadata:
-                metadata_token = metadata_var.set(metadata)
+                metadata_var.set(metadata)
 
             # Use provided correlation ID or generate one if needed
             effective_correlation_id = correlation_id

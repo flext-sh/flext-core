@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Self
 from urllib.parse import urljoin
 
 from pydantic import BaseModel
@@ -21,7 +22,24 @@ from flext_core import (
     FlextTypes,
 )
 
-logger = FlextLogger(__name__)
+
+# Lazy logger initialization to avoid configuration issues
+class _LoggerSingleton:
+    """Singleton logger instance."""
+
+    _instance: FlextLogger | None = None
+
+    @classmethod
+    def get_logger(cls) -> FlextLogger:
+        """Get logger instance with lazy initialization."""
+        if cls._instance is None:
+            cls._instance = FlextLogger(__name__)
+        return cls._instance
+
+
+def get_logger() -> FlextLogger:
+    """Get logger instance with lazy initialization."""
+    return _LoggerSingleton.get_logger()
 
 
 class FlextTestsHttp:
@@ -314,7 +332,7 @@ class FlextTestsHttp:
 
             return self
 
-        def build_scenario(self) -> FlextTypes.Core.Dict:
+        def build_scenario(self: Self) -> FlextTypes.Core.Dict:
             """Build test scenario.
 
             Returns:

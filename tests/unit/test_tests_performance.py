@@ -10,8 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
+from contextlib import AbstractContextManager
+from typing import Any, cast
 
-from flext_tests.performance import FlextTestsPerformance
+from flext_tests import FlextTestsPerformance, performance
 
 
 class TestFlextTestsPerformance:
@@ -49,7 +52,6 @@ class TestFlextTestsPerformance:
     def test_module_imports_and_structure(self) -> None:
         """Test module imports and overall structure."""
         # Test that the module can be imported
-        from flext_tests import performance
 
         # Verify module structure
         assert hasattr(performance, "FlextTestsPerformance")
@@ -248,8 +250,7 @@ class TestFlextTestsPerformance:
             result = method()
             if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
                 # It's a context manager, test basic usage
-                from contextlib import AbstractContextManager
-                from typing import cast
+
                 context_manager = cast("AbstractContextManager[object]", result)
                 with context_manager:
                     pass  # Just verify it works as a context manager
@@ -275,9 +276,9 @@ class TestFlextTestsPerformance:
 
             # Test if it can be used as a decorator
             try:
-                from collections.abc import Callable
-                from typing import cast
-                decorator = cast("Callable[[Callable[..., object]], Callable[..., object]]", method)
+                decorator = cast(
+                    "Callable[[Callable[..., object]], Callable[..., object]]", method
+                )
 
                 @decorator
                 def test_decorated_function() -> int:
@@ -359,7 +360,7 @@ class TestFlextTestsPerformance:
     def test_performance_measurement_integration(self) -> None:
         """Test integration of performance measurement capabilities."""
         # Test that we can measure the performance of various operations
-        operations = [
+        operations: list[Callable[[], Any]] = [
             lambda: [i**2 for i in range(100)],  # List comprehension
             lambda: sum(range(1000)),  # Summation
             lambda: sorted(range(100, 0, -1)),  # Sorting
@@ -369,7 +370,7 @@ class TestFlextTestsPerformance:
         for operation in operations:
             # Basic timing measurement
             start_time = time.time()
-            result = operation()  # type: ignore[no-untyped-call]
+            result = operation()
             end_time = time.time()
             execution_time = end_time - start_time
 

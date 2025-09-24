@@ -353,9 +353,9 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
 
-        if handler.can_handle("not_a_command"):
+        if handler.can_handle(str):
             raise AssertionError(
-                f"Expected False, got {handler.can_handle('not_a_command')}",
+                f"Expected False, got {handler.can_handle(str)}",
             )
 
     def test_handle_command_success(self) -> None:

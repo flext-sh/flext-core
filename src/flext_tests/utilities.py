@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import warnings
 from collections.abc import Callable
-from typing import ClassVar, Generic, Protocol, cast, runtime_checkable
+from typing import ClassVar, Generic, Protocol, Self, runtime_checkable
 
 from flext_core import (
     FlextConstants,
@@ -344,7 +344,7 @@ class FlextTestsUtilities:
         def __init__(self, service_type: str = "generic", **config: object) -> None:
             """Initialize functional test service using FlextProcessors."""
             self.service_type = service_type
-            self.config = config
+            self.config: dict[str, object] = config
             self.call_history: list[
                 tuple[str, tuple[object, ...], FlextTypes.Core.Dict]
             ] = []
@@ -475,20 +475,22 @@ class FlextTestsUtilities:
             **options: object,
         ) -> None:
             """Initialize functional test context using FlextContext."""
-            self.target = target
-            self.attribute = attribute
+            self.target: object = target
+            self.attribute: str = attribute
             # Handle new parameter correctly - check if it was explicitly passed
-            options_dict = dict(options)  # Convert to dict for easier handling
+            options_dict: dict[str, object] = dict(
+                options
+            )  # Convert to dict for easier handling
             if "new" in options_dict:
                 self.new_value = options_dict.pop("new")
                 self.has_new = True
             else:
                 self.new_value = new_value
                 self.has_new = new_value is not None
-            self.options = options_dict
+            self.options: dict[str, object] = options_dict
             self.original_value: object = None
-            self.create = bool(options_dict.get("create"))
-            self.had_attribute = False
+            self.create: bool = bool(options_dict.get("create"))
+            self.had_attribute: bool = False
 
         def __enter__(self) -> object:
             """Enter context - set up test scenario."""
@@ -708,7 +710,7 @@ class FlextTestsUtilities:
     # === FACTORY METHODS ===
 
     @classmethod
-    def utilities(cls) -> FlextTestsUtilities.TestUtilities:
+    def utilities(cls: type[Self]) -> FlextTestsUtilities.TestUtilities:
         """Get test utilities instance."""
         return cls.TestUtilities()
 
@@ -718,12 +720,12 @@ class FlextTestsUtilities:
         return cls.TestFactory(model_class)
 
     @classmethod
-    def assertion(cls) -> FlextTestsUtilities.TestAssertion:
+    def assertion(cls: type[Self]) -> FlextTestsUtilities.TestAssertion:
         """Get test assertion instance."""
         return cls.TestAssertion()
 
     @classmethod
-    def test_double_manager(cls) -> FlextTestsUtilities.TestDoubleManager:
+    def test_double_manager(cls: type[Self]) -> FlextTestsUtilities.TestDoubleManager:
         """Get test double manager instance."""
         return cls.TestDoubleManager()
 
@@ -775,15 +777,15 @@ class FlextTestsUtilities:
         return cls.TestUtilities.create_test_data(size=size, prefix=prefix)
 
     @classmethod
-    def create_ldap_config(cls) -> FlextTypes.Core.Dict:
+    def create_ldap_config(cls: type[Self]) -> FlextTypes.Core.Dict:
         """Create LDAP test configuration."""
-        return cls.create_ldap_test_config()
+        return FlextTestsUtilities.create_ldap_test_config()
 
     @classmethod
-    def create_oud_config(cls) -> FlextTypes.Core.Dict:
+    def create_oud_config(cls: type[Self]) -> FlextTypes.Core.Dict:
         """Create OUD connection configuration."""
         config = cls.create_oud_connection_config()
-        return cast("FlextTypes.Core.Dict", config)
+        return dict(config)  # Convert to dict[str, object]
 
     @classmethod
     def create_api_response(

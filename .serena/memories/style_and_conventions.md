@@ -47,7 +47,7 @@ def process_data(self, input_data: dict) -> FlextResult[ProcessedData]:
 ```python
 # ✅ CORRECT
 from flext_core import FlextResult, FlextLogger, FlextContainer
-from flext_cli import FlextCliApi, FlextCliMain
+from flext_cli import FlextCliApi, FlextCliCommands
 
 # ❌ FORBIDDEN
 from flext_core.result import FlextResult  # Internal imports prohibited
@@ -57,16 +57,16 @@ import click  # Direct CLI imports prohibited
 ### 4. CLI Implementation (ZERO TOLERANCE)
 
 ```python
-from flext_cli import FlextCliApi, FlextCliMain, FlextCliConfigs
+from flext_cli import FlextCliApi, FlextCliCommands, FlextCliConfigs
 
 class FlextDbOracleCliService:
     def __init__(self) -> None:
         self._cli_api = FlextCliApi()
 
-    def create_cli_interface(self) -> FlextResult[FlextCliMain]:
-        main_cli = FlextCliMain(name="oracle-cli")
+    def create_cli_interface(self) -> FlextResult[FlextCliCommands]:
+        main_cli = FlextCliCommands(name="oracle-cli")
         # Use flext-cli for ALL output - NO Rich directly
-        return FlextResult[FlextCliMain].ok(main_cli)
+        return FlextResult[FlextCliCommands].ok(main_cli)
 ```
 
 ## Code Quality Standards

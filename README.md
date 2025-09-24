@@ -58,13 +58,13 @@ print(response.unwrap())
 
 ## Module Guide
 
-| Area                        | Modules                                                                             | Release Focus                      |
-| --------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------- |
-| **Foundation**              | `result.py`, `typings.py`, `constants.py`                                           | Maintain ABI and type guarantees   |
-| **Runtime Surfaces**        | `container.py`, `service.py`, `models.py`, `utilities.py`                   | Shared service and domain patterns |
+| Area                        | Modules                                                                  | Release Focus                      |
+| --------------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| **Foundation**              | `result.py`, `typings.py`, `constants.py`                                | Maintain ABI and type guarantees   |
+| **Runtime Surfaces**        | `container.py`, `service.py`, `models.py`, `utilities.py`                | Shared service and domain patterns |
 | **Execution Flow**          | `bus.py`, `dispatcher.py`, `registry.py`, `handlers.py`, `processing.py` | Unified dispatcher roadmap         |
-| **Context & Observability** | `context.py`, `loggings.py`                                                         | Context-first adoption and metrics |
-| **Configuration**           | `config.py`, `version.py`                                                           | Single configuration lifecycle     |
+| **Context & Observability** | `context.py`, `loggings.py`                                              | Context-first adoption and metrics |
+| **Configuration**           | `config.py`, `version.py`                                                | Single configuration lifecycle     |
 
 See `docs/architecture/flext_modernization_plan.md` for the detailed modernization charter.
 

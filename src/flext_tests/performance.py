@@ -16,7 +16,7 @@ import time
 import tracemalloc
 from collections.abc import Awaitable, Callable, Generator
 from contextlib import _GeneratorContextManager, contextmanager
-from typing import Protocol
+from typing import Protocol, Self
 
 import pytest
 
@@ -37,7 +37,7 @@ class FlextTestsPerformance:
     class ComplexityAnalyzer:
         """Analyze algorithmic complexity and performance characteristics."""
 
-        def __init__(self) -> None:
+        def __init__(self: Self) -> None:
             """Initialize complexityanalyzer:."""
             self.measurements: list[FlextTypes.Core.Dict] = []
 
@@ -141,7 +141,7 @@ class FlextTestsPerformance:
     class StressTestRunner:
         """Run stress tests with configurable load patterns."""
 
-        def __init__(self) -> None:
+        def __init__(self: Self) -> None:
             """Initialize stresstestrunner:."""
             self.results: list[FlextTypes.Core.Dict] = []
 
@@ -250,7 +250,7 @@ class FlextTestsPerformance:
     class PerformanceProfiler:
         """Advanced performance profiling with memory and time tracking."""
 
-        def __init__(self) -> None:
+        def __init__(self: Self) -> None:
             """Initialize performanceprofiler:."""
             self.measurements: list[FlextTypes.Core.Dict] = []
 
@@ -947,7 +947,7 @@ class FlextTestsPerformance:
             ...
 
         @property
-        def stats(self) -> FlextTypes.Core.Dict:
+        def stats(self: object) -> FlextTypes.Core.Dict:
             """Benchmark statistics."""
             ...
 

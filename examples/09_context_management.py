@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 import warnings
 from uuid import uuid4
@@ -338,8 +339,6 @@ class ContextManagementService(FlextService[dict[str, str]]):
         print(f"Serialized data keys: {list(serialized.keys())}")
 
         # Convert to JSON
-        import json
-
         json_context = json.dumps(serialized)
         print(f"\nJSON length: {len(json_context)} characters")
         print(f"First 100 chars: {json_context[:100]}...")

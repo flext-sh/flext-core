@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import logging
 import random
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine, Iterable
@@ -20,9 +19,26 @@ from typing import Protocol, TypeGuard, cast
 
 import pytest
 
-from flext_core import FlextLogger, FlextTypes, T
+from flext_core import FlextLogger, FlextResult, FlextTypes, T
 
-logger = FlextLogger(__name__)
+
+# Lazy logger initialization to avoid configuration issues
+class _LoggerSingleton:
+    """Singleton logger instance."""
+
+    _instance: FlextLogger | None = None
+
+    @classmethod
+    def get_logger(cls) -> FlextLogger:
+        """Get logger instance with lazy initialization."""
+        if cls._instance is None:
+            cls._instance = FlextLogger(__name__)
+        return cls._instance
+
+
+def get_logger() -> FlextLogger:
+    """Get logger instance with lazy initialization."""
+    return _LoggerSingleton.get_logger()
 
 
 class FlextTestsAsyncs:
@@ -62,16 +78,17 @@ class FlextTestsAsyncs:
         while time.time() - start_time < timeout_seconds:
             try:
                 if asyncio.iscoroutinefunction(condition):
-                    result = await condition()
+                    condition_result = await condition()
                 else:
-                    result = condition()
+                    condition_result = condition()
 
-                if result:
+                # Check the actual boolean value, not the FlextResult wrapper
+                if condition_result:
                     return
 
             except Exception as e:
                 # Log exceptions during condition checking for debugging
-                logger.debug("Exception during condition check: %s", e)
+                get_logger().debug("Exception during condition check: %s", e)
 
             await asyncio.sleep(poll_interval)
 
@@ -151,8 +168,7 @@ class FlextTestsAsyncs:
             except Exception as e:
                 # Fall through to final timeout-based error
                 # Log the exception for debugging but continue to timeout error
-                logger = logging.getLogger(__name__)
-                logger.debug(
+                get_logger().debug(
                     f"Exception during timeout operation, falling through to timeout: {e}",
                 )
             # If we couldn't discover a factory or retries failed, re-raise as TimeoutError respecting API contract
@@ -441,13 +457,20 @@ class FlextTestsAsyncs:
                 return return_value
             if isinstance(side_effect, Exception):
                 raise side_effect
-            if callable(side_effect):
-                result = cast("Callable[[object], object]", side_effect)(
-                    *args, **kwargs
-                )
-                if asyncio.iscoroutine(result):
-                    return await result
-                return result
+            # Check if side_effect is callable with explicit type handling
+            try:
+                # Try to call it to see if it's callable
+                if not callable(side_effect):
+                    msg = "side_effect is not callable"
+                    raise TypeError(msg)
+                callable_effect = side_effect
+                effect_result = callable_effect(*args, **kwargs)
+                if asyncio.iscoroutine(effect_result):
+                    return await effect_result
+                return effect_result
+            except TypeError:
+                # Not callable, treat as return value
+                pass
             # side_effect is some other non-callable object
             return return_value
 
@@ -517,8 +540,8 @@ class FlextTestsAsyncs:
         if not inputs:
             return []
         tasks = [task_func(i) for i in inputs]
-        results = await asyncio.gather(*tasks)
-        return list(results)
+        results: list[object] = await asyncio.gather(*tasks)
+        return results
 
     @staticmethod
     async def test_race_condition(
@@ -607,7 +630,8 @@ class FlextTestsAsyncs:
             results: list[FlextTypes.Core.Dict] = []
             for _ in range(iterations_per_worker):
                 try:
-                    result = await func()
+                    func_result = await func()
+                    result: FlextResult[object] = FlextResult[object].ok(func_result)
                     results.append({"result": result, "success": True})
                 except Exception as e:
                     results.append({"error": str(e), "success": False})
@@ -615,7 +639,9 @@ class FlextTestsAsyncs:
 
         # Start all workers concurrently
         workers = [worker() for _ in range(concurrency_level)]
-        worker_results = await asyncio.gather(*workers)
+        worker_results: list[list[FlextTypes.Core.Dict]] = await asyncio.gather(
+            *workers
+        )
 
         # Flatten results
         all_results: list[FlextTypes.Core.Dict] = []
@@ -674,12 +700,14 @@ class FlextTestsAsyncs:
         # Create coroutines and ensure they are proper coroutines
         coroutines: list[Coroutine[object, object, object]] = []
         for _ in range(concurrent_count):
-            result = func()
-            if asyncio.iscoroutine(result):
-                coroutines.append(cast("Coroutine[object, object, object]", result))
+            func_result = func()
+            if asyncio.iscoroutine(func_result):
+                coroutines.append(
+                    cast("Coroutine[object, object, object]", func_result)
+                )
             else:
                 # Wrap non-coroutine awaitables
-                async def _wrapper(aw: Awaitable[object] = result) -> object:
+                async def _wrapper(aw: Awaitable[object] = func_result) -> object:
                     """Wrapper for non-coroutine awaitable."""
                     return await aw
 
@@ -688,8 +716,8 @@ class FlextTestsAsyncs:
         tasks: list[asyncio.Task[object]] = [
             asyncio.create_task(coro) for coro in coroutines
         ]
-        results = await asyncio.gather(*tasks)
-        return list(results)
+        results: list[object] = await asyncio.gather(*tasks)
+        return results
 
     @staticmethod
     async def measure_concurrency_performance(
@@ -736,7 +764,11 @@ class FlextTestsAsyncs:
             ...
 
 
+# Module-level logger for convenience
+logger = get_logger()
+
 # Export only the unified class
 __all__ = [
     "FlextTestsAsyncs",
+    "logger",
 ]
