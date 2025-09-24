@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from flext_tests.asyncs import FlextTestsAsyncs
 from flext_tests.builders import FlextTestsBuilders
+from flext_tests.docker import ContainerInfo, ContainerStatus, FlextTestDocker
 from flext_tests.domains import FlextTestsDomains
 from flext_tests.factories import FlextTestsFactories
 from flext_tests.fixtures import FlextTestsFixtures
@@ -21,6 +22,9 @@ from flext_tests.performance import FlextTestsPerformance
 from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
+    "ContainerInfo",
+    "ContainerStatus",
+    "FlextTestDocker",
     "FlextTestsAsyncs",
     "FlextTestsBuilders",
     "FlextTestsDomains",

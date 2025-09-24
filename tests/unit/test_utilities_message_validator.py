@@ -11,6 +11,7 @@ import math
 from typing import ClassVar
 from unittest.mock import patch
 
+import attr
 import pytest
 from pydantic import BaseModel
 
@@ -226,7 +227,6 @@ class TestMessageValidator:
     def test_build_serializable_message_payload_attrs_class(self) -> None:
         """Test building payload for attrs class."""
         try:
-            import attr
 
             @attr.s
             class TestAttrs:
@@ -666,7 +666,7 @@ class TestMessageValidatorIntegration:
             name: str
             address: Address
 
-        address = Address(street="123 Main St", city="Anytown")
+        address = Address(street="123 Main St", city="objecttown")
         message = Person(name="John", address=address)
 
         result = FlextUtilities.MessageValidator.validate_message(

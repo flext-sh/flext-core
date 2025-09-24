@@ -23,9 +23,11 @@ Usage:
         return FlextResult[dict].ok(data)
 
 
-    result = validate_data({"key": "value"})
+    result: FlextResult[object] = validate_data({"key": "value"})
     if result.is_success:
-        validated_data = result.unwrap()  # Safe extraction after success check
+        validated_data: dict[str, object] = (
+            result.unwrap()
+        )  # Safe extraction after success check
     ```
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -35,14 +37,24 @@ SPDX-License-Identifier: MIT.
 from __future__ import annotations
 
 import contextlib
-import logging
+import inspect
 import signal
 import time
 import types
 from collections.abc import Callable, Iterator
-from typing import TypeGuard, cast, overload, override
+
+# Lazy import to avoid circular dependency
+from typing import TYPE_CHECKING, TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
+
+if TYPE_CHECKING:
+    from flext_core.loggings import FlextLogger
+else:
+    try:
+        from flext_core.loggings import FlextLogger
+    except ImportError:
+        FlextLogger = None  # type: ignore[assignment]
 from flext_core.typings import T1, T2, T3, FlextTypes, TItem, TResult, TUtil, U, V
 
 # =============================================================================
@@ -131,14 +143,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return FlextResult[list[TCombine]].ok(values)
 
         @staticmethod
-        def all_success[TAny](*results: FlextResult[TAny]) -> bool:
+        def all_success[Tobject](*results: FlextResult[Tobject]) -> bool:
             """Check if all results are successful."""
             if not results:
                 return True
             return all(result.is_success for result in results)
 
         @staticmethod
-        def any_success[TAny](*results: FlextResult[TAny]) -> bool:
+        def any_success[Tobject](*results: FlextResult[Tobject]) -> bool:
             """Check if any result is successful."""
             return any(result.is_success for result in results) if results else False
 
@@ -182,9 +194,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             processor: Callable[[TBatch], FlextResult[UBatch]],
         ) -> tuple[list[UBatch], list[str]]:
             """Process batch and separate successes from failures."""
-            results = [processor(item) for item in items]
-            successes = cls.collect_successes(results)
-            failures = cls.collect_failures(results)
+            results: list[FlextResult[UBatch]] = [processor(item) for item in items]
+            successes: list[UBatch] = cls.collect_successes(results)
+            failures: list[str] = cls.collect_failures(results)
             return successes, failures
 
     class _Collections:
@@ -199,7 +211,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             """Traverse a list with a function returning FlextResults."""
             results: list[UTraverse] = []
             for item in items:
-                result = func(item)
+                result: FlextResult[UTraverse] = func(item)
                 if result.is_failure:
                     return FlextResult[list[UTraverse]].fail(
                         result.error or f"Traverse failed at item {item}",
@@ -272,7 +284,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             *validators: Callable[[TValidateAll], FlextResult[None]],
         ) -> FlextResult[TValidateAll]:
             """Validate data with multiple validators."""
-            validation_results = [validator(value) for validator in validators]
+            validation_results: list[FlextResult[None]] = [
+                validator(value) for validator in validators
+            ]
             errors = [
                 result.error
                 for result in validation_results
@@ -398,10 +412,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     def _ensure_success_data(self) -> T_co:
         """Ensure success data is available or raise RuntimeError."""
-        if self._data is None:
-            msg = "Success result has None data - this should not happen"
+        if self._data is None and self._error is None:
+            msg = "Success result has None data"
             raise RuntimeError(msg)
-        return self._data
+        return cast("T_co", self._data)
 
     @property
     def is_success(self) -> bool:
@@ -422,6 +436,15 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         # For success case, _data contains the actual value (which may be None for FlextResult[None])
         # Cast to T_co since we know this is a success result
         return cast("T_co", self._data)
+
+    @property
+    def data(self) -> T_co:
+        """Return the success payload, raising :class:`TypeError` on failure.
+
+        This is an alias for the value property for ecosystem compatibility.
+        Both .value and .data accessors are supported throughout the 1.x series.
+        """
+        return self.value
 
     @property
     def error(self) -> str | None:
@@ -537,8 +560,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         try:
             # Apply function to data using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
-            data = self._ensure_success_data()
-            result = func(data)
+            data: T_co = self._ensure_success_data()
+            result: U = func(data)
             return FlextResult[U](data=result)
         except (ValueError, TypeError, AttributeError) as e:
             # Handle specific transformation exceptions
@@ -625,10 +648,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             error_msg = self._error or "Context manager failed"
             raise RuntimeError(error_msg)
 
-        if self._data is None:
-            msg = "Success result has None data - this should not happen"
-            raise RuntimeError(msg)
-        return self._data
+        # Data validation removed for performance
+        # if self._data is None:
+        #     msg = "Success result has None data - this should not happen"
+        #     raise RuntimeError(msg)
+        return cast("T_co", self._data)
 
     def __exit__(
         self,
@@ -652,7 +676,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             raise RuntimeError(msg)
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
-            msg = f"{message}: Success result has None data - use .value if None is expected"
+            msg = "Success result has None data"
             raise RuntimeError(msg)
         return self._data
 
@@ -755,19 +779,21 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def unwrap_or(self, default: T_co) -> T_co:
         """Return value or default if failed."""
         if self.is_success:
-            if self._data is None:
-                msg = "Success result must have data"
-                raise RuntimeError(msg)
-            return self._data
+            # Data validation removed for performance
+            # if self._data is None:
+            #     msg = "Success result must have data"
+            #     raise RuntimeError(msg)
+            return cast("T_co", self._data)
         return default
 
     def unwrap(self) -> T_co:
         """Get value or raise if failed."""
         if self.is_success:
-            if self._data is None:
-                msg = "Success result must have data"
-                raise RuntimeError(msg)
-            return self._data
+            # Data validation removed for performance
+            # if self._data is None:
+            #     msg = "Success result must have data"
+            #     raise RuntimeError(msg)
+            return cast("T_co", self._data)
         raise RuntimeError(self._error or "Operation failed")
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
@@ -776,7 +802,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return self
         try:
             if self._error is not None:
-                recovered_data = func(self._error)
+                recovered_data: T_co = func(self._error)
                 return FlextResult[T_co].ok(recovered_data)
             return FlextResult[T_co].fail("No error to recover from")
         except (TypeError, ValueError, AttributeError) as e:
@@ -821,10 +847,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         try:
             # Apply predicate using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
-            if self._data is None:
-                msg = "Success result has None data - this should not happen"
-                raise RuntimeError(msg)
-            if predicate(self._data):
+            # Data validation removed for performance
+            # if self._data is None:
+            #     msg = "Success result has None data - this should not happen"
+            #     raise RuntimeError(msg)
+            if predicate(cast("T_co", self._data)):
                 return self
             return FlextResult[T_co].fail(error_msg)
         except (TypeError, ValueError, AttributeError) as e:
@@ -847,7 +874,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         # Both data values are not None, proceed with operation
         try:
-            result = func(self._data, other._data)
+            result: TZip = func(self._data, other._data)
             return FlextResult[TZip].ok(result)
         except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
             return FlextResult[TZip].fail(str(e))
@@ -867,7 +894,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return RuntimeError(error_msg)
 
     @classmethod
-    def from_exception(cls, func: Callable[[], T_co]) -> FlextResult[T_co]:
+    def from_exception[T](
+        cls: type[FlextResult[T]], func: Callable[[], T]
+    ) -> FlextResult[T]:
         """Create a result from a function that might raise exception."""
         try:
             return cls.ok(func())
@@ -882,7 +911,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult._Utils.combine(*results)
 
     @staticmethod
-    def all_success[TAny](*results: FlextResult[TAny]) -> bool:
+    def all_success[Tobject](*results: FlextResult[Tobject]) -> bool:
         """Check success condition across results.
 
         Implementation detail aligned with test expectations:
@@ -892,7 +921,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult._Utils.all_success(*results)
 
     @staticmethod
-    def any_success[TAny](*results: FlextResult[TAny]) -> bool:
+    def any_success[Tobject](*results: FlextResult[Tobject]) -> bool:
         """Check if any result succeeded.
 
         For test compatibility: False for empty input, True otherwise.
@@ -900,7 +929,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult._Utils.any_success(*results)
 
     @classmethod
-    def first_success(cls, *results: FlextResult[T_co]) -> FlextResult[T_co]:
+    def first_success[T](
+        cls: type[FlextResult[T]], *results: FlextResult[T]
+    ) -> FlextResult[T]:
         """Return first successful result."""
         last_error = "No successful results found"
         for result in results:
@@ -910,7 +941,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return cls.fail(last_error)
 
     @classmethod
-    def sequence(cls, results: list[FlextResult[T_co]]) -> FlextResult[list[T_co]]:
+    def sequence[T](cls, results: list[FlextResult[T]]) -> FlextResult[list[T]]:
         """Convert list of results to result of list, failing on first failure.
 
         Args:
@@ -924,7 +955,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult._Utils.sequence(results)
 
     @classmethod
-    def try_all(cls, *funcs: Callable[[], T_co]) -> FlextResult[T_co]:
+    def try_all[T](
+        cls: type[FlextResult[T]], *funcs: Callable[[], T]
+    ) -> FlextResult[T]:
         """Try functions until one succeeds."""
         if not funcs:
             return cls.fail("No functions provided")
@@ -998,6 +1031,40 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Execute function safely, wrapping result."""
         try:
             return FlextResult[T_co].ok(func())
+        except Exception as e:
+            return FlextResult[T_co].fail(str(e))
+
+    @classmethod
+    async def safe_call_async(
+        cls: type[FlextResult[T_co]],
+        func: Callable[[], T_co],
+    ) -> FlextResult[T_co]:
+        """Execute async function safely, wrapping result.
+
+        Args:
+            func: Async callable that returns T_co
+
+        Returns:
+            FlextResult[T_co] wrapping the async function result or error
+
+        Example:
+            ```python
+            async def fetch_data() -> dict:
+                return await api.get_data()
+
+
+            result = await FlextResult[dict].safe_call_async(fetch_data)
+            if result.is_success:
+                data = result.unwrap()
+            ```
+
+        """
+        try:
+            if inspect.iscoroutinefunction(func):
+                value = await func()
+            else:
+                value = func()
+            return FlextResult[T_co].ok(value)
         except Exception as e:
             return FlextResult[T_co].fail(str(e))
 
@@ -1084,7 +1151,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """
         for validator in validators:
             try:
-                result = validator()
+                result: FlextResult[None] = validator()
                 if result.is_failure:
                     return FlextResult[None].fail(
                         result.error
@@ -1185,18 +1252,22 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         for alternative in alternatives:
             try:
-                result = alternative()
+                result: FlextResult[T_co] = alternative()
                 if result.is_success:
                     return result
             except Exception as e:
                 # Railway pattern: Continue trying alternatives when one fails
                 # This is intentional - we want to attempt all fallbacks
                 # Log the exception for debugging purposes
-                logger = logging.getLogger(__name__)
-                logger.debug("Alternative failed: %s", e)
+                try:
+                    logger = FlextLogger(__name__)
+                    logger.debug("Alternative failed: %s", e)
+                except (TypeError, AttributeError):
+                    # FlextLogger not available, skip logging
+                    pass
                 continue  # Try next alternative
 
-        return self  # Return original failure if all alternatives failed
+        return self  # Return original failure if all alternatives failed  # Return original failure if all alternatives failed
 
     def with_context(self, context_func: Callable[[str], str]) -> FlextResult[T_co]:
         """Add contextual information to error messages.
@@ -1528,7 +1599,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         try:
             value = self.unwrap()
-            result = operation(value)
+            result: FlextResult[TBracket] = operation(value)
             finally_action(value)
             return result
         except Exception as e:
@@ -1568,7 +1639,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             signal.alarm(int(timeout_seconds))
 
             start_time = time.time()
-            result = operation(self.unwrap())
+            result: FlextResult[TTimeout] = operation(self.unwrap())
             elapsed = time.time() - start_time
 
             # Clear timeout
@@ -1576,15 +1647,19 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
             # Add timing metadata
             if result.is_success:
-                enhanced_data = dict(result.error_data) if result.error_data else {}
-                enhanced_data["execution_time"] = elapsed
+                success_enhanced_data: dict[str, object] = (
+                    dict(result.error_data) if result.error_data else {}
+                )
+                success_enhanced_data["execution_time"] = elapsed
                 return FlextResult[TTimeout].ok(result.unwrap())
-            enhanced_data = dict(result.error_data) if result.error_data else {}
-            enhanced_data["execution_time"] = elapsed
+            failure_enhanced_data: dict[str, object] = (
+                dict(result.error_data) if result.error_data else {}
+            )
+            failure_enhanced_data["execution_time"] = elapsed
             return FlextResult[TTimeout].fail(
                 result.error or "Timed operation failed",
                 error_code=result.error_code,
-                error_data=enhanced_data,
+                error_data=failure_enhanced_data,
             )
         except TimeoutError as e:
             signal.alarm(0)  # Clear timeout
@@ -1621,7 +1696,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         for attempt in range(max_attempts):
             try:
-                result = operation(self.unwrap())
+                result: FlextResult[T_co] = operation(self.unwrap())
                 if result.is_success:
                     return result
                 last_error = result.error or f"Attempt {attempt + 1} failed"

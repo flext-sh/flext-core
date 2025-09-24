@@ -15,23 +15,23 @@ This directory implements the public API exported by `flext_core`. The structure
 
 ## Runtime Surfaces
 
-| Module               | Responsibility                                            |
-| -------------------- | --------------------------------------------------------- |
-| `container.py`       | Global dependency container with typed service keys       |
-| `service.py` | Base class for domain services (immutable, context-aware) |
-| `models.py`          | Entities, values, aggregates, plus helper models          |
-| `utilities.py`       | Validation, ID generation, retry helpers                  |
+| Module         | Responsibility                                            |
+| -------------- | --------------------------------------------------------- |
+| `container.py` | Global dependency container with typed service keys       |
+| `service.py`   | Base class for domain services (immutable, context-aware) |
+| `models.py`    | Entities, values, aggregates, plus helper models          |
+| `utilities.py` | Validation, ID generation, retry helpers                  |
 
 ## Execution Flow
 
-| Module                   | Responsibility                                     |
-| ------------------------ | -------------------------------------------------- |
-| `bus.py`                 | Core command bus implementation                    |
-| `dispatcher.py`          | Dispatcher façade orchestrating bus + context      |
-| `registry.py` | Batch registration helpers for downstream packages |
-| `handlers.py`            | Base classes for command/query handlers            |
-| `processing.py`          | Lightweight processing utilities and registries    |
-| `cqrs.py`                | CQRS adapters built on top of the bus/handlers     |
+| Module          | Responsibility                                     |
+| --------------- | -------------------------------------------------- |
+| `bus.py`        | Core command bus implementation                    |
+| `dispatcher.py` | Dispatcher façade orchestrating bus + context      |
+| `registry.py`   | Batch registration helpers for downstream packages |
+| `handlers.py`   | Base classes for command/query handlers            |
+| `processing.py` | Lightweight processing utilities and registries    |
+| `cqrs.py`       | CQRS adapters built on top of the bus/handlers     |
 
 ## Context & Observability
 

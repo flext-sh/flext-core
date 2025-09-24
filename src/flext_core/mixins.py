@@ -57,7 +57,7 @@ class FlextMixins:
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
             model_obj = obj
-            data = getattr(model_obj, "model_dump")()
+            data: dict[str, object] = getattr(model_obj, "model_dump")()
             return json.dumps(
                 data,
                 indent=request.indent,
@@ -282,7 +282,9 @@ class FlextMixins:
         if hasattr(obj, "model_dump"):
             model_dump_attr = getattr(obj, "model_dump")
             if callable(model_dump_attr):
-                model_data = cast("FlextTypes.Core.Dict", model_dump_attr())
+                model_data: dict[str, object] = cast(
+                    "FlextTypes.Core.Dict", model_dump_attr()
+                )
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
                     raise KeyError(msg)
@@ -401,9 +403,9 @@ class FlextMixins:
         attribute assignment or ``model_copy(update=...)```.
 
         Example:
-            config = FlextConfig.get_global_instance()
+            config: dict[str, object] = FlextConfig.get_global_instance()
             debug_mode = config.debug
-            config.debug = True
+            config.debug: dict[str, object] = True
             updated = config.model_copy(update={"timeout_seconds": 60})
 
         """

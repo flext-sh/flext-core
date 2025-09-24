@@ -535,13 +535,13 @@ class TestFlextConfigEdgeCases:
         """Test empty string validation."""
         # Empty strings are allowed for most fields
         config1 = FlextConfig(app_name="")
-        assert config1.app_name == ""  # noqa: PLC1901
+        assert not config1.app_name
 
         config2 = FlextConfig(version="")
-        assert config2.version == ""  # noqa: PLC1901
+        assert not config2.version
 
         config3 = FlextConfig(database_url="")
-        assert config3.database_url == ""  # noqa: PLC1901
+        assert not config3.database_url
 
     def test_whitespace_handling(self) -> None:
         """Test whitespace handling in string fields."""

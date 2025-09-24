@@ -9,7 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests.utilities import FlextTestsUtilities
+from contextlib import AbstractContextManager
+from typing import cast
+
+from flext_tests import FlextTestsUtilities, utilities
 
 
 class TestFlextTestsUtilities:
@@ -47,7 +50,6 @@ class TestFlextTestsUtilities:
     def test_module_imports_and_structure(self) -> None:
         """Test module imports and overall structure."""
         # Test that the module can be imported
-        from flext_tests import utilities
 
         # Verify module structure
         assert hasattr(utilities, "FlextTestsUtilities")
@@ -518,8 +520,7 @@ class TestFlextTestsUtilities:
                 result = method()
                 if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
                     # It's a context manager, test basic usage
-                    from contextlib import AbstractContextManager
-                    from typing import cast
+
                     context_manager = cast("AbstractContextManager[object]", result)
                     with context_manager:
                         pass  # Just verify it works as a context manager

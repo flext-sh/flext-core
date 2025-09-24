@@ -105,7 +105,7 @@ class FlextExceptions:
             super().__init__(message)
             self.message = message
             self.code = code or FlextConstants.Errors.GENERIC_ERROR
-            self.context = dict(context or {})
+            self.context: dict[str, object] = dict(context or {})
             self.correlation_id = correlation_id or f"flext_{int(time.time() * 1000)}"
             self.timestamp = time.time()
             FlextExceptions.record_exception(self.__class__.__name__)
@@ -126,7 +126,9 @@ class FlextExceptions:
             **additional_context: object,
         ) -> dict[str, object]:
             """Build context dictionary from base context and additional items."""
-            context_dict = dict(base_context) if isinstance(base_context, dict) else {}
+            context_dict: dict[str, object] = (
+                dict(base_context) if isinstance(base_context, dict) else {}
+            )
             context_dict.update(additional_context)
             return context_dict
 
@@ -298,9 +300,8 @@ class FlextExceptions:
             self.config_key = config_key
             self.config_file = config_file
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict: dict[str, object] = cast("dict[str, object]", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"config_key": config_key, "config_file": config_file})
@@ -327,9 +328,8 @@ class FlextExceptions:
             self.service = service
             self.endpoint = endpoint
             context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
             if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
+                context_dict: dict[str, object] = cast("dict[str, object]", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"service": service, "endpoint": endpoint})
@@ -355,23 +355,22 @@ class FlextExceptions:
         ) -> None:
             self.business_rule = business_rule
             self.operation = operation
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict.update({
-                "business_rule": business_rule,
-                "operation": operation,
-            })
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                business_rule=business_rule,
+                operation=operation,
+            )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.PROCESSING_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _TimeoutError(BaseError, TimeoutError):
@@ -385,20 +384,21 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.timeout_seconds = timeout_seconds
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict["timeout_seconds"] = timeout_seconds
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                timeout_seconds=timeout_seconds,
+            )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TIMEOUT_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _NotFoundError(BaseError, FileNotFoundError):
@@ -414,23 +414,22 @@ class FlextExceptions:
         ) -> None:
             self.resource_id = resource_id
             self.resource_type = resource_type
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict.update({
-                "resource_id": resource_id,
-                "resource_type": resource_type,
-            })
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                resource_id=resource_id,
+                resource_type=resource_type,
+            )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.NOT_FOUND,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _AlreadyExistsError(BaseError, FileExistsError):
@@ -446,21 +445,22 @@ class FlextExceptions:
         ) -> None:
             self.resource_id = resource_id
             self.resource_type = resource_type
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict["resource_id"] = resource_id
-            context_dict["resource_type"] = resource_type
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                resource_id=resource_id,
+                resource_type=resource_type,
+            )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.ALREADY_EXISTS,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _PermissionError(BaseError, PermissionError):
@@ -474,20 +474,21 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.required_permission = required_permission
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict["required_permission"] = required_permission
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                required_permission=required_permission,
+            )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.PERMISSION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _AuthenticationError(BaseError, PermissionError):
@@ -501,20 +502,21 @@ class FlextExceptions:
             **kwargs: object,
         ) -> None:
             self.auth_method = auth_method
-            context_raw = kwargs.get("context", {})
-            context_dict: dict[str, object]
-            if isinstance(context_raw, dict):
-                context_dict = cast("dict[str, object]", context_raw)
-            else:
-                context_dict = {}
-            context_dict["auth_method"] = auth_method
+
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
+            # Build context with specific fields
+            context = self._build_context(
+                base_context,
+                auth_method=auth_method,
+            )
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.AUTHENTICATION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _TypeError(BaseError, TypeError):
@@ -559,31 +561,31 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] | None = cast(
+                base_context: dict[str, object] | None = cast(
                     "dict[str, object]", context_raw
                 )
             else:
-                context_dict = None
+                base_context = None
             correlation_id_raw = kwargs.pop("correlation_id", None)
             correlation_id = (
                 str(correlation_id_raw) if correlation_id_raw is not None else None
             )
 
             # Add remaining kwargs to context for full functionality
-            if context_dict is not None:
-                full_context: dict[str, object] = dict(context_dict)
-                full_context.update(kwargs)
-                context_dict = full_context
+            context_dict: dict[str, object]
+            if base_context is not None:
+                context_dict = dict(base_context)
+                context_dict.update(kwargs)
             elif kwargs:
                 context_dict = dict(kwargs)
+            else:
+                context_dict = {}
 
             super().__init__(
                 message,
                 code=FlextConstants.Errors.CRITICAL_ERROR,
                 context=context_dict,
-                correlation_id=str(correlation_id)
-                if correlation_id is not None
-                else None,
+                correlation_id=correlation_id,
             )
 
     class _Error(BaseError, RuntimeError):
@@ -593,11 +595,11 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] | None = cast(
+                base_context: dict[str, object] | None = cast(
                     "dict[str, object]", context_raw
                 )
             else:
-                context_dict = None
+                base_context = None
             correlation_id_raw = kwargs.pop("correlation_id", None)
             correlation_id = (
                 str(correlation_id_raw) if correlation_id_raw is not None else None
@@ -606,12 +608,14 @@ class FlextExceptions:
             error_code = str(error_code_raw) if error_code_raw is not None else None
 
             # Add remaining kwargs to context for full functionality
-            if context_dict is not None:
-                full_context: dict[str, object] = dict(context_dict)
-                full_context.update(kwargs)
-                context_dict = full_context
+            context_dict: dict[str, object]
+            if base_context is not None:
+                context_dict = dict(base_context)
+                context_dict.update(kwargs)
             elif kwargs:
                 context_dict = dict(kwargs)
+            else:
+                context_dict = {}
 
             super().__init__(
                 message,
@@ -624,20 +628,14 @@ class FlextExceptions:
         """User input or API usage error."""
 
         def __init__(self, message: str, **kwargs: object) -> None:
-            context_raw = kwargs.get("context", {})
-            if isinstance(context_raw, dict):
-                context_dict: dict[str, object] | None = cast(
-                    "dict[str, object]", context_raw
-                )
-            else:
-                context_dict = None
+            # Extract common parameters using helper
+            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TYPE_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                context=base_context or {},
+                correlation_id=correlation_id,
             )
 
     # =============================================================================

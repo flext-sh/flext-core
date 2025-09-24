@@ -9,13 +9,11 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, Protocol, overload, runtime_checkable
+from typing import Generic, Protocol, overload, runtime_checkable
 
+from flext_core.config import FlextConfig
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T_contra, TInput_contra, TResult
-
-if TYPE_CHECKING:
-    from flext_core.config import FlextConfig
 
 
 class FlextProtocols:
@@ -53,7 +51,7 @@ class FlextProtocols:
             """Domain service contract aligned with FlextService implementation."""
 
             @abstractmethod
-            def execute(self) -> FlextResult[object]:
+            def execute(self: object) -> FlextResult[object]:
                 """Execute the main domain operation.
 
                 Returns:
@@ -62,7 +60,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def is_valid(self) -> bool:
+            def is_valid(self: object) -> bool:
                 """Check if the domain service is in a valid state.
 
                 Returns:
@@ -71,7 +69,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self: object) -> FlextResult[None]:
                 """Validate business rules for the domain service.
 
                 Returns:
@@ -80,7 +78,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate_config(self) -> FlextResult[None]:
+            def validate_config(self: object) -> FlextResult[None]:
                 """Validate service configuration.
 
                 Returns:
@@ -101,7 +99,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def get_service_info(self) -> FlextTypes.Core.Dict:
+            def get_service_info(self: object) -> FlextTypes.Core.Dict:
                 """Get service information and metadata.
 
                 Returns:
@@ -129,7 +127,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def find_all(self) -> object:
+            def find_all(self: object) -> object:
                 """Enumerate entities for modernization-aligned queries."""
                 ...
 
@@ -214,7 +212,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def handler_name(self) -> str:
+            def handler_name(self: object) -> str:
                 """Get the handler name.
 
                 Returns:
@@ -224,7 +222,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def mode(self) -> str:
+            def mode(self: object) -> str:
                 """Get the handler mode (command/query).
 
                 Returns:
@@ -247,15 +245,15 @@ class FlextProtocols:
                 """Callable interface for connection."""
                 ...
 
-            def test_connection(self) -> object:
+            def test_connection(self: object) -> object:
                 """Test connection to external system."""
                 ...
 
-            def get_connection_string(self) -> str:
+            def get_connection_string(self: object) -> str:
                 """Get connection string for external system."""
                 ...
 
-            def close_connection(self) -> object:
+            def close_connection(self: object) -> object:
                 """Close connection to external system."""
                 ...
 
@@ -267,7 +265,7 @@ class FlextProtocols:
                 """Configure component with provided settings."""
                 ...
 
-            def get_config(self) -> FlextTypes.Core.Dict:
+            def get_config(self: object) -> FlextTypes.Core.Dict:
                 """Get current configuration."""
                 ...
 
@@ -357,7 +355,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def clear_request_context(self) -> FlextResult[None]:
+            def clear_request_context(self: object) -> FlextResult[None]:
                 """Clear request-specific context data.
 
                 Returns:
@@ -378,7 +376,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def get_consolidated_context(self) -> dict[str, object]:
+            def get_consolidated_context(self: object) -> dict[str, object]:
                 """Get all context data consolidated for log entry building.
 
                 Returns:
@@ -391,11 +389,11 @@ class FlextProtocols:
         class ConfigValidator(Protocol):
             """Protocol for configuration validation strategies."""
 
-            def validate_runtime_requirements(self) -> FlextResult[None]:
+            def validate_runtime_requirements(self: object) -> FlextResult[None]:
                 """Validate configuration meets runtime requirements."""
                 ...
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self: object) -> FlextResult[None]:
                 """Validate business rules for configuration consistency."""
                 ...
 
@@ -463,7 +461,7 @@ class FlextProtocols:
                 """Configure component with settings."""
                 ...
 
-            def get_config(self) -> FlextTypes.Core.Dict:
+            def get_config(self: object) -> FlextTypes.Core.Dict:
                 """Get current configuration."""
                 ...
 
@@ -476,12 +474,12 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def shutdown(self) -> object:
+            def shutdown(self: object) -> object:
                 """Shutdown plugin and cleanup."""
                 ...
 
             @abstractmethod
-            def get_info(self) -> FlextTypes.Core.Dict:
+            def get_info(self: object) -> FlextTypes.Core.Dict:
                 """Get plugin information."""
                 ...
 
@@ -492,11 +490,13 @@ class FlextProtocols:
                 """Get service by name."""
                 ...
 
-            def get_config(self) -> FlextTypes.Core.Dict:
+            def get_config(self: object) -> FlextTypes.Core.Dict:
                 """Get plugin configuration."""
                 ...
 
-            def flext_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
+            def flext_logger(
+                self: object,
+            ) -> FlextProtocols.Infrastructure.LoggerProtocol:
                 """Get logger instance for plugin."""
                 ...
 
@@ -528,7 +528,7 @@ class FlextProtocols:
                 """Start distributed trace."""
                 ...
 
-            def health_check(self) -> object:
+            def health_check(self: object) -> object:
                 """Perform health check."""
                 ...
 

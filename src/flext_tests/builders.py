@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import tempfile
 from collections.abc import Callable
-from typing import Protocol
+from typing import Protocol, cast
 
 from flext_core import (
     FlextConfig,
@@ -90,7 +90,7 @@ class FlextTestsBuilders:
 
     # === Container Builder Methods (Unified) ===
 
-    def create_test_container(self) -> FlextContainer:
+    def create_test_container(self: object) -> FlextContainer:
         """Create a FlextContainer with common test services.
 
         Returns:
@@ -306,9 +306,9 @@ class FlextTestsBuilders:
                     return return_values[0]
                 if len(return_values) > 1:
                     # Cycle through return values
-                    result = return_values[call_count % len(return_values)]
+                    result_item: object = return_values[call_count % len(return_values)]
                     call_count += 1
-                    return result
+                    return result_item
 
             return None
 
@@ -321,11 +321,11 @@ class FlextTestsBuilders:
     ) -> _TestCallableProtocol:
         """Create a callable that returns FlextResult objects."""
         if error:
-            result = FlextResult[object].fail(error)
+            result_value: FlextResult[object] = FlextResult[object].fail(error)
         else:
-            result = FlextResult[object].ok(data)
+            result_value = FlextResult[object].ok(data)
 
-        return self.create_test_callable(return_value=result)
+        return self.create_test_callable(return_value=result_value)
 
     # === Convenience Factory Methods ===
 
@@ -365,7 +365,7 @@ class FlextTestsBuilders:
         self._result_success = False
         return self
 
-    def build(self) -> FlextContainer | FlextResult[object]:
+    def build(self: object) -> FlextContainer | FlextResult[object]:
         """Build object (deprecated method - supports both container and result building)."""
         # Check for result building first (explicit result building mode)
         if (
@@ -375,12 +375,22 @@ class FlextTestsBuilders:
         ):
             # FlextResult building pattern (deprecated)
             if getattr(self, "_result_success", True):
-                data = getattr(self, "_result_data", "test_data")
+                result_data = getattr(self, "_result_data", "test_data")
+                data: FlextTypes.Core.Dict = (
+                    cast("FlextTypes.Core.Dict", result_data)
+                    if isinstance(result_data, dict)
+                    else {"data": result_data}
+                )
                 return FlextResult[object].ok(data)
 
             error = getattr(self, "_result_error", "Test error")
             error_code = getattr(self, "_result_error_code", None)
-            error_data = getattr(self, "_result_error_data", None)
+            error_data_raw = getattr(self, "_result_error_data", None)
+            error_data: FlextTypes.Core.Dict = (
+                cast("FlextTypes.Core.Dict", error_data_raw)
+                if isinstance(error_data_raw, dict)
+                else {}
+            )
             return FlextResult[object].fail(
                 error,
                 error_code=error_code,
@@ -397,18 +407,26 @@ class FlextTestsBuilders:
 
             # Register services if any
             if hasattr(self, "_container_services"):
-                for name, service in self._container_services.items():
-                    result = container.register(name, service)
-                    if result.is_failure:
-                        msg = f"Failed to register service {name}: {result.error}"
+                container_services = getattr(self, "_container_services", {})
+                for name, service in container_services.items():
+                    register_result: FlextResult[None] = container.register(
+                        name, service
+                    )
+                    if register_result.is_failure:
+                        msg = f"Failed to register service {name}: {register_result.error}"
                         raise RuntimeError(msg)
 
             # Register factories if any
             if hasattr(self, "_container_factories"):
-                for name, factory in self._container_factories.items():
-                    result = container.register_factory(name, factory)
-                    if result.is_failure:
-                        msg = f"Failed to register factory {name}: {result.error}"
+                container_factories = getattr(self, "_container_factories", {})
+                for name, factory in container_factories.items():
+                    factory_result: FlextResult[None] = container.register_factory(
+                        name, factory
+                    )
+                    if factory_result.is_failure:
+                        msg = (
+                            f"Failed to register factory {name}: {factory_result.error}"
+                        )
                         raise RuntimeError(msg)
 
             return container
@@ -417,7 +435,7 @@ class FlextTestsBuilders:
         return FlextResult[object].ok("test_data")
 
     @classmethod
-    def container(cls) -> FlextTestsBuilders:
+    def container(cls: type[FlextTestsBuilders]) -> FlextTestsBuilders:
         """Create a container builder (deprecated - use create_test_container)."""
         instance = cls()
         instance._building_container = True  # Flag to indicate container building mode
@@ -488,7 +506,7 @@ class FlextTestsBuilders:
         return cls().create_failure_result(error)
 
     @classmethod
-    def test_container(cls) -> FlextContainer:
+    def test_container(cls: type[FlextTestsBuilders]) -> FlextContainer:
         """Build a container with common test services (deprecated - use create_test_container)."""
         return cls().create_test_container()
 

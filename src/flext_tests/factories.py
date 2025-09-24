@@ -370,7 +370,7 @@ class FlextTestsFactories:
         def user_result(*, success: bool = True) -> FlextResult[FlextTypes.Core.Dict]:
             """Create user-specific result."""
             if success:
-                user_data = FlextTestsFactories.UserFactory.create()
+                user_data: dict[str, object] = FlextTestsFactories.UserFactory.create()
                 return FlextResult[FlextTypes.Core.Dict].ok(user_data)
             return FlextResult[FlextTypes.Core.Dict].fail("User creation failed")
 

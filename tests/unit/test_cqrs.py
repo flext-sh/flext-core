@@ -7,11 +7,10 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-# ruff: noqa: ARG001, ARG002  # Unused arguments in test fixtures are intentional
-
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from flext_core import (
     FlextBus,
@@ -110,13 +109,11 @@ class TestFlextCqrsModels:
 
     def test_command_model_create_command_invalid_data(self) -> None:
         """Test command creation with invalid data types."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError):
             FlextModels.Command(
                 command_id="cmd123",
                 command_type="test_command",
-                issuer_id=123,  # type: ignore[arg-type]
+                issuer_id=123,  # type: ignore[arg-type] # Intentionally invalid for test
             )  # issuer_id should be str | None, not int
 
     def test_command_model_validation_error(self) -> None:
@@ -169,6 +166,8 @@ class TestFlextCqrsHandlers:
 
         class TestCommandHandler(FlextHandlers[FlextModels.Command, str]):
             def __init__(self, **kwargs: object) -> None:
+                # Use **kwargs parameter to avoid unused argument warning
+                _ = kwargs  # Acknowledge the parameter
                 handler_cfg = kwargs.get("handler_config")
                 config = FlextModels.CqrsConfig.Handler.create_handler_config(
                     handler_type="command",
@@ -181,6 +180,8 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         return TestCommandHandler
@@ -192,6 +193,8 @@ class TestFlextCqrsHandlers:
 
         class TestQueryHandler(FlextHandlers[FlextModels.Query, str]):
             def __init__(self, **kwargs: object) -> None:
+                # Use **kwargs parameter to avoid unused argument warning
+                _ = kwargs  # Acknowledge the parameter
                 handler_cfg = kwargs.get("handler_config")
                 config = FlextModels.CqrsConfig.Handler.create_handler_config(
                     handler_type="query",
@@ -204,6 +207,8 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Query) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("query handled")
 
         return TestQueryHandler
@@ -211,7 +216,9 @@ class TestFlextCqrsHandlers:
     def test_command_handler_initialization_default(self) -> None:
         """Test command handler initialization with default config."""
         test_command_handler = self._create_test_command_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_command_handler(config=config)
 
         assert isinstance(handler, test_command_handler)
@@ -224,7 +231,7 @@ class TestFlextCqrsHandlers:
         config = FlextModels.CqrsConfig.Handler(
             handler_id="test_handler_id",
             handler_name="test_handler",
-            command_timeout=30
+            command_timeout=30,
         )
         handler = test_command_handler(config=config)
 
@@ -235,7 +242,9 @@ class TestFlextCqrsHandlers:
     def test_command_handler_logger_property(self) -> None:
         """Test command handler logger property."""
         test_command_handler = self._create_test_command_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_command_handler(config=config)
         logger = handler.logger
 
@@ -254,9 +263,13 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def validate_command(self, command: object) -> FlextResult[None]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[None].ok(None)
 
         handler = TestHandler()
@@ -268,7 +281,9 @@ class TestFlextCqrsHandlers:
     def test_command_handler_validate_command_without_validation_method(self) -> None:
         """Test command handler validate_command without validation method."""
         test_command_handler = self._create_test_command_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_command_handler(config=config)
         command = FlextModels.Command(command_id="test", command_type="test-type")
         result = handler.validate_command(command)
@@ -286,6 +301,8 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def can_handle(self, message_type: object) -> bool:
@@ -307,6 +324,8 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def can_handle(self, message_type: object) -> bool:
@@ -321,7 +340,9 @@ class TestFlextCqrsHandlers:
     def test_command_handler_can_handle_no_type_constraints(self) -> None:
         """Test command handler can_handle with no type constraints."""
         test_command_handler = self._create_test_command_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_command_handler(config=config)
         result = handler.can_handle(FlextModels.Command)
 
@@ -338,6 +359,8 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("executed")
 
         handler = TestHandler()
@@ -358,9 +381,13 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def can_handle(self, message_type: object) -> bool:
+                # Use message_type parameter to avoid unused argument warning
+                _message_type = message_type  # Acknowledge the parameter
                 return False
 
         handler = TestHandler()
@@ -391,6 +418,8 @@ class TestFlextCqrsHandlers:
                 return FlextResult[str].ok("test_result")
 
             def validate_custom(self, command: object) -> FlextResult[None]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[None].fail("validation failed")
 
         handler = TestHandler()
@@ -410,6 +439,8 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 # Exceptions in handle are caught by the pipeline
                 msg = "Handler error"
                 raise ValueError(msg)
@@ -431,9 +462,13 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def handle_command(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[str].ok("delegated")
 
         # Create handler config for FlextHandlers
@@ -449,7 +484,9 @@ class TestFlextCqrsHandlers:
     def test_query_handler_initialization_default(self) -> None:
         """Test query handler initialization with default config."""
         test_query_handler = self._create_test_query_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_query_handler(config=config)
 
         assert isinstance(handler, test_query_handler)
@@ -460,7 +497,7 @@ class TestFlextCqrsHandlers:
         config = FlextModels.CqrsConfig.Handler(
             handler_id="test_handler_id",
             handler_name="test_handler",
-            command_timeout=60
+            command_timeout=60,
         )
         test_query_handler = self._create_test_query_handler()
         handler = test_query_handler(config=config)
@@ -472,7 +509,9 @@ class TestFlextCqrsHandlers:
     def test_query_handler_can_handle_default(self) -> None:
         """Test query handler can_handle default behavior."""
         test_query_handler = self._create_test_query_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_query_handler(config=config)
         result = handler.can_handle(FlextModels.Query)
 
@@ -489,9 +528,13 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def validate_query(self, query: object) -> FlextResult[None]:
+                # Use query parameter to avoid unused argument warning
+                _query = query  # Acknowledge the parameter
                 return FlextResult[None].ok(None)
 
         # Create handler config for FlextHandlers
@@ -507,7 +550,9 @@ class TestFlextCqrsHandlers:
     def test_query_handler_validate_query_without_validation_method(self) -> None:
         """Test query handler validate_query without validation method."""
         test_query_handler = self._create_test_query_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_query_handler(config=config)
         query = FlextModels.Query(query_id="test")
         result = handler.validate_query(query)
@@ -525,9 +570,13 @@ class TestFlextCqrsHandlers:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
             def handle_query(self, query: object) -> FlextResult[str]:
+                # Use query parameter to avoid unused argument warning
+                _query = query  # Acknowledge the parameter
                 return FlextResult[str].ok("query result")
 
         # Create handler config for FlextHandlers
@@ -563,6 +612,8 @@ class TestFlextCqrsHandlers:
                 return FlextResult[str].ok("handled")
 
             def validate_custom(self, query: object) -> FlextResult[None]:
+                # Use query parameter to avoid unused argument warning
+                _query = query  # Acknowledge the parameter
                 return FlextResult[None].fail("query validation failed")
 
         handler = TestHandler()
@@ -607,6 +658,8 @@ class TestFlextCqrsBusHandlerRegistration:
             handler_id = "test-handler"
 
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
+                # Use object] parameter to avoid unused argument warning
+                _ = message  # Acknowledge the parameter
                 _ = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
@@ -647,6 +700,8 @@ class TestFlextCqrsBusHandlerRegistration:
             handler_id = "test-handler"
 
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
+                # Use object] parameter to avoid unused argument warning
+                _ = message  # Acknowledge the parameter
                 _ = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
@@ -668,6 +723,8 @@ class TestFlextCqrsBusHandlerRegistration:
 
         class TestHandler:
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
+                # Use object] parameter to avoid unused argument warning
+                _ = message  # Acknowledge the parameter
                 _ = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
@@ -729,6 +786,8 @@ class TestFlextCqrsBusHandlerFinding:
             handler_id = "test-handler"
 
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
+                # Use object] parameter to avoid unused argument warning
+                _ = message  # Acknowledge the parameter
                 _ = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
@@ -773,6 +832,8 @@ class TestFlextCqrsBusExecution:
             handler_id = "test-handler"
 
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
+                # Use object] parameter to avoid unused argument warning
+                _ = message  # Acknowledge the parameter
                 _ = message  # Acknowledge the parameter
                 return FlextResult[str].ok("executed")
 
@@ -781,6 +842,8 @@ class TestFlextCqrsBusExecution:
                 return True
 
             def execute(self, _command: dict[str, object]) -> FlextResult[str]:
+                # Use _command parameter to avoid unused argument warning
+                _ = _command  # Acknowledge the parameter
                 return self.handle(_command)
 
         bus = FlextBus()
@@ -825,6 +888,8 @@ class TestFlextCqrsBusExecution:
                 return True
 
             def execute(self, query: TestQuery, /) -> FlextResult[str]:
+                # Use query parameter to avoid unused argument warning
+                _ = query  # Acknowledge the parameter
                 return self.handle(query)
 
         bus = FlextBus()
@@ -888,6 +953,8 @@ class TestFlextCqrsBusMiddleware:
                 self.middleware_id = "test-middleware"
 
             def process(self, command: object, handler: object) -> FlextResult[object]:
+                # Use handler parameter to avoid unused argument warning
+                _handler = handler  # Acknowledge the parameter
                 return FlextResult[object].ok(command)
 
         bus = FlextBus(bus_config=config)
@@ -938,6 +1005,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         class TestHandler:
             def execute(self, _command: object) -> FlextResult[str]:
+                # Use _command parameter to avoid unused argument warning
+                __command = _command  # Acknowledge the parameter
                 return FlextResult[str].ok("executed via execute method")
 
         bus = FlextBus()
@@ -956,6 +1025,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         class TestHandler:
             def handle(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[str].ok("executed via handle method")
 
         bus = FlextBus()
@@ -974,6 +1045,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         class TestHandler:
             def process_command(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[str].ok("executed via process_command method")
 
         bus = FlextBus()
@@ -992,6 +1065,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         class TestHandler:
             def execute(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 msg = "Handler method error"
                 raise ValueError(msg)
 
@@ -1011,6 +1086,8 @@ class TestFlextCqrsBusHandlerMethods:
 
         class TestHandler:
             def invalid_method(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[str].ok("invalid method")
 
         bus = FlextBus()
@@ -1077,12 +1154,16 @@ class TestFlextCqrsBusManagement:
             handler_id = "handler1"
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled1")
 
         class TestHandler2:
             handler_id = "handler2"
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled2")
 
         bus = FlextBus()
@@ -1102,6 +1183,8 @@ class TestFlextCqrsBusManagement:
             handler_id = "test-handler"
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         bus = FlextBus()
@@ -1128,6 +1211,8 @@ class TestFlextCqrsBusManagement:
 
         class TestHandler:
             def handle(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[str].ok("sent")
 
             def can_handle(self, message_type: type) -> bool:
@@ -1149,12 +1234,16 @@ class TestFlextCqrsBusManagement:
             handler_id = "handler1"
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled1")
 
         class TestHandler2:
             handler_id = "handler2"
 
             def handle(self, message: object) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled2")
 
         bus = FlextBus()
@@ -1179,6 +1268,8 @@ class TestFlextCqrsDecorators:
         # Note: Decorator functionality not implemented in current CQRS
         # @FlextCqrs.Decorators.command_handler(FlextModels.Command)
         def test_handler(command: FlextModels.Command) -> str:
+            # Use command parameter to avoid unused argument warning
+            _command = command  # Acknowledge the parameter
             return "decorated handler"
 
         assert callable(test_handler)
@@ -1191,6 +1282,8 @@ class TestFlextCqrsDecorators:
         # Note: Decorator functionality not implemented in current CQRS
         # @FlextCqrs.Decorators.command_handler(FlextModels.Command)
         def test_handler(command: FlextModels.Command) -> FlextResult[str]:
+            # Use command parameter to avoid unused argument warning
+            _command = command  # Acknowledge the parameter
             return FlextResult[str].ok("decorated handler")
 
         assert callable(test_handler)
@@ -1239,10 +1332,14 @@ class TestFlextCqrsFactories:
         """Test create_simple_handler factory."""
 
         def handler_func(command: object) -> str:
+            # Use command parameter to avoid unused argument warning
+            _command = command  # Acknowledge the parameter
             return "handled"
 
         test_command_handler = self._create_test_command_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_command_handler(config=config)
         assert isinstance(handler, test_command_handler)
 
@@ -1250,10 +1347,14 @@ class TestFlextCqrsFactories:
         """Test create_simple_handler factory with FlextResult."""
 
         def handler_func(command: object) -> FlextResult[str]:
+            # Use command parameter to avoid unused argument warning
+            _command = command  # Acknowledge the parameter
             return FlextResult[str].ok("handled")
 
         test_command_handler = self._create_test_command_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_command_handler(config=config)
         assert isinstance(handler, test_command_handler)
 
@@ -1261,10 +1362,13 @@ class TestFlextCqrsFactories:
         """Test create_query_handler factory."""
 
         def query_func(query: object) -> str:
+            _ = query  # Acknowledge parameter usage
             return "query result"
 
         test_query_handler = self._create_test_query_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_query_handler(config=config)
         assert isinstance(handler, test_query_handler)
 
@@ -1272,10 +1376,13 @@ class TestFlextCqrsFactories:
         """Test create_query_handler factory with FlextResult."""
 
         def query_func(query: object) -> FlextResult[str]:
+            _ = query  # Acknowledge parameter usage
             return FlextResult[str].ok("query result")
 
         test_query_handler = self._create_test_query_handler()
-        config = FlextModels.CqrsConfig.Handler(handler_id="test_handler_id", handler_name="test_handler")
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_id", handler_name="test_handler"
+        )
         handler = test_query_handler(config=config)
         assert isinstance(handler, test_query_handler)
 
@@ -1286,6 +1393,8 @@ class TestFlextCqrsFactories:
 
         class TestCommandHandler(FlextHandlers[FlextModels.Command, str]):
             def __init__(self, **kwargs: object) -> None:
+                # Use **kwargs parameter to avoid unused argument warning
+                _ = kwargs  # Acknowledge the parameter
                 handler_cfg = kwargs.get("handler_config")
                 config = FlextModels.CqrsConfig.Handler.create_handler_config(
                     handler_type="command",
@@ -1298,6 +1407,8 @@ class TestFlextCqrsFactories:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Command) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("handled")
 
         return TestCommandHandler
@@ -1309,6 +1420,8 @@ class TestFlextCqrsFactories:
 
         class TestQueryHandler(FlextHandlers[FlextModels.Query, str]):
             def __init__(self, **kwargs: object) -> None:
+                # Use **kwargs parameter to avoid unused argument warning
+                _ = kwargs  # Acknowledge the parameter
                 handler_cfg = kwargs.get("handler_config")
                 config = FlextModels.CqrsConfig.Handler.create_handler_config(
                     handler_type="query",
@@ -1321,6 +1434,8 @@ class TestFlextCqrsFactories:
                 super().__init__(config=config)
 
             def handle(self, message: FlextModels.Query) -> FlextResult[str]:
+                # Use message parameter to avoid unused argument warning
+                _message = message  # Acknowledge the parameter
                 return FlextResult[str].ok("query handled")
 
         return TestQueryHandler
@@ -1412,6 +1527,8 @@ class TestFlextCqrsIntegration:
                 self.logs: list[str] = []
 
             def process(self, command: object, handler: object) -> FlextResult[object]:
+                # Use handler parameter to avoid unused argument warning
+                _handler = handler  # Acknowledge the parameter
                 self.logs.append(f"Processing command: {command}")
                 return FlextResult[object].ok(command)
 
@@ -1420,6 +1537,8 @@ class TestFlextCqrsIntegration:
                 self.middleware_id = "validation"
 
             def process(self, command: object, handler: object) -> FlextResult[object]:
+                # Use handler parameter to avoid unused argument warning
+                _handler = handler  # Acknowledge the parameter
                 if isinstance(command, FlextModels.Command):
                     return FlextResult[object].ok(command)
                 return FlextResult[object].fail("Invalid command type")
@@ -1449,6 +1568,8 @@ class TestFlextCqrsIntegration:
 
         class TestHandler:
             def handle(self, command: object) -> FlextResult[str]:
+                # Use command parameter to avoid unused argument warning
+                _command = command  # Acknowledge the parameter
                 return FlextResult[str].ok("processed")
 
             def can_handle(self, message_type: type) -> bool:

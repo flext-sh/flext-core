@@ -620,8 +620,8 @@ class TestFlextProcessorPipeline:
             data={"test": "data"},
             timeout_seconds=3600,  # At model maximum
         )
-        # Use object.__setattr__ to bypass Pydantic validation
-        object.__setattr__(request, "timeout_seconds", 9999)  # Above processing maximum  # noqa: PLC2801
+        # Use setattr to bypass Pydantic validation
+        setattr(request, "timeout_seconds", 9999)  # Above processing maximum
 
         result = self.pipeline.process_with_timeout(request)
         FlextTestsMatchers.assert_result_failure(result)

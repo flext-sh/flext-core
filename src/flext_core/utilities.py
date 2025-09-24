@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextvars
 import inspect
 import math
 import os
@@ -23,7 +24,6 @@ import uuid
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
-from itertools import starmap
 from typing import ClassVar, cast, get_origin, get_type_hints
 
 from pydantic import BaseModel
@@ -335,7 +335,9 @@ class FlextUtilities:
         @staticmethod
         def validate_existing_file_path(path: str) -> FlextResult[str]:
             """Validate that file path exists on filesystem."""
-            file_path_result = FlextUtilities.Validation.validate_file_path(path)
+            file_path_result: FlextResult[str] = (
+                FlextUtilities.Validation.validate_file_path(path)
+            )
             if file_path_result.is_failure:
                 return file_path_result
 
@@ -479,7 +481,7 @@ class FlextUtilities:
                 Value if validation passes, contextual error otherwise
 
             """
-            validation_result = validator(value)
+            validation_result: FlextResult[None] = validator(value)
             if validation_result.is_failure:
                 return FlextResult[TContext].fail(
                     f"{context_name}: {validation_result.error}"
@@ -646,7 +648,7 @@ class FlextUtilities:
         """Processing utilities with reliability patterns."""
 
         @staticmethod
-        def retry_operation(
+        def retry_operation[T](
             operation: Callable[[], FlextResult[T]],
             max_retries: int = 3,
             delay_seconds: float = 1.0,
@@ -668,7 +670,7 @@ class FlextUtilities:
                 return FlextResult[T].fail(error_msg)
 
             # Use retry_until_success directly on the operation result
-            initial_result = operation()
+            initial_result: FlextResult[T] = operation()
             if initial_result.is_success:
                 return initial_result
 
@@ -764,7 +766,7 @@ class FlextUtilities:
 
             # Execute operation (CLOSED or HALF_OPEN state)
             try:
-                result = operation()
+                result: FlextResult[T] = operation()
 
                 if result.is_success:
                     # Operation succeeded - reset failure count and close circuit
@@ -923,13 +925,10 @@ class FlextUtilities:
                 FlextResult containing converted float or conversion error
 
             """
-            if isinstance(value, float):
-                return FlextResult[float].ok(value)
-
-            if isinstance(value, int):
+            if isinstance(value, (float, int)):
                 return FlextResult[float].ok(float(value))
 
-            # value is str at this point due to type annotation float | str
+            # value is str at this point due to type annotation
             # Type checking already ensures this
 
             # Validate string before conversion
@@ -996,12 +995,19 @@ class FlextUtilities:
                     # For other types with constructors, try calling them
                     # Skip object type as it doesn't accept arguments
                     if callable(target_type) and target_type is not object:
-                        # Use type ignore for the constructor call since MyPy can't verify all types
-                        converted_value = cast("Callable[[object], T]", target_type)(
-                            value
-                        )
-                        return FlextResult[T].ok(converted_value)
-                    # If no constructor or object type, return the value with explicit type annotation
+                        # Use proper type handling for constructor call
+                        try:
+                            converted_value = cast(
+                                "Callable[[object], T]", target_type
+                            )(value)
+                            return FlextResult[T].ok(converted_value)
+                        except (TypeError, ValueError):
+                            # If constructor fails with args, try no-arg constructor
+                            if callable(target_type) and target_type is not type:
+                                converted_value = target_type()
+                                return FlextResult[T].ok(converted_value)
+                            raise
+                    # If no constructor or object type, return the value with proper type annotation
                     return FlextResult[T].ok(cast("T", value))
                 except (TypeError, ValueError):
                     # If constructor fails, return the value with explicit type annotation
@@ -1043,8 +1049,14 @@ class FlextUtilities:
                 keys = path.split(".")
                 current: object = data  # Start with the data object
                 for key in keys:
-                    if isinstance(current, dict) and key in current:
-                        current = cast("object", current[key])
+                    if isinstance(current, dict):
+                        # Type narrow: current is now dict[str, object] due to isinstance check
+                        dict_current = current
+                        if key in dict_current:
+                            current_value = dict_current[key]
+                            current = current_value
+                        else:
+                            return FlextResult[object].ok(default)
                     else:
                         return FlextResult[object].ok(default)
                 return FlextResult[object].ok(current)
@@ -1132,8 +1144,6 @@ class FlextUtilities:
                         item for batch_result in nested_results for item in batch_result
                     ]
 
-                from typing import cast
-
                 def _identity2(
                     x: list[FlextResult[list[U]]],
                 ) -> list[FlextResult[list[U]]]:
@@ -1146,7 +1156,9 @@ class FlextUtilities:
                 )
                 return sequence_result.map(flatten_results)
             # Use accumulate_errors for collecting all errors
-            all_results = [processor(item) for batch in batches for item in batch]
+            all_results: list[FlextResult[U]] = [
+                processor(item) for batch in batches for item in batch
+            ]
             return FlextResult.accumulate_errors(*all_results)
 
     class Cache:
@@ -1380,7 +1392,7 @@ class FlextUtilities:
 
             for attempt in range(max_retries):
                 try:
-                    result = operation()
+                    result: FlextResult[T] = operation()
                     if result.is_success:
                         return result
                     last_error = result.error or f"Attempt {attempt + 1} failed"
@@ -1416,8 +1428,6 @@ class FlextUtilities:
                     exception_container[0] = e
 
             # Copy current context to the new thread
-            import contextvars
-
             context = contextvars.copy_context()
             thread = threading.Thread(target=context.run, args=(run_operation,))
             thread.daemon = True
@@ -1473,7 +1483,7 @@ class FlextUtilities:
         ) -> FlextResult[TFallback]:
             """Execute operation with fallback alternatives using railway patterns."""
             # Try primary operation first
-            primary_result = primary_operation()
+            primary_result: FlextResult[TFallback] = primary_operation()
 
             # Use or_try to chain fallbacks
             return primary_result.or_try(*fallback_operations)
@@ -1482,77 +1492,17 @@ class FlextUtilities:
         """Data conversion utilities for table formatting and display."""
 
         @staticmethod
-        def to_table_format(data: object) -> FlextResult[list[dict[str, object]]]:
-            """Convert various data types to table format (list of dictionaries).
-
-            Handles:
-            - list[dict]: Direct passthrough
-            - dict: Convert to single-row table or key-value pairs
-            - object with __dict__: Convert to key-value table
-            - primitive values: Single-cell table
-
-            Args:
-                data: Data to convert to table format
-
-            Returns:
-                FlextResult containing list of dictionaries for table display
-
-            """
-            if data is None:
-                return FlextResult[list[dict[str, object]]].ok([])
-
-            # Handle list of dictionaries (ideal case)
-            if isinstance(data, list):
-                if not data:
-                    return FlextResult[list[dict[str, object]]].ok([])
-
-                if all(isinstance(item, dict) for item in data):
-                    return FlextResult[list[dict[str, object]]].ok(
-                        cast("list[dict[str, object]]", data)
-                    )
-
-                # Convert list of non-dict items to table
-                def convert_item_to_dict(i: int, item: object) -> dict[str, object]:
-                    return {"index": i, "value": str(item)}
-
+        def normalize_data_for_table(
+            data: list[object],
+        ) -> FlextResult[list[dict[str, object]]]:
+            """Normalize data for table display."""
+            if all(isinstance(item, dict) for item in data):
                 return FlextResult[list[dict[str, object]]].ok(
-                    list(
-                        starmap(
-                            convert_item_to_dict, enumerate(cast("list[object]", data))
-                        )
-                    )
+                    cast("list[dict[str, object]]", data)
                 )
-
-            # Handle single dictionary
-            if isinstance(data, dict):
-                if not data:
-                    return FlextResult[list[dict[str, object]]].ok([])
-
-                # Convert to key-value table
-                def convert_kv_to_dict(key: object, value: object) -> dict[str, object]:
-                    return {"key": str(key), "value": str(value)}
-
-                return FlextResult[list[dict[str, object]]].ok(
-                    list(
-                        starmap(
-                            convert_kv_to_dict, cast("dict[str, object]", data).items()
-                        )
-                    )
-                )
-
-            # Handle objects with __dict__ attribute
-            if hasattr(data, "__dict__"):
-                obj_dict = data.__dict__
-                if obj_dict:
-                    return FlextResult[list[dict[str, object]]].ok([
-                        {"attribute": str(key), "value": str(value)}
-                        for key, value in obj_dict.items()
-                        if not key.startswith("_")  # Skip private attributes
-                    ])
-                return FlextResult[list[dict[str, object]]].ok([{"object": str(data)}])
-
-            # Handle primitive values
-            return FlextResult[list[dict[str, object]]].ok([{"value": str(data)}])
+            return FlextResult[list[dict[str, object]]].fail(
+                "Data must be list of dictionaries"
+            )
 
     class TypeGuards:
         """Type guard utilities for runtime type checking."""
@@ -1845,33 +1795,31 @@ class FlextUtilities:
                     try:
                         # Check if it's a custom validation method (callable without parameters)
                         # and returns a FlextResult (not a Pydantic field validator)
-                        import inspect
-
                         sig = inspect.signature(validation_method)
                         if (
                             len(sig.parameters) == 0
                         ):  # No parameters = custom validation method
-                            validation_result = validation_method()
-                            if (
-                                hasattr(validation_result, "is_failure")
-                                and hasattr(validation_result, "error")
-                                and getattr(validation_result, "is_failure", False)
-                            ):
-                                return FlextResult[None].fail(
-                                    getattr(validation_result, "error", f"{operation} validation failed")
-                                    or f"{operation} validation failed",
-                                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                            validation_result_obj = validation_method()
+                            # Type narrow to FlextResult
+                            if isinstance(validation_result_obj, FlextResult):
+                                validation_result: FlextResult[object] = cast(
+                                    "FlextResult[object]", validation_result_obj
                                 )
+                                if validation_result.is_failure:
+                                    return FlextResult[None].fail(
+                                        validation_result.error
+                                        or f"{operation} validation failed",
+                                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                                    )
                     except Exception as e:
                         # If calling without parameters fails, it's likely a Pydantic field validator
                         # Skip custom validation in this case - this is expected behavior
                         # Log at debug level since this is expected for Pydantic field validators
-                        import logging
-                        logger = logging.getLogger(__name__)
+                        logger = FlextLogger(__name__)
                         logger.debug(
                             "Skipping validation method %s: %s",
                             validation_method_name,
-                            str(e)
+                            str(e),
                         )
 
             # If message is a Pydantic model, assume it is already validated unless
@@ -1986,7 +1934,7 @@ class FlextUtilities:
                 and hasattr(message, "__class__")
             ):
                 # This is an attrs instance, convert to dict manually
-                result = {}
+                result: dict[str, object] = {}
                 for attr_field in attrs_fields:
                     field_name = attr_field.name
                     if hasattr(message, field_name):
@@ -1999,7 +1947,10 @@ class FlextUtilities:
                 method = getattr(message, method_name, None)
                 if callable(method):
                     try:
-                        data = method()
+                        result_data = method()
+                        # Type narrow to dict and return immediately if valid
+                        if isinstance(result_data, dict):
+                            return cast("dict[str, object]", result_data)
                     except Exception as e:
                         # Log the exception for debugging purposes as required by S112
                         logger.debug(
@@ -2009,8 +1960,6 @@ class FlextUtilities:
                             error=str(e),
                         )
                         continue
-                    if data is not None:
-                        return data
 
             # Handle __slots__
             slots = getattr(message, "__slots__", None)

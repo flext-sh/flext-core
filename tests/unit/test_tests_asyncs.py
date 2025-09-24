@@ -15,8 +15,7 @@ import time
 
 import pytest
 
-from flext_tests import asyncs
-from flext_tests.asyncs import FlextTestsAsyncs
+from flext_tests import FlextTestsAsyncs, asyncs
 
 
 class TestFlextTestsAsyncs:

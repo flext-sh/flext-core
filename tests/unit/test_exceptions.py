@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptions
+from flext_core import FlextConstants, FlextExceptions
 
 
 class TestExceptions100PercentCoverage:
@@ -250,7 +250,6 @@ class TestExceptions100PercentCoverage:
     def test_error_codes_access_lines_1199_1216(self) -> None:
         """Test ErrorCodes access lines 1199-1216."""
         # Test actual error code constants from FlextConstants.Errors
-        from flext_core.constants import FlextConstants
 
         error_codes = [
             FlextConstants.Errors.VALIDATION_ERROR,

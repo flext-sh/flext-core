@@ -23,7 +23,24 @@ from flext_core import (
     FlextTypes,
 )
 
-logger = FlextLogger(__name__)
+
+# Lazy logger initialization to avoid configuration issues
+class _LoggerSingleton:
+    """Singleton logger instance."""
+
+    _instance: FlextLogger | None = None
+
+    @classmethod
+    def get_logger(cls) -> FlextLogger:
+        """Get logger instance with lazy initialization."""
+        if cls._instance is None:
+            cls._instance = FlextLogger(__name__)
+        return cls._instance
+
+
+def get_logger() -> FlextLogger:
+    """Get logger instance with lazy initialization."""
+    return _LoggerSingleton.get_logger()
 
 
 class FlextTestsFixtures:
@@ -451,7 +468,7 @@ class FlextTestsFixtures:
 
         def __init__(self) -> None:
             """Initialize async executor."""
-            self._running = False
+            self._running: bool = False
             self._tasks: list[asyncio.Task[object]] = []
 
         async def start(self) -> None:
@@ -510,7 +527,7 @@ class FlextTestsFixtures:
         def __init__(self) -> None:
             """Initialize test data service."""
             self._data_store: FlextTypes.Core.Dict = {}
-            self._call_count = 0
+            self._call_count: int = 0
             self._operations_log: list[str] = []
 
         def store(self, key: str, value: object) -> None:

@@ -9,6 +9,7 @@
 ### Phase 1: Runtime Error Fixes (Examples 01-11)
 
 **Fixed API Issues:**
+
 1. **FlextResult API** (01_basic_result.py):
    - Changed `.data` to `.value` for new API
    - Fixed type annotations for `FlextResult.safe_call()`
@@ -39,23 +40,27 @@
 ### Phase 2: Quality Assurance Fixes
 
 **Ruff Linting (7 issues fixed):**
+
 - Removed unused variables (F841)
 - Fixed performance anti-patterns (PERF401)
 - Added security exception handling (S110)
 - All examples now pass Ruff with zero errors
 
 **Type Checking:**
+
 - Fixed critical runtime-affecting type issues
 - Added justified `type: ignore` comments with explanations
 - MyPy: 323 errors remain (mostly demo code annotations)
 - PyRight: 902 errors remain (mostly type annotations)
 
 ### Phase 3: Final Runtime Testing
+
 - ✅ All 13 examples pass runtime tests
 - ✅ No crashes or exceptions
 - ✅ Proper error handling demonstrated
 
 ### Phase 4: Anti-Pattern Review
+
 - Most try/except blocks are intentional demonstrations
 - Added `noqa` comments for justified exceptions
 - Deprecated patterns kept with proper warnings for educational purposes
@@ -63,35 +68,44 @@
 ## KEY CHANGES BY FILE
 
 ### 01_basic_result.py
+
 - Fixed `risky_function` to properly raise exception
 - Corrected type annotations for safe_call
 - Modified validators for `validate_all` pattern
 
-### 02_dependency_injection.py  
+### 02_dependency_injection.py
+
 - User entity uses string ID
 - Proper batch_register result handling
 - Direct method calls without hasattr checks
 
 ### 03_models_basics.py
+
 - Added justified type: ignore comments for dynamic data
 
 ### 06_messaging_patterns.py
+
 - Complete Payload API fix (non-generic, dict fields)
 
 ### 07_processing_handlers.py
+
 - Proper logger initialization in all handlers
 
 ### 08_integration_complete.py
+
 - Fixed unused loop variable and performance issue
 
 ### 10_cqrs_patterns.py
+
 - Complete FlextCqrs.Results API correction
 - DomainEvent field name fixes
 
 ### 11_bus_messaging.py
+
 - FlextBus configuration fixes
 
 ### 13_exceptions_handling.py
+
 - Added noqa comments for intentional patterns
 
 ## METRICS
@@ -114,6 +128,7 @@
 ## EDUCATIONAL VALUE PRESERVED
 
 All examples maintain their educational purpose while following FLEXT standards:
+
 - Intentional anti-patterns are clearly marked with warnings
 - Deprecated patterns shown with migration paths
 - Error handling demonstrates both wrong and right approaches

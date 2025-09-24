@@ -7,7 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import dataclasses
+from dataclasses import dataclass, is_dataclass
 from datetime import UTC, datetime
 from typing import Protocol, cast
 
@@ -1403,23 +1404,22 @@ class _ValidationProbeHandler(FlextHandlers[object, object]):
             return {slot: getattr(message, slot, None) for slot in slots}
         if hasattr(message, "__dataclass_fields__"):
             # Handle dataclasses
-            import dataclasses
 
             try:
                 # Use proper type checking for dataclass
-                if hasattr(message, "__dataclass_fields__"):
+                if (
+                    hasattr(message, "__dataclass_fields__")
+                    and is_dataclass(message)
+                    and not isinstance(message, type)
+                ):
                     # Type check: message is a dataclass instance
-                    from dataclasses import is_dataclass
-
-                    if is_dataclass(message) and not isinstance(message, type):
-                        return cast("dict[str, object]", dataclasses.asdict(message))
+                    return cast("dict[str, object]", dataclasses.asdict(message))
                 return {"value": str(message), "type": type(message).__name__}
             except TypeError:
                 # Fallback for non-dataclass objects
                 return {"value": str(message), "type": type(message).__name__}
         if hasattr(message, "__attrs_attrs__"):
             # Handle attrs classes
-            import attr
 
             try:
                 # Use proper type checking for attrs
