@@ -1,4 +1,4 @@
-"""Tests for FlextContext context management system.
+"""Comprehensive tests for FlextContext - Context Management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,631 +6,365 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from threading import Thread
-from time import sleep
-
-import pytest
-
-from flext_core import FlextContext, FlextTypes
-
-pytestmark = [pytest.mark.unit, pytest.mark.core]
-
-
-class TestCorrelationIdManagement:
-    """Test correlation ID functionality."""
-
-    def test_get_correlation_id_default(self) -> None:
-        """Test getting correlation ID returns None by default."""
-        # Clear any existing context
-        FlextContext.Utilities.clear_context()
-
-        assert FlextContext.Correlation.get_correlation_id() is None
-
-    def test_set_get_correlation_id(self) -> None:
-        """Test setting and getting correlation ID."""
-        test_id = "test-correlation-123"
-        FlextContext.Correlation.set_correlation_id(test_id)
-
-        assert FlextContext.Correlation.get_correlation_id() == test_id
-
-    def test_generate_correlation_id(self) -> None:
-        """Test generating new correlation ID."""
-        generated_id = FlextContext.Correlation.generate_correlation_id()
-
-        assert generated_id is not None
-        # ID format changed during simplification
-        assert len(generated_id) == 13  # Format: "corr_" + 8 character UUID prefix
-        assert generated_id.startswith("corr_")
-        assert FlextContext.Correlation.get_correlation_id() == generated_id
-
-    def test_parent_correlation_id(self) -> None:
-        """Test parent correlation ID functionality."""
-        FlextContext.Utilities.clear_context()
-
-        # Test default is None
-        assert FlextContext.Correlation.get_parent_correlation_id() is None
-
-        # Test setting and getting
-        parent_id = "parent-correlation-456"
-        FlextContext.Correlation.set_parent_correlation_id(parent_id)
-        assert FlextContext.Correlation.get_parent_correlation_id() == parent_id
-
-    def test_new_correlation_context_with_id(self) -> None:
-        """Test new correlation context with specific ID."""
-        test_id = "specific-correlation-789"
-
-        with FlextContext.Correlation.new_correlation(
-            correlation_id=test_id,
-        ) as context_id:
-            assert context_id == test_id
-            assert FlextContext.Correlation.get_correlation_id() == test_id
-
-    def test_new_correlation_context_generated(self) -> None:
-        """Test new correlation context with generated ID."""
-        with FlextContext.Correlation.new_correlation() as context_id:
-            assert context_id is not None
-            assert len(context_id) == 13  # Format: "corr_" + 8 character UUID prefix
-            assert context_id.startswith("corr_")
-            assert FlextContext.Correlation.get_correlation_id() == context_id
-
-    def test_new_correlation_with_parent(self) -> None:
-        """Test new correlation context with parent ID."""
-        parent_id = "explicit-parent-123"
-
-        with FlextContext.Correlation.new_correlation(
-            parent_id=parent_id,
-        ) as context_id:
-            assert context_id is not None
-            assert FlextContext.Correlation.get_parent_correlation_id() == parent_id
-
-    def test_new_correlation_inherits_current_as_parent(self) -> None:
-        """Test that new correlation inherits current as parent."""
-        # Set initial correlation
-        initial_id = "initial-correlation"
-        FlextContext.Correlation.set_correlation_id(initial_id)
-
-        with FlextContext.Correlation.new_correlation() as new_id:
-            assert new_id != initial_id
-            assert FlextContext.Correlation.get_parent_correlation_id() == initial_id
-
-    def test_new_correlation_context_restoration(self) -> None:
-        """Test context restoration after new_correlation."""
-        # Set initial context
-        initial_correlation = "initial-123"
-        initial_parent = "initial-parent-456"
-        FlextContext.Correlation.set_correlation_id(initial_correlation)
-        FlextContext.Correlation.set_parent_correlation_id(initial_parent)
-
-        # Create new context
-        with FlextContext.Correlation.new_correlation(correlation_id="temp-789"):
-            assert FlextContext.Correlation.get_correlation_id() == "temp-789"
-
-        # Context should be restored (correlation cleared, parent restored)
-        assert FlextContext.Correlation.get_correlation_id() == initial_correlation
-
-    def test_inherit_correlation_existing(self) -> None:
-        """Test inheriting existing correlation ID."""
-        existing_id = "existing-correlation"
-        FlextContext.Correlation.set_correlation_id(existing_id)
-
-        with FlextContext.Correlation.inherit_correlation() as inherited_id:
-            assert inherited_id == existing_id
-            assert FlextContext.Correlation.get_correlation_id() == existing_id
-
-    def test_inherit_correlation_creates_new(self) -> None:
-        """Test inherit_correlation creates new when none exists."""
-        FlextContext.Utilities.clear_context()
-
-        with FlextContext.Correlation.inherit_correlation() as inherited_id:
-            assert inherited_id is not None
-            assert len(inherited_id) == 13  # Format: "corr_" + 8 character UUID prefix
-            assert inherited_id.startswith("corr_")
-            assert FlextContext.Correlation.get_correlation_id() == inherited_id
-
-
-class TestServiceIdentification:
-    """Test service identification functionality."""
-
-    def test_service_name_default(self) -> None:
-        """Test service name is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Service.get_service_name() is None
-
-    def test_set_get_service_name(self) -> None:
-        """Test setting and getting service name."""
-        service_name = "test-service"
-        FlextContext.Service.set_service_name(service_name)
-        assert FlextContext.Service.get_service_name() == service_name
-
-    def test_service_version_default(self) -> None:
-        """Test service version is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Service.get_service_version() is None
-
-    def test_set_get_service_version(self) -> None:
-        """Test setting and getting service version."""
-        version = "1.2.3"
-        FlextContext.Service.set_service_version(version)
-        assert FlextContext.Service.get_service_version() == version
-
-    def test_service_context_both_values(self) -> None:
-        """Test service context with name and version."""
-        service_name = "test-service"
-        version = "2.0.0"
-
-        with FlextContext.Service.service_context(service_name, version):
-            assert FlextContext.Service.get_service_name() == service_name
-            assert FlextContext.Service.get_service_version() == version
-
-    def test_service_context_name_only(self) -> None:
-        """Test service context with name only."""
-        FlextContext.Utilities.clear_context()  # Clear any state from previous tests
-        service_name = "name-only-service"
-
-        with FlextContext.Service.service_context(service_name):
-            assert FlextContext.Service.get_service_name() == service_name
-            assert FlextContext.Service.get_service_version() is None
-
-    def test_service_context_restoration(self) -> None:
-        """Test service context restoration after block."""
-        # Set initial values
-        initial_name = "initial-service"
-        initial_version = "1.0.0"
-        FlextContext.Service.set_service_name(initial_name)
-        FlextContext.Service.set_service_version(initial_version)
-
-        # Use service context
-        with FlextContext.Service.service_context("temp-service", "2.0.0"):
-            assert FlextContext.Service.get_service_name() == "temp-service"
-            assert FlextContext.Service.get_service_version() == "2.0.0"
-
-        # Should restore initial values
-        assert FlextContext.Service.get_service_name() == initial_name
-        assert FlextContext.Service.get_service_version() == initial_version
-
-
-class TestRequestMetadata:
-    """Test request metadata functionality."""
-
-    def test_user_id_default(self) -> None:
-        """Test user ID is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Request.get_user_id() is None
-
-    def test_set_get_user_id(self) -> None:
-        """Test setting and getting user ID."""
-        user_id = "user-123"
-        FlextContext.Request.set_user_id(user_id)
-        assert FlextContext.Request.get_user_id() == user_id
-
-    def test_operation_name_default(self) -> None:
-        """Test operation name is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Request.get_operation_name() is None
-
-    def test_set_get_operation_name(self) -> None:
-        """Test setting and getting operation name."""
-        operation = "create_user"
-        FlextContext.Request.set_operation_name(operation)
-        assert FlextContext.Request.get_operation_name() == operation
-
-    def test_request_id_default(self) -> None:
-        """Test request ID is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Request.get_request_id() is None
-
-    def test_set_get_request_id(self) -> None:
-        """Test setting and getting request ID."""
-        request_id = "request-456"
-        FlextContext.Request.set_request_id(request_id)
-        assert FlextContext.Request.get_request_id() == request_id
-
-    def test_request_context_all_params(self) -> None:
-        """Test request context with all parameters."""
-        user_id = "test-user"
-        operation_name = "test-operation"
-        request_id = "test-request"
-        metadata: dict[str, object] = {"key": "value", "num": 123}
-
-        with FlextContext.Request.request_context(
-            user_id=user_id,
-            operation_name=operation_name,
-            request_id=request_id,
-            metadata=metadata,
-        ):
-            assert FlextContext.Request.get_user_id() == user_id
-            assert FlextContext.Request.get_operation_name() == operation_name
-            assert FlextContext.Request.get_request_id() == request_id
-            assert FlextContext.Performance.get_operation_metadata() == metadata
-
-    def test_request_context_partial_params(self) -> None:
-        """Test request context with some parameters."""
-        # Clear context to avoid contamination from other tests
-        FlextContext.Utilities.clear_context()
-
-        user_id = "partial-user"
-
-        with FlextContext.Request.request_context(user_id=user_id):
-            assert FlextContext.Request.get_user_id() == user_id
-            assert FlextContext.Request.get_operation_name() is None
-            assert FlextContext.Request.get_request_id() is None
-
-    def test_request_context_restoration(self) -> None:
-        """Test request context restoration."""
-        # Set initial values
-        FlextContext.Request.set_user_id("initial-user")
-        FlextContext.Request.set_operation_name("initial-op")
-
-        with FlextContext.Request.request_context(
-            user_id="temp-user",
-            operation_name="temp-op",
-        ):
-            assert FlextContext.Request.get_user_id() == "temp-user"
-            assert FlextContext.Request.get_operation_name() == "temp-op"
-
-        # Should restore initial values
-        assert FlextContext.Request.get_user_id() == "initial-user"
-        assert FlextContext.Request.get_operation_name() == "initial-op"
-
-
-class TestPerformanceContext:
-    """Test performance context functionality."""
-
-    def test_operation_start_time_default(self) -> None:
-        """Test operation start time is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Performance.get_operation_start_time() is None
-
-    def test_set_operation_start_time_explicit(self) -> None:
-        """Test setting explicit start time."""
-        start_time = datetime.now(UTC)
-        FlextContext.Performance.set_operation_start_time(start_time)
-        assert FlextContext.Performance.get_operation_start_time() == start_time
-
-    def test_set_operation_start_time_auto(self) -> None:
-        """Test setting start time automatically."""
-        FlextContext.Performance.set_operation_start_time()
-        start_time = FlextContext.Performance.get_operation_start_time()
-
-        assert start_time is not None
-        assert isinstance(start_time, datetime)
-        assert start_time.tzinfo == UTC
-
-    def test_operation_metadata_default(self) -> None:
-        """Test operation metadata is None by default."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Performance.get_operation_metadata() is None
-
-    def test_set_get_operation_metadata(self) -> None:
-        """Test setting and getting operation metadata."""
-        metadata: dict[str, object] = {"step": "validation", "count": 10}
-        FlextContext.Performance.set_operation_metadata(metadata)
-        assert FlextContext.Performance.get_operation_metadata() == metadata
-
-    def test_add_operation_metadata_new(self) -> None:
-        """Test adding metadata when none exists."""
-        FlextContext.Utilities.clear_context()
-        FlextContext.Performance.add_operation_metadata("key1", "value1")
-
-        metadata = FlextContext.Performance.get_operation_metadata()
-        assert metadata == {"key1": "value1"}
-
-    def test_add_operation_metadata_existing(self) -> None:
-        """Test adding to existing metadata."""
-        initial: FlextTypes.Core.Dict = {"existing": "value"}
-        FlextContext.Performance.set_operation_metadata(initial)
-
-        FlextContext.Performance.add_operation_metadata("new_key", "new_value")
-
-        metadata = FlextContext.Performance.get_operation_metadata()
-        assert metadata == {"existing": "value", "new_key": "new_value"}
-
-    def test_timed_operation_basic(self) -> None:
-        """Test basic timed operation."""
-        operation_name = "test_operation"
-
-        with FlextContext.Performance.timed_operation(operation_name) as metadata:
-            # Check initial metadata
-            assert "start_time" in metadata
-            assert "operation_name" in metadata
-            assert metadata["operation_name"] == operation_name
-
-            # Verify context is set
-            assert FlextContext.Request.get_operation_name() == operation_name
-            assert FlextContext.Performance.get_operation_start_time() is not None
-
-            # Small delay to measure duration
-            sleep(0.01)
-
-        # Check final metadata has duration
-        assert "end_time" in metadata
-        assert "duration_seconds" in metadata
-        assert isinstance(metadata["duration_seconds"], float)
-        assert metadata["duration_seconds"] > 0
-
-    def test_timed_operation_no_name(self) -> None:
-        """Test timed operation without name."""
-        with FlextContext.Performance.timed_operation() as metadata:
-            assert "start_time" in metadata
-            assert metadata["operation_name"] is None
-
-            sleep(0.001)  # Very small delay
-
-        assert "duration_seconds" in metadata
-        duration = metadata["duration_seconds"]
-        assert isinstance(duration, (int, float))
-        assert duration >= 0
-
-
-class TestContextSerialization:
-    """Test context serialization functionality."""
-
-    def test_get_full_context_empty(self) -> None:
-        """Test getting full context when empty."""
-        FlextContext.Utilities.clear_context()
-        context = FlextContext.Serialization.get_full_context()
-
-        expected_keys = {
-            "correlation_id",
-            "parent_correlation_id",
-            "service_name",
-            "service_version",
-            "user_id",
-            "operation_name",
-            "request_id",
-            "operation_start_time",
-            "operation_metadata",
+import threading
+import time
+
+from flext_core import FlextContext
+
+
+class TestFlextContext:
+    """Test suite for FlextContext context management."""
+
+    def test_context_initialization(self) -> None:
+        """Test context initialization."""
+        context = FlextContext()
+        assert context is not None
+        assert isinstance(context, FlextContext)
+
+    def test_context_with_initial_data(self) -> None:
+        """Test context initialization with initial data."""
+        initial_data = {"user_id": "123", "session_id": "abc"}
+        context = FlextContext(initial_data)
+        assert context is not None
+        assert context.get("user_id") == "123"
+        assert context.get("session_id") == "abc"
+
+    def test_context_set_get_value(self) -> None:
+        """Test context set/get value operations."""
+        context = FlextContext()
+
+        context.set("test_key", "test_value")
+        value = context.get("test_key")
+        assert value == "test_value"
+
+    def test_context_get_with_default(self) -> None:
+        """Test context get with default value."""
+        context = FlextContext()
+
+        value = context.get("nonexistent_key", "default_value")
+        assert value == "default_value"
+
+    def test_context_has_value(self) -> None:
+        """Test context has value check."""
+        context = FlextContext()
+
+        context.set("test_key", "test_value")
+        assert context.has("test_key") is True
+        assert context.has("nonexistent_key") is False
+
+    def test_context_remove_value(self) -> None:
+        """Test context remove value operation."""
+        context = FlextContext()
+
+        context.set("test_key", "test_value")
+        assert context.has("test_key") is True
+
+        context.remove("test_key")
+        assert context.has("test_key") is False
+
+    def test_context_clear(self) -> None:
+        """Test context clear operation."""
+        context = FlextContext()
+
+        context.set("key1", "value1")
+        context.set("key2", "value2")
+
+        assert context.has("key1") is True
+        assert context.has("key2") is True
+
+        context.clear()
+
+        assert context.has("key1") is False
+        assert context.has("key2") is False
+
+    def test_context_keys_values_items(self) -> None:
+        """Test context keys, values, and items operations."""
+        context = FlextContext()
+
+        context.set("key1", "value1")
+        context.set("key2", "value2")
+
+        keys = context.keys()
+        assert "key1" in keys
+        assert "key2" in keys
+
+        values = context.values()
+        assert "value1" in values
+        assert "value2" in values
+
+        items = context.items()
+        assert ("key1", "value1") in items
+        assert ("key2", "value2") in items
+
+    def test_context_nested_data(self) -> None:
+        """Test context with nested data structures."""
+        context = FlextContext()
+
+        nested_data = {
+            "user": {
+                "id": "123",
+                "profile": {"name": "John Doe", "email": "john@example.com"},
+            }
         }
 
-        assert set(context.keys()) == expected_keys
-        assert all(value is None for value in context.values())
+        context.set("nested", nested_data)
+        retrieved = context.get("nested")
+        assert retrieved == nested_data
+        assert retrieved["user"]["profile"]["name"] == "John Doe"
 
-    def test_get_full_context_populated(self) -> None:
-        """Test getting full context when populated."""
-        # Set various context values
-        FlextContext.Correlation.set_correlation_id("corr-123")
-        FlextContext.Correlation.set_parent_correlation_id("parent-456")
-        FlextContext.Service.set_service_name("test-service")
-        FlextContext.Service.set_service_version("1.0.0")
-        FlextContext.Request.set_user_id("user-789")
-        FlextContext.Request.set_operation_name("test-op")
-        FlextContext.Request.set_request_id("req-012")
+    def test_context_merge(self) -> None:
+        """Test context merging."""
+        context1 = FlextContext()
+        context1.set("key1", "value1")
+        context1.set("key2", "value1")
 
-        start_time = datetime.now(UTC)
-        metadata: FlextTypes.Core.Dict = {"key": "value"}
-        FlextContext.Performance.set_operation_start_time(start_time)
-        FlextContext.Performance.set_operation_metadata(metadata)
+        context2 = FlextContext()
+        context2.set("key2", "value2")
+        context2.set("key3", "value3")
 
-        context = FlextContext.Serialization.get_full_context()
+        merged = context1.merge(context2)
+        assert merged.get("key1") == "value1"
+        assert merged.get("key2") == "value2"  # Overridden by context2
+        assert merged.get("key3") == "value3"
 
-        assert context["correlation_id"] == "corr-123"
-        assert context["parent_correlation_id"] == "parent-456"
-        assert context["service_name"] == "test-service"
-        assert context["service_version"] == "1.0.0"
-        assert context["user_id"] == "user-789"
-        assert context["operation_name"] == "test-op"
-        assert context["request_id"] == "req-012"
-        assert context["operation_start_time"] == start_time
-        assert context["operation_metadata"] == metadata
+    def test_context_clone(self) -> None:
+        """Test context cloning."""
+        context = FlextContext()
+        context.set("key1", "value1")
+        context.set("key2", "value2")
 
-    def test_get_correlation_context_empty(self) -> None:
-        """Test getting correlation context when empty."""
-        FlextContext.Utilities.clear_context()
-        context = FlextContext.Serialization.get_correlation_context()
+        cloned = context.clone()
+        assert cloned.get("key1") == "value1"
+        assert cloned.get("key2") == "value2"
 
-        assert context == {}
+        # Modifying clone should not affect original
+        cloned.set("key1", "modified_value")
+        assert context.get("key1") == "value1"
 
-    def test_get_correlation_context_populated(self) -> None:
-        """Test getting correlation context with data."""
-        FlextContext.Correlation.set_correlation_id("corr-123")
-        FlextContext.Correlation.set_parent_correlation_id("parent-456")
-        FlextContext.Service.set_service_name("test-service")
+    def test_context_serialization(self) -> None:
+        """Test context serialization."""
+        context = FlextContext()
+        context.set("string_key", "string_value")
+        context.set("int_key", 42)
+        context.set("bool_key", True)
+        context.set("list_key", [1, 2, 3])
+        context.set("dict_key", {"nested": "value"})
 
-        context = FlextContext.Serialization.get_correlation_context()
+        # Test JSON serialization
+        json_str = context.to_json()
+        assert isinstance(json_str, str)
+        assert "string_value" in json_str
 
-        assert context["X-Correlation-Id"] == "corr-123"
-        assert context["X-Parent-Correlation-Id"] == "parent-456"
-        assert context["X-Service-Name"] == "test-service"
+        # Test JSON deserialization
+        restored_context = FlextContext.from_json(json_str)
+        assert restored_context.get("string_key") == "string_value"
+        assert restored_context.get("int_key") == 42
+        assert restored_context.get("bool_key") is True
 
-    def test_set_from_context_http_headers(self) -> None:
-        """Test setting context from HTTP header format."""
-        headers = {
-            "X-Correlation-Id": "header-corr-123",
-            "X-Parent-Correlation-Id": "header-parent-456",
-            "X-Service-Name": "header-service",
-            "X-User-Id": "header-user-789",
-        }
+    def test_context_validation(self) -> None:
+        """Test context validation."""
+        context = FlextContext()
+        context.set("valid_key", "valid_value")
 
-        FlextContext.Serialization.set_from_context(headers)
+        result = context.validate()
+        assert result.is_success
 
-        assert FlextContext.Correlation.get_correlation_id() == "header-corr-123"
-        assert (
-            FlextContext.Correlation.get_parent_correlation_id() == "header-parent-456"
-        )
-        assert FlextContext.Service.get_service_name() == "header-service"
-        assert FlextContext.Request.get_user_id() == "header-user-789"
+    def test_context_validation_failure(self) -> None:
+        """Test context validation failure."""
+        context = FlextContext()
+        context.set("", "empty_key")  # Invalid key
 
-    def test_set_from_context_plain_format(self) -> None:
-        """Test setting context from plain dictionary format."""
-        plain_context = {
-            "correlation_id": "plain-corr-123",
-            "parent_correlation_id": "plain-parent-456",
-            "service_name": "plain-service",
-            "user_id": "plain-user-789",
-        }
+        result = context.validate()
+        assert result.is_failure
 
-        FlextContext.Serialization.set_from_context(plain_context)
+    def test_context_thread_safety(self) -> None:
+        """Test context thread safety."""
+        context = FlextContext()
+        results = []
 
-        assert FlextContext.Correlation.get_correlation_id() == "plain-corr-123"
-        assert (
-            FlextContext.Correlation.get_parent_correlation_id() == "plain-parent-456"
-        )
-        assert FlextContext.Service.get_service_name() == "plain-service"
-        assert FlextContext.Request.get_user_id() == "plain-user-789"
+        def set_value(thread_id: int) -> None:
+            context.set(f"thread_{thread_id}", f"value_{thread_id}")
+            results.append(context.get(f"thread_{thread_id}"))
 
-    def test_set_from_context_invalid_types(self) -> None:
-        """Test setting context ignores invalid types."""
-        invalid_context = {
-            "X-Correlation-Id": 123,  # Not a string
-            "X-Service-Name": None,  # None value
-            "valid_key": "valid_value",
-        }
-
-        FlextContext.Utilities.clear_context()
-        FlextContext.Serialization.set_from_context(invalid_context)
-
-        # Only valid string values should be set
-        assert FlextContext.Correlation.get_correlation_id() is None
-        assert FlextContext.Service.get_service_name() is None
-
-
-class TestContextUtilities:
-    """Test context utility methods."""
-
-    def test_ensure_correlation_id_exists(self) -> None:
-        """Test ensure_correlation_id when ID exists."""
-        existing_id = "existing-123"
-        FlextContext.Correlation.set_correlation_id(existing_id)
-
-        result_id = FlextContext.Utilities.ensure_correlation_id()
-        assert result_id == existing_id
-
-    def test_ensure_correlation_id_creates_new(self) -> None:
-        """Test ensure_correlation_id creates new when none exists."""
-        FlextContext.Utilities.clear_context()
-
-        result_id = FlextContext.Utilities.ensure_correlation_id()
-        assert result_id is not None
-        assert len(result_id) == 13  # Format: "corr_" + 8 character UUID prefix
-        assert result_id.startswith("corr_")
-        assert FlextContext.Correlation.get_correlation_id() == result_id
-
-    def test_has_correlation_id_true(self) -> None:
-        """Test has_correlation_id returns True when ID exists."""
-        FlextContext.Correlation.set_correlation_id("test-123")
-        assert FlextContext.Utilities.has_correlation_id() is True
-
-    def test_has_correlation_id_false(self) -> None:
-        """Test has_correlation_id returns False when no ID."""
-        FlextContext.Utilities.clear_context()
-        assert FlextContext.Utilities.has_correlation_id() is False
-
-    def test_get_context_summary_empty(self) -> None:
-        """Test context summary when empty."""
-        FlextContext.Utilities.clear_context()
-        summary = FlextContext.Utilities.get_context_summary()
-        assert summary == "FlextContext(empty)"
-
-    def test_get_context_summary_populated(self) -> None:
-        """Test context summary with data."""
-        FlextContext.Correlation.set_correlation_id("long-correlation-id-123456789")
-        FlextContext.Service.set_service_name("test-service")
-        FlextContext.Request.set_operation_name("test-operation")
-        FlextContext.Request.set_user_id("test-user")
-
-        summary = FlextContext.Utilities.get_context_summary()
-
-        # Should contain truncated correlation ID and other values
-        assert "correlation=long-cor..." in summary
-        assert "service=test-service" in summary
-        assert "operation=test-operation" in summary
-        assert "user=test-user" in summary
-        assert "FlextContext(" in summary
-
-    def test_get_context_summary_partial(self) -> None:
-        """Test context summary with partial data."""
-        FlextContext.Utilities.clear_context()
-        FlextContext.Service.set_service_name("only-service")
-
-        summary = FlextContext.Utilities.get_context_summary()
-        assert "service=only-service" in summary
-        assert summary == "FlextContext(service=only-service)"
-
-
-class TestContextClear:
-    """Test context clearing functionality."""
-
-    def test_clear_context_all_variables(self) -> None:
-        """Test clearing all context variables."""
-        # Set all types of context variables
-        FlextContext.Correlation.set_correlation_id("test-corr")
-        FlextContext.Correlation.set_parent_correlation_id("test-parent")
-        FlextContext.Service.set_service_name("test-service")
-        FlextContext.Service.set_service_version("1.0.0")
-        FlextContext.Request.set_user_id("test-user")
-        FlextContext.Request.set_operation_name("test-operation")
-        FlextContext.Request.set_request_id("test-request")
-        FlextContext.Performance.set_operation_start_time(datetime.now(UTC))
-        FlextContext.Performance.set_operation_metadata({"key": "value"})
-
-        # Clear all
-        FlextContext.Utilities.clear_context()
-
-        # All should be None
-        assert FlextContext.Correlation.get_correlation_id() is None
-        assert FlextContext.Correlation.get_parent_correlation_id() is None
-        assert FlextContext.Service.get_service_name() is None
-        assert FlextContext.Service.get_service_version() is None
-        assert FlextContext.Request.get_user_id() is None
-        assert FlextContext.Request.get_operation_name() is None
-        assert FlextContext.Request.get_request_id() is None
-        assert FlextContext.Performance.get_operation_start_time() is None
-        assert FlextContext.Performance.get_operation_metadata() is None
-
-
-class TestContextThreadSafety:
-    """Test thread safety of context management."""
-
-    def test_context_isolation_between_threads(self) -> None:
-        """Test that context is isolated between threads."""
-        results: FlextTypes.Core.Dict = {}
-
-        def thread_worker(thread_id: str) -> None:
-            # Each thread sets its own correlation ID
-            FlextContext.Correlation.set_correlation_id(f"thread-{thread_id}")
-            FlextContext.Service.set_service_name(f"service-{thread_id}")
-
-            sleep(0.01)  # Small delay to allow interleaving
-
-            # Each thread should see only its own values
-            results[f"correlation_{thread_id}"] = (
-                FlextContext.Correlation.get_correlation_id()
-            )
-            results[f"service_{thread_id}"] = FlextContext.Service.get_service_name()
-
-        # Start multiple threads
         threads = []
-        for i in range(3):
-            thread = Thread(target=thread_worker, args=(str(i),))
+        for i in range(10):
+            thread = threading.Thread(target=set_value, args=(i,))
             threads.append(thread)
             thread.start()
 
-        # Wait for all threads to complete
         for thread in threads:
             thread.join()
 
-        # Verify each thread had isolated context
-        assert results["correlation_0"] == "thread-0"
-        assert results["correlation_1"] == "thread-1"
-        assert results["correlation_2"] == "thread-2"
-        assert results["service_0"] == "service-0"
-        assert results["service_1"] == "service-1"
-        assert results["service_2"] == "service-2"
+        assert len(results) == 10
+        assert all(result.startswith("value_") for result in results)
 
-    def test_context_inheritance_in_new_thread(self) -> None:
-        """Test that context doesn't leak to new threads."""
-        FlextContext.Correlation.set_correlation_id("main-thread-id")
+    def test_context_performance(self) -> None:
+        """Test context performance."""
+        context = FlextContext()
 
-        new_thread_correlation = None
+        start_time = time.time()
 
-        def new_thread_worker() -> None:
-            nonlocal new_thread_correlation
-            new_thread_correlation = FlextContext.Correlation.get_correlation_id()
+        # Perform many operations
+        for i in range(1000):
+            context.set(f"key_{i}", f"value_{i}")
+            context.get(f"key_{i}")
 
-        thread = Thread(target=new_thread_worker)
-        thread.start()
-        thread.join()
+        end_time = time.time()
 
-        # New thread should not inherit main thread's context
-        assert new_thread_correlation is None
+        # Should complete 2000 operations in reasonable time
+        assert end_time - start_time < 1.0
+
+    def test_context_error_handling(self) -> None:
+        """Test context error handling."""
+        context = FlextContext()
+
+        # Test invalid key
+        try:
+            context.set(None, "value")  # type: ignore[arg-type]
+            msg = "Should have raised an error"
+            raise AssertionError(msg)
+        except (TypeError, ValueError):
+            pass  # Expected
+
+        # Test invalid value
+        try:
+            context.set("key", object())  # type: ignore[arg-type]
+            msg = "Should have raised an error"
+            raise AssertionError(msg)
+        except (TypeError, ValueError):
+            pass  # Expected
+
+    def test_context_scoped_access(self) -> None:
+        """Test context scoped access."""
+        context = FlextContext()
+
+        # Set values in different scopes
+        context.set("global_key", "global_value")
+        context.set("user_key", "user_value", scope="user")
+        context.set("session_key", "session_value", scope="session")
+
+        # Test global access
+        assert context.get("global_key") == "global_value"
+
+        # Test scoped access
+        assert context.get("user_key", scope="user") == "user_value"
+        assert context.get("session_key", scope="session") == "session_value"
+
+        # Test cross-scope access
+        assert context.get("user_key") is None  # Not in global scope
+        assert context.get("session_key") is None  # Not in global scope
+
+    def test_context_lifecycle(self) -> None:
+        """Test context lifecycle management."""
+        context = FlextContext()
+
+        # Test context creation
+        assert context.is_active() is True
+
+        # Test context suspension
+        context.suspend()
+        assert context.is_active() is False
+
+        # Test context resumption
+        context.resume()
+        assert context.is_active() is True
+
+        # Test context destruction
+        context.destroy()
+        assert context.is_active() is False
+
+    def test_context_hooks(self) -> None:
+        """Test context hooks."""
+        context = FlextContext()
+
+        hook_called = False
+
+        def test_hook(_key: str, _value: object) -> None:
+            nonlocal hook_called
+            hook_called = True
+
+        context.add_hook("set", test_hook)
+        context.set("test_key", "test_value")
+
+        assert hook_called is True
+
+    def test_context_metadata(self) -> None:
+        """Test context metadata."""
+        context = FlextContext()
+
+        # Set metadata
+        context.set_metadata("created_at", "2025-01-01")
+        context.set_metadata("version", "1.0.0")
+
+        # Get metadata
+        assert context.get_metadata("created_at") == "2025-01-01"
+        assert context.get_metadata("version") == "1.0.0"
+
+        # Get all metadata
+        metadata = context.get_all_metadata()
+        assert "created_at" in metadata
+        assert "version" in metadata
+
+    def test_context_statistics(self) -> None:
+        """Test context statistics."""
+        context = FlextContext()
+
+        context.set("key1", "value1")
+        context.set("key2", "value2")
+        context.get("key1")
+        context.get("key2")
+        context.remove("key1")
+
+        stats = context.get_statistics()
+        assert stats["operations"]["set"] >= 2
+        assert stats["operations"]["get"] >= 2
+        assert stats["operations"]["remove"] >= 1
+
+    def test_context_cleanup(self) -> None:
+        """Test context cleanup."""
+        context = FlextContext()
+
+        context.set("key1", "value1")
+        context.set("key2", "value2")
+
+        assert context.has("key1") is True
+        assert context.has("key2") is True
+
+        context.cleanup()
+
+        assert context.has("key1") is False
+        assert context.has("key2") is False
+
+    def test_context_export_import(self) -> None:
+        """Test context export/import."""
+        context = FlextContext()
+        context.set("key1", "value1")
+        context.set("key2", "value2")
+
+        # Export context
+        exported = context.export()
+        assert isinstance(exported, dict)
+        assert "key1" in exported
+        assert "key2" in exported
+
+        # Import context
+        new_context = FlextContext()
+        new_context.import_data(exported)
+
+        assert new_context.get("key1") == "value1"
+        assert new_context.get("key2") == "value2"
+
+    def test_context_singleton_pattern(self) -> None:
+        """Test context singleton pattern."""
+        context1 = FlextContext.get_global()
+        context2 = FlextContext.get_global()
+
+        assert context1 is context2
+
+    def test_context_singleton_reset(self) -> None:
+        """Test context singleton reset."""
+        context1 = FlextContext.get_global()
+        FlextContext.reset_global()
+        context2 = FlextContext.get_global()
+
+        assert context1 is not context2

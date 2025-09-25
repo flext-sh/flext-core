@@ -42,19 +42,9 @@ import signal
 import time
 import types
 from collections.abc import Callable, Iterator
-
-# Lazy import to avoid circular dependency
-from typing import TYPE_CHECKING, TypeGuard, cast, overload, override
+from typing import TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
-
-if TYPE_CHECKING:
-    from flext_core.loggings import FlextLogger
-else:
-    try:
-        from flext_core.loggings import FlextLogger
-    except ImportError:
-        FlextLogger = None  # type: ignore[assignment]
 from flext_core.typings import T1, T2, T3, FlextTypes, TItem, TResult, TUtil, U, V
 
 # =============================================================================
@@ -346,17 +336,21 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             result3: FlextResult[T3],
         ) -> FlextResult[TResult]:
             """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
+            if result1.is_failure:
+                return FlextResult[TResult].fail(
+                    result1.error or "First argument failed"
+                )
+            if result2.is_failure:
+                return FlextResult[TResult].fail(
+                    result2.error or "Second argument failed"
+                )
+            if result3.is_failure:
+                return FlextResult[TResult].fail(
+                    result3.error or "Third argument failed"
+                )
 
-            def lift_func(t1_t2: tuple[T1, T2] | None, t3: T3) -> TResult:
-                if t1_t2 is None:
-                    msg = "Unexpected None value in applicative lift"
-                    raise ValueError(msg)
-                return func(t1_t2[0], t1_t2[1], t3)
-
-            return FlextResult._Functional.applicative_lift2(
-                lift_func,
-                result1 @ result2,
-                result3,
+            return FlextResult[TResult].ok(
+                func(result1.unwrap(), result2.unwrap(), result3.unwrap())
             )
 
     # Python 3.13+ discriminated union architecture.
@@ -492,14 +486,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     # the instance property `success`. Use `ok()` instead.
 
     @classmethod
-    def fail(
-        cls: type[FlextResult[T_co]],
+    def fail[TResult](
+        cls: type[FlextResult[TResult]],
         error: str,
         /,
         *,
         error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
-    ) -> FlextResult[T_co]:
+        error_data: dict[str, object] | None = None,
+    ) -> FlextResult[TResult]:
         """Create a failed FlextResult with structured error information.
 
         This is the primary way to create failed results throughout the FLEXT
@@ -512,7 +506,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             error_data: Optional additional error data/metadata for diagnostics.
 
         Returns:
-            FlextResult[T_co]: A failed FlextResult with the provided error information.
+            FlextResult[TResult]: A failed FlextResult with the provided error information.
 
         Example:
             ```python
@@ -635,7 +629,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         raise IndexError(msg)
 
     def __or__(self, default: T_co) -> T_co:
-        """Use | operator for default values: result | default_value."""
+        """Union[Use, operator] for default values: Union[result, default_value.]."""
         if self.is_success:
             if self._data is None:
                 return default  # Handle None data case
@@ -1035,17 +1029,17 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return FlextResult[T_co].fail(str(e))
 
     @classmethod
-    async def safe_call_async(
-        cls: type[FlextResult[T_co]],
-        func: Callable[[], T_co],
-    ) -> FlextResult[T_co]:
+    async def safe_call_async[TResult](
+        cls: type[FlextResult[TResult]],
+        func: Callable[[], TResult],
+    ) -> FlextResult[TResult]:
         """Execute async function safely, wrapping result.
 
         Args:
-            func: Async callable that returns T_co
+            func: Async callable that returns TResult
 
         Returns:
-            FlextResult[T_co] wrapping the async function result or error
+            FlextResult[TResult] wrapping the async function result or error
 
         Example:
             ```python
@@ -1061,12 +1055,12 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """
         try:
             if inspect.iscoroutinefunction(func):
-                value = await func()
+                value: TResult = await func()
             else:
                 value = func()
-            return FlextResult[T_co].ok(value)
+            return FlextResult[TResult].ok(value)
         except Exception as e:
-            return FlextResult[T_co].fail(str(e))
+            return FlextResult[TResult].fail(str(e))
 
     # === MONADIC COMPOSITION ADVANCED OPERATORS (Python 3.13) ===
 
@@ -1080,15 +1074,28 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     def __matmul__(self, other: FlextResult[U]) -> FlextResult[tuple[T_co, U]]:
         """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION."""
+        # Use map2 pattern to avoid type inference issues
         if self.is_failure:
-            return FlextResult[tuple[T_co, U]].fail(self.error or "Left operand failed")
+            return cast("FlextResult[tuple[T_co, U]]", self.cast_fail())
         if other.is_failure:
-            return FlextResult[tuple[T_co, U]].fail(
-                other.error or "Right operand failed",
-            )
+            return cast("FlextResult[tuple[T_co, U]]", other.cast_fail())
 
         # Both successful - combine values
-        return FlextResult[tuple[T_co, U]].ok((self.unwrap(), other.unwrap()))
+        left_val = self.unwrap()
+        right_val = other.unwrap()
+        combined_tuple: tuple[T_co, U] = (left_val, right_val)
+        return FlextResult[tuple[T_co, U]].ok(combined_tuple)
+
+    def cast_fail(self) -> FlextResult[object]:
+        """Cast a failed result to a different type."""
+        if self.is_success:
+            msg = "Cannot cast successful result to failed"
+            raise ValueError(msg)
+        return FlextResult[object].fail(
+            self.error or "Unknown error",
+            error_code=self.error_code,
+            error_data=self.error_data,
+        )
 
     def __truediv__(self, other: FlextResult[U]) -> FlextResult[T_co | U]:
         """Division operator (/) for alternative fallback - ADVANCED COMPOSITION."""
@@ -1260,9 +1267,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 # This is intentional - we want to attempt all fallbacks
                 # Log the exception for debugging purposes
                 try:
+                    from flext_core.loggings import FlextLogger  # noqa: PLC0415
+
                     logger = FlextLogger(__name__)
                     logger.debug("Alternative failed: %s", e)
-                except (TypeError, AttributeError):
+                except (TypeError, AttributeError, ImportError):
                     # FlextLogger not available, skip logging
                     pass
                 continue  # Try next alternative
@@ -1324,7 +1333,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return composed
 
     @classmethod
-    def applicative_lift2(
+    def applicative_lift2[T1, T2, TResult](
         cls,
         func: Callable[[T1, T2], TResult],
         result1: FlextResult[T1],
@@ -1339,7 +1348,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
 
     @classmethod
-    def applicative_lift3(
+    def applicative_lift3[T1, T2, T3, TResult](
         cls,
         func: Callable[[T1, T2, T3], TResult],
         result1: FlextResult[T1],
@@ -1348,11 +1357,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     ) -> FlextResult[TResult]:
         """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
 
-        def lift_func(t1_t2: tuple[T1, T2] | None, t3: T3) -> TResult:
-            if t1_t2 is None:
-                # This should not happen in practice due to applicative lifting
-                msg = "Unexpected None value in applicative lift"
-                raise ValueError(msg)
+        def lift_func(t1_t2: tuple[T1, T2], t3: T3) -> TResult:
             return func(t1_t2[0], t1_t2[1], t3)
 
         return cls.applicative_lift2(
@@ -1665,7 +1670,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             signal.alarm(0)  # Clear timeout
             return FlextResult[TTimeout].fail(
                 str(e),
-                error_code="TIMEOUT_ERROR",
+                error_code=FlextConstants.Errors.TIMEOUT_ERROR,
                 error_data={"timeout_seconds": timeout_seconds},
             )
         except Exception as e:

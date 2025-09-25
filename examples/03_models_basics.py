@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 """03 - FlextModels Fundamentals: Complete Domain-Driven Design Patterns.
 
 This example demonstrates the COMPLETE FlextModels API - the foundation

@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from pathlib import Path
-
-# Lazy import to avoid circular dependency
 from typing import TYPE_CHECKING, ClassVar, TypedDict, cast
 
 from pydantic import (
@@ -27,75 +26,184 @@ if TYPE_CHECKING:
     from flext_core.result import FlextResult
 
 
-# Type definitions for configuration dictionaries
-class LoggingConfigDict(TypedDict):
-    level: str
-    json_output: bool | None
-    include_source: bool
-    structured_output: bool
-    log_verbosity: str
-    log_format: str
-    log_file: str | None
-    log_file_max_size: int
-    log_file_backup_count: int
-    console_enabled: bool
-    console_color_enabled: bool
-    track_performance: bool
-    track_timing: bool
-    include_context: bool
-    include_correlation_id: bool
-    mask_sensitive_data: bool
-
-
-class DatabaseConfigDict(TypedDict):
-    url: str | None
-    pool_size: int
-
-
-class CacheConfigDict(TypedDict):
-    ttl: int
-    max_size: int
-    enabled: bool
-
-
-class CqrsBusConfigDict(TypedDict):
-    auto_context: bool
-    timeout_seconds: int
-    enable_metrics: bool
-    enable_logging: bool
-
-
-class MetadataConfigDict(TypedDict):
-    app_name: str
-    version: str
-    environment: str
-    debug: bool
-    trace: bool
-
-
-class SecurityConfigDict(TypedDict):
-    secret_key_configured: bool
-    api_key_configured: bool
-    jwt_expiry_minutes: int
-    bcrypt_rounds: int
-
-
-class CacheConfigComputedDict(TypedDict):
-    ttl: int
-    max_size: int
-    enabled: bool
-
-
 class FlextConfig(BaseSettings):
     """Unified configuration system for FLEXT v1.0.0 based on Pydantic Settings.
 
     Provides consolidated configuration management aligned with the enterprise
     requirements established in ``../CLAUDE.md`` and the domain-driven-design
     practices of the FLEXT 1.0.0 stable release target.
+
+    This is the single unified class containing all configuration functionality
+    with nested classes for typed configuration dictionaries following the
+    single class per module pattern established in the 1.0.0 refactoring.
     """
+
+    # Nested TypedDict classes for configuration structures
+    class LoggingConfigDict(TypedDict):
+        """Logging configuration dictionary structure."""
+
+        level: str
+        json_output: bool | None
+        include_source: bool
+        structured_output: bool
+        log_verbosity: str
+        log_format: str
+        log_file: str | None
+        log_file_max_size: int
+        log_file_backup_count: int
+        console_enabled: bool
+        console_color_enabled: bool
+        track_performance: bool
+        track_timing: bool
+        include_context: bool
+        include_correlation_id: bool
+        mask_sensitive_data: bool
+
+    class DatabaseConfigDict(TypedDict):
+        """Database configuration dictionary structure."""
+
+        url: str | None
+        pool_size: int
+
+    class CacheConfigDict(TypedDict):
+        """Cache configuration dictionary structure."""
+
+        ttl: int
+        max_size: int
+        enabled: bool
+
+    class CqrsBusConfigDict(TypedDict):
+        """CQRS bus configuration dictionary structure."""
+
+        auto_context: bool
+        timeout_seconds: int
+        enable_metrics: bool
+        enable_logging: bool
+
+    class MetadataConfigDict(TypedDict):
+        """Application metadata configuration dictionary structure."""
+
+        app_name: str
+        version: str
+        environment: str
+        debug: bool
+        trace: bool
+
+    class SecurityConfigDict(TypedDict):
+        """Security configuration dictionary structure."""
+
+        secret_key_configured: bool
+        api_key_configured: bool
+        jwt_expiry_minutes: int
+        bcrypt_rounds: int
+
+    class CacheConfigComputedDict(TypedDict):
+        """Cache configuration computed dictionary structure."""
+
+        ttl: int
+        max_size: int
+        enabled: bool
+
+    class HandlerConfiguration:
+        """Handler configuration resolution utilities."""
+
+        @staticmethod
+        def resolve_handler_mode(
+            handler_mode: str | None = None,
+            handler_config: object = None,
+        ) -> str:
+            """Resolve handler mode from various sources.
+
+            Args:
+                handler_mode: Explicit handler mode
+                handler_config: Config object or dict containing handler_type
+
+            Returns:
+                str: Resolved handler mode (command or query)
+
+            """
+            # Use explicit handler_mode if provided and valid
+            if handler_mode in {"command", "query"}:
+                return handler_mode
+
+            # Try to extract from config object
+            if handler_config is not None:
+                # Try attribute access
+                if hasattr(handler_config, "handler_type"):
+                    config_mode: str | None = getattr(handler_config, "handler_type")
+                    if config_mode in {"command", "query"}:
+                        return str(config_mode)
+
+                # Try dict access
+                if isinstance(handler_config, dict):
+                    handler_dict = cast("dict[str, object]", handler_config)
+                    config_mode_dict = handler_dict.get("handler_type")
+                    if isinstance(config_mode_dict, str) and config_mode_dict in {
+                        "command",
+                        "query",
+                    }:
+                        return config_mode_dict
+
+            # Default to command
+            return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
+
+        @staticmethod
+        def create_handler_config(
+            handler_mode: str | None = None,
+            handler_name: str | None = None,
+            handler_id: str | None = None,
+            handler_config: dict[str, object] | None = None,
+            command_timeout: int = 0,
+            max_command_retries: int = 0,
+        ) -> dict[str, object]:
+            """Create handler configuration dictionary.
+
+            Args:
+                handler_mode: Handler mode (command or query)
+                handler_name: Handler name
+                handler_id: Handler ID
+                handler_config: Additional configuration to merge
+                command_timeout: Command timeout in milliseconds
+                max_command_retries: Maximum command retries
+
+            Returns:
+                dict: Handler configuration dictionary
+
+            """
+            # Resolve handler mode
+            resolved_mode = FlextConfig.HandlerConfiguration.resolve_handler_mode(
+                handler_mode=handler_mode, handler_config=handler_config
+            )
+
+            # Generate default handler_id if not provided or empty
+            if not handler_id:
+                unique_suffix = uuid.uuid4().hex[:8]
+                handler_id = f"{resolved_mode}_handler_{unique_suffix}"
+
+            # Generate default handler_name if not provided or empty
+            if not handler_name:
+                handler_name = f"{resolved_mode.capitalize()} Handler"
+
+            # Create base config
+            config: dict[str, object] = {
+                "handler_id": handler_id,
+                "handler_name": handler_name,
+                "handler_type": resolved_mode,
+                "handler_mode": resolved_mode,
+                "command_timeout": command_timeout,
+                "max_command_retries": max_command_retries,
+                "metadata": {},
+            }
+
+            # Merge additional config if provided
+            if handler_config:
+                config.update(handler_config)
+
+            return config
 
     # Singleton pattern implementation
     _global_instance: ClassVar[FlextConfig | None] = None
+    _lock: ClassVar[threading.Lock] = threading.Lock()
 
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -451,7 +559,9 @@ class FlextConfig(BaseSettings):
     def get_global_instance(cls) -> FlextConfig:
         """Get the global singleton instance of FlextConfig."""
         if cls._global_instance is None:
-            cls._global_instance = cls()
+            with cls._lock:
+                if cls._global_instance is None:
+                    cls._global_instance = cls()
         return cls._global_instance
 
     @classmethod
@@ -466,23 +576,32 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def clear_global_instance(cls) -> None:
-        """Clear the global instance (alias for reset_global_instance)."""
+        """Clear the global instance."""
         cls.reset_global_instance()
 
     # Class methods for creating instances
     @classmethod
     def create(cls, **kwargs: object) -> FlextConfig:
-        """Create a new FlextConfig instance with the given parameters."""
-        # Pydantic BaseSettings handles kwargs properly
-        # Type cast to bypass mypy's argument checking since BaseSettings handles dynamic kwargs
-        return cls(**kwargs)  # type: ignore[arg-type]
+        """Create a new FlextConfig instance with the given parameters.
+
+        Args:
+            **kwargs: Configuration parameters. Pydantic BaseSettings handles
+                flexible kwargs with proper validation and type conversion.
+
+        """
+        return cls(**kwargs)
 
     @classmethod
     def create_for_environment(cls, environment: str, **kwargs: object) -> FlextConfig:
-        """Create a FlextConfig instance for a specific environment."""
-        # Pydantic BaseSettings handles kwargs properly
-        # Type cast to bypass mypy's argument checking since BaseSettings handles dynamic kwargs
-        return cls(environment=environment, **kwargs)  # type: ignore[arg-type]
+        """Create a FlextConfig instance for a specific environment.
+
+        Args:
+            environment: The environment name (development, production, etc.)
+            **kwargs: Additional configuration parameters. Pydantic BaseSettings
+                handles flexible kwargs with proper validation and type conversion.
+
+        """
+        return cls(environment=environment, **kwargs)
 
     @classmethod
     def from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
@@ -647,102 +766,27 @@ class FlextConfig(BaseSettings):
             "bcrypt_rounds": self.bcrypt_rounds,
         }
 
-    class HandlerConfiguration:
-        """Handler configuration resolution utilities."""
 
-        @staticmethod
-        def resolve_handler_mode(
-            handler_mode: str | None = None,
-            handler_config: object = None,
-        ) -> str:
-            """Resolve handler mode from various sources.
+# Rebuild Pydantic model after all type definitions are complete
+# This resolves any forward reference issues that may occur during model construction
+FlextConfig.model_rebuild()
 
-            Args:
-                handler_mode: Explicit handler mode
-                handler_config: Config object or dict containing handler_type
+# Type aliases for backward compatibility (FLEXT 1.0.0 compatibility guarantee)
+LoggingConfigDict = FlextConfig.LoggingConfigDict
+DatabaseConfigDict = FlextConfig.DatabaseConfigDict
+CacheConfigDict = FlextConfig.CacheConfigDict
+CqrsBusConfigDict = FlextConfig.CqrsBusConfigDict
+MetadataConfigDict = FlextConfig.MetadataConfigDict
+SecurityConfigDict = FlextConfig.SecurityConfigDict
+CacheConfigComputedDict = FlextConfig.CacheConfigComputedDict
 
-            Returns:
-                str: Resolved handler mode (command or query)
-
-            """
-            # Use explicit handler_mode if provided and valid
-            if handler_mode in {"command", "query"}:
-                return handler_mode
-
-            # Try to extract from config object
-            if handler_config is not None:
-                # Try attribute access
-                if hasattr(handler_config, "handler_type"):
-                    config_mode: str | None = getattr(handler_config, "handler_type")
-                    if config_mode in {"command", "query"}:
-                        return str(config_mode)
-
-                # Try dict access
-                if isinstance(handler_config, dict):
-                    handler_dict = cast("dict[str, object]", handler_config)
-                    config_mode_dict = handler_dict.get("handler_type")
-                    if isinstance(config_mode_dict, str) and config_mode_dict in {
-                        "command",
-                        "query",
-                    }:
-                        return config_mode_dict
-
-            # Default to command
-            return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
-
-        @staticmethod
-        def create_handler_config(
-            handler_mode: str | None = None,
-            handler_name: str | None = None,
-            handler_id: str | None = None,
-            handler_config: dict[str, object] | None = None,
-            command_timeout: int = 0,
-            max_command_retries: int = 0,
-        ) -> dict[str, object]:
-            """Create handler configuration dictionary.
-
-            Args:
-                handler_mode: Handler mode (command or query)
-                handler_name: Handler name
-                handler_id: Handler ID
-                handler_config: Additional configuration to merge
-                command_timeout: Command timeout in milliseconds
-                max_command_retries: Maximum command retries
-
-            Returns:
-                dict: Handler configuration dictionary
-
-            """
-            # Resolve handler mode
-            resolved_mode = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-                handler_mode=handler_mode, handler_config=handler_config
-            )
-
-            # Generate default handler_id if not provided or empty
-            if not handler_id:
-                unique_suffix = uuid.uuid4().hex[:8]
-                handler_id = f"{resolved_mode}_handler_{unique_suffix}"
-
-            # Generate default handler_name if not provided or empty
-            if not handler_name:
-                handler_name = f"{resolved_mode.capitalize()} Handler"
-
-            # Create base config
-            config: dict[str, object] = {
-                "handler_id": handler_id,
-                "handler_name": handler_name,
-                "handler_type": resolved_mode,
-                "handler_mode": resolved_mode,
-                "command_timeout": command_timeout,
-                "max_command_retries": max_command_retries,
-                "metadata": {},
-            }
-
-            # Merge additional config if provided
-            if handler_config:
-                config.update(handler_config)
-
-            return config
-
-
-__all__ = ["FlextConfig"]
+__all__ = [
+    "CacheConfigComputedDict",
+    "CacheConfigDict",
+    "CqrsBusConfigDict",
+    "DatabaseConfigDict",
+    "FlextConfig",
+    "LoggingConfigDict",
+    "MetadataConfigDict",
+    "SecurityConfigDict",
+]

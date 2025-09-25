@@ -166,6 +166,18 @@ class FlextConstants:
         SECONDS_PER_HOUR: Final[int] = 3600  # Usage count: 0
         BYTES_PER_KB: Final[int] = 1024  # Usage count: 0
 
+        # Security and validation constants
+        MIN_TOKEN_LENGTH: Final[int] = (
+            8  # Minimum length for security tokens and passwords
+        )
+        MAX_TIMEOUT_SECONDS: Final[int] = 3600  # Maximum timeout in seconds (1 hour)
+        MAX_ERROR_DISPLAY: Final[int] = (
+            5  # Maximum errors to display in batch processing
+        )
+        MAX_REGEX_PATTERN_LENGTH: Final[int] = (
+            1000  # Maximum regex pattern length to prevent ReDoS
+        )
+
     class Patterns:
         """Regex placeholders for downstream ecosystem adapters."""  # Usage count: 0
 
@@ -197,6 +209,16 @@ class FlextConstants:
         PROFILE_WEB_SERVICE: Final[str] = "web_service"
         PROFILE_DATA_PROCESSOR: Final[str] = "data_processor"
         PROFILE_API_CLIENT: Final[str] = "api_client"
+
+        class LogLevel(StrEnum):
+            """Standard log levels for centralized logging configuration."""
+
+            DEBUG = "DEBUG"
+            INFO = "INFO"
+            WARNING = "WARNING"
+            ERROR = "ERROR"
+            CRITICAL = "CRITICAL"
+
         PROFILE_BATCH_JOB: Final[str] = "batch_job"
         PROFILE_MICROSERVICE: Final[str] = "microservice"
 
@@ -208,19 +230,6 @@ class FlextConstants:
             CLI = "cli"  # Usage count: 0
             DEFAULT = "default"  # Usage count: 0
             DOTENV = "dotenv"  # Usage count: 0
-
-        class LogLevel(StrEnum):
-            """Standard log levels mirroring FlextLogger semantics.
-
-            DEPRECATED: Use FlextConstants.Config.LogLevel. constants instead.
-            This class is maintained for backward compatibility only.
-            """
-
-            DEBUG = "DEBUG"  # Usage count: 4 - DEPRECATED: Use FlextConstants.Config.LogLevel.DEBUG
-            INFO = "INFO"  # Usage count: 4 - DEPRECATED: Use FlextConstants.Config.LogLevel.INFO
-            WARNING = "WARNING"  # Usage count: 4 - DEPRECATED: Use FlextConstants.Config.LogLevel.WARNING
-            ERROR = "ERROR"  # Usage count: 3 - DEPRECATED: Use FlextConstants.Config.LogLevel.ERROR
-            CRITICAL = "CRITICAL"  # Usage count: 3 - DEPRECATED: Use FlextConstants.Config.LogLevel.CRITICAL
 
     class Enums:
         """Shared enumerations referenced across the API surface."""
@@ -285,6 +294,31 @@ class FlextConstants:
         PROTOCOL_HTTPS: Final[str] = "https://"
         PROTOCOL_TCP: Final[str] = "tcp://"
         PROTOCOL_UDP: Final[str] = "udp://"
+        PROTOCOL_LDAP: Final[str] = "ldap://"
+        PROTOCOL_LDAPS: Final[str] = "ldaps://"
+
+        # LDAP protocol constants
+        LDAP_DEFAULT_PORT: Final[int] = 389
+        LDAPS_DEFAULT_PORT: Final[int] = 636
+
+        # LDAP search scope constants
+        LDAP_SCOPE_BASE: Final[str] = "base"
+        LDAP_SCOPE_LEVEL: Final[str] = "level"
+        LDAP_SCOPE_SUBTREE: Final[str] = "subtree"
+
+        # LDAP modify operation constants
+        LDAP_MODIFY_ADD: Final[str] = "add"
+        LDAP_MODIFY_DELETE: Final[str] = "delete"
+        LDAP_MODIFY_REPLACE: Final[str] = "replace"
+
+        # LDAP authentication constants
+        LDAP_AUTH_SIMPLE: Final[str] = "simple"
+        LDAP_AUTH_SASL: Final[str] = "sasl"
+
+        # LDAP attribute constants
+        LDAP_ATTR_ALL: Final[str] = "*"
+        LDAP_ATTR_OBJECT_CLASS: Final[str] = "objectClass"
+        LDAP_ATTR_DISTINGUISHED_NAME: Final[str] = "distinguishedName"
 
         # Output formats
         FORMAT_JSON: Final[str] = "json"
@@ -341,9 +375,11 @@ class FlextConstants:
         ENV_FILE_DEFAULT: Final[str] = ".env"
 
         # Validation patterns
-        PATTERN_SECURITY_LEVEL: Final[str] = "^(low|standard|high|critical)$"
+        PATTERN_SECURITY_LEVEL: Final[str] = (
+            "^(Union[Union[low, standard], high]|critical)$"
+        )
         PATTERN_DATA_CLASSIFICATION: Final[str] = (
-            "^(public|internal|confidential|restricted)$"
+            "^(Union[Union[public, internal], confidential]|restricted)$"
         )
         PATTERN_EMAIL: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[1-9]\d{1,14}$"
@@ -532,6 +568,8 @@ class FlextConstants:
         DEFAULT_HANDLER_TYPE: Final = "command"
         COMMAND_HANDLER_TYPE: Final = "command"
         QUERY_HANDLER_TYPE: Final = "query"
+        EVENT_HANDLER_TYPE: Final = "event"
+        SAGA_HANDLER_TYPE: Final = "saga"
 
         # Timeout constants
         DEFAULT_TIMEOUT: Final[int] = 30000  # milliseconds

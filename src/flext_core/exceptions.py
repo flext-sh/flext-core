@@ -23,6 +23,7 @@ from collections.abc import Mapping
 from typing import ClassVar, cast, override
 
 from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -33,6 +34,22 @@ class FlextExceptions:
     flows, domain services, and configuration loaders surface consistent
     failures throughout the 1.0.0 rollout.
     """
+
+    def __init__(self, config: dict[str, object] | None = None) -> None:
+        """Initialize FlextExceptions with configuration.
+
+        Args:
+            config: Optional configuration dictionary
+
+        """
+        self._config = config or {}
+        self._handlers: dict[type[Exception], list[object]] = {}
+        self._middleware: list[object] = []
+        self._audit_log: list[dict[str, object]] = []
+        self._performance_metrics: dict[str, dict[str, int]] = {}
+        self._circuit_breakers: dict[str, bool] = {}
+        self._rate_limiters: dict[str, dict[str, object]] = {}
+        self._cache: dict[str, object] = {}
 
     def __call__(
         self,
@@ -87,6 +104,259 @@ class FlextExceptions:
         cls._metrics.clear()
 
     # =============================================================================
+    # Handler Registry Methods
+    # =============================================================================
+
+    def register_handler(self, exception_type: type[Exception], handler: object) -> FlextResult[None]:
+        """Register exception handler for specific exception type.
+
+        Args:
+            exception_type: Type of exception to handle
+            handler: Handler function or object
+
+        Returns:
+            FlextResult with success or failure
+
+        """
+        try:
+            if exception_type not in self._handlers:
+                self._handlers[exception_type] = []
+            self._handlers[exception_type].append(handler)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to register handler: {e}")
+
+    def unregister_handler(self, exception_type: type[Exception], handler: object) -> FlextResult[None]:
+        """Unregister exception handler.
+
+        Args:
+            exception_type: Type of exception
+            handler: Handler to remove
+
+        Returns:
+            FlextResult with success or failure
+
+        """
+        try:
+            if exception_type in self._handlers and handler in self._handlers[exception_type]:
+                self._handlers[exception_type].remove(handler)
+                if not self._handlers[exception_type]:
+                    del self._handlers[exception_type]
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to unregister handler: {e}")
+
+    def handle_exception(self, exception: Exception, correlation_id: str | None = None) -> FlextResult[object]:
+        """Handle exception using registered handlers.
+
+        Args:
+            exception: Exception to handle
+            correlation_id: Optional correlation ID
+
+        Returns:
+            FlextResult with handling result
+
+        """
+        try:
+            exception_type = type(exception)
+            handlers = self._handlers.get(exception_type, [])
+
+            if not handlers:
+                return FlextResult[object].fail("No handler found")
+
+            # Apply middleware
+            for _middleware in self._middleware:
+                # Middleware processing would go here
+                pass
+
+            # Execute handlers
+            results = []
+            for handler in handlers:
+                try:
+                    if callable(handler):
+                        result = handler(exception)
+                        results.append(result)
+                    else:
+                        results.append(handler)
+                except Exception as handler_error:
+                    results.append(f"Handler error: {handler_error}")
+
+            # Record in audit log
+            self._audit_log.append({
+                "exception_type": exception_type.__name__,
+                "exception_message": str(exception),
+                "handlers_executed": len(handlers),
+                "correlation_id": correlation_id,
+                "timestamp": time.time(),
+            })
+
+            # Update performance metrics
+            exception_name = exception_type.__name__
+            if exception_name not in self._performance_metrics:
+                self._performance_metrics[exception_name] = {"handled": 0, "errors": 0}
+            self._performance_metrics[exception_name]["handled"] += 1
+
+            return FlextResult[object].ok(results)
+        except Exception as e:
+            return FlextResult[object].fail(f"Exception handling failed: {e}")
+
+    def handle_batch(self, exceptions: list[Exception]) -> list[FlextResult[object]]:
+        """Handle multiple exceptions in batch.
+
+        Args:
+            exceptions: List of exceptions to handle
+
+        Returns:
+            List of FlextResults with handling results
+
+        """
+        return [self.handle_exception(exc) for exc in exceptions]
+
+    def handle_parallel(self, exceptions: list[Exception]) -> list[FlextResult[object]]:
+        """Handle multiple exceptions in parallel.
+
+        Args:
+            exceptions: List of exceptions to handle
+
+        Returns:
+            List of FlextResults with handling results
+
+        """
+        # For now, same as batch handling
+        return self.handle_batch(exceptions)
+
+    def add_middleware(self, middleware: object) -> None:
+        """Add middleware for exception processing.
+
+        Args:
+            middleware: Middleware function or object
+
+        """
+        self._middleware.append(middleware)
+
+    def is_circuit_breaker_open(self, exception_type: str) -> bool:
+        """Check if circuit breaker is open for exception type.
+
+        Args:
+            exception_type: Name of exception type
+
+        Returns:
+            True if circuit breaker is open
+
+        """
+        return self._circuit_breakers.get(exception_type, False)
+
+    def get_audit_log(self) -> list[dict[str, object]]:
+        """Get audit log of exception handling.
+
+        Returns:
+            List of audit log entries
+
+        """
+        return self._audit_log.copy()
+
+    def get_performance_metrics(self) -> dict[str, dict[str, int]]:
+        """Get performance metrics.
+
+        Returns:
+            Dictionary of performance metrics
+
+        """
+        return self._performance_metrics.copy()
+
+    def get_handlers(self, exception_type: type[Exception]) -> list[object]:
+        """Get handlers for specific exception type.
+
+        Args:
+            exception_type: Type of exception
+
+        Returns:
+            List of handlers
+
+        """
+        return self._handlers.get(exception_type, []).copy()
+
+    def clear_handlers(self) -> None:
+        """Clear all registered handlers."""
+        self._handlers.clear()
+
+    def get_statistics(self) -> dict[str, object]:
+        """Get statistics about exception handling.
+
+        Returns:
+            Dictionary of statistics
+
+        """
+        return {
+            "total_handlers": sum(len(handlers) for handlers in self._handlers.values()),
+            "exception_types": len(self._handlers),
+            "middleware_count": len(self._middleware),
+            "audit_log_entries": len(self._audit_log),
+            "performance_metrics": self._performance_metrics.copy(),
+        }
+
+    def validate(self) -> FlextResult[None]:
+        """Validate configuration and handlers.
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        try:
+            # Validate handlers
+            for exception_type, handlers in self._handlers.items():
+                if not isinstance(exception_type, type):
+                    return FlextResult[None].fail(f"Invalid exception type: {exception_type}")
+                if not isinstance(handlers, list):
+                    return FlextResult[None].fail(f"Invalid handlers list for {exception_type}")
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Validation failed: {e}")
+
+    def export_config(self) -> dict[str, object]:
+        """Export configuration.
+
+        Returns:
+            Dictionary of configuration
+
+        """
+        return {
+            "config": self._config.copy(),
+            "handler_count": len(self._handlers),
+            "middleware_count": len(self._middleware),
+            "audit_log_size": len(self._audit_log),
+        }
+
+    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
+        """Import configuration.
+
+        Args:
+            config: Configuration dictionary
+
+        Returns:
+            FlextResult with import result
+
+        """
+        try:
+            if "config" in config and isinstance(config["config"], dict):
+                config_dict = cast("dict[str, object]", config["config"])
+                self._config.update(config_dict)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Config import failed: {e}")
+
+    def cleanup(self) -> None:
+        """Clean up resources."""
+        self._handlers.clear()
+        self._middleware.clear()
+        self._audit_log.clear()
+        self._performance_metrics.clear()
+        self._circuit_breakers.clear()
+        self._rate_limiters.clear()
+        self._cache.clear()
+
+    # =============================================================================
     # BASE EXCEPTION CLASS - Clean hierarchical approach
     # =============================================================================
 
@@ -135,11 +405,7 @@ class FlextExceptions:
         @staticmethod
         def _extract_common_kwargs(
             kwargs: dict[str, object],
-        ) -> tuple[
-            dict[str, object] | None,
-            str | None,
-            str | None,
-        ]:
+        ) -> tuple[dict[str, object] | None, str | None, str | None]:
             """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
             context_raw = kwargs.get("context")
             context = (
@@ -168,11 +434,7 @@ class FlextExceptions:
     @staticmethod
     def _extract_common_kwargs(
         kwargs: dict[str, object],
-    ) -> tuple[
-        dict[str, object] | None,
-        str | None,
-        str | None,
-    ]:
+    ) -> tuple[dict[str, object] | None, str | None, str | None]:
         """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
         context_raw = kwargs.get("context")
         context = (

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 """09 - FlextContext: Request Context and Correlation Management.
 
 This example demonstrates the COMPLETE FlextContext API for managing
@@ -198,7 +198,7 @@ class ContextManagementService(FlextService[dict[str, str]]):
         print("\n=== Request Context ===")
 
         # Set request context
-        request_data: dict[str, str | dict[str, str] | dict[str, str | int]] = {
+        request_data: dict[str, str | dict[str, str], dict[str, str | int]] = {
             "method": "POST",
             "path": "/api/orders",
             "user_id": "USER-456",
@@ -381,7 +381,7 @@ class ContextManagementService(FlextService[dict[str, str]]):
         print(f"  Result: {merged}")
 
         # Copy context
-        original: dict[str, str | dict[str, str] | int] = {
+        original: dict[str, str | dict[str, str], int] = {
             "data": {"nested": "value"},
             "id": 123,
         }

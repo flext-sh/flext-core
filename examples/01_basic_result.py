@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 """01 - FlextResult Fundamentals: Complete Railway-Oriented Programming.
 
 This example demonstrates the COMPLETE FlextResult[T] API - the foundation

@@ -307,7 +307,7 @@ class FlextTestsFixtures:
                 session_id: Session identifier
 
             Returns:
-                FlextTypes.Core.Dict | None: Stored session data if present
+                Union[FlextTypes.Core.Dict, None]: Stored session data if present
 
             """
             return self._data.get(session_id)
@@ -514,7 +514,7 @@ class FlextTestsFixtures:
                 self._tasks.append(task)
                 tasks.append(task)
 
-            results: list[object] = await asyncio.gather(*tasks)
+            results: list[object] = list(await asyncio.gather(*tasks))
             return list(results)
 
         def cleanup(self) -> None:

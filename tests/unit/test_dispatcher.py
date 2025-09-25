@@ -1,4 +1,4 @@
-"""Tests for FlextDispatcher facade.
+"""Comprehensive tests for FlextDispatcher - Message Dispatcher.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,758 +6,551 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import types
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Literal, cast
-from unittest.mock import Mock
+import threading
+import time
 
-from pydantic import BaseModel
+from flext_core import FlextDispatcher, FlextResult
 
-from flext_core import (
-    FlextBus,
-    FlextConfig,
-    FlextContext,
-    FlextDispatcher,
-    FlextHandlers,
-    FlextModels,
-    FlextRegistry,
-    FlextResult,
-)
 
+class TestFlextDispatcher:
+    """Test suite for FlextDispatcher message dispatching."""
 
-@dataclass
-class EchoCommand:
-    """Simple command used for dispatcher tests."""
-
-    payload: str
-
-
-class EchoHandler(FlextHandlers[EchoCommand, str]):
-    """Handler that uppercases the payload."""
-
-    def __init__(self) -> None:
-        """Initialize the echo handler."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="EchoHandler",
-            default_id="echo_handler",
-        )
-        super().__init__(config=config)
-
-    def handle(self, message: EchoCommand) -> FlextResult[str]:
-        """Handle the echo command.
-
-        Returns:
-            FlextResult[str]: Success result with uppercase payload.
-
-        """
-        return FlextResult[str].ok(message.payload.upper())
-
-    def execute(self, message: EchoCommand) -> FlextResult[str]:
-        """Delegate execution to the simplified handle implementation."""
-        return self.handle(message)
-
-
-class ContextAwareHandler(FlextHandlers[EchoCommand, str]):
-    """Handler that inspects correlation context."""
-
-    def __init__(self) -> None:
-        """Initialize the context aware handler."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command",
-            default_name="ContextAwareEchoHandler",
-            default_id="context_aware_echo_handler",
-        )
-        super().__init__(config=config)
-
-    def handle(self, message: EchoCommand) -> FlextResult[str]:
-        """Handle the echo command using correlation context.
-
-        Returns:
-            FlextResult[str]: Success result with correlation-aware response.
-
-        """
-        correlation_id = FlextContext.Correlation.get_correlation_id()
-        if correlation_id is None:
-            return FlextResult[str].fail("Correlation ID missing")
-        # Include message info in the response to use the parameter
-        return FlextResult[str].ok(f"{correlation_id}:{message.payload}")
-
-    def execute(self, message: EchoCommand) -> FlextResult[str]:
-        """Delegate execution to the custom handle implementation."""
-        return self.handle(message)
-
-
-@dataclass
-class CachedQuery:
-    """Simple query payload used to validate cache behaviour."""
-
-    query_id: str
-    payload: str
-
-
-class CountingQueryHandler(FlextHandlers[CachedQuery, dict[str, object]]):
-    """Query handler that records execution counts for each query."""
-
-    def __init__(self) -> None:
-        """Initialise the counting handler in query mode."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="query",
-            default_name="CountingQueryHandler",
-            default_id="counting_query_handler",
-        )
-        super().__init__(config=config)
-        self.calls: dict[str, int] = {}
-
-    def handle(self, message: CachedQuery) -> FlextResult[dict[str, object]]:
-        """Return metadata while tracking how many times it executed."""
-        current_calls = self.calls.get(message.query_id, 0) + 1
-        self.calls[message.query_id] = current_calls
-        result_payload: dict[str, object] = {
-            "query_id": message.query_id,
-            "payload": message.payload,
-            "calls": current_calls,
-        }
-        return FlextResult[dict[str, object]].ok(result_payload)
-
-    def execute(self, message: CachedQuery) -> FlextResult[dict[str, object]]:
-        """Delegate execution to the query handler implementation."""
-        return self.handle(message)
-
-
-@dataclass
-class SimpleCachedQuery:
-    """Query object used to exercise dispatcher caching."""
-
-    payload: str
-
-
-class SimpleCachedQueryHandler:
-    """Lightweight handler that tracks invocation count to validate caching."""
-
-    def __init__(self) -> None:
-        """Initialize the cached query handler."""
-        super().__init__()
-        self.calls = 0
-
-    def handle(self, message: SimpleCachedQuery) -> FlextResult[str]:
-        """Handle the cached query while counting invocations."""
-        self.calls += 1
-        return FlextResult[str].ok(f"{message.payload}:{self.calls}")
-
-
-def test_dispatcher_cache_hits_for_equivalent_dataclass_queries() -> None:
-    """Repeated dataclass queries with reordered payloads reuse the cached result."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    @dataclass
-    class StructuredQuery:
-        filters: dict[str, int]
-        limits: tuple[int, ...]
-
-    class StructuredQueryHandler:
-        def __init__(self) -> None:
-            super().__init__()
-            self.call_count = 0
-
-        def can_handle(self, command_type: type[object]) -> bool:
-            return command_type is StructuredQuery
-
-        def handle(self, message: StructuredQuery) -> FlextResult[dict[str, int]]:
-            self.call_count += 1
-            total = sum(message.filters.values()) + sum(message.limits)
-            return FlextResult[dict[str, int]].ok({"total": total})
-
-    handler = StructuredQueryHandler()
-    register_result = dispatcher.register_handler(
-        cast("FlextHandlers[object, object]", handler)
-    )
-    assert register_result.is_success
-
-    # Clear cache using public API if available
-    if hasattr(dispatcher.bus, "clear_cache") and callable(dispatcher.bus.clear_cache):
-        dispatcher.bus.clear_cache(dispatcher.bus)
-    else:
-        # For testing purposes, access cache directly
-        dispatcher.bus._cache.clear()
-
-    first_query = StructuredQuery(filters={"a": 1, "b": 2}, limits=(3, 4))
-    second_query = StructuredQuery(
-        filters={"b": 2, "a": 1},
-        limits=(3, 4),
-    )
-
-    first_result = dispatcher.dispatch(first_query)
-    assert first_result.is_success
-    assert handler.call_count == 1
-    assert len(dispatcher.bus._cache) == 1
-
-    second_result = dispatcher.dispatch(second_query)
-    assert second_result.is_success
-    assert handler.call_count == 1
-    assert len(dispatcher.bus._cache) == 1
-    assert second_result.unwrap() == {"total": 10}
-    cached_result = next(iter(dispatcher.bus._cache.values()))
-    assert cached_result.unwrap() == {"total": 10}
-
-
-def test_dispatcher_cache_hits_for_equivalent_pydantic_queries() -> None:
-    """Pydantic-based queries share cache entries when payload ordering differs."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    class PydanticCachedQuery(BaseModel):
-        filters: dict[str, int]
-        offsets: list[int]
-
-    class PydanticCachedQueryHandler:
-        def __init__(self) -> None:
-            super().__init__()
-            self.call_count = 0
-
-        def can_handle(self, command_type: type[object]) -> bool:
-            return command_type is PydanticCachedQuery
-
-        def handle(self, message: PydanticCachedQuery) -> FlextResult[dict[str, int]]:
-            self.call_count += 1
-            total = sum(message.filters.values()) + sum(message.offsets)
-            return FlextResult[dict[str, int]].ok({"total": total})
-
-    handler = PydanticCachedQueryHandler()
-    register_result = dispatcher.register_handler(
-        cast("FlextHandlers[object, object]", handler)
-    )
-    assert register_result.is_success
-
-    # Avoid accessing private _cache directly; prefer a public API.
-    if hasattr(dispatcher.bus, "clear_cache") and callable(dispatcher.bus.clear_cache):
-        dispatcher.bus.clear_cache(dispatcher.bus)
-    else:
-        msg = (
-            "dispatcher.bus does not provide a public 'clear_cache' method. "
-            "Please add a public API to clear the cache instead of accessing _cache directly."
-        )
-        raise RuntimeError(msg)
-
-    first_query = PydanticCachedQuery(filters={"c": 3, "d": 4}, offsets=[1, 2])
-    second_query = PydanticCachedQuery(filters={"d": 4, "c": 3}, offsets=[1, 2])
-
-    first_result = dispatcher.dispatch(first_query)
-    assert first_result.is_success
-    assert handler.call_count == 1
-    assert len(dispatcher.bus._cache) == 1
-
-    second_result = dispatcher.dispatch(second_query)
-    assert second_result.is_success
-    assert handler.call_count == 1
-    assert len(dispatcher.bus._cache) == 1
-    assert second_result.unwrap() == {"total": 10}
-    cached_result = next(iter(dispatcher.bus._cache.values()))
-    assert cached_result.unwrap() == {"total": 10}
-
-
-def test_dispatcher_registers_handler_and_dispatches_command() -> None:
-    """Test the dispatcher registers a handler and dispatches a command."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    handler = EchoHandler()
-    register_result = dispatcher.register_handler(
-        cast("FlextHandlers[object, object]", handler)
-    )
-    assert register_result.is_success
-
-    result = dispatcher.dispatch(EchoCommand(payload="hello"))
-    assert result.is_success
-    assert result.unwrap() == "HELLO"
-
-
-def test_dispatcher_register_command_binding() -> None:
-    """Test the dispatcher registers a command binding."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    handler = EchoHandler()
-    register_result = dispatcher.register_command(
-        EchoCommand, cast("FlextHandlers[object, object]", handler)
-    )
-    assert register_result.is_success
-
-    result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="world"))
-    assert result.is_success
-    assert result.unwrap() == "WORLD"
-
-
-def test_dispatcher_register_function_helper() -> None:
-    """Test the dispatcher registers a function helper."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    def handle_echo(command: EchoCommand) -> str:
-        if command.payload == "boom":
-            msg = "boom"
-            raise RuntimeError(msg)
-        return f"echo:{command.payload}"
-
-    register_result = dispatcher.register_function(
-        EchoCommand,
-        cast("Callable[[object], object | FlextResult[object]]", handle_echo),
-    )
-    assert register_result.is_success
-
-    success_result: FlextResult[object] = dispatcher.dispatch(
-        EchoCommand(payload="ping")
-    )
-    assert success_result.is_success
-    assert success_result.unwrap() == "echo:ping"
-
-    failure_result: FlextResult[object] = dispatcher.dispatch(
-        EchoCommand(payload="boom")
-    )
-    assert failure_result.is_failure
-    assert "boom" in (failure_result.error or "")
-
-    handler = dispatcher.bus.find_handler(EchoCommand(payload="ping"))
-    assert handler is not None
-
-    result = cast("FlextHandlers[object, object]", handler).handle(
-        EchoCommand(payload="ping")
-    )
-    assert result.is_success
-    assert result.unwrap() == "echo:ping"
-
-
-def test_dispatcher_provides_correlation_context() -> None:
-    """Test the dispatcher provides correlation context."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    handler = ContextAwareHandler()
-    register_result = dispatcher.register_handler(
-        cast("FlextHandlers[object, object]", handler)
-    )
-    assert register_result.is_success
-
-    result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="context"))
-    assert result.is_success
-    assert isinstance(result.unwrap(), str)
-    assert result.unwrap()
-
-
-def test_dispatcher_dispatch_with_explicit_correlation_id_uses_provided_value() -> None:
-    """Dispatcher should expose the provided correlation ID within handlers."""
-    FlextContext.Utilities.clear_context()
-
-    class RecordingBus(FlextBus):
-        def __init__(self) -> None:
-            super().__init__()
-            self.correlation_ids: list[str | None] = []
-            self.parent_ids: list[str | None] = []
-
-        def execute(self, command: object) -> FlextResult[object]:
-            # Use command parameter to avoid unused argument warning
-            _command = command  # Acknowledge the parameter
-            self.correlation_ids.append(FlextContext.Correlation.get_correlation_id())
-            self.parent_ids.append(FlextContext.Correlation.get_parent_correlation_id())
-            return FlextResult[object].ok("handled")
-
-        def register_handler(self, *_args: object) -> FlextResult[None]:
-            # Use *_args parameter to avoid unused argument warning
-            _ = _args  # Acknowledge the parameter
-            return FlextResult[None].ok(None)
-
-    bus = RecordingBus()
-    dispatcher = FlextDispatcher(bus=bus)
-
-    provided_correlation = "corr-explicit-123"
-    result: FlextResult[object] = dispatcher.dispatch(
-        EchoCommand(payload="explicit"),
-        correlation_id=provided_correlation,
-    )
-
-    assert result.is_success
-    assert bus.correlation_ids == [provided_correlation]
-    assert bus.parent_ids == [None]
-
-    assert FlextContext.Correlation.get_correlation_id() is None
-    assert FlextContext.Correlation.get_parent_correlation_id() is None
-
-
-def test_dispatcher_dispatch_with_explicit_correlation_id_restores_previous_context() -> (
-    None
-):
-    """Explicit correlation IDs should be scoped without mutating outer context."""
-    FlextContext.Utilities.clear_context()
-
-    class RecordingBus(FlextBus):
-        def __init__(self) -> None:
-            super().__init__()
-            self.correlation_ids: list[str | None] = []
-            self.parent_ids: list[str | None] = []
-
-        def execute(self, command: object) -> FlextResult[object]:
-            # Use command parameter to avoid unused argument warning
-            _command = command  # Acknowledge the parameter
-            self.correlation_ids.append(FlextContext.Correlation.get_correlation_id())
-            self.parent_ids.append(FlextContext.Correlation.get_parent_correlation_id())
-            return FlextResult[object].ok("handled")
-
-        def register_handler(self, *_args: object) -> FlextResult[None]:
-            # Use *_args parameter to avoid unused argument warning
-            _ = _args  # Acknowledge the parameter
-            return FlextResult[None].ok(None)
-
-    bus = RecordingBus()
-    dispatcher = FlextDispatcher(bus=bus)
-
-    existing_correlation = "corr-existing-456"
-    existing_parent = "corr-parent-789"
-    FlextContext.Correlation.set_correlation_id(existing_correlation)
-    FlextContext.Correlation.set_parent_correlation_id(existing_parent)
-
-    provided_correlation = "corr-explicit-nested"
-    result = dispatcher.dispatch(
-        EchoCommand(payload="restore"),
-        correlation_id=provided_correlation,
-    )
-
-    assert result.is_success
-    assert bus.correlation_ids == [provided_correlation]
-    assert bus.parent_ids == [existing_correlation]
-
-    assert FlextContext.Correlation.get_correlation_id() == existing_correlation
-    assert FlextContext.Correlation.get_parent_correlation_id() == existing_parent
-
-    FlextContext.Utilities.clear_context()
-
-
-def test_dispatcher_propagates_metadata_model_to_context() -> None:
-    """Dispatching with metadata model exposes attributes via context."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    metadata = FlextModels.Metadata(
-        created_by="tester",
-        attributes={"tenant": "acme", "retry": 2},
-    )
-    expected_metadata = dict(metadata.attributes)
-
-    mock_execute = Mock()
-
-    def fake_execute(_message: object) -> FlextResult[object]:
-        # Use _message parameter to avoid unused argument warning
-        __message = _message  # Acknowledge the parameter
-        metadata_from_context = FlextContext.Performance.get_operation_metadata()
-        assert metadata_from_context == expected_metadata
-        return FlextResult[object].ok(dict(metadata_from_context or {}))
-
-    mock_execute.side_effect = fake_execute
-    setattr(dispatcher._bus, "execute", mock_execute)
-
-    request: dict[str, object] = {
-        "message": EchoCommand(payload="metadata"),
-        "context_metadata": metadata,
-    }
-
-    dispatch_result = dispatcher.dispatch_with_request(request)
-    assert dispatch_result.is_success
-    payload = dispatch_result.unwrap()
-    assert payload["success"] is True
-    assert payload["result"] == expected_metadata
-    assert "created_by" not in cast("dict[str, object]", payload["result"])
-    mock_execute.assert_called_once()
-
-
-def test_dispatcher_propagates_plain_metadata_dict_to_context() -> None:
-    """Dispatching with plain metadata dict sets context metadata."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    metadata = {"tenant": "beta", "attempt": 1, 3: "three"}
-    expected_metadata = {"tenant": "beta", "attempt": 1, "3": "three"}
-
-    mock_execute = Mock()
-
-    def fake_execute(_message: object) -> FlextResult[object]:
-        # Use _message parameter to avoid unused argument warning
-        __message = _message  # Acknowledge the parameter
-        metadata_from_context = FlextContext.Performance.get_operation_metadata()
-        assert metadata_from_context == expected_metadata
-        return FlextResult[object].ok(dict(metadata_from_context or {}))
-
-    mock_execute.side_effect = fake_execute
-    setattr(dispatcher._bus, "execute", mock_execute)
-
-    request: dict[str, object] = {
-        "message": EchoCommand(payload="metadata"),
-        "context_metadata": metadata,
-    }
-
-    dispatch_result = dispatcher.dispatch_with_request(request)
-    assert dispatch_result.is_success
-    payload = dispatch_result.unwrap()
-    assert payload["success"] is True
-    assert payload["result"] == expected_metadata
-    mock_execute.assert_called_once()
-
-
-def test_registry_prevents_duplicate_handler_registration() -> None:
-    """Registry returns success while avoiding duplicate registrations."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher)
-
-    handler = EchoHandler()
-
-    first_result = registry.register_handler(
-        cast("FlextHandlers[object, object]", handler)
-    )
-    assert first_result.is_success
-    # Note: RegistrationDetails doesn't have handler attribute in current implementation
-    # assert first_result.unwrap().handler is handler
-
-    second_result = registry.register_handler(
-        cast("FlextHandlers[object, object]", handler)
-    )
-    assert second_result.is_success
-    # Note: RegistrationDetails doesn't have handler attribute in current implementation
-    # assert second_result.unwrap().handler is handler
-
-
-def test_registry_batch_registration_tracks_skipped() -> None:
-    """Registry summary records skipped handlers when duplicates appear."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher)
-
-    handler = EchoHandler()
-    summary_result: FlextResult[FlextRegistry.Summary] = registry.register_handlers(
-        [
-            cast("FlextHandlers[object, object]", handler),
-            cast("FlextHandlers[object, object]", handler),
-        ],
-    )
-
-    assert summary_result.is_success
-    summary = summary_result.unwrap()
-    assert len(summary.registered) == 1
-    expected_key = handler.handler_id or handler.handler_name
-    assert summary.skipped == [expected_key]
-
-
-def test_registry_register_bindings() -> None:
-    """Registry binds handlers to explicit message types."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher)
-
-    handler = EchoHandler()
-    summary_result = registry.register_bindings([
-        (EchoCommand, cast("FlextHandlers[object, object]", handler))
-    ])
-    assert summary_result.is_success
-    summary = summary_result.unwrap()
-    assert len(summary.registered) == 1
-
-    dispatch_result = dispatcher.dispatch(EchoCommand(payload="bound"))
-    assert dispatch_result.is_success
-    assert dispatch_result.unwrap() == "BOUND"
-
-
-def test_dispatcher_unregisters_handler_registered_with_command_type() -> None:
-    """Handlers registered via the two-arg form can be removed by type."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-
-    handler = EchoHandler()
-    register_result = dispatcher.register_command(
-        EchoCommand, cast("FlextHandlers[object, object]", handler)
-    )
-
-    assert register_result.is_success
-    assert handler in dispatcher.bus.get_all_handlers()
-    assert "EchoCommand" in dispatcher.bus.get_registered_handlers()
-
-    removed_result = dispatcher.bus.unregister_handler(EchoCommand)
-    assert removed_result.is_success
-    assert handler not in dispatcher.bus.get_all_handlers()
-    assert "EchoCommand" not in dispatcher.bus.get_registered_handlers()
-
-
-def test_registry_register_function_map() -> None:
-    """Registry accepts function mappings for registration."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher)
-
-    def echo_function(command: EchoCommand) -> str:
-        return f"fn:{command.payload}"
-
-    def custom_create_handler_from_function(
-        _self: FlextDispatcher,
-        handler_func: Callable[[object], object | FlextResult[object]],
-        _handler_config: dict[str, object] | None,
-        mode: str,
-    ) -> FlextResult[FlextHandlers[object, object]]:
-        class FunctionHandler(FlextHandlers[object, object]):
-            def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler.create_handler_config(
-                    handler_type=cast("Literal['command', 'query']", mode),
-                    default_name="FunctionHandler",
-                    default_id="function_handler",
-                )
-                super().__init__(config=config)
-                self._handler_func = handler_func
-
-            def handle(self, message: object) -> FlextResult[object]:
-                result = self._handler_func(message)
-                if isinstance(result, FlextResult):
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
-
-            def execute(self, message: object) -> FlextResult[object]:
-                return self.handle(message)
-
-        return FlextResult[FlextHandlers[object, object]].ok(FunctionHandler())
-
-    # Monkey patch the method for testing
-
-    setattr(
-        dispatcher,
-        "_create_handler_from_function",
-        types.MethodType(custom_create_handler_from_function, dispatcher),
-    )
-
-    summary_result = registry.register_function_map(
-        {
-            EchoCommand: (
-                cast("Callable[[object], object | FlextResult[object]]", echo_function),
-                None,
-            )
-        },
-    )
-    assert summary_result.is_success
-
-    result: FlextResult[object] = dispatcher.dispatch(EchoCommand(payload="fn"))
-    assert result.is_success
-    assert result.unwrap() == "fn:fn"
-
-
-def test_dispatcher_query_cache_returns_same_instance() -> None:
-    """Cached queries should reuse the same result without re-running the handler."""
-    FlextContext.Utilities.clear_context()
-    bus = FlextBus.create_command_bus({
-        "enable_caching": True,
-        "enable_metrics": True,
-        "max_cache_size": 4,
-    })
-    dispatcher = FlextDispatcher(bus=bus)
-
-    handler = CountingQueryHandler()
-    register_result = dispatcher.register_handler(
-        cast("FlextHandlers[object, object]", handler),
-        handler_mode="query",
-    )
-    assert register_result.is_success
-
-    query = CachedQuery(query_id="cache-1", payload="value")
-    first_result = dispatcher.dispatch(query)
-    assert first_result.is_success
-    first_payload = first_result.unwrap()
-
-    cached_result = dispatcher.dispatch(query)
-    assert cached_result.is_success
-    assert cached_result.unwrap() is first_payload
-    assert handler.calls.get("cache-1") == 1
-
-
-def test_dispatcher_query_cache_respects_max_size() -> None:
-    """Ensure cached entries are evicted when exceeding the configured size."""
-    FlextContext.Utilities.clear_context()
-    bus = FlextBus.create_command_bus({
-        "enable_caching": True,
-        "enable_metrics": True,
-        "max_cache_size": 1,
-    })
-    dispatcher = FlextDispatcher(bus=bus)
-
-    handler = CountingQueryHandler()
-    register_result = dispatcher.register_handler(
-        cast("FlextHandlers[object, object]", handler),
-        handler_mode="query",
-    )
-    assert register_result.is_success
-
-    first_query = CachedQuery(query_id="q-1", payload="first")
-    second_query = CachedQuery(query_id="q-2", payload="second")
-
-    first_result = dispatcher.dispatch(first_query)
-    assert first_result.is_success
-    first_payload = first_result.unwrap()
-
-    second_result = dispatcher.dispatch(second_query)
-    assert second_result.is_success
-
-    assert handler.calls.get("q-1") == 1
-    assert handler.calls.get("q-2") == 1
-
-    third_result = dispatcher.dispatch(first_query)
-    assert third_result.is_success
-    assert handler.calls.get("q-1") == 2
-    assert third_result.unwrap() is not first_payload
-
-
-def test_dispatcher_uses_global_execution_timeout_for_bus() -> None:
-    """Dispatcher maps global timeout configuration onto the bus."""
-    FlextContext.Utilities.clear_context()
-    FlextConfig.reset_global_instance()
-
-    try:
-        custom_timeout = 123
-        FlextConfig.set_global_instance(
-            FlextConfig(dispatcher_timeout_seconds=custom_timeout)
-        )
-
+    def test_dispatcher_initialization(self) -> None:
+        """Test dispatcher initialization."""
         dispatcher = FlextDispatcher()
-        assert dispatcher.bus.config.execution_timeout == custom_timeout
-    finally:
-        FlextConfig.reset_global_instance()
+        assert dispatcher is not None
+        assert isinstance(dispatcher, FlextDispatcher)
 
+    def test_dispatcher_with_custom_config(self) -> None:
+        """Test dispatcher initialization with custom configuration."""
+        config = {"max_retries": 3, "timeout": 30}
+        dispatcher = FlextDispatcher(config=config)
+        assert dispatcher is not None
 
-def test_dispatcher_reuses_cache_when_metrics_disabled() -> None:
-    """Cache lookup remains active when metrics are disabled but caching is enabled."""
-    FlextContext.Utilities.clear_context()
-    dispatcher = FlextDispatcher(
-        config={
-            "auto_context": False,
-            "enable_logging": False,
-            "enable_metrics": False,
-            "bus_config": {
-                "enable_metrics": False,
-                "enable_caching": True,
-            },
-        }
-    )
+    def test_dispatcher_register_handler(self) -> None:
+        """Test handler registration."""
+        dispatcher = FlextDispatcher()
 
-    handler = CountingQueryHandler()
-    registration_result = dispatcher.register_command(
-        CachedQuery,
-        cast("FlextHandlers[object, object]", handler),
-    )
-    assert registration_result.is_success
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
 
-    first_result: FlextResult[object] = dispatcher.dispatch(
-        CachedQuery(query_id="cache-test", payload="cache")
-    )
-    assert first_result.is_success
-    assert len(handler.calls) == 1
-    first_value = first_result.unwrap()
+        result = dispatcher.register_handler("test_message", test_handler)
+        assert result.is_success
 
-    second_result: FlextResult[object] = dispatcher.dispatch(
-        CachedQuery(query_id="cache-test", payload="cache")
-    )
-    assert second_result.is_success
-    assert len(handler.calls) == 1
-    assert second_result.unwrap() == first_value
+    def test_dispatcher_register_handler_invalid(self) -> None:
+        """Test handler registration with invalid parameters."""
+        dispatcher = FlextDispatcher()
+
+        result = dispatcher.register_handler("", object())
+        assert result.is_failure
+
+    def test_dispatcher_unregister_handler(self) -> None:
+        """Test handler unregistration."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+        result = dispatcher.unregister_handler("test_message", test_handler)
+        assert result.is_success
+
+    def test_dispatcher_unregister_nonexistent_handler(self) -> None:
+        """Test unregistering non-existent handler."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        result = dispatcher.unregister_handler("nonexistent_message", test_handler)
+        assert result.is_failure
+
+    def test_dispatcher_dispatch_message(self) -> None:
+        """Test message dispatching."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+    def test_dispatcher_dispatch_to_nonexistent_handler(self) -> None:
+        """Test dispatching to non-existent handler."""
+        dispatcher = FlextDispatcher()
+
+        result = dispatcher.dispatch("nonexistent_message", "test_data")
+        assert result.is_failure
+
+    def test_dispatcher_dispatch_with_multiple_handlers(self) -> None:
+        """Test dispatching with multiple handlers."""
+        dispatcher = FlextDispatcher()
+
+        def handler1(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"handler1_{_message}")
+
+        def handler2(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"handler2_{_message}")
+
+        dispatcher.register_handler("test_message", handler1)
+        dispatcher.register_handler("test_message", handler2)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+    def test_dispatcher_dispatch_with_failing_handler(self) -> None:
+        """Test dispatching with failing handler."""
+        dispatcher = FlextDispatcher()
+
+        def failing_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].fail("Handler failed")
+
+        dispatcher.register_handler("test_message", failing_handler)
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_failure
+
+    def test_dispatcher_dispatch_with_exception(self) -> None:
+        """Test dispatching with exception."""
+        dispatcher = FlextDispatcher()
+
+        def exception_handler(_message: object) -> FlextResult[str]:
+            msg = "Handler exception"
+            raise ValueError(msg)
+
+        dispatcher.register_handler("test_message", exception_handler)
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_failure
+        assert "Handler exception" in result.error
+
+    def test_dispatcher_dispatch_with_retry(self) -> None:
+        """Test dispatching with retry mechanism."""
+        dispatcher = FlextDispatcher(config={"max_retries": 3, "retry_delay": 0.01})
+
+        retry_count = 0
+
+        def retry_handler(_message: object) -> FlextResult[str]:
+            nonlocal retry_count
+            retry_count += 1
+            if retry_count < 3:
+                return FlextResult[str].fail("Temporary failure")
+            return FlextResult[str].ok(f"success_after_{retry_count}_retries")
+
+        dispatcher.register_handler("test_message", retry_handler)
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+        assert "success_after_3_retries" in result.data
+
+    def test_dispatcher_dispatch_with_timeout(self) -> None:
+        """Test dispatching with timeout."""
+        dispatcher = FlextDispatcher(config={"timeout": 0.1})
+
+        def timeout_handler(_message: object) -> FlextResult[str]:
+            time.sleep(0.2)  # Exceed timeout
+            return FlextResult[str].ok("should_not_reach_here")
+
+        dispatcher.register_handler("test_message", timeout_handler)
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_failure
+        assert "timeout" in result.error.lower()
+
+    def test_dispatcher_dispatch_with_validation(self) -> None:
+        """Test dispatching with validation."""
+        dispatcher = FlextDispatcher()
+
+        def validated_handler(_message: object) -> FlextResult[str]:
+            if not _message:
+                return FlextResult[str].fail("Message is required")
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", validated_handler)
+
+        # Valid message
+        result = dispatcher.dispatch("test_message", "valid_data")
+        assert result.is_success
+
+        # Invalid message
+        result = dispatcher.dispatch("test_message", "")
+        assert result.is_failure
+        assert "Message is required" in result.error
+
+    def test_dispatcher_dispatch_with_middleware(self) -> None:
+        """Test dispatching with middleware."""
+        dispatcher = FlextDispatcher()
+
+        middleware_called = False
+
+        def middleware(_message: object) -> object:
+            nonlocal middleware_called
+            middleware_called = True
+            return _message
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.add_middleware(middleware)
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+        assert middleware_called is True
+
+    def test_dispatcher_dispatch_with_logging(self) -> None:
+        """Test dispatching with logging."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+    def test_dispatcher_dispatch_with_metrics(self) -> None:
+        """Test dispatching with metrics."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+        # Check metrics
+        metrics = dispatcher.get_metrics()
+        assert "test_message" in metrics
+        assert metrics["test_message"]["dispatches"] >= 1
+
+    def test_dispatcher_dispatch_with_correlation_id(self) -> None:
+        """Test dispatching with correlation ID."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch(
+            "test_message", "test_data", correlation_id="test_corr_123"
+        )
+        assert result.is_success
+
+    def test_dispatcher_dispatch_with_batch(self) -> None:
+        """Test dispatching with batch processing."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        messages = ["test1", "test2", "test3"]
+        results = dispatcher.dispatch_batch("test_message", messages)
+        assert len(results) == 3
+        assert all(result.is_success for result in results)
+
+    def test_dispatcher_dispatch_with_parallel(self) -> None:
+        """Test dispatching with parallel processing."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            time.sleep(0.1)  # Simulate work
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        messages = ["test1", "test2", "test3"]
+
+        start_time = time.time()
+        results = dispatcher.dispatch_parallel("test_message", messages)
+        end_time = time.time()
+
+        assert len(results) == 3
+        assert all(result.is_success for result in results)
+        # Should complete faster than sequential execution
+        assert end_time - start_time < 0.3
+
+    def test_dispatcher_dispatch_with_circuit_breaker(self) -> None:
+        """Test dispatching with circuit breaker."""
+        dispatcher = FlextDispatcher(config={"circuit_breaker_threshold": 3})
+
+        def failing_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].fail("Service unavailable")
+
+        dispatcher.register_handler("test_message", failing_handler)
+
+        # Execute failing dispatches to trigger circuit breaker
+        for _ in range(5):
+            result = dispatcher.dispatch("test_message", "test_data")
+            assert result.is_failure
+
+        # Circuit breaker should be open
+        assert dispatcher.is_circuit_breaker_open("test_message") is True
+
+    def test_dispatcher_dispatch_with_rate_limiting(self) -> None:
+        """Test dispatching with rate limiting."""
+        dispatcher = FlextDispatcher(config={"rate_limit": 2, "rate_limit_window": 1})
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        # Execute dispatches within rate limit
+        for i in range(2):
+            result = dispatcher.dispatch("test_message", f"test{i}")
+            assert result.is_success
+
+        # Exceed rate limit
+        result = dispatcher.dispatch("test_message", "test3")
+        assert result.is_failure
+        assert "rate limit" in result.error.lower()
+
+    def test_dispatcher_dispatch_with_caching(self) -> None:
+        """Test dispatching with caching."""
+        dispatcher = FlextDispatcher(config={"cache_ttl": 60})
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        # First dispatch should cache result
+        result1 = dispatcher.dispatch("test_message", "test_data")
+        assert result1.is_success
+
+        # Second dispatch should use cache
+        result2 = dispatcher.dispatch("test_message", "test_data")
+        assert result2.is_success
+        assert result1.data == result2.data
+
+    def test_dispatcher_dispatch_with_audit(self) -> None:
+        """Test dispatching with audit logging."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+        # Check audit log
+        audit_log = dispatcher.get_audit_log()
+        assert len(audit_log) >= 1
+        assert audit_log[0]["message_type"] == "test_message"
+
+    def test_dispatcher_dispatch_with_performance_monitoring(self) -> None:
+        """Test dispatching with performance monitoring."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            time.sleep(0.1)  # Simulate work
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+        # Check performance metrics
+        performance = dispatcher.get_performance_metrics()
+        assert "test_message" in performance
+        assert performance["test_message"]["avg_execution_time"] >= 0.1
+
+    def test_dispatcher_dispatch_with_error_handling(self) -> None:
+        """Test dispatching with error handling."""
+        dispatcher = FlextDispatcher()
+
+        def error_handler(_message: object) -> FlextResult[str]:
+            msg = "Handler error"
+            raise ValueError(msg)
+
+        dispatcher.register_handler("test_message", error_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_failure
+        assert "Handler error" in result.error
+
+    def test_dispatcher_dispatch_with_cleanup(self) -> None:
+        """Test dispatching with cleanup."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+
+        # Cleanup
+        dispatcher.cleanup()
+
+        # After cleanup, handlers should be cleared
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_failure
+        assert "No handler found" in result.error
+
+    def test_dispatcher_get_registered_handlers(self) -> None:
+        """Test getting registered handlers."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+        handlers = dispatcher.get_handlers("test_message")
+        assert len(handlers) == 1
+        assert test_handler in handlers
+
+    def test_dispatcher_get_handlers_for_nonexistent_message(self) -> None:
+        """Test getting handlers for non-existent message."""
+        dispatcher = FlextDispatcher()
+
+        handlers = dispatcher.get_handlers("nonexistent_message")
+        assert len(handlers) == 0
+
+    def test_dispatcher_clear_handlers(self) -> None:
+        """Test clearing all handlers."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+        dispatcher.clear_handlers()
+
+        handlers = dispatcher.get_handlers("test_message")
+        assert len(handlers) == 0
+
+    def test_dispatcher_statistics(self) -> None:
+        """Test dispatcher statistics tracking."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+        dispatcher.dispatch("test_message", "test_data")
+
+        stats = dispatcher.get_statistics()
+        assert "test_message" in stats
+        assert stats["test_message"]["dispatches"] >= 1
+
+    def test_dispatcher_thread_safety(self) -> None:
+        """Test dispatcher thread safety."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        results = []
+
+        def dispatch_message(thread_id: int) -> None:
+            result = dispatcher.dispatch("test_message", f"data_{thread_id}")
+            results.append(result)
+
+        threads = []
+        for i in range(10):
+            thread = threading.Thread(target=dispatch_message, args=(i,))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        assert len(results) == 10
+        assert all(result.is_success for result in results)
+
+    def test_dispatcher_performance(self) -> None:
+        """Test dispatcher performance characteristics."""
+        dispatcher = FlextDispatcher()
+
+        def fast_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", fast_handler)
+
+        start_time = time.time()
+
+        # Perform many operations
+        for i in range(100):
+            dispatcher.dispatch("test_message", f"data_{i}")
+
+        end_time = time.time()
+
+        # Should complete 100 operations in reasonable time
+        assert end_time - start_time < 1.0
+
+    def test_dispatcher_error_handling(self) -> None:
+        """Test dispatcher error handling mechanisms."""
+        dispatcher = FlextDispatcher()
+
+        def error_handler(_message: object) -> FlextResult[str]:
+            msg = "Handler error"
+            raise ValueError(msg)
+
+        dispatcher.register_handler("test_message", error_handler)
+
+        result = dispatcher.dispatch("test_message", "test_data")
+        assert result.is_failure
+        assert "Handler error" in result.error
+
+    def test_dispatcher_validation(self) -> None:
+        """Test dispatcher validation."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        result = dispatcher.validate()
+        assert result.is_success
+
+    def test_dispatcher_export_import(self) -> None:
+        """Test dispatcher export/import."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+
+        # Export dispatcher configuration
+        config = dispatcher.export_config()
+        assert isinstance(config, dict)
+        assert "test_message" in config
+
+        # Create new dispatcher and import configuration
+        new_dispatcher = FlextDispatcher()
+        result = new_dispatcher.import_config(config)
+        assert result.is_success
+
+        # Verify handler is available in new dispatcher
+        result = new_dispatcher.dispatch("test_message", "test_data")
+        assert result.is_success
+        assert "processed_test_data" in result.data
+
+    def test_dispatcher_cleanup(self) -> None:
+        """Test dispatcher cleanup."""
+        dispatcher = FlextDispatcher()
+
+        def test_handler(_message: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_message}")
+
+        dispatcher.register_handler("test_message", test_handler)
+        dispatcher.dispatch("test_message", "test_data")
+
+        dispatcher.cleanup()
+
+        # After cleanup, handlers should be cleared
+        handlers = dispatcher.get_handlers("test_message")
+        assert len(handlers) == 0

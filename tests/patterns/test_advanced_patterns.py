@@ -36,8 +36,7 @@ def mark_test_pattern(pattern: str) -> Callable[[object], object]:
     def decorator(func: object) -> object:
         """Decorator method.
 
-        Returns:
-            object: The decorated function with pattern attribute.
+        Returns: The decorated function with pattern attribute.
 
         """
         # Use setattr to dynamically assign the pattern attribute

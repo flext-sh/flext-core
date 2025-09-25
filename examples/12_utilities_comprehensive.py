@@ -453,7 +453,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
 
         # Boolean conversion
         print("\n3. Boolean Conversion:")
-        bool_values: list[bool | int | str | None] = [
+        bool_values: list[bool | int, str | None] = [
             True,
             False,
             1,

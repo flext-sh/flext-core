@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 """10 - FlextCqrs: Command Query Responsibility Segregation Patterns.
 
 This example demonstrates the COMPLETE FlextCqrs API for implementing

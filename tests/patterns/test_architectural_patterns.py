@@ -100,7 +100,7 @@ class TestCleanArchitecturePatterns:
                     CreateUserCommand,
                 )
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(self, request: CreateUserCommand) -> FlextResult[str]:
                 """Handle user creation.
 
                 Returns:
@@ -202,7 +202,7 @@ class TestCleanArchitecturePatterns:
         class Order(FlextModels.AggregateRoot):
             """Order aggregate root."""
 
-            order_id: object
+            order_id: str
             total: object
             status: str = "pending"
 
@@ -310,7 +310,7 @@ class TestCleanArchitecturePatterns:
         class UpdateUserHandler(FlextProcessors.Handler):
             """Handler for user update commands."""
 
-            def handle(self, request: object) -> FlextResult[object]:
+            def handle(self, request: UpdateUserCommand) -> FlextResult[object]:
                 """Handle user update command."""
                 if not isinstance(request, UpdateUserCommand):
                     return FlextResult[object].fail("Invalid command type")
@@ -332,7 +332,7 @@ class TestCleanArchitecturePatterns:
         class GetUserHandler(FlextProcessors.Handler):
             """Handler for user queries."""
 
-            def handle(self, request: object) -> FlextResult[object]:
+            def handle(self, request: GetUserQuery) -> FlextResult[object]:
                 """Handle user query."""
                 if not isinstance(request, GetUserQuery):
                     return FlextResult[object].fail("Invalid query type")

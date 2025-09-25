@@ -868,7 +868,7 @@ class FlextTestsMatchers:
     @staticmethod
     def assert_type_guard(
         value: object,
-        expected_type: type[object] | Callable[[object], bool],
+        expected_type: type[object] | Callable[[object], bool] | bool,
     ) -> None:
         """Assert that value is of expected type with type guard.
 
@@ -1143,7 +1143,7 @@ class FlextTestsMatchers:
             list[object]: List of task results
 
         """
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        return list(await asyncio.gather(*tasks, return_exceptions=True))
 
     @staticmethod
     async def run_concurrently(
@@ -1207,7 +1207,7 @@ class FlextTestsMatchers:
             for _ in range(concurrency_level)
         ]
 
-        results: list[object] = await asyncio.gather(*tasks, return_exceptions=True)
+        results: list[object] = list(await asyncio.gather(*tasks, return_exceptions=True))
         end_time = time.time()
 
         return {

@@ -186,15 +186,15 @@ class FlextTestsAsyncs:
             return []
 
         if return_exceptions:
-            results: list[T | BaseException] = await asyncio.gather(
+            results: list[T | BaseException] = list(await asyncio.gather(
                 *coroutines,
                 return_exceptions=True,
-            )
+            ))
             # Filter out exceptions and return only successful results
             return [r for r in results if not isinstance(r, BaseException)]
 
         # When return_exceptions=False, asyncio.gather will raise on first exception
-        return await asyncio.gather(*coroutines, return_exceptions=False)
+        return list(await asyncio.gather(*coroutines, return_exceptions=False))
 
     @staticmethod
     async def run_concurrent(duration: float) -> None:
@@ -211,14 +211,14 @@ class FlextTestsAsyncs:
         if not tasks:
             return []
         if return_exceptions:
-            results: list[T | BaseException] = await asyncio.gather(
+            results: list[T | BaseException] = list(await asyncio.gather(
                 *tasks,
                 return_exceptions=True,
-            )
+            ))
             # Filter out exceptions and return only successful results
             return [r for r in results if not isinstance(r, BaseException)]
         # When return_exceptions=False, asyncio.gather will raise on first exception
-        return await asyncio.gather(*tasks, return_exceptions=False)
+        return list(await asyncio.gather(*tasks, return_exceptions=False))
 
     @staticmethod
     async def retry_async(
@@ -540,7 +540,7 @@ class FlextTestsAsyncs:
         if not inputs:
             return []
         tasks = [task_func(i) for i in inputs]
-        results: list[object] = await asyncio.gather(*tasks)
+        results: list[object] = list(await asyncio.gather(*tasks))
         return results
 
     @staticmethod
@@ -639,9 +639,9 @@ class FlextTestsAsyncs:
 
         # Start all workers concurrently
         workers = [worker() for _ in range(concurrency_level)]
-        worker_results: list[list[FlextTypes.Core.Dict]] = await asyncio.gather(
+        worker_results: list[list[FlextTypes.Core.Dict]] = list(await asyncio.gather(
             *workers
-        )
+        ))
 
         # Flatten results
         all_results: list[FlextTypes.Core.Dict] = []
@@ -716,7 +716,7 @@ class FlextTestsAsyncs:
         tasks: list[asyncio.Task[object]] = [
             asyncio.create_task(coro) for coro in coroutines
         ]
-        results: list[object] = await asyncio.gather(*tasks)
+        results: list[object] = list(await asyncio.gather(*tasks))
         return results
 
     @staticmethod
