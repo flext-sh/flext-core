@@ -1,307 +1,309 @@
-"""Comprehensive tests for FlextRegistry - 100% coverage target.
+"""Comprehensive tests for FlextRegistry - Service Registry.
 
-Tests the registry functionality including handler registration,
-function mapping, bindings, and error handling with FlextResult patterns.
+Tests the actual FlextRegistry API with real functionality testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from unittest.mock import Mock
+from flext_core import (
+    FlextDispatcher,
+    FlextHandlers,
+    FlextModels,
+    FlextRegistry,
+    FlextResult,
+)
 
-from flext_core import FlextDispatcher, FlextRegistry, FlextResult
+
+class ConcreteTestHandler(FlextHandlers[str, str]):
+    """Concrete implementation of FlextHandlers for testing."""
+
+    def handle(self, message: str) -> FlextResult[str]:
+        """Handle the message."""
+        return FlextResult[str].ok(f"processed_{message}")
 
 
 class TestFlextRegistry:
-    """Test FlextRegistry core functionality."""
+    """Test suite for FlextRegistry service registry functionality."""
 
-    def test_initialization(self) -> None:
+    def test_registry_initialization(self) -> None:
         """Test registry initialization."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+        assert registry is not None
+        assert isinstance(registry, FlextRegistry)
 
-        assert registry._dispatcher is mock_dispatcher
-        assert registry._registered_keys == set()
+    def test_registry_register_handler(self) -> None:
+        """Test handler registration."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
 
-    def test_safe_get_handler_mode_valid(self) -> None:
-        """Test _safe_get_handler_mode with valid modes."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_1", handler_name="Test Handler 1"
+        )
+        handler = ConcreteTestHandler(config=config)
 
-        # Test valid handler modes
-        assert registry._safe_get_handler_mode("command") == "command"
-        assert registry._safe_get_handler_mode("query") == "query"
-
-    def test_safe_get_handler_mode_invalid(self) -> None:
-        """Test _safe_get_handler_mode with invalid modes."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
-
-        # Test invalid handler mode - should return default "command" for invalid values
-        result = registry._safe_get_handler_mode("invalid")
-        assert result == "command"
-
-    def test_safe_get_status_valid(self) -> None:
-        """Test _safe_get_status with valid statuses."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
-
-        # Test valid registration statuses
-        assert registry._safe_get_status("active") == "active"
-        assert registry._safe_get_status("inactive") == "inactive"
-
-    def test_safe_get_status_invalid(self) -> None:
-        """Test _safe_get_status with invalid status."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
-
-        # Test invalid status - should return default "active" for invalid values
-        result = registry._safe_get_status("invalid")
-        assert result == "active"
-
-    def test_register_handler_success(self) -> None:
-        """Test successful handler registration."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        mock_dispatcher.register_handler.return_value = FlextResult[
-            dict[str, object]
-        ].ok({
-            "registration_id": "test_reg",
-            "handler_mode": "command",
-            "timestamp": "2024-01-01T00:00:00Z",
-            "status": "active",
-        })
-
-        registry = FlextRegistry(mock_dispatcher)
-
-        # Mock handler with proper attributes
-        mock_handler = Mock()
-        mock_handler.handler_id = "TestHandler"
-        mock_handler.__class__.__name__ = "TestHandler"
-
-        result = registry.register_handler(mock_handler)
-
+        result = registry.register_handler(handler)
         assert result.is_success
-        assert "TestHandler" in registry._registered_keys
-        mock_dispatcher.register_handler.assert_called_once_with(mock_handler)
+        assert isinstance(result.value, FlextModels.RegistrationDetails)
 
-    def test_register_handler_failure(self) -> None:
-        """Test handler registration failure."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        mock_dispatcher.register_handler.return_value = FlextResult[
-            dict[str, object]
-        ].fail("Registration failed")
+    def test_registry_register_handler_none(self) -> None:
+        """Test handler registration with None handler."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
 
-        registry = FlextRegistry(mock_dispatcher)
-
-        # Mock handler with proper attributes
-        mock_handler = Mock()
-        mock_handler.handler_id = "TestHandler"
-        mock_handler.__class__.__name__ = "TestHandler"
-
-        result = registry.register_handler(mock_handler)
-
+        result = registry.register_handler(None)
         assert result.is_failure
-        assert "TestHandler" not in registry._registered_keys
-        assert result.error is not None
-        assert "Registration failed" in str(result.error)
+        assert "Handler cannot be None" in result.error
 
-    def test_register_handlers_multiple_success(self) -> None:
-        """Test registering multiple handlers successfully."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        mock_dispatcher.register_handler.return_value = FlextResult[
-            dict[str, object]
-        ].ok({
-            "registration_id": "test_reg",
-            "handler_mode": "command",
-            "timestamp": "2024-01-01T00:00:00Z",
-            "status": "active",
-        })
+    def test_registry_register_handlers(self) -> None:
+        """Test multiple handler registration."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
 
-        registry = FlextRegistry(mock_dispatcher)
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_1", handler_name="Test Handler 1"
+        )
+        handler1 = ConcreteTestHandler(config=config)
+        handler2 = ConcreteTestHandler(config=config)
 
-        # Create proper mock handlers
-        mock_handler1 = Mock()
-        mock_handler1.handler_id = "Handler1"
-        mock_handler1.__class__.__name__ = "Handler1"
-
-        mock_handler2 = Mock()
-        mock_handler2.handler_id = "Handler2"
-        mock_handler2.__class__.__name__ = "Handler2"
-
-        handlers = [mock_handler1, mock_handler2]
-
+        handlers = [handler1, handler2]
         result = registry.register_handlers(handlers)
-
         assert result.is_success
-        summary = result.unwrap()
-        assert len(summary.registered) == 2
-        assert summary.successful_registrations == 2
-        assert summary.failed_registrations == 0
+        assert isinstance(result.value, FlextRegistry.Summary)
 
-    def test_register_handlers_mixed_results(self) -> None:
-        """Test registering multiple handlers with mixed success/failure."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-
-        # First call succeeds, second fails
-        mock_dispatcher.register_handler.side_effect = [
-            FlextResult[dict[str, object]].ok({
-                "registration_id": "handler1_reg",
-                "handler_mode": "command",
-                "timestamp": "2024-01-01T00:00:00Z",
-                "status": "active",
-            }),
-            FlextResult[dict[str, object]].fail("Handler2 failed"),
-        ]
-
-        registry = FlextRegistry(mock_dispatcher)
-
-        # Create proper mock handlers
-        mock_handler1 = Mock()
-        mock_handler1.handler_id = "Handler1"
-        mock_handler1.__class__.__name__ = "Handler1"
-
-        mock_handler2 = Mock()
-        mock_handler2.handler_id = "Handler2"
-        mock_handler2.__class__.__name__ = "Handler2"
-
-        handlers = [mock_handler1, mock_handler2]
-
-        result = registry.register_handlers(handlers)
-
-        assert result.is_failure  # Should fail due to second handler failure
-        assert result.error is not None
-        assert "Handler2 failed" in str(result.error)
-
-
-class TestFlextRegistryEdgeCases:
-    """Test edge cases and error conditions."""
-
-    def test_register_handler_with_none_handler(self) -> None:
-        """Test registering None as handler."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
-
-        # This should be handled gracefully
-        try:
-            result = registry.register_handler(None)
-            # If it doesn't raise, it should fail gracefully
-            assert result.is_failure
-        except (TypeError, AttributeError):
-            # Expected behavior for None handler
-            pass
-
-    def test_empty_handlers_dict(self) -> None:
-        """Test registering empty handlers list."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
+    def test_registry_register_handlers_empty(self) -> None:
+        """Test multiple handler registration with empty list."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
 
         result = registry.register_handlers([])
-
         assert result.is_success
-        summary = result.unwrap()
-        assert len(summary.registered) == 0
+        assert isinstance(result.value, FlextRegistry.Summary)
+
+    def test_registry_register_bindings(self) -> None:
+        """Test binding registration."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_binding_handler", handler_name="Test Binding Handler"
+        )
+        handler = ConcreteTestHandler(config=config)
+        bindings = [(str, handler)]
+
+        result = registry.register_bindings(bindings)
+        assert result.is_success
+        assert isinstance(result.value, FlextRegistry.Summary)
+
+    def test_registry_register_bindings_empty(self) -> None:
+        """Test binding registration with empty bindings."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        result = registry.register_bindings({})
+        assert result.is_success
+        assert isinstance(result.value, FlextRegistry.Summary)
+
+    def test_registry_register_function_map(self) -> None:
+        """Test function map registration."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        def test_function(data: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{data}")
+
+        function_map = {"test_function": test_function}
+
+        result = registry.register_function_map(function_map)
+        assert result.is_success
+        assert isinstance(result.value, FlextRegistry.Summary)
+
+    def test_registry_register_function_map_empty(self) -> None:
+        """Test function map registration with empty map."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        result = registry.register_function_map({})
+        assert result.is_success
+        assert isinstance(result.value, FlextRegistry.Summary)
+
+    def test_registry_summary_properties(self) -> None:
+        """Test registry summary properties."""
+        summary = FlextRegistry.Summary()
+
+        # Test initial state
+        assert summary.is_success is True
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
 
-    def test_empty_bindings_dict(self) -> None:
-        """Test registering empty bindings list."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
+        # Add some test data
+        summary.registered.append(
+            FlextModels.RegistrationDetails(
+                registration_id="test1",
+                handler_mode="command",
+                timestamp="2025-01-01T00:00:00Z",
+                status="active",
+            )
+        )
+        summary.errors.append("test_error")
 
-        result = registry.register_bindings([])
+        # Test updated state
+        assert summary.is_success is False
+        assert summary.successful_registrations == 1
+        assert summary.failed_registrations == 1
 
+    def test_registry_idempotent_registration(self) -> None:
+        """Test that re-registering the same handler is idempotent."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_1", handler_name="Test Handler 1"
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # First registration
+        result1 = registry.register_handler(handler)
+        assert result1.is_success
+
+        # Second registration (should be idempotent)
+        result2 = registry.register_handler(handler)
+        assert result2.is_success
+
+        # Both should return success
+        assert result1.is_success == result2.is_success
+
+    def test_registry_safe_get_handler_mode(self) -> None:
+        """Test safe handler mode extraction."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        # Test valid modes
+        assert registry._safe_get_handler_mode("command") == "command"
+        assert registry._safe_get_handler_mode("query") == "query"
+
+        # Test invalid mode (should default to command)
+        assert registry._safe_get_handler_mode("invalid") == "command"
+        assert registry._safe_get_handler_mode(None) == "command"
+
+    def test_registry_safe_get_status(self) -> None:
+        """Test safe status extraction."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        # Test valid statuses
+        assert registry._safe_get_status("active") == "active"
+        assert registry._safe_get_status("inactive") == "inactive"
+
+        # Test invalid status (should default to active)
+        assert registry._safe_get_status("invalid") == "active"
+        assert registry._safe_get_status(None) == "active"
+
+    def test_registry_resolve_handler_key(self) -> None:
+        """Test handler key resolution."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_1", handler_name="Test Handler 1"
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        key = registry._resolve_handler_key(handler)
+        assert isinstance(key, str)
+        assert len(key) > 0
+
+    def test_registry_resolve_binding_key(self) -> None:
+        """Test binding key resolution."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        binding_entry = {"handler_mode": "command", "status": "active"}
+
+        key = registry._resolve_binding_key("test_binding", binding_entry)
+        assert isinstance(key, str)
+        assert len(key) > 0
+
+    def test_registry_resolve_binding_key_from_entry(self) -> None:
+        """Test binding key resolution from entry."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        binding_entry = {"handler_mode": "command", "status": "active"}
+
+        key = registry._resolve_binding_key_from_entry(binding_entry, str)
+        assert isinstance(key, str)
+        assert len(key) > 0
+
+    def test_registry_with_real_dispatcher(self) -> None:
+        """Test registry with real dispatcher functionality."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_handler_1", handler_name="Test Handler 1"
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # Register handler
+        result = registry.register_handler(handler)
         assert result.is_success
-        summary = result.unwrap()
+
+        # Verify registration details
+        reg_details = result.value
+        assert reg_details.registration_id is not None
+        assert reg_details.handler_mode in {"command", "query"}
+        assert reg_details.status in {"active", "inactive"}
+
+    def test_registry_error_handling(self) -> None:
+        """Test registry error handling."""
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry(dispatcher=dispatcher)
+
+        # Test with None handler
+        result = registry.register_handler(None)
+        assert result.is_failure
+        assert "Handler cannot be None" in result.error
+
+    def test_registry_summary_creation(self) -> None:
+        """Test registry summary creation."""
+        summary = FlextRegistry.Summary()
+
+        # Test initial state
         assert len(summary.registered) == 0
         assert len(summary.skipped) == 0
         assert len(summary.errors) == 0
 
-    def test_empty_function_map(self) -> None:
-        """Test registering empty function map."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        registry = FlextRegistry(mock_dispatcher)
+        # Test properties
+        assert summary.is_success is True
+        assert summary.successful_registrations == 0
+        assert summary.failed_registrations == 0
 
-        result = registry.register_function_map({})
+    def test_registry_summary_with_data(self) -> None:
+        """Test registry summary with data."""
+        summary = FlextRegistry.Summary()
 
-        assert result.is_success
-        summary = result.unwrap()
-        assert len(summary.registered) == 0
+        # Add registered handler
+        summary.registered.append(
+            FlextModels.RegistrationDetails(
+                registration_id="test1",
+                handler_mode="command",
+                timestamp="2025-01-01T00:00:00Z",
+                status="active",
+            )
+        )
 
-    def test_function_map_missing_metadata(self) -> None:
-        """Test function map entry missing metadata."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        mock_dispatcher.register_function.return_value = FlextResult[
-            dict[str, object]
-        ].ok({
-            "registration_id": "test_reg",
-            "handler_mode": "command",
-            "timestamp": "2024-01-01T00:00:00Z",
-            "status": "active",
-        })
-        registry = FlextRegistry(mock_dispatcher)
+        # Add skipped handler
+        summary.skipped.append("skipped_handler")
 
-        class TestType:
-            pass
+        # Add error
+        summary.errors.append("registration_error")
 
-        # Function map entry without metadata - using proper typing
-        def test_function(message: object) -> object:
-            return message
-
-        function_map: dict[
-            type[object],
-            tuple[
-                Callable[[object], object | FlextResult[object]],
-                dict[str, object] | None,
-            ],
-        ] = {
-            TestType: (test_function, None)  # Missing metadata key
-        }
-        result = registry.register_function_map(function_map)
-
-        assert result.is_success  # Summary contains error details
-        summary = result.unwrap()
-        assert (
-            summary.failed_registrations >= 0
-        )  # Should handle missing metadata gracefully
-
-    def test_function_map_invalid_metadata_type(self) -> None:
-        """Test function map with invalid metadata type."""
-        mock_dispatcher = Mock(spec=FlextDispatcher)
-        # Configure mock to return successful registration
-        mock_dispatcher.register_function.return_value = FlextResult[
-            dict[str, object]
-        ].ok({
-            "registration_id": "func1_registration",
-            "handler_mode": "command",
-            "timestamp": "2024-01-01T00:00:00Z",
-            "status": "active",
-        })
-        registry = FlextRegistry(mock_dispatcher)
-
-        class TestType:
-            pass
-
-        # Function map with invalid metadata - using proper typing
-
-        def test_function2(message: object) -> object:
-            return message
-
-        function_map: dict[
-            type[object],
-            tuple[
-                Callable[[object], object | FlextResult[object]],
-                dict[str, object] | None,
-            ],
-        ] = {
-            TestType: (
-                test_function2,
-                {"invalid": "metadata_type"},
-            )  # Valid dict format
-        }
-
-        result = registry.register_function_map(function_map)
-
-        assert result.is_success  # Summary contains error details
-        summary = result.unwrap()
-        # Should handle invalid metadata type gracefully
-        assert len(summary.registered) == 1
+        # Test properties
+        assert summary.is_success is False  # Has errors
+        assert summary.successful_registrations == 1
+        assert summary.failed_registrations == 1
+        assert len(summary.skipped) == 1

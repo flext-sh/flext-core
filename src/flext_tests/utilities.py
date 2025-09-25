@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import warnings
 from collections.abc import Callable
 from typing import ClassVar, Generic, Protocol, Self, runtime_checkable
@@ -629,30 +628,6 @@ class FlextTestsUtilities:
     # === UTILITY FUNCTIONS ===
 
     @staticmethod
-    def create_oud_connection_config() -> dict[str, str]:
-        """Create ALGAR OUD connection configuration for testing.
-
-        Returns:
-          Dictionary with OUD connection parameters as strings.
-
-        """
-        # Prefer environment-provided ports to avoid conflicts in CI/containers
-        port_str = (
-            os.environ.get("LDAP_PORT") or os.environ.get("TESTS_LDAP_PORT") or "3389"
-        )
-
-        return {
-            "host": "localhost",
-            "port": port_str,
-            "bind_dn": "cn=orcladmin",
-            # Match container default password from fixtures
-            "bind_password": "password",
-            "base_dn": "dc=ctbc,dc=com",
-            "use_ssl": "false",
-            "timeout": "30",
-        }
-
-    @staticmethod
     def create_ldap_test_config() -> FlextTypes.Core.Dict:
         """Create LDAP test configuration for testing.
 
@@ -782,12 +757,6 @@ class FlextTestsUtilities:
         return FlextTestsUtilities.create_ldap_test_config()
 
     @classmethod
-    def create_oud_config(cls: type[Self]) -> FlextTypes.Core.Dict:
-        """Create OUD connection configuration."""
-        config = cls.create_oud_connection_config()
-        return dict(config)  # Convert to dict[str, object]
-
-    @classmethod
     def create_api_response(
         cls,
         *,
@@ -847,7 +816,6 @@ class FlextTestsUtilities:
 #     ... all methods commented out
 
 # Utility functions as compatibility facades - REMOVED (commented out)
-# def create_oud_connection_config() -> dict[str, str]:
 #     ... all functions commented out
 
 # Protocol facades for backward compatibility - REMOVED (commented out)

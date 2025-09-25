@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 """05 - FlextLogger Fundamentals: Complete Structured Logging.
 
 This example demonstrates the COMPLETE FlextLogger API - the foundation

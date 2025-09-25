@@ -76,8 +76,7 @@ class FunctionalUserService:
     def __init__(self) -> None:
         """Initialize functional user service."""
         self.users: dict[
-            str,
-            dict[str, str | int | bool | FlextTypes.Core.StringList],
+            str, dict[str, str | int, bool] | FlextTypes.Core.StringList
         ] = {}
         self.call_count = 0
         self.should_fail = False
@@ -85,7 +84,7 @@ class FunctionalUserService:
     def get_user(
         self,
         user_id: str,
-    ) -> FlextResult[dict[str, str | int | bool | FlextTypes.Core.StringList]]:
+    ) -> FlextResult[dict[str, str | int, bool] | FlextTypes.Core.StringList]:
         """Get user by ID - functional implementation.
 
         Returns:
@@ -95,34 +94,32 @@ class FunctionalUserService:
         self.call_count += 1
 
         if self.should_fail:
-            return FlextResult[
-                dict[str, str | int | bool | FlextTypes.Core.StringList]
-            ].fail(
+            return FlextResult[dict[str, str | int | bool]].fail(
                 "User service unavailable",
             )
 
         if user_id in self.users:
             return FlextResult[
-                dict[str, str | int | bool | FlextTypes.Core.StringList]
+                dict[str, str | int, bool] | FlextTypes.Core.StringList
             ].ok(
                 self.users[user_id],
             )
 
         # Default user data for testing
-        default_user: dict[str, str | int | bool | FlextTypes.Core.StringList] = {
+        default_user: dict[str, str | int, bool] | FlextTypes.Core.StringList = {
             "id": user_id,
             "email": f"user{user_id}@example.com",
             "name": f"User {user_id}",
             "active": True,
         }
-        return FlextResult[dict[str, str | int | bool | FlextTypes.Core.StringList]].ok(
+        return FlextResult[dict[str, str | int, bool] | FlextTypes.Core.StringList].ok(
             default_user,
         )
 
     def set_user_data(
         self,
         user_id: str,
-        user_data: dict[str, str | int | bool | FlextTypes.Core.StringList],
+        user_data: dict[str, str | int, bool] | FlextTypes.Core.StringList,
     ) -> None:
         """Set user data for testing."""
         self.users[user_id] = user_data
@@ -241,12 +238,8 @@ class TestServiceIntegrationPatterns:
         self,
         mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
-        benchmark_data: dict[
-            str,
-            list[int]
-            | FlextTypes.Core.Headers
-            | dict[str, dict[str, dict[str, list[int]]]],
-        ],
+        benchmark_data: dict[str, list[int], FlextTypes.Core.Headers]
+        | dict[str, dict[str, dict[str, list[int]]]],
     ) -> None:
         """Test service pipeline meets performance requirements.
 
@@ -335,7 +328,7 @@ class TestServiceIntegrationPatterns:
     def test_dependency_injection_with_mocks(
         self,
         clean_container: FlextContainer,
-        test_user_data: dict[str, str | int | bool | FlextTypes.Core.StringList],
+        test_user_data: dict[str, str | int, bool] | FlextTypes.Core.StringList,
     ) -> None:
         """Test dependency injection patterns with functional services.
 

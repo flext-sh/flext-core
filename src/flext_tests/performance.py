@@ -734,7 +734,7 @@ class FlextTestsPerformance:
 
                     """
                     tasks = [func(*args, **kwargs) for _ in range(workers)]
-                    return await asyncio.gather(*tasks)
+                    return list(await asyncio.gather(*tasks))
 
                 start_time = time.perf_counter()
                 result = await concurrent_execution()

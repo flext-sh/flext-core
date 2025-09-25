@@ -12,14 +12,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import json
+import threading
 import time
 import uuid
-from collections.abc import Generator, Mapping
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from datetime import UTC, datetime
 from typing import Final
 
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -31,8 +34,415 @@ class FlextContext:
     propagate correlation IDs and structured metadata.
     """
 
+    def __init__(self, initial_data: FlextTypes.Core.Dict | None = None) -> None:
+        """Initialize FlextContext with optional initial data.
+
+        Args:
+            initial_data: Optional dictionary of initial context data
+
+        """
+        self._data: FlextTypes.Core.Dict = initial_data or {}
+        self._metadata: FlextTypes.Core.Dict = {}
+        self._hooks: dict[str, list[Callable[[str, object], None]]] = {}
+        self._statistics: dict[str, object] = {
+            "operations": {
+                "set": 0,
+                "get": 0,
+                "remove": 0,
+                "clear": 0,
+            },
+            "sets": 0,
+            "gets": 0,
+            "removes": 0,
+            "clears": 0,
+        }
+        self._active = True
+        self._suspended = False
+        self._lock = threading.RLock()
+        # Scope-based storage
+        self._scopes: dict[str, FlextTypes.Core.Dict] = {
+            "global": self._data,
+            "user": {},
+            "session": {},
+        }
+
     # =========================================================================
-    # Variables Domain - Context variables organized by functionality
+    # Instance Methods - Core context operations
+    # =========================================================================
+
+    def set(self, key: str, value: object, scope: str = "global") -> None:
+        """Set a value in the context.
+
+        Args:
+            key: The key to set
+            value: The value to set
+            scope: The scope for the value (global, user, session)
+
+        """
+        if not self._active:
+            return
+
+        # Validate inputs - only check type, not content for setting
+        if not isinstance(key, str):
+            msg = "Key must be a string"
+            raise TypeError(msg)
+        # Validate value is serializable
+        if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+            msg = "Value must be serializable"
+            raise TypeError(msg)
+
+        with self._lock:
+            scope_data = self._scopes.get(scope, self._data)
+            scope_data[key] = value
+            sets_count = self._statistics.get("sets", 0)
+            if isinstance(sets_count, int):
+                self._statistics["sets"] = sets_count + 1
+
+            operations = self._statistics.get("operations", {})
+            if isinstance(operations, dict) and "set" in operations:
+                set_count = operations["set"]
+                if isinstance(set_count, int):
+                    operations["set"] = set_count + 1
+
+            # Execute hooks
+            if "set" in self._hooks:
+                for hook in self._hooks["set"]:
+                    with contextlib.suppress(Exception):
+                        hook(key, value)
+
+    def get(self, key: str, default: object = None, scope: str = "global") -> object:
+        """Get a value from the context.
+
+        Args:
+            key: The key to get
+            default: Default value if key not found
+            scope: The scope to get from (global, user, session)
+
+        Returns:
+            The value or default
+
+        """
+        if not self._active:
+            return default
+
+        with self._lock:
+            scope_data = self._scopes.get(scope, self._data)
+            gets_count = self._statistics.get("gets", 0)
+            if isinstance(gets_count, int):
+                self._statistics["gets"] = gets_count + 1
+
+            operations = self._statistics.get("operations", {})
+            if isinstance(operations, dict) and "get" in operations:
+                get_count = operations["get"]
+                if isinstance(get_count, int):
+                    operations["get"] = get_count + 1
+            return scope_data.get(key, default)
+
+    def has(self, key: str, scope: str = "global") -> bool:
+        """Check if a key exists in the context.
+
+        Args:
+            key: The key to check
+            scope: The scope to check (global, user, session)
+
+        Returns:
+            True if key exists, False otherwise
+
+        """
+        if not self._active:
+            return False
+
+        with self._lock:
+            scope_data = self._scopes.get(scope, self._data)
+            return key in scope_data
+
+    def remove(self, key: str, scope: str = "global") -> None:
+        """Remove a key from the context.
+
+        Args:
+            key: The key to remove
+            scope: The scope to remove from (global, user, session)
+
+        """
+        if not self._active:
+            return
+
+        with self._lock:
+            scope_data = self._scopes.get(scope, self._data)
+            if key in scope_data:
+                del scope_data[key]
+                removes_count = self._statistics.get("removes", 0)
+                if isinstance(removes_count, int):
+                    self._statistics["removes"] = removes_count + 1
+
+                operations = self._statistics.get("operations", {})
+                if isinstance(operations, dict) and "remove" in operations:
+                    remove_count = operations["remove"]
+                    if isinstance(remove_count, int):
+                        operations["remove"] = remove_count + 1
+
+    def clear(self) -> None:
+        """Clear all data from the context."""
+        if not self._active:
+            return
+
+        with self._lock:
+            self._data.clear()
+            clears_count = self._statistics.get("clears", 0)
+            if isinstance(clears_count, int):
+                self._statistics["clears"] = clears_count + 1
+
+    def keys(self) -> list[str]:
+        """Get all keys in the context.
+
+        Returns:
+            List of all keys
+
+        """
+        if not self._active:
+            return []
+
+        with self._lock:
+            return list(self._data.keys())
+
+    def values(self) -> list[object]:
+        """Get all values in the context.
+
+        Returns:
+            List of all values
+
+        """
+        if not self._active:
+            return []
+
+        with self._lock:
+            return list(self._data.values())
+
+    def items(self) -> list[tuple[str, object]]:
+        """Get all key-value pairs in the context.
+
+        Returns:
+            List of (key, value) tuples
+
+        """
+        if not self._active:
+            return []
+
+        with self._lock:
+            return list(self._data.items())
+
+    def merge(self, other: FlextContext | FlextTypes.Core.Dict) -> FlextContext:
+        """Merge another context or dictionary into this context.
+
+        Args:
+            other: Another FlextContext or dictionary to merge
+
+        Returns:
+            Self for chaining
+
+        """
+        if not self._active:
+            return self
+
+        with self._lock:
+            if isinstance(other, FlextContext):
+                self._data.update(other._data)  # noqa: SLF001
+            else:
+                self._data.update(other)
+        return self
+
+    def clone(self) -> FlextContext:
+        """Create a clone of this context.
+
+        Returns:
+            A new FlextContext with the same data
+
+        """
+        with self._lock:
+            cloned = FlextContext(self._data.copy())
+            cloned._metadata = self._metadata.copy()
+            cloned._statistics = self._statistics.copy()
+            return cloned
+
+    def validate(self) -> object:
+        """Validate the context data.
+
+        Returns:
+            FlextResult indicating validation success or failure
+
+        """
+        if not self._active:
+            return FlextResult[None].fail("Context is not active")
+
+        with self._lock:
+            # Check for empty keys
+            for key in self._data:
+                if not key or not isinstance(key, str):
+                    return FlextResult[None].fail("Invalid key found in context")
+            return FlextResult[None].ok(None)
+
+    def to_json(self) -> str:
+        """Convert context to JSON string.
+
+        Returns:
+            JSON string representation of the context
+
+        """
+        with self._lock:
+            return json.dumps(self._data, default=str)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> FlextContext:
+        """Create context from JSON string.
+
+        Args:
+            json_str: JSON string to parse
+
+        Returns:
+            New FlextContext instance
+
+        """
+        data = json.loads(json_str)
+        return cls(data)
+
+    def is_active(self) -> bool:
+        """Check if context is active.
+
+        Returns:
+            True if context is active, False otherwise
+
+        """
+        return self._active and not self._suspended
+
+    def suspend(self) -> None:
+        """Suspend the context."""
+        self._suspended = True
+
+    def resume(self) -> None:
+        """Resume the context."""
+        self._suspended = False
+
+    def destroy(self) -> None:
+        """Destroy the context."""
+        with self._lock:
+            self._active = False
+            self._data.clear()
+            self._metadata.clear()
+            self._hooks.clear()
+
+    def add_hook(self, event: str, hook: Callable[[str, object], None]) -> None:
+        """Add a hook for context events.
+
+        Args:
+            event: The event to hook (set, get, remove, clear)
+            hook: The hook function to call
+
+        """
+        if event not in self._hooks:
+            self._hooks[event] = []
+        self._hooks[event].append(hook)
+
+    def set_metadata(self, key: str, value: object) -> None:
+        """Set metadata for the context.
+
+        Args:
+            key: The metadata key
+            value: The metadata value
+
+        """
+        with self._lock:
+            self._metadata[key] = value
+
+    def get_metadata(self, key: str, default: object = None) -> object:
+        """Get metadata from the context.
+
+        Args:
+            key: The metadata key
+            default: Default value if key not found
+
+        Returns:
+            The metadata value or default
+
+        """
+        with self._lock:
+            return self._metadata.get(key, default)
+
+    def get_all_metadata(self) -> FlextTypes.Core.Dict:
+        """Get all metadata from the context.
+
+        Returns:
+            Dictionary of all metadata
+
+        """
+        with self._lock:
+            return self._metadata.copy()
+
+    def get_statistics(self) -> FlextTypes.Core.Dict:
+        """Get context statistics.
+
+        Returns:
+            Dictionary of context statistics
+
+        """
+        with self._lock:
+            return self._statistics.copy()
+
+    def cleanup(self) -> None:
+        """Clean up the context."""
+        with self._lock:
+            self._data.clear()
+            self._metadata.clear()
+
+    def export(self) -> FlextTypes.Core.Dict:
+        """Export context data.
+
+        Returns:
+            Dictionary containing context data
+
+        """
+        with self._lock:
+            # Return the data directly, not wrapped in a "data" key
+            return self._data.copy()
+
+    def import_data(self, data: FlextTypes.Core.Dict) -> None:
+        """Import context data.
+
+        Args:
+            data: Dictionary containing context data
+
+        """
+        with self._lock:
+            # Import data directly, not from a "data" key
+            self._data.update(data)
+
+    # =========================================================================
+    # Global Context Management - Static methods for global context
+    # =========================================================================
+
+    _global_context: FlextContext | None = None
+    _global_lock = threading.RLock()
+
+    @classmethod
+    def get_global(cls) -> FlextContext:
+        """Get the global context instance.
+
+        Returns:
+            The global FlextContext instance
+
+        """
+        with cls._global_lock:
+            if cls._global_context is None:
+                cls._global_context = cls()
+            return cls._global_context
+
+    @classmethod
+    def reset_global(cls) -> None:
+        """Reset the global context instance."""
+        with cls._global_lock:
+            cls._global_context = None
+
+    # =========================================================================
+    # Static Methods - Context variables organized by functionality
     # =========================================================================
 
     class Variables:

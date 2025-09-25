@@ -265,7 +265,9 @@ class FlextCqrs:
                 handler_config_result = FlextCqrs.Operations.create_handler_config(
                     handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                     handler_name=getattr(
-                        func, "__name__", f"{command_type.__name__}Handler"
+                        func,
+                        "__name__",
+                        f"{getattr(command_type, '__name__', str(command_type))}Handler",
                     ),
                     config_overrides=config
                     if isinstance(config, dict)
@@ -277,7 +279,9 @@ class FlextCqrs:
                     handler_config = FlextModels.CqrsConfig.Handler(
                         handler_id=FlextUtilities.Generators.generate_id(),
                         handler_name=getattr(
-                            func, "__name__", f"{command_type.__name__}Handler"
+                            func,
+                            "__name__",
+                            f"{getattr(command_type, '__name__', str(command_type))}Handler",
                         ),
                         handler_type="command",
                         handler_mode="command",
@@ -324,7 +328,9 @@ class FlextCqrs:
                                 f"Command handler execution failed: {e!s}",
                                 error_code=FlextConstants.Cqrs.COMMAND_PROCESSING_FAILED,
                                 error_data={
-                                    "command_type": command_type.__name__,
+                                    "command_type": getattr(
+                                        command_type, "__name__", str(command_type)
+                                    ),
                                     "handler_id": handler_config.handler_id,
                                     "handler_name": handler_config.handler_name,
                                 },

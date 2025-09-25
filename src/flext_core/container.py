@@ -70,7 +70,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # SINGLETON MANAGEMENT - Class-level global state
     # =========================================================================
 
-    _global_manager: FlextTypes.Core.Optional[FlextContainer.GlobalManager] = None
+    _global_manager: FlextContainer.GlobalManager | None = None
 
     class ServiceKey:
         """Utility for service key normalization and validation."""
@@ -110,7 +110,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         def __init__(self) -> None:
             """Initialize the global container manager."""
             super().__init__()
-            self._container: FlextTypes.Core.Optional[FlextContainer] = None
+            self._container: FlextContainer | None = None
             self._lock = threading.Lock()
 
         def get_or_create(self) -> FlextContainer:
@@ -146,7 +146,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             .strip()
             .lower()
         )
-        self._global_config = {
+        self._global_config: dict[str, object] = {
             "max_workers": int(getattr(self._flext_config, "max_workers", 4)),
             "timeout_seconds": float(
                 getattr(
@@ -367,7 +367,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         except Exception as e:
             return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
-    def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
+    def get_typed[T](self, name: str, expected_type: type[T]) -> FlextResult[T]:
         """Get service with type validation.
 
         Returns:
@@ -378,7 +378,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             lambda service: self._validate_service_type(service, expected_type)
         )
 
-    def _validate_service_type(
+    def _validate_service_type[T](
         self, service: object, expected_type: type[T]
     ) -> FlextResult[T]:
         """Validate service type and return typed result.
@@ -389,7 +389,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         if not isinstance(service, expected_type):
             return FlextResult[T].fail(
-                f"Service type mismatch: expected {expected_type.__name__}, got {type(service).__name__}"
+                f"Service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
             )
         return FlextResult[T].ok(service)
 
@@ -579,7 +579,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 elif param.default == inspect.Parameter.empty:
                     # Required dependency not found
                     return FlextResult[FlextTypes.Core.Dict].fail(
-                        f"Cannot resolve required dependency '{param_name}' for {service_class.__name__}"
+                        f"Cannot resolve required dependency '{param_name}' for {getattr(service_class, '__name__', str(service_class))}"
                     )
 
             return FlextResult[FlextTypes.Core.Dict].ok(dependencies)
@@ -651,7 +651,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         if not isinstance(service, expected_type):
             return FlextResult[T].fail(
-                f"Auto-wired service type mismatch: expected {expected_type.__name__}, got {type(service).__name__}"
+                f"Auto-wired service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
             )
 
         return FlextResult[T].ok(service)
@@ -1066,7 +1066,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return container.configure_container(config)
 
     @classmethod
-    def get_global_typed(cls, name: str, expected_type: type[T]) -> FlextResult[T]:
+    def get_global_typed[T](cls, name: str, expected_type: type[T]) -> FlextResult[T]:
         """Get typed service from global container.
 
         Returns:

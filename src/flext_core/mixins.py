@@ -16,6 +16,7 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
@@ -186,20 +187,23 @@ class FlextMixins:
             **config.context,
         }
 
-        # Use FlextConstants for log level mapping
-        normalized_level = str(config.level).upper()
-        level_methods: dict[str, Callable[[str], None]] = {
-            FlextConstants.Logging.DEBUG: logger.debug,
-            FlextConstants.Logging.INFO: logger.info,
-            FlextConstants.Logging.WARNING: logger.warning,
-            FlextConstants.Logging.ERROR: logger.error,
-            FlextConstants.Logging.CRITICAL: logger.critical,
-        }
-
-        level_methods.get(normalized_level, logger.info)
         # Use bind for structured logging instead of extra parameter
         bound_logger = logger.bind(**context)
-        bound_logger.info(f"Operation: {config.operation}")
+
+        # Use specific level methods based on normalized level
+        normalized_level = str(config.level).upper()
+        if normalized_level == FlextConstants.Logging.DEBUG:
+            bound_logger.debug(f"Operation: {config.operation}")
+        elif normalized_level == FlextConstants.Logging.INFO:
+            bound_logger.info(f"Operation: {config.operation}")
+        elif normalized_level == FlextConstants.Logging.WARNING:
+            bound_logger.warning(f"Operation: {config.operation}")
+        elif normalized_level == FlextConstants.Logging.ERROR:
+            bound_logger.error(f"Operation: {config.operation}")
+        elif normalized_level == FlextConstants.Logging.CRITICAL:
+            bound_logger.critical(f"Operation: {config.operation}")
+        else:
+            bound_logger.info(f"Operation: {config.operation}")
 
     # =============================================================================
     # SIMPLIFIED UTILITY METHODS - Direct delegation to FlextUtilities
@@ -409,3 +413,320 @@ class FlextMixins:
             updated = config.model_copy(update={"timeout_seconds": 60})
 
         """
+
+    # =============================================================================
+    # ADVANCED PATTERNS - Domain-driven design and enterprise patterns
+    # =============================================================================
+
+    class AdvancedPatterns:
+        """Advanced mixin patterns for enterprise applications."""
+
+        @staticmethod
+        def create_entity[T](
+            entity_type: str,
+            entity_data: FlextTypes.Core.Dict,
+            validation_rules: list[Callable[[T], FlextResult[None]]] | None = None,
+        ) -> FlextResult[T]:
+            """Create an entity with validation patterns.
+
+            Args:
+                entity_type: Type of entity to create
+                entity_data: Entity data dictionary
+                validation_rules: Optional validation rules
+
+            Returns:
+                FlextResult[T]: Created entity or validation failure
+
+            Example:
+                ```python
+                result = FlextMixins.AdvancedPatterns.create_entity(
+                    "User",
+                    {"name": "John Doe", "email": "john@example.com"},
+                    [validate_user_name, validate_user_email],
+                )
+                ```
+
+            """
+            try:
+                # In real implementation, would create entity instance
+                # entity = entity_type(**entity_data)
+                entity = cast("T", entity_data)  # Simplified for example
+
+                # Apply validation rules if provided
+                if validation_rules:
+                    for rule in validation_rules:
+                        result = rule(entity)
+                        if result.is_failure:
+                            return FlextResult[T].fail(
+                                f"Entity validation failed: {result.error}",
+                                error_code="ENTITY_VALIDATION_FAILED",
+                                error_data={
+                                    "entity_type": entity_type,
+                                    "error": result.error,
+                                },
+                            )
+
+                return FlextResult[T].ok(entity)
+            except Exception as e:
+                return FlextResult[T].fail(
+                    f"Entity creation failed: {e!s}",
+                    error_code="ENTITY_CREATION_FAILED",
+                    error_data={"entity_type": entity_type, "exception": str(e)},
+                )
+
+        @staticmethod
+        def create_value_object[T](
+            value_type: str,
+            value_data: FlextTypes.Core.Dict,
+            invariants: list[Callable[[T], FlextResult[None]]] | None = None,
+        ) -> FlextResult[T]:
+            """Create a value object with invariant validation.
+
+            Args:
+                value_type: Type of value object to create
+                value_data: Value object data dictionary
+                invariants: Optional invariant validation functions
+
+            Returns:
+                FlextResult[T]: Created value object or invariant violation
+
+            Example:
+                ```python
+                result = FlextMixins.AdvancedPatterns.create_value_object(
+                    "Money",
+                    {"amount": 100.0, "currency": "USD"},
+                    [validate_positive_amount, validate_valid_currency],
+                )
+                ```
+
+            """
+            try:
+                # In real implementation, would create value object instance
+                # value_object = value_type(**value_data)
+                value_object = cast("T", value_data)  # Simplified for example
+
+                # Apply invariants if provided
+                if invariants:
+                    for invariant in invariants:
+                        result = invariant(value_object)
+                        if result.is_failure:
+                            return FlextResult[T].fail(
+                                f"Value object invariant violation: {result.error}",
+                                error_code="VALUE_OBJECT_INVARIANT_VIOLATION",
+                                error_data={
+                                    "value_type": value_type,
+                                    "error": result.error,
+                                },
+                            )
+
+                return FlextResult[T].ok(value_object)
+            except Exception as e:
+                return FlextResult[T].fail(
+                    f"Value object creation failed: {e!s}",
+                    error_code="VALUE_OBJECT_CREATION_FAILED",
+                    error_data={"value_type": value_type, "exception": str(e)},
+                )
+
+        @staticmethod
+        def create_aggregate_root[T](
+            aggregate_type: str,
+            aggregate_data: FlextTypes.Core.Dict,
+            business_rules: list[Callable[[T], FlextResult[None]]] | None = None,
+        ) -> FlextResult[T]:
+            """Create an aggregate root with business rule validation.
+
+            Args:
+                aggregate_type: Type of aggregate root to create
+                aggregate_data: Aggregate root data dictionary
+                business_rules: Optional business rule validation functions
+
+            Returns:
+                FlextResult[T]: Created aggregate root or business rule violation
+
+            Example:
+                ```python
+                result = FlextMixins.AdvancedPatterns.create_aggregate_root(
+                    "Order",
+                    {"customer_id": "123", "items": [...]},
+                    [validate_order_items, validate_customer_exists],
+                )
+                ```
+
+            """
+            try:
+                # In real implementation, would create aggregate root instance
+                # aggregate = aggregate_type(**aggregate_data)
+                aggregate = cast("T", aggregate_data)  # Simplified for example
+
+                # Apply business rules if provided
+                if business_rules:
+                    for rule in business_rules:
+                        result = rule(aggregate)
+                        if result.is_failure:
+                            return FlextResult[T].fail(
+                                f"Aggregate business rule violation: {result.error}",
+                                error_code="AGGREGATE_BUSINESS_RULE_VIOLATION",
+                                error_data={
+                                    "aggregate_type": aggregate_type,
+                                    "error": result.error,
+                                },
+                            )
+
+                return FlextResult[T].ok(aggregate)
+            except Exception as e:
+                return FlextResult[T].fail(
+                    f"Aggregate creation failed: {e!s}",
+                    error_code="AGGREGATE_CREATION_FAILED",
+                    error_data={"aggregate_type": aggregate_type, "exception": str(e)},
+                )
+
+        @staticmethod
+        def create_domain_event(
+            event_type: str,
+            event_data: FlextTypes.Core.Dict,
+            aggregate_id: str,
+            correlation_id: str | None = None,
+        ) -> FlextResult[object]:
+            """Create a domain event with proper metadata.
+
+            Args:
+                event_type: Type of domain event to create
+                event_data: Event data dictionary
+                aggregate_id: Aggregate root identifier
+                correlation_id: Optional correlation identifier
+
+            Returns:
+                FlextResult[T]: Created domain event or creation failure
+
+            Example:
+                ```python
+                result = FlextMixins.AdvancedPatterns.create_domain_event(
+                    "OrderCreated",
+                    {"order_id": "123", "customer_id": "456"},
+                    "order_123",
+                    "corr_789",
+                )
+                ```
+
+            """
+            try:
+                # Create event with proper metadata
+                event_metadata = {
+                    "event_id": FlextUtilities.Generators.generate_event_id(),
+                    "event_type": event_type,
+                    "aggregate_id": aggregate_id,
+                    "correlation_id": correlation_id
+                    or FlextUtilities.Generators.generate_correlation_id(),
+                    "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                    "version": 1,
+                }
+
+                # Combine event data with metadata
+                domain_event = {
+                    **event_data,
+                    **event_metadata,
+                }
+
+                return FlextResult[object].ok(domain_event)
+            except Exception as e:
+                return FlextResult[object].fail(
+                    f"Domain event creation failed: {e!s}",
+                    error_code="DOMAIN_EVENT_CREATION_FAILED",
+                    error_data={"event_type": event_type, "exception": str(e)},
+                )
+
+        @staticmethod
+        def create_command(
+            command_type: str,
+            command_data: FlextTypes.Core.Dict,
+            correlation_id: str | None = None,
+        ) -> FlextResult[object]:
+            """Create a command with proper metadata.
+
+            Args:
+                command_type: Type of command to create
+                command_data: Command data dictionary
+                correlation_id: Optional correlation identifier
+
+            Returns:
+                FlextResult[T]: Created command or creation failure
+
+            Example:
+                ```python
+                result = FlextMixins.AdvancedPatterns.create_command(
+                    "CreateOrder", {"customer_id": "123", "items": [...]}, "corr_789"
+                )
+                ```
+
+            """
+            try:
+                # Create command with proper metadata
+                command_metadata = {
+                    "command_id": FlextUtilities.Generators.generate_command_id(),
+                    "command_type": command_type,
+                    "correlation_id": correlation_id
+                    or FlextUtilities.Generators.generate_correlation_id(),
+                    "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                }
+
+                # Combine command data with metadata
+                command = {
+                    **command_data,
+                    **command_metadata,
+                }
+
+                return FlextResult[object].ok(command)
+            except Exception as e:
+                return FlextResult[object].fail(
+                    f"Command creation failed: {e!s}",
+                    error_code="COMMAND_CREATION_FAILED",
+                    error_data={"command_type": command_type, "exception": str(e)},
+                )
+
+        @staticmethod
+        def create_query(
+            query_type: str,
+            query_data: FlextTypes.Core.Dict,
+            correlation_id: str | None = None,
+        ) -> FlextResult[object]:
+            """Create a query with proper metadata.
+
+            Args:
+                query_type: Type of query to create
+                query_data: Query data dictionary
+                correlation_id: Optional correlation identifier
+
+            Returns:
+                FlextResult[T]: Created query or creation failure
+
+            Example:
+                ```python
+                result = FlextMixins.AdvancedPatterns.create_query(
+                    "GetOrderById", {"order_id": "123"}, "corr_789"
+                )
+                ```
+
+            """
+            try:
+                # Create query with proper metadata
+                query_metadata = {
+                    "query_id": FlextUtilities.Generators.generate_query_id(),
+                    "query_type": query_type,
+                    "correlation_id": correlation_id
+                    or FlextUtilities.Generators.generate_correlation_id(),
+                    "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                }
+
+                # Combine query data with metadata
+                query = {
+                    **query_data,
+                    **query_metadata,
+                }
+
+                return FlextResult[object].ok(query)
+            except Exception as e:
+                return FlextResult[object].fail(
+                    f"Query creation failed: {e!s}",
+                    error_code="QUERY_CREATION_FAILED",
+                    error_data={"query_type": query_type, "exception": str(e)},
+                )

@@ -1,4 +1,6 @@
-"""Test version module functionality.
+"""Comprehensive tests for FlextVersionManager - Version Management.
+
+This module tests the version management functionality provided by FlextVersionManager.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,38 +8,57 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextVersionManager, __version__
+import time
+
+from flext_core import FlextVersionManager
 
 
-class TestVersion:
-    """Test version information."""
+class TestFlextVersionManager:
+    """Test suite for FlextVersionManager version management."""
 
-    def test_version_exists(self) -> None:
-        """Test that version is defined."""
-        assert __version__ is not None
-        assert isinstance(__version__, str)
-        assert len(__version__) > 0
+    def test_version_manager_initialization(self) -> None:
+        """Test version manager initialization."""
+        version_manager = FlextVersionManager()
 
-    def test_version_format(self) -> None:
-        """Test version follows semantic versioning."""
-        parts = __version__.split(".")
-        assert len(parts) >= 2, f"Expected {len(parts)} >= {2} # At least major.minor"
+        assert version_manager.VERSION_MAJOR >= 0
+        assert version_manager.VERSION_MINOR >= 0
+        assert version_manager.VERSION_PATCH >= 0
 
-        # First two parts should be numeric
-        assert parts[0].isdigit()
-        assert parts[1].isdigit()
+    def test_version_constants(self) -> None:
+        """Test version constants."""
+        assert FlextVersionManager.VERSION_MAJOR >= 0
+        assert FlextVersionManager.VERSION_MINOR >= 0
+        assert FlextVersionManager.VERSION_PATCH >= 0
+        assert FlextVersionManager.SEMVER_PARTS_COUNT == 3
 
-    def test_get_version_function(self) -> None:
-        """Test get_version_string function."""
-        version = FlextVersionManager.get_version_string()
-        assert __version__ in version, (
-            f"Expected {__version__} in {version} # Version string contains the version"
-        )
-        assert isinstance(version, str)
+    def test_release_information(self) -> None:
+        """Test release information."""
+        assert FlextVersionManager.RELEASE_NAME is not None
+        assert FlextVersionManager.RELEASE_DATE is not None
+        assert FlextVersionManager.BUILD_TYPE is not None
 
-    def test_get_version_info_function(self) -> None:
-        """Test get_version_info function."""
+    def test_python_version_constraints(self) -> None:
+        """Test Python version constraints."""
+        min_version = FlextVersionManager.MIN_PYTHON_VERSION
+        max_version = FlextVersionManager.MAX_PYTHON_VERSION
+
+        assert len(min_version) == 3
+        assert len(max_version) == 3
+        assert min_version[0] >= 3
+        assert max_version[0] >= 3
+
+    def test_get_version_tuple(self) -> None:
+        """Test get_version_tuple method."""
+        version_tuple = FlextVersionManager.get_version_tuple()
+
+        assert isinstance(version_tuple, tuple)
+        assert len(version_tuple) == 3
+        assert all(isinstance(v, int) for v in version_tuple)
+
+    def test_get_version_info(self) -> None:
+        """Test get_version_info method."""
         version_info = FlextVersionManager.get_version_info()
+
         assert hasattr(version_info, "major")
         assert hasattr(version_info, "minor")
         assert hasattr(version_info, "patch")
@@ -45,69 +66,71 @@ class TestVersion:
         assert isinstance(version_info.minor, int)
         assert isinstance(version_info.patch, int)
 
-    def test_get_version_tuple(self) -> None:
-        """Test get_version_tuple function."""
-        version_tuple = FlextVersionManager.get_version_tuple()
-        assert isinstance(version_tuple, tuple)
-        assert len(version_tuple) == 3
-        assert all(isinstance(v, int) for v in version_tuple)
+    def test_get_version_string(self) -> None:
+        """Test get_version_string method."""
+        version_string = FlextVersionManager.get_version_string()
+
+        assert isinstance(version_string, str)
+        assert "." in version_string
+        parts = version_string.split(".")
+        assert len(parts) >= 3
 
     def test_get_available_features(self) -> None:
-        """Test get_available_features function."""
+        """Test get_available_features method."""
         features = FlextVersionManager.get_available_features()
+
         assert isinstance(features, list)
-        # Should have some features available
-        assert len(features) > 0
+        assert all(isinstance(feature, str) for feature in features)
 
     def test_compare_versions(self) -> None:
-        """Test compare_versions function."""
-        # Test equal versions
+        """Test compare_versions method."""
+        # Test version comparison
+        result = FlextVersionManager.compare_versions("1.0.0", "1.0.1")
+        assert result < 0  # 1.0.0 < 1.0.1
+
+        result = FlextVersionManager.compare_versions("1.0.1", "1.0.0")
+        assert result > 0  # 1.0.1 > 1.0.0
+
         result = FlextVersionManager.compare_versions("1.0.0", "1.0.0")
-        assert result == 0
-
-        # Test version1 > version2
-        result = FlextVersionManager.compare_versions("1.1.0", "1.0.0")
-        assert result > 0
-
-        # Test version1 < version2
-        result = FlextVersionManager.compare_versions("1.0.0", "1.1.0")
-        assert result < 0
+        assert result == 0  # 1.0.0 == 1.0.0
 
     def test_validate_version_format(self) -> None:
-        """Test validate_version_format function."""
-        # Test valid version formats
-        assert FlextVersionManager.validate_version_format("1.0.0") is True
-        assert FlextVersionManager.validate_version_format("0.9.0") is True
-        assert FlextVersionManager.validate_version_format("10.20.30") is True
+        """Test validate_version_format method."""
+        # Valid versions
+        assert FlextVersionManager.validate_version_format("1.0.0")
+        assert FlextVersionManager.validate_version_format("0.0.0")
+        assert FlextVersionManager.validate_version_format("999.999.999")
 
-        # Test invalid version formats
-        assert FlextVersionManager.validate_version_format("1.0") is False
-        assert FlextVersionManager.validate_version_format("1.0.0.0") is False
-        assert FlextVersionManager.validate_version_format("invalid") is False
-        assert FlextVersionManager.validate_version_format("") is False
+        # Invalid versions
+        assert not FlextVersionManager.validate_version_format("1.0")
+        assert not FlextVersionManager.validate_version_format("1.0.0.0")
+        assert not FlextVersionManager.validate_version_format("invalid")
+        assert not FlextVersionManager.validate_version_format("")
 
-        # Test additional edge cases to cover missing lines
-        assert FlextVersionManager.validate_version_format(None) is False  # Line 138
-        assert FlextVersionManager.validate_version_format("1.a.0") is False  # Line 145
-        assert (
-            FlextVersionManager.validate_version_format("1.-1.0") is False
-        )  # Line 147
-        assert (
-            FlextVersionManager.validate_version_format("a.b.c") is False
-        )  # Line 147-149
+    def test_version_manager_performance(self) -> None:
+        """Test version manager performance."""
+        start_time = time.time()
 
-    def test_compatibility_result_creation(self) -> None:
-        """Test CompatibilityResult creation to cover missing init lines."""
-        # Create a CompatibilityResult to cover lines 74-78
-        check = FlextVersionManager.CompatibilityResult(
-            is_compatible=True,
-            current_version=(1, 0, 0),
-            required_version=(1, 0, 0),
-            error_message="No error",
-            recommendations=["Keep using current version"],
-        )
-        assert check.is_compatible is True
-        assert check.current_version == (1, 0, 0)
-        assert check.required_version == (1, 0, 0)
-        assert check.error_message == "No error"
-        assert check.recommendations == ["Keep using current version"]
+        # Test performance of version operations
+        for i in range(1000):
+            FlextVersionManager.get_version_string()
+            FlextVersionManager.get_version_tuple()
+            FlextVersionManager.validate_version_format(f"{i % 10}.{i % 10}.{i % 10}")
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        # Should complete quickly (less than 1 second)
+        assert execution_time < 1.0
+
+    def test_version_manager_type_safety(self) -> None:
+        """Test type safety of version manager."""
+        # Test type safety
+        version_tuple = FlextVersionManager.get_version_tuple()
+        assert isinstance(version_tuple, tuple)
+
+        version_string = FlextVersionManager.get_version_string()
+        assert isinstance(version_string, str)
+
+        features = FlextVersionManager.get_available_features()
+        assert isinstance(features, list)

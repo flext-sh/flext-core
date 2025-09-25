@@ -120,10 +120,11 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[
-            str,
-            str | int | float | bool | list[int] | FlextTypes.Core.Headers | None,
-        ],
+        sample_data: dict[str, str | int, float]
+        | bool
+        | list[int]
+        | FlextTypes.Core.Headers
+        | None,
     ) -> None:
         """Test comprehensive integration of core library exports.
 

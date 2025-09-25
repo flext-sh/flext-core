@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 """08 - Complete FLEXT Integration: All Components Working Together.
 
 This comprehensive example demonstrates how ALL FLEXT components work together
@@ -249,7 +249,7 @@ class InventoryService(FlextService[dict[str, str | int | float]]):
 
     def process_operation(
         self, data: dict[str, str | int]
-    ) -> FlextResult[dict[str, str | int | float | dict[str, str | int | float]]]:
+    ) -> FlextResult[dict[str, str | int | float]]:
         """Process inventory operation."""
         operation = data.get("operation")
 
@@ -259,9 +259,7 @@ class InventoryService(FlextService[dict[str, str | int | float]]):
                 result = self.get_product(product_id)
                 if result.is_success:
                     product = result.unwrap()
-                    return FlextResult[
-                        dict[str, str | int | float | dict[str, str | int | float]]
-                    ].ok({
+                    return FlextResult[dict[str, object]].ok({
                         "product": {
                             "id": product.id,
                             "name": product.name,
@@ -269,16 +267,16 @@ class InventoryService(FlextService[dict[str, str | int | float]]):
                             "stock": product.stock,
                         }
                     })
-                return FlextResult[
-                    dict[str, str | int | float | dict[str, str | int | float]]
-                ].fail(result.error or "Unknown error")
-            return FlextResult[
-                dict[str, str | int | float | dict[str, str | int | float]]
-            ].fail("Invalid product ID type")
+                return FlextResult[dict[str, str | int | float]].fail(
+                    result.error or "Unknown error"
+                )
+            return FlextResult[dict[str, str | int | float]].fail(
+                "Invalid product ID type"
+            )
 
-        return FlextResult[
-            dict[str, str | int | float | dict[str, str | int | float]]
-        ].fail(f"Unknown operation: {operation}")
+        return FlextResult[dict[str, str | int | float]].fail(
+            f"Unknown operation: {operation}"
+        )
 
 
 class PaymentService(FlextService[dict[str, str | int | float]]):
@@ -491,8 +489,8 @@ class OrderService(FlextService[dict[str, str | int | float]]):
         })
 
     def process_operation(
-        self, data: dict[str, str | int | list[dict[str, str | int]]]
-    ) -> FlextResult[dict[str, str | int | float]]:
+        self, data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Process order operation."""
         operation = data.get("operation")
 
@@ -534,20 +532,20 @@ class OrderValidationHandler:
         self._logger = FlextLogger(__name__)
 
     def handle(
-        self, request: dict[str, str | int | list[dict[str, str | int]]]
-    ) -> FlextResult[dict[str, str | int | list[dict[str, str | int]] | bool]]:
+        self, request: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate order data."""
         self._logger.info("Validating order request")
 
         # Check required fields
         if not request.get("customer_id"):
             return FlextResult[
-                dict[str, str | int | list[dict[str, str | int]] | bool]
+                dict[str, str | int, list[dict[str, str | int]]] | bool
             ].fail("Customer ID required")
 
         if not request.get("items"):
             return FlextResult[
-                dict[str, str | int | list[dict[str, str | int]] | bool]
+                dict[str, str | int, list[dict[str, str | int]]] | bool
             ].fail("Order items required")
 
         # Validate items
@@ -556,16 +554,16 @@ class OrderValidationHandler:
             for item in items:
                 if not item.get("product_id"):
                     return FlextResult[
-                        dict[str, str | int | list[dict[str, str | int]] | bool]
+                        dict[str, str | int, list[dict[str, str | int]]] | bool
                     ].fail("Product ID required for all items")
                 quantity = item.get("quantity")
                 if not isinstance(quantity, int) or quantity <= 0:
                     return FlextResult[
-                        dict[str, str | int | list[dict[str, str | int]] | bool]
+                        dict[str, str | int, list[dict[str, str | int]]] | bool
                     ].fail("Valid quantity required for all items")
 
         request["validated"] = True
-        return FlextResult[dict[str, str | int | list[dict[str, str | int]] | bool]].ok(
+        return FlextResult[dict[str, str | int, list[dict[str, str | int]]] | bool].ok(
             request
         )
 
@@ -579,25 +577,21 @@ class OrderEnrichmentHandler:
         self._logger = FlextLogger(__name__)
 
     def handle(
-        self, request: dict[str, str | int | list[dict[str, str | int]] | bool]
+        self,
+        request: dict[str, str | int, list[dict[str, str | int]]],
+        *,
+        _debug: bool = False,
     ) -> FlextResult[
-        dict[
-            str, str | int | list[dict[str, str | int]] | bool | dict[str, str | float]
-        ]
+        dict[str, str | int, list[dict[str, str | int]]] | bool | dict[str, str | float]
     ]:
         """Add metadata to order."""
         self._logger.info("Enriching order request")
 
         if not request.get("validated"):
             return FlextResult[
-                dict[
-                    str,
-                    str
-                    | int
-                    | list[dict[str, str | int]]
-                    | bool
-                    | dict[str, str | float],
-                ]
+                dict[str, str | int, list[dict[str, str | int]]]
+                | bool
+                | dict[str, str | float]
             ].fail("Order must be validated first")
 
         # Add metadata
@@ -609,18 +603,19 @@ class OrderEnrichmentHandler:
         }
 
         # Create a new dict with the metadata added
-        enriched_request: dict[
-            str, str | int | list[dict[str, str | int]] | bool | dict[str, str | float]
-        ] = {
+        enriched_request: (
+            dict[str, str | int, list[dict[str, str | int]]]
+            | bool
+            | dict[str, str | float]
+        ) = {
             **request,
             "metadata": metadata,
         }
 
         return FlextResult[
-            dict[
-                str,
-                str | int | list[dict[str, str | int]] | bool | dict[str, str | float],
-            ]
+            dict[str, str | int, list[dict[str, str | int]]]
+            | bool
+            | dict[str, str | float]
         ].ok(enriched_request)
 
 
@@ -661,11 +656,9 @@ def demonstrate_complete_integration() -> None:
     enrichment_handler = OrderEnrichmentHandler()
 
     def execute_pipeline(
-        request: dict[str, str | int | list[dict[str, str | int]]],
+        request: dict[str, str | int, list[dict[str, str | int]]],
     ) -> FlextResult[
-        dict[
-            str, str | int | list[dict[str, str | int]] | bool | dict[str, str | float]
-        ]
+        dict[str, str | int, list[dict[str, str | int]]] | bool | dict[str, str | float]
     ]:
         """Execute the processing pipeline."""
         # Chain handlers using railway pattern
@@ -690,7 +683,7 @@ def demonstrate_complete_integration() -> None:
 
     if len(products) >= 3:
         # Order request using actual product IDs
-        order_request: dict[str, str | int | list[dict[str, str | int]]] = {
+        order_request: dict[str, str | int, list[dict[str, str | int]]] = {
             "customer_id": "CUST-123",
             "items": [
                 {"product_id": products[0].id, "quantity": 1},  # Laptop
@@ -774,7 +767,7 @@ def demonstrate_complete_integration() -> None:
     print("\n=== 6. Error Handling ===")
 
     # Try to order with insufficient stock
-    large_order: dict[str, str | int | list[dict[str, str | int]]] = {
+    large_order: dict[str, str | int, list[dict[str, str | int]]] = {
         "customer_id": "CUST-456",
         "items": [
             {

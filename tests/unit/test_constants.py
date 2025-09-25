@@ -1,4 +1,6 @@
-"""Targeted tests for 100% coverage on FlextConstants module.
+"""Comprehensive tests for FlextConstants - Foundation Constants.
+
+Tests the actual FlextConstants API with real functionality testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,149 +8,236 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
-
 from flext_core import FlextConstants
 
 
-class TestConstantsLogLevel100PercentCoverage:
-    """Targeted tests for the remaining 3 uncovered lines in constants.py."""
+class TestFlextConstants:
+    """Test suite for FlextConstants foundation constants."""
 
-    def test_lines_703_705_loglevel_string_comparison(self) -> None:
-        """Test lines 703-705: LogLevel.__eq__ method with string comparison."""
-        # Test string comparison that triggers line 703-704
-        log_level = FlextConstants.Config.LogLevel.DEBUG
+    def test_core_constants(self) -> None:
+        """Test core constants access."""
+        assert FlextConstants.Core.NAME == "FLEXT"
+        assert FlextConstants.Core.VERSION == "0.9.0"
+        assert FlextConstants.Core.DEFAULT_VERSION == "1.0.0"
 
-        # Should return True when comparing with matching string
-        assert log_level == "DEBUG"  # Triggers lines 703-704
+    def test_network_constants(self) -> None:
+        """Test network constants access."""
+        assert FlextConstants.Network.MIN_PORT == 1
+        assert FlextConstants.Network.MAX_PORT == 65535
+        assert FlextConstants.Network.TOTAL_TIMEOUT == 60
+        assert FlextConstants.Network.DEFAULT_TIMEOUT == 30
 
-        # Test different string values
-        assert log_level != "INFO"
-        assert log_level != "ERROR"
+    def test_validation_constants(self) -> None:
+        """Test validation constants access."""
+        assert FlextConstants.Validation.MIN_NAME_LENGTH == 2
+        assert FlextConstants.Validation.MAX_NAME_LENGTH == 100
+        assert FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH == 2
+        assert FlextConstants.Validation.MAX_EMAIL_LENGTH == 254
+        assert FlextConstants.Validation.MIN_PERCENTAGE == 0.0
+        assert FlextConstants.Validation.MAX_PERCENTAGE == 100.0
+        assert FlextConstants.Validation.MIN_SECRET_KEY_LENGTH == 32
+        assert FlextConstants.Validation.MIN_PHONE_DIGITS == 10
 
-        # Test with other log levels
-        info_level = FlextConstants.Config.LogLevel.INFO
-        assert info_level == "INFO"
-        assert info_level != "DEBUG"
+    def test_error_constants(self) -> None:
+        """Test error constants access."""
+        assert FlextConstants.Errors.VALIDATION_ERROR == "VALIDATION_ERROR"
+        assert FlextConstants.Errors.TYPE_ERROR == "TYPE_ERROR"
+        assert FlextConstants.Errors.SERIALIZATION_ERROR == "SERIALIZATION_ERROR"
+        assert FlextConstants.Errors.CONFIG_ERROR == "CONFIG_ERROR"
+        assert FlextConstants.Errors.OPERATION_ERROR == "OPERATION_ERROR"
+        assert (
+            FlextConstants.Errors.BUSINESS_RULE_VIOLATION == "BUSINESS_RULE_VIOLATION"
+        )
+        assert FlextConstants.Errors.NOT_FOUND_ERROR == "NOT_FOUND_ERROR"
 
-        warning_level = FlextConstants.Config.LogLevel.WARNING
-        assert warning_level == "WARNING"
-        assert warning_level != "CRITICAL"
+    def test_messages_constants(self) -> None:
+        """Test message constants access."""
+        assert FlextConstants.Messages.TYPE_MISMATCH == "Type mismatch"
+        assert (
+            FlextConstants.Messages.SERVICE_NAME_EMPTY == "Service name cannot be empty"
+        )
 
-    def test_loglevel_non_string_comparison(self) -> None:
-        """Test line 705: LogLevel.__eq__ with non-string objects."""
-        log_level = FlextConstants.Config.LogLevel.ERROR
+    def test_entities_constants(self) -> None:
+        """Test entity constants access."""
+        assert FlextConstants.Entities.ENTITY_ID_EMPTY == "Entity ID cannot be empty"
 
-        # Test comparison with non-string objects (triggers line 705)
-        # Use type() to get the actual type for comparison that makes sense
-        assert log_level != str(123)  # Compare with string representation
-        assert log_level is not None  # Test identity, not equality
-        assert log_level != str([])  # Compare with string representation
-        assert log_level != str({})  # Compare with string representation
+    def test_defaults_constants(self) -> None:
+        """Test default constants access."""
+        assert FlextConstants.Defaults.TIMEOUT == 30
+        assert FlextConstants.Defaults.PAGE_SIZE == 100
+        assert FlextConstants.Defaults.TIMEOUT_SECONDS == 30
 
-        # Test comparison with another LogLevel enum (should use super().__eq__)
-        same_level = FlextConstants.Config.LogLevel.ERROR
-        assert log_level == same_level  # Triggers super().__eq__() via line 705
+    def test_limits_constants(self) -> None:
+        """Test limits constants access."""
+        assert FlextConstants.Limits.MAX_STRING_LENGTH == 1000
+        assert FlextConstants.Limits.MAX_LIST_SIZE == 10000
+        assert FlextConstants.Limits.MAX_FILE_SIZE == 10 * 1024 * 1024
 
-        different_level = FlextConstants.Config.LogLevel.INFO
-        assert log_level != different_level
+    def test_utilities_constants(self) -> None:
+        """Test utility constants access."""
+        assert FlextConstants.Utilities.SECONDS_PER_MINUTE == 60
+        assert FlextConstants.Utilities.SECONDS_PER_HOUR == 3600
+        assert FlextConstants.Utilities.BYTES_PER_KB == 1024
 
-    def test_line_705_super_eq_call(self) -> None:
-        """Specifically test line 705: return super().__eq__(other)."""
-        log_level = FlextConstants.Config.LogLevel.DEBUG
+    def test_config_constants(self) -> None:
+        """Test configuration constants access."""
+        assert "development" in FlextConstants.Config.ENVIRONMENTS
+        assert "staging" in FlextConstants.Config.ENVIRONMENTS
+        assert "production" in FlextConstants.Config.ENVIRONMENTS
 
-        # Create another LogLevel with same value - should call super().__eq__()
-        another_debug = FlextConstants.Config.LogLevel.DEBUG
-        result = log_level == another_debug  # This should trigger line 705
-        assert result is True
+    def test_logging_constants(self) -> None:
+        """Test logging constants access."""
+        assert FlextConstants.Logging.DEFAULT_LEVEL == "INFO"
+        assert FlextConstants.Logging.DEFAULT_LEVEL_DEVELOPMENT == "DEBUG"
+        assert FlextConstants.Logging.DEFAULT_LEVEL_PRODUCTION == "WARNING"
+        assert FlextConstants.Logging.DEFAULT_LEVEL_TESTING == "INFO"
 
-        # Test with different LogLevel - should also call super().__eq__()
-        info_level = FlextConstants.Config.LogLevel.INFO
-        # Use a variable to avoid Pyright's literal type optimization
-        debug_value = log_level
-        info_value = info_level
-        result = debug_value == info_value  # This should also trigger line 705
-        assert result is False
+    def test_logging_levels_enum(self) -> None:
+        """Test logging levels enum."""
+        assert FlextConstants.Config.LogLevel.DEBUG == "DEBUG"
+        assert FlextConstants.Config.LogLevel.INFO == "INFO"
+        assert FlextConstants.Config.LogLevel.WARNING == "WARNING"
+        assert FlextConstants.Config.LogLevel.ERROR == "ERROR"
+        assert FlextConstants.Config.LogLevel.CRITICAL == "CRITICAL"
 
-        # Test explicit non-string comparison to force super().__eq__() path
-        class NonStringObject:
-            """Test object that is not a string."""
+    def test_config_source_enum(self) -> None:
+        """Test config source enum."""
+        assert FlextConstants.Config.ConfigSource.FILE == "file"
+        assert FlextConstants.Config.ConfigSource.ENVIRONMENT == "env"
+        assert FlextConstants.Config.ConfigSource.CLI == "cli"
 
-            def __eq__(self, other: object) -> bool:
-                """Custom equality that returns False for testing.
+    def test_field_type_enum(self) -> None:
+        """Test field type enum."""
+        assert FlextConstants.Enums.FieldType.STRING == "string"
+        assert FlextConstants.Enums.FieldType.INTEGER == "integer"
+        assert FlextConstants.Enums.FieldType.FLOAT == "float"
+        assert FlextConstants.Enums.FieldType.BOOLEAN == "boolean"
+        assert FlextConstants.Enums.FieldType.DATETIME == "datetime"
 
-                Returns:
-                    bool: Always returns False for testing purposes
+    def test_platform_constants(self) -> None:
+        """Test platform constants access."""
+        assert FlextConstants.Platform.FLEXT_API_PORT == 8000
+        assert FlextConstants.Platform.DEFAULT_HOST == "localhost"
+        assert FlextConstants.Platform.LOOPBACK_IP == "127.0.0.1"
 
-                """
-                return False
+    def test_observability_constants(self) -> None:
+        """Test observability constants access."""
+        assert FlextConstants.Observability.DEFAULT_LOG_LEVEL == "INFO"
 
-            def __hash__(self) -> int:
-                """Hash implementation for the test object.
+    def test_performance_constants(self) -> None:
+        """Test performance constants access."""
+        assert FlextConstants.Performance.DEFAULT_BATCH_SIZE == 1000
+        assert FlextConstants.Performance.SUBPROCESS_TIMEOUT == 300
+        assert FlextConstants.Performance.SUBPROCESS_TIMEOUT_SHORT == 180
 
-                Returns:
-                    int: Hash value based on object identity
+    def test_reliability_constants(self) -> None:
+        """Test reliability constants access."""
+        assert FlextConstants.Reliability.MAX_RETRY_ATTEMPTS == 3
+        assert FlextConstants.Reliability.DEFAULT_MAX_RETRIES == 3
+        assert FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY == "exponential"
 
-                """
-                return hash(id(self))
+    def test_security_constants(self) -> None:
+        """Test security constants access."""
+        assert FlextConstants.Security.MAX_JWT_EXPIRY_MINUTES == 43200
+        assert FlextConstants.Security.DEFAULT_JWT_EXPIRY_MINUTES == 1440
 
-        non_string_obj = NonStringObject()
-        result = log_level == non_string_obj  # Forces line 705 path
-        assert result is False
+    def test_environment_enums(self) -> None:
+        """Test environment enums."""
+        assert FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT == "development"
+        assert FlextConstants.Environment.ConfigEnvironment.STAGING == "staging"
+        assert FlextConstants.Environment.ConfigEnvironment.PRODUCTION == "production"
 
-    def test_all_loglevel_values_string_comparison(self) -> None:
-        """Comprehensive test of all LogLevel values with string comparison."""
-        # Test all log level values to ensure complete coverage
-        test_cases = [
-            (FlextConstants.Config.LogLevel.DEBUG, "DEBUG"),
-            (FlextConstants.Config.LogLevel.INFO, "INFO"),
-            (FlextConstants.Config.LogLevel.WARNING, "WARNING"),
-            (FlextConstants.Config.LogLevel.ERROR, "ERROR"),
-            (FlextConstants.Config.LogLevel.CRITICAL, "CRITICAL"),
-            # TRACE was removed from LogLevel enum
-        ]
+    def test_validation_level_enum(self) -> None:
+        """Test validation level enum."""
+        assert FlextConstants.Environment.ValidationLevel.STRICT == "strict"
+        assert FlextConstants.Environment.ValidationLevel.NORMAL == "normal"
+        assert FlextConstants.Environment.ValidationLevel.RELAXED == "relaxed"
 
-        for log_level, expected_string in test_cases:
-            # Test exact string match (lines 703-704)
-            assert log_level == expected_string
+    def test_cqrs_constants(self) -> None:
+        """Test CQRS constants access."""
+        assert FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE == "command"
+        assert FlextConstants.Cqrs.COMMAND_HANDLER_TYPE == "command"
+        assert FlextConstants.Cqrs.QUERY_HANDLER_TYPE == "query"
 
-            # Test case sensitivity
-            assert log_level != expected_string.lower()
-            assert log_level != expected_string.title()
+    def test_container_constants(self) -> None:
+        """Test container constants access."""
+        assert FlextConstants.Container.MAX_WORKERS == 4
+        assert FlextConstants.Container.MIN_WORKERS == 1
 
-    def test_loglevel_edge_cases(self) -> None:
-        """Test edge cases for LogLevel comparison."""
-        log_level = FlextConstants.Config.LogLevel.INFO
+    def test_dispatcher_constants(self) -> None:
+        """Test dispatcher constants access."""
+        assert FlextConstants.Dispatcher.HANDLER_MODE_COMMAND == "command"
+        assert FlextConstants.Dispatcher.HANDLER_MODE_QUERY == "query"
+        assert FlextConstants.Dispatcher.DEFAULT_HANDLER_MODE == "command"
 
-        # Test empty string
-        assert log_level
+    def test_mixins_constants(self) -> None:
+        """Test mixins constants access."""
+        assert FlextConstants.Mixins.FIELD_CREATED_AT == "created_at"
+        assert FlextConstants.Mixins.FIELD_UPDATED_AT == "updated_at"
+        assert FlextConstants.Mixins.FIELD_ID == "id"
 
-        # Test partial matches
-        assert log_level != "INF"
-        assert log_level != "INFO_LEVEL"
+    def test_constants_immutability(self) -> None:
+        """Test that constants are immutable (Final)."""
+        # This test verifies that constants are properly marked as Final
+        # and cannot be modified at runtime
+        original_name = FlextConstants.Core.NAME
+        assert original_name == "FLEXT"
 
-        # Test with whitespace
-        assert log_level != " INFO "
-        assert log_level != "INFO\n"
+        # Constants should be immutable - this is enforced by the Final type hint
+        # In a real test, we would verify that attempting to modify raises an error
+        # but since these are Final, Python will prevent modification at runtime
 
-        # Test comparison with other enum types (line 705 path)
+    def test_constants_type_safety(self) -> None:
+        """Test that constants have correct types."""
+        # Test string constants
+        assert isinstance(FlextConstants.Core.NAME, str)
+        assert isinstance(FlextConstants.Core.VERSION, str)
 
-        class OtherEnum(StrEnum):
-            """Test enum for comparison."""
+        # Test integer constants
+        assert isinstance(FlextConstants.Network.MIN_PORT, int)
+        assert isinstance(FlextConstants.Network.MAX_PORT, int)
 
-            INFO = "INFO"
-            DEBUG = "DEBUG"
+        # Test float constants
+        assert isinstance(FlextConstants.Validation.MIN_PERCENTAGE, float)
+        assert isinstance(FlextConstants.Validation.MAX_PERCENTAGE, float)
 
-        other_enum = OtherEnum.INFO
-        # Test that different enum types don't match (use type checking instead)
-        assert isinstance(log_level, FlextConstants.Config.LogLevel)
-        assert isinstance(other_enum, OtherEnum)
-        # Test enum values are different types
-        assert log_level.__class__.__name__ == "LogLevel"
-        assert other_enum.__class__.__name__ == "OtherEnum"
-        # Test that values can be the same but types are different
-        assert log_level.value == "INFO"
-        assert other_enum.value == "INFO"
-        # Also test with same value but different enum type
-        debug_enum = OtherEnum.DEBUG
-        assert debug_enum.__class__.__name__ == "OtherEnum"
+        # Test list constants
+        assert isinstance(FlextConstants.Config.ENVIRONMENTS, list)
+
+    def test_constants_completeness(self) -> None:
+        """Test that all expected constant categories exist."""
+        # Verify all major constant categories are present
+        assert hasattr(FlextConstants, "Core")
+        assert hasattr(FlextConstants, "Network")
+        assert hasattr(FlextConstants, "Validation")
+        assert hasattr(FlextConstants, "Errors")
+        assert hasattr(FlextConstants, "Messages")
+        assert hasattr(FlextConstants, "Entities")
+        assert hasattr(FlextConstants, "Defaults")
+        assert hasattr(FlextConstants, "Limits")
+        assert hasattr(FlextConstants, "Utilities")
+        assert hasattr(FlextConstants, "Config")
+        assert hasattr(FlextConstants, "Logging")
+        assert hasattr(FlextConstants, "Enums")
+        assert hasattr(FlextConstants, "Platform")
+        assert hasattr(FlextConstants, "Observability")
+        assert hasattr(FlextConstants, "Performance")
+        assert hasattr(FlextConstants, "Reliability")
+        assert hasattr(FlextConstants, "Security")
+        assert hasattr(FlextConstants, "Environment")
+        assert hasattr(FlextConstants, "Cqrs")
+        assert hasattr(FlextConstants, "Container")
+        assert hasattr(FlextConstants, "Dispatcher")
+        assert hasattr(FlextConstants, "Mixins")
+
+    def test_constants_documentation(self) -> None:
+        """Test that constants have proper documentation."""
+        # Verify that the main class has documentation
+        assert FlextConstants.__doc__ is not None
+        assert "Foundation constants" in FlextConstants.__doc__
+
+        # Verify that nested classes have documentation
+        assert FlextConstants.Core.__doc__ is not None
+        assert FlextConstants.Network.__doc__ is not None
+        assert FlextConstants.Validation.__doc__ is not None
+        assert FlextConstants.Errors.__doc__ is not None

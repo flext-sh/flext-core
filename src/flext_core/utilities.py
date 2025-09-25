@@ -682,7 +682,7 @@ class FlextUtilities:
             )
 
         @staticmethod
-        def timeout_operation(
+        def timeout_operation[T](
             operation: Callable[[], FlextResult[T]],
             timeout_seconds: float = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS,
         ) -> FlextResult[T]:
@@ -700,7 +700,7 @@ class FlextUtilities:
             return FlextUtilities.Reliability.with_timeout(operation, timeout_seconds)
 
         @classmethod
-        def circuit_breaker(
+        def circuit_breaker[T](
             cls,
             operation: Callable[[], FlextResult[T]],
             failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
@@ -885,7 +885,7 @@ class FlextUtilities:
             if isinstance(value, int):
                 return FlextResult[int].ok(value)
 
-            # value is str at this point due to type annotation int | str
+            # value is str at this point due to type annotation Union[int, str]
             # Type checking already ensures this
 
             # Validate string before conversion
@@ -963,7 +963,7 @@ class FlextUtilities:
         """General utility functions using railway composition."""
 
         @staticmethod
-        def safe_cast(
+        def safe_cast[T](
             value: object, target_type: type[T], field_name: str = "value"
         ) -> FlextResult[T]:
             """Safely cast value to target type."""
@@ -1014,8 +1014,9 @@ class FlextUtilities:
                     return FlextResult[T].ok(cast("T", value))
 
             except (ValueError, TypeError) as e:
+                type_name = getattr(target_type, "__name__", str(target_type))
                 return FlextResult[T].fail(
-                    f"Cannot cast {field_name} to {target_type.__name__}: {e}"
+                    f"Cannot cast {field_name} to {type_name}: {e}"
                 )
 
         @staticmethod
@@ -1236,13 +1237,18 @@ class FlextUtilities:
             return str(uuid.uuid4())
 
         @staticmethod
+        def generate_uuid() -> str:
+            """Generate a UUID string."""
+            return str(uuid.uuid4())
+
+        @staticmethod
         def generate_timestamp() -> str:
             """Generate ISO format timestamp."""
             return datetime.now(UTC).isoformat()
 
         @staticmethod
         def generate_iso_timestamp() -> str:
-            """Generate ISO format timestamp (alias for compatibility)."""
+            """Generate ISO format timestamp."""
             return datetime.now(UTC).isoformat()
 
         @staticmethod
@@ -1255,11 +1261,6 @@ class FlextUtilities:
             """Generate a short random ID."""
             alphabet = string.ascii_letters + string.digits
             return "".join(secrets.choice(alphabet) for _ in range(length))
-
-        @staticmethod
-        def generate_uuid() -> str:
-            """Generate a UUID (alias for generate_id for compatibility)."""
-            return str(uuid.uuid4())
 
         @staticmethod
         def generate_entity_id() -> str:
@@ -1300,6 +1301,51 @@ class FlextUtilities:
             )()
 
             return FlextResult[object].ok(utilities)
+
+        @staticmethod
+        def generate_correlation_id_with_context(context: str) -> str:
+            """Generate a correlation ID with context prefix."""
+            return f"{context}_{str(uuid.uuid4())[:8]}"
+
+        @staticmethod
+        def generate_batch_id(batch_size: int) -> str:
+            """Generate a batch ID with size information."""
+            return f"batch_{batch_size}_{str(uuid.uuid4())[:8]}"
+
+        @staticmethod
+        def generate_transaction_id() -> str:
+            """Generate a transaction ID for distributed transactions."""
+            return f"txn_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_saga_id() -> str:
+            """Generate a saga ID for distributed transaction patterns."""
+            return f"saga_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_event_id() -> str:
+            """Generate an event ID for domain events."""
+            return f"evt_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_command_id() -> str:
+            """Generate a command ID for CQRS patterns."""
+            return f"cmd_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_query_id() -> str:
+            """Generate a query ID for CQRS patterns."""
+            return f"qry_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_aggregate_id(aggregate_type: str) -> str:
+            """Generate an aggregate ID with type prefix."""
+            return f"{aggregate_type.lower()}_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_entity_version() -> int:
+            """Generate an entity version number."""
+            return int(datetime.now(UTC).timestamp() * 1000) % 1000000
 
     class TextProcessor:
         """Text processing utilities using railway composition."""
@@ -1450,7 +1496,12 @@ class FlextUtilities:
                     "Operation completed but returned no result"
                 )
 
-            return result_container[0]
+            result = result_container[0]
+            if result is None:
+                return FlextResult[TTimeout].fail(
+                    "Operation completed but returned no result"
+                )
+            return result
 
         @staticmethod
         def circuit_breaker[TCircuit](
@@ -1819,7 +1870,7 @@ class FlextUtilities:
                         logger.debug(
                             "Skipping validation method %s: %s",
                             validation_method_name,
-                            str(e),
+                            e,
                         )
 
             # If message is a Pydantic model, assume it is already validated unless
@@ -2007,3 +2058,223 @@ class FlextUtilities:
                 },
                 correlation_id=f"message_serialization_{int(time.time() * 1000)}",
             )
+
+    class Composition:
+        """Advanced composition patterns using railway-oriented programming.
+
+        Provides utilities for composing complex operations using FlextResult
+        monadic patterns and railway-oriented programming principles.
+        """
+
+        @staticmethod
+        def compose_pipeline[T](
+            *functions: Callable[[T], FlextResult[T]],
+        ) -> Callable[[T], FlextResult[T]]:
+            """Compose a pipeline of functions using railway patterns.
+
+            Args:
+                *functions: Functions to compose in sequence
+
+            Returns:
+                Callable[[T], FlextResult[T]]: Composed pipeline function
+
+            Example:
+                ```python
+                pipeline = FlextUtilities.Composition.compose_pipeline(
+                    validate_input, transform_data, persist_data
+                )
+                result = pipeline(input_data)
+                ```
+
+            """
+
+            def composed(value: T) -> FlextResult[T]:
+                current_value = value
+                for func in functions:
+                    result = func(current_value)
+                    if result.is_failure:
+                        return result
+                    current_value = result.unwrap()
+                return FlextResult[T].ok(current_value)
+
+            return composed
+
+        @staticmethod
+        def compose_parallel[T, U](
+            *functions: Callable[[T], FlextResult[U]],
+        ) -> Callable[[T], FlextResult[list[U]]]:
+            """Compose functions to run in parallel using railway patterns.
+
+            Args:
+                *functions: Functions to run in parallel
+
+            Returns:
+                Callable[[T], FlextResult[list[U]]]: Parallel composition function
+
+            Example:
+                ```python
+                parallel = FlextUtilities.Composition.compose_parallel(
+                    validate_user, validate_permissions, validate_data
+                )
+                result = parallel(input_data)
+                ```
+
+            """
+
+            def parallel_composed(value: T) -> FlextResult[list[U]]:
+                results = []
+                for func in functions:
+                    result = func(value)
+                    if result.is_failure:
+                        return FlextResult[list[U]].fail(
+                            f"Parallel execution failed: {result.error}",
+                            error_code="PARALLEL_EXECUTION_FAILED",
+                            error_data={
+                                "failed_function": func.__name__,
+                                "error": result.error,
+                            },
+                        )
+                    results.append(result.unwrap())
+                return FlextResult[list[U]].ok(results)
+
+            return parallel_composed
+
+        @staticmethod
+        def compose_conditional[T](
+            condition: Callable[[T], bool],
+            true_func: Callable[[T], FlextResult[T]],
+            false_func: Callable[[T], FlextResult[T]],
+        ) -> Callable[[T], FlextResult[T]]:
+            """Compose conditional execution using railway patterns.
+
+            Args:
+                condition: Condition function to evaluate
+                true_func: Function to execute if condition is true
+                false_func: Function to execute if condition is false
+
+            Returns:
+                Callable[[T], FlextResult[T]]: Conditional composition function
+
+            Example:
+                ```python
+                conditional = FlextUtilities.Composition.compose_conditional(
+                    lambda x: x.amount > 1000,
+                    lambda x: process_large_amount(x),
+                    lambda x: process_small_amount(x),
+                )
+                result = conditional(transaction_data)
+                ```
+
+            """
+
+            def conditional_composed(value: T) -> FlextResult[T]:
+                if condition(value):
+                    return true_func(value)
+                return false_func(value)
+
+            return conditional_composed
+
+        @staticmethod
+        def compose_retry[T](
+            func: Callable[[T], FlextResult[T]],
+            max_retries: int = 3,
+            retry_delay: float = 1.0,
+        ) -> Callable[[T], FlextResult[T]]:
+            """Compose retry logic using railway patterns.
+
+            Args:
+                func: Function to retry
+                max_retries: Maximum number of retries
+                retry_delay: Delay between retries in seconds
+
+            Returns:
+                Callable[[T], FlextResult[T]]: Retry composition function
+
+            Example:
+                ```python
+                retry_func = FlextUtilities.Composition.compose_retry(
+                    unreliable_function, max_retries=5, retry_delay=2.0
+                )
+                result = retry_func(input_data)
+                ```
+
+            """
+
+            def retry_composed(value: T) -> FlextResult[T]:
+                last_error = None
+                for attempt in range(max_retries + 1):
+                    result = func(value)
+                    if result.is_success:
+                        return result
+                    last_error = result.error
+                    if attempt < max_retries:
+                        time.sleep(retry_delay)
+
+                return FlextResult[T].fail(
+                    f"Function failed after {max_retries} retries: {last_error}",
+                    error_code="RETRY_EXHAUSTED",
+                    error_data={"max_retries": max_retries, "last_error": last_error},
+                )
+
+            return retry_composed
+
+        @staticmethod
+        def compose_circuit_breaker[T](
+            func: Callable[[T], FlextResult[T]],
+            failure_threshold: int = 5,
+            recovery_timeout: float = 60.0,
+        ) -> Callable[[T], FlextResult[T]]:
+            """Compose circuit breaker logic using railway patterns.
+
+            Args:
+                func: Function to protect with circuit breaker
+                failure_threshold: Number of failures before opening circuit
+                recovery_timeout: Time to wait before attempting recovery
+
+            Returns:
+                Callable[[T], FlextResult[T]]: Circuit breaker composition function
+
+            Example:
+                ```python
+                protected_func = FlextUtilities.Composition.compose_circuit_breaker(
+                    external_service_call, failure_threshold=3, recovery_timeout=30.0
+                )
+                result = protected_func(input_data)
+                ```
+
+            """
+            circuit_state = {"failures": 0, "last_failure": 0.0, "is_open": False}
+
+            def circuit_breaker_composed(value: T) -> FlextResult[T]:
+                current_time = time.time()
+
+                # Check if circuit is open and if we should attempt recovery
+                if circuit_state["is_open"]:
+                    if current_time - circuit_state["last_failure"] < recovery_timeout:
+                        return FlextResult[T].fail(
+                            "Circuit breaker is open",
+                            error_code="CIRCUIT_BREAKER_OPEN",
+                            error_data={"recovery_timeout": recovery_timeout},
+                        )
+                    # Attempt recovery
+                    circuit_state["is_open"] = False
+                    circuit_state["failures"] = 0
+
+                # Execute function
+                result = func(value)
+
+                if result.is_success:
+                    # Reset failure count on success
+                    circuit_state["failures"] = 0
+                    return result
+                # Increment failure count
+                circuit_state["failures"] += 1
+                circuit_state["last_failure"] = current_time
+
+                # Open circuit if threshold reached
+                if circuit_state["failures"] >= failure_threshold:
+                    circuit_state["is_open"] = True
+
+                return result
+
+            return circuit_breaker_composed

@@ -112,7 +112,7 @@ class FlextTestsHypothesis:
                 FlextTestsHypothesis.FlextStrategies._build_correlation_id,
                 prefix=st.sampled_from(["corr", "trace", "req", "op"]),
                 suffix=st.text(
-                    alphabet=string.ascii_lowercase + string.digits,
+                    alphabet=list(string.ascii_lowercase + string.digits),
                     min_size=8,
                     max_size=16,
                 ),
@@ -129,12 +129,12 @@ class FlextTestsHypothesis:
             return st.builds(
                 FlextTestsHypothesis.FlextStrategies._build_email,
                 local=st.text(
-                    alphabet=string.ascii_lowercase + string.digits + "._-",
+                    alphabet=list(string.ascii_lowercase + string.digits + "._-"),
                     min_size=1,
                     max_size=20,
                 ).filter(FlextTestsHypothesis.FlextStrategies._is_valid_email_part),
                 domain=st.text(
-                    alphabet=string.ascii_lowercase + string.digits + "-",
+                    alphabet=list(string.ascii_lowercase + string.digits + "-"),
                     min_size=1,
                     max_size=20,
                 ).filter(FlextTestsHypothesis.FlextStrategies._is_valid_domain),
@@ -222,7 +222,7 @@ class FlextTestsHypothesis:
                 FlextTestsHypothesis.FlextStrategies._build_url,
                 scheme=st.sampled_from(["http", "https"]),
                 domain=st.text(
-                    alphabet=string.ascii_lowercase + string.digits,
+                    alphabet=list(string.ascii_lowercase + string.digits),
                     min_size=3,
                     max_size=20,
                 ),
@@ -233,7 +233,7 @@ class FlextTestsHypothesis:
                         st.builds(
                             FlextTestsHypothesis.FlextStrategies._build_path,
                             p=st.text(
-                                alphabet=string.ascii_lowercase + string.digits + "-_/",
+                                alphabet=list(string.ascii_lowercase + string.digits + "-_/"),
                                 min_size=1,
                                 max_size=50,
                             ),
@@ -446,7 +446,7 @@ class FlextTestsHypothesis:
             return st.one_of(
                 [
                     st.just(""),
-                    st.text(alphabet=" \t\n\r", min_size=1, max_size=10),
+                    st.text(alphabet=list(" \t\n\r"), min_size=1, max_size=10),
                     st.builds(
                         FlextTestsHypothesis.EdgeCaseStrategies._repeat_spaces,
                         n=st.integers(min_value=1, max_value=100),
@@ -502,19 +502,19 @@ class FlextTestsHypothesis:
             """Generate Unicode edge cases."""
             return st.one_of(
                 [
-                    st.text(alphabet="🚀🎯✅❌🔧📊", min_size=1, max_size=10),  # Emojis
+                    st.text(alphabet=list("🚀🎯✅❌🔧📊"), min_size=1, max_size=10),  # Emojis
                     st.text(
-                        alphabet="áéíóúñü",
+                        alphabet=list("áéíóúñü"),
                         min_size=1,
                         max_size=20,
                     ),  # Accented chars
                     st.text(
-                        alphabet="αβγδεζηθ",
+                        alphabet=list("αβγδεζηθ"),
                         min_size=1,
                         max_size=15,
                     ),  # Greek letters
                     st.text(
-                        alphabet="中文测试",
+                        alphabet=list("中文测试"),
                         min_size=1,
                         max_size=10,
                     ),  # Chinese characters
@@ -768,13 +768,13 @@ class FlextTestsHypothesis:
                         st.builds(
                             FlextTestsHypothesis.CompositeStrategies._build_database_url,
                             host=st.text(
-                                alphabet=string.ascii_lowercase,
+                                alphabet=list(string.ascii_lowercase),
                                 min_size=5,
                                 max_size=20,
                             ),
                             port=st.integers(min_value=1000, max_value=65535),
                             db=st.text(
-                                alphabet=string.ascii_lowercase + "_",
+                                alphabet=list(string.ascii_lowercase + "_"),
                                 min_size=3,
                                 max_size=20,
                             ),
@@ -786,7 +786,7 @@ class FlextTestsHypothesis:
                     "features": draw(
                         st.lists(
                             st.text(
-                                alphabet=string.ascii_lowercase + "_",
+                                alphabet=list(string.ascii_lowercase + "_"),
                                 min_size=3,
                                 max_size=30,
                             ),

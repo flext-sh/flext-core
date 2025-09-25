@@ -368,7 +368,7 @@ class TestPropertyBasedPatterns:
     """Demonstrate property-based testing with custom strategies."""
 
     @given(FlextTestsHypothesis.FlextStrategies.emails())
-    def test_email_properties(self, email: str) -> None:
+    def test_email_property_based(self, email: str) -> None:
         """Property-based test for email handling."""
         assume(FlextTestsHypothesis.PropertyTestHelpers.assume_valid_email(email))
 
@@ -379,7 +379,7 @@ class TestPropertyBasedPatterns:
         assert not email.endswith("@")
 
     @given(FlextTestsHypothesis.CompositeStrategies.user_profiles())
-    def test_user_profile_properties(self, profile: FlextTypes.Core.Dict) -> None:
+    def test_user_profile_property_based(self, profile: FlextTypes.Core.Dict) -> None:
         """Property-based test for user profiles."""
         # Verify required fields
         assert "id" in profile
@@ -399,7 +399,7 @@ class TestPropertyBasedPatterns:
         )
 
     @given(FlextTestsHypothesis.PerformanceStrategies.large_strings())
-    def test_string_processing_scalability(self, large_string: str) -> None:
+    def test_string_performance_property_based(self, large_string: str) -> None:
         """Property-based test for string processing performance."""
         assume(len(large_string) >= 1000)
 
@@ -419,7 +419,7 @@ class TestPropertyBasedPatterns:
         assert len(processed) <= len(large_string)
 
     @given(FlextTestsHypothesis.EdgeCaseStrategies.unicode_edge_cases())
-    def test_unicode_handling_properties(self, unicode_text: str) -> None:
+    def test_unicode_handling_property_based(self, unicode_text: str) -> None:
         """Property-based test for Unicode handling."""
         # Should handle Unicode gracefully without crashing
         result = unicode_text.encode("utf-8").decode("utf-8")

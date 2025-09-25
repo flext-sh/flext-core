@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import cast
 
@@ -23,6 +24,393 @@ class FlextProcessors:
     the modernization plan so supporting packages can compose around
     ``FlextDispatcher`` without bespoke glue code.
     """
+
+    def __init__(self, config: dict[str, object] | None = None) -> None:
+        """Initialize FlextProcessors with optional configuration.
+
+        Args:
+            config: Optional configuration dictionary for processors
+
+        """
+        self._registry: dict[str, object] = {}
+        self._middleware: list[object] = []
+        self._config = config or {}
+        self._metrics: dict[str, int] = {}
+        self._audit_log: list[dict[str, object]] = []
+        self._performance_metrics: dict[str, float] = {}
+        self._circuit_breaker: dict[str, bool] = {}
+        self._rate_limiter: dict[str, dict[str, int | float]] = {}
+        self._cache: dict[str, tuple[object, float]] = {}
+        cache_ttl = self._config.get("cache_ttl", 300)
+        self._cache_ttl = (
+            float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 300.0
+        )
+
+        circuit_threshold = self._config.get("circuit_breaker_threshold", 5)
+        self._circuit_breaker_threshold = (
+            int(circuit_threshold)
+            if isinstance(circuit_threshold, (int, float, str))
+            else 5
+        )
+
+        rate_limit = self._config.get("rate_limit", 10)
+        self._rate_limit = (
+            int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 10
+        )
+
+        rate_window = self._config.get("rate_limit_window", 60)
+        self._rate_limit_window = (
+            int(rate_window) if isinstance(rate_window, (int, float, str)) else 60
+        )
+
+    def register(self, name: str, processor: object) -> FlextResult[None]:
+        """Register a processor with the given name.
+
+        Args:
+            name: Name to register the processor under
+            processor: The processor function or object to register
+
+        Returns:
+            FlextResult[None]: Success if registration succeeded, failure otherwise
+
+        """
+        if not name:
+            return FlextResult[None].fail("Processor name cannot be empty")
+
+        if name in self._registry:
+            return FlextResult[None].fail(f"Processor '{name}' already registered")
+
+        self._registry[name] = processor
+        self._metrics["registrations"] = self._metrics.get("registrations", 0) + 1
+
+        return FlextResult[None].ok(None)
+
+    def process(self, name: str, data: object) -> FlextResult[object]:
+        """Process data using the named processor.
+
+        Args:
+            name: Name of the registered processor
+            data: Data to process
+
+        Returns:
+            FlextResult[object]: Processed result or failure
+
+        """
+        if name not in self._registry:
+            return FlextResult[object].fail(f"Processor '{name}' not found")
+
+        processor = self._registry[name]
+
+        # Check circuit breaker
+        if self._circuit_breaker.get(name, False):
+            return FlextResult[object].fail(
+                f"Circuit breaker open for processor '{name}'"
+            )
+
+        # Check rate limit
+        now = time.time()
+        rate_key = f"{name}_rate"
+        if rate_key not in self._rate_limiter:
+            self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
+
+        rate_data = self._rate_limiter[rate_key]
+        if now - rate_data["window_start"] > self._rate_limit_window:
+            rate_data["count"] = 0
+            rate_data["window_start"] = now
+
+        if rate_data["count"] >= self._rate_limit:
+            return FlextResult[object].fail(
+                f"Rate limit exceeded for processor '{name}'"
+            )
+
+        rate_data["count"] += 1
+
+        # Check cache
+        cache_key = f"{name}:{hash(str(data))}"
+        if cache_key in self._cache:
+            cached_value, cached_time = self._cache[cache_key]
+            if time.time() - cached_time < self._cache_ttl:
+                return FlextResult[object].ok(cached_value)
+
+        # Apply middleware
+        processed_data = data
+        for middleware in self._middleware:
+            if callable(middleware):
+                try:
+                    processed_data = middleware(processed_data)
+                except Exception as e:
+                    return FlextResult[object].fail(f"Middleware error: {e}")
+
+        # Execute processor
+        try:
+            if callable(processor):
+                result = processor(processed_data)
+                if isinstance(result, FlextResult):
+                    if result.is_success:
+                        self._cache[cache_key] = (result.value, time.time())
+                        self._metrics["successful_processes"] = (
+                            self._metrics.get("successful_processes", 0) + 1
+                        )
+                        self._audit_log.append({
+                            "timestamp": time.time(),
+                            "processor": name,
+                            "status": "success",
+                            "data_hash": hash(str(data)),
+                        })
+                    else:
+                        self._metrics["failed_processes"] = (
+                            self._metrics.get("failed_processes", 0) + 1
+                        )
+                        self._audit_log.append({
+                            "timestamp": time.time(),
+                            "processor": name,
+                            "status": "failure",
+                            "error": result.error,
+                            "data_hash": hash(str(data)),
+                        })
+                    return result
+
+                # Wrap non-FlextResult in FlextResult
+                result_wrapped = FlextResult[object].ok(result)
+                self._cache[cache_key] = (result, time.time())
+                self._metrics["successful_processes"] = (
+                    self._metrics.get("successful_processes", 0) + 1
+                )
+                return result_wrapped
+
+            return FlextResult[object].fail(f"Processor '{name}' is not callable")
+        except Exception as e:
+            self._metrics["failed_processes"] = (
+                self._metrics.get("failed_processes", 0) + 1
+            )
+            self._audit_log.append({
+                "timestamp": time.time(),
+                "processor": name,
+                "status": "error",
+                "error": str(e),
+                "data_hash": hash(str(data)),
+            })
+            return FlextResult[object].fail(f"Processor execution error: {e}")
+
+    def add_middleware(self, middleware: object) -> None:
+        """Add middleware to the processing pipeline.
+
+        Args:
+            middleware: Middleware function to add
+
+        """
+        if callable(middleware):
+            self._middleware.append(middleware)
+        else:
+            error_msg = "Middleware must be callable"
+            raise TypeError(error_msg)
+
+    def get_metrics(self) -> dict[str, int]:
+        """Get processing metrics.
+
+        Returns:
+            dict[str, int]: Current metrics
+
+        """
+        return self._metrics.copy()
+
+    def get_audit_log(self) -> list[dict[str, object]]:
+        """Get audit log of processing operations.
+
+        Returns:
+            list[dict[str, object]]: Audit log entries
+
+        """
+        return self._audit_log.copy()
+
+    def get_performance_metrics(self) -> dict[str, float]:
+        """Get performance metrics.
+
+        Returns:
+            dict[str, float]: Performance metrics
+
+        """
+        return self._performance_metrics.copy()
+
+    def is_circuit_breaker_open(self, name: str) -> bool:
+        """Check if circuit breaker is open for a processor.
+
+        Args:
+            name: Processor name
+
+        Returns:
+            bool: True if circuit breaker is open
+
+        """
+        return self._circuit_breaker.get(name, False)
+
+    def process_batch(
+        self, name: str, data_list: list[object]
+    ) -> FlextResult[list[object]]:
+        """Process a batch of data items.
+
+        Args:
+            name: Processor name
+            data_list: List of data items to process
+
+        Returns:
+            FlextResult[list[object]]: List of processed results
+
+        """
+        results = []
+        for data in data_list:
+            result = self.process(name, data)
+            if result.is_failure:
+                return FlextResult[list[object]].fail(
+                    f"Batch processing failed: {result.error}"
+                )
+            results.append(result.value)
+
+        return FlextResult[list[object]].ok(results)
+
+    def process_parallel(
+        self, name: str, data_list: list[object]
+    ) -> FlextResult[list[object]]:
+        """Process data items in parallel.
+
+        Args:
+            name: Processor name
+            data_list: List of data items to process
+
+        Returns:
+            FlextResult[list[object]]: List of processed results
+
+        """
+        # For now, just process sequentially - can be enhanced with actual parallel processing
+        return self.process_batch(name, data_list)
+
+    def get_processors(self, name: str) -> list[object]:
+        """Get registered processors by name.
+
+        Args:
+            name: Processor name
+
+        Returns:
+            list[object]: List of processors with the given name
+
+        """
+        if name in self._registry:
+            return [self._registry[name]]
+        return []
+
+    def clear_processors(self) -> None:
+        """Clear all registered processors."""
+        self._registry.clear()
+        self._metrics["clear_operations"] = self._metrics.get("clear_operations", 0) + 1
+
+    def get_statistics(self) -> dict[str, object]:
+        """Get comprehensive statistics.
+
+        Returns:
+            dict[str, object]: Statistics dictionary
+
+        """
+        return {
+            "total_processors": len(self._registry),
+            "total_middleware": len(self._middleware),
+            "metrics": self._metrics.copy(),
+            "cache_size": len(self._cache),
+            "circuit_breakers_open": sum(
+                1 for is_open in self._circuit_breaker.values() if is_open
+            ),
+        }
+
+    def cleanup(self) -> None:
+        """Clean up resources and reset state."""
+        # Clear expired cache entries
+        now = time.time()
+        expired_keys = [
+            key
+            for key, (_, cached_time) in self._cache.items()
+            if now - cached_time > self._cache_ttl
+        ]
+        for key in expired_keys:
+            del self._cache[key]
+
+        # Reset circuit breakers
+        self._circuit_breaker.clear()
+
+        # Reset rate limiters
+        self._rate_limiter.clear()
+
+    def validate(self) -> FlextResult[None]:
+        """Validate processor configuration and state.
+
+        Returns:
+            FlextResult[None]: Success if valid, failure otherwise
+
+        """
+        if not isinstance(self._config, dict):
+            return FlextResult[None].fail("Configuration must be a dictionary")
+
+        if self._cache_ttl < 0:
+            return FlextResult[None].fail("Cache TTL must be non-negative")
+
+        if self._circuit_breaker_threshold < 0:
+            return FlextResult[None].fail(
+                "Circuit breaker threshold must be non-negative"
+            )
+
+        if self._rate_limit < 0:
+            return FlextResult[None].fail("Rate limit must be non-negative")
+
+        return FlextResult[None].ok(None)
+
+    def export_config(self) -> dict[str, object]:
+        """Export current configuration.
+
+        Returns:
+            dict[str, object]: Configuration dictionary
+
+        """
+        return {
+            "cache_ttl": self._cache_ttl,
+            "circuit_breaker_threshold": self._circuit_breaker_threshold,
+            "rate_limit": self._rate_limit,
+            "rate_limit_window": self._rate_limit_window,
+            "processor_count": len(self._registry),
+            "middleware_count": len(self._middleware),
+        }
+
+    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
+        """Import configuration.
+
+        Args:
+            config: Configuration dictionary
+
+        Returns:
+            FlextResult[None]: Success if import succeeded, failure otherwise
+
+        """
+        try:
+            if "cache_ttl" in config:
+                cache_ttl = config["cache_ttl"]
+                if isinstance(cache_ttl, (int, float, str)):
+                    self._cache_ttl = float(cache_ttl)
+
+            if "circuit_breaker_threshold" in config:
+                circuit_threshold = config["circuit_breaker_threshold"]
+                if isinstance(circuit_threshold, (int, float, str)):
+                    self._circuit_breaker_threshold = int(circuit_threshold)
+
+            if "rate_limit" in config:
+                rate_limit = config["rate_limit"]
+                if isinstance(rate_limit, (int, float, str)):
+                    self._rate_limit = int(rate_limit)
+
+            if "rate_limit_window" in config:
+                rate_window = config["rate_limit_window"]
+                if isinstance(rate_window, (int, float, str)):
+                    self._rate_limit_window = int(rate_window)
+
+            return FlextResult[None].ok(None)
+        except (ValueError, TypeError) as e:
+            return FlextResult[None].fail(f"Configuration import error: {e}")
 
     class Config:
         """Configuration settings for FlextProcessors using FlextConfig defaults."""
@@ -147,7 +535,8 @@ class FlextProcessors:
             """
             if name not in self._handlers:
                 return FlextResult[object].fail(
-                    f"Handler '{name}' not found", error_code="NOT_FOUND_ERROR"
+                    f"Handler '{name}' not found",
+                    error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
                 )
             return FlextResult[object].ok(self._handlers[name])
 
@@ -232,7 +621,7 @@ class FlextProcessors:
             """Get a handler optionally, returning None if not found.
 
             Returns:
-                object | None: Handler instance or None when not registered.
+                Union[object, None]: Handler instance or None when not registered.
 
             """
             return self._handlers.get(name)
@@ -264,21 +653,22 @@ class FlextProcessors:
             """Execute handler with fallback handlers using HandlerExecutionConfig model.
 
             Returns:
-                FlextResult[object]: The first successful handler result or the
-                final failure if all fallbacks fail.
+                FlextResult[object]: The result of handler execution, trying fallbacks if primary fails.
 
             """
-            return FlextUtilities.Reliability.with_fallback(
-                lambda: self.execute(config.handler_name, config.input_data),
-                *[
-                    (
-                        lambda fallback=fallback: self.execute(
-                            fallback, config.input_data
-                        )
-                    )
-                    for fallback in config.fallback_handlers
-                ],
-            )
+            # Try primary handler first
+            primary_result = self.execute(config.handler_name, config.input_data)
+            if primary_result.is_success:
+                return primary_result
+
+            # Try fallback handlers if primary failed
+            for fallback_name in config.fallback_handlers:
+                fallback_result = self.execute(fallback_name, config.input_data)
+                if fallback_result.is_success:
+                    return fallback_result
+
+            # All handlers failed, return the original primary failure
+            return primary_result
 
         def execute_batch(
             self, config: FlextModels.BatchProcessingConfig | object
@@ -460,12 +850,20 @@ class FlextProcessors:
                 the final failure.
 
             """
+
+            # Define fallback operations with proper typing
+            def create_fallback_operation(
+                p: FlextProcessors.Pipeline,
+            ) -> Callable[[], FlextResult[object]]:
+                return lambda: p.process(request.data)
+
+            fallback_operations = [
+                create_fallback_operation(pipeline) for pipeline in fallback_pipelines
+            ]
+
             return FlextUtilities.Reliability.with_fallback(
                 lambda: self.process(request.data),
-                *[
-                    (lambda pipeline=pipeline: pipeline.process(request.data))
-                    for pipeline in fallback_pipelines
-                ],
+                *fallback_operations,
             )
 
         def process_batch(
@@ -667,7 +1065,7 @@ class FlextProcessors:
                 """Get handler by name.
 
                 Returns:
-                    object | None: The handler instance or None if not found.
+                    Union[object, None]: The handler instance or None if not found.
 
                 """
                 return self._handlers.get(name)
@@ -676,7 +1074,7 @@ class FlextProcessors:
                 """Get handler optionally, returning None if not found.
 
                 Returns:
-                    object | None: The handler instance or None when not present.
+                    Union[object, None]: The handler instance or None when not present.
 
                 """
                 return self._handlers.get(name)
@@ -777,18 +1175,7 @@ class FlextProcessors:
                 return self.handle(message)
 
             def validate_command(self, command: object) -> FlextResult[None]:
-                """Validate a command message.
-
-                🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-                ❌ CRITICAL ISSUE: Command validation should be centralized in FlextModels.Validation
-                ❌ INLINE VALIDATION: This contains inline validation logic that should be centralized
-
-                🔧 REQUIRED ACTION:
-                - Move this validation logic to FlextModels.Validation.validate_command()
-                - Use centralized validation patterns for command validation
-                - Remove inline validation from processing classes
-
-                📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_command()
+                """Validate a command message using centralized validation.
 
                 Args:
                     command: The command to validate
@@ -797,23 +1184,10 @@ class FlextProcessors:
                     FlextResult[None]: Success if valid, failure with error details
 
                 """
-                if command is None:
-                    return FlextResult[None].fail("Command cannot be None")
-                return FlextResult[None].ok(None)
+                return FlextModels.Validation.validate_command(command)
 
             def validate_query(self, query: object) -> FlextResult[None]:
-                """Validate a query message.
-
-                🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-                ❌ CRITICAL ISSUE: Query validation should be centralized in FlextModels.Validation
-                ❌ INLINE VALIDATION: This contains inline validation logic that should be centralized
-
-                🔧 REQUIRED ACTION:
-                - Move this validation logic to FlextModels.Validation.validate_query()
-                - Use centralized validation patterns for query validation
-                - Remove inline validation from processing classes
-
-                📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_query()
+                """Validate a query message using centralized validation.
 
                 Args:
                     query: The query to validate
@@ -822,9 +1196,7 @@ class FlextProcessors:
                     FlextResult[None]: Success if valid, failure with error details
 
                 """
-                if query is None:
-                    return FlextResult[None].fail("Query cannot be None")
-                return FlextResult[None].ok(None)
+                return FlextModels.Validation.validate_query(query)
 
             @property
             def handler_name(self) -> str:

@@ -83,7 +83,7 @@ def sample_data() -> FlextTypes.Core.Dict:
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, str | int | bool | FlextTypes.Core.StringList | None]:
+def test_user_data() -> dict[str, str | int, bool] | FlextTypes.Core.StringList | None:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns

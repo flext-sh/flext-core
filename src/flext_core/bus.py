@@ -26,103 +26,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class ModelDumpable(Protocol):
-    """Protocol for objects that have a model_dump method."""
-
-    def model_dump(self: object) -> FlextTypes.Core.Dict: ...
-
-
-def _cache_sort_key(value: object) -> str:
-    """Return a deterministic string for ordering normalized cache components."""
-    return json.dumps(value, sort_keys=True, default=str)
-
-
-def _normalize_cache_component(value: object) -> object:
-    """Normalize arbitrary objects into cache-friendly deterministic structures."""
-    if value is None or isinstance(value, (bool, int, float, str)):
-        return value
-
-    if isinstance(value, bytes):
-        return ("bytes", value.hex())
-
-    if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
-        # Cast to ModelDumpable protocol to ensure type checker knows it has model_dump
-        model_obj = cast("ModelDumpable", value)
-        try:
-            dumped: FlextTypes.Core.Dict = model_obj.model_dump()
-        except TypeError:
-            dumped = {}
-        # dumped is already a Dict from model_dump(), so it's always a Mapping
-        return ("pydantic", _normalize_cache_component(dumped))
-
-    if dataclasses.is_dataclass(value):
-        # Ensure we have a dataclass instance, not a class
-        if isinstance(value, type):
-            return ("dataclass_class", str(value))
-        # Use the value directly since it's already a dataclass instance
-        return (
-            "dataclass",
-            _normalize_cache_component(dataclasses.asdict(value)),
-        )
-
-    if isinstance(value, Mapping):
-        # Normalize keys and values, and sort by a deterministic key
-        # Create a list of tuples first to avoid generator type issues
-        mapping_items: list[tuple[object, object]] = []
-        # Cast the items to avoid unknown type issues
-        mapping_value = cast("Mapping[object, object]", value)
-        for key, val in mapping_value.items():
-            normalized_key = _normalize_cache_component(key)
-            normalized_val = _normalize_cache_component(val)
-            mapping_items.append((normalized_key, normalized_val))
-
-        # Sort by the first element (normalized key)
-        mapping_items.sort(key=lambda item: _cache_sort_key(item[0]))
-
-        normalized_items = tuple(mapping_items)
-        return ("mapping", normalized_items)
-
-    if isinstance(value, (list, tuple)):
-        # Cast the sequence to avoid unknown type issues
-        sequence_value = cast("Sequence[object]", value)
-        # Create a list first to avoid generator type issues
-        sequence_items = [_normalize_cache_component(item) for item in sequence_value]
-        return ("sequence", tuple(sequence_items))
-
-    if isinstance(value, set):
-        # Cast the set to avoid unknown type issues
-        set_value = cast("set[object]", value)
-        # Create a list first to avoid generator type issues
-        set_items = [_normalize_cache_component(item) for item in set_value]
-
-        # Sort by cache sort key
-        set_items.sort(key=_cache_sort_key)
-
-        normalized_set = tuple(set_items)
-        return ("set", normalized_set)
-
-    try:
-        # Cast to proper type for type checker
-        value_vars_dict: dict[str, object] = cast("dict[str, object]", vars(value))
-    except TypeError:
-        return ("repr", repr(value))
-
-    normalized_vars = tuple(
-        (key, _normalize_cache_component(val))
-        for key, val in sorted(value_vars_dict.items(), key=operator.itemgetter(0))
-    )
-    return ("vars", normalized_vars)
-
-
-# Note: _make_cache_key is reserved for future cache key implementation
-# def _make_cache_key(command: object) -> str:
-#     """Create a deterministic cache key for the provided command/query."""
-#     normalized_command = _normalize_cache_component(command)
-#     serialized_command = json.dumps(normalized_command, sort_keys=True)
-#     command_type = f"{command.__class__.__module__}.{command.__class__.__qualname__}"
-#     return f"{command_type}:{serialized_command}"
-
-
 class FlextBus(FlextMixins):
     """Runtime bus that enforces the CQRS contract shared across FLEXT 1.x.
 
@@ -131,7 +34,118 @@ class FlextBus(FlextMixins):
     surface ``FlextResult`` outcomes, and every dispatch emits context-aware
     telemetry via ``FlextLogger``. Downstream packages reach it through
     ``FlextDispatcher`` to guarantee a uniform command/query experience.
+
+    This is the single unified class containing all CQRS bus functionality
+    with nested protocols and utility methods following the single class per
+    module pattern established in the 1.0.0 refactoring.
     """
+
+    # Nested Protocol for type safety
+    class ModelDumpable(Protocol):
+        """Protocol for objects that have a model_dump method."""
+
+        def model_dump(self: object) -> FlextTypes.Core.Dict:
+            """Convert model to dictionary representation."""
+            ...
+
+    class CacheUtilities:
+        """Cache-related utility methods consolidated into nested class."""
+
+        @staticmethod
+        def sort_key(value: object) -> str:
+            """Return a deterministic string for ordering normalized cache components."""
+            return json.dumps(value, sort_keys=True, default=str)
+
+        @staticmethod
+        def normalize_component(value: object) -> object:
+            """Normalize arbitrary objects into cache-friendly deterministic structures."""
+            if value is None or isinstance(value, (bool, int, float, str)):
+                return value
+
+            if isinstance(value, bytes):
+                return ("bytes", value.hex())
+
+            if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
+                # Cast to ModelDumpable protocol to ensure type checker knows it has model_dump
+                model_obj = cast("FlextBus.ModelDumpable", value)
+                try:
+                    dumped: FlextTypes.Core.Dict = model_obj.model_dump()
+                except TypeError:
+                    dumped = {}
+                # dumped is already a Dict from model_dump(), so it's always a Mapping
+                return ("pydantic", FlextBus.CacheUtilities.normalize_component(dumped))
+
+            if dataclasses.is_dataclass(value):
+                # Ensure we have a dataclass instance, not a class
+                if isinstance(value, type):
+                    return ("dataclass_class", str(value))
+                # Use the value directly since it's already a dataclass instance
+                return (
+                    "dataclass",
+                    FlextBus.CacheUtilities.normalize_component(
+                        dataclasses.asdict(value)
+                    ),
+                )
+
+            if isinstance(value, Mapping):
+                # Normalize keys and values, and sort by a deterministic key
+                # Create a list of tuples first to avoid generator type issues
+                mapping_items: list[tuple[object, object]] = []
+                # Cast the items to avoid unknown type issues
+                mapping_value = cast("Mapping[object, object]", value)
+                for key, val in mapping_value.items():
+                    normalized_key = FlextBus.CacheUtilities.normalize_component(key)
+                    normalized_val = FlextBus.CacheUtilities.normalize_component(val)
+                    mapping_items.append((normalized_key, normalized_val))
+
+                # Sort by the first element (normalized key)
+                mapping_items.sort(
+                    key=lambda item: FlextBus.CacheUtilities.sort_key(item[0])
+                )
+
+                normalized_items = tuple(mapping_items)
+                return ("mapping", normalized_items)
+
+            if isinstance(value, (list, tuple)):
+                # Cast the sequence to avoid unknown type issues
+                sequence_value = cast("Sequence[object]", value)
+                # Create a list first to avoid generator type issues
+                sequence_items = [
+                    FlextBus.CacheUtilities.normalize_component(item)
+                    for item in sequence_value
+                ]
+                return ("sequence", tuple(sequence_items))
+
+            if isinstance(value, set):
+                # Cast the set to avoid unknown type issues
+                set_value = cast("set[object]", value)
+                # Create a list first to avoid generator type issues
+                set_items = [
+                    FlextBus.CacheUtilities.normalize_component(item)
+                    for item in set_value
+                ]
+
+                # Sort by cache sort key
+                set_items.sort(key=FlextBus.CacheUtilities.sort_key)
+
+                normalized_set = tuple(set_items)
+                return ("set", normalized_set)
+
+            try:
+                # Cast to proper type for type checker
+                value_vars_dict: dict[str, object] = cast(
+                    "dict[str, object]", vars(value)
+                )
+            except TypeError:
+                return ("repr", repr(value))
+
+            normalized_vars = tuple(
+                (key, FlextBus.CacheUtilities.normalize_component(val))
+                for key, val in sorted(
+                    value_vars_dict.items(), key=operator.itemgetter(0)
+                )
+            )
+            return ("vars", normalized_vars)
 
     def __init__(
         self,
@@ -163,7 +177,7 @@ class FlextBus(FlextMixins):
                 getattr(bus_config, "model_dump")
             ):
                 # Cast to ModelDumpable protocol to ensure type checker knows it has model_dump
-                model_obj = cast("ModelDumpable", bus_config)
+                model_obj = cast("FlextBus.ModelDumpable", bus_config)
                 config_dict = model_obj.model_dump()
             elif isinstance(bus_config, dict):
                 config_dict = bus_config
@@ -201,7 +215,7 @@ class FlextBus(FlextMixins):
 
     @property
     def config(self) -> FlextModels.CqrsConfig.Bus:
-        """Expose the validated CQRS bus configuration model."""
+        """Access the bus configuration model."""
         return self._config_model
 
     @classmethod
@@ -404,7 +418,7 @@ class FlextBus(FlextMixins):
             command: The command/query object to find handler for
 
         Returns:
-            object | None: The handler instance or None if not found
+            Union[object, None]: The handler instance or None if not found
 
         """
         command_type = type(command)
@@ -938,6 +952,10 @@ class FlextBus(FlextMixins):
         return {str(k): v for k, v in self._handlers.items()}
 
 
+# Type aliases for backward compatibility (FLEXT 1.0.0 compatibility guarantee)
+ModelDumpable = FlextBus.ModelDumpable
+
 __all__: FlextTypes.Core.StringList = [
     "FlextBus",
+    "ModelDumpable",
 ]

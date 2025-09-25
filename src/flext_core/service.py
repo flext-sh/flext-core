@@ -481,12 +481,22 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with result, failure, or skipped
 
         """
-        # Check condition by looking at enable flags
-        if not getattr(condition, "enable_execution", True):
-            return FlextResult[TDomainResult].fail("Execution condition not met")
-
-        # Execute if condition is met
-        return self.execute()
+        # Evaluate the condition
+        if condition.condition(self):
+            # Execute true action if condition is met
+            result = condition.true_action(self)
+            if isinstance(result, FlextResult):
+                return result
+            # Type assertion since we expect TDomainResult from the action
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+        # Execute false action if condition is not met
+        if condition.false_action:
+            result = condition.false_action(self)
+            if isinstance(result, FlextResult):
+                return result
+            # Type assertion since we expect TDomainResult from the action
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+        return FlextResult[TDomainResult].fail("Condition not met")
 
     def execute_batch_with_request(
         self, request: FlextModels.DomainServiceBatchRequest
