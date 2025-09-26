@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 if TYPE_CHECKING:
     from flext_core.models import FlextModels
@@ -61,6 +61,7 @@ class FlextRegistry:
             """Number of failed registrations."""
             return len(self.errors)
 
+    @override
     def __init__(self, dispatcher: FlextDispatcher) -> None:
         """Initialize the registry with a FlextDispatcher instance."""
         # No super() call needed as this class doesn't inherit from anything

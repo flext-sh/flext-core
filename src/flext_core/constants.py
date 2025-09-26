@@ -57,6 +57,10 @@ class FlextConstants:
     - Stable API for 1.0.0 release
     """
 
+    # Project metadata (REQUIRED - Foundation Library)
+    CONSTANTS_VERSION = "1.0.0"
+    PROJECT_PREFIX = "FLEXT_CORE"
+    PROJECT_NAME = "FLEXT Core Foundation"
     class Core:
         """Core identifiers hardened for the 1.0.0 release cycle."""
 
@@ -375,11 +379,9 @@ class FlextConstants:
         ENV_FILE_DEFAULT: Final[str] = ".env"
 
         # Validation patterns
-        PATTERN_SECURITY_LEVEL: Final[str] = (
-            "^(Union[Union[low, standard], high]|critical)$"
-        )
+        PATTERN_SECURITY_LEVEL: Final[str] = "^(low|standard|high|critical)$"
         PATTERN_DATA_CLASSIFICATION: Final[str] = (
-            "^(Union[Union[public, internal], confidential]|restricted)$"
+            "^(public|internal|confidential|restricted)$"
         )
         PATTERN_EMAIL: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[1-9]\d{1,14}$"
@@ -416,9 +418,11 @@ class FlextConstants:
         DEFAULT_LOG_LEVEL: Final[str] = "INFO"  # Usage count: 0
 
     class Performance:
-        """Performance tuning knobs surfaced in roadmap metrics."""
+        """Performance thresholds and operational limits for FLEXT services."""
 
-        DEFAULT_BATCH_SIZE: Final[int] = 1000  # Usage count: 2
+        # Connection and timeout settings
+        CONNECTION_TIMEOUT: Final[int] = 30  # seconds
+        SOCKET_TIMEOUT: Final[int] = 30  # seconds
         SUBPROCESS_TIMEOUT: Final[int] = 300  # 5 minutes for build/test operations
         SUBPROCESS_TIMEOUT_SHORT: Final[int] = 180  # 3 minutes for quick operations
 
@@ -439,17 +443,30 @@ class FlextConstants:
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
         DEFAULT_FALLBACK_DELAY: Final[float] = 0.1
 
-        # Pagination and batch processing
+        # Batch processing constants - consolidated from duplicates
+        class BatchProcessing:
+            """Batch processing configuration constants - consolidated from duplicates."""
+
+            # Core batch sizes (consolidated from previous duplicates)
+            DEFAULT_SIZE: Final[int] = 1000  # Main batch size (was DEFAULT_BATCH_SIZE)
+            SMALL_SIZE: Final[int] = (
+                100  # Small batch size (was DEFAULT_BATCH_SIZE_SMALL)
+            )
+            STREAM_SIZE: Final[int] = (
+                100  # Stream batch size (was DEFAULT_STREAM_BATCH_SIZE)
+            )
+
+            # Validation limits
+            MAX_VALIDATION_SIZE: Final[int] = (
+                1000  # Maximum batch size for validation (was MAX_BATCH_SIZE_VALIDATION)
+            )
+            MAX_ITEMS: Final[int] = 10000  # Maximum batch items (existing)
+
+        # Pagination and processing (duplicated batch constants removed)
         DEFAULT_PAGE_SIZE: Final[int] = 10
-        DEFAULT_BATCH_SIZE_SMALL: Final[int] = 100
         DEFAULT_PAGE_NUMBER: Final[int] = 1
-        MAX_BATCH_ITEMS: Final[int] = 10000
-        DEFAULT_STREAM_BATCH_SIZE: Final[int] = 100
         DEFAULT_TIME_RANGE_SECONDS: Final[int] = 3600  # 1 hour
         DEFAULT_TTL_SECONDS: Final[int] = 3600  # 1 hour default TTL
-        MAX_BATCH_SIZE_VALIDATION: Final[int] = (
-            1000  # Maximum batch size for validation
-        )
 
         # Field validation constraints
         DEFAULT_VERSION: Final[int] = 1  # Default version for entities
@@ -499,7 +516,9 @@ class FlextConstants:
         CLI_PERFORMANCE_CRITICAL_MS: Final[float] = 10000.0  # 10 seconds
         AUTH_PERFORMANCE_WARNING_MS: Final[float] = 1000.0  # 1 second
         AUTH_PERFORMANCE_CRITICAL_MS: Final[float] = 5000.0  # 5 seconds
-        HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 100 * 1024 * 1024  # 100MB
+        HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = (
+            100 * 1024 * 1024
+        )  # 100MB  # 100MB  # 100MB
 
     class Reliability:
         """Reliability thresholds backing retry guidance."""
@@ -530,6 +549,8 @@ class FlextConstants:
 
         # Password and hash validation
         MIN_BCRYPT_HASH_LENGTH: Final[int] = 32  # Minimum bcrypt hash length
+        MIN_PASSWORD_LENGTH: Final[int] = 8  # Minimum password length
+        MAX_PASSWORD_LENGTH: Final[int] = 128  # Maximum password length
         MAX_DAYS_FOR_MONTH_ADDITION: Final[int] = 28  # Safe days for month calculations
 
         # JWT token expiry limits - Additional short-term option
@@ -625,13 +646,20 @@ class FlextConstants:
         CRITICAL: Final[str] = "CRITICAL"
 
         # Default log level for different environments
-        DEFAULT_LEVEL: Final[str] = INFO
-        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = DEBUG
-        DEFAULT_LEVEL_PRODUCTION: Final[str] = WARNING
-        DEFAULT_LEVEL_TESTING: Final[str] = INFO
+        DEFAULT_LEVEL: Final[str] = "INFO"
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
+        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
 
         # Valid log levels set
-        VALID_LEVELS: Final[set[str]] = {TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL}
+        VALID_LEVELS: Final[set[str]] = {
+            "TRACE",
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
         # Log Formatting
         DEFAULT_FORMAT: Final[str] = (
@@ -828,7 +856,9 @@ class FlextConstants:
             # Error messages
             ERROR_OCCURRED: Final[str] = "Error occurred: {error}"
             CRITICAL_ERROR: Final[str] = "Critical error: {error}"
-            VALIDATION_ERROR: Final[str] = "Validation error: {error}"  # milliseconds
+            VALIDATION_ERROR_MESSAGE: Final[str] = (
+                "Validation error: {error}"  # Template referencing Errors.VALIDATION_ERROR
+            )
 
     class Dispatcher:
         """Constants for FlextDispatcher operations.

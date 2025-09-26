@@ -126,7 +126,7 @@ class TestFlextConstants:
 
     def test_performance_constants(self) -> None:
         """Test performance constants access."""
-        assert FlextConstants.Performance.DEFAULT_BATCH_SIZE == 1000
+        assert FlextConstants.Performance.DEFAULT_PAGE_SIZE == 10
         assert FlextConstants.Performance.SUBPROCESS_TIMEOUT == 300
         assert FlextConstants.Performance.SUBPROCESS_TIMEOUT_SHORT == 180
 

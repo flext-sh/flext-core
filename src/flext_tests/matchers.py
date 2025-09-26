@@ -25,7 +25,7 @@ import uuid
 import warnings
 from collections.abc import Awaitable, Callable, Container, Iterable, Sequence, Sized
 from itertools import starmap
-from typing import Protocol, Self, cast
+from typing import Protocol, Self, cast, override
 
 from flext_core.typings import FlextTypes
 
@@ -624,6 +624,7 @@ class FlextTestsMatchers:
     class SuccessMatcher:
         """Specialized matcher for success results."""
 
+        @override
         def __init__(self, result: object) -> None:
             """Initialize success matcher with result object."""
             self.result = result
@@ -646,6 +647,7 @@ class FlextTestsMatchers:
     class FailureMatcher:
         """Specialized matcher for failure results."""
 
+        @override
         def __init__(self, result: object) -> None:
             """Initialize failure matcher with result object."""
             self.result = result
@@ -792,6 +794,7 @@ class FlextTestsMatchers:
     class BenchmarkFixture:
         """Benchmark test fixture for performance testing."""
 
+        @override
         def __init__(self, name: str, iterations: int = 1000) -> None:
             """Initialize benchmark fixture with name and iteration count."""
             self.name = name
@@ -886,7 +889,9 @@ class FlextTestsMatchers:
                 msg = f"Type guard function {expected_type.__name__} failed for value {value}"
                 raise AssertionError(msg)
         # It's a type
-        elif not isinstance(value, expected_type):
+        elif not isinstance(expected_type, type) or not isinstance(
+            value, expected_type
+        ):
             type_name = getattr(expected_type, "__name__", str(expected_type))
             msg = f"Expected {type_name}, got {type(value).__name__}"
             raise AssertionError(msg)
@@ -1163,7 +1168,7 @@ class FlextTestsMatchers:
 
         """
         partial_func = functools.partial(func, *args)
-        return await asyncio.get_event_loop().run_in_executor(None, partial_func)
+        return await asyncio.get_event_loop().run_in_executor(None, partial_func)  # type: ignore[arg-type]
 
     @staticmethod
     async def test_race_condition(
@@ -1181,8 +1186,8 @@ class FlextTestsMatchers:
 
         """
         return await asyncio.gather(
-            asyncio.get_event_loop().run_in_executor(None, func1),
-            asyncio.get_event_loop().run_in_executor(None, func2),
+            asyncio.get_event_loop().run_in_executor(None, func1),  # type: ignore[arg-type]
+            asyncio.get_event_loop().run_in_executor(None, func2),  # type: ignore[arg-type]
         )
 
     @staticmethod
@@ -1203,11 +1208,13 @@ class FlextTestsMatchers:
         start_time = time.time()
 
         tasks = [
-            asyncio.get_event_loop().run_in_executor(None, func)
+            asyncio.get_event_loop().run_in_executor(None, func)  # type: ignore[arg-type]
             for _ in range(concurrency_level)
         ]
 
-        results: list[object] = list(await asyncio.gather(*tasks, return_exceptions=True))
+        results: list[object] = list(
+            await asyncio.gather(*tasks, return_exceptions=True)
+        )
         end_time = time.time()
 
         return {
@@ -1235,6 +1242,7 @@ class FlextTestsMatchers:
         """
 
         class TimeoutContext:
+            @override
             def __init__(self, timeout_seconds: float) -> None:
                 self.timeout_seconds = timeout_seconds
 
@@ -1271,6 +1279,7 @@ class FlextTestsMatchers:
         """
 
         class AsyncMock:
+            @override
             def __init__(
                 self,
                 return_value: object = None,
@@ -1335,6 +1344,7 @@ class FlextTestsMatchers:
         class FlakyAsyncMock:
             """Flaky async mock for test compatibility."""
 
+            @override
             def __init__(
                 self,
                 success_return: object = None,
@@ -1385,6 +1395,7 @@ class FlextTestsMatchers:
         """
 
         class ManagedResourceContext:
+            @override
             def __init__(self, factory: object, cleanup: object = None) -> None:
                 self.factory = factory
                 self.cleanup = cleanup
@@ -1435,6 +1446,7 @@ class FlextTestsMatchers:
         """
 
         class TestContext:
+            @override
             def __init__(
                 self,
                 setup_func: object = None,

@@ -789,7 +789,7 @@ class TestComprehensiveIntegration:
         results = FlextTestsPerformance.BenchmarkUtils.benchmark_with_warmup(
             benchmark,
             benchmark_operation,
-            warmup_rounds=3,
+            3,  # warmup_rounds
         )
 
         # Verify results

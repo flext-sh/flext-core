@@ -18,87 +18,96 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal, ParamSpec, TypeVar
+from typing import (
+    Literal,
+    ParamSpec,
+    TypeVar,
+)
 
 # =============================================================================
 # CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
 # =============================================================================
 
 # Core generic type variables
-T = TypeVar("T")
-U = TypeVar("U")
-V = TypeVar("V")
-W = TypeVar("W")
-R = TypeVar("R")
-E = TypeVar("E")
-F = TypeVar("F")
-K = TypeVar("K")
 P = ParamSpec("P")
 
-# Covariant type variables (read-only)
-T_co = TypeVar("T_co", covariant=True)
-TResult_co = TypeVar("TResult_co", covariant=True)
-TAggregate_co = TypeVar("TAggregate_co", covariant=True)
-TEntity_co = TypeVar("TEntity_co", covariant=True)
-TValueObject_co = TypeVar("TValueObject_co", covariant=True)
-TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
-TState_co = TypeVar("TState_co", covariant=True)
-TValue_co = TypeVar("TValue_co", covariant=True)
-TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
-ResultT = TypeVar("ResultT")
-TConfigValue_co = TypeVar("TConfigValue_co", covariant=True)
-
-# Contravariant type variables (write-only)
-T_contra = TypeVar("T_contra", contravariant=True)
-TInput_contra = TypeVar("TInput_contra", contravariant=True)
-TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
-TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
-TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
-TKey_contra = TypeVar("TKey_contra", contravariant=True)
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
-TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
-TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
-
-# Domain-specific type variables
-TCommand = TypeVar("TCommand")
-TQuery = TypeVar("TQuery")
-TEvent = TypeVar("TEvent")
-TState = TypeVar("TState")
-TKey = TypeVar("TKey")
-TValue = TypeVar("TValue")
-TEntity = TypeVar("TEntity")
-TAggregate = TypeVar("TAggregate")
-TDomainEvent = TypeVar("TDomainEvent")
-TMessage = TypeVar("TMessage")
-TResult = TypeVar("TResult")
-MessageT = TypeVar("MessageT")
-
-# Service and infrastructure type variables
-TService = TypeVar("TService")
-TCacheKey = TypeVar("TCacheKey")
-TCacheValue = TypeVar("TCacheValue")
-TConfigKey = TypeVar("TConfigKey")
-TConfigValue = TypeVar("TConfigValue")
-TResource = TypeVar("TResource")
-TTimeout = TypeVar("TTimeout")
-
-# Additional generic type variables
+# Core TypeVars
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
-TConcurrent = TypeVar("TConcurrent")
+
+# Covariant type variables (read-only)
+T1_co = TypeVar("T1_co", covariant=True)
+T2_co = TypeVar("T2_co", covariant=True)
+T3_co = TypeVar("T3_co", covariant=True)
+
+# Contravariant type variables (write-only)
+TItem = TypeVar("TItem")
+TItem_contra = TypeVar("TItem_contra", contravariant=True)
+TResult = TypeVar("TResult")
+TResult_contra = TypeVar("TResult_contra", contravariant=True)
+TUtil = TypeVar("TUtil")
+TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)
+MessageT = TypeVar("MessageT")
+MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
+TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
+TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
+TInput_contra = TypeVar("TInput_contra", contravariant=True)
+TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
+TState_co = TypeVar("TState_co", covariant=True)
+TState = TypeVar("TState")
+E = TypeVar("E")
+F = TypeVar("F")
+K = TypeVar("K")
+R = TypeVar("R")
+# P already defined as ParamSpec above
+
+# Domain-specific type variables
+Message = TypeVar("Message")
+Command = TypeVar("Command")
+Query = TypeVar("Query")
+Event = TypeVar("Event")
+ResultT = TypeVar("ResultT")
+TCommand = TypeVar("TCommand")
+TEvent = TypeVar("TEvent")
+TQuery = TypeVar("TQuery")
+
+# Service and infrastructure type variables
+U = TypeVar("U")
+V = TypeVar("V")
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
 TAccumulate = TypeVar("TAccumulate")
+TAggregate = TypeVar("TAggregate")
+TAggregate_co = TypeVar("TAggregate_co", covariant=True)
+TCacheKey = TypeVar("TCacheKey")
+TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
+TCacheValue = TypeVar("TCacheValue")
+TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
+W = TypeVar("W")
+TConcurrent = TypeVar("TConcurrent")
+TConfigKey = TypeVar("TConfigKey")
+TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
+TConfigValue = TypeVar("TConfigValue")
+TConfigValue_co = TypeVar("TConfigValue_co", covariant=True)
+TDomainEvent = TypeVar("TDomainEvent")
+TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
+TEntity = TypeVar("TEntity")
+TEntity_co = TypeVar("TEntity_co", covariant=True)
+TKey = TypeVar("TKey")
+TKey_contra = TypeVar("TKey_contra", contravariant=True)
+TMessage = TypeVar("TMessage")
 TParallel = TypeVar("TParallel")
+TResource = TypeVar("TResource")
+TResult_co = TypeVar("TResult_co", covariant=True)
+TService = TypeVar("TService")
+TTimeout = TypeVar("TTimeout")
+TValue = TypeVar("TValue")
+TValue_co = TypeVar("TValue_co", covariant=True)
+TValueObject_co = TypeVar("TValueObject_co", covariant=True)
 UParallel = TypeVar("UParallel")
 UResource = TypeVar("UResource")
-TItem = TypeVar("TItem")
-TUtil = TypeVar("TUtil")
-
-# Additional generic type variables for ecosystem patterns
-TProcessor = TypeVar("TProcessor")
-THandler = TypeVar("THandler")
-TBuilder = TypeVar("TBuilder")
-TFactory = TypeVar("TFactory")
 
 
 class FlextTypes:
@@ -125,7 +134,7 @@ class FlextTypes:
         V = V
         W = W
 
-        # Note: Use standard Optional[T] or T | None syntax directly
+        # Note: Use standard T | None or T | None syntax directly
 
         # Basic collection types
         type Dict = dict[str, object]
@@ -164,12 +173,6 @@ class FlextTypes:
         type Operation = Callable[[object], object]
         type Serializer = Callable[[object], dict[str, object]]
         type Validator = Callable[[object], bool]
-
-        # gRPC target types (for flext-grpc domain usage)
-        type GrpcTarget = str
-        type GrpcStreamType = str
-        type GrpcChannelState = str
-        type GrpcServerState = str
 
     # =========================================================================
     # DOMAIN TYPES - Domain-Driven Design patterns
@@ -248,7 +251,15 @@ class FlextTypes:
         """Project management types."""
 
         type ProjectType = Literal[
-            "library", "application", "service", "cli", "web", "api"
+            "library",
+            "application",
+            "service",
+            "cli",
+            "web",
+            "api",
+            "PYTHON",
+            "GO",
+            "JAVASCRIPT",
         ]
         type ProjectStatus = Literal["active", "inactive", "deprecated", "archived"]
         type ProjectConfig = dict[str, object]
@@ -289,45 +300,6 @@ class FlextTypes:
         type Token = str
 
     # =========================================================================
-    # ALGAR TYPES - ALGAR Telecom specific types
-    # =========================================================================
-
-    class Algar:
-        """ALGAR Telecom specific types."""
-
-        type EnvironmentType = Literal[
-            "development", "staging", "production", "testing"
-        ]
-        type ProfileType = Literal["user", "group", "organizational", "other"]
-        type MigrationStatus = Literal["pending", "running", "completed", "failed"]
-        type SyncStatus = Literal["pending", "running", "completed", "failed"]
-        type OperationMode = Literal["migrate", "validate", "sync", "status"]
-        type EntryCategory = Literal["user", "group", "organizational", "other"]
-        type ProcessingPhase = Literal["01", "02", "03", "04", "05", "all"]
-        type WorkflowStatus = Literal["pending", "running", "completed", "failed"]
-        type StepStatus = Literal["pending", "running", "completed", "failed"]
-        type LdapOperationType = Literal["search", "add", "modify", "delete"]
-        type LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
-        type EntryType = Literal["user", "group", "organizational", "other"]
-        type ProcessingMode = Literal["batch", "stream", "parallel"]
-        type ConversionStrategy = Literal["direct", "transform", "validate"]
-        type ValidationLevel = Literal["strict", "lenient", "standard"]
-        type SyncMode = Literal["incremental", "full", "validate"]
-        type ConflictResolution = Literal["skip", "overwrite", "merge", "manual"]
-        type ReportFormat = Literal["json", "yaml", "csv", "html", "text"]
-        type Environment = Literal["development", "staging", "production", "testing"]
-        type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        type ServiceOperationType = Literal[
-            "create", "read", "update", "delete", "search"
-        ]
-        type ServiceStatus = Literal["active", "inactive", "maintenance", "error"]
-        type ServiceMode = Literal["sync", "async", "batch", "stream"]
-        type HandlerType = Literal["command", "query", "event", "notification"]
-        type EventType = Literal["created", "updated", "deleted", "migrated"]
-        type ProcessorType = Literal["parser", "validator", "transformer", "writer"]
-        type OudConfig = dict[str, object]
-
-    # =========================================================================
     # PROTOCOL TYPES - Generic protocol patterns
     # =========================================================================
 
@@ -342,26 +314,43 @@ class FlextTypes:
 
 
 # =========================================================================
+# STANDALONE TYPE EXPORTS - For backward compatibility
+# =========================================================================
+
+# Export WorkspaceStatus for backward compatibility
+type WorkspaceStatus = FlextTypes.Project.WorkspaceStatus
+
+# =========================================================================
 # PUBLIC API EXPORTS - Essential TypeVars and types only
 # =========================================================================
 
 __all__: list[str] = [
+    # Core TypeVars
     "T1",
     "T2",
     "T3",
+    "Command",
     "E",
+    "Event",
     "F",
+    # Main classes
     "FlextTypes",
     "K",
+    # Domain TypeVars
+    "Message",
     "MessageT",
     "MessageT_contra",
     "P",
+    "Query",
     "R",
+    "ResultT",
     "T",
+    "T1_co",
+    "T2_co",
+    "T3_co",
     "TAccumulate",
     "TAggregate",
     "TAggregate_co",
-    "TBuilder",
     "TCacheKey",
     "TCacheKey_contra",
     "TCacheValue",
@@ -379,32 +368,33 @@ __all__: list[str] = [
     "TEntity_co",
     "TEvent",
     "TEvent_contra",
-    "TFactory",
-    "THandler",
+    "TInput_contra",
     "TItem",
+    "TItem_contra",
     "TKey",
     "TKey_contra",
     "TMessage",
     "TParallel",
-    "TProcessor",
     "TQuery",
     "TQuery_contra",
     "TResource",
     "TResult",
     "TResult_co",
+    "TResult_contra",
     "TService",
     "TState",
     "TState_co",
     "TTimeout",
     "TUtil",
+    "TUtil_contra",
     "TValue",
     "TValueObject_co",
     "TValue_co",
-    "T_co",
     "T_contra",
     "U",
     "UParallel",
     "UResource",
     "V",
     "W",
+    "WorkspaceStatus",
 ]

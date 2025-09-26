@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from typing import Protocol, cast
+from typing import Protocol, cast, override
 
 from pydantic import ConfigDict
 
@@ -72,6 +72,7 @@ class FlextService[TDomainResult](
         use_enum_values=True,
     )
 
+    @override
     def __init__(self, **data: object) -> None:
         """Initialize domain service with Pydantic validation."""
         super().__init__(**data)

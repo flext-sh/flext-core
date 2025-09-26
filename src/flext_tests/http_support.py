@@ -9,15 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Self, override
 from urllib.parse import urljoin
 
-from pydantic import BaseModel
+# BaseModel usage replaced with FlextModels - using foundation patterns
 from pytest_httpx import HTTPXMock
 
 from flext_core import (
     FlextConstants,
     FlextLogger,
+    FlextModels,
     FlextResult,
     FlextTypes,
 )
@@ -54,6 +55,7 @@ class FlextTestsHttp:
     class APITestClient:
         """API test client for HTTP testing."""
 
+        @override
         def __init__(self, base_url: str = "https://api.example.com") -> None:
             """Initialize API test client."""
             self.base_url = base_url
@@ -163,6 +165,7 @@ class FlextTestsHttp:
     class HTTPScenarioBuilder:
         """Builder for complex HTTP testing scenarios."""
 
+        @override
         def __init__(self, httpx_mock: HTTPXMock) -> None:
             """Initialize HTTP scenario builder."""
             self.httpx_mock = httpx_mock
@@ -367,7 +370,7 @@ class FlextTestsHttp:
                 "event": event_type,
                 "data": data,
                 "timestamp": "2025-01-01T00:00:00Z",
-                "version": "1.0",
+                "version": 1.0,
             }
 
         @staticmethod
@@ -412,8 +415,8 @@ class FlextTestsHttp:
 
     # === HTTP Test Models ===
 
-    class HTTPTestRequest(BaseModel):
-        """HTTP test request model."""
+    class HTTPTestRequest(FlextModels.ArbitraryTypesModel):
+        """HTTP test request model extending FlextModels foundation."""
 
         method: str
         url: str
@@ -421,8 +424,8 @@ class FlextTestsHttp:
         data: object | None = None
         timeout: float = float(FlextConstants.Defaults.TIMEOUT)
 
-    class HTTPTestResponse(BaseModel):
-        """HTTP test response model."""
+    class HTTPTestResponse(FlextModels.ArbitraryTypesModel):
+        """HTTP test response model extending FlextModels foundation."""
 
         status_code: int
         headers: FlextTypes.Core.Dict

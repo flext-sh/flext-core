@@ -13,8 +13,8 @@ import time
 from typing import cast
 
 import pytest
-from pydantic import BaseModel
 
+# BaseModel usage replaced with FlextModels for test standardization
 from flext_core import (
     FlextModels,
     FlextProcessors,
@@ -74,8 +74,8 @@ class TestCleanArchitecturePatterns:
                 return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
-        class CreateUserCommand(BaseModel):
-            """Application command."""
+        class CreateUserCommand(FlextModels.Command):
+            """Application command using FlextModels foundation."""
 
             name: str
             email: str
@@ -100,7 +100,7 @@ class TestCleanArchitecturePatterns:
                     CreateUserCommand,
                 )
 
-            def handle(self, request: CreateUserCommand) -> FlextResult[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Handle user creation.
 
                 Returns:
@@ -301,8 +301,8 @@ class TestCleanArchitecturePatterns:
         """Test CQRS (Command Query Responsibility Segregation) pattern."""
 
         # Commands (Write Operations)
-        class UpdateUserCommand(BaseModel):
-            """Command to update user information."""
+        class UpdateUserCommand(FlextModels.Command):
+            """Command to update user information using FlextModels foundation."""
 
             user_id: str
             name: str
@@ -310,7 +310,7 @@ class TestCleanArchitecturePatterns:
         class UpdateUserHandler(FlextProcessors.Handler):
             """Handler for user update commands."""
 
-            def handle(self, request: UpdateUserCommand) -> FlextResult[object]:
+            def handle(self, request: object) -> FlextResult[object]:
                 """Handle user update command."""
                 if not isinstance(request, UpdateUserCommand):
                     return FlextResult[object].fail("Invalid command type")
@@ -324,15 +324,15 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[object].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
-        class GetUserQuery(BaseModel):
-            """Query to get user information."""
+        class GetUserQuery(FlextModels.Query):
+            """Query to get user information using FlextModels foundation."""
 
             user_id: str
 
         class GetUserHandler(FlextProcessors.Handler):
             """Handler for user queries."""
 
-            def handle(self, request: GetUserQuery) -> FlextResult[object]:
+            def handle(self, request: object) -> FlextResult[object]:
                 """Handle user query."""
                 if not isinstance(request, GetUserQuery):
                     return FlextResult[object].fail("Invalid query type")
@@ -537,14 +537,14 @@ class TestEventDrivenPatterns:
         """Test Domain Event pattern implementation."""
 
         # Event classes
-        class UserCreatedEvent(BaseModel):
-            """Domain event for user creation."""
+        class UserCreatedEvent(FlextModels.DomainEvent):
+            """Domain event for user creation using FlextModels foundation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(BaseModel):
+        class UserUpdatedEvent(FlextModels.DomainEvent):
             """Domain event for user updates."""
 
             user_id: str
@@ -558,7 +558,7 @@ class TestEventDrivenPatterns:
 
             def __init__(self) -> None:
                 """Initialize handler."""
-                self.processed_events: list[BaseModel] = []
+                self.processed_events: list[FlextModels.DomainEvent] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
                 """Handle user created event."""

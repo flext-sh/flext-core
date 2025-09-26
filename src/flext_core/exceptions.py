@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Mapping
 from typing import ClassVar, cast, override
@@ -48,6 +49,7 @@ class FlextExceptions:
         self._audit_log: list[dict[str, object]] = []
         self._performance_metrics: dict[str, dict[str, int]] = {}
         self._circuit_breakers: dict[str, bool] = {}
+        self.logger = logging.getLogger(__name__)
         self._rate_limiters: dict[str, dict[str, object]] = {}
         self._cache: dict[str, object] = {}
 
@@ -107,7 +109,9 @@ class FlextExceptions:
     # Handler Registry Methods
     # =============================================================================
 
-    def register_handler(self, exception_type: type[Exception], handler: object) -> FlextResult[None]:
+    def register_handler(
+        self, exception_type: type[Exception], handler: object
+    ) -> FlextResult[None]:
         """Register exception handler for specific exception type.
 
         Args:
@@ -126,7 +130,9 @@ class FlextExceptions:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register handler: {e}")
 
-    def unregister_handler(self, exception_type: type[Exception], handler: object) -> FlextResult[None]:
+    def unregister_handler(
+        self, exception_type: type[Exception], handler: object
+    ) -> FlextResult[None]:
         """Unregister exception handler.
 
         Args:
@@ -138,7 +144,10 @@ class FlextExceptions:
 
         """
         try:
-            if exception_type in self._handlers and handler in self._handlers[exception_type]:
+            if (
+                exception_type in self._handlers
+                and handler in self._handlers[exception_type]
+            ):
                 self._handlers[exception_type].remove(handler)
                 if not self._handlers[exception_type]:
                     del self._handlers[exception_type]
@@ -146,7 +155,9 @@ class FlextExceptions:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to unregister handler: {e}")
 
-    def handle_exception(self, exception: Exception, correlation_id: str | None = None) -> FlextResult[object]:
+    def handle_exception(
+        self, exception: Exception, correlation_id: str | None = None
+    ) -> FlextResult[object]:
         """Handle exception using registered handlers.
 
         Args:
@@ -164,10 +175,19 @@ class FlextExceptions:
             if not handlers:
                 return FlextResult[object].fail("No handler found")
 
+            # Check circuit breaker
+            exception_type_name = exception_type.__name__
+            if self.is_circuit_breaker_open(exception_type_name):
+                return FlextResult[object].fail("Circuit breaker is open")
+
             # Apply middleware
-            for _middleware in self._middleware:
-                # Middleware processing would go here
-                pass
+            processed_exception = exception
+            for middleware in self._middleware:
+                if callable(middleware):
+                    try:
+                        processed_exception = middleware(processed_exception)
+                    except Exception as middleware_error:
+                        self.logger.warning(f"Middleware error: {middleware_error}")
 
             # Execute handlers
             results = []
@@ -194,7 +214,33 @@ class FlextExceptions:
             exception_name = exception_type.__name__
             if exception_name not in self._performance_metrics:
                 self._performance_metrics[exception_name] = {"handled": 0, "errors": 0}
-            self._performance_metrics[exception_name]["handled"] += 1
+
+            # Check circuit breaker threshold
+            threshold_value = self._config.get("circuit_breaker_threshold", 5)
+            circuit_breaker_threshold = (
+                int(threshold_value) if isinstance(threshold_value, (int, str)) else 5
+            )
+
+            # Count failures in results
+            failure_count = sum(
+                1
+                for result in results
+                if isinstance(result, FlextResult) and result.is_failure
+            )
+            if failure_count > 0:
+                self._performance_metrics[exception_name]["errors"] += failure_count
+
+                # Open circuit breaker if threshold exceeded
+                if (
+                    self._performance_metrics[exception_name]["errors"]
+                    >= circuit_breaker_threshold
+                ):
+                    self._circuit_breakers[exception_name] = True
+                    return FlextResult[object].fail(
+                        "Circuit breaker opened due to repeated failures"
+                    )
+            else:
+                self._performance_metrics[exception_name]["handled"] += 1
 
             return FlextResult[object].ok(results)
         except Exception as e:
@@ -288,7 +334,9 @@ class FlextExceptions:
 
         """
         return {
-            "total_handlers": sum(len(handlers) for handlers in self._handlers.values()),
+            "total_handlers": sum(
+                len(handlers) for handlers in self._handlers.values()
+            ),
             "exception_types": len(self._handlers),
             "middleware_count": len(self._middleware),
             "audit_log_entries": len(self._audit_log),
@@ -306,9 +354,13 @@ class FlextExceptions:
             # Validate handlers
             for exception_type, handlers in self._handlers.items():
                 if not isinstance(exception_type, type):
-                    return FlextResult[None].fail(f"Invalid exception type: {exception_type}")
+                    return FlextResult[None].fail(
+                        f"Invalid exception type: {exception_type}"
+                    )
                 if not isinstance(handlers, list):
-                    return FlextResult[None].fail(f"Invalid handlers list for {exception_type}")
+                    return FlextResult[None].fail(
+                        f"Invalid handlers list for {exception_type}"
+                    )
 
             return FlextResult[None].ok(None)
         except Exception as e:

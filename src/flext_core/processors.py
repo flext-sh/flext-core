@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import cast
+from typing import cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -25,6 +25,7 @@ class FlextProcessors:
     ``FlextDispatcher`` without bespoke glue code.
     """
 
+    @override
     def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize FlextProcessors with optional configuration.
 
@@ -446,11 +447,11 @@ class FlextProcessors:
                     getattr(
                         config,
                         "max_batch_size",
-                        FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+                        FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
                     )
                 )
             except Exception:
-                return FlextConstants.Performance.DEFAULT_BATCH_SIZE
+                return FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
 
         @classmethod
         def get_max_handlers(cls) -> int:
@@ -486,6 +487,7 @@ class FlextProcessors:
     class HandlerRegistry:
         """Registry managing named handler instances for dispatcher pilots."""
 
+        @override
         def __init__(self) -> None:
             """Initialize handler registry."""
             self._handlers: dict[str, object] = {}
@@ -621,7 +623,7 @@ class FlextProcessors:
             """Get a handler optionally, returning None if not found.
 
             Returns:
-                Union[object, None]: Handler instance or None when not registered.
+                object | None: Handler instance or None when not registered.
 
             """
             return self._handlers.get(name)
@@ -752,6 +754,7 @@ class FlextProcessors:
     class Pipeline:
         """Advanced processing pipeline using monadic composition."""
 
+        @override
         def __init__(self) -> None:
             """Initialize processing pipeline."""
             self._steps: list[
@@ -1024,6 +1027,7 @@ class FlextProcessors:
         class BasicHandler:
             """Basic handler implementation."""
 
+            @override
             def __init__(self, name: str) -> None:
                 """Initialize basic handler with name."""
                 self.name = name
@@ -1053,6 +1057,7 @@ class FlextProcessors:
         class HandlerRegistry:
             """Handler registry for examples."""
 
+            @override
             def __init__(self) -> None:
                 """Initialize handler registry."""
                 self._handlers: dict[str, object] = {}
@@ -1065,7 +1070,7 @@ class FlextProcessors:
                 """Get handler by name.
 
                 Returns:
-                    Union[object, None]: The handler instance or None if not found.
+                    object | None: The handler instance or None if not found.
 
                 """
                 return self._handlers.get(name)
@@ -1074,7 +1079,7 @@ class FlextProcessors:
                 """Get handler optionally, returning None if not found.
 
                 Returns:
-                    Union[object, None]: The handler instance or None when not present.
+                    object | None: The handler instance or None when not present.
 
                 """
                 return self._handlers.get(name)
@@ -1085,6 +1090,7 @@ class FlextProcessors:
         class HandlerChain:
             """Handler chain for examples."""
 
+            @override
             def __init__(self, name: str) -> None:
                 """Initialize handler chain with name."""
                 self.name = name
@@ -1130,6 +1136,7 @@ class FlextProcessors:
         class ChainableHandler:
             """Chainable handler for examples - Application.Handler protocol implementation."""
 
+            @override
             def __init__(self, name: str) -> None:
                 """Initialize chainable handler with name."""
                 self.name = name
@@ -1217,3 +1224,24 @@ class FlextProcessors:
 
                 """
                 return "command"
+
+    def unregister(self, name: str) -> FlextResult[None]:
+        """Unregister a processor by name.
+
+        Args:
+            name: Name of the processor to unregister
+
+        Returns:
+            FlextResult[None]: Success if unregistration succeeded, failure otherwise
+
+        """
+        if not name:
+            return FlextResult[None].fail("Processor name cannot be empty")
+
+        if name not in self._registry:
+            return FlextResult[None].fail(f'Processor "{name}" not found')
+
+        del self._registry[name]
+        self._metrics["unregistrations"] = self._metrics.get("unregistrations", 0) + 1
+
+        return FlextResult[None].ok(None)

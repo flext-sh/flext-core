@@ -453,7 +453,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
 
         # Boolean conversion
         print("\n3. Boolean Conversion:")
-        bool_values: list[bool | int, str | None] = [
+        bool_values: list[object] = [
             True,
             False,
             1,
@@ -463,7 +463,11 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
             None,
         ]
         for bool_value in bool_values:
-            bool_result = FlextUtilities.Conversions.to_bool(value=bool_value)
+            # Cast to the expected type for to_bool
+            if isinstance(bool_value, (str, bool, int, type(None))):
+                bool_result = FlextUtilities.Conversions.to_bool(value=bool_value)
+            else:
+                bool_result = FlextUtilities.Conversions.to_bool(value=str(bool_value))
             if bool_result.is_success:
                 print(f"  {bool_value!r} → {bool_result.unwrap()}")
             else:

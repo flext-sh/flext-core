@@ -259,7 +259,7 @@ class TestFlextLogger:
 
         # Invalid data should fail
         try:
-            result = logger.info("Invalid message", invalid_field=object())  # type: ignore[arg-type]
+            result = logger.info("Invalid message", invalid_field=object())
             assert result.is_failure
         except (TypeError, ValueError):
             pass  # Expected
@@ -391,7 +391,7 @@ class TestFlextLogger:
 
         # Test logging with invalid data
         try:
-            result = logger.info("Test message", invalid_field=object())  # type: ignore[arg-type]
+            result = logger.info("Test message", invalid_field=object())
             assert result.is_failure
         except (TypeError, ValueError):
             pass  # Expected

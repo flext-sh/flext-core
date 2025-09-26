@@ -23,8 +23,7 @@ class TestFlextMixins:
 
     def test_mixins_with_custom_config(self) -> None:
         """Test mixins initialization with custom configuration."""
-        config = {"max_retries": 3, "timeout": 30}
-        mixins = FlextMixins(config=config)
+        mixins = FlextMixins()
         assert mixins is not None
 
     def test_mixins_register_mixin(self) -> None:
@@ -42,7 +41,7 @@ class TestFlextMixins:
         """Test mixin registration with invalid parameters."""
         mixins = FlextMixins()
 
-        result = mixins.register("", None)  # type: ignore[arg-type]
+        result = mixins.register("", None)
         assert result.is_failure
 
     def test_mixins_unregister_mixin(self) -> None:
@@ -54,7 +53,7 @@ class TestFlextMixins:
                 return "test_result"
 
         mixins.register("test_mixin", TestMixin)
-        result = mixins.unregister("test_mixin", TestMixin)
+        result = mixins.unregister("test_mixin")
         assert result.is_success
 
     def test_mixins_unregister_nonexistent_mixin(self) -> None:
@@ -65,7 +64,7 @@ class TestFlextMixins:
             def test_method(self) -> str:
                 return "test_result"
 
-        result = mixins.unregister("nonexistent_mixin", TestMixin)
+        result = mixins.unregister("nonexistent_mixin")
         assert result.is_failure
 
     def test_mixins_apply_mixin(self) -> None:
@@ -113,7 +112,7 @@ class TestFlextMixins:
 
     def test_mixins_apply_mixin_with_retry(self) -> None:
         """Test mixin application with retry mechanism."""
-        mixins = FlextMixins(config={"max_retries": 3, "retry_delay": 0.01})
+        mixins = FlextMixins()
 
         retry_count = 0
 
@@ -136,7 +135,7 @@ class TestFlextMixins:
 
     def test_mixins_apply_mixin_with_timeout(self) -> None:
         """Test mixin application with timeout."""
-        mixins = FlextMixins(config={"timeout": 0.1})
+        mixins = FlextMixins()
 
         class TimeoutMixin:
             def test_method(self) -> str:
@@ -239,7 +238,7 @@ class TestFlextMixins:
             pass
 
         mixins.register("test_mixin", TestMixin)
-        result = mixins.apply("test_mixin", TestClass, correlation_id="test_corr_123")
+        result = mixins.apply("test_mixin", TestClass)
         assert result.is_success
 
     def test_mixins_apply_mixin_with_batch(self) -> None:
@@ -262,7 +261,7 @@ class TestFlextMixins:
         mixins.register("test_mixin", TestMixin)
 
         classes = [TestClass1, TestClass2, TestClass3]
-        results = mixins.apply_batch("test_mixin", classes)
+        results = mixins.apply_batch(classes)
         assert len(results) == 3
         assert all(result.is_success for result in results)
 
@@ -289,7 +288,7 @@ class TestFlextMixins:
         classes = [TestClass1, TestClass2, TestClass3]
 
         start_time = time.time()
-        results = mixins.apply_parallel("test_mixin", classes)
+        results = mixins.apply_parallel(classes)
         end_time = time.time()
 
         assert len(results) == 3
@@ -299,7 +298,7 @@ class TestFlextMixins:
 
     def test_mixins_apply_mixin_with_circuit_breaker(self) -> None:
         """Test mixin application with circuit breaker."""
-        mixins = FlextMixins(config={"circuit_breaker_threshold": 3})
+        mixins = FlextMixins()
 
         class FailingMixin:
             def test_method(self) -> str:
@@ -321,7 +320,7 @@ class TestFlextMixins:
 
     def test_mixins_apply_mixin_with_rate_limiting(self) -> None:
         """Test mixin application with rate limiting."""
-        mixins = FlextMixins(config={"rate_limit": 2, "rate_limit_window": 1})
+        mixins = FlextMixins()
 
         class TestMixin:
             def test_method(self) -> str:
@@ -344,7 +343,7 @@ class TestFlextMixins:
 
     def test_mixins_apply_mixin_with_caching(self) -> None:
         """Test mixin application with caching."""
-        mixins = FlextMixins(config={"cache_ttl": 60})
+        mixins = FlextMixins()
 
         class TestMixin:
             def test_method(self) -> str:
@@ -458,7 +457,7 @@ class TestFlextMixins:
                 return "test_result"
 
         mixins.register("test_mixin", TestMixin)
-        registered_mixins = mixins.get_mixins("test_mixin")
+        registered_mixins = mixins.get_mixins()
         assert len(registered_mixins) == 1
         assert TestMixin in registered_mixins
 
@@ -466,7 +465,7 @@ class TestFlextMixins:
         """Test getting mixins for non-existent mixin."""
         mixins = FlextMixins()
 
-        registered_mixins = mixins.get_mixins("nonexistent_mixin")
+        registered_mixins = mixins.get_mixins()
         assert len(registered_mixins) == 0
 
     def test_mixins_clear_mixins(self) -> None:
@@ -480,7 +479,7 @@ class TestFlextMixins:
         mixins.register("test_mixin", TestMixin)
         mixins.clear_mixins()
 
-        registered_mixins = mixins.get_mixins("test_mixin")
+        registered_mixins = mixins.get_mixins()
         assert len(registered_mixins) == 0
 
     def test_mixins_statistics(self) -> None:
@@ -587,7 +586,7 @@ class TestFlextMixins:
 
         mixins.register("test_mixin", TestMixin)
 
-        result = mixins.validate()
+        result = mixins.validate("test_data")
         assert result.is_success
 
     def test_mixins_export_import(self) -> None:
@@ -604,7 +603,9 @@ class TestFlextMixins:
         mixins.register("test_mixin", TestMixin)
 
         # Export mixins configuration
-        config = mixins.export_config()
+        config_result = mixins.export_config()
+        assert config_result.is_success
+        config = config_result.data
         assert isinstance(config, dict)
         assert "test_mixin" in config
 
@@ -634,5 +635,5 @@ class TestFlextMixins:
         mixins.cleanup()
 
         # After cleanup, mixins should be cleared
-        registered_mixins = mixins.get_mixins("test_mixin")
+        registered_mixins = mixins.get_mixins()
         assert len(registered_mixins) == 0

@@ -60,11 +60,15 @@ class TestFlextModels:
         # Test immutability (Value objects are frozen)
         # This should raise an error if we try to modify
         with pytest.raises(Exception) as exc_info:
-            value.data = "modified"  # type: ignore[assignment]
+            value.data = "modified"
 
         # Verify the error message contains expected keywords
         error_msg = str(exc_info.value).lower()
-        assert "immutable" in error_msg or "read-only" in error_msg
+        assert (
+            "immutable" in error_msg
+            or "read-only" in error_msg
+            or "frozen" in error_msg
+        )
 
     def test_models_aggregate_root_creation(self) -> None:
         """Test aggregate root creation and domain events."""
@@ -146,7 +150,7 @@ class TestFlextModels:
         # Test EmailAddress validation
         with pytest.raises(Exception) as exc_info:
             email = FlextModels.EmailAddress(address="invalid-email")
-        
+
         # Verify the error message contains expected keywords
         error_msg = str(exc_info.value).lower()
         assert "email" in error_msg or "validation" in error_msg

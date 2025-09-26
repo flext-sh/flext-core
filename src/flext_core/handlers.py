@@ -21,6 +21,7 @@ Usage:
 
 
     class UserCommandHandler(FlextHandlers[CreateUserCommand, User]):
+        @override
         def handle(self, command: CreateUserCommand) -> FlextResult[User]:
             # Implement command handling logic
             return FlextResult[User].ok(created_user)
@@ -35,7 +36,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Literal, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
@@ -55,6 +56,9 @@ from flext_core.utilities import FlextUtilities
 
 if TYPE_CHECKING:
     from flext_core.loggings import FlextLogger
+else:
+    # Import at runtime for get_logger method
+    from flext_core.loggings import FlextLogger
 
 HandlerModeLiteral = Literal["command", "query", "event", "saga"]
 HandlerTypeLiteral = Literal["command", "query", "event", "saga"]
@@ -73,6 +77,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     Maintains all functionality while achieving single responsibility principle.
     """
 
+    @override
     def __init__(self, *, config: FlextModels.CqrsConfig.Handler) -> None:
         """Initialize handler with simplified single-config approach.
 
@@ -132,8 +137,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             FlextLogger: Logger instance
 
         """
-        from flext_core.loggings import FlextLogger  # noqa: PLC0415
-
         return FlextLogger(self.__class__.__name__)
 
     @property
@@ -258,8 +261,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             FlextResult containing the processing result or error
 
         """
-        import time  # noqa: PLC0415
-
         # Extract message ID
         message_id: str = "unknown"
         if isinstance(message, dict):
@@ -451,6 +452,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         # Create a simple wrapper class
         class CallableHandler(FlextHandlers[object, object]):
+            @override
             def handle(self, message: object) -> FlextResult[object]:
                 try:
                     result = callable_func(message)
@@ -628,6 +630,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
             class CommandHandler(FlextHandlers[TCommand, TResult]):
+                @override
                 def handle(self, message: TCommand) -> FlextResult[TResult]:
                     # Apply validation rules if provided
                     if validation_rules:
@@ -689,6 +692,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
             class QueryHandler(FlextHandlers[TQuery, TResult]):
+                @override
                 def handle(self, message: TQuery) -> FlextResult[TResult]:
                     # Implement caching logic if enabled
                     if caching_enabled:
@@ -745,6 +749,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
             class EventHandler(FlextHandlers[TEvent, None]):
+                @override
                 def handle(self, message: TEvent) -> FlextResult[None]:
                     # Implement retry logic if policy provided
                     if retry_policy:
@@ -829,6 +834,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
             class SagaHandler(FlextHandlers[TState, TState]):
+                @override
                 def handle(self, message: TState) -> FlextResult[TState]:
                     current_state = message
                     executed_steps: list[int] = []

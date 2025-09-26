@@ -185,7 +185,7 @@ def _display_status_table(control: FlextTestDocker) -> None:
             ContainerStatus.RUNNING: "🟢 Running",
             ContainerStatus.STOPPED: "🔴 Stopped",
             ContainerStatus.NOT_FOUND: "⚫ Not Found",
-            ContainerStatus.ERROR: "⚠️  Error",
+            ContainerStatus.ERROR: "⚠️ Error",
         }.get(info.status, "❓ Unknown")
 
         ports_str = (
@@ -221,7 +221,10 @@ def logs(container: str) -> None:
 
     try:
         # Get container logs using Docker client
-        docker_container = control.client.containers.get(container)
+        client = (
+            control._get_client()
+        )  # Use the private method to ensure client is initialized
+        docker_container = client.containers.get(container)
         logs = docker_container.logs(tail=100).decode("utf-8", errors="ignore")
         console.print(logs)
     except Exception as e:

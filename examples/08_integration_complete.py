@@ -196,7 +196,7 @@ class Order(FlextModels.AggregateRoot):
 # ========== SERVICES (Using FlextService patterns) ==========
 
 
-class InventoryService(FlextService[dict[str, str | int | float]]):
+class InventoryService(FlextService[dict[str, object]]):
     """Inventory management service."""
 
     def __init__(self) -> None:
@@ -241,15 +241,13 @@ class InventoryService(FlextService[dict[str, str | int | float]]):
             return FlextResult[Product].fail(f"Product not found: {product_id}")
         return FlextResult[Product].ok(product)
 
-    def execute(self) -> FlextResult[dict[str, str | int | float]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute inventory operation."""
-        return FlextResult[dict[str, str | int | float]].ok({
-            "status": "inventory_service_ready"
-        })
+        return FlextResult[dict[str, object]].ok({"status": "inventory_service_ready"})
 
     def process_operation(
         self, data: dict[str, str | int]
-    ) -> FlextResult[dict[str, str | int | float]]:
+    ) -> FlextResult[dict[str, object]]:
         """Process inventory operation."""
         operation = data.get("operation")
 
@@ -267,19 +265,15 @@ class InventoryService(FlextService[dict[str, str | int | float]]):
                             "stock": product.stock,
                         }
                     })
-                return FlextResult[dict[str, str | int | float]].fail(
+                return FlextResult[dict[str, object]].fail(
                     result.error or "Unknown error"
                 )
-            return FlextResult[dict[str, str | int | float]].fail(
-                "Invalid product ID type"
-            )
+            return FlextResult[dict[str, object]].fail("Invalid product ID type")
 
-        return FlextResult[dict[str, str | int | float]].fail(
-            f"Unknown operation: {operation}"
-        )
+        return FlextResult[dict[str, object]].fail(f"Unknown operation: {operation}")
 
 
-class PaymentService(FlextService[dict[str, str | int | float]]):
+class PaymentService(FlextService[dict[str, object]]):
     """Payment processing service using strategy pattern."""
 
     def __init__(self) -> None:
@@ -289,7 +283,7 @@ class PaymentService(FlextService[dict[str, str | int | float]]):
 
     def process_payment(
         self, order: Order, method: str
-    ) -> FlextResult[dict[str, str | int | float]]:
+    ) -> FlextResult[dict[str, object]]:
         """Process payment for order."""
         self._logger.info(
             "Processing payment",
@@ -304,7 +298,7 @@ class PaymentService(FlextService[dict[str, str | int | float]]):
         if method == "credit_card":
             # Simulate credit card processing
             time.sleep(0.1)  # Simulate API call
-            return FlextResult[dict[str, str | int | float]].ok({
+            return FlextResult[dict[str, object]].ok({
                 "transaction_id": str(uuid4()),
                 "status": "approved",
                 "method": method,
@@ -314,22 +308,20 @@ class PaymentService(FlextService[dict[str, str | int | float]]):
         if method == "paypal":
             # Simulate PayPal processing
             time.sleep(0.15)  # Simulate API call
-            return FlextResult[dict[str, str | int | float]].ok({
+            return FlextResult[dict[str, object]].ok({
                 "transaction_id": str(uuid4()),
                 "status": "approved",
                 "method": method,
                 "amount": str(order.total.amount),
             })
 
-        return FlextResult[dict[str, str | int | float]].fail(
+        return FlextResult[dict[str, object]].fail(
             f"Unsupported payment method: {method}"
         )
 
-    def execute(self) -> FlextResult[dict[str, str | int | float]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute payment operation."""
-        return FlextResult[dict[str, str | int | float]].ok({
-            "status": "payment_service_ready"
-        })
+        return FlextResult[dict[str, object]].ok({"status": "payment_service_ready"})
 
     def process_operation(
         self, data: dict[str, str | int]
@@ -339,7 +331,7 @@ class PaymentService(FlextService[dict[str, str | int | float]]):
         return FlextResult[dict[str, str | int]].ok({"status": "processed"})
 
 
-class OrderService(FlextService[dict[str, str | int | float]]):
+class OrderService(FlextService[dict[str, object]]):
     """Order processing service - orchestrates the workflow."""
 
     def __init__(self) -> None:
@@ -410,23 +402,21 @@ class OrderService(FlextService[dict[str, str | int | float]]):
 
     def submit_order(
         self, order: Order, payment_method: str
-    ) -> FlextResult[dict[str, str | int | float]]:
+    ) -> FlextResult[dict[str, object]]:
         """Submit order with payment processing."""
         self._logger.info("Submitting order", extra={"order_id": order.id})
 
         # Submit the order
         submit_result = order.submit()
         if submit_result.is_failure:
-            return FlextResult[dict[str, str | int | float]].fail(
+            return FlextResult[dict[str, object]].fail(
                 submit_result.error or "Unknown error"
             )
 
         # Get payment service
         payment_service_result = self._container.get_typed("payment", PaymentService)
         if payment_service_result.is_failure:
-            return FlextResult[dict[str, str | int | float]].fail(
-                "Payment service not available"
-            )
+            return FlextResult[dict[str, object]].fail("Payment service not available")
         payment = payment_service_result.unwrap()
 
         # Process payment
@@ -434,7 +424,7 @@ class OrderService(FlextService[dict[str, str | int | float]]):
         if payment_result.is_failure:
             # Rollback order status
             order.status = "PAYMENT_FAILED"
-            return FlextResult[dict[str, str | int | float]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Payment failed: {payment_result.error}"
             )
 
@@ -468,7 +458,7 @@ class OrderService(FlextService[dict[str, str | int | float]]):
             },
         )
 
-        result_data: dict[str, str | int | float] = {
+        result_data: dict[str, object] = {
             "order_id": order.id,
             "status": order.status,
             "total": str(order.total.amount),
@@ -480,13 +470,11 @@ class OrderService(FlextService[dict[str, str | int | float]]):
         )
         result_data["payment_status"] = str(payment_data.get("status", "unknown"))
 
-        return FlextResult[dict[str, str | int | float]].ok(result_data)
+        return FlextResult[dict[str, object]].ok(result_data)
 
-    def execute(self) -> FlextResult[dict[str, str | int | float]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute order operation."""
-        return FlextResult[dict[str, str | int | float]].ok({
-            "status": "order_service_ready"
-        })
+        return FlextResult[dict[str, object]].ok({"status": "order_service_ready"})
 
     def process_operation(
         self, data: dict[str, object]
@@ -501,7 +489,7 @@ class OrderService(FlextService[dict[str, str | int | float]]):
             if isinstance(customer_id, str) and isinstance(items, list):
                 order_result = self.create_order(customer_id, items)
                 if order_result.is_failure:
-                    return FlextResult[dict[str, str | int | float]].fail(
+                    return FlextResult[dict[str, object]].fail(
                         order_result.error or "Unknown error"
                     )
 
@@ -511,13 +499,11 @@ class OrderService(FlextService[dict[str, str | int | float]]):
                 payment_method = data.get("payment_method", "credit_card")
                 if isinstance(payment_method, str):
                     return self.submit_order(order, payment_method)
-                return FlextResult[dict[str, str | int | float]].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Invalid payment method type"
                 )
 
-        return FlextResult[dict[str, str | int | float]].fail(
-            f"Unknown operation: {operation}"
-        )
+        return FlextResult[dict[str, object]].fail(f"Unknown operation: {operation}")
 
 
 # ========== HANDLER PIPELINE (Using FlextProcessors) ==========
@@ -531,41 +517,33 @@ class OrderValidationHandler:
         self.name = "OrderValidator"
         self._logger = FlextLogger(__name__)
 
-    def handle(
-        self, request: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+    def handle(self, request: dict[str, object]) -> FlextResult[dict[str, object]]:
         """Validate order data."""
         self._logger.info("Validating order request")
 
         # Check required fields
         if not request.get("customer_id"):
-            return FlextResult[
-                dict[str, str | int, list[dict[str, str | int]]] | bool
-            ].fail("Customer ID required")
+            return FlextResult[dict[str, object]].fail("Customer ID required")
 
         if not request.get("items"):
-            return FlextResult[
-                dict[str, str | int, list[dict[str, str | int]]] | bool
-            ].fail("Order items required")
+            return FlextResult[dict[str, object]].fail("Order items required")
 
         # Validate items
         items = request["items"]
         if isinstance(items, list):
             for item in items:
                 if not item.get("product_id"):
-                    return FlextResult[
-                        dict[str, str | int, list[dict[str, str | int]]] | bool
-                    ].fail("Product ID required for all items")
+                    return FlextResult[dict[str, object]].fail(
+                        "Product ID required for all items"
+                    )
                 quantity = item.get("quantity")
                 if not isinstance(quantity, int) or quantity <= 0:
-                    return FlextResult[
-                        dict[str, str | int, list[dict[str, str | int]]] | bool
-                    ].fail("Valid quantity required for all items")
+                    return FlextResult[dict[str, object]].fail(
+                        "Valid quantity required for all items"
+                    )
 
         request["validated"] = True
-        return FlextResult[dict[str, str | int, list[dict[str, str | int]]] | bool].ok(
-            request
-        )
+        return FlextResult[dict[str, object]].ok(request)
 
 
 class OrderEnrichmentHandler:
@@ -578,21 +556,15 @@ class OrderEnrichmentHandler:
 
     def handle(
         self,
-        request: dict[str, str | int, list[dict[str, str | int]]],
+        request: dict[str, object],
         *,
         _debug: bool = False,
-    ) -> FlextResult[
-        dict[str, str | int, list[dict[str, str | int]]] | bool | dict[str, str | float]
-    ]:
+    ) -> FlextResult[dict[str, object]]:
         """Add metadata to order."""
         self._logger.info("Enriching order request")
 
         if not request.get("validated"):
-            return FlextResult[
-                dict[str, str | int, list[dict[str, str | int]]]
-                | bool
-                | dict[str, str | float]
-            ].fail("Order must be validated first")
+            return FlextResult[dict[str, object]].fail("Order must be validated first")
 
         # Add metadata
         metadata: dict[str, str | float] = {
@@ -603,20 +575,12 @@ class OrderEnrichmentHandler:
         }
 
         # Create a new dict with the metadata added
-        enriched_request: (
-            dict[str, str | int, list[dict[str, str | int]]]
-            | bool
-            | dict[str, str | float]
-        ) = {
+        enriched_request: dict[str, object] = {
             **request,
             "metadata": metadata,
         }
 
-        return FlextResult[
-            dict[str, str | int, list[dict[str, str | int]]]
-            | bool
-            | dict[str, str | float]
-        ].ok(enriched_request)
+        return FlextResult[dict[str, object]].ok(enriched_request)
 
 
 # ========== INTEGRATION DEMONSTRATION ==========
@@ -656,10 +620,8 @@ def demonstrate_complete_integration() -> None:
     enrichment_handler = OrderEnrichmentHandler()
 
     def execute_pipeline(
-        request: dict[str, str | int, list[dict[str, str | int]]],
-    ) -> FlextResult[
-        dict[str, str | int, list[dict[str, str | int]]] | bool | dict[str, str | float]
-    ]:
+        request: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Execute the processing pipeline."""
         # Chain handlers using railway pattern
         return validation_handler.handle(request).flat_map(enrichment_handler.handle)
@@ -683,7 +645,7 @@ def demonstrate_complete_integration() -> None:
 
     if len(products) >= 3:
         # Order request using actual product IDs
-        order_request: dict[str, str | int, list[dict[str, str | int]]] = {
+        order_request: dict[str, object] = {
             "customer_id": "CUST-123",
             "items": [
                 {"product_id": products[0].id, "quantity": 1},  # Laptop
@@ -742,9 +704,7 @@ def demonstrate_complete_integration() -> None:
             "payment_method": payment_method,
         })
     else:
-        result = FlextResult[dict[str, str | int | float]].fail(
-            "Invalid enriched data types"
-        )
+        result = FlextResult[dict[str, object]].fail("Invalid enriched data types")
 
     if result.is_success:
         order_data = result.unwrap()
@@ -767,7 +727,7 @@ def demonstrate_complete_integration() -> None:
     print("\n=== 6. Error Handling ===")
 
     # Try to order with insufficient stock
-    large_order: dict[str, str | int, list[dict[str, str | int]]] = {
+    large_order: dict[str, object] = {
         "customer_id": "CUST-456",
         "items": [
             {
@@ -800,7 +760,7 @@ def demonstrate_complete_integration() -> None:
                 "payment_method": payment_method,
             })
         else:
-            result = FlextResult[dict[str, str | int | float]].fail(
+            result = FlextResult[dict[str, object]].fail(
                 "Invalid validation data types"
             )
 

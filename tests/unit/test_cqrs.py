@@ -63,7 +63,7 @@ class TestFlextCqrs:
 
     def test_cqrs_results_failure_with_error_data(self) -> None:
         """Test CQRS Results failure method with error data."""
-        error_data = {"field": "value", "code": 400}
+        error_data: dict[str, object] = {"field": "value", "code": 400}
         result = FlextCqrs.Results.failure("Test error", error_data=error_data)
 
         assert result.is_failure
@@ -85,7 +85,7 @@ class TestFlextCqrs:
 
     def test_cqrs_operations_create_command(self) -> None:
         """Test CQRS Operations create_command method."""
-        command_data = {"command_type": "CreateUser"}
+        command_data: dict[str, object] = {"command_type": "CreateUser"}
         result = FlextCqrs.Operations.create_command(command_data)
 
         assert result.is_success
@@ -94,7 +94,7 @@ class TestFlextCqrs:
 
     def test_cqrs_operations_create_command_with_config(self) -> None:
         """Test CQRS Operations create_command method with configuration."""
-        command_data = {"command_type": "CreateUser"}
+        command_data: dict[str, object] = {"command_type": "CreateUser"}
         config = FlextModels.CqrsConfig.Handler(
             handler_id="test_handler",
             handler_name="TestHandler",
@@ -108,7 +108,7 @@ class TestFlextCqrs:
 
     def test_cqrs_operations_create_query(self) -> None:
         """Test CQRS Operations create_query method."""
-        query_data = {"query_type": "GetUser"}
+        query_data: dict[str, object] = {"query_type": "GetUser"}
         result = FlextCqrs.Operations.create_query(query_data)
 
         assert result.is_success
@@ -116,7 +116,7 @@ class TestFlextCqrs:
 
     def test_cqrs_operations_create_query_with_config(self) -> None:
         """Test CQRS Operations create_query method with configuration."""
-        query_data = {"query_type": "GetUser"}
+        query_data: dict[str, object] = {"query_type": "GetUser"}
         config = FlextModels.CqrsConfig.Handler(
             handler_id="test_handler", handler_name="TestHandler", handler_type="query"
         )
@@ -163,10 +163,10 @@ class TestFlextCqrs:
 
         # Test performance of CQRS operations
         for i in range(1000):
-            command_data = {"command_type": f"CreateUser{i}"}
+            command_data: dict[str, object] = {"command_type": f"CreateUser{i}"}
             FlextCqrs.Operations.create_command(command_data)
 
-            query_data = {"query_type": f"GetUser{i}"}
+            query_data: dict[str, object] = {"query_type": f"GetUser{i}"}
             FlextCqrs.Operations.create_query(query_data)
 
         end_time = time.time()
@@ -178,7 +178,7 @@ class TestFlextCqrs:
     def test_cqrs_type_safety(self) -> None:
         """Test type safety of CQRS operations."""
         # Test type safety
-        command_data = {"command_type": "CreateUser"}
+        command_data: dict[str, object] = {"command_type": "CreateUser"}
         result = FlextCqrs.Operations.create_command(command_data)
 
         assert result.is_success
@@ -188,9 +188,10 @@ class TestFlextCqrs:
     def test_cqrs_error_handling(self) -> None:
         """Test error handling in CQRS operations."""
         # Test with invalid command data that violates Pydantic validation
-        invalid_command_data = {"invalid_field": "invalid_value"}
+        invalid_command_data: dict[str, object] = {"invalid_field": "invalid_value"}
         result = FlextCqrs.Operations.create_command(invalid_command_data)
 
         # Should fail due to Pydantic validation
         assert result.is_failure
+        assert result.error is not None
         assert "Extra inputs are not permitted" in result.error

@@ -542,6 +542,7 @@ class TestFlextResult:
 
     def test_result_batch_processing(self) -> None:
         """Test batch processing functionality."""
+
         def processor(item: str) -> FlextResult[str]:
             if item == "fail":
                 return FlextResult[str].fail("Processing failed")
@@ -549,7 +550,7 @@ class TestFlextResult:
 
         items = ["item1", "item2", "fail", "item3"]
         successes, failures = FlextResult.batch_process(items, processor)
-        
+
         assert len(successes) == 3
         assert len(failures) == 1
         assert "processed_item1" in successes
@@ -559,6 +560,7 @@ class TestFlextResult:
 
     def test_result_traverse_collection(self) -> None:
         """Test traverse collection functionality."""
+
         def transform(item: int) -> FlextResult[str]:
             if item < 0:
                 return FlextResult[str].fail("Negative number")
@@ -566,18 +568,19 @@ class TestFlextResult:
 
         items = [1, 2, -1, 3]
         result = FlextResult.traverse(items, transform)
-        
+
         assert result.is_failure
         assert "Negative number" in result.error
 
     def test_result_traverse_collection_success(self) -> None:
         """Test traverse collection functionality with all successes."""
+
         def transform(item: int) -> FlextResult[str]:
             return FlextResult[str].ok(str(item * 2))
 
         items = [1, 2, 3]
         result = FlextResult.traverse(items, transform)
-        
+
         assert result.is_success
         assert result.value == ["2", "4", "6"]
 
@@ -586,9 +589,9 @@ class TestFlextResult:
         results = [
             FlextResult[str].ok("success1"),
             FlextResult[str].fail("error1"),
-            FlextResult[str].ok("success2")
+            FlextResult[str].ok("success2"),
         ]
-        
+
         result = FlextResult.sequence(results)
         assert result.is_failure
         assert "error1" in result.error
@@ -598,9 +601,9 @@ class TestFlextResult:
         results = [
             FlextResult[str].ok("value1"),
             FlextResult[str].fail("error1"),
-            FlextResult[str].ok("value2")
+            FlextResult[str].ok("value2"),
         ]
-        
+
         result = FlextResult.combine(*results)
         assert result.is_failure
         assert "error1" in result.error
@@ -623,9 +626,9 @@ class TestFlextResult:
             FlextResult[str].ok("success1"),
             FlextResult[str].fail("error1"),
             FlextResult[str].ok("success2"),
-            FlextResult[str].fail("error2")
+            FlextResult[str].fail("error2"),
         ]
-        
+
         successes = FlextResult.collect_successes(results)
         assert successes == ["success1", "success2"]
 
@@ -635,9 +638,9 @@ class TestFlextResult:
             FlextResult[str].ok("success1"),
             FlextResult[str].fail("error1"),
             FlextResult[str].ok("success2"),
-            FlextResult[str].fail("error2")
+            FlextResult[str].fail("error2"),
         ]
-        
+
         failures = FlextResult.collect_failures(results)
         assert failures == ["error1", "error2"]
 
@@ -646,9 +649,9 @@ class TestFlextResult:
         results = [
             FlextResult[str].ok("value1"),
             FlextResult[str].fail("Processing failed"),
-            FlextResult[str].ok("value2")
+            FlextResult[str].ok("value2"),
         ]
-        
+
         result = FlextResult.chain_results(*results)
         assert result.is_failure
         assert "Processing failed" in result.error
@@ -658,9 +661,9 @@ class TestFlextResult:
         results = [
             FlextResult[str].ok("value1"),
             FlextResult[str].ok("value2"),
-            FlextResult[str].ok("value3")
+            FlextResult[str].ok("value3"),
         ]
-        
+
         result = FlextResult.chain_results(*results)
         assert result.is_success
         assert result.value == ["value1", "value2", "value3"]
@@ -671,9 +674,9 @@ class TestFlextResult:
             FlextResult[str].ok("value1"),
             FlextResult[str].fail("error1"),
             FlextResult[str].ok("value2"),
-            FlextResult[str].fail("error2")
+            FlextResult[str].fail("error2"),
         ]
-        
+
         result = FlextResult.accumulate_errors(*results)
         assert result.is_failure
         assert "error1" in result.error
@@ -684,9 +687,9 @@ class TestFlextResult:
         results = [
             FlextResult[str].ok("value1"),
             FlextResult[str].ok("value2"),
-            FlextResult[str].ok("value3")
+            FlextResult[str].ok("value3"),
         ]
-        
+
         result = FlextResult.accumulate_errors(*results)
         assert result.is_success
         assert result.value == ["value1", "value2", "value3"]
@@ -702,9 +705,99 @@ class TestFlextResult:
         results = [
             FlextResult[str].ok("value1"),
             FlextResult[str].fail(None),  # None error
-            FlextResult[str].ok("value2")
+            FlextResult[str].ok("value2"),
         ]
-        
+
         result = FlextResult.accumulate_errors(*results)
         assert result.is_failure
         assert "Unknown error" in result.error
+
+    def test_result_parallel_map_with_fail_fast(self) -> None:
+        """Test parallel_map method with fail_fast=True."""
+        items = [1, 2, 3, 4, 5]
+
+        def process_item(item: int) -> FlextResult[str]:
+            if item == 3:
+                return FlextResult[str].fail("Processing failed")
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=True)
+        assert result.is_failure
+        assert result.error == "Processing failed"
+
+    def test_result_parallel_map_with_fail_fast_success(self) -> None:
+        """Test parallel_map method with fail_fast=True and all success."""
+        items = [1, 2, 3, 4, 5]
+
+        def process_item(item: int) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=True)
+        assert result.is_success
+        assert len(result.value) == 5
+        assert result.value[0] == "processed_1"
+        assert result.value[4] == "processed_5"
+
+    def test_result_parallel_map_without_fail_fast(self) -> None:
+        """Test parallel_map method with fail_fast=False."""
+        items = [1, 2, 3, 4, 5]
+
+        def process_item(item: int) -> FlextResult[str]:
+            if item == 3:
+                return FlextResult[str].fail("Processing failed")
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=False)
+        assert result.is_failure
+        assert "Processing failed" in result.error
+
+    def test_result_parallel_map_without_fail_fast_success(self) -> None:
+        """Test parallel_map method with fail_fast=False and all success."""
+        items = [1, 2, 3, 4, 5]
+
+        def process_item(item: int) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=False)
+        assert result.is_success
+        assert len(result.value) == 5
+
+    def test_result_parallel_map_with_multiple_errors(self) -> None:
+        """Test parallel_map method with multiple errors."""
+        items = [1, 2, 3, 4, 5]
+
+        def process_item(item: int) -> FlextResult[str]:
+            if item in {2, 4}:
+                return FlextResult[str].fail(f"Error processing {item}")
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=False)
+        assert result.is_failure
+        assert "Error processing 2" in result.error
+        assert "Error processing 4" in result.error
+
+    def test_result_parallel_map_with_none_error(self) -> None:
+        """Test parallel_map method with None error."""
+        items = [1, 2, 3]
+
+        def process_item(item: int) -> FlextResult[str]:
+            if item == 2:
+                return FlextResult[str].fail(None)
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=False)
+        assert result.is_failure
+        assert "Unknown error occurred" in result.error
+
+    def test_result_parallel_map_with_fail_fast_none_error(self) -> None:
+        """Test parallel_map method with fail_fast=True and None error."""
+        items = [1, 2, 3]
+
+        def process_item(item: int) -> FlextResult[str]:
+            if item == 2:
+                return FlextResult[str].fail(None)
+            return FlextResult[str].ok(f"processed_{item}")
+
+        result = FlextResult.parallel_map(items, process_item, fail_fast=True)
+        assert result.is_failure
+        assert "Unknown error occurred" in result.error

@@ -9,7 +9,9 @@ import signal
 import time
 
 import pytest
-from pydantic import BaseModel, Field, ValidationError
+
+# BaseModel usage replaced with FlextModels - using ValidationError from pydantic
+from pydantic import Field, ValidationError
 
 from flext_core import (
     FlextConstants,
@@ -658,8 +660,8 @@ class TestDomainServicesFixed:
 
         # Test all expected parent classes
 
-        # Use actual Pydantic BaseModel instead of non-existent FlextModels.BaseModel
-        assert isinstance(service, BaseModel)
+        # Service extends FlextModels foundation which is based on Pydantic BaseModel
+        assert isinstance(service, FlextModels.ArbitraryTypesModel)
         assert isinstance(service, FlextMixins.Serializable)
         assert isinstance(service, FlextMixins.Loggable)
 

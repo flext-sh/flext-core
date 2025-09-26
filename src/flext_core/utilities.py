@@ -609,7 +609,7 @@ class FlextUtilities:
                 return validation_result
 
             name: str = validation_result.unwrap()
-            sanitized_name = re.sub(r'[<>:"/\\|?*]', "_", name)
+            sanitized_name = re.sub(r'[<>: "/\\|?*]', "_", name)
             limited_name = sanitized_name[: FlextConstants.Validation.MAX_EMAIL_LENGTH]
 
             return FlextResult[str].ok(limited_name)
@@ -885,7 +885,7 @@ class FlextUtilities:
             if isinstance(value, int):
                 return FlextResult[int].ok(value)
 
-            # value is str at this point due to type annotation Union[int, str]
+            # value is str at this point due to type annotation int | str
             # Type checking already ensures this
 
             # Validate string before conversion
@@ -939,7 +939,7 @@ class FlextUtilities:
             # Check for obvious non-numeric patterns (basic validation)
             if cleaned_value.lower() in {"inf", "+inf", "-inf", "nan"}:
                 return FlextResult[float].fail(
-                    f"Special float values not allowed: '{value}'"
+                    f"Special float values not allowed: {value}"
                 )
 
             # Use minimal try/except only for interfacing with built-in float()
@@ -949,7 +949,7 @@ class FlextUtilities:
                 # Check for infinity and NaN after conversion
                 if not math.isfinite(converted_float):
                     return FlextResult[float].fail(
-                        f"Infinite or NaN values not allowed: '{value}'"
+                        f"Infinite or NaN values not allowed: {value}"
                     )
                 return FlextResult[float].ok(converted_float)
             except (ValueError, OverflowError) as e:
@@ -1963,7 +1963,7 @@ class FlextUtilities:
                     actual_type="NoneType",
                     context={
                         "operation": context_operation,
-                        "message_type": "NoneType",
+                        "message_type": type(None),
                         "validation_type": "serializable_check",
                     },
                     correlation_id=f"message_serialization_{int(time.time() * 1000)}",

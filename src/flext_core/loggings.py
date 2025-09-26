@@ -32,27 +32,39 @@ import structlog
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from structlog.typing import EventDict, Processor
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+# Import logging constants
+INFO = logging.INFO
+DEBUG = logging.DEBUG
+WARNING = logging.WARNING
+ERROR = logging.ERROR
+CRITICAL = logging.CRITICAL
+
+# Define error types
+StringError = "StringError"
+
+# Define processor name
+flext_logging = "flext_logging"
+
 
 def _get_config() -> dict[str, object]:
     """Get logging configuration lazily to avoid circular imports."""
     try:
-        from flext_core.config import FlextConfig  # noqa: PLC0415
-
         config = FlextConfig()
         return config.model_dump()
     except ImportError:
         # Fallback to default config if circular import occurs
         return {
-            "level": "INFO",
+            "level": INFO,
             "json_output": True,
             "include_source": True,
             "structured_output": True,
-            "log_verbosity": "INFO",
+            "log_verbosity": INFO,
             "format": "json",
             "log_file": None,
             "log_file_max_size": 10485760,
@@ -73,7 +85,7 @@ class FlextLogger:
         from flext_core.loggings import FlextLogger
 
         logger = FlextLogger(__name__)
-        logger.info("Operation completed", extra={"user_id": "123"})
+        logger.info("Operation completed", extra={"user_id": 123})
 
         # Context management
         logger.set_correlation_id("req-123")
@@ -525,9 +537,7 @@ class FlextLogger:
                     persistent_model = FlextLogger.LoggerPermanentContextModel(
                         app_name="copied",
                         app_version="1.0.0",
-                        environment=cast(
-                            "FlextTypes.Config.Environment", "development"
-                        ),
+                        environment="development",
                         permanent_context=self._logger.get_persistent_context(),
                         replace_existing=True,
                     )
@@ -621,6 +631,12 @@ class FlextLogger:
         logger = logging.getLogger()
         logger.handlers.clear()
 
+        # Define colors for console output
+        cyan = "cyan"
+        green = "green"
+        yellow = "yellow"
+        red = "red"
+
         # Console handler
         if console_enabled:
             console_handler = logging.StreamHandler(sys.stdout)
@@ -629,10 +645,10 @@ class FlextLogger:
                     colorlog.ColoredFormatter(
                         "%(log_color)s%(levelname)-8s%(reset)s %(message)s",
                         log_colors={
-                            "DEBUG": "cyan",
-                            "INFO": "green",
-                            "WARNING": "yellow",
-                            "ERROR": "red",
+                            "DEBUG": cyan,
+                            "INFO": green,
+                            "WARNING": yellow,
+                            "ERROR": red,
                             "CRITICAL": "red,bg_white",
                         },
                     )
@@ -821,6 +837,7 @@ class FlextLogger:
         valid_levels = FlextConstants.Logging.VALID_LEVELS
 
         # 0) Detect test environment deterministically (pytest session or explicit config)
+        # This is the only acceptable environment variable check as it's for test detection
         is_pytest = (
             os.getenv(FlextConstants.Platform.ENV_PYTEST_CURRENT_TEST) is not None
             or "pytest" in sys.modules
@@ -845,26 +862,13 @@ class FlextLogger:
 
         # Removed debug print statement for production code
 
-        # 3) Environment variable override when valid (after loading .env via config)
+        # 3) Use FlextConfig singleton instead of direct environment variable access
         if resolved_level is None:
-            # Check project-specific environment variable first
-            project_specific_var = self._get_project_specific_env_var("LOG_LEVEL")
-            if project_specific_var:
-                env_level = os.getenv(project_specific_var)
-                env_level_upper = (
-                    env_level.upper() if isinstance(env_level, str) else None
-                )
-                if env_level_upper in valid_levels:
-                    resolved_level = cast("FlextTypes.Config.LogLevel", env_level_upper)
-
-            # Fallback to global FLEXT_LOG_LEVEL
-            if resolved_level is None:
-                env_level = os.getenv("FLEXT_LOG_LEVEL")
-                env_level_upper = (
-                    env_level.upper() if isinstance(env_level, str) else None
-                )
-                if env_level_upper in valid_levels:
-                    resolved_level = cast("FlextTypes.Config.LogLevel", env_level_upper)
+            # Get configuration from singleton as single source of truth
+            flext_config = FlextConfig.get_global_instance()
+            config_level = flext_config.log_level
+            if config_level and config_level in valid_levels:
+                resolved_level = cast("FlextTypes.Config.LogLevel", config_level)
 
         # 4) Configuration/defaults from FlextConfig singleton
         if resolved_level is None:
@@ -918,11 +922,7 @@ class FlextLogger:
                 "name": self._service_name,
                 "version": self._service_version,
                 "instance_id": f"{platform.node()}-{os.getpid()}",
-                "environment": (
-                    os.environ.get("ENVIRONMENT")
-                    or os.environ.get("ENV")
-                    or "development"
-                ).lower(),
+                "environment": self._get_environment_from_config(),
             },
             "system": {
                 "hostname": platform.node(),
@@ -975,14 +975,24 @@ class FlextLogger:
         return hash(str(self))
 
     def _extract_service_name(self) -> str:
-        """Extract service name from logger name or environment.
+        """Extract service name from logger name or FlextConfig.
 
         Returns:
-            str: Service name extracted from environment or logger name
+            str: Service name extracted from configuration or logger name
 
         """
-        if service_name := os.environ.get("SERVICE_NAME"):
-            return service_name
+        # Try to get from FlextConfig first
+        try:
+            flext_config = FlextConfig.get_global_instance()
+            if hasattr(flext_config, "app_name") and flext_config.app_name:
+                # Extract service name from app_name if available
+                service_name = flext_config.app_name.lower().replace(" ", "-")
+                if service_name != "flext application":
+                    return service_name
+        except Exception:
+            # Fallback to module name extraction if config access fails
+            # Continue to module name extraction below
+            ...
 
         # Extract from module name
         min_parts = 2
@@ -999,7 +1009,7 @@ class FlextLogger:
             suffix: Suffix to append to the environment variable name
 
         Returns:
-            Optional[str]: Environment variable name or None if not applicable
+            str | None: Environment variable name or None if not applicable
 
         """
         service_name = self._extract_service_name()
@@ -1017,6 +1027,20 @@ class FlextLogger:
 
         """
         return datetime.now(UTC).isoformat()
+
+    def _get_environment_from_config(self) -> str:
+        """Get environment from FlextConfig singleton.
+
+        Returns:
+            str: Environment name from configuration or default
+
+        """
+        try:
+            flext_config = FlextConfig.get_global_instance()
+            return flext_config.environment.lower()
+        except Exception:
+            # Fallback to development if config access fails
+            return "development"
 
     def _sanitize_context(self, context: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         """Sanitize context by redacting sensitive data and ensuring JSON serialization.
@@ -1206,7 +1230,7 @@ class FlextLogger:
                     error_data["stack_trace"] = traceback.format_tb(error.__traceback__)
             else:
                 error_data = {
-                    "type": "StringError",
+                    "type": StringError,
                     "message": str(error),
                     "stack_trace": None,
                 }
@@ -1217,7 +1241,7 @@ class FlextLogger:
             config.get("include_context", FlextConstants.Logging.INCLUDE_CONTEXT)
             and context is not None
         ):
-            # Since context is Union[Mapping[str, object], None], we know it's a Mapping when not None
+            # Since context is Mapping[str | object, None], we know it's a Mapping when not None
             context_dict: dict[str, object] = dict(context)
 
             if context_dict:
@@ -1673,7 +1697,7 @@ class FlextLogger:
             **context: Additional context for the trace
 
         Returns:
-            Optional[str]: Trace ID if tracing enabled, None otherwise
+            str | None: Trace ID if tracing enabled, None otherwise
 
         """
         config: dict[str, object] = _get_config()
@@ -1991,7 +2015,7 @@ class FlextLogger:
 
         """
         event_dict["@metadata"] = {
-            "processor": "flext_logging",
+            "processor": flext_logging,
             "version": FlextConstants.Core.VERSION,
             "processed_at": datetime.now(UTC).isoformat(),
         }
@@ -2066,7 +2090,7 @@ class FlextLogger:
         """Get global correlation ID.
 
         Returns:
-            Optional[str]: Global correlation ID or None if not set
+            str | None: Global correlation ID or None if not set
 
         """
         return cls._global_correlation_id
@@ -2077,7 +2101,7 @@ class FlextLogger:
         """Get instance correlation ID.
 
         Returns:
-            Optional[str]: Instance correlation ID or None if not set
+            str | None: Instance correlation ID or None if not set
 
         """
         return self._correlation_id
@@ -2282,16 +2306,14 @@ class FlextLogger:
     def cleanup(self) -> None:
         """Clean up logger resources."""
         try:
-            # Clear any cached instances
-            if hasattr(self.__class__, '_instances'):
-                self.__class__._instances.clear()  # noqa: SLF001
-
             # Clear persistent context
-            if hasattr(self, '_persistent_context'):
+            if hasattr(self, "_persistent_context"):
                 self._persistent_context.clear()
-        except Exception:
-            # Ignore cleanup errors
-            pass
+        except Exception as e:
+            # Log cleanup errors instead of silently ignoring
+            # Use already imported logging module to avoid circular reference
+            logger = logging.getLogger(__name__)
+            logger.warning("Logger cleanup failed", extra={"error": str(e)})
 
     def get_statistics(self) -> dict[str, object]:
         """Get logger statistics.
@@ -2309,7 +2331,7 @@ class FlextLogger:
         }
 
         # Add persistent context size if available
-        if hasattr(self, '_persistent_context'):
+        if hasattr(self, "_persistent_context"):
             stats["persistent_context_size"] = len(self._persistent_context)
 
         return stats
@@ -2355,7 +2377,7 @@ class FlextLogger:
         }
 
         # Add persistent context if available
-        if hasattr(self, '_persistent_context'):
+        if hasattr(self, "_persistent_context"):
             config["persistent_context"] = dict(self._persistent_context)
 
         return config
@@ -2446,7 +2468,9 @@ class FlextLogger:
         """
         # This is a placeholder implementation for test compatibility
 
-    def log(self, level: str, message: str, *args: object, **context: object) -> FlextResult[None]:
+    def log(
+        self, level: str, message: str, *args: object, **context: object
+    ) -> FlextResult[None]:
         """Log message at specified level.
 
         Args:
