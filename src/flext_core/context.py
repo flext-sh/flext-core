@@ -20,7 +20,7 @@ from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from datetime import UTC, datetime
-from typing import Final
+from typing import Final, override
 
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -34,6 +34,7 @@ class FlextContext:
     propagate correlation IDs and structured metadata.
     """
 
+    @override
     def __init__(self, initial_data: FlextTypes.Core.Dict | None = None) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -246,7 +247,7 @@ class FlextContext:
 
         with self._lock:
             if isinstance(other, FlextContext):
-                self._data.update(other._data)  # noqa: SLF001
+                self._data.update(other.get_all_data())
             else:
                 self._data.update(other)
         return self
@@ -376,6 +377,16 @@ class FlextContext:
         """
         with self._lock:
             return self._metadata.copy()
+
+    def get_all_data(self) -> FlextTypes.Core.Dict:
+        """Get all data from the context.
+
+        Returns:
+            Dictionary of all context data
+
+        """
+        with self._lock:
+            return self._data.copy()
 
     def get_statistics(self) -> FlextTypes.Core.Dict:
         """Get context statistics.
@@ -979,6 +990,7 @@ class FlextContext:
         handler execution and provide reusable context management patterns.
         """
 
+        @override
         def __init__(self, handler_name: str, handler_mode: str) -> None:
             """Initialize handler execution context.
 

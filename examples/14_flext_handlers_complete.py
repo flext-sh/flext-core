@@ -457,7 +457,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         """Show comprehensive error handling patterns."""
         print("\n=== Error Handling Patterns ===")
 
-        class ValidationHandler(FlextHandlers[dict[str, str | int, float]]):
+        class ValidationHandler(FlextHandlers[dict[str, object], dict[str, object]]):
             """Handler demonstrating various error scenarios."""
 
             def __init__(self) -> None:
@@ -474,14 +474,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 self._logger = FlextLogger(__name__)
 
             def handle(
-                self, message: dict[str, str | int, float]
-            ) -> FlextResult[dict[str, str | int, float]]:
+                self, message: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 """Handle validation with comprehensive error handling."""
                 self._logger.info("Processing validation request")
 
                 # Required field validation
                 if not message.get("id"):
-                    return FlextResult[dict[str, str | int, float]].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Missing required field: id",
                         error_code="MISSING_FIELD",
                         error_data={
@@ -492,7 +492,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 # Type validation
                 if not isinstance(message.get("amount"), (int, float)):
-                    return FlextResult[dict[str, str | int, float]].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Invalid type for amount field",
                         error_code="TYPE_ERROR",
                         error_data={
@@ -505,14 +505,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Business rule validation
                 amount_value = message.get("amount", 0)
                 if not isinstance(amount_value, (int, float)):
-                    return FlextResult[dict[str, str | int, float]].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Amount must be a number",
                         error_code="TYPE_ERROR",
                     )
 
                 amount: int | float = amount_value
                 if amount < 0:
-                    return FlextResult[dict[str, str | int, float]].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Amount cannot be negative",
                         error_code="BUSINESS_RULE_VIOLATION",
                         error_data={"rule": "positive_amount", "value": amount},
@@ -526,7 +526,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     "status": "validated",
                 }
 
-                return FlextResult[dict[str, str | int, float]].ok(validated_data)
+                return FlextResult[dict[str, object]].ok(validated_data)
 
         # Test error handling
         print("\n1. Error Handling Scenarios:")
@@ -567,7 +567,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         class ProcessOrderCommand:
             order_id: str
             customer_id: str
-            items: list[dict[str, str | int, float]]
+            items: list[dict[str, object]]
             total_amount: Decimal
 
         class OrderValidationHandler(
@@ -625,7 +625,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             ) -> FlextResult[ProcessOrderCommand]:
                 """Enrich order with additional data."""
                 # Simulate enrichment by adding timestamps and IDs
-                enriched_items: list[dict[str, str | int, float]] = []
+                enriched_items: list[dict[str, object]] = []
                 for item in message.items:
                     enriched_item = item.copy()
                     enriched_item["item_id"] = f"ITEM-{uuid4().hex[:8]}"

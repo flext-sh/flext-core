@@ -68,7 +68,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             enable_middleware=True,
             enable_metrics=True,
             execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
-            max_cache_size=FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+            max_cache_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         )
 
         bus = FlextBus(bus_config=config)

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, NamedTuple
+from typing import ClassVar, NamedTuple, override
 
 from flext_core.constants import FlextConstants
 
@@ -77,6 +77,7 @@ class FlextVersionManager:
     class CompatibilityResult:
         """Python compatibility outcome backing modernization guarantees."""
 
+        @override
         def __init__(
             self,
             *,

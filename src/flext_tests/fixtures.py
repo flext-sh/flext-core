@@ -10,7 +10,7 @@ import asyncio
 import string
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Protocol, cast
+from typing import Protocol, cast, override
 
 from pydantic import Field
 
@@ -71,6 +71,7 @@ class FlextTestsFixtures:
     class FactoryRegistry:
         """Factory registry for testing."""
 
+        @override
         def __init__(self) -> None:
             """Initialize factory registry."""
             self.factories: FlextTypes.Core.Dict = {}
@@ -270,6 +271,7 @@ class FlextTestsFixtures:
     class SessionTestService:
         """Service for managing test sessions."""
 
+        @override
         def __init__(self) -> None:
             """Initialize session service."""
             self._data: dict[str, FlextTypes.Core.Dict] = {}
@@ -307,7 +309,7 @@ class FlextTestsFixtures:
                 session_id: Session identifier
 
             Returns:
-                Union[FlextTypes.Core.Dict, None]: Stored session data if present
+                FlextTypes.Core.Dict | None: Stored session data if present
 
             """
             return self._data.get(session_id)
@@ -435,6 +437,7 @@ class FlextTestsFixtures:
     class AsyncTestService:
         """Test service for async testing."""
 
+        @override
         def __init__(self) -> None:
             """Initialize async test service."""
             self._executor = FlextTestsFixtures.AsyncExecutor()
@@ -466,6 +469,7 @@ class FlextTestsFixtures:
     class AsyncExecutor:
         """Async executor for testing."""
 
+        @override
         def __init__(self) -> None:
             """Initialize async executor."""
             self._running: bool = False
@@ -524,6 +528,7 @@ class FlextTestsFixtures:
     class TestDataService:
         """Test data service for testing scenarios."""
 
+        @override
         def __init__(self) -> None:
             """Initialize test data service."""
             self._data_store: FlextTypes.Core.Dict = {}
@@ -577,6 +582,7 @@ class FlextTestsFixtures:
     class TestUser:
         """Test user model."""
 
+        @override
         def __init__(self, user_id: str, name: str, email: str) -> None:
             """Initialize test user."""
             self.id = user_id
@@ -587,6 +593,7 @@ class FlextTestsFixtures:
     class TestOrder:
         """Test order model."""
 
+        @override
         def __init__(self, order_id: str, user_id: str, amount: float) -> None:
             """Initialize test order."""
             self.id = order_id
@@ -598,6 +605,7 @@ class FlextTestsFixtures:
     class TestProduct:
         """Test product model."""
 
+        @override
         def __init__(self, product_id: str, name: str, price: float) -> None:
             """Initialize test product."""
             self.id = product_id

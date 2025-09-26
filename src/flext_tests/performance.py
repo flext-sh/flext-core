@@ -16,11 +16,19 @@ import time
 import tracemalloc
 from collections.abc import Awaitable, Callable, Generator
 from contextlib import _GeneratorContextManager, contextmanager
-from typing import Protocol, Self
+from typing import Protocol, Self, override
 
 import pytest
 
 from flext_core import FlextTypes, P, T
+
+# Performance pattern constants
+insufficient_data = "insufficient_data"
+linear = "linear"
+medium = "medium"
+quadratic_or_worse = "quadratic_or_worse"
+low = "low"
+unknown = "unknown"
 
 
 class FlextTestsPerformance:
@@ -37,6 +45,7 @@ class FlextTestsPerformance:
     class ComplexityAnalyzer:
         """Analyze algorithmic complexity and performance characteristics."""
 
+        @override
         def __init__(self: Self) -> None:
             """Initialize complexityanalyzer:."""
             self.measurements: list[FlextTypes.Core.Dict] = []
@@ -104,7 +113,7 @@ class FlextTestsPerformance:
 
             """
             if len(results) < 2:
-                return {"pattern": "insufficient_data"}
+                return {"pattern": insufficient_data}
 
             sizes = [
                 float(r["input_size"])
@@ -128,19 +137,20 @@ class FlextTestsPerformance:
                     abs(ratio_1 - size_ratio_1) < 0.5
                     and abs(ratio_2 - size_ratio_2) < 0.5
                 ):
-                    return {"pattern": "linear", "confidence": "medium"}
+                    return {"pattern": linear, "confidence": medium}
 
                 # Check for quadratic (simplified)
                 if ratio_1 > size_ratio_1 * 1.5 and ratio_2 > size_ratio_2 * 1.5:
-                    return {"pattern": "quadratic_or_worse", "confidence": "low"}
+                    return {"pattern": quadratic_or_worse, "confidence": low}
 
-            return {"pattern": "unknown", "confidence": "low"}
+            return {"pattern": unknown, "confidence": low}
 
     # === Stress Testing ===
 
     class StressTestRunner:
         """Run stress tests with configurable load patterns."""
 
+        @override
         def __init__(self: Self) -> None:
             """Initialize stresstestrunner:."""
             self.results: list[FlextTypes.Core.Dict] = []
@@ -250,6 +260,7 @@ class FlextTestsPerformance:
     class PerformanceProfiler:
         """Advanced performance profiling with memory and time tracking."""
 
+        @override
         def __init__(self: Self) -> None:
             """Initialize performanceprofiler:."""
             self.measurements: list[FlextTypes.Core.Dict] = []
@@ -358,7 +369,7 @@ class FlextTestsPerformance:
                 func(*args, **kwargs)
 
             # Actual benchmark
-            return benchmark(func, *args, **kwargs)
+            return benchmark(func, *args, **kwargs)  # type: ignore[arg-type]
 
         @staticmethod
         def benchmark_complexity(
@@ -495,7 +506,7 @@ class FlextTestsPerformance:
                 T: Benchmark result
 
             """
-            result = benchmark(func, *args, **kwargs)
+            result = benchmark(func, *args, **kwargs)  # type: ignore[arg-type]
             stats = getattr(benchmark, "stats", None)
             current_time = getattr(stats, "mean", 0.0) if stats else 0.0
 
@@ -551,7 +562,7 @@ class FlextTestsPerformance:
                         max_workers=workers,
                     ) as executor:
                         futures = [
-                            executor.submit(func, *args, **kwargs)
+                            executor.submit(func, *args, **kwargs)  # type: ignore[arg-type]
                             for _ in range(workers)
                         ]
                         return [future.result() for future in futures]

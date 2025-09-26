@@ -23,7 +23,7 @@ Usage:
         return FlextResult[dict].ok(data)
 
 
-    result: FlextResult[object] = validate_data({"key": "value"})
+    result: FlextResult[object] = validate_data({"key": value})
     if result.is_success:
         validated_data: dict[str, object] = (
             result.unwrap()
@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import contextlib
 import inspect
+import logging
 import signal
 import time
 import types
@@ -45,7 +46,14 @@ from collections.abc import Callable, Iterator
 from typing import TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import T1, T2, T3, FlextTypes, TItem, TResult, TUtil, U, V
+from flext_core.typings import (
+    FlextTypes,
+    TItem,
+    TResult,
+    TUtil,
+    U,
+    V,
+)
 
 # =============================================================================
 # FLEXT RESULT
@@ -173,7 +181,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         def collect_failures[TCollectFail](
             cls,
             results: list[FlextResult[TCollectFail]],
-        ) -> list[str]:
+        ) -> FlextTypes.Core.StringList:
             """Collect all error messages from failed results."""
             return [r.error for r in results if r.is_failure and r.error]
 
@@ -182,11 +190,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             cls,
             items: list[TBatch],
             processor: Callable[[TBatch], FlextResult[UBatch]],
-        ) -> tuple[list[UBatch], list[str]]:
+        ) -> tuple[list[UBatch], FlextTypes.Core.StringList]:
             """Process batch and separate successes from failures."""
             results: list[FlextResult[UBatch]] = [processor(item) for item in items]
             successes: list[UBatch] = cls.collect_successes(results)
-            failures: list[str] = cls.collect_failures(results)
+            failures: FlextTypes.Core.StringList = cls.collect_failures(results)
             return successes, failures
 
     class _Collections:
@@ -216,7 +224,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         ) -> FlextResult[list[TAccumulate]]:
             """Accumulate all errors or return all successes."""
             successes: list[TAccumulate] = []
-            errors: list[str] = []
+            errors: FlextTypes.Core.StringList = []
 
             for result in results:
                 if result.is_success:
@@ -255,7 +263,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 return FlextResult[list[UPar]].ok(fast_successes)
 
             successes: list[UPar] = []
-            errors: list[str] = []
+            errors: FlextTypes.Core.StringList = []
             for result in results:
                 if result.is_failure:
                     error_msg = result.error or "Operation failed"
@@ -629,7 +637,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         raise IndexError(msg)
 
     def __or__(self, default: T_co) -> T_co:
-        """Union[Use, operator] for default values: Union[result, default_value.]."""
+        """Use | operator for default values: result | default_value.."""
         if self.is_success:
             if self._data is None:
                 return default  # Handle None data case
@@ -996,7 +1004,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult._Utils.collect_successes(results)
 
     @classmethod
-    def collect_failures(cls, results: list[FlextResult[TUtil]]) -> list[str]:
+    def collect_failures(
+        cls, results: list[FlextResult[TUtil]]
+    ) -> FlextTypes.Core.StringList:
         """Collect error messages from failures."""
         return FlextResult._Utils.collect_failures(results)
 
@@ -1013,7 +1023,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         cls,
         items: list[TItem],
         processor: Callable[[TItem], FlextResult[TUtil]],
-    ) -> tuple[list[TUtil], list[str]]:
+    ) -> tuple[list[TUtil], FlextTypes.Core.StringList]:
         """Process batch and separate successes from failures."""
         return FlextResult._Utils.batch_process(items, processor)
 
@@ -1267,9 +1277,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 # This is intentional - we want to attempt all fallbacks
                 # Log the exception for debugging purposes
                 try:
-                    from flext_core.loggings import FlextLogger  # noqa: PLC0415
-
-                    logger = FlextLogger(__name__)
+                    logger = logging.getLogger(__name__)
                     logger.debug("Alternative failed: %s", e)
                 except (TypeError, AttributeError, ImportError):
                     # FlextLogger not available, skip logging
@@ -1453,7 +1461,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def collect_all_errors[TCollect](
         cls,
         *results: FlextResult[TCollect],
-    ) -> tuple[list[TCollect], list[str]]:
+    ) -> tuple[list[TCollect], FlextTypes.Core.StringList]:
         """Collect all successful values and all error messages.
 
         Args:
@@ -1464,7 +1472,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         """
         successes: list[TCollect] = []
-        errors: list[str] = []
+        errors: FlextTypes.Core.StringList = []
 
         for result in results:
             if result.is_success:

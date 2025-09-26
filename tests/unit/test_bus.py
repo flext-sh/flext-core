@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import time
 
-from pydantic import BaseModel
-
-from flext_core import FlextBus, FlextResult
+# BaseModel usage replaced with FlextModels for test standardization
+from flext_core import FlextBus, FlextModels, FlextResult
 
 
 class TestFlextBus:
@@ -25,7 +24,7 @@ class TestFlextBus:
 
     def test_bus_with_custom_config(self) -> None:
         """Test bus initialization with custom configuration."""
-        config = {"enable_middleware": True, "enable_caching": False}
+        config: dict[str, object] = {"enable_middleware": True, "enable_caching": False}
         bus = FlextBus(bus_config=config)
         assert bus is not None
         assert bus.config.enable_caching is False
@@ -46,7 +45,7 @@ class TestFlextBus:
         """Test handler registration with command type and handler."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class TestHandler:
@@ -89,7 +88,7 @@ class TestFlextBus:
         """Test command execution."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class TestHandler:
@@ -99,7 +98,7 @@ class TestFlextBus:
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         result = bus.execute(command)
         assert result.is_success
         assert result.value == "processed_test_data"
@@ -108,10 +107,10 @@ class TestFlextBus:
         """Test executing command with non-existent handler."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         result = bus.execute(command)
         assert result.is_failure
 
@@ -119,7 +118,7 @@ class TestFlextBus:
         """Test executing command with failing handler."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class FailingHandler:
@@ -131,9 +130,10 @@ class TestFlextBus:
         handler = FailingHandler()
         bus.register_handler("TestCommand", handler)
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         result = bus.execute(command)
         assert result.is_failure
+        assert result.error is not None
         assert "Handler failed" in result.error
 
     def test_get_registered_handlers(self) -> None:
@@ -168,7 +168,7 @@ class TestFlextBus:
         """Test finding handler for command."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class TestHandler:
@@ -178,7 +178,7 @@ class TestFlextBus:
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         found_handler = bus.find_handler(command)
         assert found_handler is not None
         assert found_handler == handler
@@ -187,7 +187,7 @@ class TestFlextBus:
         """Test send_command method (compatibility shim)."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class TestHandler:
@@ -197,7 +197,7 @@ class TestFlextBus:
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         result = bus.send_command(command)
         assert result.is_success
         assert result.value == "processed_test_data"
@@ -206,7 +206,7 @@ class TestFlextBus:
         """Test bus error handling mechanisms."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class ErrorHandler:
@@ -217,16 +217,17 @@ class TestFlextBus:
         handler = ErrorHandler()
         bus.register_handler("TestCommand", handler)
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         result = bus.execute(command)
         assert result.is_failure
+        assert result.error is not None
         assert "Handler error" in result.error
 
     def test_bus_performance(self) -> None:
         """Test bus performance characteristics."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class FastHandler:
@@ -238,7 +239,7 @@ class TestFlextBus:
 
         start_time = time.time()
         for i in range(10):  # Reduced from 100 to 10 for faster execution
-            command = TestCommand(f"data_{i}")
+            command = TestCommand(data=f"data_{i}")
             result = bus.execute(command)
             assert result.is_success
         end_time = time.time()
@@ -250,7 +251,7 @@ class TestFlextBus:
         """Test bus concurrent access patterns."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class TestHandler:
@@ -263,7 +264,7 @@ class TestFlextBus:
         # Simulate concurrent access
         results = []
         for i in range(10):
-            command = TestCommand(f"data_{i}")
+            command = TestCommand(data=f"data_{i}")
             result = bus.execute(command)
             results.append(result)
 
@@ -274,7 +275,7 @@ class TestFlextBus:
         """Test bus middleware functionality."""
         bus = FlextBus()
 
-        class TestCommand(BaseModel):
+        class TestCommand(FlextModels.Command):
             data: str
 
         class TestMiddleware:
@@ -296,7 +297,7 @@ class TestFlextBus:
         bus.add_middleware(middleware)
         bus.register_handler("TestCommand", handler)
 
-        command = TestCommand("test_data")
+        command = TestCommand(data="test_data")
         result = bus.execute(command)
         assert result.is_success
 
@@ -309,7 +310,7 @@ class TestFlextBus:
     def test_create_simple_handler(self) -> None:
         """Test create_simple_handler factory method."""
 
-        def simple_handler(data: str) -> str:
+        def simple_handler(data: object) -> object:
             return f"processed_{data}"
 
         handler = FlextBus.create_simple_handler(simple_handler)
@@ -318,7 +319,7 @@ class TestFlextBus:
     def test_create_query_handler(self) -> None:
         """Test create_query_handler factory method."""
 
-        def query_handler(data: str) -> str:
+        def query_handler(data: object) -> object:
             return f"query_result_{data}"
 
         handler = FlextBus.create_query_handler(query_handler)

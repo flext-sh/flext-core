@@ -14,7 +14,7 @@ import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from contextvars import Token
-from typing import Literal, cast
+from typing import Literal, cast, override
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -37,6 +37,7 @@ class FlextDispatcher:
     contract without bespoke buses.
     """
 
+    @override
     def __init__(
         self,
         *,
@@ -712,11 +713,10 @@ class FlextDispatcher:
     def cleanup(self) -> None:
         """Clean up dispatcher resources."""
         try:
-            if hasattr(self, '_bus') and self._bus and hasattr(self._bus, 'cleanup'):
+            if hasattr(self, "_bus") and self._bus and hasattr(self._bus, "cleanup"):
                 self._bus.cleanup()
-        except Exception:
-            # Ignore cleanup errors
-            pass
+        except Exception as e:
+            self._logger.warning("Cleanup failed", error=str(e))
 
     def get_handlers(self, _message_type: str) -> list[object]:
         """Get handlers for specific message type.
@@ -735,11 +735,14 @@ class FlextDispatcher:
     def clear_handlers(self) -> None:
         """Clear all registered handlers."""
         try:
-            if hasattr(self, '_bus') and self._bus and hasattr(self._bus, 'clear_handlers'):
+            if (
+                hasattr(self, "_bus")
+                and self._bus
+                and hasattr(self._bus, "clear_handlers")
+            ):
                 self._bus.clear_handlers()
-        except Exception:
-            # Ignore clear errors
-            pass
+        except Exception as e:
+            self._logger.warning("Clear handlers failed", error=str(e))
 
     def get_statistics(self) -> dict[str, object]:
         """Get dispatcher statistics.
@@ -750,12 +753,12 @@ class FlextDispatcher:
         """
         stats: dict[str, object] = {
             "dispatcher_initialized": True,
-            "bus_available": hasattr(self, '_bus') and self._bus is not None,
-            "config_loaded": hasattr(self, '_config') and bool(self._config),
+            "bus_available": hasattr(self, "_bus") and self._bus is not None,
+            "config_loaded": hasattr(self, "_config") and bool(self._config),
         }
 
         # Add bus statistics if available
-        if hasattr(self, '_bus') and self._bus and hasattr(self._bus, 'get_statistics'):
+        if hasattr(self, "_bus") and self._bus and hasattr(self._bus, "get_statistics"):
             try:
                 bus_stats = self._bus.get_statistics()
                 stats["bus_statistics"] = bus_stats
@@ -773,11 +776,11 @@ class FlextDispatcher:
         """
         try:
             # Validate configuration
-            if not hasattr(self, '_config') or not self._config:
+            if not hasattr(self, "_config") or not self._config:
                 return FlextResult[None].fail("Dispatcher not properly configured")
 
             # Validate bus
-            if not hasattr(self, '_bus') or not self._bus:
+            if not hasattr(self, "_bus") or not self._bus:
                 return FlextResult[None].fail("Dispatcher bus not available")
 
             return FlextResult[None].ok(None)
@@ -793,10 +796,10 @@ class FlextDispatcher:
         """
         config = {}
 
-        if hasattr(self, '_config'):
+        if hasattr(self, "_config"):
             config.update(self._config)
 
-        if hasattr(self, '_bus') and self._bus and hasattr(self._bus, 'export_config'):
+        if hasattr(self, "_bus") and self._bus and hasattr(self._bus, "export_config"):
             try:
                 bus_config = self._bus.export_config()
                 config["bus_config"] = bus_config
@@ -816,15 +819,23 @@ class FlextDispatcher:
 
         """
         try:
-            if hasattr(self, '_config'):
+            if hasattr(self, "_config"):
                 self._config.update(config)
 
             # Import bus config if available
-            if ("bus_config" in config and hasattr(self, '_bus') and self._bus and
-                hasattr(self._bus, 'import_config')):
-                bus_result = self._bus.import_config(config["bus_config"])
+            if (
+                "bus_config" in config
+                and hasattr(self, "_bus")
+                and self._bus
+                and hasattr(self._bus, "import_config")
+            ):
+                bus_result = self._bus.import_config(
+                    cast("dict[str, object]", config["bus_config"])
+                )
                 if bus_result.is_failure:
-                    return FlextResult[None].fail(f"Bus config import failed: {bus_result.error}")
+                    return FlextResult[None].fail(
+                        f"Bus config import failed: {bus_result.error}"
+                    )
 
             return FlextResult[None].ok(None)
         except Exception as e:

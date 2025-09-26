@@ -139,8 +139,8 @@ class FlextCqrs:
             except Exception as e:
                 return FlextResult[FlextModels.Command].fail(
                     (
-                        f"{FlextConstants.Messages.VALIDATION_FAILED}:"
-                        f" Command validation failed: {e!s}"
+                        f"{FlextConstants.Messages.VALIDATION_FAILED}: "
+                        f"Command validation failed: {e!s}"
                     ),
                     error_code=FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
                     error_data={

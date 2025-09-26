@@ -120,7 +120,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, str | int, float]
+        sample_data: dict[str, object]
         | bool
         | list[int]
         | FlextTypes.Core.Headers
@@ -137,7 +137,11 @@ class TestLibraryIntegration:
 
         """
         # Arrange
-        test_value = cast("str", sample_data["string"])
+        if not isinstance(sample_data, dict):
+            pytest.skip("sample_data is not a dictionary")
+        # Type narrow sample_data to dict[str, object] for indexing
+        sample_dict = cast("dict[str, object]", sample_data)
+        test_value = cast("str", sample_dict["string"])
 
         # Act - Test FlextResult creation
         result = FlextResult[str].ok(test_value)

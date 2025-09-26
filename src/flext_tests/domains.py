@@ -173,7 +173,7 @@ class FlextTestsDomains:
             "type": "user_created",
             "timestamp": "2024-01-01T00:00:00Z",
             "data": {"user_id": str(uuid.uuid4())},
-            "metadata": {"source": "test", "version": "1.0"},
+            "metadata": {"source": "test", "version": 1.0},
         }
         data.update(overrides)
         return data

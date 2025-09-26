@@ -11,7 +11,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Generic, Protocol, overload, runtime_checkable
+from typing import Generic, Protocol, overload, override, runtime_checkable
 
 from flext_core.config import FlextConfig
 from flext_core.result import FlextResult
@@ -35,6 +35,7 @@ class FlextProtocols:
     points relied upon during the 1.0.0 rollout.
     """
 
+    @override
     def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize FlextProtocols with optional configuration.
 
@@ -288,7 +289,7 @@ class FlextProtocols:
             FlextResult[list[object]]: List of validation results
 
         """
-        results = []
+        results: list[object] = []
         for implementation in implementations:
             result = self.validate_implementation(name, implementation)
             if result.is_failure:

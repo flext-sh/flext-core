@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import tempfile
 from collections.abc import Callable
-from typing import Protocol, cast
+from typing import Protocol, cast, override
 
 from flext_core import (
     FlextConfig,
@@ -38,6 +38,7 @@ class FlextTestsBuilders:
             """Call signature for test functions."""
             ...
 
+    @override
     def __init__(self) -> None:
         """Initialize unified test builders service."""
         try:
@@ -118,7 +119,7 @@ class FlextTestsBuilders:
             },
             "logger": {
                 "level": FlextConstants.Config.LogLevel.DEBUG,
-                "format": "json",
+                "format": json,
                 "handlers": ["console"],
             },
         }
@@ -489,7 +490,7 @@ class FlextTestsBuilders:
             "logger",
             {
                 "level": FlextConstants.Config.LogLevel.DEBUG,
-                "format": "json",
+                "format": json,
                 "handlers": ["console"],
             },
         )

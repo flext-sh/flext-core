@@ -10,7 +10,7 @@ import json
 import threading
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, TypedDict, cast
+from typing import ClassVar, TypedDict, cast
 
 from pydantic import (
     Field,
@@ -21,9 +21,8 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
-
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
@@ -581,7 +580,7 @@ class FlextConfig(BaseSettings):
 
     # Class methods for creating instances
     @classmethod
-    def create(cls, **kwargs: object) -> FlextConfig:
+    def create(cls, **kwargs: FlextTypes.Core.Value) -> FlextConfig:
         """Create a new FlextConfig instance with the given parameters.
 
         Args:
@@ -589,10 +588,13 @@ class FlextConfig(BaseSettings):
                 flexible kwargs with proper validation and type conversion.
 
         """
-        return cls(**kwargs)
+        # Pydantic BaseSettings handles kwargs validation and type conversion automatically
+        return cls(**kwargs)  # type: ignore[arg-type]
 
     @classmethod
-    def create_for_environment(cls, environment: str, **kwargs: object) -> FlextConfig:
+    def create_for_environment(
+        cls, environment: str, **kwargs: FlextTypes.Core.Value
+    ) -> FlextConfig:
         """Create a FlextConfig instance for a specific environment.
 
         Args:
@@ -601,7 +603,8 @@ class FlextConfig(BaseSettings):
                 handles flexible kwargs with proper validation and type conversion.
 
         """
-        return cls(environment=environment, **kwargs)
+        # Pydantic BaseSettings handles kwargs validation and type conversion automatically
+        return cls(environment=environment, **kwargs)  # type: ignore[arg-type]
 
     @classmethod
     def from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
@@ -616,9 +619,6 @@ class FlextConfig(BaseSettings):
             FlextResult containing the loaded configuration or error
 
         """
-        # Import at runtime to avoid circular dependency
-        from flext_core.result import FlextResult  # noqa: PLC0415
-
         try:
             path = Path(file_path)
             if not path.exists():

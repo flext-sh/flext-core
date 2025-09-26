@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
-from typing import ClassVar, Generic, Protocol, Self, runtime_checkable
+from typing import ClassVar, Generic, Protocol, Self, override, runtime_checkable
 
 from flext_core import (
     FlextConstants,
@@ -135,6 +135,7 @@ class FlextTestsUtilities:
     class TestFactory(Generic[T]):
         """Factory for creating test objects using FlextUtilities.Generators."""
 
+        @override
         def __init__(self, model_class: type[T]) -> None:
             """Initialize test factory."""
             self._model_class = model_class
@@ -340,6 +341,7 @@ class FlextTestsUtilities:
     class FunctionalTestService:
         """Functional test service that uses FlextProcessors for DI."""
 
+        @override
         def __init__(self, service_type: str = "generic", **config: object) -> None:
             """Initialize functional test service using FlextProcessors."""
             self.service_type = service_type
@@ -466,6 +468,7 @@ class FlextTestsUtilities:
     class FunctionalTestContext:
         """Functional context manager that uses FlextContext."""
 
+        @override
         def __init__(
             self,
             target: object,
@@ -642,7 +645,7 @@ class FlextTestsUtilities:
             "bind_password": "testpass",
             "base_dn": "dc=test,dc=com",
             "use_ssl": False,
-            "timeout": FlextConstants.Defaults.TIMEOUT,
+            "timeout": "FlextConstants.Defaults.TIMEOUT",
         }
 
     @staticmethod

@@ -122,7 +122,7 @@ class TestFlextUtilities:
     def test_utility_error_handling(self) -> None:
         """Test error handling in utility functions."""
         # Test error handling
-        result = FlextUtilities.Validation.validate_email(None)  # type: ignore[arg-type]
+        result = FlextUtilities.Validation.validate_email(None)
         assert result.is_failure
 
     def test_utility_performance(self) -> None:
@@ -143,6 +143,6 @@ class TestFlextUtilities:
     def test_utility_type_safety(self) -> None:
         """Test type safety of utility functions."""
         # Test type safety
-        result = FlextUtilities.Validation.validate_string_not_empty("")  # type: ignore[arg-type]
+        result = FlextUtilities.Validation.validate_string_not_empty("")
         # Should handle validation gracefully
         assert result.is_failure

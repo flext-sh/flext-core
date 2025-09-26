@@ -15,7 +15,7 @@ from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
-from typing import Protocol, cast
+from typing import Protocol, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -147,6 +147,7 @@ class FlextBus(FlextMixins):
             )
             return ("vars", normalized_vars)
 
+    @override
     def __init__(
         self,
         bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
@@ -155,7 +156,7 @@ class FlextBus(FlextMixins):
         enable_metrics: bool | None = None,
         enable_caching: bool = True,
         execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
-        max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+        max_cache_size: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         implementation_path: str = "flext_core.bus:FlextBus",
     ) -> None:
         """Initialise the bus using the CQRS configuration models."""
@@ -202,7 +203,7 @@ class FlextBus(FlextMixins):
         # Handlers registry: command type -> handler instance
         self._handlers: FlextTypes.Core.Dict = {}
         # Middleware pipeline (controlled by config)
-        self._middleware: list[FlextTypes.Core.Dict] = []
+        self._middleware: list[object] = []
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Core.Dict = {}
         # Execution counter
@@ -396,6 +397,11 @@ class FlextBus(FlextMixins):
                 msg = "Invalid arguments: command_type and handler are required"
                 return FlextResult[None].fail(msg)
 
+            # Validate command_type is not empty string
+            if isinstance(command_type_obj, str) and not command_type_obj.strip():
+                msg = "Command type cannot be empty"
+                return FlextResult[None].fail(msg)
+
             # Compute key for local registry visibility
             key = self._normalize_command_key(command_type_obj)
             self._handlers[key] = handler
@@ -418,7 +424,7 @@ class FlextBus(FlextMixins):
             command: The command/query object to find handler for
 
         Returns:
-            Union[object, None]: The handler instance or None if not found
+            object | None: The handler instance or None if not found
 
         """
         command_type = type(command)
@@ -619,8 +625,8 @@ class FlextBus(FlextMixins):
 
         for middleware_config in sorted_middleware:
             # Extract configuration values - middleware_config is from self._middleware which stores dicts
-            if hasattr(middleware_config, "get"):  # It's a dict-like object
-                config_dict = middleware_config
+            if isinstance(middleware_config, dict):  # It's a dict-like object
+                config_dict = cast("dict[str, object]", middleware_config)
                 middleware_id_value = config_dict.get("middleware_id")
                 middleware_type_value = config_dict.get("middleware_type", "")
                 order_value = config_dict.get("order", 0)

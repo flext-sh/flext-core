@@ -233,7 +233,9 @@ class FlextTestsHypothesis:
                         st.builds(
                             FlextTestsHypothesis.FlextStrategies._build_path,
                             p=st.text(
-                                alphabet=list(string.ascii_lowercase + string.digits + "-_/"),
+                                alphabet=list(
+                                    string.ascii_lowercase + string.digits + "-_/"
+                                ),
                                 min_size=1,
                                 max_size=50,
                             ),
@@ -502,7 +504,9 @@ class FlextTestsHypothesis:
             """Generate Unicode edge cases."""
             return st.one_of(
                 [
-                    st.text(alphabet=list("🚀🎯✅❌🔧📊"), min_size=1, max_size=10),  # Emojis
+                    st.text(
+                        alphabet=list("🚀🎯✅❌🔧📊"), min_size=1, max_size=10
+                    ),  # Emojis
                     st.text(
                         alphabet=list("áéíóúñü"),
                         min_size=1,
@@ -634,7 +638,7 @@ class FlextTestsHypothesis:
             """Check if URL meets basic validation assumptions."""
             return (
                 "://" in url
-                and len(url) > FlextTestsHypothesis.MIN_URL_LENGTH  # Minimum: "http://"
+                and len(url) > FlextTestsHypothesis.MIN_URL_LENGTH  # Minimum: http://
                 and not url.endswith("://")
                 and url.startswith(("http://", "https://"))
             )
@@ -702,7 +706,7 @@ class FlextTestsHypothesis:
                     "metadata": draw(
                         st.dictionaries(
                             st.text(min_size=1, max_size=20),
-                            st.one_of([st.text(), st.integers(), st.booleans()]),
+                            st.one_of(st.text(), st.integers(), st.booleans()),  # type: ignore[arg-type]
                             max_size=5,
                         ),
                     ),

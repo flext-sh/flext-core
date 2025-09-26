@@ -80,7 +80,7 @@ class FlextTestsAsyncs:
                 if asyncio.iscoroutinefunction(condition):
                     condition_result = await condition()
                 else:
-                    condition_result = condition()
+                    condition_result = condition()  # type: ignore[assignment]
 
                 # Check the actual boolean value, not the FlextResult wrapper
                 if condition_result:
@@ -186,10 +186,12 @@ class FlextTestsAsyncs:
             return []
 
         if return_exceptions:
-            results: list[T | BaseException] = list(await asyncio.gather(
-                *coroutines,
-                return_exceptions=True,
-            ))
+            results: list[T | BaseException] = list(
+                await asyncio.gather(
+                    *coroutines,
+                    return_exceptions=True,
+                )
+            )
             # Filter out exceptions and return only successful results
             return [r for r in results if not isinstance(r, BaseException)]
 
@@ -211,10 +213,12 @@ class FlextTestsAsyncs:
         if not tasks:
             return []
         if return_exceptions:
-            results: list[T | BaseException] = list(await asyncio.gather(
-                *tasks,
-                return_exceptions=True,
-            ))
+            results: list[T | BaseException] = list(
+                await asyncio.gather(
+                    *tasks,
+                    return_exceptions=True,
+                )
+            )
             # Filter out exceptions and return only successful results
             return [r for r in results if not isinstance(r, BaseException)]
         # When return_exceptions=False, asyncio.gather will raise on first exception
@@ -639,9 +643,9 @@ class FlextTestsAsyncs:
 
         # Start all workers concurrently
         workers = [worker() for _ in range(concurrency_level)]
-        worker_results: list[list[FlextTypes.Core.Dict]] = list(await asyncio.gather(
-            *workers
-        ))
+        worker_results: list[list[FlextTypes.Core.Dict]] = list(
+            await asyncio.gather(*workers)
+        )
 
         # Flatten results
         all_results: list[FlextTypes.Core.Dict] = []

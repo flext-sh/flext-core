@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import override
 
 from flext_core import (
     FlextResult,
@@ -312,6 +313,7 @@ class FlextTestsFactories:
     class TestDataBuilder:
         """Builder pattern for complex test data scenarios."""
 
+        @override
         def __init__(self) -> None:
             """Initialize test data builder."""
             self._data: FlextTypes.Core.Dict = {}

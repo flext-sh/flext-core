@@ -23,6 +23,7 @@ Usage:
         name: str
         email: str
 
+        @override
         def validate(self: object) -> FlextResult[None]:
             if "@" not in self.email:
                 return FlextResult[None].fail("Invalid email")
@@ -74,15 +75,6 @@ from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
-
-
-class WorkspaceStatus(StrEnum):
-    """Workspace status enumeration."""
-
-    INITIALIZING = "initializing"
-    READY = "ready"
-    ERROR = "error"
-    MAINTENANCE = "maintenance"
 
 
 def _create_default_pagination() -> FlextModels.Pagination:
@@ -706,7 +698,7 @@ class FlextModels:
         batch_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         items: Annotated[list[object], Field(default_factory=list)]
         size: int = Field(
-            default=FlextConstants.Performance.DEFAULT_BATCH_SIZE_SMALL, ge=1
+            default=FlextConstants.Performance.BatchProcessing.SMALL_SIZE, ge=1
         )
         processed_count: int = 0
 
@@ -715,7 +707,7 @@ class FlextModels:
 
         stream_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         position: int = 0
-        batch_size: int = FlextConstants.Performance.DEFAULT_STREAM_BATCH_SIZE
+        batch_size: int = FlextConstants.Performance.BatchProcessing.STREAM_SIZE
         buffer: Annotated[list[object], Field(default_factory=list)]
 
     class Pipeline(ArbitraryTypesModel):
@@ -1060,6 +1052,14 @@ class FlextModels:
         code: str
         description: str | None = None
 
+    class WorkspaceStatus(StrEnum):
+        """Workspace status enumeration."""
+
+        INITIALIZING = "initializing"
+        READY = "ready"
+        ERROR = "error"
+        MAINTENANCE = "maintenance"
+
     # Factory methods for creating validated models
     @staticmethod
     def create_validated_email(email: str) -> FlextResult[EmailAddress]:
@@ -1369,8 +1369,8 @@ class FlextModels:
         @classmethod
         def validate_data_items(cls, v: list[object]) -> list[object]:
             """Validate data items are not empty when provided."""
-            if len(v) > FlextConstants.Performance.MAX_BATCH_ITEMS:
-                msg = f"Batch cannot exceed {FlextConstants.Performance.MAX_BATCH_ITEMS} items"
+            if len(v) > FlextConstants.Performance.BatchProcessing.MAX_ITEMS:
+                msg = f"Batch cannot exceed {FlextConstants.Performance.BatchProcessing.MAX_ITEMS} items"
                 raise ValueError(msg)
             return v
 
@@ -1387,7 +1387,9 @@ class FlextModels:
         @model_validator(mode="after")
         def validate_batch(self) -> Self:
             """Validate batch configuration consistency."""
-            max_batch_size = FlextConstants.Performance.MAX_BATCH_SIZE_VALIDATION
+            max_batch_size = (
+                FlextConstants.Performance.BatchProcessing.MAX_VALIDATION_SIZE
+            )
             if self.batch_size > max_batch_size:
                 msg = f"Batch size cannot exceed {max_batch_size}"
                 raise ValueError(msg)
@@ -2517,7 +2519,7 @@ class FlextModels:
                 description="Command execution timeout",
             )
             max_cache_size: int = Field(
-                default=FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+                default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
                 description="Maximum cache size",
             )
             implementation_path: str = Field(
@@ -2542,7 +2544,7 @@ class FlextModels:
                 enable_metrics: bool | None = None,
                 enable_caching: bool = True,
                 execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
-                max_cache_size: int = FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+                max_cache_size: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
                 implementation_path: str = "flext_core.bus:FlextBus",
             ) -> Self:
                 """Create bus configuration with defaults and overrides."""
