@@ -965,8 +965,52 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         }
 
     @staticmethod
+    def _validate_positive_int(value: object, *, minimum: int) -> FlextResult[int]:
+        """Validate value as positive integer - no fallbacks, explicit validation."""
+        if isinstance(value, bool):
+            return FlextResult[int].fail(
+                f"Boolean value not allowed for integer field: {value}"
+            )
+
+        if isinstance(value, int):
+            if value < minimum:
+                return FlextResult[int].fail(
+                    f"Value {value} is below minimum {minimum}"
+                )
+            return FlextResult[int].ok(value)
+
+        if isinstance(value, float):
+            if not value.is_integer():
+                return FlextResult[int].fail(
+                    f"Float value must be whole number: {value}"
+                )
+            int_value = int(value)
+            if int_value < minimum:
+                return FlextResult[int].fail(
+                    f"Value {int_value} is below minimum {minimum}"
+                )
+            return FlextResult[int].ok(int_value)
+
+        if isinstance(value, str):
+            try:
+                int_value = int(value)
+                if int_value < minimum:
+                    return FlextResult[int].fail(
+                        f"Value {int_value} is below minimum {minimum}"
+                    )
+                return FlextResult[int].ok(int_value)
+            except ValueError:
+                return FlextResult[int].fail(
+                    f"Cannot convert string to integer: {value}"
+                )
+
+        return FlextResult[int].fail(
+            f"Invalid type for integer: {type(value).__name__}"
+        )
+
+    @staticmethod
     def _coerce_positive_int(value: object, *, default: int, minimum: int) -> int:
-        """Coerce value to positive integer with fallback."""
+        """Coerce value to positive int with fallback."""
         candidate: int | None = None
 
         if isinstance(value, (bool, int, float)):

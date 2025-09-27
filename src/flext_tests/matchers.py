@@ -1168,7 +1168,7 @@ class FlextTestsMatchers:
 
         """
         partial_func = functools.partial(func, *args)
-        return await asyncio.get_event_loop().run_in_executor(None, partial_func)  # type: ignore[arg-type]
+        return await asyncio.get_event_loop().run_in_executor(None, partial_func)
 
     @staticmethod
     async def test_race_condition(

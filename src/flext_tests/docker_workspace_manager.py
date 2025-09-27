@@ -69,7 +69,7 @@ class FlextWorkspaceDockerManager:
         self, projects: list[str], registry: str = "flext"
     ) -> FlextResult[dict[str, str]]:
         """Build Docker images for multiple projects using FlextTestDocker."""
-        results = {}
+        results: dict[str, str] = {}
 
         for project in projects:
             project_path = self.workspace_root / project
@@ -250,7 +250,7 @@ class FlextWorkspaceDockerManager:
         prune_system: bool = False,
     ) -> FlextResult[str]:
         """Clean up Docker artifacts using FlextTestDocker."""
-        cleanup_operations = []
+        cleanup_operations: list[str] = []
 
         # Stop all auto-managed services
         running_services = self.docker_manager.get_running_services()
@@ -319,7 +319,7 @@ class FlextWorkspaceDockerManager:
 
         """
         _ = timeout  # Parameter required by API but not used in stub implementation
-        health_results = {}
+        health_results: dict[str, str] = {}
 
         # Auto-discover services
         discovery_result = self.docker_manager.auto_discover_services(compose_file)
@@ -389,8 +389,7 @@ class FlextWorkspaceDockerManager:
                 f"Image listing failed: {images_result.error}"
             )
 
-        images_str = images_result.unwrap()
-        images = images_str.split("\n") if images_str else []
+        images = images_result.unwrap()
 
         # Apply repository filter if specified
         if repository_filter:
@@ -400,7 +399,10 @@ class FlextWorkspaceDockerManager:
         for _image in images:
             pass
 
-        return FlextResult[list[str]].ok(images)
+        # Ensure images is a list of strings
+        if isinstance(images, list):
+            return FlextResult[list[str]].ok(images)
+        return FlextResult[list[str]].fail("Images result is not a list")
 
     def list_containers(
         self, name_filter: str | None = None, *, show_all: bool = False
@@ -415,8 +417,7 @@ class FlextWorkspaceDockerManager:
                 f"Container listing failed: {containers_result.error}"
             )
 
-        containers_str = containers_result.unwrap()
-        containers = containers_str.split("\n") if containers_str else []
+        containers = containers_result.unwrap()
 
         # Apply name filter if specified
         if name_filter:
@@ -426,11 +427,14 @@ class FlextWorkspaceDockerManager:
         for _container in containers:
             pass
 
-        return FlextResult[list[str]].ok(containers)
+        # Ensure containers is a list of strings
+        if isinstance(containers, list):
+            return FlextResult[list[str]].ok(containers)
+        return FlextResult[list[str]].fail("Containers result is not a list")
 
     def validate_workspace(self, workspace_root: Path) -> FlextResult[dict[str, str]]:
         """Validate FlextTestDocker functionality in workspace."""
-        validation_results = {}
+        validation_results: dict[str, str] = {}
 
         try:
             # Test Docker connection

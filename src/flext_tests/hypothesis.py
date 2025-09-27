@@ -706,7 +706,11 @@ class FlextTestsHypothesis:
                     "metadata": draw(
                         st.dictionaries(
                             st.text(min_size=1, max_size=20),
-                            st.one_of(st.text(), st.integers(), st.booleans()),  # type: ignore[arg-type]
+                            st.one_of(
+                                st.text(),
+                                st.integers().map(str),
+                                st.booleans().map(str),
+                            ),
                             max_size=5,
                         ),
                     ),

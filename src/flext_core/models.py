@@ -1466,7 +1466,7 @@ class FlextModels:
         @classmethod
         def validate_execution_time(cls, v: int) -> int:
             """Validate execution time is reasonable."""
-            max_execution_time_ms = 300000  # 5 minutes
+            max_execution_time_ms = FlextConstants.Cqrs.MAX_TIMEOUT  # 5 minutes
             if v > max_execution_time_ms:
                 msg = f"Execution time exceeds maximum ({max_execution_time_ms // 60000} minutes)"
                 raise ValueError(msg)

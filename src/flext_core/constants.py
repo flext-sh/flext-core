@@ -61,6 +61,7 @@ class FlextConstants:
     CONSTANTS_VERSION = "1.0.0"
     PROJECT_PREFIX = "FLEXT_CORE"
     PROJECT_NAME = "FLEXT Core Foundation"
+
     class Core:
         """Core identifiers hardened for the 1.0.0 release cycle."""
 

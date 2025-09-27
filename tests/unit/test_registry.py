@@ -17,12 +17,12 @@ from flext_core import (
 )
 
 
-class ConcreteTestHandler(FlextHandlers[str, str]):
+class ConcreteTestHandler(FlextHandlers[object, object]):
     """Concrete implementation of FlextHandlers for testing."""
 
-    def handle(self, message: str) -> FlextResult[str]:
+    def handle(self, message: object) -> FlextResult[object]:
         """Handle the message."""
-        return FlextResult[str].ok(f"processed_{message}")
+        return FlextResult[object].ok(f"processed_{message}")
 
 
 class TestFlextRegistry:
@@ -56,7 +56,7 @@ class TestFlextRegistry:
 
         result = registry.register_handler(None)
         assert result.is_failure
-        assert "Handler cannot be None" in result.error
+        assert result.error is not None and "Handler cannot be None" in result.error
 
     def test_registry_register_handlers(self) -> None:
         """Test multiple handler registration."""
@@ -92,7 +92,7 @@ class TestFlextRegistry:
             handler_id="test_binding_handler", handler_name="Test Binding Handler"
         )
         handler = ConcreteTestHandler(config=config)
-        bindings = [(str, handler)]
+        bindings = [(object, handler)]
 
         result = registry.register_bindings(bindings)
         assert result.is_success
@@ -103,7 +103,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        result = registry.register_bindings({})
+        result = registry.register_bindings([])
         assert result.is_success
         assert isinstance(result.value, FlextRegistry.Summary)
 
@@ -112,10 +112,13 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        def test_function(data: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"processed_{data}")
+        handler = ConcreteTestHandler(
+            config=FlextModels.CqrsConfig.Handler(
+                handler_id="test", handler_name="Test"
+            )
+        )
 
-        function_map = {"test_function": test_function}
+        function_map = {object: handler}
 
         result = registry.register_function_map(function_map)
         assert result.is_success
@@ -221,9 +224,12 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        binding_entry = {"handler_mode": "command", "status": "active"}
-
-        key = registry._resolve_binding_key("test_binding", binding_entry)
+        handler = ConcreteTestHandler(
+            config=FlextModels.CqrsConfig.Handler(
+                handler_id="test", handler_name="Test"
+            )
+        )
+        key = registry._resolve_binding_key(handler, object)
         assert isinstance(key, str)
         assert len(key) > 0
 
@@ -232,9 +238,13 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        binding_entry = {"handler_mode": "command", "status": "active"}
+        handler = ConcreteTestHandler(
+            config=FlextModels.CqrsConfig.Handler(
+                handler_id="test", handler_name="Test"
+            )
+        )
 
-        key = registry._resolve_binding_key_from_entry(binding_entry, str)
+        key = registry._resolve_binding_key_from_entry(handler, object)
         assert isinstance(key, str)
         assert len(key) > 0
 
@@ -266,7 +276,7 @@ class TestFlextRegistry:
         # Test with None handler
         result = registry.register_handler(None)
         assert result.is_failure
-        assert "Handler cannot be None" in result.error
+        assert result.error is not None and "Handler cannot be None" in result.error
 
     def test_registry_summary_creation(self) -> None:
         """Test registry summary creation."""

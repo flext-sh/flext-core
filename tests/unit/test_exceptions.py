@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import cast
 
 from flext_core import FlextExceptions, FlextResult
 
@@ -23,7 +24,7 @@ class TestFlextExceptions:
 
     def test_exceptions_with_custom_config(self) -> None:
         """Test exceptions initialization with custom configuration."""
-        config = {"max_retries": 3, "timeout": 30}
+        config: dict[str, object] = {"max_retries": 3, "timeout": 30}
         exceptions = FlextExceptions(config=config)
         assert exceptions is not None
 
@@ -41,7 +42,7 @@ class TestFlextExceptions:
         """Test exception handler registration with invalid parameters."""
         exceptions = FlextExceptions()
 
-        result = exceptions.register_handler("", object())
+        result = exceptions.register_handler(cast("type[Exception]", ""), object())
         assert result.is_failure
 
     def test_exceptions_unregister_handler(self) -> None:
@@ -77,7 +78,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_success
-        assert "handled_ValueError" in result.data
+        assert isinstance(result.data, str) and "handled_ValueError" in result.data
 
     def test_exceptions_handle_unhandled_exception(self) -> None:
         """Test handling unhandled exception."""
@@ -86,7 +87,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "No handler found" in result.error
+        assert result.error is not None and "No handler found" in result.error
 
     def test_exceptions_handle_exception_with_failing_handler(self) -> None:
         """Test exception handling with failing handler."""
@@ -100,7 +101,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "Handler failed" in result.error
+        assert result.error is not None and "Handler failed" in result.error
 
     def test_exceptions_handle_exception_with_exception(self) -> None:
         """Test exception handling with exception in handler."""
@@ -115,7 +116,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "Handler exception" in result.error
+        assert result.error is not None and "Handler exception" in result.error
 
     def test_exceptions_handle_exception_with_retry(self) -> None:
         """Test exception handling with retry mechanism."""
@@ -135,7 +136,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_success
-        assert "success_after_3_retries" in result.data
+        assert isinstance(result.data, str) and "success_after_3_retries" in result.data
 
     def test_exceptions_handle_exception_with_timeout(self) -> None:
         """Test exception handling with timeout."""
@@ -150,7 +151,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "timeout" in result.error.lower()
+        assert result.error is not None and "timeout" in result.error.lower()
 
     def test_exceptions_handle_exception_with_validation(self) -> None:
         """Test exception handling with validation."""
@@ -218,7 +219,10 @@ class TestFlextExceptions:
         # Check metrics
         metrics = exceptions.get_metrics()
         assert "ValueError" in metrics
-        assert metrics["ValueError"]["handled"] >= 1
+        assert (
+            isinstance(metrics["ValueError"], dict)
+            and metrics["ValueError"]["handled"] >= 1
+        )
 
     def test_exceptions_handle_exception_with_correlation_id(self) -> None:
         """Test exception handling with correlation ID."""
@@ -242,7 +246,7 @@ class TestFlextExceptions:
 
         exceptions.register_handler(ValueError, test_handler)
 
-        exceptions_list = [
+        exceptions_list: list[Exception] = [
             ValueError("Test error 1"),
             ValueError("Test error 2"),
             ValueError("Test error 3"),
@@ -262,7 +266,7 @@ class TestFlextExceptions:
 
         exceptions.register_handler(ValueError, test_handler)
 
-        exceptions_list = [
+        exceptions_list: list[Exception] = [
             ValueError("Test error 1"),
             ValueError("Test error 2"),
             ValueError("Test error 3"),
@@ -319,7 +323,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error 3")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "rate limit" in result.error.lower()
+        assert result.error is not None and "rate limit" in result.error.lower()
 
     def test_exceptions_handle_exception_with_caching(self) -> None:
         """Test exception handling with caching."""
@@ -390,7 +394,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "Handler error" in result.error
+        assert result.error is not None and "Handler error" in result.error
 
     def test_exceptions_handle_exception_with_cleanup(self) -> None:
         """Test exception handling with cleanup."""
@@ -411,7 +415,7 @@ class TestFlextExceptions:
         # After cleanup, handlers should be cleared
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "No handler found" in result.error
+        assert result.error is not None and "No handler found" in result.error
 
     def test_exceptions_get_registered_handlers(self) -> None:
         """Test getting registered handlers."""
@@ -459,7 +463,10 @@ class TestFlextExceptions:
 
         stats = exceptions.get_statistics()
         assert "ValueError" in stats
-        assert stats["ValueError"]["handled"] >= 1
+        assert (
+            isinstance(stats["ValueError"], dict)
+            and stats["ValueError"]["handled"] >= 1
+        )
 
     def test_exceptions_thread_safety(self) -> None:
         """Test exceptions thread safety."""
@@ -523,7 +530,7 @@ class TestFlextExceptions:
         exc = ValueError("Test error")
         result = exceptions.handle_exception(exc)
         assert result.is_failure
-        assert "Handler error" in result.error
+        assert result.error is not None and "Handler error" in result.error
 
     def test_exceptions_validation(self) -> None:
         """Test exceptions validation."""

@@ -14,8 +14,7 @@ import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
-from datetime import UTC, datetime
-from typing import Protocol, cast, override
+from typing import Protocol, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -147,63 +146,22 @@ class FlextBus(FlextMixins):
             )
             return ("vars", normalized_vars)
 
-    @override
     def __init__(
         self,
         bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
-        *,
-        enable_middleware: bool = True,
-        enable_metrics: bool | None = None,
-        enable_caching: bool = True,
-        execution_timeout: int = FlextConstants.Defaults.TIMEOUT,
-        max_cache_size: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-        implementation_path: str = "flext_core.bus:FlextBus",
     ) -> None:
-        """Initialise the bus using the CQRS configuration models."""
+        """Initialize FlextBus with configuration."""
         super().__init__()
-        self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
-        self._max_cache_size: int = 0
-        # Initialize mixins manually since we don't inherit from them
-        FlextMixins.initialize_validation(self, "bus_config")
-        FlextMixins.clear_cache(self)
-        # Timestampable mixin initialization
-        self._created_at = datetime.now(UTC)
-        self._start_time = time.time()
 
-        # Convert bus_config to dict if it's a Bus object
-        config_dict: dict[str, object] | None = None
-        if bus_config is not None:
-            # Check if it's a Pydantic model with model_dump method
-            if hasattr(bus_config, "model_dump") and callable(
-                getattr(bus_config, "model_dump")
-            ):
-                # Cast to ModelDumpable protocol to ensure type checker knows it has model_dump
-                model_obj = cast("FlextBus.ModelDumpable", bus_config)
-                config_dict = model_obj.model_dump()
-            elif isinstance(bus_config, dict):
-                config_dict = bus_config
+        # Configuration model
+        self._config_model = self._create_config_model(bus_config)
 
-        config_model = FlextModels.CqrsConfig.Bus.create_bus_config(
-            config_dict,
-            enable_middleware=enable_middleware,
-            enable_metrics=enable_metrics,
-            enable_caching=enable_caching,
-            execution_timeout=execution_timeout,
-            max_cache_size=max_cache_size,
-            implementation_path=implementation_path,
-        )
-
-        self._config_model: FlextModels.CqrsConfig.Bus = config_model
-        self._config: dict[str, object] = config_model.model_dump()
-        if config_model.enable_caching and config_model.max_cache_size > 0:
-            self._max_cache_size = config_model.max_cache_size
-        else:
-            self._max_cache_size = 0
-
-        # Handlers registry: command type -> handler instance
+        # Handler registry
         self._handlers: FlextTypes.Core.Dict = {}
-        # Middleware pipeline (controlled by config)
-        self._middleware: list[object] = []
+
+        # Middleware pipeline - use parent's _middleware for callables only
+        # Middleware configurations stored separately
+        self._middleware_configs: list[dict[str, object]] = []
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Core.Dict = {}
         # Execution counter
@@ -211,8 +169,26 @@ class FlextBus(FlextMixins):
         # Auto-discovery handlers (single-arg registration)
         self._auto_handlers: FlextTypes.Core.List = []
 
+        # Cache configuration - use OrderedDict for LRU behavior
+        self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
+        self._max_cache_size: int = 100
+
+        # Timing
+        self._created_at: float = time.time()
+        self._start_time: float = 0.0
+
         # Add logger
         self.logger = FlextLogger(self.__class__.__name__)
+
+    def _create_config_model(
+        self, bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None
+    ) -> FlextModels.CqrsConfig.Bus:
+        """Create configuration model from input."""
+        if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
+            return bus_config
+        if isinstance(bus_config, dict):
+            return FlextModels.CqrsConfig.Bus(**bus_config)
+        return FlextModels.CqrsConfig.Bus()
 
     @property
     def config(self) -> FlextModels.CqrsConfig.Bus:
@@ -621,12 +597,12 @@ class FlextBus(FlextMixins):
                 return order_value
             return 0
 
-        sorted_middleware = sorted(self._middleware, key=get_order)
+        sorted_middleware = sorted(self._middleware_configs, key=get_order)
 
         for middleware_config in sorted_middleware:
             # Extract configuration values - middleware_config is from self._middleware which stores dicts
             if isinstance(middleware_config, dict):  # It's a dict-like object
-                config_dict = cast("dict[str, object]", middleware_config)
+                config_dict = middleware_config
                 middleware_id_value = config_dict.get("middleware_id")
                 middleware_type_value = config_dict.get("middleware_type", "")
                 order_value = config_dict.get("order", 0)
@@ -862,7 +838,7 @@ class FlextBus(FlextMixins):
         middleware_id = config_data.get("middleware_id")
         if middleware_id is None:
             middleware_id = getattr(
-                middleware, "middleware_id", f"mw_{len(self._middleware)}"
+                middleware, "middleware_id", f"mw_{len(self._middleware_configs)}"
             )
             config_data["middleware_id"] = middleware_id
 
@@ -871,10 +847,10 @@ class FlextBus(FlextMixins):
 
         config_data.setdefault("middleware_type", type(middleware).__name__)
         config_data.setdefault("enabled", True)
-        config_data.setdefault("order", len(self._middleware))
+        config_data.setdefault("order", len(self._middleware_configs))
 
-        # Store both middleware and config
-        self._middleware.append(config_data)
+        # Store middleware config separately from callables
+        self._middleware_configs.append(config_data)
         # Also store the actual middleware instance using the resolved ID
         self._middleware_instances[middleware_id_str] = middleware
 
@@ -882,7 +858,7 @@ class FlextBus(FlextMixins):
             "Middleware added to pipeline",
             middleware_type=config_data.get("middleware_type", ""),
             middleware_id=config_data.get("middleware_id", ""),
-            total_middleware=len(self._middleware),
+            total_middleware=len(self._middleware_configs),
         )
 
         return FlextResult[None].ok(None)
@@ -958,10 +934,8 @@ class FlextBus(FlextMixins):
         return {str(k): v for k, v in self._handlers.items()}
 
 
-# Type aliases for backward compatibility (FLEXT 1.0.0 compatibility guarantee)
-ModelDumpable = FlextBus.ModelDumpable
+# Direct class access - no legacy aliases
 
 __all__: FlextTypes.Core.StringList = [
     "FlextBus",
-    "ModelDumpable",
 ]

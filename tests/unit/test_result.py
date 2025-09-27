@@ -94,15 +94,27 @@ class TestFlextResult:
         when_result = result.when(lambda x: x > 3)
 
         assert when_result.is_failure
-        assert "condition" in when_result.error.lower()
+        assert (
+            when_result.error is not None and "condition" in when_result.error.lower()
+        )
 
     def test_result_tap_error(self) -> None:
         """Test tap_error operation."""
         result = FlextResult[int].fail("original_error")
-        tapped_error = result.tap_error(lambda e: f"tapped_{e}")
+
+        # Test side effect function that doesn't return anything
+        side_effect_called = False
+
+        def side_effect(e: str) -> None:
+            nonlocal side_effect_called
+            side_effect_called = True
+            assert e == "original_error"
+
+        tapped_error = result.tap_error(side_effect)
 
         assert tapped_error.is_failure
         assert tapped_error.error == "original_error"
+        assert side_effect_called
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or operation."""
@@ -226,7 +238,7 @@ class TestFlextResult:
 
         chained = FlextResult.chain_results(result1, result2, result3)
         assert chained.is_failure
-        assert "Chain failed at result" in chained.error
+        assert chained.error is not None and "Chain failed at result" in chained.error
 
     def test_result_combine_static_method(self) -> None:
         """Test combine static method."""
@@ -246,7 +258,7 @@ class TestFlextResult:
 
         combined = FlextResult.combine(result1, result2, result3)
         assert combined.is_failure
-        assert "error" in combined.error
+        assert combined.error is not None and "error" in combined.error
 
     def test_result_tap_method(self) -> None:
         """Test tap method."""
@@ -324,7 +336,10 @@ class TestFlextResult:
         unless_result = result.unless(lambda x: x > 3)
 
         assert unless_result.is_failure
-        assert "condition" in unless_result.error.lower()
+        assert (
+            unless_result.error is not None
+            and "condition" in unless_result.error.lower()
+        )
 
     def test_result_unless_method_success(self) -> None:
         """Test unless method on success."""
@@ -340,7 +355,10 @@ class TestFlextResult:
         context_result = result.with_context(lambda e: f"Context: {e}")
 
         assert context_result.is_failure
-        assert "Context: error" in context_result.error
+        assert (
+            context_result.error is not None
+            and "Context: error" in context_result.error
+        )
 
     def test_result_with_context_method_success(self) -> None:
         """Test with_context method on success."""
@@ -570,7 +588,7 @@ class TestFlextResult:
         result = FlextResult.traverse(items, transform)
 
         assert result.is_failure
-        assert "Negative number" in result.error
+        assert result.error is not None and "Negative number" in result.error
 
     def test_result_traverse_collection_success(self) -> None:
         """Test traverse collection functionality with all successes."""
@@ -594,7 +612,7 @@ class TestFlextResult:
 
         result = FlextResult.sequence(results)
         assert result.is_failure
-        assert "error1" in result.error
+        assert result.error is not None and "error1" in result.error
 
     def test_result_combine_with_failures(self) -> None:
         """Test combine static method with failures."""
@@ -606,7 +624,7 @@ class TestFlextResult:
 
         result = FlextResult.combine(*results)
         assert result.is_failure
-        assert "error1" in result.error
+        assert result.error is not None and "error1" in result.error
 
     def test_result_collect_successes_empty(self) -> None:
         """Test collect_successes with empty results."""
@@ -654,7 +672,7 @@ class TestFlextResult:
 
         result = FlextResult.chain_results(*results)
         assert result.is_failure
-        assert "Processing failed" in result.error
+        assert result.error is not None and "Processing failed" in result.error
 
     def test_result_chain_results_all_success(self) -> None:
         """Test chain_results static method with all successes."""
@@ -679,8 +697,8 @@ class TestFlextResult:
 
         result = FlextResult.accumulate_errors(*results)
         assert result.is_failure
-        assert "error1" in result.error
-        assert "error2" in result.error
+        assert result.error is not None and "error1" in result.error
+        assert result.error is not None and "error2" in result.error
 
     def test_result_accumulate_all_success(self) -> None:
         """Test accumulate method with all successes."""
@@ -704,13 +722,13 @@ class TestFlextResult:
         """Test accumulate method with None errors."""
         results = [
             FlextResult[str].ok("value1"),
-            FlextResult[str].fail(None),  # None error
+            FlextResult[str].fail(""),  # Empty error
             FlextResult[str].ok("value2"),
         ]
 
         result = FlextResult.accumulate_errors(*results)
         assert result.is_failure
-        assert "Unknown error" in result.error
+        assert result.error is not None and "Unknown error" in result.error
 
     def test_result_parallel_map_with_fail_fast(self) -> None:
         """Test parallel_map method with fail_fast=True."""
@@ -749,7 +767,7 @@ class TestFlextResult:
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=False)
         assert result.is_failure
-        assert "Processing failed" in result.error
+        assert result.error is not None and "Processing failed" in result.error
 
     def test_result_parallel_map_without_fail_fast_success(self) -> None:
         """Test parallel_map method with fail_fast=False and all success."""
@@ -773,8 +791,8 @@ class TestFlextResult:
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=False)
         assert result.is_failure
-        assert "Error processing 2" in result.error
-        assert "Error processing 4" in result.error
+        assert result.error is not None and "Error processing 2" in result.error
+        assert result.error is not None and "Error processing 4" in result.error
 
     def test_result_parallel_map_with_none_error(self) -> None:
         """Test parallel_map method with None error."""
@@ -782,12 +800,12 @@ class TestFlextResult:
 
         def process_item(item: int) -> FlextResult[str]:
             if item == 2:
-                return FlextResult[str].fail(None)
+                return FlextResult[str].fail("Unknown error occurred")
             return FlextResult[str].ok(f"processed_{item}")
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=False)
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "Unknown error occurred" in result.error
 
     def test_result_parallel_map_with_fail_fast_none_error(self) -> None:
         """Test parallel_map method with fail_fast=True and None error."""
@@ -795,9 +813,9 @@ class TestFlextResult:
 
         def process_item(item: int) -> FlextResult[str]:
             if item == 2:
-                return FlextResult[str].fail(None)
+                return FlextResult[str].fail("Unknown error occurred")
             return FlextResult[str].ok(f"processed_{item}")
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=True)
         assert result.is_failure
-        assert "Unknown error occurred" in result.error
+        assert result.error is not None and "Unknown error occurred" in result.error

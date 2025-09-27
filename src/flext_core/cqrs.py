@@ -13,7 +13,7 @@ import re
 from collections.abc import Callable
 from typing import Literal, cast, override
 
-from flext_core.config import CqrsBusConfigDict, FlextConfig
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
@@ -370,7 +370,7 @@ class FlextCqrs:
             """
             try:
                 config_instance: FlextConfig = FlextConfig.get_global_instance()
-                raw_config_payload: CqrsBusConfigDict = (
+                raw_config_payload: FlextConfig.CqrsBusConfigDict = (
                     config_instance.get_cqrs_bus_config()
                 )
 

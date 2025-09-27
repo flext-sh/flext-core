@@ -122,7 +122,7 @@ class TestFlextUtilities:
     def test_utility_error_handling(self) -> None:
         """Test error handling in utility functions."""
         # Test error handling
-        result = FlextUtilities.Validation.validate_email(None)
+        result = FlextUtilities.Validation.validate_email("")
         assert result.is_failure
 
     def test_utility_performance(self) -> None:

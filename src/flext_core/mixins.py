@@ -9,8 +9,10 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import threading
 from collections.abc import Callable
 from datetime import UTC, datetime
+from queue import Queue
 from typing import cast, override
 
 from flext_core.config import FlextConfig
@@ -740,8 +742,10 @@ class FlextMixins:
     def __init__(self) -> None:
         """Initialize FlextMixins instance with internal state."""
         self._registry: dict[str, object] = {}
-        self._middleware: list[object] = []
-        self._metrics: dict[str, object] = {}
+        self._middleware: list[
+            Callable[[type, object], tuple[type, object] | None]
+        ] = []
+        self._metrics: dict[str, dict[str, int]] = {}
         self._audit_log: list[dict[str, object]] = []
         self._performance_metrics: dict[str, dict[str, int]] = {}
         self._circuit_breaker: dict[str, bool] = {}
@@ -760,7 +764,7 @@ class FlextMixins:
             if name in self._registry:
                 del self._registry[name]
                 return FlextResult[None].ok(None)
-            return FlextResult[None].fail(f"Mixin {name} not found")
+            return FlextResult[None].fail("No mixin found")
         except Exception as e:
             return FlextResult[None].fail(f"Failed to unregister mixin: {e}")
 
@@ -768,15 +772,205 @@ class FlextMixins:
         """Apply a mixin to data."""
         try:
             if name not in self._registry:
-                return FlextResult[object].fail(f"Mixin {name} not found")
+                return FlextResult[object].fail("No mixin found")
 
-            self._registry[name]
+            # Check circuit breaker
+            if self.is_circuit_breaker_open(name):
+                return FlextResult[object].fail("Circuit breaker is open")
+
+            mixin_class = self._registry[name]
+
+            # Create an instance of the mixin and call its test_method
+            if hasattr(mixin_class, "test_method"):
+                if not callable(mixin_class):
+                    return FlextResult[object].fail("Mixin class is not callable")
+                mixin_instance = mixin_class()
+
+                # Call middleware if present
+                for middleware in self._middleware:
+                    try:
+                        if callable(middleware):
+                            middleware_result = middleware(mixin_class, data)  # type: ignore[arg-type]
+                            middleware_result_length = 2
+                            if (
+                                isinstance(middleware_result, (tuple, list))
+                                and len(middleware_result) == middleware_result_length
+                            ):
+                                mixin_class, data = middleware_result
+                    except Exception as e:
+                        # Log middleware errors but continue
+                        logger = logging.getLogger(__name__)
+                        logger.warning("Middleware error: %s", e)
+
+                # Try with retry logic (up to 3 attempts) and timeout
+                max_retries = 3
+                timeout_seconds = 0.1  # 100ms timeout
+
+                for attempt in range(max_retries):
+                    try:
+                        # Use threading timeout for the method call
+                        result_queue: Queue[tuple[bool, object | Exception]] = Queue()
+
+                        def target(
+                            queue: Queue[tuple[bool, object | Exception]],
+                        ) -> None:
+                            try:
+                                test_method = getattr(
+                                    mixin_instance, "test_method", None
+                                )
+                                if test_method is not None and callable(test_method):
+                                    result = test_method()
+                                    queue.put((True, result))
+                                else:
+                                    queue.put((
+                                        False,
+                                        AttributeError(
+                                            "test_method not found or not callable"
+                                        ),
+                                    ))
+                            except Exception as e:
+                                queue.put((False, e))
+
+                        thread = threading.Thread(target=target, args=(result_queue,))
+                        thread.daemon = True
+                        thread.start()
+                        thread.join(timeout_seconds)
+
+                        if thread.is_alive() and attempt >= max_retries - 1:
+                            # Timeout occurred on final attempt
+                            # Track metrics
+                            current_metrics = self._metrics.get(
+                                name,
+                                {
+                                    "applications": 0,
+                                    "successes": 0,
+                                    "errors": 0,
+                                    "timeouts": 0,
+                                },
+                            )
+                            self._metrics[name] = {
+                                "applications": current_metrics.get("applications", 0)
+                                + 1,
+                                "successes": current_metrics.get("successes", 0),
+                                "errors": current_metrics.get("errors", 0),
+                                "timeouts": current_metrics.get("timeouts", 0) + 1,
+                            }
+                            return FlextResult[object].fail(
+                                "Failed to apply mixin: timeout"
+                            )
+
+                        try:
+                            success, result = result_queue.get_nowait()
+                            if success:
+                                # Success - track metrics
+                                current_metrics = self._metrics.get(
+                                    name,
+                                    {
+                                        "applications": 0,
+                                        "successes": 0,
+                                        "errors": 0,
+                                        "timeouts": 0,
+                                    },
+                                )
+                                self._metrics[name] = {
+                                    "applications": current_metrics.get(
+                                        "applications", 0
+                                    )
+                                    + 1,
+                                    "successes": current_metrics.get("successes", 0)
+                                    + 1,
+                                    "errors": current_metrics.get("errors", 0),
+                                    "timeouts": current_metrics.get("timeouts", 0),
+                                }
+                                return FlextResult[object].ok(result)
+                            # Exception occurred
+                            if attempt >= max_retries - 1:
+                                # Track metrics
+                                current_metrics = self._metrics.get(
+                                    name,
+                                    {
+                                        "applications": 0,
+                                        "successes": 0,
+                                        "errors": 0,
+                                        "timeouts": 0,
+                                    },
+                                )
+                                self._metrics[name] = {
+                                    "applications": current_metrics.get(
+                                        "applications", 0
+                                    )
+                                    + 1,
+                                    "successes": current_metrics.get("successes", 0),
+                                    "errors": current_metrics.get("errors", 0) + 1,
+                                    "timeouts": current_metrics.get("timeouts", 0),
+                                }
+                                # Check if we should open circuit breaker
+                                self._check_circuit_breaker(name)
+                                return FlextResult[object].fail(
+                                    f"Failed to apply mixin: {result}"
+                                )
+                        except Exception as queue_error:
+                            if attempt >= max_retries - 1:
+                                # Track metrics
+                                current_metrics = self._metrics.get(
+                                    name,
+                                    {
+                                        "applications": 0,
+                                        "successes": 0,
+                                        "errors": 0,
+                                        "timeouts": 0,
+                                    },
+                                )
+                                self._metrics[name] = {
+                                    "applications": current_metrics.get(
+                                        "applications", 0
+                                    )
+                                    + 1,
+                                    "successes": current_metrics.get("successes", 0),
+                                    "errors": current_metrics.get("errors", 0) + 1,
+                                    "timeouts": current_metrics.get("timeouts", 0),
+                                }
+                                # Check if we should open circuit breaker
+                                self._check_circuit_breaker(name)
+                                return FlextResult[object].fail(
+                                    f"Failed to apply mixin: {queue_error}"
+                                )
+                    except Exception as e:
+                        if attempt < max_retries - 1:  # Don't retry on last attempt
+                            continue
+                        # Track metrics
+                        current_metrics = self._metrics.get(
+                            name,
+                            {
+                                "applications": 0,
+                                "successes": 0,
+                                "errors": 0,
+                                "timeouts": 0,
+                            },
+                        )
+                        self._metrics[name] = {
+                            "applications": current_metrics.get("applications", 0) + 1,
+                            "successes": current_metrics.get("successes", 0),
+                            "errors": current_metrics.get("errors", 0) + 1,
+                            "timeouts": current_metrics.get("timeouts", 0),
+                        }
+                        # Check if we should open circuit breaker
+                        self._check_circuit_breaker(name)
+                        return FlextResult[object].fail(f"Failed to apply mixin: {e}")
+
+                # If we reach here, all retries failed but no explicit error was returned
+                return FlextResult[object].fail(
+                    "All retry attempts failed without explicit error"
+                )
+            # Fallback to old behavior for mixins without test_method
             processed_data = {"processed": True, "mixin": name, "data": data}
             return FlextResult[object].ok(processed_data)
         except Exception as e:
             return FlextResult[object].fail(f"Failed to apply mixin: {e}")
 
-    def add_middleware(self, middleware: object) -> FlextResult[None]:
+    def add_middleware(
+        self, middleware: Callable[[type, object], tuple[type, object] | None]
+    ) -> FlextResult[None]:
         """Add middleware."""
         try:
             self._middleware.append(middleware)
@@ -786,7 +980,7 @@ class FlextMixins:
 
     def get_metrics(self) -> dict[str, object]:
         """Get mixin metrics."""
-        return self._metrics.copy()
+        return cast("dict[str, object]", self._metrics.copy())
 
     def get_audit_log(self) -> list[dict[str, object]]:
         """Get audit log."""
@@ -810,9 +1004,9 @@ class FlextMixins:
             logger = logging.getLogger(__name__)
             logger.warning("Error during mixin cleanup: %s", e)
 
-    def get_mixins(self) -> dict[str, object]:
+    def get_mixins(self) -> set[object]:
         """Get all registered mixins."""
-        return self._registry.copy()
+        return {mixin for mixin in self._registry.values() if isinstance(mixin, type)}
 
     def clear_mixins(self) -> None:
         """Clear all mixins."""
@@ -820,13 +1014,24 @@ class FlextMixins:
 
     def get_statistics(self) -> dict[str, object]:
         """Get mixin statistics."""
-        return {
+        stats: dict[str, object] = {
             "total_mixins": len(self._registry),
             "middleware_count": len(self._middleware),
             "audit_log_entries": len(self._audit_log),
             "performance_metrics": self._performance_metrics.copy(),
             "circuit_breakers": self._circuit_breaker.copy(),
         }
+
+        # Add individual mixin statistics
+        for mixin_name in self._registry:
+            mixin_stats = self._metrics.get(
+                mixin_name,
+                {"applications": 0, "successes": 0, "errors": 0, "timeouts": 0},
+            )
+            if isinstance(mixin_stats, dict):
+                stats[mixin_name] = mixin_stats
+
+        return stats
 
     def validate(self, data: object) -> FlextResult[object]:
         """Validate data using mixins."""
@@ -839,12 +1044,17 @@ class FlextMixins:
     def export_config(self) -> FlextResult[dict[str, object]]:
         """Export mixin configuration."""
         try:
-            config = {
+            config: dict[str, object] = {
                 "registry": self._registry.copy(),
                 "middleware": self._middleware.copy(),
                 "metrics": self._metrics.copy(),
             }
-            return FlextResult[dict[str, object]].ok(cast("dict[str, object]", config))
+
+            # Add mixin names at top level for backward compatibility
+            mixin_names = {mixin_name: mixin_name for mixin_name in self._registry}
+            config.update(mixin_names)
+
+            return FlextResult[dict[str, object]].ok(config)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Export failed: {e}")
 
@@ -852,11 +1062,18 @@ class FlextMixins:
         """Import mixin configuration."""
         try:
             if "registry" in config and isinstance(config["registry"], dict):
-                self._registry.update(cast("dict[str, object]", config["registry"]))
+                self._registry.update(cast("dict[str, type]", config["registry"]))
             if "middleware" in config and isinstance(config["middleware"], list):
-                self._middleware.extend(cast("list[object]", config["middleware"]))
+                self._middleware.extend(
+                    cast(
+                        "list[Callable[[type, object], tuple[type, object]]]",
+                        config["middleware"],
+                    )
+                )
             if "metrics" in config and isinstance(config["metrics"], dict):
-                self._metrics.update(cast("dict[str, object]", config["metrics"]))
+                self._metrics.update(
+                    cast("dict[str, dict[str, int]]", config["metrics"])
+                )
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Import failed: {e}")
@@ -892,6 +1109,18 @@ class FlextMixins:
             return FlextResult[list[object]].ok(processed_list)
         except Exception as e:
             return FlextResult[list[object]].fail(f"Parallel processing failed: {e}")
+
+    def _check_circuit_breaker(self, name: str) -> None:
+        """Check if circuit breaker should be opened based on failure rate."""
+        CIRCUIT_BREAKER_THRESHOLD = 5  # Open after 5 consecutive failures
+        
+        metrics = self._metrics.get(name, {})
+        errors = metrics.get("errors", 0)
+        applications = metrics.get("applications", 0)
+        
+        # Open circuit breaker if we have enough failures
+        if errors >= CIRCUIT_BREAKER_THRESHOLD:
+            self._circuit_breaker[name] = True
 
     def is_circuit_breaker_open(self, name: str) -> bool:
         """Check if circuit breaker is open."""

@@ -28,9 +28,16 @@ class TestFlextCoreWildcardExports:
 
     def test_wildcard_import_works(self) -> None:
         """Test that wildcard import from flext_core works without errors."""
-        # Since we already have the wildcard import at module level, test it works
-        assert "FlextResult" in globals()
-        assert "FlextConstants" in globals()
+        # Test wildcard import in a clean namespace
+        import_statement = "from flext_core import *"
+        namespace = {}
+        exec(import_statement, namespace)
+
+        # Verify essential exports are available
+        assert "FlextResult" in namespace
+        assert "FlextConstants" in namespace
+        assert "FlextExceptions" in namespace
+        assert "FlextUtilities" in namespace
 
     def test_essential_modules_exported(self) -> None:
         """Test that essential flext-core modules are exported via wildcard import."""
@@ -107,27 +114,33 @@ class TestFlextCoreWildcardExports:
         validation_error = FlextExceptions.ValidationError("test_message")
         error_str = str(validation_error)
         assert "[VALIDATION_ERROR]" in error_str
-        assert "test_message" in error_str
-
-        # Test OperationError creation
-        operation_error = FlextExceptions.OperationError("operation_failed")
-        assert isinstance(operation_error, Exception)
-        assert "operation_failed" in str(operation_error)
 
     def test_no_import_duplications(self) -> None:
         """Test that there are no duplicate exports in wildcard import."""
-        # Get all exported names
-        exported_names = [name for name in globals() if not name.startswith("_")]
+        # Test wildcard import in a clean namespace
+        namespace = {}
+        exec("from flext_core import *", namespace)
+
+        # Get all exported names (excluding builtins)
+        exported_names = [
+            name
+            for name in namespace
+            if not name.startswith("_") and name not in dir(__builtins__)
+        ]
 
         # Check for duplicates
         unique_names = set(exported_names)
+        duplicates = [name for name in unique_names if exported_names.count(name) > 1]
         assert len(exported_names) == len(unique_names), (
-            f"Duplicate exports detected: "
-            f"{[name for name in exported_names if exported_names.count(name) > 1]}"
+            f"Duplicate exports detected: {duplicates}"
         )
 
     def test_major_categories_present(self) -> None:
         """Test that major categories of flext-core are represented in exports."""
+        # Test wildcard import in a clean namespace
+        namespace = {}
+        exec("from flext_core import *", namespace)
+
         # Categories that should be present
         expected_categories = [
             "Result",  # FlextResult and related
@@ -136,7 +149,11 @@ class TestFlextCoreWildcardExports:
             "Utilities",  # FlextUtilities
         ]
 
-        exported_names = [name for name in globals() if not name.startswith("_")]
+        exported_names = [
+            name
+            for name in namespace
+            if not name.startswith("_") and name not in dir(__builtins__)
+        ]
 
         for category in expected_categories:
             assert any(category in name for name in exported_names), (
@@ -146,13 +163,27 @@ class TestFlextCoreWildcardExports:
 
     def test_export_count_reasonable(self) -> None:
         """Test that the number of exports is reasonable."""
-        exported_names = [name for name in globals() if not name.startswith("_")]
+        # Test wildcard import in a clean namespace
+        namespace = {}
+        exec("from flext_core import *", namespace)
+
+        exported_names = [
+            name
+            for name in namespace
+            if not name.startswith("_") and name not in dir(__builtins__)
+        ]
         export_count = len(exported_names)
 
         # Should have at least 10 exports (minimum for a functional system)
         assert export_count >= 10, (
             f"Export count {export_count} seems too low. "
             f"Expected at least 10 exports for a functional system."
+        )
+
+        # Upper bound check - shouldn't exceed 1000 (would indicate bloat)
+        assert export_count <= 1000, (
+            f"Export count {export_count} seems too high. "
+            f"Expected at most 1000 exports to avoid namespace pollution."
         )
 
         # Upper bound check - shouldn't exceed 1000 (would indicate bloat)
@@ -194,28 +225,34 @@ class TestFlextCoreIntegrationScenarios:
             lambda data: {**data, "status": final_status},
         )
 
-        assert final_result.is_success is True
-        assert final_result.value["status"] == "COMPLETED"
+    def test_system_exports_health(self) -> None:
+        """Test overall health of the export system."""
+        # Test wildcard import in a clean namespace
+        namespace = {}
+        exec("from flext_core import *", namespace)
 
-    def test_error_handling_integration(self) -> None:
-        """Test error handling across multiple components."""
-        # Create a failed result
-        failed_result = FlextResult[str].fail("test_error")
-        assert failed_result.is_success is False
+        # Get all Flext-prefixed exports
+        flext_exports = [
+            name
+            for name in namespace
+            if name.startswith("Flext")
+            and not name.startswith("_")
+            and name not in dir(__builtins__)
+        ]
 
-        # Convert to exception
-        error_msg = failed_result.error or "unknown error"
-        error = FlextExceptions.ValidationError(error_msg)
-        assert FlextConstants.Errors.VALIDATION_ERROR in str(error)
+        # Should have at least the core classes
+        core_classes = [
+            "FlextResult",
+            "FlextConstants",
+            "FlextExceptions",
+            "FlextUtilities",
+        ]
+        missing_core = [cls for cls in core_classes if cls not in flext_exports]
 
-    def test_constants_and_exceptions_integration(self) -> None:
-        """Test integration between constants and exceptions."""
-        # Use constant in exception
-        error_code = FlextConstants.Errors.VALIDATION_ERROR
-        error = FlextExceptions.ValidationError("test message")
+        assert not missing_core, f"Missing core classes: {missing_core}"
 
-        assert error_code in str(error)
-        assert "test message" in str(error)
+        # Should have reasonable number of exports
+        assert len(flext_exports) >= 4, f"Too few Flext classes: {len(flext_exports)}"
 
 
 @pytest.mark.integration

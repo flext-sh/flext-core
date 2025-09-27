@@ -452,6 +452,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         # Create a simple wrapper class
         class CallableHandler(FlextHandlers[object, object]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+                self.original_callable = callable_func
+
             @override
             def handle(self, message: object) -> FlextResult[object]:
                 try:

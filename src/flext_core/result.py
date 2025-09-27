@@ -105,6 +105,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     - Includes circuit breaker and retry patterns
     """
 
+    _data: T_co | None
+    _error: str | None
+    _error_code: str | None
+    _error_data: FlextTypes.Core.Dict
+
     # =========================================================================
     # NESTED HELPER CLASSES - UNIFIED ARCHITECTURE PATTERN
     # =========================================================================
@@ -398,15 +403,16 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
             # Failure path: ensure data is None for type consistency.
-            self._data: T_co | None = None
-            self._error: str | None = error
+            self._data = None
+            # Ensure error is never None for failure results
+            self._error = error if error is not None else "Unknown error"
         else:
             # Success path: data can be T_co (including None if T_co allows it).
             self._data = data
             self._error = None
 
         self._error_code = error_code
-        self._error_data: FlextTypes.Core.Dict = error_data or {}
+        self._error_data = error_data or {}
 
     def _is_success_state(self, value: T_co | None) -> TypeGuard[T_co]:
         """Type guard for success state checking."""
@@ -443,14 +449,15 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def data(self) -> T_co:
         """Return the success payload, raising :class:`TypeError` on failure.
 
-        This is an alias for the value property for ecosystem compatibility.
-        Both .value and .data accessors are supported throughout the 1.x series.
+        Direct access to the value property - use .value instead.
         """
         return self.value
 
     @property
     def error(self) -> str | None:
         """Return the captured error message for failure results."""
+        # For failure results, error should never be None
+        # For success results, error is None
         return self._error
 
     @property
@@ -1780,7 +1787,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             """Factory for FlextResult[dict[str, str]]."""
             return FlextResult[dict[str, str]]
 
-        type Success = str  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency
+        type Success = str  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency
 
 
 __all__: list[str] = [

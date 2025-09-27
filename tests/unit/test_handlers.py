@@ -73,7 +73,10 @@ class TestFlextHandlers:
 
         result = handler.handle("test_message")
         assert result.is_failure
-        assert "Handler failed for: test_message" in result.error
+        assert (
+            result.error is not None
+            and "Handler failed for: test_message" in result.error
+        )
 
     def test_handlers_config_access(self) -> None:
         """Test access to handler configuration."""

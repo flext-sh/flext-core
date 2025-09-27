@@ -1528,16 +1528,26 @@ class FlextUtilities:
             )
 
         @staticmethod
-        def with_fallback[TFallback](
-            primary_operation: Callable[[], FlextResult[TFallback]],
-            *fallback_operations: Callable[[], FlextResult[TFallback]],
-        ) -> FlextResult[TFallback]:
-            """Execute operation with fallback alternatives using railway patterns."""
-            # Try primary operation first
-            primary_result: FlextResult[TFallback] = primary_operation()
+        def execute_with_retry[TRetry](
+            operation: Callable[[], FlextResult[TRetry]],
+            max_attempts: int = 3,
+        ) -> FlextResult[TRetry]:
+            """Execute operation with retry logic - no fallbacks, explicit error handling."""
+            if max_attempts <= 0:
+                return FlextResult[TRetry].fail(
+                    "Invalid max_attempts: must be positive"
+                )
 
-            # Use or_try to chain fallbacks
-            return primary_result.or_try(*fallback_operations)
+            last_error = "No attempts made"
+            for attempt in range(max_attempts):
+                result = operation()
+                if result.is_success:
+                    return result
+                last_error = result.error or f"Attempt {attempt + 1} failed"
+
+            return FlextResult[TRetry].fail(
+                f"All {max_attempts} attempts failed. Last error: {last_error}"
+            )
 
     class Conversion:
         """Data conversion utilities for table formatting and display."""

@@ -77,7 +77,7 @@ class TestFlextStandardization:
         # Test with None data
         result = FlextStandardization.standardize_data(None)
         assert result.is_failure
-        assert "Data cannot be empty" in result.error
+        assert result.error is not None and "Data cannot be empty" in result.error
 
     def test_standardization_performance(self) -> None:
         """Test standardization performance."""
@@ -117,6 +117,7 @@ class TestFlextStandardization:
         assert result.is_success
 
         standardized = result.value
+        assert isinstance(standardized, dict)
         assert isinstance(standardized["string"], str)
         assert isinstance(standardized["integer"], int)
         assert isinstance(standardized["float"], float)
@@ -129,12 +130,12 @@ class TestFlextStandardization:
         # Test empty data (considered invalid by the current implementation)
         result = FlextStandardization.standardize_data({})
         assert result.is_failure
-        assert "Data cannot be empty" in result.error
+        assert result.error is not None and "Data cannot be empty" in result.error
 
         # Test empty list (considered invalid by the current implementation)
         result = FlextStandardization.standardize_data([])
         assert result.is_failure
-        assert "Data cannot be empty" in result.error
+        assert result.error is not None and "Data cannot be empty" in result.error
 
         # Test single value
         result = FlextStandardization.standardize_data("single value")

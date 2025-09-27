@@ -24,7 +24,7 @@ class TestFlextProtocols:
 
     def test_protocols_with_custom_config(self) -> None:
         """Test protocols initialization with custom configuration."""
-        config = {"max_retries": 3, "timeout": 30}
+        config: dict[str, object] = {"max_retries": 3, "timeout": 30}
         protocols = FlextProtocols(config=config)
         assert protocols is not None
 
@@ -42,7 +42,7 @@ class TestFlextProtocols:
         """Test protocol registration with invalid parameters."""
         protocols = FlextProtocols()
 
-        result = protocols.register("", None)
+        result = protocols.register("", object)
         assert result.is_failure
 
     def test_protocols_unregister_protocol(self) -> None:
@@ -93,7 +93,7 @@ class TestFlextProtocols:
             "nonexistent_protocol", TestImplementation
         )
         assert result.is_failure
-        assert "not found" in result.error
+        assert result.error is not None and "not found" in result.error
 
     def test_protocols_validate_invalid_implementation(self) -> None:
         """Test validation with invalid implementation."""
@@ -272,7 +272,7 @@ class TestFlextProtocols:
 
         protocols.register("test_protocol", TestProtocol)
 
-        implementations = [
+        implementations: list[type[object]] = [
             TestImplementation1,
             TestImplementation2,
             TestImplementation3,
@@ -305,7 +305,7 @@ class TestFlextProtocols:
 
         protocols.register("test_protocol", TestProtocol)
 
-        implementations = [
+        implementations: list[type[object]] = [
             TestImplementation1,
             TestImplementation2,
             TestImplementation3,
@@ -370,7 +370,7 @@ class TestFlextProtocols:
         # Exceed rate limit
         result = protocols.validate_implementation("test_protocol", TestImplementation)
         assert result.is_failure
-        assert "rate limit" in result.error.lower()
+        assert result.error is not None and "rate limit" in result.error.lower()
 
     def test_protocols_validate_with_caching(self) -> None:
         """Test validation with caching."""
@@ -480,7 +480,9 @@ class TestFlextProtocols:
         # After cleanup, protocols should be cleared
         result = protocols.validate_implementation("test_protocol", TestImplementation)
         assert result.is_failure
-        assert "No protocol found" in result.error or "not found" in result.error
+        assert (result.error is not None and "No protocol found" in result.error) or (
+            result.error is not None and "not found" in result.error
+        )
 
     def test_protocols_get_registered_protocols(self) -> None:
         """Test getting registered protocols."""
@@ -639,7 +641,10 @@ class TestFlextProtocols:
         assert "audit_log_size" in config
 
         # Test that the config can be used
-        assert config["audit_log_size"] >= 0
+        assert (
+            isinstance(config["audit_log_size"], (int, float))
+            and config["audit_log_size"] >= 0
+        )
 
     def test_protocols_cleanup(self) -> None:
         """Test protocols cleanup."""

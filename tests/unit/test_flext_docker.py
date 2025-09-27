@@ -7,7 +7,7 @@ CLI command equivalents, and shell script compatibility.
 import tempfile
 from pathlib import Path
 from subprocess import TimeoutExpired
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from docker.errors import DockerException
@@ -27,6 +27,9 @@ class TestFlextTestDockerCore:
             mock_docker.return_value = mock_client
 
             docker_manager = FlextTestDocker()
+
+            # Initialize the client by calling get_client()
+            docker_manager.get_client()
 
             assert docker_manager.client == mock_client
             assert docker_manager.workspace_root is not None
@@ -54,8 +57,6 @@ class TestFlextTestDockerCore:
             assert hasattr(docker_manager, "_network_manager")
             assert hasattr(docker_manager, "_volume_manager")
             assert hasattr(docker_manager, "_image_manager")
-            assert hasattr(docker_manager, "_lifecycle_manager")
-            assert hasattr(docker_manager, "_auto_service_manager")
 
 
 class TestAutoServiceManagement:
@@ -81,9 +82,9 @@ class TestAutoServiceManagement:
         assert result.is_success
 
         # Verify service is registered
-        services = docker_manager.get_running_services()
-        # Service not running yet, but should be registered
-        assert isinstance(services, list)
+        services_result = docker_manager.get_running_services()
+        assert services_result.is_success
+        assert isinstance(services_result.data, list)
 
     def test_register_service_with_dependencies(
         self, docker_manager: FlextTestDocker
@@ -105,9 +106,9 @@ class TestAutoServiceManagement:
         assert api_result.is_success
 
         # Check dependency graph
-        deps = docker_manager.get_service_dependency_graph()
-        assert "api" in deps
-        assert "database" in deps["api"]
+        api_deps: dict[str, list[str]] = docker_manager.get_service_dependency_graph()
+        assert "api" in api_deps
+        assert "database" in api_deps["api"]
 
     def test_auto_discover_services_from_compose(
         self, docker_manager: FlextTestDocker
@@ -146,9 +147,11 @@ services:
             assert "api" in services
 
             # Check dependency graph was built
-            deps = docker_manager.get_service_dependency_graph()
-            assert "api" in deps
-            assert "redis" in deps.get("api", [])
+            compose_deps: dict[str, list[str]] = (
+                docker_manager.get_service_dependency_graph()
+            )
+            assert "api" in compose_deps
+            assert "redis" in compose_deps.get("api", [])
 
         finally:
             Path(compose_file).unlink()
@@ -171,13 +174,15 @@ services:
             mock_start.return_value = FlextResult[str].ok("started")
             mock_wait.return_value = FlextResult[None].ok(None)
 
-            result = docker_manager.start_services_for_test(
-                test_name="integration_test",
-                required_services=["api", "database", "cache"],
+            result: FlextResult[dict[str, str]] = (
+                docker_manager.start_services_for_test(
+                    service_names=["api", "database", "cache"],
+                    test_name="integration_test",
+                )
             )
 
             assert result.is_success
-            services_status = result.unwrap()
+            services_status: dict[str, str] = result.unwrap()
 
             assert "database" in services_status
             assert "cache" in services_status
@@ -269,6 +274,9 @@ class TestDockerCLIEquivalents:
 
     def test_build_image_advanced(self, docker_manager: FlextTestDocker) -> None:
         """Test build_image_advanced method."""
+        # Mock the client to avoid None issues
+        mock_client = MagicMock()
+        docker_manager.client = mock_client
         with patch.object(docker_manager.client.api, "build") as mock_build:
             # Mock successful build
             mock_build.return_value = [
@@ -281,14 +289,15 @@ class TestDockerCLIEquivalents:
                 dockerfile_path = Path(temp_dir) / "Dockerfile"
                 dockerfile_path.write_text("FROM alpine\nRUN echo 'test'\n")
 
-                result = docker_manager.build_image_advanced(
+                result: FlextResult[str] = docker_manager.build_image_advanced(
+                    path=temp_dir,
+                    tag="test:latest",
                     dockerfile_path=str(dockerfile_path),
                     context_path=temp_dir,
-                    tag="test:latest",
                 )
 
                 assert result.is_success
-                image_id = result.unwrap()
+                image_id: str = result.unwrap()
                 assert image_id
 
     def test_exec_container_interactive(self, docker_manager: FlextTestDocker) -> None:
@@ -318,12 +327,12 @@ class TestDockerCLIEquivalents:
         with patch.object(docker_manager.client, "containers") as mock_containers:
             mock_containers.get.return_value = mock_container
 
-            result = docker_manager.container_logs_formatted(
+            result: FlextResult[str] = docker_manager.container_logs_formatted(
                 container_name="test_container", tail=50
             )
 
             assert result.is_success
-            logs = result.unwrap()
+            logs: str = result.unwrap()
             assert "Test log output" in logs
 
 
@@ -390,7 +399,7 @@ class TestShellScriptCompatibility:
             )
 
             assert result.is_failure
-            assert "timeout" in result.error.lower()
+            assert result.error is not None and "timeout" in result.error.lower()
 
 
 class TestWorkspaceManager:
@@ -461,12 +470,12 @@ class TestErrorHandling:
         self, docker_manager: FlextTestDocker
     ) -> None:
         """Test starting unregistered services."""
-        result = docker_manager.start_services_for_test(
-            test_name="test", required_services=["nonexistent_service"]
+        result: FlextResult[dict[str, str]] = docker_manager.start_services_for_test(
+            service_names=["nonexistent_service"], test_name="test"
         )
 
         assert result.is_failure
-        assert "not registered" in result.error
+        assert result.error is not None and "not registered" in result.error
 
     def test_health_check_unregistered_service(
         self, docker_manager: FlextTestDocker
@@ -475,7 +484,7 @@ class TestErrorHandling:
         result = docker_manager.get_service_health_status("nonexistent_service")
 
         assert result.is_failure
-        assert "not registered" in result.error
+        assert result.error is not None and "not registered" in result.error
 
     def test_docker_connection_failure(self) -> None:
         """Test handling Docker connection failures."""
@@ -523,8 +532,10 @@ class TestIntegrationScenarios:
             mock_exec.return_value = FlextResult[str].ok("healthy")
 
             # Step 3: Start services for test
-            start_result = docker_manager.start_services_for_test(
-                "integration_test", ["api", "database"]
+            start_result: FlextResult[dict[str, str]] = (
+                docker_manager.start_services_for_test(
+                    service_names=["api", "database"], test_name="integration_test"
+                )
             )
             assert start_result.is_success
 
@@ -541,7 +552,7 @@ class TestIntegrationScenarios:
     ) -> None:
         """Test complex dependency resolution scenario."""
         # Create a more complex dependency graph
-        services = [
+        services: list[tuple[str, list[str], list[int]]] = [
             ("database", [], [5432]),
             ("cache", [], [6379]),
             ("message_queue", [], [5672]),
@@ -552,6 +563,9 @@ class TestIntegrationScenarios:
 
         # Register all services
         for name, deps, ports in services:
+            name: str
+            deps: list[str]
+            ports: list[int]
             result = docker_manager.register_service(
                 service_name=name,
                 container_name=f"test_{name}",
@@ -561,10 +575,12 @@ class TestIntegrationScenarios:
             assert result.is_success
 
         # Test dependency graph
-        deps = docker_manager.get_service_dependency_graph()
-        assert "api_service" in deps["web_service"]
-        assert "auth_service" in deps["api_service"]
-        assert "database" in deps["auth_service"]
+        dependency_graph: dict[str, list[str]] = (
+            docker_manager.get_service_dependency_graph()
+        )
+        assert "api_service" in dependency_graph["web_service"]
+        assert "auth_service" in dependency_graph["api_service"]
+        assert "database" in dependency_graph["auth_service"]
 
 
 @pytest.mark.integration

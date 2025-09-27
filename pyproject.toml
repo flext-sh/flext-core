@@ -5,7 +5,7 @@ requires = ["poetry-core>=1.9.0"]
 [project]
 authors = [{ name = "FLEXT Team", email = "team@flext.sh" }]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-license.text = "MIT"
+license = {text = "MIT"}
 maintainers = [{ name = "FLEXT Team", email = "team@flext.sh" }]
 name = "flext-core"
 readme = "README.md"
@@ -154,12 +154,6 @@ pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
 [tool.pyrefly]
 # Python 3.13+ Foundation Type Checking
 python_version = "3.13"
-
-# FLEXT ecosystem configuration - essential settings only
-target_version = "3.13"
-
-# Output formatting
-show_error_codes = true
 
 [tool.pytest.ini_options]
 addopts = [
