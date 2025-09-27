@@ -639,7 +639,7 @@ class FlextTestsUtilities:
 
         """
         return {
-            "host": "localhost",
+            "host": FlextConstants.Platform.DEFAULT_HOST,
             "port": 389,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
             "bind_password": "testpass",

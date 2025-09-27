@@ -110,6 +110,11 @@ UParallel = TypeVar("UParallel")
 UResource = TypeVar("UResource")
 
 
+# =============================================================================
+# FLEXT TYPES NAMESPACE - Centralized type system for the FLEXT ecosystem
+# =============================================================================
+
+
 class FlextTypes:
     """Centralized type system namespace for the FLEXT ecosystem.
 
@@ -209,7 +214,15 @@ class FlextTypes:
             "development", "staging", "production", "testing", "test", "local"
         ]
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        type ConfigSerializer = Callable[[FlextTypes.Core.ConfigDict], str]
+        type ConfigSerializer = Callable[
+            [
+                dict[
+                    str,
+                    str | int | float | bool | list[object] | dict[str, object] | None,
+                ]
+            ],
+            str,
+        ]
 
     # =========================================================================
     # VALIDATION TYPES - Validation patterns
@@ -311,6 +324,19 @@ class FlextTypes:
         type AuthCredentials = dict[str, str]
         type ProtocolConfig = dict[str, object]
         type MessageFormat = Literal["json", "xml", "binary", "text"]
+
+    # =========================================================================
+    # CONVENIENCE ALIASES - Direct access to commonly used types
+    # =========================================================================
+
+    # Direct access to Core types for convenience
+    ConfigValue = Core.ConfigValue
+    JsonValue = Core.JsonValue
+    ConfigDict = Core.ConfigDict
+    JsonDict = Core.JsonDict
+    Headers = Core.Headers
+    Metadata = Core.Metadata
+    Parameters = Core.Parameters
 
 
 # =========================================================================

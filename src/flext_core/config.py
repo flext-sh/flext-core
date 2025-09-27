@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import uuid
 from pathlib import Path
@@ -14,6 +15,7 @@ from typing import ClassVar, TypedDict, cast
 
 from pydantic import (
     Field,
+    SecretStr,
     computed_field,
     field_validator,
     model_validator,
@@ -213,14 +215,22 @@ class FlextConfig(BaseSettings):
         extra="ignore",  # Changed from "forbid" to "ignore" to allow extra env vars
         use_enum_values=True,
         frozen=False,  # Allow runtime configuration updates
-        # Pydantic 2.11 enhanced features
+        # Pydantic 2.11+ enhanced features
         arbitrary_types_allowed=True,
         validate_return=True,
+        validate_assignment=True,  # Validate on assignment
         # Enhanced settings features
         cli_parse_args=False,  # Disable CLI parsing by default
         cli_avoid_json=True,  # Avoid JSON CLI options for complex types
         enable_decoding=True,  # Enable JSON decoding for environment variables
         nested_model_default_partial_update=True,  # Allow partial updates to nested models
+        # Advanced Pydantic 2.11+ features
+        str_strip_whitespace=True,  # Strip whitespace from strings
+        str_to_lower=False,  # Keep original case
+        json_schema_extra={
+            "title": "FLEXT Configuration",
+            "description": "Enterprise FLEXT ecosystem configuration with singleton pattern support",
+        },
     )
 
     # Core application configuration - using FlextConstants for defaults
@@ -360,15 +370,15 @@ class FlextConfig(BaseSettings):
         description="Maximum cache size",
     )
 
-    # Security configuration
-    secret_key: str | None = Field(
+    # Security configuration using SecretStr for sensitive data
+    secret_key: SecretStr | None = Field(
         default=None,
-        description="Secret key for security operations",
+        description="Secret key for security operations (sensitive)",
     )
 
-    api_key: str | None = Field(
+    api_key: SecretStr | None = Field(
         default=None,
-        description="API key for external service authentication",
+        description="API key for external service authentication (sensitive)",
     )
 
     # Service configuration using FlextConstants
@@ -578,9 +588,74 @@ class FlextConfig(BaseSettings):
         """Clear the global instance."""
         cls.reset_global_instance()
 
+    @classmethod
+    def get_or_create_shared_instance(
+        cls, project_name: str | None = None, **overrides: FlextTypes.Core.Value
+    ) -> FlextConfig:
+        """Get or create a shared singleton instance with project-specific overrides.
+
+        This method supports inverse dependency injection where multiple projects
+        can share the same FlextConfig singleton instance while allowing project-specific
+        configuration overrides to be applied.
+
+        Args:
+            project_name: Optional project name for logging and identification
+            **overrides: Project-specific configuration overrides
+
+        Returns:
+            FlextConfig: The shared singleton instance with any overrides applied
+
+        """
+        instance = cls.get_global_instance()
+
+        # If overrides are provided, create a merged instance but keep using the singleton
+        if overrides:
+            # Apply overrides without breaking the singleton pattern
+            for key, value in overrides.items():
+                if hasattr(instance, key):
+                    setattr(instance, key, value)
+
+        # Log project access for debugging if project_name provided
+        if project_name:
+            logger = logging.getLogger(__name__)
+            logger.debug(
+                f"Project '{project_name}' accessing shared FlextConfig instance"
+            )
+
+        return instance
+
+    @classmethod
+    def create_project_config(
+        cls, project_name: str, **project_defaults: FlextTypes.Core.Value
+    ) -> FlextConfig:
+        """Create a project-specific configuration that inherits from the global singleton.
+
+        This factory method is designed for projects that need their own Config class
+        but want to maintain compatibility with the shared FlextConfig singleton.
+
+        Args:
+            project_name: Name of the project (e.g., 'flext-api', 'flext-auth')
+            **project_defaults: Project-specific default values
+
+        Returns:
+            FlextConfig: Project configuration instance based on global singleton
+
+        """
+        # Get the base configuration from singleton
+        base_config = cls.get_global_instance()
+
+        # Create project-specific overrides
+        project_overrides: dict[str, FlextTypes.Core.Value] = {
+            "app_name": f"{project_name} Application",
+            **project_defaults,
+        }
+
+        # Use the merge method to create a new instance with project specifics
+        return base_config.merge(project_overrides)
+
     # Class methods for creating instances
     @classmethod
-    def create(cls, **kwargs: FlextTypes.Core.Value) -> FlextConfig:
+    def create(cls, **kwargs: object) -> FlextConfig:
         """Create a new FlextConfig instance with the given parameters.
 
         Args:
@@ -766,27 +841,26 @@ class FlextConfig(BaseSettings):
             "bcrypt_rounds": self.bcrypt_rounds,
         }
 
+    # SecretStr accessor methods for sensitive configuration
+    def get_secret_key_value(self) -> str | None:
+        """Get the actual secret key value (safely extract from SecretStr)."""
+        if self.secret_key is not None:
+            return self.secret_key.get_secret_value()
+        return None
+
+    def get_api_key_value(self) -> str | None:
+        """Get the actual API key value (safely extract from SecretStr)."""
+        if self.api_key is not None:
+            return self.api_key.get_secret_value()
+        return None
+
 
 # Rebuild Pydantic model after all type definitions are complete
 # This resolves any forward reference issues that may occur during model construction
 FlextConfig.model_rebuild()
 
-# Type aliases for backward compatibility (FLEXT 1.0.0 compatibility guarantee)
-LoggingConfigDict = FlextConfig.LoggingConfigDict
-DatabaseConfigDict = FlextConfig.DatabaseConfigDict
-CacheConfigDict = FlextConfig.CacheConfigDict
-CqrsBusConfigDict = FlextConfig.CqrsBusConfigDict
-MetadataConfigDict = FlextConfig.MetadataConfigDict
-SecurityConfigDict = FlextConfig.SecurityConfigDict
-CacheConfigComputedDict = FlextConfig.CacheConfigComputedDict
+# Direct class access - no legacy aliases
 
 __all__ = [
-    "CacheConfigComputedDict",
-    "CacheConfigDict",
-    "CqrsBusConfigDict",
-    "DatabaseConfigDict",
     "FlextConfig",
-    "LoggingConfigDict",
-    "MetadataConfigDict",
-    "SecurityConfigDict",
 ]

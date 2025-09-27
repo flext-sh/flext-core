@@ -224,7 +224,8 @@ class TestFlextContext:
 
         # Test invalid key
         try:
-            context.set(None, "value")
+            # Use cast to suppress Pyrefly type error for intentional None test
+            context.set(cast("str", None), "value")
             msg = "Should have raised an error"
             raise AssertionError(msg)
         except (TypeError, ValueError):

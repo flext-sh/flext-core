@@ -956,10 +956,10 @@ class TestServiceCoverageImprovements:
                 return FlextResult[str].ok("success")
 
             def execute_with_request(
-                self, request: FlextModels.DomainServiceExecutionRequest
+                self, _request: FlextModels.DomainServiceExecutionRequest
             ) -> FlextResult[str]:
                 # Store request for processing
-                self._current_request = request
+                self._current_request = _request
                 return self.execute()
 
         service = RequestService()
@@ -1087,42 +1087,33 @@ class AsyncExecutable:
 
     async def execute_async(self) -> FlextResult[object]:
         """Execute operation asynchronously."""
-        return FlextResult[str].ok("success")
+        return FlextResult[object].ok("success")
 
-        class BatchService(FlextService[list[str]]):
-            def execute(self) -> FlextResult[list[str]]:
-                return FlextResult[list[str]].ok(["item1", "item2", "item3"])
 
-            def execute_batch_with_request(
-                self, request: FlextModels.DomainServiceBatchRequest
-            ) -> FlextResult[list[list[str]]]:
-                # Process in batches
-                batch_size = getattr(request, "batch_size", 10)
-                result = self.execute()
-                if result.is_success:
-                    # Simulate batch processing
-                    items = result.value
-                    batch_count = len(items) // batch_size + (
-                        1 if len(items) % batch_size > 0 else 0
-                    )
-                    return FlextResult[list[list[str]]].ok([
-                        [f"batch_{i}"] for i in range(batch_count)
-                    ])
-                return FlextResult[list[list[str]]].fail(
-                    result.error or "Batch execution failed"
-                )
+class BatchService(FlextService[list[str]]):
+    """Test service for batch processing."""
 
-        service = BatchService()
-        request = FlextModels.DomainServiceBatchRequest(
-            service_name="BatchService",
-            operations=[{"op": "process"}],
-            batch_size=5,
+    def execute(self) -> FlextResult[list[str]]:
+        return FlextResult[list[str]].ok(["item1", "item2", "item3"])
+
+    def execute_batch_with_request(
+        self, request: FlextModels.DomainServiceBatchRequest
+    ) -> FlextResult[list[list[str]]]:
+        # Process in batches
+        batch_size = getattr(request, "batch_size", 10)
+        result = self.execute()
+        if result.is_success:
+            # Simulate batch processing
+            items = result.value
+            batch_count = len(items) // batch_size + (
+                1 if len(items) % batch_size > 0 else 0
+            )
+            return FlextResult[list[list[str]]].ok([
+                [f"batch_{i}"] for i in range(batch_count)
+            ])
+        return FlextResult[list[list[str]]].fail(
+            result.error or "Batch execution failed"
         )
-        result = service.execute_batch_with_request(request)
-
-        assert result.is_success
-        assert "batch_0" in result.value[0]
-        return None
 
     def test_execute_with_metrics_request_success(self) -> None:
         """Test execute_with_metrics_request with success."""
@@ -1132,10 +1123,10 @@ class AsyncExecutable:
                 return FlextResult[dict[str, object]].ok({"status": "success"})
 
             def execute_with_metrics_request(
-                self, request: FlextModels.DomainServiceMetricsRequest
+                self, _request: FlextModels.DomainServiceMetricsRequest
             ) -> FlextResult[dict[str, object]]:
                 # Collect metrics if requested
-                collect_metrics = getattr(request, "collect_metrics", False)
+                collect_metrics = getattr(_request, "collect_metrics", False)
                 result = self.execute()
                 if result.is_success and collect_metrics:
                     # Add metrics to result

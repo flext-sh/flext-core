@@ -123,6 +123,14 @@ class FlextExceptions:
 
         """
         try:
+            # Validate that exception_type is actually a type that inherits from Exception
+            if not isinstance(exception_type, type) or not issubclass(
+                exception_type, Exception
+            ):
+                return FlextResult[None].fail(
+                    f"Invalid exception type: {exception_type}"
+                )
+
             if exception_type not in self._handlers:
                 self._handlers[exception_type] = []
             self._handlers[exception_type].append(handler)

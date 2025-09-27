@@ -141,7 +141,7 @@ class TestLibraryIntegration:
             pytest.skip("sample_data is not a dictionary")
         # Type narrow sample_data to dict[str, object] for indexing
         sample_dict = cast("dict[str, object]", sample_data)
-        test_value = cast("str", sample_dict["string"])
+        test_value: str = cast("str", sample_dict["string"])
 
         # Act - Test FlextResult creation
         result = FlextResult[str].ok(test_value)

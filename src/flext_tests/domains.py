@@ -17,7 +17,7 @@ from typing import ClassVar
 
 from pydantic import Field
 
-from flext_core import FlextModels, FlextTypes
+from flext_core import FlextConstants, FlextModels, FlextTypes
 
 
 class FlextTestsDomains:
@@ -128,7 +128,7 @@ class FlextTestsDomains:
 
         """
         data: FlextTypes.Core.Dict = {
-            "database_url": "postgresql://localhost:5432/test",
+            "database_url": f"postgresql://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.POSTGRES_DEFAULT_PORT}/test",
             "log_level": "INFO",
             "debug": False,
             "cache_enabled": True,
@@ -151,7 +151,10 @@ class FlextTestsDomains:
         data: FlextTypes.Core.Dict = {
             "name": f"test_service_{random.randint(1, 100)}",
             "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
-            "port": random.randint(8000, 9000),
+            "port": random.randint(
+                FlextConstants.Platform.FLEXT_API_PORT,
+                FlextConstants.Platform.FLEXT_API_PORT + 1000,
+            ),
             "health_check_path": "/health",
             "dependencies": [],
         }

@@ -93,7 +93,11 @@ class FlextContext:
             raise TypeError(msg)
 
         with self._lock:
-            scope_data = self._scopes.get(scope, self._data)
+            # Ensure the scope exists in _scopes
+            if scope not in self._scopes:
+                self._scopes[scope] = {}
+
+            scope_data = self._scopes[scope]
             scope_data[key] = value
             sets_count = self._statistics.get("sets", 0)
             if isinstance(sets_count, int):
@@ -127,7 +131,7 @@ class FlextContext:
             return default
 
         with self._lock:
-            scope_data = self._scopes.get(scope, self._data)
+            scope_data = self._scopes.get(scope, {})
             gets_count = self._statistics.get("gets", 0)
             if isinstance(gets_count, int):
                 self._statistics["gets"] = gets_count + 1
@@ -154,7 +158,7 @@ class FlextContext:
             return False
 
         with self._lock:
-            scope_data = self._scopes.get(scope, self._data)
+            scope_data = self._scopes.get(scope, {})
             return key in scope_data
 
     def remove(self, key: str, scope: str = "global") -> None:
@@ -169,7 +173,7 @@ class FlextContext:
             return
 
         with self._lock:
-            scope_data = self._scopes.get(scope, self._data)
+            scope_data = self._scopes.get(scope, {})
             if key in scope_data:
                 del scope_data[key]
                 removes_count = self._statistics.get("removes", 0)
@@ -188,10 +192,18 @@ class FlextContext:
             return
 
         with self._lock:
-            self._data.clear()
+            # Clear all scopes
+            for scope_data in self._scopes.values():
+                scope_data.clear()
             clears_count = self._statistics.get("clears", 0)
             if isinstance(clears_count, int):
                 self._statistics["clears"] = clears_count + 1
+
+            operations = self._statistics.get("operations", {})
+            if isinstance(operations, dict) and "clear" in operations:
+                clear_count = operations["clear"]
+                if isinstance(clear_count, int):
+                    operations["clear"] = clear_count + 1
 
     def keys(self) -> list[str]:
         """Get all keys in the context.
@@ -204,7 +216,10 @@ class FlextContext:
             return []
 
         with self._lock:
-            return list(self._data.keys())
+            all_keys: set[str] = set()
+            for scope_data in self._scopes.values():
+                all_keys.update(scope_data.keys())
+            return list(all_keys)
 
     def values(self) -> list[object]:
         """Get all values in the context.
@@ -217,7 +232,10 @@ class FlextContext:
             return []
 
         with self._lock:
-            return list(self._data.values())
+            all_values: list[object] = []
+            for scope_data in self._scopes.values():
+                all_values.extend(scope_data.values())
+            return all_values
 
     def items(self) -> list[tuple[str, object]]:
         """Get all key-value pairs in the context.
@@ -230,7 +248,10 @@ class FlextContext:
             return []
 
         with self._lock:
-            return list(self._data.items())
+            all_items: list[tuple[str, object]] = []
+            for scope_data in self._scopes.values():
+                all_items.extend(scope_data.items())
+            return all_items
 
     def merge(self, other: FlextContext | FlextTypes.Core.Dict) -> FlextContext:
         """Merge another context or dictionary into this context.
@@ -247,9 +268,15 @@ class FlextContext:
 
         with self._lock:
             if isinstance(other, FlextContext):
-                self._data.update(other.get_all_data())
+                # Merge all scopes from the other context
+                other_scopes = other.get_all_scopes()
+                for scope_name, scope_data in other_scopes.items():
+                    if scope_name not in self._scopes:
+                        self._scopes[scope_name] = {}
+                    self._scopes[scope_name].update(scope_data)
             else:
-                self._data.update(other)
+                # Merge into global scope
+                self._scopes["global"].update(other)
         return self
 
     def clone(self) -> FlextContext:
@@ -260,7 +287,12 @@ class FlextContext:
 
         """
         with self._lock:
-            cloned = FlextContext(self._data.copy())
+            cloned = FlextContext()
+            # Clone all scopes
+            cloned._scopes = {
+                scope_name: scope_data.copy()
+                for scope_name, scope_data in self._scopes.items()
+            }
             cloned._metadata = self._metadata.copy()
             cloned._statistics = self._statistics.copy()
             return cloned
@@ -276,10 +308,11 @@ class FlextContext:
             return FlextResult[None].fail("Context is not active")
 
         with self._lock:
-            # Check for empty keys
-            for key in self._data:
-                if not key or not isinstance(key, str):
-                    return FlextResult[None].fail("Invalid key found in context")
+            # Check for empty keys in all scopes
+            for scope_data in self._scopes.values():
+                for key in scope_data:
+                    if not key or not isinstance(key, str):
+                        return FlextResult[None].fail("Invalid key found in context")
             return FlextResult[None].ok(None)
 
     def to_json(self) -> str:
@@ -290,7 +323,11 @@ class FlextContext:
 
         """
         with self._lock:
-            return json.dumps(self._data, default=str)
+            # Combine all scopes into a single flat dictionary for backward compatibility
+            all_data = {}
+            for scope_data in self._scopes.values():
+                all_data.update(scope_data)
+            return json.dumps(all_data, default=str)
 
     @classmethod
     def from_json(cls, json_str: str) -> FlextContext:
@@ -304,7 +341,18 @@ class FlextContext:
 
         """
         data = json.loads(json_str)
-        return cls(data)
+        context = cls()
+
+        # Handle both old flat format and new scoped format
+        if isinstance(data, dict):
+            if all(isinstance(v, dict) for v in data.values()):
+                # New scoped format
+                context._scopes = data
+            else:
+                # Old flat format - put everything in global scope
+                context._scopes["global"] = data
+
+        return context
 
     def is_active(self) -> bool:
         """Check if context is active.
@@ -327,7 +375,9 @@ class FlextContext:
         """Destroy the context."""
         with self._lock:
             self._active = False
-            self._data.clear()
+            # Clear all scopes
+            for scope_data in self._scopes.values():
+                scope_data.clear()
             self._metadata.clear()
             self._hooks.clear()
 
@@ -401,8 +451,20 @@ class FlextContext:
     def cleanup(self) -> None:
         """Clean up the context."""
         with self._lock:
-            self._data.clear()
+            # Clear all scopes
+            for scope_data in self._scopes.values():
+                scope_data.clear()
             self._metadata.clear()
+
+    def get_all_scopes(self) -> dict[str, FlextTypes.Core.Dict]:
+        """Get all scopes.
+
+        Returns:
+            Dictionary of all scopes
+
+        """
+        with self._lock:
+            return self._scopes.copy()
 
     def export(self) -> FlextTypes.Core.Dict:
         """Export context data.
@@ -412,8 +474,11 @@ class FlextContext:
 
         """
         with self._lock:
-            # Return the data directly, not wrapped in a "data" key
-            return self._data.copy()
+            # Combine all scopes into a single dictionary
+            all_data = {}
+            for scope_data in self._scopes.values():
+                all_data.update(scope_data)
+            return all_data
 
     def import_data(self, data: FlextTypes.Core.Dict) -> None:
         """Import context data.
@@ -423,8 +488,8 @@ class FlextContext:
 
         """
         with self._lock:
-            # Import data directly, not from a "data" key
-            self._data.update(data)
+            # Import data into global scope
+            self._scopes["global"].update(data)
 
     # =========================================================================
     # Global Context Management - Static methods for global context

@@ -222,8 +222,8 @@ def logs(container: str) -> None:
     try:
         # Get container logs using Docker client
         client = (
-            control._get_client()
-        )  # Use the private method to ensure client is initialized
+            control.get_client()
+        )  # Use the public method to ensure client is initialized
         docker_container = client.containers.get(container)
         logs = docker_container.logs(tail=100).decode("utf-8", errors="ignore")
         console.print(logs)

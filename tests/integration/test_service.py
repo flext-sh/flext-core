@@ -272,7 +272,13 @@ class TestServiceIntegrationPatterns:
         if isinstance(large_dataset, (list, dict)) or hasattr(
             large_dataset, "__iter__"
         ):
-            result = process_pipeline(large_dataset)
+            # Cast to expected type to satisfy Pyrefly
+            result = process_pipeline(
+                cast(
+                    "list[int] | dict[str, dict[str, dict[str, list[int]]]]",
+                    large_dataset,
+                )
+            )
         else:
             pytest.skip("large_dataset is not a valid type for process_pipeline")
         execution_time = time.perf_counter() - start_time

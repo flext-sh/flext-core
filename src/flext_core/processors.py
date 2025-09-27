@@ -14,7 +14,6 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-from flext_core.utilities import FlextUtilities
 
 
 class FlextProcessors:
@@ -864,10 +863,19 @@ class FlextProcessors:
                 create_fallback_operation(pipeline) for pipeline in fallback_pipelines
             ]
 
-            return FlextUtilities.Reliability.with_fallback(
-                lambda: self.process(request.data),
-                *fallback_operations,
-            )
+            # Try primary operation first
+            primary_result = self.process(request.data)
+            if primary_result.is_success:
+                return primary_result
+
+            # Try fallback operations
+            for fallback_operation in fallback_operations:
+                fallback_result = fallback_operation()
+                if fallback_result.is_success:
+                    return fallback_result
+
+            # All operations failed, return the primary failure
+            return primary_result
 
         def process_batch(
             self, config: FlextModels.BatchProcessingConfig | object
