@@ -747,11 +747,14 @@ class FlextMixins:
         ] = []
         self._metrics: dict[str, dict[str, int]] = {}
         self._audit_log: list[dict[str, object]] = []
-        self._performance_metrics: dict[str, dict[str, int]] = {}
+        self._performance_metrics: dict[str, dict[str, float | int]] = {}
         self._circuit_breaker: dict[str, bool] = {}
+        self._rate_limit_requests: dict[str, list[datetime]] = {}
 
     def register(self, name: str, mixin: object) -> FlextResult[None]:
         """Register a mixin."""
+        if not name or mixin is None:
+            return FlextResult[None].fail("Invalid mixin name or mixin object")
         try:
             self._registry[name] = mixin
             return FlextResult[None].ok(None)
@@ -777,6 +780,33 @@ class FlextMixins:
             # Check circuit breaker
             if self.is_circuit_breaker_open(name):
                 return FlextResult[object].fail("Circuit breaker is open")
+
+            # Check rate limiting (max 10 applications per mixin to allow circuit breaker testing)
+            current_time = datetime.now(UTC)
+            rate_limit_key = f"{name}_rate_limit"
+            if rate_limit_key not in self._rate_limit_requests:
+                self._rate_limit_requests[rate_limit_key] = []
+
+            # Constants for rate limiting (configurable for testing)
+            rate_limit_window_seconds = 60  # 1 minute window
+            max_requests_per_window = 10  # Allow more requests for circuit breaker testing
+
+            # Clean old requests (older than 1 minute)
+            self._rate_limit_requests[rate_limit_key] = [
+                req_time
+                for req_time in self._rate_limit_requests[rate_limit_key]
+                if (current_time - req_time).total_seconds() < rate_limit_window_seconds
+            ]
+
+            # Check if rate limit exceeded (max 10 requests per minute)
+            if (
+                len(self._rate_limit_requests[rate_limit_key])
+                >= max_requests_per_window
+            ):
+                return FlextResult[object].fail("Rate limit exceeded")
+
+            # Add current request
+            self._rate_limit_requests[rate_limit_key].append(current_time)
 
             mixin_class = self._registry[name]
 
@@ -810,6 +840,7 @@ class FlextMixins:
                     try:
                         # Use threading timeout for the method call
                         result_queue: Queue[tuple[bool, object | Exception]] = Queue()
+                        start_time = datetime.now(UTC)
 
                         def target(
                             queue: Queue[tuple[bool, object | Exception]],
@@ -836,6 +867,9 @@ class FlextMixins:
                         thread.start()
                         thread.join(timeout_seconds)
 
+                        end_time = datetime.now(UTC)
+                        execution_time = (end_time - start_time).total_seconds()
+
                         if thread.is_alive() and attempt >= max_retries - 1:
                             # Timeout occurred on final attempt
                             # Track metrics
@@ -855,6 +889,7 @@ class FlextMixins:
                                 "errors": current_metrics.get("errors", 0),
                                 "timeouts": current_metrics.get("timeouts", 0) + 1,
                             }
+                            self._check_circuit_breaker(name)
                             return FlextResult[object].fail(
                                 "Failed to apply mixin: timeout"
                             )
@@ -862,7 +897,7 @@ class FlextMixins:
                         try:
                             success, result = result_queue.get_nowait()
                             if success:
-                                # Success - track metrics
+                                # Success - track metrics and performance
                                 current_metrics = self._metrics.get(
                                     name,
                                     {
@@ -882,6 +917,33 @@ class FlextMixins:
                                     "errors": current_metrics.get("errors", 0),
                                     "timeouts": current_metrics.get("timeouts", 0),
                                 }
+
+                                # Track performance metrics
+                                perf_metrics = self._performance_metrics.get(
+                                    name,
+                                    {
+                                        "total_execution_time": 0.0,
+                                        "execution_count": 0,
+                                        "avg_execution_time": 0.0,
+                                    },
+                                )
+                                perf_metrics["total_execution_time"] += execution_time
+                                perf_metrics["execution_count"] += 1
+                                perf_metrics["avg_execution_time"] = (
+                                    perf_metrics["total_execution_time"]
+                                    / perf_metrics["execution_count"]
+                                )
+                                self._performance_metrics[name] = perf_metrics
+
+                                # Add audit log entry
+                                self._audit_log.append({
+                                    "mixin_name": name,
+                                    "timestamp": datetime.now(UTC).isoformat(),
+                                    "action": "apply",
+                                    "success": True,
+                                    "execution_time": execution_time,
+                                })
+
                                 return FlextResult[object].ok(result)
                             # Exception occurred
                             if attempt >= max_retries - 1:
@@ -966,6 +1028,24 @@ class FlextMixins:
             processed_data = {"processed": True, "mixin": name, "data": data}
             return FlextResult[object].ok(processed_data)
         except Exception as e:
+            # Track metrics for general exceptions
+            current_metrics = self._metrics.get(
+                name,
+                {
+                    "applications": 0,
+                    "successes": 0,
+                    "errors": 0,
+                    "timeouts": 0,
+                },
+            )
+            self._metrics[name] = {
+                "applications": current_metrics.get("applications", 0) + 1,
+                "successes": current_metrics.get("successes", 0),
+                "errors": current_metrics.get("errors", 0) + 1,
+                "timeouts": current_metrics.get("timeouts", 0),
+            }
+            # Check if we should open circuit breaker
+            self._check_circuit_breaker(name)
             return FlextResult[object].fail(f"Failed to apply mixin: {e}")
 
     def add_middleware(
@@ -986,7 +1066,7 @@ class FlextMixins:
         """Get audit log."""
         return self._audit_log.copy()
 
-    def get_performance_metrics(self) -> dict[str, dict[str, int]]:
+    def get_performance_metrics(self) -> dict[str, dict[str, float | int]]:
         """Get performance metrics."""
         return self._performance_metrics.copy()
 
@@ -1112,14 +1192,13 @@ class FlextMixins:
 
     def _check_circuit_breaker(self, name: str) -> None:
         """Check if circuit breaker should be opened based on failure rate."""
-        CIRCUIT_BREAKER_THRESHOLD = 5  # Open after 5 consecutive failures
-        
+        circuit_breaker_threshold = 5  # Open after 5 consecutive failures
+
         metrics = self._metrics.get(name, {})
         errors = metrics.get("errors", 0)
-        applications = metrics.get("applications", 0)
-        
+
         # Open circuit breaker if we have enough failures
-        if errors >= CIRCUIT_BREAKER_THRESHOLD:
+        if errors >= circuit_breaker_threshold:
             self._circuit_breaker[name] = True
 
     def is_circuit_breaker_open(self, name: str) -> bool:

@@ -933,6 +933,11 @@ class FlextBus(FlextMixins):
         """
         return {str(k): v for k, v in self._handlers.items()}
 
+    def clear_handlers(self) -> None:
+        """Clear all registered handlers."""
+        self._handlers.clear()
+        self._auto_handlers.clear()
+
 
 # Direct class access - no legacy aliases
 

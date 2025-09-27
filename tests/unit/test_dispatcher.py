@@ -554,7 +554,8 @@ class TestFlextDispatcher:
         # Export dispatcher configuration
         config = dispatcher.export_config()
         assert isinstance(config, dict)
-        assert "test_message" in config
+        assert "handlers" in config
+        assert "test_message" in config["handlers"]
 
         # Create new dispatcher and import configuration
         new_dispatcher = FlextDispatcher()

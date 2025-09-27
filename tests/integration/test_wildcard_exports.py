@@ -221,7 +221,7 @@ class TestFlextCoreIntegrationScenarios:
 
         # 4. Verify final state using a simple string
         final_status = "COMPLETED"
-        final_result = processed_result.map(
+        processed_result.map(
             lambda data: {**data, "status": final_status},
         )
 

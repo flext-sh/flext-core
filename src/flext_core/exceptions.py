@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import time
 from collections.abc import Mapping
@@ -159,7 +160,8 @@ class FlextExceptions:
                 self._handlers[exception_type].remove(handler)
                 if not self._handlers[exception_type]:
                     del self._handlers[exception_type]
-            return FlextResult[None].ok(None)
+                return FlextResult[None].ok(None)
+            return FlextResult[None].fail("Handler not found")
         except Exception as e:
             return FlextResult[None].fail(f"Failed to unregister handler: {e}")
 
@@ -177,6 +179,7 @@ class FlextExceptions:
 
         """
         try:
+            start_time = time.time()
             exception_type = type(exception)
             handlers = self._handlers.get(exception_type, [])
 
@@ -188,6 +191,37 @@ class FlextExceptions:
             if self.is_circuit_breaker_open(exception_type_name):
                 return FlextResult[object].fail("Circuit breaker is open")
 
+            # Check rate limiting
+            rate_limit = self._config.get("rate_limit", 10)  # Default 10 requests
+            rate_limit_window = self._config.get(
+                "rate_limit_window", 60
+            )  # Default 60 seconds
+
+            current_time = time.time()
+            rate_limit_key = f"{exception_type_name}_rate_limit"
+
+            if rate_limit_key not in self._rate_limiters:
+                self._rate_limiters[rate_limit_key] = {
+                    "requests": [],
+                    "window_start": current_time,
+                }
+
+            rate_limiter = self._rate_limiters[rate_limit_key]
+
+            # Clean old requests outside the window
+            rate_limiter["requests"] = [
+                req_time
+                for req_time in rate_limiter["requests"]
+                if current_time - req_time < rate_limit_window
+            ]
+
+            # Check if rate limit exceeded
+            if len(rate_limiter["requests"]) >= rate_limit:
+                return FlextResult[object].fail("Rate limit exceeded")
+
+            # Add current request
+            rate_limiter["requests"].append(current_time)
+
             # Apply middleware
             processed_exception = exception
             for middleware in self._middleware:
@@ -197,17 +231,44 @@ class FlextExceptions:
                     except Exception as middleware_error:
                         self.logger.warning(f"Middleware error: {middleware_error}")
 
-            # Execute handlers
+            # Execute handlers with timeout
+            timeout_seconds = self._config.get("timeout", 30)  # Default 30 seconds
+            timeout_value = (
+                float(timeout_seconds) if isinstance(timeout_seconds, (int, float, str)) else 30.0
+            )
+
             results = []
-            for handler in handlers:
+            handler_exceptions = []
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(handlers)) as executor:
+                # Submit all handlers
+                future_to_handler = {
+                    executor.submit(handler, processed_exception): handler
+                    for handler in handlers
+                    if callable(handler)
+                }
+
+                # Wait for results with timeout
                 try:
-                    if callable(handler):
-                        result = handler(exception)
-                        results.append(result)
-                    else:
-                        results.append(handler)
-                except Exception as handler_error:
-                    results.append(f"Handler error: {handler_error}")
+                    for future in concurrent.futures.as_completed(future_to_handler, timeout=timeout_value):
+                        try:
+                            handler_result = future.result()
+                            results.append(handler_result)
+                        except Exception as handler_error:
+                            handler_exceptions.append(str(handler_error))
+                            results.append(f"Handler error: {handler_error}")
+                except concurrent.futures.TimeoutError:
+                    return FlextResult[object].fail("Handler timeout")
+
+                # Add non-callable handlers
+                non_callable_handlers = [handler for handler in handlers if not callable(handler)]
+                results.extend(non_callable_handlers)
+
+            # If any handler raised an exception, return failure
+            if handler_exceptions:
+                return FlextResult[object].fail(
+                    f"Handler exception: {handler_exceptions[0]}"
+                )
 
             # Record in audit log
             self._audit_log.append({
@@ -220,8 +281,24 @@ class FlextExceptions:
 
             # Update performance metrics
             exception_name = exception_type.__name__
+            execution_time = time.time() - start_time
+
             if exception_name not in self._performance_metrics:
-                self._performance_metrics[exception_name] = {"handled": 0, "errors": 0}
+                self._performance_metrics[exception_name] = {
+                    "handled": 0,
+                    "errors": 0,
+                    "total_execution_time": 0.0,
+                    "execution_count": 0,
+                    "avg_execution_time": 0.0
+                }
+
+            # Update execution time metrics
+            self._performance_metrics[exception_name]["total_execution_time"] += execution_time
+            self._performance_metrics[exception_name]["execution_count"] += 1
+            self._performance_metrics[exception_name]["avg_execution_time"] = (
+                self._performance_metrics[exception_name]["total_execution_time"] /
+                self._performance_metrics[exception_name]["execution_count"]
+            )
 
             # Check circuit breaker threshold
             threshold_value = self._config.get("circuit_breaker_threshold", 5)
@@ -237,19 +314,29 @@ class FlextExceptions:
             )
             if failure_count > 0:
                 self._performance_metrics[exception_name]["errors"] += failure_count
-
-                # Open circuit breaker if threshold exceeded
-                if (
-                    self._performance_metrics[exception_name]["errors"]
-                    >= circuit_breaker_threshold
-                ):
-                    self._circuit_breakers[exception_name] = True
-                    return FlextResult[object].fail(
-                        "Circuit breaker opened due to repeated failures"
-                    )
             else:
                 self._performance_metrics[exception_name]["handled"] += 1
 
+            # Check circuit breaker threshold after updating metrics
+            if (
+                self._performance_metrics[exception_name]["errors"]
+                >= circuit_breaker_threshold
+            ):
+                self._circuit_breakers[exception_name] = True
+                return FlextResult[object].fail(
+                    "Circuit breaker opened due to repeated failures"
+                )
+
+            # Check if any handler failed
+            if any(isinstance(result, FlextResult) and result.is_failure for result in results):
+                # Return the first failure
+                for result in results:
+                    if isinstance(result, FlextResult) and result.is_failure:
+                        return result
+
+            # Return single result if only one handler, otherwise return list
+            if len(results) == 1:
+                return results[0]
             return FlextResult[object].ok(results)
         except Exception as e:
             return FlextResult[object].fail(f"Exception handling failed: {e}")
@@ -276,8 +363,18 @@ class FlextExceptions:
             List of FlextResults with handling results
 
         """
-        # For now, same as batch handling
-        return self.handle_batch(exceptions)
+        results = []
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=len(exceptions)
+        ) as executor:
+            futures = [
+                executor.submit(self.handle_exception, exc) for exc in exceptions
+            ]
+            results.extend(
+                future.result() for future in concurrent.futures.as_completed(futures)
+            )
+
+        return results
 
     def add_middleware(self, middleware: object) -> None:
         """Add middleware for exception processing.
@@ -341,7 +438,7 @@ class FlextExceptions:
             Dictionary of statistics
 
         """
-        return {
+        stats = {
             "total_handlers": sum(
                 len(handlers) for handlers in self._handlers.values()
             ),
@@ -350,6 +447,11 @@ class FlextExceptions:
             "audit_log_entries": len(self._audit_log),
             "performance_metrics": self._performance_metrics.copy(),
         }
+
+        # Add individual exception type statistics
+        stats.update(self._performance_metrics)
+
+        return stats
 
     def validate(self) -> FlextResult[None]:
         """Validate configuration and handlers.

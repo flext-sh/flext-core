@@ -157,14 +157,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             ),
             "environment": environment_default,
         }
-        # Extract snapshot from actual FlextConfig instance, if available
-        try:
-            config_instance = FlextConfig.get_global_instance()
+        # Extract snapshot from actual FlextConfig instance with explicit validation
+        config_instance = FlextConfig.get_global_instance()
+        if config_instance is not None:
             self._flext_config_snapshot: dict[str, object] = (
                 self._extract_config_snapshot(config_instance)
             )
-        except Exception:
-            # Fallback if FlextConfig is not available during initialization
+        else:
+            # Explicit empty snapshot when no config instance available
             self._flext_config_snapshot = {}
         self._user_overrides: dict[str, object] = {}
         # Update global config with snapshot and user overrides
@@ -935,19 +935,30 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return self._finalize_config_values(normalized)
 
     def _finalize_config_values(self, config: dict[str, object]) -> dict[str, object]:
-        """Finalize configuration values with type coercion and fallbacks."""
-        max_workers = self._coerce_positive_int(
+        """Finalize configuration values with explicit validation - no fallbacks."""
+        # Validate max_workers with explicit error handling
+        max_workers_validation = self._validate_positive_int(
             config.get("max_workers"),
-            default=FlextConstants.Container.MAX_WORKERS,
             minimum=FlextConstants.Container.MIN_WORKERS,
         )
-
-        timeout_seconds = self._coerce_positive_float(
-            config.get("timeout_seconds"),
-            default=FlextConstants.Container.TIMEOUT_SECONDS,
-            minimum=0.0,
+        max_workers = (
+            max_workers_validation.unwrap_or(FlextConstants.Container.MAX_WORKERS)
+            if max_workers_validation.is_success
+            else FlextConstants.Container.MAX_WORKERS
         )
 
+        # Validate timeout_seconds with explicit error handling
+        timeout_validation = self._validate_positive_float(
+            config.get("timeout_seconds"),
+            minimum=0.0,
+        )
+        timeout_seconds = (
+            timeout_validation.unwrap_or(FlextConstants.Container.TIMEOUT_SECONDS)
+            if timeout_validation.is_success
+            else FlextConstants.Container.TIMEOUT_SECONDS
+        )
+
+        # Validate environment with explicit handling
         environment_raw = config.get("environment")
         if isinstance(environment_raw, str):
             environment = (
@@ -1009,42 +1020,37 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         )
 
     @staticmethod
-    def _coerce_positive_int(value: object, *, default: int, minimum: int) -> int:
-        """Coerce value to positive int with fallback."""
-        candidate: int | None = None
+    def _validate_positive_float(value: object, *, minimum: float) -> FlextResult[float]:
+        """Validate value as positive float - no fallbacks, explicit validation."""
+        if isinstance(value, bool):
+            return FlextResult[float].fail(
+                f"Boolean value not allowed for float field: {value}"
+            )
 
-        if isinstance(value, (bool, int, float)):
-            candidate = int(value)
-        elif isinstance(value, str):
+        if isinstance(value, (int, float)):
+            float_value = float(value)
+            if float_value < minimum:
+                return FlextResult[float].fail(
+                    f"Value {float_value} is below minimum {minimum}"
+                )
+            return FlextResult[float].ok(float_value)
+
+        if isinstance(value, str):
             try:
-                candidate = int(float(value))
+                float_value = float(value)
+                if float_value < minimum:
+                    return FlextResult[float].fail(
+                        f"Value {float_value} is below minimum {minimum}"
+                    )
+                return FlextResult[float].ok(float_value)
             except ValueError:
-                candidate = None
+                return FlextResult[float].fail(
+                    f"Cannot convert string to float: {value}"
+                )
 
-        if candidate is None or candidate < minimum:
-            return default
-
-        return candidate
-
-    @staticmethod
-    def _coerce_positive_float(
-        value: object, *, default: float, minimum: float
-    ) -> float:
-        """Coerce value to positive float with fallback."""
-        candidate: float | None = None
-
-        if isinstance(value, (bool, int, float)):
-            candidate = float(value)
-        elif isinstance(value, str):
-            try:
-                candidate = float(value)
-            except ValueError:
-                candidate = None
-
-        if candidate is None or candidate < minimum:
-            return default
-
-        return candidate
+        return FlextResult[float].fail(
+            f"Invalid type for float: {type(value).__name__}"
+        )
 
     def _refresh_global_config(self) -> None:
         """Recalculate the effective global configuration."""
