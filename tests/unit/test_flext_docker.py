@@ -65,8 +65,12 @@ class TestAutoServiceManagement:
     @pytest.fixture
     def docker_manager(self) -> FlextTestDocker:
         """Create a FlextTestDocker instance for testing."""
-        with patch("flext_tests.docker.docker.from_env"):
-            return FlextTestDocker()
+        with patch("flext_tests.docker.docker.from_env") as mock_docker:
+            mock_client = Mock()
+            mock_docker.return_value = mock_client
+            manager = FlextTestDocker()
+            manager.client = mock_client
+            return manager
 
     def test_register_service_success(self, docker_manager: FlextTestDocker) -> None:
         """Test successful service registration."""
@@ -220,8 +224,12 @@ class TestDockerCLIEquivalents:
     @pytest.fixture
     def docker_manager(self) -> FlextTestDocker:
         """Create a FlextTestDocker instance for testing."""
-        with patch("flext_tests.docker.docker.from_env"):
-            return FlextTestDocker()
+        with patch("flext_tests.docker.docker.from_env") as mock_docker:
+            mock_client = Mock()
+            mock_docker.return_value = mock_client
+            manager = FlextTestDocker()
+            manager.client = mock_client
+            return manager
 
     def test_list_containers_formatted(self, docker_manager: FlextTestDocker) -> None:
         """Test list_containers_formatted method."""

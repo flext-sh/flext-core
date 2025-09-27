@@ -1057,6 +1057,17 @@ class FlextDispatcher:
             except Exception:
                 config["bus_config"] = "unavailable"
 
+        # Include handler information
+        if hasattr(self, "_bus") and self._bus:
+            handlers = {}
+            try:
+                registered_handlers = self._bus.get_registered_handlers()
+                if isinstance(registered_handlers, dict):
+                    handlers.update(registered_handlers)
+                config["handlers"] = handlers
+            except Exception:
+                config["handlers"] = {}
+
         return config
 
     def get_metrics(self) -> dict[str, object]:

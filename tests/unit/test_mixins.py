@@ -345,7 +345,7 @@ class TestFlextMixins:
         mixins.register("test_mixin", TestMixin)
 
         # Execute applications within rate limit
-        for _i in range(2):
+        for _i in range(10):
             result = mixins.apply("test_mixin", TestClass)
             assert result.is_success
 
