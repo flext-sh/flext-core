@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import cast
 
 from flext_core import FlextDispatcher, FlextHandlers, FlextModels, FlextResult
 
@@ -555,7 +556,8 @@ class TestFlextDispatcher:
         config = dispatcher.export_config()
         assert isinstance(config, dict)
         assert "handlers" in config
-        assert "test_message" in config["handlers"]
+        handlers = cast("dict", config["handlers"])
+        assert "test_message" in handlers
 
         # Create new dispatcher and import configuration
         new_dispatcher = FlextDispatcher()

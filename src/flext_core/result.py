@@ -546,7 +546,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             actual_error = error
 
         # Create a new instance with the correct type annotation
-        return cls(error=actual_error, error_code=error_code, error_data=error_data)
+        return FlextResult[TResult](error=actual_error, error_code=error_code, error_data=error_data)
 
     # Operations
     @staticmethod

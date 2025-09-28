@@ -422,7 +422,7 @@ class TestWorkspaceManager:
             manager = FlextTestDocker(workspace_root=workspace_path)
 
             assert manager.workspace_root == workspace_path
-            assert manager.docker_manager is not None
+            assert manager.client is not None
 
     def test_workspace_manager_init_workspace(self) -> None:
         """Test workspace initialization functionality."""

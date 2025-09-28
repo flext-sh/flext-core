@@ -15,7 +15,7 @@ import random
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine, Iterable
 from contextlib import asynccontextmanager, suppress
-from typing import Protocol, TypeGuard, cast
+from typing import Any, Protocol, TypeGuard, cast
 
 import pytest
 
@@ -62,7 +62,7 @@ class FlextTestsAsyncs:
 
     @staticmethod
     async def wait_for_condition(
-        condition: Callable[[], bool | Awaitable[bool]],
+        condition: Callable[[], Any],  # Can return bool, Awaitable[bool], or Coroutine
         timeout_seconds: float = 5.0,
         poll_interval: float = 0.1,
         error_message: str = "Condition not met within timeout",
@@ -81,6 +81,10 @@ class FlextTestsAsyncs:
                     condition_result = await condition()
                 else:
                     condition_result = condition()
+
+                # Ensure we have a boolean result
+                if not isinstance(condition_result, bool):
+                    condition_result = bool(condition_result)
 
                 # Check the actual boolean value, not the FlextResult wrapper
                 if condition_result:

@@ -22,12 +22,33 @@ import pytest
 
 from flext_core import FlextTypes, P, T
 
+
+class BenchmarkProtocol(Protocol):
+    """Protocol for pytest-benchmark fixture."""
+
+    def __call__(
+        self,
+        func: Callable[P, T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> T:
+        """Call the benchmark function."""
+        ...
+
+    @property
+    def stats(self: object) -> FlextTypes.Core.Dict:
+        """Benchmark statistics."""
+        ...
+
+
 # Performance pattern constants
 insufficient_data = "insufficient_data"
 linear = "linear"
 medium = "medium"
 quadratic_or_worse = "quadratic_or_worse"
 low = "low"
+
+# Use global P ParamSpec for benchmark protocol
 unknown = "unknown"
 
 
@@ -345,7 +366,7 @@ class FlextTestsPerformance:
 
         @staticmethod
         def benchmark_with_warmup(
-            benchmark: FlextTestsPerformance.BenchmarkProtocol,
+            benchmark: BenchmarkProtocol,
             func: Callable[P, T],
             warmup_rounds: int = 5,
             *args: P.args,
@@ -373,7 +394,7 @@ class FlextTestsPerformance:
 
         @staticmethod
         def benchmark_complexity(
-            benchmark: FlextTestsPerformance.BenchmarkProtocol,
+            benchmark: BenchmarkProtocol,
             func: Callable[[int], T],
             sizes: list[int],
             expected_complexity: str = "O(n)",
@@ -485,7 +506,7 @@ class FlextTestsPerformance:
 
         @staticmethod
         def benchmark_regression(
-            benchmark: FlextTestsPerformance.BenchmarkProtocol,
+            benchmark: BenchmarkProtocol,
             func: Callable[P, T],
             baseline_time: float,
             tolerance_percent: float = 10.0,
@@ -525,11 +546,11 @@ class FlextTestsPerformance:
 
         @staticmethod
         def parallel_benchmark(
-            benchmark: FlextTestsPerformance.BenchmarkProtocol,
-            func: Callable[P, T],
+            benchmark: BenchmarkProtocol,
+            func: Callable[..., T],
             thread_counts: list[int],
-            *args: P.args,
-            **kwargs: P.kwargs,
+            *args: object,
+            **kwargs: object,
         ) -> dict[int, FlextTypes.Core.Dict]:
             """Benchmark function with different thread counts.
 
@@ -944,23 +965,6 @@ class FlextTestsPerformance:
         """
         analyzer = FlextTestsPerformance.ComplexityAnalyzer()
         return analyzer.measure_complexity(function, input_sizes, operation_name)
-
-    class BenchmarkProtocol(Protocol):
-        """Protocol for pytest-benchmark fixture."""
-
-        def __call__(
-            self,
-            func: Callable[P, T],
-            *args: P.args,
-            **kwargs: P.kwargs,
-        ) -> T:
-            """Call the benchmark function."""
-            ...
-
-        @property
-        def stats(self: object) -> FlextTypes.Core.Dict:
-            """Benchmark statistics."""
-            ...
 
 
 # === REMOVED COMPATIBILITY ALIASES AND FACADES ===

@@ -22,7 +22,7 @@ import concurrent.futures
 import logging
 import time
 from collections.abc import Mapping
-from typing import ClassVar, cast, override
+from typing import Any, ClassVar, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
@@ -48,7 +48,7 @@ class FlextExceptions:
         self._handlers: dict[type[Exception], list[object]] = {}
         self._middleware: list[object] = []
         self._audit_log: list[dict[str, object]] = []
-        self._performance_metrics: dict[str, dict[str, int]] = {}
+        self._performance_metrics: dict[str, dict[str, int | float]] = {}
         self._circuit_breakers: dict[str, bool] = {}
         self.logger = logging.getLogger(__name__)
         self._rate_limiters: dict[str, dict[str, object]] = {}
@@ -197,6 +197,14 @@ class FlextExceptions:
                 "rate_limit_window", 60
             )  # Default 60 seconds
 
+            # Ensure proper types
+            rate_limit = int(rate_limit) if isinstance(rate_limit, (int, str)) else 10
+            rate_limit_window = (
+                float(rate_limit_window)
+                if isinstance(rate_limit_window, (int, float, str))
+                else 60.0
+            )
+
             current_time = time.time()
             rate_limit_key = f"{exception_type_name}_rate_limit"
 
@@ -209,18 +217,24 @@ class FlextExceptions:
             rate_limiter = self._rate_limiters[rate_limit_key]
 
             # Clean old requests outside the window
-            rate_limiter["requests"] = [
-                req_time
-                for req_time in rate_limiter["requests"]
-                if current_time - req_time < rate_limit_window
-            ]
+            requests_list = rate_limiter["requests"]
+            if isinstance(requests_list, list):
+                rate_limiter["requests"] = [
+                    req_time
+                    for req_time in requests_list
+                    if isinstance(req_time, (int, float))
+                    and current_time - req_time < rate_limit_window
+                ]
 
             # Check if rate limit exceeded
-            if len(rate_limiter["requests"]) >= rate_limit:
+            requests_list = rate_limiter["requests"]
+            if isinstance(requests_list, list) and len(requests_list) >= rate_limit:
                 return FlextResult[object].fail("Rate limit exceeded")
 
             # Add current request
-            rate_limiter["requests"].append(current_time)
+            requests_list = rate_limiter["requests"]
+            if isinstance(requests_list, list):
+                requests_list.append(current_time)
 
             # Apply middleware
             processed_exception = exception
@@ -349,7 +363,10 @@ class FlextExceptions:
 
             # Return single result if only one handler, otherwise return list
             if len(results) == 1:
-                return results[0]
+                result = results[0]
+                if isinstance(result, FlextResult):
+                    return result
+                return FlextResult[object].ok(result)
             return FlextResult[object].ok(results)
         except Exception as e:
             return FlextResult[object].fail(f"Exception handling failed: {e}")
@@ -419,7 +436,7 @@ class FlextExceptions:
         """
         return self._audit_log.copy()
 
-    def get_performance_metrics(self) -> dict[str, dict[str, int]]:
+    def get_performance_metrics(self) -> dict[str, dict[str, int | float]]:
         """Get performance metrics.
 
         Returns:
@@ -444,14 +461,14 @@ class FlextExceptions:
         """Clear all registered handlers."""
         self._handlers.clear()
 
-    def get_statistics(self) -> dict[str, object]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics about exception handling.
 
         Returns:
             Dictionary of statistics
 
         """
-        stats = {
+        return {
             "total_handlers": sum(
                 len(handlers) for handlers in self._handlers.values()
             ),
@@ -460,11 +477,6 @@ class FlextExceptions:
             "audit_log_entries": len(self._audit_log),
             "performance_metrics": self._performance_metrics.copy(),
         }
-
-        # Add individual exception type statistics
-        stats.update(self._performance_metrics)
-
-        return stats
 
     def validate(self) -> FlextResult[None]:
         """Validate configuration and handlers.

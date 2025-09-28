@@ -1172,8 +1172,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def test_race_condition(
-        func1: Callable[[], object],
-        func2: Callable[[], object],
+        func1: Callable[..., object],
+        func2: Callable[..., object],
     ) -> tuple[object, object]:
         """Ultra-simple for test compatibility - runs function concurrently to test race conditions.
 
@@ -1192,7 +1192,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     async def measure_concurrency_performance(
-        func: Callable[[], object],
+        func: Callable[..., object],
         concurrency_level: int,
     ) -> FlextTypes.Core.Dict:
         """Ultra-simple for test compatibility - measures concurrency performance.

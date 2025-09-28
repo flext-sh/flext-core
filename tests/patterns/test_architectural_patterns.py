@@ -270,7 +270,7 @@ class TestCleanArchitecturePatterns:
 
         return Order(
             id="order_123",
-            order_id=order_id.value,
+            order_id=getattr(order_id, "value", str(order_id)),
             total=money,
         )
 

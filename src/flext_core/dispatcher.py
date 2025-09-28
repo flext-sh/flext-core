@@ -17,7 +17,7 @@ from contextlib import contextmanager
 from contextvars import Token
 from dataclasses import dataclass
 from queue import Queue
-from typing import Literal, cast, override
+from typing import Any, Literal, cast, override
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -114,23 +114,23 @@ class FlextDispatcher:
         self._circuit_breaker_failures: dict[str, int] = {}
         circuit_breaker_threshold = config.get("circuit_breaker_threshold", 5)
         if isinstance(circuit_breaker_threshold, (int, str)):
-            self._circuit_breaker_threshold: int = int(circuit_breaker_threshold)
+            self._circuit_breaker_threshold = int(circuit_breaker_threshold)
         else:
-            self._circuit_breaker_threshold: int = 5
+            self._circuit_breaker_threshold = 5
 
         # Rate limiting state
         self._rate_limit_requests: dict[str, list[float]] = {}
         rate_limit = config.get("rate_limit", 100)
         if isinstance(rate_limit, (int, str)):
-            self._rate_limit: int = int(rate_limit)
+            self._rate_limit = int(rate_limit)
         else:
-            self._rate_limit: int = 100
+            self._rate_limit = 100
 
         rate_limit_window = config.get("rate_limit_window", 60)
         if isinstance(rate_limit_window, (int, str)):
-            self._rate_limit_window: int = int(rate_limit_window)
+            self._rate_limit_window = int(rate_limit_window)
         else:
-            self._rate_limit_window: int = 60
+            self._rate_limit_window = 60
 
         # Audit log
         self._audit_log: list[dict[str, object]] = []
@@ -938,12 +938,11 @@ class FlextDispatcher:
     def cleanup(self) -> None:
         """Clean up dispatcher resources."""
         try:
-            # Clear all handlers by clearing the bus handlers directly
+            # Clear all handlers using the public API
             if hasattr(self, "_bus") and self._bus:
-                # Clear the handlers registry directly
-                if hasattr(self._bus, "_handlers"):
-                    # Access private attribute for cleanup - necessary for proper state management
-                    self._bus._handlers.clear()  # noqa: SLF001
+                # Use the public clear_handlers method
+                if hasattr(self._bus, "clear_handlers"):
+                    self._bus.clear_handlers()
 
                 if hasattr(self._bus, "cleanup"):
                     self._bus.cleanup()
@@ -974,12 +973,19 @@ class FlextDispatcher:
                 handlers = [handlers]
 
             # Extract original callables from CallableHandler objects for compatibility
-            result = []
+            result: list[object] = []
             for handler in handlers:
-                if hasattr(handler, "original_callable"):
-                    result.append(handler.original_callable)
+                # Type-safe access to handler - cast to Any to handle unknown types
+                handler_any: Any = handler
+                if hasattr(handler_any, "original_callable"):
+                    # Type-safe access to original_callable attribute
+                    original_callable = getattr(handler_any, "original_callable", None)
+                    if original_callable is not None:
+                        result.append(original_callable)
+                    else:
+                        result.append(handler_any)
                 else:
-                    result.append(handler)
+                    result.append(handler_any)
             return result
         return []
 
@@ -1004,7 +1010,7 @@ class FlextDispatcher:
         """
         stats: dict[str, object] = {
             "dispatcher_initialized": True,
-            "bus_available": hasattr(self, "_bus") and self._bus is not None,
+            "bus_available": hasattr(self, "_bus") and bool(self._bus),
             "config_loaded": hasattr(self, "_config") and bool(self._config),
         }
 
@@ -1059,11 +1065,15 @@ class FlextDispatcher:
 
         # Include handler information
         if hasattr(self, "_bus") and self._bus:
-            handlers = {}
+            handlers: dict[str, Any] = {}
             try:
                 registered_handlers = self._bus.get_registered_handlers()
-                if isinstance(registered_handlers, dict):
-                    handlers.update(registered_handlers)
+                # registered_handlers is already a dict from get_registered_handlers()
+                # Cast to handle the unknown return type
+                registered_handlers_any: dict[str, Any] = cast(
+                    "dict[str, Any]", registered_handlers
+                )
+                handlers.update(registered_handlers_any)
                 config["handlers"] = handlers
             except Exception:
                 config["handlers"] = {}
@@ -1073,7 +1083,7 @@ class FlextDispatcher:
     def get_metrics(self) -> dict[str, object]:
         """Get dispatcher metrics."""
         # Convert performance metrics to the expected format
-        result = {}
+        result: dict[str, object] = {}
         for message_type, metrics in self._performance_metrics.items():
             result[message_type] = {
                 "dispatches": metrics["total_executions"],
@@ -1090,11 +1100,17 @@ class FlextDispatcher:
             if "handlers" in config:
                 handlers = config["handlers"]
                 if isinstance(handlers, dict):
-                    for message_type, handler_list in handlers.items():
+                    # Cast handlers to proper type to handle unknown dict types
+                    handlers_dict: dict[str, Any] = cast("dict[str, Any]", handlers)
+                    for message_type, handler_list in handlers_dict.items():
+                        # Ensure message_type is a string and handler_list is properly typed
+                        message_type_str = str(message_type)
                         if not isinstance(handler_list, list):
-                            handler_list = [handler_list]  # noqa: PLW2901
-                        for handler in handler_list:
-                            self.register_handler(message_type, handler)
+                            handlers_for_type: list[Any] = [handler_list]
+                        else:
+                            handlers_for_type = cast("list[Any]", handler_list)
+                        for handler in handlers_for_type:
+                            self.register_handler(message_type_str, handler)
 
             # Import other state
             if "circuit_breaker_failures" in config:
@@ -1118,7 +1134,7 @@ class FlextDispatcher:
         self, message_type: str, messages: list[object]
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch."""
-        results = []
+        results: list[FlextResult[object]] = []
         for message in messages:
             result = self.dispatch(message_type, message)
             results.append(result)
