@@ -1,233 +1,247 @@
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=1.9.0"]
+    build-backend = "poetry.core.masonry.api"
+    requires = [
+        "poetry-core>=1.9.0",
+    ]
 
 [project]
-authors = [{ name = "FLEXT Team", email = "team@flext.sh" }]
-description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-license = {text = "MIT"}
-maintainers = [{ name = "FLEXT Team", email = "team@flext.sh" }]
-name = "flext-core"
-readme = "README.md"
-requires-python = ">=3.13,<3.14"
-version = "0.9.9"
-urls.Homepage = "https://github.com/flext-sh/flext-core"
-urls.Repository = "https://github.com/flext-sh/flext-core"
-urls.Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Framework :: Pydantic :: 2",
-    "Framework :: Pydantic",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Software Development :: Libraries :: Application Frameworks",
-    "Typing :: Typed",
-]
-dependencies = [
-    "pydantic-settings>=2.10.1",
-    "pydantic>=2.11.7",
-    "pyyaml (>=6.0.2,<7.0.0)",
-    "structlog>=25.4.0",
-    "typing-extensions>=4.12.0",
-    "colorlog (>=6.9.0)",
-]
-keywords = [
-    "clean-architecture",
-    "ddd",
-    "enterprise",
-    "flext",
-    "modern",
-    "solid",
-]
+    authors = [
+        { name = "FLEXT Team", email = "team@flext.sh" },
+    ]
+    description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+    license = { text = "MIT" }
+    maintainers = [
+        { name = "FLEXT Team", email = "team@flext.sh" },
+    ]
+    name = "flext-core"
+    readme = "README.md"
+    requires-python = ">=3.13,<3.14"
+    version = "0.9.9"
+    urls = { Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core", Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md" }
+    classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Framework :: Pydantic :: 2",
+        "Framework :: Pydantic",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.13",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
+        "Typing :: Typed",
+    ]
+    dependencies = [
+        "pydantic-settings>=2.10.1",
+        "pydantic>=2.11.7",
+        "pyyaml (>=6.0.2,<7.0.0)",
+        "structlog>=25.4.0",
+        "typing-extensions>=4.12.0",
+        "colorlog (>=6.9.0)",
+    ]
+    keywords = [
+        "clean-architecture",
+        "ddd",
+        "enterprise",
+        "flext",
+        "modern",
+        "solid",
+    ]
 
 [project.optional-dependencies]
-dev = [
-    "autoflake>=2.3.1",
-    "black>=25.1.0",
-    "codespell>=2.3.0",
-    "deptry>=0.23.0",
-    "isort>=6.0.1",
-    "pre-commit>=4.0.1",
-    "pylint>=3.3.0",
-    "pyupgrade>=3.19.0",
-    "radon>=6.0.1",
-    "ruff>=0.12.3",
-    "vulture>=2.13",
-]
-security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
-test = [
-    "factory-boy>=3.3.1",
-    "faker>=37.4.0",
-    "hypothesis>=6.125.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-benchmark>=5.1.0",
-    "pytest-clarity>=1.0.1",
-    "pytest-cov>=6.2.0",
-    "pytest-deadfixtures>=2.2.1",
-    "pytest-env>=1.1.5",
-    "pytest-httpx>=0.35.0",
-    "pytest-mock>=3.14.0",
-    "pytest-randomly>=3.16.0",
-    "pytest-sugar>=1.0.0",
-    "pytest-timeout>=2.4.0",
-    "pytest-xdist>=3.8.0",
-    "pytest>=8.4.0",
-]
-typings = [
-    "django-stubs>=5.2.2",
-    "types-ldap3>=2.9.13.20250622",
-    "types-protobuf>=6.30.2.20250703",
-    "types-psutil>=7.0.0",
-    "types-psycopg2>=2.9.21.20250718",
-    "types-python-dateutil>=2.9.0",
-    "types-pyyaml>=6.0.12",
-    "types-redis>=4.6.0",
-    "types-requests>=2.32.4",
-    "types-setuptools>=80.9.0",
-    "types-toml>=0.10.8.20240310",
-]
+    dev = [
+        "autoflake>=2.3.1",
+        "black>=25.1.0",
+        "codespell>=2.3.0",
+        "deptry>=0.23.0",
+        "isort>=6.0.1",
+        "pre-commit>=4.0.1",
+        "pylint>=3.3.0",
+        "pyupgrade>=3.19.0",
+        "radon>=6.0.1",
+        "ruff>=0.12.3",
+        "vulture>=2.13",
+    ]
+    security = [
+        "bandit>=1.8.0",
+        "pip-audit>=2.7.3",
+    ]
+    test = [
+        "factory-boy>=3.3.1",
+        "faker>=37.4.0",
+        "hypothesis>=6.125.0",
+        "pytest-asyncio>=0.21.0",
+        "pytest-benchmark>=5.1.0",
+        "pytest-clarity>=1.0.1",
+        "pytest-cov>=6.2.0",
+        "pytest-deadfixtures>=2.2.1",
+        "pytest-env>=1.1.5",
+        "pytest-httpx>=0.35.0",
+        "pytest-mock>=3.14.0",
+        "pytest-randomly>=3.16.0",
+        "pytest-sugar>=1.0.0",
+        "pytest-timeout>=2.4.0",
+        "pytest-xdist>=3.8.0",
+        "pytest>=8.4.0",
+    ]
+    typings = [
+        "django-stubs>=5.2.2",
+        "types-ldap3>=2.9.13.20250622",
+        "types-protobuf>=6.30.2.20250703",
+        "types-psutil>=7.0.0",
+        "types-psycopg2>=2.9.21.20250718",
+        "types-python-dateutil>=2.9.0",
+        "types-pyyaml>=6.0.12",
+        "types-redis>=4.6.0",
+        "types-requests>=2.32.4",
+        "types-setuptools>=80.9.0",
+        "types-toml>=0.10.8.20240310",
+    ]
 
 [tool.poetry]
-packages = [
-    { include = "flext_core", from = "src" },
-    { include = "flext_tests", from = "src" },
-]
+    packages = [
+        { include = "flext_core", from = "src" },
+        { include = "flext_tests", from = "src" },
+    ]
 
 [tool.poetry.group.dev.dependencies]
-types-pyyaml = "^6.0.12.20250822"
-pyrefly = "^0.34.0"
+    types-pyyaml = "^6.0.12.20250822"
+    pyrefly      = "^0.34.0"
 
 [tool.poetry.group.typings.dependencies]
-types-pygments = ">=2.19.0.20250715"
-types-colorama = ">=0.4.15.20240311"
-types-pexpect = ">=4.9.0.20250516"
-
+    types-pygments = ">=2.19.0.20250715"
+    types-colorama = ">=0.4.15.20240311"
+    types-pexpect  = ">=4.9.0.20250516"
 
 [tool.bandit]
-exclude_dirs = [
-    "__pycache__",
-    ".archive",
-    ".git",
-    ".mypy_cache",
-    ".pyrefly_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "archive",
-    "build",
-    "dist",
-    "htmlcov",
-    "reports",
-    "tests",
-    "venv",
-]
-skips = ["B101", "B104", "B105", "B601"]
+    exclude_dirs = [
+        "__pycache__",
+        ".archive",
+        ".git",
+        ".mypy_cache",
+        ".pyrefly_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "archive",
+        "build",
+        "dist",
+        "htmlcov",
+        "reports",
+        "tests",
+        "venv",
+    ]
+    skips = [
+        "B101",
+        "B104",
+        "B105",
+        "B601",
+    ]
 
 [tool.coverage]
-extend = "../.coverage-shared.toml"
+    extend = "../.coverage-shared.toml"
 
 [tool.deptry]
-exclude = [
-    "__pycache__",
-    ".archive",
-    ".git",
-    ".meltano",
-    ".mypy_cache",
-    ".pyrefly_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "build",
-    "dist",
-    "htmlcov",
-    "vendor",
-    "node_modules",
-    "reports",
-    "venv",
-]
-known_first_party = ["flext_core", "flext_tests"]
-pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
-
-[tool.pyrefly]
-# Python 3.13+ Foundation Type Checking
-python_version = "3.13"
+    exclude = [
+        "__pycache__",
+        ".archive",
+        ".git",
+        ".meltano",
+        ".mypy_cache",
+        ".pyrefly_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "build",
+        "dist",
+        "htmlcov",
+        "vendor",
+        "node_modules",
+        "reports",
+        "venv",
+    ]
+    known_first_party = [
+        "flext_core",
+        "flext_tests",
+    ]
+    pep621_dev_dependency_groups = [
+        "dev",
+        "security",
+        "test",
+        "typings",
+    ]
 
 [tool.pytest.ini_options]
-addopts = [
-    "--maxfail=1000000",
-    "--strict-config",
-    "--strict-markers",
-    "-ra",
-    "--tb=short",
-]
-asyncio_mode = "auto"
-filterwarnings = ["ignore::DeprecationWarning:pyasn1(.*|$)"]
-markers = [
-    "advanced: Advanced functionality tests",
-    "architecture: Architectural pattern tests",
-    "benchmark: Performance benchmark tests",
-    "boundary: Boundary condition tests",
-    "cleanup: Cleanup tests",
-    "concurrency: Concurrency and threading tests",
-    "core: Core framework functionality tests",
-    "coverage: Coverage improvement tests",
-    "dbt: dbt transformation tests",
-    "ddd: Domain-driven design tests",
-    "destructive: Tests that may modify external systems",
-    "e2e: End-to-end tests",
-    "error_path: Error path scenario tests",
-    "happy_path: Happy path scenario tests",
-    "integration: Integration tests",
-    "memory: Memory usage tests",
-    "oracle: Oracle database tests",
-    "parametrize_advanced: Advanced parametrized tests",
-    "pep8: PEP8 compliance validation tests",
-    "performance: Performance tests",
-    "race_condition: Race condition tests",
-    "regression: Regression testing and detection",
-    "slow: Slow tests",
-    "smoke: Smoke tests",
-    "snapshot: Snapshot regression tests",
-    "tap: Singer tap tests",
-    "target: Singer target tests",
-    "timeout: Tests that may timeout",
-    "unit: Unit tests",
-]
-minversion = "8.0"
-python_classes = ["Test*"]
-python_files = ["test_*.py", "*_test.py"]
-python_functions = ["test_*"]
-testpaths = ["tests"]
+    addopts = [
+        "--maxfail=1000000",
+        "--strict-config",
+        "--strict-markers",
+        "-ra",
+        "--tb=short",
+    ]
+    asyncio_mode = "auto"
+    filterwarnings = [
+        "ignore::DeprecationWarning:pyasn1(.*|$)",
+    ]
+    markers = [
+        "advanced: Advanced functionality tests",
+        "architecture: Architectural pattern tests",
+        "benchmark: Performance benchmark tests",
+        "boundary: Boundary condition tests",
+        "cleanup: Cleanup tests",
+        "concurrency: Concurrency and threading tests",
+        "core: Core framework functionality tests",
+        "coverage: Coverage improvement tests",
+        "dbt: dbt transformation tests",
+        "ddd: Domain-driven design tests",
+        "destructive: Tests that may modify external systems",
+        "e2e: End-to-end tests",
+        "error_path: Error path scenario tests",
+        "happy_path: Happy path scenario tests",
+        "integration: Integration tests",
+        "memory: Memory usage tests",
+        "oracle: Oracle database tests",
+        "parametrize_advanced: Advanced parametrized tests",
+        "pep8: PEP8 compliance validation tests",
+        "performance: Performance tests",
+        "race_condition: Race condition tests",
+        "regression: Regression testing and detection",
+        "slow: Slow tests",
+        "smoke: Smoke tests",
+        "snapshot: Snapshot regression tests",
+        "tap: Singer tap tests",
+        "target: Singer target tests",
+        "timeout: Tests that may timeout",
+        "unit: Unit tests",
+    ]
+    minversion = "8.0"
+    python_classes = [
+        "Test*",
+    ]
+    python_files = [
+        "test_*.py",
+        "*_test.py",
+    ]
+    python_functions = [
+        "test_*",
+    ]
+    testpaths = [
+        "tests",
+    ]
 
 [tool.ruff]
-extend = "../ruff-shared.toml"
-lint.isort.known-first-party = ["flext_core", "flext_tests"]
+    extend = "../ruff-shared.toml"
 
-[tool.vulture]
-exclude = [
-    "__pycache__/",
-    ".*/examples/",
-    ".*/generate_config.py",
-    ".*/manage.py",
-    ".*/scripts/",
-    ".*/tests/",
-    ".coverage.*",
-    ".git/",
-    ".mypy_cache/",
-    ".pyrefly_cache/",
-    ".ruff_cache/",
-    ".pytest_cache/",
-    ".venv/",
-    "build/",
-    "dist/",
-    "node_modules/",
-    "tests/",
-    "vendor/",
-]
-min_confidence = 80
-paths = ["src"]
-sort_by_size = true
-verbose = false
+[tool.ruff.lint.isort]
+    known-first-party = [
+        "flext_core",
+        "flext_tests",
+    ]
+
+[tool.pyrefly]
+    python-version = "3.13"
+    search-path = [
+        "examples",
+        "scripts",
+        "src",
+        "tests",
+    ]

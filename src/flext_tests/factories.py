@@ -44,8 +44,6 @@ class FlextTestsFactories:
             """
             return FlextTestsDomains.create_user(**overrides)
 
-        # build method removed - use create directly per FLEXT architectural principles
-
         @staticmethod
         def create_batch(size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
             """Create batch of users.
@@ -83,9 +81,6 @@ class FlextTestsFactories:
             defaults: FlextTypes.Core.Dict = {"active": False, "name": "Inactive User"}
             defaults.update(overrides)
             return FlextTestsDomains.create_user(**defaults)
-
-        # Alias methods removed - use REDACTED_LDAP_BIND_PASSWORD_user, inactive_user, create_batch directly
-        # per FLEXT architectural principles
 
     # =========================================================================
     # CONFIG FACTORIES - Configuration data creation
@@ -375,9 +370,6 @@ class FlextTestsFactories:
                 user_data: dict[str, object] = FlextTestsFactories.UserFactory.create()
                 return FlextResult[FlextTypes.Core.Dict].ok(user_data)
             return FlextResult[FlextTypes.Core.Dict].fail("User creation failed")
-
-        # Alias methods removed - use success_result, failure_result directly
-        # per FLEXT architectural principles
 
     # =========================================================================
     # SERVICE FACTORIES - Service layer testing

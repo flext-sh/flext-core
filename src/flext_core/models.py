@@ -268,9 +268,7 @@ class FlextModels:
             default=FlextConstants.Performance.DEFAULT_VERSION,
             ge=FlextConstants.Performance.MIN_VERSION,
         )
-        domain_events: Annotated[list[object], Field(default_factory=list)] | None = (
-            None
-        )
+        domain_events: list[object] = Field(default_factory=list)
 
         @override
         def model_post_init(self, __context: object, /) -> None:

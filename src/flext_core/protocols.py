@@ -424,6 +424,7 @@ class FlextProtocols:
     class Foundation:
         """Foundation layer protocols cementing the 1.0.0 contracts."""
 
+        @runtime_checkable
         class OperationCallable(Protocol):
             """Protocol for callable operations in the FLEXT ecosystem.
 
@@ -444,6 +445,7 @@ class FlextProtocols:
                 """
                 ...
 
+        @runtime_checkable
         class Validator(Protocol, Generic[T_contra]):
             """Generic validator protocol reused by modernization guardrails."""
 
@@ -522,6 +524,7 @@ class FlextProtocols:
                 """
                 ...
 
+        @runtime_checkable
         class Repository(Protocol, Generic[T_contra]):
             """Repository protocol shaping modernization data access patterns."""
 
@@ -964,6 +967,7 @@ class FlextProtocols:
     class Infrastructure:
         """Infrastructure layer protocols - external systems."""
 
+        @runtime_checkable
         class Connection(Protocol):
             """Connection protocol for external systems."""
 
@@ -1176,6 +1180,7 @@ class FlextProtocols:
         # Plugin architecture and middleware system for extensible applications
         # Provides plugin ecosystem support for applications
 
+        @runtime_checkable
         class Plugin(Protocol):
             """Plugin protocol with configuration.
 
@@ -1209,6 +1214,7 @@ class FlextProtocols:
                 """Get plugin information."""
                 ...
 
+        @runtime_checkable
         class PluginContext(Protocol):
             """Plugin execution context."""
 
@@ -1226,6 +1232,7 @@ class FlextProtocols:
                 """Get logger instance for plugin."""
                 ...
 
+        @runtime_checkable
         class Middleware(Protocol):
             """Middleware pipeline component protocol."""
 
@@ -1261,6 +1268,7 @@ class FlextProtocols:
     class Commands:
         """CQRS Command and Query protocols for Flext CQRS components."""
 
+        @runtime_checkable
         class CommandHandler[CommandT, ResultT](Protocol):
             """Protocol for command handlers in CQRS pattern."""
 
@@ -1288,6 +1296,7 @@ class FlextProtocols:
                 """
                 ...
 
+        @runtime_checkable
         class QueryHandler[QueryT, ResultT](Protocol):
             """Protocol for query handlers in CQRS pattern."""
 
@@ -1362,6 +1371,7 @@ class FlextProtocols:
                 """
                 ...
 
+        @runtime_checkable
         class Middleware(Protocol):
             """Protocol for command bus middleware."""
 

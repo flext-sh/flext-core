@@ -14,7 +14,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import click
 import docker
@@ -187,7 +187,7 @@ class FlextTestDocker:
             result = subprocess.run(
                 ["docker"] + script_path.split(),
                 check=False,
-                capture_output=capture_output,
+                capture_output=bool(capture_output),
                 text=True,
                 timeout=timeout,
             )
@@ -313,8 +313,8 @@ class FlextTestDocker:
                     content = f.read()
 
                     # Find service names and their dependencies
-                    lines = content.split("\n")
-                    current_service = None
+                    lines: list[str] = content.split("\n")
+                    current_service: str | None = None
                     in_depends_on = False
 
                     excluded_prefixes = (
@@ -521,7 +521,7 @@ class FlextTestDocker:
         image: str,
         *,
         name: str | None = None,
-        ports: dict[str, int | list[int] | tuple[str, int] | None] | None = None,
+        ports: dict[str, int | list[int] | tuple[str, int]] | None = None,
         environment: dict[str, str] | None = None,
         volumes: dict[str, dict[str, str]] | list[str] | None = None,
         detach: bool = True,
@@ -532,15 +532,23 @@ class FlextTestDocker:
         try:
             client = self.get_client()
             container_name = name or f"flext-container-{hash(image)}"
+            # Prepare parameters for docker run
+            run_kwargs: dict[str, object] = {
+                "detach": detach,
+                "remove": remove,
+            }
+
+            if ports is not None:
+                run_kwargs["ports"] = ports
+            if environment is not None:
+                run_kwargs["environment"] = environment
+            if volumes is not None:
+                run_kwargs["volumes"] = volumes
+            if command is not None:
+                run_kwargs["command"] = command
+
             container = client.containers.run(
-                image,
-                name=container_name,
-                ports=ports,
-                environment=environment,
-                volumes=volumes,
-                detach=detach,  # Use the parameter
-                remove=remove,
-                command=command,
+                image, name=container_name, **cast("Any", run_kwargs)
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -746,7 +754,12 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+                if pytest is not None:
+                    pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+                else:
+                    raise RuntimeError(
+                        f"Failed to start LDAP container: {start_result.error}"
+                    )
 
             yield container_name
 
@@ -767,9 +780,14 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                pytest.skip(
-                    f"Failed to start PostgreSQL container: {start_result.error}"
-                )
+                if pytest is not None:
+                    pytest.skip(
+                        f"Failed to start PostgreSQL container: {start_result.error}"
+                    )
+                else:
+                    raise RuntimeError(
+                        f"Failed to start PostgreSQL container: {start_result.error}"
+                    )
 
             yield container_name
             docker_control.stop_container(container_name, remove=False)
@@ -789,7 +807,14 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                pytest.skip(f"Failed to start Redis container: {start_result.error}")
+                if pytest is not None:
+                    pytest.skip(
+                        f"Failed to start Redis container: {start_result.error}"
+                    )
+                else:
+                    raise RuntimeError(
+                        f"Failed to start Redis container: {start_result.error}"
+                    )
 
             yield container_name
             docker_control.stop_container(container_name, remove=False)
@@ -809,7 +834,14 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                pytest.skip(f"Failed to start Oracle container: {start_result.error}")
+                if pytest is not None:
+                    pytest.skip(
+                        f"Failed to start Oracle container: {start_result.error}"
+                    )
+                else:
+                    raise RuntimeError(
+                        f"Failed to start Oracle container: {start_result.error}"
+                    )
 
             yield container_name
             docker_control.stop_container(container_name, remove=False)
@@ -819,7 +851,12 @@ class FlextTestDocker:
             container_name = "flext-shared-ldap"
             reset_result = docker_control.reset_container(container_name)
             if reset_result.is_failure:
-                pytest.skip(f"Failed to reset LDAP container: {reset_result.error}")
+                if pytest is not None:
+                    pytest.skip(f"Failed to reset LDAP container: {reset_result.error}")
+                else:
+                    raise RuntimeError(
+                        f"Failed to reset LDAP container: {reset_result.error}"
+                    )
             return container_name
 
         @pytest.fixture
@@ -827,9 +864,14 @@ class FlextTestDocker:
             container_name = "flext-postgres"
             reset_result = docker_control.reset_container(container_name)
             if reset_result.is_failure:
-                pytest.skip(
-                    f"Failed to reset PostgreSQL container: {reset_result.error}"
-                )
+                if pytest is not None:
+                    pytest.skip(
+                        f"Failed to reset PostgreSQL container: {reset_result.error}"
+                    )
+                else:
+                    raise RuntimeError(
+                        f"Failed to reset PostgreSQL container: {reset_result.error}"
+                    )
             return container_name
 
         @pytest.fixture
@@ -838,7 +880,12 @@ class FlextTestDocker:
         ) -> Iterator[dict[str, str]]:
             start_result = docker_control.start_all()
             if start_result.is_failure:
-                pytest.skip(f"Failed to start all containers: {start_result.error}")
+                if pytest is not None:
+                    pytest.skip(f"Failed to start all containers: {start_result.error}")
+                else:
+                    raise RuntimeError(
+                        f"Failed to start all containers: {start_result.error}"
+                    )
 
             yield start_result.value
 
@@ -1305,7 +1352,9 @@ class FlextTestDocker:
         command_result: FlextResult[Any] | None = None
 
         if args.command == "init":
-            command_result = manager.init_workspace(args.workspace_root)
+            if args.workspace_root is None:
+                return 1
+            command_result = manager.init_workspace(Path(args.workspace_root))
         elif args.command == "build-workspace":
             projects = [p.strip() for p in args.projects.split(",") if p.strip()]
             command_result = manager.build_workspace_projects(projects, args.registry)
@@ -1345,7 +1394,7 @@ class FlextTestDocker:
                 args.compose_file, timeout=args.timeout
             )
         elif args.command == "create-network":
-            command_result = manager.create_network(args.name, args.driver)
+            command_result = manager.create_network(args.name, driver=args.driver)
         elif args.command == "list-volumes":
             volumes = manager.list_volumes()
             if volumes.is_success:
@@ -1376,7 +1425,9 @@ class FlextTestDocker:
                     )
             command_result = containers
         elif args.command == "validate":
-            command_result = manager.validate_workspace(args.workspace_root)
+            if args.workspace_root is None:
+                return 1
+            command_result = manager.validate_workspace(Path(args.workspace_root))
             if command_result.is_success:
                 for key, value in command_result.value.items():
                     cls._console.print(f"{key}: {value}")
@@ -1440,7 +1491,7 @@ class FlextTestDocker:
                         f"[bold green]✓ {start_result.value}[/bold green]"
                     )
                 else:
-                    raise click.ClickException(start_result.error)
+                    raise click.ClickException(str(start_result.error))
 
         @docker_cli.command(name="stop")
         @click.option(
@@ -1469,7 +1520,7 @@ class FlextTestDocker:
                         f"[bold green]✓ All containers {action.lower()}[/bold green]"
                     )
                 else:
-                    raise click.ClickException(result.error)
+                    raise click.ClickException(str(result.error))
             else:
                 action = "Stopping and removing" if remove else "Stopping"
                 cls._console.print(
@@ -1481,7 +1532,7 @@ class FlextTestDocker:
                         f"[bold green]✓ {stop_result.value}[/bold green]"
                     )
                 else:
-                    raise click.ClickException(stop_result.error)
+                    raise click.ClickException(str(stop_result.error))
 
         @docker_cli.command(name="reset")
         @click.option(
@@ -1504,7 +1555,7 @@ class FlextTestDocker:
                     )
                     cls._display_status_table(manager)
                 else:
-                    raise click.ClickException(result.error)
+                    raise click.ClickException(str(result.error))
             else:
                 cls._console.print(
                     f"[bold blue]Resetting container: {container}[/bold blue]"
@@ -1515,7 +1566,7 @@ class FlextTestDocker:
                         f"[bold green]✓ {reset_result.value}[/bold green]"
                     )
                 else:
-                    raise click.ClickException(reset_result.error)
+                    raise click.ClickException(str(reset_result.error))
 
         @docker_cli.command(name="status")
         def status_command() -> None:
@@ -1545,7 +1596,7 @@ class FlextTestDocker:
             if logs_result.is_success:
                 cls._console.print(logs_result.value)
             else:
-                raise click.ClickException(logs_result.error)
+                raise click.ClickException(str(logs_result.error))
 
         cls._cli_group = docker_cli
         return docker_cli
