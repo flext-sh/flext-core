@@ -8,14 +8,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import argparse
 import subprocess
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
+import click
 import docker
 from docker.errors import DockerException, NotFound
+from rich.console import Console
+from rich.table import Table
+
+try:
+    import pytest
+except ImportError:  # pragma: no cover - optional dependency
+    pytest = None
 
 from flext_core import FlextLogger, FlextResult
 
@@ -64,6 +74,18 @@ class ContainerInfo:
 
 class FlextTestDocker:
     """Docker container management for FLEXT tests."""
+
+    _console: ClassVar[Console] = Console()
+    _cli_group: ClassVar[click.Group | None] = None
+    _workspace_parser: ClassVar[argparse.ArgumentParser | None] = None
+    _DEFAULT_LOG_TAIL: ClassVar[int] = 100
+    _CLI_CONTAINER_CHOICES: ClassVar[list[str]] = [
+        "flext-shared-ldap",
+        "flext-postgres",
+        "flext-redis",
+        "flext-oracle",
+    ]
+    _PYTEST_REGISTERED: ClassVar[bool] = False
 
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize Docker client."""
@@ -295,49 +317,55 @@ class FlextTestDocker:
                     current_service = None
                     in_depends_on = False
 
+                    excluded_prefixes = (
+                        "version:",
+                        "services:",
+                        "healthcheck:",
+                        "ports:",
+                        "image:",
+                        "environment:",
+                        "volumes:",
+                        "networks:",
+                    )
+
                     for line in lines:
                         stripped_line = line.strip()
-                        # Check if this is a service definition (not indented, ends with colon, not a property)
+                        if not stripped_line or stripped_line.startswith("#"):
+                            continue
+
                         if (
-                            stripped_line
-                            and not stripped_line.startswith("#")
-                            and stripped_line.endswith(":")
-                            and not stripped_line.startswith(" ")
-                            and not stripped_line.startswith("version:")
-                            and not stripped_line.startswith("services:")
-                            and not stripped_line.startswith("depends_on:")
-                            and not stripped_line.startswith("healthcheck:")
-                            and not stripped_line.startswith("ports:")
-                            and not stripped_line.startswith("image:")
-                            and not stripped_line.startswith("environment:")
-                            and not stripped_line.startswith("volumes:")
-                            and not stripped_line.startswith("networks:")
+                            stripped_line.startswith("- ")
+                            and current_service
+                            and in_depends_on
                         ):
-                            service_name = stripped_line[:-1].strip()  # Remove the colon
-                            if service_name:
-                                current_service = service_name
-                                services.append(service_name)
-                                self._registered_services.add(service_name)
-                                self._service_dependencies[service_name] = []
-                                in_depends_on = False
-                        elif stripped_line.startswith("depends_on:"):
-                            # Next lines will contain dependencies
-                            in_depends_on = True
-                        elif (
-                            stripped_line.startswith("- ") and current_service and in_depends_on
-                        ):
-                            # This is a dependency
                             dep_name = stripped_line[2:].strip()
                             if dep_name:
                                 self._service_dependencies[current_service].append(
                                     dep_name
                                 )
-                        elif (
-                            stripped_line
-                            and not stripped_line.startswith("- ")
-                            and not stripped_line.startswith("depends_on:")
-                        ):
-                            # This is not a dependency line anymore
+                            continue
+
+                        if stripped_line.startswith("depends_on:"):
+                            in_depends_on = True
+                            continue
+
+                        if not stripped_line.endswith(":"):
+                            in_depends_on = False
+                            continue
+
+                        if stripped_line.startswith(" "):
+                            continue
+
+                        if stripped_line.startswith(excluded_prefixes):
+                            in_depends_on = False
+                            continue
+
+                        service_name = stripped_line[:-1].strip()
+                        if service_name:
+                            current_service = service_name
+                            services.append(service_name)
+                            self._registered_services.add(service_name)
+                            self._service_dependencies[service_name] = []
                             in_depends_on = False
 
                 return FlextResult[list[str]].ok(services)
@@ -509,7 +537,7 @@ class FlextTestDocker:
                 name=container_name,
                 ports=ports,
                 environment=environment,
-                volumes=volumes,  # type: ignore[arg-type]
+                volumes=volumes,
                 detach=detach,  # Use the parameter
                 remove=remove,
                 command=command,
@@ -619,3 +647,925 @@ class FlextTestDocker:
             return FlextResult[list[ContainerInfo]].fail(
                 f"Failed to list containers: {e}"
             )
+
+    @classmethod
+    def _status_icon(cls, status: ContainerStatus) -> str:
+        """Return a friendly icon for container status."""
+        return {
+            ContainerStatus.RUNNING: "🟢 Running",
+            ContainerStatus.STOPPED: "🔴 Stopped",
+            ContainerStatus.NOT_FOUND: "⚫ Not Found",
+            ContainerStatus.ERROR: "⚠️ Error",
+        }.get(status, "❓ Unknown")
+
+    @classmethod
+    def _format_ports(cls, info: ContainerInfo) -> str:
+        """Format port mapping for CLI display."""
+        if not info.ports:
+            return "-"
+        return ", ".join(
+            f"{host}→{container}" for host, container in info.ports.items()
+        )
+
+    @classmethod
+    def _display_status_table(cls, manager: FlextTestDocker) -> FlextResult[None]:
+        """Render the container status table to the console."""
+        status_result = manager.get_all_status()
+        if status_result.is_failure:
+            error_message = f"Failed to get status: {status_result.error}"
+            cls._console.print(f"[bold red]{error_message}[/bold red]")
+            return FlextResult[None].fail(error_message)
+
+        table = Table(title="FLEXT Docker Test Containers Status", show_header=True)
+        table.add_column("Container", style="cyan", no_wrap=True)
+        table.add_column("Status", style="magenta")
+        table.add_column("Ports", style="green")
+        table.add_column("Image", style="blue")
+
+        for name, info in status_result.value.items():
+            table.add_row(
+                name,
+                cls._status_icon(info.status),
+                cls._format_ports(info),
+                info.image or "-",
+            )
+
+        cls._console.print(table)
+        return FlextResult[None].ok(None)
+
+    def show_status_table(self) -> FlextResult[None]:
+        """Public helper to render container status."""
+        return self._display_status_table(self)
+
+    def fetch_container_logs(
+        self, container_name: str, *, tail: int | None = None
+    ) -> FlextResult[str]:
+        """Fetch logs for a specific container."""
+        tail_count = tail or self._DEFAULT_LOG_TAIL
+        try:
+            client = self.get_client()
+            container = client.containers.get(container_name)
+            logs_bytes = container.logs(tail=tail_count)
+            return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
+        except NotFound:
+            return FlextResult[str].fail(f"Container {container_name} not found")
+        except DockerException as exc:
+            self._logger.exception("Failed to fetch container logs")
+            return FlextResult[str].fail(f"Failed to fetch logs: {exc}")
+
+    @classmethod
+    def register_pytest_fixtures(cls, namespace: dict[str, Any] | None = None) -> None:
+        """Register pytest fixtures that wrap FlextTestDocker operations."""
+        if cls._PYTEST_REGISTERED:
+            return
+
+        if pytest is None:
+            get_logger().warning(
+                "pytest is not available; skipping FlextTestDocker fixture registration"
+            )
+            return
+
+        ns = namespace if namespace is not None else globals()
+
+        @pytest.fixture(scope="session")
+        def docker_control() -> FlextTestDocker:
+            return cls()
+
+        @pytest.fixture(scope="session")
+        def flext_ldap_container(
+            docker_control: FlextTestDocker,
+        ) -> Iterator[str]:
+            container_name = "flext-shared-ldap"
+            status = docker_control.get_container_status(container_name)
+            if (
+                status.is_success
+                and status.value.status.value == ContainerStatus.RUNNING.value
+            ):
+                yield container_name
+                return
+
+            start_result = docker_control.start_container(container_name)
+            if start_result.is_failure:
+                pytest.skip(f"Failed to start LDAP container: {start_result.error}")
+
+            yield container_name
+
+            docker_control.stop_container(container_name, remove=False)
+
+        @pytest.fixture(scope="session")
+        def flext_postgres_container(
+            docker_control: FlextTestDocker,
+        ) -> Iterator[str]:
+            container_name = "flext-postgres"
+            status = docker_control.get_container_status(container_name)
+            if (
+                status.is_success
+                and status.value.status.value == ContainerStatus.RUNNING.value
+            ):
+                yield container_name
+                return
+
+            start_result = docker_control.start_container(container_name)
+            if start_result.is_failure:
+                pytest.skip(
+                    f"Failed to start PostgreSQL container: {start_result.error}"
+                )
+
+            yield container_name
+            docker_control.stop_container(container_name, remove=False)
+
+        @pytest.fixture(scope="session")
+        def flext_redis_container(
+            docker_control: FlextTestDocker,
+        ) -> Iterator[str]:
+            container_name = "flext-redis"
+            status = docker_control.get_container_status(container_name)
+            if (
+                status.is_success
+                and status.value.status.value == ContainerStatus.RUNNING.value
+            ):
+                yield container_name
+                return
+
+            start_result = docker_control.start_container(container_name)
+            if start_result.is_failure:
+                pytest.skip(f"Failed to start Redis container: {start_result.error}")
+
+            yield container_name
+            docker_control.stop_container(container_name, remove=False)
+
+        @pytest.fixture(scope="session")
+        def flext_oracle_container(
+            docker_control: FlextTestDocker,
+        ) -> Iterator[str]:
+            container_name = "flext-oracle"
+            status = docker_control.get_container_status(container_name)
+            if (
+                status.is_success
+                and status.value.status.value == ContainerStatus.RUNNING.value
+            ):
+                yield container_name
+                return
+
+            start_result = docker_control.start_container(container_name)
+            if start_result.is_failure:
+                pytest.skip(f"Failed to start Oracle container: {start_result.error}")
+
+            yield container_name
+            docker_control.stop_container(container_name, remove=False)
+
+        @pytest.fixture
+        def reset_ldap_container(docker_control: FlextTestDocker) -> str:
+            container_name = "flext-shared-ldap"
+            reset_result = docker_control.reset_container(container_name)
+            if reset_result.is_failure:
+                pytest.skip(f"Failed to reset LDAP container: {reset_result.error}")
+            return container_name
+
+        @pytest.fixture
+        def reset_postgres_container(docker_control: FlextTestDocker) -> str:
+            container_name = "flext-postgres"
+            reset_result = docker_control.reset_container(container_name)
+            if reset_result.is_failure:
+                pytest.skip(
+                    f"Failed to reset PostgreSQL container: {reset_result.error}"
+                )
+            return container_name
+
+        @pytest.fixture
+        def all_containers_running(
+            docker_control: FlextTestDocker,
+        ) -> Iterator[dict[str, str]]:
+            start_result = docker_control.start_all()
+            if start_result.is_failure:
+                pytest.skip(f"Failed to start all containers: {start_result.error}")
+
+            yield start_result.value
+
+            docker_control.stop_all(remove=False)
+
+        ns.update({
+            "docker_control": docker_control,
+            "flext_ldap_container": flext_ldap_container,
+            "flext_postgres_container": flext_postgres_container,
+            "flext_redis_container": flext_redis_container,
+            "flext_oracle_container": flext_oracle_container,
+            "reset_ldap_container": reset_ldap_container,
+            "reset_postgres_container": reset_postgres_container,
+            "all_containers_running": all_containers_running,
+        })
+
+        cls._PYTEST_REGISTERED = True
+
+    def init_workspace(self, workspace_root: Path) -> FlextResult[str]:
+        """Initialize workspace configuration and auto-discover services."""
+        try:
+            self.workspace_root = workspace_root
+            compose_candidates = [
+                workspace_root / "docker" / "docker-compose.yml",
+                workspace_root / "docker-compose.yml",
+                workspace_root / "compose.yml",
+            ]
+
+            for compose_path in compose_candidates:
+                if compose_path.exists():
+                    discovery = self.auto_discover_services(str(compose_path))
+                    if discovery.is_success:
+                        services = discovery.value
+                        self._logger.info(
+                            "Auto-discovered services from %s: %s",
+                            compose_path,
+                            services,
+                        )
+
+            return FlextResult[str].ok(
+                f"FlextTestDocker initialized for workspace: {workspace_root}"
+            )
+        except Exception as exc:
+            self._logger.exception("Workspace initialization failed")
+            return FlextResult[str].fail(f"Workspace initialization failed: {exc}")
+
+    def build_workspace_projects(
+        self, projects: list[str], registry: str = "flext"
+    ) -> FlextResult[dict[str, str]]:
+        """Build Docker images for a set of workspace projects."""
+        results: dict[str, str] = {}
+
+        for project in projects:
+            project_path = self.workspace_root / project
+            if not project_path.exists():
+                results[project] = f"Project path not found: {project_path}"
+                continue
+
+            dockerfile_candidates = [
+                project_path / "Dockerfile",
+                project_path / "docker" / "Dockerfile",
+                project_path / f"Dockerfile.{project}",
+            ]
+
+            dockerfile_path: Path | None = None
+            for candidate in dockerfile_candidates:
+                if candidate.exists():
+                    dockerfile_path = candidate
+                    break
+
+            if dockerfile_path is None:
+                results[project] = "No Dockerfile found"
+                continue
+
+            tag = f"{registry}/{project}:latest"
+            build_result = self.build_image_advanced(
+                path=str(project_path), tag=tag, dockerfile=dockerfile_path.name
+            )
+
+            if build_result.is_success:
+                results[project] = f"Built successfully: {tag}"
+            else:
+                results[project] = f"Build failed: {build_result.error}"
+
+        return FlextResult[dict[str, str]].ok(results)
+
+    def build_single_image(
+        self, name: str, dockerfile_path: str, context_path: str | None = None
+    ) -> FlextResult[str]:
+        """Build a single Docker image."""
+        context_root = context_path or str(Path(dockerfile_path).parent)
+        build_result = self.build_image_advanced(
+            path=context_root, tag=name, dockerfile=Path(dockerfile_path).name
+        )
+
+        if build_result.is_success:
+            return FlextResult[str].ok(f"Image built successfully: {name}")
+        return FlextResult[str].fail(f"Image build failed: {build_result.error}")
+
+    def start_compose_stack(
+        self, compose_file: str, network_name: str | None = None
+    ) -> FlextResult[str]:
+        """Start a Docker Compose stack."""
+        discovery = self.auto_discover_services(compose_file)
+        if discovery.is_failure:
+            return FlextResult[str].fail(f"Service discovery failed: {discovery.error}")
+
+        start_result = self.compose_up(compose_file)
+        if start_result.is_failure:
+            return FlextResult[str].fail(f"Stack start failed: {start_result.error}")
+
+        if network_name:
+            network_result = self.create_network(network_name)
+            if network_result.is_failure:
+                self._logger.warning(
+                    "Network creation failed for %s: %s",
+                    network_name,
+                    network_result.error,
+                )
+
+        services = discovery.value
+        return FlextResult[str].ok(
+            f"Stack started successfully with services: {services}"
+        )
+
+    def stop_compose_stack(self, compose_file: str) -> FlextResult[str]:
+        """Stop a Docker Compose stack."""
+        stop_result = self.compose_down(compose_file)
+        if stop_result.is_success:
+            return FlextResult[str].ok("Stack stopped successfully")
+        return FlextResult[str].fail(f"Stack stop failed: {stop_result.error}")
+
+    def restart_compose_stack(self, compose_file: str) -> FlextResult[str]:
+        """Restart a Docker Compose stack."""
+        stop_result = self.stop_compose_stack(compose_file)
+        if stop_result.is_failure:
+            return FlextResult[str].fail(f"Stack stop failed: {stop_result.error}")
+
+        start_result = self.start_compose_stack(compose_file)
+        if start_result.is_failure:
+            return FlextResult[str].fail(f"Stack restart failed: {start_result.error}")
+
+        return FlextResult[str].ok("Stack restarted successfully")
+
+    def show_stack_logs(
+        self, compose_file: str, *, follow: bool = False
+    ) -> FlextResult[str]:
+        """Show logs for a Docker Compose stack."""
+        _ = follow  # compatibility with previous signature
+        logs_result = self.compose_logs(compose_file)
+        if logs_result.is_success:
+            return FlextResult[str].ok("Logs displayed")
+        return FlextResult[str].fail(f"Failed to get logs: {logs_result.error}")
+
+    def show_stack_status(self, compose_file: str) -> FlextResult[dict[str, Any]]:
+        """Return status information for the Docker Compose stack."""
+        _ = compose_file  # compose file not required for stub implementation
+        status_result = self.get_all_status()
+        if status_result.is_failure:
+            return FlextResult[dict[str, Any]].fail(
+                f"Status check failed: {status_result.error}"
+            )
+
+        status_info: dict[str, Any] = status_result.value.copy()
+        running_services = self.get_running_services()
+        if running_services.is_success:
+            status_info["auto_managed_services"] = running_services.value
+        else:
+            status_info["auto_managed_services"] = []
+
+        return FlextResult[dict[str, Any]].ok(status_info)
+
+    def connect_to_service(self, service_name: str) -> FlextResult[str]:
+        """Open an interactive session with a service container."""
+        connect_result = self.exec_container_interactive(
+            container_name=service_name, command="/bin/bash"
+        )
+        if connect_result.is_success:
+            return FlextResult[str].ok(f"Connected to {service_name}")
+        return FlextResult[str].fail(f"Connection failed: {connect_result.error}")
+
+    def execute_in_service(self, service_name: str, command: str) -> FlextResult[str]:
+        """Execute a command inside a service container."""
+        exec_result = self.execute_container_command(
+            container_name=service_name, command=command
+        )
+        if exec_result.is_success:
+            return FlextResult[str].ok("Command executed successfully")
+        return FlextResult[str].fail(f"Command execution failed: {exec_result.error}")
+
+    def cleanup_workspace(
+        self,
+        *,
+        remove_volumes: bool = False,
+        remove_networks: bool = False,
+        prune_system: bool = False,
+    ) -> FlextResult[str]:
+        """Clean up containers, networks, volumes, and images."""
+        operations: list[str] = []
+
+        running_services = self.get_running_services()
+        if running_services.is_success:
+            for service in running_services.value:
+                stop_result = self.stop_services_for_test(f"cleanup_{service}")
+                if stop_result.is_success:
+                    operations.append(f"Stopped service: {service}")
+                else:
+                    operations.append(
+                        f"Failed to stop service {service}: {stop_result.error}"
+                    )
+        else:
+            operations.append(
+                f"Failed to list running services: {running_services.error}"
+            )
+
+        container_cleanup = self.cleanup_all_test_containers()
+        if container_cleanup.is_success:
+            operations.append("Cleaned up test containers")
+        else:
+            operations.append(f"Container cleanup failed: {container_cleanup.error}")
+
+        if remove_volumes:
+            volumes_result = self.cleanup_volumes()
+            if volumes_result.is_success:
+                operations.append("Pruned volumes")
+            else:
+                operations.append(f"Volume pruning failed: {volumes_result.error}")
+
+        if remove_networks:
+            networks_result = self.cleanup_networks()
+            if networks_result.is_success:
+                operations.append("Pruned networks")
+            else:
+                operations.append(f"Network pruning failed: {networks_result.error}")
+
+        if prune_system:
+            images_result = self.cleanup_images()
+            if images_result.is_success:
+                operations.append("Pruned images")
+            else:
+                operations.append(f"Image pruning failed: {images_result.error}")
+
+        summary = "; ".join(operations) if operations else "No cleanup actions run"
+        return FlextResult[str].ok(f"Cleanup completed: {summary}")
+
+    def health_check_stack(
+        self, compose_file: str, *, timeout: int = 30
+    ) -> FlextResult[dict[str, str]]:
+        """Perform health checks for services in the compose stack."""
+        _ = timeout  # Compatibility with previous signature
+        health: dict[str, str] = {}
+
+        discovery = self.auto_discover_services(compose_file)
+        if discovery.is_failure:
+            return FlextResult[dict[str, str]].fail(
+                f"Service discovery failed: {discovery.error}"
+            )
+
+        for service in discovery.value:
+            health_result = self.get_service_health_status(service)
+            if health_result.is_success:
+                info = health_result.value
+                container_status = info.get("container_status", "unknown")
+                health[service] = f"Status: {container_status}"
+            else:
+                health[service] = f"Health check failed: {health_result.error}"
+
+        return FlextResult[dict[str, str]].ok(health)
+
+    def validate_workspace(self, workspace_root: Path) -> FlextResult[dict[str, str]]:
+        """Validate Docker operations within a workspace."""
+        results: dict[str, str] = {}
+
+        try:
+            docker_manager = FlextTestDocker(workspace_root=workspace_root)
+            results["docker_connection"] = "✅ Connected"
+
+            containers_result = docker_manager.list_containers_formatted()
+            if containers_result.is_success:
+                results["container_operations"] = "✅ Working"
+            else:
+                results["container_operations"] = (
+                    f"❌ Failed: {containers_result.error}"
+                )
+
+            images_result = docker_manager.images_formatted()
+            if images_result.is_success:
+                results["image_operations"] = "✅ Working"
+            else:
+                results["image_operations"] = f"❌ Failed: {images_result.error}"
+
+            networks_result = docker_manager.list_networks()
+            if networks_result.is_success:
+                results["network_operations"] = "✅ Working"
+            else:
+                results["network_operations"] = f"❌ Failed: {networks_result.error}"
+
+            volumes_result = docker_manager.list_volumes()
+            if volumes_result.is_success:
+                results["volume_operations"] = "✅ Working"
+            else:
+                results["volume_operations"] = f"❌ Failed: {volumes_result.error}"
+        except Exception as exc:
+            results["docker_connection"] = f"❌ Failed: {exc}"
+
+        return FlextResult[dict[str, str]].ok(results)
+
+    @classmethod
+    def _get_workspace_parser(cls) -> argparse.ArgumentParser:
+        """Build or reuse the workspace command parser."""
+        if cls._workspace_parser is not None:
+            return cls._workspace_parser
+
+        parser = argparse.ArgumentParser(
+            description=(
+                "FLEXT Workspace Docker Manager - Unified Docker operations using "
+                "FlextTestDocker"
+            )
+        )
+        parser.add_argument(
+            "--workspace-root", type=Path, help="Workspace root directory"
+        )
+
+        subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+        init_parser = subparsers.add_parser(
+            "init", help="Initialize FlextTestDocker workspace"
+        )
+        init_parser.add_argument("--workspace-root", type=Path, required=True)
+
+        build_workspace_parser = subparsers.add_parser(
+            "build-workspace", help="Build workspace projects"
+        )
+        build_workspace_parser.add_argument(
+            "--projects", required=True, help="Comma-separated project list"
+        )
+        build_workspace_parser.add_argument(
+            "--registry", default="flext", help="Docker registry prefix"
+        )
+
+        build_image_parser = subparsers.add_parser(
+            "build-image", help="Build single image"
+        )
+        build_image_parser.add_argument("--name", required=True, help="Image name/tag")
+        build_image_parser.add_argument(
+            "--dockerfile", required=True, help="Dockerfile path"
+        )
+        build_image_parser.add_argument("--context", help="Build context path")
+
+        start_stack_parser = subparsers.add_parser(
+            "start-stack", help="Start Docker Compose stack"
+        )
+        start_stack_parser.add_argument(
+            "--compose-file", required=True, help="Docker Compose file path"
+        )
+        start_stack_parser.add_argument("--network", help="Network name")
+
+        stop_stack_parser = subparsers.add_parser(
+            "stop-stack", help="Stop Docker Compose stack"
+        )
+        stop_stack_parser.add_argument(
+            "--compose-file", required=True, help="Docker Compose file path"
+        )
+
+        restart_stack_parser = subparsers.add_parser(
+            "restart-stack", help="Restart Docker Compose stack"
+        )
+        restart_stack_parser.add_argument(
+            "--compose-file", required=True, help="Docker Compose file path"
+        )
+
+        logs_parser = subparsers.add_parser("show-logs", help="Show stack logs")
+        logs_parser.add_argument(
+            "--compose-file", required=True, help="Docker Compose file path"
+        )
+        logs_parser.add_argument("--follow", action="store_true", help="Follow logs")
+
+        status_parser = subparsers.add_parser("show-status", help="Show stack status")
+        status_parser.add_argument(
+            "--compose-file", required=True, help="Docker Compose file path"
+        )
+
+        connect_parser = subparsers.add_parser(
+            "connect", help="Connect to service container"
+        )
+        connect_parser.add_argument("--service", required=True, help="Service name")
+
+        exec_parser = subparsers.add_parser("exec", help="Execute command in container")
+        exec_parser.add_argument("--service", required=True, help="Service name")
+        exec_parser.add_argument("--command", required=True, help="Command to execute")
+
+        cleanup_parser = subparsers.add_parser(
+            "cleanup", help="Clean up Docker artifacts"
+        )
+        cleanup_parser.add_argument(
+            "--remove-volumes", action="store_true", help="Remove volumes"
+        )
+        cleanup_parser.add_argument(
+            "--remove-networks", action="store_true", help="Remove networks"
+        )
+        cleanup_parser.add_argument(
+            "--prune-system", action="store_true", help="Prune system"
+        )
+
+        health_parser = subparsers.add_parser(
+            "health-check", help="Perform health check"
+        )
+        health_parser.add_argument(
+            "--compose-file", required=True, help="Docker Compose file path"
+        )
+        health_parser.add_argument(
+            "--timeout", type=int, default=30, help="Health check timeout"
+        )
+
+        create_network_parser = subparsers.add_parser(
+            "create-network", help="Create Docker network"
+        )
+        create_network_parser.add_argument("--name", required=True, help="Network name")
+        create_network_parser.add_argument(
+            "--driver", default="bridge", help="Network driver"
+        )
+
+        list_volumes_parser = subparsers.add_parser(
+            "list-volumes", help="List Docker volumes"
+        )
+        list_volumes_parser.add_argument("--filter", help="Name filter")
+
+        list_images_parser = subparsers.add_parser(
+            "list-images", help="List Docker images"
+        )
+        list_images_parser.add_argument("--filter", help="Repository filter")
+
+        list_containers_parser = subparsers.add_parser(
+            "list-containers", help="List Docker containers"
+        )
+        list_containers_parser.add_argument("--filter", help="Name filter")
+        list_containers_parser.add_argument(
+            "--show-all", action="store_true", help="Show all containers"
+        )
+
+        validate_parser = subparsers.add_parser(
+            "validate", help="Validate FlextTestDocker functionality"
+        )
+        validate_parser.add_argument("--workspace-root", type=Path, required=True)
+
+        cls._workspace_parser = parser
+        return parser
+
+    @classmethod
+    def run_workspace_command(cls, argv: list[str] | None = None) -> int:
+        """Execute workspace manager commands using FlextTestDocker."""
+        parser = cls._get_workspace_parser()
+        args = parser.parse_args(argv)
+
+        if not getattr(args, "command", None):
+            parser.print_help()
+            return 1
+
+        workspace_root: Path = (
+            args.workspace_root if args.workspace_root is not None else Path.cwd()
+        )
+        manager = cls(workspace_root=workspace_root)
+
+        command_result: FlextResult[Any] | None = None
+
+        if args.command == "init":
+            command_result = manager.init_workspace(args.workspace_root)
+        elif args.command == "build-workspace":
+            projects = [p.strip() for p in args.projects.split(",") if p.strip()]
+            command_result = manager.build_workspace_projects(projects, args.registry)
+        elif args.command == "build-image":
+            command_result = manager.build_single_image(
+                args.name, args.dockerfile, args.context
+            )
+        elif args.command == "start-stack":
+            command_result = manager.start_compose_stack(
+                args.compose_file, args.network
+            )
+        elif args.command == "stop-stack":
+            command_result = manager.stop_compose_stack(args.compose_file)
+        elif args.command == "restart-stack":
+            command_result = manager.restart_compose_stack(args.compose_file)
+        elif args.command == "show-logs":
+            command_result = manager.show_stack_logs(
+                args.compose_file, follow=args.follow
+            )
+        elif args.command == "show-status":
+            status_result = manager.show_stack_status(args.compose_file)
+            if status_result.is_success:
+                cls._display_status_table(manager)
+            command_result = status_result
+        elif args.command == "connect":
+            command_result = manager.connect_to_service(args.service)
+        elif args.command == "exec":
+            command_result = manager.execute_in_service(args.service, args.command)
+        elif args.command == "cleanup":
+            command_result = manager.cleanup_workspace(
+                remove_volumes=args.remove_volumes,
+                remove_networks=args.remove_networks,
+                prune_system=args.prune_system,
+            )
+        elif args.command == "health-check":
+            command_result = manager.health_check_stack(
+                args.compose_file, timeout=args.timeout
+            )
+        elif args.command == "create-network":
+            command_result = manager.create_network(args.name, args.driver)
+        elif args.command == "list-volumes":
+            volumes = manager.list_volumes()
+            if volumes.is_success:
+                filtered = volumes.value
+                if args.filter:
+                    filtered = [volume for volume in filtered if args.filter in volume]
+                for volume in filtered:
+                    cls._console.print(volume)
+            command_result = volumes
+        elif args.command == "list-images":
+            images = manager.images_formatted()
+            if images.is_success:
+                filtered = images.value
+                if args.filter:
+                    filtered = [image for image in filtered if args.filter in image]
+                for image in filtered:
+                    cls._console.print(image)
+            command_result = images
+        elif args.command == "list-containers":
+            containers = manager.list_containers(all_containers=args.show_all)
+            if containers.is_success:
+                filtered = containers.value
+                if args.filter:
+                    filtered = [info for info in filtered if args.filter in info.name]
+                for info in filtered:
+                    cls._console.print(
+                        f"{info.name}: {cls._status_icon(info.status)} ({info.image})"
+                    )
+            command_result = containers
+        elif args.command == "validate":
+            command_result = manager.validate_workspace(args.workspace_root)
+            if command_result.is_success:
+                for key, value in command_result.value.items():
+                    cls._console.print(f"{key}: {value}")
+        else:
+            return 1
+
+        if command_result is None:
+            return 1
+
+        if command_result.is_success:
+            if isinstance(command_result.value, str) and command_result.value:
+                cls._console.print(command_result.value)
+            return 0
+
+        cls._console.print(f"[bold red]{command_result.error}[/bold red]")
+        return 1
+
+    @classmethod
+    def _get_cli_group(cls) -> click.Group:
+        """Build (or reuse) the click CLI group for container commands."""
+        if cls._cli_group is not None:
+            return cls._cli_group
+
+        choices = cls._CLI_CONTAINER_CHOICES + ["all"]
+
+        @click.group(name="docker")
+        def docker_cli() -> None:
+            """Manage FLEXT Docker test containers."""
+
+        @docker_cli.command(name="start")
+        @click.option(
+            "--container",
+            "-c",
+            type=click.Choice(choices, case_sensitive=False),
+            default="all",
+            help="Container to start",
+        )
+        def start_command(container: str) -> None:
+            manager = cls()
+            if container.lower() == "all":
+                cls._console.print(
+                    "[bold blue]Starting all FLEXT test containers...[/bold blue]"
+                )
+                result = manager.start_all()
+                if result.is_success:
+                    cls._console.print(
+                        "[bold green]✓ All containers started successfully[/bold green]"
+                    )
+                    cls._display_status_table(manager)
+                else:
+                    raise click.ClickException(
+                        f"Failed to start containers: {result.error}"
+                    )
+            else:
+                cls._console.print(
+                    f"[bold blue]Starting container: {container}[/bold blue]"
+                )
+                start_result = manager.start_container(container)
+                if start_result.is_success:
+                    cls._console.print(
+                        f"[bold green]✓ {start_result.value}[/bold green]"
+                    )
+                else:
+                    raise click.ClickException(start_result.error)
+
+        @docker_cli.command(name="stop")
+        @click.option(
+            "--container",
+            "-c",
+            type=click.Choice(choices, case_sensitive=False),
+            default="all",
+            help="Container to stop",
+        )
+        @click.option(
+            "--remove",
+            "-r",
+            is_flag=True,
+            help="Remove container after stopping",
+        )
+        def stop_command(container: str, remove: bool) -> None:
+            manager = cls()
+            if container.lower() == "all":
+                action = "Stopping and removing" if remove else "Stopping"
+                cls._console.print(
+                    f"[bold blue]{action} all FLEXT test containers...[/bold blue]"
+                )
+                result = manager.stop_all(remove=remove)
+                if result.is_success:
+                    cls._console.print(
+                        f"[bold green]✓ All containers {action.lower()}[/bold green]"
+                    )
+                else:
+                    raise click.ClickException(result.error)
+            else:
+                action = "Stopping and removing" if remove else "Stopping"
+                cls._console.print(
+                    f"[bold blue]{action} container: {container}[/bold blue]"
+                )
+                stop_result = manager.stop_container(container, remove=remove)
+                if stop_result.is_success:
+                    cls._console.print(
+                        f"[bold green]✓ {stop_result.value}[/bold green]"
+                    )
+                else:
+                    raise click.ClickException(stop_result.error)
+
+        @docker_cli.command(name="reset")
+        @click.option(
+            "--container",
+            "-c",
+            type=click.Choice(choices, case_sensitive=False),
+            default="all",
+            help="Container to reset",
+        )
+        def reset_command(container: str) -> None:
+            manager = cls()
+            if container.lower() == "all":
+                cls._console.print(
+                    "[bold blue]Resetting all FLEXT test containers...[/bold blue]"
+                )
+                result = manager.reset_all()
+                if result.is_success:
+                    cls._console.print(
+                        "[bold green]✓ All containers reset successfully[/bold green]"
+                    )
+                    cls._display_status_table(manager)
+                else:
+                    raise click.ClickException(result.error)
+            else:
+                cls._console.print(
+                    f"[bold blue]Resetting container: {container}[/bold blue]"
+                )
+                reset_result = manager.reset_container(container)
+                if reset_result.is_success:
+                    cls._console.print(
+                        f"[bold green]✓ {reset_result.value}[/bold green]"
+                    )
+                else:
+                    raise click.ClickException(reset_result.error)
+
+        @docker_cli.command(name="status")
+        def status_command() -> None:
+            manager = cls()
+            cls._display_status_table(manager)
+
+        @docker_cli.command(name="logs")
+        @click.option(
+            "--container",
+            "-c",
+            type=click.Choice(cls._CLI_CONTAINER_CHOICES, case_sensitive=False),
+            required=True,
+            help="Container to inspect",
+        )
+        @click.option(
+            "--tail",
+            type=int,
+            default=None,
+            help="Number of log lines to show",
+        )
+        def logs_command(container: str, tail: int | None) -> None:
+            manager = cls()
+            cls._console.print(
+                f"[bold blue]Fetching logs for {container}...[/bold blue]"
+            )
+            logs_result = manager.fetch_container_logs(container, tail=tail)
+            if logs_result.is_success:
+                cls._console.print(logs_result.value)
+            else:
+                raise click.ClickException(logs_result.error)
+
+        cls._cli_group = docker_cli
+        return docker_cli
+
+    @classmethod
+    def run_cli(cls) -> None:
+        """Execute the docker CLI group using click."""
+        cli = cls._get_cli_group()
+        cli()
+
+
+if pytest is not None:  # pragma: no mutate - ensure fixtures available in tests
+    FlextTestDocker.register_pytest_fixtures(globals())
+
+
+def main() -> None:
+    """Entry point for command-line usage."""
+    FlextTestDocker.run_cli()
+
+
+def workspace_main(argv: list[str] | None = None) -> int:
+    """Entry point compatible with the former workspace manager script."""
+    return FlextTestDocker.run_workspace_command(argv)

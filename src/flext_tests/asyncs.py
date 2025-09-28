@@ -78,9 +78,9 @@ class FlextTestsAsyncs:
         while time.time() - start_time < timeout_seconds:
             try:
                 if asyncio.iscoroutinefunction(condition):
-                    condition_result = await condition()  # type: ignore[misc]
+                    condition_result = await condition()
                 else:
-                    condition_result = condition()  # type: ignore[misc]
+                    condition_result = condition()
 
                 # Check the actual boolean value, not the FlextResult wrapper
                 if condition_result:

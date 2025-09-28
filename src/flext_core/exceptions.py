@@ -234,13 +234,17 @@ class FlextExceptions:
             # Execute handlers with timeout
             timeout_seconds = self._config.get("timeout", 30)  # Default 30 seconds
             timeout_value = (
-                float(timeout_seconds) if isinstance(timeout_seconds, (int, float, str)) else 30.0
+                float(timeout_seconds)
+                if isinstance(timeout_seconds, (int, float, str))
+                else 30.0
             )
 
             results = []
             handler_exceptions = []
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=len(handlers)) as executor:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=len(handlers)
+            ) as executor:
                 # Submit all handlers
                 future_to_handler = {
                     executor.submit(handler, processed_exception): handler
@@ -250,7 +254,9 @@ class FlextExceptions:
 
                 # Wait for results with timeout
                 try:
-                    for future in concurrent.futures.as_completed(future_to_handler, timeout=timeout_value):
+                    for future in concurrent.futures.as_completed(
+                        future_to_handler, timeout=timeout_value
+                    ):
                         try:
                             handler_result = future.result()
                             results.append(handler_result)
@@ -261,7 +267,9 @@ class FlextExceptions:
                     return FlextResult[object].fail("Handler timeout")
 
                 # Add non-callable handlers
-                non_callable_handlers = [handler for handler in handlers if not callable(handler)]
+                non_callable_handlers = [
+                    handler for handler in handlers if not callable(handler)
+                ]
                 results.extend(non_callable_handlers)
 
             # If any handler raised an exception, return failure
@@ -289,15 +297,17 @@ class FlextExceptions:
                     "errors": 0,
                     "total_execution_time": 0.0,
                     "execution_count": 0,
-                    "avg_execution_time": 0.0
+                    "avg_execution_time": 0.0,
                 }
 
             # Update execution time metrics
-            self._performance_metrics[exception_name]["total_execution_time"] += execution_time
+            self._performance_metrics[exception_name]["total_execution_time"] += (
+                execution_time
+            )
             self._performance_metrics[exception_name]["execution_count"] += 1
             self._performance_metrics[exception_name]["avg_execution_time"] = (
-                self._performance_metrics[exception_name]["total_execution_time"] /
-                self._performance_metrics[exception_name]["execution_count"]
+                self._performance_metrics[exception_name]["total_execution_time"]
+                / self._performance_metrics[exception_name]["execution_count"]
             )
 
             # Check circuit breaker threshold
@@ -328,7 +338,10 @@ class FlextExceptions:
                 )
 
             # Check if any handler failed
-            if any(isinstance(result, FlextResult) and result.is_failure for result in results):
+            if any(
+                isinstance(result, FlextResult) and result.is_failure
+                for result in results
+            ):
                 # Return the first failure
                 for result in results:
                     if isinstance(result, FlextResult) and result.is_failure:

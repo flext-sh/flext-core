@@ -9,8 +9,6 @@ import signal
 import time
 
 import pytest
-
-# BaseModel usage replaced with FlextModels - using ValidationError from pydantic
 from pydantic import Field, ValidationError
 
 from flext_core import (

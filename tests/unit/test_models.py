@@ -204,7 +204,6 @@ class TestFlextModels:
             name="Test Project",
             organization_id="org-123",
             repository_path="/path/to/repo",
-            domain_events=[],
         )
         assert project.name == "Test Project"
         assert project.organization_id == "org-123"
@@ -218,7 +217,6 @@ class TestFlextModels:
             name="Test Workspace",
             root_path="/workspace/root",
             projects=[],
-            domain_events=[],
         )
         assert workspace.workspace_id == "ws-123"
         assert workspace.name == "Test Workspace"

@@ -369,7 +369,7 @@ class FlextTestsPerformance:
                 func(*args, **kwargs)
 
             # Actual benchmark
-            return benchmark(func, *args, **kwargs)  # type: ignore[arg-type]
+            return benchmark(func, *args, **kwargs)
 
         @staticmethod
         def benchmark_complexity(
@@ -506,7 +506,7 @@ class FlextTestsPerformance:
                 T: Benchmark result
 
             """
-            result = benchmark(func, *args, **kwargs)  # type: ignore[arg-type]
+            result = benchmark(func, *args, **kwargs)
             stats = getattr(benchmark, "stats", None)
             current_time = getattr(stats, "mean", 0.0) if stats else 0.0
 
@@ -562,7 +562,7 @@ class FlextTestsPerformance:
                         max_workers=workers,
                     ) as executor:
                         futures = [
-                            executor.submit(func, *args, **kwargs)  # type: ignore[arg-type]
+                            executor.submit(func, *args, **kwargs)
                             for _ in range(workers)
                         ]
                         return [future.result() for future in futures]

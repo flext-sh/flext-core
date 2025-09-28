@@ -412,7 +412,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number=f"ORD-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}",
-            domain_events=[],
         )
         return FlextResult[Order].ok(order)
 
@@ -484,7 +483,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             price=Money(amount=Decimal("999.99"), currency="USD"),
             sku="LAP-001",
             stock=10,
-            domain_events=[],
         )
         print(f"Product: {product.name} (ID: {product.id})")
 
@@ -513,7 +511,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             name="Same Product",
             price=Money(amount=Decimal(100), currency="USD"),
             sku="PROD-001",
-            domain_events=[],
         )
 
         product2 = Product(
@@ -521,7 +518,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             name="Different Name",
             price=Money(amount=Decimal(200), currency="USD"),
             sku="PROD-002",
-            domain_events=[],
         )
 
         print(f"Same ID equality: {product1 == product2}")  # True (same ID)
@@ -531,7 +527,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             name="Same Product",
             price=Money(amount=Decimal(100), currency="USD"),
             sku="PROD-001",
-            domain_events=[],
         )
 
         print(f"Different ID equality: {product1 == product3}")  # False (different ID)
@@ -547,7 +542,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number="ORD-2025-001",
-            domain_events=[],
         )
         print(f"Order created: {order.order_number}")
 
@@ -558,7 +552,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             price=Money(amount=Decimal("999.99"), currency="USD"),
             sku="LAP-001",
             stock=5,
-            domain_events=[],
         )
 
         mouse = Product(
@@ -567,7 +560,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             price=Money(amount=Decimal("29.99"), currency="USD"),
             sku="MOU-001",
             stock=20,
-            domain_events=[],
         )
 
         # Add lines to order (aggregate maintains consistency)
@@ -616,7 +608,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             ),
             credit_limit=Money(amount=Decimal(5000), currency="USD"),
             current_balance=Money(amount=Decimal(1000), currency="USD"),
-            domain_events=[],
         )
 
         # Check purchase ability
@@ -658,7 +649,6 @@ class ComprehensiveModelsService(FlextService[Order]):
                 ),
             ],
             total_amount=Money(amount=Decimal(100), currency="USD"),
-            domain_events=[],
         )
 
         # Serialize to dict
@@ -715,7 +705,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number="ORD-2025-003",
-            domain_events=[],
         )
 
         # Save
