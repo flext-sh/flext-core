@@ -157,15 +157,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             ),
             "environment": environment_default,
         }
-        # Extract snapshot from actual FlextConfig instance with explicit validation
+        # Extract snapshot from actual FlextConfig instance
         config_instance = FlextConfig.get_global_instance()
-        if config_instance is not None:
-            self._flext_config_snapshot: dict[str, object] = (
-                self._extract_config_snapshot(config_instance)
-            )
-        else:
-            # Explicit empty snapshot when no config instance available
-            self._flext_config_snapshot = {}
+        self._flext_config_snapshot: dict[str, object] = self._extract_config_snapshot(
+            config_instance
+        )
         self._user_overrides: dict[str, object] = {}
 
         # Update global config with snapshot and user overrides - handle validation failure
