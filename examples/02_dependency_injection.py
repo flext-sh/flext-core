@@ -183,7 +183,6 @@ class UserRepository(FlextService[User]):
             name="John Doe",
             email="john@example.com",
             age=30,
-            domain_events=[],
         )
         return FlextResult[User].ok(user)
 
@@ -214,7 +213,6 @@ class ComprehensiveDIService(FlextService[User]):
                 name="Demo User",
                 email="demo@example.com",
                 age=25,
-                domain_events=[],
             )
         )
 

@@ -280,7 +280,7 @@ class FlextDispatcher:
         else:
             # New API: register_handler(handler)
             # Convert callable to FlextHandlers if needed
-            resolved_handler = message_type_or_handler  # type: ignore[assignment]
+            resolved_handler = message_type_or_handler
             if callable(message_type_or_handler) and not isinstance(
                 message_type_or_handler, FlextHandlers
             ):
@@ -615,7 +615,7 @@ class FlextDispatcher:
             message_type = message_or_type
         else:
             # New API: dispatch(message)
-            message = message_or_type  # type: ignore[assignment]
+            message = message_or_type
             message_type = type(message).__name__ if message else "unknown"
 
         # Check circuit breaker
@@ -659,7 +659,7 @@ class FlextDispatcher:
             message_type = message_or_type
         else:
             # New API: dispatch(message)
-            message = message_or_type  # type: ignore[assignment]
+            message = message_or_type
         # Create structured request
         metadata_obj = None
         if metadata:

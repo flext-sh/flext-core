@@ -167,8 +167,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Explicit empty snapshot when no config instance available
             self._flext_config_snapshot = {}
         self._user_overrides: dict[str, object] = {}
-        # Update global config with snapshot and user overrides
-        self._global_config = self._build_global_config()
+
+        # Update global config with snapshot and user overrides - handle validation failure
+        config_result = self._build_global_config()
+        if config_result.is_failure:
+            msg = f"Container initialization failed: {config_result.error}"
+            raise ValueError(msg)
+        self._global_config = config_result.value
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -238,6 +243,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         from flext_core.container import FlextContainer, FlextLogger
 
             container = FlextContainer.get_global()
+
             logger = FlextLogger(__name__)
 
             result: FlextResult[object] = container.register("logger", logger)
@@ -821,8 +827,12 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Update user overrides with only the provided values (preserve existing overrides)
             self._user_overrides.update(processed_config)
 
-            # Rebuild global config from snapshot + user overrides
-            self._global_config = self._build_global_config()
+            # Rebuild global config from snapshot + user overrides - handle validation failure
+            config_result = self._build_global_config()
+            if config_result.is_failure:
+                msg = f"Global config rebuild failed: {config_result.error}"
+                raise ValueError(msg)
+            self._global_config = config_result.unwrap()
 
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -923,7 +933,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 snapshot[key] = value
         return snapshot
 
-    def _build_global_config(self) -> dict[str, object]:
+    def _build_global_config(self) -> FlextResult[dict[str, object]]:
         """Merge FlextConfig snapshot and user overrides into final container config."""
         merged: dict[str, object] = {}
         for source in (self._flext_config_snapshot, self._user_overrides):
@@ -934,46 +944,50 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         normalized = self._normalize_config_fields(merged)
         return self._finalize_config_values(normalized)
 
-    def _finalize_config_values(self, config: dict[str, object]) -> dict[str, object]:
+    def _finalize_config_values(
+        self, config: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Finalize configuration values with explicit validation - no fallbacks."""
         # Validate max_workers with explicit error handling
         max_workers_validation = self._validate_positive_int(
-            config.get("max_workers"),
+            config.get("max_workers", FlextConstants.Container.MAX_WORKERS),
             minimum=FlextConstants.Container.MIN_WORKERS,
         )
-        max_workers = (
-            max_workers_validation.unwrap_or(FlextConstants.Container.MAX_WORKERS)
-            if max_workers_validation.is_success
-            else FlextConstants.Container.MAX_WORKERS
-        )
+        if max_workers_validation.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid max_workers configuration: {max_workers_validation.error}"
+            )
 
         # Validate timeout_seconds with explicit error handling
         timeout_validation = self._validate_positive_float(
-            config.get("timeout_seconds"),
+            config.get("timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS),
             minimum=0.0,
         )
-        timeout_seconds = (
-            timeout_validation.unwrap_or(FlextConstants.Container.TIMEOUT_SECONDS)
-            if timeout_validation.is_success
-            else FlextConstants.Container.TIMEOUT_SECONDS
-        )
+        if timeout_validation.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid timeout_seconds configuration: {timeout_validation.error}"
+            )
 
         # Validate environment with explicit handling
-        environment_raw = config.get("environment")
-        if isinstance(environment_raw, str):
-            environment = (
-                environment_raw.strip() or FlextConstants.Config.DEFAULT_ENVIRONMENT
+        environment_raw = config.get(
+            "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
+        )
+        if not isinstance(environment_raw, str):
+            return FlextResult[dict[str, object]].fail(
+                f"Environment must be string, got {type(environment_raw).__name__}"
             )
-        elif environment_raw is not None:
-            environment = str(environment_raw)
-        else:
-            environment = FlextConstants.Config.DEFAULT_ENVIRONMENT
 
-        return {
-            "max_workers": max_workers,
-            "timeout_seconds": timeout_seconds,
+        environment = environment_raw.strip()
+        if not environment:
+            return FlextResult[dict[str, object]].fail(
+                "Environment cannot be empty string"
+            )
+
+        return FlextResult[dict[str, object]].ok({
+            "max_workers": max_workers_validation.value,
+            "timeout_seconds": timeout_validation.value,
             "environment": environment,
-        }
+        })
 
     @staticmethod
     def _validate_positive_int(value: object, *, minimum: int) -> FlextResult[int]:
@@ -1020,7 +1034,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         )
 
     @staticmethod
-    def _validate_positive_float(value: object, *, minimum: float) -> FlextResult[float]:
+    def _validate_positive_float(
+        value: object, *, minimum: float
+    ) -> FlextResult[float]:
         """Validate value as positive float - no fallbacks, explicit validation."""
         if isinstance(value, bool):
             return FlextResult[float].fail(
@@ -1054,7 +1070,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     def _refresh_global_config(self) -> None:
         """Recalculate the effective global configuration."""
-        self._global_config = self._build_global_config()
+        config_result = self._build_global_config()
+        if config_result.is_failure:
+            msg = f"Global config refresh failed: {config_result.error}"
+            raise ValueError(msg)
+        self._global_config = config_result.unwrap()
 
     # =========================================================================
     # GLOBAL CONTAINER MANAGEMENT - Singleton pattern with thread safety
@@ -1089,6 +1109,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         from flext_core.container import FlextContainer
 
             # Get the global container
+
             container = FlextContainer.get_global()
 
             # Register a service

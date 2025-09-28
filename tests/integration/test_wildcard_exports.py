@@ -186,12 +186,6 @@ class TestFlextCoreWildcardExports:
             f"Expected at most 1000 exports to avoid namespace pollution."
         )
 
-        # Upper bound check - shouldn't exceed 1000 (would indicate bloat)
-        assert export_count <= 1000, (
-            f"Export count {export_count} seems too high. "
-            f"Expected at most 1000 exports to avoid namespace pollution."
-        )
-
 
 class TestFlextCoreIntegrationScenarios:
     """Integration test scenarios using multiple flext-core components together."""

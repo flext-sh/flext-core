@@ -214,21 +214,18 @@ class InventoryService(FlextService[dict[str, object]]):
                 name="Laptop",
                 price=Money(amount=Decimal("999.99"), currency="USD"),
                 stock=10,
-                domain_events=[],
             ),
             Product(
                 id="PROD-002",
                 name="Mouse",
                 price=Money(amount=Decimal("29.99"), currency="USD"),
                 stock=50,
-                domain_events=[],
             ),
             Product(
                 id="PROD-003",
                 name="Keyboard",
                 price=Money(amount=Decimal("79.99"), currency="USD"),
                 stock=25,
-                domain_events=[],
             ),
         ]
         for product in products:
@@ -780,7 +777,6 @@ def demonstrate_complete_integration() -> None:
         name="Test Product",
         price=Money(amount=Decimal("10.00"), currency="USD"),
         stock=5,
-        domain_events=[],
     )
 
     simple_order.add_item(product, 2)

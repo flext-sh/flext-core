@@ -13,8 +13,7 @@ import pytest
 from docker.errors import DockerException
 
 from flext_core import FlextResult
-from flext_tests.docker import FlextTestDocker
-from flext_tests.docker_workspace_manager import FlextWorkspaceDockerManager
+from flext_tests import FlextTestDocker
 
 
 class TestFlextTestDockerCore:
@@ -420,7 +419,7 @@ class TestWorkspaceManager:
             tempfile.TemporaryDirectory() as temp_dir,
         ):
             workspace_path = Path(temp_dir)
-            manager = FlextWorkspaceDockerManager(workspace_root=workspace_path)
+            manager = FlextTestDocker(workspace_root=workspace_path)
 
             assert manager.workspace_root == workspace_path
             assert manager.docker_manager is not None
@@ -445,7 +444,7 @@ services:
       - "8080:8080"
 """)
 
-            manager = FlextWorkspaceDockerManager()
+            manager = FlextTestDocker()
             result = manager.init_workspace(workspace_path)
 
             assert result.is_success

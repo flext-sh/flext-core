@@ -664,7 +664,7 @@ class FlextConfig(BaseSettings):
 
         """
         # Pydantic BaseSettings handles kwargs validation and type conversion automatically
-        return cls(**kwargs)  # type: ignore[arg-type]
+        return cls(**kwargs)
 
     @classmethod
     def create_for_environment(
@@ -679,7 +679,7 @@ class FlextConfig(BaseSettings):
 
         """
         # Pydantic BaseSettings handles kwargs validation and type conversion automatically
-        return cls(environment=environment, **kwargs)  # type: ignore[arg-type]
+        return cls(environment=environment, **kwargs)
 
     @classmethod
     def from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:

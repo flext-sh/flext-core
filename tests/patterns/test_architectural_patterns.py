@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Any, cast
+from typing import cast
 
 import pytest
 
@@ -128,7 +128,6 @@ class TestCleanArchitecturePatterns:
                     id="user_123",
                     name=command.name,
                     email_obj=email_obj,
-                    domain_events=[],
                 )
                 user_result = user.validate_domain_rules()
 
@@ -195,7 +194,7 @@ class TestCleanArchitecturePatterns:
         money = Money.model_validate({"amount": 99.99, "currency": "USD"})
         return order_id, money
 
-    def _create_ddd_aggregate(self, order_id: Any, money: Any) -> Any:
+    def _create_ddd_aggregate(self, order_id: object, money: object) -> object:
         """Create DDD aggregate for testing."""
 
         # Aggregate Root
@@ -273,10 +272,9 @@ class TestCleanArchitecturePatterns:
             id="order_123",
             order_id=order_id.value,
             total=money,
-            domain_events=[],
         )
 
-    def _test_ddd_validation_and_behavior(self, order: Any) -> None:
+    def _test_ddd_validation_and_behavior(self, order: object) -> None:
         """Test DDD validation and behavior."""
         # Test domain validation
         if hasattr(order, "validate_business_rules"):

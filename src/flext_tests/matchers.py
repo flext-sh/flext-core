@@ -1186,8 +1186,8 @@ class FlextTestsMatchers:
 
         """
         return await asyncio.gather(
-            asyncio.get_event_loop().run_in_executor(None, func1),  # type: ignore[arg-type]
-            asyncio.get_event_loop().run_in_executor(None, func2),  # type: ignore[arg-type]
+            asyncio.get_event_loop().run_in_executor(None, func1),
+            asyncio.get_event_loop().run_in_executor(None, func2),
         )
 
     @staticmethod
@@ -1208,7 +1208,7 @@ class FlextTestsMatchers:
         start_time = time.time()
 
         tasks = [
-            asyncio.get_event_loop().run_in_executor(None, func)  # type: ignore[arg-type]
+            asyncio.get_event_loop().run_in_executor(None, func)
             for _ in range(concurrency_level)
         ]
 

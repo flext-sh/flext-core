@@ -789,7 +789,9 @@ class FlextMixins:
 
             # Constants for rate limiting (configurable for testing)
             rate_limit_window_seconds = 60  # 1 minute window
-            max_requests_per_window = 10  # Allow more requests for circuit breaker testing
+            max_requests_per_window = (
+                10  # Allow more requests for circuit breaker testing
+            )
 
             # Clean old requests (older than 1 minute)
             self._rate_limit_requests[rate_limit_key] = [
@@ -820,7 +822,7 @@ class FlextMixins:
                 for middleware in self._middleware:
                     try:
                         if callable(middleware):
-                            middleware_result = middleware(mixin_class, data)  # type: ignore[arg-type]
+                            middleware_result = middleware(mixin_class, data)
                             middleware_result_length = 2
                             if (
                                 isinstance(middleware_result, (tuple, list))
