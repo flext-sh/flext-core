@@ -11,7 +11,7 @@ import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import ClassVar, TypedDict, cast
+from typing import ClassVar, TypedDict
 
 from pydantic import (
     Field,
@@ -137,8 +137,7 @@ class FlextConfig(BaseSettings):
 
                 # Try dict access
                 if isinstance(handler_config, dict):
-                    handler_dict = cast("dict[str, object]", handler_config)
-                    config_mode_dict = handler_dict.get("handler_type")
+                    config_mode_dict = handler_config.get("handler_type")
                     if isinstance(config_mode_dict, str) and config_mode_dict in {
                         "command",
                         "query",
@@ -153,10 +152,10 @@ class FlextConfig(BaseSettings):
             handler_mode: str | None = None,
             handler_name: str | None = None,
             handler_id: str | None = None,
-            handler_config: dict[str, object] | None = None,
+            handler_config: FlextTypes.Core.Dict | None = None,
             command_timeout: int = 0,
             max_command_retries: int = 0,
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Core.Dict:
             """Create handler configuration dictionary.
 
             Args:
@@ -186,7 +185,7 @@ class FlextConfig(BaseSettings):
                 handler_name = f"{resolved_mode.capitalize()} Handler"
 
             # Create base config
-            config: dict[str, object] = {
+            config: FlextTypes.Core.Dict = {
                 "handler_id": handler_id,
                 "handler_name": handler_name,
                 "handler_type": resolved_mode,
@@ -586,6 +585,8 @@ class FlextConfig(BaseSettings):
     @classmethod
     def clear_global_instance(cls) -> None:
         """Clear the global instance."""
+        # ISSUE: Code doesn't do what it means to do - method claims to "clear" but just calls "reset"
+        # ISSUE: Duplicates reset_global_instance functionality - should either be removed or do something different
         cls.reset_global_instance()
 
     @classmethod
@@ -655,7 +656,7 @@ class FlextConfig(BaseSettings):
 
     # Class methods for creating instances
     @classmethod
-    def create(cls, **kwargs: object) -> FlextConfig:
+    def create(cls, **kwargs: FlextTypes.Core.Value) -> FlextConfig:
         """Create a new FlextConfig instance with the given parameters.
 
         Args:
@@ -783,7 +784,7 @@ class FlextConfig(BaseSettings):
             "trace": self.trace,
         }
 
-    def merge(self, overrides: dict[str, object] | FlextConfig) -> FlextConfig:
+    def merge(self, overrides: FlextTypes.Core.Dict | FlextConfig) -> FlextConfig:
         """Create a new FlextConfig instance with merged values.
 
         Args:
@@ -855,7 +856,6 @@ class FlextConfig(BaseSettings):
         return None
 
 
-# Rebuild Pydantic model after all type definitions are complete
 # This resolves any forward reference issues that may occur during model construction
 FlextConfig.model_rebuild()
 

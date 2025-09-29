@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import time
 from decimal import Decimal
+from typing import cast
 from uuid import uuid4
 
 from pydantic import Field
@@ -35,7 +36,7 @@ from flext_core import (
     FlextService,
 )
 
-# ========== DOMAIN MODELS (Using FlextModels DDD patterns) ==========
+from .example_scenarios import ExampleScenarios
 
 
 class ProductId(FlextModels.Value):
@@ -203,31 +204,38 @@ class InventoryService(FlextService[dict[str, object]]):
         """Initialize with products."""
         super().__init__()
         self._logger = FlextLogger(__name__)
+        self._scenarios = ExampleScenarios
         self._products: dict[str, Product] = {}
         self._initialize_products()
 
     def _initialize_products(self) -> None:
         """Initialize sample products."""
-        products = [
-            Product(
-                id="PROD-001",
-                name="Laptop",
-                price=Money(amount=Decimal("999.99"), currency="USD"),
-                stock=10,
-            ),
-            Product(
-                id="PROD-002",
-                name="Mouse",
-                price=Money(amount=Decimal("29.99"), currency="USD"),
-                stock=50,
-            ),
-            Product(
-                id="PROD-003",
-                name="Keyboard",
-                price=Money(amount=Decimal("79.99"), currency="USD"),
-                stock=25,
-            ),
-        ]
+        realistic_order = self._scenarios.realistic_data()["order"]
+        products: list[Product] = []
+        for item in realistic_order["items"]:
+            amount_raw = item.get("price", Decimal(0))
+            amount = (
+                amount_raw
+                if isinstance(amount_raw, Decimal)
+                else Decimal(str(amount_raw))
+            )
+            product = Product(
+                id=str(item.get("product_id", uuid4())),
+                name=str(item.get("name", "Catalog Item")),
+                price=Money(amount=amount, currency="USD"),
+                stock=int(item.get("quantity", 1)) * 10,
+            )
+            products.append(product)
+
+        if not products:
+            products.append(
+                Product(
+                    id="PROD-FALLBACK",
+                    name="Fallback Item",
+                    price=Money(amount=Decimal("50.00"), currency="USD"),
+                    stock=10,
+                ),
+            )
         for product in products:
             self._products[product.id] = product
 
@@ -336,6 +344,8 @@ class OrderService(FlextService[dict[str, object]]):
         super().__init__()
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
+        self._scenarios = ExampleScenarios
+        self._metadata = self._scenarios.metadata(tags=["integration", "demo"])
 
     def create_order(
         self, customer_id: str, items: list[dict[str, str | int]]
@@ -590,6 +600,10 @@ def demonstrate_complete_integration() -> None:
     print("E-Commerce Order Processing System")
     print("=" * 60)
 
+    scenario_data = ExampleScenarios.realistic_data()
+    order_template = scenario_data["order"]
+    user_pool = ExampleScenarios.users()
+
     # 1. Configuration setup
     print("\n=== 1. Configuration ===")
     config = FlextConfig.get_global_instance()
@@ -626,45 +640,34 @@ def demonstrate_complete_integration() -> None:
     # 4. Process an order
     print("\n=== 4. Order Processing ===")
 
-    # Get actual product IDs from inventory
+    scenario_order = order_template
     inventory_result = container.get_typed("inventory", InventoryService)
+    products: list[Product] = []
     if inventory_result.is_success:
         inventory_service = inventory_result.unwrap()
-        # Access products through a public method instead of private attribute
-        products: list[Product] = []
-        for product_id in ["PROD-001", "PROD-002", "PROD-003"]:
-            product_result = inventory_service.get_product(product_id)
+        for item in scenario_order["items"]:
+            product_result = inventory_service.get_product(item["product_id"])
             if product_result.is_success:
-                product = product_result.unwrap()
-                products.append(product)
-    else:
-        products = []
+                products.append(product_result.unwrap())
 
-    if len(products) >= 3:
-        # Order request using actual product IDs
-        order_request: dict[str, object] = {
-            "customer_id": "CUST-123",
-            "items": [
-                {"product_id": products[0].id, "quantity": 1},  # Laptop
-                {"product_id": products[1].id, "quantity": 2},  # Mouse x2
-                {"product_id": products[2].id, "quantity": 1},  # Keyboard
-            ],
-            "payment_method": "credit_card",
-        }
-    else:
-        # Fallback with hardcoded IDs if products not available
-        order_request = {
-            "customer_id": "CUST-123",
-            "items": [
-                {"product_id": "PROD-001", "quantity": 1},  # Laptop
-                {"product_id": "PROD-002", "quantity": 2},  # Mouse x2
-                {"product_id": "PROD-003", "quantity": 1},  # Keyboard
-            ],
-            "payment_method": "credit_card",
-        }
+    order_request: dict[str, object] = {
+        "customer_id": scenario_order["customer_id"],
+        "items": [
+            {
+                "product_id": item["product_id"],
+                "quantity": item.get("quantity", 1),
+            }
+            for item in scenario_order["items"]
+        ],
+        "payment_method": "credit_card",
+    }
+    order_dict = order_request
+    items_list = cast("list[object]", order_dict["items"])
+    first_item = cast("dict[str, object]", items_list[0])
+    first_product_id = first_item["product_id"]
 
-    print(f"Customer: {order_request['customer_id']}")
-    items = order_request["items"]
+    print(f"Customer: {order_dict['customer_id']}")
+    items = order_dict["items"]
     if isinstance(items, list):
         print(f"Items: {len(items)} products")
     else:
@@ -725,12 +728,14 @@ def demonstrate_complete_integration() -> None:
 
     # Try to order with insufficient stock
     large_order: dict[str, object] = {
-        "customer_id": "CUST-456",
+        "customer_id": (
+            user_pool[1]["id"] if len(user_pool) > 1 else scenario_order["customer_id"]
+        ),
         "items": [
             {
-                "product_id": products[0].id if len(products) > 0 else "PROD-001",
+                "product_id": first_product_id,
                 "quantity": 100,
-            },  # Too many laptops
+            },
         ],
         "payment_method": "paypal",
     }
@@ -771,11 +776,21 @@ def demonstrate_complete_integration() -> None:
     print("Events emitted during order processing:")
 
     # Create a simple order to show events
-    simple_order = Order(customer_id="CUST-789", domain_events=[])
+    default_customer = (
+        user_pool[0]["id"] if user_pool else scenario_order["customer_id"]
+    )
+    simple_order = Order(customer_id=default_customer, domain_events=[])
+    item_template = scenario_order["items"][0]
+    template_price = item_template.get("price", Decimal("10.00"))
+    price_amount = (
+        template_price
+        if isinstance(template_price, Decimal)
+        else Decimal(str(template_price))
+    )
     product = Product(
-        id="PROD-TEST",
-        name="Test Product",
-        price=Money(amount=Decimal("10.00"), currency="USD"),
+        id=item_template.get("product_id", "PROD-TEMPLATE"),
+        name=item_template.get("name", "Template Product"),
+        price=Money(amount=price_amount, currency="USD"),
         stock=5,
     )
 

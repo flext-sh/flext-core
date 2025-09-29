@@ -169,8 +169,7 @@ class TestFlextContext:
         context.set("valid_key", "valid_value")
 
         result = context.validate()
-        if hasattr(result, "is_success"):
-            assert result.is_success
+        assert result.is_success
 
     def test_context_validation_failure(self) -> None:
         """Test context validation failure."""
@@ -178,8 +177,7 @@ class TestFlextContext:
         context.set("", "empty_key")  # Invalid key
 
         result = context.validate()
-        if hasattr(result, "is_failure"):
-            assert result.is_failure
+        assert result.is_failure
 
     def test_context_thread_safety(self) -> None:
         """Test context thread safety."""

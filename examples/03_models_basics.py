@@ -37,6 +37,8 @@ from flext_core import (
     FlextService,
 )
 
+from .example_scenarios import ExampleScenarios
+
 # ========== VALUE OBJECTS ==========
 
 
@@ -393,9 +395,6 @@ class Order(FlextModels.AggregateRoot):
         return FlextResult[None].ok(None)
 
 
-# ========== COMPREHENSIVE MODELS SERVICE ==========
-
-
 class ComprehensiveModelsService(FlextService[Order]):
     """Service demonstrating ALL FlextModels patterns and methods."""
 
@@ -404,6 +403,10 @@ class ComprehensiveModelsService(FlextService[Order]):
         super().__init__()
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
+        self._scenarios = ExampleScenarios
+        self._dataset = self._scenarios.dataset()
+        self._realistic = self._scenarios.realistic_data()
+        self._validation = self._scenarios.validation_data()
 
     def execute(self) -> FlextResult[Order]:
         """Execute method required by FlextService."""
@@ -421,51 +424,56 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show value object patterns."""
         print("\n=== Value Objects ===")
 
-        # Create value objects
-        email_result = Email.create_email("john@example.com")
+        sample_email = self._validation["valid_emails"][0]
+        email_result = Email.create_email(sample_email)
         if email_result.is_success:
             email: Email = email_result.unwrap()
             print(f"✅ Email created: {email.address}")
 
-        money = Money(amount=Decimal("100.50"), currency="USD")
+        order_data = self._realistic["order"]
+        money = Money(amount=order_data["total"], currency="USD")
         print(f"Money: ${money.amount} {money.currency}")
 
+        address_data = self._realistic["user_registration"]["address"]
         address = Address(
-            street="123 Main St",
-            city="Springfield",
-            state="IL",
-            zip_code="62701",
+            street=str(address_data["street"]),
+            city=str(address_data["city"]),
+            state=str(address_data["state"]),
+            zip_code=str(address_data["zip"]),
         )
         print(f"Address:\n{address.format_for_shipping()}")
 
-        # Value object equality (by value, not identity)
-        email1 = Email(address="test@example.com")
-        email2 = Email(address="test@example.com")
-        print(f"Value equality: {email1 == email2}")  # True
+        email1 = Email(address=sample_email)
+        email2 = Email(address=sample_email)
+        print(f"Value equality: {email1 == email2}")
         print(f"Same instance: {email1 is email2}")  # False  # False
 
     def demonstrate_value_object_operations(self) -> None:
         """Show value object business operations."""
         print("\n=== Value Object Operations ===")
 
-        # Money operations
-        money1 = Money(amount=Decimal(100), currency="USD")
-        money2 = Money(amount=Decimal(50), currency="USD")
+        order_data = self._realistic["order"]
+        first_item = order_data["items"][0]
+        second_item = (
+            order_data["items"][0]
+            if len(order_data["items"]) == 1
+            else order_data["items"][1]
+        )
 
-        # Addition
+        money1 = Money(amount=first_item["price"], currency="USD")
+        money2 = Money(amount=second_item["price"], currency="USD")
+
         result = money1.add(money2)
         if result.is_success:
             total = result.unwrap()
-            print(f"$100 + $50 = ${total.amount}")
+            print(f"${money1.amount} + ${money2.amount} = ${total.amount}")
 
-        # Subtraction
         result = money1.subtract(money2)
         if result.is_success:
             difference = result.unwrap()
-            print(f"$100 - $50 = ${difference.amount}")
+            print(f"${money1.amount} - ${money2.amount} = ${difference.amount}")
 
-        # Currency mismatch
-        euro = Money(amount=Decimal(50), currency="EUR")
+        euro = Money(amount=money2.amount, currency="EUR")
         result = money1.add(euro)
         if result.is_failure:
             print(f"✅ Currency check: {result.error}")
@@ -476,57 +484,56 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show entity patterns."""
         print("\n=== Entities ===")
 
-        # Create entities with identity
+        product_data = self._realistic["order"]["items"][0]
         product = Product(
-            id=str(uuid4()),
-            name="Laptop",
-            price=Money(amount=Decimal("999.99"), currency="USD"),
-            sku="LAP-001",
+            id=str(product_data["product_id"]),
+            name=str(product_data["name"]),
+            price=Money(amount=product_data["price"], currency="USD"),
+            sku=str(product_data["product_id"])[:8],
             stock=10,
         )
         print(f"Product: {product.name} (ID: {product.id})")
 
-        # Entity operations
         result = product.add_stock(5)
         if result.is_success:
             print(f"✅ Stock added, new stock: {product.stock}")
 
-        # Price adjustment
-        new_price = Money(amount=Decimal("899.99"), currency="USD")
+        new_price = Money(
+            amount=product.price.amount - Decimal("50.00"), currency="USD"
+        )
         result = product.adjust_price(new_price)
         if result.is_success:
             print(f"✅ Price adjusted to ${new_price.amount}")
 
-        # Note: Entity class doesn't have domain events
-        # Only AggregateRoot has domain event support
         print("Note: Entity doesn't track domain events (use AggregateRoot)")
 
     def demonstrate_entity_identity(self) -> None:
         """Show entity identity vs value comparison."""
         print("\n=== Entity Identity ===")
 
-        # Entities are compared by ID, not values
+        base_item = self._realistic["order"]["items"][0]
         product1 = Product(
-            id=str(uuid4()),
-            name="Same Product",
-            price=Money(amount=Decimal(100), currency="USD"),
-            sku="PROD-001",
+            id=str(base_item["product_id"]),
+            name=str(base_item["name"]),
+            price=Money(amount=base_item["price"], currency="USD"),
+            sku=str(base_item["product_id"])[:8],
         )
 
         product2 = Product(
-            id=product1.id,  # Same ID
-            name="Different Name",
-            price=Money(amount=Decimal(200), currency="USD"),
-            sku="PROD-002",
+            id=product1.id,
+            name=f"{base_item['name']} Variant",
+            price=Money(amount=base_item["price"], currency="USD"),
+            sku=f"{product1.sku}-VAR",
         )
 
-        print(f"Same ID equality: {product1 == product2}")  # True (same ID)
+        print(f"Same ID equality: {product1 == product2}")
 
+        alt_item = self._realistic["order"]["items"][0]
         product3 = Product(
-            id=str(uuid4()),  # Different ID
-            name="Same Product",
-            price=Money(amount=Decimal(100), currency="USD"),
-            sku="PROD-001",
+            id=str(uuid4()),
+            name=str(alt_item["name"]),
+            price=Money(amount=alt_item["price"], currency="USD"),
+            sku=str(uuid4())[:8],
         )
 
         print(f"Different ID equality: {product1 == product3}")  # False (different ID)
@@ -537,49 +544,33 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show aggregate root patterns."""
         print("\n=== Aggregate Roots ===")
 
-        # Create aggregate root
+        order_data = self._realistic["order"]
         order = Order(
-            id=str(uuid4()),
-            customer_id=str(uuid4()),
-            order_number="ORD-2025-001",
+            id=str(order_data["order_id"]),
+            customer_id=str(order_data["customer_id"]),
+            order_number=str(order_data["order_id"])[:12],
         )
         print(f"Order created: {order.order_number}")
 
-        # Create products for the order
-        laptop = Product(
-            id=str(uuid4()),
-            name="Laptop",
-            price=Money(amount=Decimal("999.99"), currency="USD"),
-            sku="LAP-001",
-            stock=5,
-        )
-
-        mouse = Product(
-            id=str(uuid4()),
-            name="Mouse",
-            price=Money(amount=Decimal("29.99"), currency="USD"),
-            sku="MOU-001",
-            stock=20,
-        )
-
-        # Add lines to order (aggregate maintains consistency)
-        result = order.add_line(laptop, 2)
-        if result.is_success:
-            print(f"✅ Added 2x {laptop.name}")
-
-        result = order.add_line(mouse, 3)
-        if result.is_success:
-            print(f"✅ Added 3x {mouse.name}")
+        for item in order_data["items"]:
+            product = Product(
+                id=str(item["product_id"]),
+                name=str(item["name"]),
+                price=Money(amount=item["price"], currency="USD"),
+                sku=str(item["product_id"])[:8],
+                stock=max(item.get("quantity", 1) * 5, 5),
+            )
+            result = order.add_line(product, int(item.get("quantity", 1)))
+            if result.is_success:
+                print(f"✅ Added {item.get('quantity', 1)}x {product.name}")
 
         print(f"Order total: ${order.total_amount.amount}")
 
-        # Submit order (state transition)
         result = order.submit()
         if result.is_success:
             print(f"✅ Order submitted, status: {order.status}")
 
-        # Aggregate events (AggregateRoot has domain event support!)
-        events = order.domain_events  # Access the events list directly
+        events = order.domain_events
         print(f"Aggregate events: {len(events)} events")
         for event in events:
             if isinstance(event, dict) and "event_name" in event:
@@ -589,41 +580,42 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show how aggregates maintain business invariants."""
         print("\n=== Business Invariants ===")
 
-        # Customer with credit limit
+        user_data = self._dataset["users"][0]
+        address_data = self._realistic["user_registration"]["address"]
+
         customer = Customer(
             id=str(uuid4()),
-            name="John Doe",
-            email=Email(address="john@example.com"),
+            name=str(user_data["name"]),
+            email=Email(address=str(user_data["email"])),
             shipping_address=Address(
-                street="123 Main St",
-                city="Springfield",
-                state="IL",
-                zip_code="62701",
+                street=str(address_data["street"]),
+                city=str(address_data["city"]),
+                state=str(address_data["state"]),
+                zip_code=str(address_data["zip"]),
             ),
             billing_address=Address(
-                street="123 Main St",
-                city="Springfield",
-                state="IL",
-                zip_code="62701",
+                street=str(address_data["street"]),
+                city=str(address_data["city"]),
+                state=str(address_data["state"]),
+                zip_code=str(address_data["zip"]),
             ),
             credit_limit=Money(amount=Decimal(5000), currency="USD"),
             current_balance=Money(amount=Decimal(1000), currency="USD"),
         )
 
-        # Check purchase ability
-        purchase_amount = Money(amount=Decimal(3000), currency="USD")
+        purchase_amount = Money(
+            amount=self._realistic["order"]["total"], currency="USD"
+        )
         can_purchase = customer.can_purchase(purchase_amount)
         if can_purchase.is_success:
             print(f"Can purchase ${purchase_amount.amount}: {can_purchase.unwrap()}")
 
-        # Attempt purchase
         result = customer.make_purchase(purchase_amount)
         if result.is_success:
             print(
                 f"✅ Purchase completed, new balance: ${customer.current_balance.amount}"
             )
 
-        # Try to exceed limit
         excessive = Money(amount=Decimal(2000), currency="USD")
         result = customer.make_purchase(excessive)
         if result.is_failure:
@@ -635,31 +627,29 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show model serialization patterns."""
         print("\n=== Model Serialization ===")
 
-        # Create complex model
+        order_data = self._realistic["order"]
         order = Order(
-            id=str(uuid4()),
-            customer_id=str(uuid4()),
-            order_number="ORD-2025-002",
+            id=str(order_data["order_id"]),
+            customer_id=str(order_data["customer_id"]),
+            order_number=str(order_data["order_id"])[:12],
             lines=[
                 OrderLine(
-                    product_id=str(uuid4()),
-                    product_name="Product 1",
-                    quantity=2,
-                    unit_price=Money(amount=Decimal(50), currency="USD"),
-                ),
+                    product_id=str(item["product_id"]),
+                    product_name=str(item["name"]),
+                    quantity=int(item["quantity"]),
+                    unit_price=Money(amount=item["price"], currency="USD"),
+                )
+                for item in order_data["items"]
             ],
-            total_amount=Money(amount=Decimal(100), currency="USD"),
+            total_amount=Money(amount=order_data["total"], currency="USD"),
         )
 
-        # Serialize to dict
         order_dict = order.model_dump()
         print(f"Serialized keys: {list(order_dict.keys())}")
 
-        # Serialize with exclusion
         order_dict_minimal = order.model_dump(exclude={"lines", "domain_events"})
         print(f"Minimal serialization: {list(order_dict_minimal.keys())}")
 
-        # Create from dict (deserialization)
         new_order = Order(**order_dict)
         print(f"✅ Deserialized order: {new_order.order_number}")
 
@@ -678,7 +668,6 @@ class ComprehensiveModelsService(FlextService[Order]):
 
             def save(self, order: Order) -> FlextResult[None]:
                 """Save order aggregate."""
-                # In real implementation, this would persist to database
                 self._storage[order.id] = order
                 self._logger.info(f"Order saved: {order.order_number}")
                 return FlextResult[None].ok(None)
@@ -698,21 +687,19 @@ class ComprehensiveModelsService(FlextService[Order]):
                 ]
                 return FlextResult[list[Order]].ok(orders)
 
-        # Use repository
         repo = OrderRepository()
 
+        order_data = self._realistic["order"]
         order = Order(
-            id=str(uuid4()),
-            customer_id=str(uuid4()),
-            order_number="ORD-2025-003",
+            id=str(order_data["order_id"]),
+            customer_id=str(order_data["customer_id"]),
+            order_number=str(order_data["order_id"])[:12],
         )
 
-        # Save
         result = repo.save(order)
         if result.is_success:
             print("✅ Order saved to repository")
 
-        # Retrieve
         find_result = repo.find_by_id(order.id)
         if find_result.is_success:
             retrieved = find_result.unwrap()

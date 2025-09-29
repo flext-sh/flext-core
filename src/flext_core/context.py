@@ -297,7 +297,7 @@ class FlextContext:
             cloned._statistics = self._statistics.copy()
             return cloned
 
-    def validate(self) -> object:
+    def validate(self) -> FlextResult[None]:
         """Validate the context data.
 
         Returns:

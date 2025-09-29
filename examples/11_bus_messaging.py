@@ -35,8 +35,6 @@ from flext_core import (
     FlextService,
 )
 
-# ========== BUS SERVICE ==========
-
 
 class BusMessagingService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextBus patterns."""
@@ -237,7 +235,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             items=[{"product": "Widget", "qty": 2}],
             payment_method="credit_card",
         )
-        result = bus.send_command(place_cmd)
+        result = bus.execute(place_cmd)
         if result.is_success:
             order_id = result.unwrap()
             print(f"  ✅ Order placed: {order_id}")
@@ -246,14 +244,14 @@ class BusMessagingService(FlextService[dict[str, object]]):
             ship_cmd = ShipOrderCommand(
                 order_id=str(order_id), carrier="FedEx", tracking_number="1234567890"
             )
-            ship_result = bus.send_command(ship_cmd)
+            ship_result = bus.execute(ship_cmd)
             print(f"  {'✅' if ship_result.is_success else '❌'} Order shipped")
 
             print("\n3. Try to Cancel Shipped Order:")
             cancel_cmd = CancelOrderCommand(
                 order_id=str(order_id), reason="Customer request"
             )
-            cancel_result = bus.send_command(cancel_cmd)
+            cancel_result = bus.execute(cancel_cmd)
             if cancel_result.is_failure:
                 print(f"  ✅ Correctly rejected: {cancel_result.error}")
 

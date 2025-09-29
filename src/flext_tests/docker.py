@@ -14,23 +14,21 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import click
 import docker
+import pytest
 from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
-
-try:
-    import pytest
-except ImportError:  # pragma: no cover - optional dependency
-    pytest = None
 
 from flext_core import FlextLogger, FlextResult
 
 if TYPE_CHECKING:
     from docker import DockerClient
+pytest_module: ModuleType | None = pytest
 
 
 # Lazy logger initialization to avoid configuration issues
@@ -435,7 +433,33 @@ class FlextTestDocker:
         return FlextResult[list[str]].ok([])
 
     # Class attributes that are expected
-    SHARED_CONTAINERS: ClassVar[dict[str, str]] = {}
+    SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = {
+        "flext-openldap-test": {
+            "compose_file": "docker/docker-compose.openldap.yml",
+            "service": "openldap",
+            "port": 3390,
+        },
+        "flext-postgres-test": {
+            "compose_file": "docker/docker-compose.postgres.yml",
+            "service": "postgres",
+            "port": 5433,
+        },
+        "flext-redis-test": {
+            "compose_file": "docker/docker-compose.redis.yml",
+            "service": "redis",
+            "port": 6380,
+        },
+        "flext-oracle-db-test": {
+            "compose_file": "docker/docker-compose.oracle-db.yml",
+            "service": "oracle-db",
+            "port": 1522,
+        },
+        "flext-algar-oud-test": {
+            "compose_file": "docker/docker-compose.algar-oud.yml",
+            "service": "algar-oud",
+            "port": 3389,
+        },
+    }
 
     def start_container(
         self,
@@ -1416,10 +1440,12 @@ class FlextTestDocker:
         elif args.command == "list-containers":
             containers = manager.list_containers(all_containers=args.show_all)
             if containers.is_success:
-                filtered = containers.value
+                filtered_containers = containers.value
                 if args.filter:
-                    filtered = [info for info in filtered if args.filter in info.name]
-                for info in filtered:
+                    filtered_containers = [
+                        info for info in filtered_containers if args.filter in info.name
+                    ]
+                for info in filtered_containers:
                     cls._console.print(
                         f"{info.name}: {cls._status_icon(info.status)} ({info.image})"
                     )

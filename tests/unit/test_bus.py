@@ -182,25 +182,6 @@ class TestFlextBus:
         assert found_handler is not None
         assert found_handler == handler
 
-    def test_send_command_compatibility(self) -> None:
-        """Test send_command method (compatibility shim)."""
-        bus = FlextBus()
-
-        class TestCommand(FlextModels.Command):
-            data: str
-
-        class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
-
-        handler = TestHandler()
-        bus.register_handler("TestCommand", handler)
-
-        command = TestCommand(data="test_data")
-        result = bus.send_command(command)
-        assert result.is_success
-        assert result.value == "processed_test_data"
-
     def test_bus_error_handling(self) -> None:
         """Test bus error handling mechanisms."""
         bus = FlextBus()

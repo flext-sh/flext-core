@@ -34,8 +34,6 @@ from flext_core import (
     FlextService,
 )
 
-# ========== CONTEXT SERVICE ==========
-
 
 class ContextManagementService(FlextService[dict[str, str]]):
     """Service demonstrating ALL FlextContext patterns."""

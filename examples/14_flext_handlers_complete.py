@@ -24,8 +24,6 @@ import time
 import warnings
 from dataclasses import dataclass
 from decimal import Decimal
-
-# ========== MESSAGE DEFINITIONS ==========
 from uuid import uuid4
 
 from flext_core import (

@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import contextvars
 import inspect
+import json
 import math
+import operator
 import os
 import pathlib
 import re
@@ -21,10 +23,11 @@ import threading
 import time
 import typing
 import uuid
-from collections.abc import Callable
+from collections import OrderedDict
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
-from typing import ClassVar, cast, get_origin, get_type_hints
+from typing import Any, ClassVar, cast, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -35,17 +38,11 @@ from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.typings import T, U
 
-# Module-level constants to avoid magic numbers - use FlextConstants where available
-MIN_TOKEN_LENGTH = 8  # Minimum length for security tokens and passwords
-MAX_PORT_NUMBER = FlextConstants.Network.MAX_PORT  # Maximum valid port number
-MAX_TIMEOUT_SECONDS = (
-    3600  # Maximum timeout in seconds (1 hour) - specific to utilities
-)
-MAX_RETRY_COUNT = (
-    FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-)  # Maximum retry attempts
-MAX_ERROR_DISPLAY = 5  # Maximum errors to display in batch processing
-MAX_REGEX_PATTERN_LENGTH = 1000  # Maximum regex pattern length to prevent ReDoS
+# All constants now use FlextConstants - no local constants needed
+# Using FlextConstants.Utilities for utility-specific constants
+# Using FlextConstants.Security for security-related constants
+# Using FlextConstants.Network for network-related constants
+# Using FlextConstants.Reliability for retry-related constants
 
 
 class FlextUtilities:
@@ -72,7 +69,12 @@ class FlextUtilities:
     - Message validation for handlers
     """
 
-    MIN_TOKEN_LENGTH = MIN_TOKEN_LENGTH
+    MIN_TOKEN_LENGTH = FlextConstants.Security.MIN_PASSWORD_LENGTH
+
+    @staticmethod
+    def generate_id() -> str:
+        """Generate a unique ID."""
+        return FlextUtilities.Generators.generate_id()
 
     class Validation:
         """Unified validation patterns using railway composition.
@@ -260,9 +262,9 @@ class FlextUtilities:
             port_int = port_conversion.unwrap()
 
             # Then validate the port range
-            if not (1 <= port_int <= MAX_PORT_NUMBER):
+            if not (1 <= port_int <= FlextConstants.Network.MAX_PORT):
                 return FlextResult[int].fail(
-                    f"Port must be between 1 and {MAX_PORT_NUMBER}, got {port_int}"
+                    f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}, got {port_int}"
                 )
             return FlextResult[int].ok(port_int)
 
@@ -296,7 +298,9 @@ class FlextUtilities:
         def validate_security_token(token: str) -> FlextResult[str]:
             """Validate security token format and strength."""
             return FlextUtilities.Validation.validate_string(
-                token, min_length=MIN_TOKEN_LENGTH, field_name="security token"
+                token,
+                min_length=FlextConstants.Security.MIN_PASSWORD_LENGTH,
+                field_name="security token",
             )
 
         @staticmethod
@@ -363,9 +367,9 @@ class FlextUtilities:
                 return FlextResult[float].fail(
                     f"Timeout must be positive, got {timeout_float}"
                 )
-            if timeout_float > MAX_TIMEOUT_SECONDS:
+            if timeout_float > FlextConstants.Utilities.MAX_TIMEOUT_SECONDS:
                 return FlextResult[float].fail(
-                    f"Timeout too large (max {MAX_TIMEOUT_SECONDS}s), got {timeout_float}"
+                    f"Timeout too large (max {FlextConstants.Utilities.MAX_TIMEOUT_SECONDS}s), got {timeout_float}"
                 )
             return FlextResult[float].ok(timeout_float)
 
@@ -377,9 +381,9 @@ class FlextUtilities:
                     return FlextResult[int].fail(
                         f"Retry count cannot be negative, got {retries}"
                     )
-                if retries > MAX_RETRY_COUNT:
+                if retries > FlextConstants.Reliability.MAX_RETRY_ATTEMPTS:
                     return FlextResult[int].fail(
-                        f"Retry count too high (max {MAX_RETRY_COUNT}), got {retries}"
+                        f"Retry count too high (max {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}), got {retries}"
                     )
                 return FlextResult[int].ok(retries)
             except (ValueError, TypeError):
@@ -450,13 +454,13 @@ class FlextUtilities:
         @staticmethod
         def validate_pipeline[TValidate](
             value: TValidate,
-            *validators: Callable[[TValidate], FlextResult[None]],
+            validators: list[Callable[[TValidate], FlextResult[None]]],
         ) -> FlextResult[TValidate]:
             """Comprehensive validation pipeline using advanced railway patterns.
 
             Args:
                 value: Value to validate
-                *validators: Validation functions to apply
+                validators: List of validation functions to apply
 
             Returns:
                 Original value if all validations pass, accumulated errors otherwise
@@ -494,9 +498,21 @@ class FlextUtilities:
             if not email:
                 return FlextResult[str].fail("Email cannot be empty")
 
-            # Use pattern from FlextConstants.Platform.PATTERN_EMAIL
-            if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
+            # Basic format validation - must have @ and domain part
+            if "@" not in email:
+                return FlextResult[str].fail("Invalid email format: missing @")
+
+            parts = email.split("@", 1)
+            if (
+                len(parts) != FlextConstants.Validation.EMAIL_PARTS_COUNT
+                or not parts[0]
+                or not parts[1]
+            ):
                 return FlextResult[str].fail(f"Invalid email format: {email}")
+
+            domain = parts[1]
+            if "." not in domain:
+                return FlextResult[str].fail("Invalid email format: missing domain dot")
 
             # Length validation using FlextConstants
             if len(email) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
@@ -523,6 +539,18 @@ class FlextUtilities:
             if not all(c.isalnum() or c in ".-" for c in hostname):
                 return FlextResult[str].fail("Invalid hostname characters")
 
+            # Check for consecutive dots or dashes
+            if ".." in hostname or "--" in hostname:
+                return FlextResult[str].fail(
+                    "Invalid hostname format: consecutive dots or dashes"
+                )
+
+            # Check that hostname doesn't start or end with dot or dash
+            if hostname.startswith((".", "-")) or hostname.endswith((".", "-")):
+                return FlextResult[str].fail(
+                    "Invalid hostname format: cannot start or end with dot or dash"
+                )
+
             return FlextResult[str].ok(hostname.lower())
 
         @staticmethod
@@ -535,8 +563,13 @@ class FlextUtilities:
             if not entity_id:
                 return FlextResult[str].fail("Entity ID cannot be empty")
 
-            # Allow UUIDs, alphanumeric with dashes/underscores
+            # Check minimum length
+            if len(entity_id) < FlextConstants.Validation.MIN_NAME_LENGTH:
+                return FlextResult[str].fail(
+                    f"Entity ID too short (min {FlextConstants.Validation.MIN_NAME_LENGTH} chars)"
+                )
 
+            # Allow UUIDs, alphanumeric with dashes/underscores
             if not re.match(r"^[a-zA-Z0-9_-]+$", entity_id):
                 return FlextResult[str].fail("Invalid entity ID format")
 
@@ -596,8 +629,8 @@ class FlextUtilities:
 
         @staticmethod
         def normalize_string(value: str) -> FlextResult[str]:
-            """Normalize string by stripping whitespace and converting to lowercase."""
-            return FlextResult[str].ok(value.strip().lower())
+            """Normalize string by stripping whitespace and title casing."""
+            return FlextResult[str].ok(value.strip().title())
 
         @staticmethod
         def sanitize_filename(filename: str) -> FlextResult[str]:
@@ -648,6 +681,19 @@ class FlextUtilities:
         """Processing utilities with reliability patterns."""
 
         @staticmethod
+        def _get_circuit_breaker_state(operation_id: str) -> dict[str, object]:
+            """Get circuit breaker state for operation."""
+            # This is a simplified implementation
+            # In a real implementation, this would track circuit breaker states
+            return {
+                "operation_id": operation_id,
+                "state": "closed",
+                "failure_count": 0,
+                "last_failure_time": None,
+                "next_retry_time": None,
+            }
+
+        @staticmethod
         def retry_operation[T](
             operation: Callable[[], FlextResult[T]],
             max_retries: int = 3,
@@ -669,17 +715,17 @@ class FlextUtilities:
                 error_msg = delay_validation.error or "Invalid delay seconds"
                 return FlextResult[T].fail(error_msg)
 
-            # Use retry_until_success directly on the operation result
-            initial_result: FlextResult[T] = operation()
-            if initial_result.is_success:
-                return initial_result
+            # Implement retry logic with exponential backoff
 
-            # Retry on failure
-            return initial_result.retry_until_success(
-                lambda _: operation(),
-                max_attempts=max_retries,
-                backoff_factor=delay_seconds,
-            )
+            for attempt in range(max_retries + 1):
+                result = operation()
+                if result.is_success:
+                    return result
+
+                if attempt < max_retries:  # Don't sleep after the last attempt
+                    time.sleep(delay_seconds * (2**attempt))  # Exponential backoff
+
+            return result  # Return the last failure result
 
         @staticmethod
         def timeout_operation[T](
@@ -821,7 +867,7 @@ class FlextUtilities:
         _circuit_breaker_lock: ClassVar[threading.Lock] = threading.Lock()
 
         @classmethod
-        def _get_circuit_breaker_state(cls, operation_id: str) -> dict[str, object]:
+        def get_circuit_breaker_state(cls, operation_id: str) -> dict[str, object]:
             """Get or create circuit breaker state for an operation."""
             with cls._circuit_breaker_lock:
                 if operation_id not in cls._circuit_breaker_states:
@@ -853,7 +899,7 @@ class FlextUtilities:
             # Type annotation guarantees pattern is str, isinstance check unnecessary
 
             # Check for basic pattern validity before compilation
-            if len(pattern) > MAX_REGEX_PATTERN_LENGTH:
+            if len(pattern) > FlextConstants.Utilities.MAX_REGEX_PATTERN_LENGTH:
                 return FlextResult[re.Pattern[str]].fail(
                     "Pattern too long (max 1000 characters)"
                 )
@@ -1047,6 +1093,10 @@ class FlextUtilities:
         ) -> FlextResult[object]:
             """Safely get nested dictionary value using dot notation."""
             try:
+                # Handle empty path - return the entire data
+                if not path:
+                    return FlextResult[object].ok(data)
+
                 keys = path.split(".")
                 current: object = data  # Start with the data object
                 for key in keys:
@@ -1163,7 +1213,10 @@ class FlextUtilities:
             return FlextResult.accumulate_errors(*all_results)
 
     class Cache:
-        """Cache management utilities for FlextMixins and other components."""
+        """Cache management utilities for FlextMixins and other components.
+
+        Extended with CQRS cache functionality for command/query result caching.
+        """
 
         @staticmethod
         def clear_object_cache(obj: object) -> FlextResult[None]:
@@ -1227,6 +1280,225 @@ class FlextUtilities:
             ]
 
             return any(hasattr(obj, attr) for attr in cache_attributes)
+
+        @staticmethod
+        def sort_key(value: object) -> str:
+            """Return a deterministic string for ordering normalized cache components."""
+            return json.dumps(value, sort_keys=True, default=str)
+
+        @staticmethod
+        def normalize_component(value: object) -> object:
+            """Normalize arbitrary objects into cache-friendly deterministic structures."""
+            if value is None or isinstance(value, (bool, int, float, str)):
+                return value
+
+            if isinstance(value, bytes):
+                return ("bytes", value.hex())
+
+            if hasattr(value, "model_dump") and callable(getattr(value, "model_dump")):
+                try:
+                    dumped: dict[str, object] = getattr(value, "model_dump")()
+                except TypeError:
+                    dumped = {}
+                return ("pydantic", FlextUtilities.Cache.normalize_component(dumped))
+
+            if is_dataclass(value):
+                # Ensure we have a dataclass instance, not a class
+                if isinstance(value, type):
+                    return ("dataclass_class", str(value))
+                return (
+                    "dataclass",
+                    FlextUtilities.Cache.normalize_component(asdict(value)),
+                )
+
+            if isinstance(value, Mapping):
+                # Return sorted dict for cache-friendly deterministic ordering
+                mapping_value = cast("Mapping[object, object]", value)
+                sorted_items = sorted(
+                    mapping_value.items(),
+                    key=lambda x: FlextUtilities.Cache.sort_key(x[0]),
+                )
+                return {
+                    FlextUtilities.Cache.normalize_component(
+                        k
+                    ): FlextUtilities.Cache.normalize_component(v)
+                    for k, v in sorted_items
+                }
+
+            if isinstance(value, (list, tuple)):
+                sequence_value = cast("Sequence[object]", value)
+                sequence_items = [
+                    FlextUtilities.Cache.normalize_component(item)
+                    for item in sequence_value
+                ]
+                return ("sequence", tuple(sequence_items))
+
+            if isinstance(value, set):
+                set_value = cast("set[object]", value)
+                set_items = [
+                    FlextUtilities.Cache.normalize_component(item) for item in set_value
+                ]
+
+                # Sort by cache sort key
+                set_items.sort(key=FlextUtilities.Cache.sort_key)
+
+                normalized_set = tuple(set_items)
+                return ("set", normalized_set)
+
+            try:
+                # Cast to proper type for type checker
+                value_vars_dict: dict[str, object] = cast(
+                    "dict[str, object]", vars(value)
+                )
+            except TypeError:
+                return ("repr", repr(value))
+
+            normalized_vars = tuple(
+                (key, FlextUtilities.Cache.normalize_component(val))
+                for key, val in sorted(
+                    value_vars_dict.items(), key=operator.itemgetter(0)
+                )
+            )
+            return ("vars", normalized_vars)
+
+        @staticmethod
+        def generate_cache_key(command: object, command_type: type[object]) -> str:
+            """Generate a deterministic cache key for the command.
+
+            Args:
+                command: The command/query object
+                command_type: The type of the command
+
+            Returns:
+                str: Deterministic cache key
+
+            """
+            try:
+                # For Pydantic models, use model_dump with sorted keys
+                if hasattr(command, "model_dump"):
+                    model_dump_method = getattr(command, "model_dump")
+                    data = model_dump_method(mode="python")
+                    # Sort keys recursively for deterministic ordering
+                    sorted_data = FlextUtilities.Cache.sort_dict_keys(data)
+                    return f"{command_type.__name__}_{hash(str(sorted_data))}"
+
+                # For dataclasses, use asdict with sorted keys
+                if (
+                    hasattr(command, "__dataclass_fields__")
+                    and is_dataclass(command)
+                    and not isinstance(command, type)
+                ):
+                    dataclass_data = asdict(command)
+                    dataclass_sorted_data = FlextUtilities.Cache.sort_dict_keys(
+                        dataclass_data
+                    )
+                    return f"{command_type.__name__}_{hash(str(dataclass_sorted_data))}"
+
+                # For dictionaries, sort keys
+                if isinstance(command, dict):
+                    dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
+                        cast("dict[str, object]", command)
+                    )
+                    return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"
+
+                # For other objects, use string representation
+                command_str = str(command) if command is not None else "None"
+                command_hash = hash(command_str)
+                return f"{command_type.__name__}_{command_hash}"
+
+            except Exception:
+                # Fallback to string representation if anything fails
+                command_str_fallback = str(command) if command is not None else "None"
+                try:
+                    command_hash_fallback = hash(command_str_fallback)
+                    return f"{command_type.__name__}_{command_hash_fallback}"
+                except TypeError:
+                    # If hash fails, use a deterministic fallback
+                    return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode('utf-8')))}"
+
+        @staticmethod
+        def sort_dict_keys(obj: object) -> object:
+            """Recursively sort dictionary keys for deterministic ordering.
+
+            Args:
+                obj: Object to sort (dict, list, or other)
+
+            Returns:
+                Object with sorted keys
+
+            """
+            if isinstance(obj, dict):
+                dict_obj: dict[str, object] = cast("dict[str, object]", obj)
+                sorted_items: list[tuple[object, object]] = sorted(
+                    dict_obj.items(), key=lambda x: str(x[0])
+                )
+                return {
+                    str(k): FlextUtilities.Cache.sort_dict_keys(v)
+                    for k, v in sorted_items
+                }
+            if isinstance(obj, list):
+                obj_list: list[object] = cast("list[object]", obj)
+                return [FlextUtilities.Cache.sort_dict_keys(item) for item in obj_list]
+            if isinstance(obj, tuple):
+                obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
+                return tuple(
+                    FlextUtilities.Cache.sort_dict_keys(item) for item in obj_tuple
+                )
+            return obj
+
+    class CqrsCache:
+        """CQRS-specific cache manager for command/query result caching."""
+
+        def __init__(self, max_size: int = 100) -> None:
+            """Initialize CQRS cache manager.
+
+            Args:
+                max_size: Maximum number of cached results
+
+            """
+            self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
+            self._max_size = max_size
+
+        def get(self, key: str) -> FlextResult[object] | None:
+            """Get cached result by key.
+
+            Args:
+                key: Cache key
+
+            Returns:
+                Cached result or None if not found
+
+            """
+            result = self._cache.get(key)
+            if result is not None:
+                self._cache.move_to_end(key)
+            return result
+
+        def put(self, key: str, result: FlextResult[object]) -> None:
+            """Store result in cache.
+
+            Args:
+                key: Cache key
+                result: Result to cache
+
+            """
+            self._cache[key] = result
+            self._cache.move_to_end(key)
+            while len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
+
+        def clear(self) -> None:
+            """Clear all cached results."""
+            self._cache.clear()
+
+        def size(self) -> int:
+            """Get current cache size.
+
+            Returns:
+                Number of cached items
+
+            """
+            return len(self._cache)
 
     class Generators:
         """ID and data generation utilities."""
@@ -1340,12 +1612,35 @@ class FlextUtilities:
         @staticmethod
         def generate_aggregate_id(aggregate_type: str) -> str:
             """Generate an aggregate ID with type prefix."""
-            return f"{aggregate_type.lower()}_{str(uuid.uuid4())[:12]}"
+            return f"{aggregate_type}_{str(uuid.uuid4())[:12]}"
 
         @staticmethod
         def generate_entity_version() -> int:
             """Generate an entity version number."""
             return int(datetime.now(UTC).timestamp() * 1000) % 1000000
+
+    class Correlation:
+        """Distributed tracing and correlation ID management."""
+
+        @staticmethod
+        def generate_correlation_id() -> str:
+            """Generate a correlation ID for tracking."""
+            return FlextUtilities.Generators.generate_correlation_id()
+
+        @staticmethod
+        def generate_iso_timestamp() -> str:
+            """Generate ISO format timestamp."""
+            return FlextUtilities.Generators.generate_iso_timestamp()
+
+        @staticmethod
+        def generate_command_id() -> str:
+            """Generate a command ID for CQRS patterns."""
+            return FlextUtilities.Generators.generate_command_id()
+
+        @staticmethod
+        def generate_query_id() -> str:
+            """Generate a query ID for CQRS patterns."""
+            return FlextUtilities.Generators.generate_query_id()
 
     class TextProcessor:
         """Text processing utilities using railway composition."""
@@ -1387,7 +1682,8 @@ class FlextUtilities:
                 return default
             return text.strip()
 
-    class Conversions:
+    # Note: This class handles type conversions (str->bool, str->int), while "Conversion" handles table formatting
+    class TypeConversions:
         """Type conversion utilities using railway composition."""
 
         @staticmethod
@@ -1430,7 +1726,8 @@ class FlextUtilities:
         def retry_with_backoff(
             operation: Callable[[], FlextResult[T]],
             max_retries: int = 3,
-            backoff_factor: float = 1.0,
+            initial_delay: float = 1.0,
+            backoff_factor: float = 2.0,
         ) -> FlextResult[T]:
             """Enhanced retry with exponential backoff using railway patterns."""
             # Simple implementation that tries the operation multiple times
@@ -1443,9 +1740,9 @@ class FlextUtilities:
                         return result
                     last_error = result.error or f"Attempt {attempt + 1} failed"
 
-                    # Add delay before next attempt (simple backoff)
+                    # Add delay before next attempt (exponential backoff)
                     if attempt < max_retries - 1:  # Don't wait after last attempt
-                        time.sleep(backoff_factor * (2**attempt))
+                        time.sleep(initial_delay * (backoff_factor**attempt))
 
                 except Exception as e:
                     last_error = f"Exception in attempt {attempt + 1}: {e}"
@@ -1514,18 +1811,112 @@ class FlextUtilities:
             config = FlextConfig.get_global_instance()
             if not config.enable_circuit_breaker:
                 # Circuit breaker disabled - execute operation directly
-                return operation()
+                try:
+                    return operation()
+                except Exception as e:
+                    return FlextResult[TCircuit].fail(f"Operation failed: {e}")
 
-            # Validate parameters
-            if failure_threshold <= 0:
-                return FlextResult[TCircuit].fail("Failure threshold must be positive")
-            if recovery_timeout <= 0:
-                return FlextResult[TCircuit].fail("Recovery timeout must be positive")
-
-            # Delegate to Processing circuit breaker with enhanced state management
-            return FlextUtilities.Processing.circuit_breaker(
-                operation, failure_threshold, recovery_timeout
+            threshold_validation = FlextUtilities.Validation.validate_retry_count(
+                failure_threshold
             )
+            if threshold_validation.is_failure:
+                return FlextResult[TCircuit].fail(
+                    f"Invalid failure threshold: {threshold_validation.error}"
+                )
+
+            timeout_validation = FlextUtilities.Validation.validate_timeout_seconds(
+                recovery_timeout
+            )
+            if timeout_validation.is_failure:
+                return FlextResult[TCircuit].fail(
+                    f"Invalid recovery timeout: {timeout_validation.error}"
+                )
+
+            # Get or create circuit breaker state for this operation
+            operation_id = f"{operation.__name__ if hasattr(operation, '__name__') else 'anonymous'}_{id(operation)}"
+            state = FlextUtilities.Processing.get_circuit_breaker_state(operation_id)
+
+            # Check current circuit state with proper type casting
+            current_time = time.time()
+            # Extract circuit state with type checking
+            circuit_state_raw = state["circuit_state"]
+            circuit_state = (
+                str(circuit_state_raw) if circuit_state_raw is not None else "CLOSED"
+            )
+
+            # Extract last failure time with type checking
+            last_failure_time_raw = state["last_failure_time"]
+            if isinstance(last_failure_time_raw, (int, float)):
+                last_failure_time = float(last_failure_time_raw)
+            else:
+                last_failure_time = 0.0
+
+            # Handle OPEN state (circuit is open, failures exceeded threshold)
+            if circuit_state == "OPEN":
+                if current_time - last_failure_time >= recovery_timeout:
+                    # Transition to HALF_OPEN state
+                    state["circuit_state"] = "HALF_OPEN"
+                    state["failure_count"] = 0
+                else:
+                    # Circuit still open - reject immediately
+                    return FlextResult[TCircuit].fail(
+                        f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. "
+                        f"Next retry in {recovery_timeout - (current_time - last_failure_time):.1f}s"
+                    )
+
+            # Execute operation (CLOSED or HALF_OPEN state)
+            try:
+                result: FlextResult[TCircuit] = operation()
+
+                if result.is_success:
+                    # Operation succeeded - reset failure count and close circuit
+                    state["failure_count"] = 0
+                    state["circuit_state"] = "CLOSED"
+                    state["last_success_time"] = current_time
+                    return result
+                # Operation failed - increment failure count
+                current_failure_count_raw = state["failure_count"]
+                current_failure_count = (
+                    int(current_failure_count_raw)
+                    if isinstance(current_failure_count_raw, (int, float))
+                    else 0
+                )
+                state["failure_count"] = current_failure_count + 1
+                state["last_failure_time"] = current_time
+
+                new_failure_count = current_failure_count + 1
+                if new_failure_count >= failure_threshold:
+                    # Open circuit - failures exceeded threshold
+                    state["circuit_state"] = "OPEN"
+                    return FlextResult[TCircuit].fail(
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
+                        f"Error: {result.error}"
+                    )
+
+                return result
+
+            except Exception as e:
+                # Exception during operation - treat as failure
+                current_failure_count_raw = state["failure_count"]
+                current_failure_count = (
+                    int(current_failure_count_raw)
+                    if isinstance(current_failure_count_raw, (int, float))
+                    else 0
+                )
+                state["failure_count"] = current_failure_count + 1
+                state["last_failure_time"] = current_time
+
+                new_failure_count = current_failure_count + 1
+                if new_failure_count >= failure_threshold:
+                    state["circuit_state"] = "OPEN"
+                    return FlextResult[TCircuit].fail(
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
+                        f"Exception: {e}"
+                    )
+
+                return FlextResult[TCircuit].fail(
+                    f"Circuit breaker operation failed: {e}"
+                )
 
         @staticmethod
         def execute_with_retry[TRetry](
@@ -1549,7 +1940,8 @@ class FlextUtilities:
                 f"All {max_attempts} attempts failed. Last error: {last_error}"
             )
 
-    class Conversion:
+    # Note: This class handles table/display formatting, while "TypeConversions" handles type conversions
+    class TableConversion:
         """Data conversion utilities for table formatting and display."""
 
         @staticmethod
@@ -1570,8 +1962,8 @@ class FlextUtilities:
 
         @staticmethod
         def is_string_non_empty(value: object) -> bool:
-            """Check if value is a non-empty string."""
-            return isinstance(value, str) and len(value) > 0
+            """Check if value is a non-empty string (excluding whitespace-only strings)."""
+            return isinstance(value, str) and len(value.strip()) > 0
 
         @staticmethod
         def is_dict_non_empty(value: object) -> bool:
@@ -1719,6 +2111,10 @@ class FlextUtilities:
                 True if types are compatible
 
             """
+            # Any type should be compatible with everything
+            if expected_type is Any:
+                return True
+
             origin_type = get_origin(expected_type) or expected_type
             message_origin = get_origin(message_type) or message_type
 
@@ -2078,36 +2474,26 @@ class FlextUtilities:
 
         @staticmethod
         def compose_pipeline[T](
-            *functions: Callable[[T], FlextResult[T]],
-        ) -> Callable[[T], FlextResult[T]]:
-            """Compose a pipeline of functions using railway patterns.
+            initial_value: T,
+            functions: list[Callable[[T], FlextResult[T]]],
+        ) -> FlextResult[T]:
+            """Compose and execute a pipeline of functions using railway patterns.
 
             Args:
-                *functions: Functions to compose in sequence
+                initial_value: Initial value to pass through the pipeline
+                functions: List of functions to compose in sequence
 
             Returns:
-                Callable[[T], FlextResult[T]]: Composed pipeline function
-
-            Example:
-                ```python
-                pipeline = FlextUtilities.Composition.compose_pipeline(
-                    validate_input, transform_data, persist_data
-                )
-                result = pipeline(input_data)
-                ```
+                FlextResult[T]: Result of executing the pipeline
 
             """
-
-            def composed(value: T) -> FlextResult[T]:
-                current_value = value
-                for func in functions:
-                    result = func(current_value)
-                    if result.is_failure:
-                        return result
-                    current_value = result.unwrap()
-                return FlextResult[T].ok(current_value)
-
-            return composed
+            current_value = initial_value
+            for func in functions:
+                result = func(current_value)
+                if result.is_failure:
+                    return result
+                current_value = result.unwrap()
+            return FlextResult[T].ok(current_value)
 
         @staticmethod
         def compose_parallel[T, U](

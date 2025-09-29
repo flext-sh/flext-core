@@ -29,7 +29,7 @@ from flext_core import (
     FlextService,
 )
 
-# ========== PROCESSING SERVICE ==========
+from .example_scenarios import ExampleScenarios
 
 
 class ProcessingPatternsService(FlextService[dict[str, object]]):
@@ -40,6 +40,12 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         super().__init__()
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
+        self._scenarios = ExampleScenarios
+        self._user = self._scenarios.user()
+        self._order = self._scenarios.realistic_data()["order"]
+        self._admin_user = {**self._user, "role": "admin", "token": "valid-token"}
+        self._invalid_user = {**self._user, "email": "invalid", "role": "user"}
+        self._metadata = self._scenarios.metadata(tags=["processors", "demo"])
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute method required by FlextService."""
@@ -55,7 +61,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         """Show basic handler creation and execution."""
         print("\n=== Basic Handler Patterns ===")
 
-        # Create a basic handler
         class ValidationHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler for data validation."""
 
@@ -68,7 +73,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 """Validate and process the request."""
                 self._logger.info(f"Validating request in {self.name}")
 
-                # Convert object to dict for processing
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
@@ -76,28 +80,29 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 if not email_value:
                     return FlextResult[str].fail("Email required")
 
-                # Ensure email is a string for validation
                 if not isinstance(email_value, str):
                     return FlextResult[str].fail("Email must be a string")
 
                 if "@" not in email_value:
                     return FlextResult[str].fail("Invalid email format")
 
-                # Add validation timestamp
                 request["validated_at"] = str(time.time())
                 return FlextResult[str].ok(f"Validation passed for {request['email']}")
 
-        # Create and use handler
         validator = ValidationHandler("EmailValidator")
 
-        # Test valid request
-        valid_request = {"email": "user@example.com", "name": "John"}
+        valid_request = {
+            "email": self._user["email"],
+            "name": self._user["name"],
+        }
         result = validator.handle(valid_request)
         if result.is_success:
             print(f"✅ Validation passed: {result.unwrap()}")
 
-        # Test invalid request
-        invalid_request = {"email": "invalid", "name": "Jane"}
+        invalid_request = {
+            "email": self._invalid_user["email"],
+            "name": self._invalid_user["name"],
+        }
         result = validator.handle(invalid_request)
         if result.is_failure:
             print(f"❌ Validation failed: {result.error}")
@@ -108,7 +113,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         """Show chain of responsibility pattern with handler pipeline."""
         print("\n=== Handler Pipeline ===")
 
-        # Create pipeline of handlers
         class AuthenticationHandler(FlextProcessors.Implementation.BasicHandler):
             """Authenticate the request."""
 
@@ -121,7 +125,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 """Check authentication."""
                 self._logger.info("Authenticating request")
 
-                # Convert object to dict for processing
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
@@ -129,11 +132,9 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 if not token_value:
                     return FlextResult[str].fail("Authentication required")
 
-                # Ensure token is a string for validation
                 if not isinstance(token_value, str):
                     return FlextResult[str].fail("Token must be a string")
 
-                # Simulate token validation
                 if token_value != "valid-token":
                     return FlextResult[str].fail("Invalid token")
 
@@ -152,7 +153,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 """Check authorization."""
                 self._logger.info("Authorizing request")
 
-                # Convert object to dict for processing
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
@@ -160,7 +160,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 if not authenticated_value:
                     return FlextResult[str].fail("Not authenticated")
 
-                # Check permissions
                 role_value: str | None = request.get("role", None)
                 if role_value != "admin":
                     return FlextResult[str].fail("Insufficient permissions")
@@ -180,7 +179,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 """Process the business logic."""
                 self._logger.info("Processing request")
 
-                # Convert object to dict for processing
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
@@ -188,38 +186,34 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 if not authorized_value:
                     return FlextResult[str].fail("Not authorized")
 
-                # Simulate processing
                 request["processed"] = True
                 request["result"] = "Operation completed successfully"
                 request["timestamp"] = str(time.time())
 
                 return FlextResult[str].ok("Processing completed successfully")
 
-        # Build the pipeline
         auth_handler = AuthenticationHandler("Authenticator")
         authz_handler = AuthorizationHandler("Authorizer")
         process_handler = ProcessingHandler("Processor")
 
-        # Chain handlers manually (chain of responsibility)
         def execute_pipeline(request: dict[str, object]) -> FlextResult[str]:
             """Execute the handler pipeline."""
-            # Each handler processes and passes to next
             result = auth_handler.handle(request)
             if result.is_failure:
                 return result
 
-            result = authz_handler.handle(request)  # Pass original request
+            result = authz_handler.handle(request)
             if result.is_failure:
                 return result
 
-            return process_handler.handle(request)  # Pass original request
+            return process_handler.handle(request)
 
-        # Test the pipeline
         print("\n1. Valid request through pipeline:")
         valid_request: dict[str, object] = {
-            "token": "valid-token",
-            "role": "admin",
+            "token": self._admin_user["token"],
+            "role": self._admin_user["role"],
             "action": "delete_user",
+            "user": self._admin_user,
         }
         result = execute_pipeline(valid_request)
         if result.is_success:
@@ -228,8 +222,9 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         print("\n2. Request with invalid token:")
         invalid_token: dict[str, object] = {
             "token": "invalid",
-            "role": "admin",
+            "role": self._admin_user["role"],
             "action": "delete_user",
+            "user": self._admin_user,
         }
         result = execute_pipeline(invalid_token)
         if result.is_failure:
@@ -237,9 +232,10 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
         print("\n3. Request with insufficient permissions:")
         insufficient: dict[str, object] = {
-            "token": "valid-token",
-            "role": "user",
+            "token": self._admin_user["token"],
+            "role": self._invalid_user.get("role", "user"),
             "action": "delete_user",
+            "user": self._invalid_user,
         }
         result = execute_pipeline(insufficient)
         if result.is_failure:
@@ -251,7 +247,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         """Show strategy pattern for algorithm selection."""
         print("\n=== Strategy Pattern ===")
 
-        # Define strategy interface
         class PaymentStrategy:
             """Base payment processing strategy."""
 
@@ -259,14 +254,12 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 """Process payment with specific strategy."""
                 raise NotImplementedError
 
-        # Concrete strategies
         class CreditCardStrategy(PaymentStrategy):
             """Credit card payment strategy."""
 
             def process(self, amount: float) -> FlextResult[dict[str, object]]:
                 """Process credit card payment."""
-                # Simulate processing
-                fee = amount * 0.029  # 2.9% fee
+                fee = amount * 0.029
                 return FlextResult[dict[str, object]].ok({
                     "method": "credit_card",
                     "amount": amount,
@@ -280,7 +273,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
             def process(self, amount: float) -> FlextResult[dict[str, object]]:
                 """Process PayPal payment."""
-                fee = amount * 0.034 + 0.30  # 3.4% + $0.30
+                fee = amount * 0.034 + 0.30
                 return FlextResult[dict[str, object]].ok({
                     "method": "paypal",
                     "amount": amount,
@@ -294,16 +287,15 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
             def process(self, amount: float) -> FlextResult[dict[str, object]]:
                 """Process bank transfer."""
-                fee = 5.00  # Flat $5 fee
+                fee = 5.00
                 return FlextResult[dict[str, object]].ok({
                     "method": "bank_transfer",
                     "amount": amount,
                     "fee": fee,
                     "total": amount + fee,
-                    "status": "pending",  # Bank transfers are slower
+                    "status": "pending",
                 })
 
-        # Strategy context
         class PaymentProcessor:
             """Payment processor using strategy pattern."""
 
@@ -314,48 +306,32 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                     "paypal": PayPalStrategy(),
                     "bank_transfer": BankTransferStrategy(),
                 }
-                self._logger = FlextLogger(__name__)
 
-            def process_payment(
-                self, method: str, amount: float
+            def process(
+                self,
+                method: str,
+                amount: float,
             ) -> FlextResult[dict[str, object]]:
                 """Process payment with selected strategy."""
                 strategy = self._strategies.get(method)
-
-                if not strategy:
-                    return FlextResult[dict[str, object]].fail(
-                        f"Unknown payment method: {method}"
-                    )
-
-                self._logger.info(
-                    "Processing payment", extra={"method": method, "amount": amount}
-                )
-
+                if strategy is None:
+                    return FlextResult[dict[str, object]].fail("Unknown payment method")
                 return strategy.process(amount)
 
-        # Use the strategy pattern
         processor = PaymentProcessor()
+        amount = float(self._order["total"])
 
-        # Test different strategies
-        print("\n1. Credit Card Payment:")
-        result = processor.process_payment("credit_card", 100.00)
-        if result.is_success:
-            print(f"✅ {result.unwrap()}")
+        card_result = processor.process("credit_card", amount)
+        if card_result.is_success:
+            print(f"✅ Credit card processed: {card_result.unwrap()['total']}")
 
-        print("\n2. PayPal Payment:")
-        result = processor.process_payment("paypal", 100.00)
-        if result.is_success:
-            print(f"✅ {result.unwrap()}")
+        paypal_result = processor.process("paypal", amount)
+        if paypal_result.is_success:
+            print(f"✅ PayPal processed: {paypal_result.unwrap()['total']}")
 
-        print("\n3. Bank Transfer:")
-        result = processor.process_payment("bank_transfer", 100.00)
-        if result.is_success:
-            print(f"✅ {result.unwrap()}")
-
-        print("\n4. Unknown Method:")
-        result = processor.process_payment("bitcoin", 100.00)
-        if result.is_failure:
-            print(f"❌ {result.error}")
+        bank_result = processor.process("bank_transfer", amount)
+        if bank_result.is_success:
+            print(f"✅ Bank transfer pending: {bank_result.unwrap()['status']}")
 
     # ========== REGISTRY PATTERN ==========
 

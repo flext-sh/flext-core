@@ -496,10 +496,10 @@ class TestFlextProcessors:
         """Test processors export/import."""
         processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextResult[str]:
+        def test_processor_1(_data: object) -> FlextResult[str]:
             return FlextResult[str].ok(f"processed_{_data}")
 
-        processors.register("test_processor", test_processor)
+        processors.register("test_processor", test_processor_1)
 
         # Export processors configuration
         config = processors.export_config()
@@ -513,10 +513,10 @@ class TestFlextProcessors:
 
         # Import config only restores settings, not processors
         # We need to register the processor again
-        def test_processor(_data: object) -> FlextResult[str]:
+        def test_processor_2(_data: object) -> FlextResult[str]:
             return FlextResult[str].ok(f"processed_{_data}")
 
-        new_processors.register("test_processor", test_processor)
+        new_processors.register("test_processor", test_processor_2)
         result = new_processors.process("test_processor", "test_data")
         assert result.is_success
         assert isinstance(result.data, str) and "processed_test_data" in result.data

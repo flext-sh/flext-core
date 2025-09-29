@@ -23,7 +23,7 @@ import pytest
 from flext_core import FlextTypes, P, T
 
 
-class BenchmarkProtocol(Protocol):
+class BenchmarkProtocol(Protocol[P, T]):
     """Protocol for pytest-benchmark fixture."""
 
     def __call__(

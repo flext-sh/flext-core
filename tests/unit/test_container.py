@@ -6,11 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import dataclasses
-import threading
-import time
-from typing import cast
-
 from flext_core import FlextContainer
 
 
@@ -31,401 +26,563 @@ class TestFlextContainer:
             def __init__(self) -> None:
                 self.value = "test"
 
-        result = container.register("test_service", TestService)
+        service_instance = TestService()
+        result = container.register("test_service", service_instance)
         assert result.is_success
 
-    def test_container_register_instance(self) -> None:
-        """Test instance registration."""
+    def test_container_create_service(self) -> None:
+        """Test service creation with dependency injection."""
         container = FlextContainer()
 
-        instance = {"key": "value"}
-        result = container.register("test_instance", instance)
+        # Register a dependency
+        class Dependency:
+            def __init__(self) -> None:
+                self.name = "dependency"
+
+        class Service:
+            def __init__(self, dependency: Dependency) -> None:
+                self.dependency = dependency
+                self.initialized = True
+
+        dependency = Dependency()
+        container.register("dependency", dependency)
+
+        # Create service with dependency injection
+        result = container.create_service(Service, "test_service")
         assert result.is_success
+        service = result.value
+        assert service is not None
+        assert service.initialized
+        assert service.dependency is dependency
 
-    def test_container_register_factory(self) -> None:
-        """Test factory registration."""
+    def test_container_auto_wire(self) -> None:
+        """Test auto-wiring without registration."""
         container = FlextContainer()
 
-        def factory() -> dict[str, str]:
-            return {"created": "by_factory"}
+        # Register a dependency
+        class Dependency:
+            def __init__(self) -> None:
+                self.name = "dependency"
 
-        result = container.register("test_factory", factory)
+        class Service:
+            def __init__(self, dependency: Dependency) -> None:
+                self.dependency = dependency
+                self.initialized = True
+
+        dependency = Dependency()
+        container.register("dependency", dependency)
+
+        # Auto-wire service (creates instance but doesn't register)
+        result = container.auto_wire(Service)
         assert result.is_success
+        service = result.value
+        assert service is not None
+        assert service.initialized
+        assert service.dependency is dependency
 
-    def test_container_register_invalid(self) -> None:
-        """Test invalid registration."""
+        # Service should not be registered
+        assert not container.has("service")
+
+    def test_container_auto_wire_missing_dependency(self) -> None:
+        """Test auto-wiring with missing dependency."""
         container = FlextContainer()
 
-        result = container.register("", None)
+        class Service:
+            def __init__(self, _missing_dep: object) -> None:
+                self.initialized = True
+
+        # Auto-wire service with missing dependency
+        result = container.auto_wire(Service)
         assert result.is_failure
+        assert result.error is not None
+        assert "Cannot resolve required dependency" in result.error
 
-    def test_container_get_service(self) -> None:
-        """Test service retrieval."""
+    def test_container_auto_wire_with_defaults(self) -> None:
+        """Test auto-wiring with default parameters."""
+        container = FlextContainer()
+
+        class Service:
+            def __init__(self, optional: str = "default") -> None:
+                self.optional = optional
+                self.initialized = True
+
+        # Auto-wire service with default parameter
+        result = container.auto_wire(Service)
+        assert result.is_success
+        service = result.value
+        assert service is not None
+        assert service.initialized
+        assert service.optional == "default"
+
+    def test_container_configure(self) -> None:
+        """Test container configuration."""
+        container = FlextContainer()
+
+        # Configure container
+        config: dict[str, object] = {
+            "max_workers": 8,
+            "timeout_seconds": 60.0,
+            "environment": "testing",
+        }
+        result = container.configure(config)
+        assert result.is_success
+
+        # Check configuration was applied
+        container_config = container.get_config()
+        assert container_config["max_workers"] == 8
+        assert container_config["timeout_seconds"] == 60.0
+        assert container_config["environment"] == "testing"
+
+    def test_container_configure_invalid_keys(self) -> None:
+        """Test container configuration with invalid keys."""
+        container = FlextContainer()
+
+        # Configure with invalid keys (should be ignored)
+        config: dict[str, object] = {"invalid_key": "value", "max_workers": 4}
+        result = container.configure(config)
+        assert result.is_success
+
+        # Valid key should be applied
+        container_config = container.get_config()
+        assert container_config["max_workers"] == 4
+
+    def test_container_batch_register(self) -> None:
+        """Test batch service registration."""
+        container = FlextContainer()
+
+        services: dict[str, object] = {
+            "service1": {"key": "value1"},
+            "service2": {"key": "value2"},
+            "service3": {"key": "value3"},
+        }
+
+        result = container.batch_register(services)
+        assert result.is_success
+
+        # All services should be registered
+        for name in services:
+            assert container.has(name)
+            get_result = container.get(name)
+            assert get_result.is_success
+
+    def test_container_batch_register_with_duplicate(self) -> None:
+        """Test batch registration with duplicate service."""
+        container = FlextContainer()
+
+        # Pre-register a service
+        container.register("service1", {"key": "original"})
+
+        services: dict[str, object] = {
+            "service1": {"key": "duplicate"},  # This should fail
+            "service2": {"key": "value2"},
+        }
+
+        result = container.batch_register(services)
+        assert result.is_failure
+        assert result.error is not None
+        assert "already registered" in result.error
+
+        # Original service should still be there
+        get_result = container.get("service1")
+        assert get_result.is_success
+        assert isinstance(get_result.value, dict)
+        assert get_result.value["key"] == "original"
+
+    def test_container_batch_register_empty(self) -> None:
+        """Test batch registration with empty dict."""
+        container = FlextContainer()
+
+        result = container.batch_register({})
+        assert result.is_success
+
+    def test_container_get_typed(self) -> None:
+        """Test typed service retrieval."""
         container = FlextContainer()
 
         class TestService:
             def __init__(self) -> None:
                 self.value = "test"
 
-        container.register_factory("test_service", TestService)
-        service_result = container.get("test_service")
-        assert service_result.is_success
-        service = service_result.value
-        assert service is not None
-        assert isinstance(service, TestService)
-        assert service.value == "test"
+        service = TestService()
+        container.register("test_service", service)
 
-    def test_container_get_instance(self) -> None:
-        """Test instance retrieval."""
+        # Get with correct type
+        result = container.get_typed("test_service", TestService)
+        assert result.is_success
+        assert isinstance(result.value, TestService)
+        assert result.value.value == "test"
+
+    def test_container_get_typed_wrong_type(self) -> None:
+        """Test typed service retrieval with wrong type."""
         container = FlextContainer()
 
-        instance = {"key": "value"}
-        container.register("test_instance", instance)
-        retrieved_result = container.get("test_instance")
-        assert retrieved_result.is_success
-        retrieved = retrieved_result.value
-        assert retrieved is not None
-        assert retrieved == instance
+        service = {"key": "value"}
+        container.register("test_service", service)
 
-    def test_container_get_factory(self) -> None:
-        """Test factory retrieval."""
+        # Get with wrong type
+        result = container.get_typed("test_service", dict)
+        assert result.is_success  # Should succeed because dict is the correct type
+
+        # Get with wrong type
+        class WrongType:
+            pass
+
+        result = container.get_typed("test_service", WrongType)
+        assert result.is_failure
+        assert result.error is not None
+        assert "type mismatch" in result.error
+
+    def test_container_get_or_create(self) -> None:
+        """Test get or create service."""
         container = FlextContainer()
 
         def factory() -> dict[str, str]:
             return {"created": "by_factory"}
 
-        container.register("test_factory", factory)
-        retrieved_result = container.get("test_factory")
-        assert retrieved_result.is_success
-        retrieved = retrieved_result.value
-        assert retrieved is not None
-        assert callable(retrieved)
-
-    def test_container_get_nonexistent(self) -> None:
-        """Test retrieval of non-existent service."""
-        container = FlextContainer()
-
-        result = container.get("nonexistent_service")
-        assert result.is_failure
-
-    def test_container_has_service(self) -> None:
-        """Test service existence check."""
-        container = FlextContainer()
-
-        class TestService:
-            pass
-
-        container.register("test_service", TestService)
-        assert container.has("test_service") is True
-        assert container.has("nonexistent_service") is False
-
-    def test_container_unregister_service(self) -> None:
-        """Test service unregistration."""
-        container = FlextContainer()
-
-        class TestService:
-            pass
-
-        container.register("test_service", TestService)
-        assert container.has("test_service") is True
-
-        result = container.unregister("test_service")
+        # Service doesn't exist, should create using factory
+        result = container.get_or_create("test_service", factory)
         assert result.is_success
-        assert container.has("test_service") is False
+        assert isinstance(result.value, dict)
+        assert result.value["created"] == "by_factory"
 
-    def test_container_unregister_nonexistent(self) -> None:
-        """Test unregistration of non-existent service."""
+        # Service now exists, should return existing
+        result2 = container.get_or_create("test_service", factory)
+        assert result2.is_success
+        assert result2.value is result.value  # Same instance
+
+    def test_container_get_or_create_no_factory(self) -> None:
+        """Test get or create without factory."""
         container = FlextContainer()
 
-        result = container.unregister("nonexistent_service")
+        # Service doesn't exist and no factory provided
+        result = container.get_or_create("nonexistent")
         assert result.is_failure
+        assert result.error is not None
+        assert "not found and no factory provided" in result.error
+
+    def test_container_list_services(self) -> None:
+        """Test listing services."""
+        container = FlextContainer()
+
+        # Register different types of services
+        container.register("instance", {"type": "instance"})
+        container.register_factory("factory", lambda: {"type": "factory"})
+
+        result = container.list_services()
+        assert result.is_success
+
+        services = result.value
+        assert len(services) == 2
+
+        # Check service info
+        service_names = [s["name"] for s in services]
+        assert "instance" in service_names
+        assert "factory" in service_names
+
+        service_types = [s["type"] for s in services]
+        assert "instance" in service_types
+        assert "factory" in service_types
+
+    def test_container_get_service_names(self) -> None:
+        """Test getting service names."""
+        container = FlextContainer()
+
+        container.register("service1", "value1")
+        container.register("service2", "value2")
+
+        result = container.get_service_names()
+        assert result.is_success
+
+        names = result.value
+        assert set(names) == {"service1", "service2"}
+
+    def test_container_get_info(self) -> None:
+        """Test getting container info."""
+        container = FlextContainer()
+
+        container.register("test", "value")
+
+        result = container.get_info()
+        assert result.is_success
+
+        info = result.value
+        assert "service_count" in info
+        assert "direct_services" in info
+        assert "factories" in info
+        assert "configuration" in info
+        assert info["service_count"] == 1
+        assert info["direct_services"] == 1
+
+    def test_container_register_factory_invalid(self) -> None:
+        """Test registering invalid factory."""
+        container = FlextContainer()
+
+        # Register non-callable as factory (string instead of function)
+        result = container.register_factory("invalid", "this is not callable")
+        assert result.is_failure
+        assert result.error is not None
+        assert "must be callable" in result.error
+
+    def test_container_get_service_with_factory_caching(self) -> None:
+        """Test that factory services are cached after first creation."""
+        container = FlextContainer()
+
+        call_count = 0
+
+        def counting_factory() -> dict[str, str]:
+            nonlocal call_count
+            call_count += 1
+            return {"call_count": str(call_count)}
+
+        container.register_factory("cached_service", counting_factory)
+
+        # First call should create the service
+        result1 = container.get("cached_service")
+        assert result1.is_success
+        assert isinstance(result1.value, dict)
+        assert result1.value["call_count"] == "1"
+        assert call_count == 1
+
+        # Second call should return cached instance
+        result2 = container.get("cached_service")
+        assert result2.is_success
+        assert isinstance(result2.value, dict)
+        assert result2.value["call_count"] == "1"  # Same instance, not recreated
+        assert call_count == 1  # Factory not called again
 
     def test_container_clear(self) -> None:
-        """Test container clearing."""
+        """Test clearing all services."""
         container = FlextContainer()
 
-        class TestService:
-            pass
+        container.register("service1", "value1")
+        container.register_factory("service2", lambda: "value2")
 
-        container.register("service1", TestService)
-        container.register("service2", TestService)
+        assert container.has("service1")
+        assert container.has("service2")
 
-        assert container.has("service1") is True
-        assert container.has("service2") is True
+        result = container.clear()
+        assert result.is_success
 
-        container.clear()
+        assert not container.has("service1")
+        assert not container.has("service2")
+        assert container.get_service_count() == 0
 
-        assert container.has("service1") is False
-        assert container.has("service2") is False
-
-    def test_container_singleton_pattern(self) -> None:
-        """Test container singleton pattern."""
-        container1 = FlextContainer.get_global()
-        container2 = FlextContainer.get_global()
-
-        assert container1 is container2
-
-    def test_container_singleton_reset(self) -> None:
-        """Test container singleton reset."""
-        container1 = FlextContainer.get_global()
-        container1.clear()
-        container2 = FlextContainer.get_global()
-
-        # Both should be the same instance (singleton)
-        assert container1 is container2
-
-    def test_container_dependency_injection(self) -> None:
-        """Test dependency injection."""
+    def test_container_register_invalid_name(self) -> None:
+        """Test registering with invalid service name."""
         container = FlextContainer()
 
-        class DatabaseService:
+        result = container.register("", "service")
+        assert result.is_failure
+        assert result.error is not None
+        assert "empty" in result.error
+
+        result = container.register("invalid/name", "service")
+        assert result.is_failure
+        assert result.error is not None
+        assert "invalid characters" in result.error
+
+    def test_container_unregister_nonexistent(self) -> None:
+        """Test unregistering non-existent service."""
+        container = FlextContainer()
+
+        result = container.unregister("nonexistent")
+        assert result.is_failure
+        assert result.error is not None
+        assert "not registered" in result.error
+
+    def test_container_get_nonexistent_typed(self) -> None:
+        """Test getting non-existent service with typing."""
+        container = FlextContainer()
+
+        result = container.get_typed("nonexistent", dict)
+        assert result.is_failure
+        assert result.error is not None
+        assert "not found" in result.error
+
+    def test_container_has_invalid_name(self) -> None:
+        """Test has() with invalid service name."""
+        container = FlextContainer()
+
+        # Should return False for invalid names, not raise exception
+        assert not container.has("")
+        assert not container.has("invalid/name")
+
+    def test_container_create_service_with_custom_name(self) -> None:
+        """Test creating service with custom name."""
+        container = FlextContainer()
+
+        class Service:
             def __init__(self) -> None:
-                self.connected = True
-
-        @dataclasses.dataclass
-        class UserService:
-            db: DatabaseService
-
-        container.register_factory("database", DatabaseService)
-        container.register_factory(
-            "user_service", lambda: UserService(db=DatabaseService())
-        )
-
-        user_service_result = container.get("user_service")
-        # The container successfully resolves dependencies
-        assert user_service_result.is_success
-        user_service = user_service_result.value
-        assert user_service is not None
-        assert isinstance(user_service, UserService)
-        assert user_service.db.connected is True
-
-    def test_container_circular_dependency_detection(self) -> None:
-        """Test circular dependency detection."""
-        container = FlextContainer()
-
-        @dataclasses.dataclass
-        class ServiceA:
-            service_b: ServiceB
-
-        @dataclasses.dataclass
-        class ServiceB:
-            service_a: ServiceA
-
-        container.register_factory("service_a", ServiceA)
-        container.register_factory("service_b", lambda: ServiceB(service_a=ServiceA()))
-
-        result = container.get("service_a")
-        # Note: Current implementation may not detect circular dependencies
-        # This test verifies the container handles the registration
-        assert result.is_success or result.is_failure
-
-    def test_container_lazy_loading(self) -> None:
-        """Test lazy loading of services."""
-        container = FlextContainer()
-
-        class ExpensiveService:
-            def __init__(self) -> None:
-                time.sleep(0.1)  # Simulate expensive initialization
                 self.initialized = True
 
-        container.register_factory("expensive_service", ExpensiveService)
+        result = container.create_service(Service, "custom_name")
+        assert result.is_success
 
-        # Service should be initialized on first access
-        start_time = time.time()
-        service_result = container.get("expensive_service")
-        end_time = time.time()
+        # Service should be registered with custom name
+        assert container.has("custom_name")
+        get_result = container.get("custom_name")
+        assert get_result.is_success
 
-        assert service_result.is_success
-        service = cast("ExpensiveService", service_result.value)
-        assert service.initialized is True
-        assert end_time - start_time >= 0.1  # Should take time to initialize
-
-    def test_container_scoped_services(self) -> None:
-        """Test scoped services."""
+    def test_container_create_service_missing_dependency(self) -> None:
+        """Test creating service with missing dependency."""
         container = FlextContainer()
 
-        class ScopedService:
-            def __init__(self) -> None:
-                self.instance_id = id(self)
+        class Service:
+            def __init__(self, _missing: object) -> None:
+                self.initialized = True
 
-        container.register_factory("scoped_service", ScopedService)
+        result = container.create_service(Service)
+        assert result.is_failure
+        assert result.error is not None
+        assert "Cannot resolve required dependency" in result.error
 
-        # Multiple retrievals should return the same instance
-        service1_result = container.get("scoped_service")
-        service2_result = container.get("scoped_service")
-
-        assert service1_result.is_success
-        assert service2_result.is_success
-        service1 = cast("ScopedService", service1_result.value)
-        service2 = cast("ScopedService", service2_result.value)
-        assert service1.instance_id == service2.instance_id
-
-    def test_container_transient_services(self) -> None:
-        """Test transient services."""
+    def test_container_create_service_with_defaults(self) -> None:
+        """Test creating service with default parameters."""
         container = FlextContainer()
 
-        class TransientService:
-            def __init__(self) -> None:
-                self.instance_id = id(self)
+        class Service:
+            def __init__(self, optional: str = "default") -> None:
+                self.optional = optional
+                self.initialized = True
 
-        container.register_factory("transient_service", TransientService)
+        result = container.create_service(Service)
+        assert result.is_success
+        service = result.value
+        assert service.initialized
+        assert service.optional == "default"
 
-        # Multiple retrievals should return the same instance (singleton behavior)
-        service1_result = container.get("transient_service")
-        service2_result = container.get("transient_service")
-
-        assert service1_result.is_success
-        assert service2_result.is_success
-        service1 = cast("TransientService", service1_result.value)
-        service2 = cast("TransientService", service2_result.value)
-        assert service1.instance_id == service2.instance_id
-
-    def test_container_singleton_services(self) -> None:
-        """Test singleton services."""
+    def test_container_error_handling_in_batch_operations(self) -> None:
+        """Test error handling in batch operations."""
         container = FlextContainer()
 
-        class SingletonService:
-            def __init__(self) -> None:
-                self.instance_id = id(self)
+        # Test batch register with invalid service name first
+        services: dict[str, object] = {
+            "": {"key": "empty_name"},  # Invalid name first
+            "valid": {"key": "value"},
+            "valid2": {"key": "value2"},
+        }
 
-        container.register_factory("singleton_service", SingletonService)
+        result = container.batch_register(services)
+        assert result.is_failure
+        assert result.error is not None
+        assert "empty" in result.error
 
-        # Multiple retrievals should return the same instance
-        service1_result = container.get("singleton_service")
-        service2_result = container.get("singleton_service")
+        # Since batch operation fails fast, no services should be registered
+        # when the first service has an invalid name
+        assert not container.has("")
+        assert not container.has("valid")
+        assert not container.has("valid2")
 
-        assert service1_result.is_success
-        assert service2_result.is_success
-        service1 = cast("SingletonService", service1_result.value)
-        service2 = cast("SingletonService", service2_result.value)
-        assert service1.instance_id == service2.instance_id
-
-    def test_container_thread_safety(self) -> None:
-        """Test container thread safety."""
-        container = FlextContainer()
-
-        class ThreadSafeService:
-            def __init__(self) -> None:
-                self.value = 0
-
-        container.register("thread_safe_service", ThreadSafeService)
-
-        results = []
-
-        def get_service(thread_id: int) -> None:
-            service = container.get("thread_safe_service")
-            results.append((thread_id, service.is_success))
-
-        threads = []
-        for i in range(10):
-            thread = threading.Thread(target=get_service, args=(i,))
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        assert len(results) == 10
-        assert all(success for _, success in results)
-
-    def test_container_performance(self) -> None:
-        """Test container performance."""
-        container = FlextContainer()
-
-        class FastService:
-            def __init__(self) -> None:
-                self.value = "fast"
-
-        container.register("fast_service", FastService)
-
-        start_time = time.time()
-
-        # Perform many operations
-        for _ in range(1000):
-            container.get("fast_service")
-
-        end_time = time.time()
-
-        # Should complete 1000 operations in reasonable time
-        assert end_time - start_time < 1.0
-
-    def test_container_error_handling(self) -> None:
-        """Test container error handling."""
+    def test_container_exception_handling_in_service_creation(self) -> None:
+        """Test exception handling during service creation."""
         container = FlextContainer()
 
         class FailingService:
             def __init__(self) -> None:
-                msg = "Service initialization failed"
-                raise ValueError(msg)
+                error_msg = "Service creation failed"
+                raise ValueError(error_msg)
 
-        container.register_factory("failing_service", FailingService)
+        container.register("other_service", "some_value")
 
-        result = container.get("failing_service")
+        result = container.create_service(FailingService)
         assert result.is_failure
         assert result.error is not None
-        assert "Service initialization failed" in result.error
+        assert "Service creation failed" in result.error
 
-    def test_container_validation(self) -> None:
-        """Test container validation."""
+    def test_container_get_service_with_exception_in_factory(self) -> None:
+        """Test exception handling when factory throws exception."""
         container = FlextContainer()
 
-        class ValidService:
-            def __init__(self) -> None:
-                self.valid = True
+        def failing_factory() -> dict[str, str]:
+            error_msg = "Factory failed"
+            raise RuntimeError(error_msg)
 
-        container.register_factory("valid_service", ValidService)
+        container.register_factory("failing", failing_factory)
 
-        # Test that the service can be retrieved successfully
-        result = container.get("valid_service")
+        result = container.get("failing")
+        assert result.is_failure
+        assert result.error is not None
+        assert "Factory 'failing' failed" in result.error
+
+    def test_container_global_singleton_functionality(self) -> None:
+        """Test global singleton container functionality."""
+        # Test that get_global() returns the same instance
+        container1 = FlextContainer.get_global()
+        container2 = FlextContainer.get_global()
+        assert container1 is container2
+
+        # Test global registration
+        result = FlextContainer.register_global("global_service", "global_value")
         assert result.is_success
 
-    def test_container_statistics(self) -> None:
-        """Test container statistics."""
-        container = FlextContainer()
+        # Should be accessible from global container
+        global_container = FlextContainer.get_global()
+        get_result = global_container.get("global_service")
+        assert get_result.is_success
+        assert get_result.value == "global_value"
 
-        class TestService:
-            pass
-
-        container.register_factory("service1", TestService)
-        container.register_factory("service2", TestService)
-        container.get("service1")
-        container.get("service2")
-
-        # Test that services are registered and can be retrieved
-        service_count = container.get_service_count()
-        assert service_count >= 2
-
-    def test_container_export_import(self) -> None:
-        """Test container export/import."""
-        container = FlextContainer()
-
-        class TestService:
-            def __init__(self) -> None:
-                self.value = "test"
-
-        container.register_factory("test_service", TestService)
-
-        # Test that the service is registered and can be retrieved
-        result = container.get("test_service")
-        assert result.is_success
-        service = cast("TestService", result.value)
-        assert service.value == "test"
-
-    def test_container_cleanup(self) -> None:
-        """Test container cleanup."""
-        container = FlextContainer()
-
-        class TestService:
-            def __init__(self) -> None:
-                self.cleaned_up = False
-
-            def cleanup(self) -> None:
-                self.cleaned_up = True
-
-        container.register_factory("test_service", TestService)
-        result = container.get("test_service")
+    def test_container_configure_global(self) -> None:
+        """Test global container configuration."""
+        # Configure global container
+        config: dict[str, object] = {"max_workers": 16, "timeout_seconds": 120.0}
+        result = FlextContainer.configure_global(config)
         assert result.is_success
 
-        # Test that the service can be cleared
-        clear_result = container.clear()
-        assert clear_result.is_success
+        # Check that global container has the configuration
+        global_container = FlextContainer.get_global()
+        container_config = global_container.get_config()
+        assert container_config["max_workers"] == 16
+        assert container_config["timeout_seconds"] == 120.0
+
+    def test_container_get_global_typed(self) -> None:
+        """Test global typed service retrieval."""
+        # Register service in global container
+        service = {"type": "test"}
+        FlextContainer.register_global("typed_service", service)
+
+        # Get with typing
+        result = FlextContainer.get_global_typed("typed_service", dict)
+        assert result.is_success
+        assert isinstance(result.value, dict)
+        assert result.value["type"] == "test"
+
+    def test_container_module_utilities(self) -> None:
+        """Test module utilities creation."""
+        result = FlextContainer.create_module_utilities("test_module")
+        assert result.is_success
+
+        utilities = result.value
+        assert utilities["module"] == "test_module"
+        assert utilities["logger"] == "flext.test_module"
+        assert "container" in utilities
+
+    def test_container_repr(self) -> None:
+        """Test container string representation."""
+        container = FlextContainer()
+        container.register("test", "value")
+
+        repr_str = repr(container)
+        assert "FlextContainer" in repr_str
+        assert "services=1" in repr_str
+        assert "factories=0" in repr_str
+        assert "total_registered=1" in repr_str
+
+    def test_container_register_factory_duplicate_name(self) -> None:
+        """Test registering factory with duplicate name fails."""
+        container = FlextContainer()
+
+        def factory1() -> dict[str, str]:
+            return {"factory": "1"}
+
+        def factory2() -> dict[str, str]:
+            return {"factory": "2"}
+
+        # Register first factory
+        result1 = container.register_factory("test_factory", factory1)
+        assert result1.is_success
+
+        # Try to register second factory with same name
+        result2 = container.register_factory("test_factory", factory2)
+        assert result2.is_failure
+        assert result2.error is not None
+        assert "already registered" in result2.error

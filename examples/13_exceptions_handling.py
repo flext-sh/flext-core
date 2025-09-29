@@ -34,8 +34,6 @@ from flext_core import (
     FlextService,
 )
 
-# ========== EXCEPTION SERVICE ==========
-
 
 class ComprehensiveExceptionService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextExceptions patterns and methods."""

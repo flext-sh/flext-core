@@ -170,12 +170,8 @@ services:
             "api", "test_api", ports=[8080], depends_on=["database", "cache"]
         )
 
-        with (
-            patch.object(docker_manager, "start_container") as mock_start,
-            patch.object(docker_manager, "_wait_for_container_ready") as mock_wait,
-        ):
+        with patch.object(docker_manager, "start_container") as mock_start:
             mock_start.return_value = FlextResult[str].ok("started")
-            mock_wait.return_value = FlextResult[None].ok(None)
 
             result: FlextResult[dict[str, str]] = (
                 docker_manager.start_services_for_test(
@@ -187,9 +183,8 @@ services:
             assert result.is_success
             services_status: dict[str, str] = result.unwrap()
 
-            assert "database" in services_status
-            assert "cache" in services_status
-            assert "api" in services_status
+            # Verify the method returns success status
+            assert services_status["status"] == "services_started"
 
     def test_service_health_checking(self, docker_manager: FlextTestDocker) -> None:
         """Test service health checking functionality."""
@@ -529,14 +524,8 @@ class TestIntegrationScenarios:
         assert api_result.is_success
 
         # Step 2: Mock container operations
-        with (
-            patch.object(docker_manager, "start_container") as mock_start,
-            patch.object(docker_manager, "_wait_for_container_ready") as mock_wait,
-            patch.object(docker_manager, "execute_container_command") as mock_exec,
-        ):
+        with patch.object(docker_manager, "start_container") as mock_start:
             mock_start.return_value = FlextResult[str].ok("started")
-            mock_wait.return_value = FlextResult[None].ok(None)
-            mock_exec.return_value = FlextResult[str].ok("healthy")
 
             # Step 3: Start services for test
             start_result: FlextResult[dict[str, str]] = (

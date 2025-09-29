@@ -222,13 +222,22 @@ class FlextModels:
         round_trip: bool
         warnings: bool
         mode: str
-        context: dict[str, object] | None
+        context: FlextTypes.Core.Dict | None
 
     class Pagination(BaseModel):
         """Pagination model for query results."""
 
-        page: int = Field(default=1, ge=1, description="Page number (1-based)")
-        size: int = Field(default=20, ge=1, le=1000, description="Page size")
+        page: int = Field(
+            default=FlextConstants.Pagination.DEFAULT_PAGE_NUMBER,
+            ge=1,
+            description="Page number (1-based)",
+        )
+        size: int = Field(
+            default=FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
+            ge=1,
+            le=1000,
+            description="Page size",
+        )
 
         @property
         def offset(self) -> int:
@@ -343,7 +352,7 @@ class FlextModels:
 
         @override
         def __hash__(self) -> int:
-            """Hash based on values for use in sets/dict[str, object]s."""
+            """Hash based on values for use in sets/FlextTypes.Core.Dicts."""
             return hash(tuple(self.model_dump().items()))
 
         @classmethod
@@ -421,7 +430,7 @@ class FlextModels:
         """Specification pattern for complex queries."""
 
         criteria: FlextTypes.Core.Dict = Field(default_factory=dict)
-        includes: list[str] = Field(default_factory=list)
+        includes: FlextTypes.Core.StringList = Field(default_factory=list)
         order_by: Annotated[list[tuple[str, str]], Field(default_factory=list)]
         skip: int = Field(
             default=FlextConstants.Performance.DEFAULT_SKIP,
@@ -437,7 +446,7 @@ class FlextModels:
         """Saga pattern for distributed transactions."""
 
         saga_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        steps: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        steps: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         current_step: int = Field(
             default=FlextConstants.Performance.DEFAULT_CURRENT_STEP,
             ge=FlextConstants.Performance.MIN_CURRENT_STEP,
@@ -454,7 +463,7 @@ class FlextModels:
         created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         modified_by: str | None = None
         modified_at: datetime | None = None
-        tags: list[str] = Field(default_factory=list)
+        tags: FlextTypes.Core.StringList = Field(default_factory=list)
         attributes: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     class ErrorDetail(FrozenStrictModel):
@@ -470,7 +479,7 @@ class FlextModels:
 
         is_valid: bool
         errors: Annotated[list[FlextModels.ErrorDetail], Field(default_factory=list)]
-        warnings: list[str] = Field(default_factory=list)
+        warnings: FlextTypes.Core.StringList = Field(default_factory=list)
 
     class Configuration(FrozenStrictModel):
         """Base configuration model - immutable."""
@@ -513,7 +522,7 @@ class FlextModels:
 
         name: str
         description: str | None = None
-        rules: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        rules: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         enabled: bool = True
         priority: int = Field(
             default=FlextConstants.Performance.DEFAULT_PRIORITY,
@@ -544,8 +553,8 @@ class FlextModels:
         """Enhanced message bus model with config-driven defaults."""
 
         bus_id: str = Field(default_factory=lambda: f"bus_{uuid.uuid4().hex[:8]}")
-        handlers: dict[str, list[str]] = Field(default_factory=dict)
-        middlewares: list[str] = Field(default_factory=list)
+        handlers: dict[str, FlextTypes.Core.StringList] = Field(default_factory=dict)
+        middlewares: FlextTypes.Core.StringList = Field(default_factory=list)
         timeout_seconds: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
@@ -576,7 +585,7 @@ class FlextModels:
         value: str
         type: Literal["bearer", "api_key", "jwt"] = "bearer"
         expires_at: datetime | None = None
-        scopes: list[str] = Field(default_factory=list)
+        scopes: FlextTypes.Core.StringList = Field(default_factory=list)
 
     class Permission(FrozenStrictModel):
         """Immutable permission model."""
@@ -599,7 +608,7 @@ class FlextModels:
 
         username: str
         email: str
-        roles: list[str] = Field(default_factory=list)
+        roles: FlextTypes.Core.StringList = Field(default_factory=list)
         is_active: bool = True
         last_login: datetime | None = None
 
@@ -629,7 +638,7 @@ class FlextModels:
         """Queue model for message processing."""
 
         name: str
-        messages: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        messages: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         max_size: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().cache_max_size
         )
@@ -714,7 +723,7 @@ class FlextModels:
         """Pipeline model."""
 
         name: str
-        stages: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        stages: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         current_stage: int = 0
         status: Literal["idle", "running", "completed", "failed"] = "idle"
 
@@ -723,7 +732,7 @@ class FlextModels:
 
         workflow_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         name: str
-        steps: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        steps: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         current_step: int = 0
         context: FlextTypes.Core.Dict = Field(default_factory=dict)
 
@@ -746,7 +755,7 @@ class FlextModels:
         status: Literal["pending", "processing", "completed", "failed"] = "pending"
         records_total: int = 0
         records_processed: int = 0
-        errors: list[str] = Field(default_factory=list)
+        errors: FlextTypes.Core.StringList = Field(default_factory=list)
 
     class Export(ArbitraryTypesModel):
         """Export model."""
@@ -1244,7 +1253,7 @@ class FlextModels:
         name: str
         factory: Callable[[], object]
         singleton: bool = False
-        dependencies: list[str] = Field(default_factory=list)
+        dependencies: FlextTypes.Core.StringList = Field(default_factory=list)
 
         @field_validator("factory")
         @classmethod
@@ -1317,7 +1326,7 @@ class FlextModels:
 
         @field_validator("context")
         @classmethod
-        def validate_context(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_context(cls, v: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Validate context has required fields."""
             if "correlation_id" not in v:
                 v["correlation_id"] = str(uuid.uuid4())
@@ -1340,7 +1349,7 @@ class FlextModels:
 
         name: str
         handler: object
-        event_types: list[str] = Field(default_factory=list)
+        event_types: FlextTypes.Core.StringList = Field(default_factory=list)
         priority: int = Field(default=0, ge=0, le=100)
 
         @field_validator("handler")
@@ -1355,7 +1364,9 @@ class FlextModels:
     class BatchProcessingConfig(StrictArbitraryTypesModel):
         """Enhanced batch processing configuration."""
 
-        batch_size: int = Field(default=100)
+        batch_size: int = Field(
+            default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+        )
         max_workers: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_workers
         )
@@ -1414,7 +1425,7 @@ class FlextModels:
         max_retries: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
-        fallback_handlers: list[str] = Field(default_factory=list)
+        fallback_handlers: FlextTypes.Core.StringList = Field(default_factory=list)
 
         @field_validator("handler_name")
         @classmethod
@@ -1429,7 +1440,7 @@ class FlextModels:
         """Pipeline configuration with advanced validation."""
 
         name: str = Field(min_length=FlextConstants.Performance.MIN_NAME_LENGTH)
-        steps: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        steps: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         parallel_execution: bool = False
         stop_on_error: bool = True
         max_parallel: int = Field(gt=0, default=4)
@@ -1459,7 +1470,7 @@ class FlextModels:
         operation_id: str
         status: Literal["success", "failure", "partial"]
         data: object = None
-        errors: list[str] = Field(default_factory=list)
+        errors: FlextTypes.Core.StringList = Field(default_factory=list)
         execution_time_ms: int = 0
 
         @field_validator("execution_time_ms")
@@ -1518,6 +1529,7 @@ class FlextModels:
                 raise ValueError(msg)
             return v
 
+    # ISSUE: Duplicates loggings.py LoggerInitializationModel - should use that instead
     class LoggerInitializationModel(ArbitraryTypesModel):
         """DEPRECATED: Moved to FlextLoggings.LoggerInitializationModel.
 
@@ -1539,6 +1551,7 @@ class FlextModels:
         Use FlextLogger internal models instead.
         """
 
+    # ISSUE: Duplicates loggings.py LoggerContextBindingModel - should use that instead
     class LoggerContextBindingModel(ArbitraryTypesModel):
         """DEPRECATED: Moved to FlextLoggings.LoggerContextBindingModel.
 
@@ -1546,6 +1559,7 @@ class FlextModels:
         Use FlextLogger internal models instead.
         """
 
+    # ISSUE: Duplicates loggings.py LoggerRequestContextModel - should use that instead
     class LoggerRequestContextModel(ArbitraryTypesModel):
         """DEPRECATED: Moved to FlextLoggings.LoggerRequestContextModel.
 
@@ -1553,6 +1567,7 @@ class FlextModels:
         Use FlextLogger internal models instead.
         """
 
+    # ISSUE: Duplicates loggings.py LoggerPermanentContextModel - should use that instead
     class LoggerPermanentContextModel(ArbitraryTypesModel):
         """DEPRECATED: Moved to FlextLoggings.LoggerPermanentContextModel.
 
@@ -1604,7 +1619,7 @@ class FlextModels:
 
         @field_validator("context")
         @classmethod
-        def validate_context(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_context(cls, v: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Ensure context has required fields."""
             if "trace_id" not in v:
                 v["trace_id"] = str(uuid.uuid4())
@@ -1626,7 +1641,7 @@ class FlextModels:
         """Domain service validation request."""
 
         entity: FlextTypes.Core.Dict
-        rules: list[str] = Field(default_factory=list)
+        rules: FlextTypes.Core.StringList = Field(default_factory=list)
         validate_business_rules: bool = True
         validate_integrity: bool = True
         validate_permissions: bool = False
@@ -1649,10 +1664,12 @@ class FlextModels:
         """Domain service batch request."""
 
         service_name: str
-        operations: Annotated[list[dict[str, object]], Field(default_factory=list)]
+        operations: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         parallel_execution: bool = False
         stop_on_error: bool = True
-        batch_size: int = Field(default=100)
+        batch_size: int = Field(
+            default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+        )
         timeout_per_operation: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
@@ -1674,12 +1691,12 @@ class FlextModels:
         """Domain service metrics request."""
 
         service_name: str
-        metric_types: list[str] = Field(
+        metric_types: FlextTypes.Core.StringList = Field(
             default_factory=lambda: ["performance", "errors", "throughput"]
         )
         time_range_seconds: int = FlextConstants.Performance.DEFAULT_TIME_RANGE_SECONDS
         aggregation: Literal["sum", "avg", "min", "max", "count"] = "avg"
-        group_by: list[str] = Field(default_factory=list)
+        group_by: FlextTypes.Core.StringList = Field(default_factory=list)
         filters: FlextTypes.Core.Dict = Field(default_factory=dict)
 
         @field_validator("metric_types")
@@ -1838,7 +1855,9 @@ class FlextModels:
         half_open_max_calls: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
-        sliding_window_size: int = Field(default=100)
+        sliding_window_size: int = Field(
+            default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+        )
         minimum_throughput: int = Field(default=10)
         slow_call_duration_seconds: float = Field(
             default=FlextConstants.Performance.DEFAULT_DELAY_SECONDS, gt=0
@@ -1933,7 +1952,7 @@ class FlextModels:
 
         @field_validator("transitions")
         @classmethod
-        def validate_transitions(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_transitions(cls, v: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Validate state transitions."""
             if not v:
                 msg = "Transitions cannot be empty"
@@ -1942,7 +1961,9 @@ class FlextModels:
             # Validate transition structure
             for state, transitions in v.items():
                 if not isinstance(transitions, dict):
-                    msg = f"Transitions for state {state} must be a dict[str, object]"
+                    msg = (
+                        f"Transitions for state {state} must be a FlextTypes.Core.Dict"
+                    )
                     raise TypeError(msg)
                 for event, next_state in cast(
                     "dict[object, object]", transitions
@@ -1983,7 +2004,9 @@ class FlextModels:
 
         @field_validator("dimensions")
         @classmethod
-        def validate_metrics_collector(cls, v: dict[str, object]) -> dict[str, object]:
+        def validate_metrics_collector(
+            cls, v: FlextTypes.Core.Dict
+        ) -> FlextTypes.Core.Dict:
             """Validate dimensions."""
             max_dimensions = FlextConstants.Performance.MAX_DIMENSIONS
             if len(v) > max_dimensions:
@@ -2141,9 +2164,9 @@ class FlextModels:
 
         @classmethod
         def _get_serialization_context(
-            cls, context: dict[str, object] | None
-        ) -> dict[str, object]:
-            """Extract serialization context from context dict[str, object]."""
+            cls, context: FlextTypes.Core.Dict | None
+        ) -> FlextTypes.Core.Dict:
+            """Extract serialization context from context FlextTypes.Core.Dict."""
             if not context:
                 return {
                     "include_sensitive": False,
@@ -2184,7 +2207,7 @@ class FlextModels:
             """Context-aware model dump."""
             if context and isinstance(context, dict):
                 ser_context = self._get_serialization_context(
-                    cast("dict[str, object]", context)
+                    cast("FlextTypes.Core.Dict", context)
                 )
 
                 # Apply context settings
@@ -2233,7 +2256,7 @@ class FlextModels:
                 warnings=warnings,
                 serialize_as_any=serialize_as_any,
                 mode=mode,
-                context=cast("dict[str, object] | None", context),
+                context=cast("FlextTypes.Core.Dict | None", context),
                 fallback=fallback,  # Pass through for parent compatibility
             )
 
@@ -2295,17 +2318,17 @@ class FlextModels:
             *,
             compact: bool = False,
             parallel: bool = False,
-        ) -> list[dict[str, object]] | str:
+        ) -> list[FlextTypes.Core.Dict] | str:
             """Serialize a batch of models efficiently.
 
             Args:
                 models: List of Pydantic models to serialize
-                output_format: Output format ('dict[str, object]' or 'json')
+                output_format: Output format ('FlextTypes.Core.Dict' or 'json')
                 compact: Use compact serialization
                 parallel: Use parallel processing for large batches
 
             Returns:
-                List of dict[str, object]s or JSON array string
+                List of FlextTypes.Core.Dicts or JSON array string
 
             """
             if not models:
@@ -2331,7 +2354,7 @@ class FlextModels:
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     if output_format == "dict":
 
-                        def serialize_to_dict(m: BaseModel) -> dict[str, object]:
+                        def serialize_to_dict(m: BaseModel) -> FlextTypes.Core.Dict:
                             return m.model_dump(
                                 exclude_unset=cast(
                                     "bool", dump_kwargs.get("exclude_unset", False)
@@ -2419,7 +2442,7 @@ class FlextModels:
                 mode: Schema mode
 
             Returns:
-                Optimized JSON schema dict[str, object]
+                Optimized JSON schema FlextTypes.Core.Dict
 
             """
             schema = model.model_json_schema(
@@ -2495,7 +2518,7 @@ class FlextModels:
         validation_type: str = Field(
             default="general", description="Type of validation to perform"
         )
-        context: dict[str, object] = Field(
+        context: FlextTypes.Core.Dict = Field(
             default_factory=dict, description="Validation context"
         )
 
@@ -2538,7 +2561,7 @@ class FlextModels:
             @classmethod
             def create_bus_config(
                 cls,
-                bus_config: dict[str, object] | None = None,
+                bus_config: FlextTypes.Core.Dict | None = None,
                 *,
                 enable_middleware: bool = True,
                 enable_metrics: bool | None = None,
@@ -2552,7 +2575,7 @@ class FlextModels:
                 if enable_metrics is None:
                     enable_metrics = FlextConfig.get_global_instance().enable_metrics
 
-                config_data: dict[str, object] = {
+                config_data: FlextTypes.Core.Dict = {
                     "enable_middleware": enable_middleware,
                     "enable_metrics": enable_metrics,
                     "enable_caching": enable_caching,
@@ -2583,7 +2606,7 @@ class FlextModels:
             max_command_retries: int = Field(
                 default=0, description="Maximum retry attempts"
             )
-            metadata: dict[str, object] = Field(
+            metadata: FlextTypes.Core.Dict = Field(
                 default_factory=dict, description="Handler metadata"
             )
 
@@ -2594,7 +2617,7 @@ class FlextModels:
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
-                handler_config: dict[str, object] | None = None,
+                handler_config: FlextTypes.Core.Dict | None = None,
                 command_timeout: int = 0,
                 max_command_retries: int = 0,
             ) -> Self:
@@ -2604,7 +2627,7 @@ class FlextModels:
                     if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
                     else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
                 )
-                config_data: dict[str, object] = {
+                config_data: FlextTypes.Core.Dict = {
                     "handler_id": default_id
                     or f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
                     "handler_name": default_name or f"{handler_type.title()} Handler",
@@ -2731,6 +2754,28 @@ class FlextModels:
                 )
 
             return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_service_name(name: str) -> FlextResult[str]:
+            """Validate service name format for container registration.
+
+            Args:
+                name: Service name to validate
+
+            Returns:
+                FlextResult[str]: Success with normalized name or failure with error message
+
+            """
+            # Type annotation guarantees name is str, so no isinstance check needed
+            normalized = name.strip().lower()
+            if not normalized:
+                return FlextResult[str].fail("Service name cannot be empty")
+
+            # Additional validation for special characters
+            if any(char in normalized for char in [".", "/", "\\"]):
+                return FlextResult[str].fail("Service name contains invalid characters")
+
+            return FlextResult[str].ok(normalized)
 
         @staticmethod
         def validate_query(query: object) -> FlextResult[None]:
@@ -3127,7 +3172,7 @@ class FlextModels:
     class Query(BaseModel):
         """Query model for CQRS query operations."""
 
-        filters: dict[str, object] = Field(
+        filters: FlextTypes.Core.Dict = Field(
             default_factory=dict, description="Query filters"
         )
         pagination: FlextModels.Pagination = Field(
@@ -3168,7 +3213,7 @@ class FlextModels:
 
         @classmethod
         def validate_query(
-            cls, query_payload: dict[str, object]
+            cls, query_payload: FlextTypes.Core.Dict
         ) -> FlextResult[FlextModels.Query]:
             """Validate and create Query from payload."""
             try:

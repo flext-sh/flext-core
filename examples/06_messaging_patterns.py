@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import warnings
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
+from typing import cast
 from uuid import uuid4
 
 from flext_core import (
@@ -36,7 +36,7 @@ from flext_core import (
     FlextTypes,
 )
 
-# ========== MESSAGING SERVICE ==========
+from .example_scenarios import ExampleScenarios
 
 
 class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
@@ -50,6 +50,12 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         self._config = FlextConfig.get_global_instance()
         self._event_store: list[FlextModels.DomainEvent] = []
         self._message_queue: list[FlextModels.Payload[FlextTypes.Core.Dict]] = []
+        self._scenarios = ExampleScenarios
+        self._metadata = self._scenarios.metadata(tags=["messaging", "demo"])
+        self._user = self._scenarios.user()
+        self._users = self._scenarios.users()
+        self._order = self._scenarios.realistic_data()["order"]
+        self._api_payload = self._scenarios.payload()
 
     def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute method required by FlextService."""
@@ -74,50 +80,43 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show basic payload creation and usage."""
         print("\n=== Basic Payload Patterns ===")
 
-        # Simple payload with string data wrapped in dict
         greeting_data: FlextTypes.Core.Dict = {
             "message": "Hello, FLEXT!",
             "source_service": "greeting_service",
             "message_type": "greeting",
-            "message_id": str(uuid4()),
+            "user": self._user,
         }
         greeting_payload = FlextModels.Payload[FlextTypes.Core.Dict](
             data=greeting_data,
             metadata={
+                **self._metadata,
                 "timestamp": datetime.now(UTC).isoformat(),
+                "correlation_id": self._api_payload.get("request_id", str(uuid4())),
             },
         )
-        print(f"✅ Greeting: {greeting_payload.data.get('message')}")
-        print(f"Source: {greeting_payload.data.get('source_service')}")
-        print(f"Type: {greeting_payload.data.get('message_type')}")
-        print(f"ID: {greeting_payload.data.get('message_id')}")
+        data_dict = greeting_payload.data
+        print(f"✅ Greeting: {data_dict.get('message')}")
+        print(f"Source: {data_dict.get('source_service')}")
+        print(f"Type: {data_dict.get('message_type')}")
+        user_data = cast("dict[str, object]", data_dict.get("user", {}))
+        print(f"User email: {user_data.get('email')}")
         print(f"Timestamp: {greeting_payload.metadata.get('timestamp')}")
 
-        # Structured data payload
-        user_data: FlextTypes.Core.Dict = {
-            "id": str(uuid4()),
-            "username": "john_doe",
-            "email": "john@example.com",
-            "roles": ["user", "admin"],
-        }
-
         user_payload = FlextModels.Payload[FlextTypes.Core.Dict](
-            data=user_data,
+            data=self._user,
             metadata={
+                **self._metadata,
                 "source_service": "user_service",
                 "message_type": "user_created",
                 "version": "1.0",
                 "correlation_id": str(uuid4()),
-                "priority": 5,
             },
         )
         print("\n✅ User payload created")
-        user_data_dict = user_payload.data
-        print(f"User ID: {user_data_dict['id']}")
-        print(f"Username: {user_data_dict['username']}")
+        print(f"User ID: {user_payload.data['id']}")
+        print(f"Username: {user_payload.data.get('name')}")
         print(f"Metadata: {user_payload.metadata}")
 
-        # Add to message queue
         self._message_queue.append(user_payload)
 
     # ========== COMMAND PATTERNS ==========
@@ -126,25 +125,24 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show command message patterns for CQRS."""
         print("\n=== Command Patterns ===")
 
-        # Create order command
+        order_id = self._order["order_id"]
+        total = float(self._order["total"])
+
         create_order_command = FlextModels.Payload[FlextTypes.Core.Dict](
             data={
                 "command": "CreateOrder",
-                "order_id": str(uuid4()),
-                "customer_id": "CUST-123",
-                "items": [
-                    {"sku": "PROD-A", "quantity": 2, "price": 29.99},
-                    {"sku": "PROD-B", "quantity": 1, "price": 49.99},
-                ],
-                "total": 109.97,
+                "order_id": order_id,
+                "customer_id": self._order["customer_id"],
+                "items": self._order["items"],
+                "total": total,
             },
             metadata={
+                **self._metadata,
                 "source_service": "web_api",
                 "message_type": "command",
                 "command_type": "CreateOrder",
                 "correlation_id": str(uuid4()),
-                "user_id": "user_456",
-                "timestamp": datetime.now(UTC).isoformat(),
+                "user_id": self._user["id"],
             },
         )
         command_data = create_order_command.data
@@ -152,7 +150,6 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         print(f"Order ID: {command_data['order_id']}")
         print(f"Total: ${command_data['total']}")
 
-        # Process payment command
         process_payment_command = FlextModels.Payload[FlextTypes.Core.Dict](
             data={
                 "command": "ProcessPayment",
@@ -162,6 +159,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
                 "card_token": "tok_xxxxx",
             },
             metadata={
+                **self._metadata,
                 "source_service": "order_service",
                 "message_type": "command",
                 "command_type": "ProcessPayment",
@@ -181,25 +179,27 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show query message patterns for CQRS."""
         print("\n=== Query Patterns ===")
 
-        # Query for user orders
+        user_id = self._user["id"]
+
         get_orders_query = FlextModels.Payload[FlextTypes.Core.Dict](
             data={
                 "query": "GetUserOrders",
-                "user_id": "user_456",
+                "user_id": user_id,
                 "filters": {
                     "status": ["pending", "completed"],
-                    "date_from": "2025-01-01",
-                    "date_to": "2025-12-31",
+                    "date_from": datetime.now(UTC).date().replace(day=1).isoformat(),
+                    "date_to": datetime.now(UTC).date().isoformat(),
                 },
                 "pagination": FlextModels.Pagination(page=1, size=20).model_dump(),
             },
             metadata={
+                **self._metadata,
                 "source_service": "web_api",
                 "message_type": "query",
                 "query_type": "GetUserOrders",
                 "correlation_id": str(uuid4()),
-                "cache_key": "user_456_orders_2025",
-                "cache_ttl": 300,  # 5 minutes
+                "cache_key": f"{user_id}_orders",
+                "cache_ttl": 300,
             },
         )
         query_data = get_orders_query.data
@@ -207,20 +207,20 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         print(f"User: {query_data['user_id']}")
         print(f"Filters: {query_data['filters']}")
 
-        # Aggregation query
         sales_report_query = FlextModels.Payload[FlextTypes.Core.Dict](
             data={
                 "query": "GenerateSalesReport",
                 "period": "monthly",
-                "year": 2025,
+                "year": datetime.now(UTC).year,
                 "metrics": ["total_sales", "order_count", "avg_order_value"],
                 "group_by": ["product_category", "region"],
             },
             metadata={
+                **self._metadata,
                 "source_service": "analytics_service",
                 "message_type": "query",
                 "query_type": "AggregationQuery",
-                "priority": 3,  # Lower priority
+                "priority": 3,
                 "timeout_seconds": 30,
             },
         )
@@ -236,14 +236,16 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show domain event patterns for event sourcing."""
         print("\n=== Domain Event Patterns ===")
 
-        # Order created event
+        aggregate_id = self._order["order_id"]
+        order_total = str(self._order["total"])
+
         order_created_event = FlextModels.DomainEvent(
-            aggregate_id=str(uuid4()),
+            aggregate_id=aggregate_id,
             event_type="OrderCreated",
             data={
-                "order_id": str(uuid4()),
-                "customer_id": "CUST-123",
-                "total": str(Decimal("109.97")),  # Convert Decimal to string for JSON
+                "order_id": aggregate_id,
+                "customer_id": self._order["customer_id"],
+                "total": order_total,
                 "status": "pending",
                 "created_at": datetime.now(UTC).isoformat(),
             },
@@ -255,15 +257,13 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         print(f"✅ Event: {order_created_event.event_type}")
         print(f"Aggregate: {order_created_event.aggregate_id}")
         print(f"Sequence: {order_created_event.metadata.get('sequence_number')}")
-        print(f"Version: {order_created_event.metadata.get('aggregate_version')}")
 
-        # Payment processed event
         payment_processed_event = FlextModels.DomainEvent(
-            aggregate_id=order_created_event.aggregate_id,
+            aggregate_id=aggregate_id,
             event_type="PaymentProcessed",
             data={
                 "payment_id": str(uuid4()),
-                "amount": str(Decimal("109.97")),  # Convert Decimal to string for JSON
+                "amount": order_total,
                 "method": "credit_card",
                 "status": "success",
                 "processed_at": datetime.now(UTC).isoformat(),
@@ -276,14 +276,13 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         print(f"\n✅ Payment event: {payment_processed_event.event_type}")
         print(f"Payment ID: {payment_processed_event.data['payment_id']}")
 
-        # Order shipped event
         order_shipped_event = FlextModels.DomainEvent(
-            aggregate_id=order_created_event.aggregate_id,
+            aggregate_id=aggregate_id,
             event_type="OrderShipped",
             data={
                 "shipment_id": str(uuid4()),
                 "carrier": "FedEx",
-                "tracking_number": "1234567890",
+                "tracking_number": self._api_payload.get("request_id", "tracking-123"),
                 "estimated_delivery": (
                     datetime.now(UTC) + timedelta(days=3)
                 ).isoformat(),
@@ -296,7 +295,6 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         print(f"\n✅ Shipment event: {order_shipped_event.event_type}")
         print(f"Tracking: {order_shipped_event.data['tracking_number']}")
 
-        # Store events
         self._event_store.extend([
             order_created_event,
             payment_processed_event,
@@ -309,14 +307,17 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show event aggregation and projection patterns."""
         print("\n=== Event Aggregation ===")
 
-        # Create multiple events for the same aggregate
-        user_aggregate_id = str(uuid4())
+        user_record = self._users[0]
+        user_aggregate_id = str(user_record["id"])
 
         events = [
             FlextModels.DomainEvent(
                 aggregate_id=user_aggregate_id,
                 event_type="UserRegistered",
-                data={"username": "jane_doe", "email": "jane@example.com"},
+                data={
+                    "username": user_record["name"],
+                    "email": user_record["email"],
+                },
                 metadata={
                     "sequence_number": 1,
                     "aggregate_version": 1,
@@ -334,7 +335,10 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             FlextModels.DomainEvent(
                 aggregate_id=user_aggregate_id,
                 event_type="ProfileUpdated",
-                data={"name": "Jane Smith", "bio": "Software Engineer"},
+                data={
+                    "name": user_record["name"],
+                    "bio": "Scenario generated profile",
+                },
                 metadata={
                     "sequence_number": 3,
                     "aggregate_version": 3,
@@ -351,7 +355,6 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             ),
         ]
 
-        # Build aggregate state from events
         user_state: FlextTypes.Core.Dict = {}
         for event in events:
             version = event.metadata.get("aggregate_version", 0)
@@ -368,13 +371,13 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
                 user_state.update(event.data)
             elif event.event_type == "RoleGranted":
                 roles_raw = user_state.get("roles", [])
-                # Use Python 3.13+ type narrowing with explicit type annotation
-                roles: list[str] = (
-                    roles_raw
-                    if isinstance(roles_raw, list)
-                    and all(isinstance(r, str) for r in roles_raw)
-                    else []
-                )
+                roles: list[str]
+                if isinstance(roles_raw, list) and all(
+                    isinstance(role, str) for role in roles_raw
+                ):
+                    roles = list(roles_raw)
+                else:
+                    roles = []
                 role = event.data["role"]
                 if isinstance(role, str):
                     roles.append(role)
@@ -394,11 +397,15 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show message routing and handling patterns."""
         print("\n=== Message Routing ===")
 
-        # Create messages with routing information
         messages = [
             FlextModels.Payload[FlextTypes.Core.Dict](
-                data={"action": "send_email", "to": "user@example.com"},
+                data={
+                    "action": "send_email",
+                    "to": self._user["email"],
+                    "template": "welcome",
+                },
                 metadata={
+                    **self._metadata,
                     "source_service": "order_service",
                     "message_type": "notification",
                     "target_service": "email_service",
@@ -407,8 +414,12 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
                 },
             ),
             FlextModels.Payload[FlextTypes.Core.Dict](
-                data={"action": "update_inventory", "sku": "PROD-A", "quantity": -2},
+                data={
+                    "action": "update_inventory",
+                    "items": self._order["items"],
+                },
                 metadata={
+                    **self._metadata,
                     "source_service": "order_service",
                     "message_type": "command",
                     "target_service": "inventory_service",
@@ -420,9 +431,10 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
                 data={
                     "action": "calculate_shipping",
                     "weight": 2.5,
-                    "destination": "NY",
+                    "destination": self._metadata.get("component", "shipping"),
                 },
                 metadata={
+                    **self._metadata,
                     "source_service": "order_service",
                     "message_type": "query",
                     "target_service": "shipping_service",
@@ -432,14 +444,11 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             ),
         ]
 
-        # Route messages based on metadata
         routes: dict[str, list[FlextModels.Payload[FlextTypes.Core.Dict]]] = {}
         for msg in messages:
             target = msg.metadata.get("target_service", "unknown")
             if isinstance(target, str):
-                if target not in routes:
-                    routes[target] = []
-                routes[target].append(msg)
+                routes.setdefault(target, []).append(msg)
 
         print("✅ Message routing:")
         for service, service_messages in routes.items():
@@ -459,22 +468,23 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show request/response correlation patterns."""
         print("\n=== Correlation Tracking ===")
 
-        # Original request
         correlation_id = str(uuid4())
+        order_id = self._order["order_id"]
 
         request_payload = FlextModels.Payload[FlextTypes.Core.Dict](
             data={
                 "operation": "process_order",
-                "order_id": str(uuid4()),
-                "amount": 150.00,
-                "message_id": str(uuid4()),  # Add message_id to data
+                "order_id": order_id,
+                "amount": float(self._order["total"]),
+                "message_id": str(uuid4()),
             },
             metadata={
+                **self._metadata,
                 "source_service": "api_gateway",
                 "message_type": "request",
                 "correlation_id": correlation_id,
                 "session_id": str(uuid4()),
-                "user_id": "user_789",
+                "user_id": self._user["id"],
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
@@ -483,64 +493,54 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         request_data = request_payload.data
         print(f"Operation: {request_data['operation']}")
 
-        # Chain of internal messages with same correlation
         internal_messages: list[FlextModels.Payload[FlextTypes.Core.Dict]] = []
 
-        # Validation message
         validation_msg = FlextModels.Payload[FlextTypes.Core.Dict](
-            data={"validate": "order", "order_id": request_data["order_id"]},
+            data={"validate": "order", "order_id": order_id},
             metadata={
+                **self._metadata,
                 "source_service": "order_service",
                 "message_type": "internal",
                 "correlation_id": correlation_id,
-                "parent_message_id": request_data.get("message_id", ""),
+                "parent_message_id": request_data["message_id"],
                 "step": "validation",
             },
         )
         internal_messages.append(validation_msg)
 
-        # Payment message
         payment_msg = FlextModels.Payload[FlextTypes.Core.Dict](
             data={"process": "payment", "amount": request_data["amount"]},
             metadata={
+                **self._metadata,
                 "source_service": "order_service",
                 "message_type": "internal",
                 "correlation_id": correlation_id,
-                "parent_message_id": request_data.get("message_id", ""),
+                "parent_message_id": request_data["message_id"],
                 "step": "payment",
             },
         )
         internal_messages.append(payment_msg)
 
-        # Response message
         response_payload = FlextModels.Payload[FlextTypes.Core.Dict](
             data={
                 "status": "success",
-                "order_id": request_data["order_id"],
+                "order_id": order_id,
                 "transaction_id": str(uuid4()),
-                "message": "Order processed successfully",
             },
             metadata={
+                **self._metadata,
                 "source_service": "order_service",
                 "message_type": "response",
                 "correlation_id": correlation_id,
-                "request_message_id": request_data.get("message_id", ""),
-                "duration_ms": 234,
+                "duration_ms": 120,
             },
         )
 
-        print("\n✅ Response received")
-        print(f"Status: {response_payload.data['status']}")
-        print(
-            f"Same correlation: {response_payload.metadata['correlation_id'] == correlation_id}"
-        )
-        print(f"Processing time: {response_payload.metadata['duration_ms']}ms")
+        for msg in [request_payload, *internal_messages, response_payload]:
+            self._message_queue.append(msg)
 
-        self._message_queue.extend([
-            request_payload,
-            *internal_messages,
-            response_payload,
-        ])
+        print("\n✅ Response sent")
+        print(f"Status: {response_payload.data['status']}")
 
     # ========== EVENT REPLAY ==========
 
@@ -548,8 +548,15 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
         """Show event replay for rebuilding state."""
         print("\n=== Event Replay ===")
 
-        # Events representing account transactions
         account_id = str(uuid4())
+        order_total = float(self._order["total"])
+        first_item = self._order["items"][0]
+        second_item = (
+            self._order["items"][0]
+            if len(self._order["items"]) == 1
+            else self._order["items"][1]
+        )
+
         events = [
             FlextModels.DomainEvent(
                 aggregate_id=account_id,
@@ -563,7 +570,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             FlextModels.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyDeposited",
-                data={"amount": 1000, "source": "direct_deposit"},
+                data={"amount": order_total, "source": "order_payment"},
                 metadata={
                     "sequence_number": 2,
                     "aggregate_version": 2,
@@ -572,7 +579,10 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             FlextModels.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyWithdrawn",
-                data={"amount": 250, "reason": "ATM"},
+                data={
+                    "amount": float(first_item["price"]),
+                    "reason": "inventory_purchase",
+                },
                 metadata={
                     "sequence_number": 3,
                     "aggregate_version": 3,
@@ -581,7 +591,10 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             FlextModels.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyDeposited",
-                data={"amount": 500, "source": "transfer"},
+                data={
+                    "amount": float(second_item["price"]),
+                    "source": "upsell_revenue",
+                },
                 metadata={
                     "sequence_number": 4,
                     "aggregate_version": 4,
@@ -590,7 +603,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             FlextModels.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyWithdrawn",
-                data={"amount": 100, "reason": "purchase"},
+                data={"amount": 100, "reason": "operational_cost"},
                 metadata={
                     "sequence_number": 5,
                     "aggregate_version": 5,
@@ -598,27 +611,39 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
             ),
         ]
 
-        # Replay events to rebuild balance
         balance: float = 0.0
         print("Replaying account events:")
         for event in events:
+            event_data = event.data
             if event.event_type == "AccountOpened":
-                initial_balance = event.data["initial_balance"]
-                if isinstance(initial_balance, (int, float, str)):
-                    balance = float(initial_balance)
+                initial_balance = event_data["initial_balance"]
+                try:
+                    balance = (
+                        float(initial_balance)
+                        if isinstance(initial_balance, (int, float, str))
+                        else 0.0
+                    )
+                except (TypeError, ValueError):
+                    balance = 0.0
                 print(f"  Account opened: ${balance}")
             elif event.event_type == "MoneyDeposited":
-                amount_value = event.data["amount"]
-                if isinstance(amount_value, (int, float, str)):
-                    amount = float(amount_value)
-                    balance += amount
-                    print(f"  + Deposited ${amount}: balance = ${balance}")
+                amount = event_data["amount"]
+                try:
+                    balance += (
+                        float(amount) if isinstance(amount, (int, float, str)) else 0.0
+                    )
+                except (TypeError, ValueError):
+                    balance += 0.0
+                print(f"  + Deposited ${amount}: balance = ${balance}")
             elif event.event_type == "MoneyWithdrawn":
-                amount_value = event.data["amount"]
-                if isinstance(amount_value, (int, float, str)):
-                    amount = float(amount_value)
-                    balance -= amount
-                    print(f"  - Withdrew ${amount}: balance = ${balance}")
+                amount = event_data["amount"]
+                try:
+                    balance -= (
+                        float(amount) if isinstance(amount, (int, float, str)) else 0.0
+                    )
+                except (TypeError, ValueError):
+                    balance -= 0.0
+                print(f"  - Withdrew ${amount}: balance = ${balance}")
 
         print(f"\n✅ Final balance after replay: ${balance}")
         print(f"Total events: {len(events)}")
