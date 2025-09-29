@@ -22,7 +22,7 @@ import concurrent.futures
 import logging
 import time
 from collections.abc import Mapping
-from typing import Any, ClassVar, cast, override
+from typing import ClassVar, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
@@ -393,7 +393,7 @@ class FlextExceptions:
             List of FlextResults with handling results
 
         """
-        results = []
+        results: list[FlextResult[object]] = []
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=len(exceptions)
         ) as executor:
@@ -461,11 +461,13 @@ class FlextExceptions:
         """Clear all registered handlers."""
         self._handlers.clear()
 
-    def get_statistics(self) -> dict[str, Any]:
+    def get_statistics(
+        self,
+    ) -> dict[str, int | dict[str, dict[str, int | float]]]:
         """Get statistics about exception handling.
 
         Returns:
-            Dictionary of statistics
+            Dictionary with handler counts (int) and performance_metrics (nested dict)
 
         """
         return {

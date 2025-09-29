@@ -72,6 +72,8 @@ def _get_config() -> dict[str, object]:
         }
 
 
+# ISSUE: Violates SOLID principles - single class with 2500+ lines (god class pattern)
+# ISSUE: Could be split into FlextLogger + FlextLoggerConfig + FlextLoggerContext + FlextLoggerUtils
 class FlextLogger:
     """Structured logging solution for the FLEXT ecosystem.
 
@@ -1213,7 +1215,7 @@ class FlextLogger:
             }
 
         # Build error details
-        error_data: FlextTypes.Core.Dict = {}
+        error_data: dict[str, object] = {}
         if error is not None:
             if isinstance(error, Exception):
                 # Ensure all error data is JSON serializable
@@ -1225,19 +1227,19 @@ class FlextLogger:
                     else:
                         serializable_args.append(str(arg))
 
-                error_data: dict[str, object] = {
+                error_data.update({
                     "type": error.__class__.__name__,
                     "message": str(error),
                     "details": serializable_args,
-                }
+                })
                 if error.__traceback__ is not None:
                     error_data["stack_trace"] = traceback.format_tb(error.__traceback__)
             else:
-                error_data = {
-                    "type": StringError,
+                error_data.update({
+                    "type": "StringError",
                     "message": str(error),
                     "stack_trace": None,
-                }
+                })
 
         # Build context data
         context_data: FlextTypes.Core.Dict = {}

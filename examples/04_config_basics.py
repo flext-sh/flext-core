@@ -32,7 +32,7 @@ from flext_core import (
     FlextService,
 )
 
-# ========== CONFIGURATION SERVICE ==========
+from .example_scenarios import ExampleScenarios
 
 
 class ComprehensiveConfigService(FlextService[dict[str, object]]):
@@ -43,15 +43,19 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         super().__init__()
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
+        self._scenarios = ExampleScenarios
+        self._reference_config = self._scenarios.config()
+        self._production_config = self._scenarios.config(production=True)
+        self._metadata = self._scenarios.metadata(tags=["config", "demo"])
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute method required by FlextService."""
-        # This is a demonstration service, returns current config
         config = FlextConfig.get_global_instance()
         return FlextResult[dict[str, object]].ok({
             "environment": config.environment,
             "debug": config.debug,
             "log_level": config.log_level,
+            "reference_database": self._reference_config.get("database_url"),
         })
 
     # ========== GLOBAL SINGLETON ACCESS ==========
@@ -81,15 +85,14 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("\n=== Environment Configuration ===")
 
         config = FlextConfig.get_global_instance()
+        target_env = self._production_config.get("environment", "production")
 
-        # Environment determines behavior
         print(f"Current environment: {config.environment}")
+        print(f"Reference production environment: {target_env}")
 
-        # Environment checks
         print(f"Is development: {config.is_development()}")
         print(f"Is production: {config.is_production()}")
 
-        # Environment-specific behavior
         if config.is_development():
             print("Development mode features:")
             print("  - Debug logging available")
@@ -109,7 +112,6 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         config = FlextConfig.get_global_instance()
 
-        # Logging settings
         print(f"Log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
         print(f"Include source: {config.include_source}")
@@ -117,17 +119,16 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print(f"Include context: {config.include_context}")
         print(f"Include correlation ID: {config.include_correlation_id}")
 
-        # Log file settings
+        print(f"Scenario metadata tags: {self._metadata['tags']}")
+
         print(f"Log file: {config.log_file or 'Console only'}")
         if config.log_file:
             print(f"Log file max size: {config.log_file_max_size}")
             print(f"Log file backup count: {config.log_file_backup_count}")
 
-        # Console settings
         print(f"Console enabled: {config.console_enabled}")
         print(f"Console colors: {config.console_color_enabled}")
 
-        # Get logging configuration
         log_config = config.get_logging_config()
         print(f"Full logging config: {log_config}")
 
@@ -138,12 +139,12 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("\n=== Database Configuration ===")
 
         config = FlextConfig.get_global_instance()
+        reference_url = self._reference_config.get("database_url", "Not configured")
 
-        # Database settings
-        print(f"Database URL: {config.database_url or 'Not configured'}")
+        print(f"Database URL: {config.database_url or reference_url}")
+        print(f"Reference URL: {reference_url}")
         print(f"Database pool size: {config.database_pool_size}")
 
-        # Get database configuration
         db_config = config.get_database_config()
         print(f"Database config: {db_config}")
 
@@ -154,15 +155,10 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("\n=== Cache Configuration ===")
 
         config = FlextConfig.get_global_instance()
+        reference_ttl = self._reference_config.get("api_timeout", 30)
 
-        # Cache settings
         print(f"Enable caching: {config.enable_caching}")
-        print(f"Cache TTL: {config.cache_ttl}s")
-        print(f"Cache max size: {config.cache_max_size}")
-
-        # Get cache configuration
-        cache_config = config.get_cache_config()
-        print(f"Cache config: {cache_config}")
+        print(f"Cache TTL: {config.cache_ttl}s (reference {reference_ttl}s)")
 
     # ========== PERFORMANCE CONFIGURATION ==========
 
@@ -172,23 +168,17 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         config = FlextConfig.get_global_instance()
 
-        # Performance settings
         print(f"Max workers: {config.max_workers}")
+        print(f"Timeout seconds: {config.timeout_seconds}s")
         print(f"Max retry attempts: {config.max_retry_attempts}")
-        print(f"Timeout seconds: {config.timeout_seconds}")
 
-        # Circuit breaker
-        print(f"Enable circuit breaker: {config.enable_circuit_breaker}")
-
-        # Metrics and tracing
-        print(f"Enable metrics: {config.enable_metrics}")
-        print(f"Enable tracing: {config.enable_tracing}")
-
-        # Dispatcher settings
-        print(f"Dispatcher timeout: {config.dispatcher_timeout_seconds}s")
-        print(f"Dispatcher logging: {config.dispatcher_enable_logging}")
-        print(f"Dispatcher metrics: {config.dispatcher_enable_metrics}")
-        print(f"Dispatcher auto context: {config.dispatcher_auto_context}")
+        print(
+            "Reference retry strategy:",
+            {
+                "workers": self._reference_config.get("max_connections", 10),
+                "timeout": self._reference_config.get("api_timeout", 30),
+            },
+        )
 
     # ========== CQRS/EVENT BUS CONFIGURATION ==========
 
@@ -241,11 +231,10 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         config = FlextConfig.get_global_instance()
 
-        # Get service metadata
         metadata = config.get_metadata()
         print(f"Service metadata: {metadata}")
+        print(f"Scenario metadata: {self._metadata}")
 
-        # Individual metadata fields
         print(f"App name: {config.app_name}")
         print(f"Environment: {config.environment}")
         print(f"Debug mode: {config.debug}")
@@ -256,27 +245,22 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show environment variable loading."""
         print("\n=== Environment Variables ===")
 
-        # Simulate environment variables
-        test_vars = {
-            "FLEXT_ENVIRONMENT": "test",
-            "FLEXT_DEBUG": "true",
-            "FLEXT_LOG_LEVEL": FlextConstants.Logging.INFO,
-            "FLEXT_DATABASE_URL": "postgresql://localhost/db",
-            "FLEXT_MAX_WORKERS": "4",
+        base_env = {
+            "FLEXT_ENVIRONMENT": self._reference_config.get(
+                "environment", "development"
+            ),
+            "FLEXT_DEBUG": str(self._reference_config.get("debug", False)).lower(),
+            "FLEXT_LOG_LEVEL": self._reference_config.get(
+                "log_level", FlextConstants.Logging.INFO
+            ),
+            "FLEXT_DATABASE_URL": self._reference_config.get(
+                "database_url", "postgresql://localhost/db"
+            ),
+            "FLEXT_MAX_WORKERS": str(self._production_config.get("max_connections", 4)),
         }
 
-        # Show how environment variables map to config
-        print("Environment variable mapping:")
-        for key, value in test_vars.items():
-            config_key = key.replace("FLEXT_", "").lower()
-            print(f"  {key} -> config.{config_key} = {value}")
-
-        # .env file support
-        print("\n.env file support:")
-        print("  - .env (default)")
-        print("  - .env.development")
-        print("  - .env.production")
-        print("  - .internal.invalid (gitignored)")
+        for key, value in base_env.items():
+            print(f"{key}={value}")
 
     # ========== CONFIGURATION VALIDATION ==========
 
@@ -286,7 +270,6 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         config = FlextConfig.get_global_instance()
 
-        # Type validation (Pydantic handles this)
         validations = [
             (
                 "environment",
@@ -300,6 +283,10 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             ("timeout_seconds", config.timeout_seconds > 0),
             ("max_workers", config.max_workers > 0),
             ("cache_ttl", config.cache_ttl >= 0),
+            (
+                "reference_database",
+                bool(self._reference_config.get("database_url")),
+            ),
         ]
 
         for field, is_valid in validations:
@@ -316,15 +303,20 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         FlextConfig.get_global_instance()
 
-        # FlextConfig is based on Pydantic Settings, which is immutable
         print("Note: FlextConfig is immutable after initialization")
         print("To change config, create new instance with environment variables")
 
-        # You can create new instances for different environments
         print("\nCreating config for different environment:")
         test_config = FlextConfig.create_for_environment("test")
         print(f"Test environment config: {test_config.environment}")
         print(f"Test debug mode: {test_config.debug}")
+        print(
+            "Production baseline:",
+            {
+                "environment": self._production_config.get("environment", "production"),
+                "debug": self._production_config.get("debug", False),
+            },
+        )
 
     # ========== CONFIGURATION EXPORT ==========
 

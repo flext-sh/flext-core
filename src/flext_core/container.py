@@ -18,6 +18,7 @@ from typing import override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
@@ -72,38 +73,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     _global_manager: FlextContainer.GlobalManager | None = None
 
-    class ServiceKey:
-        """Utility for service key normalization and validation."""
-
-        @staticmethod
-        def normalize(name: str) -> FlextResult[str]:
-            """Normalize service name for consistent lookups.
-
-            Returns:
-                FlextResult[str]: Success with normalized name or failure with error message.
-
-            """
-            # Type annotation guarantees name is str, so no isinstance check needed
-            normalized = name.strip().lower()
-            if not normalized:
-                return FlextResult[str].fail("Service name cannot be empty")
-
-            # Additional validation for special characters
-            if any(char in normalized for char in [".", "/", "\\"]):
-                return FlextResult[str].fail("Service name contains invalid characters")
-
-            return FlextResult[str].ok(normalized)
-
-        @staticmethod
-        def validate(name: str) -> FlextResult[str]:
-            """Validate service name format and return normalized key.
-
-            Returns:
-                FlextResult[str]: Success with normalized name or failure with error message.
-
-            """
-            return FlextContainer.ServiceKey.normalize(name)
-
     class GlobalManager:
         """Thread-safe global container management."""
 
@@ -133,20 +102,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._services: dict[str, object] = {}
         self._factories: dict[str, Callable[[], object]] = {}
 
-        # Configuration integration with FlextConfig singleton
+        # Use FlextConfig directly for container configuration
         self._flext_config: FlextConfig = FlextConfig.get_global_instance()
-        environment_default = (
-            str(
-                getattr(
-                    self._flext_config,
-                    "environment",
-                    FlextConstants.Config.DEFAULT_ENVIRONMENT,
-                )
-            )
-            .strip()
-            .lower()
-        )
-        self._global_config: dict[str, object] = {
+        self._global_config: dict[str, object] = self._create_container_config()
+        self._user_overrides: dict[str, object] = {}
+
+    def _create_container_config(self) -> dict[str, object]:
+        """Create container configuration from FlextConfig defaults."""
+        return {
             "max_workers": int(getattr(self._flext_config, "max_workers", 4)),
             "timeout_seconds": float(
                 getattr(
@@ -155,21 +118,16 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     FlextConstants.Container.TIMEOUT_SECONDS,
                 )
             ),
-            "environment": environment_default,
+            "environment": str(
+                getattr(
+                    self._flext_config,
+                    "environment",
+                    FlextConstants.Config.DEFAULT_ENVIRONMENT,
+                )
+            )
+            .strip()
+            .lower(),
         }
-        # Extract snapshot from actual FlextConfig instance
-        config_instance = FlextConfig.get_global_instance()
-        self._flext_config_snapshot: dict[str, object] = self._extract_config_snapshot(
-            config_instance
-        )
-        self._user_overrides: dict[str, object] = {}
-
-        # Update global config with snapshot and user overrides - handle validation failure
-        config_result = self._build_global_config()
-        if config_result.is_failure:
-            msg = f"Container initialization failed: {config_result.error}"
-            raise ValueError(msg)
-        self._global_config = config_result.value
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -208,13 +166,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # =========================================================================
 
     def _validate_service_name(self, name: str) -> FlextResult[str]:
-        """Validate and normalize service name using ServiceKey utility.
+        """Validate and normalize service name using centralized validation.
 
         Returns:
             FlextResult[str]: Success with validated name or failure with error.
 
         """
-        return self.ServiceKey.validate(name)
+        return FlextModels.Validation.validate_service_name(name)
 
     def register(
         self,
@@ -236,7 +194,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         Example:
             ```python
             from flext_core.result import FlextResult
-        from flext_core.container import FlextContainer, FlextLogger
+            from flext_core.container import FlextContainer, FlextLogger
 
             container = FlextContainer.get_global()
 
@@ -289,7 +247,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             FlextResult[None]: Success if stored or failure with error.
 
         """
-        # Type annotation guarantees factory is callable, so no callable() check needed
+        # Validate that factory is actually callable
+        if not callable(factory):
+            return FlextResult[None].fail(f"Factory '{name}' must be callable")
 
         if name in self._factories:
             return FlextResult[None].fail(f"Factory '{name}' already registered")
@@ -410,7 +370,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         snapshot = self._create_registry_snapshot()
 
         try:
-            # Process all registrations
+            # Process all registrations with error handling
             result = self._process_batch_registrations(services)
             if result.is_failure:
                 # Restore snapshot on failure
@@ -518,104 +478,51 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         return self.get(name)
 
-    def auto_wire(self, service_class: type[T]) -> FlextResult[T]:
-        """Automatically register and resolve service with dependency injection.
+    def create_service(
+        self,
+        service_class: type[T],
+        service_name: str | None = None,
+    ) -> FlextResult[T]:
+        """Create and register service with dependencies from container.
 
         Returns:
             FlextResult[T]: Success with instantiated service or failure with error.
 
         """
-        return (
-            self._resolve_auto_wire_name(service_class)
-            .flat_map(lambda _: self._resolve_dependencies(service_class))
-            .flat_map(
-                lambda deps: self._instantiate_and_register_service(service_class, deps)
-            )
-        )
-
-    def _resolve_auto_wire_name(self, service_class: type[T]) -> FlextResult[str]:
-        """Resolve service name for auto-wiring.
-
-        Returns:
-            FlextResult[str]: Success with snake_case service name or failure with error.
-
-        """
-        name = getattr(service_class, "__name__", "")
-        if not name:
-            return FlextResult[str].fail(
-                "Cannot determine service name for auto-wiring"
-            )
-
-        # Convert CamelCase to snake_case for service naming
-        snake_case = "".join([
-            "_" + c.lower() if c.isupper() and i > 0 else c.lower()
-            for i, c in enumerate(name)
-        ])
-        return FlextResult[str].ok(snake_case)
-
-    def _resolve_dependencies(
-        self, service_class: type[T]
-    ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Resolve constructor dependencies from type hints.
-
-        Returns:
-            FlextResult[FlextTypes.Core.Dict]: Success with dependencies dict or failure with error.
-
-        """
         try:
-            signature = inspect.signature(service_class.__init__)
+            # Determine service name
+            if service_name is None:
+                name = getattr(service_class, "__name__", "").lower()
+                if not name:
+                    return FlextResult[T].fail("Cannot determine service name")
+            else:
+                name = service_name
+
+            # Try to resolve dependencies from container
             dependencies: FlextTypes.Core.Dict = {}
+            signature = inspect.signature(service_class.__init__)
 
             for param_name, param in signature.parameters.items():
                 if param_name == "self":
                     continue
 
-                if param.annotation == inspect.Parameter.empty:
-                    continue
-
-                # Try to resolve dependency from container
-                dep_result: FlextResult[object] = self.get(param_name)
+                # Try to get dependency from container
+                dep_result = self.get(param_name)
                 if dep_result.is_success:
-                    # Use value_or_none for safe extraction, handling FlextResult[None] cases
-                    dependencies[param_name] = dep_result.value_or_none
-                elif param.default == inspect.Parameter.empty:
-                    # Required dependency not found
-                    return FlextResult[FlextTypes.Core.Dict].fail(
-                        f"Cannot resolve required dependency '{param_name}' for {getattr(service_class, '__name__', str(service_class))}"
+                    dependencies[param_name] = dep_result.value
+                elif param.default != inspect.Parameter.empty:
+                    # Use default value
+                    dependencies[param_name] = param.default
+                else:
+                    return FlextResult[T].fail(
+                        f"Cannot resolve required dependency '{param_name}'"
                     )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(dependencies)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Dependency resolution failed: {e}"
-            )
-
-    def _instantiate_and_register_service(
-        self, service_class: type[T], dependencies: FlextTypes.Core.Dict
-    ) -> FlextResult[T]:
-        """Instantiate service with dependencies and register it.
-
-        Returns:
-            FlextResult[T]: Success with instantiated service or failure with error.
-
-        """
-        try:
+            # Create service instance
             service = service_class(**dependencies)
-            name_result = self._resolve_auto_wire_name(service_class)
 
-            if name_result.is_failure:
-                return FlextResult[T].fail(
-                    name_result.error or "Name resolution failed"
-                )
-
-            # Use value_or_none for safe extraction, even though we checked for failure
-            name = name_result.value_or_none
-            if name is None:
-                return FlextResult[T].fail("Name resolution returned None")
-
-            register_result = self.register(str(name), service)
-
+            # Register the service
+            register_result = self.register(name, service)
             if register_result.is_failure:
                 return FlextResult[T].fail(
                     register_result.error or "Service registration failed"
@@ -624,39 +531,49 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return FlextResult[T].ok(service)
 
         except Exception as e:
-            return FlextResult[T].fail(f"Service instantiation failed: {e}")
+            return FlextResult[T].fail(f"Service creation failed: {e}")
 
-    def _instantiate_and_register_service_typed(
+    def auto_wire[T](
         self,
         service_class: type[T],
-        dependencies: FlextTypes.Core.Dict,
-        expected_type: type[T],
     ) -> FlextResult[T]:
-        """Instantiate and register service with explicit type validation.
+        """Auto-wire service dependencies without registering.
+
+        Creates a service instance by resolving its constructor dependencies
+        from the container, but does not register the created service.
 
         Returns:
-            FlextResult[T]: Success with validated service or failure with error.
+            FlextResult[T]: Success with instantiated service or failure with error.
 
         """
-        instantiation_result = self._instantiate_and_register_service(
-            service_class, dependencies
-        )
+        try:
+            # Try to resolve dependencies from container
+            dependencies: FlextTypes.Core.Dict = {}
+            signature = inspect.signature(service_class.__init__)
 
-        if instantiation_result.is_failure:
-            return instantiation_result
+            for param_name, param in signature.parameters.items():
+                if param_name == "self":
+                    continue
 
-        service = instantiation_result.value_or_none
-        if service is None:
-            return FlextResult[T].fail(
-                "Service instantiation returned None despite success state"
-            )
+                # Try to get dependency from container
+                dep_result = self.get(param_name)
+                if dep_result.is_success:
+                    dependencies[param_name] = dep_result.value
+                elif param.default != inspect.Parameter.empty:
+                    # Use default value
+                    dependencies[param_name] = param.default
+                else:
+                    return FlextResult[T].fail(
+                        f"Cannot resolve required dependency '{param_name}' for auto-wiring"
+                    )
 
-        if not isinstance(service, expected_type):
-            return FlextResult[T].fail(
-                f"Auto-wired service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
-            )
+            # Create service instance
+            service = service_class(**dependencies)
 
-        return FlextResult[T].ok(service)
+            return FlextResult[T].ok(service)
+
+        except Exception as e:
+            return FlextResult[T].fail(f"Auto-wiring failed: {e}")
 
     # =========================================================================
     # INSPECTION AND UTILITIES - Container introspection and management
@@ -683,7 +600,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             bool: True if service is registered, False otherwise.
 
         """
-        normalized = self.ServiceKey.normalize(name)
+        normalized = FlextModels.Validation.validate_service_name(name)
         if normalized.is_failure:
             return False
         validated_name = normalized.value_or_none
@@ -698,6 +615,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             FlextResult[list[dict[str, object]]]: Success with service list or failure with error.
 
         """
+        # ISSUE: Duplicates get_service_names functionality - both methods iterate over same service collections
         try:
             services: list[dict[str, object]] = []
             for name in sorted(
@@ -805,272 +723,31 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         try:
-            # Validate configuration structure
-            validation_result = self._validate_config_structure(config)
-            if validation_result.is_failure:
-                return FlextResult[None].fail(
-                    validation_result.error or "Config validation failed"
-                )
-
-            # Only process the keys that were explicitly provided in config
-            # Don't auto-fill missing keys with defaults as that overwrites user overrides
-            # Use dictionary comprehension with set literal for efficiency
+            # Only allow specific configuration keys
             allowed_keys = {"max_workers", "timeout_seconds", "environment"}
             processed_config = {
                 key: value for key, value in config.items() if key in allowed_keys
             }
 
-            # Update user overrides with only the provided values (preserve existing overrides)
+            # Update user overrides
             self._user_overrides.update(processed_config)
 
-            # Rebuild global config from snapshot + user overrides - handle validation failure
-            config_result = self._build_global_config()
-            if config_result.is_failure:
-                msg = f"Global config rebuild failed: {config_result.error}"
-                raise ValueError(msg)
-            self._global_config = config_result.unwrap()
+            # Update global config
+            self._refresh_global_config()
 
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Container configuration failed: {e}")
 
-    def _validate_config_structure(
-        self, _config: FlextTypes.Core.Dict
-    ) -> FlextResult[None]:
-        """Validate configuration structure.
-
-        Returns:
-            FlextResult[None]: Success if valid or failure with error.
-
-        """
-        # Type annotation guarantees config is a dictionary, so no isinstance check needed
-        # Additional validation can be added here if needed for specific dict structure
-        return FlextResult[None].ok(None)
-
-    def _normalize_config_fields(self, config: dict[str, object]) -> dict[str, object]:
-        """Normalize configuration fields with proper defaults and validation.
-
-        Returns:
-            dict[str, object]: Normalized configuration dictionary.
-
-        """
-        # Create normalized config with defaults from captured FlextConfig
-        max_workers_attr = getattr(
-            self._flext_config,
-            "max_workers",
-            self._global_config.get("max_workers", 4),
-        )
-        fallback_max_workers = (
-            int(max_workers_attr)
-            if isinstance(max_workers_attr, (int, float, str))
-            else 4
-        )
-
-        timeout_attr = getattr(
-            self._flext_config,
-            "timeout_seconds",
-            self._global_config.get("timeout_seconds", 30.0),
-        )
-        fallback_timeout = (
-            float(timeout_attr) if isinstance(timeout_attr, (int, float, str)) else 30.0
-        )
-
-        environment_attr = getattr(
-            self._flext_config,
-            "environment",
-            self._global_config.get("environment", "development"),
-        )
-        fallback_environment = (
-            str(environment_attr).strip().lower()
-            if environment_attr is not None
-            else "development"
-        )
-
-        normalized = {
-            "max_workers": config.get("max_workers", fallback_max_workers),
-            "timeout_seconds": config.get("timeout_seconds", fallback_timeout),
-            "environment": config.get("environment", fallback_environment),
-        }
-
-        # Validate and fix max_workers
-        max_workers_value = normalized["max_workers"]
-        if isinstance(max_workers_value, (int, float)):
-            if max_workers_value <= 0:
-                normalized["max_workers"] = fallback_max_workers
-        else:
-            normalized["max_workers"] = fallback_max_workers
-
-        # Validate and fix timeout_seconds
-        timeout_value = normalized["timeout_seconds"]
-        if isinstance(timeout_value, (int, float)):
-            if timeout_value <= 0:
-                normalized["timeout_seconds"] = fallback_timeout
-        else:
-            normalized["timeout_seconds"] = fallback_timeout
-
-        # Set default environment if empty or invalid
-        environment_value = normalized["environment"]
-        if isinstance(environment_value, str) and environment_value.strip():
-            normalized["environment"] = environment_value.strip().lower()
-        else:
-            normalized["environment"] = fallback_environment
-
-        return normalized
-
-    def _extract_config_snapshot(self, config: FlextConfig | None) -> dict[str, object]:
-        """Extract relevant configuration values from FlextConfig instance."""
-        if config is None:
-            return {}
-
-        snapshot: dict[str, object] = {}
-        for key in ("max_workers", "timeout_seconds", "environment"):
-            value = getattr(config, key, None)
-            if value is not None:
-                snapshot[key] = value
-        return snapshot
-
-    def _build_global_config(self) -> FlextResult[dict[str, object]]:
-        """Merge FlextConfig snapshot and user overrides into final container config."""
+    def _refresh_global_config(self) -> None:
+        """Refresh the effective global configuration."""
+        # Merge FlextConfig defaults with user overrides
         merged: dict[str, object] = {}
-        for source in (self._flext_config_snapshot, self._user_overrides):
+        for source in (self._create_container_config(), self._user_overrides):
             merged.update({
                 key: value for key, value in source.items() if value is not None
             })
-
-        normalized = self._normalize_config_fields(merged)
-        return self._finalize_config_values(normalized)
-
-    def _finalize_config_values(
-        self, config: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Finalize configuration values with explicit validation - no fallbacks."""
-        # Validate max_workers with explicit error handling
-        max_workers_validation = self._validate_positive_int(
-            config.get("max_workers", FlextConstants.Container.MAX_WORKERS),
-            minimum=FlextConstants.Container.MIN_WORKERS,
-        )
-        if max_workers_validation.is_failure:
-            return FlextResult[dict[str, object]].fail(
-                f"Invalid max_workers configuration: {max_workers_validation.error}"
-            )
-
-        # Validate timeout_seconds with explicit error handling
-        timeout_validation = self._validate_positive_float(
-            config.get("timeout_seconds", FlextConstants.Container.TIMEOUT_SECONDS),
-            minimum=0.0,
-        )
-        if timeout_validation.is_failure:
-            return FlextResult[dict[str, object]].fail(
-                f"Invalid timeout_seconds configuration: {timeout_validation.error}"
-            )
-
-        # Validate environment with explicit handling
-        environment_raw = config.get(
-            "environment", FlextConstants.Config.DEFAULT_ENVIRONMENT
-        )
-        if not isinstance(environment_raw, str):
-            return FlextResult[dict[str, object]].fail(
-                f"Environment must be string, got {type(environment_raw).__name__}"
-            )
-
-        environment = environment_raw.strip()
-        if not environment:
-            return FlextResult[dict[str, object]].fail(
-                "Environment cannot be empty string"
-            )
-
-        return FlextResult[dict[str, object]].ok({
-            "max_workers": max_workers_validation.value,
-            "timeout_seconds": timeout_validation.value,
-            "environment": environment,
-        })
-
-    @staticmethod
-    def _validate_positive_int(value: object, *, minimum: int) -> FlextResult[int]:
-        """Validate value as positive integer - no fallbacks, explicit validation."""
-        if isinstance(value, bool):
-            return FlextResult[int].fail(
-                f"Boolean value not allowed for integer field: {value}"
-            )
-
-        if isinstance(value, int):
-            if value < minimum:
-                return FlextResult[int].fail(
-                    f"Value {value} is below minimum {minimum}"
-                )
-            return FlextResult[int].ok(value)
-
-        if isinstance(value, float):
-            if not value.is_integer():
-                return FlextResult[int].fail(
-                    f"Float value must be whole number: {value}"
-                )
-            int_value = int(value)
-            if int_value < minimum:
-                return FlextResult[int].fail(
-                    f"Value {int_value} is below minimum {minimum}"
-                )
-            return FlextResult[int].ok(int_value)
-
-        if isinstance(value, str):
-            try:
-                int_value = int(value)
-                if int_value < minimum:
-                    return FlextResult[int].fail(
-                        f"Value {int_value} is below minimum {minimum}"
-                    )
-                return FlextResult[int].ok(int_value)
-            except ValueError:
-                return FlextResult[int].fail(
-                    f"Cannot convert string to integer: {value}"
-                )
-
-        return FlextResult[int].fail(
-            f"Invalid type for integer: {type(value).__name__}"
-        )
-
-    @staticmethod
-    def _validate_positive_float(
-        value: object, *, minimum: float
-    ) -> FlextResult[float]:
-        """Validate value as positive float - no fallbacks, explicit validation."""
-        if isinstance(value, bool):
-            return FlextResult[float].fail(
-                f"Boolean value not allowed for float field: {value}"
-            )
-
-        if isinstance(value, (int, float)):
-            float_value = float(value)
-            if float_value < minimum:
-                return FlextResult[float].fail(
-                    f"Value {float_value} is below minimum {minimum}"
-                )
-            return FlextResult[float].ok(float_value)
-
-        if isinstance(value, str):
-            try:
-                float_value = float(value)
-                if float_value < minimum:
-                    return FlextResult[float].fail(
-                        f"Value {float_value} is below minimum {minimum}"
-                    )
-                return FlextResult[float].ok(float_value)
-            except ValueError:
-                return FlextResult[float].fail(
-                    f"Cannot convert string to float: {value}"
-                )
-
-        return FlextResult[float].fail(
-            f"Invalid type for float: {type(value).__name__}"
-        )
-
-    def _refresh_global_config(self) -> None:
-        """Recalculate the effective global configuration."""
-        config_result = self._build_global_config()
-        if config_result.is_failure:
-            msg = f"Global config refresh failed: {config_result.error}"
-            raise ValueError(msg)
-        self._global_config = config_result.unwrap()
+        self._global_config = merged
 
     # =========================================================================
     # GLOBAL CONTAINER MANAGEMENT - Singleton pattern with thread safety
@@ -1102,7 +779,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         Example:
             ```python
             from flext_core.result import FlextResult
-        from flext_core.container import FlextContainer
+            from flext_core.container import FlextContainer
 
             # Get the global container
 

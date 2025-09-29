@@ -15,6 +15,9 @@ from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 
+# ISSUE: Violates SOLID principles - massive god class with 1200+ lines spanning multiple responsibilities
+# ISSUE: Should be split into separate modules: FlextRegistry, FlextPipeline, FlextCircuitBreaker, FlextRateLimiter, etc.
+
 
 class FlextProcessors:
     """Processing convenience namespace aligned with dispatcher workflows.
@@ -281,6 +284,7 @@ class FlextProcessors:
             FlextResult[list[object]]: List of processed results
 
         """
+        # ISSUE: Code doesn't do what it means to do - method name suggests parallel but just calls sequential batch processing
         # For now, just process sequentially - can be enhanced with actual parallel processing
         return self.process_batch(name, data_list)
 

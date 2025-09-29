@@ -22,11 +22,20 @@ from flext_tests.fixtures import FlextTestsFixtures
 from flext_tests.http_support import FlextTestsHttp
 from flext_tests.hypothesis import FlextTestsHypothesis
 from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.parallel_docker import (
+    ContainerSpec,
+    ParallelDockerManager,
+    get_client-a_oud_container,
+    get_shared_openldap_container,
+    release_client-a_oud_container,
+    release_shared_openldap_container,
+)
 from flext_tests.performance import FlextTestsPerformance
 from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
     "ContainerInfo",
+    "ContainerSpec",
     "ContainerStatus",
     "FlextTestDocker",
     "FlextTestsAsyncs",
@@ -39,4 +48,9 @@ __all__ = [
     "FlextTestsMatchers",
     "FlextTestsPerformance",
     "FlextTestsUtilities",
+    "ParallelDockerManager",
+    "get_client-a_oud_container",
+    "get_shared_openldap_container",
+    "release_client-a_oud_container",
+    "release_shared_openldap_container",
 ]

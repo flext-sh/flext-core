@@ -36,8 +36,6 @@ from flext_core import (
     FlextService,
 )
 
-# ========== CQRS SERVICE ==========
-
 
 class CqrsPatternService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextCqrs patterns."""

@@ -79,6 +79,9 @@ K = TypeVar("K")
 R = TypeVar("R")
 # P already defined as ParamSpec above
 
+# Type aliases - Python 3.13+ syntax
+type WorkspaceStatus = Literal["initializing", "ready", "error", "maintenance"]
+
 # Domain-specific type variables
 Message = TypeVar("Message")
 Command = TypeVar("Command")
@@ -292,7 +295,6 @@ class FlextTypes:
         ]
         type ProjectStatus = Literal["active", "inactive", "deprecated", "archived"]
         type ProjectConfig = dict[str, object]
-        type WorkspaceStatus = Literal["initializing", "ready", "error", "maintenance"]
 
     # =========================================================================
     # PROCESSING TYPES - Generic processing patterns
@@ -354,13 +356,6 @@ class FlextTypes:
     Metadata = Core.Metadata
     Parameters = Core.Parameters
 
-
-# =========================================================================
-# STANDALONE TYPE EXPORTS - For backward compatibility
-# =========================================================================
-
-# Export WorkspaceStatus for backward compatibility
-type WorkspaceStatus = FlextTypes.Project.WorkspaceStatus
 
 # =========================================================================
 # PUBLIC API EXPORTS - Essential TypeVars and types only

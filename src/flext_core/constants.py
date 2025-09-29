@@ -84,6 +84,7 @@ class FlextConstants:
         MAX_NAME_LENGTH: Final[int] = 100  # Usage count: 0
         MIN_SERVICE_NAME_LENGTH: Final[int] = 2  # Usage count: 0
         MAX_EMAIL_LENGTH: Final[int] = 254  # Usage count: 0
+        EMAIL_PARTS_COUNT: Final[int] = 2  # Expected parts when splitting email by @
         MIN_PERCENTAGE: Final[float] = 0.0  # Usage count: 0
         MAX_PERCENTAGE: Final[float] = 100.0  # Usage count: 0
         MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
@@ -904,6 +905,14 @@ class FlextConstants:
             REGISTRATION_STATUS_ERROR,
         )
 
+    class Pagination:
+        """Pagination constants referenced by FlextModels.Pagination."""
+
+        DEFAULT_PAGE_NUMBER: Final[int] = 1  # Default starting page (1-based)
+        DEFAULT_PAGE_SIZE: Final[int] = 10  # Default page size
+        MAX_PAGE_SIZE: Final[int] = 1000  # Maximum allowed page size
+        MIN_PAGE_SIZE: Final[int] = 1  # Minimum page size
+
     class Mixins:
         """Constants for FlextMixins operations.
 
@@ -944,7 +953,7 @@ class FlextConstants:
         STATE_UNHEALTHY = "unhealthy"
 
         # Status Constants for Scripts and Diagnostics
-        STATUS_PASS = "PASS"
+        STATUS_PASS = "PASS"  # nosec B105 - Not a password, status constant
         STATUS_FAIL = "FAIL"
         STATUS_NO_TARGET = "NO_TARGET"
         STATUS_SKIP = "SKIP"

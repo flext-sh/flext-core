@@ -28,6 +28,7 @@ from flext_tests import (
     FlextTestsHypothesis,
     FlextTestsPerformance,
 )
+from flext_tests.performance import BenchmarkProtocol
 
 
 def mark_test_pattern(
@@ -724,7 +725,7 @@ class TestComprehensiveIntegration:
 
     def test_performance_with_property_testing(
         self,
-        benchmark: FlextTestsPerformance.BenchmarkProtocol,
+        benchmark: BenchmarkProtocol,
     ) -> None:
         """Combine performance testing with property-based testing."""
 

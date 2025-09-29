@@ -36,7 +36,7 @@ from flext_core import (
     FlextService,
 )
 
-# ========== LOGGING SERVICE ==========
+from .example_scenarios import ExampleScenarios
 
 
 class ComprehensiveLoggingService(FlextService[dict[str, str]]):
@@ -48,6 +48,10 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
         self._config = FlextConfig.get_global_instance()
+        self._scenarios = ExampleScenarios
+        self._metadata = self._scenarios.metadata(tags=["logging", "demo"])
+        self._user = self._scenarios.user()
+        self._payload = self._scenarios.payload()
 
     def execute(self) -> FlextResult[dict[str, str]]:
         """Execute method required by FlextService."""
@@ -88,18 +92,16 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
 
         logger = FlextLogger(__name__)
 
-        # Log with structured data
         logger.info(
             "User action",
             extra={
-                "user_id": "12345",
+                "user_id": self._user["id"],
                 "action": "login",
                 "ip_address": "192.168.1.1",
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
-        # Log with metrics
         logger.info(
             "Request processed",
             extra={
@@ -108,23 +110,16 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
                 "path": "/api/users",
                 "status_code": 200,
                 "response_time_ms": 45.2,
+                "scenario": self._metadata,
             },
         )
 
-        # Complex nested structures
         logger.info(
             "Order completed",
             extra={
-                "order": {
-                    "id": "ORD-001",
-                    "total": 99.99,
-                    "items": [
-                        {"sku": "ITEM-1", "quantity": 2},
-                        {"sku": "ITEM-2", "quantity": 1},
-                    ],
-                },
+                "order": self._payload,
                 "customer": {
-                    "id": "CUST-123",
+                    "id": self._user["id"],
                     "tier": "premium",
                 },
             },
@@ -138,18 +133,14 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
 
         logger = FlextLogger(__name__)
 
-        # Bind context that persists across log calls
-        logger.bind(request_id=str(uuid4()), user_id="user-123")
-        logger.info("Starting process")  # Has request_id and user_id
+        logger.bind(request_id=str(uuid4()), user_id=self._user["id"])
+        logger.info("Starting process")
 
-        # Add more context
-        logger.bind(session_id="session-456")
-        logger.info("Process step 1")  # Has all three context values
+        logger.bind(session_id="session-456", tags=self._metadata["tags"])
+        logger.info("Process step 1")
 
-        # Log with temporary additional context
         logger.info("Process step 2", extra={"step": 2, "progress": 0.5})
 
-        # Log final message
         logger.info("Process completed")
         logger.info("Clean slate")  # No context
 

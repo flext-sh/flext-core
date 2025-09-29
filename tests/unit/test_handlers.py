@@ -8,6 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from types import SimpleNamespace
+from typing import cast
+
+import pytest
+
 from flext_core import FlextHandlers, FlextModels, FlextResult
 from flext_core.context import FlextContext
 from flext_core.mixins import FlextMixins
@@ -279,3 +285,471 @@ class TestFlextHandlers:
         assert isinstance(
             handler._execution_context, FlextContext.HandlerExecutionContext
         )
+
+    def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
+        """Test _run_pipeline with dict message having command_id."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_dict_command_id",
+            handler_name="Test Pipeline Dict Command ID",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create handler that accepts dict messages
+        class DictHandler(FlextHandlers[dict, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: dict) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{message}")
+
+        handler = DictHandler(config=config)
+        dict_message = {"command_id": "cmd_123", "data": "test_data"}
+        result = handler._run_pipeline(dict_message, operation="command")
+
+        assert result.is_success
+        assert (
+            result.value == "processed_{'command_id': 'cmd_123', 'data': 'test_data'}"
+        )
+
+    def test_handlers_run_pipeline_with_dict_message_message_id(self) -> None:
+        """Test _run_pipeline with dict message having message_id."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_dict_message_id",
+            handler_name="Test Pipeline Dict Message ID",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create handler that accepts dict messages
+        class DictHandler(FlextHandlers[dict, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: dict) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{message}")
+
+        handler = DictHandler(config=config)
+        dict_message = {"message_id": "msg_456", "data": "test_data"}
+        result = handler._run_pipeline(dict_message, operation="command")
+
+        assert result.is_success
+        assert (
+            result.value == "processed_{'message_id': 'msg_456', 'data': 'test_data'}"
+        )
+
+    def test_handlers_run_pipeline_with_object_message_command_id(self) -> None:
+        """Test _run_pipeline with object message having command_id attribute."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_object_command_id",
+            handler_name="Test Pipeline Object Command ID",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create handler that accepts object messages
+        class ObjectHandler(FlextHandlers[object, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: object) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{message}")
+
+        handler = ObjectHandler(config=config)
+        message_obj = SimpleNamespace(command_id="cmd_789", data="test_data")
+        result = handler._run_pipeline(message_obj, operation="command")
+
+        assert result.is_success
+        assert "processed_" in result.value
+
+    def test_handlers_run_pipeline_with_object_message_message_id(self) -> None:
+        """Test _run_pipeline with object message having message_id attribute."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_object_message_id",
+            handler_name="Test Pipeline Object Message ID",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create handler that accepts object messages
+        class ObjectHandler(FlextHandlers[object, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: object) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{message}")
+
+        handler = ObjectHandler(config=config)
+        message_obj = SimpleNamespace(message_id="msg_789", data="test_data")
+        result = handler._run_pipeline(message_obj, operation="command")
+
+        assert result.is_success
+        assert "processed_" in result.value
+
+    def test_handlers_run_pipeline_mode_validation_error(self) -> None:
+        """Test _run_pipeline with mismatched operation and handler mode."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_mode_error",
+            handler_name="Test Pipeline Mode Error",
+            handler_type="command",
+            handler_mode="command",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # Try to execute query operation on command handler
+        result = handler._run_pipeline("test_message", operation="query")
+
+        assert result.is_failure
+        assert (
+            result.error is not None
+            and "Handler with mode 'command' cannot execute query pipelines"
+            in result.error
+        )
+
+    def test_handlers_run_pipeline_cannot_handle_message_type(self) -> None:
+        """Test _run_pipeline when handler cannot handle message type."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_cannot_handle",
+            handler_name="Test Pipeline Cannot Handle",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create a handler that returns False for can_handle
+        class RestrictiveHandler(FlextHandlers[str, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def can_handle(self, message_type: type) -> bool:
+                # Always return False to simulate cannot handle
+                # Parameter is intentionally unused in this test
+                _ = message_type  # Mark as intentionally unused
+                return False
+
+            def handle(self, message: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{message}")
+
+        handler = RestrictiveHandler(config=config)
+        result = handler._run_pipeline("test_message", operation="command")
+
+        assert result.is_failure
+        assert (
+            result.error is not None
+            and "Handler cannot handle message type str" in result.error
+        )
+
+    def test_handlers_run_pipeline_validation_failure(self) -> None:
+        """Test _run_pipeline when message validation fails."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_validation_failure",
+            handler_name="Test Pipeline Validation Failure",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create handler that fails validation
+        class ValidationFailingHandler(FlextHandlers[str, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def validate_command(self, command: object) -> FlextResult[None]:
+                # Parameter is intentionally unused in this test
+                _ = command  # Mark as intentionally unused
+                return FlextResult[None].fail("Validation failed for test")
+
+            def handle(self, message: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{message}")
+
+        handler = ValidationFailingHandler(config=config)
+        result = handler._run_pipeline("test_message", operation="command")
+
+        assert result.is_failure
+        assert (
+            result.error is not None
+            and "Message validation failed: Validation failed for test" in result.error
+        )
+
+    def test_handlers_run_pipeline_handler_exception(self) -> None:
+        """Test _run_pipeline when handler.handle() raises exception."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_exception",
+            handler_name="Test Pipeline Exception",
+            handler_type="command",
+            handler_mode="command",
+        )
+
+        # Create handler that raises exception
+        class ExceptionHandler(FlextHandlers[str, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: str) -> FlextResult[str]:
+                # Parameter is intentionally unused in this test
+                _ = message  # Mark as intentionally unused
+                error_message = "Test exception in handler"
+                raise ValueError(error_message)
+
+        handler = ExceptionHandler(config=config)
+        result = handler._run_pipeline("test_message", operation="command")
+
+        assert result.is_failure
+        assert (
+            result.error is not None
+            and "Critical handler failure: Test exception in handler" in result.error
+        )
+
+    def test_handlers_run_pipeline_query_operation(self) -> None:
+        """Test _run_pipeline with query operation."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_query",
+            handler_name="Test Pipeline Query",
+            handler_type="query",
+            handler_mode="query",
+        )
+
+        # Create a query handler
+        class QueryHandler(FlextHandlers[str, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"queried_{message}")
+
+        handler = QueryHandler(config=config)
+        result = handler._run_pipeline("test_query", operation="query")
+
+        assert result.is_success
+        assert result.value == "queried_test_query"
+
+    def test_handlers_run_pipeline_query_validation_failure(self) -> None:
+        """Test _run_pipeline with query operation validation failure."""
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="test_pipeline_query_validation",
+            handler_name="Test Pipeline Query Validation",
+            handler_type="query",
+            handler_mode="query",
+        )
+
+        # Create query handler that fails validation
+        class QueryValidationHandler(FlextHandlers[str, str]):
+            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+                super().__init__(config=config)
+
+            def validate_query(self, query: object) -> FlextResult[None]:
+                # Parameter is intentionally unused in this test
+                _ = query  # Mark as intentionally unused
+                return FlextResult[None].fail("Query validation failed")
+
+            def handle(self, message: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"queried_{message}")
+
+        handler = QueryValidationHandler(config=config)
+        result = handler._run_pipeline("test_query", operation="query")
+
+        assert result.is_failure
+        assert (
+            result.error is not None
+            and "Message validation failed: Query validation failed" in result.error
+        )
+
+    def test_handlers_from_callable_basic(self) -> None:
+        """Test from_callable with basic function."""
+
+        def simple_handler(message: str) -> str:
+            return f"handled_{message}"
+
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", simple_handler),
+            handler_name="simple_handler",
+            handler_type="command",
+        )
+
+        assert handler is not None
+        assert handler.handler_name == "simple_handler"
+        assert handler.mode == "command"
+
+        result = handler.handle("test")
+        assert result.is_success
+        assert result.value == "handled_test"
+
+    def test_handlers_from_callable_with_flext_result(self) -> None:
+        """Test from_callable with function returning FlextResult."""
+
+        def result_handler(message: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"result_{message}")
+
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", result_handler),
+            handler_name="result_handler",
+            handler_type="query",
+        )
+
+        assert handler.handler_name == "result_handler"
+        assert handler.mode == "query"
+
+        result = handler.handle("test")
+        assert result.is_success
+        assert result.value == "result_test"
+
+    def test_handlers_from_callable_with_exception(self) -> None:
+        """Test from_callable with function that raises exception."""
+
+        def failing_handler(message: str) -> str:
+            # Parameter is intentionally unused in this test
+            _ = message  # Mark as intentionally unused
+            error_message = "Handler failed"
+            raise ValueError(error_message)
+
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", failing_handler),
+            handler_name="failing_handler",
+            handler_type="command",
+        )
+
+        result = handler.handle("test")
+        assert result.is_failure
+        assert result.error is not None and "Handler failed" in result.error
+
+    def test_handlers_from_callable_default_name(self) -> None:
+        """Test from_callable with default handler name from function name."""
+
+        def my_custom_function(message: str) -> str:
+            return f"custom_{message}"
+
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", my_custom_function),
+            handler_type="command",
+        )
+
+        assert handler.handler_name == "my_custom_function"
+        assert handler.mode == "command"
+
+    def test_handlers_from_callable_with_mode_parameter(self) -> None:
+        """Test from_callable with mode parameter (compatibility)."""
+
+        def mode_handler(message: str) -> str:
+            return f"mode_{message}"
+
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", mode_handler),
+            handler_name="mode_handler",
+            mode="query",  # Using mode parameter instead of handler_type
+        )
+
+        assert handler.handler_name == "mode_handler"
+        assert handler.mode == "query"
+
+    def test_handlers_from_callable_invalid_mode(self) -> None:
+        """Test from_callable with invalid mode."""
+
+        def invalid_handler(message: str) -> str:
+            return f"invalid_{message}"
+
+        with pytest.raises(ValueError) as exc_info:
+            FlextHandlers.from_callable(
+                cast("Callable[[object], object]", invalid_handler),
+                handler_name="invalid_handler",
+                mode="invalid_mode",
+            )
+
+        assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
+
+    def test_handlers_from_callable_with_dict_config(self) -> None:
+        """Test from_callable with dict handler_config."""
+
+        def dict_config_handler(message: str) -> str:
+            return f"dict_config_{message}"
+
+        handler_config: dict[str, object] = {
+            "handler_id": "custom_id",
+            "handler_name": "Custom Name",
+            "handler_type": "command",
+            "handler_mode": "command",
+            "metadata": {"test": "value"},
+        }
+
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", dict_config_handler),
+            handler_config=handler_config,
+        )
+
+        assert handler.handler_name == "Custom Name"
+        assert handler._config_model.handler_id == "custom_id"
+        assert handler._config_model.metadata == {"test": "value"}
+
+    def test_handlers_from_callable_with_invalid_dict_config(self) -> None:
+        """Test from_callable with invalid dict handler_config."""
+
+        def invalid_config_handler(message: object) -> object:
+            if isinstance(message, str):
+                return f"invalid_config_{message}"
+            return f"invalid_config_{message!s}"
+
+        invalid_config: dict[str, object] = {
+            "handler_type": "invalid_type"  # Invalid value
+        }
+
+        with pytest.raises(ValueError) as exc_info:
+            FlextHandlers.from_callable(
+                invalid_config_handler, handler_config=invalid_config
+            )
+
+        assert "Invalid handler config:" in str(exc_info.value)
+
+    def test_handlers_from_callable_with_pydantic_config(self) -> None:
+        """Test from_callable with FlextModels.CqrsConfig.Handler object."""
+
+        def pydantic_config_handler(message: object) -> object:
+            if isinstance(message, str):
+                return f"pydantic_config_{message}"
+            return f"pydantic_config_{message!s}"
+
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="pydantic_id",
+            handler_name="Pydantic Handler",
+            handler_type="query",
+            handler_mode="query",
+        )
+
+        handler = FlextHandlers.from_callable(
+            pydantic_config_handler, handler_config=config
+        )
+
+        assert handler.handler_name == "Pydantic Handler"
+        assert handler._config_model.handler_id == "pydantic_id"
+        assert handler.mode == "query"
+
+    def test_handlers_from_callable_anonymous_function(self) -> None:
+        """Test from_callable with lambda (anonymous function)."""
+        handler = FlextHandlers.from_callable(
+            lambda message: f"lambda_{message}"
+            if isinstance(message, str)
+            else f"lambda_{message!s}",
+            handler_name="lambda_handler",
+            handler_type="command",
+        )
+
+        assert handler.handler_name == "lambda_handler"
+        result = handler.handle("test")
+        assert result.is_success
+        assert result.value == "lambda_test"
+
+    def test_handlers_from_callable_function_without_name_attribute(self) -> None:
+        """Test from_callable with function object without __name__ attribute."""
+
+        # Create a callable object without __name__
+        class CallableObject:
+            def __call__(self, message: object) -> object:
+                if isinstance(message, str):
+                    return f"callable_object_{message}"
+                return f"callable_object_{message!s}"
+
+        callable_obj = CallableObject()
+
+        handler = FlextHandlers.from_callable(callable_obj, handler_type="command")
+
+        # Should default to "unknown_handler" when no __name__ attribute
+        assert handler.handler_name == "unknown_handler"
+        result = handler.handle("test")
+        assert result.is_success
+        assert result.value == "callable_object_test"

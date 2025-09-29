@@ -25,7 +25,7 @@ Usage:
 
     result: FlextResult[object] = validate_data({"key": value})
     if result.is_success:
-        validated_data: dict[str, object] = (
+        validated_data: FlextTypes.Core.Dict = (
             result.unwrap()
         )  # Safe extraction after success check
     ```
@@ -42,18 +42,41 @@ import logging
 import signal
 import time
 import types
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from typing import TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import (
     FlextTypes,
+    T,
     TItem,
     TResult,
     TUtil,
     U,
     V,
 )
+
+
+class _DualAccessMethod:
+    """Descriptor that exposes both instance and class-level callables under one name."""
+
+    def __init__(
+        self,
+        instance_impl: Callable[..., object],
+        class_impl: Callable[..., object],
+    ) -> None:
+        self._instance_impl = instance_impl
+        self._class_impl = class_impl
+
+    def __get__(
+        self,
+        instance: object | None,
+        owner: type[object],
+    ) -> Callable[..., object]:
+        if instance is None:
+            return types.MethodType(self._class_impl, owner)
+        return types.MethodType(self._instance_impl, instance)
+
 
 # =============================================================================
 # FLEXT RESULT
@@ -450,6 +473,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Return the success payload, raising :class:`TypeError` on failure.
 
         Direct access to the value property - use .value instead.
+        Maintained for ecosystem compatibility but .value is the preferred API.
         """
         return self.value
 
@@ -507,7 +531,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         /,
         *,
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[TResult]:
         """Create a failed FlextResult with structured error information.
 
@@ -546,7 +570,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             actual_error = error
 
         # Create a new instance with the correct type annotation
-        return FlextResult[TResult](error=actual_error, error_code=error_code, error_data=error_data)
+        return FlextResult[TResult](
+            error=actual_error, error_code=error_code, error_data=error_data
+        )
 
     # Operations
     @staticmethod
@@ -614,7 +640,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
         except Exception as e:
-            # Handle any other unexpected exceptions
+            # Handle object other unexpected exceptions
             return FlextResult[U](
                 error=f"Unexpected chaining error: {e}",
                 error_code=FlextConstants.Errors.CHAIN_ERROR,
@@ -676,6 +702,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     @property
     def value_or_none(self) -> T_co | None:
         """Get value or None if failed."""
+        # ISSUE: Duplicates safe_unwrap_or_none class method - same functionality exists as static method
         return self._data if self.is_success else None
 
     def expect(self, message: str) -> T_co:
@@ -931,7 +958,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     @staticmethod
     def any_success[Tobject](*results: FlextResult[Tobject]) -> bool:
-        """Check if any result succeeded.
+        """Check if object result succeeded.
 
         For test compatibility: False for empty input, True otherwise.
         """
@@ -939,14 +966,28 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     @classmethod
     def first_success[T](
-        cls: type[FlextResult[T]], *results: FlextResult[T]
+        cls: type[FlextResult[T]],
+        *results: FlextResult[T] | Sequence[FlextResult[T]],
     ) -> FlextResult[T]:
-        """Return first successful result."""
+        """Return the first successful result from a nested collection."""
+        flattened = cls._flatten_variadic_args(*results)
+        filtered: list[FlextResult[T]] = []
+        for entry in flattened:
+            if isinstance(entry, FlextResult):
+                filtered.append(entry)
+            else:
+                msg = "first_success expects FlextResult instances"
+                raise TypeError(msg)
+
+        if not filtered:
+            return cls.fail("No results provided")
+
         last_error = "No successful results found"
-        for result in results:
+        for result in filtered:
             if result.is_success:
                 return result
-            last_error = result.error or "Unknown error"
+            last_error = result.error or last_error
+
         return cls.fail(last_error)
 
     @classmethod
@@ -965,24 +1006,31 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     @classmethod
     def try_all[T](
-        cls: type[FlextResult[T]], *funcs: Callable[[], T]
+        cls: type[FlextResult[T]],
+        *funcs: Callable[[], T | FlextResult[T]]
+        | Sequence[Callable[[], T | FlextResult[T]]],
     ) -> FlextResult[T]:
-        """Try functions until one succeeds."""
-        if not funcs:
+        """Execute callables until one succeeds, flattening nested collections."""
+        callables = cls._flatten_callable_args(*funcs)
+        if not callables:
             return cls.fail("No functions provided")
+
         last_error = "All functions failed"
-        for func in funcs:
+        for func in callables:
             try:
-                return cls.ok(func())
-            except (
-                TypeError,
-                ValueError,
-                AttributeError,
-                RuntimeError,
-                ArithmeticError,
-            ) as e:
-                last_error = str(e)
+                outcome = func()
+            except Exception as exc:
+                last_error = str(exc)
                 continue
+
+            if isinstance(outcome, FlextResult):
+                if outcome.is_success:
+                    return outcome
+                last_error = outcome.error or last_error
+                continue
+
+            return cls.ok(cast("T", outcome))
+
         return cls.fail(last_error)
 
     # =========================================================================
@@ -992,6 +1040,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     @classmethod
     def safe_unwrap_or_none(cls, result: FlextResult[T_co]) -> T_co | None:
         """Unwrap value or None if failed."""
+        # ISSUE: Duplicates value_or_none property - same functionality exists as instance property
         return result.value if result.is_success else None
 
     @classmethod
@@ -1001,6 +1050,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         exception_type: type[Exception] = RuntimeError,
     ) -> TUtil:
         """Unwrap or raise exception."""
+        # ISSUE: Duplicates unwrap method functionality - instance method already does the same thing
         if result.is_success:
             return result.value
         raise exception_type(result.error or "Operation failed")
@@ -1667,12 +1717,12 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
             # Add timing metadata
             if result.is_success:
-                success_enhanced_data: dict[str, object] = (
+                success_enhanced_data: FlextTypes.Core.Dict = (
                     dict(result.error_data) if result.error_data else {}
                 )
                 success_enhanced_data["execution_time"] = elapsed
                 return FlextResult[TTimeout].ok(result.unwrap())
-            failure_enhanced_data: dict[str, object] = (
+            failure_enhanced_data: FlextTypes.Core.Dict = (
                 dict(result.error_data) if result.error_data else {}
             )
             failure_enhanced_data["execution_time"] = elapsed
@@ -1779,15 +1829,47 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """
         return FlextResult._Collections.validate_all(value, *validators)
 
-    class Result:
-        """Result factory methods and types."""
+    # Factory methods moved from nested Result class to main FlextResult class
+    @staticmethod
+    def dict_result() -> type[FlextResult[dict[str, str]]]:
+        """Factory for FlextResult[dict[str, str]]."""
+        return FlextResult[dict[str, str]]
 
-        @staticmethod
-        def dict_result() -> type[FlextResult[dict[str, str]]]:
-            """Factory for FlextResult[dict[str, str]]."""
-            return FlextResult[dict[str, str]]
+    # Type alias moved from nested Result class
+    type Success = str  # Generic success type without FlextResult dependency
 
-        type Success = str  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency  # Generic success type without FlextResult dependency
+    @staticmethod
+    def _is_flattenable_sequence(item: object) -> bool:
+        return isinstance(item, Sequence) and not isinstance(
+            item, (str, bytes, bytearray)
+        )
+
+    @staticmethod
+    def _flatten_variadic_args(*items: object) -> list[object]:
+        flat: list[object] = []
+        for item in items:
+            if FlextResult._is_flattenable_sequence(item) and isinstance(
+                item, (list, tuple)
+            ):
+                flat.extend(FlextResult._flatten_variadic_args(*item))
+            else:
+                flat.append(item)
+        return flat
+
+    @staticmethod
+    def _flatten_callable_args(*items: object) -> list[Callable[..., object]]:
+        flat_callables: list[Callable[..., object]] = []
+        for item in items:
+            if FlextResult._is_flattenable_sequence(item) and isinstance(
+                item, (list, tuple)
+            ):
+                flat_callables.extend(FlextResult._flatten_callable_args(*item))
+            else:
+                if not callable(item):
+                    msg = "Expected callable when flattening alternatives"
+                    raise TypeError(msg)
+                flat_callables.append(item)
+        return flat_callables
 
 
 __all__: list[str] = [

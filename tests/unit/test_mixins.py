@@ -41,7 +41,8 @@ class TestFlextMixins:
         """Test mixin registration with invalid parameters."""
         mixins = FlextMixins()
 
-        result = mixins.register("", None)
+        # Test with empty name (should fail)
+        result = mixins.register("", str)
         assert result.is_failure
 
     def test_mixins_unregister_mixin(self) -> None:
@@ -265,9 +266,10 @@ class TestFlextMixins:
         results = mixins.apply_batch(classes)
         if results.is_success and results.data:
             assert len(results.data) == 3
+            # results.data contains the unwrapped values, not FlextResult objects
             assert all(
-                hasattr(result, "is_success") and result.is_success
-                for result in results.data
+                isinstance(result, type(classes[i]))
+                for i, result in enumerate(results.data)
             )
         else:
             assert results.is_failure
@@ -300,9 +302,10 @@ class TestFlextMixins:
 
         if results.is_success and results.data:
             assert len(results.data) == 3
+            # results.data contains the unwrapped values, not FlextResult objects
             assert all(
-                hasattr(result, "is_success") and result.is_success
-                for result in results.data
+                isinstance(result, type(classes[i]))
+                for i, result in enumerate(results.data)
             )
         else:
             assert results.is_failure

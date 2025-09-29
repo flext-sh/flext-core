@@ -25,17 +25,71 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable
+from typing import cast
 
-from flext_core import FlextConstants, FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult
+
+from .example_scenarios import ExampleScenarios
 
 
 class ComprehensiveResultService:
     """Service demonstrating ALL FlextResult patterns and methods."""
 
+    class Scenario:
+        """Shared access to canonical flext_tests scenarios."""
+
+        _scenarios = ExampleScenarios
+
+        @classmethod
+        def dataset(cls) -> dict[str, object]:
+            """Return a reusable dataset with users, configs, and fields."""
+            return cls._scenarios.dataset()
+
+        @classmethod
+        def validation_data(cls) -> dict[str, object]:
+            """Return shared validation data used by multiple examples."""
+            return cls._scenarios.validation_data()
+
+        @classmethod
+        def result_success(
+            cls,
+            data: object | None = None,
+        ) -> FlextResult[object]:
+            """Return a successful ``FlextResult`` instance."""
+            return cls._scenarios.result_success(data)
+
+        @classmethod
+        def result_failure(cls, message: str) -> FlextResult[object]:
+            """Return a failed ``FlextResult`` instance."""
+            return cls._scenarios.result_failure(message)
+
+        @classmethod
+        def user_result(
+            cls,
+            *,
+            success: bool = True,
+        ) -> FlextResult[dict[str, object]]:
+            """Return a user-specific ``FlextResult``."""
+            return cls._scenarios.user_result(success=success)
+
+        @classmethod
+        def metadata(cls) -> dict[str, object]:
+            """Return a structured error scenario from fixtures."""
+            return cls._scenarios.metadata(tags=["result", "demo"])
+
+        @classmethod
+        def error_message(cls) -> str:
+            """Return a structured error scenario from fixtures."""
+            scenario = cls._scenarios.error_scenario("ValidationError")
+            return str(scenario.get("message", "Scenario failure"))
+
     def __init__(self) -> None:
         """Initialize with FlextLogger for structured logging."""
         super().__init__()
         self._logger = FlextLogger(__name__)
+        self._dataset: dict[str, object] = self.Scenario.dataset()
+        self._validation: dict[str, object] = self.Scenario.validation_data()
+        self._metadata: dict[str, object] = self.Scenario.metadata()
 
     # ========== BASIC OPERATIONS ==========
 
@@ -43,19 +97,12 @@ class ComprehensiveResultService:
         """Show all ways to create FlextResult instances."""
         print("\n=== Factory Methods ===")
 
-        # Success creation
-        success = FlextResult[str].ok("value")
+        success = self.Scenario.result_success({"scenario": "factory"})
         print(f"✅ .ok(): {success}")
 
-        # Failure creation with error code
-        failure = FlextResult[str].fail(
-            "Validation failed",
-            error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            error_data={"field": "email"},
-        )
+        failure = self.Scenario.result_failure("Validation failed")
         print(f"❌ .fail(): {failure}")
 
-        # Safe call for exception handling
         def risky_operation() -> int:
             return 1 // 0  # Will raise ZeroDivisionError
 
@@ -66,20 +113,17 @@ class ComprehensiveResultService:
         """Show all ways to extract values from FlextResult."""
         print("\n=== Value Extraction ===")
 
-        success = FlextResult[str].ok("hello")
-        failure = FlextResult[str].fail("error")
+        dataset = self._dataset
+        users_list = cast("list[object]", dataset["users"])
+        user_payload = cast("dict[str, object]", users_list[0])
+        success = FlextResult[dict[str, object]].ok(user_payload)
+        failure = self.Scenario.result_failure("error")
 
-        # Safe extraction methods
-        print(f".unwrap() on success: {success.unwrap()}")
-        print(f".unwrap_or('default'): {failure.unwrap_or('default')}")
+        print(f".unwrap() on success: {success.unwrap()['email']}")
+        print(f".unwrap_or('default'): {failure.unwrap_or({'email': 'default'})}")
         print(f".value_or_none: {failure.value_or_none}")
 
-        # API compatibility (CRITICAL for ecosystem)
-        print(f".value property: {success.value}")
-        # Note: .data property is deprecated but still supported in some versions
-        # print(f".data property (legacy): {success.data}")
-
-        # Expect with custom message
+        print(f".value property: {success.value['name']}")
         print(f".expect('Must have value'): {success.expect('Must have value')}")
 
     # ========== RAILWAY OPERATIONS ==========
@@ -178,30 +222,25 @@ class ComprehensiveResultService:
         """Operations on collections of FlextResults."""
         print("\n=== Collection Operations ===")
 
-        results: list[FlextResult[int]] = [
-            FlextResult[int].ok(1),
-            FlextResult[int].ok(2),
-            FlextResult[int].ok(3),
+        results: list[FlextResult[dict[str, object]]] = [
+            self.Scenario.user_result(success=True),
+            self.Scenario.user_result(success=True),
+            self.Scenario.user_result(success=True),
         ]
 
-        # Sequence: convert list of results to result of list
         sequenced = FlextResult.sequence(results)
-        print(f".sequence(): {sequenced.unwrap()}")
+        print(f".sequence(): {len(sequenced.unwrap())} successful users")
 
-        # AllSuccess: check if all are successful
-        all_ok = FlextResult.all_success(*results)  # Unpack list
+        all_ok = FlextResult.all_success(*results)
         print(f".all_success(): {all_ok}")
 
-        # Add a failure
-        results.append(FlextResult[int].fail("error"))
+        results.append(self.Scenario.user_result(success=False))
 
-        # objectSuccess: check if any is successful
-        any_ok = FlextResult.any_success(*results)  # Unpack list
+        any_ok = FlextResult.any_success(*results)
         print(f".any_success(): {any_ok}")
 
-        # CollectSuccesses: get only successful values
         successes = FlextResult.collect_successes(results)
-        print(f".collect_successes(): {successes}")
+        print(f".collect_successes(): {len(successes)} users")
 
     # ========== VALIDATION PATTERNS ==========
 
@@ -209,49 +248,57 @@ class ComprehensiveResultService:
         """Complex validation scenarios."""
         print("\n=== Validation Chaining ===")
 
-        def validate_not_empty(s: str) -> FlextResult[str]:
-            if not s:
+        validation_data = self._validation
+        sample_email = cast("list[object]", validation_data["valid_emails"])[0]
+        invalid_email = cast("list[object]", validation_data["invalid_emails"])[0]
+
+        def validate_not_empty(value: object) -> FlextResult[str]:
+            str_value = cast("str", value)
+            if not str_value:
                 return FlextResult[str].fail("Empty string")
-            return FlextResult[str].ok(s)
+            return FlextResult[str].ok(str_value)
 
-        def validate_email(s: str) -> FlextResult[str]:
-            if "@" not in s:
+        def validate_email(value: object) -> FlextResult[str]:
+            str_value = cast("str", value)
+            if "@" not in str_value:
                 return FlextResult[str].fail("Invalid email")
-            return FlextResult[str].ok(s)
+            return FlextResult[str].ok(str_value)
 
-        def validate_domain(s: str) -> FlextResult[str]:
-            if not s.endswith(".com"):
+        def validate_domain(value: object) -> FlextResult[str]:
+            str_value = cast("str", value)
+            if not str_value.endswith(".com"):
                 return FlextResult[str].fail("Must be .com domain")
-            return FlextResult[str].ok(s)
+            return FlextResult[str].ok(str_value)
 
-        # Chain multiple validations using flat_map
         result = (
             FlextResult[str]
-            .ok("test@example.com")
+            .ok(cast("str", sample_email))
             .flat_map(validate_not_empty)
             .flat_map(validate_email)
             .flat_map(validate_domain)
         )
         print(f".chain_validations(): {result}")
 
-        # Validate all with accumulation - create validators that return FlextResult[None]
-        def validate_not_empty_none(s: str) -> FlextResult[None]:
-            if not s:
+        def validate_not_empty_none(value: object) -> FlextResult[None]:
+            str_value = cast("str", value)
+            if not str_value:
                 return FlextResult[None].fail("Empty string")
             return FlextResult[None].ok(None)
 
-        def validate_email_none(s: str) -> FlextResult[None]:
-            if "@" not in s:
+        def validate_email_none(value: object) -> FlextResult[None]:
+            str_value = cast("str", value)
+            if "@" not in str_value:
                 return FlextResult[None].fail("Invalid email")
             return FlextResult[None].ok(None)
 
-        def validate_domain_none(s: str) -> FlextResult[None]:
-            if not s.endswith(".com"):
+        def validate_domain_none(value: object) -> FlextResult[None]:
+            str_value = cast("str", value)
+            if not str_value.endswith(".com"):
                 return FlextResult[None].fail("Must be .com domain")
             return FlextResult[None].ok(None)
 
         all_results = FlextResult.validate_all(
-            "test@example.com",
+            invalid_email,
             validate_not_empty_none,
             validate_email_none,
             validate_domain_none,
@@ -306,22 +353,21 @@ class ComprehensiveResultService:
         print("\n=== Context and Logging ===")
 
         def risky_operation() -> FlextResult[int]:
-            return FlextResult[int].fail("Something went wrong")
+            message = self.Scenario.error_message()
+            return FlextResult[int].fail(message)
 
-        # Add context to errors (takes a function)
         result = risky_operation().with_context(
-            lambda err: f"Error for user 12345: {err}"
+            lambda err: f"{self._metadata.get('component', 'component')} error: {err}"
         )
         print(f".with_context(): {result}")
 
-        # Rescue with logging (logs but keeps failure state)
         def log_error(error: str) -> None:
-            self._logger.error(f"Logged error: {error}")
+            extra = {**self._metadata, "severity": "high"}
+            self._logger.error(f"Logged error: {error}", extra=extra)
 
         result = risky_operation().rescue_with_logging(log_error)
         print(f".rescue_with_logging() (logs error): {result}")
 
-        # To recover with a fallback after logging, chain with recover
         result_with_fallback = (
             risky_operation().rescue_with_logging(log_error).recover(lambda _: 0)
         )

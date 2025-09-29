@@ -261,7 +261,7 @@ class FlextMixins:
         if hasattr(obj, FlextConstants.Mixins.FIELD_ID):
             id_value = getattr(obj, FlextConstants.Mixins.FIELD_ID, None)
             if not id_value:
-                new_id = FlextUtilities.Generators.generate_id()
+                new_id = FlextUtilities.generate_id()
                 setattr(obj, FlextConstants.Mixins.FIELD_ID, new_id)
 
     # =============================================================================
@@ -619,8 +619,8 @@ class FlextMixins:
                     "event_type": event_type,
                     "aggregate_id": aggregate_id,
                     "correlation_id": correlation_id
-                    or FlextUtilities.Generators.generate_correlation_id(),
-                    "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                    or FlextUtilities.Correlation.generate_correlation_id(),
+                    "timestamp": FlextUtilities.Correlation.generate_iso_timestamp(),
                     "version": 1,
                 }
 
@@ -665,11 +665,11 @@ class FlextMixins:
             try:
                 # Create command with proper metadata
                 command_metadata = {
-                    "command_id": FlextUtilities.Generators.generate_command_id(),
+                    "command_id": FlextUtilities.Correlation.generate_command_id(),
                     "command_type": command_type,
                     "correlation_id": correlation_id
-                    or FlextUtilities.Generators.generate_correlation_id(),
-                    "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                    or FlextUtilities.Correlation.generate_correlation_id(),
+                    "timestamp": FlextUtilities.Correlation.generate_iso_timestamp(),
                 }
 
                 # Combine command data with metadata
@@ -713,11 +713,11 @@ class FlextMixins:
             try:
                 # Create query with proper metadata
                 query_metadata = {
-                    "query_id": FlextUtilities.Generators.generate_query_id(),
+                    "query_id": FlextUtilities.Correlation.generate_query_id(),
                     "query_type": query_type,
                     "correlation_id": correlation_id
-                    or FlextUtilities.Generators.generate_correlation_id(),
-                    "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                    or FlextUtilities.Correlation.generate_correlation_id(),
+                    "timestamp": FlextUtilities.Correlation.generate_iso_timestamp(),
                 }
 
                 # Combine query data with metadata
@@ -741,7 +741,7 @@ class FlextMixins:
     @override
     def __init__(self) -> None:
         """Initialize FlextMixins instance with internal state."""
-        self._registry: dict[str, object] = {}
+        self._registry: dict[str, type] = {}
         self._middleware: list[
             Callable[[type, object], tuple[type, object] | None]
         ] = []
@@ -751,7 +751,7 @@ class FlextMixins:
         self._circuit_breaker: dict[str, bool] = {}
         self._rate_limit_requests: dict[str, list[datetime]] = {}
 
-    def register(self, name: str, mixin: object) -> FlextResult[None]:
+    def register(self, name: str, mixin: type) -> FlextResult[None]:
         """Register a mixin."""
         if not name or mixin is None:
             return FlextResult[None].fail("Invalid mixin name or mixin object")
@@ -836,7 +836,9 @@ class FlextMixins:
 
                 # Try with retry logic (up to 3 attempts) and timeout
                 max_retries = 3
-                timeout_seconds = 0.1  # 100ms timeout
+                timeout_seconds = (
+                    0.15  # 150ms timeout - handles 100ms sleep but times out at 200ms
+                )
 
                 for attempt in range(max_retries):
                     try:

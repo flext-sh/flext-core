@@ -33,13 +33,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import asdict, is_dataclass
 from typing import TYPE_CHECKING, Literal, cast, override
+
+from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
+from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
@@ -62,6 +67,240 @@ else:
 
 HandlerModeLiteral = Literal["command", "query", "event", "saga"]
 HandlerTypeLiteral = Literal["command", "query", "event", "saga"]
+
+
+class _MessageValidator:
+    """Private message validation utilities for FlextHandlers.
+
+    Moved from FlextUtilities to follow SOLID Single Responsibility Principle.
+    This is handler-specific validation logic, not a general utility.
+    """
+
+    _SERIALIZABLE_MESSAGE_EXPECTATION = (
+        "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
+        "model_dump/dict/as_dict/__slots__ representations"
+    )
+
+    @classmethod
+    def validate_message(
+        cls,
+        message: object,
+        *,
+        operation: str,
+        revalidate_pydantic_messages: bool = False,
+    ) -> FlextResult[None]:
+        """Validate a message for the given operation.
+
+        Args:
+            message: The message object to validate
+            operation: The operation name for context
+            revalidate_pydantic_messages: Whether to revalidate Pydantic models
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error details if invalid
+
+        """
+        # Check for custom validation methods first
+        validation_method_name = f"validate_{operation}"
+        if hasattr(message, validation_method_name):
+            validation_method = getattr(message, validation_method_name)
+            if callable(validation_method):
+                try:
+                    sig = inspect.signature(validation_method)
+                    if len(sig.parameters) == 0:
+                        validation_result_obj = validation_method()
+                        if isinstance(validation_result_obj, FlextResult):
+                            validation_result: FlextResult[object] = cast(
+                                "FlextResult[object]", validation_result_obj
+                            )
+                            if validation_result.is_failure:
+                                return FlextResult[None].fail(
+                                    validation_result.error
+                                    or f"{operation} validation failed",
+                                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                                )
+                except Exception as e:
+                    # Skip if it's a Pydantic field validator - validation will proceed below
+                    logger = FlextLogger(__name__)
+                    logger.debug(
+                        f"Skipping validation method {validation_method_name}: {type(e).__name__}"
+                    )
+
+        # If message is a Pydantic model, assume validated unless revalidation requested
+        if isinstance(message, BaseModel):
+            if not revalidate_pydantic_messages:
+                return FlextResult[None].ok(None)
+
+            try:
+                message.__class__.model_validate(message.model_dump(mode="python"))
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                validation_error = FlextExceptions.ValidationError(
+                    f"Pydantic revalidation failed: {e}",
+                    field="pydantic_model",
+                    value=str(message)[:100]
+                    if hasattr(message, "__str__")
+                    else "unknown",
+                    validation_details={
+                        "pydantic_exception": str(e),
+                        "model_class": message.__class__.__name__,
+                        "revalidated": True,
+                    },
+                    context={
+                        "operation": operation,
+                        "message_type": type(message).__name__,
+                        "validation_type": "pydantic_revalidation",
+                        "revalidate_pydantic_messages": revalidate_pydantic_messages,
+                    },
+                    correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
+                )
+                return FlextResult[None].fail(
+                    str(validation_error),
+                    error_code=validation_error.error_code,
+                    error_data={"exception_context": validation_error.context},
+                )
+
+        # For non-Pydantic objects, ensure serializable representation can be constructed
+        try:
+            cls._build_serializable_message_payload(message, operation=operation)
+        except Exception as exc:
+            if isinstance(exc, FlextExceptions.TypeError):
+                return FlextResult[None].fail(
+                    str(exc),
+                    error_code=exc.error_code,
+                    error_data={"exception_context": exc.context},
+                )
+
+            fallback_error = FlextExceptions.TypeError(
+                f"Invalid message type for {operation}: {type(message).__name__}",
+                expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type=type(message).__name__,
+                context={
+                    "operation": operation,
+                    "message_type": type(message).__name__,
+                    "validation_type": "serializable_check",
+                    "original_exception": str(exc),
+                },
+                correlation_id=f"type_validation_{int(time.time() * 1000)}",
+            )
+            return FlextResult[None].fail(
+                str(fallback_error),
+                error_code=fallback_error.error_code,
+                error_data={"exception_context": fallback_error.context},
+            )
+
+        return FlextResult[None].ok(None)
+
+    @classmethod
+    def _build_serializable_message_payload(
+        cls,
+        message: object,
+        *,
+        operation: str | None = None,
+    ) -> object:
+        """Build a serializable representation for message validation heuristics."""
+        operation_name = operation or "message"
+        context_operation = operation or "unknown"
+
+        if isinstance(message, (dict, str, int, float, bool)):
+            return cast("dict[str, object] | str | int | float | bool", message)
+
+        if message is None:
+            msg = f"Invalid message type for {operation_name}: NoneType"
+            raise FlextExceptions.TypeError(
+                msg,
+                expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
+                actual_type="NoneType",
+                context={
+                    "operation": context_operation,
+                    "message_type": type(None),
+                    "validation_type": "serializable_check",
+                },
+                correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+            )
+
+        if isinstance(message, BaseModel):
+            return message.model_dump()
+
+        if is_dataclass(message) and not isinstance(message, type):
+            return asdict(message)
+
+        # Handle attrs classes
+        attrs_fields = getattr(message, "__attrs_attrs__", None)
+        if (
+            attrs_fields is not None
+            and not isinstance(message, type)
+            and hasattr(message, "__attrs_attrs__")
+            and hasattr(message, "__class__")
+        ):
+            result: dict[str, object] = {}
+            for attr_field in attrs_fields:
+                field_name = attr_field.name
+                if hasattr(message, field_name):
+                    result[field_name] = getattr(message, field_name)
+            return result
+
+        # Try common serialization methods
+        for method_name in ("model_dump", "dict", "as_dict"):
+            method = getattr(message, method_name, None)
+            if callable(method):
+                try:
+                    result_data = method()
+                    if isinstance(result_data, dict):
+                        return cast("dict[str, object]", result_data)
+                except Exception as e:
+                    logger = FlextLogger(__name__)
+                    logger.debug(
+                        f"Serialization method {method_name} failed: {type(e).__name__}"
+                    )
+                    continue
+
+        # Handle __slots__
+        slots = getattr(message, "__slots__", None)
+        if slots:
+            if isinstance(slots, str):
+                slot_names: tuple[str, ...] = (slots,)
+            elif isinstance(slots, (list, tuple)):
+                slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
+            else:
+                msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
+                raise FlextExceptions.TypeError(
+                    msg,
+                    expected_type="str, list, or tuple",
+                    actual_type=type(slots).__name__,
+                    context={
+                        "operation": context_operation,
+                        "message_type": type(message).__name__,
+                        "validation_type": "serializable_check",
+                        "__slots__": repr(slots),
+                    },
+                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                )
+
+            def get_slot_value(slot_name: str) -> object:
+                return getattr(message, slot_name)
+
+            return {
+                slot_name: get_slot_value(slot_name)
+                for slot_name in slot_names
+                if hasattr(message, slot_name)
+            }
+
+        if hasattr(message, "__dict__"):
+            return vars(message)
+
+        msg = f"Invalid message type for {operation_name}: {type(message).__name__}"
+        raise FlextExceptions.TypeError(
+            msg,
+            expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
+            actual_type=type(message).__name__,
+            context={
+                "operation": context_operation,
+                "message_type": type(message).__name__,
+                "validation_type": "serializable_check",
+            },
+            correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+        )
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
@@ -190,7 +429,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             FlextResult indicating validation success or failure
 
         """
-        return FlextUtilities.MessageValidator.validate_message(
+        return _MessageValidator.validate_message(
             command,
             operation="command",
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
@@ -206,7 +445,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             FlextResult indicating validation success or failure
 
         """
-        return FlextUtilities.MessageValidator.validate_message(
+        return _MessageValidator.validate_message(
             query,
             operation="query",
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
@@ -223,30 +462,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         return self._run_pipeline(message, operation=self.mode)
-
-    def handle_command(self, command: MessageT_contra) -> FlextResult[ResultT]:
-        """Handle a command message.
-
-        Args:
-            command: The command to handle
-
-        Returns:
-            FlextResult containing the command handling result or error
-
-        """
-        return self.execute(command)
-
-    def handle_query(self, query: MessageT_contra) -> FlextResult[ResultT]:
-        """Handle a query message.
-
-        Args:
-            query: The query to handle
-
-        Returns:
-            FlextResult containing the query handling result or error
-
-        """
-        return self.execute(query)
 
     def _run_pipeline(
         self, message: MessageT_contra | dict[str, object], operation: str = "command"
