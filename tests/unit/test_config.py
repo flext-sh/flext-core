@@ -11,6 +11,7 @@ import os
 import threading
 import time
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -362,3 +363,167 @@ class TestFlextConfig:
         assert restored_config.app_name == config.app_name
         assert restored_config.version == config.version
         assert restored_config.environment == config.environment
+
+    def test_config_handler_configuration_resolve_handler_mode_with_config_attr(
+        self,
+    ) -> None:
+        """Test resolve_handler_mode with handler_config.handler_type attribute (line 181-184)."""
+        from flext_core import FlextConfig
+
+        # Create a config object with handler_type attribute
+        class MockConfig:
+            handler_type = "query"
+
+        resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
+            handler_mode=None, handler_config=MockConfig()
+        )
+        assert resolved == "query"
+
+    def test_config_handler_configuration_resolve_handler_mode_with_dict(self) -> None:
+        """Test resolve_handler_mode with handler_config dict (line 187-193)."""
+        from flext_core import FlextConfig
+
+        # Test with dict containing handler_type
+        config_dict = {"handler_type": "query"}
+        resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
+            handler_mode=None, handler_config=config_dict
+        )
+        assert resolved == "query"
+
+    def test_config_handler_configuration_resolve_handler_mode_default(self) -> None:
+        """Test resolve_handler_mode default fallback (line 196)."""
+        from flext_core import FlextConfig, FlextConstants
+
+        # Test default fallback when no valid mode found
+        resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
+            handler_mode=None, handler_config=None
+        )
+        assert resolved == FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
+
+    def test_config_handler_configuration_create_handler_config_defaults(self) -> None:
+        """Test create_handler_config with automatic defaults (line 222-250)."""
+        from flext_core import FlextConfig
+
+        # Test with minimal inputs - should generate defaults
+        config = FlextConfig.HandlerConfiguration.create_handler_config(
+            handler_mode="command"
+        )
+
+        # Should have auto-generated handler_id
+        assert "handler_id" in config
+        handler_id = cast("str", config["handler_id"])
+        assert handler_id.startswith("command_handler_")
+
+        # Should have auto-generated handler_name
+        assert "handler_name" in config
+        handler_name = config["handler_name"]
+        assert handler_name == "Command Handler"
+
+        # Should have correct handler_type
+        handler_type = config["handler_type"]
+        handler_mode = config["handler_mode"]
+        assert handler_type == "command"
+        assert handler_mode == "command"
+
+    def test_config_handler_configuration_create_handler_config_with_merge(
+        self,
+    ) -> None:
+        """Test create_handler_config with additional config merge (line 247-248)."""
+        from flext_core import FlextConfig
+
+        # Test with additional config that should be merged
+        additional_config = {"custom_field": "custom_value", "another_field": 42}
+
+        config = FlextConfig.HandlerConfiguration.create_handler_config(
+            handler_mode="query",
+            handler_id="test_query",
+            handler_name="Test Query Handler",
+            handler_config=additional_config,
+        )
+
+        # Should have the provided values
+        assert config["handler_id"] == "test_query"
+        assert config["handler_name"] == "Test Query Handler"
+
+        # Should have merged the additional config
+        assert config["custom_field"] == "custom_value"
+        assert config["another_field"] == 42
+
+    def test_config_validate_log_level_invalid(self) -> None:
+        """Test log level validation with invalid level (line 597-601)."""
+        import pytest
+        from pydantic import ValidationError
+
+        from flext_core import FlextConfig
+
+        # Test with invalid log level - Pydantic raises ValidationError
+        with pytest.raises(ValidationError) as exc_info:
+            FlextConfig(log_level="INVALID")
+
+        assert "Invalid log level" in str(exc_info.value)
+
+    def test_config_validate_debug_trace_production_error(self) -> None:
+        """Test debug cannot be enabled in production (line 608-613)."""
+        import pytest
+        from pydantic import ValidationError
+
+        from flext_core import FlextConfig
+
+        # Test production with debug=True should fail - Pydantic raises ValidationError
+        with pytest.raises(ValidationError) as exc_info:
+            FlextConfig(environment="PRODUCTION", debug=True)
+
+        assert "Debug mode cannot be enabled in production" in str(exc_info.value)
+
+    def test_config_validate_trace_requires_debug(self) -> None:
+        """Test trace requires debug to be enabled (line 616-620)."""
+        import pytest
+        from pydantic import ValidationError
+
+        from flext_core import FlextConfig
+
+        # Test trace=True with debug=False should fail - Pydantic raises ValidationError
+        with pytest.raises(ValidationError) as exc_info:
+            FlextConfig(trace=True, debug=False)
+
+        assert "Trace mode requires debug mode" in str(exc_info.value)
+
+    def test_config_get_or_create_shared_instance_with_overrides(self) -> None:
+        """Test get_or_create_shared_instance with overrides (line 663-679)."""
+        from flext_core import FlextConfig
+
+        # Reset global instance first
+        FlextConfig.reset_global_instance()
+
+        # Create initial instance
+        initial = FlextConfig.get_global_instance()
+
+        # Get instance with overrides - this tests line 668-670
+        # The setattr will attempt to modify the field
+        instance = FlextConfig.get_or_create_shared_instance(
+            project_name="test_project", overrides={"app_name": "Test Application"}
+        )
+
+        # Verify it's the same singleton instance
+        assert instance is initial
+
+        # Verify project_name logging path was hit (line 673-677)
+        instance2 = FlextConfig.get_or_create_shared_instance(
+            project_name="another_project"
+        )
+        assert instance is instance2  # Should be same singleton
+
+        # Reset after test
+        FlextConfig.reset_global_instance()
+
+    def test_config_create_project_config(self) -> None:
+        """Test create_project_config method (line 682-708)."""
+        from flext_core import FlextConfig
+
+        # Create project-specific config
+        project_config = FlextConfig.create_project_config(
+            project_name="test_project", debug=True, log_level="DEBUG"
+        )
+
+        assert project_config.debug is True
+        assert project_config.log_level == "DEBUG"

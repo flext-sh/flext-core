@@ -623,7 +623,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     @classmethod
     def fail[TResult](
         cls: type[FlextResult[TResult]],
-        error: str,
+        error: str | None,
         /,
         *,
         error_code: str | None = None,

@@ -241,7 +241,9 @@ class FlextTestDocker:
                 # Ensure compose_file is str for Path operation
                 compose_file_value = config["compose_file"]
                 if not isinstance(compose_file_value, str):
-                    results[container_name] = f"Invalid compose_file type: {type(compose_file_value)}"
+                    results[container_name] = (
+                        f"Invalid compose_file type: {type(compose_file_value)}"
+                    )
                     continue
 
                 compose_file = str(self.workspace_root / compose_file_value)

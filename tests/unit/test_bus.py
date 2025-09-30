@@ -430,9 +430,7 @@ class TestFlextBusMissingCoverage:
 
         # Create a Bus config model instance
         bus_model = FlextModels.CqrsConfig.Bus(
-            enable_middleware=True,
-            enable_caching=False,
-            max_cache_size=50
+            enable_middleware=True, enable_caching=False, max_cache_size=50
         )
 
         # Should return the same instance
@@ -485,6 +483,7 @@ class TestFlextBusMissingCoverage:
 
     def test_normalize_middleware_config_with_dict_method(self) -> None:
         """Test _normalize_middleware_config with dict method (lines 369-379)."""
+
         class LegacyConfig:
             def dict(self) -> dict[str, object]:
                 return {"legacy": True, "version": 1}
@@ -499,6 +498,7 @@ class TestFlextBusMissingCoverage:
 
     def test_normalize_middleware_config_with_method_type_error(self) -> None:
         """Test _normalize_middleware_config when method() raises TypeError (lines 374-375)."""
+
         class BrokenConfig:
             def model_dump(self, *args: object) -> dict[str, object]:
                 msg = "Required parameter missing"
@@ -548,7 +548,7 @@ class TestFlextBusMissingCoverage:
         command = ValidatedCommand(data="invalid")
         result = bus.execute(command)
         assert result.is_failure
-        assert "Data is invalid" in result.error
+        assert "Data is invalid" in (result.error or "")
 
     def test_command_validation_exception_handling(self) -> None:
         """Test validation exception handling (lines 533-536)."""
@@ -577,15 +577,18 @@ class TestFlextBusMissingCoverage:
 
     def test_middleware_disabled_with_middleware_configured(self) -> None:
         """Test middleware disabled but middleware configured (lines 485-489)."""
-        # Create bus with middleware disabled but add middleware
+        # Create bus with middleware disabled
         bus = FlextBus(bus_config={"enable_middleware": False})
 
-        class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+        def test_middleware(
+            command_type: type, command: object
+        ) -> tuple[type, object] | None:
+            """Test middleware function that matches expected signature."""
+            return None
 
-        # Add middleware
-        bus.add_middleware(TestMiddleware())
+        # Manually configure middleware to simulate configuration before disable
+        # (this tests the edge case where middleware was configured but then disabled)
+        bus._middleware.append(test_middleware)
 
         class TestCommand(FlextModels.Command):
             data: str
@@ -596,11 +599,13 @@ class TestFlextBusMissingCoverage:
 
         bus.register_handler(TestCommand, TestHandler())
 
-        # Execute should succeed - middleware is disabled so it's ignored (lines 485-489)
+        # Execute should fail - middleware is disabled but configured (lines 488-492)
         command = TestCommand(data="test")
         result = bus.execute(command)
-        assert result.is_success
-        assert result.value == "processed_test"
+        assert result.is_failure
+        assert "Middleware pipeline is disabled but middleware is configured" in (
+            result.error or ""
+        )
 
     def test_query_detection_with_query_id_attribute(self) -> None:
         """Test query detection using query_id attribute (line 538)."""
@@ -659,7 +664,7 @@ class TestFlextBusMissingCoverage:
                     "query_id": query.query_id,
                     "param1": query.param1,
                     "param2": query.param2,
-                    "call_count": self.call_count
+                    "call_count": self.call_count,
                 })
 
         handler = TestHandler()
@@ -677,6 +682,7 @@ class TestFlextBusMissingCoverage:
         result2 = bus.execute(query)
         assert result2.is_success
         # Verify cache key generation was executed (lines 543-554 covered)
+        assert isinstance(result2.value, dict)
         assert result2.value["query_id"] == "q1"
 
     def test_handler_execution_with_timing(self) -> None:
@@ -752,7 +758,7 @@ class TestFlextBusMissingCoverage:
         result = bus.execute(command)
         # Should return failure result (lines 631-634)
         assert result.is_failure
-        assert "Handler error" in result.error
+        assert "Handler error" in (result.error or "")
 
     def test_execute_handler_with_invalid_return_type(self) -> None:
         """Test _execute_handler when handler returns non-FlextResult (lines 652-668)."""
@@ -762,7 +768,9 @@ class TestFlextBusMissingCoverage:
             data: str
 
         class BadHandler:
-            def handle(self, command: TestCommand) -> str:  # Returns str, not FlextResult
+            def handle(
+                self, command: TestCommand
+            ) -> str:  # Returns str, not FlextResult
                 return f"raw_{command.data}"
 
         bus.register_handler(TestCommand, BadHandler())
@@ -796,7 +804,7 @@ class TestFlextBusMissingCoverage:
         result = bus.execute(command)
         # Middleware should reject (lines 587-591)
         assert result.is_failure
-        assert "Middleware rejected" in result.error
+        assert "Middleware rejected" in (result.error or "")
 
     def test_handler_with_audit_metadata(self) -> None:
         """Test handler execution with audit metadata (lines 680-686)."""
@@ -824,7 +832,39 @@ class TestFlextBusMissingCoverage:
         # Register with None handler (line 396)
         result = bus.register_handler(None)
         assert result.is_failure
-        assert "Handler cannot be None" in result.error
+        assert "Handler cannot be None" in (result.error or "")
+
+    def test_register_handler_two_args_with_none(self) -> None:
+        """Test register_handler two-arg form with None arguments (line 431)."""
+        bus = FlextBus()
+
+        # Test with None command_type
+        result = bus.register_handler(None, object())
+        assert result.is_failure
+        assert "Invalid arguments: command_type and handler are required" in (
+            result.error or ""
+        )
+
+        # Test with None handler
+        result = bus.register_handler("TestCommand", None)
+        assert result.is_failure
+        assert "Invalid arguments: command_type and handler are required" in (
+            result.error or ""
+        )
+
+    def test_register_handler_invalid_arg_count(self) -> None:
+        """Test register_handler with invalid argument count (line 448)."""
+        bus = FlextBus()
+
+        # Test with no arguments
+        result = bus.register_handler()
+        assert result.is_failure
+        assert "takes 1 or 2 arguments but 0 were given" in (result.error or "")
+
+        # Test with 3 arguments
+        result = bus.register_handler("arg1", "arg2", "arg3")
+        assert result.is_failure
+        assert "takes 1 or 2 arguments but 3 were given" in (result.error or "")
 
     def test_register_handler_without_handle_method(self) -> None:
         """Test register_handler with handler missing handle method (lines 399-403)."""
@@ -837,7 +877,7 @@ class TestFlextBusMissingCoverage:
         # Register handler without handle() method (lines 401-402)
         result = bus.register_handler(InvalidHandler())
         assert result.is_failure
-        assert "must have callable 'handle' method" in result.error
+        assert "must have callable 'handle' method" in (result.error or "")
 
     def test_register_handler_with_handler_id(self) -> None:
         """Test register_handler with handler_id attribute (lines 409-412)."""
@@ -941,7 +981,9 @@ class TestFlextBusMissingCoverage:
             data: str
 
         class RawHandler:
-            def handle(self, command: TestCommand) -> dict:  # Returns dict, not FlextResult
+            def handle(
+                self, command: TestCommand
+            ) -> dict:  # Returns dict, not FlextResult
                 return {"processed": command.data}
 
         bus.register_handler(TestCommand, RawHandler())

@@ -10,7 +10,7 @@ import inspect
 import time
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import cast
+from typing import Any, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -40,7 +40,7 @@ class _CqrsCache:
         self._cache: FlextTypes.Core.OrderedDict = OrderedDict()
         self._max_size = max_size
 
-    def get(self, key: str) -> FlextResult[object] | None:
+    def get(self, key: str) -> FlextResult[Any] | None:
         """Get cached result by key.
 
         Args:
@@ -53,9 +53,9 @@ class _CqrsCache:
         result = self._cache.get(key)
         if result is not None:
             self._cache.move_to_end(key)
-        return cast("FlextResult[object] | None", result)
+        return cast("FlextResult[Any] | None", result)
 
-    def put(self, key: str, result: FlextResult[object]) -> None:
+    def put(self, key: str, result: FlextResult[Any]) -> None:
         """Store result in cache.
 
         Args:
@@ -264,7 +264,7 @@ class FlextBus(FlextMixins):
             config_dict = dict(
                 bus_config
             )  # Create a new dict to avoid mutating the original
-            return FlextModels.CqrsConfig.Bus(**config_dict)
+            return FlextModels.CqrsConfig.Bus.model_validate(config_dict)
         return FlextModels.CqrsConfig.Bus()
 
     @property
@@ -358,12 +358,12 @@ class FlextBus(FlextMixins):
         if middleware_config is None:
             return {}
 
+        if isinstance(middleware_config, dict):
+            return cast("FlextTypes.Core.Dict", middleware_config)
+
         if isinstance(middleware_config, Mapping):
             # Cast to proper type for type checker
             return dict(cast("Mapping[str, object]", middleware_config))
-
-        if isinstance(middleware_config, dict):
-            return cast("FlextTypes.Core.Dict", middleware_config)
 
         # For Pydantic models or objects with model_dump
         for attr_name in ("model_dump", "dict"):
@@ -536,9 +536,7 @@ class FlextBus(FlextMixins):
 
         is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
 
-        should_consider_cache = (
-            self._config_model.enable_caching and self._cache.size() > 0 and is_query
-        )
+        should_consider_cache = self._config_model.enable_caching and is_query
         cache_key: str | None = None
         if should_consider_cache:
             # Generate a more deterministic cache key

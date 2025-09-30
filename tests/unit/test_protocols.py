@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Protocol
+from typing import Any, Protocol, cast
 
 import pytest
 
@@ -51,9 +51,16 @@ class TestFlextProtocols:
         """Test protocol registration with None protocol."""
         protocols = FlextProtocols()
 
-        result = protocols.register("test", None)  # type: ignore[arg-type]
+        class TestProtocol(Protocol):
+            def test_method(self) -> str: ...
+
+        result = protocols.register("test", None)
         assert result.is_failure
-        assert "cannot be None" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "cannot be None" in result.error
+        )
 
     def test_protocols_register_protocol_duplicate(self) -> None:
         """Test registering the same protocol name twice."""
@@ -65,7 +72,11 @@ class TestFlextProtocols:
         protocols.register("test_protocol", TestProtocol)
         result = protocols.register("test_protocol", TestProtocol)
         assert result.is_failure
-        assert "already registered" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "already registered" in result.error
+        )
 
     def test_protocols_unregister_protocol(self) -> None:
         """Test protocol unregistration."""
@@ -101,7 +112,7 @@ class TestFlextProtocols:
         protocols.register("test_protocol", TestProtocol1)
         result = protocols.unregister("test_protocol", TestProtocol2)
         assert result.is_failure
-        assert "mismatch" in result.error
+        assert result.error is not None and result.error and "mismatch" in result.error
 
     def test_protocols_unregister_empty_name(self) -> None:
         """Test unregistering with empty name."""
@@ -112,7 +123,11 @@ class TestFlextProtocols:
 
         result = protocols.unregister("", TestProtocol)
         assert result.is_failure
-        assert "cannot be empty" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "cannot be empty" in result.error
+        )
 
     def test_protocols_validate_implementation(self) -> None:
         """Test protocol implementation validation."""
@@ -418,7 +433,7 @@ class TestFlextProtocols:
         # Exceed rate limit
         result = protocols.validate_implementation("test_protocol", TestImplementation)
         assert result.is_failure
-        assert result.error is not None and "rate limit" in result.error.lower()
+        assert result.error is not None and "rate limit" in (result.error or "").lower()
 
     def test_protocols_validate_with_caching(self) -> None:
         """Test validation with caching."""
@@ -737,7 +752,11 @@ class TestFlextProtocols:
         # Validation should fail due to circuit breaker
         result = protocols.validate_implementation("test_protocol", ValidImpl)
         assert result.is_failure
-        assert "Circuit breaker open" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Circuit breaker open" in result.error
+        )
 
     def test_protocols_rate_limiter_resets_window(self) -> None:
         """Test rate limiter resets count after window expires (lines 429-430)."""
@@ -795,7 +814,11 @@ class TestFlextProtocols:
         # Validation should fail due to middleware error
         result = protocols.validate_implementation("test_protocol", ValidImpl)
         assert result.is_failure
-        assert "Middleware error" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Middleware error" in result.error
+        )
 
     def test_protocols_validation_with_no_annotations(self) -> None:
         """Test validation fails when protocol has no annotations (line 472)."""
@@ -846,7 +869,7 @@ class TestFlextProtocols:
 
         # Try to add non-callable middleware
         with pytest.raises(FlextExceptions.TypeError) as exc_info:
-            protocols.add_middleware("not_callable")  # type: ignore[arg-type]
+            protocols.add_middleware("not_callable")
 
         assert "Middleware must be callable" in str(exc_info.value)
 
@@ -866,7 +889,7 @@ class TestFlextProtocols:
                 return "test"
 
         # Test batch with nonexistent protocol to guarantee failure
-        implementations = [ValidImpl, ValidImpl]
+        implementations: list[type[object]] = [ValidImpl, ValidImpl]
         result = protocols.validate_batch("nonexistent_protocol", implementations)
         assert result.is_failure
         # The error should mention the nonexistent protocol
@@ -879,24 +902,32 @@ class TestFlextProtocols:
         class TestProtocol(Protocol):
             def execute(self) -> str: ...
 
-        protocols._registry[123] = TestProtocol  # type: ignore[index]  # Invalid key type
+        protocols._registry[cast("Any", 123)] = TestProtocol
 
         # Validate should detect the invalid name
         result = protocols.validate()
         assert result.is_failure
-        assert "Invalid protocol name" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Invalid protocol name" in result.error
+        )
 
     def test_protocols_validate_with_invalid_protocol_type(self) -> None:
         """Test validate() fails with invalid protocol type (lines 644, 647-648)."""
         protocols = FlextProtocols()
 
         # Register a protocol with invalid type (not a type)
-        protocols._registry["bad_protocol"] = "not a type"  # type: ignore[assignment]
+        protocols._registry["bad_protocol"] = "not a type"
 
         # Validate should detect the invalid type
         result = protocols.validate()
         assert result.is_failure
-        assert "Invalid protocol type" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Invalid protocol type" in result.error
+        )
 
     def test_protocols_import_config_with_config_dict(self) -> None:
         """Test import_config with config dictionary (lines 678-680)."""
@@ -923,7 +954,10 @@ class TestFlextProtocols:
         protocols = FlextProtocols()
 
         # Import config with string representations of numbers
-        config = {"cache_ttl": "180.5", "circuit_breaker_threshold": "15"}
+        config: FlextTypes.Core.Dict = {
+            "cache_ttl": "180.5",
+            "circuit_breaker_threshold": "15",
+        }
 
         result = protocols.import_config(config)
         assert result.is_success
@@ -939,13 +973,17 @@ class TestFlextProtocols:
         # Create a config that would cause an exception during processing
         # Make _config.update() fail by passing something that will raise
 
-        # Alternatively, corrupt the internal state to force exception
-        # Replace _config with something that will fail on update
-        protocols._config = None  # type: ignore[assignment]
+        # Corrupt the internal state to force exception during config update
+        # Replace _config with something that doesn't have update method
+        protocols._config = cast("Any", "not a dict")
 
         result = protocols.import_config({"config": {"key": "value"}})
         assert result.is_failure
-        assert "Config import failed" in result.error
+        assert (
+            result.error is not None
+            and result.error
+            and "Config import failed" in result.error
+        )
 
     def test_protocols_validate_implementation_with_callable_implementation(
         self,
@@ -984,8 +1022,7 @@ class TestFlextProtocols:
 
         # Define a protocol
         class TestProtocol(Protocol):
-            def test_method(self) -> str:
-                ...
+            def test_method(self) -> str: ...
 
         # Register protocol
         protocols.register("test_protocol", TestProtocol)
@@ -995,25 +1032,25 @@ class TestFlextProtocols:
             def test_method(self) -> str:
                 return "test"
 
-        impl = TestImpl()
-
         # Make 2 requests within window (should succeed)
-        result1 = protocols.validate_implementation("test_protocol", impl)
+        result1 = protocols.validate_implementation("test_protocol", type[TestImpl])
         assert result1.is_success
 
-        result2 = protocols.validate_implementation("test_protocol", impl)
+        result2 = protocols.validate_implementation("test_protocol", type[TestImpl])
         assert result2.is_success
 
         # Third request should fail (rate limit exceeded)
-        result3 = protocols.validate_implementation("test_protocol", impl)
+        result3 = protocols.validate_implementation("test_protocol", type[TestImpl])
         assert result3.is_failure
-        assert "rate limit" in result3.error.lower()
+        assert (
+            result3.error is not None and "rate limit" in (result3.error or "").lower()
+        )
 
         # Wait for window to expire (trigger lines 429-430)
         time.sleep(1.1)
 
         # Next request should reset window and succeed
-        result4 = protocols.validate_implementation("test_protocol", impl)
+        result4 = protocols.validate_implementation("test_protocol", type[TestImpl])
         assert result4.is_success, "Window reset should allow new request"
 
     def test_validation_internal_exception(self) -> None:
@@ -1025,24 +1062,21 @@ class TestFlextProtocols:
 
         # Define a protocol with method
         class TestProtocol(Protocol):
-            def test_method(self) -> str:
-                ...
+            def test_method(self) -> str: ...
 
         # Register protocol
         protocols.register("test_protocol", TestProtocol)
 
         # Corrupt the registry to force exception during validation
-        protocols._registry["test_protocol"] = "not_a_type"  # type: ignore[assignment]
+        protocols._registry["test_protocol"] = "not_a_type"
 
         # Create any implementation
         class TestImpl:
             def test_method(self) -> str:
                 return "test"
 
-        impl = TestImpl()
-
         # Attempt validation - should catch exception (lines 473-484)
-        result = protocols.validate_implementation("test_protocol", impl)
+        result = protocols.validate_implementation("test_protocol", type[TestImpl])
         assert result.is_failure
         # Should contain validation error message
         assert result.error is not None
@@ -1055,15 +1089,17 @@ class TestFlextProtocols:
 
         # Define protocol
         class TestProtocol(Protocol):
-            def test_method(self) -> str:
-                ...
+            def test_method(self) -> str: ...
 
         protocols.register("test_protocol", TestProtocol)
 
         # Corrupt internal state to cause exception in validate()
-        protocols._registry["bad_key"] = "not_a_type"  # type: ignore[assignment]
+        protocols._registry["bad_key"] = "not_a_type"
 
         # Call validate() which should catch exception (lines 647-648)
         result = protocols.validate()
         assert result.is_failure
-        assert "validation failed" in result.error.lower() or "invalid" in result.error.lower()
+        assert result.error is not None and (
+            "validation failed" in (result.error or "").lower()
+            or "invalid" in (result.error or "").lower()
+        )

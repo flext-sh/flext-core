@@ -433,7 +433,11 @@ class FlextService[TDomainResult](
 
         raw_timeout = getattr(operation, "timeout_seconds", None)
         try:
-            timeout_seconds = float(raw_timeout) if raw_timeout is not None else FlextConstants.Core.INITIAL_TIME
+            timeout_seconds = (
+                float(raw_timeout)
+                if raw_timeout is not None
+                else FlextConstants.Core.INITIAL_TIME
+            )
         except (TypeError, ValueError):  # pragma: no cover - defensive branch
             timeout_seconds = FlextConstants.Core.INITIAL_TIME
         timeout_seconds = max(FlextConstants.Core.INITIAL_TIME, timeout_seconds)

@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Final, override
 
+from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -185,7 +186,7 @@ class FlextContext:
 
         self._data: dict[str, object] = context_data.data
         self._metadata: dict[str, object] = context_data.metadata
-        self._hooks: dict[str, list[collections.abc.Callable]] = {}
+        self._hooks: dict[str, list[collections.abc.Callable[..., object]]] = {}
         self._statistics: dict[str, object] = {
             "operations": {
                 "set": 0,
@@ -229,14 +230,14 @@ class FlextContext:
             msg = "Key must be a string"
             raise FlextExceptions.TypeError(
                 message=msg,
-                error_code="TYPE_ERROR",
+                error_code=FlextConstants.Errors.TYPE_ERROR,
             )
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
             msg = "Value must be serializable"
             raise FlextExceptions.TypeError(
                 message=msg,
-                error_code="TYPE_ERROR",
+                error_code=FlextConstants.Errors.TYPE_ERROR,
             )
 
         with self._lock:
@@ -528,7 +529,7 @@ class FlextContext:
             self._metadata.clear()
             self._hooks.clear()
 
-    def add_hook(self, event: str, hook: collections.abc.Callable) -> None:
+    def add_hook(self, event: str, hook: collections.abc.Callable[..., object]) -> None:
         """Add a hook for context events.
 
         Args:

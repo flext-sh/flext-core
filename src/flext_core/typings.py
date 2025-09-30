@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import OrderedDict
-from collections.abc import Callable as CollectionsCallable
+from collections.abc import Callable as CollectionsCallable, Callable as TypingCallable
 from typing import (
     Literal,
     ParamSpec,
@@ -83,9 +83,6 @@ R = TypeVar("R")
 
 # Type aliases - Python 3.13+ syntax
 type WorkspaceStatus = Literal["initializing", "ready", "error", "maintenance"]
-
-# Function type alias at module level for use in other type statements and as import
-type Callable = CollectionsCallable
 
 # Module-level type aliases for common types (can be imported directly)
 type Dict = dict[str, object]
@@ -293,6 +290,9 @@ class FlextTypes:
 
         # Note: Use standard T | None syntax directly
 
+        # Basic types
+        Callable = TypingCallable
+
         # Basic collection types - simple type aliases (not using TypeAlias in class scope)
         Dict = dict[str, object]
         List = list[object]
@@ -324,9 +324,6 @@ class FlextTypes:
 
         # Value types
         type Value = str | int | float | bool | object | None
-
-        # Callable type
-        type Callable = CollectionsCallable
 
         # Collection types with ordering
         OrderedDict = OrderedDict[str, object]
