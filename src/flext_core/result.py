@@ -84,48 +84,128 @@ class _DualAccessMethod:
 
 
 class FlextResult[T_co]:  # Monad library legitimately needs many methods
-    """Foundation result type that powers FLEXT's railway pattern.
+    """Railway-oriented result type for type-safe error handling.
 
-    FlextResult[T] is the cornerstone of error handling throughout the FLEXT
-    ecosystem. Use FlextResult for ALL operations that can succeed or fail,
-    replacing try/except patterns with explicit railway-oriented programming.
+    FlextResult[T] implements the railway pattern (Either monad) for
+    explicit error handling throughout the FLEXT ecosystem. Replaces
+    try/except patterns with composable success/failure workflows and
+    serves as the foundation for all 32+ dependent FLEXT projects.
 
-    **ECOSYSTEM USAGE**: Import and use directly from flext_core:
+    **Function**: Type-safe success/failure wrapper with monadic ops
+        - Wraps operation results with explicit success/failure state
+        - Provides monadic operations (map, flat_map, filter, bind)
+        - Maintains dual API (.data/.value) for backward compatibility
+        - Enables railway-oriented programming patterns ecosystem-wide
+        - Supports advanced composition (sequence, traverse, combine)
+        - Includes timeout, retry, and circuit breaker patterns
+        - Provides resource management with context managers
+        - Guarantees API stability throughout 1.x series
+
+    **Uses**: Pure Python foundation (no external dependencies)
+        - Generic type variable T_co for covariant type safety
+        - Immutable result state with explicit error metadata
+        - Internal caching for performance optimization
+        - Descriptor pattern for dual .data/.value access
+        - FlextConstants for error codes and system defaults
+        - FlextTypes for type definitions and aliases
+        - Python 3.13+ discriminated unions for type narrowing
+        - Structured error data with error_code and error_data
+
+    **How to use**: Basic and advanced patterns
         ```python
         from flext_core import FlextResult
 
+        # Example 1: Basic usage - Create success/failure results
+        success = FlextResult[str].ok("data")
+        failure = FlextResult[str].fail("error occurred")
 
-        def validate_user(data: dict) -> FlextResult[User]:
-            if not data.get("email"):
-                return FlextResult[User].fail("Email required")
-            return FlextResult[User].ok(User(**data))
+        # Check result state
+        if success.is_success:
+            value = success.unwrap()  # Safe extraction after check
+
+        # Example 2: Railway composition (monadic chaining)
+        result = (
+            validate_input(data)
+            .flat_map(lambda d: process_data(d))
+            .map(lambda d: format_output(d))
+            .map_error(lambda e: log_error(e))
+            .filter(lambda d: d.is_valid, "Invalid data")
+        )
+
+        # Example 3: Dual API compatibility (ecosystem requirement)
+        result = FlextResult[dict].ok({"key": "value"})
+        assert result.value == result.data  # Both work
+        data = result.unwrap_or({})  # With default fallback
+
+        # Example 4: Batch processing with error collection
+        items = [1, 2, 3, 4, 5]
+        successes, failures = FlextResult._Utils.batch_process(
+            items, lambda x: process_item(x)
+        )
+
+        # Example 5: Resource management with context manager
+        with FlextResult.ok(resource).expect("Resource required") as r:
+            r.perform_operations()
         ```
 
-    **API COMPATIBILITY**: Supports both .value and .data accessors for
-    ecosystem compatibility across the entire 1.x series.
+    **TODO**: Enhancements for 1.0.0+ releases
+        - [ ] Add async/await support for FlextResult[Awaitable[T]]
+        - [ ] Implement result combination optimizations (parallel)
+        - [ ] Add error context with stack traces for debugging
+        - [ ] Support custom error types beyond strings
+        - [ ] Add performance metrics collection and telemetry
+        - [ ] Implement lazy evaluation for chained operations
+        - [ ] Add Result.from_exception() factory method
+        - [ ] Support error recovery strategies (fallback chains)
+        - [ ] Implement result caching for expensive operations
+        - [ ] Add validation DSL for common patterns
 
-    **UNIFIED ARCHITECTURE**: Following CLAUDE.md unified class pattern,
-    all FlextResult functionality is consolidated into this single class
-    with nested helper classes for organization.
+    Args:
+        value: The success value wrapped in the result (if successful).
+        error: The error message string (if failed).
+        error_code: Optional error code for categorization.
+        error_data: Optional structured error metadata dict.
 
-    The implementation mirrors the behaviour promised for the 1.0.0 release:
-    explicit success/failure states, functional composition helpers, and
-    ergonomic metadata for telemetry. It backs every service contract inside
-    the FLEXT ecosystem and is guaranteed stable throughout the 1.x line.
+    Attributes:
+        _data (T_co | None): Internal success value storage.
+        _error (str | None): Internal error message storage.
+        _error_code (str | None): Internal error code storage.
+        _error_data (FlextTypes.Core.Dict): Internal error metadata.
 
-    **AUDIT FINDINGS**:
-    - ✅ NO DUPLICATIONS: Single comprehensive implementation
-    - ✅ NO EXTERNAL DEPENDENCIES: Pure Python implementation
-    - ✅ COMPLETE FUNCTIONALITY: Advanced monadic operations
-    - ✅ EXCELLENT DOCUMENTATION: Comprehensive examples and usage patterns
-    - ✅ PRODUCTION READY: Stable API with backward compatibility
+    Returns:
+        FlextResult[T]: A result instance wrapping success or failure.
 
-    **IMPLEMENTATION NOTES**:
-    - Uses Python 3.13+ discriminated unions for type safety
-    - Implements advanced functional programming patterns
-    - Provides comprehensive error handling with structured metadata
-    - Supports resource management and timeout operations
-    - Includes circuit breaker and retry patterns
+    Raises:
+        ValueError: When unwrap() called on failure without check.
+        TimeoutError: When timeout operations exceed time limits.
+
+    Note:
+        API compatibility guaranteed throughout 1.x series. Both
+        .data and .value accessors maintained for ecosystem stability.
+        All operations are immutable and thread-safe. Use for ALL
+        operations that can succeed or fail across FLEXT ecosystem.
+
+    Warning:
+        Never use unwrap() without checking is_success first. Use
+        unwrap_or() for safe extraction with defaults. Breaking the
+        railway pattern by ignoring failures defeats type safety.
+
+    Example:
+        Complete workflow with error handling:
+
+        >>> def validate_user(data: dict) -> FlextResult[User]:
+        ...     if not data.get("email"):
+        ...         return FlextResult[User].fail("Email required")
+        ...     return FlextResult[User].ok(User(**data))
+        >>> result = validate_user({"email": "test@example.com"})
+        >>> print(result.is_success)
+        True
+
+    See Also:
+        FlextContainer: For dependency injection with FlextResult.
+        FlextModels: For domain entities using FlextResult patterns.
+        FlextBus: For CQRS command/query handling with results.
+
     """
 
     _data: T_co | None

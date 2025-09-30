@@ -39,12 +39,137 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextDispatcher:
-    """Orchestrates CQRS execution while enforcing context-first observability.
+    """Orchestrates CQRS execution while enforcing context observability.
 
-    The dispatcher is the front door promoted across the ecosystem: all handler
-    registration flows, context scoping, and dispatch telemetry align with the
-    modernization plan so downstream packages can adopt a consistent runtime
-    contract without bespoke buses.
+    The dispatcher is the front door promoted across the ecosystem: all
+    handler registration flows, context scoping, and dispatch telemetry
+    align with the modernization plan so downstream packages can adopt
+    a consistent runtime contract without bespoke buses.
+
+    **Function**: High-level message dispatch orchestration
+        - Handler registration for command and query patterns
+        - Message dispatch with context propagation and tracing
+        - Circuit breaker pattern for fault tolerance
+        - Rate limiting for request throttling
+        - Retry logic with exponential backoff
+        - Timeout enforcement for operation boundaries
+        - Audit logging for compliance and debugging
+        - Performance metrics collection and reporting
+        - Batch processing for multiple messages
+        - Configuration import/export for persistence
+
+    **Uses**: Core FLEXT infrastructure for dispatch
+        - FlextBus for low-level command/query execution
+        - FlextProcessors for circuit breaker and rate limiting
+        - FlextContext for execution context management
+        - FlextLogger for structured logging
+        - FlextConfig for global configuration
+        - FlextHandlers for handler base class patterns
+        - FlextResult[T] for all operation results
+        - FlextUtilities for ID generation and validation
+        - FlextConstants for error codes and defaults
+        - FlextModels for domain models and metadata
+        - concurrent.futures for timeout enforcement
+        - contextvars for context propagation
+
+    **How to use**: Message dispatch and handler registration
+        ```python
+        from flext_core import FlextDispatcher, FlextResult
+
+        # Example 1: Create dispatcher with default config
+        dispatcher_result = FlextDispatcher.create_from_global_config()
+        if dispatcher_result.is_success:
+            dispatcher = dispatcher_result.unwrap()
+
+
+        # Example 2: Register handler with message type
+        class CreateUserCommand:
+            email: str
+
+
+        def create_user_handler(cmd: CreateUserCommand) -> str:
+            return f"User created: {cmd.email}"
+
+
+        reg_result = dispatcher.register_handler(
+            CreateUserCommand, create_user_handler, handler_mode="command"
+        )
+
+        # Example 3: Dispatch message with context metadata
+        command = CreateUserCommand(email="user@example.com")
+        result = dispatcher.dispatch(
+            command,
+            metadata={"user_id": "123", "request_id": "abc"},
+            correlation_id="req-123",
+        )
+
+        # Example 4: Dispatch with timeout override
+        result = dispatcher.dispatch(
+            command,
+            timeout_override=5,  # 5 second timeout
+        )
+
+        # Example 5: Batch dispatch multiple messages
+        messages = [command1, command2, command3]
+        results = dispatcher.dispatch_batch("CreateUser", messages)
+
+        # Example 6: Check circuit breaker state
+        is_open = dispatcher.is_circuit_breaker_open("CreateUser")
+        if not is_open:
+            result = dispatcher.dispatch(command)
+
+        # Example 7: Export configuration for persistence
+        config = dispatcher.export_config()
+        # Later restore with import_config()
+        ```
+
+    **TODO**: Enhanced dispatcher features for 1.0.0+ releases
+        - [ ] Add distributed tracing integration (OpenTelemetry)
+        - [ ] Implement priority queue for message ordering
+        - [ ] Support async dispatch patterns with asyncio
+        - [ ] Add circuit breaker auto-recovery with backoff
+        - [ ] Implement adaptive rate limiting based on metrics
+        - [ ] Support message routing and transformation
+        - [ ] Add saga pattern coordinator integration
+        - [ ] Implement dead letter queue for failed messages
+        - [ ] Support message replay for debugging
+        - [ ] Add health check endpoints for monitoring
+
+    Attributes:
+        config: Dispatcher configuration dictionary.
+        bus: Underlying FlextBus instance for execution.
+        processors: FlextProcessors for specialized processing.
+
+    Note:
+        All dispatch methods return FlextResult for consistency.
+        Circuit breaker and rate limiting are automatic. Use
+        export_config/import_config for state persistence.
+        Context metadata propagates to all handlers. Correlation
+        IDs enable distributed tracing across services.
+
+    Warning:
+        Circuit breaker threshold from FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD.
+        Rate limit from FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS per
+        FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS.
+        Timeout from FlextConstants.Defaults.TIMEOUT_SECONDS, override per message.
+        Batch processing may impact rate limiting calculations.
+
+    Example:
+        Complete dispatcher workflow with error handling:
+
+        >>> dispatcher = FlextDispatcher.create_from_global_config()
+        >>> dispatcher = dispatcher.unwrap()
+        >>> reg_result = dispatcher.register_handler(CreateUserCommand, handler)
+        >>> result = dispatcher.dispatch(command)
+        >>> print(result.is_success)
+        True
+
+    See Also:
+        FlextBus: For low-level command/query execution.
+        FlextProcessors: For circuit breaker and rate limiting.
+        FlextContext: For context management patterns.
+        FlextHandlers: For handler base class patterns.
+
     """
 
     @override
@@ -122,10 +247,19 @@ class FlextDispatcher:
 
         # Initialize specialized processors for SOLID compliance
         processor_config = {
-            "circuit_breaker_threshold": config.get("circuit_breaker_threshold", 5),
-            "rate_limit": config.get("rate_limit", 100),
-            "rate_limit_window": config.get("rate_limit_window", 60),
-            "cache_ttl": config.get("cache_ttl", 300),
+            "circuit_breaker_threshold": config.get(
+                "circuit_breaker_threshold",
+                FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+            ),
+            "rate_limit": config.get(
+                "rate_limit",
+                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+            ),
+            "rate_limit_window": config.get(
+                "rate_limit_window",
+                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            ),
+            "cache_ttl": config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL),
         }
         self._processors = FlextProcessors(processor_config)
 
@@ -147,24 +281,34 @@ class FlextDispatcher:
 
         # Circuit breaker state
         self._circuit_breaker_failures: dict[str, int] = {}
-        circuit_breaker_threshold_raw = config.get("circuit_breaker_threshold", 5)
+        circuit_breaker_threshold_raw = config.get(
+            "circuit_breaker_threshold",
+            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+        )
         self._circuit_breaker_threshold = (
             int(circuit_breaker_threshold_raw)
             if isinstance(circuit_breaker_threshold_raw, (int, str))
-            else 5
+            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
         )
 
         # Rate limiting state
         self._rate_limit_requests: dict[str, list[float]] = {}
-        rate_limit_raw = config.get("rate_limit", 100)
-        self._rate_limit = (
-            int(rate_limit_raw) if isinstance(rate_limit_raw, (int, str)) else 100
+        rate_limit_raw = config.get(
+            "rate_limit", FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
         )
-        rate_limit_window_raw = config.get("rate_limit_window", 60)
+        self._rate_limit = (
+            int(rate_limit_raw)
+            if isinstance(rate_limit_raw, (int, str))
+            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
+        )
+        rate_limit_window_raw = config.get(
+            "rate_limit_window",
+            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+        )
         self._rate_limit_window = (
             float(rate_limit_window_raw)
             if isinstance(rate_limit_window_raw, (int, float, str))
-            else 60.0
+            else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
         )
 
         # Audit and performance tracking
@@ -622,11 +766,6 @@ class FlextDispatcher:
     ) -> FlextResult[object]:
         """Dispatch message with support for both old and new API.
 
-        # TODO(@flext-team): DUPLICATION - This method duplicates functionality that should be in FlextBus
-        # TODO(@flext-team): REFACTOR - Circuit breaker, rate limiting, retry, and timeout logic here
-        # duplicates patterns that should be centralized in FlextBus or FlextUtilities
-        # This creates two places where the same reliability patterns are implemented
-
         Refactored to use specialized processors for SOLID compliance:
         - Circuit breaker, rate limiting, caching → FlextProcessors
         - Timeout, retry → Uses threading with processors
@@ -713,9 +852,13 @@ class FlextDispatcher:
             FlextModels.Metadata(attributes=string_metadata)
 
         # Execute dispatch with retry logic using bus directly
-        max_retries_raw = self._config.get("max_retries", 3)
+        max_retries_raw = self._config.get(
+            "max_retries", FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+        )
         max_retries: int = (
-            int(max_retries_raw) if isinstance(max_retries_raw, (int, float)) else 3
+            int(max_retries_raw)
+            if isinstance(max_retries_raw, (int, float))
+            else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
         )
         retry_delay_raw = self._config.get("retry_delay", 0.1)
         retry_delay: float = (
@@ -729,7 +872,12 @@ class FlextDispatcher:
             try:
                 # Get timeout from config
                 timeout_seconds = float(
-                    cast("int | float", self._config.get("timeout", 30))
+                    cast(
+                        "int | float",
+                        self._config.get(
+                            "timeout", FlextConstants.Defaults.TIMEOUT_SECONDS
+                        ),
+                    )
                 )
                 if timeout_override:
                     timeout_seconds = float(timeout_override)
@@ -1239,7 +1387,13 @@ class FlextDispatcher:
                         else:
                             handlers_for_type: list[object] = handler_list
                         for handler in handlers_for_type:
-                            self.register_handler(message_type_str, handler)
+                            self.register_handler(
+                                message_type_str,
+                                cast(
+                                    "FlextHandlers[object, object] | Callable[[object], object | FlextResult[object]] | None",
+                                    handler,
+                                ),
+                            )
 
             # Import circuit breaker and rate limiting state
             if "circuit_breaker_failures" in config:

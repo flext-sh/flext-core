@@ -38,32 +38,19 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
-from typing import TYPE_CHECKING, Literal, cast, override
+from typing import Literal, cast, override
 
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
+from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-from flext_core.typings import (
-    FlextTypes,
-    MessageT_contra,
-    ResultT,
-    TCommand,
-    TEvent,
-    TQuery,
-    TState,
-)
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-if TYPE_CHECKING:
-    from flext_core.loggings import FlextLogger
-else:
-    # Import at runtime for get_logger method
-    from flext_core.loggings import FlextLogger
 
 HandlerModeLiteral = Literal["command", "query", "event", "saga"]
 HandlerTypeLiteral = Literal["command", "query", "event", "saga"]
@@ -138,7 +125,7 @@ class _MessageValidator:
                 validation_error = FlextExceptions.ValidationError(
                     f"Pydantic revalidation failed: {e}",
                     field="pydantic_model",
-                    value=str(message)[:100]
+                    value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
                     if hasattr(message, "__str__")
                     else "unknown",
                     validation_details={
@@ -203,7 +190,7 @@ class _MessageValidator:
         context_operation = operation or "unknown"
 
         if isinstance(message, (dict, str, int, float, bool)):
-            return cast("dict[str, object] | str | int | float | bool", message)
+            return cast("FlextTypes.Core.Dict | str | int | float | bool", message)
 
         if message is None:
             msg = f"Invalid message type for {operation_name}: NoneType"
@@ -233,7 +220,7 @@ class _MessageValidator:
             and hasattr(message, "__attrs_attrs__")
             and hasattr(message, "__class__")
         ):
-            result: dict[str, object] = {}
+            result: FlextTypes.Core.Dict = {}
             for attr_field in attrs_fields:
                 field_name = attr_field.name
                 if hasattr(message, field_name):
@@ -247,7 +234,7 @@ class _MessageValidator:
                 try:
                     result_data = method()
                     if isinstance(result_data, dict):
-                        return cast("dict[str, object]", result_data)
+                        return cast("FlextTypes.Core.Dict", result_data)
                 except Exception as e:
                     logger = FlextLogger(__name__)
                     logger.debug(
@@ -304,16 +291,150 @@ class _MessageValidator:
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
-    """Simplified CQRS handler base with extracted complexity.
+    """Handler base class for CQRS command and query implementations.
 
-    Reduced from 700+ lines to ~150 lines by delegating to:
-    - FlextConfig.HandlerConfiguration for configuration management
-    - FlextUtilities.TypeChecker for type compatibility checking
-    - FlextUtilities.MessageValidator for message validation
-    - FlextContext.HandlerExecutionContext for execution state
-    - FlextHandlers.Metrics for logging coordination
+    FlextHandlers provides the foundation for implementing CQRS handlers
+    with validation, execution context, metrics collection, and
+    configuration management. Generic base supporting commands, queries,
+    events, and sagas across all 32+ FLEXT projects.
 
-    Maintains all functionality while achieving single responsibility principle.
+    **Function**: Base class for CQRS handler implementations
+        - Abstract base for command/query/event handlers
+        - Handler execution with validation pipeline
+        - Type checking for message compatibility
+        - Metrics collection for handler performance
+        - Configuration via FlextModels.CqrsConfig.Handler
+        - Execution context tracking per handler
+        - Message validation with FlextResult
+        - Pydantic message revalidation support
+        - Logger integration for handler operations
+        - Support for handler_type (command/query/event/saga)
+        - Generic types for message and result type safety
+        - Integration with FlextContext for state
+
+    **Uses**: CQRS infrastructure and validation components
+        - FlextMixins for reusable behavior patterns
+        - ABC for abstract base class enforcement
+        - FlextResult[T] for all operation results
+        - FlextModels.CqrsConfig.Handler for configuration
+        - FlextContext.HandlerExecutionContext for state
+        - FlextUtilities.TypeChecker for type validation
+        - FlextUtilities.MessageValidator for messages
+        - FlextLogger for handler operation logging
+        - FlextConstants for handler defaults
+        - FlextExceptions for structured errors
+        - Generic types MessageT_contra and ResultT
+        - inspect module for type introspection
+
+    **How to use**: Implement handlers by subclassing
+        ```python
+        from flext_core import FlextHandlers, FlextResult, FlextModels
+
+
+        # Example 1: Command handler implementation
+        class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+            def __init__(self):
+                config = FlextModels.CqrsConfig.Handler(
+                    handler_name="CreateUserHandler", handler_type="command"
+                )
+                super().__init__(config=config)
+
+            def handle(self, command: CreateUserCommand) -> FlextResult[User]:
+                # Validate command
+                validation = self._validate_message(command)
+                if validation.is_failure:
+                    return FlextResult[User].fail(validation.error)
+
+                # Execute business logic
+                user = User(name=command.name, email=command.email)
+                return FlextResult[User].ok(user)
+
+
+        # Example 2: Query handler with caching
+        class GetUserHandler(FlextHandlers[GetUserQuery, User]):
+            def __init__(self):
+                config = FlextModels.CqrsConfig.Handler(
+                    handler_name="GetUserHandler", handler_type="query"
+                )
+                super().__init__(config=config)
+
+            def handle(self, query: GetUserQuery) -> FlextResult[User]:
+                # Query execution logic
+                user = database.get_user(query.user_id)
+                if not user:
+                    return FlextResult[User].fail("User not found")
+                return FlextResult[User].ok(user)
+
+
+        # Example 3: Check message compatibility
+        handler = CreateUserHandler()
+        can_handle = handler.can_handle(CreateUserCommand)
+        print(f"Can handle: {can_handle}")
+
+        # Example 4: Access handler metadata
+        handler_id = handler.handler_id
+        handler_mode = handler.handler_mode
+        logger = handler.logger
+        ```
+
+    **TODO**: Enhanced handler features for 1.0.0+ releases
+        - [ ] Add async/await handler support for concurrency
+        - [ ] Implement handler chaining for workflows
+        - [ ] Add enhanced validation with custom rules
+        - [ ] Support handler composition patterns
+        - [ ] Implement handler interceptors
+        - [ ] Add transaction support for handlers
+        - [ ] Support handler versioning
+        - [ ] Implement handler timeout configuration
+        - [ ] Add handler circuit breaker patterns
+        - [ ] Support handler result caching
+
+    Args:
+        config: Handler configuration (CqrsConfig.Handler model).
+
+    Attributes:
+        _config_model (FlextModels.CqrsConfig.Handler): Configuration.
+        _execution_context: Handler execution context state.
+        _accepted_message_types (set): Compatible message types.
+        _revalidate_pydantic_messages (bool): Revalidation flag.
+
+    Returns:
+        FlextHandlers: Abstract handler base for subclassing.
+
+    Raises:
+        NotImplementedError: When handle() not implemented.
+        ValueError: When message validation fails.
+
+    Note:
+        Abstract base class - must implement handle() method.
+        Generic types MessageT_contra and ResultT for type safety.
+        Inherits from FlextMixins for reusable behaviors. All
+        operations return FlextResult for railway pattern.
+
+    Warning:
+        Must call super().__init__(config=config) in subclasses.
+        handle() method must be implemented by subclasses.
+        Message type checking uses generic type parameters.
+        Configuration required at instantiation.
+
+    Example:
+        Complete handler implementation:
+
+        >>> class MyHandler(FlextHandlers[MyCommand, MyResult]):
+        ...     def __init__(self):
+        ...         config = FlextModels.CqrsConfig.Handler(
+        ...             handler_name="MyHandler", handler_type="command"
+        ...         )
+        ...         super().__init__(config=config)
+        ...
+        ...     def handle(self, cmd: MyCommand) -> FlextResult[MyResult]:
+        ...         return FlextResult[MyResult].ok(result)
+
+    See Also:
+        FlextBus: For handler registration and execution.
+        FlextModels: For Command/Query base classes.
+        FlextDispatcher: For higher-level dispatch patterns.
+
     """
 
     @override
@@ -464,7 +585,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         return self._run_pipeline(message, operation=self.mode)
 
     def _run_pipeline(
-        self, message: MessageT_contra | dict[str, object], operation: str = "command"
+        self,
+        message: MessageT_contra | FlextTypes.Core.Dict,
+        operation: str = "command",
     ) -> FlextResult[ResultT]:
         """Run the handler pipeline with message processing.
 
@@ -593,12 +716,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     @classmethod
     def from_callable(
         cls,
-        callable_func: Callable[[object], object],
+        callable_func: FlextTypes.Core.Callable,
         handler_name: str | None = None,
         handler_type: Literal["command", "query"] = "command",
         mode: str | None = None,
         handler_config: FlextModels.CqrsConfig.Handler
-        | dict[str, object]
+        | FlextTypes.Core.Dict
         | None = None,
     ) -> FlextHandlers[object, object]:
         """Create a handler from a callable function.
@@ -753,7 +876,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         ) -> None:
             """Log handler error event with structured logging."""
             if logger is not None:
-                kwargs: dict[str, object] = {
+                kwargs: FlextTypes.Core.Dict = {
                     "handler_mode": handler_mode,
                     "message_type": message_type,
                     "message_id": message_id,
@@ -810,7 +933,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_command_handler[TCommand, TResult](
-            handler_func: Callable[[TCommand], FlextResult[TResult]],
+            handler_func: FlextTypes.Core.Callable,
             command_type: str,
             validation_rules: list[Callable[[TCommand], FlextResult[None]]]
             | None = None,
@@ -871,11 +994,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_query_handler[TQuery, TResult](
-            handler_func: Callable[[TQuery], FlextResult[TResult]],
+            handler_func: FlextTypes.Core.Callable,
             query_type: str,
             *,
             caching_enabled: bool = False,
-            cache_ttl: int = 300,
+            cache_ttl: int = FlextConstants.Defaults.CACHE_TTL,
         ) -> FlextHandlers[TQuery, TResult]:
             """Create a query handler with caching patterns.
 
@@ -936,9 +1059,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_event_handler[TEvent](
-            handler_func: Callable[[TEvent], FlextResult[None]],
+            handler_func: FlextTypes.Core.Callable,
             event_type: str,
-            retry_policy: dict[str, object] | None = None,
+            retry_policy: FlextTypes.Core.Dict | None = None,
         ) -> FlextHandlers[TEvent, None]:
             """Create an event handler with retry patterns.
 
@@ -972,17 +1095,24 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 def handle(self, message: TEvent) -> FlextResult[None]:
                     # Implement retry logic if policy provided
                     if retry_policy:
-                        max_retries_val = retry_policy.get("max_retries", 3)
-                        retry_delay_val = retry_policy.get("retry_delay", 1.0)
+                        max_retries_val = retry_policy.get(
+                            "max_retries", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+                        )
+                        retry_delay_val = retry_policy.get(
+                            "retry_delay",
+                            FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+                        )
                         max_retries = (
                             int(max_retries_val)
                             if isinstance(max_retries_val, (int, str))
-                            else 3
+                            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
                         )
                         retry_delay = (
                             float(retry_delay_val)
                             if isinstance(retry_delay_val, (int, float, str))
-                            else 1.0
+                            else float(
+                                FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+                            )
                         )
 
                         result = None

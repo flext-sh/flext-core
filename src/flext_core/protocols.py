@@ -6,14 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import threading
 import time
 from abc import abstractmethod
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Generic, Protocol, overload, override, runtime_checkable
 
 from flext_core.config import FlextConfig
+from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
@@ -29,54 +32,200 @@ from flext_core.typings import (
 
 
 class FlextProtocols:
-    """Grouped protocol interfaces underpinning the modernization contracts.
+    """Grouped protocol interfaces underpinning modernization contracts.
 
-    They clarify the callable semantics, configuration hooks, and extension
-    points relied upon during the 1.0.0 rollout.
+    They clarify the callable semantics, configuration hooks, and
+    extension points relied upon during the 1.0.0 rollout. Provides
+    type-safe protocol definitions for the entire FLEXT ecosystem.
+
+    **Function**: Protocol interface definitions for type safety
+        - Foundation protocols for validators and operations
+        - Domain protocols for DDD patterns (Service, Repository)
+        - Application protocols for CQRS handlers
+        - Infrastructure protocols for external systems
+        - Extension protocols for plugin architecture
+        - Protocol registration and validation system
+        - Circuit breaker and rate limiting for protocols
+        - Middleware support for protocol processing
+        - Performance metrics and audit logging
+        - Batch and parallel protocol validation
+
+    **Uses**: Core FLEXT infrastructure for protocols
+        - FlextResult[T] for all operation results
+        - FlextTypes for type definitions and aliases
+        - FlextConfig for configuration management
+        - typing.Protocol for runtime-checkable protocols
+        - typing.Generic for generic protocol types
+        - abc.abstractmethod for abstract protocol methods
+        - time module for rate limiting and metrics
+        - datetime for timestamp operations
+        - pathlib for file operations
+        - collections.abc for callable protocols
+
+    **How to use**: Protocol definition and validation
+        ```python
+        from flext_core import FlextProtocols, FlextResult
+
+
+        # Example 1: Use Foundation validator protocol
+        class EmailValidator(FlextProtocols.Foundation.Validator[str]):
+            def validate(self, data: str) -> object:
+                if "@" not in data:
+                    return FlextResult[None].fail("Invalid email")
+                return FlextResult[None].ok(None)
+
+
+        # Example 2: Use Domain service protocol
+        class UserService(FlextProtocols.Domain.Service):
+            def execute(self) -> FlextResult[object]:
+                return FlextResult[object].ok({"status": "success"})
+
+            def is_valid(self) -> bool:
+                return True
+
+
+        # Example 3: Use Application handler protocol
+        class CreateUserHandler(FlextProtocols.Application.Handler[dict, str]):
+            def handle(self, message: dict) -> FlextResult[str]:
+                return FlextResult[str].ok("user_created")
+
+
+        # Example 4: Register protocol for validation
+        protocols = FlextProtocols()
+        reg_result = protocols.register("user_service", UserService)
+        if reg_result.is_success:
+            # Validate implementation
+            validation = protocols.validate_implementation("user_service", UserService)
+
+
+        # Example 5: Use Infrastructure logger protocol
+        class CustomLogger(FlextProtocols.Infrastructure.LoggerProtocol):
+            def info(self, message: str, **kwargs: object) -> None:
+                print(f"INFO: {message}")
+
+
+        # Example 6: Use Extension plugin protocol
+        class CustomPlugin(FlextProtocols.Extensions.Plugin):
+            def initialize(self, context) -> object:
+                return FlextResult[None].ok(None)
+
+
+        # Example 7: Batch protocol validation
+        implementations = [UserService, CreateUserHandler]
+        batch_result = protocols.validate_batch("services", implementations)
+        ```
+
+    **TODO**: Enhanced protocol features for 1.0.0+ releases
+        - [ ] Add distributed protocol validation across services
+        - [ ] Implement protocol versioning for evolution
+        - [ ] Support protocol composition and inheritance
+        - [ ] Add protocol discovery and introspection
+        - [ ] Implement protocol compatibility checking
+        - [ ] Support protocol migration tools
+        - [ ] Add protocol documentation generation
+        - [ ] Implement protocol testing framework
+        - [ ] Support protocol performance profiling
+        - [ ] Add protocol security validation
+
+    Attributes:
+        Foundation: Foundation layer protocol definitions.
+        Domain: Domain layer protocol definitions for DDD.
+        Application: Application layer protocol definitions.
+        Infrastructure: Infrastructure protocol definitions.
+        Extensions: Extension and plugin protocol definitions.
+        Commands: CQRS command and query protocol definitions.
+
+    Note:
+        All protocols use @runtime_checkable for isinstance checks.
+        Protocol registration enables validation and type checking.
+        Circuit breaker and rate limiting protect validation.
+        Middleware can transform protocol implementations.
+        Metrics and audit logs track protocol usage patterns.
+
+    Warning:
+        Protocol validation has rate limiting (10 per 60 seconds).
+        Circuit breaker opens after 5 consecutive failures.
+        Cache TTL defaults to 300 seconds for validation.
+        Batch validation fails if any implementation fails.
+
+    Example:
+        Complete protocol definition and validation workflow:
+
+        >>> protocols = FlextProtocols()
+        >>> protocols.register("validator", EmailValidator)
+        >>> result = protocols.validate_implementation("validator", EmailValidator)
+        >>> print(result.is_success)
+        True
+
+    See Also:
+        FlextHandlers: For handler implementation patterns.
+        FlextBus: For command/query bus implementation.
+        FlextConfig: For configuration management.
+        FlextResult: For result type definitions.
+
     """
 
     @override
-    def __init__(self, config: dict[str, object] | None = None) -> None:
+    def __init__(self, config: FlextTypes.Core.Dict | None = None) -> None:
         """Initialize FlextProtocols with optional configuration.
 
         Args:
             config: Optional configuration dictionary for protocols
 
         """
-        self._registry: dict[str, type[object]] = {}
-        self._middleware: list[object] = []
+        self._registry: FlextTypes.Core.Dict = {}
+        self._middleware: FlextTypes.Core.List = []
         self._config = config or {}
         self._metrics: dict[str, int] = {}
-        self._audit_log: list[dict[str, object]] = []
-        self._performance_metrics: dict[str, float] = {}
+        self._audit_log: FlextTypes.Core.List = []
+        self._performance_metrics: dict[str, dict[str, int | float]] = {}
         self._circuit_breaker: dict[str, bool] = {}
         self._rate_limiter: dict[str, dict[str, int | float]] = {}
-        self._cache: dict[str, tuple[object, float]] = {}
-        cache_ttl = self._config.get("cache_ttl", 300)
+        self._cache: dict[str, tuple[bool, float]] = {}
+        self._lock = threading.Lock()  # Thread safety lock
+        cache_ttl = self._config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL)
         self._cache_ttl = (
-            float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 300.0
+            float(cache_ttl)
+            if isinstance(cache_ttl, (int, float, str))
+            else float(FlextConstants.Defaults.CACHE_TTL)
         )
 
-        circuit_threshold = self._config.get("circuit_breaker_threshold", 5)
+        circuit_threshold = self._config.get(
+            "circuit_breaker_threshold",
+            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+        )
         self._circuit_breaker_threshold = (
             int(circuit_threshold)
             if isinstance(circuit_threshold, (int, float, str))
-            else 5
+            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
         )
 
-        rate_limit = self._config.get("rate_limit", 10)
+        rate_limit = self._config.get(
+            "rate_limit", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+        )
         self._rate_limit = (
-            int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 10
+            int(rate_limit)
+            if isinstance(rate_limit, (int, float, str))
+            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
         )
 
-        rate_window = self._config.get("rate_limit_window", 60)
+        rate_window = self._config.get(
+            "rate_limit_window",
+            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+        )
         self._rate_limit_window = (
-            int(rate_window) if isinstance(rate_window, (int, float, str)) else 60
+            int(rate_window)
+            if isinstance(rate_window, (int, float, str))
+            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
         )
 
-        max_retries = self._config.get("max_retries", 3)
+        max_retries = self._config.get(
+            "max_retries", FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+        )
         self._max_retries = (
-            int(max_retries) if isinstance(max_retries, (int, float, str)) else 3
+            int(max_retries)
+            if isinstance(max_retries, (int, float, str))
+            else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
         )
 
         retry_delay = self._config.get("retry_delay", 0.1)
@@ -100,19 +249,20 @@ class FlextProtocols:
             FlextResult[None]: Success if registration succeeded, failure otherwise
 
         """
-        if not name:
-            return FlextResult[None].fail("Protocol name cannot be empty")
+        with self._lock:
+            if not name:
+                return FlextResult[None].fail("Protocol name cannot be empty")
 
-        if protocol is None:
-            return FlextResult[None].fail("Protocol cannot be None")
+            if protocol is None:
+                return FlextResult[None].fail("Protocol cannot be None")
 
-        if name in self._registry:
-            return FlextResult[None].fail(f"Protocol '{name}' already registered")
+            if name in self._registry:
+                return FlextResult[None].fail(f"Protocol '{name}' already registered")
 
-        self._registry[name] = protocol
-        self._metrics["registrations"] = self._metrics.get("registrations", 0) + 1
+            self._registry[name] = protocol
+            self._metrics["registrations"] = self._metrics.get("registrations", 0) + 1
 
-        return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)
 
     def unregister(self, name: str, protocol: type[object]) -> FlextResult[None]:
         """Unregister a protocol with the given name.
@@ -125,19 +275,22 @@ class FlextProtocols:
             FlextResult[None]: Success if unregistration succeeded, failure otherwise
 
         """
-        if not name:
-            return FlextResult[None].fail("Protocol name cannot be empty")
+        with self._lock:
+            if not name:
+                return FlextResult[None].fail("Protocol name cannot be empty")
 
-        if name not in self._registry:
-            return FlextResult[None].fail(f"Protocol '{name}' not found")
+            if name not in self._registry:
+                return FlextResult[None].fail(f"Protocol '{name}' not found")
 
-        if self._registry[name] != protocol:
-            return FlextResult[None].fail(f"Protocol mismatch for '{name}'")
+            if self._registry[name] != protocol:
+                return FlextResult[None].fail(f"Protocol mismatch for '{name}'")
 
-        del self._registry[name]
-        self._metrics["unregistrations"] = self._metrics.get("unregistrations", 0) + 1
+            del self._registry[name]
+            self._metrics["unregistrations"] = (
+                self._metrics.get("unregistrations", 0) + 1
+            )
 
-        return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)
 
     def validate_implementation(
         self, name: str, implementation: type[object]
@@ -152,77 +305,82 @@ class FlextProtocols:
             FlextResult[None]: Success if validation passed, failure otherwise
 
         """
-        if name not in self._registry:
-            return FlextResult[None].fail(f"Protocol '{name}' not found")
+        with self._lock:
+            if name not in self._registry:
+                return FlextResult[None].fail(f"Protocol '{name}' not found")
 
-        protocol = self._registry[name]
+            protocol = self._registry[name]
 
-        # Check circuit breaker
-        if self._circuit_breaker.get(name, False):
-            return FlextResult[None].fail(f"Circuit breaker open for protocol '{name}'")
+            # Check circuit breaker
+            if self._circuit_breaker.get(name, False):
+                return FlextResult[None].fail(
+                    f"Circuit breaker open for protocol '{name}'"
+                )
 
-        # Check rate limit
-        now = time.time()
-        rate_key = f"{name}_rate"
-        if rate_key not in self._rate_limiter:
-            self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
+            # Check rate limit
+            now = time.time()
+            rate_key = f"{name}_rate"
+            if rate_key not in self._rate_limiter:
+                self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
 
-        rate_data = self._rate_limiter[rate_key]
-        if now - rate_data["window_start"] > self._rate_limit_window:
-            rate_data["count"] = 0
-            rate_data["window_start"] = now
+            rate_data = self._rate_limiter[rate_key]
+            if now - rate_data["window_start"] > self._rate_limit_window:
+                rate_data["count"] = 0
+                rate_data["window_start"] = now
 
-        if rate_data["count"] >= self._rate_limit:
-            return FlextResult[None].fail(f"Rate limit exceeded for protocol '{name}'")
+            if rate_data["count"] >= self._rate_limit:
+                return FlextResult[None].fail(
+                    f"Rate limit exceeded for protocol '{name}'"
+                )
 
-        rate_data["count"] += 1
+            rate_data["count"] += 1
 
-        # Check cache
-        cache_key = f"{name}:{hash(str(implementation))}"
-        if cache_key in self._cache:
-            _, cached_time = self._cache[cache_key]
-            if time.time() - cached_time < self._cache_ttl:
-                return FlextResult[None].ok(None)
+            # Check cache
+            cache_key = f"{name}:{hash(str(implementation))}"
+            if cache_key in self._cache:
+                _, cached_time = self._cache[cache_key]
+                if time.time() - cached_time < self._cache_ttl:
+                    return FlextResult[None].ok(None)
 
-        # Apply middleware
-        processed_implementation = implementation
-        for middleware in self._middleware:
-            if callable(middleware):
-                try:
-                    processed_implementation = middleware(processed_implementation)
-                except Exception as e:
-                    return FlextResult[None].fail(f"Middleware error: {e}")
+            # Apply middleware
+            processed_implementation = implementation
+            for middleware in self._middleware:
+                if callable(middleware):
+                    try:
+                        processed_implementation = middleware(processed_implementation)
+                    except Exception as e:
+                        return FlextResult[None].fail(f"Middleware error: {e}")
 
-        # Validate implementation
-        try:
-            # Basic validation - check if implementation has the expected methods
-            if hasattr(protocol, "__annotations__"):
-                # For now, just do basic validation
-                # In a real implementation, you'd check method signatures, etc.
-                self._cache[cache_key] = (True, time.time())
-                self._metrics["successful_validations"] = (
-                    self._metrics.get("successful_validations", 0) + 1
+            # Validate implementation
+            try:
+                # Basic validation - check if implementation has the expected methods
+                if hasattr(protocol, "__annotations__"):
+                    # For now, just do basic validation
+                    # In a real implementation, you'd check method signatures, etc.
+                    self._cache[cache_key] = (True, time.time())
+                    self._metrics["successful_validations"] = (
+                        self._metrics.get("successful_validations", 0) + 1
+                    )
+                    self._audit_log.append({
+                        "timestamp": time.time(),
+                        "protocol": name,
+                        "implementation": str(implementation),
+                        "status": "success",
+                    })
+                    return FlextResult[None].ok(None)
+                return FlextResult[None].fail(f"Protocol '{name}' has no annotations")
+            except Exception as e:
+                self._metrics["failed_validations"] = (
+                    self._metrics.get("failed_validations", 0) + 1
                 )
                 self._audit_log.append({
                     "timestamp": time.time(),
                     "protocol": name,
                     "implementation": str(implementation),
-                    "status": "success",
+                    "status": "error",
+                    "error": str(e),
                 })
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail(f"Protocol '{name}' has no annotations")
-        except Exception as e:
-            self._metrics["failed_validations"] = (
-                self._metrics.get("failed_validations", 0) + 1
-            )
-            self._audit_log.append({
-                "timestamp": time.time(),
-                "protocol": name,
-                "implementation": str(implementation),
-                "status": "error",
-                "error": str(e),
-            })
-            return FlextResult[None].fail(f"Validation error: {e}")
+                return FlextResult[None].fail(f"Validation error: {e}")
 
     def add_middleware(self, middleware: object) -> None:
         """Add middleware to the validation pipeline.
@@ -238,28 +396,28 @@ class FlextProtocols:
             raise TypeError(error_msg)
 
     def get_metrics(self) -> dict[str, int]:
-        """Get protocol metrics.
+        """Get current metrics.
 
         Returns:
-            dict[str, int]: Current metrics
+            FlextTypes.Core.Dict: Current metrics
 
         """
         return self._metrics.copy()
 
-    def get_audit_log(self) -> list[dict[str, object]]:
-        """Get audit log of validation operations.
+    def get_audit_log(self) -> FlextTypes.Core.List:
+        """Get audit log entries.
 
         Returns:
-            list[dict[str, object]]: Audit log entries
+            FlextTypes.Core.List: Audit log entries
 
         """
         return self._audit_log.copy()
 
-    def get_performance_metrics(self) -> dict[str, float]:
+    def get_performance_metrics(self) -> dict[str, dict[str, int | float]]:
         """Get performance metrics.
 
         Returns:
-            dict[str, float]: Performance metrics
+            FlextTypes.Core.Dict: Performance metrics
 
         """
         return self._performance_metrics.copy()
@@ -278,43 +436,47 @@ class FlextProtocols:
 
     def validate_batch(
         self, name: str, implementations: list[type[object]]
-    ) -> FlextResult[list[object]]:
-        """Validate a batch of implementations.
+    ) -> FlextResult[list[FlextResult[None]]]:
+        """Validate multiple implementations against a protocol in batch.
 
         Args:
             name: Protocol name
-            implementations: List of implementation classes to validate
+            implementations: List of implementations to validate
 
         Returns:
-            FlextResult[list[object]]: List of validation results
+            FlextResult[list[FlextResult[None]]]: List of validation results
 
         """
-        results: list[object] = []
-        for implementation in implementations:
-            result = self.validate_implementation(name, implementation)
+        results: list[FlextResult[None]] = []
+        for impl in implementations:
+            result = self.validate_implementation(name, impl)
             if result.is_failure:
-                return FlextResult[list[object]].fail(
+                return FlextResult[list[FlextResult[None]]].fail(
                     f"Batch validation failed: {result.error}"
                 )
-            results.append(result.value)
-
-        return FlextResult[list[object]].ok(results)
+            results.append(result)
+        return FlextResult[list[FlextResult[None]]].ok(results)
 
     def validate_parallel(
         self, name: str, implementations: list[type[object]]
-    ) -> FlextResult[list[object]]:
-        """Validate implementations in parallel.
+    ) -> FlextResult[list[FlextResult[None]]]:
+        """Validate multiple implementations in parallel.
 
         Args:
             name: Protocol name
-            implementations: List of implementation classes to validate
+            implementations: List of implementations to validate
 
         Returns:
-            FlextResult[list[object]]: List of validation results
+            FlextResult[list[FlextResult[None]]]: List of validation results
 
         """
-        # For now, just validate sequentially - can be enhanced with actual parallel processing
-        return self.validate_batch(name, implementations)
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self.validate_implementation, name, impl)
+                for impl in implementations
+            ]
+            results = [future.result() for future in futures]
+        return FlextResult[list[FlextResult[None]]].ok(results)
 
     # =============================================================================
     # Missing Methods for Test Compatibility
@@ -322,24 +484,24 @@ class FlextProtocols:
 
     def cleanup(self) -> None:
         """Clean up protocol registry resources."""
-        self._registry.clear()
-        self._middleware.clear()
-        self._metrics.clear()
-        self._audit_log.clear()
-        self._performance_metrics.clear()
-        self._circuit_breaker.clear()
+        with self._lock:
+            self._registry.clear()
+            self._middleware.clear()
+            self._metrics.clear()
+            self._audit_log.clear()
+            self._performance_metrics.clear()
+            self._circuit_breaker.clear()
 
-    def get_protocols(self, name: str) -> list[type[object]]:
-        """Get protocols for specific name.
+    def get_protocols(self, name: str) -> FlextTypes.Core.List:
+        """Get registered protocols by name.
 
         Args:
             name: Protocol name
 
         Returns:
-            List of protocol implementations
+            FlextTypes.Core.List: List of protocol types
 
         """
-        # Return single protocol or empty list
         protocol = self._registry.get(name)
         return [protocol] if protocol is not None else []
 
@@ -347,20 +509,19 @@ class FlextProtocols:
         """Clear all registered protocols."""
         self._registry.clear()
 
-    def get_statistics(self) -> dict[str, object]:
-        """Get protocol registry statistics.
+    def get_statistics(self) -> FlextTypes.Core.Dict:
+        """Get statistics about protocol usage.
 
         Returns:
-            Dictionary of statistics
+            FlextTypes.Core.Dict: Statistics dictionary
 
         """
         return {
-            "total_protocols": len(self._registry),
-            "protocol_names": len(self._registry),
+            "protocols_registered": len(self._registry),
             "middleware_count": len(self._middleware),
-            "audit_log_entries": len(self._audit_log),
-            "performance_metrics": self._performance_metrics.copy(),
-            "circuit_breakers": self._circuit_breaker.copy(),
+            "metrics": self._metrics.copy(),
+            "cache_size": len(self._cache),
+            "audit_log_size": len(self._audit_log),
         }
 
     def validate(self) -> FlextResult[None]:
@@ -382,37 +543,47 @@ class FlextProtocols:
         except Exception as e:
             return FlextResult[None].fail(f"Protocol validation failed: {e}")
 
-    def export_config(self) -> dict[str, object]:
-        """Export protocol registry configuration.
+    def export_config(self) -> FlextTypes.Core.Dict:
+        """Export configuration.
 
         Returns:
-            Dictionary of configuration
+            FlextTypes.Core.Dict: Configuration dictionary
 
         """
         return {
-            "protocol_count": len(self._registry),
-            "middleware_count": len(self._middleware),
-            "audit_log_size": len(self._audit_log),
-            "performance_metrics_count": len(self._performance_metrics),
-            "circuit_breaker_count": len(self._circuit_breaker),
+            "config": self._config.copy(),
+            "cache_ttl": self._cache_ttl,
+            "circuit_breaker_threshold": self._circuit_breaker_threshold,
+            "rate_limit": self._rate_limit,
+            "rate_limit_window": self._rate_limit_window,
+            "max_retries": self._max_retries,
+            "retry_delay": self._retry_delay,
+            "timeout": self._timeout,
         }
 
-    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
-        """Import protocol registry configuration.
+    def import_config(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
+        """Import configuration.
 
         Args:
             config: Configuration dictionary
 
         Returns:
-            FlextResult with import result
+            FlextResult indicating success or failure
 
         """
         try:
-            # Configuration import would go here
-            # For now, just validate the config structure
-            if not isinstance(config, dict):
-                return FlextResult[None].fail("Config must be a dictionary")
-
+            if "config" in config:
+                config_dict = config["config"]
+                if isinstance(config_dict, dict):
+                    self._config.update(config_dict)
+            if "cache_ttl" in config:
+                cache_ttl = config["cache_ttl"]
+                if isinstance(cache_ttl, (int, float, str)):
+                    self._cache_ttl = float(cache_ttl)
+            if "circuit_breaker_threshold" in config:
+                threshold = config["circuit_breaker_threshold"]
+                if isinstance(threshold, (int, str)):
+                    self._circuit_breaker_threshold = int(threshold)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Config import failed: {e}")
@@ -563,7 +734,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def get_uncommitted_events(self) -> list[object]:
+            def get_uncommitted_events(self) -> FlextTypes.Core.List:
                 """Get uncommitted domain events."""
                 ...
 
@@ -827,7 +998,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def get_supported_command_types(self) -> list[str]:
+            def get_supported_command_types(self) -> FlextTypes.Core.List:
                 """Get list of supported command types."""
                 ...
 
@@ -846,7 +1017,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def get_supported_query_types(self) -> list[str]:
+            def get_supported_query_types(self) -> FlextTypes.Core.List:
                 """Get list of supported query types."""
                 ...
 
@@ -865,7 +1036,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def get_supported_event_types(self) -> list[str]:
+            def get_supported_event_types(self) -> FlextTypes.Core.List:
                 """Get list of supported event types."""
                 ...
 
@@ -908,7 +1079,10 @@ class FlextProtocols:
 
             @abstractmethod
             def save_events(
-                self, aggregate_id: str, events: list[object], expected_version: int
+                self,
+                aggregate_id: str,
+                events: FlextTypes.Core.List,
+                expected_version: int,
             ) -> FlextResult[None]:
                 """Save events for an aggregate."""
                 ...
@@ -916,21 +1090,21 @@ class FlextProtocols:
             @abstractmethod
             def get_events(
                 self, aggregate_id: str, from_version: int = 0
-            ) -> FlextResult[list[object]]:
+            ) -> FlextResult[FlextTypes.Core.List]:
                 """Get events for an aggregate."""
                 ...
 
             @abstractmethod
             def get_events_by_type(
                 self, event_type: str, from_timestamp: datetime | None = None
-            ) -> FlextResult[list[object]]:
+            ) -> FlextResult[FlextTypes.Core.List]:
                 """Get events by type."""
                 ...
 
             @abstractmethod
             def get_events_by_correlation_id(
                 self, correlation_id: str
-            ) -> FlextResult[list[object]]:
+            ) -> FlextResult[FlextTypes.Core.List]:
                 """Get events by correlation ID."""
                 ...
 
@@ -944,7 +1118,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def publish_events(self, events: list[object]) -> FlextResult[None]:
+            def publish_events(self, events: FlextTypes.Core.List) -> FlextResult[None]:
                 """Publish multiple domain events."""
                 ...
 
@@ -1042,7 +1216,7 @@ class FlextProtocols:
             """Log renderer protocol for formatting log entries."""
 
             def __call__(
-                self, logger: object, method_name: str, event_dict: dict[str, object]
+                self, logger: object, method_name: str, event_dict: FlextTypes.Core.Dict
             ) -> str:
                 """Render log entry to string format.
 
@@ -1106,11 +1280,11 @@ class FlextProtocols:
                 """
                 ...
 
-            def get_consolidated_context(self: object) -> dict[str, object]:
+            def get_consolidated_context(self: object) -> FlextTypes.Core.Dict:
                 """Get all context data consolidated for log entry building.
 
                 Returns:
-                    dict[str, object]: Consolidated context data
+                    FlextTypes.Core.Dict: Consolidated context data
 
                 """
                 ...

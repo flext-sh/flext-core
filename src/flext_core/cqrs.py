@@ -22,12 +22,120 @@ HandlerTypeLiteral = Literal["command", "query"]
 
 
 class FlextCqrs:
-    """Unified CQRS infrastructure using existing flext-core functionality.
+    """CQRS helpers and decorators for command/query patterns.
 
-    Provides simplified access to CQRS operations by leveraging the existing
-    flext-core infrastructure: FlextModels for validation, FlextUtilities for
-    processing, FlextHandlers for handler creation, FlextConfig for configuration,
-    and FlextResult for railway-oriented error handling.
+    FlextCqrs provides utility functions and decorators for implementing
+    CQRS patterns with FlextBus and FlextDispatcher. Includes result
+    helpers, handler factories, and decorators for command/query
+    handlers across all 32+ FLEXT projects.
+
+    **Function**: CQRS utility functions and decorators
+        - Result helpers for success/failure creation
+        - Handler factories for command/query handlers
+        - Decorators for command/query handler registration
+        - Command/query validation utilities
+        - Handler configuration helpers
+        - Error handling with structured metadata
+        - Integration with FlextResult railway pattern
+        - Support for handler metadata attachment
+        - Configuration-aware result creation
+        - Type-safe handler creation patterns
+
+    **Uses**: Core FLEXT infrastructure for CQRS
+        - FlextResult[T] for all operation results
+        - FlextModels for command/query base classes
+        - FlextConstants for CQRS error codes
+        - FlextUtilities for validation and processing
+        - FlextTypes for type definitions
+        - functools for decorator implementation
+        - Literal types for handler type validation
+
+    **How to use**: CQRS helpers and decorators
+        ```python
+        from flext_core import FlextCqrs, FlextResult, FlextModels
+
+        # Example 1: Create success result with metadata
+        config = FlextModels.CqrsConfig.Handler(
+            handler_name="CreateUser", handler_type="command"
+        )
+        result = FlextCqrs.Results.success(data={"user_id": "123"}, config=config)
+
+        # Example 2: Create failure result with error details
+        result = FlextCqrs.Results.failure(
+            "Validation failed",
+            error_code="VALIDATION_ERROR",
+            error_data={"field": "email"},
+            config=config,
+        )
+
+
+        # Example 3: Use decorators for handler registration
+        @FlextCqrs.Decorators.command_handler
+        class CreateUserHandler:
+            def handle(self, cmd: CreateUserCommand) -> FlextResult[User]:
+                return FlextCqrs.Results.success(user)
+
+
+        # Example 4: Query handler decorator
+        @FlextCqrs.Decorators.query_handler
+        class GetUserHandler:
+            def handle(self, query: GetUserQuery) -> FlextResult[User]:
+                return FlextCqrs.Results.success(user)
+
+
+        # Example 5: Create handler configuration
+        handler_config = FlextCqrs.create_handler_config(
+            handler_name="MyHandler", handler_type="command"
+        )
+
+        # Example 6: Validate command before execution
+        validation_result = FlextCqrs.validate_command(command)
+        if validation_result.is_success:
+            result = handler.handle(command)
+        ```
+
+    **TODO**: Enhanced CQRS features for 1.0.0+ releases
+        - [ ] Add saga coordinator decorators for workflows
+        - [ ] Implement event handler decorators
+        - [ ] Add query optimization decorators (caching)
+        - [ ] Support command validation decorators
+        - [ ] Implement command/query middleware decorators
+        - [ ] Add handler composition utilities
+        - [ ] Support async command/query decorators
+        - [ ] Implement retry decorators for handlers
+        - [ ] Add circuit breaker decorators
+        - [ ] Support handler metrics decorators
+
+    Attributes:
+        Results: Result helper utilities for CQRS.
+        Decorators: Decorator utilities for handlers.
+
+    Note:
+        All result helpers return FlextResult for consistency.
+        Decorators integrate with FlextBus registration. Use
+        Results.success/failure for consistent error handling.
+        Handler metadata attached to results for tracing.
+
+    Warning:
+        Decorators must be used with FlextBus integration.
+        Handler configuration required for metadata attachment.
+        Error codes should use FlextConstants.Cqrs namespace.
+
+    Example:
+        Complete CQRS workflow with helpers:
+
+        >>> result = FlextCqrs.Results.success({"id": "123"})
+        >>> print(result.is_success)
+        True
+        >>> failure = FlextCqrs.Results.failure("Error occurred")
+        >>> print(failure.is_failure)
+        True
+
+    See Also:
+        FlextBus: For command/query bus operations.
+        FlextHandlers: For handler base class patterns.
+        FlextDispatcher: For higher-level dispatch.
+
     """
 
     class Results:
@@ -98,140 +206,6 @@ class FlextCqrs:
                 error_data=enhanced_error_data,
             )
 
-    class Operations:
-        """CQRS Operations using existing flext-core functionality."""
-
-        @staticmethod
-        def create_command(
-            command_data: FlextTypes.Core.Dict,
-            config: object | None = None,
-        ) -> FlextResult[FlextModels.Command]:
-            """Create a validated CQRS command using FlextModels.
-
-            Args:
-                command_data: Raw command data to validate
-                config: Optional handler configuration (for metadata)
-
-            Returns:
-                FlextResult containing validated Command
-
-            """
-            try:
-                # Use FlextUtilities for ID generation if needed
-                if "command_id" not in command_data:
-                    command_data = {
-                        **command_data,
-                        "command_id": FlextUtilities.generate_id(),
-                    }
-
-                # Use FlextModels for validation
-                command = FlextModels.Command.model_validate(command_data)
-                return FlextResult[FlextModels.Command].ok(command)
-
-            except Exception as e:
-                return FlextResult[FlextModels.Command].fail(
-                    f"{FlextConstants.Messages.VALIDATION_FAILED}: Command validation failed: {e!s}",
-                    error_code=FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
-                    error_data={
-                        "command_data": command_data,
-                        "config": getattr(config, "model_dump", lambda: None)()
-                        if config
-                        else None,
-                    },
-                )
-
-        @staticmethod
-        def create_query(
-            query_data: FlextTypes.Core.Dict,
-            config: object | None = None,
-        ) -> FlextResult[FlextModels.Query]:
-            """Create a validated CQRS query using FlextModels.
-
-            Args:
-                query_data: Raw query data to validate
-                config: Optional handler configuration (for metadata)
-
-            Returns:
-                FlextResult containing validated Query
-
-            """
-            # 🚨 DUPLICATION: FlextModels.Query.validate_query already performs this validation and ID generation.
-            try:
-                # Use FlextUtilities for ID generation if needed
-                if "query_id" not in query_data:
-                    query_data = {
-                        **query_data,
-                        "query_id": FlextUtilities.generate_id(),
-                    }
-
-                # Use FlextModels for validation
-                query = FlextModels.Query.model_validate(query_data)
-                return FlextResult[FlextModels.Query].ok(query)
-
-            except Exception as e:
-                return FlextResult[FlextModels.Query].fail(
-                    f"{FlextConstants.Messages.VALIDATION_FAILED} (query): {e!s}",
-                    error_code=FlextConstants.Cqrs.QUERY_VALIDATION_FAILED,
-                    error_data={
-                        "query_data": query_data,
-                        "config": getattr(config, "model_dump", lambda: None)()
-                        if config
-                        else None,
-                    },
-                )
-
-        @staticmethod
-        def create_handler_config(
-            handler_type: HandlerTypeLiteral,
-            *,
-            handler_name: str | None = None,
-            handler_id: str | None = None,
-            config_overrides: FlextTypes.Core.Dict | None = None,
-        ) -> FlextResult[FlextModels.CqrsConfig.Handler]:
-            """Create a validated handler configuration using FlextModels.
-
-            Args:
-                handler_type: Type of handler (command or query)
-                handler_name: Optional custom handler name
-                handler_id: Optional custom handler ID
-                config_overrides: Optional configuration overrides
-
-            Returns:
-                FlextResult containing validated handler configuration
-
-            """
-            # 🚨 DUPLICATION: This method is a thin wrapper over FlextModels.CqrsConfig.Handler.create_handler_config.
-            try:
-                # Use FlextUtilities for name/ID generation
-                default_name = handler_name or f"{handler_type}_handler"
-                default_id = (
-                    handler_id
-                    or f"handler_{handler_type}_{FlextUtilities.generate_id()}"
-                )
-
-                # Use FlextModels factory method with FlextConstants defaults
-                handler_config = FlextModels.CqrsConfig.Handler.create_handler_config(
-                    handler_type=handler_type,
-                    default_name=default_name,
-                    default_id=default_id,
-                    handler_config=config_overrides,
-                    command_timeout=FlextConstants.Cqrs.DEFAULT_TIMEOUT,
-                    max_command_retries=FlextConstants.Cqrs.DEFAULT_RETRIES,
-                )
-
-                return FlextResult[FlextModels.CqrsConfig.Handler].ok(handler_config)
-
-            except Exception as e:
-                return FlextResult[FlextModels.CqrsConfig.Handler].fail(
-                    f"Handler configuration creation failed: {e!s}",
-                    error_code=FlextConstants.Cqrs.HANDLER_CONFIG_INVALID,
-                    error_data={
-                        "handler_type": handler_type,
-                        "handler_name": handler_name,
-                        "config_overrides": config_overrides,
-                    },
-                )
-
     class Decorators:
         """CQRS Decorators using existing FlextHandlers functionality."""
 
@@ -255,38 +229,38 @@ class FlextCqrs:
             def decorator(
                 func: Callable[[TCmd], TResult],
             ) -> Callable[[TCmd], TResult]:
-                # 🚨 BEHAVIOUR GAP: Despite the docstring, this decorator never produces a FlextHandlers instance.
-                # Create validated handler configuration
-                handler_config_result = FlextCqrs.Operations.create_handler_config(
-                    handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                    handler_name=getattr(
-                        func,
-                        "__name__",
-                        f"{getattr(command_type, '__name__', str(command_type))}Handler",
-                    ),
-                    config_overrides=config
-                    if isinstance(config, dict)
-                    else (
-                        getattr(config, "model_dump", lambda: None)()
-                        if config
-                        else None
-                    ),
+                # Create handler configuration directly using FlextModels
+                handler_name = getattr(
+                    func,
+                    "__name__",
+                    f"{getattr(command_type, '__name__', str(command_type))}Handler",
                 )
 
-                if handler_config_result.is_failure:
-                    # Create basic configuration if validation failed
+                try:
+                    # Use FlextModels.CqrsConfig.Handler.create_handler_config directly
+                    handler_config = (
+                        FlextModels.CqrsConfig.Handler.create_handler_config(
+                            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                            default_name=handler_name,
+                            handler_config=config
+                            if isinstance(config, dict)
+                            else (
+                                getattr(config, "model_dump", lambda: None)()
+                                if config
+                                else None
+                            ),
+                            command_timeout=FlextConstants.Cqrs.DEFAULT_TIMEOUT,
+                            max_command_retries=FlextConstants.Cqrs.DEFAULT_RETRIES,
+                        )
+                    )
+                except Exception:
+                    # Fallback to basic configuration if creation fails
                     handler_config = FlextModels.CqrsConfig.Handler(
                         handler_id=FlextUtilities.generate_id(),
-                        handler_name=getattr(
-                            func,
-                            "__name__",
-                            f"{getattr(command_type, '__name__', str(command_type))}Handler",
-                        ),
+                        handler_name=handler_name,
                         handler_type="command",
                         handler_mode="command",
                     )
-                else:
-                    handler_config = handler_config_result.value
 
                 # Create wrapper function with metadata
                 def wrapper(command: TCmd) -> TResult:

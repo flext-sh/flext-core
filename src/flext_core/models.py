@@ -52,7 +52,6 @@ from typing import (
     ClassVar,
     Literal,
     Self,
-    TypedDict,
     cast,
     override,
 )
@@ -84,39 +83,153 @@ def _create_default_pagination() -> FlextModels.Pagination:
 
 
 class FlextModels:
-    """Enhanced unified model container with advanced Pydantic 2 optimizations.
+    """Domain-Driven Design patterns for FLEXT ecosystem modeling.
 
-    Provides comprehensive domain-driven models for FLEXT infrastructure leveraging:
-    - Direct FlextConfig integration for dynamic defaults
-    - Advanced Field constraints with Pydantic validation
-    - Computed fields for derived properties
-    - Consolidated model configuration hierarchy
-    - FlextUtilities integration for enhanced validation
+    FlextModels provides comprehensive DDD base classes for domain
+    modeling throughout the FLEXT ecosystem. Includes Entity, Value
+    Object, Aggregate Root patterns with built-in validation and
+    event sourcing support. Used across all 32+ dependent projects.
 
-    This class serves as the central export point for all FLEXT models,
-    implementing Railway-oriented error handling through FlextResult[T].
+    **Function**: DDD pattern implementations with Pydantic 2
+        - Entity base with identity and lifecycle management
+        - Value Object base for immutable value types
+        - Aggregate Root for consistency boundaries
+        - Domain event management and event sourcing
+        - CQRS patterns (Command, Query, DomainEvent)
+        - Repository and specification patterns
+        - Saga pattern for distributed transactions
+        - Validation utilities with FlextResult integration
+        - Pagination support for queries
+        - Metadata and error detail models
+        - Configuration models with environment support
+        - Request/Response models for APIs
 
-    **CENTRALIZED APPROACH**: All models follow centralized patterns:
-    - FlextModels.* for core domain models
-    - Centralized validation through FlextModels.Validation
-    - Centralized configuration through FlextModels.Config
-    - No wrappers, aliases, or fallbacks
+    **Uses**: Pydantic 2 for validation and serialization
+        - BaseModel for all domain models with type safety
+        - Field validators for business rule enforcement
+        - model_config for Pydantic settings and behavior
+        - ConfigDict for model configuration
+        - computed_field for derived properties
+        - FlextResult[T] for operation results
+        - FlextConfig for configuration integration
+        - FlextLogger for domain event logging
+        - FlextConstants for validation limits
+        - FlextTypes for type definitions
 
-    **AUDIT FINDINGS**:
-    - ✅ NO DUPLICATIONS: Single comprehensive model namespace
-    - ✅ MINIMAL EXTERNAL DEPENDENCIES: Only Pydantic 2.11+ for validation
-    - ✅ COMPLETE FUNCTIONALITY: DDD patterns, validation, serialization
-    - ✅ ADVANCED FEATURES: Entity lifecycle, domain events, aggregate roots
-    - ✅ PRODUCTION READY: Comprehensive domain modeling foundation
+    **How to use**: Implement domain models with DDD patterns
+        ```python
+        from flext_core import FlextModels, FlextResult
 
-    **IMPLEMENTATION NOTES**:
-    - Domain-Driven Design patterns (Entity, Value, AggregateRoot)
-    - CQRS patterns (Command, Query, DomainEvent)
-    - Comprehensive validation with Pydantic 2
-    - Domain event handling and lifecycle management
-    - Repository and specification patterns
-    - Saga pattern for distributed transactions
-    - Metadata and error detail models
+
+        # Example 1: Value Object (immutable, compared by value)
+        class Email(FlextModels.Value):
+            address: str
+
+            def validate(self) -> FlextResult[None]:
+                if "@" not in self.address:
+                    return FlextResult[None].fail("Invalid email")
+                return FlextResult[None].ok(None)
+
+
+        # Example 2: Entity (has identity and lifecycle)
+        class User(FlextModels.Entity):
+            name: str
+            email: Email
+            is_active: bool = False
+
+            def activate(self) -> FlextResult[None]:
+                if self.is_active:
+                    return FlextResult[None].fail("Already active")
+                self.is_active = True
+                self.add_domain_event("UserActivated", {"user_id": self.id})
+                return FlextResult[None].ok(None)
+
+
+        # Example 3: Aggregate Root (consistency boundary)
+        class Account(FlextModels.AggregateRoot):
+            owner: User
+            balance: Decimal
+
+            def withdraw(self, amount: Decimal) -> FlextResult[None]:
+                if amount > self.balance:
+                    return FlextResult[None].fail("Insufficient funds")
+                self.balance -= amount
+                self.add_domain_event("MoneyWithdrawn", {"amount": str(amount)})
+                return FlextResult[None].ok(None)
+
+
+        # Example 4: CQRS Command pattern
+        class CreateUserCommand(FlextModels.Command):
+            name: str
+            email: str
+
+
+        # Example 5: CQRS Query pattern with pagination
+        class GetUsersQuery(FlextModels.Query):
+            pagination: FlextModels.Pagination = Field(
+                default_factory=_create_default_pagination
+            )
+
+
+        # Example 6: Domain Event for event sourcing
+        class UserCreatedEvent(FlextModels.DomainEvent):
+            user_id: str
+            timestamp: datetime
+        ```
+
+    **TODO**: Enhanced DDD support for 1.0.0+ releases
+        - [ ] Add domain event versioning for evolution
+        - [ ] Implement event store patterns with snapshots
+        - [ ] Support aggregate snapshots for performance
+        - [ ] Add saga orchestration patterns
+        - [ ] Enhance validation DSL for complex rules
+        - [ ] Implement optimistic locking for concurrency
+        - [ ] Add domain event replay for debugging
+        - [ ] Support event sourcing with CQRS projection
+        - [ ] Implement specification pattern composition
+        - [ ] Add repository pattern with unit of work
+
+    Attributes:
+        Entity: Base class for entities with identity.
+        Value: Base class for immutable value objects.
+        AggregateRoot: Base class for aggregate roots.
+        Command: Base class for CQRS commands.
+        Query: Base class for CQRS queries.
+        DomainEvent: Base class for domain events.
+        Pagination: Pagination support for queries.
+        Validation: Validation utilities and helpers.
+        Config: Configuration models.
+        Metadata: Metadata and error detail models.
+
+    Note:
+        All models use Pydantic 2.11+ for validation. Entity
+        instances have identity (id field). Value objects are
+        immutable and compared by value. Aggregate roots manage
+        consistency boundaries. Use FlextResult for all operations.
+
+    Warning:
+        Value objects must be immutable - never modify after
+        creation. Aggregate roots enforce invariants - always
+        validate state changes. Domain events are immutable once
+        created. Never bypass validation in domain models.
+
+    Example:
+        Complete domain modeling with DDD patterns:
+
+        >>> class Money(FlextModels.Value):
+        ...     amount: Decimal
+        ...     currency: str
+        >>> class Account(FlextModels.AggregateRoot):
+        ...     balance: Money
+        >>> account = Account(balance=Money(amount=100, currency="USD"))
+        >>> print(account.balance.amount)
+        100
+
+    See Also:
+        FlextResult: For railway-oriented error handling.
+        FlextContainer: For dependency injection patterns.
+        FlextBus: For CQRS command/query dispatching.
+
     """
 
     # Enhanced validation using FlextUtilities and FlextConstants
@@ -206,23 +319,23 @@ class FlextModels:
     # UTILITY TYPES - Centralized type definitions
     # =========================================================================
 
-    class ModelDumpKwargs(TypedDict, total=False):
+    class ModelDumpKwargs(ArbitraryTypesModel):
         """Type definition for model dump keyword arguments.
 
-        This TypedDict defines the optional parameters that can be passed to
+        This model defines the optional parameters that can be passed to
         Pydantic model dump methods, ensuring type safety for serialization operations.
         """
 
-        include: set[str] | None
-        exclude: set[str] | None
-        by_alias: bool
-        exclude_unset: bool
-        exclude_defaults: bool
-        exclude_none: bool
-        round_trip: bool
-        warnings: bool
-        mode: str
-        context: FlextTypes.Core.Dict | None
+        include: set[str] | None = None
+        exclude: set[str] | None = None
+        by_alias: bool = False
+        exclude_unset: bool = False
+        exclude_defaults: bool = False
+        exclude_none: bool = False
+        round_trip: bool = False
+        warnings: bool = True
+        mode: str = "python"
+        context: FlextTypes.Core.Dict | None = None
 
     class Pagination(BaseModel):
         """Pagination model for query results."""
@@ -249,7 +362,7 @@ class FlextModels:
             """Get limit (same as size)."""
             return self.size
 
-        def to_dict(self) -> dict[str, int]:
+        def to_dict(self) -> FlextTypes.Core.Dict:
             """Convert pagination to dictionary."""
             return {
                 "page": self.page,
@@ -277,7 +390,7 @@ class FlextModels:
             default=FlextConstants.Performance.DEFAULT_VERSION,
             ge=FlextConstants.Performance.MIN_VERSION,
         )
-        domain_events: list[object] = Field(default_factory=list)
+        domain_events: FlextTypes.Core.List = Field(default_factory=list)
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -327,9 +440,9 @@ class FlextModels:
             # Increment version after adding domain event
             self.increment_version()
 
-        def clear_domain_events(self) -> list[object]:
+        def clear_domain_events(self) -> FlextTypes.Core.List:
             """Clear and return domain events."""
-            events: list[object] = self.domain_events.copy()
+            events: FlextTypes.Core.List = self.domain_events.copy()
             self.domain_events.clear()
             return events
 
@@ -493,7 +606,7 @@ class FlextModels:
 
         service_name: str
         status: Literal["healthy", "degraded", "unhealthy"] = "healthy"
-        checks: dict[str, bool] = Field(default_factory=dict)
+        checks: FlextTypes.Core.Dict = Field(default_factory=dict)
         last_check: datetime = Field(default_factory=lambda: datetime.now(UTC))
         details: FlextTypes.Core.Dict = Field(default_factory=dict)
 
@@ -705,7 +818,7 @@ class FlextModels:
         """Batch processing model."""
 
         batch_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        items: Annotated[list[object], Field(default_factory=list)]
+        items: Annotated[FlextTypes.Core.List, Field(default_factory=list)]
         size: int = Field(
             default=FlextConstants.Performance.BatchProcessing.SMALL_SIZE, ge=1
         )
@@ -717,7 +830,7 @@ class FlextModels:
         stream_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         position: int = 0
         batch_size: int = FlextConstants.Performance.BatchProcessing.STREAM_SIZE
-        buffer: Annotated[list[object], Field(default_factory=list)]
+        buffer: Annotated[FlextTypes.Core.List, Field(default_factory=list)]
 
     class Pipeline(ArbitraryTypesModel):
         """Pipeline model."""
@@ -1336,7 +1449,7 @@ class FlextModels:
 
         def validate_processing_constraints(self) -> FlextResult[None]:
             """Validate constraints that should be checked during processing."""
-            max_timeout_seconds = 3600  # 1 hour max
+            max_timeout_seconds = FlextConstants.Utilities.MAX_TIMEOUT_SECONDS
             if self.timeout_seconds > max_timeout_seconds:
                 return FlextResult[None].fail(
                     f"Timeout cannot exceed {max_timeout_seconds} seconds"
@@ -1374,11 +1487,11 @@ class FlextModels:
             default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
         continue_on_error: bool = True
-        data_items: Annotated[list[object], Field(default_factory=list)]
+        data_items: Annotated[FlextTypes.Core.List, Field(default_factory=list)]
 
         @field_validator("data_items")
         @classmethod
-        def validate_data_items(cls, v: list[object]) -> list[object]:
+        def validate_data_items(cls, v: FlextTypes.Core.List) -> FlextTypes.Core.List:
             """Validate data items are not empty when provided."""
             if len(v) > FlextConstants.Performance.BatchProcessing.MAX_ITEMS:
                 msg = f"Batch cannot exceed {FlextConstants.Performance.BatchProcessing.MAX_ITEMS} items"
@@ -1449,7 +1562,7 @@ class FlextModels:
         @classmethod
         def validate_name(cls, v: str) -> str:
             """Validate pipeline name."""
-            max_name_length = 100
+            max_name_length = FlextConstants.Validation.MAX_NAME_LENGTH
             if len(v) > max_name_length:
                 msg = f"Pipeline name too long (max {max_name_length} characters)"
                 raise ValueError(msg)
@@ -1808,15 +1921,19 @@ class FlextModels:
             default=FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER, ge=1.0
         )
         retry_on_exceptions: Annotated[
-            list[type[Exception]], Field(default_factory=list)
+            list[type[BaseException]], Field(default_factory=list)
         ]
-        retry_on_status_codes: Annotated[list[int], Field(default_factory=list)]
+        retry_on_status_codes: Annotated[
+            FlextTypes.Core.List, Field(default_factory=list)
+        ]
 
         @field_validator("retry_on_status_codes")
         @classmethod
-        def validate_backoff_strategy(cls, v: list[object]) -> list[int]:
+        def validate_backoff_strategy(
+            cls, v: FlextTypes.Core.List
+        ) -> FlextTypes.Core.List:
             """Validate status codes are valid HTTP codes."""
-            validated_codes: list[int] = []
+            validated_codes: FlextTypes.Core.List = []
             for code in v:
                 try:
                     if isinstance(code, (int, str)):
@@ -1883,13 +2000,13 @@ class FlextModels:
         max_validation_errors: int = Field(default=10)
         validate_on_assignment: bool = True
         validate_on_read: bool = False
-        custom_validators: Annotated[
-            list[Callable[[object], object]], Field(default_factory=list)
-        ]
+        custom_validators: Annotated[FlextTypes.Core.List, Field(default_factory=list)]
 
         @field_validator("custom_validators")
         @classmethod
-        def validate_additional_validators(cls, v: list[object]) -> list[object]:
+        def validate_additional_validators(
+            cls, v: FlextTypes.Core.List
+        ) -> FlextTypes.Core.List:
             """Validate custom validators are callable."""
             for validator in v:
                 if not callable(validator):
@@ -1946,7 +2063,7 @@ class FlextModels:
         """State machine request."""
 
         initial_state: str
-        transitions: dict[str, dict[str, str]] = Field(default_factory=dict)
+        transitions: FlextTypes.Core.Dict = Field(default_factory=dict)
         current_state: str | None = None
         state_data: FlextTypes.Core.Dict = Field(default_factory=dict)
 
@@ -1966,7 +2083,7 @@ class FlextModels:
                     )
                     raise TypeError(msg)
                 for event, next_state in cast(
-                    "dict[object, object]", transitions
+                    "FlextTypes.Core.Dict", transitions
                 ).items():
                     if not isinstance(next_state, str):
                         msg = f"Next state for {state}.{event} must be a string"

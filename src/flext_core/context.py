@@ -16,7 +16,7 @@ import json
 import threading
 import time
 import uuid
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from datetime import UTC, datetime
@@ -29,9 +29,120 @@ from flext_core.typings import FlextTypes
 class FlextContext:
     """Hierarchical context manager for request-, service-, and perf-scopes.
 
-    It is the single entry point referenced across the modernization plan: all
-    dispatcher, container, and logging surfaces depend on these context vars to
-    propagate correlation IDs and structured metadata.
+    It is the single entry point referenced across the modernization plan:
+    all dispatcher, container, and logging surfaces depend on context vars
+    to propagate correlation IDs and structured metadata.
+
+    **Function**: Context management for distributed systems
+        - Correlation ID management for distributed tracing
+        - Service identification context (name, version)
+        - Request context with user and operation metadata
+        - Performance tracking with timing operations
+        - Scoped context storage (global, user, session)
+        - Thread-safe context variable management
+        - Context serialization for cross-service propagation
+        - Hook system for context change notifications
+        - Context cloning and merging capabilities
+        - Statistics tracking for context operations
+
+    **Uses**: Core infrastructure for context management
+        - contextvars for thread-local context variables
+        - threading.RLock for thread-safe operations
+        - FlextTypes.Core.Dict for type-safe dictionaries
+        - FlextResult[T] for operation results
+        - datetime for timestamp operations
+        - uuid for correlation ID generation
+        - json for context serialization
+        - contextmanager for context scope management
+        - collections.abc.Mapping for type checking
+        - contextlib for context helpers
+
+    **How to use**: Context management and propagation
+        ```python
+        from flext_core import FlextContext
+
+        # Example 1: Global context singleton
+        context = FlextContext.get_global()
+        context.set("user_id", "123")
+        user_id = context.get("user_id")
+
+        # Example 2: Correlation ID management
+        with FlextContext.Correlation.new_correlation() as corr_id:
+            # Correlation ID is automatically propagated
+            print(f"Processing request {corr_id}")
+            # All operations within this scope share correlation
+
+        # Example 3: Service context
+        with FlextContext.Service.service_context("user-service", version="1.0.0"):
+            # Service name/version available to logging
+            pass
+
+        # Example 4: Request context with metadata
+        with FlextContext.Request.request_context(
+            user_id="user123", operation_name="create_user", request_id="req-abc"
+        ):
+            # Request metadata propagates automatically
+            pass
+
+        # Example 5: Timed performance tracking
+        with FlextContext.Performance.timed_operation("database_query") as metrics:
+            # Perform operation
+            pass
+            # metrics contains duration_seconds
+
+        # Example 6: Cross-service propagation
+        headers = FlextContext.Serialization.get_correlation_context()
+        # Send headers to downstream service
+        # Downstream service:
+        FlextContext.Serialization.set_from_context(headers)
+
+        # Example 7: Scoped storage
+        context = FlextContext()
+        context.set("key", "value", scope="user")
+        value = context.get("key", scope="user")
+        ```
+
+    Attributes:
+        Variables: Context variable definitions by domain.
+        Correlation: Correlation ID management utilities.
+        Service: Service identification context helpers.
+        Request: Request-level context management.
+        Performance: Performance tracking and timing.
+        Serialization: Context serialization utilities.
+        Utilities: Context utility methods and helpers.
+        HandlerExecutionContext: Handler execution context.
+
+    Note:
+        All context variables are thread-safe using contextvars.
+        Correlation IDs automatically propagate through scopes.
+        Context can be serialized for cross-service communication.
+        Statistics track all context operations. Global context
+        uses singleton pattern with thread-safe access.
+
+    Warning:
+        Context must be cleared manually when no longer needed.
+        Context hooks may impact performance on high-frequency ops.
+        Suspended contexts do not respond to operations.
+        Context serialization does not include hooks/statistics.
+
+    Example:
+        Complete context workflow with correlation and timing:
+
+        >>> context = FlextContext.get_global()
+        >>> with FlextContext.Correlation.new_correlation() as cid:
+        ...     with FlextContext.Performance.timed_operation() as m:
+        ...         context.set("processed", True)
+        ...         print(cid)
+        corr_12345678
+        >>> print(context.get("processed"))
+        True
+
+    See Also:
+        FlextLogger: For structured logging with context.
+        FlextDispatcher: For context-aware message dispatch.
+        FlextBus: For command/query execution with context.
+        FlextConfig: For configuration management.
+
     """
 
     @override
@@ -44,8 +155,8 @@ class FlextContext:
         """
         self._data: FlextTypes.Core.Dict = initial_data or {}
         self._metadata: FlextTypes.Core.Dict = {}
-        self._hooks: dict[str, list[Callable[[str, object], None]]] = {}
-        self._statistics: dict[str, object] = {
+        self._hooks: dict[str, list[FlextTypes.Core.Callable]] = {}
+        self._statistics: FlextTypes.Core.Dict = {
             "operations": {
                 "set": 0,
                 "get": 0,
@@ -221,7 +332,7 @@ class FlextContext:
                 all_keys.update(scope_data.keys())
             return list(all_keys)
 
-    def values(self) -> list[object]:
+    def values(self) -> FlextTypes.Core.List:
         """Get all values in the context.
 
         Returns:
@@ -232,7 +343,7 @@ class FlextContext:
             return []
 
         with self._lock:
-            all_values: list[object] = []
+            all_values: FlextTypes.Core.List = []
             for scope_data in self._scopes.values():
                 all_values.extend(scope_data.values())
             return all_values
@@ -381,7 +492,7 @@ class FlextContext:
             self._metadata.clear()
             self._hooks.clear()
 
-    def add_hook(self, event: str, hook: Callable[[str, object], None]) -> None:
+    def add_hook(self, event: str, hook: FlextTypes.Core.Callable) -> None:
         """Add a hook for context events.
 
         Args:

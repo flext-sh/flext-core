@@ -234,7 +234,7 @@ class TestFlextConstants:
         """Test that constants have proper documentation."""
         # Verify that the main class has documentation
         assert FlextConstants.__doc__ is not None
-        assert "Foundation constants" in FlextConstants.__doc__
+        assert "foundation" in FlextConstants.__doc__.lower()
 
         # Verify that nested classes have documentation
         assert FlextConstants.Core.__doc__ is not None

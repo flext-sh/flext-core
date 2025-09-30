@@ -6,6 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
+
 from flext_core import FlextContainer
 
 
@@ -274,12 +277,12 @@ class TestFlextContainer:
         services = result.value
         assert len(services) == 2
 
-        # Check service info
-        service_names = [s["name"] for s in services]
+        # Check service info with type casts for dict access
+        service_names = [cast("dict[str, object]", s)["name"] for s in services]
         assert "instance" in service_names
         assert "factory" in service_names
 
-        service_types = [s["type"] for s in services]
+        service_types = [cast("dict[str, object]", s)["type"] for s in services]
         assert "instance" in service_types
         assert "factory" in service_types
 
@@ -318,7 +321,8 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Register non-callable as factory (string instead of function)
-        result = container.register_factory("invalid", "this is not callable")
+        invalid_factory = cast("Callable[[], object]", "this is not callable")
+        result = container.register_factory("invalid", invalid_factory)
         assert result.is_failure
         assert result.error is not None
         assert "must be callable" in result.error

@@ -17,44 +17,119 @@ from typing import ClassVar, Final
 
 
 class FlextConstants:
-    """Foundation constants providing ecosystem-wide defaults and values.
+    """Ecosystem-wide constant definitions for FLEXT foundation.
 
-    This class serves as the single source of truth for all constants across
-    the FLEXT ecosystem. Use FlextConstants directly for all constant access.
+    FlextConstants provides the single source of truth for all constants
+    across the entire FLEXT ecosystem. As Layer 0, this module has NO
+    dependencies and serves as the foundation for all 32+ dependent
+    projects. All constants are immutable using typing.Final.
 
-    Usage:
+    **Function**: Central constant definitions for ecosystem
+        - Define error codes for exception categorization (50+ codes)
+        - Provide configuration defaults (timeout, environment, etc.)
+        - Establish validation limits (string length, ports, etc.)
+        - Define logging constants (levels, formats, defaults)
+        - Provide platform constants (OS, encoding, paths)
+        - Support message and display constants
+        - Enable telemetry and metrics defaults
+        - Guarantee immutability with typing.Final
+
+    **Uses**: Pure Python foundation (Layer 0 - no dependencies)
+        - typing.Final for immutable constant definitions
+        - enum.StrEnum for string enumeration types
+        - typing.ClassVar for class-level constants
+        - No external dependencies (pure Python stdlib)
+        - Layer 0 foundation - imported by all other modules
+
+    **How to use**: Access constants via nested namespaces
         ```python
         from flext_core import FlextConstants
 
-        # Access logging constants
-        log_level = FlextConstants.Logging.DEFAULT_LEVEL
+        # Example 1: Access error codes for exception handling
+        error_code = FlextConstants.Errors.VALIDATION_ERROR
+        raise FlextException("Invalid input", error_code=error_code)
 
-        # Access configuration constants
+        # Example 2: Use configuration defaults
         timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+        max_workers = FlextConstants.Config.DEFAULT_MAX_WORKERS
+        environment = FlextConstants.Config.DEFAULT_ENVIRONMENT
 
-        # Access validation constants
-        max_retries = FlextConstants.Validation.MAX_RETRIES
+        # Example 3: Apply validation limits
+        if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
+            return FlextResult[str].fail("Name too short")
+
+        # Example 4: Use network constants for validation
+        if not (
+            FlextConstants.Network.MIN_PORT <= port <= FlextConstants.Network.MAX_PORT
+        ):
+            return FlextResult[int].fail("Invalid port number")
+
+        # Example 5: Access logging constants
+        log_level = FlextConstants.Logging.DEFAULT_LEVEL
+        log_format = FlextConstants.Logging.DEFAULT_FORMAT
+
+        # Example 6: Use message constants for user feedback
+        success_msg = FlextConstants.Messages.OPERATION_SUCCESS
+        failure_msg = FlextConstants.Messages.OPERATION_FAILURE
         ```
 
-    Layer 0 Foundation: No dependencies, used by all other modules.
+    **TODO**: Enhanced constants for 1.0.0+ releases
+        - [ ] Add runtime constant validation on module load
+        - [ ] Implement dynamic constant loading from config
+        - [ ] Support environment variable overrides for constants
+        - [ ] Add constant versioning for API compatibility
+        - [ ] Implement constant deprecation warnings
+        - [ ] Add constant usage tracking and metrics
+        - [ ] Support constant documentation generation
+        - [ ] Implement constant type validation at runtime
+        - [ ] Add constant groups for feature flags
+        - [ ] Support constant internationalization (i18n)
 
-    Each nested namespace lines up with limits, error codes, and defaults
-    captured in ``README.md`` and ``docs/architecture.md`` so dependants share
-    consistent thresholds during the 1.0.0 rollout.
+    Attributes:
+        CONSTANTS_VERSION (str): Constants module version.
+        PROJECT_PREFIX (str): Project prefix for environment vars.
+        PROJECT_NAME (str): Full project name string.
+        Core: Core identifiers (NAME, VERSION, DEFAULT_VERSION).
+        Network: Network defaults (ports, timeouts).
+        Validation: Validation limits (length, format rules).
+        Errors: Error codes for exception categorization.
+        Messages: User-facing message constants.
+        Config: Configuration defaults and limits.
+        Platform: Platform-specific constants (OS, paths).
+        Logging: Logging configuration constants.
+        Container: DI container defaults.
+        Processing: Processing pipeline constants.
+        Security: Security and encryption constants.
 
-    **AUDIT FINDINGS**:
-    - ✅ NO DUPLICATIONS: Single source of truth for all constants
-    - ✅ NO EXTERNAL DEPENDENCIES: Pure Python implementation
-    - ✅ COMPLETE FUNCTIONALITY: Comprehensive constants for all FLEXT modules
-    - ✅ EXCELLENT DOCUMENTATION: Extensive docstrings and usage examples
-    - ✅ PRODUCTION READY: Stable constants with clear organization
+    Note:
+        Layer 0 foundation with ZERO dependencies. All constants are
+        immutable using typing.Final. This is the single source of
+        truth for the entire FLEXT ecosystem. Constants guaranteed
+        stable throughout 1.x series. Import only FlextConstants,
+        never individual nested classes.
 
-    **IMPLEMENTATION NOTES**:
-    - Layer 0 foundation with no dependencies
-    - Comprehensive constants for all FLEXT modules
-    - Well-organized nested namespaces
-    - Extensive documentation and usage examples
-    - Stable API for 1.0.0 release
+    Warning:
+        Never modify constants at runtime - all are Final. Never
+        create local constant copies - always import from this
+        module. Constants must remain backward compatible across
+        1.x series. Breaking constant changes require major version.
+
+    Example:
+        Complete constant usage pattern:
+
+        >>> from flext_core import FlextConstants
+        >>> error_code = FlextConstants.Errors.VALIDATION_ERROR
+        >>> print(error_code)
+        VALIDATION_ERROR
+        >>> timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+        >>> print(timeout)
+        30
+
+    See Also:
+        FlextExceptions: For error code usage in exceptions.
+        FlextConfig: For runtime configuration management.
+        FlextTypes: For type definitions and aliases.
+
     """
 
     # Project metadata (REQUIRED - Foundation Library)
@@ -78,7 +153,37 @@ class FlextConstants:
         DEFAULT_TIMEOUT: Final[int] = 30  # Usage count: 4
 
     class Validation:
-        """Validation guardrails referenced in modernization docs."""
+        """Validation guardrails referenced in modernization docs.
+
+        Usage example:
+            from flext_core import FlextConstants, FlextResult
+
+            def validate_user_name(name: str) -> FlextResult[str]:
+                if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
+                    return FlextResult[str].fail(
+                        f"Name must be at least {FlextConstants.Validation.MIN_NAME_LENGTH} characters"
+                    )
+                if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
+                    return FlextResult[str].fail(
+                        f"Name cannot exceed {FlextConstants.Validation.MAX_NAME_LENGTH} characters"
+                    )
+                return FlextResult[str].ok(name)
+
+            def validate_email(email: str) -> FlextResult[str]:
+                if len(email) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                    return FlextResult[str].fail("Email too long")
+                parts = email.split("@")
+                if len(parts) != FlextConstants.Validation.EMAIL_PARTS_COUNT:
+                    return FlextResult[str].fail("Invalid email format")
+                return FlextResult[str].ok(email)
+
+            def validate_percentage(value: float) -> FlextResult[float]:
+                if value < FlextConstants.Validation.MIN_PERCENTAGE:
+                    return FlextResult[float].fail("Percentage cannot be negative")
+                if value > FlextConstants.Validation.MAX_PERCENTAGE:
+                    return FlextResult[float].fail("Percentage cannot exceed 100")
+                return FlextResult[float].ok(value)
+        """
 
         MIN_NAME_LENGTH: Final[int] = 2  # Usage count: 1
         MAX_NAME_LENGTH: Final[int] = 100  # Usage count: 0
@@ -90,49 +195,131 @@ class FlextConstants:
         MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
 
         # Phone number validation
-        MIN_PHONE_DIGITS: Final[int] = 10  # Minimum phone number length
+        MIN_PHONE_DIGITS: Final[int] = (
+            10  # Minimum phone number length  # Minimum phone number length
+        )
 
     class Errors:
-        """Canonical error codes surfaced in telemetry narratives."""
+        """Canonical error codes surfaced in telemetry narratives.
 
+        Error codes define the standard taxonomy for error classification
+        across the FLEXT ecosystem. Constants with 0 usage are part of the
+        stable 1.0.0 API contract and reserved for:
+        - Future flext-* library implementations
+        - Third-party ecosystem extensions
+        - Backward compatibility guarantees
+        - Public API stability requirements
+
+        Usage pattern:
+            raise FlextException(
+                message="Validation failed",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR
+            )
+        """
+
+        # Core error codes (actively used)
         VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"  # Usage count: 28
         TYPE_ERROR: Final[str] = "TYPE_ERROR"  # Usage count: 4
-        SERIALIZATION_ERROR: Final[str] = "SERIALIZATION_ERROR"  # Usage count: 0
         CONFIG_ERROR: Final[str] = "CONFIG_ERROR"  # Usage count: 1
-        OPERATION_ERROR: Final[str] = "OPERATION_ERROR"  # Usage count: 0
-        BUSINESS_RULE_VIOLATION: Final[str] = (
-            "BUSINESS_RULE_VIOLATION"  # Usage count: 0
-        )
-        NOT_FOUND_ERROR: Final[str] = "NOT_FOUND_ERROR"  # Usage count: 0
-        NOT_FOUND: Final[str] = "NOT_FOUND"  # Usage count: 0
         GENERIC_ERROR: Final[str] = "GENERIC_ERROR"  # Usage count: 3
         COMMAND_PROCESSING_FAILED: Final[str] = (
             "COMMAND_PROCESSING_FAILED"  # Usage count: 4
         )
-        COMMAND_BUS_ERROR: Final[str] = "COMMAND_BUS_ERROR"  # Usage count: 0
-        TIMEOUT_ERROR: Final[str] = "TIMEOUT_ERROR"  # Usage count: 0
-        PROCESSING_ERROR: Final[str] = "PROCESSING_ERROR"  # Usage count: 0
-        PERMISSION_ERROR: Final[str] = "PERMISSION_ERROR"  # Usage count: 0
-        EXCEPTION_ERROR: Final[str] = "EXCEPTION_ERROR"  # Usage count: 0
-        CRITICAL_ERROR: Final[str] = "CRITICAL_ERROR"  # Usage count: 0
-        CONNECTION_ERROR: Final[str] = "CONNECTION_ERROR"  # Usage count: 0
-        CONFIGURATION_ERROR: Final[str] = "CONFIGURATION_ERROR"  # Usage count: 0
-        COMMAND_HANDLER_NOT_FOUND: Final[str] = (
-            "COMMAND_HANDLER_NOT_FOUND"  # Usage count: 0
-        )
-        AUTHENTICATION_ERROR: Final[str] = "AUTHENTICATION_ERROR"  # Usage count: 0
-        ALREADY_EXISTS: Final[str] = "ALREADY_EXISTS"  # Usage count: 0
-        RESOURCE_NOT_FOUND: Final[str] = "RESOURCE_NOT_FOUND"  # Usage count: 0
-        MAP_ERROR: Final[str] = "MAP_ERROR"  # Usage count: 0
-        EXTERNAL_SERVICE_ERROR: Final[str] = "EXTERNAL_SERVICE_ERROR"  # Usage count: 0
-        CHAIN_ERROR: Final[str] = "CHAIN_ERROR"  # Usage count: 0
-        BUSINESS_RULE_ERROR: Final[str] = "BUSINESS_RULE_ERROR"  # Usage count: 0
-        BIND_ERROR: Final[str] = "BIND_ERROR"  # Usage count: 0
-        UNWRAP_ERROR: Final[str] = "UNWRAP_ERROR"  # Usage count: 0
         UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"  # Usage count: 1
 
+        # Serialization errors (reserved for FlextResult operations)
+        SERIALIZATION_ERROR: Final[str] = (
+            "SERIALIZATION_ERROR"  # Reserved for 1.0.0 API
+        )
+        MAP_ERROR: Final[str] = "MAP_ERROR"  # Reserved for FlextResult.map operations
+        BIND_ERROR: Final[str] = "BIND_ERROR"  # Reserved for FlextResult.flat_map
+        CHAIN_ERROR: Final[str] = "CHAIN_ERROR"  # Reserved for FlextResult chaining
+        UNWRAP_ERROR: Final[str] = "UNWRAP_ERROR"  # Reserved for FlextResult.unwrap
+
+        # Business logic errors (reserved for domain services)
+        OPERATION_ERROR: Final[str] = (
+            "OPERATION_ERROR"  # Reserved for service operations
+        )
+        BUSINESS_RULE_VIOLATION: Final[str] = (
+            "BUSINESS_RULE_VIOLATION"  # Reserved for DDD
+        )
+        BUSINESS_RULE_ERROR: Final[str] = (
+            "BUSINESS_RULE_ERROR"  # Reserved for validation
+        )
+
+        # Resource errors (reserved for CRUD operations)
+        NOT_FOUND_ERROR: Final[str] = "NOT_FOUND_ERROR"  # Reserved for queries
+        NOT_FOUND: Final[str] = "NOT_FOUND"  # Reserved for entity lookup
+        RESOURCE_NOT_FOUND: Final[str] = "RESOURCE_NOT_FOUND"  # Reserved for REST APIs
+        ALREADY_EXISTS: Final[str] = "ALREADY_EXISTS"  # Reserved for create operations
+
+        # CQRS errors (reserved for command/query bus)
+        COMMAND_BUS_ERROR: Final[str] = "COMMAND_BUS_ERROR"  # Reserved for FlextBus
+        COMMAND_HANDLER_NOT_FOUND: Final[str] = (
+            "COMMAND_HANDLER_NOT_FOUND"  # Reserved for dispatch
+        )
+
+        # Infrastructure errors (reserved for technical failures)
+        TIMEOUT_ERROR: Final[str] = "TIMEOUT_ERROR"  # Reserved for async operations
+        PROCESSING_ERROR: Final[str] = (
+            "PROCESSING_ERROR"  # Reserved for batch processing
+        )
+        CONNECTION_ERROR: Final[str] = "CONNECTION_ERROR"  # Reserved for network/DB
+        CONFIGURATION_ERROR: Final[str] = (
+            "CONFIGURATION_ERROR"  # Reserved for FlextConfig
+        )
+        EXTERNAL_SERVICE_ERROR: Final[str] = (
+            "EXTERNAL_SERVICE_ERROR"  # Reserved for integrations
+        )
+
+        # Security errors (reserved for authentication/authorization)
+        PERMISSION_ERROR: Final[str] = "PERMISSION_ERROR"  # Reserved for access control
+        AUTHENTICATION_ERROR: Final[str] = "AUTHENTICATION_ERROR"  # Reserved for auth
+
+        # System errors (reserved for critical failures)
+        EXCEPTION_ERROR: Final[str] = (
+            "EXCEPTION_ERROR"  # Reserved for exception wrapping
+        )
+        CRITICAL_ERROR: Final[str] = (
+            "CRITICAL_ERROR"  # Reserved for system failures  # Usage count: 1
+        )
+
     class Messages:
-        """User-facing validation and failure messages."""
+        """User-facing validation and failure messages.
+
+        Usage example:
+            from flext_core import FlextConstants, FlextResult, FlextException
+
+            def process_user_input(data: dict) -> FlextResult[dict]:
+                if not data:
+                    return FlextResult[dict].fail(
+                        FlextConstants.Messages.NULL_DATA,
+                        error_code="VALIDATION_ERROR"
+                    )
+
+                if "name" not in data or not data["name"]:
+                    return FlextResult[dict].fail(
+                        FlextConstants.Messages.VALUE_EMPTY,
+                        error_code="VALIDATION_ERROR"
+                    )
+
+                try:
+                    processed = transform_data(data)
+                    return FlextResult[dict].ok(processed)
+                except Exception as e:
+                    return FlextResult[dict].fail(
+                        FlextConstants.Messages.OPERATION_FAILED,
+                        error_code="OPERATION_ERROR"
+                    )
+
+            def validate_type(value: any, expected_type: type) -> FlextResult[None]:
+                if not isinstance(value, expected_type):
+                    return FlextResult[None].fail(
+                        FlextConstants.Messages.TYPE_MISMATCH,
+                        error_code="TYPE_ERROR"
+                    )
+                return FlextResult[None].ok(None)
+        """
 
         TYPE_MISMATCH: Final[str] = "Type mismatch"  # Usage count: 2
         SERVICE_NAME_EMPTY: Final[str] = (
@@ -143,7 +330,9 @@ class FlextConstants:
         VALUE_EMPTY: Final[str] = "Value cannot be empty"  # Usage count: 0
         VALIDATION_FAILED: Final[str] = "Validation failed"  # Usage count: 0
         UNKNOWN_ERROR: Final[str] = "Unknown error"  # Usage count: 0
-        NULL_DATA: Final[str] = "Data cannot be null"  # Usage count: 0
+        NULL_DATA: Final[str] = (
+            "Data cannot be null"  # Usage count: 0  # Usage count: 0
+        )
 
     class Entities:
         """Entity validation prompts reused across services."""
@@ -157,6 +346,15 @@ class FlextConstants:
         PAGE_SIZE: Final[int] = 100  # Usage count: 2
         TIMEOUT_SECONDS: Final[int] = 30  # Default timeout for operations
         ENVIRONMENT: Final[str] = "development"  # Default environment  # Usage count: 2
+
+        # Cache defaults
+        CACHE_TTL: Final[int] = 300  # Cache time-to-live in seconds (5 minutes)
+        MAX_CACHE_SIZE: Final[int] = 100  # Maximum cache entries
+
+        # Message and operation defaults
+        MAX_MESSAGE_LENGTH: Final[int] = 100  # Maximum message length for truncation
+        DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0  # Default middleware execution order
+        OPERATION_TIMEOUT_SECONDS: Final[int] = 30  # Default operation timeout
 
     class Limits:
         """Upper bounds safeguarding payload and resource usage."""
@@ -253,7 +451,50 @@ class FlextConstants:
             EMAIL = "email"  # Usage count: 0
 
     class Platform:
-        """Platform defaults referenced by CLI and adapter packages."""
+        """Platform defaults referenced by CLI and adapter packages.
+
+        Usage example:
+            from flext_core import FlextConstants, FlextResult
+
+            # HTTP client configuration
+            def build_api_url(path: str) -> str:
+                return (
+                    f"{FlextConstants.Platform.PROTOCOL_HTTPS}"
+                    f"{FlextConstants.Platform.DEFAULT_HOST}:"
+                    f"{FlextConstants.Platform.FLEXT_API_PORT}{path}"
+                )
+
+            # Database connection
+            def get_postgres_url(host: str, db_name: str) -> str:
+                port = FlextConstants.Platform.POSTGRES_DEFAULT_PORT
+                return f"{FlextConstants.Platform.DB_SCHEME_POSTGRESQL}{host}:{port}/{db_name}"
+
+            # HTTP headers
+            def create_request_headers(api_key: str) -> dict:
+                return {
+                    FlextConstants.Platform.HEADER_CONTENT_TYPE: FlextConstants.Platform.MIME_TYPE_JSON,
+                    FlextConstants.Platform.HEADER_API_KEY: api_key,
+                    FlextConstants.Platform.HEADER_USER_AGENT: "FLEXT/1.0.0"
+                }
+
+            # HTTP status validation
+            def is_success_status(status_code: int) -> bool:
+                return (
+                    FlextConstants.Platform.HTTP_STATUS_OK <= status_code < 300
+                )
+
+            # LDAP connection
+            def build_ldap_url(host: str, use_ssl: bool = False) -> str:
+                protocol = (
+                    FlextConstants.Platform.PROTOCOL_LDAPS if use_ssl
+                    else FlextConstants.Platform.PROTOCOL_LDAP
+                )
+                port = (
+                    FlextConstants.Platform.LDAPS_DEFAULT_PORT if use_ssl
+                    else FlextConstants.Platform.LDAP_DEFAULT_PORT
+                )
+                return f"{protocol}{host}:{port}"
+        """
 
         FLEXT_API_PORT: Final[int] = 8000  # Usage count: 4
         DEFAULT_HOST: Final[str] = "localhost"  # Usage count: 0
@@ -527,6 +768,7 @@ class FlextConstants:
 
         MAX_RETRY_ATTEMPTS: Final[int] = 3  # Usage count: 1
         DEFAULT_MAX_RETRIES: Final[int] = 3  # Usage count: 1 (referenced in models.py)
+        DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1  # Default delay between retries
         DEFAULT_BACKOFF_STRATEGY: Final[str] = (
             "exponential"  # Usage count: 1 (referenced in models.py)
         )
@@ -538,8 +780,64 @@ class FlextConstants:
             30.0  # Default timeout for domain services
         )
 
+        # Rate limiting constants
+        DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final[int] = 60  # 1 minute window
+        DEFAULT_RATE_LIMIT_MAX_REQUESTS: Final[int] = 100  # Max requests per window
+
+        # Circuit breaker constants
+        DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5  # Open after failures
+        DEFAULT_CIRCUIT_BREAKER_TIMEOUT_SECONDS: Final[int] = 60  # Recovery time
+
     class Security:
-        """Security-related constants for authentication and authorization."""
+        """Security-related constants for authentication and authorization.
+
+        Usage example:
+            from flext_core import FlextConstants, FlextResult
+            from datetime import datetime, timedelta
+            import bcrypt
+
+            # JWT token generation with appropriate expiry
+            def create_access_token(user_id: str, short_lived: bool = False) -> dict:
+                expiry_minutes = (
+                    FlextConstants.Security.SHORT_JWT_EXPIRY_MINUTES if short_lived
+                    else FlextConstants.Security.DEFAULT_JWT_EXPIRY_MINUTES
+                )
+                return {
+                    "user_id": user_id,
+                    "exp": datetime.utcnow() + timedelta(minutes=expiry_minutes),
+                    "type": "access"
+                }
+
+            # Password validation
+            def validate_password(password: str) -> FlextResult[str]:
+                if len(password) < FlextConstants.Security.MIN_PASSWORD_LENGTH:
+                    return FlextResult[str].fail(
+                        f"Password must be at least {FlextConstants.Security.MIN_PASSWORD_LENGTH} characters"
+                    )
+                if len(password) > FlextConstants.Security.MAX_PASSWORD_LENGTH:
+                    return FlextResult[str].fail(
+                        f"Password cannot exceed {FlextConstants.Security.MAX_PASSWORD_LENGTH} characters"
+                    )
+                return FlextResult[str].ok(password)
+
+            # BCrypt password hashing
+            def hash_password(password: str) -> str:
+                rounds = FlextConstants.Security.DEFAULT_BCRYPT_ROUNDS
+                salt = bcrypt.gensalt(rounds=rounds)
+                return bcrypt.hashpw(password.encode(), salt).decode()
+
+            # Session management
+            def create_session(user_id: str, extended: bool = False) -> dict:
+                duration_hours = (
+                    FlextConstants.Security.MAX_SESSION_EXTENSION_HOURS if extended
+                    else FlextConstants.Security.DEFAULT_SESSION_HOURS
+                )
+                return {
+                    "user_id": user_id,
+                    "expires_at": datetime.utcnow() + timedelta(hours=duration_hours),
+                    "extended": extended
+                }
+        """
 
         # JWT token expiry limits
         MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days in minutes
@@ -637,6 +935,53 @@ class FlextConstants:
 
         Provides centralized logging defaults, levels, formats, and configuration
         options used across all FLEXT modules and subprojects.
+
+        Usage example:
+            from flext_core import FlextConstants, FlextLogger
+
+            # Configure logger with environment-specific settings
+            def setup_logger(environment: str) -> FlextLogger:
+                if environment == "production":
+                    config = FlextConstants.Logging.Environment.PRODUCTION
+                    level = FlextConstants.Logging.DEFAULT_LEVEL_PRODUCTION
+                elif environment == "development":
+                    config = FlextConstants.Logging.Environment.DEVELOPMENT
+                    level = FlextConstants.Logging.DEFAULT_LEVEL_DEVELOPMENT
+                else:
+                    config = FlextConstants.Logging.Environment.STAGING
+                    level = FlextConstants.Logging.DEFAULT_LEVEL
+
+                logger = FlextLogger(__name__)
+                logger.setLevel(level)
+                return logger
+
+            # Log with structured output and performance tracking
+            logger = FlextLogger(__name__)
+            if FlextConstants.Logging.TRACK_PERFORMANCE:
+                start_time = time.time()
+                # ... operation ...
+                duration_ms = (time.time() - start_time) * 1000
+
+                if duration_ms > FlextConstants.Logging.PERFORMANCE_THRESHOLD_CRITICAL:
+                    logger.warning(
+                        FlextConstants.Logging.Messages.PERFORMANCE_CRITICAL,
+                        extra={"operation": "data_processing", "duration": duration_ms}
+                    )
+
+            # Module-specific logging level
+            db_logger = FlextLogger("flext_db_oracle")
+            db_logger.setLevel(FlextConstants.Logging.ModuleLevels.FLEXT_DB_ORACLE)
+
+            # Structured logging with context
+            if FlextConstants.Logging.INCLUDE_CONTEXT:
+                logger.info(
+                    FlextConstants.Logging.Messages.API_REQUEST,
+                    extra={
+                        "method": "POST",
+                        "endpoint": "/api/users",
+                        "correlation_id": "abc-123"
+                    }
+                )
         """
 
         # Log Levels - Standard hierarchy
@@ -700,6 +1045,7 @@ class FlextConstants:
         MAX_FILE_SIZE: Final[int] = 10 * 1024 * 1024  # 10MB
         BACKUP_COUNT: Final[int] = 5
         ROTATION_WHEN: Final[str] = "midnight"
+        MAX_CONTEXT_KEYS: Final[int] = 100  # Maximum context keys per log entry
 
         # Console output configuration
         CONSOLE_ENABLED: Final[bool] = True

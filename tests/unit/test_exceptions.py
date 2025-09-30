@@ -360,7 +360,8 @@ class TestFlextExceptions:
         # Check audit log
         audit_log = exceptions.get_audit_log()
         assert len(audit_log) >= 1
-        assert audit_log[0]["exception_type"] == "ValueError"
+        first_entry = cast("dict[str, object]", audit_log[0])
+        assert first_entry["exception_type"] == "ValueError"
 
     def test_exceptions_handle_exception_with_performance_monitoring(self) -> None:
         """Test exception handling with performance monitoring."""
@@ -463,8 +464,11 @@ class TestFlextExceptions:
 
         stats = exceptions.get_statistics()
         # Check that ValueError is tracked in performance metrics
-        assert "ValueError" in stats["performance_metrics"]
-        assert stats["performance_metrics"]["ValueError"]["handled"] >= 1
+        perf_metrics = cast("dict[str, object]", stats["performance_metrics"])
+        assert "ValueError" in perf_metrics
+        value_error_stats = cast("dict[str, object]", perf_metrics["ValueError"])
+        handled_count = cast("int", value_error_stats["handled"])
+        assert handled_count >= 1
 
     def test_exceptions_thread_safety(self) -> None:
         """Test exceptions thread safety."""

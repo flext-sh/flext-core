@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import inspect
 import threading
-from collections.abc import Callable
-from typing import override
+from typing import cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -25,46 +24,115 @@ from flext_core.typings import FlextTypes, T
 
 
 class FlextContainer(FlextProtocols.Infrastructure.Configurable):
-    """Global dependency injection container for the FLEXT ecosystem.
+    """Global dependency injection container for FLEXT ecosystem.
 
-    FlextContainer provides centralized service management using the singleton
-    pattern. Use FlextContainer.get_global() to access the global instance
-    throughout FLEXT applications for consistent dependency injection.
+    FlextContainer provides centralized service management using the
+    singleton pattern. Access via FlextContainer.get_global() for
+    consistent dependency injection throughout applications and all
+    32+ dependent FLEXT projects.
 
-    **ECOSYSTEM USAGE**: Access the global singleton directly:
+    **Function**: Service registry and dependency injection manager
+        - Register services and factories globally with validation
+        - Resolve dependencies with type safety and FlextResult
+        - Support auto-wiring of constructor dependencies via inspect
+        - Provide batch operations with rollback on failure
+        - Enable thread-safe singleton access with double-checked lock
+        - Integrate with FlextConfig for container configuration
+        - Implement Configurable protocol for 1.0.0 compliance
+        - Support service lifecycle management (singleton pattern)
+
+    **Uses**: Core infrastructure components
+        - FlextResult[T] for all operation results (railway pattern)
+        - FlextConfig for container configuration and defaults
+        - FlextModels.Validation for service name validation
+        - FlextProtocols.Infrastructure.Configurable protocol
+        - threading.Lock for singleton thread safety
+        - inspect module for dependency resolution and auto-wiring
+        - FlextConstants for timeout and configuration defaults
+        - FlextTypes for type definitions and aliases
+
+    **How to use**: Service registration and retrieval patterns
         ```python
-        from flext_core.result import FlextResult
-        from flext_core.container import FlextContainer
+        from flext_core import FlextContainer, FlextLogger, FlextResult
 
+        # Example 1: Get global singleton instance
         container = FlextContainer.get_global()
-        container.register("database", DatabaseService())
 
-        db_result: FlextResult[object] = container.get("database")
-        if db_result.is_success:
-            db = db_result.unwrap()
+        # Example 2: Register services with validation
+        logger = FlextLogger(__name__)
+        result = container.register("logger", logger)
+        if result.is_success:
+            print("Logger registered successfully")
+
+        # Example 3: Register factories (lazy instantiation)
+        container.register_factory("database", lambda: DatabaseService())
+
+        # Example 4: Retrieve services with type safety
+        logger_result = container.get_typed("logger", FlextLogger)
+        if logger_result.is_success:
+            logger = logger_result.unwrap()
+            logger.info("Container operational")
+
+        # Example 5: Auto-wire dependencies (constructor injection)
+        service_result = container.create_service(
+            MyService,  # Auto-resolves constructor parameters
+            service_name="my_service",
+        )
+
+        # Example 6: Batch registration with rollback
+        services = {
+            "cache": CacheService(),
+            "queue": QueueService(),
+            "metrics": MetricsService(),
+        }
+        batch_result = container.batch_register(services)
         ```
 
-    **UNIFIED ARCHITECTURE**: Single class design with nested helpers following
-    CLAUDE.md standards. All container functionality consolidated here.
+    Args:
+        None: Constructor called internally via get_global() singleton.
 
-    Optimized implementation using FlextResult railway patterns for 75% code reduction
-    while maintaining identical functionality, API compatibility, and explicit Configurable
-    protocol compliance for 1.0.0 stability.
+    Attributes:
+        _services (FlextTypes.Core.Dict): Registered service instances.
+        _factories (FlextTypes.Core.Dict): Service factory functions.
+        _flext_config (FlextConfig): Global FlextConfig instance.
+        _global_config (FlextTypes.Core.Dict): Container configuration.
+        _user_overrides (FlextTypes.Core.Dict): User config overrides.
 
-    **AUDIT FINDINGS**:
-    - ✅ NO DUPLICATIONS: Single comprehensive container implementation
-    - ✅ NO EXTERNAL DEPENDENCIES: Pure Python implementation
-    - ✅ COMPLETE FUNCTIONALITY: Service registration, factory resolution, auto-wiring
-    - ✅ ADVANCED FEATURES: Thread-safe singleton, batch operations, type validation
-    - ✅ PRODUCTION READY: Stable API with comprehensive error handling
+    Returns:
+        FlextContainer: Singleton container instance via get_global().
 
-    **IMPLEMENTATION NOTES**:
-    - Thread-safe singleton pattern with proper locking
-    - Service and factory registration with validation
-    - Auto-wiring with dependency injection
-    - Batch operations with rollback capability
-    - Type-safe service resolution
-    - Configuration integration with FlextConfig
+    Raises:
+        ValueError: When service registration validation fails.
+        KeyError: When retrieving non-existent service.
+        TypeError: When type validation fails for typed retrieval.
+
+    Note:
+        Thread-safe singleton pattern with double-checked locking.
+        All operations return FlextResult for railway pattern. Use
+        get_global() instead of direct instantiation. Container
+        integrates with FlextConfig for ecosystem-wide settings.
+
+    Warning:
+        Never instantiate FlextContainer directly - always use
+        get_global(). Batch operations rollback on first failure.
+        Service names must be unique across the container.
+
+    Example:
+        Complete service lifecycle management:
+
+        >>> container = FlextContainer.get_global()
+        >>> result = container.register("db", DatabaseService())
+        >>> print(result.is_success)
+        True
+        >>> db_result = container.get("db")
+        >>> print(db_result.is_success)
+        True
+
+    See Also:
+        FlextConfig: For global configuration management.
+        FlextResult: For railway-oriented error handling.
+        FlextLogger: For logging with container integration.
+
     """
 
     # =========================================================================
@@ -99,15 +167,15 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Initialize container with optimized data structures."""
         super().__init__()
         # Core service storage with type safety
-        self._services: dict[str, object] = {}
-        self._factories: dict[str, Callable[[], object]] = {}
+        self._services: FlextTypes.Core.Dict = {}
+        self._factories: FlextTypes.Core.Dict = {}
 
         # Use FlextConfig directly for container configuration
         self._flext_config: FlextConfig = FlextConfig.get_global_instance()
-        self._global_config: dict[str, object] = self._create_container_config()
-        self._user_overrides: dict[str, object] = {}
+        self._global_config: FlextTypes.Core.Dict = self._create_container_config()
+        self._user_overrides: FlextTypes.Core.Dict = {}
 
-    def _create_container_config(self) -> dict[str, object]:
+    def _create_container_config(self) -> FlextTypes.Core.Dict:
         """Create container configuration from FlextConfig defaults."""
         return {
             "max_workers": int(getattr(self._flext_config, "max_workers", 4)),
@@ -134,7 +202,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # =========================================================================
 
     @override
-    def configure(self, config: dict[str, object]) -> FlextResult[None]:
+    def configure(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Configure component with provided settings - Configurable protocol implementation.
 
         Returns:
@@ -144,11 +212,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return self.configure_container(config)
 
     @override
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get current configuration - Configurable protocol implementation.
 
         Returns:
-            dict[str, object]: Current container configuration
+            FlextTypes.Core.Dict: Current container configuration
 
         """
         self._refresh_global_config()
@@ -226,7 +294,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def register_factory(
         self,
         name: str,
-        factory: Callable[[], object],
+        factory: FlextTypes.Core.Callable,
     ) -> FlextResult[None]:
         """Register service factory with validation.
 
@@ -239,7 +307,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         )
 
     def _store_factory(
-        self, name: str, factory: Callable[[], object]
+        self, name: str, factory: FlextTypes.Core.Callable
     ) -> FlextResult[None]:
         """Store factory with callable validation.
 
@@ -319,7 +387,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         try:
-            factory = self._factories[name]
+            factory_obj = self._factories[name]
+            # Type-safe factory invocation
+            factory = cast("FlextTypes.Core.Callable", factory_obj)
             service = factory()
 
             # Cache the created service
@@ -359,7 +429,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # BATCH OPERATIONS - Efficient bulk service management
     # =========================================================================
 
-    def batch_register(self, services: dict[str, object]) -> FlextResult[None]:
+    def batch_register(self, services: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Register multiple services atomically with rollback on failure.
 
         Returns:
@@ -398,7 +468,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         }
 
     def _process_batch_registrations(
-        self, services: dict[str, object]
+        self, services: FlextTypes.Core.Dict
     ) -> FlextResult[None]:
         """Process batch registrations with proper error handling.
 
@@ -423,7 +493,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         return FlextResult[None].ok(None)
 
-    def _restore_registry_snapshot(self, snapshot: dict[str, object]) -> None:
+    def _restore_registry_snapshot(self, snapshot: FlextTypes.Core.Dict) -> None:
         """Restore registry state from snapshot with type safety."""
         # Direct assignment - snapshot already has correct types
         services_snapshot = snapshot.get("services")
@@ -441,7 +511,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def get_or_create(
         self,
         name: str,
-        factory: Callable[[], object] | None = None,
+        factory: FlextTypes.Core.Callable | None = None,
     ) -> FlextResult[object]:
         """Get existing service or create using provided factory.
 
@@ -462,7 +532,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return self._create_from_factory(name, factory)
 
     def _create_from_factory(
-        self, name: str, factory: Callable[[], object]
+        self, name: str, factory: FlextTypes.Core.Callable
     ) -> FlextResult[object]:
         """Create service from factory and register it.
 
@@ -608,31 +678,32 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return False
         return validated_name in self._services or validated_name in self._factories
 
-    def list_services(self) -> FlextResult[list[dict[str, object]]]:
+    def list_services(self) -> FlextResult[FlextTypes.Core.List]:
         """List all registered services with metadata.
 
         Returns:
-            FlextResult[list[dict[str, object]]]: Success with service list or failure with error.
+            FlextResult[FlextTypes.Core.List]: Success with service list or failure with error.
 
         """
         # ISSUE: Duplicates get_service_names functionality - both methods iterate over same service collections
         try:
-            services: list[dict[str, object]] = []
+            services: FlextTypes.Core.List = []
             for name in sorted(
                 set(self._services.keys()) | set(self._factories.keys())
             ):
-                service_info: dict[str, object] = {
+                service_info: FlextTypes.Core.Dict = {
                     FlextConstants.Mixins.FIELD_NAME: name,
                     FlextConstants.Mixins.FIELD_TYPE: "instance"
                     if name in self._services
                     else "factory",
                     FlextConstants.Mixins.FIELD_REGISTERED: True,
                 }
-                services.append(service_info)
+                # Ensure type compatibility by explicitly casting to object before append
+                services.append(cast("object", service_info))
 
-            return FlextResult[list[dict[str, object]]].ok(services)
+            return FlextResult[FlextTypes.Core.List].ok(services)
         except Exception as e:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[FlextTypes.Core.List].fail(
                 f"Failed to list services: {e}"
             )
 
@@ -715,7 +786,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # CONFIGURATION MANAGEMENT - FlextConfig integration
     # =========================================================================
 
-    def configure_container(self, config: dict[str, object]) -> FlextResult[None]:
+    def configure_container(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Configure container with validated settings.
 
         Returns:
@@ -742,7 +813,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def _refresh_global_config(self) -> None:
         """Refresh the effective global configuration."""
         # Merge FlextConfig defaults with user overrides
-        merged: dict[str, object] = {}
+        merged: FlextTypes.Core.Dict = {}
         for source in (self._create_container_config(), self._user_overrides):
             merged.update({
                 key: value for key, value in source.items() if value is not None
