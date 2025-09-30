@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import time
 import warnings
+from datetime import datetime, UTC
 from typing import Protocol, cast
 
 from flext_core import (
@@ -450,6 +451,10 @@ class UserRepository(FlextService[User]):
             name=str(user_data.get("name", "Unknown")),
             email=str(user_data.get("email", "")),
             age=age,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+            version=1,
+            domain_events=[],
         )
 
         # Cache the user

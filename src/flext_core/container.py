@@ -390,7 +390,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         try:
             factory_obj = self._factories[name]
             # Type-safe factory invocation
-            factory = cast("FlextTypes.Core.Callable", factory_obj)
+            factory = cast("Callable[[], object]", factory_obj)
             service = factory()
 
             # Cache the created service
@@ -512,7 +512,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def get_or_create(
         self,
         name: str,
-        factory: FlextTypes.Core.Callable | None = None,
+        factory: Callable[[], object] | None = None,
     ) -> FlextResult[object]:
         """Get existing service or create using provided factory.
 
@@ -533,7 +533,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return self._create_from_factory(name, factory)
 
     def _create_from_factory(
-        self, name: str, factory: FlextTypes.Core.Callable
+        self, name: str, factory: Callable[[], object]
     ) -> FlextResult[object]:
         """Create service from factory and register it.
 

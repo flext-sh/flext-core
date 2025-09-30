@@ -106,6 +106,7 @@
 [tool.poetry.group.dev.dependencies]
     types-pyyaml = "^6.0.12.20250822"
     pyrefly      = "^0.34.0"
+docker = "^7.1.0"
 
 [tool.poetry.group.typings.dependencies]
     types-pygments = ">=2.19.0.20250715"

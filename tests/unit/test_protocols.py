@@ -934,11 +934,14 @@ class TestFlextProtocols:
         protocols = FlextProtocols()
 
         # Import config with nested config dict
-        config = {
-            "config": {"custom_key": "custom_value", "another_key": 42},
-            "cache_ttl": 120,
-            "circuit_breaker_threshold": 10,
-        }
+        config = cast(
+            "dict[str, object]",
+            {
+                "config": {"custom_key": "custom_value", "another_key": 42},
+                "cache_ttl": 120,
+                "circuit_breaker_threshold": 10,
+            },
+        )
 
         result = protocols.import_config(config)
         assert result.is_success

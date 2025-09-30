@@ -150,19 +150,19 @@ class TestFlextCqrs:
         assert isinstance(command, FlextModels.Command)
         assert command.command_type == "CreateUser"
         assert command.issuer_id == "user_123"
-        assert command.command_id is not None  # Auto-generated
-        assert command.issued_at is not None  # Auto-generated
+        assert command.id is not None  # Auto-generated from IdentifiableMixin
+        assert command.created_at is not None  # Auto-generated from TimestampableMixin
 
     def test_cqrs_operations_create_command_with_existing_id(self) -> None:
         """Test command creation with existing command ID."""
         custom_id = str(uuid.uuid4())
         command_data: dict[str, object] = {
             "command_type": "UpdateUser",
-            "command_id": custom_id,
+            "id": custom_id,  # Use actual field name
             "issuer_id": "system",
         }
         command = FlextModels.Command.model_validate(command_data)
-        assert command.command_id == custom_id  # Should preserve existing ID
+        assert command.id == custom_id  # Should preserve existing ID
         assert command.command_type == "UpdateUser"
         assert command.issuer_id == "system"
 
