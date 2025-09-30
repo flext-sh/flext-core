@@ -18,10 +18,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import OrderedDict
-from collections.abc import Callable, Callable as CollectionsCallable
+from collections.abc import Callable as CollectionsCallable
 from typing import (
     Literal,
     ParamSpec,
+    TypedDict,
     TypeVar,
 )
 
@@ -83,6 +84,13 @@ R = TypeVar("R")
 # Type aliases - Python 3.13+ syntax
 type WorkspaceStatus = Literal["initializing", "ready", "error", "maintenance"]
 
+# Function type alias at module level for use in other type statements and as import
+type Callable = CollectionsCallable
+
+# Module-level type aliases for common types (can be imported directly)
+type Dict = dict[str, object]
+type List = list[object]
+
 # Domain-specific type variables
 Message = TypeVar("Message")
 Command = TypeVar("Command")
@@ -131,6 +139,18 @@ UResource = TypeVar("UResource")
 
 
 # =============================================================================
+# TYPED DICTIONARIES - Structured data types
+# =============================================================================
+
+
+class RateLimiterState(TypedDict):
+    """Rate limiter state tracking structure."""
+
+    requests: list[float]
+    last_reset: float
+
+
+# =============================================================================
 # FLEXT TYPES NAMESPACE - Centralized type system for the FLEXT ecosystem
 # =============================================================================
 
@@ -175,7 +195,10 @@ class FlextTypes:
 
         # Example 2: Use configuration types
         def load_config() -> FlextTypes.Core.ConfigDict:
-            return {"timeout": 30, "retries": 3}
+            return {
+                "timeout": FlextConstants.Network.DEFAULT_TIMEOUT,
+                "retries": FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
+            }
 
 
         # Example 3: Use headers type
@@ -268,9 +291,9 @@ class FlextTypes:
         V = V
         W = W
 
-        # Note: Use standard T | None or T | None syntax directly
+        # Note: Use standard T | None syntax directly
 
-        # Basic collection types
+        # Basic collection types - simple type aliases (not using TypeAlias in class scope)
         Dict = dict[str, object]
         List = list[object]
         StringList = list[str]
@@ -280,28 +303,30 @@ class FlextTypes:
 
         # Advanced collection types
         NestedDict = dict[str, dict[str, object]]
-        Headers = dict[str, str]
-        Metadata = dict[str, str]
-        Parameters = dict[str, object]
-        CounterDict = dict[str, int]
+        type Headers = dict[str, str]
+        type Metadata = dict[str, str]
+        type Parameters = dict[str, object]
+        type CounterDict = dict[str, int]
 
         # Configuration types
-        ConfigValue = str | int | float | bool | list[object] | dict[str, object] | None
-        ConfigDict = dict[str, ConfigValue]
+        type ConfigValue = (
+            str | int | float | bool | list[object] | dict[str, object] | None
+        )
+        type ConfigDict = dict[str, ConfigValue]
 
         # JSON types with modern Python 3.13+ syntax
-        # Note: Using object for recursive types due to Python limitation
-        JsonValue = str | int | float | bool | list[object] | dict[str, object] | None
-        JsonObject = dict[str, JsonValue]
-        JsonArray = list[JsonValue]
-        JsonDict = dict[str, JsonValue]
+        type JsonValue = (
+            str | int | float | bool | list[object] | dict[str, object] | None
+        )
+        type JsonObject = dict[str, JsonValue]
+        type JsonArray = list[JsonValue]
+        type JsonDict = dict[str, JsonValue]
 
         # Value types
-        Value = str | int | float | bool | object | None
+        type Value = str | int | float | bool | object | None
 
-        # Function types - use collections.abc.Callable for runtime checks
-        Callable = CollectionsCallable
-        # Note: Subscriptable Callable types are not used in type aliases to avoid pyrefly issues
+        # Callable type
+        type Callable = CollectionsCallable
 
         # Collection types with ordering
         OrderedDict = OrderedDict[str, object]
@@ -327,7 +352,7 @@ class FlextTypes:
         """Service layer types."""
 
         type ServiceDict = dict[str, object]
-        type FactoryDict = dict[str, Callable[[], object]]
+        type FactoryDict = dict[str, CollectionsCallable[[], object]]
         type ServiceType = Literal["instance", "factory"]
 
     # =========================================================================
@@ -341,7 +366,7 @@ class FlextTypes:
             "development", "staging", "production", "testing", "test", "local"
         ]
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        type ConfigSerializer = Callable[
+        type ConfigSerializer = CollectionsCallable[
             [
                 dict[
                     str,
@@ -358,9 +383,9 @@ class FlextTypes:
     class Validation:
         """Validation types."""
 
-        type Validator = Callable[[object], bool]
-        type ValidationRule = Callable[[object], bool]
-        type BusinessRule = Callable[[object], bool]
+        type Validator = CollectionsCallable[[object], bool]
+        type ValidationRule = CollectionsCallable[[object], bool]
+        type BusinessRule = CollectionsCallable[[object], bool]
 
     # =========================================================================
     # OUTPUT TYPES - Generic output formatting types
@@ -460,9 +485,9 @@ class FlextTypes:
     JsonValue = Core.JsonValue
     ConfigDict = Core.ConfigDict
     JsonDict = Core.JsonDict
-    Headers = Core.Headers
-    Metadata = Core.Metadata
-    Parameters = Core.Parameters
+    type Headers = Core.Headers
+    type Metadata = Core.Metadata
+    type Parameters = Core.Parameters
 
 
 # =========================================================================
@@ -488,6 +513,7 @@ __all__: list[str] = [
     "P",
     "Query",
     "R",
+    "RateLimiterState",
     "ResultT",
     "T",
     "T1_co",

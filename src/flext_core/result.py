@@ -43,7 +43,10 @@ import signal
 import time
 import types
 from collections.abc import Callable, Iterator, Sequence
-from typing import TypeGuard, cast, overload, override
+from typing import TYPE_CHECKING, TypeGuard, cast, overload, override
+
+if TYPE_CHECKING:
+    from flext_core.exceptions import FlextExceptions
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import (
@@ -55,6 +58,13 @@ from flext_core.typings import (
     U,
     V,
 )
+
+
+def _get_exceptions() -> type[FlextExceptions]:
+    """Lazy import FlextExceptions to avoid circular dependency."""
+    from flext_core.exceptions import FlextExceptions
+
+    return FlextExceptions
 
 
 class _DualAccessMethod:
@@ -522,10 +532,13 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return self._error is None and value is not None
 
     def _ensure_success_data(self) -> T_co:
-        """Ensure success data is available or raise RuntimeError."""
+        """Ensure success data is available or raise OperationError."""
         if self._data is None and self._error is None:
             msg = "Success result has None data"
-            raise RuntimeError(msg)
+            raise _get_exceptions().OperationError(
+                message=msg,
+                error_code="OPERATION_ERROR",
+            )
         return cast("T_co", self._data)
 
     @property
@@ -543,7 +556,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Return the success payload, raising :class:`TypeError` on failure."""
         if self.is_failure:
             msg = "Attempted to access value on failed result"
-            raise TypeError(msg)
+            raise _get_exceptions().TypeError(
+                message=msg,
+                error_code="TYPE_ERROR",
+            )
         # For success case, _data contains the actual value (which may be None for FlextResult[None])
         # Cast to T_co since we know this is a success result
         return cast("T_co", self._data)
@@ -747,7 +763,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         if key == 1:
             return self._error
         msg = "FlextResult only supports indices 0 (data) and 1 (error)"
-        raise IndexError(msg)
+        raise _get_exceptions().NotFoundError(msg, field=f"index[{key}]")
 
     def __or__(self, default: T_co) -> T_co:
         """Use | operator for default values: result | default_value.."""
@@ -761,7 +777,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise RuntimeError(error_msg)
+            raise _get_exceptions().OperationError(
+                message=error_msg,
+                error_code="OPERATION_ERROR",
+            )
 
         # Data validation removed for performance
         # if self._data is None:
@@ -789,11 +808,17 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Get value or raise with custom message."""
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise RuntimeError(msg)
+            raise _get_exceptions().OperationError(
+                message=msg,
+                error_code="OPERATION_ERROR",
+            )
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = "Success result has None data"
-            raise RuntimeError(msg)
+            raise _get_exceptions().OperationError(
+                message=msg,
+                error_code="OPERATION_ERROR",
+            )
         return self._data
 
     # Boolean methods as callables removed - use properties instead
@@ -910,7 +935,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             #     msg = "Success result must have data"
             #     raise RuntimeError(msg)
             return cast("T_co", self._data)
-        raise RuntimeError(self._error or "Operation failed")
+        error_msg = self._error or "Operation failed"
+        raise _get_exceptions().OperationError(
+            message=error_msg,
+            error_code="OPERATION_ERROR",
+        )
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure by applying func to error."""
@@ -1057,7 +1086,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 filtered.append(entry)
             else:
                 msg = "first_success expects FlextResult instances"
-                raise TypeError(msg)
+                raise _get_exceptions().TypeError(
+                    message=msg,
+                    error_code="TYPE_ERROR",
+                )
 
         if not filtered:
             return cls.fail("No results provided")
@@ -1237,7 +1269,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Cast a failed result to a different type."""
         if self.is_success:
             msg = "Cannot cast successful result to failed"
-            raise ValueError(msg)
+            raise _get_exceptions().ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         return FlextResult[object].fail(
             self.error or "Unknown error",
             error_code=self.error_code,
@@ -1781,7 +1816,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         def timeout_handler(_signum: int, _frame: object) -> None:
             msg = f"Operation timed out after {timeout_seconds} seconds"
-            raise TimeoutError(msg)
+            raise _get_exceptions().TimeoutError(
+                message=msg,
+                error_code=FlextConstants.Errors.TIMEOUT_ERROR,
+            )
 
         try:
             # Set up timeout signal
@@ -1826,7 +1864,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         self,
         operation: Callable[[T_co], FlextResult[T_co]],
         max_attempts: int = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-        backoff_factor: float = 1.0,
+        backoff_factor: float = FlextConstants.Reliability.LINEAR_BACKOFF_FACTOR,
     ) -> FlextResult[T_co]:
         """Retry operation until success with exponential backoff.
 
@@ -1947,7 +1985,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             else:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
-                    raise TypeError(msg)
+                    raise _get_exceptions().TypeError(
+                        message=msg,
+                        error_code="TYPE_ERROR",
+                    )
                 flat_callables.append(item)
         return flat_callables
 

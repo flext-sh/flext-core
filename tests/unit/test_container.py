@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import UserDict
 from collections.abc import Callable
 from typing import cast
 
-from flext_core import FlextContainer
+from flext_core import FlextConstants, FlextContainer
 
 
 class TestFlextContainer:
@@ -590,3 +591,289 @@ class TestFlextContainer:
         assert result2.is_failure
         assert result2.error is not None
         assert "already registered" in result2.error
+
+    def test_container_unregister_success_both_registries(self) -> None:
+        """Test successful unregister removes from both services and factories."""
+        container = FlextContainer()
+
+        # Register both a service and factory with same name
+        container.register("test_service", "service_value")
+        container.register_factory("test_service", lambda: "factory_value")
+
+        # Unregister should succeed and remove from both
+        result = container.unregister("test_service")
+        assert result.is_success
+        assert not container.has("test_service")
+
+    def test_container_batch_register_exception_rollback(self) -> None:
+        """Test batch_register exception handling with rollback."""
+        container = FlextContainer()
+
+        # Register initial service
+        container.register("initial", "value")
+
+        # Create services dict with invalid entry that will cause exception
+        # Using non-string key to trigger exception in processing
+        services: dict[object, object] = {
+            "valid_service": "valid_value",
+            123: "invalid_key",  # type: ignore[dict-item]
+        }
+
+        # Should fail and rollback
+        result = container.batch_register(services)
+        assert result.is_failure
+        assert "Batch registration error" in result.error
+
+        # Original service should still exist (rollback worked)
+        assert container.has("initial")
+        # New services should not be registered
+        assert not container.has("valid_service")
+
+    def test_container_create_from_factory_registration_failure(self) -> None:
+        """Test _create_from_factory when factory registration fails."""
+        container = FlextContainer()
+
+        # Register a factory first
+        container.register_factory("test", lambda: "value")
+
+        # Try to create from factory with same name (will fail registration)
+        result = container._create_from_factory("test", lambda: "new_value")
+        assert result.is_failure
+        assert "already registered" in result.error.lower()
+
+    def test_container_create_service_no_name_attribute(self) -> None:
+        """Test create_service with class that has no __name__ attribute."""
+        container = FlextContainer()
+
+        # Create a mock class-like object without __name__
+        class MockClassWithoutName:
+            """Mock class for testing."""
+
+            def __init__(self) -> None:
+                pass
+
+        # Use a type that doesn't have __name__ by using a custom descriptor
+        # Python classes always have __name__, so we test the getattr fallback
+        # by creating an object where __name__ returns empty string
+        original_getattr = getattr
+
+        def mock_getattr(obj: object, name: str, default: object = None) -> object:
+            if name == "__name__" and obj is MockClassWithoutName:
+                return ""
+            return original_getattr(obj, name, default)
+
+        # Monkey-patch getattr temporarily
+        import builtins
+
+        original_builtin_getattr = builtins.getattr
+        builtins.getattr = mock_getattr  # type: ignore[assignment]
+
+        try:
+            result = container.create_service(MockClassWithoutName)  # type: ignore[arg-type]
+            assert result.is_failure
+            assert "Cannot determine service name" in result.error
+        finally:
+            # Restore original getattr
+            builtins.getattr = original_builtin_getattr  # type: ignore[assignment]
+
+    def test_container_create_service_registration_failure(self) -> None:
+        """Test create_service when final registration fails."""
+        container = FlextContainer()
+
+        # Create a simple service class
+        class SimpleService:
+            def __init__(self) -> None:
+                self.value = "test"
+
+        # Pre-register to cause registration failure
+        container.register("simpleservice", "existing")
+
+        # create_service will try to register "simpleservice" but it already exists
+        result = container.create_service(SimpleService)
+        assert result.is_failure
+        # The error is about registration failure
+        assert "already registered" in result.error.lower()
+
+    def test_container_auto_wire_exception(self) -> None:
+        """Test auto_wire exception handling."""
+        container = FlextContainer()
+
+        # Create a class that will raise exception during instantiation
+        class FailingService:
+            def __init__(self) -> None:
+                msg = "Intentional failure"
+                raise RuntimeError(msg)
+
+        result = container.auto_wire(FailingService)
+        assert result.is_failure
+        assert "Auto-wiring failed" in result.error
+
+    def test_container_clear_exception_handling(self) -> None:
+        """Test clear() exception handling with corrupted state."""
+        container = FlextContainer()
+        container.register("test", "value")
+
+        # Simulate exception by corrupting internal state
+        # Replace _services dict with object that raises on clear()
+        class FailingDict(UserDict):  # type: ignore[type-arg]
+            def clear(self) -> None:
+                msg = "Clear failed"
+                raise RuntimeError(msg)
+
+        container._services = FailingDict(container._services)  # type: ignore[assignment]
+
+        result = container.clear()
+        assert result.is_failure
+        assert "Failed to clear container" in result.error
+
+    def test_container_has_none_validated_name(self) -> None:
+        """Test has() when validation returns None for validated_name."""
+        container = FlextContainer()
+
+        # Test with empty string (validation fails, returns None in value_or_none)
+        result = container.has("")
+        assert result is False
+
+    def test_container_list_services_exception(self) -> None:
+        """Test list_services() exception handling."""
+        container = FlextContainer()
+        container.register("test", "value")
+
+        # Corrupt _services to trigger exception
+        class FailingDict(UserDict):  # type: ignore[type-arg]
+            def keys(self) -> object:
+                msg = "Keys failed"
+                raise RuntimeError(msg)
+
+        container._services = FailingDict(container._services)  # type: ignore[assignment]
+
+        result = container.list_services()
+        assert result.is_failure
+        assert "Failed to list services" in result.error
+
+    def test_container_get_service_names_exception(self) -> None:
+        """Test get_service_names() exception handling."""
+        container = FlextContainer()
+        container.register("test", "value")
+
+        # Corrupt _services to trigger exception
+        class FailingDict(UserDict):  # type: ignore[type-arg]
+            def keys(self) -> object:
+                msg = "Keys failed"
+                raise RuntimeError(msg)
+
+        container._services = FailingDict(container._services)  # type: ignore[assignment]
+
+        result = container.get_service_names()
+        assert result.is_failure
+        assert "Failed to get service names" in result.error
+
+    def test_container_get_info_exception(self) -> None:
+        """Test get_info() exception handling."""
+        container = FlextContainer()
+        container.register("test", "value")
+
+        # Corrupt internal state to trigger exception
+        class FailingDict(UserDict):  # type: ignore[type-arg]
+            def __len__(self) -> int:
+                msg = "Length failed"
+                raise RuntimeError(msg)
+
+        container._services = FailingDict(container._services)  # type: ignore[assignment]
+
+        result = container.get_info()
+        assert result.is_failure
+        assert "Failed to get container info" in result.error
+
+    def test_container_build_service_info_exception_fallback(self) -> None:
+        """Test _build_service_info exception handling with fallback dict."""
+        container = FlextContainer()
+
+        # Create an object that raises exception when accessing __class__
+        class ProblematicService:
+            @property
+            def __class__(self) -> object:
+                msg = "Class access failed"
+                raise RuntimeError(msg)
+
+        service = ProblematicService()
+
+        # Should return fallback dict with "unknown" values
+        info = container._build_service_info("test", service, "service")
+
+        assert info[FlextConstants.Mixins.FIELD_NAME] == "test"
+        assert info[FlextConstants.Mixins.FIELD_TYPE] == "service"
+        assert (
+            info[FlextConstants.Mixins.FIELD_CLASS]
+            == FlextConstants.Mixins.IDENTIFIER_UNKNOWN
+        )
+        assert (
+            info[FlextConstants.Mixins.FIELD_MODULE]
+            == FlextConstants.Mixins.IDENTIFIER_UNKNOWN
+        )
+
+    def test_container_configure_container_exception(self) -> None:
+        """Test configure_container() exception handling."""
+        container = FlextContainer()
+
+        # Create config dict that will cause exception during processing
+        # Use invalid type that breaks the update logic
+        config: dict[str, object] = {"invalid_key": object()}  # type: ignore[dict-item]
+
+        # Corrupt _user_overrides to trigger exception
+        class FailingDict(UserDict):  # type: ignore[type-arg]
+            def update(self, *args: object, **kwargs: object) -> None:
+                msg = "Update failed"
+                raise RuntimeError(msg)
+
+        container._user_overrides = FailingDict()  # type: ignore[assignment]
+
+        result = container.configure_container(config)
+        assert result.is_failure
+        assert "Container configuration failed" in result.error
+
+    def test_container_create_module_utilities_empty_name(self) -> None:
+        """Test create_module_utilities() with empty module name."""
+        result = FlextContainer.create_module_utilities("")
+        assert result.is_failure
+        assert "Module name must be non-empty string" in result.error
+
+    def test_container_has_with_validation_edge_cases(self) -> None:
+        """Test has() with various validation edge cases."""
+        container = FlextContainer()
+
+        # Test with invalid characters that fail validation
+        assert container.has("invalid/name") is False
+
+        # Test with name that has special characters
+        assert container.has("name@#$%") is False
+
+        # Register a valid service
+        container.register("valid_service", "value")
+
+        # Test that valid service is found
+        assert container.has("valid_service") is True
+
+    def test_has_validation_success_with_none_value(self) -> None:
+        """Test has() when validation succeeds but value_or_none is None (line 678)."""
+        container = FlextContainer()
+
+        # Mock scenario: validation can succeed but return None for value_or_none
+        # This tests the edge case where normalized.value_or_none is None
+        # even though validation didn't fail
+
+        # The FlextModels.Validation.validate_service_name can return success
+        # with None value in edge cases - test has() handles this
+        from unittest.mock import MagicMock, patch
+
+        mock_result = MagicMock()
+        mock_result.is_failure = False
+        mock_result.value_or_none = None
+
+        with patch(
+            "flext_core.container.FlextModels.Validation.validate_service_name",
+            return_value=mock_result,
+        ):
+            # This should return False when value_or_none is None
+            result = container.has("test_service")
+            assert result is False

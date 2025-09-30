@@ -186,22 +186,13 @@ class FlextVersionManager:
             bool: True if version format is valid, False otherwise
 
         """
-        try:
-            if not isinstance(version, str):
-                return False
-            parts = version.split(".")
-            if len(parts) != FlextVersionManager.SEMVER_PARTS_COUNT:
-                return False
-
-            for part in parts:
-                if not part.isdigit():
-                    return False
-                if int(part) < 0:
-                    return False
-        except (ValueError, AttributeError):
+        if not isinstance(version, str):
             return False
-        else:
-            return True
+        parts = version.split(".")
+        if len(parts) != FlextVersionManager.SEMVER_PARTS_COUNT:
+            return False
+
+        return all(part.isdigit() for part in parts)
 
 
 # =============================================================================

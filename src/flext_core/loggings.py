@@ -32,9 +32,8 @@ import structlog
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from structlog.typing import EventDict, Processor
 
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.context import FlextContext
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -55,6 +54,8 @@ flext_logging = "flext_logging"
 def _get_config() -> dict[str, object]:
     """Get logging configuration lazily to avoid circular imports."""
     try:
+        from flext_core.config import FlextConfig
+
         config = FlextConfig()
         return config.model_dump()
     except ImportError:
@@ -285,7 +286,10 @@ class FlextLogger:
             v_upper = v.upper()
             if v_upper not in valid_levels:
                 msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v_upper
 
         @field_validator(
@@ -305,7 +309,10 @@ class FlextLogger:
                 json.dumps(v)
             except (TypeError, ValueError) as e:
                 msg = f"Context data must be JSON serializable: {e}"
-                raise ValueError(msg) from e
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                ) from e
             return v
 
         @field_validator("timestamp")
@@ -316,7 +323,10 @@ class FlextLogger:
                 datetime.fromisoformat(v)
             except ValueError as e:
                 msg = f"Invalid timestamp format: {v}. Must be ISO format: {e}"
-                raise ValueError(msg) from e
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                ) from e
             return v
 
         @model_validator(mode="after")
@@ -341,7 +351,10 @@ class FlextLogger:
                 field_value: dict[str, object] = getattr(self, field_name, {})
                 if len(str(field_value)) > max_context_size:
                     msg = f"Field '{field_name}' context data too large (max {max_context_size} characters)"
-                    raise ValueError(msg)
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
 
             return self
 
@@ -376,7 +389,10 @@ class FlextLogger:
             v_upper = v.upper()
             if v_upper not in valid_levels:
                 msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v_upper
 
     class LoggerRequestContextModel(BaseModel):
@@ -402,7 +418,10 @@ class FlextLogger:
                 and self.method not in FlextConstants.Platform.VALID_HTTP_METHODS
             ):
                 msg = f"Invalid HTTP method: {self.method}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class LoggerContextBindingModel(BaseModel):
@@ -425,7 +444,10 @@ class FlextLogger:
             max_context_keys = FlextConstants.Logging.MAX_CONTEXT_KEYS
             if len(v) > max_context_keys:
                 msg = f"Context data too large (max {max_context_keys} keys)"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class LoggerPermanentContextModel(BaseModel):
@@ -461,7 +483,10 @@ class FlextLogger:
             valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
             if normalized not in valid_envs:
                 msg = f"Environment must be one of {sorted(valid_envs)}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return cast("FlextTypes.Config.Environment", normalized)
 
         @model_validator(mode="after")
@@ -478,7 +503,10 @@ class FlextLogger:
                     f"Invalid environment: {self.environment}. "
                     f"Must be one of {sorted_envs}"
                 )
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     # =============================================================================
@@ -978,6 +1006,8 @@ class FlextLogger:
         if resolved_level is None:
             # Get configuration from singleton as single source of truth
             try:
+                from flext_core.config import FlextConfig
+
                 flext_config = FlextConfig.get_global_instance()
                 config_level = flext_config.log_level
                 if config_level and config_level in valid_levels:
@@ -1018,7 +1048,8 @@ class FlextLogger:
         self._start_time = time.time()
 
         # Instance-level correlation ID (can override global)
-        context_id = None
+        from flext_core.context import FlextContext
+
         context_id = FlextContext.Correlation.get_correlation_id()
 
         self._correlation_id = (
@@ -1099,6 +1130,8 @@ class FlextLogger:
         """
         # Try to get from FlextConfig first
         try:
+            from flext_core.config import FlextConfig
+
             flext_config = FlextConfig.get_global_instance()
             if hasattr(flext_config, "app_name") and flext_config.app_name:
                 # Extract service name from app_name if available
@@ -1152,6 +1185,8 @@ class FlextLogger:
 
         """
         try:
+            from flext_core.config import FlextConfig
+
             flext_config = FlextConfig.get_global_instance()
             return flext_config.environment.lower()
         except Exception:

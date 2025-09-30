@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import collections.abc
 import contextlib
 import json
 import threading
@@ -19,11 +20,30 @@ import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Final, override
 
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+
+@dataclass(slots=True)
+class _ContextData:
+    """Lightweight container for initializing context state."""
+
+    data: dict[str, object] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class _ContextExport:
+    """Typed snapshot returned by `export_snapshot`."""
+
+    data: dict[str, object] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)
+    statistics: dict[str, object] = field(default_factory=dict)
 
 
 class FlextContext:
@@ -146,17 +166,27 @@ class FlextContext:
     """
 
     @override
-    def __init__(self, initial_data: FlextTypes.Core.Dict | None = None) -> None:
+    def __init__(
+        self,
+        initial_data: _ContextData | dict[str, object] | None = None,
+    ) -> None:
         """Initialize FlextContext with optional initial data.
 
         Args:
-            initial_data: Optional dictionary of initial context data
+            initial_data: Optional context data (dict or `_ContextData`)
 
         """
-        self._data: FlextTypes.Core.Dict = initial_data or {}
-        self._metadata: FlextTypes.Core.Dict = {}
-        self._hooks: dict[str, list[FlextTypes.Core.Callable]] = {}
-        self._statistics: FlextTypes.Core.Dict = {
+        if initial_data is None:
+            context_data = _ContextData()
+        elif isinstance(initial_data, dict):
+            context_data = _ContextData(data=initial_data)
+        else:
+            context_data = initial_data
+
+        self._data: dict[str, object] = context_data.data
+        self._metadata: dict[str, object] = context_data.metadata
+        self._hooks: dict[str, list[collections.abc.Callable]] = {}
+        self._statistics: dict[str, object] = {
             "operations": {
                 "set": 0,
                 "get": 0,
@@ -172,7 +202,7 @@ class FlextContext:
         self._suspended = False
         self._lock = threading.RLock()
         # Scope-based storage
-        self._scopes: dict[str, FlextTypes.Core.Dict] = {
+        self._scopes: dict[str, dict[str, object]] = {
             "global": self._data,
             "user": {},
             "session": {},
@@ -197,11 +227,17 @@ class FlextContext:
         # Validate inputs - only check type, not content for setting
         if not isinstance(key, str):
             msg = "Key must be a string"
-            raise TypeError(msg)
+            raise FlextExceptions.TypeError(
+                message=msg,
+                error_code="TYPE_ERROR",
+            )
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
             msg = "Value must be serializable"
-            raise TypeError(msg)
+            raise FlextExceptions.TypeError(
+                message=msg,
+                error_code="TYPE_ERROR",
+            )
 
         with self._lock:
             # Ensure the scope exists in _scopes
@@ -492,7 +528,7 @@ class FlextContext:
             self._metadata.clear()
             self._hooks.clear()
 
-    def add_hook(self, event: str, hook: FlextTypes.Core.Callable) -> None:
+    def add_hook(self, event: str, hook: collections.abc.Callable) -> None:
         """Add a hook for context events.
 
         Args:
@@ -578,18 +614,22 @@ class FlextContext:
             return self._scopes.copy()
 
     def export(self) -> FlextTypes.Core.Dict:
-        """Export context data.
+        """Export context data as a dictionary for compatibility consumers."""
+        export_snapshot = self.export_snapshot()
+        return dict(export_snapshot.data)
 
-        Returns:
-            Dictionary containing context data
-
-        """
+    def export_snapshot(self) -> _ContextExport:
+        """Return typed export snapshot including metadata and statistics."""
         with self._lock:
-            # Combine all scopes into a single dictionary
-            all_data = {}
+            all_data: dict[str, object] = {}
             for scope_data in self._scopes.values():
                 all_data.update(scope_data)
-            return all_data
+
+            return _ContextExport(
+                data=all_data,
+                metadata=self._metadata.copy(),
+                statistics=self._statistics.copy(),
+            )
 
     def import_data(self, data: FlextTypes.Core.Dict) -> None:
         """Import context data.

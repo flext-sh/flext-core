@@ -70,6 +70,7 @@ from pydantic.main import IncEx
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -431,7 +432,6 @@ class FlextModels:
                     # Log exception but don't re-raise to maintain resilience
                     # Domain events may not have corresponding handlers or handlers may fail
                     # The important thing is that the event is still recorded
-
                     logger = FlextLogger(__name__)
                     logger.warning(
                         f"Domain event handler {handler_method_name} failed for event {event_name}: {e}"
@@ -495,7 +495,10 @@ class FlextModels:
             for invariant in self._invariants:
                 if not invariant():
                     msg = f"Invariant violated: {invariant.__name__}"
-                    raise ValueError(msg)
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -507,7 +510,10 @@ class FlextModels:
         """Base class for CQRS commands with validation."""
 
         command_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        command_type: str = Field(default="")
+        command_type: str = Field(
+            default=FlextConstants.Cqrs.DEFAULT_COMMAND_TYPE,
+            description="Command type identifier",
+        )
         issued_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         issuer_id: str | None = None
 
@@ -894,7 +900,10 @@ class FlextModels:
             """Validate email format using centralized FlextUtilities.Validation."""
             result: FlextResult[str] = FlextModels.Validation.validate_email_address(v)
             if result.is_failure:
-                raise ValueError(result.error)
+                raise FlextExceptions.ValidationError(
+                    message=result.error or "Invalid email format",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return result.unwrap()
 
     class Host(Value):
@@ -908,7 +917,10 @@ class FlextModels:
             """Validate hostname format using centralized FlextUtilities.Validation."""
             result: FlextResult[str] = FlextModels.Validation.validate_hostname(v)
             if result.is_failure:
-                raise ValueError(result.error)
+                raise FlextExceptions.ValidationError(
+                    message=result.error or "Invalid hostname format",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return result.unwrap()
 
     class EntityId(Value):
@@ -922,7 +934,10 @@ class FlextModels:
             """Validate entity ID format using centralized FlextUtilities.Validation."""
             result = FlextModels.Validation.validate_entity_id(v)
             if result.is_failure:
-                raise ValueError(result.error)
+                raise FlextExceptions.ValidationError(
+                    message=result.error or "Invalid entity ID format",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return result.unwrap()
 
     class Coordinates(Value):
@@ -973,12 +988,18 @@ class FlextModels:
                 result: ParseResult = urlparse(v)
                 if not all([result.scheme, result.netloc]):
                     msg = f"Invalid URL format: {v}"
-                    raise ValueError(msg)
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
 
                 # Validate scheme
                 if result.scheme not in {"http", "https", "ftp", "ftps", "file"}:
                     msg = f"Unsupported URL scheme: {result.scheme}"
-                    raise ValueError(msg)
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
 
                 # Validate domain
                 if result.netloc:
@@ -989,17 +1010,26 @@ class FlextModels:
                         or len(domain) > FlextConstants.Validation.MAX_EMAIL_LENGTH
                     ):
                         msg = "Invalid domain in URL"
-                        raise ValueError(msg)
+                        raise FlextExceptions.ValidationError(
+                            message=msg,
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        )
 
                     # Check for valid characters
                     if not all(c.isalnum() or c in ".-" for c in domain):
                         msg = "Invalid characters in domain"
-                        raise ValueError(msg)
+                        raise FlextExceptions.ValidationError(
+                            message=msg,
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        )
 
                 return v
             except Exception as e:
                 msg = f"URL validation failed: {e}"
-                raise ValueError(msg) from e
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                ) from e
 
     class DateRange(Value):
         """Date range value object."""
@@ -1012,7 +1042,10 @@ class FlextModels:
             """Ensure start_date <= end_date."""
             if self.start_date > self.end_date:
                 msg = "start_date must be before or equal to end_date"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class TimeRange(Value):
@@ -1114,7 +1147,10 @@ class FlextModels:
                 and not self.repository_path.startswith("http")
             ):
                 msg = "Repository path must be absolute or URL"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
             return self
 
@@ -1134,13 +1170,19 @@ class FlextModels:
             # Workspace consistency
             if self.projects and self.total_files == 0:
                 msg = "Workspace with projects must have files"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
             # Size validation
             max_workspace_size = 10 * FlextConstants.Utilities.BYTES_PER_KB**3  # 10GB
             if self.total_size_bytes > max_workspace_size:
                 msg = "Workspace too large"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
             return self
 
@@ -1385,7 +1427,10 @@ class FlextModels:
             ]
             if required_params:
                 msg = f"Factory cannot have required parameters: {[p.name for p in required_params]}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
             return v
 
@@ -1401,7 +1446,10 @@ class FlextModels:
             """Ensure at least one registration exists."""
             if not any([self.services, self.factories, self.singletons]):
                 msg = "At least one registration required"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class LogOperation(StrictArbitraryTypesModel):
@@ -1463,7 +1511,12 @@ class FlextModels:
         name: str
         handler: object
         event_types: FlextTypes.Core.StringList = Field(default_factory=list)
-        priority: int = Field(default=0, ge=0, le=100)
+        priority: int = Field(
+            default=FlextConstants.Cqrs.DEFAULT_PRIORITY,
+            ge=FlextConstants.Cqrs.MIN_PRIORITY,
+            le=FlextConstants.Cqrs.MAX_PRIORITY,
+            description="Priority level",
+        )
 
         @field_validator("handler")
         @classmethod
@@ -1471,7 +1524,10 @@ class FlextModels:
             """Validate handler is properly callable."""
             if not callable(v):
                 error_msg = "Handler must be callable"
-                raise TypeError(error_msg)
+                raise FlextExceptions.TypeError(
+                    message=error_msg,
+                    error_code="TYPE_ERROR",
+                )
             return cast("Callable[[object], object]", v)
 
     class BatchProcessingConfig(StrictArbitraryTypesModel):
@@ -1495,7 +1551,10 @@ class FlextModels:
             """Validate data items are not empty when provided."""
             if len(v) > FlextConstants.Performance.BatchProcessing.MAX_ITEMS:
                 msg = f"Batch cannot exceed {FlextConstants.Performance.BatchProcessing.MAX_ITEMS} items"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @field_validator("max_workers")
@@ -1505,7 +1564,10 @@ class FlextModels:
             max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
             if v > max_workers_limit:
                 msg = f"Max workers cannot exceed {max_workers_limit}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @model_validator(mode="after")
@@ -1516,7 +1578,10 @@ class FlextModels:
             )
             if self.batch_size > max_batch_size:
                 msg = f"Batch size cannot exceed {max_batch_size}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
             # Adjust max_workers to not exceed batch_size without triggering validation
             adjusted_workers = min(self.max_workers, self.batch_size)
@@ -1546,7 +1611,10 @@ class FlextModels:
             """Validate handler name format."""
             if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", v):
                 msg = "Handler name must be valid identifier"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class PipelineConfiguration(ArbitraryTypesModel):
@@ -1554,9 +1622,11 @@ class FlextModels:
 
         name: str = Field(min_length=FlextConstants.Performance.MIN_NAME_LENGTH)
         steps: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
-        parallel_execution: bool = False
-        stop_on_error: bool = True
-        max_parallel: int = Field(gt=0, default=4)
+        parallel_execution: bool = FlextConstants.Cqrs.DEFAULT_PARALLEL_EXECUTION
+        stop_on_error: bool = FlextConstants.Cqrs.DEFAULT_STOP_ON_ERROR
+        max_parallel: int = Field(
+            gt=0, default=FlextConstants.Performance.DEFAULT_MAX_PARALLEL
+        )
 
         @field_validator("name")
         @classmethod
@@ -1565,7 +1635,10 @@ class FlextModels:
             max_name_length = FlextConstants.Validation.MAX_NAME_LENGTH
             if len(v) > max_name_length:
                 msg = f"Pipeline name too long (max {max_name_length} characters)"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @field_validator("steps")
@@ -1574,7 +1647,10 @@ class FlextModels:
             """Validate pipeline steps."""
             if not v:
                 msg = "Pipeline must have at least one step"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class ProcessingResult(ArbitraryTypesModel):
@@ -1593,7 +1669,10 @@ class FlextModels:
             max_execution_time_ms = FlextConstants.Cqrs.MAX_TIMEOUT  # 5 minutes
             if v > max_execution_time_ms:
                 msg = f"Execution time exceeds maximum ({max_execution_time_ms // 60000} minutes)"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @computed_field
@@ -1639,7 +1718,10 @@ class FlextModels:
             """Validate field names are valid identifiers."""
             if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", v):
                 msg = f"Invalid field name: {v}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     # ISSUE: Duplicates loggings.py LoggerInitializationModel - should use that instead
@@ -1747,7 +1829,10 @@ class FlextModels:
             max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
             if v > max_timeout_seconds:
                 msg = f"Timeout cannot exceed {max_timeout_seconds} seconds"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class DomainServiceValidationRequest(ArbitraryTypesModel):
@@ -1770,7 +1855,10 @@ class FlextModels:
                 self.rules,
             ]):
                 msg = "At least one validation type must be enabled"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class DomainServiceBatchRequest(ArbitraryTypesModel):
@@ -1793,11 +1881,17 @@ class FlextModels:
             """Validate operations list[object]."""
             if not v:
                 msg = "Operations list[object] cannot be empty"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             max_batch_operations = FlextConstants.Performance.MAX_BATCH_OPERATIONS
             if len(v) > max_batch_operations:
                 msg = f"Batch cannot exceed {max_batch_operations} operations"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class DomainServiceMetricsRequest(ArbitraryTypesModel):
@@ -1826,7 +1920,10 @@ class FlextModels:
             for metric_type in v:
                 if metric_type not in valid_types:
                     msg = f"Invalid metric type: {metric_type}"
-                    raise ValueError(msg)
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
             return v
 
     class DomainServiceResourceRequest(ArbitraryTypesModel):
@@ -1846,16 +1943,22 @@ class FlextModels:
             """Validate resource type format."""
             if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", v):
                 msg = "Resource type must be valid identifier"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @field_validator("resource_limit")
         @classmethod
         def validate_resource_limit(cls, v: int) -> int:
             """Validate resource limit is positive."""
-            if v <= 0:
+            if v <= FlextConstants.Core.ZERO:
                 msg = "Resource limit must be positive"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class OperationExecutionRequest(ArbitraryTypesModel):
@@ -1879,7 +1982,10 @@ class FlextModels:
             )
             if len(v) > max_operation_name_length:
                 msg = "Operation name too long"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @field_validator("operation_callable", mode="plain")
@@ -1944,14 +2050,23 @@ class FlextModels:
                             <= FlextConstants.Platform.MAX_HTTP_STATUS_RANGE
                         ):
                             msg = f"Invalid HTTP status code: {code}"
-                            raise ValueError(msg)
+                            raise FlextExceptions.ValidationError(
+                                message=msg,
+                                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                            )
                         validated_codes.append(code_int)
                     else:
                         msg = f"Invalid HTTP status code type: {type(code)}"
-                        raise TypeError(msg)
+                        raise FlextExceptions.TypeError(
+                            message=msg,
+                            error_code="TYPE_ERROR",
+                        )
                 except (ValueError, TypeError) as e:
                     msg = f"Invalid HTTP status code: {code}"
-                    raise ValueError(msg) from e
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    ) from e
             return validated_codes
 
         @model_validator(mode="after")
@@ -1959,13 +2074,18 @@ class FlextModels:
             """Validate delay configuration consistency."""
             if self.max_delay_seconds < self.initial_delay_seconds:
                 msg = "max_delay_seconds must be >= initial_delay_seconds"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class CircuitBreakerConfiguration(ArbitraryTypesModel):
         """Circuit breaker configuration."""
 
-        failure_threshold: int = Field(default=5)
+        failure_threshold: int = Field(
+            default=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
+        )
         recovery_timeout_seconds: int = Field(
             default=FlextConstants.Performance.DEFAULT_RECOVERY_TIMEOUT
         )
@@ -1975,7 +2095,10 @@ class FlextModels:
         sliding_window_size: int = Field(
             default=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
         )
-        minimum_throughput: int = Field(default=10)
+        minimum_throughput: int = Field(
+            default=FlextConstants.Cqrs.DEFAULT_MINIMUM_THROUGHPUT,
+            description="Minimum throughput threshold",
+        )
         slow_call_duration_seconds: float = Field(
             default=FlextConstants.Performance.DEFAULT_DELAY_SECONDS, gt=0
         )
@@ -1988,7 +2111,10 @@ class FlextModels:
             """Validate circuit breaker configuration."""
             if self.half_open_max_calls > self.sliding_window_size:
                 msg = "half_open_max_calls cannot exceed sliding_window_size"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class ValidationConfiguration(ArbitraryTypesModel):
@@ -1997,7 +2123,10 @@ class FlextModels:
         enable_strict_mode: bool = Field(
             default_factory=lambda: FlextConfig.get_global_instance().validation_strict_mode
         )
-        max_validation_errors: int = Field(default=10)
+        max_validation_errors: int = Field(
+            default=FlextConstants.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
+            description="Maximum validation errors",
+        )
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[FlextTypes.Core.List, Field(default_factory=list)]
@@ -2011,7 +2140,10 @@ class FlextModels:
             for validator in v:
                 if not callable(validator):
                     msg = "All validators must be callable"
-                    raise TypeError(msg)
+                    raise FlextExceptions.TypeError(
+                        message=msg,
+                        error_code="TYPE_ERROR",
+                    )
             return v
 
     class ServiceExecutionContext(ArbitraryTypesModel):
@@ -2031,7 +2163,10 @@ class FlextModels:
             """Validate correlation ID format."""
             if not re.match(r"^[a-zA-Z0-9\-_]+$", v):
                 msg = "Correlation ID must contain only alphanumeric, dash, and underscore"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
         @field_validator("deadline")
@@ -2040,7 +2175,10 @@ class FlextModels:
             """Validate deadline is in the future."""
             if v and v <= datetime.now(UTC):
                 msg = "Deadline must be in the future"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class ConditionalExecutionRequest(ArbitraryTypesModel):
@@ -2073,7 +2211,10 @@ class FlextModels:
             """Validate state transitions."""
             if not v:
                 msg = "Transitions cannot be empty"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
             # Validate transition structure
             for state, transitions in v.items():
@@ -2081,13 +2222,19 @@ class FlextModels:
                     msg = (
                         f"Transitions for state {state} must be a FlextTypes.Core.Dict"
                     )
-                    raise TypeError(msg)
+                    raise FlextExceptions.TypeError(
+                        message=msg,
+                        error_code="TYPE_ERROR",
+                    )
                 for event, next_state in cast(
                     "FlextTypes.Core.Dict", transitions
                 ).items():
                     if not isinstance(next_state, str):
                         msg = f"Next state for {state}.{event} must be a string"
-                        raise TypeError(msg)
+                        raise FlextExceptions.TypeError(
+                            message=msg,
+                            error_code="TYPE_ERROR",
+                        )
 
             return v
 
@@ -2107,7 +2254,10 @@ class FlextModels:
             """Validate resource management request."""
             if self.action in {"release", "check"} and not self.resource_id:
                 msg = f"resource_id required for action: {self.action}"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return self
 
     class MetricsCollectionRequest(ArbitraryTypesModel):
@@ -2128,7 +2278,10 @@ class FlextModels:
             max_dimensions = FlextConstants.Performance.MAX_DIMENSIONS
             if len(v) > max_dimensions:
                 msg = f"Too many dimensions (max {max_dimensions})"
-                raise ValueError(msg)
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
             return v
 
     class TransformationRequest(ArbitraryTypesModel):
@@ -2426,7 +2579,10 @@ class FlextModels:
                 model.model_dump_json()
             except Exception as e:
                 msg = f"Model not JSON serializable: {e}"
-                raise ValueError(msg) from e
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                ) from e
 
         @staticmethod
         def serialize_batch(
@@ -2672,7 +2828,10 @@ class FlextModels:
                 """Validate implementation path format."""
                 if ":" not in v:
                     error_msg = "implementation_path must be in 'module:Class' format"
-                    raise ValueError(error_msg)
+                    raise FlextExceptions.ValidationError(
+                        message=error_msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
                 return v
 
             @classmethod
@@ -2719,9 +2878,13 @@ class FlextModels:
                 default="command",
                 description="Handler mode",
             )
-            command_timeout: int = Field(default=0, description="Command timeout")
+            command_timeout: int = Field(
+                default=FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+                description="Command timeout",
+            )
             max_command_retries: int = Field(
-                default=0, description="Maximum retry attempts"
+                default=FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+                description="Maximum retry attempts",
             )
             metadata: FlextTypes.Core.Dict = Field(
                 default_factory=dict, description="Handler metadata"
@@ -2772,7 +2935,10 @@ class FlextModels:
             default="command",
             description="Handler mode",
         )
-        timestamp: str = Field(default="", description="Registration timestamp")
+        timestamp: str = Field(
+            default=FlextConstants.Cqrs.DEFAULT_TIMESTAMP,
+            description="Registration timestamp",
+        )
         status: Literal["active", "inactive"] = Field(
             default="active",
             description="Registration status",

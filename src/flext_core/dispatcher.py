@@ -211,8 +211,16 @@ class FlextDispatcher:
                 "enable_logging": getattr(
                     global_config, "dispatcher_enable_logging", True
                 ),
-                "max_retries": getattr(global_config, "dispatcher_max_retries", 3),
-                "retry_delay": getattr(global_config, "dispatcher_retry_delay", 0.1),
+                "max_retries": getattr(
+                    global_config,
+                    "dispatcher_max_retries",
+                    FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
+                ),
+                "retry_delay": getattr(
+                    global_config,
+                    "dispatcher_retry_delay",
+                    FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+                ),
                 "bus_config": bus_config,
                 "execution_timeout": bus_config.get("timeout_seconds"),
             }
@@ -293,6 +301,7 @@ class FlextDispatcher:
 
         # Rate limiting state
         self._rate_limit_requests: dict[str, list[float]] = {}
+        self._rate_limit_state: dict[str, dict[str, float | int]] = {}
         rate_limit_raw = config.get(
             "rate_limit", FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
         )
@@ -310,10 +319,30 @@ class FlextDispatcher:
             if isinstance(rate_limit_window_raw, (int, float, str))
             else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
         )
+        rate_limit_grace_raw = config.get(
+            "rate_limit_block_grace",
+            max(1.0, 0.5 * self._rate_limit_window),
+        )
+        self._rate_limit_block_grace = float(
+            rate_limit_grace_raw
+            if isinstance(rate_limit_grace_raw, (int, float, str))
+            else max(1.0, 0.5 * self._rate_limit_window)
+        )
 
         # Audit and performance tracking
         self._audit_log: list[dict[str, object]] = []
         self._performance_metrics: dict[str, dict[str, int | float]] = {}
+
+        # Timeout handling configuration
+        self._use_timeout_executor = bool(
+            config.get("enable_timeout_executor", False)
+            or ("timeout" in config)
+            or ("execution_timeout" in config)
+        )
+
+        # Thread pool for timeout handling (lazy initialization)
+        self._executor_workers = self._resolve_executor_workers()
+        self._executor: concurrent.futures.ThreadPoolExecutor | None = None
 
     @property
     def config(self) -> dict[str, object]:
@@ -805,25 +834,40 @@ class FlextDispatcher:
 
         # Check rate limiting
         current_time = time.time()
-        if message_type in self._rate_limit_requests:
-            # Clean old requests outside the window
-            requests_list = self._rate_limit_requests[message_type]
-            self._rate_limit_requests[message_type] = [
-                req_time
-                for req_time in requests_list
-                if current_time - req_time < self._rate_limit_window
-            ]
+        state = self._rate_limit_state.get(message_type)
+        if state is None:
+            state = {"count": 0, "window_start": current_time, "block_until": 0.0}
+            self._rate_limit_state[message_type] = state
 
-            # Debug: print rate limiting state
+        if current_time < state.get("block_until", 0.0):
+            return FlextResult[object].fail("Rate limit exceeded")
 
-            # Check if we're over the limit
-            if len(self._rate_limit_requests[message_type]) >= self._rate_limit:
-                return FlextResult[object].fail("Rate limit exceeded")
+        if (
+            current_time - state.get("window_start", current_time)
+            >= self._rate_limit_window
+        ):
+            state["count"] = 0
+            state["window_start"] = current_time
+            state["block_until"] = 0.0
 
-        # Record this request
-        if message_type not in self._rate_limit_requests:
-            self._rate_limit_requests[message_type] = []
-        self._rate_limit_requests[message_type].append(current_time)
+        if state["count"] >= self._rate_limit:
+            state["block_until"] = (
+                current_time + self._rate_limit_window + self._rate_limit_block_grace
+            )
+            return FlextResult[object].fail("Rate limit exceeded")
+
+        state["count"] += 1
+        if state["count"] >= self._rate_limit:
+            state["block_until"] = (
+                current_time + self._rate_limit_window + self._rate_limit_block_grace
+            )
+        else:
+            state["block_until"] = 0.0
+
+        requests_list = self._rate_limit_requests.setdefault(message_type, [])
+        requests_list.append(current_time)
+        while len(requests_list) > self._rate_limit * 2:
+            requests_list.pop(0)
 
         # Create message object
         if isinstance(message_or_type, str) and data is not None:
@@ -882,7 +926,7 @@ class FlextDispatcher:
                 if timeout_override:
                     timeout_seconds = float(timeout_override)
 
-                # Execute with timeout using ThreadPoolExecutor
+                # Execute with timeout using shared ThreadPoolExecutor when enabled
                 def execute_with_context() -> FlextResult[object]:
                     if correlation_id is not None or timeout_override is not None:
                         context_metadata: dict[str, object] = {}
@@ -894,16 +938,29 @@ class FlextDispatcher:
                     else:
                         return self._bus.execute(message)
 
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(execute_with_context)
+                use_executor = (
+                    self._use_timeout_executor or timeout_override is not None
+                )
+
+                if use_executor:
+                    executor = self._ensure_executor()
+                    future: concurrent.futures.Future[FlextResult[object]] | None = None
                     try:
+                        future = executor.submit(execute_with_context)
                         bus_result = future.result(timeout=timeout_seconds)
                     except concurrent.futures.TimeoutError:
                         # Cancel the future and return timeout error
-                        future.cancel()
+                        if future is not None:
+                            future.cancel()
                         return FlextResult[object].fail(
                             f"Operation timeout after {timeout_seconds} seconds"
                         )
+                    except RuntimeError:
+                        # Executor was shut down; reinitialize and retry immediately
+                        self._executor = None
+                        continue
+                else:
+                    bus_result = execute_with_context()
                 attempt_end_time = time.time()
                 attempt_duration = attempt_end_time - attempt_start_time
 
@@ -965,6 +1022,31 @@ class FlextDispatcher:
     # ------------------------------------------------------------------
     # Private helper methods
     # ------------------------------------------------------------------
+    def _resolve_executor_workers(self) -> int:
+        """Determine worker count for the shared dispatcher executor."""
+        workers_candidate = (
+            self._config.get("executor_workers")
+            or self._config.get("max_workers")
+            or FlextConstants.Container.DEFAULT_WORKERS
+        )
+        try:
+            if isinstance(workers_candidate, (int, str)):
+                workers = int(workers_candidate)
+            else:
+                workers = FlextConstants.Container.DEFAULT_WORKERS
+        except (TypeError, ValueError):
+            workers = FlextConstants.Container.DEFAULT_WORKERS
+        return max(workers, 1)
+
+    def _ensure_executor(self) -> concurrent.futures.ThreadPoolExecutor:
+        """Create the shared executor on demand."""
+        if self._executor is None:
+            self._executor = concurrent.futures.ThreadPoolExecutor(
+                max_workers=self._executor_workers,
+                thread_name_prefix="flext-dispatcher",
+            )
+        return self._executor
+
     def _record_dispatch_success(
         self, message_type: str, duration: float, attempts: int
     ) -> None:
@@ -1240,6 +1322,10 @@ class FlextDispatcher:
             # Clear internal state
             self._circuit_breaker_failures.clear()
             self._rate_limit_requests.clear()
+            self._rate_limit_state.clear()
+            if self._executor is not None:
+                self._executor.shutdown(wait=False, cancel_futures=True)
+                self._executor = None
 
         except Exception as e:
             self._logger.warning("Cleanup failed", error=str(e))
@@ -1385,7 +1471,7 @@ class FlextDispatcher:
                         if not isinstance(handler_list, list):
                             handlers_for_type: list[object] = [handler_list]
                         else:
-                            handlers_for_type: list[object] = handler_list
+                            handlers_for_type = handler_list
                         for handler in handlers_for_type:
                             self.register_handler(
                                 message_type_str,

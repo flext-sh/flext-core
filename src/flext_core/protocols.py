@@ -13,10 +13,19 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Generic, Protocol, overload, override, runtime_checkable
 
-from flext_core.config import FlextConfig
+# Import FlextConfig using TYPE_CHECKING to avoid circular imports
+from typing import (
+    TYPE_CHECKING,
+    Generic,
+    Protocol,
+    overload,
+    override,
+    runtime_checkable,
+)
+
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
@@ -29,6 +38,94 @@ from flext_core.typings import (
     TState,
     TState_co,
 )
+
+if TYPE_CHECKING:
+    from flext_core.config import FlextConfig
+
+# =============================================================================
+# Core Protocols for Breaking Circular Dependencies
+# These protocols are defined here to break the circular dependency between
+# result.py and exceptions.py. They provide minimal interfaces that both
+# modules can use without importing each other.
+# =============================================================================
+
+
+@runtime_checkable
+class ResultProtocol[T](Protocol):
+    """Protocol for Result type to break circular dependency.
+
+    This protocol defines the minimal interface needed by exceptions.py
+    without importing the concrete FlextResult class.
+    """
+
+    @property
+    def is_success(self) -> bool:
+        """Check if result represents success."""
+        ...
+
+    @property
+    def is_failure(self) -> bool:
+        """Check if result represents failure."""
+        ...
+
+    @property
+    def error(self) -> str | None:
+        """Get error message if failed."""
+        ...
+
+    @property
+    def value(self) -> T:
+        """Get success value or raise on failure."""
+        ...
+
+    def unwrap(self) -> T:
+        """Get value or raise if failed."""
+        ...
+
+    @classmethod
+    def ok(cls, data: T) -> ResultProtocol[T]:
+        """Create success result."""
+        ...
+
+    @classmethod
+    def fail(cls, error: str) -> ResultProtocol[T]:
+        """Create failure result."""
+        ...
+
+
+@runtime_checkable
+class ExceptionProtocol(Protocol):
+    """Protocol for Exception types to break circular dependency.
+
+    This protocol defines the minimal interface needed by result.py
+    without importing the concrete FlextExceptions class.
+    """
+
+    class OperationError(Exception):
+        """Protocol for operation errors."""
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            error_code: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize operation error with message and error code."""
+            ...
+
+    class FlextTypeError(Exception):
+        """Protocol for type errors (avoiding builtin TypeError shadow)."""
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            error_code: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize type error with message and error code."""
+            ...
 
 
 class FlextProtocols:
@@ -51,9 +148,9 @@ class FlextProtocols:
         - Batch and parallel protocol validation
 
     **Uses**: Core FLEXT infrastructure for protocols
-        - FlextResult[T] for all operation results
+        - FlextResult[T] for all operation results (lazy loaded)
         - FlextTypes for type definitions and aliases
-        - FlextConfig for configuration management
+        - FlextConfig for configuration management (lazy loaded)
         - typing.Protocol for runtime-checkable protocols
         - typing.Generic for generic protocol types
         - abc.abstractmethod for abstract protocol methods
@@ -233,9 +330,13 @@ class FlextProtocols:
             float(retry_delay) if isinstance(retry_delay, (int, float, str)) else 0.1
         )
 
-        timeout = self._config.get("timeout", 30.0)
+        timeout = self._config.get(
+            "timeout", float(FlextConstants.Network.DEFAULT_TIMEOUT)
+        )
         self._timeout = (
-            float(timeout) if isinstance(timeout, (int, float, str)) else 30.0
+            float(timeout)
+            if isinstance(timeout, (int, float, str))
+            else float(FlextConstants.Network.DEFAULT_TIMEOUT)
         )
 
     def register(self, name: str, protocol: type[object]) -> FlextResult[None]:
@@ -393,7 +494,10 @@ class FlextProtocols:
             self._middleware.append(middleware)
         else:
             error_msg = "Middleware must be callable"
-            raise TypeError(error_msg)
+            raise FlextExceptions.TypeError(
+                message=error_msg,
+                error_code="TYPE_ERROR",
+            )
 
     def get_metrics(self) -> dict[str, int]:
         """Get current metrics.
@@ -1519,7 +1623,7 @@ class FlextProtocols:
 
                 """
                 # Implementation would go here
-                return FlextResult[None].ok(None)
+                return FlextResult[None].ok(None)  # pragma: no cover
 
             def unregister_handler(self, command_type: type | str) -> bool:
                 """Remove a handler registration by type or name.
@@ -1564,5 +1668,7 @@ class FlextProtocols:
 
 
 __all__ = [
+    "ExceptionProtocol",  # Protocol for exception types (breaks circular dependency)
     "FlextProtocols",  # Main hierarchical protocol architecture with Config
+    "ResultProtocol",  # Protocol for result types (breaks circular dependency)
 ]

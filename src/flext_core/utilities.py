@@ -473,7 +473,7 @@ class FlextUtilities:
             timeout_float = float_conversion.unwrap()
 
             # Then validate the timeout constraints
-            if timeout_float <= 0:
+            if timeout_float <= FlextConstants.Core.INITIAL_TIME:
                 return FlextResult[float].fail(
                     f"Timeout must be positive, got {timeout_float}"
                 )
@@ -487,7 +487,7 @@ class FlextUtilities:
         def validate_retry_count(retries: int) -> FlextResult[int]:
             """Validate retry count value."""
             try:
-                if retries < 0:
+                if retries < FlextConstants.Core.ZERO:
                     return FlextResult[int].fail(
                         f"Retry count cannot be negative, got {retries}"
                     )
@@ -507,7 +507,7 @@ class FlextUtilities:
         ) -> FlextResult[int]:
             """Validate that value is a positive integer."""
             try:
-                if value <= 0:
+                if value <= FlextConstants.Core.ZERO:
                     return FlextResult[int].fail(
                         f"{field_name} must be positive, got {value}"
                     )
@@ -523,7 +523,7 @@ class FlextUtilities:
         ) -> FlextResult[int]:
             """Validate that value is a non-negative integer."""
             try:
-                if value < 0:
+                if value < FlextConstants.Core.ZERO:
                     return FlextResult[int].fail(
                         f"{field_name} cannot be negative, got {value}"
                     )
@@ -1260,7 +1260,7 @@ class FlextUtilities:
 
             """
             # Validate batch size
-            if batch_size <= 0:
+            if batch_size <= FlextConstants.Core.ZERO:
                 return FlextResult[list[U]].fail("Batch size must be positive")
 
             return FlextUtilities.Utilities.process_batches_railway(
@@ -1559,7 +1559,9 @@ class FlextUtilities:
     class CqrsCache:
         """CQRS-specific cache manager for command/query result caching."""
 
-        def __init__(self, max_size: int = 100) -> None:
+        def __init__(
+            self, max_size: int = FlextConstants.Performance.DEFAULT_CACHE_SIZE
+        ) -> None:
             """Initialize CQRS cache manager.
 
             Args:
@@ -1777,7 +1779,9 @@ class FlextUtilities:
             return FlextResult[str].ok(truncated)
 
         @staticmethod
-        def safe_string(text: str, default: str = "") -> str:
+        def safe_string(
+            text: str, default: str = FlextConstants.Performance.DEFAULT_EMPTY_STRING
+        ) -> str:
             """Convert text to safe string, handling None and empty values.
 
             Args:
@@ -1867,7 +1871,7 @@ class FlextUtilities:
             timeout_seconds: float,
         ) -> FlextResult[TTimeout]:
             """Execute operation with timeout using railway patterns."""
-            if timeout_seconds <= 0:
+            if timeout_seconds <= FlextConstants.Core.INITIAL_TIME:
                 return FlextResult[TTimeout].fail("Timeout must be positive")
 
             # Use proper typing for containers
@@ -2034,7 +2038,7 @@ class FlextUtilities:
             max_attempts: int = 3,
         ) -> FlextResult[TRetry]:
             """Execute operation with retry logic - no fallbacks, explicit error handling."""
-            if max_attempts <= 0:
+            if max_attempts <= FlextConstants.Core.ZERO:
                 return FlextResult[TRetry].fail(
                     "Invalid max_attempts: must be positive"
                 )
@@ -2223,6 +2227,10 @@ class FlextUtilities:
             """
             # object type should be compatible with everything
             if expected_type is object:
+                return True
+
+            # Any type should be compatible with everything
+            if hasattr(expected_type, "__name__") and expected_type.__name__ == "Any":
                 return True
 
             origin_type = get_origin(expected_type) or expected_type
@@ -2727,8 +2735,8 @@ class FlextUtilities:
         @staticmethod
         def compose_circuit_breaker[T](
             func: Callable[[T], FlextResult[T]],
-            failure_threshold: int = 5,
-            recovery_timeout: float = 60.0,
+            failure_threshold: int = FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+            recovery_timeout: float = FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY,
         ) -> Callable[[T], FlextResult[T]]:
             """Compose circuit breaker logic using railway patterns.
 

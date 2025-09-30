@@ -17,6 +17,7 @@ from typing import cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
@@ -392,13 +393,13 @@ class FlextMixins:
                 )
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                    raise KeyError(msg)
+                    raise FlextExceptions.NotFoundError(msg, field=parameter)
                 return model_data[parameter]
 
         # Fallback for non-Pydantic objects - direct attribute access
         if not hasattr(obj, parameter):
             msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-            raise KeyError(msg)
+            raise FlextExceptions.NotFoundError(msg, field=parameter)
         return getattr(obj, parameter)
 
     @staticmethod
@@ -458,7 +459,7 @@ class FlextMixins:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
-        raise AttributeError(msg)
+        raise FlextExceptions.AttributeError(msg)
 
     @staticmethod
     def set_singleton_parameter(

@@ -21,6 +21,7 @@ from typing import Protocol, cast, override
 from pydantic import ConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
@@ -419,7 +420,7 @@ class FlextService[TDomainResult](
         backoff_multiplier = (
             float(retry_config.backoff_multiplier) if retry_config is not None else 1.0
         )
-        if backoff_multiplier <= 0:
+        if backoff_multiplier <= FlextConstants.Core.INITIAL_TIME:
             backoff_multiplier = 1.0
         exponential_backoff = bool(
             retry_config.exponential_backoff if retry_config is not None else False
@@ -432,11 +433,10 @@ class FlextService[TDomainResult](
 
         raw_timeout = getattr(operation, "timeout_seconds", None)
         try:
-            timeout_seconds = float(raw_timeout) if raw_timeout is not None else 0.0
+            timeout_seconds = float(raw_timeout) if raw_timeout is not None else FlextConstants.Core.INITIAL_TIME
         except (TypeError, ValueError):  # pragma: no cover - defensive branch
-            timeout_seconds = 0.0
-        if timeout_seconds <= 0:
-            timeout_seconds = 0.0
+            timeout_seconds = FlextConstants.Core.INITIAL_TIME
+        timeout_seconds = max(FlextConstants.Core.INITIAL_TIME, timeout_seconds)
 
         def call_operation() -> FlextResult[TDomainResult]:
             # operation_callable is already validated as Callable[..., object] in the model
@@ -461,7 +461,9 @@ class FlextService[TDomainResult](
             timeout_message = f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
 
             def timeout_handler(_signum: int, _frame: object) -> None:
-                raise TimeoutError(timeout_message)
+                raise FlextExceptions.TimeoutError(
+                    timeout_message, operation=operation_name
+                )
 
             previous_handler = signal.getsignal(signal.SIGALRM)
             try:
@@ -557,7 +559,7 @@ class FlextService[TDomainResult](
         def timeout_context(seconds: int) -> Generator[None]:
             def timeout_handler(_signum: int, _frame: object) -> None:
                 msg = f"Operation timed out after {seconds} seconds"
-                raise TimeoutError(msg)
+                raise FlextExceptions.TimeoutError(msg)
 
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(seconds)
