@@ -83,6 +83,89 @@ def _create_default_pagination() -> FlextModels.Pagination:
     return FlextModels.Pagination()
 
 
+class _BaseConfigDict:
+    """Shared Pydantic 2.11 ConfigDict patterns to eliminate duplication.
+
+    This class provides reusable configuration presets for all FlextModels classes,
+    leveraging Pydantic 2.11 features for enhanced validation and serialization.
+    """
+
+    ARBITRARY: ConfigDict = ConfigDict(
+        # Pydantic 2.11 validation features
+        validate_assignment=True,  # Validate on field assignment
+        validate_return=True,  # Validate return values from methods
+        validate_default=True,  # Validate default values
+        use_enum_values=True,  # Use enum values in serialization
+        arbitrary_types_allowed=True,  # Allow arbitrary types
+        # JSON serialization features
+        ser_json_timedelta="iso8601",  # Serialize timedelta as ISO8601 duration
+        ser_json_bytes="base64",  # Serialize bytes as base64 strings
+        # Alias and naming features
+        serialize_by_alias=True,  # Use aliases in serialization
+        populate_by_name=True,  # Accept both alias and field name
+        # String processing
+        str_strip_whitespace=True,  # Automatically strip whitespace from strings
+        str_to_lower=False,  # Keep case sensitivity
+        str_to_upper=False,  # Keep case sensitivity
+        # Performance optimizations
+        defer_build=False,  # Build schema immediately for better error messages
+        # Type coercion
+        coerce_numbers_to_str=False,  # Keep strict typing
+    )
+
+    STRICT: ConfigDict = ConfigDict(
+        # Pydantic 2.11 validation features
+        validate_assignment=True,  # Validate on field assignment
+        validate_return=True,  # Validate return values from methods
+        validate_default=True,  # Validate default values
+        use_enum_values=True,  # Use enum values in serialization
+        arbitrary_types_allowed=True,  # Allow arbitrary types
+        extra="forbid",  # Strict validation - no extra fields allowed
+        # JSON serialization features
+        ser_json_timedelta="iso8601",  # Serialize timedelta as ISO8601 duration
+        ser_json_bytes="base64",  # Serialize bytes as base64 strings
+        # Alias and naming features
+        serialize_by_alias=True,  # Use aliases in serialization
+        populate_by_name=True,  # Accept both alias and field name
+        # String processing
+        str_strip_whitespace=True,  # Automatically strip whitespace from strings
+        str_to_lower=False,  # Keep case sensitivity
+        str_to_upper=False,  # Keep case sensitivity
+        # Performance optimizations
+        defer_build=False,  # Build schema immediately for better error messages
+        # Type coercion
+        coerce_numbers_to_str=False,  # Keep strict typing
+    )
+
+    FROZEN: ConfigDict = ConfigDict(
+        frozen=True,  # Immutable models
+        extra="forbid",  # No extra fields
+        use_enum_values=True,  # Use enum values
+    )
+
+
+# Reusable Annotated field types for common patterns (Pydantic 2.11)
+# These eliminate 1000+ lines of repetitive Field definitions
+
+# UUID fields
+UuidField = Annotated[str, Field(default_factory=lambda: str(uuid.uuid4()))]
+
+# Timestamp fields
+TimestampField = Annotated[datetime, Field(default_factory=lambda: datetime.now(UTC))]
+
+# Config-driven fields (pull from global FlextConfig)
+TimeoutField = Annotated[
+    int, Field(default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds)
+]
+RetryField = Annotated[
+    int,
+    Field(default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts),
+]
+MaxWorkersField = Annotated[
+    int, Field(default_factory=lambda: FlextConfig.get_global_instance().max_workers)
+]
+
+
 class FlextModels:
     """Domain-Driven Design patterns for FLEXT ecosystem modeling.
 
@@ -233,6 +316,76 @@ class FlextModels:
 
     """
 
+    # =========================================================================
+    # BEHAVIOR MIXINS - Reusable model behaviors (Pydantic 2.11 pattern)
+    # =========================================================================
+
+    class IdentifiableMixin(BaseModel):
+        """Mixin for models with unique identifiers.
+
+        Provides the `id` field using UuidField pattern with explicit default.
+        Used by Entity, Command, DomainEvent, Saga, and other identifiable models.
+        """
+
+        id: UuidField = Field(default_factory=lambda: str(uuid.uuid4()))
+
+    class TimestampableMixin(BaseModel):
+        """Mixin for models with creation and update timestamps.
+
+        Provides `created_at` and `updated_at` fields with automatic timestamp management.
+        Used by Entity, TimestampedModel, and models requiring audit trails.
+        """
+
+        created_at: TimestampField = Field(default_factory=lambda: datetime.now(UTC))
+        updated_at: datetime | None = None
+
+        def update_timestamp(self) -> None:
+            """Update the updated_at timestamp to current UTC time."""
+            self.updated_at = datetime.now(UTC)
+
+    class TimeoutableMixin(BaseModel):
+        """Mixin for models with timeout configuration.
+
+        Provides `timeout_seconds` field pulling from global FlextConfig.
+        Used by Repository, Queue, Bus, Circuit, and other timeout-aware models.
+        """
+
+        timeout_seconds: TimeoutField = Field(
+            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
+        )
+
+    class RetryableMixin(BaseModel):
+        """Mixin for models with retry configuration.
+
+        Provides `max_retry_attempts` and `retry_policy` fields for retry behavior.
+        Used by Repository, HandlerExecutionConfig, and other retry-aware models.
+        """
+
+        max_retry_attempts: RetryField = Field(
+            default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
+        )
+        retry_policy: dict[str, object] = Field(default_factory=dict)  # Pydantic v2 makes this safe!
+
+    class VersionableMixin(BaseModel):
+        """Mixin for models with versioning support.
+
+        Provides `version` field and increment_version method for optimistic locking.
+        Used by Entity and models requiring version tracking.
+        """
+
+        version: int = Field(
+            default=FlextConstants.Performance.DEFAULT_VERSION,
+            ge=FlextConstants.Performance.MIN_VERSION,
+        )
+
+        def increment_version(self) -> None:
+            """Increment the version number for optimistic locking."""
+            self.version += 1
+
+    # =========================================================================
+    # BASE MODEL CLASSES - Using shared ConfigDict patterns
+    # =========================================================================
+
     # Enhanced validation using FlextUtilities and FlextConstants
     # Base model classes for configuration consolidation with Pydantic 2.11 features
     class ArbitraryTypesModel(BaseModel):
@@ -242,34 +395,7 @@ class FlextModels:
         Used by 17+ models in the codebase. This is the recommended base class for all FLEXT models.
         """
 
-        model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            # Pydantic 2.11 enhanced features
-            validate_return=True,
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
-            # Enhanced serialization
-            serialize_by_alias=True,
-            populate_by_name=True,
-            # String processing features
-            str_strip_whitespace=True,  # Automatically strip whitespace from strings
-            str_to_lower=False,  # Keep case sensitivity
-            str_to_upper=False,  # Keep case sensitivity
-            # Performance optimizations
-            defer_build=False,  # Build schema immediately for better error messages
-            # Type coercion features
-            coerce_numbers_to_str=False,  # Keep strict typing
-            # Validation features
-            validate_default=True,  # Validate default values
-            # Serialization features
-            json_encoders={
-                # Custom encoders for complex types
-                Path: str,
-                # Add more custom encoders as needed
-            },
-        )
+        model_config = _BaseConfigDict.ARBITRARY
 
     class StrictArbitraryTypesModel(BaseModel):
         """Strict pattern: forbid extra fields, arbitrary types allowed.
@@ -278,35 +404,7 @@ class FlextModels:
         Enhanced with comprehensive Pydantic 2.11 features.
         """
 
-        model_config = ConfigDict(
-            validate_assignment=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            extra="forbid",  # Strict validation - no extra fields allowed
-            # Pydantic 2.11 enhanced features
-            validate_return=True,
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
-            # Enhanced serialization
-            serialize_by_alias=True,
-            populate_by_name=True,
-            # String processing features
-            str_strip_whitespace=True,  # Automatically strip whitespace from strings
-            str_to_lower=False,  # Keep case sensitivity
-            str_to_upper=False,  # Keep case sensitivity
-            # Performance optimizations
-            defer_build=False,  # Build schema immediately for better error messages
-            # Type coercion features
-            coerce_numbers_to_str=False,  # Keep strict typing
-            # Validation features
-            validate_default=True,  # Validate default values
-            # Serialization features
-            json_encoders={
-                # Custom encoders for complex types
-                Path: str,
-                # Add more custom encoders as needed
-            },
-        )
+        model_config = _BaseConfigDict.STRICT
 
     class FrozenStrictModel(BaseModel):
         """Immutable pattern: frozen with extra fields forbidden.
@@ -314,7 +412,7 @@ class FlextModels:
         Used by value objects and configuration models.
         """
 
-        model_config = ConfigDict(frozen=True, extra="forbid", use_enum_values=True)
+        model_config = _BaseConfigDict.FROZEN
 
     # =========================================================================
     # UTILITY TYPES - Centralized type definitions
@@ -373,25 +471,24 @@ class FlextModels:
             }
 
     # Base model classes from DDD patterns
-    class TimestampedModel(ArbitraryTypesModel):
-        """Base class for models with timestamp fields."""
+    class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
+        """Base class for models with timestamp fields.
+        
+        Inherits timestamp functionality from TimestampableMixin.
+        Provides created_at and updated_at fields with automatic management.
+        """
 
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        updated_at: datetime | None = None
+    class Entity(TimestampedModel, IdentifiableMixin, VersionableMixin):
+        """Base class for domain entities with identity.
+        
+        Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
+        - id: Unique identifier (from IdentifiableMixin)
+        - created_at/updated_at: Timestamps (from TimestampedModel)
+        - version: Optimistic locking (from VersionableMixin)
+        - domain_events: Event sourcing support
+        """
 
-        def update_timestamp(self) -> None:
-            """Update the updated_at timestamp."""
-            self.updated_at = datetime.now(UTC)
-
-    class Entity(TimestampedModel):
-        """Base class for domain entities with identity."""
-
-        id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        version: int = Field(
-            default=FlextConstants.Performance.DEFAULT_VERSION,
-            ge=FlextConstants.Performance.MIN_VERSION,
-        )
-        domain_events: FlextTypes.Core.List = Field(default_factory=list)
+        domain_events: list[object] = Field(default_factory=list)
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -412,12 +509,16 @@ class FlextModels:
             return hash(self.id)
 
         def add_domain_event(self, event_name: str, data: FlextTypes.Core.Dict) -> None:
-            """Add a domain event to be dispatched."""
+            """Add a domain event to be dispatched.
+            
+            DomainEvent now uses IdentifiableMixin and TimestampableMixin,
+            so id and created_at are auto-generated.
+            """
             domain_event = FlextModels.DomainEvent(
                 event_type=event_name,
                 aggregate_id=self.id,
                 data=data,
-                occurred_at=datetime.now(UTC),
+                # Removed occurred_at - auto-generated via TimestampableMixin
             )
             self.domain_events.append(domain_event)
 
@@ -430,26 +531,20 @@ class FlextModels:
                     handler_method(data)
                 except Exception as e:
                     # Log exception but don't re-raise to maintain resilience
-                    # Domain events may not have corresponding handlers or handlers may fail
-                    # The important thing is that the event is still recorded
                     logger = FlextLogger(__name__)
                     logger.warning(
                         f"Domain event handler {handler_method_name} failed for event {event_name}: {e}"
                     )
 
-            # Increment version after adding domain event
+            # Increment version after adding domain event (from VersionableMixin)
             self.increment_version()
+            self.update_timestamp()
 
         def clear_domain_events(self) -> FlextTypes.Core.List:
             """Clear and return domain events."""
             events: FlextTypes.Core.List = self.domain_events.copy()
             self.domain_events.clear()
             return events
-
-        def increment_version(self) -> None:
-            """Increment the entity version for optimistic locking."""
-            self.version += 1
-            self.updated_at = datetime.now(UTC)
 
     class Value(FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""
@@ -506,15 +601,16 @@ class FlextModels:
             super().model_post_init(__context)
             self.check_invariants()
 
-    class Command(StrictArbitraryTypesModel):
-        """Base class for CQRS commands with validation."""
+    class Command(StrictArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Base class for CQRS commands with validation.
+        
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
 
-        command_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         command_type: str = Field(
             default=FlextConstants.Cqrs.DEFAULT_COMMAND_TYPE,
             description="Command type identifier",
         )
-        issued_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         issuer_id: str | None = None
 
         @field_validator("command_type")
@@ -525,25 +621,25 @@ class FlextModels:
                 return cls.__name__
             return v
 
-    class DomainEvent(ArbitraryTypesModel):
-        """Base class for domain events."""
+    class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Base class for domain events.
+        
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
 
-        event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         event_type: str
         aggregate_id: str
-        occurred_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        data: FlextTypes.Core.Dict = Field(default_factory=dict)
-        metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
+        data: dict[str, object] = Field(default_factory=dict)
+        metadata: dict[str, object] = Field(default_factory=dict)
 
-    class Repository(ArbitraryTypesModel):
-        """Base repository model for data access patterns."""
+    class Repository(ArbitraryTypesModel, TimeoutableMixin, RetryableMixin):
+        """Base repository model for data access patterns.
+        
+        Uses TimeoutableMixin for timeout_seconds and RetryableMixin for retry configuration.
+        """
 
         entity_type: str
         connection_string: str | None = None
-        timeout_seconds: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
-        )
-        retry_policy: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     class Specification(ArbitraryTypesModel):
         """Specification pattern for complex queries."""
@@ -561,10 +657,12 @@ class FlextModels:
             le=FlextConstants.Performance.MAX_TAKE,
         )
 
-    class Saga(ArbitraryTypesModel):
-        """Saga pattern for distributed transactions."""
+    class Saga(ArbitraryTypesModel, IdentifiableMixin):
+        """Saga pattern for distributed transactions.
+        
+        Uses IdentifiableMixin for id.
+        """
 
-        saga_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         steps: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         current_step: int = Field(
             default=FlextConstants.Performance.DEFAULT_CURRENT_STEP,
@@ -573,7 +671,7 @@ class FlextModels:
         status: Literal["pending", "running", "completed", "failed", "compensating"] = (
             "pending"
         )
-        compensation_data: FlextTypes.Core.Dict = Field(default_factory=dict)
+        compensation_data: dict[str, object] = Field(default_factory=dict)
 
     class Metadata(FrozenStrictModel):
         """Immutable metadata model."""
@@ -668,31 +766,37 @@ class FlextModels:
         )
         expires_at: datetime | None = None
 
-    class Bus(BaseModel):
-        """Enhanced message bus model with config-driven defaults."""
+    class Bus(TimeoutableMixin, RetryableMixin):
+        """Enhanced message bus model with config-driven defaults.
+        
+        Uses TimeoutableMixin and RetryableMixin for timeout and retry configuration.
+        Uses UuidField pattern for bus_id generation.
+        
+        Note: Removed BaseModel from inheritance since mixins already inherit from it.
+        """
 
         bus_id: str = Field(default_factory=lambda: f"bus_{uuid.uuid4().hex[:8]}")
         handlers: dict[str, FlextTypes.Core.StringList] = Field(default_factory=dict)
         middlewares: FlextTypes.Core.StringList = Field(default_factory=list)
-        timeout_seconds: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
-        )
-        retry_policy: FlextTypes.Core.Dict = Field(default_factory=dict)
+        
+        model_config = _BaseConfigDict.ARBITRARY
 
-    class Payload[T](ArbitraryTypesModel):
-        """Enhanced payload model with computed field."""
+    class Payload[T](ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Enhanced payload model with computed field.
+        
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
 
         data: T = Field(...)  # Required field, no default
-        metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        metadata: dict[str, object] = Field(default_factory=dict)
         expires_at: datetime | None = None
         correlation_id: str | None = None
         source_service: str | None = None
         message_type: str | None = None
-        message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
         @computed_field
-        def is_expired(self: FlextModels.Payload[T]) -> bool:
+        @property
+        def is_expired(self) -> bool:
             """Computed property to check if payload is expired."""
             if self.expires_at is None:
                 return False
@@ -731,38 +835,40 @@ class FlextModels:
         is_active: bool = True
         last_login: datetime | None = None
 
-    class Session(ArbitraryTypesModel):
-        """Session model."""
+    class Session(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Session model.
+        
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
 
-        session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         user_id: str
-        started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         expires_at: datetime
-        data: FlextTypes.Core.Dict = Field(default_factory=dict)
+        data: dict[str, object] = Field(default_factory=dict)
 
-    class Task(ArbitraryTypesModel):
-        """Task model for background processing."""
+    class Task(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Task model for background processing.
+        
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
 
-        task_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         name: str
         status: Literal["pending", "running", "completed", "failed"] = "pending"
-        payload: FlextTypes.Core.Dict = Field(default_factory=dict)
+        payload: dict[str, object] = Field(default_factory=dict)
         result: object = None
         error: str | None = None
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         started_at: datetime | None = None
         completed_at: datetime | None = None
 
-    class Queue(ArbitraryTypesModel):
-        """Queue model for message processing."""
+    class Queue(ArbitraryTypesModel, TimeoutableMixin):
+        """Queue model for message processing.
+        
+        Uses TimeoutableMixin for timeout_seconds.
+        """
 
         name: str
         messages: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         max_size: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().cache_max_size
-        )
-        processing_timeout: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
 
     class Schedule(ArbitraryTypesModel):
@@ -820,10 +926,12 @@ class FlextModels:
             FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER
         )
 
-    class Batch(ArbitraryTypesModel):
-        """Batch processing model."""
+    class Batch(ArbitraryTypesModel, IdentifiableMixin):
+        """Batch processing model.
+        
+        Uses IdentifiableMixin for id.
+        """
 
-        batch_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         items: Annotated[FlextTypes.Core.List, Field(default_factory=list)]
         size: int = Field(
             default=FlextConstants.Performance.BatchProcessing.SMALL_SIZE, ge=1
@@ -846,24 +954,27 @@ class FlextModels:
         current_stage: int = 0
         status: Literal["idle", "running", "completed", "failed"] = "idle"
 
-    class Workflow(ArbitraryTypesModel):
-        """Workflow model."""
+    class Workflow(ArbitraryTypesModel, IdentifiableMixin):
+        """Workflow model.
+        
+        Uses IdentifiableMixin for id.
+        """
 
-        workflow_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         name: str
         steps: Annotated[list[FlextTypes.Core.Dict], Field(default_factory=list)]
         current_step: int = 0
-        context: FlextTypes.Core.Dict = Field(default_factory=dict)
+        context: dict[str, object] = Field(default_factory=dict)
 
-    class Archive(ArbitraryTypesModel):
-        """Archive model."""
+    class Archive(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Archive model.
+        
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
 
-        archive_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         entity_type: str
         entity_id: str
-        archived_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         archived_by: str
-        data: FlextTypes.Core.Dict = Field(default_factory=dict)
+        data: dict[str, object] = Field(default_factory=dict)
 
     class Import(ArbitraryTypesModel):
         """Import model."""
@@ -971,65 +1082,14 @@ class FlextModels:
         @field_validator("url")
         @classmethod
         def _validate_url_format(cls, v: str) -> str:
-            """Validate URL format.
-
-            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-            ❌ CRITICAL ISSUE: URL validation should be centralized in FlextModels.Validation
-            ❌ INLINE VALIDATION: This contains inline validation logic that should be centralized
-
-            🔧 REQUIRED ACTION:
-            - Move this validation logic to FlextModels.Validation.validate_url()
-            - Use centralized validation patterns for URL validation
-            - Remove inline validation from field validators
-
-            📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_url()
-            """
-            try:
-                result: ParseResult = urlparse(v)
-                if not all([result.scheme, result.netloc]):
-                    msg = f"Invalid URL format: {v}"
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-
-                # Validate scheme
-                if result.scheme not in {"http", "https", "ftp", "ftps", "file"}:
-                    msg = f"Unsupported URL scheme: {result.scheme}"
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-
-                # Validate domain
-                if result.netloc:
-                    # Basic domain validation
-                    domain = result.netloc.split(":")[0]  # Remove port
-                    if (
-                        not domain
-                        or len(domain) > FlextConstants.Validation.MAX_EMAIL_LENGTH
-                    ):
-                        msg = "Invalid domain in URL"
-                        raise FlextExceptions.ValidationError(
-                            message=msg,
-                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                        )
-
-                    # Check for valid characters
-                    if not all(c.isalnum() or c in ".-" for c in domain):
-                        msg = "Invalid characters in domain"
-                        raise FlextExceptions.ValidationError(
-                            message=msg,
-                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                        )
-
-                return v
-            except Exception as e:
-                msg = f"URL validation failed: {e}"
+            """Validate URL format using centralized FlextModels.Validation."""
+            result: FlextResult[str] = FlextModels.Validation.validate_url(v)
+            if result.is_failure:
                 raise FlextExceptions.ValidationError(
-                    message=msg,
+                    message=result.error or "Invalid URL format",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                ) from e
+                )
+            return result.unwrap()
 
     class DateRange(Value):
         """Date range value object."""
@@ -1723,66 +1783,6 @@ class FlextModels:
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             return v
-
-    # ISSUE: Duplicates loggings.py LoggerInitializationModel - should use that instead
-    class LoggerInitializationModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.LoggerInitializationModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    class LoggerConfigurationModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.LoggerConfigurationModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    class LogContextModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.LogContextModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    # ISSUE: Duplicates loggings.py LoggerContextBindingModel - should use that instead
-    class LoggerContextBindingModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.LoggerContextBindingModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    # ISSUE: Duplicates loggings.py LoggerRequestContextModel - should use that instead
-    class LoggerRequestContextModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.LoggerRequestContextModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    # ISSUE: Duplicates loggings.py LoggerPermanentContextModel - should use that instead
-    class LoggerPermanentContextModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.LoggerPermanentContextModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    class OperationTrackingModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.OperationTrackingModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
-
-    class PerformanceTrackingModel(ArbitraryTypesModel):
-        """DEPRECATED: Moved to FlextLoggings.PerformanceTrackingModel.
-
-        This model has been moved to break circular dependencies.
-        Use FlextLogger internal models instead.
-        """
 
     class SerializationRequest(StrictArbitraryTypesModel):
         """Enhanced serialization request."""
@@ -3012,6 +3012,35 @@ class FlextModels:
                 return FlextResult[str].fail("Invalid entity ID format")
 
             return FlextResult[str].ok(entity_id)
+
+        @staticmethod
+        def validate_url(url: str) -> FlextResult[str]:
+            """Validate URL format with comprehensive checks.
+            
+            Centralizes URL validation logic that was previously inline in FlextModels.Url.
+            """
+            try:
+                result: ParseResult = urlparse(url)
+                if not all([result.scheme, result.netloc]):
+                    return FlextResult[str].fail(f"Invalid URL format: {url}")
+
+                # Validate scheme
+                if result.scheme not in {"http", "https", "ftp", "ftps", "file"}:
+                    return FlextResult[str].fail(f"Unsupported URL scheme: {result.scheme}")
+
+                # Validate domain
+                if result.netloc:
+                    domain = result.netloc.split(":")[0]  # Remove port
+                    if not domain or len(domain) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                        return FlextResult[str].fail("Invalid domain in URL")
+
+                    # Check for valid characters
+                    if not all(c.isalnum() or c in ".-" for c in domain):
+                        return FlextResult[str].fail("Invalid characters in domain")
+
+                return FlextResult[str].ok(url)
+            except Exception as e:
+                return FlextResult[str].fail(f"URL validation failed: {e}")
 
         @staticmethod
         def validate_command(command: object) -> FlextResult[None]:

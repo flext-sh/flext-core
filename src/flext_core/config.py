@@ -11,7 +11,7 @@ import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar, Self, cast
 
 from pydantic import (
     Field,
@@ -249,8 +249,8 @@ class FlextConfig(BaseSettings):
 
             return config
 
-    # Singleton pattern implementation
-    _global_instance: ClassVar[FlextConfig | None] = None
+    # Singleton pattern implementation - per-class instances to support inheritance
+    _instances: ClassVar[dict[type, FlextConfig]] = {}
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
     model_config = SettingsConfigDict(
@@ -624,23 +624,34 @@ class FlextConfig(BaseSettings):
 
     # Singleton pattern methods
     @classmethod
-    def get_global_instance(cls) -> FlextConfig:
-        """Get the global singleton instance of FlextConfig."""
-        if cls._global_instance is None:
+    def get_global_instance(cls) -> Self:
+        """Get the global singleton instance per class (supports inheritance).
+
+        Each subclass gets its own singleton instance, preventing conflicts
+        in the FLEXT ecosystem where multiple config classes may coexist.
+
+        Returns:
+            Singleton instance of the specific config class.
+
+        """
+        if cls not in cls._instances:
             with cls._lock:
-                if cls._global_instance is None:
-                    cls._global_instance = cls()
-        return cls._global_instance
+                if cls not in cls._instances:
+                    cls._instances[cls] = cls()
+        return cast("Self", cls._instances[cls])
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
-        """Set the global singleton instance of FlextConfig."""
-        cls._global_instance = instance
+        """Set the global singleton instance per class."""
+        with cls._lock:
+            cls._instances[cls] = instance
 
     @classmethod
     def reset_global_instance(cls) -> None:
-        """Reset the global FlextConfig instance (mainly for testing)."""
-        cls._global_instance = None
+        """Reset the global instance for this specific class (mainly for testing)."""
+        with cls._lock:
+            if cls in cls._instances:
+                del cls._instances[cls]
 
     @classmethod
     def get_or_create_shared_instance(
@@ -709,7 +720,7 @@ class FlextConfig(BaseSettings):
 
     # Class methods for creating instances
     @classmethod
-    def create(cls, **kwargs: object) -> FlextConfig:
+    def create(cls, **kwargs: FlextTypes.Core.ConfigValue) -> FlextConfig:
         """Create a new FlextConfig instance with the given parameters.
 
         Args:
@@ -718,10 +729,10 @@ class FlextConfig(BaseSettings):
 
         """
         # Pydantic BaseSettings handles kwargs validation and type conversion automatically
-        return cls(**kwargs)
+        return cls(**kwargs)  # type: ignore[call-arg]
 
     @classmethod
-    def create_for_environment(cls, environment: str, **kwargs: object) -> FlextConfig:
+    def create_for_environment(cls, environment: str, **kwargs: Any) -> FlextConfig:
         """Create a FlextConfig instance for a specific environment.
 
         Args:

@@ -338,7 +338,7 @@ class TestFlextConfig:
         config = FlextConfig()
 
         # Test invalid file path (using from_file which exists)
-        result = config.from_file("/invalid/path/config.json")
+        result = FlextConfig.from_file("/invalid/path/config.json")
         assert result.is_failure
 
         # Test invalid data type - Pydantic might not raise immediately
@@ -432,7 +432,9 @@ class TestFlextConfig:
         from flext_core import FlextConfig
 
         # Test with additional config that should be merged
-        additional_config = {"custom_field": "custom_value", "another_field": 42}
+        additional_config = cast(
+            "dict[str, object]", {"custom_field": "custom_value", "another_field": 42}
+        )
 
         config = FlextConfig.HandlerConfiguration.create_handler_config(
             handler_mode="query",

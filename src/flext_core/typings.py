@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import OrderedDict
-from collections.abc import Callable as CollectionsCallable, Callable as TypingCallable
+from collections.abc import Callable as CollectionsCallable
 from typing import (
     Literal,
     ParamSpec,
@@ -291,7 +291,7 @@ class FlextTypes:
         # Note: Use standard T | None syntax directly
 
         # Basic types
-        Callable = TypingCallable
+        type Callable = CollectionsCallable
 
         # Basic collection types - simple type aliases (not using TypeAlias in class scope)
         Dict = dict[str, object]

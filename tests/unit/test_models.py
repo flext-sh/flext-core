@@ -137,15 +137,15 @@ class TestFlextModels:
         command = TestCommand(data="test_data")
         assert command.command_type == "test_command"
         assert command.data == "test_data"
-        assert command.issued_at is not None
-        assert command.command_id is not None
+        assert command.created_at is not None  # Timestamp from TimestampableMixin
+        assert command.id is not None  # ID from IdentifiableMixin
 
     def test_models_payload_creation(self) -> None:
         """Test payload model creation."""
         payload = FlextModels.Payload(data="test_data")
         assert payload.data == "test_data"
         assert payload.created_at is not None
-        assert payload.message_id is not None
+        assert payload.id is not None  # ID from IdentifiableMixin
 
         # Test expiration functionality
         assert not payload.is_expired

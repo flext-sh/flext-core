@@ -941,12 +941,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """Advanced handler patterns for complex domain operations."""
 
         @staticmethod
-        def create_command_handler[TCommand, TResult](
-            handler_func: FlextTypes.Core.Callable,
+        def create_command_handler[TCommand](
+            handler_func: Callable[[TCommand], FlextResult[object]],
             command_type: str,
             validation_rules: list[Callable[[TCommand], FlextResult[None]]]
             | None = None,
-        ) -> FlextHandlers[TCommand, TResult]:
+        ) -> FlextHandlers[TCommand, object]:
             """Create a command handler with advanced validation patterns.
 
             Args:
@@ -980,15 +980,15 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 },
             )
 
-            class CommandHandler(FlextHandlers[TCommand, TResult]):
+            class CommandHandler(FlextHandlers[TCommand, object]):
                 @override
-                def handle(self, message: TCommand) -> FlextResult[TResult]:
+                def handle(self, message: TCommand) -> FlextResult[object]:
                     # Apply validation rules if provided
                     if validation_rules:
                         for rule in validation_rules:
                             result = rule(message)
                             if result.is_failure:
-                                return FlextResult[TResult].fail(
+                                return FlextResult[object].fail(
                                     f"Command validation failed: {result.error}",
                                     error_code="COMMAND_VALIDATION_FAILED",
                                     error_data={

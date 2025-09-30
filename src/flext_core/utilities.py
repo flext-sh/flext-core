@@ -826,6 +826,7 @@ class FlextUtilities:
                 return FlextResult[T].fail(error_msg)
 
             # Implement retry logic with exponential backoff
+            result: FlextResult[T] = FlextResult[T].fail("No attempts made")
 
             for attempt in range(max_retries + 1):
                 result = operation()
@@ -2230,7 +2231,10 @@ class FlextUtilities:
                 return True
 
             # Any type should be compatible with everything
-            if hasattr(expected_type, "__name__") and expected_type.__name__ == "Any":
+            if (
+                hasattr(expected_type, "__name__")
+                and getattr(expected_type, "__name__", "") == "Any"
+            ):
                 return True
 
             origin_type = get_origin(expected_type) or expected_type
