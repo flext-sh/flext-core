@@ -13,10 +13,7 @@ from functools import lru_cache
 from typing import Any, Final
 
 from flext_core import FlextLogger, FlextResult
-from flext_tests import (
-    FlextTestsFactories,
-    FlextTestsFixtures,
-)
+from flext_tests import FlextTestsFactories
 
 
 class ExampleScenarios:
@@ -94,10 +91,14 @@ class ExampleScenarios:
 
     @staticmethod
     def error_scenario(error_type: str = "ValidationError") -> dict[str, Any]:
-        """Return a structured error scenario from fixtures."""
-        return FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
-            error_type
-        )
+        """Return a structured error scenario for examples."""
+        return {
+            "error_type": error_type,
+            "error_code": f"{error_type.upper()}_001",
+            "message": f"Example {error_type} scenario",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "severity": "error",
+        }
 
     @staticmethod
     def metadata(source: str = "examples", **extra: Any) -> dict[str, Any]:

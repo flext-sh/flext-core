@@ -9,12 +9,10 @@ from __future__ import annotations
 import threading
 import time
 from abc import abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-
-# Import FlextConfig using TYPE_CHECKING to avoid circular imports
 from typing import (
     TYPE_CHECKING,
     Generic,
@@ -339,7 +337,7 @@ class FlextProtocols:
             else float(FlextConstants.Network.DEFAULT_TIMEOUT)
         )
 
-    def register(self, name: str, protocol: type[object]) -> FlextResult[None]:
+    def register(self, name: str, protocol: type[object] | None) -> FlextResult[None]:
         """Register a protocol with the given name.
 
         Args:
@@ -365,7 +363,7 @@ class FlextProtocols:
 
             return FlextResult[None].ok(None)
 
-    def unregister(self, name: str, protocol: type[object]) -> FlextResult[None]:
+    def unregister(self, name: str, protocol: type[object] | None) -> FlextResult[None]:
         """Unregister a protocol with the given name.
 
         Args:
@@ -394,7 +392,7 @@ class FlextProtocols:
             return FlextResult[None].ok(None)
 
     def validate_implementation(
-        self, name: str, implementation: type[object]
+        self, name: str, implementation: type[object] | None
     ) -> FlextResult[None]:
         """Validate that an implementation conforms to a registered protocol.
 
@@ -539,7 +537,7 @@ class FlextProtocols:
         return self._circuit_breaker.get(name, False)
 
     def validate_batch(
-        self, name: str, implementations: list[type[object]]
+        self, name: str, implementations: Sequence[type[object] | None]
     ) -> FlextResult[list[FlextResult[None]]]:
         """Validate multiple implementations against a protocol in batch.
 
@@ -562,7 +560,7 @@ class FlextProtocols:
         return FlextResult[list[FlextResult[None]]].ok(results)
 
     def validate_parallel(
-        self, name: str, implementations: list[type[object]]
+        self, name: str, implementations: Sequence[type[object] | None]
     ) -> FlextResult[list[FlextResult[None]]]:
         """Validate multiple implementations in parallel.
 

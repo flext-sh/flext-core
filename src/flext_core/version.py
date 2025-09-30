@@ -152,6 +152,16 @@ class FlextVersionManager:
         ]
 
     @staticmethod
+    def parse_version(version: str) -> tuple[int, ...]:
+        """Parse a version string into comparison-friendly tuple form.
+
+        Returns:
+            tuple[int, ...]: Version parts as integers
+
+        """
+        return tuple(int(part) for part in version.split("."))
+
+    @staticmethod
     def compare_versions(version1: str, version2: str) -> int:
         """Compare semantic versions to inform upgrade guidance.
 
@@ -159,18 +169,8 @@ class FlextVersionManager:
             int: -1 if version1 < version2, 0 if equal, 1 if version1 > version2
 
         """
-
-        def parse_version(version: str) -> tuple[int, ...]:
-            """Parse a version string into comparison-friendly tuple form.
-
-            Returns:
-                tuple[int, ...]: Version parts as integers
-
-            """
-            return tuple(int(part) for part in version.split("."))
-
-        v1_tuple = parse_version(version1)
-        v2_tuple = parse_version(version2)
+        v1_tuple = FlextVersionManager.parse_version(version1)
+        v2_tuple = FlextVersionManager.parse_version(version2)
 
         if v1_tuple < v2_tuple:
             return -1

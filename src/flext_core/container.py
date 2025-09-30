@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import inspect
 import threading
+from collections.abc import Callable
 from typing import cast, override
 
 from flext_core.config import FlextConfig
@@ -294,7 +295,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def register_factory(
         self,
         name: str,
-        factory: FlextTypes.Core.Callable,
+        factory: Callable[[], object],
     ) -> FlextResult[None]:
         """Register service factory with validation.
 
@@ -307,7 +308,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         )
 
     def _store_factory(
-        self, name: str, factory: FlextTypes.Core.Callable
+        self, name: str, factory: Callable[[], object]
     ) -> FlextResult[None]:
         """Store factory with callable validation.
 

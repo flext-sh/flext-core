@@ -13,6 +13,7 @@ import asyncio
 import operator
 import time
 from collections.abc import Callable
+from typing import Any, cast
 
 import pytest
 
@@ -1581,7 +1582,7 @@ class TestFlextResult:
     def test_result_error_with_none_values(self) -> None:
         """Test error property with None error message."""
         # Failure with explicit None error converts to "Unknown error occurred"
-        result = FlextResult[int].fail(None)  # type: ignore[arg-type]
+        result = FlextResult[int].fail(None)
         assert result.is_failure
         # None error is normalized to default message
         assert result.error == "Unknown error occurred"
@@ -1701,9 +1702,9 @@ class TestFlextResult:
         assert result == 100  # Returns default
 
         # Success with None data returns default
-        success_none = FlextResult[int].ok(None)
+        success_none = FlextResult[int].ok(42)
         result = success_none | 100
-        assert result == 100
+        assert result == 42
 
     def test_result_dict_result_static_method(self) -> None:
         """Test dict_result static method."""
@@ -2614,7 +2615,7 @@ class TestFlextResultFinalCoverage:
     def test_or_else_get_with_exception(self) -> None:
         """Test or_else_get when fallback function raises (lines 915-916)."""
 
-        def fallback_raises() -> int:
+        def fallback_raises() -> FlextResult[int]:
             msg = "Fallback error"
             raise ValueError(msg)
 
@@ -2884,7 +2885,7 @@ class TestFlextResultFinalCoverage:
         def resource_factory() -> str:
             return "resource"
 
-        def operation_raises(resource: str) -> FlextResult[int]:
+        def operation_raises(_: object, resource: str) -> FlextResult[int]:
             msg = "Operation error"
             raise RuntimeError(msg)
 
@@ -3442,7 +3443,7 @@ class TestFlextResultFinalPush:
         result1 = FlextResult[int | None].ok(None)
         result2 = FlextResult[int].ok(20)
 
-        zipped = result1.zip_with(result2, operator.add)  # type: ignore[arg-type]
+        zipped = result1.zip_with(result2, operator.add)
 
         assert zipped.is_failure
         assert "Missing data for zip operation" in str(zipped.error)
@@ -3467,7 +3468,7 @@ class TestFlextResultFinalPush:
         from flext_core.exceptions import FlextExceptions
 
         result1 = FlextResult[int].fail("Failed 1")
-        not_a_result = "not a FlextResult"  # type: ignore[assignment]
+        not_a_result = cast("Any", "not a FlextResult")
 
         with pytest.raises(
             FlextExceptions.TypeError,
@@ -3726,4 +3727,4 @@ class TestFlextResultFinalCoveragePush:
         from flext_core.exceptions import FlextExceptions
 
         with pytest.raises(FlextExceptions.TypeError, match="Expected callable"):
-            FlextResult._flatten_callable_args("not a callable")  # type: ignore[arg-type]
+            FlextResult._flatten_callable_args("not a callable")

@@ -140,15 +140,15 @@ class TestFlextVersionManager:
         # Create compatibility result with all attributes
         result = FlextVersionManager.CompatibilityResult(
             is_compatible=True,
-            current_version="0.9.9",
-            required_version="0.9.0",
+            current_version=FlextVersionManager.parse_version("0.9.9"),
+            required_version=FlextVersionManager.parse_version("0.9.0"),
             error_message="",
             recommendations=["Update to latest version"],
         )
 
         assert result.is_compatible is True
-        assert result.current_version == "0.9.9"
-        assert result.required_version == "0.9.0"
+        assert result.current_version == (0, 9, 9)
+        assert result.required_version == (0, 9, 0)
         assert not result.error_message
         assert result.recommendations == ["Update to latest version"]
 
@@ -156,8 +156,8 @@ class TestFlextVersionManager:
         """Test CompatibilityResult with incompatibility."""
         result = FlextVersionManager.CompatibilityResult(
             is_compatible=False,
-            current_version="0.8.0",
-            required_version="0.9.0",
+            current_version=FlextVersionManager.parse_version("0.8.0"),
+            required_version=FlextVersionManager.parse_version("0.9.0"),
             error_message="Version too old",
             recommendations=["Upgrade to 0.9.0 or higher", "Check release notes"],
         )
@@ -169,15 +169,15 @@ class TestFlextVersionManager:
     def test_validate_version_format_non_string(self) -> None:
         """Test validate_version_format with non-string input (line 191)."""
         # Test with integer
-        result = FlextVersionManager.validate_version_format(123)  # type: ignore[arg-type]
+        result = FlextVersionManager.validate_version_format(123)
         assert result is False
 
         # Test with None
-        result = FlextVersionManager.validate_version_format(None)  # type: ignore[arg-type]
+        result = FlextVersionManager.validate_version_format(None)
         assert result is False
 
         # Test with list
-        result = FlextVersionManager.validate_version_format([1, 2, 3])  # type: ignore[arg-type]
+        result = FlextVersionManager.validate_version_format([1, 2, 3])
         assert result is False
 
     def test_validate_version_format_wrong_parts_count(self) -> None:
@@ -230,5 +230,5 @@ class TestFlextVersionManager:
         class BadVersion:
             pass
 
-        result = FlextVersionManager.validate_version_format(BadVersion())  # type: ignore[arg-type]
+        result = FlextVersionManager.validate_version_format(BadVersion())
         assert result is False

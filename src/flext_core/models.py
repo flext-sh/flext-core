@@ -1526,7 +1526,7 @@ class FlextModels:
                 error_msg = "Handler must be callable"
                 raise FlextExceptions.TypeError(
                     message=error_msg,
-                    error_code="TYPE_ERROR",
+                    error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
             return cast("Callable[[object], object]", v)
 
@@ -1961,6 +1961,15 @@ class FlextModels:
                 )
             return v
 
+    class DomainServiceOperation(ArbitraryTypesModel):
+        """Domain service operation definition."""
+
+        name: str
+        operation_callable: object
+        arguments: object = None
+        retry_config: FlextModels.RetryConfiguration | None = None
+        validate_before_execution: bool = True
+
     class OperationExecutionRequest(ArbitraryTypesModel):
         """Operation execution request."""
 
@@ -2059,7 +2068,7 @@ class FlextModels:
                         msg = f"Invalid HTTP status code type: {type(code)}"
                         raise FlextExceptions.TypeError(
                             message=msg,
-                            error_code="TYPE_ERROR",
+                            error_code=FlextConstants.Errors.TYPE_ERROR,
                         )
                 except (ValueError, TypeError) as e:
                     msg = f"Invalid HTTP status code: {code}"
@@ -2142,7 +2151,7 @@ class FlextModels:
                     msg = "All validators must be callable"
                     raise FlextExceptions.TypeError(
                         message=msg,
-                        error_code="TYPE_ERROR",
+                        error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
             return v
 
@@ -2224,7 +2233,7 @@ class FlextModels:
                     )
                     raise FlextExceptions.TypeError(
                         message=msg,
-                        error_code="TYPE_ERROR",
+                        error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
                 for event, next_state in cast(
                     "FlextTypes.Core.Dict", transitions
@@ -2233,7 +2242,7 @@ class FlextModels:
                         msg = f"Next state for {state}.{event} must be a string"
                         raise FlextExceptions.TypeError(
                             message=msg,
-                            error_code="TYPE_ERROR",
+                            error_code=FlextConstants.Errors.TYPE_ERROR,
                         )
 
             return v
@@ -3210,7 +3219,7 @@ class FlextModels:
             except Exception as e:
                 return FlextResult[T].fail(
                     f"Validation failed: {e}",
-                    error_code="VALIDATION_ERROR",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
         @staticmethod
@@ -3564,6 +3573,14 @@ class FlextModels:
     # ============================================================================
     # END OF FLEXT MODELS - Foundation library complete
     # ============================================================================
+
+    class DomainServiceRetryConfig(RetryConfiguration):
+        """Domain service retry configuration."""
+
+        max_attempts: int = 1
+        retry_delay: float = 0.0
+        backoff_multiplier: float = 1.0
+        exponential_backoff: bool = False
 
 
 __all__ = [

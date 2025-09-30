@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import Callable
-from typing import cast
+from typing import Never, cast
 
 from flext_core import FlextConstants, FlextContainer
+from flext_core.typings import FlextTypes
 
 
 class TestFlextContainer:
@@ -613,16 +614,16 @@ class TestFlextContainer:
         container.register("initial", "value")
 
         # Create services dict with invalid entry that will cause exception
-        # Using non-string key to trigger exception in processing
-        services: dict[object, object] = {
+        # Using service name with invalid characters to trigger validation failure
+        services_with_invalid_key: dict[str, object] = {
             "valid_service": "valid_value",
-            123: "invalid_key",  # type: ignore[dict-item]
+            "invalid.service": "invalid_key",  # Service name with dot will trigger validation failure
         }
 
         # Should fail and rollback
-        result = container.batch_register(services)
+        result = container.batch_register(services_with_invalid_key)
         assert result.is_failure
-        assert "Batch registration error" in result.error
+        assert "Service name contains invalid characters" in (result.error or "")
 
         # Original service should still exist (rollback worked)
         assert container.has("initial")
@@ -639,7 +640,7 @@ class TestFlextContainer:
         # Try to create from factory with same name (will fail registration)
         result = container._create_from_factory("test", lambda: "new_value")
         assert result.is_failure
-        assert "already registered" in result.error.lower()
+        assert "already registered" in (result.error or "").lower()
 
     def test_container_create_service_no_name_attribute(self) -> None:
         """Test create_service with class that has no __name__ attribute."""
@@ -666,15 +667,15 @@ class TestFlextContainer:
         import builtins
 
         original_builtin_getattr = builtins.getattr
-        builtins.getattr = mock_getattr  # type: ignore[assignment]
+        builtins.getattr = mock_getattr
 
         try:
-            result = container.create_service(MockClassWithoutName)  # type: ignore[arg-type]
+            result = container.create_service(MockClassWithoutName)
             assert result.is_failure
-            assert "Cannot determine service name" in result.error
+            assert "Cannot determine service name" in (result.error or "")
         finally:
             # Restore original getattr
-            builtins.getattr = original_builtin_getattr  # type: ignore[assignment]
+            builtins.getattr = original_builtin_getattr
 
     def test_container_create_service_registration_failure(self) -> None:
         """Test create_service when final registration fails."""
@@ -692,7 +693,7 @@ class TestFlextContainer:
         result = container.create_service(SimpleService)
         assert result.is_failure
         # The error is about registration failure
-        assert "already registered" in result.error.lower()
+        assert "already registered" in (result.error or "").lower()
 
     def test_container_auto_wire_exception(self) -> None:
         """Test auto_wire exception handling."""
@@ -706,7 +707,7 @@ class TestFlextContainer:
 
         result = container.auto_wire(FailingService)
         assert result.is_failure
-        assert "Auto-wiring failed" in result.error
+        assert "Auto-wiring failed" in (result.error or "")
 
     def test_container_clear_exception_handling(self) -> None:
         """Test clear() exception handling with corrupted state."""
@@ -715,16 +716,18 @@ class TestFlextContainer:
 
         # Simulate exception by corrupting internal state
         # Replace _services dict with object that raises on clear()
-        class FailingDict(UserDict):  # type: ignore[type-arg]
+        class FailingDict(UserDict[str, object]):
             def clear(self) -> None:
                 msg = "Clear failed"
                 raise RuntimeError(msg)
 
-        container._services = FailingDict(container._services)  # type: ignore[assignment]
+        container._services = cast(
+            "FlextTypes.Core.Dict", FailingDict(container._services)
+        )
 
         result = container.clear()
         assert result.is_failure
-        assert "Failed to clear container" in result.error
+        assert "Failed to clear container" in (result.error or "")
 
     def test_container_has_none_validated_name(self) -> None:
         """Test has() when validation returns None for validated_name."""
@@ -740,16 +743,18 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Corrupt _services to trigger exception
-        class FailingDict(UserDict):  # type: ignore[type-arg]
-            def keys(self) -> object:
+        class FailingDict(UserDict[str, object]):
+            def keys(self) -> Never:
                 msg = "Keys failed"
                 raise RuntimeError(msg)
 
-        container._services = FailingDict(container._services)  # type: ignore[assignment]
+        container._services = cast(
+            "FlextTypes.Core.Dict", FailingDict(container._services)
+        )
 
         result = container.list_services()
         assert result.is_failure
-        assert "Failed to list services" in result.error
+        assert "Failed to list services" in (result.error or "")
 
     def test_container_get_service_names_exception(self) -> None:
         """Test get_service_names() exception handling."""
@@ -757,16 +762,18 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Corrupt _services to trigger exception
-        class FailingDict(UserDict):  # type: ignore[type-arg]
-            def keys(self) -> object:
+        class FailingDict(UserDict[str, object]):
+            def keys(self) -> Never:
                 msg = "Keys failed"
                 raise RuntimeError(msg)
 
-        container._services = FailingDict(container._services)  # type: ignore[assignment]
+        container._services = cast(
+            "FlextTypes.Core.Dict", FailingDict(container._services)
+        )
 
         result = container.get_service_names()
         assert result.is_failure
-        assert "Failed to get service names" in result.error
+        assert "Failed to get service names" in (result.error or "")
 
     def test_container_get_info_exception(self) -> None:
         """Test get_info() exception handling."""
@@ -774,16 +781,18 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Corrupt internal state to trigger exception
-        class FailingDict(UserDict):  # type: ignore[type-arg]
+        class FailingDict(UserDict[str, object]):
             def __len__(self) -> int:
                 msg = "Length failed"
                 raise RuntimeError(msg)
 
-        container._services = FailingDict(container._services)  # type: ignore[assignment]
+        container._services = cast(
+            "FlextTypes.Core.Dict", FailingDict(container._services)
+        )
 
         result = container.get_info()
         assert result.is_failure
-        assert "Failed to get container info" in result.error
+        assert "Failed to get container info" in (result.error or "")
 
     def test_container_build_service_info_exception_fallback(self) -> None:
         """Test _build_service_info exception handling with fallback dict."""
@@ -792,9 +801,14 @@ class TestFlextContainer:
         # Create an object that raises exception when accessing __class__
         class ProblematicService:
             @property
-            def __class__(self) -> object:
+            def __class__(self) -> type[object]:
                 msg = "Class access failed"
                 raise RuntimeError(msg)
+
+            @__class__.setter
+            def __class__(self, value: type[object]) -> None:
+                # Setter for __class__ property (required for property override)
+                pass
 
         service = ProblematicService()
 
@@ -818,25 +832,25 @@ class TestFlextContainer:
 
         # Create config dict that will cause exception during processing
         # Use invalid type that breaks the update logic
-        config: dict[str, object] = {"invalid_key": object()}  # type: ignore[dict-item]
+        config: dict[str, object] = {"invalid_key": object()}
 
         # Corrupt _user_overrides to trigger exception
-        class FailingDict(UserDict):  # type: ignore[type-arg]
+        class FailingDict(UserDict[str, object]):
             def update(self, *args: object, **kwargs: object) -> None:
                 msg = "Update failed"
                 raise RuntimeError(msg)
 
-        container._user_overrides = FailingDict()  # type: ignore[assignment]
+        container._user_overrides = cast("FlextTypes.Core.Dict", FailingDict())
 
         result = container.configure_container(config)
         assert result.is_failure
-        assert "Container configuration failed" in result.error
+        assert "Container configuration failed" in (result.error or "")
 
     def test_container_create_module_utilities_empty_name(self) -> None:
         """Test create_module_utilities() with empty module name."""
         result = FlextContainer.create_module_utilities("")
         assert result.is_failure
-        assert "Module name must be non-empty string" in result.error
+        assert "Module name must be non-empty string" in (result.error or "")
 
     def test_container_has_with_validation_edge_cases(self) -> None:
         """Test has() with various validation edge cases."""

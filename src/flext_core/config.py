@@ -709,7 +709,7 @@ class FlextConfig(BaseSettings):
 
     # Class methods for creating instances
     @classmethod
-    def create(cls, **kwargs: FlextTypes.Core.Value) -> FlextConfig:
+    def create(cls, **kwargs: object) -> FlextConfig:
         """Create a new FlextConfig instance with the given parameters.
 
         Args:
@@ -721,9 +721,7 @@ class FlextConfig(BaseSettings):
         return cls(**kwargs)
 
     @classmethod
-    def create_for_environment(
-        cls, environment: str, **kwargs: FlextTypes.Core.Value
-    ) -> FlextConfig:
+    def create_for_environment(cls, environment: str, **kwargs: object) -> FlextConfig:
         """Create a FlextConfig instance for a specific environment.
 
         Args:

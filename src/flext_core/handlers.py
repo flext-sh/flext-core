@@ -1003,7 +1003,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_query_handler[TQuery, TResult](
-            handler_func: FlextTypes.Core.Callable,
+            handler_func: Callable[[TQuery], FlextResult[TResult]],
             query_type: str,
             *,
             caching_enabled: bool = False,
@@ -1068,7 +1068,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_event_handler[TEvent](
-            handler_func: FlextTypes.Core.Callable,
+            handler_func: Callable[[TEvent], FlextResult[None]],
             event_type: str,
             retry_policy: FlextTypes.Core.Dict | None = None,
         ) -> FlextHandlers[TEvent, None]:

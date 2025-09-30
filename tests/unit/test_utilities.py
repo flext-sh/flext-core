@@ -58,6 +58,14 @@ class TestFlextUtilitiesComprehensive:
         result = FlextUtilities.Validation.validate_string_pattern("TEST", r"^[a-z]+$")
         assert result.is_failure
 
+        # Test validate_string_pattern with None pattern (should pass)
+        result = FlextUtilities.Validation.validate_string_pattern("any_string", None)
+        assert result.is_success
+
+        # Test validate_string_pattern with invalid regex pattern (should fail)
+        result = FlextUtilities.Validation.validate_string_pattern("test", "[invalid")
+        assert result.is_failure
+
         # Test validate_string (comprehensive validation)
         result = FlextUtilities.Validation.validate_string(
             "valid_string", min_length=5, max_length=20, pattern=r"^[a-z_]+$"
