@@ -22,9 +22,119 @@ from flext_core.result import FlextResult
 class FlextProcessors:
     """Processing convenience namespace aligned with dispatcher workflows.
 
-    Registries, pipelines, and handler helpers mirror the ergonomics promoted in
-    the modernization plan so supporting packages can compose around
-    ``FlextDispatcher`` without bespoke glue code.
+    Registries, pipelines, and handler helpers mirror ergonomics
+    promoted in modernization plan so supporting packages can compose
+    around ``FlextDispatcher`` without bespoke glue code.
+
+    **Function**: Processing utilities for dispatcher integration
+        - Processor registration and discovery
+        - Middleware pipeline processing
+        - Circuit breaker pattern implementation
+        - Rate limiting for request throttling
+        - Caching with TTL support
+        - Performance metrics collection
+        - Audit logging for operations
+        - Batch processing support
+        - Processor validation and health checks
+        - Configuration import and export
+
+    **Uses**: Core FLEXT infrastructure for processing
+        - FlextResult[T] for operation results
+        - FlextConfig for configuration management
+        - FlextConstants for defaults and error codes
+        - FlextModels for domain models
+        - time module for rate limiting
+        - collections.abc for callable types
+        - typing.cast for type safety
+        - dict for internal state management
+
+    **How to use**: Processor registration and execution
+        ```python
+        from flext_core import FlextProcessors, FlextResult
+
+        # Example 1: Create processors with config
+        config = {"circuit_breaker_threshold": 5, "rate_limit": 100, "cache_ttl": 300}
+        processors = FlextProcessors(config)
+
+
+        # Example 2: Register processor
+        def audit_processor(data: dict) -> dict:
+            data["audited"] = True
+            return data
+
+
+        processors.register("audit", audit_processor)
+
+        # Example 3: Process data through pipeline
+        data = {"operation": "create_user"}
+        result = processors.process("audit", data)
+        if result.is_success:
+            processed = result.unwrap()
+
+
+        # Example 4: Add middleware
+        def logging_middleware(data: dict) -> dict:
+            print(f"Processing: {data}")
+            return data
+
+
+        processors.add_middleware(logging_middleware)
+
+        # Example 5: Check circuit breaker
+        is_open = processors.is_circuit_breaker_open("processor")
+        if not is_open:
+            result = processors.process("processor", data)
+
+        # Example 6: Batch processing
+        items = [{"id": 1}, {"id": 2}, {"id": 3}]
+        results = processors.process_batch("processor", items)
+
+        # Example 7: Get performance metrics
+        metrics = processors.get_performance_metrics()
+        print(f"Total operations: {len(metrics)}")
+        ```
+
+    **TODO**: Enhanced processor features for 1.0.0+ releases
+        - [ ] Split into focused modules (Registry, Pipeline, etc)
+        - [ ] Add distributed processor coordination
+        - [ ] Implement processor dependency resolution
+        - [ ] Support processor versioning and migration
+        - [ ] Add processor health monitoring
+        - [ ] Implement processor auto-scaling
+        - [ ] Support processor composition patterns
+        - [ ] Add processor testing framework
+        - [ ] Implement processor debugging tools
+        - [ ] Support processor documentation generation
+
+    Note:
+        Processors integrate with FlextDispatcher workflows.
+        Circuit breaker and rate limiting are automatic.
+        Cache uses TTL for automatic expiration.
+        Middleware processes all registered operations.
+        Batch processing does not provide transactions.
+
+    Warning:
+        Large class with multiple responsibilities (refactor planned).
+        Circuit breaker threshold defaults to 5 failures.
+        Rate limit defaults to 10 operations per 60 seconds.
+        Cache TTL defaults to 300 seconds.
+        Processor state is not thread-safe by default.
+
+    Example:
+        Complete processor workflow with middleware:
+
+        >>> processors = FlextProcessors()
+        >>> processors.register("log", lambda d: d)
+        >>> result = processors.process("log", {"msg": "test"})
+        >>> print(result.is_success)
+        True
+
+    See Also:
+        FlextDispatcher: For dispatcher integration.
+        FlextResult: For result type definitions.
+        FlextConfig: For configuration management.
+        FlextConstants: For defaults and error codes.
+
     """
 
     @override
@@ -44,26 +154,40 @@ class FlextProcessors:
         self._circuit_breaker: dict[str, bool] = {}
         self._rate_limiter: dict[str, dict[str, int | float]] = {}
         self._cache: dict[str, tuple[object, float]] = {}
-        cache_ttl = self._config.get("cache_ttl", 300)
+        cache_ttl = self._config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL)
         self._cache_ttl = (
-            float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 300.0
+            float(cache_ttl)
+            if isinstance(cache_ttl, (int, float, str))
+            else float(FlextConstants.Defaults.CACHE_TTL)
         )
 
-        circuit_threshold = self._config.get("circuit_breaker_threshold", 5)
+        circuit_threshold = self._config.get(
+            "circuit_breaker_threshold",
+            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+        )
         self._circuit_breaker_threshold = (
             int(circuit_threshold)
             if isinstance(circuit_threshold, (int, float, str))
-            else 5
+            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
         )
 
-        rate_limit = self._config.get("rate_limit", 10)
+        rate_limit = self._config.get(
+            "rate_limit", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+        )
         self._rate_limit = (
-            int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 10
+            int(rate_limit)
+            if isinstance(rate_limit, (int, float, str))
+            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
         )
 
-        rate_window = self._config.get("rate_limit_window", 60)
+        rate_window = self._config.get(
+            "rate_limit_window",
+            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+        )
         self._rate_limit_window = (
-            int(rate_window) if isinstance(rate_window, (int, float, str)) else 60
+            int(rate_window)
+            if isinstance(rate_window, (int, float, str))
+            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
         )
 
     def register(self, name: str, processor: object) -> FlextResult[None]:

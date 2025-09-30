@@ -67,38 +67,145 @@ def _get_config() -> dict[str, object]:
             "log_verbosity": INFO,
             "format": "json",
             "log_file": None,
-            "log_file_max_size": 10485760,
-            "log_file_backup_count": 5,
+            "log_file_max_size": FlextConstants.Logging.MAX_FILE_SIZE,
+            "log_file_backup_count": FlextConstants.Logging.BACKUP_COUNT,
         }
 
 
-# ISSUE: Violates SOLID principles - single class with 2500+ lines (god class pattern)
-# ISSUE: Could be split into FlextLogger + FlextLoggerConfig + FlextLoggerContext + FlextLoggerUtils
 class FlextLogger:
-    """Structured logging solution for the FLEXT ecosystem.
+    """Structured logging with context and correlation tracking.
 
-    FlextLogger provides enhanced logging with structured output, context management,
-    correlation tracking, and performance monitoring. Use FlextLogger throughout
-    FLEXT applications for consistent, structured logging.
+    FlextLogger provides enterprise-grade structured logging using
+    structlog with context management, correlation IDs, performance
+    tracking, and sensitive data sanitization. Used across all 32+
+    dependent FLEXT projects for consistent logging patterns.
 
-    **ECOSYSTEM USAGE**: Create logger instances directly:
+    **Function**: Structured logging with advanced features
+        - Structured logging using structlog integration
+        - Context management with thread-local storage
+        - Correlation ID tracking for distributed tracing
+        - Performance monitoring with timing metrics
+        - Sensitive data sanitization for security
+        - JSON and console output formats
+        - Log level configuration (DEBUG, INFO, WARN, ERROR)
+        - Log file rotation and management
+        - Color-coded console output with colorlog
+        - Integration with FlextConfig for settings
+        - Integration with FlextContext for metadata
+        - Thread-safe logging operations
+        - Lazy initialization to avoid circular imports
+
+    **Uses**: structlog for structured logging foundation
+        - structlog for structured log processing
+        - colorlog for colored console output
+        - FlextConfig for logging configuration
+        - FlextContext for context metadata injection
+        - FlextResult[T] for operation results
+        - FlextConstants for logging defaults
+        - threading.local for thread-local storage
+        - Pydantic BaseModel for log entry validation
+        - logging.handlers for file rotation
+        - json module for JSON serialization
+
+    **How to use**: Create logger instances and log messages
         ```python
-        from flext_core.result import FlextResult
-        from flext_core.loggings import FlextLogger
+        from flext_core import FlextLogger
 
+        # Example 1: Basic logger creation
         logger = FlextLogger(__name__)
-        logger.info("Operation completed", extra={"user_id": 123})
+        logger.info("Application started")
 
-        # Context management
-        logger.set_correlation_id("req-123")
-        logger.bind_context({"service": "user-service"})
+        # Example 2: Structured logging with context
+        logger.info(
+            "User login", extra={"user_id": "user_123", "ip_address": "192.168.1.1"}
+        )
+
+        # Example 3: Set correlation ID for request tracking
+        logger.set_correlation_id("req-abc-123")
+        logger.info("Processing request")
+
+        # Example 4: Bind context for all subsequent logs
+        logger.bind_context({"service": "auth-service", "version": "1.0.0"})
+
+        # Example 5: Performance tracking with timing
+        with logger.track_performance("database_query"):
+            result = database.query(sql)
+
+        # Example 6: Error logging with exception details
+        try:
+            risky_operation()
+        except Exception as e:
+            logger.error("Operation failed", exc_info=e)
+
+        # Example 7: Debug logging (only in debug mode)
+        logger.debug("Debug info", extra={"state": current_state})
+
+        # Example 8: Sanitize sensitive data automatically
+        logger.info(
+            "User data",
+            extra={
+                "password": "secret123",  # Will be sanitized
+                "email": "user@example.com",
+            },
+        )
         ```
 
-    **UNIFIED ARCHITECTURE**: Single class design containing all logging
-    functionality with internal Pydantic models for validation.
+    **TODO**: Enhanced logging features for 1.0.0+ releases
+        - [ ] Add distributed tracing integration (Jaeger, Zipkin)
+        - [ ] Implement log sampling for high-volume scenarios
+        - [ ] Add enhanced sanitization patterns for PII data
+        - [ ] Support log aggregation (ELK, Splunk, Datadog)
+        - [ ] Implement custom formatter plugins
+        - [ ] Add async logging for performance
+        - [ ] Support structured log queries
+        - [ ] Implement log retention policies
+        - [ ] Add log compression for archival
+        - [ ] Support custom log processors pipeline
 
-    Provides structured logging with configurable output formats, correlation tracking,
-    request context binding, performance monitoring, and full Pydantic v2 model integration.
+    Args:
+        name: Logger name (typically __name__ of calling module).
+
+    Attributes:
+        _logger (structlog.BoundLogger): Internal structlog logger.
+        _correlation_id (str): Current correlation ID for tracking.
+        _context (dict): Thread-local context dictionary.
+        _config (FlextConfig): Global configuration instance.
+
+    Returns:
+        FlextLogger: Logger instance for structured logging.
+
+    Raises:
+        ValueError: When logger configuration is invalid.
+        ImportError: When structlog dependencies missing.
+
+    Note:
+        Create logger instances directly with FlextLogger(__name__).
+        Correlation IDs propagate through entire request chain.
+        Context bound to thread-local storage for isolation.
+        Sensitive data automatically sanitized in logs. JSON
+        output default for production, console for development.
+
+    Warning:
+        Logger instances not serializable - create per module.
+        Context is thread-local - set per thread in concurrent
+        code. Performance tracking adds overhead - use judiciously.
+        File logging requires write permissions. Never log raw
+        passwords or tokens - sanitization has limits.
+
+    Example:
+        Complete logging workflow:
+
+        >>> logger = FlextLogger(__name__)
+        >>> logger.info("Starting operation")
+        >>> logger.set_correlation_id("req-123")
+        >>> logger.bind_context({"user": "alice"})
+        >>> logger.info("Operation completed")
+
+    See Also:
+        FlextConfig: For logging configuration management.
+        FlextContext: For request context integration.
+        FlextResult: For operation result logging.
+
     """
 
     # =============================================================================
@@ -315,7 +422,7 @@ class FlextLogger:
         @classmethod
         def validate_context_data(cls, v: dict[str, object]) -> dict[str, object]:
             """Validate context data."""
-            max_context_keys = 100
+            max_context_keys = FlextConstants.Logging.MAX_CONTEXT_KEYS
             if len(v) > max_context_keys:
                 msg = f"Context data too large (max {max_context_keys} keys)"
                 raise ValueError(msg)
@@ -570,7 +677,7 @@ class FlextLogger:
         include_source: bool = FlextConstants.Logging.INCLUDE_SOURCE,
         log_verbosity: str = FlextConstants.Logging.VERBOSITY,
         log_file: str | None = None,
-        log_file_max_size: int = 10 * 1024 * 1024,  # 10MB default
+        log_file_max_size: int = FlextConstants.Logging.MAX_FILE_SIZE,
         log_file_backup_count: int = 5,
         console_enabled: bool = FlextConstants.Logging.CONSOLE_ENABLED,
         console_color_enabled: bool = FlextConstants.Logging.CONSOLE_COLOR_ENABLED,
@@ -784,7 +891,10 @@ class FlextLogger:
                 ),
                 log_file_max_size=int(
                     cast(
-                        "int", logging_config.get("log_file_max_size", 10 * 1024 * 1024)
+                        "int",
+                        logging_config.get(
+                            "log_file_max_size", FlextConstants.Logging.MAX_FILE_SIZE
+                        ),
                     )
                 ),
                 log_file_backup_count=int(
@@ -2183,8 +2293,12 @@ class FlextLogger:
             "log_verbosity": global_config.get("log_verbosity", "compact"),
             "format": global_config.get("log_format", "%(message)s"),
             "log_file": global_config.get("log_file"),
-            "log_file_max_size": global_config.get("log_file_max_size", 10485760),
-            "log_file_backup_count": global_config.get("log_file_backup_count", 5),
+            "log_file_max_size": global_config.get(
+                "log_file_max_size", FlextConstants.Logging.MAX_FILE_SIZE
+            ),
+            "log_file_backup_count": global_config.get(
+                "log_file_backup_count", FlextConstants.Logging.BACKUP_COUNT
+            ),
             "console_enabled": global_config.get("console_enabled", True),
             "console_color_enabled": global_config.get("console_color_enabled", True),
             "track_performance": global_config.get("track_performance", False),

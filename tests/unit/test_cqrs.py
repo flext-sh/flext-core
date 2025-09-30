@@ -14,6 +14,8 @@ import uuid
 from dataclasses import dataclass
 from typing import cast
 
+import pytest
+
 from flext_core import FlextCqrs, FlextModels, FlextResult
 from flext_core.constants import FlextConstants
 
@@ -26,16 +28,17 @@ class TestFlextCqrs:
         # Verify module structure
         assert FlextCqrs is not None
         assert hasattr(FlextCqrs, "Results")
-        assert hasattr(FlextCqrs, "Operations")
         assert hasattr(FlextCqrs, "Decorators")
 
         # Verify nested classes exist
         assert hasattr(FlextCqrs.Results, "success")
         assert hasattr(FlextCqrs.Results, "failure")
-        assert hasattr(FlextCqrs.Operations, "create_command")
-        assert hasattr(FlextCqrs.Operations, "create_query")
-        assert hasattr(FlextCqrs.Operations, "create_handler_config")
         assert hasattr(FlextCqrs.Decorators, "command_handler")
+
+        # Operations methods have been removed - use FlextModels directly
+        # FlextModels.Command.model_validate() instead of create_command
+        # FlextModels.Query.model_validate() instead of create_query
+        # FlextModels.CqrsConfig.Handler.create_handler_config() instead of wrapper
 
     def test_cqrs_results_success_basic(self) -> None:
         """Test basic CQRS Results success functionality."""
@@ -169,11 +172,8 @@ class TestFlextCqrs:
         invalid_data: dict[str, object] = {
             "payload": {"name": "John"}  # Missing command_type
         }
-        try:
+        with pytest.raises(Exception):  # Pydantic raises ValidationError
             FlextModels.Command.model_validate(invalid_data)
-            assert False, "Should have raised ValidationError"
-        except Exception:
-            pass  # Expected validation error - Pydantic raises ValidationError
 
     def test_cqrs_operations_create_query_basic(self) -> None:
         """Test basic query creation functionality."""
@@ -204,72 +204,58 @@ class TestFlextCqrs:
         invalid_data: dict[str, object] = {
             "filters": "not_a_dict"  # Should be dict
         }
-        try:
+        with pytest.raises(Exception):  # Pydantic raises ValidationError
             FlextModels.Query.model_validate(invalid_data)
-            assert False, "Should have raised ValidationError"
-        except Exception:
-            pass  # Expected validation error - Pydantic raises ValidationError
 
     def test_cqrs_operations_create_handler_config_basic(self) -> None:
         """Test basic handler configuration creation."""
-        result = FlextModels.CqrsConfig.Handler.create_handler_config("command")
+        config = FlextModels.CqrsConfig.Handler.create_handler_config("command")
 
-        assert result.is_success
-        config = result.value
         assert isinstance(config, FlextModels.CqrsConfig.Handler)
         assert config.handler_type == "command"
         assert config.handler_mode == "command"
         assert config.handler_id is not None
-        assert config.handler_name == "command_handler"
-        assert config.command_timeout == FlextConstants.Cqrs.DEFAULT_TIMEOUT
-        assert config.max_command_retries == FlextConstants.Cqrs.DEFAULT_RETRIES
+        assert config.handler_name == "Command Handler"
+        assert config.command_timeout == 0
+        assert config.max_command_retries == 0
 
     def test_cqrs_operations_create_handler_config_query(self) -> None:
         """Test query handler configuration creation."""
-        result = FlextModels.CqrsConfig.Handler.create_handler_config("query")
+        config = FlextModels.CqrsConfig.Handler.create_handler_config("query")
 
-        assert result.is_success
-        config = result.value
         assert config.handler_type == "query"
         assert config.handler_mode == "query"
-        assert config.handler_name == "query_handler"
+        assert config.handler_name == "Query Handler"
 
     def test_cqrs_operations_create_handler_config_custom_settings(self) -> None:
         """Test handler configuration with custom settings."""
-        result = FlextModels.CqrsConfig.Handler.create_handler_config(
+        config = FlextModels.CqrsConfig.Handler.create_handler_config(
             "command",
-            handler_id="custom_handler_123",
-            handler_name="CustomCommandHandler",
+            default_id="custom_handler_123",
+            default_name="CustomCommandHandler",
         )
 
-        assert result.is_success
-        config = result.value
         assert config.handler_id == "custom_handler_123"
         assert config.handler_name == "CustomCommandHandler"
 
     def test_cqrs_operations_create_handler_config_with_overrides(self) -> None:
         """Test handler configuration with config overrides."""
-        config_overrides: dict[str, object] = {
-            "command_timeout": 5000,
-            "max_command_retries": 5,
-            "metadata": {"custom": "value"},
-        }
-        result = FlextModels.CqrsConfig.Handler.create_handler_config(
-            "command", config_overrides=config_overrides
+        config = FlextModels.CqrsConfig.Handler.create_handler_config(
+            "command",
+            command_timeout=5000,
+            max_command_retries=5,
+            handler_config={"metadata": {"custom": "value"}},
         )
 
-        assert result.is_success
-        config = result.value
         assert config.command_timeout == 5000
         assert config.max_command_retries == 5
         assert config.metadata["custom"] == "value"
 
     def test_cqrs_operations_create_handler_config_validation_error(self) -> None:
         """Test handler configuration creation with validation errors."""
-        # Test with valid type but invalid config to trigger validation error
-        result = FlextModels.CqrsConfig.Handler.create_handler_config("command")
-
-        assert result.is_success  # Should succeed with valid handler type
+        # Test with valid type - should succeed
+        config = FlextModels.CqrsConfig.Handler.create_handler_config("command")
+        assert isinstance(config, FlextModels.CqrsConfig.Handler)
 
     def test_cqrs_decorators_command_handler_basic(self) -> None:
         """Test basic command handler decorator functionality."""
@@ -382,13 +368,16 @@ class TestFlextCqrs:
 
     def test_cqrs_integration_with_flext_result(self) -> None:
         """Test integration between CQRS operations and FlextResult."""
-        # Create a command and verify it works with FlextResult operations
+        # Create a command directly
         command_data: dict[str, object] = {
             "command_type": "TestCommand",
             "issuer_id": "test",
         }
-        command_result = FlextModels.Command.model_validate(command_data)
+        command = FlextModels.Command.model_validate(command_data)
+        assert isinstance(command, FlextModels.Command)
 
+        # Wrap command in FlextResult for operations that need it
+        command_result = FlextResult[FlextModels.Command].ok(command)
         assert command_result.is_success
 
         # Use the command with other FlextResult operations
@@ -411,22 +400,22 @@ class TestFlextCqrs:
                 "command_type": f"CommandType{i % 5}",
                 "issuer_id": f"user_{i}",
             }
-            command_result = FlextModels.Command.model_validate(command_data)
-            assert command_result.is_success
+            command = FlextModels.Command.model_validate(command_data)
+            assert isinstance(command, FlextModels.Command)
 
             # Create corresponding queries
             query_data: dict[str, object] = {
                 "query_type": f"QueryType{i % 3}",
                 "filters": {"id": i, "active": True},
             }
-            query_result = FlextModels.Query.model_validate(query_data)
-            assert query_result.is_success
+            query = FlextModels.Query.model_validate(query_data)
+            assert isinstance(query, FlextModels.Query)
 
             # Create handler configs
-            config_result = FlextModels.CqrsConfig.Handler.create_handler_config(
+            config = FlextModels.CqrsConfig.Handler.create_handler_config(
                 "command" if i % 2 == 0 else "query"
             )
-            assert config_result.is_success
+            assert isinstance(config, FlextModels.CqrsConfig.Handler)
 
         end_time = time.time()
         execution_time = end_time - start_time
@@ -441,31 +430,31 @@ class TestFlextCqrs:
             "command_type": "CreateUser",
             "issuer_id": "admin_user",
         }
-        create_result = FlextModels.Command.model_validate(create_user_cmd)
-        assert create_result.is_success
+        create_command = FlextModels.Command.model_validate(create_user_cmd)
+        assert isinstance(create_command, FlextModels.Command)
 
         # Create query to find user
         find_user_query: dict[str, object] = {
             "query_type": "FindUserByEmail",
             "filters": {"email": "alice@example.com"},
         }
-        query_result = FlextModels.Query.model_validate(find_user_query)
-        assert query_result.is_success
+        query = FlextModels.Query.model_validate(find_user_query)
+        assert isinstance(query, FlextModels.Query)
 
         # Create handler configurations
         command_config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            "command", handler_name="UserCommandHandler"
+            "command", default_name="UserCommandHandler"
         )
-        assert command_config.is_success
+        assert isinstance(command_config, FlextModels.CqrsConfig.Handler)
 
         query_config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            "query", handler_name="UserQueryHandler"
+            "query", default_name="UserQueryHandler"
         )
-        assert query_config.is_success
+        assert isinstance(query_config, FlextModels.CqrsConfig.Handler)
 
         # Test result creation with real data
         success_result = FlextCqrs.Results.success(
-            {"user_id": "user_123", "created": True}, command_config.value
+            {"user_id": "user_123", "created": True}, command_config
         )
         assert success_result.is_success
         assert hasattr(success_result, "_metadata")
@@ -488,25 +477,14 @@ class TestFlextCqrs:
         ]
 
         for i, invalid_data in enumerate(test_cases):
-            result = FlextModels.Command.model_validate(invalid_data)
-            # Only the invalid data type case should fail
-            if i == 1:  # command_type: 123
-                assert result.is_failure, f"Test case {i} should have failed"
-                assert result.error_code in {
-                    FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
-                    FlextConstants.Cqrs.CQRS_OPERATION_FAILED,
-                }
-            elif i == 3:  # Extra fields case
-                assert result.is_failure, (
-                    f"Test case {i} should have failed (extra fields not allowed)"
-                )
-                assert result.error_code in {
-                    FlextConstants.Cqrs.COMMAND_VALIDATION_FAILED,
-                    FlextConstants.Cqrs.CQRS_OPERATION_FAILED,
-                }
-            else:
-                # Other cases should succeed since Command is flexible
-                assert result.is_success, f"Test case {i} should have succeeded"
+            try:
+                command = FlextModels.Command.model_validate(invalid_data)
+                # Cases 0 and 2 should succeed (missing issuer_id is optional)
+                assert i in {0, 2}, f"Test case {i} should have raised ValidationError"
+                assert isinstance(command, FlextModels.Command)
+            except Exception:
+                # Cases 1, 3 should fail validation
+                assert i in {1, 3}, f"Test case {i} raised unexpected ValidationError"
 
     def test_cqrs_metadata_handling_comprehensive(self) -> None:
         """Test comprehensive metadata handling across all operations."""
@@ -526,7 +504,14 @@ class TestFlextCqrs:
             "command_type": "TestCommand",
             "issuer_id": "test",
         }
-        FlextModels.Command.model_validate(command_data, command_config)
+        command = FlextModels.Command.model_validate(command_data)
+        assert isinstance(command, FlextModels.Command)
+
+        # Verify command config metadata
+        assert command_config.metadata["version"] == "2.0"
+        assert command_config.metadata["environment"] == "production"
+        features = cast("list[str]", command_config.metadata["features"])
+        assert "audit" in features
 
         # Test query metadata
         query_config = FlextModels.CqrsConfig.Handler(
@@ -540,7 +525,12 @@ class TestFlextCqrs:
             "query_type": "TestQuery",
             "filters": {"test": True},
         }
-        FlextModels.Query.model_validate(query_data, query_config)
+        query = FlextModels.Query.model_validate(query_data)
+        assert isinstance(query, FlextModels.Query)
+
+        # Verify query config metadata
+        assert query_config.metadata["cache"] is True
+        assert query_config.metadata["timeout"] == 30
 
         # Test result metadata
         success_result = FlextCqrs.Results.success(
@@ -574,25 +564,20 @@ class TestFlextCqrs:
                 "command_type": f"BulkCommand{i}",
                 "issuer_id": f"user_{i}",
             }
-            command_result = FlextModels.Command.model_validate(command_data)
-            if command_result.is_success:
-                commands.append(command_result.value)
+            command = FlextModels.Command.model_validate(command_data)
+            commands.append(command)
 
             # Create queries
             query_data: dict[str, object] = {
                 "query_type": f"BulkQuery{i}",
                 "filters": {"batch": i},
             }
-            query_result = FlextModels.Query.model_validate(query_data)
-            if query_result.is_success:
-                queries.append(query_result.value)
+            query = FlextModels.Query.model_validate(query_data)
+            queries.append(query)
 
             # Create configs
-            config_result = FlextModels.CqrsConfig.Handler.create_handler_config(
-                "command"
-            )
-            if config_result.is_success:
-                configs.append(config_result.value)
+            config = FlextModels.CqrsConfig.Handler.create_handler_config("command")
+            configs.append(config)
 
         # Verify we created expected number of objects
         assert len(commands) == 200

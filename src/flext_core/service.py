@@ -41,21 +41,122 @@ class FlextService[TDomainResult](
 ):
     """Domain service base using railway patterns with Pydantic models.
 
-    Provides unified service pattern for FLEXT ecosystem:
-    - FlextResult[T] error handling with railway patterns
-    - Pydantic Generic[T] for type-safe domain operations
-    - Complete type annotations for ecosystem consistency
-    - Nested helper classes instead of loose functions
-    - Direct implementation without delegation layers
+    Provides unified service pattern for FLEXT ecosystem with
+    FlextResult[T] error handling, Pydantic Generic[T] for type-safe
+    domain operations, and complete type annotations for consistency.
 
-    Generic[TDomainResult] provides type safety for execute() return types.
+    **Function**: Domain service base class for business logic
+        - Abstract execute() method for domain operations
+        - Business rule validation with FlextResult
+        - Configuration validation and management
+        - Operation execution with timeout support
+        - Batch processing for multiple operations
+        - Performance metrics collection and tracking
+        - Service information and metadata access
+        - Context-aware logging integration
+        - Serialization support via FlextMixins
+        - Type-safe generic result handling
 
-    **AUDIT FINDINGS**:
-    - ✅ NO DUPLICATIONS: Single comprehensive service base class
-    - ✅ MINIMAL EXTERNAL DEPENDENCIES: Only Pydantic for model validation
-    - ✅ COMPLETE FUNCTIONALITY: Domain service patterns, validation, execution
-    - ✅ ADVANCED FEATURES: Timeout operations, batch processing, metrics collection
-    - ✅ PRODUCTION READY: Comprehensive domain service foundation
+    **Uses**: Core FLEXT infrastructure for services
+        - FlextResult[T] for railway pattern error handling
+        - FlextModels.ArbitraryTypesModel for Pydantic base
+        - FlextMixins for serialization and logging
+        - FlextConstants for defaults and error codes
+        - Pydantic Generic[T] for type-safe operations
+        - abc.ABC for abstract base class pattern
+        - signal module for timeout enforcement
+        - datetime for timestamp operations
+        - contextmanager for context scopes
+        - Protocol for callable interfaces
+
+    **How to use**: Domain service implementation patterns
+        ```python
+        from flext_core import FlextService, FlextResult
+
+
+        # Example 1: Implement domain service
+        class UserService(FlextService[User]):
+            name: str = "UserService"
+            version: str = "1.0.0"
+
+            def execute(self) -> FlextResult[User]:
+                # Validate business rules first
+                validation = self.validate_business_rules()
+                if validation.is_failure:
+                    return FlextResult[User].fail(validation.error)
+
+                # Execute domain logic
+                user = User(id="123", name="John")
+                return FlextResult[User].ok(user)
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                if not self.name:
+                    return FlextResult[None].fail("Name required")
+                return FlextResult[None].ok(None)
+
+
+        # Example 2: Execute service operation
+        service = UserService()
+        result = service.execute()
+        if result.is_success:
+            user = result.unwrap()
+
+        # Example 3: Execute with timeout
+        operation_request = OperationExecutionRequest(
+            operation_callable=lambda: service.execute(), timeout_seconds=5.0
+        )
+        result = service.execute_operation(operation_request)
+
+        # Example 4: Validate configuration
+        config_result = service.validate_config()
+        if config_result.is_failure:
+            print(f"Config error: {config_result.error}")
+
+        # Example 5: Get service information
+        info = service.get_service_info()
+        print(f"Service: {info['name']} v{info['version']}")
+
+        # Example 6: Batch operation execution
+        operations = [op1, op2, op3]
+        results = [service.execute() for _ in operations]
+
+        # Example 7: Check if service is valid
+        if service.is_valid():
+            result = service.execute()
+        ```
+
+    Attributes:
+        model_config: Pydantic configuration dict.
+
+    Note:
+        All services must implement execute() method.
+        Generic type TDomainResult provides type safety.
+        Services inherit serialization from FlextMixins.
+        Business rule validation returns FlextResult.
+        Configuration validation is separate from rules.
+
+    Warning:
+        Execute method must be implemented by subclasses.
+        Timeout operations require signal support (Unix-like).
+        Batch operations do not provide transaction semantics.
+        Service validation does not guarantee execution success.
+
+    Example:
+        Complete domain service implementation:
+
+        >>> class OrderService(FlextService[Order]):
+        ...     def execute(self) -> FlextResult[Order]:
+        ...         return FlextResult[Order].ok(Order())
+        >>> service = OrderService()
+        >>> result = service.execute()
+        >>> print(result.is_success)
+        True
+
+    See Also:
+        FlextResult: For railway pattern error handling.
+        FlextModels: For domain model definitions.
+        FlextMixins: For serialization and logging.
+        FlextHandlers: For handler implementation patterns.
 
     **IMPLEMENTATION NOTES**:
     - Abstract domain service base class with railway patterns
@@ -64,6 +165,7 @@ class FlextService[TDomainResult](
     - Batch operation support with error accumulation
     - Metrics collection integration
     - Resource management patterns with automatic cleanup
+
     """
 
     model_config = ConfigDict(
@@ -128,11 +230,11 @@ class FlextService[TDomainResult](
         except Exception:
             return False
 
-    def get_service_info(self) -> dict[str, object]:
+    def get_service_info(self) -> FlextTypes.Core.Dict:
         """Get service information for diagnostics.
 
         Returns:
-            dict[str, object]: Service information including type and configuration
+            FlextTypes.Core.Dict: Service information including type and configuration
 
         """
         return {"service_type": self.__class__.__name__}
@@ -250,7 +352,7 @@ class FlextService[TDomainResult](
             positional_arguments = tuple(cast("Iterable[object]", raw_arguments))
         elif isinstance(raw_arguments, dict):
             if "args" in raw_arguments:
-                nested_args: object = cast("dict[str, object]", raw_arguments).get(
+                nested_args: object = cast("FlextTypes.Core.Dict", raw_arguments).get(
                     "args", None
                 )
                 if isinstance(nested_args, (list, tuple, set)):
@@ -268,7 +370,7 @@ class FlextService[TDomainResult](
 
         raw_keyword_arguments = getattr(operation, "keyword_arguments", None)
         if raw_keyword_arguments is None:
-            keyword_arguments: dict[str, object] = {}
+            keyword_arguments: FlextTypes.Core.Dict = {}
         elif isinstance(raw_keyword_arguments, dict):
             keyword_arguments = dict(
                 cast("Mapping[str, object]", raw_keyword_arguments)
@@ -281,7 +383,7 @@ class FlextService[TDomainResult](
                     f"Invalid keyword arguments for operation '{operation_name}': {exc}"
                 )
 
-        retry_config_data: dict[str, object] = (
+        retry_config_data: FlextTypes.Core.Dict = (
             getattr(operation, "retry_config", {}) or {}
         )
         retry_config: FlextModels.RetryConfiguration | None
@@ -548,7 +650,7 @@ class FlextService[TDomainResult](
 
         """
         start_time = time.time()
-        metrics_data: dict[str, object] = {}
+        metrics_data: FlextTypes.Core.Dict = {}
 
         try:
             # Collect pre-execution metrics
@@ -654,7 +756,7 @@ class FlextService[TDomainResult](
         """Nested execution helper - no loose functions."""
 
         @staticmethod
-        def prepare_execution_context(service: object) -> dict[str, object]:
+        def prepare_execution_context(service: object) -> FlextTypes.Core.Dict:
             """Prepare execution context for the service."""
             return {
                 "service_type": service.__class__.__name__,
@@ -663,7 +765,7 @@ class FlextService[TDomainResult](
 
         @staticmethod
         def cleanup_execution_context(
-            service: object, context: dict[str, object]
+            service: object, context: FlextTypes.Core.Dict
         ) -> None:
             """Cleanup execution context after service execution."""
             # Default implementation - can be extended by subclasses
@@ -672,9 +774,9 @@ class FlextService[TDomainResult](
         """Nested metadata helper - no loose functions."""
 
         @staticmethod
-        def extract_service_metadata(service: object) -> dict[str, object]:
+        def extract_service_metadata(service: object) -> FlextTypes.Core.Dict:
             """Extract metadata from service instance."""
-            metadata: dict[str, object] = {
+            metadata: FlextTypes.Core.Dict = {
                 "service_class": service.__class__.__name__,
                 "service_module": service.__class__.__module__,
             }
@@ -688,7 +790,9 @@ class FlextService[TDomainResult](
             return metadata
 
         @staticmethod
-        def format_service_info(_service: object, metadata: dict[str, object]) -> str:
+        def format_service_info(
+            _service: object, metadata: FlextTypes.Core.Dict
+        ) -> str:
             """Format service information for display."""
             return f"Service: {metadata.get('service_class', 'Unknown')} ({metadata.get('service_module', 'Unknown')})"
 

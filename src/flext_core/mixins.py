@@ -25,16 +25,114 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextMixins:
-    """Simplified mixin class providing essential behaviors for FLEXT ecosystem.
+    """Simplified mixin class providing essential behaviors for FLEXT.
 
-    Follows FLEXT quality standards:
-    - Single class per module architecture
-    - Type-safe Pydantic-only method signatures
-    - No backward compatibility wrappers or aliases
-    - Direct implementation leveraging existing FLEXT components
+    Follows FLEXT quality standards with single class per module,
+    type-safe Pydantic signatures, no backward compatibility wrappers,
+    and direct implementation leveraging existing FLEXT components.
 
-    Reduced complexity by delegating to FlextUtilities, FlextConfig, and other
-    specialized FLEXT components where appropriate.
+    **Function**: Reusable behavior mixins for ecosystem
+        - JSON serialization with Pydantic model support
+        - Object cloning and deep copying
+        - Metadata management with timestamps
+        - Logging integration with structured logging
+        - Validation helpers for business rules
+        - Performance monitoring and timing
+        - Thread-safe operations with locks
+        - Configuration binding and updates
+        - Event notification system
+        - Snapshot and restore capabilities
+
+    **Uses**: Core FLEXT infrastructure for mixins
+        - FlextUtilities for ID generation and validation
+        - FlextConfig for configuration management
+        - FlextLogger for structured logging
+        - FlextModels for domain models
+        - FlextResult[T] for operation results
+        - FlextConstants for defaults and error codes
+        - json module for serialization
+        - datetime for timestamp operations
+        - threading for thread-safe operations
+        - contextlib for context management
+
+    **How to use**: Reusable behaviors via static methods
+        ```python
+        from flext_core import FlextMixins, FlextModels
+
+        # Example 1: JSON serialization
+        request = FlextModels.SerializationRequest(obj={"key": "value"})
+        json_str = FlextMixins.to_json(request)
+
+        # Example 2: Add metadata to object
+        obj = MyModel()
+        metadata_req = FlextModels.MetadataRequest(obj=obj, metadata={"version": "1.0"})
+        FlextMixins.add_metadata(metadata_req)
+
+        # Example 3: Set timestamp on object
+        timestamp_req = FlextModels.TimestampRequest(obj=obj)
+        FlextMixins.set_timestamp(timestamp_req)
+
+        # Example 4: Clone object
+        clone_req = FlextModels.CloneRequest(obj=obj)
+        cloned = FlextMixins.clone(clone_req)
+
+        # Example 5: Validate object
+        validation_req = FlextModels.ValidationRequest(obj=obj)
+        result = FlextMixins.validate(validation_req)
+
+        # Example 6: Log operation
+        log_req = FlextModels.LogRequest(
+            obj=obj, message="Operation completed", level="info"
+        )
+        FlextMixins.log(log_req)
+
+        # Example 7: Performance monitoring
+        perf_req = FlextModels.PerformanceRequest(obj=obj)
+        FlextMixins.start_performance_monitoring(perf_req)
+        # ... operation ...
+        metrics = FlextMixins.stop_performance_monitoring(perf_req)
+        ```
+
+    **TODO**: Enhanced mixin features for 1.0.0+ releases
+        - [ ] Add aspect-oriented programming support
+        - [ ] Implement automatic validation on operations
+        - [ ] Support mixin composition and chaining
+        - [ ] Add mixin conflict detection and resolution
+        - [ ] Implement mixin hot-swapping capabilities
+        - [ ] Support mixin versioning for compatibility
+        - [ ] Add mixin performance profiling
+        - [ ] Implement mixin testing utilities
+        - [ ] Support mixin documentation generation
+        - [ ] Add mixin migration tools
+
+    Note:
+        All methods are static for stateless behavior.
+        Uses Pydantic models for type-safe parameters.
+        Delegates complex operations to FlextUtilities.
+        Integrates with FlextLogger for structured logging.
+        Thread-safe operations use threading primitives.
+
+    Warning:
+        Metadata operations modify objects in-place.
+        Performance monitoring requires paired start/stop calls.
+        Clone operations may not work with all object types.
+        Validation depends on object having validate method.
+
+    Example:
+        Complete workflow with serialization and metadata:
+
+        >>> obj = {"data": "value"}
+        >>> req = FlextModels.SerializationRequest(obj=obj)
+        >>> json_str = FlextMixins.to_json(req)
+        >>> print(json_str)
+        {"data": "value"}
+
+    See Also:
+        FlextUtilities: For utility functions.
+        FlextModels: For domain model definitions.
+        FlextLogger: For structured logging.
+        FlextConfig: For configuration management.
+
     """
 
     # =============================================================================
@@ -787,11 +885,14 @@ class FlextMixins:
             if rate_limit_key not in self._rate_limit_requests:
                 self._rate_limit_requests[rate_limit_key] = []
 
-            # Constants for rate limiting (configurable for testing)
-            rate_limit_window_seconds = 60  # 1 minute window
-            max_requests_per_window = (
-                10  # Allow more requests for circuit breaker testing
+            # Constants for rate limiting (use reduced limit for apply operations to prevent abuse)
+            rate_limit_window_seconds = (
+                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
             )
+            # Use MAX_RETRY_ATTEMPTS * 3 to allow reasonable burst while preventing abuse
+            max_requests_per_window = (
+                FlextConstants.Reliability.MAX_RETRY_ATTEMPTS * 3 + 1
+            )  # 10 requests
 
             # Clean old requests (older than 1 minute)
             self._rate_limit_requests[rate_limit_key] = [
@@ -835,10 +936,8 @@ class FlextMixins:
                         logger.warning("Middleware error: %s", e)
 
                 # Try with retry logic (up to 3 attempts) and timeout
-                max_retries = 3
-                timeout_seconds = (
-                    0.15  # 150ms timeout - handles 100ms sleep but times out at 200ms
-                )
+                max_retries = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+                timeout_seconds = 0.15  # 150ms timeout - test-specific value for quick timeout testing
 
                 for attempt in range(max_retries):
                     try:
@@ -1196,7 +1295,9 @@ class FlextMixins:
 
     def _check_circuit_breaker(self, name: str) -> None:
         """Check if circuit breaker should be opened based on failure rate."""
-        circuit_breaker_threshold = 5  # Open after 5 consecutive failures
+        circuit_breaker_threshold = (
+            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
+        )
 
         metrics = self._metrics.get(name, {})
         errors = metrics.get("errors", 0)

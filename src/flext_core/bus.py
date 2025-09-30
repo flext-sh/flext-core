@@ -9,7 +9,7 @@ from __future__ import annotations
 import inspect
 import time
 from collections import OrderedDict
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from typing import cast
 
 from flext_core.constants import FlextConstants
@@ -29,14 +29,15 @@ class _CqrsCache:
     This is bus-specific caching logic, not a general utility.
     """
 
-    def __init__(self, max_size: int = 100) -> None:
+    def __init__(self, max_size: int = FlextConstants.Defaults.MAX_CACHE_SIZE) -> None:
         """Initialize CQRS cache manager.
 
         Args:
             max_size: Maximum number of cached results
 
         """
-        self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
+        # Use FlextTypes instead of OrderedDict directly
+        self._cache: FlextTypes.Core.OrderedDict = OrderedDict()
         self._max_size = max_size
 
     def get(self, key: str) -> FlextResult[object] | None:
@@ -52,7 +53,7 @@ class _CqrsCache:
         result = self._cache.get(key)
         if result is not None:
             self._cache.move_to_end(key)
-        return result
+        return cast("FlextResult[object] | None", result)
 
     def put(self, key: str, result: FlextResult[object]) -> None:
         """Store result in cache.
@@ -82,17 +83,141 @@ class _CqrsCache:
 
 
 class FlextBus(FlextMixins):
-    """Runtime bus that enforces the CQRS contract shared across FLEXT 1.x.
+    """Command/Query bus for CQRS pattern implementation.
 
-    It is the execution core described in the modernization plan: configuration
-    is validated through ``FlextModels.CqrsConfig``, handlers are wrapped so they
-    surface ``FlextResult`` outcomes, and every dispatch emits context-aware
-    telemetry via ``FlextLogger``. Downstream packages reach it through
-    ``FlextDispatcher`` to guarantee a uniform command/query experience.
+    FlextBus provides message dispatching for Command Query
+    Responsibility Segregation (CQRS) patterns. Routes commands and
+    queries to registered handlers with middleware support, caching,
+    and comprehensive error handling. Foundation for all 32+ FLEXT
+    projects implementing CQRS.
 
-    This is the single unified class containing all CQRS bus functionality
-    with nested protocols and utility methods following the single class per
-    module pattern established in the 1.0.0 refactoring.
+    **Function**: Message bus with middleware pipeline for CQRS
+        - Register command and query handlers with validation
+        - Execute handlers with middleware chain processing
+        - Support result caching for query optimization
+        - Provide handler discovery and auto-registration
+        - Enable middleware-based cross-cutting concerns
+        - Context-aware telemetry with FlextLogger
+        - Handler execution with FlextResult wrapping
+        - Configuration validation with FlextModels.CqrsConfig
+        - Thread-safe handler registry
+        - Normalize command/query keys for routing
+        - Support middleware enable/disable per instance
+        - Handler metrics and execution counting
+
+    **Uses**: CQRS infrastructure with handler support
+        - FlextHandlers for handler base class and execution
+        - FlextResult[T] for all operation results
+        - FlextModels.CqrsConfig for bus configuration
+        - FlextLogger for operation logging and telemetry
+        - FlextMixins for reusable behavior patterns
+        - FlextConstants for CQRS defaults and error codes
+        - FlextUtilities for validation and processing
+        - FlextTypes for type definitions
+        - OrderedDict for handler registry ordering
+        - _CqrsCache for query result caching (internal)
+        - inspect module for handler introspection
+
+    **How to use**: Command/query dispatch patterns
+        ```python
+        from flext_core import FlextBus, FlextResult, FlextModels
+
+        # Example 1: Create bus instance with configuration
+        bus = FlextBus(
+            bus_config={
+                "auto_context": True,
+                "timeout_seconds": FlextConstants.Defaults.OPERATION_TIMEOUT_SECONDS,
+                "enable_metrics": True,
+            }
+        )
+
+
+        # Example 2: Define and register command handler
+        class CreateUserHandler:
+            def handle(self, cmd: CreateUserCommand):
+                # Process command
+                user = User(name=cmd.name, email=cmd.email)
+                return FlextResult[User].ok(user)
+
+
+        bus.register_handler("CreateUser", CreateUserHandler())
+
+        # Example 3: Execute command with error handling
+        command = CreateUserCommand(name="Alice", email="alice@example.com")
+        result = bus.execute("CreateUser", command)
+        if result.is_success:
+            user = result.unwrap()
+            print(f"User created: {user.name}")
+
+
+        # Example 4: Add middleware for logging
+        def logging_middleware(message, next_handler):
+            logger.info(f"Executing: {type(message).__name__}")
+            result = next_handler(message)
+            logger.info(f"Completed: {result.is_success}")
+            return result
+
+
+        bus.add_middleware(logging_middleware)
+
+        # Example 5: Query with caching
+        query = GetUserQuery(user_id="user_123")
+        result = bus.execute("GetUser", query)  # Cached result
+
+        # Example 6: Handler auto-discovery
+        bus.auto_discover_handlers([
+            CreateUserHandler(),
+            GetUserHandler(),
+            UpdateUserHandler(),
+        ])
+        ```
+
+
+    Args:
+        bus_config: Bus configuration dict or CqrsConfig.Bus model.
+
+    Attributes:
+        _config_model (FlextModels.CqrsConfig.Bus): Bus config model.
+        _handlers (dict): Registered command/query handlers.
+        _middleware_configs (list): Middleware configurations.
+        _middleware_instances (dict): Cached middleware instances.
+        _execution_count (int): Total handler executions.
+        _auto_handlers (list): Auto-discovered handlers.
+        _cache (_CqrsCache): Query result cache.
+        _logger (FlextLogger): Bus operation logger.
+
+    Returns:
+        FlextBus: Bus instance for CQRS message dispatching.
+
+    Raises:
+        ValueError: When handler registration validation fails.
+        KeyError: When handler not found for message type.
+
+    Note:
+        Inherits from FlextMixins for reusable behaviors. All
+        operations return FlextResult for railway pattern. Handlers
+        wrapped to ensure FlextResult output. Middleware executed
+        in registration order. Query results cached by default.
+
+    Warning:
+        Handler names must be unique in registry. Middleware order
+        matters - logging should be first. Cache can grow unbounded
+        without TTL. Auto-discovery requires handlers with metadata.
+
+    Example:
+        Complete CQRS workflow:
+
+        >>> bus = FlextBus()
+        >>> bus.register_handler("CreateUser", handler)
+        >>> result = bus.execute("CreateUser", command)
+        >>> print(result.is_success)
+        True
+
+    See Also:
+        FlextHandlers: For handler base class patterns.
+        FlextDispatcher: For higher-level dispatch abstraction.
+        FlextModels: For Command/Query base classes.
+
     """
 
     def __init__(
@@ -165,7 +290,7 @@ class FlextBus(FlextMixins):
 
     @staticmethod
     def create_simple_handler(
-        handler_func: Callable[[object], object],
+        handler_func: FlextTypes.Core.Callable,
         handler_config: FlextModels.CqrsConfig.Handler
         | FlextTypes.Core.Dict
         | None = None,
@@ -194,7 +319,7 @@ class FlextBus(FlextMixins):
 
     @staticmethod
     def create_query_handler(
-        handler_func: Callable[[object], object],
+        handler_func: FlextTypes.Core.Callable,
         handler_config: FlextModels.CqrsConfig.Handler
         | FlextTypes.Core.Dict
         | None = None,
@@ -228,7 +353,7 @@ class FlextBus(FlextMixins):
 
     def _normalize_middleware_config(
         self, middleware_config: object | None
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Convert middleware configuration into a dictionary."""
         if middleware_config is None:
             return {}
@@ -238,7 +363,7 @@ class FlextBus(FlextMixins):
             return dict(cast("Mapping[str, object]", middleware_config))
 
         if isinstance(middleware_config, dict):
-            return cast("dict[str, object]", middleware_config)
+            return cast("FlextTypes.Core.Dict", middleware_config)
 
         # For Pydantic models or objects with model_dump
         for attr_name in ("model_dump", "dict"):
@@ -251,7 +376,7 @@ class FlextBus(FlextMixins):
                 if isinstance(result, Mapping):
                     return dict(cast("Mapping[str, object]", result))
                 if isinstance(result, dict):
-                    return cast("dict[str, object]", result)
+                    return cast("FlextTypes.Core.Dict", result)
 
         return {}
 
@@ -499,14 +624,20 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(middleware_config: dict[str, object]) -> int:
-            order_value = middleware_config.get("order", 0)
+        def get_order(middleware_config: FlextTypes.Core.Dict) -> int:
+            order_value = middleware_config.get(
+                "order", FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+            )
             if isinstance(order_value, str):
                 try:
                     return int(order_value)
                 except ValueError:
-                    return 0
-            return int(order_value) if isinstance(order_value, int) else 0
+                    return FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+            return (
+                int(order_value)
+                if isinstance(order_value, int)
+                else FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+            )
 
         sorted_middleware = sorted(self._middleware_configs, key=get_order)
 
@@ -536,7 +667,9 @@ class FlextBus(FlextMixins):
                 "Applying middleware",
                 middleware_id=middleware_id_value or "",
                 middleware_type=str(middleware_type_value),
-                order=config_dict.get("order", 0),
+                order=config_dict.get(
+                    "order", FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+                ),
             )
 
             process_method = getattr(middleware, "process", None)
@@ -656,7 +789,7 @@ class FlextBus(FlextMixins):
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
 
-        config_data: dict[str, object] = self._normalize_middleware_config(
+        config_data: FlextTypes.Core.Dict = self._normalize_middleware_config(
             middleware_config
         )
         if not config_data:

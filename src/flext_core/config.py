@@ -11,7 +11,7 @@ import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import ClassVar, TypedDict
+from typing import ClassVar
 
 from pydantic import (
     Field,
@@ -28,82 +28,129 @@ from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
-    """Unified configuration system for FLEXT v1.0.0 based on Pydantic Settings.
+    """Configuration management system for FLEXT ecosystem.
 
-    Provides consolidated configuration management aligned with the enterprise
-    requirements established in ``../CLAUDE.md`` and the domain-driven-design
-    practices of the FLEXT 1.0.0 stable release target.
+    FlextConfig provides centralized configuration management using
+    Pydantic Settings with environment variable support. Global singleton
+    pattern ensures consistent configuration across all 32+ dependent
+    FLEXT projects. Access via FlextConfig.get_global_instance().
 
-    This is the single unified class containing all configuration functionality
-    with nested classes for typed configuration dictionaries following the
-    single class per module pattern established in the 1.0.0 refactoring.
+    **Function**: Centralized configuration with environment support
+        - Global singleton configuration instance
+        - Environment variable mapping with FLEXT_ prefix
+        - Pydantic Settings validation and type safety
+        - Configuration profiles (dev, staging, prod)
+        - Secret management with SecretStr for sensitive data
+        - Logging configuration (level, format, output)
+        - Database configuration (URL, pool size)
+        - Cache configuration (TTL, max size, enabled)
+        - CQRS bus configuration (timeout, metrics)
+        - Security configuration (keys, JWT, bcrypt)
+        - Metadata configuration (app name, version)
+        - Computed fields for derived configuration
+        - Validation methods for configuration integrity
+
+    **Uses**: Pydantic Settings for configuration management
+        - BaseSettings for environment-based configuration
+        - Field for default values and validation rules
+        - SecretStr for sensitive data protection
+        - field_validator for custom validation logic
+        - model_validator for cross-field validation
+        - computed_field for derived properties
+        - FlextConstants for configuration defaults
+        - FlextResult[T] for operation results
+        - FlextTypes for type definitions
+        - threading.Lock for singleton thread safety
+        - json module for configuration serialization
+
+    **How to use**: Access and configure via singleton
+        ```python
+        from flext_core import FlextConfig
+
+        # Example 1: Get global configuration instance
+        config = FlextConfig.get_global_instance()
+
+        # Example 2: Access configuration values
+        log_level = config.log_level
+        timeout = config.timeout_seconds
+        environment = config.environment
+
+        # Example 3: Environment variable override
+        # Set FLEXT_LOG_LEVEL=DEBUG in environment
+        # config.log_level will be "DEBUG"
+
+        # Example 4: Check configuration validity
+        validation_result = config.validate_environment()
+        if validation_result.is_success:
+            print("Configuration valid")
+
+        # Example 5: Access computed fields
+        metadata = config.metadata_config
+        print(f"App: {metadata['app_name']}")
+
+        # Example 6: Configuration profiles
+        if config.environment == "production":
+            # Production-specific configuration
+            config.debug = False
+            config.trace = False
+
+        # Example 7: Secret configuration (from environment)
+        # Set FLEXT_SECRET_KEY in environment
+        secret = config.secret_key  # Returns SecretStr
+        ```
+
+    Args:
+        **data: Configuration values as keyword arguments.
+
+    Attributes:
+        environment (str): Runtime environment (dev/staging/prod).
+        debug (bool): Debug mode flag for development.
+        trace (bool): Trace mode for detailed logging.
+        log_level (str): Logging level (DEBUG, INFO, WARN, ERROR).
+        timeout_seconds (int): Default operation timeout.
+        max_workers (int): Thread pool maximum workers.
+        secret_key (SecretStr): Application secret key.
+        api_key (SecretStr): API authentication key.
+        database_url (str): Database connection URL.
+        cache_ttl (int): Cache time-to-live in seconds.
+
+    Returns:
+        FlextConfig: Singleton configuration instance.
+
+    Raises:
+        ValidationError: When configuration validation fails.
+        ValueError: When required configuration missing.
+
+    Note:
+        Global singleton pattern - use get_global_instance() not
+        direct instantiation. Environment variables prefixed with
+        FLEXT_ override defaults. SecretStr protects sensitive data.
+        Configuration validated on load. Thread-safe singleton.
+
+    Warning:
+        Never instantiate FlextConfig directly - use singleton.
+        Never commit secrets to source control. Always use
+        environment variables for production secrets. Configuration
+        changes require application restart (no hot-reload yet).
+
+    Example:
+        Complete configuration management workflow:
+
+        >>> config = FlextConfig.get_global_instance()
+        >>> print(config.environment)
+        development
+        >>> print(config.log_level)
+        INFO
+        >>> validation = config.validate_environment()
+        >>> print(validation.is_success)
+        True
+
+    See Also:
+        FlextConstants: For configuration defaults.
+        FlextContainer: For dependency injection integration.
+        FlextLogger: For logging configuration usage.
+
     """
-
-    # Nested TypedDict classes for configuration structures
-    class LoggingConfigDict(TypedDict):
-        """Logging configuration dictionary structure."""
-
-        level: str
-        json_output: bool | None
-        include_source: bool
-        structured_output: bool
-        log_verbosity: str
-        log_format: str
-        log_file: str | None
-        log_file_max_size: int
-        log_file_backup_count: int
-        console_enabled: bool
-        console_color_enabled: bool
-        track_performance: bool
-        track_timing: bool
-        include_context: bool
-        include_correlation_id: bool
-        mask_sensitive_data: bool
-
-    class DatabaseConfigDict(TypedDict):
-        """Database configuration dictionary structure."""
-
-        url: str | None
-        pool_size: int
-
-    class CacheConfigDict(TypedDict):
-        """Cache configuration dictionary structure."""
-
-        ttl: int
-        max_size: int
-        enabled: bool
-
-    class CqrsBusConfigDict(TypedDict):
-        """CQRS bus configuration dictionary structure."""
-
-        auto_context: bool
-        timeout_seconds: int
-        enable_metrics: bool
-        enable_logging: bool
-
-    class MetadataConfigDict(TypedDict):
-        """Application metadata configuration dictionary structure."""
-
-        app_name: str
-        version: str
-        environment: str
-        debug: bool
-        trace: bool
-
-    class SecurityConfigDict(TypedDict):
-        """Security configuration dictionary structure."""
-
-        secret_key_configured: bool
-        api_key_configured: bool
-        jwt_expiry_minutes: int
-        bcrypt_rounds: int
-
-    class CacheConfigComputedDict(TypedDict):
-        """Cache configuration computed dictionary structure."""
-
-        ttl: int
-        max_size: int
-        enabled: bool
 
     class HandlerConfiguration:
         """Handler configuration resolution utilities."""
@@ -583,13 +630,6 @@ class FlextConfig(BaseSettings):
         cls._global_instance = None
 
     @classmethod
-    def clear_global_instance(cls) -> None:
-        """Clear the global instance."""
-        # ISSUE: Code doesn't do what it means to do - method claims to "clear" but just calls "reset"
-        # ISSUE: Duplicates reset_global_instance functionality - should either be removed or do something different
-        cls.reset_global_instance()
-
-    @classmethod
     def get_or_create_shared_instance(
         cls, project_name: str | None = None, **overrides: FlextTypes.Core.Value
     ) -> FlextConfig:
@@ -646,7 +686,7 @@ class FlextConfig(BaseSettings):
         base_config = cls.get_global_instance()
 
         # Create project-specific overrides
-        project_overrides: dict[str, FlextTypes.Core.Value] = {
+        project_overrides: FlextTypes.Core.Dict = {
             "app_name": f"{project_name} Application",
             **project_defaults,
         }
@@ -729,7 +769,7 @@ class FlextConfig(BaseSettings):
         """Check if running in production environment."""
         return self.environment.lower() == "production"
 
-    def get_logging_config(self) -> LoggingConfigDict:
+    def get_logging_config(self) -> FlextTypes.Core.Dict:
         """Get logging configuration as dictionary."""
         return {
             "level": self.log_level,
@@ -750,14 +790,14 @@ class FlextConfig(BaseSettings):
             "mask_sensitive_data": self.mask_sensitive_data,
         }
 
-    def get_database_config(self) -> DatabaseConfigDict:
+    def get_database_config(self) -> FlextTypes.Core.Dict:
         """Get database configuration as dictionary."""
         return {
             "url": self.database_url,
             "pool_size": self.database_pool_size,
         }
 
-    def get_cache_config(self) -> CacheConfigDict:
+    def get_cache_config(self) -> FlextTypes.Core.Dict:
         """Get cache configuration as dictionary."""
         return {
             "ttl": self.cache_ttl,
@@ -765,7 +805,7 @@ class FlextConfig(BaseSettings):
             "enabled": self.enable_caching,
         }
 
-    def get_cqrs_bus_config(self) -> CqrsBusConfigDict:
+    def get_cqrs_bus_config(self) -> FlextTypes.Core.Dict:
         """Get CQRS bus configuration as dictionary."""
         return {
             "auto_context": self.dispatcher_auto_context,
@@ -774,7 +814,7 @@ class FlextConfig(BaseSettings):
             "enable_logging": self.dispatcher_enable_logging,
         }
 
-    def get_metadata(self) -> MetadataConfigDict:
+    def get_metadata(self) -> FlextTypes.Core.Dict:
         """Get application metadata as dictionary."""
         return {
             "app_name": self.app_name,
@@ -824,7 +864,7 @@ class FlextConfig(BaseSettings):
         return self.log_level
 
     @computed_field
-    def cache_config(self) -> CacheConfigComputedDict:
+    def cache_config(self) -> FlextTypes.Core.Dict:
         """Get cache configuration as dictionary."""
         return {
             "ttl": self.cache_ttl,
@@ -833,7 +873,7 @@ class FlextConfig(BaseSettings):
         }
 
     @computed_field
-    def security_config(self) -> SecurityConfigDict:
+    def security_config(self) -> FlextTypes.Core.Dict:
         """Get security configuration as dictionary."""
         return {
             "secret_key_configured": self.secret_key is not None,

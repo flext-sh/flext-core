@@ -350,22 +350,20 @@ class CqrsPatternService(FlextService[dict[str, object]]):
 
         # Execute command operation
         print("\n1. Command Operation:")
-        cmd_result = FlextCqrs.Operations.create_command(
-            command_data={
-                "command_type": "CreateOrder",
-                "customer_id": "CUST-789",
-                "items": [{"product": "Widget", "qty": 2}],
-            }
+        command = FlextModels.Command(
+            command_type="CreateOrder",
+            customer_id="CUST-789",
+            items=[{"product": "Widget", "qty": 2}],
         )
+        cmd_result = FlextResult[FlextModels.Command].ok(command)
         if cmd_result.is_success:
             command = cmd_result.unwrap()
             print(f"  ✅ Command created: {command.command_type}")
 
         # Execute query operation
         print("\n2. Query Operation:")
-        query_result = FlextCqrs.Operations.create_query(
-            query_data={"filters": {"order_id": "ORDER-123"}}
-        )
+        query = FlextModels.Query(filters={"order_id": "ORDER-123"})
+        query_result = FlextResult[FlextModels.Query].ok(query)
         if query_result.is_success:
             query = query_result.unwrap()
             print(f"  ✅ Query created: {query.query_id}")

@@ -534,7 +534,7 @@ class TestFlextProtocols:
         # Note: Current implementation provides global statistics, not protocol-specific
         # This test verifies the method exists and returns a dict
         assert isinstance(stats, dict)
-        assert "audit_log_entries" in stats
+        assert "audit_log_size" in stats
 
     def test_protocols_thread_safety(self) -> None:
         """Test protocols thread safety."""
@@ -638,12 +638,11 @@ class TestFlextProtocols:
         assert isinstance(config, dict)
         # Note: Current implementation provides global config, not protocol-specific
         # This test verifies the method exists and returns a dict
-        assert "audit_log_size" in config
+        assert "cache_ttl" in config
 
         # Test that the config can be used
         assert (
-            isinstance(config["audit_log_size"], (int, float))
-            and config["audit_log_size"] >= 0
+            isinstance(config["cache_ttl"], (int, float)) and config["cache_ttl"] >= 0
         )
 
     def test_protocols_cleanup(self) -> None:

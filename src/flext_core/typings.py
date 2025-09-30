@@ -17,7 +17,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections import OrderedDict
+from collections.abc import Callable, Callable as CollectionsCallable
 from typing import (
     Literal,
     ParamSpec,
@@ -137,12 +138,121 @@ UResource = TypeVar("UResource")
 class FlextTypes:
     """Centralized type system namespace for the FLEXT ecosystem.
 
-    Provides a comprehensive, organized type system following strict Flext standards:
-    - Single source of truth for all type definitions
-    - Python 3.13+ syntax with modern union types
-    - Clean Architecture principles
-    - No wrappers, aliases, or legacy patterns
-    - Complete type safety and validation
+    Provides comprehensive, organized type system following strict
+    Flext standards with single source of truth for all definitions.
+
+    **Function**: Type definitions for ecosystem-wide consistency
+        - Core fundamental types (Dict, List, Headers)
+        - Configuration types (ConfigValue, ConfigDict)
+        - JSON types with Python 3.13+ syntax
+        - Message types for CQRS patterns
+        - Handler types for command/query handlers
+        - Service types for domain services
+        - Protocol types for interface definitions
+        - Plugin types for extensibility
+        - Generic type variables (T, U, V, W)
+        - Covariant and contravariant type variables
+
+    **Uses**: Core Python type system infrastructure
+        - typing.TypeVar for generic type variables
+        - typing.ParamSpec for parameter specifications
+        - typing.Literal for literal type hints
+        - collections.abc.Callable for callable types
+        - Python 3.13+ union syntax (X | Y)
+        - Modern type aliases with type keyword
+        - Covariant and contravariant variance
+        - Generic type constraints
+
+    **How to use**: Type annotations and type safety
+        ```python
+        from flext_core import FlextTypes
+
+
+        # Example 1: Use core dict type
+        def process_data(data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+            return {"processed": True, **data}
+
+
+        # Example 2: Use configuration types
+        def load_config() -> FlextTypes.Core.ConfigDict:
+            return {"timeout": 30, "retries": 3}
+
+
+        # Example 3: Use headers type
+        def build_headers(token: str) -> FlextTypes.Core.Headers:
+            return {"Authorization": f"Bearer {token}"}
+
+
+        # Example 4: Use message types for CQRS
+        class CreateUserCommand(FlextTypes.Message.Command):
+            email: str
+            name: str
+
+
+        # Example 5: Use handler types
+        def create_handler(
+            cmd: FlextTypes.Message.Command,
+        ) -> FlextTypes.Handler.HandlerResult:
+            return FlextResult[User].ok(User())
+
+
+        # Example 6: Use generic type variables
+        def transform[T](items: list[T]) -> list[T]:
+            return [item for item in items]
+
+
+        # Example 7: Use string lists
+        tags: FlextTypes.Core.StringList = ["tag1", "tag2"]
+        ```
+
+    **TODO**: Enhanced type features for 1.0.0+ releases
+        - [ ] Add type validation decorators
+        - [ ] Implement runtime type checking utilities
+        - [ ] Support type narrowing helpers
+        - [ ] Add type transformation utilities
+        - [ ] Implement type compatibility checking
+        - [ ] Support type documentation generation
+        - [ ] Add type migration tools
+        - [ ] Implement type testing utilities
+        - [ ] Support type versioning
+        - [ ] Add type analysis and inspection
+
+    Attributes:
+        Core: Core fundamental types for ecosystem.
+        Message: Message types for CQRS patterns.
+        Handler: Handler types for command/query.
+        Service: Service types for domain logic.
+        Protocol: Protocol types for interfaces.
+        Plugin: Plugin types for extensibility.
+
+    Note:
+        All types use Python 3.13+ modern syntax.
+        Type variables support covariance/contravariance.
+        Type aliases use modern type keyword syntax.
+        No wrappers or legacy patterns allowed.
+        Single source of truth for all ecosystem types.
+
+    Warning:
+        Type changes may impact entire ecosystem.
+        Generic type variables must match usage patterns.
+        Covariance/contravariance must be used correctly.
+        Type aliases should not wrap existing types.
+
+    Example:
+        Complete type usage with generics:
+
+        >>> def process[T](data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+        ...     return data
+        >>> result = process({"key": "value"})
+        >>> print(result)
+        {'key': 'value'}
+
+    See Also:
+        FlextResult: For result type patterns.
+        FlextModels: For domain model types.
+        FlextHandlers: For handler type usage.
+        FlextProtocols: For protocol definitions.
+
     """
 
     # =========================================================================
@@ -161,42 +271,40 @@ class FlextTypes:
         # Note: Use standard T | None or T | None syntax directly
 
         # Basic collection types
-        type Dict = dict[str, object]
-        type List = list[object]
-        type StringList = list[str]
-        type IntList = list[int]
-        type FloatList = list[float]
-        type BoolList = list[bool]
+        Dict = dict[str, object]
+        List = list[object]
+        StringList = list[str]
+        IntList = list[int]
+        FloatList = list[float]
+        BoolList = list[bool]
 
         # Advanced collection types
-        type NestedDict = dict[str, dict[str, object]]
-        type Headers = dict[str, str]
-        type Metadata = dict[str, str]
-        type Parameters = dict[str, object]
-        type CounterDict = dict[str, int]
+        NestedDict = dict[str, dict[str, object]]
+        Headers = dict[str, str]
+        Metadata = dict[str, str]
+        Parameters = dict[str, object]
+        CounterDict = dict[str, int]
 
         # Configuration types
-        type ConfigValue = (
-            str | int | float | bool | list[object] | dict[str, object] | None
-        )
-        type ConfigDict = dict[str, ConfigValue]
+        ConfigValue = str | int | float | bool | list[object] | dict[str, object] | None
+        ConfigDict = dict[str, ConfigValue]
 
         # JSON types with modern Python 3.13+ syntax
         # Note: Using object for recursive types due to Python limitation
-        type JsonValue = (
-            str | int | float | bool | list[object] | dict[str, object] | None
-        )
-        type JsonObject = dict[str, JsonValue]
-        type JsonArray = list[JsonValue]
-        type JsonDict = dict[str, JsonValue]
+        JsonValue = str | int | float | bool | list[object] | dict[str, object] | None
+        JsonObject = dict[str, JsonValue]
+        JsonArray = list[JsonValue]
+        JsonDict = dict[str, JsonValue]
 
         # Value types
-        type Value = str | int | float | bool | object | None
+        Value = str | int | float | bool | object | None
 
-        # Function types
-        type Operation = Callable[[object], object]
-        type Serializer = Callable[[object], dict[str, object]]
-        type Validator = Callable[[object], bool]
+        # Function types - use collections.abc.Callable for runtime checks
+        Callable = CollectionsCallable
+        # Note: Subscriptable Callable types are not used in type aliases to avoid pyrefly issues
+
+        # Collection types with ordering
+        OrderedDict = OrderedDict[str, object]
 
     # =========================================================================
     # DOMAIN TYPES - Domain-Driven Design patterns

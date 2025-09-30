@@ -555,7 +555,7 @@ def logging_test_env() -> Generator[None]:
 
     try:
         # Clear both config and logger singleton states
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
 
         # Reset logger singleton state
         FlextLogger._configured = False
@@ -565,7 +565,7 @@ def logging_test_env() -> Generator[None]:
         yield
     finally:
         # Clear both singleton states again and restore original value
-        FlextConfig.clear_global_instance()
+        FlextConfig.reset_global_instance()
         FlextLogger._configured = False
 
         if original_log_level is not None:

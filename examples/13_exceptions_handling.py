@@ -472,7 +472,7 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
         grpc_error_class = grpc_exceptions["FLEXT_GRPCError"]
         try:
             msg = "GRPC connection failed"
-            raise grpc_error_class(msg, code="GRPC_001")
+            raise grpc_error_class(msg)
         except FlextExceptions.BaseError as e:
             print(f"\n✅ Module exception: {e}")
 
