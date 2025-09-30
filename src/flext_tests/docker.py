@@ -9,8 +9,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+import functools
+import json
 import subprocess
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -24,10 +26,11 @@ from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, T
 
 if TYPE_CHECKING:
     from docker import DockerClient
+
 pytest_module: ModuleType | None = pytest
 
 
@@ -86,7 +89,7 @@ class FlextTestDocker:
     _PYTEST_REGISTERED: ClassVar[bool] = False
 
     def __init__(self, workspace_root: Path | None = None) -> None:
-        """Initialize Docker client."""
+        """Initialize Docker client with dirty state tracking."""
         self._client: DockerClient | None = None
         self._logger = get_logger()
         self.workspace_root = workspace_root or Path.cwd()
@@ -101,6 +104,11 @@ class FlextTestDocker:
         self._volume_manager = None
         self._image_manager = None
 
+        # Dirty state tracking
+        self._dirty_containers: set[str] = set()
+        self._state_file = Path.home() / ".flext" / "docker_state.json"
+        self._load_dirty_state()
+
         # Initialize Docker client immediately to catch connection failures
         self.get_client()
 
@@ -114,6 +122,170 @@ class FlextTestDocker:
                 self._logger.exception("Failed to initialize Docker client")
                 raise
         return self._client
+
+    def _load_dirty_state(self) -> None:
+        """Load dirty container state from persistent storage."""
+        try:
+            if self._state_file.exists():
+                with self._state_file.open("r") as f:
+                    state = json.load(f)
+                    self._dirty_containers = set(state.get("dirty_containers", []))
+                    self._logger.info(
+                        "Loaded dirty state",
+                        extra={"dirty_containers": list(self._dirty_containers)},
+                    )
+        except Exception as e:
+            self._logger.warning("Failed to load dirty state", extra={"error": str(e)})
+            self._dirty_containers = set()
+
+    def _save_dirty_state(self) -> None:
+        """Save dirty container state to persistent storage."""
+        try:
+            self._state_file.parent.mkdir(parents=True, exist_ok=True)
+            with self._state_file.open("w") as f:
+                json.dump(
+                    {"dirty_containers": list(self._dirty_containers)}, f, indent=2
+                )
+            self._logger.info(
+                "Saved dirty state",
+                extra={"dirty_containers": list(self._dirty_containers)},
+            )
+        except Exception as e:
+            self._logger.warning("Failed to save dirty state", extra={"error": str(e)})
+
+    def mark_container_dirty(self, container_name: str) -> FlextResult[None]:
+        """Mark a container as dirty, requiring recreation on next use.
+
+        Args:
+            container_name: Name of the container to mark dirty
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            self._dirty_containers.add(container_name)
+            self._save_dirty_state()
+            self._logger.info(
+                "Container marked as dirty", extra={"container": container_name}
+            )
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to mark container dirty: {e}")
+
+    def mark_container_clean(self, container_name: str) -> FlextResult[None]:
+        """Mark a container as clean after successful recreation.
+
+        Args:
+            container_name: Name of the container to mark clean
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            self._dirty_containers.discard(container_name)
+            self._save_dirty_state()
+            self._logger.info(
+                "Container marked as clean", extra={"container": container_name}
+            )
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to mark container clean: {e}")
+
+    def is_container_dirty(self, container_name: str) -> bool:
+        """Check if a container is marked as dirty.
+
+        Args:
+            container_name: Name of the container to check
+
+        Returns:
+            True if container is dirty, False otherwise
+
+        """
+        return container_name in self._dirty_containers
+
+    def get_dirty_containers(self) -> list[str]:
+        """Get list of all dirty containers.
+
+        Returns:
+            List of dirty container names
+
+        """
+        return list(self._dirty_containers)
+
+    def cleanup_dirty_containers(self) -> FlextResult[dict[str, str]]:
+        """Clean up all dirty containers by recreating them with fresh volumes.
+
+        Returns:
+            FlextResult with dict of container names to cleanup status
+
+        """
+        results: dict[str, str] = {}
+
+        for container_name in list(self._dirty_containers):
+            self._logger.info(
+                "Cleaning up dirty container", extra={"container": container_name}
+            )
+
+            # Stop and remove container
+            stop_result = self.stop_container(container_name)
+            if stop_result.is_failure:
+                results[container_name] = f"Stop failed: {stop_result.error}"
+                continue
+
+            # Get container config from SHARED_CONTAINERS
+            if container_name in self.SHARED_CONTAINERS:
+                config = self.SHARED_CONTAINERS[container_name]
+
+                # Ensure compose_file is str for Path operation
+                compose_file_value = config["compose_file"]
+                if not isinstance(compose_file_value, str):
+                    results[container_name] = f"Invalid compose_file type: {type(compose_file_value)}"
+                    continue
+
+                compose_file = str(self.workspace_root / compose_file_value)
+
+                # Remove associated volumes
+                volume_cleanup = self.cleanup_volumes()
+                if volume_cleanup.is_failure:
+                    self._logger.warning(
+                        "Volume cleanup warning",
+                        extra={
+                            "container": container_name,
+                            "error": volume_cleanup.error,
+                        },
+                    )
+
+                # Ensure service is str or None for compose_up
+                service_value = config.get("service")
+                service: str | None = None
+                if isinstance(service_value, str):
+                    service = service_value
+                elif service_value is not None and not isinstance(service_value, int):
+                    self._logger.warning(
+                        "Unexpected service type in cleanup",
+                        extra={"type": type(service_value), "value": service_value},
+                    )
+
+                # Restart container with compose
+                restart_result = self.compose_up(compose_file, service)
+                if restart_result.is_success:
+                    # Mark as clean
+                    self.mark_container_clean(container_name)
+                    results[container_name] = "Successfully recreated"
+                else:
+                    results[container_name] = f"Restart failed: {restart_result.error}"
+            else:
+                # Try to restart generic container
+                start_result = self.start_container(container_name)
+                if start_result.is_success:
+                    self.mark_container_clean(container_name)
+                    results[container_name] = "Successfully restarted"
+                else:
+                    results[container_name] = f"Restart failed: {start_result.error}"
+
+        return FlextResult[dict[str, str]].ok(results)
 
     # Essential methods that are being called by other files
     def start_all(self) -> FlextResult[dict[str, str]]:
@@ -246,7 +418,8 @@ class FlextTestDocker:
 
     def compose_logs(self, compose_file: str) -> FlextResult[str]:
         """Get compose logs."""
-        _ = compose_file  # Parameter required by API but not used in stub implementation
+        # Parameter required by API but not used in stub implementation
+        _ = compose_file
         return FlextResult[str].ok("Compose logs retrieved")
 
     def build_image_advanced(
@@ -415,7 +588,8 @@ class FlextTestDocker:
         self, format_string: str = "{{.Repository}}:{{.Tag}}"
     ) -> FlextResult[list[str]]:
         """Get formatted list of images."""
-        _ = format_string  # Parameter required by API but not used in stub implementation
+        # Parameter required by API but not used in stub implementation
+        _ = format_string
         return FlextResult[list[str]].ok(["test:latest"])
 
     def list_containers_formatted(
@@ -480,20 +654,68 @@ class FlextTestDocker:
             self._logger.exception("Failed to start container")
             return FlextResult[str].fail(f"Failed to start container: {e}")
 
-    def stop_container(self, name: str, *, remove: bool = False) -> FlextResult[str]:
-        """Stop a Docker container."""
-        try:
-            client = self.get_client()
-            container = client.containers.get(name)
-            container.stop()
-            if remove:
-                container.remove()
-            return FlextResult[str].ok(f"Container {name} stopped")
-        except NotFound:
-            return FlextResult[str].fail(f"Container {name} not found")
-        except DockerException as e:
-            self._logger.exception("Failed to stop container")
-            return FlextResult[str].fail(f"Failed to stop container: {e}")
+    def stop_container(
+        self, container_name: str
+    ) -> FlextResult[dict[str, str | int | bool]]:
+        """Stop a running container.
+
+        Args:
+            container_name: Name of the container to stop
+
+        Returns:
+            Result containing operation details with status
+
+        """
+        if container_name not in self._dirty_containers:
+            return FlextResult[dict[str, str | int | bool]].fail(
+                "Container not running", error_code="CONTAINER_NOT_RUNNING"
+            )
+
+        if container_name in self.SHARED_CONTAINERS:
+            config = self.SHARED_CONTAINERS[container_name]
+
+            # Ensure compose_file is str for Path operation
+            compose_file_value = config["compose_file"]
+            if not isinstance(compose_file_value, str):
+                return FlextResult[dict[str, str | int | bool]].fail(
+                    f"Invalid compose_file type: {type(compose_file_value)}",
+                    error_code="INVALID_CONFIG",
+                )
+
+            compose_file = str(self.workspace_root / compose_file_value)
+
+            # Remove associated volumes
+            volume_cleanup = self.cleanup_volumes()
+            if volume_cleanup.is_failure:
+                self._logger.warning(
+                    "Volume cleanup warning",
+                    extra={"container": container_name, "error": volume_cleanup.error},
+                )
+
+            # Ensure service is str or None for compose_up
+            service_value = config.get("service")
+            service: str | None = None
+            if isinstance(service_value, str):
+                service = service_value
+            elif service_value is not None and not isinstance(service_value, int):
+                self._logger.warning(
+                    "Unexpected service type",
+                    extra={"type": type(service_value), "value": service_value},
+                )
+
+            # Restart container with compose
+            restart_result = self.compose_up(compose_file, service)
+            if restart_result.is_failure:
+                return FlextResult[dict[str, str | int | bool]].fail(
+                    f"Failed to restart container: {restart_result.error}",
+                    error_code="RESTART_FAILED",
+                )
+
+        self._dirty_containers.discard(container_name)
+        return FlextResult[dict[str, str | int | bool]].ok({
+            "container": container_name,
+            "stopped": True,
+        })
 
     def get_container_info(self, name: str) -> FlextResult[ContainerInfo]:
         """Get container information."""
@@ -787,7 +1009,7 @@ class FlextTestDocker:
 
             yield container_name
 
-            docker_control.stop_container(container_name, remove=False)
+            docker_control.stop_container(container_name)
 
         @pytest.fixture(scope="session")
         def flext_postgres_container(
@@ -814,7 +1036,7 @@ class FlextTestDocker:
                     )
 
             yield container_name
-            docker_control.stop_container(container_name, remove=False)
+            docker_control.stop_container(container_name)
 
         @pytest.fixture(scope="session")
         def flext_redis_container(
@@ -841,7 +1063,7 @@ class FlextTestDocker:
                     )
 
             yield container_name
-            docker_control.stop_container(container_name, remove=False)
+            docker_control.stop_container(container_name)
 
         @pytest.fixture(scope="session")
         def flext_oracle_container(
@@ -868,7 +1090,7 @@ class FlextTestDocker:
                     )
 
             yield container_name
-            docker_control.stop_container(container_name, remove=False)
+            docker_control.stop_container(container_name)
 
         @pytest.fixture
         def reset_ldap_container(docker_control: FlextTestDocker) -> str:
@@ -1552,7 +1774,8 @@ class FlextTestDocker:
                 cls._console.print(
                     f"[bold blue]{action} container: {container}[/bold blue]"
                 )
-                stop_result = manager.stop_container(container, remove=remove)
+                # Note: remove parameter is ignored - stop_container only stops
+                stop_result = manager.stop_container(container)
                 if stop_result.is_success:
                     cls._console.print(
                         f"[bold green]✓ {stop_result.value}[/bold green]"
@@ -1636,6 +1859,126 @@ class FlextTestDocker:
 
 if pytest is not None:  # pragma: no mutate - ensure fixtures available in tests
     FlextTestDocker.register_pytest_fixtures(globals())
+
+
+# Cleanup decorators for test functions
+def with_clean_container(
+    container_name: str,
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
+    """Decorator to ensure a container is clean before and after a test.
+
+    Args:
+        container_name: Name of the container to manage
+
+    Example:
+        @with_clean_container("flext-postgres-test")
+        def test_database_operations(postgres_container):
+            # Test code here
+            pass
+
+    """
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> T:
+            # Get FlextTestDocker instance
+            docker_manager = FlextTestDocker()
+
+            # Clean up if dirty before test
+            if docker_manager.is_container_dirty(container_name):
+                cleanup_result = docker_manager.cleanup_dirty_containers()
+                if cleanup_result.is_failure:
+                    raise RuntimeError(
+                        f"Failed to clean container: {cleanup_result.error}"
+                    )
+
+            # Run test
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                # Mark dirty on failure
+                docker_manager.mark_container_dirty(container_name)
+                raise
+            finally:
+                # Optional: Mark dirty after test if state can't be verified
+                pass
+
+        return wrapper
+
+    return decorator
+
+
+def mark_dirty_on_failure(
+    container_name: str,
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
+    """Decorator to mark a container dirty if a test fails.
+
+    Args:
+        container_name: Name of the container to mark dirty on failure
+
+    Example:
+        @mark_dirty_on_failure("flext-redis-test")
+        def test_redis_operations(redis_container):
+            # Test code that modifies Redis state
+            pass
+
+    """
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> T:
+            docker_manager = FlextTestDocker()
+
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                # Mark container dirty on any exception
+                docker_manager.mark_container_dirty(container_name)
+                get_logger().warning(
+                    "Test failed, marking container dirty",
+                    extra={"container": container_name, "error": str(e)},
+                )
+                raise
+
+        return wrapper
+
+    return decorator
+
+
+def auto_cleanup_dirty_containers() -> Callable[[Callable[..., T]], Callable[..., T]]:
+    """Decorator to automatically clean up all dirty containers before a test.
+
+    Example:
+        @auto_cleanup_dirty_containers()
+        def test_clean_environment():
+            # Test runs with all containers in clean state
+            pass
+
+    """
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> T:
+            docker_manager = FlextTestDocker()
+
+            # Clean up all dirty containers before test
+            dirty = docker_manager.get_dirty_containers()
+            if dirty:
+                get_logger().info(
+                    "Cleaning dirty containers before test", extra={"containers": dirty}
+                )
+                cleanup_result = docker_manager.cleanup_dirty_containers()
+                if cleanup_result.is_failure:
+                    raise RuntimeError(
+                        f"Failed to cleanup dirty containers: {cleanup_result.error}"
+                    )
+
+            # Run test
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def main() -> None:

@@ -144,6 +144,10 @@ class FlextConstants:
         VERSION: Final[str] = "0.9.0"  # Usage count: 8
         DEFAULT_VERSION: Final[str] = "1.0.0"  # Default version for components
 
+        # Semantic zero and initial values
+        ZERO: Final[int] = 0  # Semantic zero for counters/initialization
+        INITIAL_TIME: Final[float] = 0.0  # Initial timestamp value
+
     class Network:
         """Network defaults shared across dispatcher-aligned services."""
 
@@ -681,6 +685,11 @@ class FlextConstants:
         # Timing and delays
         DEFAULT_DELAY_SECONDS: Final[float] = 1.0
         DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
+
+        # Cache and parallel execution defaults
+        DEFAULT_CACHE_SIZE: Final[int] = 100  # Default cache size for CqrsCache
+        DEFAULT_EMPTY_STRING: Final[str] = ""  # Safe empty string constant
+        DEFAULT_MAX_PARALLEL: Final[int] = 4  # Default parallel execution threads
         DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
         DEFAULT_INITIAL_DELAY_SECONDS: Final[float] = 1.0
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
@@ -779,6 +788,9 @@ class FlextConstants:
         DEFAULT_TIMEOUT_SECONDS: Final[float] = (
             30.0  # Default timeout for domain services
         )
+        LINEAR_BACKOFF_FACTOR: Final[float] = (
+            1.0  # Linear backoff (no exponential growth)
+        )
 
         # Rate limiting constants
         DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final[int] = 60  # 1 minute window
@@ -787,6 +799,12 @@ class FlextConstants:
         # Circuit breaker constants
         DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5  # Open after failures
         DEFAULT_CIRCUIT_BREAKER_TIMEOUT_SECONDS: Final[int] = 60  # Recovery time
+        DEFAULT_CIRCUIT_BREAKER_RECOVERY: Final[float] = (
+            60.0  # Recovery timeout (float version)
+        )
+        ALTERNATIVE_RECOVERY_TIMEOUT: Final[float] = (
+            30.0  # Alternative recovery timeout
+        )
 
     class Security:
         """Security-related constants for authentication and authorization.
@@ -892,19 +910,42 @@ class FlextConstants:
         EVENT_HANDLER_TYPE: Final = "event"
         SAGA_HANDLER_TYPE: Final = "saga"
 
+        # Command/Query defaults
+        DEFAULT_COMMAND_TYPE: Final[str] = (
+            ""  # Empty string for unspecified command type
+        )
+        DEFAULT_TIMESTAMP: Final[str] = ""  # Empty string for uninitialized timestamps
+        DEFAULT_PRIORITY: Final[int] = 0  # Default priority level
+        MAX_PRIORITY: Final[int] = 100  # Maximum priority value
+        MIN_PRIORITY: Final[int] = 0  # Minimum priority value
+
         # Timeout constants
         DEFAULT_TIMEOUT: Final[int] = 30000  # milliseconds
         MIN_TIMEOUT: Final[int] = 1000  # milliseconds
         MAX_TIMEOUT: Final[int] = 300000  # milliseconds (5 minutes)
+        DEFAULT_COMMAND_TIMEOUT: Final[int] = 0  # 0 means no timeout override
 
         # Retry constants
         DEFAULT_RETRIES: Final[int] = 0
         MIN_RETRIES: Final[int] = 0
         MAX_RETRIES: Final[int] = 5
+        DEFAULT_MAX_COMMAND_RETRIES: Final[int] = 0  # 0 means no retries
 
         # Pagination constants
         DEFAULT_PAGE_SIZE: Final[int] = 10
         MAX_PAGE_SIZE: Final[int] = 1000
+
+        # Validation constants
+        DEFAULT_MAX_VALIDATION_ERRORS: Final[int] = (
+            10  # Maximum validation errors to report
+        )
+        DEFAULT_MINIMUM_THROUGHPUT: Final[int] = 10  # Minimum throughput threshold
+
+        # Pipeline execution defaults
+        DEFAULT_PARALLEL_EXECUTION: Final[bool] = (
+            False  # Pipeline parallel execution default
+        )
+        DEFAULT_STOP_ON_ERROR: Final[bool] = True  # Pipeline error handling default
 
         # Error constants for CQRS operations
         CQRS_OPERATION_FAILED: Final[str] = "CQRS_OPERATION_FAILED"

@@ -23,6 +23,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -581,7 +582,10 @@ class FlextConfig(BaseSettings):
         }
         if v.lower() not in valid_environments:
             msg = f"Invalid environment: {v}. Must be one of: {', '.join(sorted(valid_environments))}"
-            raise ValueError(msg)
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         return v
 
     @field_validator("log_level")
@@ -591,7 +595,10 @@ class FlextConfig(BaseSettings):
         v_upper = v.upper()
         if v_upper not in FlextConstants.Logging.VALID_LEVELS:
             msg = f"Invalid log level: {v}. Must be one of: {', '.join(FlextConstants.Logging.VALID_LEVELS)}"
-            raise ValueError(msg)
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         return v_upper
 
     @model_validator(mode="after")
@@ -600,12 +607,18 @@ class FlextConfig(BaseSettings):
         # Production cannot have debug=True
         if self.environment.lower() == "production" and self.debug:
             msg = "Debug mode cannot be enabled in production environment"
-            raise ValueError(msg)
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
 
         # Trace requires debug
         if self.trace and not self.debug:
             msg = "Trace mode requires debug mode to be enabled"
-            raise ValueError(msg)
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
 
         return self
 

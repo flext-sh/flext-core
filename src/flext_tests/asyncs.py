@@ -772,11 +772,9 @@ class FlextTestsAsyncs:
             ...
 
 
-# Module-level logger for convenience
-logger = get_logger()
-
-# Export only the unified class
+# Export only the unified class and logger factory
+# Note: Use get_logger() instead of module-level logger to avoid circular imports
 __all__ = [
     "FlextTestsAsyncs",
-    "logger",
+    "get_logger",
 ]

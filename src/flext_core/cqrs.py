@@ -16,7 +16,6 @@ from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
 HandlerTypeLiteral = Literal["command", "query"]
 
@@ -236,31 +235,20 @@ class FlextCqrs:
                     f"{getattr(command_type, '__name__', str(command_type))}Handler",
                 )
 
-                try:
-                    # Use FlextModels.CqrsConfig.Handler.create_handler_config directly
-                    handler_config = (
-                        FlextModels.CqrsConfig.Handler.create_handler_config(
-                            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                            default_name=handler_name,
-                            handler_config=config
-                            if isinstance(config, dict)
-                            else (
-                                getattr(config, "model_dump", lambda: None)()
-                                if config
-                                else None
-                            ),
-                            command_timeout=FlextConstants.Cqrs.DEFAULT_TIMEOUT,
-                            max_command_retries=FlextConstants.Cqrs.DEFAULT_RETRIES,
-                        )
-                    )
-                except Exception:
-                    # Fallback to basic configuration if creation fails
-                    handler_config = FlextModels.CqrsConfig.Handler(
-                        handler_id=FlextUtilities.generate_id(),
-                        handler_name=handler_name,
-                        handler_type="command",
-                        handler_mode="command",
-                    )
+                # Use FlextModels.CqrsConfig.Handler.create_handler_config directly
+                handler_config = FlextModels.CqrsConfig.Handler.create_handler_config(
+                    handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    default_name=handler_name,
+                    handler_config=config
+                    if isinstance(config, dict)
+                    else (
+                        getattr(config, "model_dump", lambda: None)()
+                        if config
+                        else None
+                    ),
+                    command_timeout=FlextConstants.Cqrs.DEFAULT_TIMEOUT,
+                    max_command_retries=FlextConstants.Cqrs.DEFAULT_RETRIES,
+                )
 
                 # Create wrapper function with metadata
                 def wrapper(command: TCmd) -> TResult:

@@ -239,7 +239,7 @@ class FlextBus(FlextMixins):
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Core.Dict = {}
         # Execution counter
-        self._execution_count: int = 0
+        self._execution_count: int = FlextConstants.Core.ZERO
         # Auto-discovery handlers (single-arg registration)
         self._auto_handlers: FlextTypes.Core.List = []
 
@@ -248,7 +248,7 @@ class FlextBus(FlextMixins):
 
         # Timing
         self._created_at: float = time.time()
-        self._start_time: float = 0.0
+        self._start_time: float = FlextConstants.Core.INITIAL_TIME
 
         # Add logger
         self.logger = FlextLogger(self.__class__.__name__)
@@ -503,9 +503,8 @@ class FlextBus(FlextMixins):
                 try:
                     # Try to call without parameters to see if it's a custom method
                     sig = inspect.signature(validation_method)
-                    if (
-                        len(sig.parameters) == 0
-                    ):  # No parameters = custom validation method
+                    # Allow 0 parameters (staticmethod) or 1 parameter (instance method with self)
+                    if len(sig.parameters) <= 1:
                         validation_result: object = validation_method()
                         if (
                             hasattr(validation_result, "is_failure")

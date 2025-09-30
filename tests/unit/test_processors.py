@@ -421,7 +421,8 @@ class TestFlextProcessors:
 
     def test_processors_thread_safety(self) -> None:
         """Test processors thread safety."""
-        processors = FlextProcessors()
+        # Disable rate limiting for this test
+        processors = FlextProcessors({"rate_limit": 100})
 
         def test_processor(_data: object) -> FlextResult[str]:
             return FlextResult[str].ok(f"processed_{_data}")

@@ -134,3 +134,101 @@ class TestFlextVersionManager:
 
         features = FlextVersionManager.get_available_features()
         assert isinstance(features, list)
+
+    def test_compatibility_result_initialization(self) -> None:
+        """Test CompatibilityResult nested class initialization (lines 91-96)."""
+        # Create compatibility result with all attributes
+        result = FlextVersionManager.CompatibilityResult(
+            is_compatible=True,
+            current_version="0.9.9",
+            required_version="0.9.0",
+            error_message="",
+            recommendations=["Update to latest version"],
+        )
+
+        assert result.is_compatible is True
+        assert result.current_version == "0.9.9"
+        assert result.required_version == "0.9.0"
+        assert not result.error_message
+        assert result.recommendations == ["Update to latest version"]
+
+    def test_compatibility_result_incompatible(self) -> None:
+        """Test CompatibilityResult with incompatibility."""
+        result = FlextVersionManager.CompatibilityResult(
+            is_compatible=False,
+            current_version="0.8.0",
+            required_version="0.9.0",
+            error_message="Version too old",
+            recommendations=["Upgrade to 0.9.0 or higher", "Check release notes"],
+        )
+
+        assert result.is_compatible is False
+        assert "too old" in result.error_message
+        assert len(result.recommendations) == 2
+
+    def test_validate_version_format_non_string(self) -> None:
+        """Test validate_version_format with non-string input (line 191)."""
+        # Test with integer
+        result = FlextVersionManager.validate_version_format(123)  # type: ignore[arg-type]
+        assert result is False
+
+        # Test with None
+        result = FlextVersionManager.validate_version_format(None)  # type: ignore[arg-type]
+        assert result is False
+
+        # Test with list
+        result = FlextVersionManager.validate_version_format([1, 2, 3])  # type: ignore[arg-type]
+        assert result is False
+
+    def test_validate_version_format_wrong_parts_count(self) -> None:
+        """Test validate_version_format with wrong number of parts (line 198)."""
+        # Too few parts
+        assert FlextVersionManager.validate_version_format("1.2") is False
+
+        # Too many parts
+        assert FlextVersionManager.validate_version_format("1.2.3.4") is False
+
+        # Single part
+        assert FlextVersionManager.validate_version_format("1") is False
+
+        # Empty string
+        assert FlextVersionManager.validate_version_format("") is False
+
+    def test_validate_version_format_non_digit_parts(self) -> None:
+        """Test validate_version_format with non-digit parts (line 200)."""
+        # Letters in version
+        assert FlextVersionManager.validate_version_format("1.2.a") is False
+        assert FlextVersionManager.validate_version_format("a.b.c") is False
+
+        # Special characters
+        assert FlextVersionManager.validate_version_format("1.2-3") is False
+        assert FlextVersionManager.validate_version_format("1.2.beta") is False
+
+        # Spaces
+        assert FlextVersionManager.validate_version_format("1. 2.3") is False
+
+    def test_validate_version_format_negative_numbers(self) -> None:
+        """Test validate_version_format with negative numbers (line 201)."""
+        # Negative major version
+        assert FlextVersionManager.validate_version_format("-1.2.3") is False
+
+        # Negative minor version
+        assert FlextVersionManager.validate_version_format("1.-2.3") is False
+
+        # Negative patch version
+        assert FlextVersionManager.validate_version_format("1.2.-3") is False
+
+        # All negative
+        assert FlextVersionManager.validate_version_format("-1.-2.-3") is False
+
+    def test_validate_version_format_exception_handling(self) -> None:
+        """Test validate_version_format exception handling (lines 200-202)."""
+        # These should trigger ValueError or AttributeError in the try block
+        # but be caught and return False
+
+        # Object without split method would trigger AttributeError
+        class BadVersion:
+            pass
+
+        result = FlextVersionManager.validate_version_format(BadVersion())  # type: ignore[arg-type]
+        assert result is False

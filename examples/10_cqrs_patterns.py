@@ -352,8 +352,6 @@ class CqrsPatternService(FlextService[dict[str, object]]):
         print("\n1. Command Operation:")
         command = FlextModels.Command(
             command_type="CreateOrder",
-            customer_id="CUST-789",
-            items=[{"product": "Widget", "qty": 2}],
         )
         cmd_result = FlextResult[FlextModels.Command].ok(command)
         if cmd_result.is_success:

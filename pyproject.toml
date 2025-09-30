@@ -241,6 +241,11 @@
         "flext_tests",
     ]
 
+[tool.ruff.lint.extend-per-file-ignores]
+    "**/*tests*/**" = [
+        "TD003",
+    ]
+
 [tool.pyrefly]
     python-version = "3.13"
     search-path = [

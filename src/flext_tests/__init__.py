@@ -18,39 +18,35 @@ from flext_tests.docker import (
 )
 from flext_tests.domains import FlextTestsDomains
 from flext_tests.factories import FlextTestsFactories
-from flext_tests.fixtures import FlextTestsFixtures
+from flext_tests.fixtures import (
+    flext_docker,
+    ldap_container,
+    oracle_container,
+    postgres_container,
+    redis_container,
+)
 from flext_tests.http_support import FlextTestsHttp
 from flext_tests.hypothesis import FlextTestsHypothesis
 from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.parallel_docker import (
-    ContainerSpec,
-    ParallelDockerManager,
-    get_client-a_oud_container,
-    get_shared_openldap_container,
-    release_client-a_oud_container,
-    release_shared_openldap_container,
-)
 from flext_tests.performance import FlextTestsPerformance
 from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
     "ContainerInfo",
-    "ContainerSpec",
     "ContainerStatus",
     "FlextTestDocker",
     "FlextTestsAsyncs",
     "FlextTestsBuilders",
     "FlextTestsDomains",
     "FlextTestsFactories",
-    "FlextTestsFixtures",
     "FlextTestsHttp",
     "FlextTestsHypothesis",
     "FlextTestsMatchers",
     "FlextTestsPerformance",
     "FlextTestsUtilities",
-    "ParallelDockerManager",
-    "get_client-a_oud_container",
-    "get_shared_openldap_container",
-    "release_client-a_oud_container",
-    "release_shared_openldap_container",
+    "flext_docker",
+    "ldap_container",
+    "oracle_container",
+    "postgres_container",
+    "redis_container",
 ]

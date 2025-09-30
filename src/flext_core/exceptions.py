@@ -20,13 +20,14 @@ from __future__ import annotations
 
 import concurrent.futures
 import logging
+import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import ClassVar, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, RateLimiterState
 
 
 class FlextExceptions:
@@ -166,9 +167,11 @@ class FlextExceptions:
         self._audit_log: FlextTypes.Core.List = []
         self._performance_metrics: dict[str, dict[str, float | int]] = {}
         self._circuit_breakers: dict[str, bool] = {}
+        self._circuit_breaker_failures: dict[str, int] = {}  # Track failure counts
         self.logger = logging.getLogger(__name__)
-        self._rate_limiters: dict[str, dict[str, list[float] | float]] = {}
+        self._rate_limiters: dict[str, RateLimiterState] = {}
         self._cache: FlextTypes.Core.Dict = {}
+        self._lock = threading.Lock()  # Thread safety lock
 
     def __call__(
         self,
@@ -191,11 +194,18 @@ class FlextExceptions:
             **kwargs,
         )
 
+    @staticmethod
+    def _get_result_class() -> type:  # Return generic type to avoid forward reference
+        """Get FlextResult class lazily to avoid circular imports."""
+        from flext_core.result import FlextResult
+
+        return FlextResult
+
     # =============================================================================
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
 
-    _metrics: ClassVar[FlextTypes.Core.CounterDict] = {}
+    _metrics: ClassVar[dict[str, object]] = {}
 
     # Type conversion mapping for cleaner type resolution
     _TYPE_MAP: ClassVar[dict[str, type]] = {
@@ -210,10 +220,13 @@ class FlextExceptions:
     @classmethod
     def record_exception(cls, exception_type: str) -> None:
         """Record exception occurrence."""
-        cls._metrics[exception_type] = cls._metrics.get(exception_type, 0) + 1
+        current_count = cls._metrics.get(exception_type, 0)
+        cls._metrics[exception_type] = (
+            int(current_count) + 1 if isinstance(current_count, (int, str)) else 1
+        )
 
     @classmethod
-    def get_metrics(cls) -> FlextTypes.Core.CounterDict:
+    def get_metrics(cls) -> dict[str, object]:
         """Get exception counts."""
         return dict(cls._metrics)
 
@@ -239,23 +252,26 @@ class FlextExceptions:
             FlextResult with success or failure
 
         """
-        try:
-            # Validate that exception_type is actually a type that inherits from Exception
-            if not isinstance(exception_type, type) or not issubclass(
-                exception_type, Exception
-            ):
-                return FlextResult[None].fail(
-                    f"Invalid exception type: {exception_type}"
-                )
+        from flext_core.result import FlextResult
 
-            if exception_type not in self._handlers:
-                self._handlers[exception_type] = []
-            handlers_list = self._handlers[exception_type]
-            if isinstance(handlers_list, list):
-                handlers_list.append(handler)
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Failed to register handler: {e}")
+        with self._lock:
+            try:
+                # Validate that exception_type is actually a type that inherits from Exception
+                if not isinstance(exception_type, type) or not issubclass(
+                    exception_type, Exception
+                ):
+                    return FlextResult[None].fail(
+                        f"Invalid exception type: {exception_type}"
+                    )
+
+                if exception_type not in self._handlers:
+                    self._handlers[exception_type] = []
+                handlers_list = self._handlers[exception_type]
+                if isinstance(handlers_list, list):
+                    handlers_list.append(handler)
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to register handler: {e}")
 
     def unregister_handler(
         self, exception_type: type[Exception], handler: object
@@ -270,6 +286,8 @@ class FlextExceptions:
             FlextResult with success or failure
 
         """
+        from flext_core.result import FlextResult
+
         try:
             if (
                 exception_type in self._handlers
@@ -296,18 +314,20 @@ class FlextExceptions:
             FlextResult with handling result
 
         """
+        from flext_core.result import FlextResult
+
         try:
             start_time = time.time()
             exception_type = type(exception)
             handlers = self._handlers.get(exception_type, [])
 
             if not handlers:
-                return FlextResult[object].fail("No handler found")
+                return FlextResult[None].fail("No handler found")
 
             # Check circuit breaker
             exception_type_name = exception_type.__name__
             if self.is_circuit_breaker_open(exception_type_name):
-                return FlextResult[object].fail("Circuit breaker is open")
+                return FlextResult[None].fail("Circuit breaker is open")
 
             # Check rate limiting
             rate_limit = self._config.get(
@@ -334,10 +354,10 @@ class FlextExceptions:
             rate_limit_key = f"{exception_type_name}_rate_limit"
 
             if rate_limit_key not in self._rate_limiters:
-                self._rate_limiters[rate_limit_key] = {
-                    "requests": [],
-                    "window_start": current_time,
-                }
+                self._rate_limiters[rate_limit_key] = RateLimiterState(
+                    requests=[],
+                    last_reset=current_time,
+                )
 
             rate_limiter = self._rate_limiters[rate_limit_key]
 
@@ -354,7 +374,7 @@ class FlextExceptions:
             # Check if rate limit exceeded
             requests_list = rate_limiter["requests"]
             if isinstance(requests_list, list) and len(requests_list) >= rate_limit:
-                return FlextResult[object].fail("Rate limit exceeded")
+                return FlextResult[None].fail("Rate limit exceeded")
 
             # Add current request
             requests_list = rate_limiter["requests"]
@@ -405,7 +425,7 @@ class FlextExceptions:
                             handler_exceptions.append(str(handler_error))
                             results.append(f"Handler error: {handler_error}")
                 except concurrent.futures.TimeoutError:
-                    return FlextResult[object].fail("Handler timeout")
+                    return FlextResult[None].fail("Handler timeout")
 
                 # Add non-callable handlers
                 non_callable_handlers = [
@@ -415,7 +435,7 @@ class FlextExceptions:
 
             # If any handler raised an exception, return failure
             if handler_exceptions:
-                return FlextResult[object].fail(
+                return FlextResult[None].fail(
                     f"Handler exception: {handler_exceptions[0]}"
                 )
 
@@ -474,7 +494,7 @@ class FlextExceptions:
                 >= circuit_breaker_threshold
             ):
                 self._circuit_breakers[exception_name] = True
-                return FlextResult[object].fail(
+                return FlextResult[None].fail(
                     "Circuit breaker opened due to repeated failures"
                 )
 
@@ -493,10 +513,168 @@ class FlextExceptions:
                 result = results[0]
                 if isinstance(result, FlextResult):
                     return result
-                return FlextResult[object].ok(result)
-            return FlextResult[object].ok(results)
+                return FlextResult[None].ok(None)
+
+            # Ensure proper types
+            rate_limit = (
+                int(rate_limit)
+                if isinstance(rate_limit, (int, str))
+                else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+            )
+            rate_limit_window = (
+                float(rate_limit_window)
+                if isinstance(rate_limit_window, (int, float, str))
+                else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
+            )
+
+            current_time = time.time()
+            rate_limit_key = f"{exception_type_name}_rate_limit"
+
+            if rate_limit_key not in self._rate_limiters:
+                self._rate_limiters[rate_limit_key] = RateLimiterState(
+                    requests=[],
+                    last_reset=current_time,
+                )
+
+            rate_limiter = self._rate_limiters[rate_limit_key]
+
+            # Clean old requests outside the window
+            requests_list = rate_limiter["requests"]
+            if isinstance(requests_list, list):
+                rate_limiter["requests"] = [
+                    req_time
+                    for req_time in requests_list
+                    if isinstance(req_time, (int, float))
+                    and current_time - req_time < rate_limit_window
+                ]
+
+            # Check if rate limit exceeded
+            requests_list = rate_limiter["requests"]
+            if isinstance(requests_list, list) and len(requests_list) >= rate_limit:
+                return FlextResult[None].fail("Rate limit exceeded")
+
+            requests_list = rate_limiter["requests"]
+            if isinstance(requests_list, list):
+                requests_list.append(current_time)
+
+            # Execute handlers
+            for handler in handlers:
+                try:
+                    start_time = time.time()
+                    result = cast(
+                        "Callable[[Exception, str | None], FlextResult[None]]", handler
+                    )(exception, correlation_id)
+                    execution_time = time.time() - start_time
+
+                    # Record metrics (using ClassVar via class)
+                    handler_name = getattr(handler, "__name__", str(handler))
+                    FlextExceptions._metrics["total_executions"] = (
+                        cast("int", FlextExceptions._metrics.get("total_executions", 0))
+                        + 1
+                    )
+
+                    # Initialize handler_executions dict if needed
+                    if "handler_executions" not in FlextExceptions._metrics:
+                        FlextExceptions._metrics["handler_executions"] = {}
+                    handler_exec = cast(
+                        "dict[str, int]", FlextExceptions._metrics["handler_executions"]
+                    )
+                    handler_exec[handler_name] = handler_exec.get(handler_name, 0) + 1
+
+                    if isinstance(result, FlextResult):
+                        if result.is_success:
+                            FlextExceptions._metrics["successful_executions"] = (
+                                cast(
+                                    "int",
+                                    FlextExceptions._metrics.get(
+                                        "successful_executions", 0
+                                    ),
+                                )
+                                + 1
+                            )
+                        else:
+                            FlextExceptions._metrics["failed_executions"] = (
+                                cast(
+                                    "int",
+                                    FlextExceptions._metrics.get(
+                                        "failed_executions", 0
+                                    ),
+                                )
+                                + 1
+                            )
+
+                    results.append(result)
+
+                except Exception as handler_error:
+                    execution_time = time.time() - start_time
+                    error_result = FlextResult[None].fail(
+                        f"Handler execution failed: {handler_error}"
+                    )
+                    results.append(error_result)
+
+                    # Record failure metrics (using ClassVar via class)
+                    FlextExceptions._metrics["failed_executions"] = (
+                        cast(
+                            "int", FlextExceptions._metrics.get("failed_executions", 0)
+                        )
+                        + 1
+                    )
+                    handler_name = getattr(handler, "__name__", str(handler))
+
+                    # Initialize handler_failures dict if needed
+                    if "handler_failures" not in FlextExceptions._metrics:
+                        FlextExceptions._metrics["handler_failures"] = {}
+                    handler_fail = cast(
+                        "dict[str, int]", FlextExceptions._metrics["handler_failures"]
+                    )
+                    handler_fail[handler_name] = handler_fail.get(handler_name, 0) + 1
+
+            # Check circuit breaker
+            if any(
+                isinstance(result, FlextResult) and result.is_failure
+                for result in results
+            ):
+                # Update circuit breaker
+                exception_name = exception_type.__name__
+                self._circuit_breaker_failures[exception_name] = (
+                    self._circuit_breaker_failures.get(exception_name, 0) + 1
+                )
+
+                failure_threshold_raw = self._config.get(
+                    "circuit_breaker_failure_threshold",
+                    5,  # Default threshold
+                )
+                failure_threshold = (
+                    int(failure_threshold_raw)
+                    if isinstance(failure_threshold_raw, (int, str))
+                    else 5
+                )
+
+                if self._circuit_breaker_failures[exception_name] >= failure_threshold:
+                    self._circuit_breakers[exception_name] = True
+                    return FlextResult[None].fail(
+                        "Circuit breaker opened due to repeated failures"
+                    )
+
+            # Check if any handler failed
+            if any(
+                isinstance(result, FlextResult) and result.is_failure
+                for result in results
+            ):
+                # Return the first failure
+                for result in results:
+                    if isinstance(result, FlextResult) and result.is_failure:
+                        return result
+
+            # Return single result if only one handler, otherwise return list
+            if len(results) == 1:
+                result = results[0]
+                if isinstance(result, FlextResult):
+                    return result
+                return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult[object].fail(f"Exception handling failed: {e}")
+            return FlextResult[None].fail(f"Exception handling failed: {e}")
 
     def handle_batch(self, exceptions: list[Exception]) -> list[FlextResult[None]]:
         """Handle multiple exceptions in batch.
@@ -529,7 +707,7 @@ class FlextExceptions:
         if not isinstance(exceptions, list):
             return []
 
-        results: list[FlextResult[None]] = []
+        parallel_results: list[FlextResult[None]] = []
         valid_exceptions = [exc for exc in exceptions if isinstance(exc, Exception)]
 
         with concurrent.futures.ThreadPoolExecutor(
@@ -538,11 +716,11 @@ class FlextExceptions:
             futures = [
                 executor.submit(self.handle_exception, exc) for exc in valid_exceptions
             ]
-            results.extend(
+            parallel_results.extend(
                 future.result() for future in concurrent.futures.as_completed(futures)
             )
 
-        return results
+        return parallel_results
 
     def add_middleware(self, middleware: object) -> None:
         """Add middleware for exception processing.
@@ -625,6 +803,8 @@ class FlextExceptions:
             FlextResult with validation result
 
         """
+        from flext_core.result import FlextResult
+
         try:
             # Validate handlers
             for exception_type, handlers in self._handlers.items():
@@ -665,6 +845,8 @@ class FlextExceptions:
             FlextResult with import result
 
         """
+        from flext_core.result import FlextResult
+
         try:
             if "config" in config and isinstance(config["config"], dict):
                 config_dict = cast("FlextTypes.Core.Dict", config["config"])

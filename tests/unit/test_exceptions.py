@@ -472,7 +472,10 @@ class TestFlextExceptions:
 
     def test_exceptions_thread_safety(self) -> None:
         """Test exceptions thread safety."""
-        exceptions = FlextExceptions()
+        # Disable rate limiting for thread safety test
+        exceptions = FlextExceptions(
+            config={"rate_limit": 100, "rate_limit_window": 60}
+        )
 
         def test_handler(exc: Exception) -> FlextResult[str]:
             return FlextResult[str].ok(f"handled_{type(exc).__name__}")

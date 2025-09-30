@@ -6,12 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import threading
 import time
 from collections.abc import Callable
 from typing import cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 
@@ -154,6 +156,7 @@ class FlextProcessors:
         self._circuit_breaker: dict[str, bool] = {}
         self._rate_limiter: dict[str, dict[str, int | float]] = {}
         self._cache: dict[str, tuple[object, float]] = {}
+        self._lock = threading.Lock()  # Thread safety lock
         cache_ttl = self._config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL)
         self._cache_ttl = (
             float(cache_ttl)
@@ -237,20 +240,22 @@ class FlextProcessors:
         # Check rate limit
         now = time.time()
         rate_key = f"{name}_rate"
-        if rate_key not in self._rate_limiter:
-            self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
 
-        rate_data = self._rate_limiter[rate_key]
-        if now - rate_data["window_start"] > self._rate_limit_window:
-            rate_data["count"] = 0
-            rate_data["window_start"] = now
+        with self._lock:
+            if rate_key not in self._rate_limiter:
+                self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
 
-        if rate_data["count"] >= self._rate_limit:
-            return FlextResult[object].fail(
-                f"Rate limit exceeded for processor '{name}'"
-            )
+            rate_data = self._rate_limiter[rate_key]
+            if now - rate_data["window_start"] > self._rate_limit_window:
+                rate_data["count"] = 0
+                rate_data["window_start"] = now
 
-        rate_data["count"] += 1
+            if rate_data["count"] >= self._rate_limit:
+                return FlextResult[object].fail(
+                    f"Rate limit exceeded for processor '{name}'"
+                )
+
+            rate_data["count"] += 1
 
         # Check cache
         cache_key = f"{name}:{hash(str(data))}"
@@ -330,7 +335,10 @@ class FlextProcessors:
             self._middleware.append(middleware)
         else:
             error_msg = "Middleware must be callable"
-            raise TypeError(error_msg)
+            raise FlextExceptions.TypeError(
+                message=error_msg,
+                error_code="TYPE_ERROR",
+            )
 
     def get_metrics(self) -> dict[str, int]:
         """Get processing metrics.
@@ -476,15 +484,15 @@ class FlextProcessors:
         if not isinstance(self._config, dict):
             return FlextResult[None].fail("Configuration must be a dictionary")
 
-        if self._cache_ttl < 0:
+        if self._cache_ttl < FlextConstants.Core.ZERO:
             return FlextResult[None].fail("Cache TTL must be non-negative")
 
-        if self._circuit_breaker_threshold < 0:
+        if self._circuit_breaker_threshold < FlextConstants.Core.ZERO:
             return FlextResult[None].fail(
                 "Circuit breaker threshold must be non-negative"
             )
 
-        if self._rate_limit < 0:
+        if self._rate_limit < FlextConstants.Core.ZERO:
             return FlextResult[None].fail("Rate limit must be non-negative")
 
         return FlextResult[None].ok(None)
@@ -820,7 +828,10 @@ class FlextProcessors:
                 # Type narrowing for mock objects
                 if not hasattr(config, "data_items"):
                     error_msg = "Config object must have data_items attribute"
-                    raise TypeError(error_msg)
+                    raise FlextExceptions.TypeError(
+                        message=error_msg,
+                        error_code="TYPE_ERROR",
+                    )
                 data_items = getattr(config, "data_items")
                 continue_on_error = getattr(config, "continue_on_error", True)
             else:
@@ -1028,7 +1039,10 @@ class FlextProcessors:
                 # Type narrowing for mock objects
                 if not hasattr(config, "data_items"):
                     error_msg = "Config object must have data_items attribute"
-                    raise TypeError(error_msg)
+                    raise FlextExceptions.TypeError(
+                        message=error_msg,
+                        error_code="TYPE_ERROR",
+                    )
                 data_items = getattr(config, "data_items")
                 continue_on_error = getattr(config, "continue_on_error", True)
             else:
@@ -1097,7 +1111,10 @@ class FlextProcessors:
                     if result.is_failure:
                         # Explicitly raise the error to be caught by from_exception wrapper
                         msg = f"Pipeline step failed: {result.error}"
-                        raise RuntimeError(msg)
+                        raise FlextExceptions.OperationError(
+                            message=msg,
+                            error_code="OPERATION_ERROR",
+                        )
                     # result.is_success is True here
                     step_result: object | None = cast(
                         "object | None",
@@ -1105,7 +1122,10 @@ class FlextProcessors:
                     )
                     if step_result is None:
                         msg = "Pipeline step returned None despite success"
-                        raise RuntimeError(msg)
+                        raise FlextExceptions.OperationError(
+                            message=msg,
+                            error_code="OPERATION_ERROR",
+                        )
                     return step_result
                 # result is not a FlextResult, return it directly
                 return result

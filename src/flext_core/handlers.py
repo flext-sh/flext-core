@@ -756,7 +756,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             msg = (
                 f"Invalid handler mode: {effective_type}. Must be 'command' or 'query'"
             )
-            raise ValueError(msg)
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
 
         # Use provided config or create default
         if handler_config is not None:
@@ -773,7 +776,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     config = FlextModels.CqrsConfig.Handler.model_validate(config_data)
                 except Exception as e:
                     msg = f"Invalid handler config: {e}"
-                    raise ValueError(msg) from e
+                    raise FlextExceptions.ValidationError(
+                        message=msg,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    ) from e
             else:
                 config = handler_config
         else:
@@ -786,7 +792,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 )
             except Exception as e:
                 msg = f"Failed to create handler config: {e}"
-                raise ValueError(msg) from e
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                ) from e
 
         # Create a simple wrapper class
         class CallableHandler(FlextHandlers[object, object]):
@@ -1078,7 +1087,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 handler = FlextHandlers.AdvancedPatterns.create_event_handler(
                     lambda e: handle_order_created(e),
                     "OrderCreated",
-                    retry_policy={"max_retries": 3, "retry_delay": 1.0},
+                    retry_policy={
+                        "max_retries": FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
+                        "retry_delay": FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+                    },
                 )
                 ```
 

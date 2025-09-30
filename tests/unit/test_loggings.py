@@ -11,6 +11,8 @@ import os
 import threading
 import time
 
+import pytest
+
 from flext_core import FlextLogger, FlextResult
 
 
@@ -205,6 +207,7 @@ class TestFlextLogger:
         result = logger.info("Test message", **special_data)
         assert result.is_success
 
+    @pytest.mark.filterwarnings("ignore:LogEntry validation failed:UserWarning")
     def test_logger_logging_with_large_data(self) -> None:
         """Test logging with large data."""
         logger = FlextLogger("test_logger")
@@ -254,6 +257,7 @@ class TestFlextLogger:
         result = logger.info("Valid message", valid_field="value")
         assert result.is_success
 
+    @pytest.mark.filterwarnings("ignore:LogEntry validation failed:UserWarning")
     def test_logger_logging_with_validation_failure(self) -> None:
         """Test logging with validation failure - should handle gracefully."""
         logger = FlextLogger("test_logger")
