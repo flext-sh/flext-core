@@ -1,12 +1,24 @@
 # FLEXT-CORE CLAUDE.md
 
 **The Foundation Library Development Guide for FLEXT Ecosystem**
-**Version**: 2.2.0 | **Authority**: CORE FOUNDATION | **Updated**: 2025-09-18
+**Version**: 2.3.0 | **Authority**: CORE FOUNDATION | **Updated**: 2025-10-01
 **Status**: 79% test coverage (proven stable), v0.9.9 Release Candidate preparing for 1.0.0 stable release · 1.0.0 Release Preparation
 
 **References**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and [README.md](README.md) for project overview.
 
-**Hierarchy**: This document provides project-specific standards based on workspace-level patterns defined in [../CLAUDE.md](../CLAUDE.md). For architectural principles, quality gates, and MCP server usage, reference the main workspace standards.
+## 📋 DOCUMENT STRUCTURE & REFERENCES
+
+**Quick Links**:
+- **[~/.claude/commands/flext.md](~/.claude/commands/flext.md)**: Optimization command (USE with `/flext` for refactoring)
+- **[../CLAUDE.md](../CLAUDE.md)**: Workspace-level domain library standards
+- **[README.md](README.md)**: Project overview and quick start
+
+**Document Purpose**:
+- **This file**: flext-core specific development patterns, API details, and foundation responsibilities
+- **[~/.claude/commands/flext.md](~/.claude/commands/flext.md)**: Practical MCP workflows and refactoring commands
+- **[../CLAUDE.md](../CLAUDE.md)**: Domain library architecture and ecosystem standards
+
+**Hierarchy**: This document provides foundation-specific standards. For refactoring workflows and MCP tool usage, use `/flext` command referencing the flext.md guide.
 
 ---
 
@@ -24,10 +36,12 @@
 - ✅ **Evidence-Based Quality**: 79% coverage proven stable, targeting 85% for 1.0.0
 
 **ECOSYSTEM IMPACT** (32+ Projects Depend on This):
-- **Infrastructure**: flext-db-oracle, flext-ldap, flext-grpc, flext-auth, etc.
-- **Applications**: flext-api, flext-cli, flext-web, flext-observability
-- **Singer Platform**: 15+ taps, targets, and DBT transformations
-- **Data Integration**: Oracle OIC/WMS, ALGAR OUD migration, GrupoNos
+- **Domain Libraries (13)**: flext-cli, flext-ldap, flext-ldif, flext-api, flext-web, flext-db-oracle, flext-meltano, flext-oracle-wms, flext-oracle-oic, flext-auth, flext-observability, flext-grpc
+- **Singer Platform (15+)**: Taps, targets, and DBT transformations
+- **Enterprise Tools**: algar-oud-mig, gruponos-meltano-native
+- **Data Integration**: Oracle OIC/WMS integrations
+
+**NOTE**: All domain libraries build on flext-core patterns. Changes here ripple through entire ecosystem. See [~/.claude/commands/flext.md](~/.claude/commands/flext.md) for complete domain library list.
 
 **QUALITY IMPERATIVES**:
 - 🔴 **ZERO tolerance** for API breaking changes without deprecation cycle
@@ -37,6 +51,8 @@
 - 🟢 **Professional documentation** - all public APIs must be perfectly documented
 
 ## FLEXT-CORE DEVELOPMENT WORKFLOW (FOUNDATION QUALITY)
+
+**IMPORTANT**: For refactoring workflows and MCP tool usage, use `/flext` command which references [~/.claude/commands/flext.md](~/.claude/commands/flext.md).
 
 ### Essential Development Workflow (MANDATORY FOR CORE)
 
@@ -90,6 +106,29 @@ make i                     # Alias for install
 make v                     # Alias for validate
 ```
 
+### MCP-Based Development Workflow
+
+**RECOMMENDED**: Use serena-flext MCP for code analysis and refactoring:
+
+```bash
+# Activate flext-core project in serena
+mcp__serena-flext__activate_project project="flext-core"
+
+# List available memories
+mcp__serena-flext__list_memories
+
+# Analyze module structure
+mcp__serena-flext__list_dir relative_path="src/flext_core" recursive=false
+
+# Get symbol overview
+mcp__serena-flext__get_symbols_overview relative_path="src/flext_core/result.py"
+
+# Find symbol references
+mcp__serena-flext__find_symbol name_path="FlextResult" relative_path="src/flext_core"
+```
+
+**See [~/.claude/commands/flext.md](~/.claude/commands/flext.md) for complete MCP workflow patterns.**
+
 ### Running Specific Tests
 
 ```bash
@@ -116,6 +155,10 @@ poetry run pytest tests/unit/ -k "test_result" -v  # Tests matching pattern
 PYTHONPATH=src pytest tests/ --cov=src --cov-report=term-missing
 PYTHONPATH=src pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=term-missing
 ```
+
+## High-Level Architecture
+
+**NOTE**: flext-core provides foundation patterns for ALL domain libraries. See [../CLAUDE.md](../CLAUDE.md) for complete domain library architecture and [~/.claude/commands/flext.md](~/.claude/commands/flext.md) for practical usage patterns.
 
 ## High-Level Architecture
 
@@ -610,6 +653,11 @@ print('✅ API patterns consistent across ecosystem')
 
 **CRITICAL: FLEXT-Core v0.9.9 → v1.0.0 Stable Release**
 
+**Key Documentation**:
+- 📋 [VERSIONING.md](VERSIONING.md) - Semantic versioning strategy and release process
+- 📋 [API_STABILITY.md](API_STABILITY.md) - Comprehensive API stability guarantees
+- 📋 [README.md](README.md) - Updated with 1.0.0 roadmap and timeline
+
 ### **Foundation Library 1.0.0 Readiness Assessment**
 
 **Current Status (v0.9.9)**:
@@ -623,12 +671,14 @@ print('✅ API patterns consistent across ecosystem')
 
 ### **MANDATORY 1.0.0 PREPARATION CHECKLIST**
 
-#### **Phase 1: API Stabilization (Weeks 1-2)**
+#### **Phase 1: API Stabilization (Weeks 1-2)** ✅ COMPLETED
 - [x] **API Surface Audit**: Verified 20+ stable exports
 - [x] **Version Update**: v0.9.9 preparation release completed
-- [ ] **ABI Finalization**: Lock dependency versions for interface stability
-- [ ] **Semantic Versioning**: Finalize breaking change policy
-- [ ] **Migration Documentation**: Complete 0.x → 1.0 upgrade guide
+- [x] **ABI Finalization**: Dependency versions locked in pyproject.toml (see VERSIONING.md)
+- [x] **Semantic Versioning**: Comprehensive strategy documented (VERSIONING.md)
+- [x] **API Stability Guarantees**: Complete documentation (API_STABILITY.md)
+- [x] **README.md Roadmap**: 1.0.0 release timeline and stability guarantees added
+- [ ] **Migration Documentation**: Create complete 0.x → 1.0 upgrade guide
 
 #### **Phase 2: Quality Assurance (Weeks 2-3)**
 - [ ] **Test Coverage Enhancement**: Target 85% from proven 79% baseline
@@ -656,18 +706,30 @@ print('✅ API patterns consistent across ecosystem')
 
 ### **1.0.0 STABILITY GUARANTEES**
 
+> **Complete details in [API_STABILITY.md](API_STABILITY.md) and [VERSIONING.md](VERSIONING.md)**
+
 **API Compatibility Promise**:
-- ✅ **FlextResult[T]** - `.data`/`.value` dual access permanently supported
-- ✅ **FlextContainer.get_global()** - Singleton pattern guaranteed stable
-- ✅ **FlextModels.Entity/Value/AggregateRoot** - DDD patterns locked
-- ✅ **FlextDomainService** - Service base class interface stable
-- ✅ **FlextLogger(__name__)** - Logging interface guaranteed
+- ✅ **FlextResult[T]** - `.data`/`.value` dual access permanently supported (Level 1: 100% stable)
+- ✅ **FlextContainer.get_global()** - Singleton pattern guaranteed stable (Level 1: 100% stable)
+- ✅ **FlextModels.Entity/Value/AggregateRoot** - DDD patterns locked (Level 1: 100% stable)
+- ✅ **FlextService** - Service base class interface stable (Level 1: 100% stable)
+- ✅ **FlextLogger(__name__)** - Logging interface guaranteed (Level 1: 100% stable)
+- ✅ **HTTP Primitives** - FlextConstants.Http, HttpRequest/HttpResponse models (Level 1: 100% stable, new in 0.9.9)
 
 **Breaking Change Policy (1.x series)**:
 - **GUARANTEED**: No breaking changes to core APIs in 1.x releases
-- **GUARANTEED**: Deprecation cycle minimum 2 minor versions for any changes
-- **GUARANTEED**: Migration tools provided for necessary upgrades
+- **GUARANTEED**: Deprecation cycle minimum 2 minor versions (6+ months notice)
+- **GUARANTEED**: Migration tools and automated utilities provided
 - **GUARANTEED**: Backward compatibility maintained through entire 1.x lifecycle
+- **GUARANTEED**: Security patches within 48 hours for stability issues
+
+**Dependency Version Locks** (ABI Stability):
+- pydantic: `>=2.11.7,<3.0.0` (Pydantic 2.x API stable)
+- pydantic-settings: `>=2.10.1,<3.0.0` (aligned with pydantic)
+- pyyaml: `>=6.0.2,<7.0.0` (YAML 6.x stable)
+- structlog: `>=25.4.0,<26.0.0` (CalVer YY.MINOR)
+- typing-extensions: `>=4.12.0,<5.0.0` (type system stability)
+- colorlog: `>=6.9.0,<7.0.0` (logging stability)
 
 ### **POST-1.0.0 DEVELOPMENT ROADMAP**
 
