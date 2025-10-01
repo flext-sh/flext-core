@@ -31,12 +31,12 @@
         "Typing :: Typed",
     ]
     dependencies = [
-        "pydantic-settings>=2.10.1",
-        "pydantic>=2.11.7",
-        "pyyaml (>=6.0.2,<7.0.0)",
-        "structlog>=25.4.0",
-        "typing-extensions>=4.12.0",
-        "colorlog (>=6.9.0)",
+        "pydantic-settings>=2.10.1,<3.0.0",
+        "pydantic>=2.11.7,<3.0.0",
+        "pyyaml>=6.0.2,<7.0.0",
+        "structlog>=25.4.0,<26.0.0",
+        "typing-extensions>=4.12.0,<5.0.0",
+        "colorlog>=6.9.0,<7.0.0",
     ]
     keywords = [
         "clean-architecture",
@@ -242,11 +242,6 @@ docker = "^7.1.0"
         "flext_tests",
     ]
 
-[tool.ruff.lint.extend-per-file-ignores]
-    "**/*tests*/**" = [
-        "TD003",
-    ]
-
 [tool.pyrefly]
     python-version = "3.13"
     search-path = [
@@ -254,4 +249,33 @@ docker = "^7.1.0"
         "scripts",
         "src",
         "tests",
+        "../flext-cli/src",
+        "../flext-ldap/src",
+        "../flext-ldif/src",
+        "../flext-db-oracle/src",
+        "../flext-meltano/src",
+        "../flext-observability/src",
+        "../flext-plugin/src",
+        "../flext-quality/src",
+        "../flext-web/src",
+        "../flext-api/src",
+        "../flext-auth/src",
+        "../flext-grpc/src",
+        "../flext-tools/src",
+        "../flext-dbt-ldap/src",
+        "../flext-dbt-ldif/src",
+        "../flext-dbt-oracle/src",
+        "../flext-dbt-oracle-wms/src",
+        "../flext-oracle-oic-ext/src",
+        "../flext-oracle-wms/src",
+        "../flext-tap-ldap/src",
+        "../flext-tap-ldif/src",
+        "../flext-tap-oracle/src",
+        "../flext-tap-oracle-oic/src",
+        "../flext-tap-oracle-wms/src",
+        "../flext-target-ldap/src",
+        "../flext-target-ldif/src",
+        "../flext-target-oracle/src",
+        "../flext-target-oracle-oic/src",
+        "../flext-target-oracle-wms/src",
     ]
