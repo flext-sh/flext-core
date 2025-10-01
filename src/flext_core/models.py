@@ -76,75 +76,88 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
-
-def _create_default_pagination() -> FlextModels.Pagination:
-    """Factory function for creating default Pagination instances."""
-    # Forward reference will be resolved at runtime
-    return FlextModels.Pagination()
+# =============================================================================
+# PRIVATE MODULE HELPERS - FlextModels implementation details
+# =============================================================================
+# Note: These must be at module level due to Python class body execution order.
+# Pydantic's model_config must be assigned during class definition, preventing
+# nested class cross-references. These are private implementation details of
+# FlextModels and should not be used directly outside this module.
 
 
 class _BaseConfigDict:
-    """Shared Pydantic 2.11 ConfigDict patterns to eliminate duplication.
+    """Shared Pydantic 2.11 ConfigDict patterns for FlextModels classes.
 
-    This class provides reusable configuration presets for all FlextModels classes,
-    leveraging Pydantic 2.11 features for enhanced validation and serialization.
+    Private implementation detail - do not use directly.
+    Access through FlextModels nested classes that use these configs.
     """
 
     ARBITRARY: ConfigDict = ConfigDict(
         # Pydantic 2.11 validation features
-        validate_assignment=True,  # Validate on field assignment
-        validate_return=True,  # Validate return values from methods
-        validate_default=True,  # Validate default values
-        use_enum_values=True,  # Use enum values in serialization
-        arbitrary_types_allowed=True,  # Allow arbitrary types
+        validate_assignment=True,
+        validate_return=True,
+        validate_default=True,
+        use_enum_values=True,
+        arbitrary_types_allowed=True,
         # JSON serialization features
-        ser_json_timedelta="iso8601",  # Serialize timedelta as ISO8601 duration
-        ser_json_bytes="base64",  # Serialize bytes as base64 strings
+        ser_json_timedelta="iso8601",
+        ser_json_bytes="base64",
         # Alias and naming features
-        serialize_by_alias=True,  # Use aliases in serialization
-        populate_by_name=True,  # Accept both alias and field name
+        serialize_by_alias=True,
+        populate_by_name=True,
         # String processing
-        str_strip_whitespace=True,  # Automatically strip whitespace from strings
-        str_to_lower=False,  # Keep case sensitivity
-        str_to_upper=False,  # Keep case sensitivity
+        str_strip_whitespace=True,
+        str_to_lower=False,
+        str_to_upper=False,
         # Performance optimizations
-        defer_build=False,  # Build schema immediately for better error messages
+        defer_build=False,
         # Type coercion
-        coerce_numbers_to_str=False,  # Keep strict typing
+        coerce_numbers_to_str=False,
     )
 
     STRICT: ConfigDict = ConfigDict(
         # Pydantic 2.11 validation features
-        validate_assignment=True,  # Validate on field assignment
-        validate_return=True,  # Validate return values from methods
-        validate_default=True,  # Validate default values
-        use_enum_values=True,  # Use enum values in serialization
-        arbitrary_types_allowed=True,  # Allow arbitrary types
-        extra="forbid",  # Strict validation - no extra fields allowed
+        validate_assignment=True,
+        validate_return=True,
+        validate_default=True,
+        use_enum_values=True,
+        arbitrary_types_allowed=True,
+        extra="forbid",
         # JSON serialization features
-        ser_json_timedelta="iso8601",  # Serialize timedelta as ISO8601 duration
-        ser_json_bytes="base64",  # Serialize bytes as base64 strings
+        ser_json_timedelta="iso8601",
+        ser_json_bytes="base64",
         # Alias and naming features
-        serialize_by_alias=True,  # Use aliases in serialization
-        populate_by_name=True,  # Accept both alias and field name
+        serialize_by_alias=True,
+        populate_by_name=True,
         # String processing
-        str_strip_whitespace=True,  # Automatically strip whitespace from strings
-        str_to_lower=False,  # Keep case sensitivity
-        str_to_upper=False,  # Keep case sensitivity
+        str_strip_whitespace=True,
+        str_to_lower=False,
+        str_to_upper=False,
         # Performance optimizations
-        defer_build=False,  # Build schema immediately for better error messages
+        defer_build=False,
         # Type coercion
-        coerce_numbers_to_str=False,  # Keep strict typing
+        coerce_numbers_to_str=False,
     )
 
     FROZEN: ConfigDict = ConfigDict(
-        frozen=True,  # Immutable models
-        extra="forbid",  # No extra fields
-        use_enum_values=True,  # Use enum values
+        frozen=True,
+        extra="forbid",
+        use_enum_values=True,
     )
 
 
-# Reusable Annotated field types for common patterns (Pydantic 2.11)
+def _create_default_pagination() -> FlextModels.Pagination:
+    """Factory for default Pagination instances - FlextModels implementation detail.
+
+    Private implementation detail - do not use directly.
+    Forward reference resolved at runtime.
+    """
+    return FlextModels.Pagination()
+
+
+# =============================================================================
+# REUSABLE FIELD TYPES - Common patterns (Pydantic 2.11)
+# =============================================================================
 # These eliminate 1000+ lines of repetitive Field definitions
 
 # UUID fields
@@ -155,7 +168,8 @@ TimestampField = Annotated[datetime, Field(default_factory=lambda: datetime.now(
 
 # Config-driven fields (pull from global FlextConfig)
 TimeoutField = Annotated[
-    int, Field(default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds)
+    int,
+    Field(default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds),
 ]
 RetryField = Annotated[
     int,
@@ -364,7 +378,9 @@ class FlextModels:
         max_retry_attempts: RetryField = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts
         )
-        retry_policy: dict[str, object] = Field(default_factory=dict)  # Pydantic v2 makes this safe!
+        retry_policy: dict[str, object] = Field(
+            default_factory=dict
+        )  # Pydantic v2 makes this safe!
 
     class VersionableMixin(BaseModel):
         """Mixin for models with versioning support.
@@ -473,14 +489,14 @@ class FlextModels:
     # Base model classes from DDD patterns
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Base class for models with timestamp fields.
-        
+
         Inherits timestamp functionality from TimestampableMixin.
         Provides created_at and updated_at fields with automatic management.
         """
 
     class Entity(TimestampedModel, IdentifiableMixin, VersionableMixin):
         """Base class for domain entities with identity.
-        
+
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
         - id: Unique identifier (from IdentifiableMixin)
         - created_at/updated_at: Timestamps (from TimestampedModel)
@@ -510,7 +526,7 @@ class FlextModels:
 
         def add_domain_event(self, event_name: str, data: FlextTypes.Core.Dict) -> None:
             """Add a domain event to be dispatched.
-            
+
             DomainEvent now uses IdentifiableMixin and TimestampableMixin,
             so id and created_at are auto-generated.
             """
@@ -603,7 +619,7 @@ class FlextModels:
 
     class Command(StrictArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Base class for CQRS commands with validation.
-        
+
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
         """
 
@@ -623,7 +639,7 @@ class FlextModels:
 
     class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Base class for domain events.
-        
+
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
         """
 
@@ -632,34 +648,9 @@ class FlextModels:
         data: dict[str, object] = Field(default_factory=dict)
         metadata: dict[str, object] = Field(default_factory=dict)
 
-    class Repository(ArbitraryTypesModel, TimeoutableMixin, RetryableMixin):
-        """Base repository model for data access patterns.
-        
-        Uses TimeoutableMixin for timeout_seconds and RetryableMixin for retry configuration.
-        """
-
-        entity_type: str
-        connection_string: str | None = None
-
-    class Specification(ArbitraryTypesModel):
-        """Specification pattern for complex queries."""
-
-        criteria: FlextTypes.Core.Dict = Field(default_factory=dict)
-        includes: FlextTypes.Core.StringList = Field(default_factory=list)
-        order_by: Annotated[list[tuple[str, str]], Field(default_factory=list)]
-        skip: int = Field(
-            default=FlextConstants.Performance.DEFAULT_SKIP,
-            ge=FlextConstants.Performance.MIN_SKIP,
-        )
-        take: int = Field(
-            default=FlextConstants.Performance.DEFAULT_TAKE,
-            ge=FlextConstants.Performance.MIN_TAKE,
-            le=FlextConstants.Performance.MAX_TAKE,
-        )
-
     class Saga(ArbitraryTypesModel, IdentifiableMixin):
         """Saga pattern for distributed transactions.
-        
+
         Uses IdentifiableMixin for id.
         """
 
@@ -768,22 +759,22 @@ class FlextModels:
 
     class Bus(TimeoutableMixin, RetryableMixin):
         """Enhanced message bus model with config-driven defaults.
-        
+
         Uses TimeoutableMixin and RetryableMixin for timeout and retry configuration.
         Uses UuidField pattern for bus_id generation.
-        
+
         Note: Removed BaseModel from inheritance since mixins already inherit from it.
         """
 
         bus_id: str = Field(default_factory=lambda: f"bus_{uuid.uuid4().hex[:8]}")
         handlers: dict[str, FlextTypes.Core.StringList] = Field(default_factory=dict)
         middlewares: FlextTypes.Core.StringList = Field(default_factory=list)
-        
+
         model_config = _BaseConfigDict.ARBITRARY
 
     class Payload[T](ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Enhanced payload model with computed field.
-        
+
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
         """
 
@@ -795,7 +786,6 @@ class FlextModels:
         message_type: str | None = None
 
         @computed_field
-        @property
         def is_expired(self) -> bool:
             """Computed property to check if payload is expired."""
             if self.expires_at is None:
@@ -837,7 +827,7 @@ class FlextModels:
 
     class Session(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Session model.
-        
+
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
         """
 
@@ -847,7 +837,7 @@ class FlextModels:
 
     class Task(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Task model for background processing.
-        
+
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
         """
 
@@ -861,7 +851,7 @@ class FlextModels:
 
     class Queue(ArbitraryTypesModel, TimeoutableMixin):
         """Queue model for message processing.
-        
+
         Uses TimeoutableMixin for timeout_seconds.
         """
 
@@ -928,7 +918,7 @@ class FlextModels:
 
     class Batch(ArbitraryTypesModel, IdentifiableMixin):
         """Batch processing model.
-        
+
         Uses IdentifiableMixin for id.
         """
 
@@ -956,7 +946,7 @@ class FlextModels:
 
     class Workflow(ArbitraryTypesModel, IdentifiableMixin):
         """Workflow model.
-        
+
         Uses IdentifiableMixin for id.
         """
 
@@ -967,7 +957,7 @@ class FlextModels:
 
     class Archive(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Archive model.
-        
+
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
         """
 
@@ -1051,29 +1041,6 @@ class FlextModels:
                 )
             return result.unwrap()
 
-    class Coordinates(Value):
-        """Geographic coordinates value object."""
-
-        latitude: float = Field(ge=-90.0, le=90.0)
-        longitude: float = Field(ge=-180.0, le=180.0)
-
-    class Money(Value):
-        """Money value object with currency."""
-
-        amount: Decimal = Field(
-            decimal_places=FlextConstants.Performance.CURRENCY_DECIMAL_PLACES
-        )
-        currency: str = Field(
-            min_length=FlextConstants.Performance.CURRENCY_CODE_LENGTH,
-            max_length=FlextConstants.Performance.CURRENCY_CODE_LENGTH,
-        )
-
-    class PhoneNumber(Value):
-        """Phone number value object."""
-
-        number: str = Field(pattern=FlextConstants.Platform.PATTERN_PHONE_NUMBER)
-        country_code: str | None = None
-
     class Url(Value):
         """Enhanced URL value object."""
 
@@ -1090,98 +1057,6 @@ class FlextModels:
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             return result.unwrap()
-
-    class DateRange(Value):
-        """Date range value object."""
-
-        start_date: date
-        end_date: date
-
-        @model_validator(mode="after")
-        def validate_date_order(self) -> Self:
-            """Ensure start_date <= end_date."""
-            if self.start_date > self.end_date:
-                msg = "start_date must be before or equal to end_date"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return self
-
-    class TimeRange(Value):
-        """Time range value object."""
-
-        start_time: time
-        end_time: time
-
-    class Address(Value):
-        """Address value object."""
-
-        street: str
-        city: str
-        state: str | None = None
-        postal_code: str | None = None
-        country: str
-
-    class Version(Value):
-        """Semantic version value object."""
-
-        major: int
-        minor: int
-        patch: int
-        pre_release: str | None = None
-
-        @override
-        def __str__(self) -> str:
-            """String representation."""
-            version = f"{self.major}.{self.minor}.{self.patch}"
-            if self.pre_release:
-                version += f"-{self.pre_release}"
-            return version
-
-    class PercentageValue(Value):
-        """Percentage value object."""
-
-        value: float  # Uses the Annotated type alias
-
-    class Port(Value):
-        """Network port value object."""
-
-        number: int  # Uses the Annotated type alias
-
-    class Duration(Value):
-        """Duration value object."""
-
-        seconds: int
-
-        @computed_field
-        def minutes(self) -> float:
-            """Convert to minutes."""
-            return self.seconds / 60.0
-
-        @computed_field
-        def hours(self) -> float:
-            """Convert to hours."""
-            return self.seconds / 3600.0
-
-    class Size(Value):
-        """Size value object."""
-
-        bytes: int
-
-        @computed_field
-        def kilobytes(self) -> float:
-            """Convert to KB."""
-            return self.bytes / float(FlextConstants.Utilities.BYTES_PER_KB)
-
-        @computed_field
-        def megabytes(self) -> float:
-            """Convert to MB."""
-            bytes_per_mb = (
-                FlextConstants.Utilities.BYTES_PER_KB
-                * FlextConstants.Utilities.BYTES_PER_KB
-            )
-            return self.bytes / float(bytes_per_mb)
 
     class Project(Entity):
         """Enhanced project entity with advanced validation."""
@@ -2402,7 +2277,7 @@ class FlextModels:
             json_schema_mode_override="validation",
         )
 
-    class CompactSerializableModel(SerializableModel):
+    class CompactSerializableModel(BaseModel):
         """Model that defaults to compact serialization.
 
         Automatically excludes unset, default, and None values during serialization
@@ -3016,7 +2891,7 @@ class FlextModels:
         @staticmethod
         def validate_url(url: str) -> FlextResult[str]:
             """Validate URL format with comprehensive checks.
-            
+
             Centralizes URL validation logic that was previously inline in FlextModels.Url.
             """
             try:
@@ -3026,12 +2901,17 @@ class FlextModels:
 
                 # Validate scheme
                 if result.scheme not in {"http", "https", "ftp", "ftps", "file"}:
-                    return FlextResult[str].fail(f"Unsupported URL scheme: {result.scheme}")
+                    return FlextResult[str].fail(
+                        f"Unsupported URL scheme: {result.scheme}"
+                    )
 
                 # Validate domain
                 if result.netloc:
                     domain = result.netloc.split(":")[0]  # Remove port
-                    if not domain or len(domain) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
+                    if (
+                        not domain
+                        or len(domain) > FlextConstants.Validation.MAX_EMAIL_LENGTH
+                    ):
                         return FlextResult[str].fail("Invalid domain in URL")
 
                     # Check for valid characters
@@ -3598,6 +3478,264 @@ class FlextModels:
     def _default_uuid_str() -> str:
         """Factory method for default UUID string."""
         return str(uuid.uuid4())
+
+    # ============================================================================
+    # HTTP PROTOCOL MODELS - Foundation for flext-api and flext-web
+    # ============================================================================
+
+    class HttpRequest(Command):
+        """Base HTTP request model - foundation for client and server.
+
+        Shared HTTP request primitive for flext-api (HTTP client) and flext-web (web server).
+        Provides common request validation, method checking, and URL validation.
+
+        USAGE: Foundation for HTTP client requests and web server request handling.
+        EXTENDS: FlextModels.Command (represents a request action/command)
+
+        Usage example:
+            from flext_core import FlextModels, FlextResult
+
+            # Create HTTP request
+            request = FlextModels.HttpRequest(
+                url="https://api.example.com/users",
+                method="GET",
+                headers={"Authorization": "Bearer token"},
+                timeout=30.0
+            )
+
+            # Validate method
+            if request.method in FlextConstants.Http.SAFE_METHODS:
+                print("Safe HTTP method")
+
+            # Domain libraries extend this:
+            # flext-api: Adds client-specific fields (full_url, request_size)
+            # flext-web: Adds server-specific fields (request_id, client_ip, user_agent)
+        """
+
+        url: str = Field(description="Request URL")
+        method: str = Field(
+            default=FlextConstants.Http.Method.GET, description="HTTP method"
+        )
+        headers: dict[str, str] = Field(
+            default_factory=dict, description="Request headers"
+        )
+        body: str | dict | None = Field(default=None, description="Request body")
+        timeout: float = Field(
+            default=FlextConstants.Network.DEFAULT_TIMEOUT,
+            ge=0.0,
+            le=300.0,
+            description="Request timeout in seconds",
+        )
+
+        @computed_field
+        @property
+        def has_body(self) -> bool:
+            """Check if request has a body."""
+            return self.body is not None
+
+        @computed_field
+        @property
+        def is_secure(self) -> bool:
+            """Check if request uses HTTPS."""
+            return self.url.startswith("https://")
+
+        @field_validator("method")
+        @classmethod
+        def validate_method(cls, v: str) -> str:
+            """Validate HTTP method using centralized constants."""
+            method_upper = v.upper()
+            valid_methods = {
+                FlextConstants.Http.Method.GET,
+                FlextConstants.Http.Method.POST,
+                FlextConstants.Http.Method.PUT,
+                FlextConstants.Http.Method.DELETE,
+                FlextConstants.Http.Method.PATCH,
+                FlextConstants.Http.Method.HEAD,
+                FlextConstants.Http.Method.OPTIONS,
+            }
+            if method_upper not in valid_methods:
+                error_msg = f"Invalid HTTP method: {v}. Valid methods: {valid_methods}"
+                raise ValueError(error_msg)
+            return method_upper
+
+        @field_validator("url")
+        @classmethod
+        def validate_url(cls, v: str) -> str:
+            """Validate URL format using centralized validation."""
+            if not v or not v.strip():
+                error_msg = "URL cannot be empty"
+                raise ValueError(error_msg)
+
+            # Allow relative URLs (starting with /)
+            if v.strip().startswith("/"):
+                return v.strip()
+
+            # Validate absolute URLs
+            result = FlextModels.create_validated_http_url(v.strip())
+            if result.is_failure:
+                error_msg = f"Invalid URL: {result.error}"
+                raise ValueError(error_msg)
+
+            url_obj = result.unwrap()
+            return str(url_obj.url) if hasattr(url_obj, "url") else str(url_obj)
+
+        @model_validator(mode="after")
+        def validate_request_consistency(self) -> Self:
+            """Cross-field validation for HTTP request consistency."""
+            # Methods without body should not have a body
+            methods_without_body = {
+                FlextConstants.Http.Method.GET,
+                FlextConstants.Http.Method.HEAD,
+                FlextConstants.Http.Method.DELETE,
+            }
+            if self.method in methods_without_body and self.body is not None:
+                error_msg = f"HTTP {self.method} requests should not have a body"
+                raise ValueError(error_msg)
+
+            # Methods with body should have Content-Type header
+            if self.method in FlextConstants.Http.METHODS_WITH_BODY and self.body:
+                headers_lower = {k.lower(): v for k, v in self.headers.items()}
+                if "content-type" not in headers_lower:
+                    # Auto-add Content-Type based on body type
+                    if isinstance(self.body, dict):
+                        self.headers[FlextConstants.Http.CONTENT_TYPE_HEADER] = (
+                            FlextConstants.Http.ContentType.JSON
+                        )
+                    elif isinstance(self.body, str):
+                        self.headers[FlextConstants.Http.CONTENT_TYPE_HEADER] = (
+                            FlextConstants.Http.ContentType.TEXT
+                        )
+
+            return self
+
+    class HttpResponse(Entity):
+        """Base HTTP response model - foundation for client and server.
+
+        Shared HTTP response primitive for flext-api (HTTP client) and flext-web (web server).
+        Provides common status code validation, success/error checking, and response metadata.
+
+        USAGE: Foundation for HTTP client responses and web server response handling.
+        EXTENDS: FlextModels.Entity (represents a response entity with ID and timestamps)
+
+        Usage example:
+            from flext_core import FlextModels, FlextConstants
+
+            # Create HTTP response
+            response = FlextModels.HttpResponse(
+                status_code=200,
+                headers={"Content-Type": "application/json"},
+                body={"result": "success"},
+                elapsed_time=0.123
+            )
+
+            # Check response status
+            if response.is_success:
+                print("Success response")
+            elif response.is_client_error:
+                print("Client error")
+
+            # Domain libraries extend this:
+            # flext-api: Adds client-specific fields (url, method, domain_events)
+            # flext-web: Adds server-specific fields (response_id, request_id, content_type)
+        """
+
+        status_code: int = Field(
+            ge=FlextConstants.Http.HTTP_STATUS_MIN,
+            le=FlextConstants.Http.HTTP_STATUS_MAX,
+            description="HTTP status code",
+        )
+        headers: dict[str, str] = Field(
+            default_factory=dict, description="Response headers"
+        )
+        body: str | dict | None = Field(default=None, description="Response body")
+        elapsed_time: float | None = Field(
+            default=None, ge=0.0, description="Request/response elapsed time in seconds"
+        )
+
+        @computed_field
+        @property
+        def is_success(self) -> bool:
+            """Check if response indicates success (2xx status codes)."""
+            return (
+                FlextConstants.Http.HTTP_SUCCESS_MIN
+                <= self.status_code
+                <= FlextConstants.Http.HTTP_SUCCESS_MAX
+            )
+
+        @computed_field
+        @property
+        def is_client_error(self) -> bool:
+            """Check if response indicates client error (4xx status codes)."""
+            return (
+                FlextConstants.Http.HTTP_CLIENT_ERROR_MIN
+                <= self.status_code
+                <= FlextConstants.Http.HTTP_CLIENT_ERROR_MAX
+            )
+
+        @computed_field
+        @property
+        def is_server_error(self) -> bool:
+            """Check if response indicates server error (5xx status codes)."""
+            return (
+                FlextConstants.Http.HTTP_SERVER_ERROR_MIN
+                <= self.status_code
+                <= FlextConstants.Http.HTTP_SERVER_ERROR_MAX
+            )
+
+        @computed_field
+        @property
+        def is_redirect(self) -> bool:
+            """Check if response indicates redirect (3xx status codes)."""
+            return (
+                FlextConstants.Http.HTTP_REDIRECTION_MIN
+                <= self.status_code
+                <= FlextConstants.Http.HTTP_REDIRECTION_MAX
+            )
+
+        @computed_field
+        @property
+        def is_informational(self) -> bool:
+            """Check if response is informational (1xx status codes)."""
+            return (
+                FlextConstants.Http.HTTP_INFORMATIONAL_MIN
+                <= self.status_code
+                <= FlextConstants.Http.HTTP_INFORMATIONAL_MAX
+            )
+
+        @field_validator("status_code")
+        @classmethod
+        def validate_status_code(cls, v: int) -> int:
+            """Validate HTTP status code using centralized constants."""
+            if not (
+                FlextConstants.Http.HTTP_STATUS_MIN
+                <= v
+                <= FlextConstants.Http.HTTP_STATUS_MAX
+            ):
+                error_msg = (
+                    f"Invalid HTTP status code: {v}. "
+                    f"Must be between {FlextConstants.Http.HTTP_STATUS_MIN} and "
+                    f"{FlextConstants.Http.HTTP_STATUS_MAX}"
+                )
+                raise ValueError(error_msg)
+            return v
+
+        @model_validator(mode="after")
+        def validate_response_consistency(self) -> Self:
+            """Cross-field validation for HTTP response consistency."""
+            # 204 No Content should not have a body
+            if (
+                self.status_code == FlextConstants.Http.HTTP_NO_CONTENT
+                and self.body is not None
+            ):
+                error_msg = "HTTP 204 No Content responses should not have a body"
+                raise ValueError(error_msg)
+
+            # Validate elapsed time
+            if self.elapsed_time is not None and self.elapsed_time < 0:
+                error_msg = "Elapsed time cannot be negative"
+                raise ValueError(error_msg)
+
+            return self
 
     # ============================================================================
     # END OF FLEXT MODELS - Foundation library complete

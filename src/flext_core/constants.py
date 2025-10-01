@@ -141,12 +141,16 @@ class FlextConstants:
         """Core identifiers hardened for the 1.0.0 release cycle."""
 
         NAME: Final[str] = "FLEXT"  # Usage count: 1
-        VERSION: Final[str] = "0.9.0"  # Usage count: 8
+        VERSION: Final[str] = (
+            "0.9.9"  # Usage count: 8 - FIXED: synced with pyproject.toml
+        )
         DEFAULT_VERSION: Final[str] = "1.0.0"  # Default version for components
 
         # Semantic zero and initial values
         ZERO: Final[int] = 0  # Semantic zero for counters/initialization
-        INITIAL_TIME: Final[float] = 0.0  # Initial timestamp value
+        INITIAL_TIME: Final[float] = (
+            0.0  # Initial timestamp value  # Initial timestamp value
+        )
 
     class Network:
         """Network defaults shared across dispatcher-aligned services."""
@@ -1410,6 +1414,123 @@ class FlextConstants:
         ERROR_INVALID_ENCODING = "Invalid character encoding"
         ERROR_MISSING_TIMESTAMP_FIELDS = "Required timestamp fields missing"
         ERROR_INVALID_LOG_LEVEL = "Invalid log level"
+
+    class Http:
+        """HTTP protocol constants for client and server operations.
+
+        Shared HTTP primitives for flext-api (client) and flext-web (server).
+        Eliminates duplication by providing single source of truth for HTTP constants.
+
+        USAGE: Foundation for HTTP client and server implementations.
+        OPTIMIZATION: Zero duplication - all HTTP constants centralized here.
+
+        Usage example:
+            from flext_core import FlextConstants
+
+            # Status code validation
+            if status_code in range(
+                FlextConstants.Http.HTTP_SUCCESS_MIN,
+                FlextConstants.Http.HTTP_SUCCESS_MAX + 1
+            ):
+                return "Success response"
+
+            # Method validation
+            if method in FlextConstants.Http.SAFE_METHODS:
+                return "Safe HTTP method"
+
+            # Port validation
+            if port == FlextConstants.Http.HTTPS_PORT:
+                return "Using HTTPS"
+        """
+
+        # HTTP Status Code Ranges
+        HTTP_STATUS_MIN: Final[int] = 100
+        HTTP_STATUS_MAX: Final[int] = 599
+        HTTP_INFORMATIONAL_MIN: Final[int] = 100
+        HTTP_INFORMATIONAL_MAX: Final[int] = 199
+        HTTP_SUCCESS_MIN: Final[int] = 200
+        HTTP_SUCCESS_MAX: Final[int] = 299
+        HTTP_REDIRECTION_MIN: Final[int] = 300
+        HTTP_REDIRECTION_MAX: Final[int] = 399
+        HTTP_CLIENT_ERROR_MIN: Final[int] = 400
+        HTTP_CLIENT_ERROR_MAX: Final[int] = 499
+        HTTP_SERVER_ERROR_MIN: Final[int] = 500
+        HTTP_SERVER_ERROR_MAX: Final[int] = 599
+
+        # Common HTTP Status Codes
+        HTTP_OK: Final[int] = 200
+        HTTP_CREATED: Final[int] = 201
+        HTTP_ACCEPTED: Final[int] = 202
+        HTTP_NO_CONTENT: Final[int] = 204
+        HTTP_MULTIPLE_CHOICES: Final[int] = 300
+        HTTP_MOVED_PERMANENTLY: Final[int] = 301
+        HTTP_FOUND: Final[int] = 302
+        HTTP_BAD_REQUEST: Final[int] = 400
+        HTTP_UNAUTHORIZED: Final[int] = 401
+        HTTP_FORBIDDEN: Final[int] = 403
+        HTTP_NOT_FOUND: Final[int] = 404
+        HTTP_METHOD_NOT_ALLOWED: Final[int] = 405
+        HTTP_CONFLICT: Final[int] = 409
+        HTTP_INTERNAL_SERVER_ERROR: Final[int] = 500
+        HTTP_NOT_IMPLEMENTED: Final[int] = 501
+        HTTP_BAD_GATEWAY: Final[int] = 502
+        HTTP_SERVICE_UNAVAILABLE: Final[int] = 503
+
+        # HTTP Methods
+        class Method:
+            """HTTP method constants."""
+
+            GET: Final[str] = "GET"
+            POST: Final[str] = "POST"
+            PUT: Final[str] = "PUT"
+            DELETE: Final[str] = "DELETE"
+            PATCH: Final[str] = "PATCH"
+            HEAD: Final[str] = "HEAD"
+            OPTIONS: Final[str] = "OPTIONS"
+            TRACE: Final[str] = "TRACE"
+            CONNECT: Final[str] = "CONNECT"
+
+        # HTTP Method Sets
+        SAFE_METHODS: ClassVar[set[str]] = {"GET", "HEAD", "OPTIONS"}
+        IDEMPOTENT_METHODS: ClassVar[set[str]] = {
+            "GET",
+            "HEAD",
+            "PUT",
+            "DELETE",
+            "OPTIONS",
+        }
+        METHODS_WITH_BODY: ClassVar[set[str]] = {"POST", "PUT", "PATCH"}
+
+        # HTTP Ports
+        HTTP_PORT: Final[int] = 80
+        HTTPS_PORT: Final[int] = 443
+        HTTPS_ALT_PORT: Final[int] = 8443
+
+        # Content Types
+        class ContentType:
+            """HTTP content type constants."""
+
+            JSON: Final[str] = "application/json"
+            XML: Final[str] = "application/xml"
+            FORM: Final[str] = "application/x-www-form-urlencoded"
+            MULTIPART: Final[str] = "multipart/form-data"
+            TEXT: Final[str] = "text/plain"
+            HTML: Final[str] = "text/html"
+            BINARY: Final[str] = "application/octet-stream"
+            PDF: Final[str] = "application/pdf"
+            CSV: Final[str] = "text/csv"
+
+        # Common HTTP Headers
+        AUTHORIZATION_HEADER: Final[str] = "Authorization"
+        CONTENT_TYPE_HEADER: Final[str] = "Content-Type"
+        ACCEPT_HEADER: Final[str] = "Accept"
+        USER_AGENT_HEADER: Final[str] = "User-Agent"
+        CONTENT_LENGTH_HEADER: Final[str] = "Content-Length"
+
+        # Default Header Values
+        DEFAULT_USER_AGENT: Final[str] = "FLEXT/1.0.0"
+        DEFAULT_CONTENT_TYPE: Final[str] = "application/json"
+        DEFAULT_ACCEPT: Final[str] = "application/json"
 
 
 __all__ = ["FlextConstants"]
