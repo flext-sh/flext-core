@@ -25,8 +25,8 @@ from __future__ import annotations
 
 import time
 import warnings
-from datetime import datetime, UTC
-from typing import Protocol, cast
+from datetime import UTC, datetime
+from typing import Protocol, cast, runtime_checkable
 
 from flext_core import (
     FlextConstants,
@@ -54,7 +54,9 @@ class DatabaseServiceProtocol(Protocol):
         ...
 
     def query_with_params(
-        self, sql: str, params: list[object]
+        self,
+        sql: str,
+        params: list[object],
     ) -> FlextResult[list[dict[str, object]]]:
         """Execute parameterized query to prevent SQL injection."""
         ...
@@ -77,6 +79,33 @@ class EmailServiceProtocol(Protocol):
 
     def send(self, to: str, subject: str, body: str) -> FlextResult[None]:
         """Send email."""
+        ...
+
+
+@runtime_checkable
+class HasGetStats(Protocol):
+    """Protocol for objects with get_stats method."""
+
+    def get_stats(self) -> dict[str, object]:
+        """Return statistics dictionary."""
+        ...
+
+
+@runtime_checkable
+class HasCacheSet(Protocol):
+    """Protocol for cache objects with set method."""
+
+    def set(self, key: str, value: object) -> FlextResult[None]:
+        """Set value in cache."""
+        ...
+
+
+@runtime_checkable
+class HasCacheGet(Protocol):
+    """Protocol for cache objects with get method."""
+
+    def get(self, key: str) -> FlextResult[object]:
+        """Get value from cache."""
         ...
 
 
@@ -171,7 +200,8 @@ class DatabaseService:
         # Validate command type
         valid_command_types = (dict, list, tuple)
         if not isinstance(command_type, type) or not issubclass(
-            command_type, valid_command_types
+            command_type,
+            valid_command_types,
         ):
             return FlextResult[list[dict[str, object]]].fail(
                 "Invalid command type for query result",
@@ -183,7 +213,7 @@ class DatabaseService:
         query_preview = sql[:50] + ("..." if len(sql) > 50 else "")
         param_preview = str(params)[:50] + ("..." if len(str(params)) > 50 else "")
         self._logger.debug(
-            f"Executing parameterized query #{self._query_count}: {query_preview} with params: {param_preview}"
+            f"Executing parameterized query #{self._query_count}: {query_preview} with params: {param_preview}",
         )
 
         # Simulate different responses based on query with enhanced data
@@ -244,9 +274,10 @@ class CacheService:
         # Check if key exists
         if key not in self._cache:
             self._misses += 1
-            self._logger.debug(f"Cache miss: {key}")
+            self._logger.debug("Cache miss: %s", key)
             return FlextResult[object].fail(
-                f"Key not found: {key}", error_code=FlextConstants.Errors.NOT_FOUND
+                f"Key not found: {key}",
+                error_code=FlextConstants.Errors.NOT_FOUND,
             )
 
         # Check TTL if metadata exists
@@ -270,7 +301,7 @@ class CacheService:
                 del self._cache[key]
                 del self._metadata[key]
                 self._misses += 1
-                self._logger.debug(f"Cache expired: {key}")
+                self._logger.debug("Cache expired: %s", key)
                 return FlextResult[object].fail(
                     f"Key expired: {key}",
                     error_code=FlextConstants.Errors.OPERATION_ERROR,
@@ -278,11 +309,14 @@ class CacheService:
 
         # Valid hit
         self._hits += 1
-        self._logger.debug(f"Cache hit: {key}")
+        self._logger.debug("Cache hit: %s", key)
         return FlextResult[object].ok(self._cache[key])
 
     def set(
-        self, key: str, value: object, ttl_seconds: int | None = None
+        self,
+        key: str,
+        value: object,
+        ttl_seconds: int | None = None,
     ) -> FlextResult[None]:
         """Set value in cache with optional TTL override."""
         if not key or not key.strip():
@@ -309,7 +343,7 @@ class CacheService:
         }
 
         self._logger.debug(
-            f"Cache set: {key} (TTL: {ttl_seconds or self._ttl_seconds}s)"
+            f"Cache set: {key} (TTL: {ttl_seconds or self._ttl_seconds}s)",
         )
         return FlextResult[None].ok(None)
 
@@ -336,7 +370,7 @@ class CacheService:
 
         del self._cache[oldest_key]
         del self._metadata[oldest_key]
-        self._logger.debug(f"Cache evicted: {oldest_key}")
+        self._logger.debug("Cache evicted: %s", oldest_key)
 
     def get_stats(self) -> dict[str, object]:
         """Get cache service statistics."""
@@ -362,9 +396,9 @@ class EmailService:
 
     def send(self, to: str, subject: str, body: str) -> FlextResult[None]:
         """Send email (simulated)."""
-        self._logger.info(f"Email sent to {to}: {subject}")
+        self._logger.info("Email sent to %s: %s", to, subject)
         self._logger.debug(
-            f"Email body: {body[:100]}..."
+            f"Email body: {body[:100]}...",
         )  # Log first 100 chars of body
         # Simulate email sending with the body content
         return FlextResult[None].ok(None)
@@ -406,7 +440,7 @@ class UserRepository(FlextService[User]):
 
         # Check cache first
         if user_id in self._cache:
-            self._logger.debug(f"User cache hit: {user_id}")
+            self._logger.debug("User cache hit: %s", user_id)
             return FlextResult[User].ok(self._cache[user_id])
 
         # Use parameterized query (simulated) to avoid SQL injection
@@ -459,7 +493,7 @@ class UserRepository(FlextService[User]):
 
         # Cache the user
         self._cache[user_id] = user
-        self._logger.info(f"User loaded from database: {user_id}")
+        self._logger.info("User loaded from database: %s", user_id)
 
         return FlextResult[User].ok(user)
 
@@ -581,15 +615,15 @@ class ComprehensiveDIService(FlextService[User]):
             db_result = self._container.get("database")
             if db_result.is_success:
                 db = db_result.unwrap()
-                if hasattr(db, "get_stats"):
-                    db_stats_method = getattr(db, "get_stats")
+                if isinstance(db, HasGetStats):
+                    db_stats_method = db.get_stats
                     db_stats = db_stats_method()
 
             cache_result = self._container.get("cache")
             if cache_result.is_success:
                 cache = cache_result.unwrap()
-                if hasattr(cache, "get_stats"):
-                    cache_stats = getattr(cache, "get_stats")()
+                if isinstance(cache, HasGetStats):
+                    cache_stats = cache.get_stats()
 
             # Log comprehensive statistics
             self._logger.info(
@@ -606,7 +640,7 @@ class ComprehensiveDIService(FlextService[User]):
                 },
             )
         except Exception as e:
-            self._logger.warning(f"Failed to log statistics: {e}")
+            self._logger.warning("Failed to log statistics: %s", e)
 
     def get_service_stats(self) -> dict[str, object]:
         """Get comprehensive service statistics."""
@@ -658,11 +692,11 @@ class ComprehensiveDIService(FlextService[User]):
         if db_result.is_success:
             db = db_result.unwrap()
             print(f"✅ Got database: {type(db).__name__}")
-            if hasattr(db, "get_stats"):
-                stats_method = getattr(db, "get_stats")
+            if isinstance(db, HasGetStats):
+                stats_method = db.get_stats
                 stats = stats_method()
                 print(
-                    f"   Database stats: {stats.get('queries_executed', 0)} queries executed"
+                    f"   Database stats: {stats.get('queries_executed', 0)} queries executed",
                 )
         else:
             print(f"❌ Failed to get database: {db_result.error}")
@@ -672,11 +706,11 @@ class ComprehensiveDIService(FlextService[User]):
             db_typed = typed_result.unwrap()
             print(f"✅ Got typed database: {type(db_typed).__name__}")
             # Safe access to database stats
-            if hasattr(db_typed, "get_stats"):
+            if isinstance(db_typed, HasGetStats):
                 stats = db_typed.get_stats()
                 if isinstance(stats, dict):
                     print(
-                        f"   Database stats: {stats.get('queries_executed', 0)} queries executed"
+                        f"   Database stats: {stats.get('queries_executed', 0)} queries executed",
                     )
         else:
             print(f"❌ Type validation failed: {typed_result.error}")
@@ -693,11 +727,11 @@ class ComprehensiveDIService(FlextService[User]):
             cache = cache_result.unwrap()
             user_dict = sample_user
             cache_key = user_dict.get("id", "test_user")
-            if hasattr(cache, "set"):
-                set_method = getattr(cache, "set")
+            if isinstance(cache, HasCacheSet):
+                set_method = cache.set
                 set_method(str(cache_key), sample_user)
-            if hasattr(cache, "get"):
-                get_method = getattr(cache, "get")
+            if isinstance(cache, HasCacheGet):
+                get_method = cache.get
                 get_result = get_method(str(cache_key))
             else:
                 get_result = FlextResult[object].fail("Cache get method not available")
@@ -706,14 +740,14 @@ class ComprehensiveDIService(FlextService[User]):
                 if isinstance(cached_data, dict):
                     print(f"✅ Cache test: {cached_data.get('email')}")
 
-            if hasattr(cache, "get_stats"):
-                stats_method = getattr(cache, "get_stats")
+            if isinstance(cache, HasGetStats):
+                stats_method = cache.get_stats
                 stats = stats_method()
                 if isinstance(stats, dict):
                     print(
                         "   Cache stats: "
                         f"{stats.get('current_size', 0)} items, "
-                        f"{stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses"
+                        f"{stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses",
                     )
 
     # ========== BATCH OPERATIONS ==========
