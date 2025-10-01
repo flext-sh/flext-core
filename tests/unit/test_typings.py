@@ -189,6 +189,7 @@ class TestFlextTypes:
         assert FlextTypes.Core.NestedDict == dict[str, dict[str, object]]
         # OrderedDict is actually OrderedDict type
         from collections import OrderedDict
+
         assert FlextTypes.Core.OrderedDict == OrderedDict[str, object]
 
         # Test configuration types
@@ -202,10 +203,10 @@ class TestFlextTypes:
     def test_flexttypes_domain_types(self) -> None:
         """Test FlextTypes.Domain types."""
         # These are attribute names, not actual types
-        assert hasattr(FlextTypes.Domain, 'EntityId')
-        assert hasattr(FlextTypes.Domain, 'Entity')
-        assert hasattr(FlextTypes.Domain, 'ValueObject')
-        assert hasattr(FlextTypes.Domain, 'AggregateRoot')
+        assert hasattr(FlextTypes.Domain, "EntityId")
+        assert hasattr(FlextTypes.Domain, "Entity")
+        assert hasattr(FlextTypes.Domain, "ValueObject")
+        assert hasattr(FlextTypes.Domain, "AggregateRoot")
 
     def test_flexttypes_service_types(self) -> None:
         """Test FlextTypes.Service types."""
@@ -305,17 +306,17 @@ class TestFlextTypes:
     def test_flexttypes_identifiers_types(self) -> None:
         """Test FlextTypes.Identifiers types."""
         # These are attribute names
-        assert hasattr(FlextTypes.Identifiers, 'Id')
-        assert hasattr(FlextTypes.Identifiers, 'Name')
-        assert hasattr(FlextTypes.Identifiers, 'Path')
-        assert hasattr(FlextTypes.Identifiers, 'Uri')
-        assert hasattr(FlextTypes.Identifiers, 'Token')
+        assert hasattr(FlextTypes.Identifiers, "Id")
+        assert hasattr(FlextTypes.Identifiers, "Name")
+        assert hasattr(FlextTypes.Identifiers, "Path")
+        assert hasattr(FlextTypes.Identifiers, "Uri")
+        assert hasattr(FlextTypes.Identifiers, "Token")
 
     def test_flexttypes_protocol_types(self) -> None:
         """Test FlextTypes.Protocol types."""
         # These are attribute names
-        assert hasattr(FlextTypes.Protocol, 'ProtocolVersion')
-        assert hasattr(FlextTypes.Protocol, 'ConnectionString')
+        assert hasattr(FlextTypes.Protocol, "ProtocolVersion")
+        assert hasattr(FlextTypes.Protocol, "ConnectionString")
 
         creds: FlextTypes.Protocol.AuthCredentials = {"user": "pass"}
         assert isinstance(creds, dict)
