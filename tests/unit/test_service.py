@@ -41,20 +41,6 @@ class SampleUserService(FlextService[object]):
             },
         )
 
-    def execute(self) -> FlextResult[object]:
-        """Execute user operation hronously.
-
-        Returns:
-            FlextResult[object]: Success with user headers
-
-        """
-        return FlextResult[object].ok(
-            {
-                "user_id": "default_123",
-                "email": "test@example.com",
-            },
-        )
-
 
 class SampleComplexService(FlextService[object]):
     """Sample service with complex validation and operations used in tests."""
@@ -116,19 +102,6 @@ class SampleComplexService(FlextService[object]):
 
         return FlextResult[object].ok(f"Processed: {self.name} with value {self.value}")
 
-    def execute(self) -> FlextResult[object]:
-        """Execute complex operation hronously."""
-        if not self.name:
-            return FlextResult[object].fail("Name is required")
-        if self.value < 0:
-            return FlextResult[object].fail("Value must be non-negative")
-        if len(self.name) > 50:
-            return FlextResult[object].fail("Name too long")
-        if self.value > 1000:
-            return FlextResult[object].fail("Value too large")
-
-        return FlextResult[object].ok(f"Processed: {self.name} with value {self.value}")
-
 
 class SampleFailingService(FlextService[None]):
     """Sample service that fails validation, used in tests."""
@@ -139,10 +112,6 @@ class SampleFailingService(FlextService[None]):
 
     def execute(self) -> FlextResult[None]:
         """Execute failing operation."""
-        return FlextResult[None].fail("Execution failed")
-
-    def execute(self) -> FlextResult[None]:
-        """Execute failing operation hronously."""
         return FlextResult[None].fail("Execution failed")
 
 
@@ -173,15 +142,6 @@ class SampleExceptionService(FlextService[str]):
             raise RuntimeError(msg)
         return FlextResult[str].ok("Success")
 
-    def execute(self) -> FlextResult[object]:
-        """Execute operation hronously."""
-        return FlextResult[object].ok(
-            {
-                "user_id": "default_123",
-                "email": "test@example.com",
-            },
-        )
-
 
 class ComplexTypeService(FlextService[dict[str, object]]):
     """Test service with complex types for testing."""
@@ -191,13 +151,6 @@ class ComplexTypeService(FlextService[dict[str, object]]):
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute operation with complex types."""
-        return FlextResult[dict[str, object]].ok({
-            "data": self.data,
-            "items": self.items,
-        })
-
-    def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute operation with complex types hronously."""
         return FlextResult[dict[str, object]].ok({
             "data": self.data,
             "items": self.items,
@@ -229,9 +182,6 @@ class TestDomainServicesFixed:
 
         # Create a concrete implementation to test abstract behavior
         class ConcreteService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
-                return FlextResult[str].ok("test")
-
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 

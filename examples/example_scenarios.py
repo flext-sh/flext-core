@@ -10,7 +10,7 @@ and easy to read.
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Final
+from typing import Final
 
 from flext_core import FlextLogger, FlextResult
 from flext_tests import FlextTestsFactories
@@ -23,7 +23,7 @@ class ExampleScenarios:
 
     @classmethod
     @lru_cache(maxsize=1)
-    def dataset(cls) -> dict[str, Any]:
+    def dataset(cls) -> dict[str, object]:
         """Return a reusable dataset with users, configs, and fields."""
         builder = FlextTestsFactories.TestDataBuilder()
         return (
@@ -34,34 +34,34 @@ class ExampleScenarios:
         )
 
     @staticmethod
-    def validation_data() -> dict[str, Any]:
+    def validation_data() -> dict[str, object]:
         """Return shared validation data used by multiple examples."""
         return FlextTestsFactories.create_validation_test_data()
 
     @staticmethod
-    def realistic_data() -> dict[str, Any]:
+    def realistic_data() -> dict[str, object]:
         """Return realistic integration-style data for advanced flows."""
         return FlextTestsFactories.create_realistic_test_data()
 
     @staticmethod
-    def user(**overrides: Any) -> dict[str, Any]:
+    def user(**overrides: object) -> dict[str, object]:
         """Return a single user dictionary."""
         return FlextTestsFactories.UserFactory.create(**overrides)
 
     @staticmethod
-    def users(count: int = _DEFAULT_USER_COUNT) -> list[dict[str, Any]]:
+    def users(count: int = _DEFAULT_USER_COUNT) -> list[dict[str, object]]:
         """Return multiple users."""
         return FlextTestsFactories.UserFactory.create_batch(count)
 
     @staticmethod
-    def config(*, production: bool = False, **overrides: Any) -> dict[str, Any]:
+    def config(*, production: bool = False, **overrides: object) -> dict[str, object]:
         """Return environment configuration data."""
         if production:
             return FlextTestsFactories.ConfigFactory.production_config(**overrides)
         return FlextTestsFactories.ConfigFactory.create(**overrides)
 
     @staticmethod
-    def service_batch(logger_name: str = "example_batch") -> dict[str, Any]:
+    def service_batch(logger_name: str = "example_batch") -> dict[str, object]:
         """Return services ready for ``FlextContainer.batch_register``."""
         return {
             "logger": FlextLogger(logger_name),
@@ -70,27 +70,27 @@ class ExampleScenarios:
         }
 
     @staticmethod
-    def payload(**overrides: Any) -> dict[str, Any]:
+    def payload(**overrides: object) -> dict[str, object]:
         """Return a messaging payload."""
         return ExampleScenarios.realistic_data()["api_response"] | overrides
 
     @staticmethod
-    def result_success(data: Any | None = None) -> FlextResult[Any]:
+    def result_success(data: object | None = None) -> FlextResult[object]:
         """Return a successful ``FlextResult`` instance."""
         return FlextTestsFactories.ResultFactory.success_result(data)
 
     @staticmethod
-    def result_failure(message: str = "Scenario error") -> FlextResult[Any]:
+    def result_failure(message: str = "Scenario error") -> FlextResult[object]:
         """Return a failed ``FlextResult`` instance."""
         return FlextTestsFactories.ResultFactory.failure_result(message)
 
     @staticmethod
-    def user_result(success: bool = True) -> FlextResult[dict[str, Any]]:
+    def user_result(success: bool = True) -> FlextResult[dict[str, object]]:
         """Return a user-specific ``FlextResult``."""
         return FlextTestsFactories.ResultFactory.user_result(success=success)
 
     @staticmethod
-    def error_scenario(error_type: str = "ValidationError") -> dict[str, Any]:
+    def error_scenario(error_type: str = "ValidationError") -> dict[str, object]:
         """Return a structured error scenario for examples."""
         return {
             "error_type": error_type,
@@ -101,7 +101,7 @@ class ExampleScenarios:
         }
 
     @staticmethod
-    def metadata(source: str = "examples", **extra: Any) -> dict[str, Any]:
+    def metadata(source: str = "examples", **extra: object) -> dict[str, object]:
         """Return standard metadata for logging and utilities examples."""
         tags = extra.pop("tags", ["scenario", "demo"])
         return {

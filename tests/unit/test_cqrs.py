@@ -127,10 +127,10 @@ class TestFlextCqrs:
 
         assert result.is_failure
         assert result.error == "Email validation failed"
-        assert "handler_id" in result.error_data
-        assert "handler_name" in result.error_data
-        assert "handler_type" in result.error_data
-        assert "handler_metadata" in result.error_data
+        assert result.error is not None and "handler_id" in result.error_data
+        assert result.error is not None and "handler_name" in result.error_data
+        assert result.error is not None and "handler_type" in result.error_data
+        assert result.error is not None and "handler_metadata" in result.error_data
 
         # Verify enhanced error data
         assert result.error_data["handler_id"] == "validation_handler"

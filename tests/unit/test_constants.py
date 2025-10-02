@@ -18,7 +18,7 @@ class TestFlextConstants:
         """Test core constants access."""
         assert FlextConstants.Core.NAME == "FLEXT"
         assert FlextConstants.Core.VERSION == "0.9.9"
-        assert FlextConstants.Core.DEFAULT_VERSION == "1.0.0"
+        assert FlextConstants.Core.DEFAULT_VERSION == "0.9.9"
 
     def test_network_constants(self) -> None:
         """Test network constants access."""

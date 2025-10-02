@@ -19,9 +19,9 @@ import pathlib
 import re
 import secrets
 import string
+import subprocess
 import threading
 import time
-import typing
 import uuid
 from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
@@ -29,11 +29,9 @@ from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
 from typing import (
     ClassVar,
-    Protocol,
     cast,
     get_origin,
     get_type_hints,
-    runtime_checkable,
 )
 
 from pydantic import BaseModel
@@ -42,35 +40,9 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import Dict, T, U
-
-
-@runtime_checkable
-class HasModelDump(Protocol):
-    """Protocol for objects that have model_dump method.
-
-    Supports Pydantic's model_dump signature with optional mode parameter.
-    """
-
-    def model_dump(self, mode: str = "python") -> dict[str, object]:
-        """Dump the model to a dictionary.
-
-        Args:
-            mode: Serialization mode ('python' or 'json')
-
-        Returns:
-            Dictionary representation of the model
-
-        """
-        ...
-
-
-# All constants now use FlextConstants - no local constants needed
-# Using FlextConstants.Utilities for utility-specific constants
-# Using FlextConstants.Security for security-related constants
-# Using FlextConstants.Network for network-related constants
-# Using FlextConstants.Reliability for retry-related constants
+from flext_core.typings import Dict, FlextTypes, T, U
 
 
 class FlextUtilities:
@@ -206,13 +178,6 @@ class FlextUtilities:
         FlextModels: For domain model validation patterns.
 
     """
-
-    MIN_TOKEN_LENGTH = FlextConstants.Security.MIN_PASSWORD_LENGTH
-
-    @staticmethod
-    def generate_id() -> str:
-        """Generate a unique ID."""
-        return FlextUtilities.Generators.generate_id()
 
     @staticmethod
     def safe_json_parse(json_string: str) -> FlextResult[dict[str, object]]:
@@ -987,7 +952,9 @@ class FlextUtilities:
         """Processing utilities with reliability patterns."""
 
         @staticmethod
-        def _get_circuit_breaker_state(operation_id: str) -> dict[str, object]:
+        def _get_circuit_breaker_state(
+            operation_id: str,
+        ) -> FlextTypes.Reliability.CircuitStats:
             """Get circuit breaker state for operation."""
             # This is a simplified implementation
             # In a real implementation, this would track circuit breaker states
@@ -1170,11 +1137,16 @@ class FlextUtilities:
                 return FlextResult[T].fail(f"Circuit breaker operation failed: {e}")
 
         # Circuit breaker state management (class-level state)
-        _circuit_breaker_states: ClassVar[dict[str, dict[str, object]]] = {}
+        _circuit_breaker_states: ClassVar[
+            FlextTypes.Reliability.CircuitBreakerRegistry
+        ] = {}
         _circuit_breaker_lock: ClassVar[threading.Lock] = threading.Lock()
 
         @classmethod
-        def get_circuit_breaker_state(cls, operation_id: str) -> dict[str, object]:
+        def get_circuit_breaker_state(
+            cls,
+            operation_id: str,
+        ) -> FlextTypes.Reliability.CircuitStats:
             """Get or create circuit breaker state for an operation."""
             with cls._circuit_breaker_lock:
                 if operation_id not in cls._circuit_breaker_states:
@@ -1496,7 +1468,7 @@ class FlextUtilities:
                     return x
 
                 batch_results: list[FlextResult[list[U]]] = [
-                    typing.cast(
+                    cast(
                         "FlextResult[list[U]]",
                         getattr(FlextResult, "sequence", _identity)([
                             processor(item) for item in batch
@@ -1610,7 +1582,7 @@ class FlextUtilities:
             if isinstance(value, bytes):
                 return ("bytes", value.hex())
 
-            if isinstance(value, HasModelDump):
+            if isinstance(value, FlextProtocols.Foundation.HasModelDump):
                 try:
                     dumped: dict[str, object] = value.model_dump()
                 except TypeError:
@@ -1692,7 +1664,7 @@ class FlextUtilities:
             """
             try:
                 # For Pydantic models, use model_dump with sorted keys
-                if isinstance(command, HasModelDump):
+                if isinstance(command, FlextProtocols.Foundation.HasModelDump):
                     data = command.model_dump(mode="python")
                     # Sort keys recursively for deterministic ordering
                     sorted_data = FlextUtilities.Cache.sort_dict_keys(data)
@@ -2444,10 +2416,10 @@ class FlextUtilities:
             if expected_type is object:
                 return True
 
-            # Any type should be compatible with everything
+            # object type should be compatible with everything
             if (
                 hasattr(expected_type, "__name__")
-                and getattr(expected_type, "__name__", "") == "Any"
+                and getattr(expected_type, "__name__", "") == "object"
             ):
                 return True
 
@@ -3016,3 +2988,94 @@ class FlextUtilities:
                 return result
 
             return circuit_breaker_composed
+
+    @staticmethod
+    def run_external_command(
+        cmd: list[str],
+        *,
+        capture_output: bool = True,
+        check: bool = True,
+        env: dict[str, str] | None = None,
+        cwd: str | pathlib.Path | None = None,
+        timeout: float | None = None,
+        command_input: str | bytes | None = None,
+        text: bool | None = None,
+    ) -> FlextResult[subprocess.CompletedProcess[str]]:
+        """Execute external command with proper error handling using FlextResult pattern.
+
+        Args:
+            cmd: Command to execute as list of strings
+            capture_output: Whether to capture stdout/stderr
+            check: Whether to raise exception on non-zero exit code
+            env: Environment variables for the command
+            cwd: Working directory for the command
+            timeout: Command timeout in seconds
+            input: Input to send to the command
+            text: Whether to decode stdout/stderr as text (Python 3.7+)
+
+        Returns:
+            FlextResult containing CompletedProcess on success or error details on failure
+
+        Example:
+            ```python
+            result = FlextUtilities.run_external_command(
+                ["python", "script.py"], capture_output=True, timeout=60.0
+            )
+            if result.is_success:
+                process = result.value
+                print(f"Exit code: {process.returncode}")
+                print(f"Output: {process.stdout}")
+            ```
+
+        """
+        try:
+            # Execute subprocess.run with explicit parameters to avoid overload issues
+            result = subprocess.run(
+                cmd,
+                capture_output=capture_output,
+                check=check,
+                env=env,
+                cwd=cwd,
+                timeout=timeout,
+                input=command_input,
+                text=text if text is not None else True,
+            )
+
+            return FlextResult.ok(result)
+
+        except subprocess.CalledProcessError as e:
+            return FlextResult.fail(
+                f"Command failed with exit code {e.returncode}",
+                error_code="COMMAND_FAILED",
+                error_data={
+                    "cmd": cmd,
+                    "returncode": e.returncode,
+                    "stdout": e.stdout,
+                    "stderr": e.stderr,
+                },
+            )
+        except subprocess.TimeoutExpired as e:
+            return FlextResult.fail(
+                f"Command timed out after {timeout} seconds",
+                error_code="COMMAND_TIMEOUT",
+                error_data={
+                    "cmd": cmd,
+                    "timeout": timeout,
+                    "stdout": e.stdout,
+                    "stderr": e.stderr,
+                },
+            )
+        except FileNotFoundError:
+            return FlextResult.fail(
+                f"Command not found: {cmd[0]}",
+                error_code="COMMAND_NOT_FOUND",
+                error_data={"cmd": cmd, "executable": cmd[0]},
+            )
+        except Exception as e:
+            return FlextResult.fail(
+                f"Unexpected error running command: {e!s}",
+                error_code="COMMAND_ERROR",
+                error_data={"cmd": cmd, "error": str(e)},
+            )
+
+    generate_id = Generators.generate_id

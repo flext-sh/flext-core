@@ -21,7 +21,6 @@ from flext_core import (
 )
 
 
-# Lazy logger initialization to avoid configuration issues
 class _LoggerSingleton:
     """Singleton logger instance."""
 
@@ -165,9 +164,6 @@ class FlextTestsHttp:
         @override
         def __init__(self, httpx_mock: object) -> None:
             """Initialize HTTP scenario builder."""
-            if HTTPXMock is None:
-                msg = "HTTPXMock not available - install pytest-httpx"
-                raise ImportError(msg)
             self.httpx_mock = httpx_mock
             self.scenarios: list[FlextTypes.Core.Dict] = []
 

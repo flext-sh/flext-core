@@ -6,6 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
+from typing import Final
+
+from flext_core import __version__ as _version_module
+
+# Backwards compatibility: expose legacy module names without keeping files.
+sys.modules.setdefault("flext_core.version", _version_module)
+sys.modules.setdefault("flext_core.metadata", _version_module)
+
+from flext_core.__version__ import VERSION, FlextVersion
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -27,10 +37,8 @@ from flext_core.typings import (
     T1,
     T2,
     T3,
-    # Core TypeVars
     E,
     F,
-    # Main type system
     FlextTypes,
     K,
     MessageT,
@@ -38,21 +46,17 @@ from flext_core.typings import (
     P,
     R,
     T,
-    # Covariant TypeVars
     T_co,
-    # Contravariant TypeVars
     T_contra,
     TAccumulate,
     TAggregate,
     TAggregate_co,
-    # Domain TypeVars
     TCommand,
     TCommand_contra,
     TEvent,
     TEvent_contra,
     TInput_contra,
     TItem,
-    # Plugin-specific TypeVars
     TPlugin,
     TPluginConfig,
     TPluginContext,
@@ -79,12 +83,20 @@ from flext_core.typings import (
     WorkspaceStatus,
 )
 from flext_core.utilities import FlextUtilities
-from flext_core.version import FlextVersionManager, __version__
+
+FlextCoreVersion = FlextVersion
+
+PROJECT_VERSION: Final[FlextVersion] = VERSION
+
+__version__: str = VERSION.version
+__version_info__: tuple[int | str, ...] = VERSION.version_info
 
 __all__ = [
+    "PROJECT_VERSION",
     "T1",
     "T2",
     "T3",
+    "VERSION",
     "E",
     "F",
     "FlextBus",
@@ -92,6 +104,7 @@ __all__ = [
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
+    "FlextCoreVersion",
     "FlextCqrs",
     "FlextDispatcher",
     "FlextExceptions",
@@ -100,13 +113,14 @@ __all__ = [
     "FlextMixins",
     "FlextModels",
     "FlextProcessors",
+    "FlextProtocolRegistry",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
-    "FlextVersionManager",
+    "FlextVersion",
     "K",
     "MessageT",
     "MessageT_contra",
@@ -149,4 +163,5 @@ __all__ = [
     "W",
     "WorkspaceStatus",
     "__version__",
+    "__version_info__",
 ]

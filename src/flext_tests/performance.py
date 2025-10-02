@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import asyncio
 import concurrent.futures
 import gc
 import time
@@ -32,12 +33,10 @@ class BenchmarkProtocol(Protocol[P, T]):
         **kwargs: P.kwargs,
     ) -> T:
         """Call the benchmark function."""
-        ...
 
     @property
     def stats(self: object) -> FlextTypes.Core.Dict:
         """Benchmark statistics."""
-        ...
 
 
 # Performance pattern constants
@@ -767,7 +766,7 @@ class FlextTestsPerformance:
 
                     """
                     tasks = [func(*args, **kwargs) for _ in range(workers)]
-                    return list(gather(*tasks))
+                    return list(asyncio.gather(*tasks))
 
                 start_time = time.perf_counter()
                 result = concurrent_execution()

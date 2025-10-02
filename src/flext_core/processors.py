@@ -9,24 +9,17 @@ from __future__ import annotations
 import threading
 import time
 from collections.abc import Callable
-from typing import Protocol, cast, override, runtime_checkable
+from typing import (
+    cast,
+    override,
+)
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-
-# ISSUE: Violates SOLID principles - massive god class with 1200+ lines spanning multiple responsibilities
-# ISSUE: Should be split into separate modules: FlextRegistry, FlextPipeline, FlextCircuitBreaker, FlextRateLimiter, etc.
-
-
-@runtime_checkable
-class HasResultValue(Protocol):
-    """Protocol for FlextResult-like objects with value and is_success attributes."""
-
-    value: object
-    is_success: bool
 
 
 class FlextProcessors:
@@ -1342,7 +1335,7 @@ class FlextProcessors:
 
                 """
                 # Extract data from FlextResult if it's a FlextResult
-                if isinstance(request, HasResultValue):
+                if isinstance(request, FlextProtocols.Foundation.HasResultValue):
                     actual_request = request.value
                 else:
                     actual_request = request

@@ -292,8 +292,8 @@ class FlextDispatcher:
         self._bus = bus or FlextBus.create_command_bus(bus_config=bus_config_dict_final)
         self._logger = FlextLogger(self.__class__.__name__)
 
-        # Circuit breaker state
-        self._circuit_breaker_failures: dict[str, int] = {}
+        # Circuit breaker state - using FlextTypes.Reliability
+        self._circuit_breaker_failures: FlextTypes.Reliability.CircuitBreakerRegistry = {}
         circuit_breaker_threshold_raw = config.get(
             "circuit_breaker_threshold",
             FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
@@ -304,9 +304,11 @@ class FlextDispatcher:
             else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
         )
 
-        # Rate limiting state
-        self._rate_limit_requests: dict[str, list[float]] = {}
-        self._rate_limit_state: dict[str, dict[str, float | int]] = {}
+        # Rate limiting state - using FlextTypes.Reliability
+        self._rate_limit_requests: dict[
+            str, FlextTypes.Reliability.RateLimitWindow
+        ] = {}
+        self._rate_limit_state: FlextTypes.Reliability.RateLimiterRegistry = {}
         rate_limit_raw = config.get(
             "rate_limit",
             FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
@@ -335,9 +337,9 @@ class FlextDispatcher:
             else max(1.0, 0.5 * self._rate_limit_window),
         )
 
-        # Audit and performance tracking
-        self._audit_log: list[dict[str, object]] = []
-        self._performance_metrics: dict[str, dict[str, int | float]] = {}
+        # Audit and performance tracking - using FlextTypes.Reliability
+        self._audit_log: list[FlextTypes.Core.Dict] = []
+        self._performance_metrics: FlextTypes.Reliability.PerformanceMetrics = {}
 
         # Timeout handling configuration
         self._use_timeout_executor = bool(
@@ -1077,8 +1079,8 @@ class FlextDispatcher:
         attempts: int,
     ) -> None:
         """Record successful dispatch."""
-        # Record in audit log
-        audit_entry: dict[str, object] = {
+        # Record in audit log - using FlextTypes.Core.Dict
+        audit_entry: FlextTypes.Core.Dict = {
             "timestamp": time.time(),
             "message_type": message_type,
             "success": True,
@@ -1087,7 +1089,7 @@ class FlextDispatcher:
         }
         self._audit_log.append(audit_entry)
 
-        # Record performance metrics
+        # Record performance metrics - using FlextTypes.Reliability.PerformanceMetrics
         if message_type not in self._performance_metrics:
             self._performance_metrics[message_type] = {
                 "total_executions": 0,
@@ -1113,8 +1115,8 @@ class FlextDispatcher:
         attempts: int,
     ) -> None:
         """Record failed dispatch."""
-        # Record in audit log
-        audit_entry: dict[str, object] = {
+        # Record in audit log - using FlextTypes.Core.Dict
+        audit_entry: FlextTypes.Core.Dict = {
             "timestamp": time.time(),
             "message_type": message_type,
             "success": False,
@@ -1565,14 +1567,14 @@ class FlextDispatcher:
         failures = self._circuit_breaker_failures.get(message_type, 0)
         return failures >= self._circuit_breaker_threshold
 
-    def get_audit_log(self) -> list[dict[str, object]]:
+    def get_audit_log(self) -> list[FlextTypes.Core.Dict]:
         """Get audit log entries."""
         return self._audit_log.copy()
 
-    def get_performance_metrics(self) -> dict[str, object]:
+    def get_performance_metrics(self) -> FlextTypes.Core.Dict:
         """Get performance metrics."""
         # Convert performance metrics to the expected format
-        result: dict[str, object] = {}
+        result: FlextTypes.Core.Dict = {}
         for message_type, metrics in self._performance_metrics.items():
             result[message_type] = {
                 "dispatches": metrics["total_executions"],

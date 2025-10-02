@@ -10,14 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-HandlerTypeLiteral = Literal["command", "query"]
 
 
 class FlextCqrs:
@@ -188,7 +185,7 @@ class FlextCqrs:
             final_error_code = error_code or FlextConstants.Cqrs.CQRS_OPERATION_FAILED
 
             # Enhance error data with configuration context
-            enhanced_error_data: dict[str, object] = (
+            enhanced_error_data: FlextTypes.Core.Dict = (
                 dict(error_data) if error_data else {}
             )
             if config and hasattr(config, "handler_id"):

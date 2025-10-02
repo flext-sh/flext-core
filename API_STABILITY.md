@@ -130,7 +130,7 @@ from flext_core import FlextContext
 # ✅ STABLE - Core functionality guaranteed
 context = FlextContext()
 context.set("key", value)
-context.get("key") -> Any
+context.get("key") -> object
 context.clear()
 
 # May receive: New helper methods (backward compatible)

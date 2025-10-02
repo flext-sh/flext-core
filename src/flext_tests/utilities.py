@@ -38,11 +38,9 @@ class FlextTestsUtilities:
 
         def create(self, **kwargs: object) -> T:
             """Create test instance."""
-            ...
 
         def create_many(self, count: int, **kwargs: object) -> list[T]:
             """Create multiple test instances."""
-            ...
 
     @runtime_checkable
     class ITestAssertion(Protocol):
@@ -50,15 +48,12 @@ class FlextTestsUtilities:
 
         def assert_equals(self, actual: object, expected: object) -> None:
             """Assert equality."""
-            ...
 
         def assert_true(self, *, condition: bool) -> None:
             """Assert condition is true."""
-            ...
 
         def assert_false(self, *, condition: bool) -> None:
             """Assert condition is false."""
-            ...
 
     class ITestDoubleProvider(Protocol):
         """Protocol for test double providers - supports real functional implementations."""
@@ -69,15 +64,12 @@ class FlextTestsUtilities:
             **config: object,
         ) -> object:
             """Create functional service implementation with real behavior."""
-            ...
 
         def create_test_context(self, **options: object) -> object:
             """Create test context manager with real functionality."""
-            ...
 
         def create_test_double(self, **options: object) -> object:
             """Create test double with real behavior instead of mock."""
-            ...
 
     # === CORE UTILITIES ===
 

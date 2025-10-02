@@ -291,7 +291,7 @@ except Exception as e:
 ```python
 from flext_core import FlextConfig
 from pydantic import Field, field_validator, model_validator
-from typing import Any
+from typing import object
 
 class AdvancedConfig(FlextConfig):
     """Configuration with complex validation."""
@@ -546,7 +546,7 @@ class GoodConfig(FlextConfig):
     port: int
     enabled: bool
     timeout: float
-    options: dict[str, Any]
+    options: dict[str, object]
     tags: list[str]
 ```
 

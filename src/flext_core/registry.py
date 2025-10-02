@@ -10,24 +10,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from collections.abc import Callable
+from typing import (
+    TYPE_CHECKING,
+    Literal,
+    cast,
+    override,
+)
 
 if TYPE_CHECKING:
     from flext_core.models import FlextModels
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Literal, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-
-HandlerModeLiteral = Literal["command", "query"]
-HandlerTypeLiteral = Literal["command", "query"]
-RegistrationStatusLiteral = Literal["active", "inactive"]
 
 
 class FlextRegistry:
@@ -180,7 +181,7 @@ class FlextRegistry:
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
-    def _safe_get_handler_mode(self, value: object) -> HandlerModeLiteral:
+    def _safe_get_handler_mode(self, value: object) -> Literal["command", "query"]:
         """Safely extract and validate handler mode from dict value."""
         if value == "query":
             return "query"

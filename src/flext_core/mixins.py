@@ -13,32 +13,20 @@ import threading
 from collections.abc import Callable
 from datetime import UTC, datetime
 from queue import Queue
-from typing import Protocol, cast, override, runtime_checkable
+from typing import (
+    cast,
+    override,
+)
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-
-@runtime_checkable
-class HasModelDump(Protocol):
-    """Protocol for objects that have model_dump method."""
-
-    def model_dump(self) -> dict[str, object]:
-        """Dump the model to a dictionary."""
-        ...
-
-
-@runtime_checkable
-class HasModelFields(Protocol):
-    """Protocol for objects that have model_fields attribute."""
-
-    model_fields: dict[str, object]
 
 
 class FlextMixins:
@@ -175,7 +163,7 @@ class FlextMixins:
         # Use Pydantic model_dump if available and requested
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
-            model_obj = cast("HasModelDump", obj)
+            model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
             data: dict[str, object] = model_obj.model_dump()
             return json.dumps(
                 data,
@@ -218,7 +206,7 @@ class FlextMixins:
         # Use Pydantic model_dump if available and requested
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
-            model_obj = cast("HasModelDump", obj)
+            model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
             result = model_obj.model_dump()
             if isinstance(result, dict):
                 return result
@@ -402,7 +390,7 @@ class FlextMixins:
 
         """
         # Check for Pydantic model with model_dump method
-        if isinstance(obj, HasModelDump):
+        if isinstance(obj, FlextProtocols.Foundation.HasModelDump):
             model_data: dict[str, object] = obj.model_dump()
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
@@ -432,7 +420,10 @@ class FlextMixins:
         """
         try:
             # Check if parameter exists in model fields for Pydantic objects
-            if isinstance(obj, HasModelFields) and parameter not in obj.model_fields:
+            if (
+                isinstance(obj, FlextProtocols.Foundation.HasModelFields)
+                and parameter not in obj.model_fields
+            ):
                 return False
 
             # Use setattr which triggers Pydantic validation if applicable

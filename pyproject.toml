@@ -8,16 +8,6 @@
     authors = [
         { name = "FLEXT Team", email = "team@flext.sh" },
     ]
-    description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-    license = { text = "MIT" }
-    maintainers = [
-        { name = "FLEXT Team", email = "team@flext.sh" },
-    ]
-    name = "flext-core"
-    readme = "README.md"
-    requires-python = ">=3.13,<3.14"
-    version = "0.9.9"
-    urls = { Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core", Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md" }
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Framework :: Pydantic :: 2",
@@ -31,13 +21,14 @@
         "Typing :: Typed",
     ]
     dependencies = [
+        "colorlog>=6.9.0,<7.0.0",
         "pydantic-settings>=2.10.1,<3.0.0",
         "pydantic>=2.11.7,<3.0.0",
         "pyyaml>=6.0.2,<7.0.0",
         "structlog>=25.4.0,<26.0.0",
         "typing-extensions>=4.12.0,<5.0.0",
-        "colorlog>=6.9.0,<7.0.0",
     ]
+    description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
     keywords = [
         "clean-architecture",
         "ddd",
@@ -46,54 +37,63 @@
         "modern",
         "solid",
     ]
+    license = { text = "MIT" }
+    maintainers = [
+        { name = "FLEXT Team", email = "team@flext.sh" },
+    ]
+    name = "flext-core"
+    readme = "README.md"
+    requires-python = ">=3.13,<3.14"
+    urls = { Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core", Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md" }
+    version = "0.9.9"
 
-[project.optional-dependencies]
-    dev = [
-        "autoflake>=2.3.1",
-        "black>=25.1.0",
-        "codespell>=2.3.0",
-        "deptry>=0.23.0",
-        "isort>=6.0.1",
-        "pre-commit>=4.0.1",
-        "pylint>=3.3.0",
-        "pyupgrade>=3.19.0",
-        "radon>=6.0.1",
-        "ruff>=0.12.3",
-        "vulture>=2.13",
-    ]
-    security = [
-        "bandit>=1.8.0",
-        "pip-audit>=2.7.3",
-    ]
-    test = [
-        "factory-boy>=3.3.1",
-        "faker>=37.4.0",
-        "hypothesis>=6.125.0",
-        "pytest-benchmark>=5.1.0",
-        "pytest-clarity>=1.0.1",
-        "pytest-cov>=6.2.0",
-        "pytest-deadfixtures>=2.2.1",
-        "pytest-env>=1.1.5",
-        "pytest-mock>=3.14.0",
-        "pytest-randomly>=3.16.0",
-        "pytest-sugar>=1.0.0",
-        "pytest-timeout>=2.4.0",
-        "pytest-xdist>=3.8.0",
-        "pytest>=8.4.0",
-    ]
-    typings = [
-        "django-stubs>=5.2.2",
-        "types-ldap3>=2.9.13.20250622",
-        "types-protobuf>=6.30.2.20250703",
-        "types-psutil>=7.0.0",
-        "types-psycopg2>=2.9.21.20250718",
-        "types-python-dateutil>=2.9.0",
-        "types-pyyaml>=6.0.12",
-        "types-redis>=4.6.0",
-        "types-requests>=2.32.4",
-        "types-setuptools>=80.9.0",
-        "types-toml>=0.10.8.20240310",
-    ]
+    [project.optional-dependencies]
+        dev = [
+            "autoflake>=2.3.1",
+            "black>=25.1.0",
+            "codespell>=2.3.0",
+            "deptry>=0.23.0",
+            "isort>=6.0.1",
+            "pre-commit>=4.0.1",
+            "pylint>=3.3.0",
+            "pyupgrade>=3.19.0",
+            "radon>=6.0.1",
+            "ruff>=0.12.3",
+            "vulture>=2.13",
+        ]
+        security = [
+            "bandit>=1.8.0",
+            "pip-audit>=2.7.3",
+        ]
+        test = [
+            "factory-boy>=3.3.1",
+            "faker>=37.4.0",
+            "hypothesis>=6.125.0",
+            "pytest-benchmark>=5.1.0",
+            "pytest-clarity>=1.0.1",
+            "pytest-cov>=6.2.0",
+            "pytest-deadfixtures>=2.2.1",
+            "pytest-env>=1.1.5",
+            "pytest-mock>=3.14.0",
+            "pytest-randomly>=3.16.0",
+            "pytest-sugar>=1.0.0",
+            "pytest-timeout>=2.4.0",
+            "pytest-xdist>=3.8.0",
+            "pytest>=8.4.0",
+        ]
+        typings = [
+            "django-stubs>=5.2.2",
+            "types-ldap3>=2.9.13.20250622",
+            "types-protobuf>=6.30.2.20250703",
+            "types-psutil>=7.0.0",
+            "types-psycopg2>=2.9.21.20250718",
+            "types-python-dateutil>=2.9.0",
+            "types-pyyaml>=6.0.12",
+            "types-redis>=4.6.0",
+            "types-requests>=2.32.4",
+            "types-setuptools>=80.9.0",
+            "types-toml>=0.10.8.20240310",
+        ]
 
 [tool.poetry]
     packages = [
@@ -101,19 +101,18 @@
         { include = "flext_tests", from = "src" },
     ]
 
-[tool.poetry.group.dev.dependencies]
-    types-pyyaml = "^6.0.12.20250822"
-    pyrefly      = "^0.34.0"
-docker = "^7.1.0"
+    [tool.poetry.group.dev.dependencies]
+        docker       = "^7.1.0"
+        pyrefly      = "^0.34.0"
+        types-pyyaml = "^6.0.12.20250822"
 
-[tool.poetry.group.typings.dependencies]
-    types-pygments = ">=2.19.0.20250715"
-    types-colorama = ">=0.4.15.20240311"
-    types-pexpect  = ">=4.9.0.20250516"
+    [tool.poetry.group.typings.dependencies]
+        types-colorama = ">=0.4.15.20240311"
+        types-pexpect  = ">=4.9.0.20250516"
+        types-pygments = ">=2.19.0.20250715"
 
 [tool.bandit]
     exclude_dirs = [
-        "__pycache__",
         ".archive",
         ".git",
         ".mypy_cache",
@@ -121,14 +120,15 @@ docker = "^7.1.0"
         ".pytest_cache",
         ".ruff_cache",
         ".venv",
+        "__pycache__",
         "archive",
         "build",
         "dist",
         "htmlcov",
         "reports",
+        "src/flext_tests",
         "tests",
         "venv",
-        "src/flext_tests",
     ]
     skips = [
         "B101",
@@ -136,8 +136,8 @@ docker = "^7.1.0"
         "B105",
         "B311",
         "B404",
-        "B603",
         "B601",
+        "B603",
     ]
 
 [tool.coverage]
@@ -145,7 +145,6 @@ docker = "^7.1.0"
 
 [tool.deptry]
     exclude = [
-        "__pycache__",
         ".archive",
         ".git",
         ".meltano",
@@ -154,12 +153,13 @@ docker = "^7.1.0"
         ".pytest_cache",
         ".ruff_cache",
         ".venv",
+        "__pycache__",
         "build",
         "dist",
         "htmlcov",
-        "vendor",
         "node_modules",
         "reports",
+        "vendor",
         "venv",
     ]
     known_first_party = [
@@ -178,8 +178,8 @@ docker = "^7.1.0"
         "--maxfail=1000000",
         "--strict-config",
         "--strict-markers",
-        "-ra",
         "--tb=short",
+        "-ra",
     ]
     filterwarnings = [
         "ignore::DeprecationWarning:pyasn1(.*|$)",
@@ -220,8 +220,8 @@ docker = "^7.1.0"
         "Test*",
     ]
     python_files = [
-        "test_*.py",
         "*_test.py",
+        "test_*.py",
     ]
     python_functions = [
         "test_*",
@@ -231,47 +231,47 @@ docker = "^7.1.0"
     ]
 
 [tool.ruff]
-    extend = "ruff-shared.toml"
+    extend = "../ruff-shared.toml"
 
-[tool.ruff.lint.isort]
-    known-first-party = [
-        "flext_core",
-        "flext_tests",
-    ]
+    [tool.ruff.lint.isort]
+        known-first-party = [
+            "flext_core",
+            "flext_tests",
+        ]
 
 [tool.pyrefly]
     python-version = "3.13"
     search-path = [
+        "../flext-api/src",
+        "../flext-auth/src",
+        "../flext-cli/src",
+        "../flext-db-oracle/src",
+        "../flext-dbt-ldap/src",
+        "../flext-dbt-ldif/src",
+        "../flext-dbt-oracle-wms/src",
+        "../flext-dbt-oracle/src",
+        "../flext-grpc/src",
+        "../flext-ldap/src",
+        "../flext-ldif/src",
+        "../flext-meltano/src",
+        "../flext-observability/src",
+        "../flext-oracle-oic-ext/src",
+        "../flext-oracle-wms/src",
+        "../flext-plugin/src",
+        "../flext-quality/src",
+        "../flext-tap-ldap/src",
+        "../flext-tap-ldif/src",
+        "../flext-tap-oracle-oic/src",
+        "../flext-tap-oracle-wms/src",
+        "../flext-tap-oracle/src",
+        "../flext-target-ldap/src",
+        "../flext-target-ldif/src",
+        "../flext-target-oracle-oic/src",
+        "../flext-target-oracle-wms/src",
+        "../flext-target-oracle/src",
+        "../flext-web/src",
         "examples",
         "scripts",
         "src",
         "tests",
-        "../flext-cli/src",
-        "../flext-ldap/src",
-        "../flext-ldif/src",
-        "../flext-db-oracle/src",
-        "../flext-meltano/src",
-        "../flext-observability/src",
-        "../flext-plugin/src",
-        "../flext-quality/src",
-        "../flext-web/src",
-        "../flext-api/src",
-        "../flext-auth/src",
-        "../flext-grpc/src",
-        "../flext-dbt-ldap/src",
-        "../flext-dbt-ldif/src",
-        "../flext-dbt-oracle/src",
-        "../flext-dbt-oracle-wms/src",
-        "../flext-oracle-oic-ext/src",
-        "../flext-oracle-wms/src",
-        "../flext-tap-ldap/src",
-        "../flext-tap-ldif/src",
-        "../flext-tap-oracle/src",
-        "../flext-tap-oracle-oic/src",
-        "../flext-tap-oracle-wms/src",
-        "../flext-target-ldap/src",
-        "../flext-target-ldif/src",
-        "../flext-target-oracle/src",
-        "../flext-target-oracle-oic/src",
-        "../flext-target-oracle-wms/src",
     ]

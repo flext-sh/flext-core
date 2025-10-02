@@ -22,7 +22,10 @@ from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Final, override
+from typing import (
+    Final,
+    override,
+)
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -161,8 +164,8 @@ class FlextContext:
         SOLID principles. This is an implementation detail of FlextContext.
         """
 
-        data: dict[str, object] = field(default_factory=dict)
-        metadata: dict[str, object] = field(default_factory=dict)
+        data: FlextTypes.Context.ContextData = field(default_factory=dict)
+        metadata: FlextTypes.Context.ContextMetadata = field(default_factory=dict)
 
     @dataclass(slots=True)
     class _ContextExport:
@@ -172,9 +175,9 @@ class FlextContext:
         SOLID principles. This is an implementation detail of FlextContext.
         """
 
-        data: dict[str, object] = field(default_factory=dict)
-        metadata: dict[str, object] = field(default_factory=dict)
-        statistics: dict[str, object] = field(default_factory=dict)
+        data: FlextTypes.Context.ContextData = field(default_factory=dict)
+        metadata: FlextTypes.Context.ContextMetadata = field(default_factory=dict)
+        statistics: FlextTypes.Context.ContextStatistics = field(default_factory=dict)
 
     # =========================================================================
     # LIFECYCLE METHODS
@@ -198,10 +201,10 @@ class FlextContext:
         else:
             context_data = initial_data
 
-        self._data: dict[str, object] = context_data.data
-        self._metadata: dict[str, object] = context_data.metadata
-        self._hooks: dict[str, list[collections.abc.Callable[..., object]]] = {}
-        self._statistics: dict[str, object] = {
+        self._data: FlextTypes.Context.ContextData = context_data.data
+        self._metadata: FlextTypes.Context.ContextMetadata = context_data.metadata
+        self._hooks: FlextTypes.Context.HookRegistry = {}
+        self._statistics: FlextTypes.Context.ContextStatistics = {
             "operations": {
                 "set": 0,
                 "get": 0,
@@ -217,7 +220,7 @@ class FlextContext:
         self._suspended = False
         self._lock = threading.RLock()
         # Scope-based storage
-        self._scopes: dict[str, dict[str, object]] = {
+        self._scopes: FlextTypes.Context.ScopeRegistry = {
             "global": self._data,
             "user": {},
             "session": {},
@@ -618,7 +621,7 @@ class FlextContext:
                 scope_data.clear()
             self._metadata.clear()
 
-    def get_all_scopes(self) -> dict[str, FlextTypes.Core.Dict]:
+    def get_all_scopes(self) -> FlextTypes.Context.ScopeRegistry:
         """Get all scopes.
 
         Returns:

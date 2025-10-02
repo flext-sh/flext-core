@@ -27,7 +27,7 @@ from typing import ClassVar, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes, RateLimiterState
+from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
@@ -169,7 +169,7 @@ class FlextExceptions:
         self._circuit_breakers: dict[str, bool] = {}
         self._circuit_breaker_failures: dict[str, int] = {}  # Track failure counts
         self.logger = logging.getLogger(__name__)
-        self._rate_limiters: dict[str, RateLimiterState] = {}
+        self._rate_limiters: dict[str, FlextTypes.Resilience.RateLimiterState] = {}
         self._cache: FlextTypes.Core.Dict = {}
         self._lock = threading.Lock()  # Thread safety lock
 
@@ -205,7 +205,7 @@ class FlextExceptions:
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
 
-    _metrics: ClassVar[dict[str, object]] = {}
+    _metrics: ClassVar[FlextTypes.Core.Dict] = {}
 
     # Type conversion mapping for cleaner type resolution
     _TYPE_MAP: ClassVar[dict[str, type]] = {
@@ -226,7 +226,7 @@ class FlextExceptions:
         )
 
     @classmethod
-    def get_metrics(cls) -> dict[str, object]:
+    def get_metrics(cls) -> FlextTypes.Core.Dict:
         """Get exception counts."""
         return dict(cls._metrics)
 
@@ -362,10 +362,10 @@ class FlextExceptions:
             rate_limit_key = f"{exception_type_name}_rate_limit"
 
             if rate_limit_key not in self._rate_limiters:
-                self._rate_limiters[rate_limit_key] = RateLimiterState(
-                    requests=[],
-                    last_reset=current_time,
-                )
+                self._rate_limiters[rate_limit_key] = {
+                    "requests": [],
+                    "last_reset": current_time,
+                }
 
             rate_limiter = self._rate_limiters[rate_limit_key]
 
@@ -541,10 +541,10 @@ class FlextExceptions:
             rate_limit_key = f"{exception_type_name}_rate_limit"
 
             if rate_limit_key not in self._rate_limiters:
-                self._rate_limiters[rate_limit_key] = RateLimiterState(
-                    requests=[],
-                    last_reset=current_time,
-                )
+                self._rate_limiters[rate_limit_key] = {
+                    "requests": [],
+                    "last_reset": current_time,
+                }
 
             rate_limiter = self._rate_limiters[rate_limit_key]
 
@@ -999,7 +999,7 @@ class FlextExceptions:
             base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
 
             # Build context with specific fields
-            context_data: dict[str, object] = {"attribute_name": attribute_name}
+            context_data: FlextTypes.Core.Dict = {"attribute_name": attribute_name}
             if attribute_context:
                 context_data["attribute_context"] = dict(attribute_context)
 
@@ -1088,7 +1088,7 @@ class FlextExceptions:
             self.config_file = config_file
             context_raw = kwargs.get("context", {})
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] = cast("dict[str, object]", context_raw)
+                context_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"config_key": config_key, "config_file": config_file})
@@ -1116,7 +1116,7 @@ class FlextExceptions:
             self.endpoint = endpoint
             context_raw = kwargs.get("context", {})
             if isinstance(context_raw, dict):
-                context_dict: dict[str, object] = cast("dict[str, object]", context_raw)
+                context_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"service": service, "endpoint": endpoint})
@@ -1348,8 +1348,8 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                base_context: dict[str, object] | None = cast(
-                    "dict[str, object]",
+                base_context: FlextTypes.Core.Dict | None = cast(
+                    "FlextTypes.Core.Dict",
                     context_raw,
                 )
             else:
@@ -1360,7 +1360,7 @@ class FlextExceptions:
             )
 
             # Add remaining kwargs to context for full functionality
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if base_context is not None:
                 context_dict = dict(base_context)
                 context_dict.update(kwargs)
@@ -1383,8 +1383,8 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                base_context: dict[str, object] | None = cast(
-                    "dict[str, object]",
+                base_context: FlextTypes.Core.Dict | None = cast(
+                    "FlextTypes.Core.Dict",
                     context_raw,
                 )
             else:
@@ -1397,7 +1397,7 @@ class FlextExceptions:
             error_code = str(error_code_raw) if error_code_raw is not None else None
 
             # Add remaining kwargs to context for full functionality
-            context_dict: dict[str, object]
+            context_dict: FlextTypes.Core.Dict
             if base_context is not None:
                 context_dict = dict(base_context)
                 context_dict.update(kwargs)
