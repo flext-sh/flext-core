@@ -30,7 +30,10 @@ class TestFlextConfig:
     def test_config_with_custom_values(self) -> None:
         """Test config initialization with custom values."""
         config = FlextConfig(
-            app_name="test_app", version="1.0.0", environment="test", debug=True
+            app_name="test_app",
+            version="1.0.0",
+            environment="test",
+            debug=True,
         )
         assert config.app_name == "test_app"
         assert config.version == "1.0.0"
@@ -133,7 +136,9 @@ class TestFlextConfig:
         """Test config validation."""
         # Valid config should pass
         config = FlextConfig(
-            app_name="valid_app", version="1.0.0", environment="production"
+            app_name="valid_app",
+            version="1.0.0",
+            environment="production",
         )
         assert config.app_name == "valid_app"
         assert config.environment == "production"
@@ -175,11 +180,15 @@ class TestFlextConfig:
     def test_config_merge(self) -> None:
         """Test config merging."""
         base_config = FlextConfig(
-            app_name="base_app", version="1.0.0", environment="development"
+            app_name="base_app",
+            version="1.0.0",
+            environment="development",
         )
 
         override_config = FlextConfig(
-            app_name="override_app", version="2.0.0", debug=True
+            app_name="override_app",
+            version="2.0.0",
+            debug=True,
         )
 
         merged_config = base_config.merge(override_config)
@@ -191,7 +200,9 @@ class TestFlextConfig:
     def test_config_clone(self) -> None:
         """Test config cloning."""
         original_config = FlextConfig(
-            app_name="original_app", version="1.0.0", environment="development"
+            app_name="original_app",
+            version="1.0.0",
+            environment="development",
         )
 
         # Use model_copy instead of clone
@@ -302,8 +313,8 @@ class TestFlextConfig:
 
         def set_value(thread_id: int) -> None:
             # Use Pydantic field assignment instead of non-existent set_value
-            setattr(config, "app_name", f"thread_{thread_id}")
-            results.append(getattr(config, "app_name"))
+            config.app_name = f"thread_{thread_id}"
+            results.append(config.app_name)
 
         threads: list[threading.Thread] = []
         for i in range(10):
@@ -350,7 +361,9 @@ class TestFlextConfig:
     def test_config_serialization(self) -> None:
         """Test config serialization."""
         config = FlextConfig(
-            app_name="serialize_app", version="1.0.0", environment="test"
+            app_name="serialize_app",
+            version="1.0.0",
+            environment="test",
         )
 
         # Test JSON serialization using model_dump_json
@@ -375,7 +388,8 @@ class TestFlextConfig:
             handler_type = "query"
 
         resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-            handler_mode=None, handler_config=MockConfig()
+            handler_mode=None,
+            handler_config=MockConfig(),
         )
         assert resolved == "query"
 
@@ -386,7 +400,8 @@ class TestFlextConfig:
         # Test with dict containing handler_type
         config_dict = {"handler_type": "query"}
         resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-            handler_mode=None, handler_config=config_dict
+            handler_mode=None,
+            handler_config=config_dict,
         )
         assert resolved == "query"
 
@@ -396,7 +411,8 @@ class TestFlextConfig:
 
         # Test default fallback when no valid mode found
         resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-            handler_mode=None, handler_config=None
+            handler_mode=None,
+            handler_config=None,
         )
         assert resolved == FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
 
@@ -406,7 +422,7 @@ class TestFlextConfig:
 
         # Test with minimal inputs - should generate defaults
         config = FlextConfig.HandlerConfiguration.create_handler_config(
-            handler_mode="command"
+            handler_mode="command",
         )
 
         # Should have auto-generated handler_id
@@ -433,7 +449,8 @@ class TestFlextConfig:
 
         # Test with additional config that should be merged
         additional_config = cast(
-            "dict[str, object]", {"custom_field": "custom_value", "another_field": 42}
+            "dict[str, object]",
+            {"custom_field": "custom_value", "another_field": 42},
         )
 
         config = FlextConfig.HandlerConfiguration.create_handler_config(
@@ -503,7 +520,8 @@ class TestFlextConfig:
         # Get instance with overrides - this tests line 668-670
         # The setattr will attempt to modify the field
         instance = FlextConfig.get_or_create_shared_instance(
-            project_name="test_project", overrides={"app_name": "Test Application"}
+            project_name="test_project",
+            overrides={"app_name": "Test Application"},
         )
 
         # Verify it's the same singleton instance
@@ -511,7 +529,7 @@ class TestFlextConfig:
 
         # Verify project_name logging path was hit (line 673-677)
         instance2 = FlextConfig.get_or_create_shared_instance(
-            project_name="another_project"
+            project_name="another_project",
         )
         assert instance is instance2  # Should be same singleton
 
@@ -524,7 +542,9 @@ class TestFlextConfig:
 
         # Create project-specific config
         project_config = FlextConfig.create_project_config(
-            project_name="test_project", debug=True, log_level="DEBUG"
+            project_name="test_project",
+            debug=True,
+            log_level="DEBUG",
         )
 
         assert project_config.debug is True

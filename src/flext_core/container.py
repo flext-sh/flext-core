@@ -185,14 +185,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     self._flext_config,
                     "timeout_seconds",
                     FlextConstants.Container.TIMEOUT_SECONDS,
-                )
+                ),
             ),
             "environment": str(
                 getattr(
                     self._flext_config,
                     "environment",
                     FlextConstants.Config.DEFAULT_ENVIRONMENT,
-                )
+                ),
             )
             .strip()
             .lower(),
@@ -276,7 +276,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         return self._validate_service_name(name).flat_map(
-            lambda validated_name: self._store_service(validated_name, service)
+            lambda validated_name: self._store_service(validated_name, service),
         )
 
     def _store_service(self, name: str, service: object) -> FlextResult[None]:
@@ -304,11 +304,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         return self._validate_service_name(name).flat_map(
-            lambda validated_name: self._store_factory(validated_name, factory)
+            lambda validated_name: self._store_factory(validated_name, factory),
         )
 
     def _store_factory(
-        self, name: str, factory: Callable[[], object]
+        self,
+        name: str,
+        factory: Callable[[], object],
     ) -> FlextResult[None]:
         """Store factory with callable validation.
 
@@ -408,11 +410,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         return self.get(name).flat_map(
-            lambda service: self._validate_service_type(service, expected_type)
+            lambda service: self._validate_service_type(service, expected_type),
         )
 
     def _validate_service_type[T](
-        self, service: object, expected_type: type[T]
+        self,
+        service: object,
+        expected_type: type[T],
     ) -> FlextResult[T]:
         """Validate service type and return typed result.
 
@@ -422,7 +426,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         if not isinstance(service, expected_type):
             return FlextResult[T].fail(
-                f"Service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
+                f"Service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}",
             )
         return FlextResult[T].ok(service)
 
@@ -447,7 +451,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 # Restore snapshot on failure
                 self._restore_registry_snapshot(snapshot)
                 return FlextResult[None].fail(
-                    result.error or "Batch registration failed"
+                    result.error or "Batch registration failed",
                 )
 
             return FlextResult[None].ok(None)
@@ -469,7 +473,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         }
 
     def _process_batch_registrations(
-        self, services: FlextTypes.Core.Dict
+        self,
+        services: FlextTypes.Core.Dict,
     ) -> FlextResult[None]:
         """Process batch registrations with proper error handling.
 
@@ -482,14 +487,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             validation_result = self._validate_service_name(name)
             if validation_result.is_failure:
                 return FlextResult[None].fail(
-                    validation_result.error or f"Invalid service name: {name}"
+                    validation_result.error or f"Invalid service name: {name}",
                 )
 
             # Store the service
             storage_result = self._store_service(name, service)
             if storage_result.is_failure:
                 return FlextResult[None].fail(
-                    storage_result.error or f"Failed to store service: {name}"
+                    storage_result.error or f"Failed to store service: {name}",
                 )
 
         return FlextResult[None].ok(None)
@@ -527,13 +532,15 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         if factory is None:
             return FlextResult[object].fail(
-                f"Service '{name}' not found and no factory provided"
+                f"Service '{name}' not found and no factory provided",
             )
 
         return self._create_from_factory(name, factory)
 
     def _create_from_factory(
-        self, name: str, factory: Callable[[], object]
+        self,
+        name: str,
+        factory: Callable[[], object],
     ) -> FlextResult[object]:
         """Create service from factory and register it.
 
@@ -544,7 +551,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         register_result = self.register_factory(name, factory)
         if register_result.is_failure:
             return FlextResult[object].fail(
-                register_result.error or "Factory registration failed"
+                register_result.error or "Factory registration failed",
             )
 
         return self.get(name)
@@ -586,7 +593,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     dependencies[param_name] = param.default
                 else:
                     return FlextResult[T].fail(
-                        f"Cannot resolve required dependency '{param_name}'"
+                        f"Cannot resolve required dependency '{param_name}'",
                     )
 
             # Create service instance
@@ -596,7 +603,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             register_result = self.register(name, service)
             if register_result.is_failure:
                 return FlextResult[T].fail(
-                    register_result.error or "Service registration failed"
+                    register_result.error or "Service registration failed",
                 )
 
             return FlextResult[T].ok(service)
@@ -635,7 +642,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     dependencies[param_name] = param.default
                 else:
                     return FlextResult[T].fail(
-                        f"Cannot resolve required dependency '{param_name}' for auto-wiring"
+                        f"Cannot resolve required dependency '{param_name}' for auto-wiring",
                     )
 
             # Create service instance
@@ -690,7 +697,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         try:
             services: FlextTypes.Core.List = []
             for name in sorted(
-                set(self._services.keys()) | set(self._factories.keys())
+                set(self._services.keys()) | set(self._factories.keys()),
             ):
                 service_info: FlextTypes.Core.Dict = {
                     FlextConstants.Mixins.FIELD_NAME: name,
@@ -705,7 +712,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return FlextResult[FlextTypes.Core.List].ok(services)
         except Exception as e:
             return FlextResult[FlextTypes.Core.List].fail(
-                f"Failed to list services: {e}"
+                f"Failed to list services: {e}",
             )
 
     def get_service_names(self) -> FlextResult[list[str]]:
@@ -746,11 +753,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             })
         except Exception as e:
             return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Failed to get container info: {e}"
+                f"Failed to get container info: {e}",
             )
 
     def _build_service_info(
-        self, name: str, service: object, service_type: str
+        self,
+        name: str,
+        service: object,
+        service_type: str,
     ) -> FlextTypes.Core.Dict:
         """Build service information dictionary.
 
@@ -905,7 +915,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     @classmethod
     def create_module_utilities(
-        cls, module_name: str
+        cls,
+        module_name: str,
     ) -> FlextResult[FlextTypes.Core.Dict]:
         """Create module-specific utilities with container integration.
 
@@ -915,7 +926,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         if not module_name:
             return FlextResult[FlextTypes.Core.Dict].fail(
-                "Module name must be non-empty string"
+                "Module name must be non-empty string",
             )
 
         return FlextResult[FlextTypes.Core.Dict].ok({

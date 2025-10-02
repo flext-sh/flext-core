@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
-
 from flext_core import FlextDispatcher, FlextModels, FlextResult
 from flext_core.handlers import FlextHandlers
 
@@ -139,31 +137,31 @@ class TestFlextDispatcherCoverage:
         dispatch_result = dispatcher.dispatch("failing_message", "test_data")
         assert dispatch_result.is_failure
 
-    def test_dispatcher_async_operations(self) -> None:
-        """Test asynchronous dispatcher operations."""
+    def test_dispatcher_operations(self) -> None:
+        """Test hronous dispatcher operations."""
         dispatcher = FlextDispatcher()
 
-        # Create an async handler with proper config
-        class AsyncHandler(FlextHandlers):
+        # Create an handler with proper config
+        class Handler(FlextHandlers):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
-                    handler_id="async_handler",
-                    handler_name="AsyncHandler",
+                    handler_id="handler",
+                    handler_name="Handler",
                     handler_type="command",
                     handler_mode="command",
                 )
                 super().__init__(config=config)
 
-            async def handle_async(self, message: str) -> FlextResult[str]:
-                # Simulate async work
-                await asyncio.sleep(0.001)
-                return FlextResult[str].ok(f"Async: {message}")
+            def handle(self, message: str) -> FlextResult[str]:
+                # Simulate work
+                sleep(0.001)
+                return FlextResult[str].ok(f": {message}")
 
             def handle(self, message: str) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Sync: {message}")
 
-        handler = AsyncHandler()
-        registration_result = dispatcher.register_handler("async_message", handler)
+        handler = Handler()
+        registration_result = dispatcher.register_handler("message", handler)
         assert registration_result.is_success
 
     def test_dispatcher_context_management(self) -> None:
@@ -193,7 +191,9 @@ class TestFlextDispatcherCoverage:
 
         # Test dispatch with metadata (context) - FlextDispatcher uses metadata parameter
         dispatch_result = dispatcher.dispatch(
-            "context_message", "test_data", metadata=context
+            "context_message",
+            "test_data",
+            metadata=context,
         )
         assert dispatch_result.is_success
 
@@ -381,7 +381,7 @@ class TestFlextDispatcherCoverage:
 
                 def handle(self, message: str) -> FlextResult[str]:
                     return FlextResult[str].ok(
-                        f"Handler {self.my_handler_id}: {message}"
+                        f"Handler {self.my_handler_id}: {message}",
                     )
 
             handler = TestHandler(i)
@@ -501,7 +501,9 @@ class TestFlextDispatcherCoverage:
         # Test if dispatcher can handle function handlers - provide required parameters
         try:
             result = dispatcher.create_handler_from_function(
-                simple_function_handler, handler_config={}, mode="command"
+                simple_function_handler,
+                handler_config={},
+                mode="command",
             )
             assert result.is_success
         except (AttributeError, TypeError):
@@ -523,18 +525,20 @@ class TestFlextDispatcherCoverage:
             def handle(self, message: str) -> FlextResult[str]:
                 self.processed_count += 1
                 return FlextResult[str].ok(
-                    f"Complex ({self.processed_count}): {message}"
+                    f"Complex ({self.processed_count}): {message}",
                 )
 
         complex_handler = ComplexHandler()
         registration_result = dispatcher.register_handler(
-            "complex_message", complex_handler
+            "complex_message",
+            complex_handler,
         )
         assert registration_result.is_success
 
         # Test multiple dispatches to the same handler
         for i in range(3):
             dispatch_result = dispatcher.dispatch(
-                "complex_message", f"complex_test_{i}"
+                "complex_message",
+                f"complex_test_{i}",
             )
             assert dispatch_result.is_success

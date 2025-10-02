@@ -481,7 +481,7 @@ class FlextTestsUtilities:
             self.attribute: str = attribute
             # Handle new parameter correctly - check if it was explicitly passed
             options_dict: dict[str, object] = dict(
-                options
+                options,
             )  # Convert to dict for easier handling
             if "new" in options_dict:
                 self.new_value = options_dict.pop("new")

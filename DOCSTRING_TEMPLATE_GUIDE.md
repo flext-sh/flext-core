@@ -8,7 +8,7 @@
 
 ## Template Structure
 
-```python
+````python
 class ClassName:
     """Brief one-line summary describing primary purpose (max 79 chars).
 
@@ -49,7 +49,7 @@ class ClassName:
         ```
 
     **TODO**: Missing functionality and improvements
-        - [ ] Add async/await support for concurrent operations
+        - [ ] Add /support for concurrent operations
         - [ ] Enhance validation with custom rule engine
         - [ ] Implement caching layer for performance
         - [ ] Add telemetry and metrics collection
@@ -96,7 +96,7 @@ class ClassName:
         https://docs.flext.io/classname: External documentation.
 
     """
-```
+````
 
 ---
 
@@ -104,7 +104,7 @@ class ClassName:
 
 ### 1. Foundation Layer: result.py - FlextResult[T]
 
-```python
+````python
 class FlextResult[T]:
     """Railway-oriented result type for type-safe error handling.
 
@@ -149,17 +149,17 @@ class FlextResult[T]:
         ```
 
     **TODO**: Enhancements for 1.0.0+
-        - [ ] Add async/await support for FlextResult[Awaitable[T]]
+        - [ ] Add /support for FlextResult[Awaitable[T]]
         - [ ] Implement result combination (sequence, traverse)
         - [ ] Add error context with stack traces
         - [ ] Support custom error types beyond strings
         - [ ] Add performance metrics collection
     """
-```
+````
 
 ### 2. Foundation Layer: container.py - FlextContainer
 
-```python
+````python
 class FlextContainer:
     """Global dependency injection container for FLEXT ecosystem.
 
@@ -220,11 +220,11 @@ class FlextContainer:
         - [ ] Add container hierarchies (parent/child)
         - [ ] Enhance auto-wiring with interface binding
     """
-```
+````
 
 ### 3. Domain Layer: models.py - FlextModels
 
-```python
+````python
 class FlextModels:
     """Domain-Driven Design (DDD) model patterns for FLEXT ecosystem.
 
@@ -298,11 +298,11 @@ class FlextModels:
         - [ ] Add saga orchestration
         - [ ] Enhance validation DSL
     """
-```
+````
 
 ### 4. Application Layer: bus.py - FlextBus
 
-```python
+````python
 class FlextBus:
     """Command/Query bus for CQRS pattern implementation.
 
@@ -366,7 +366,7 @@ class FlextBus:
         - [ ] Add priority queues
         - [ ] Enhance middleware composition
     """
-```
+````
 
 ---
 
@@ -391,30 +391,35 @@ For each class in every module, ensure:
 ## All 19 Modules Summary
 
 ### Foundation Layer (Layers 0-3)
+
 1. **typings.py** - Type definitions and aliases
 2. **constants.py** - Ecosystem-wide constants
 3. **exceptions.py** - Exception hierarchy
 4. **result.py** - Railway pattern implementation
 
 ### Domain Layer (Layer 4)
+
 5. **models.py** - DDD patterns (Entity, Value, Aggregate)
 6. **utilities.py** - Validation and processing utilities
 7. **config.py** - Configuration management
 8. **loggings.py** - Structured logging
 
 ### Application Layer (Layer 5)
+
 9. **bus.py** - Command/Query bus
 10. **handlers.py** - Handler base classes
 11. **cqrs.py** - CQRS decorators and helpers
 12. **dispatcher.py** - Message dispatching
 
 ### Infrastructure Layer (Layer 6)
+
 13. **protocols.py** - Protocol definitions
 14. **context.py** - Context management
 15. **mixins.py** - Reusable mixins
 16. **container.py** - Dependency injection
 
 ### Service Layer (Layer 7)
+
 17. **registry.py** - Handler registry
 18. **service.py** - Domain service base
 19. **processors.py** - Processing pipelines
@@ -424,6 +429,7 @@ For each class in every module, ensure:
 ## Quick Reference: Common Patterns
 
 ### Pattern 1: FlextResult Operations
+
 ```python
 # Always return FlextResult for operations
 def operation(data: dict) -> FlextResult[ProcessedData]:
@@ -433,6 +439,7 @@ def operation(data: dict) -> FlextResult[ProcessedData]:
 ```
 
 ### Pattern 2: Container Access
+
 ```python
 # Always use global singleton
 container = FlextContainer.get_global()
@@ -440,6 +447,7 @@ result = container.get("service_name")
 ```
 
 ### Pattern 3: Logger Usage
+
 ```python
 # Direct instantiation
 logger = FlextLogger(__name__)
@@ -447,6 +455,7 @@ logger.info("Operation completed")
 ```
 
 ### Pattern 4: Config Access
+
 ```python
 # Global configuration
 config = FlextConfig.get_global_instance()

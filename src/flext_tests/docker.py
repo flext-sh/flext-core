@@ -30,8 +30,13 @@ from flext_core import FlextLogger, FlextResult, T
 
 if TYPE_CHECKING:
     from docker import DockerClient
+    from docker.models.containers import Container
 
 pytest_module: ModuleType | None = pytest
+
+
+# Constants
+DOCKER_COMPOSE_FILE_PATH_HELP = "Docker Compose file path"
 
 
 # Lazy logger initialization to avoid configuration issues
@@ -144,7 +149,9 @@ class FlextTestDocker:
             self._state_file.parent.mkdir(parents=True, exist_ok=True)
             with self._state_file.open("w") as f:
                 json.dump(
-                    {"dirty_containers": list(self._dirty_containers)}, f, indent=2
+                    {"dirty_containers": list(self._dirty_containers)},
+                    f,
+                    indent=2,
                 )
             self._logger.info(
                 "Saved dirty state",
@@ -167,7 +174,8 @@ class FlextTestDocker:
             self._dirty_containers.add(container_name)
             self._save_dirty_state()
             self._logger.info(
-                "Container marked as dirty", extra={"container": container_name}
+                "Container marked as dirty",
+                extra={"container": container_name},
             )
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -187,7 +195,8 @@ class FlextTestDocker:
             self._dirty_containers.discard(container_name)
             self._save_dirty_state()
             self._logger.info(
-                "Container marked as clean", extra={"container": container_name}
+                "Container marked as clean",
+                extra={"container": container_name},
             )
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -225,7 +234,8 @@ class FlextTestDocker:
 
         for container_name in list(self._dirty_containers):
             self._logger.info(
-                "Cleaning up dirty container", extra={"container": container_name}
+                "Cleaning up dirty container",
+                extra={"container": container_name},
             )
 
             # Stop and remove container
@@ -396,7 +406,7 @@ class FlextTestDocker:
             for service_name in service_names:
                 if service_name not in self._registered_services:
                     return FlextResult[dict[str, str]].fail(
-                        f"Service '{service_name}' is not registered"
+                        f"Service '{service_name}' is not registered",
                     )
 
         _ = test_name  # Unused parameter
@@ -408,7 +418,9 @@ class FlextTestDocker:
         return FlextResult[list[str]].ok([])
 
     def compose_up(
-        self, compose_file: str, service: str | None = None
+        self,
+        compose_file: str,
+        service: str | None = None,
     ) -> FlextResult[str]:
         """Start services using docker-compose."""
         _ = service  # Parameter required by API but not used in stub implementation
@@ -465,17 +477,18 @@ class FlextTestDocker:
     def cleanup_all_test_containers(self) -> FlextResult[dict[str, str]]:
         """Clean up all test containers."""
         return FlextResult[dict[str, str]].ok({
-            "message": "All test containers cleaned up"
+            "message": "All test containers cleaned up",
         })
 
     def stop_services_for_test(self, test_name: str) -> FlextResult[dict[str, str]]:
         """Stop services for a specific test."""
         return FlextResult[dict[str, str]].ok({
-            "message": f"Services stopped for test {test_name}"
+            "message": f"Services stopped for test {test_name}",
         })
 
     def auto_discover_services(
-        self, compose_file_path: str | None = None
+        self,
+        compose_file_path: str | None = None,
     ) -> FlextResult[list[str]]:
         """Auto-discover services."""
         try:
@@ -514,7 +527,7 @@ class FlextTestDocker:
                             dep_name = stripped_line[2:].strip()
                             if dep_name:
                                 self._service_dependencies[current_service].append(
-                                    dep_name
+                                    dep_name,
                                 )
                             continue
 
@@ -547,12 +560,13 @@ class FlextTestDocker:
             return FlextResult[list[str]].ok([])
 
     def get_service_health_status(
-        self, service_name: str
+        self,
+        service_name: str,
     ) -> FlextResult[dict[str, str]]:
         """Get service health status."""
         if service_name not in self._registered_services:
             return FlextResult[dict[str, str]].fail(
-                f"Service '{service_name}' is not registered"
+                f"Service '{service_name}' is not registered",
             )
         return FlextResult[dict[str, str]].ok({
             "status": "healthy",
@@ -565,14 +579,18 @@ class FlextTestDocker:
         return FlextResult[str].ok(f"Network {name} created with driver {driver}")
 
     def execute_container_command(
-        self, container_name: str, command: str
+        self,
+        container_name: str,
+        command: str,
     ) -> FlextResult[str]:
         """Execute command in container."""
         _ = command  # Parameter required by API but not used in stub implementation
         return FlextResult[str].ok(f"Command executed in {container_name}")
 
     def exec_container_interactive(
-        self, container_name: str, command: str
+        self,
+        container_name: str,
+        command: str,
     ) -> FlextResult[str]:
         """Execute interactive command in container."""
         _ = command  # Parameter required by API but not used in stub implementation
@@ -587,7 +605,8 @@ class FlextTestDocker:
         return self._service_dependencies.copy()
 
     def images_formatted(
-        self, format_string: str = "{{.Repository}}:{{.Tag}}"
+        self,
+        format_string: str = "{{.Repository}}:{{.Tag}}",
     ) -> FlextResult[list[str]]:
         """Get formatted list of images."""
         # Parameter required by API but not used in stub implementation
@@ -595,7 +614,10 @@ class FlextTestDocker:
         return FlextResult[list[str]].ok(["test:latest"])
 
     def list_containers_formatted(
-        self, *, show_all: bool = False, format_string: str = "{{.Names}} ({{.Status}})"
+        self,
+        *,
+        show_all: bool = False,
+        format_string: str = "{{.Names}} ({{.Status}})",
     ) -> FlextResult[list[str]]:
         """Get formatted list of containers."""
         _ = (
@@ -649,7 +671,11 @@ class FlextTestDocker:
             # Use default image if not provided
             image_name = image or "alpine:latest"
             client.containers.run(
-                image_name, name=name, ports=ports, detach=True, remove=False
+                image_name,
+                name=name,
+                ports=ports,
+                detach=True,
+                remove=False,
             )
             return FlextResult[str].ok(f"Container {name} started")
         except DockerException as e:
@@ -657,7 +683,8 @@ class FlextTestDocker:
             return FlextResult[str].fail(f"Failed to start container: {e}")
 
     def stop_container(
-        self, container_name: str
+        self,
+        container_name: str,
     ) -> FlextResult[dict[str, str | int | bool]]:
         """Stop a running container.
 
@@ -670,7 +697,8 @@ class FlextTestDocker:
         """
         if container_name not in self._dirty_containers:
             return FlextResult[dict[str, str | int | bool]].fail(
-                "Container not running", error_code="CONTAINER_NOT_RUNNING"
+                "Container not running",
+                error_code="CONTAINER_NOT_RUNNING",
             )
 
         if container_name in self.SHARED_CONTAINERS:
@@ -723,7 +751,7 @@ class FlextTestDocker:
         """Get container information."""
         try:
             client = self.get_client()
-            container = client.containers.get(name)
+            container = cast("Container", client.containers.get(name))
             status = (
                 ContainerStatus.RUNNING
                 if container.status == "running"
@@ -742,7 +770,7 @@ class FlextTestDocker:
                     ports={},
                     image=image_name,
                     container_id=getattr(container, "id", "unknown") or "unknown",
-                )
+                ),
             )
         except NotFound:
             return FlextResult[ContainerInfo].fail(f"Container {name} not found")
@@ -796,7 +824,9 @@ class FlextTestDocker:
                 run_kwargs["command"] = command
 
             container = client.containers.run(
-                image, name=container_name, **cast("Any", run_kwargs)
+                image,
+                name=container_name,
+                **cast("Any", run_kwargs),
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -805,7 +835,7 @@ class FlextTestDocker:
                     ports={},  # Convert ports to string format for ContainerInfo
                     image=image,
                     container_id=getattr(container, "id", "unknown") or "unknown",
-                )
+                ),
             )
         except DockerException as e:
             self._logger.exception("Failed to run container")
@@ -815,7 +845,7 @@ class FlextTestDocker:
         """Remove a Docker container."""
         try:
             client = self.get_client()
-            container = client.containers.get(name)
+            container = cast("Container", client.containers.get(name))
             container.remove(force=force)
             return FlextResult[str].ok(f"Container {name} removed")
         except NotFound:
@@ -837,12 +867,16 @@ class FlextTestDocker:
             return FlextResult[str].fail(f"Failed to remove image: {e}")
 
     def container_logs_formatted(
-        self, container_name: str, tail: int = 100, *, follow: bool = False
+        self,
+        container_name: str,
+        tail: int = 100,
+        *,
+        follow: bool = False,
     ) -> FlextResult[str]:
         """Get formatted container logs."""
         try:
             client = self.get_client()
-            container = client.containers.get(container_name)
+            container = cast("Container", client.containers.get(container_name))
             logs = container.logs(tail=tail, follow=follow, stream=False)
             return FlextResult[str].ok(logs.decode("utf-8"))
         except NotFound:
@@ -852,14 +886,19 @@ class FlextTestDocker:
             return FlextResult[str].fail(f"Failed to get container logs: {e}")
 
     def execute_command_in_container(
-        self, container_name: str, command: str, *, user: str | None = None
+        self,
+        container_name: str,
+        command: str,
+        *,
+        user: str | None = None,
     ) -> FlextResult[str]:
         """Execute command in container."""
         try:
             client = self.get_client()
-            container = client.containers.get(container_name)
+            container = cast("Container", client.containers.get(container_name))
             result = container.exec_run(
-                command, user=user if user is not None else "root"
+                command,
+                user=user if user is not None else "root",
             )
             return FlextResult[str].ok(result.output.decode("utf-8"))
         except NotFound:
@@ -869,7 +908,9 @@ class FlextTestDocker:
             return FlextResult[str].fail(f"Failed to execute command in container: {e}")
 
     def list_containers(
-        self, *, all_containers: bool = False
+        self,
+        *,
+        all_containers: bool = False,
     ) -> FlextResult[list[ContainerInfo]]:
         """List containers."""
         try:
@@ -877,6 +918,7 @@ class FlextTestDocker:
             containers = client.containers.list(all=all_containers)
             container_infos: list[ContainerInfo] = []
             for container in containers:
+                container = cast("Container", container)
                 status = (
                     ContainerStatus.RUNNING
                     if container.status == "running"
@@ -890,18 +932,18 @@ class FlextTestDocker:
                 image_name: str = image_tags[0] if image_tags else "unknown"
                 container_infos.append(
                     ContainerInfo(
-                        name=container.name,
+                        name=str(container.name),
                         status=status,
                         ports={},
                         image=image_name,
                         container_id=getattr(container, "id", "unknown") or "unknown",
-                    )
+                    ),
                 )
             return FlextResult[list[ContainerInfo]].ok(container_infos)
         except DockerException as e:
             self._logger.exception("Failed to list containers")
             return FlextResult[list[ContainerInfo]].fail(
-                f"Failed to list containers: {e}"
+                f"Failed to list containers: {e}",
             )
 
     @classmethod
@@ -954,13 +996,16 @@ class FlextTestDocker:
         return self._display_status_table(self)
 
     def fetch_container_logs(
-        self, container_name: str, *, tail: int | None = None
+        self,
+        container_name: str,
+        *,
+        tail: int | None = None,
     ) -> FlextResult[str]:
         """Fetch logs for a specific container."""
         tail_count = tail or self._DEFAULT_LOG_TAIL
         try:
             client = self.get_client()
-            container = client.containers.get(container_name)
+            container = cast("Container", client.containers.get(container_name))
             logs_bytes = container.logs(tail=tail_count)
             return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
         except NotFound:
@@ -977,7 +1022,7 @@ class FlextTestDocker:
 
         if pytest is None:
             get_logger().warning(
-                "pytest is not available; skipping FlextTestDocker fixture registration"
+                "pytest is not available; skipping FlextTestDocker fixture registration",
             )
             return
 
@@ -1006,7 +1051,7 @@ class FlextTestDocker:
                     pytest.skip(f"Failed to start LDAP container: {start_result.error}")
                 else:
                     raise RuntimeError(
-                        f"Failed to start LDAP container: {start_result.error}"
+                        f"Failed to start LDAP container: {start_result.error}",
                     )
 
             yield container_name
@@ -1030,11 +1075,11 @@ class FlextTestDocker:
             if start_result.is_failure:
                 if pytest is not None:
                     pytest.skip(
-                        f"Failed to start PostgreSQL container: {start_result.error}"
+                        f"Failed to start PostgreSQL container: {start_result.error}",
                     )
                 else:
                     raise RuntimeError(
-                        f"Failed to start PostgreSQL container: {start_result.error}"
+                        f"Failed to start PostgreSQL container: {start_result.error}",
                     )
 
             yield container_name
@@ -1057,11 +1102,11 @@ class FlextTestDocker:
             if start_result.is_failure:
                 if pytest is not None:
                     pytest.skip(
-                        f"Failed to start Redis container: {start_result.error}"
+                        f"Failed to start Redis container: {start_result.error}",
                     )
                 else:
                     raise RuntimeError(
-                        f"Failed to start Redis container: {start_result.error}"
+                        f"Failed to start Redis container: {start_result.error}",
                     )
 
             yield container_name
@@ -1084,11 +1129,11 @@ class FlextTestDocker:
             if start_result.is_failure:
                 if pytest is not None:
                     pytest.skip(
-                        f"Failed to start Oracle container: {start_result.error}"
+                        f"Failed to start Oracle container: {start_result.error}",
                     )
                 else:
                     raise RuntimeError(
-                        f"Failed to start Oracle container: {start_result.error}"
+                        f"Failed to start Oracle container: {start_result.error}",
                     )
 
             yield container_name
@@ -1103,7 +1148,7 @@ class FlextTestDocker:
                     pytest.skip(f"Failed to reset LDAP container: {reset_result.error}")
                 else:
                     raise RuntimeError(
-                        f"Failed to reset LDAP container: {reset_result.error}"
+                        f"Failed to reset LDAP container: {reset_result.error}",
                     )
             return container_name
 
@@ -1114,11 +1159,11 @@ class FlextTestDocker:
             if reset_result.is_failure:
                 if pytest is not None:
                     pytest.skip(
-                        f"Failed to reset PostgreSQL container: {reset_result.error}"
+                        f"Failed to reset PostgreSQL container: {reset_result.error}",
                     )
                 else:
                     raise RuntimeError(
-                        f"Failed to reset PostgreSQL container: {reset_result.error}"
+                        f"Failed to reset PostgreSQL container: {reset_result.error}",
                     )
             return container_name
 
@@ -1132,7 +1177,7 @@ class FlextTestDocker:
                     pytest.skip(f"Failed to start all containers: {start_result.error}")
                 else:
                     raise RuntimeError(
-                        f"Failed to start all containers: {start_result.error}"
+                        f"Failed to start all containers: {start_result.error}",
                     )
 
             yield start_result.value
@@ -1174,14 +1219,16 @@ class FlextTestDocker:
                         )
 
             return FlextResult[str].ok(
-                f"FlextTestDocker initialized for workspace: {workspace_root}"
+                f"FlextTestDocker initialized for workspace: {workspace_root}",
             )
         except Exception as exc:
             self._logger.exception("Workspace initialization failed")
             return FlextResult[str].fail(f"Workspace initialization failed: {exc}")
 
     def build_workspace_projects(
-        self, projects: list[str], registry: str = "flext"
+        self,
+        projects: list[str],
+        registry: str = "flext",
     ) -> FlextResult[dict[str, str]]:
         """Build Docker images for a set of workspace projects."""
         results: dict[str, str] = {}
@@ -1210,7 +1257,9 @@ class FlextTestDocker:
 
             tag = f"{registry}/{project}:latest"
             build_result = self.build_image_advanced(
-                path=str(project_path), tag=tag, dockerfile=dockerfile_path.name
+                path=str(project_path),
+                tag=tag,
+                dockerfile=dockerfile_path.name,
             )
 
             if build_result.is_success:
@@ -1221,12 +1270,17 @@ class FlextTestDocker:
         return FlextResult[dict[str, str]].ok(results)
 
     def build_single_image(
-        self, name: str, dockerfile_path: str, context_path: str | None = None
+        self,
+        name: str,
+        dockerfile_path: str,
+        context_path: str | None = None,
     ) -> FlextResult[str]:
         """Build a single Docker image."""
         context_root = context_path or str(Path(dockerfile_path).parent)
         build_result = self.build_image_advanced(
-            path=context_root, tag=name, dockerfile=Path(dockerfile_path).name
+            path=context_root,
+            tag=name,
+            dockerfile=Path(dockerfile_path).name,
         )
 
         if build_result.is_success:
@@ -1234,7 +1288,9 @@ class FlextTestDocker:
         return FlextResult[str].fail(f"Image build failed: {build_result.error}")
 
     def start_compose_stack(
-        self, compose_file: str, network_name: str | None = None
+        self,
+        compose_file: str,
+        network_name: str | None = None,
     ) -> FlextResult[str]:
         """Start a Docker Compose stack."""
         discovery = self.auto_discover_services(compose_file)
@@ -1256,7 +1312,7 @@ class FlextTestDocker:
 
         services = discovery.value
         return FlextResult[str].ok(
-            f"Stack started successfully with services: {services}"
+            f"Stack started successfully with services: {services}",
         )
 
     def stop_compose_stack(self, compose_file: str) -> FlextResult[str]:
@@ -1279,7 +1335,10 @@ class FlextTestDocker:
         return FlextResult[str].ok("Stack restarted successfully")
 
     def show_stack_logs(
-        self, compose_file: str, *, follow: bool = False
+        self,
+        compose_file: str,
+        *,
+        follow: bool = False,
     ) -> FlextResult[str]:
         """Show logs for a Docker Compose stack."""
         _ = follow  # compatibility with previous signature
@@ -1294,7 +1353,7 @@ class FlextTestDocker:
         status_result = self.get_all_status()
         if status_result.is_failure:
             return FlextResult[dict[str, Any]].fail(
-                f"Status check failed: {status_result.error}"
+                f"Status check failed: {status_result.error}",
             )
 
         status_info: dict[str, Any] = status_result.value.copy()
@@ -1309,7 +1368,8 @@ class FlextTestDocker:
     def connect_to_service(self, service_name: str) -> FlextResult[str]:
         """Open an interactive session with a service container."""
         connect_result = self.exec_container_interactive(
-            container_name=service_name, command="/bin/bash"
+            container_name=service_name,
+            command="/bin/bash",
         )
         if connect_result.is_success:
             return FlextResult[str].ok(f"Connected to {service_name}")
@@ -1318,7 +1378,8 @@ class FlextTestDocker:
     def execute_in_service(self, service_name: str, command: str) -> FlextResult[str]:
         """Execute a command inside a service container."""
         exec_result = self.execute_container_command(
-            container_name=service_name, command=command
+            container_name=service_name,
+            command=command,
         )
         if exec_result.is_success:
             return FlextResult[str].ok("Command executed successfully")
@@ -1342,11 +1403,11 @@ class FlextTestDocker:
                     operations.append(f"Stopped service: {service}")
                 else:
                     operations.append(
-                        f"Failed to stop service {service}: {stop_result.error}"
+                        f"Failed to stop service {service}: {stop_result.error}",
                     )
         else:
             operations.append(
-                f"Failed to list running services: {running_services.error}"
+                f"Failed to list running services: {running_services.error}",
             )
 
         container_cleanup = self.cleanup_all_test_containers()
@@ -1380,7 +1441,10 @@ class FlextTestDocker:
         return FlextResult[str].ok(f"Cleanup completed: {summary}")
 
     def health_check_stack(
-        self, compose_file: str, *, timeout: int = 30
+        self,
+        compose_file: str,
+        *,
+        timeout: int = 30,
     ) -> FlextResult[dict[str, str]]:
         """Perform health checks for services in the compose stack."""
         _ = timeout  # Compatibility with previous signature
@@ -1389,7 +1453,7 @@ class FlextTestDocker:
         discovery = self.auto_discover_services(compose_file)
         if discovery.is_failure:
             return FlextResult[dict[str, str]].fail(
-                f"Service discovery failed: {discovery.error}"
+                f"Service discovery failed: {discovery.error}",
             )
 
         for service in discovery.value:
@@ -1451,73 +1515,98 @@ class FlextTestDocker:
             description=(
                 "FLEXT Workspace Docker Manager - Unified Docker operations using "
                 "FlextTestDocker"
-            )
+            ),
         )
         parser.add_argument(
-            "--workspace-root", type=Path, help="Workspace root directory"
+            "--workspace-root",
+            type=Path,
+            help="Workspace root directory",
         )
 
         subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
         init_parser = subparsers.add_parser(
-            "init", help="Initialize FlextTestDocker workspace"
+            "init",
+            help="Initialize FlextTestDocker workspace",
         )
         init_parser.add_argument("--workspace-root", type=Path, required=True)
 
         build_workspace_parser = subparsers.add_parser(
-            "build-workspace", help="Build workspace projects"
+            "build-workspace",
+            help="Build workspace projects",
         )
         build_workspace_parser.add_argument(
-            "--projects", required=True, help="Comma-separated project list"
+            "--projects",
+            required=True,
+            help="Comma-separated project list",
         )
         build_workspace_parser.add_argument(
-            "--registry", default="flext", help="Docker registry prefix"
+            "--registry",
+            default="flext",
+            help="Docker registry prefix",
         )
 
         build_image_parser = subparsers.add_parser(
-            "build-image", help="Build single image"
+            "build-image",
+            help="Build single image",
         )
         build_image_parser.add_argument("--name", required=True, help="Image name/tag")
         build_image_parser.add_argument(
-            "--dockerfile", required=True, help="Dockerfile path"
+            "--dockerfile",
+            required=True,
+            help="Dockerfile path",
         )
         build_image_parser.add_argument("--context", help="Build context path")
 
         start_stack_parser = subparsers.add_parser(
-            "start-stack", help="Start Docker Compose stack"
+            "start-stack",
+            help="Start Docker Compose stack",
         )
         start_stack_parser.add_argument(
-            "--compose-file", required=True, help="Docker Compose file path"
+            "--compose-file",
+            required=True,
+            help=DOCKER_COMPOSE_FILE_PATH_HELP,
         )
         start_stack_parser.add_argument("--network", help="Network name")
 
         stop_stack_parser = subparsers.add_parser(
-            "stop-stack", help="Stop Docker Compose stack"
+            "stop-stack",
+            help="Stop Docker Compose stack",
         )
         stop_stack_parser.add_argument(
-            "--compose-file", required=True, help="Docker Compose file path"
+            "--compose-file",
+            required=True,
+            help=DOCKER_COMPOSE_FILE_PATH_HELP,
         )
 
         restart_stack_parser = subparsers.add_parser(
-            "restart-stack", help="Restart Docker Compose stack"
+            "restart-stack",
+            help="Restart Docker Compose stack",
         )
         restart_stack_parser.add_argument(
-            "--compose-file", required=True, help="Docker Compose file path"
+            "--compose-file",
+            required=True,
+            help=DOCKER_COMPOSE_FILE_PATH_HELP,
         )
 
         logs_parser = subparsers.add_parser("show-logs", help="Show stack logs")
         logs_parser.add_argument(
-            "--compose-file", required=True, help="Docker Compose file path"
+            "--compose-file",
+            required=True,
+            help=DOCKER_COMPOSE_FILE_PATH_HELP,
         )
         logs_parser.add_argument("--follow", action="store_true", help="Follow logs")
 
         status_parser = subparsers.add_parser("show-status", help="Show stack status")
         status_parser.add_argument(
-            "--compose-file", required=True, help="Docker Compose file path"
+            "--compose-file",
+            required=True,
+            help=DOCKER_COMPOSE_FILE_PATH_HELP,
         )
 
         connect_parser = subparsers.add_parser(
-            "connect", help="Connect to service container"
+            "connect",
+            help="Connect to service container",
         )
         connect_parser.add_argument("--service", required=True, help="Service name")
 
@@ -1526,56 +1615,78 @@ class FlextTestDocker:
         exec_parser.add_argument("--command", required=True, help="Command to execute")
 
         cleanup_parser = subparsers.add_parser(
-            "cleanup", help="Clean up Docker artifacts"
+            "cleanup",
+            help="Clean up Docker artifacts",
         )
         cleanup_parser.add_argument(
-            "--remove-volumes", action="store_true", help="Remove volumes"
+            "--remove-volumes",
+            action="store_true",
+            help="Remove volumes",
         )
         cleanup_parser.add_argument(
-            "--remove-networks", action="store_true", help="Remove networks"
+            "--remove-networks",
+            action="store_true",
+            help="Remove networks",
         )
         cleanup_parser.add_argument(
-            "--prune-system", action="store_true", help="Prune system"
+            "--prune-system",
+            action="store_true",
+            help="Prune system",
         )
 
         health_parser = subparsers.add_parser(
-            "health-check", help="Perform health check"
+            "health-check",
+            help="Perform health check",
         )
         health_parser.add_argument(
-            "--compose-file", required=True, help="Docker Compose file path"
+            "--compose-file",
+            required=True,
+            help=DOCKER_COMPOSE_FILE_PATH_HELP,
         )
         health_parser.add_argument(
-            "--timeout", type=int, default=30, help="Health check timeout"
+            "--timeout",
+            type=int,
+            default=30,
+            help="Health check timeout",
         )
 
         create_network_parser = subparsers.add_parser(
-            "create-network", help="Create Docker network"
+            "create-network",
+            help="Create Docker network",
         )
         create_network_parser.add_argument("--name", required=True, help="Network name")
         create_network_parser.add_argument(
-            "--driver", default="bridge", help="Network driver"
+            "--driver",
+            default="bridge",
+            help="Network driver",
         )
 
         list_volumes_parser = subparsers.add_parser(
-            "list-volumes", help="List Docker volumes"
+            "list-volumes",
+            help="List Docker volumes",
         )
         list_volumes_parser.add_argument("--filter", help="Name filter")
 
         list_images_parser = subparsers.add_parser(
-            "list-images", help="List Docker images"
+            "list-images",
+            help="List Docker images",
         )
         list_images_parser.add_argument("--filter", help="Repository filter")
 
         list_containers_parser = subparsers.add_parser(
-            "list-containers", help="List Docker containers"
+            "list-containers",
+            help="List Docker containers",
         )
         list_containers_parser.add_argument("--filter", help="Name filter")
         list_containers_parser.add_argument(
-            "--show-all", action="store_true", help="Show all containers"
+            "--show-all",
+            action="store_true",
+            help="Show all containers",
         )
 
         validate_parser = subparsers.add_parser(
-            "validate", help="Validate FlextTestDocker functionality"
+            "validate",
+            help="Validate FlextTestDocker functionality",
         )
         validate_parser.add_argument("--workspace-root", type=Path, required=True)
 
@@ -1608,11 +1719,14 @@ class FlextTestDocker:
             command_result = manager.build_workspace_projects(projects, args.registry)
         elif args.command == "build-image":
             command_result = manager.build_single_image(
-                args.name, args.dockerfile, args.context
+                args.name,
+                args.dockerfile,
+                args.context,
             )
         elif args.command == "start-stack":
             command_result = manager.start_compose_stack(
-                args.compose_file, args.network
+                args.compose_file,
+                args.network,
             )
         elif args.command == "stop-stack":
             command_result = manager.stop_compose_stack(args.compose_file)
@@ -1620,7 +1734,8 @@ class FlextTestDocker:
             command_result = manager.restart_compose_stack(args.compose_file)
         elif args.command == "show-logs":
             command_result = manager.show_stack_logs(
-                args.compose_file, follow=args.follow
+                args.compose_file,
+                follow=args.follow,
             )
         elif args.command == "show-status":
             status_result = manager.show_stack_status(args.compose_file)
@@ -1639,7 +1754,8 @@ class FlextTestDocker:
             )
         elif args.command == "health-check":
             command_result = manager.health_check_stack(
-                args.compose_file, timeout=args.timeout
+                args.compose_file,
+                timeout=args.timeout,
             )
         elif args.command == "create-network":
             command_result = manager.create_network(args.name, driver=args.driver)
@@ -1671,7 +1787,7 @@ class FlextTestDocker:
                     ]
                 for info in filtered_containers:
                     cls._console.print(
-                        f"{info.name}: {cls._status_icon(info.status)} ({info.image})"
+                        f"{info.name}: {cls._status_icon(info.status)} ({info.image})",
                     )
             command_result = containers
         elif args.command == "validate":
@@ -1719,26 +1835,26 @@ class FlextTestDocker:
             manager = cls()
             if container.lower() == "all":
                 cls._console.print(
-                    "[bold blue]Starting all FLEXT test containers...[/bold blue]"
+                    "[bold blue]Starting all FLEXT test containers...[/bold blue]",
                 )
                 result = manager.start_all()
                 if result.is_success:
                     cls._console.print(
-                        "[bold green]✓ All containers started successfully[/bold green]"
+                        "[bold green]✓ All containers started successfully[/bold green]",
                     )
                     cls._display_status_table(manager)
                 else:
                     raise click.ClickException(
-                        f"Failed to start containers: {result.error}"
+                        f"Failed to start containers: {result.error}",
                     )
             else:
                 cls._console.print(
-                    f"[bold blue]Starting container: {container}[/bold blue]"
+                    f"[bold blue]Starting container: {container}[/bold blue]",
                 )
                 start_result = manager.start_container(container)
                 if start_result.is_success:
                     cls._console.print(
-                        f"[bold green]✓ {start_result.value}[/bold green]"
+                        f"[bold green]✓ {start_result.value}[/bold green]",
                     )
                 else:
                     raise click.ClickException(str(start_result.error))
@@ -1762,25 +1878,25 @@ class FlextTestDocker:
             if container.lower() == "all":
                 action = "Stopping and removing" if remove else "Stopping"
                 cls._console.print(
-                    f"[bold blue]{action} all FLEXT test containers...[/bold blue]"
+                    f"[bold blue]{action} all FLEXT test containers...[/bold blue]",
                 )
                 result = manager.stop_all(remove=remove)
                 if result.is_success:
                     cls._console.print(
-                        f"[bold green]✓ All containers {action.lower()}[/bold green]"
+                        f"[bold green]✓ All containers {action.lower()}[/bold green]",
                     )
                 else:
                     raise click.ClickException(str(result.error))
             else:
                 action = "Stopping and removing" if remove else "Stopping"
                 cls._console.print(
-                    f"[bold blue]{action} container: {container}[/bold blue]"
+                    f"[bold blue]{action} container: {container}[/bold blue]",
                 )
                 # Note: remove parameter is ignored - stop_container only stops
                 stop_result = manager.stop_container(container)
                 if stop_result.is_success:
                     cls._console.print(
-                        f"[bold green]✓ {stop_result.value}[/bold green]"
+                        f"[bold green]✓ {stop_result.value}[/bold green]",
                     )
                 else:
                     raise click.ClickException(str(stop_result.error))
@@ -1797,24 +1913,24 @@ class FlextTestDocker:
             manager = cls()
             if container.lower() == "all":
                 cls._console.print(
-                    "[bold blue]Resetting all FLEXT test containers...[/bold blue]"
+                    "[bold blue]Resetting all FLEXT test containers...[/bold blue]",
                 )
                 result = manager.reset_all()
                 if result.is_success:
                     cls._console.print(
-                        "[bold green]✓ All containers reset successfully[/bold green]"
+                        "[bold green]✓ All containers reset successfully[/bold green]",
                     )
                     cls._display_status_table(manager)
                 else:
                     raise click.ClickException(str(result.error))
             else:
                 cls._console.print(
-                    f"[bold blue]Resetting container: {container}[/bold blue]"
+                    f"[bold blue]Resetting container: {container}[/bold blue]",
                 )
                 reset_result = manager.reset_container(container)
                 if reset_result.is_success:
                     cls._console.print(
-                        f"[bold green]✓ {reset_result.value}[/bold green]"
+                        f"[bold green]✓ {reset_result.value}[/bold green]",
                     )
                 else:
                     raise click.ClickException(str(reset_result.error))
@@ -1841,7 +1957,7 @@ class FlextTestDocker:
         def logs_command(container: str, tail: int | None) -> None:
             manager = cls()
             cls._console.print(
-                f"[bold blue]Fetching logs for {container}...[/bold blue]"
+                f"[bold blue]Fetching logs for {container}...[/bold blue]",
             )
             logs_result = manager.fetch_container_logs(container, tail=tail)
             if logs_result.is_success:
@@ -1891,7 +2007,7 @@ def with_clean_container(
                 cleanup_result = docker_manager.cleanup_dirty_containers()
                 if cleanup_result.is_failure:
                     raise RuntimeError(
-                        f"Failed to clean container: {cleanup_result.error}"
+                        f"Failed to clean container: {cleanup_result.error}",
                     )
 
             # Run test
@@ -1967,12 +2083,13 @@ def auto_cleanup_dirty_containers() -> Callable[[Callable[..., T]], Callable[...
             dirty = docker_manager.get_dirty_containers()
             if dirty:
                 get_logger().info(
-                    "Cleaning dirty containers before test", extra={"containers": dirty}
+                    "Cleaning dirty containers before test",
+                    extra={"containers": dirty},
                 )
                 cleanup_result = docker_manager.cleanup_dirty_containers()
                 if cleanup_result.is_failure:
                     raise RuntimeError(
-                        f"Failed to cleanup dirty containers: {cleanup_result.error}"
+                        f"Failed to cleanup dirty containers: {cleanup_result.error}",
                     )
 
             # Run test

@@ -11,7 +11,7 @@ import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar, Self, cast
+from typing import Any, ClassVar, Protocol, Self, cast, runtime_checkable
 
 from pydantic import (
     Field,
@@ -26,6 +26,13 @@ from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+
+@runtime_checkable
+class HasHandlerType(Protocol):
+    """Protocol for config objects with handler_type attribute."""
+
+    handler_type: str | None
 
 
 class FlextConfig(BaseSettings):
@@ -178,8 +185,8 @@ class FlextConfig(BaseSettings):
             # Try to extract from config object
             if handler_config is not None:
                 # Try attribute access
-                if hasattr(handler_config, "handler_type"):
-                    config_mode: str | None = getattr(handler_config, "handler_type")
+                if isinstance(handler_config, HasHandlerType):
+                    config_mode: str | None = handler_config.handler_type
                     if config_mode in {"command", "query"}:
                         return str(config_mode)
 
@@ -220,7 +227,8 @@ class FlextConfig(BaseSettings):
             """
             # Resolve handler mode
             resolved_mode = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-                handler_mode=handler_mode, handler_config=handler_config
+                handler_mode=handler_mode,
+                handler_config=handler_config,
             )
 
             # Generate default handler_id if not provided or empty
@@ -655,7 +663,9 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def get_or_create_shared_instance(
-        cls, project_name: str | None = None, **overrides: FlextTypes.Core.Value
+        cls,
+        project_name: str | None = None,
+        **overrides: FlextTypes.Core.Value,
     ) -> FlextConfig:
         """Get or create a shared singleton instance with project-specific overrides.
 
@@ -684,14 +694,17 @@ class FlextConfig(BaseSettings):
         if project_name:
             logger = logging.getLogger(__name__)
             logger.debug(
-                f"Project '{project_name}' accessing shared FlextConfig instance"
+                "Project '%s' accessing shared FlextConfig instance",
+                project_name,
             )
 
         return instance
 
     @classmethod
     def create_project_config(
-        cls, project_name: str, **project_defaults: FlextTypes.Core.Value
+        cls,
+        project_name: str,
+        **project_defaults: FlextTypes.Core.Value,
     ) -> FlextConfig:
         """Create a project-specific configuration that inherits from the global singleton.
 
@@ -729,7 +742,7 @@ class FlextConfig(BaseSettings):
 
         """
         # Pydantic BaseSettings handles kwargs validation and type conversion automatically
-        return cls(**kwargs)  # type: ignore[call-arg]
+        return cls.model_validate(kwargs)
 
     @classmethod
     def create_for_environment(cls, environment: str, **kwargs: Any) -> FlextConfig:
@@ -761,7 +774,7 @@ class FlextConfig(BaseSettings):
             path = Path(file_path)
             if not path.exists():
                 return FlextResult[FlextConfig].fail(
-                    f"Failed to load config: Configuration file not found: {file_path}"
+                    f"Failed to load config: Configuration file not found: {file_path}",
                 )
 
             if path.suffix.lower() == ".json":
@@ -770,16 +783,16 @@ class FlextConfig(BaseSettings):
                 config = cls(**data)
                 return FlextResult[FlextConfig].ok(config)
             return FlextResult[FlextConfig].fail(
-                f"Unsupported file format: {path.suffix}"
+                f"Unsupported file format: {path.suffix}",
             )
 
         except json.JSONDecodeError as e:
             return FlextResult[FlextConfig].fail(
-                f"Failed to parse config: Invalid JSON in configuration file: {e}"
+                f"Failed to parse config: Invalid JSON in configuration file: {e}",
             )
         except Exception as e:
             return FlextResult[FlextConfig].fail(
-                f"Failed to load config: Error loading configuration: {e}"
+                f"Failed to load config: Error loading configuration: {e}",
             )
 
     # Instance methods for configuration access

@@ -247,14 +247,17 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         base_env = {
             "FLEXT_ENVIRONMENT": self._reference_config.get(
-                "environment", "development"
+                "environment",
+                "development",
             ),
             "FLEXT_DEBUG": str(self._reference_config.get("debug", False)).lower(),
             "FLEXT_LOG_LEVEL": self._reference_config.get(
-                "log_level", FlextConstants.Logging.INFO
+                "log_level",
+                FlextConstants.Logging.INFO,
             ),
             "FLEXT_DATABASE_URL": self._reference_config.get(
-                "database_url", "postgresql://localhost/db"
+                "database_url",
+                "postgresql://localhost/db",
             ),
             "FLEXT_MAX_WORKERS": str(self._production_config.get("max_connections", 4)),
         }
@@ -292,7 +295,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         for field, is_valid in validations:
             status = "✅" if is_valid else "❌"
             print(
-                f"{status} {field}: Valid" if is_valid else f"{status} {field}: Invalid"
+                f"{status} {field}: Valid"
+                if is_valid
+                else f"{status} {field}: Invalid",
             )
 
     # ========== DYNAMIC CONFIGURATION ==========
@@ -365,7 +370,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("  - get_cache_config(): Returns cache configuration")
         print("  - get_cqrs_bus_config(): Returns CQRS bus configuration")
         print(
-            "  - create_for_environment(env): Creates config for specific environment"
+            "  - create_for_environment(env): Creates config for specific environment",
         )
 
     # ========== DEPRECATED PATTERNS ==========

@@ -34,7 +34,8 @@ class TestFlextCoreWildcardExports:
         # Test wildcard import in a clean namespace
         namespace = {}
         spec = importlib.util.spec_from_file_location(
-            "flext_core", "src/flext_core/__init__.py"
+            "flext_core",
+            "src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
@@ -135,7 +136,8 @@ class TestFlextCoreWildcardExports:
         # Test wildcard import in a clean namespace
         namespace = {}
         spec = importlib.util.spec_from_file_location(
-            "flext_core", "src/flext_core/__init__.py"
+            "flext_core",
+            "src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
@@ -168,7 +170,8 @@ class TestFlextCoreWildcardExports:
         # Test wildcard import in a clean namespace
         namespace = {}
         spec = importlib.util.spec_from_file_location(
-            "flext_core", "src/flext_core/__init__.py"
+            "flext_core",
+            "src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
@@ -207,7 +210,8 @@ class TestFlextCoreWildcardExports:
         # Test wildcard import in a clean namespace
         namespace = {}
         spec = importlib.util.spec_from_file_location(
-            "flext_core", "src/flext_core/__init__.py"
+            "flext_core",
+            "src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
@@ -278,7 +282,8 @@ class TestFlextCoreIntegrationScenarios:
         # Test wildcard import in a clean namespace
         namespace = {}
         spec = importlib.util.spec_from_file_location(
-            "flext_core", "src/flext_core/__init__.py"
+            "flext_core",
+            "src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")

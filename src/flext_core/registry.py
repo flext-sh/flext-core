@@ -218,7 +218,7 @@ class FlextRegistry:
         # Validate handler is not None
         if handler is None:
             return FlextResult[FlextModels.RegistrationDetails].fail(
-                "Handler cannot be None"
+                "Handler cannot be None",
             )
 
         key = self._resolve_handler_key(handler)
@@ -230,7 +230,7 @@ class FlextRegistry:
                     handler_mode="command",
                     timestamp="",  # Will be set by model if needed
                     status="active",
-                )
+                ),
             )
 
         # Handler is already the correct type
@@ -245,19 +245,19 @@ class FlextRegistry:
                     reg_data.get(
                         "handler_mode",
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                    )
+                    ),
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
                 status=self._safe_get_status(
                     reg_data.get(
                         "status",
                         FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                    )
+                    ),
                 ),
             )
             return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
         return FlextResult[FlextModels.RegistrationDetails].fail(
-            registration.error or "Unknown error"
+            registration.error or "Unknown error",
         )
 
     def register_handlers(
@@ -275,7 +275,7 @@ class FlextRegistry:
             result: FlextResult[None] = self._process_single_handler(handler, summary)
             if result.is_failure:
                 return FlextResult[FlextRegistry.Summary].fail(
-                    result.error or "Handler processing failed"
+                    result.error or "Handler processing failed",
                 )
         return self._finalize_summary(summary)
 
@@ -308,21 +308,21 @@ class FlextRegistry:
                     reg_data.get(
                         "handler_mode",
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                    )
+                    ),
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
                 status=self._safe_get_status(
                     reg_data.get(
                         "status",
                         FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                    )
+                    ),
                 ),
             )
             self._add_successful_registration(key, reg_details, summary)
             return FlextResult[None].ok(None)
         self._add_registration_error(key, registration_result.error or "", summary)
         return FlextResult[None].fail(
-            registration_result.error or "Registration failed"
+            registration_result.error or "Registration failed",
         )
 
     def _add_successful_registration(
@@ -403,14 +403,14 @@ class FlextRegistry:
                     reg_data.get(
                         "handler_mode",
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                    )
+                    ),
                 ),
                 timestamp=str(reg_data.get("timestamp", "")),
                 status=self._safe_get_status(
                     reg_data.get(
                         "status",
                         FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                    )
+                    ),
                 ),
             )
             summary.registered.append(reg_details)
@@ -477,11 +477,11 @@ class FlextRegistry:
                                 self._registered_keys.add(key)
                             else:
                                 summary.errors.append(
-                                    f"Failed to register handler: {register_result.error}"
+                                    f"Failed to register handler: {register_result.error}",
                                 )
                         else:
                             summary.errors.append(
-                                f"Failed to create handler: {handler_result.error}"
+                                f"Failed to create handler: {handler_result.error}",
                             )
                     else:
                         # Handle FlextHandlers instance
@@ -497,7 +497,7 @@ class FlextRegistry:
                             self._registered_keys.add(key)
                         else:
                             summary.errors.append(
-                                f"Failed to register handler: {register_result.error}"
+                                f"Failed to register handler: {register_result.error}",
                             )
                 else:
                     # Handle dict or other types

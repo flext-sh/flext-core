@@ -457,7 +457,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Core.Dict]):
                 msg_data = msg.data
                 msg_metadata = msg.metadata
                 print(
-                    f"  - {msg_data['action']} (priority: {msg_metadata['priority']})"
+                    f"  - {msg_data['action']} (priority: {msg_metadata['priority']})",
                 )
 
         self._message_queue.extend(messages)

@@ -89,7 +89,7 @@ class MyService(FlextService[ConfigType]):
     def __init__(self) -> None:
         super().__init__()  # Initialize service
 
-    async def execute(self, input: TInput) -> FlextResult[TOutput]:
+    def execute(self, input: TInput) -> FlextResult[TOutput]:
         """Execute service operation."""
         pass
 
@@ -143,8 +143,8 @@ from flext_core import FlextCqrs
 
 # ✅ STABLE - Core CQRS pattern
 cqrs = FlextCqrs()
-result = await cqrs.execute_command(command)
-result = await cqrs.execute_query(query)
+result = cqrs.execute_command(command)
+result = cqrs.execute_query(query)
 
 # May receive: New handler types (backward compatible)
 ```
@@ -156,7 +156,7 @@ from flext_core import FlextBus
 
 # ✅ STABLE - Core event bus
 bus = FlextBus()
-await bus.publish(event)
+bus.publish(event)
 bus.subscribe(event_type, handler)
 
 # May receive: New event types (backward compatible)
@@ -354,6 +354,7 @@ class HttpResponse(FlextModels.HttpResponse):
 ### Ecosystem Testing
 
 Before any release, we validate with:
+
 - **flext-api**: HTTP client integration
 - **flext-cli**: CLI framework integration
 - **flext-auth**: Authentication integration
@@ -364,7 +365,7 @@ Before any release, we validate with:
 
 If you discover an API stability issue:
 
-1. **Report it**: https://github.com/flext-sh/flext-core/issues
+1. **Report it**: <https://github.com/flext-sh/flext-core/issues>
 2. **Label**: Use "stability-guarantee" label
 3. **Priority**: Stability issues are treated as P0 bugs
 4. **Fix timeline**: Hotfix within 48 hours

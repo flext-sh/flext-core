@@ -181,7 +181,8 @@ class CqrsPatternService(FlextService[dict[str, object]]):
                 return FlextResult[dict[str, object]].fail("Invalid user data")
 
             def handle_list(
-                self, query: ListUsersQuery
+                self,
+                query: ListUsersQuery,
             ) -> FlextResult[list[dict[str, object]]]:
                 """Handle list users query."""
                 users = list(self._read_store.values())
@@ -203,7 +204,7 @@ class CqrsPatternService(FlextService[dict[str, object]]):
         create_cmd = CreateUserCommand("USER-001", "Alice", "alice@example.com")
         create_result = cmd_handler.handle_create(create_cmd)
         print(
-            f"  Create user: {'✅' if create_result.is_success else '❌'} {create_result.unwrap() if create_result.is_success else create_result.error}"
+            f"  Create user: {'✅' if create_result.is_success else '❌'} {create_result.unwrap() if create_result.is_success else create_result.error}",
         )
 
         # Sync read model (eventual consistency)
@@ -240,7 +241,7 @@ class CqrsPatternService(FlextService[dict[str, object]]):
                 "aggregate_id": "ORDER-123",
                 "version": 1,
                 "events": ["OrderCreated", "OrderValidated"],
-            }
+            },
         )
         print("✅ Command Result:")
         if cmd_result.is_success:
@@ -258,7 +259,7 @@ class CqrsPatternService(FlextService[dict[str, object]]):
             data={
                 "data": {"id": "USER-456", "name": "Bob"},
                 "metadata": {"cache_hit": True, "query_time": 0.005},
-            }
+            },
         )
         print("\n✅ Query Result:")
         if query_result.is_success:
@@ -278,7 +279,7 @@ class CqrsPatternService(FlextService[dict[str, object]]):
                     {"id": "1", "status": "success"},
                     {"id": "2", "status": "failed", "error": "Validation error"},
                 ],
-            }
+            },
         )
         print("\n✅ Batch Result:")
         if batch_result.is_success:
@@ -312,7 +313,9 @@ class CqrsPatternService(FlextService[dict[str, object]]):
             """Order CQRS operations."""
 
             def create_order(
-                self, customer_id: str, items: list[dict[str, object]]
+                self,
+                customer_id: str,
+                items: list[dict[str, object]],
             ) -> FlextResult[str]:
                 """Create order command."""
                 _ = customer_id  # Used in real implementation
@@ -339,7 +342,8 @@ class CqrsPatternService(FlextService[dict[str, object]]):
         # Demonstrate OrderOperations
         print("\n0. OrderOperations Demo:")
         order_result = operations.create_order(
-            "CUST-123", [{"product": "Widget", "qty": 1}]
+            "CUST-123",
+            [{"product": "Widget", "qty": 1}],
         )
         if order_result.is_success:
             order_id = order_result.unwrap()
@@ -562,7 +566,9 @@ class CqrsPatternService(FlextService[dict[str, object]]):
                 self._streams: dict[str, list[FlextModels.DomainEvent]] = {}
 
             def save_events(
-                self, aggregate_id: str, events: list[FlextModels.DomainEvent]
+                self,
+                aggregate_id: str,
+                events: list[FlextModels.DomainEvent],
             ) -> None:
                 """Save events to store."""
                 if aggregate_id not in self._streams:
@@ -627,7 +633,11 @@ class CqrsPatternService(FlextService[dict[str, object]]):
                 self.product_categories: dict[str, str] = {}
 
             def add_product(
-                self, product_id: str, name: str, price: Decimal, category_id: str
+                self,
+                product_id: str,
+                name: str,
+                price: Decimal,
+                category_id: str,
             ) -> None:
                 """Add product to write model."""
                 self.products[product_id] = {
@@ -679,7 +689,10 @@ class CqrsPatternService(FlextService[dict[str, object]]):
 
         print("\n1. Write to normalized model:")
         write_model.add_product(
-            "PROD-A", "Laptop", Decimal("999.99"), "CAT-ELECTRONICS"
+            "PROD-A",
+            "Laptop",
+            Decimal("999.99"),
+            "CAT-ELECTRONICS",
         )
         print(f"  Products: {len(write_model.products)}")
         print(f"  Write model: {write_model.products}")

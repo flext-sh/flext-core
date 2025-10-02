@@ -87,7 +87,8 @@ class TestFlextConfigSingletonIntegration:
         # Test basic handler functionality
         basic_handler = FlextProcessors.Implementation.BasicHandler("test-handler")
         registration = FlextModels.HandlerRegistration(
-            name="test", handler=basic_handler
+            name="test",
+            handler=basic_handler,
         )
         register_result = handler_registry.register(registration)
         assert register_result.is_success

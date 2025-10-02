@@ -1,0 +1,19 @@
+ERROR Class member `DistinguishedName.create` overrides parent class `Value` in an inconsistent manner [bad-override]
+   --> /home/marlonsc/flext/flext-ldap/src/flext_ldap/models.py:216:13
+    |
+216 |         def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdapModels.DistinguishedName]:
+    |             ^^^^^^
+    |
+  `DistinguishedName.create` has type `BoundMethod[type[FlextLdapModels.DistinguishedName], (cls: type[FlextLdapModels.DistinguishedName], *args: object, **kwargs: object) -> FlextResult[FlextLdapModels.DistinguishedName]]`, which is not assignable to `BoundMethod[type[FlextLdapModels.DistinguishedName], (cls: type[FlextLdapModels.DistinguishedName], *args: object, **kwargs: object) -> FlextResult[object]]`, the type of `Value.create`
+ERROR Returned type `FlextResult[object]` is not assignable to declared return type `FlextResult[FlextLdapModels.DistinguishedName]` [bad-return]
+   --> /home/marlonsc/flext/flext-ldap/src/flext_ldap/models.py:232:24
+    |
+232 |                 return FlextResult[object].ok(dn_obj)
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Argument `type[FlextResult[object]]` is not assignable to parameter `cls` with type `type[FlextResult[FlextLdapModels.DistinguishedName]]` in function `flext_core.result.FlextResult.fail` [bad-argument-type]
+   --> /home/marlonsc/flext/flext-ldap/src/flext_ldap/models.py:234:48
+    |
+234 |                 return FlextResult[object].fail(str(e))
+    |                                                ^^^^^^^^
+    |

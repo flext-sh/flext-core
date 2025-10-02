@@ -357,13 +357,13 @@ class ComprehensiveResultService:
             return FlextResult[int].fail(message)
 
         result = risky_operation().with_context(
-            lambda err: f"{self._metadata.get('component', 'component')} error: {err}"
+            lambda err: f"{self._metadata.get('component', 'component')} error: {err}",
         )
         print(f".with_context(): {result}")
 
         def log_error(error: str) -> None:
             extra = {**self._metadata, "severity": "high"}
-            self._logger.error(f"Logged error: {error}", extra=extra)
+            self._logger.error("Logged error: %s", error, extra=extra)
 
         result = risky_operation().rescue_with_logging(log_error)
         print(f".rescue_with_logging() (logs error): {result}")

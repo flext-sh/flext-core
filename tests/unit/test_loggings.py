@@ -235,9 +235,9 @@ class TestFlextLogger:
                                 "created": "2025-01-01",
                                 "updated": "2025-01-02",
                             },
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             },
             "arrays": [
                 {"id": 1, "name": "Item 1"},
@@ -360,7 +360,7 @@ class TestFlextLogger:
         results: list[FlextResult[None]] = []
 
         def log_message(thread_id: int) -> None:
-            result = logger.info(f"Thread {thread_id} message")
+            result = logger.info("Thread %s message", thread_id)
             results.append(result)
 
         threads: list[threading.Thread] = []
@@ -383,7 +383,7 @@ class TestFlextLogger:
 
         # Perform many logging operations
         for i in range(100):
-            logger.info(f"Test message {i}")
+            logger.info("Test message %s", i)
 
         end_time = time.time()
 
@@ -554,8 +554,8 @@ class TestFlextLogger:
         result = logger.info("Test message")
         assert result.is_success
 
-    def test_logger_logging_with_async_output(self) -> None:
-        """Test logging with async output."""
+    def test_logger_logging_with_output(self) -> None:
+        """Test logging with output."""
         logger = FlextLogger("test_logger")
 
         result = logger.info("Test message")

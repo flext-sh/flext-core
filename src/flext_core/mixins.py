@@ -13,7 +13,7 @@ import threading
 from collections.abc import Callable
 from datetime import UTC, datetime
 from queue import Queue
-from typing import cast, override
+from typing import Protocol, cast, override, runtime_checkable
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -23,6 +23,22 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+
+@runtime_checkable
+class HasModelDump(Protocol):
+    """Protocol for objects that have model_dump method."""
+
+    def model_dump(self) -> dict[str, object]:
+        """Dump the model to a dictionary."""
+        ...
+
+
+@runtime_checkable
+class HasModelFields(Protocol):
+    """Protocol for objects that have model_fields attribute."""
+
+    model_fields: dict[str, object]
 
 
 class FlextMixins:
@@ -159,8 +175,8 @@ class FlextMixins:
         # Use Pydantic model_dump if available and requested
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
-            model_obj = obj
-            data: dict[str, object] = getattr(model_obj, "model_dump")()
+            model_obj = cast("HasModelDump", obj)
+            data: dict[str, object] = model_obj.model_dump()
             return json.dumps(
                 data,
                 indent=request.indent,
@@ -202,10 +218,10 @@ class FlextMixins:
         # Use Pydantic model_dump if available and requested
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
-            model_obj = obj
-            result = getattr(model_obj, "model_dump")()
+            model_obj = cast("HasModelDump", obj)
+            result = model_obj.model_dump()
             if isinstance(result, dict):
-                return cast("FlextTypes.Core.Dict", result)
+                return result
             return cast("FlextTypes.Core.Dict", {"model_dump": result})
 
         # Use __dict__ if available
@@ -214,7 +230,8 @@ class FlextMixins:
 
         # Fallback to type representation
         return cast(
-            "FlextTypes.Core.Dict", {"type": type(obj).__name__, "value": str(obj)}
+            "FlextTypes.Core.Dict",
+            {"type": type(obj).__name__, "value": str(obj)},
         )
 
     # =============================================================================
@@ -385,16 +402,12 @@ class FlextMixins:
 
         """
         # Check for Pydantic model with model_dump method
-        if hasattr(obj, "model_dump"):
-            model_dump_attr = getattr(obj, "model_dump")
-            if callable(model_dump_attr):
-                model_data: dict[str, object] = cast(
-                    "FlextTypes.Core.Dict", model_dump_attr()
-                )
-                if parameter not in model_data:
-                    msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                    raise FlextExceptions.NotFoundError(msg, field=parameter)
-                return model_data[parameter]
+        if isinstance(obj, HasModelDump):
+            model_data: dict[str, object] = obj.model_dump()
+            if parameter not in model_data:
+                msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+                raise FlextExceptions.NotFoundError(msg, field=parameter)
+            return model_data[parameter]
 
         # Fallback for non-Pydantic objects - direct attribute access
         if not hasattr(obj, parameter):
@@ -419,12 +432,8 @@ class FlextMixins:
         """
         try:
             # Check if parameter exists in model fields for Pydantic objects
-            if hasattr(obj, "model_fields"):
-                model_fields_attr = getattr(obj, "model_fields")
-                if model_fields_attr is not None:
-                    model_fields = cast("FlextTypes.Core.Dict", model_fields_attr)
-                    if parameter not in model_fields:
-                        return False
+            if isinstance(obj, HasModelFields) and parameter not in obj.model_fields:
+                return False
 
             # Use setattr which triggers Pydantic validation if applicable
             setattr(obj, parameter, value)
@@ -451,7 +460,7 @@ class FlextMixins:
 
         """
         if hasattr(singleton_class, "get_global_instance"):
-            get_global_instance_method = getattr(singleton_class, "get_global_instance")
+            get_global_instance_method = singleton_class.get_global_instance
             if callable(get_global_instance_method):
                 instance = get_global_instance_method()
                 return FlextMixins.get_config_parameter(instance, parameter)
@@ -463,7 +472,9 @@ class FlextMixins:
 
     @staticmethod
     def set_singleton_parameter(
-        singleton_class: type, parameter: str, value: object
+        singleton_class: type,
+        parameter: str,
+        value: object,
     ) -> bool:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -477,7 +488,7 @@ class FlextMixins:
 
         """
         if hasattr(singleton_class, "get_global_instance"):
-            get_global_instance_method = getattr(singleton_class, "get_global_instance")
+            get_global_instance_method = singleton_class.get_global_instance
             if callable(get_global_instance_method):
                 instance = get_global_instance_method()
                 return FlextMixins.set_config_parameter(instance, parameter, value)
@@ -951,7 +962,9 @@ class FlextMixins:
                         ) -> None:
                             try:
                                 test_method = getattr(
-                                    mixin_instance, "test_method", None
+                                    mixin_instance,
+                                    "test_method",
+                                    None,
                                 )
                                 if test_method is not None and callable(test_method):
                                     result = test_method()
@@ -960,7 +973,7 @@ class FlextMixins:
                                     queue.put((
                                         False,
                                         AttributeError(
-                                            "test_method not found or not callable"
+                                            "test_method not found or not callable",
                                         ),
                                     ))
                             except Exception as e:
@@ -995,7 +1008,7 @@ class FlextMixins:
                             }
                             self._check_circuit_breaker(name)
                             return FlextResult[object].fail(
-                                "Failed to apply mixin: timeout"
+                                "Failed to apply mixin: timeout",
                             )
 
                         try:
@@ -1013,7 +1026,8 @@ class FlextMixins:
                                 )
                                 self._metrics[name] = {
                                     "applications": current_metrics.get(
-                                        "applications", 0
+                                        "applications",
+                                        0,
                                     )
                                     + 1,
                                     "successes": current_metrics.get("successes", 0)
@@ -1063,7 +1077,8 @@ class FlextMixins:
                                 )
                                 self._metrics[name] = {
                                     "applications": current_metrics.get(
-                                        "applications", 0
+                                        "applications",
+                                        0,
                                     )
                                     + 1,
                                     "successes": current_metrics.get("successes", 0),
@@ -1073,7 +1088,7 @@ class FlextMixins:
                                 # Check if we should open circuit breaker
                                 self._check_circuit_breaker(name)
                                 return FlextResult[object].fail(
-                                    f"Failed to apply mixin: {result}"
+                                    f"Failed to apply mixin: {result}",
                                 )
                         except Exception as queue_error:
                             if attempt >= max_retries - 1:
@@ -1089,7 +1104,8 @@ class FlextMixins:
                                 )
                                 self._metrics[name] = {
                                     "applications": current_metrics.get(
-                                        "applications", 0
+                                        "applications",
+                                        0,
                                     )
                                     + 1,
                                     "successes": current_metrics.get("successes", 0),
@@ -1099,7 +1115,7 @@ class FlextMixins:
                                 # Check if we should open circuit breaker
                                 self._check_circuit_breaker(name)
                                 return FlextResult[object].fail(
-                                    f"Failed to apply mixin: {queue_error}"
+                                    f"Failed to apply mixin: {queue_error}",
                                 )
                     except Exception as e:
                         if attempt < max_retries - 1:  # Don't retry on last attempt
@@ -1126,7 +1142,7 @@ class FlextMixins:
 
                 # If we reach here, all retries failed but no explicit error was returned
                 return FlextResult[object].fail(
-                    "All retry attempts failed without explicit error"
+                    "All retry attempts failed without explicit error",
                 )
             # Fallback to old behavior for mixins without test_method
             processed_data = {"processed": True, "mixin": name, "data": data}
@@ -1153,7 +1169,8 @@ class FlextMixins:
             return FlextResult[object].fail(f"Failed to apply mixin: {e}")
 
     def add_middleware(
-        self, middleware: Callable[[type, object], tuple[type, object] | None]
+        self,
+        middleware: Callable[[type, object], tuple[type, object] | None],
     ) -> FlextResult[None]:
         """Add middleware."""
         try:
@@ -1252,11 +1269,11 @@ class FlextMixins:
                     cast(
                         "list[Callable[[type, object], tuple[type, object]]]",
                         config["middleware"],
-                    )
+                    ),
                 )
             if "metrics" in config and isinstance(config["metrics"], dict):
                 self._metrics.update(
-                    cast("dict[str, dict[str, int]]", config["metrics"])
+                    cast("dict[str, dict[str, int]]", config["metrics"]),
                 )
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -1272,7 +1289,7 @@ class FlextMixins:
                     processed_list.append(result.value)
                 else:
                     return FlextResult[list[object]].fail(
-                        f"Batch processing failed: {result.error}"
+                        f"Batch processing failed: {result.error}",
                     )
             return FlextResult[list[object]].ok(processed_list)
         except Exception as e:
@@ -1288,7 +1305,7 @@ class FlextMixins:
                     processed_list.append(result.value)
                 else:
                     return FlextResult[list[object]].fail(
-                        f"Parallel processing failed: {result.error}"
+                        f"Parallel processing failed: {result.error}",
                     )
             return FlextResult[list[object]].ok(processed_list)
         except Exception as e:

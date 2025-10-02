@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import concurrent.futures
 import gc
 import time
@@ -58,7 +57,7 @@ class FlextTestsPerformance:
     Consolidates all performance testing patterns, profiling, benchmarking,
     memory tracking, complexity analysis, and regression detection into
     a single class interface. Provides performance analysis
-    capabilities for synchronous and asynchronous code.
+    capabilities for synchronous and hronous code.
     """
 
     # === Complexity Analysis ===
@@ -354,10 +353,12 @@ class FlextTestsPerformance:
                 if isinstance(last_measurement["memory_mb"], (int, float, str))
                 else 0.0
             )
-            assert memory_used <= max_memory_mb, (
-                f"Memory usage {memory_used:.2f}MB exceeds limit {max_memory_mb:.2f}MB\n"
-                f"Top allocations: {last_measurement['peak_memory_stats']}"
-            )
+            if memory_used > max_memory_mb:
+                msg = (
+                    f"Memory usage {memory_used:.2f}MB exceeds limit {max_memory_mb:.2f}MB\n"
+                    f"Top allocations: {last_measurement['peak_memory_stats']}"
+                )
+                raise AssertionError(msg)
 
     # === Benchmark Utils ===
 
@@ -686,22 +687,22 @@ class FlextTestsPerformance:
                     raise RuntimeError(msg)
                 return last_result
 
-    # === Async Benchmarking ===
+    # === Benchmarking ===
 
-    class AsyncBenchmark:
-        """Benchmarking utilities for async functions."""
+    class Benchmark:
+        """Benchmarking utilities for functions."""
 
         @staticmethod
-        async def benchmark_async(
+        def benchmark(
             func: Callable[P, Awaitable[T]],
             iterations: int = 100,
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> dict[str, float]:
-            """Benchmark async function.
+            """Benchmark function.
 
             Args:
-                func: Async function to benchmark
+                func: function to benchmark
                 iterations: Number of iterations to run
                 *args: Positional arguments for the function
                 **kwargs: Keyword arguments for the function
@@ -714,7 +715,7 @@ class FlextTestsPerformance:
 
             for _ in range(iterations):
                 start_time = time.perf_counter()
-                await func(*args, **kwargs)
+                func(*args, **kwargs)
                 end_time = time.perf_counter()
                 times.append(end_time - start_time)
 
@@ -731,16 +732,16 @@ class FlextTestsPerformance:
             }
 
         @staticmethod
-        async def benchmark_concurrency(
+        def benchmark_concurrency(
             func: Callable[P, Awaitable[T]],
             concurrency_levels: list[int],
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> dict[int, FlextTypes.Core.Dict]:
-            """Benchmark async function with different concurrency levels.
+            """Benchmark function with different concurrency levels.
 
             Args:
-                func: Async function to benchmark
+                func: function to benchmark
                 concurrency_levels: List of concurrency levels to test
                 *args: Positional arguments for the function
                 **kwargs: Keyword arguments for the function
@@ -753,7 +754,7 @@ class FlextTestsPerformance:
 
             for concurrency in concurrency_levels:
 
-                async def concurrent_execution(
+                def concurrent_execution(
                     workers: int = concurrency,
                 ) -> FlextTypes.Core.List:
                     """concurrent_execution method.
@@ -766,10 +767,10 @@ class FlextTestsPerformance:
 
                     """
                     tasks = [func(*args, **kwargs) for _ in range(workers)]
-                    return list(await asyncio.gather(*tasks))
+                    return list(gather(*tasks))
 
                 start_time = time.perf_counter()
-                result = await concurrent_execution()
+                result = concurrent_execution()
                 end_time = time.perf_counter()
 
                 total_time = end_time - start_time
@@ -889,14 +890,14 @@ class FlextTestsPerformance:
         return FlextTestsPerformance.MemoryProfiler()
 
     @staticmethod
-    def create_async_benchmark() -> FlextTestsPerformance.AsyncBenchmark:
-        """Create AsyncBenchmark instance.
+    def create_benchmark() -> FlextTestsPerformance.Benchmark:
+        """Create Benchmark instance.
 
         Returns:
-            FlextTestsPerformance.AsyncBenchmark: New async benchmark instance
+            FlextTestsPerformance.Benchmark: New benchmark instance
 
         """
-        return FlextTestsPerformance.AsyncBenchmark()
+        return FlextTestsPerformance.Benchmark()
 
     @staticmethod
     def create_markers() -> FlextTestsPerformance.PerformanceMarkers:
@@ -1000,9 +1001,9 @@ class FlextTestsPerformance:
 #     """Compatibility facade for MemoryProfiler - use FlextTestsPerformance instead."""
 #     ... all methods commented out
 
-# Legacy AsyncBenchmark class - REMOVED (commented out)
-# class AsyncBenchmark:
-#     """Compatibility facade for AsyncBenchmark - use FlextTestsPerformance instead."""
+# Legacy Benchmark class - REMOVED (commented out)
+# class Benchmark:
+#     """Compatibility facade for Benchmark - use FlextTestsPerformance instead."""
 #     ... all methods commented out
 
 # Legacy PerformanceMarkers class - REMOVED (commented out)

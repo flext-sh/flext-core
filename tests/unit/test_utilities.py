@@ -35,23 +35,30 @@ class TestFlextUtilitiesComprehensive:
 
         # Test validate_string_length
         result = FlextUtilities.Validation.validate_string_length(
-            "test", min_length=2, max_length=10
+            "test",
+            min_length=2,
+            max_length=10,
         )
         assert result.is_success
 
         result = FlextUtilities.Validation.validate_string_length(
-            "a", min_length=2, max_length=10
+            "a",
+            min_length=2,
+            max_length=10,
         )
         assert result.is_failure
 
         result = FlextUtilities.Validation.validate_string_length(
-            "very_long_string", min_length=2, max_length=10
+            "very_long_string",
+            min_length=2,
+            max_length=10,
         )
         assert result.is_failure
 
         # Test validate_string_pattern
         result = FlextUtilities.Validation.validate_string_pattern(
-            "test123", r"^[a-z]+\d+$"
+            "test123",
+            r"^[a-z]+\d+$",
         )
         assert result.is_success
 
@@ -68,7 +75,10 @@ class TestFlextUtilitiesComprehensive:
 
         # Test validate_string (comprehensive validation)
         result = FlextUtilities.Validation.validate_string(
-            "valid_string", min_length=5, max_length=20, pattern=r"^[a-z_]+$"
+            "valid_string",
+            min_length=5,
+            max_length=20,
+            pattern=r"^[a-z_]+$",
         )
         assert result.is_success
 
@@ -100,10 +110,10 @@ class TestFlextUtilitiesComprehensive:
 
         # Test comprehensive email validation
         assert FlextUtilities.Validation.validate_email_address(
-            "user@example.com"
+            "user@example.com",
         ).is_success
         assert FlextUtilities.Validation.validate_email_address(
-            "invalid.email"
+            "invalid.email",
         ).is_failure
 
     def test_validation_numeric_operations(self) -> None:
@@ -138,10 +148,12 @@ class TestFlextUtilitiesComprehensive:
         """Test specialized validation operations."""
         # Test environment value validation
         assert FlextUtilities.Validation.validate_environment_value(
-            "production", ["production", "development"]
+            "production",
+            ["production", "development"],
         ).is_success
         assert FlextUtilities.Validation.validate_environment_value(
-            "invalid", ["production", "development"]
+            "invalid",
+            ["production", "development"],
         ).is_failure
 
         # Test log level validation
@@ -151,13 +163,13 @@ class TestFlextUtilitiesComprehensive:
 
         # Test security token validation
         assert FlextUtilities.Validation.validate_security_token(
-            "token123456"
+            "token123456",
         ).is_success
         assert FlextUtilities.Validation.validate_security_token("short").is_failure
 
         # Test connection string validation
         assert FlextUtilities.Validation.validate_connection_string(
-            "host=localhost;port=5432"
+            "host=localhost;port=5432",
         ).is_success
         assert FlextUtilities.Validation.validate_connection_string("").is_failure
 
@@ -167,10 +179,10 @@ class TestFlextUtilitiesComprehensive:
 
         # Test phone number validation
         assert FlextUtilities.Validation.validate_phone_number(
-            "+1-555-123-4567"
+            "+1-555-123-4567",
         ).is_success
         assert FlextUtilities.Validation.validate_phone_number(
-            "555-123-4567"
+            "555-123-4567",
         ).is_success
         assert FlextUtilities.Validation.validate_phone_number("invalid").is_failure
 
@@ -196,7 +208,9 @@ class TestFlextUtilitiesComprehensive:
 
         # Test file path validation with secure temp file
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False
+            encoding="utf-8",
+            mode="w",
+            delete=False,
         ) as secure_temp_file:
             secure_temp_file.write("test content")
             temp_file_path = secure_temp_file.name
@@ -223,7 +237,7 @@ class TestFlextUtilitiesComprehensive:
 
         # Test non-existing file
         result = FlextUtilities.Validation.validate_existing_file_path(
-            "/non/existent/file.txt"
+            "/non/existent/file.txt",
         )
         assert result.is_failure
 
@@ -236,21 +250,25 @@ class TestFlextUtilitiesComprehensive:
         # Test validation pipeline
         def validator1(value: str) -> FlextResult[None]:
             return FlextUtilities.Validation.validate_string_not_empty(value).map(
-                lambda _: None
+                lambda _: None,
             )
 
         def validator2(value: str) -> FlextResult[None]:
             return FlextUtilities.Validation.validate_string_length(
-                value, min_length=3, max_length=20
+                value,
+                min_length=3,
+                max_length=20,
             ).map(lambda _: None)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [validator1, validator2]
+            "test",
+            [validator1, validator2],
         )
         assert result.is_success
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "", [validator1, validator2]
+            "",
+            [validator1, validator2],
         )
         assert result.is_failure
 
@@ -263,12 +281,16 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[None].ok(None)
 
         result = FlextUtilities.Validation.validate_with_context(
-            "short", "context_test", context_validator
+            "short",
+            "context_test",
+            context_validator,
         )
         assert result.is_failure
 
         result = FlextUtilities.Validation.validate_with_context(
-            "long_enough", "context_test", context_validator
+            "long_enough",
+            "context_test",
+            context_validator,
         )
         assert result.is_success
 
@@ -298,7 +320,8 @@ class TestFlextUtilitiesComprehensive:
 
         # Test error message formatting
         error_result = FlextUtilities.Transformation.format_error_message(
-            "Error", "Additional context"
+            "Error",
+            "Additional context",
         )
         assert error_result.is_success
         assert "Error" in error_result.value
@@ -353,7 +376,8 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[str].ok("Success")
 
         result = FlextUtilities.Processing.retry_operation(
-            failing_operation, max_retries=3
+            failing_operation,
+            max_retries=3,
         )
         assert result.is_success
         assert result.value == "Success"
@@ -364,7 +388,8 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[str].ok("Quick result")
 
         result = FlextUtilities.Processing.timeout_operation(
-            quick_operation, timeout_seconds=1.0
+            quick_operation,
+            timeout_seconds=1.0,
         )
         assert result.is_success
         assert result.value == "Quick result"
@@ -434,7 +459,9 @@ class TestFlextUtilitiesComprehensive:
         # Test batch processing
         items = [1, 2, 3, 4, 5]
         batch_result = FlextUtilities.Utilities.batch_process(
-            items, batch_size=2, processor=lambda x: FlextResult[int].ok(x * 2)
+            items,
+            batch_size=2,
+            processor=lambda x: FlextResult[int].ok(x * 2),
         )
         assert batch_result.is_success
         assert len(batch_result.value) == 5
@@ -504,7 +531,7 @@ class TestFlextUtilitiesComprehensive:
 
         # Test correlation with context
         corr_with_ctx = FlextUtilities.Generators.generate_correlation_id_with_context(
-            "test_context"
+            "test_context",
         )
         assert "test_context" in corr_with_ctx
 
@@ -517,7 +544,8 @@ class TestFlextUtilitiesComprehensive:
 
         # Test text truncation
         result = FlextUtilities.TextProcessor.truncate_text(
-            "Long text here", max_length=8
+            "Long text here",
+            max_length=8,
         )
         assert result.is_success
         assert len(result.value) <= 11  # 8 + "..." (3)
@@ -687,7 +715,8 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[str].ok("Quick result")
 
         result = FlextUtilities.Reliability.with_timeout(
-            quick_operation, timeout_seconds=1.0
+            quick_operation,
+            timeout_seconds=1.0,
         )
         assert result.is_success
         assert result.value == "Quick result"
@@ -703,7 +732,8 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[str].ok("Retry successful")
 
         result = FlextUtilities.Reliability.execute_with_retry(
-            retry_operation, max_attempts=3
+            retry_operation,
+            max_attempts=3,
         )
         assert result.is_success
         assert result.value == "Retry successful"
@@ -740,13 +770,14 @@ class TestFlextUtilitiesComprehensive:
 
         # Test generic message validation
         result = FlextUtilities.MessageValidator.validate_message(
-            command, operation="command"
+            command,
+            operation="command",
         )
         assert result.is_success
 
         # Test message payload building
         payload = FlextUtilities.MessageValidator.build_serializable_message_payload(
-            command
+            command,
         )
         assert isinstance(payload, dict)
         assert "name" in payload
@@ -773,7 +804,8 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[str].ok(f"{value}_b")
 
         parallel_func = FlextUtilities.Composition.compose_parallel(
-            operation_a, operation_b
+            operation_a,
+            operation_b,
         )
         parallel_result = parallel_func("input")
         assert parallel_result.is_success
@@ -792,7 +824,9 @@ class TestFlextUtilitiesComprehensive:
             return FlextResult[str].ok(f"{value}_short")
 
         conditional_func = FlextUtilities.Composition.compose_conditional(
-            condition, true_operation, false_operation
+            condition,
+            true_operation,
+            false_operation,
         )
         result = conditional_func("short")
         assert result.is_success

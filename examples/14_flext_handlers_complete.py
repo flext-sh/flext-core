@@ -129,7 +129,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Handler for creating new users."""
 
             def __init__(
-                self, user_store: dict[str, User], event_store: list[UserCreatedEvent]
+                self,
+                user_store: dict[str, User],
+                event_store: list[UserCreatedEvent],
             ) -> None:
                 # Create handler configuration
                 config = FlextModels.CqrsConfig.Handler(
@@ -159,7 +161,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 if message.age < 0 or message.age > 150:
                     return FlextResult[str].fail(
-                        "Invalid age provided", error_code="VALIDATION_ERROR"
+                        "Invalid age provided",
+                        error_code="VALIDATION_ERROR",
                     )
 
                 # Create user
@@ -207,7 +210,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 if message.user_id not in self._users:
                     return FlextResult[None].fail(
-                        f"User {message.user_id} not found", error_code="USER_NOT_FOUND"
+                        f"User {message.user_id} not found",
+                        error_code="USER_NOT_FOUND",
                     )
 
                 user = self._users[message.user_id]
@@ -233,7 +237,10 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # Create user command
         create_cmd = CreateUserCommand(
-            user_id="USER-001", name="Alice Smith", email="alice@example.com", age=28
+            user_id="USER-001",
+            name="Alice Smith",
+            email="alice@example.com",
+            age=28,
         )
 
         create_result = create_handler.handle(create_cmd)
@@ -244,7 +251,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # Update user command
         update_cmd = UpdateUserCommand(
-            user_id="USER-001", name="Alice Johnson", email="alice.johnson@example.com"
+            user_id="USER-001",
+            name="Alice Johnson",
+            email="alice.johnson@example.com",
         )
 
         update_result = update_handler.handle(update_cmd)
@@ -292,7 +301,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 user = self._users.get(message.user_id)
                 if not user:
                     return FlextResult[User].fail(
-                        f"User {message.user_id} not found", error_code="USER_NOT_FOUND"
+                        f"User {message.user_id} not found",
+                        error_code="USER_NOT_FOUND",
                     )
 
                 return FlextResult[User].ok(user)
@@ -310,7 +320,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=2000,
                     max_command_retries=1,
                     metadata={
-                        "description": "Handles user list queries with pagination"
+                        "description": "Handles user list queries with pagination",
                     },
                 )
                 super().__init__(config=config)
@@ -320,7 +330,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             def handle(self, message: ListUsersQuery) -> FlextResult[list[User]]:
                 """Handle list users query."""
                 self._logger.info(
-                    f"Listing users (limit: {message.limit}, offset: {message.offset})"
+                    f"Listing users (limit: {message.limit}, offset: {message.offset})",
                 )
 
                 users = list(self._users.values())
@@ -472,7 +482,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 self._logger = FlextLogger(__name__)
 
             def handle(
-                self, message: dict[str, object]
+                self,
+                message: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Handle validation with comprehensive error handling."""
                 self._logger.info("Processing validation request")
@@ -569,7 +580,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             total_amount: Decimal
 
         class OrderValidationHandler(
-            FlextHandlers[ProcessOrderCommand, ProcessOrderCommand]
+            FlextHandlers[ProcessOrderCommand, ProcessOrderCommand],
         ):
             """First stage: Order validation."""
 
@@ -586,23 +597,24 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 super().__init__(config=config)
 
             def handle(
-                self, message: ProcessOrderCommand
+                self,
+                message: ProcessOrderCommand,
             ) -> FlextResult[ProcessOrderCommand]:
                 """Validate order before processing."""
                 if not message.items:
                     return FlextResult[ProcessOrderCommand].fail(
-                        "Order must contain items"
+                        "Order must contain items",
                     )
 
                 if message.total_amount <= 0:
                     return FlextResult[ProcessOrderCommand].fail(
-                        "Total amount must be positive"
+                        "Total amount must be positive",
                     )
 
                 return FlextResult[ProcessOrderCommand].ok(message)
 
         class OrderEnrichmentHandler(
-            FlextHandlers[ProcessOrderCommand, ProcessOrderCommand]
+            FlextHandlers[ProcessOrderCommand, ProcessOrderCommand],
         ):
             """Second stage: Order enrichment."""
 
@@ -619,7 +631,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 super().__init__(config=config)
 
             def handle(
-                self, message: ProcessOrderCommand
+                self,
+                message: ProcessOrderCommand,
             ) -> FlextResult[ProcessOrderCommand]:
                 """Enrich order with additional data."""
                 # Simulate enrichment by adding timestamps and IDs
@@ -660,7 +673,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Simulate persistence
                 confirmation_id = f"CONF-{uuid4().hex[:8]}"
                 print(
-                    f"    💾 Order {message.order_id} persisted with confirmation {confirmation_id}"
+                    f"    💾 Order {message.order_id} persisted with confirmation {confirmation_id}",
                 )
                 return FlextResult[str].ok(confirmation_id)
 

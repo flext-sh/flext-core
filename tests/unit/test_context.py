@@ -105,7 +105,7 @@ class TestFlextContext:
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
-            }
+            },
         }
 
         context.set("nested", nested_data)

@@ -90,12 +90,15 @@ class TestAutoServiceManagement:
         assert isinstance(services_result.data, list)
 
     def test_register_service_with_dependencies(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test service registration with dependencies."""
         # Register database service first
         db_result = docker_manager.register_service(
-            service_name="database", container_name="test_db", ports=[5432]
+            service_name="database",
+            container_name="test_db",
+            ports=[5432],
         )
         assert db_result.is_success
 
@@ -114,7 +117,8 @@ class TestAutoServiceManagement:
         assert "database" in api_deps["api"]
 
     def test_auto_discover_services_from_compose(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test auto-discovery from docker-compose file."""
         compose_content = """
@@ -136,7 +140,10 @@ services:
 """
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".yml", delete=False
+            encoding="utf-8",
+            mode="w",
+            suffix=".yml",
+            delete=False,
         ) as f:
             f.write(compose_content)
             compose_file = f.name
@@ -160,14 +167,18 @@ services:
             Path(compose_file).unlink()
 
     def test_start_services_with_dependency_resolution(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test starting services with proper dependency resolution."""
         # Register services with dependencies
         docker_manager.register_service("database", "test_db", ports=[5432])
         docker_manager.register_service("cache", "test_redis", ports=[6379])
         docker_manager.register_service(
-            "api", "test_api", ports=[8080], depends_on=["database", "cache"]
+            "api",
+            "test_api",
+            ports=[8080],
+            depends_on=["database", "cache"],
         )
 
         with patch.object(docker_manager, "start_container") as mock_start:
@@ -247,7 +258,8 @@ class TestDockerCLIEquivalents:
             mock_containers.list.return_value = [mock_container1, mock_container2]
 
             result = docker_manager.list_containers_formatted(
-                show_all=True, format_string="{{.Names}}"
+                show_all=True,
+                format_string="{{.Names}}",
             )
 
             assert result.is_success
@@ -266,7 +278,7 @@ class TestDockerCLIEquivalents:
             mock_images.list.return_value = [mock_image]
 
             result = docker_manager.images_formatted(
-                format_string="{{.Repository}}:{{.Tag}}"
+                format_string="{{.Repository}}:{{.Tag}}",
             )
 
             assert result.is_success
@@ -316,7 +328,8 @@ class TestDockerCLIEquivalents:
                 mock_system.return_value = 0
 
                 result = docker_manager.exec_container_interactive(
-                    container_name="test_container", command="/bin/bash"
+                    container_name="test_container",
+                    command="/bin/bash",
                 )
 
                 assert result.is_success
@@ -330,7 +343,8 @@ class TestDockerCLIEquivalents:
             mock_containers.get.return_value = mock_container
 
             result: FlextResult[str] = docker_manager.container_logs_formatted(
-                container_name="test_container", tail=50
+                container_name="test_container",
+                tail=50,
             )
 
             assert result.is_success
@@ -348,7 +362,8 @@ class TestShellScriptCompatibility:
             return FlextTestDocker()
 
     def test_shell_script_compatibility_run_success(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test successful shell script compatibility execution."""
         with patch("subprocess.run") as mock_run:
@@ -359,7 +374,8 @@ class TestShellScriptCompatibility:
             mock_run.return_value = mock_result
 
             result = docker_manager.shell_script_compatibility_run(
-                "ps --format table", capture_output=True
+                "ps --format table",
+                capture_output=True,
             )
 
             assert result.is_success
@@ -368,7 +384,8 @@ class TestShellScriptCompatibility:
             assert "Container running" in stdout
 
     def test_shell_script_compatibility_run_error(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test shell script compatibility with command error."""
         with patch("subprocess.run") as mock_run:
@@ -390,14 +407,16 @@ class TestShellScriptCompatibility:
             assert "Container not found" in stderr
 
     def test_shell_script_compatibility_timeout(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test shell script compatibility with timeout."""
         with patch("subprocess.run") as mock_run:
             mock_run.side_effect = TimeoutExpired("docker", 30)
 
             result = docker_manager.shell_script_compatibility_run(
-                "exec -it test-container /bin/bash", capture_output=True
+                "exec -it test-container /bin/bash",
+                capture_output=True,
             )
 
             assert result.is_failure
@@ -457,30 +476,35 @@ class TestErrorHandling:
             return FlextTestDocker()
 
     def test_register_service_invalid_data(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test service registration with invalid data."""
         # Empty service name should fail
         result = docker_manager.register_service(
-            service_name="", container_name="test_container"
+            service_name="",
+            container_name="test_container",
         )
 
         # Should still succeed but with empty name (implementation allows this)
         assert result.is_success or result.is_failure
 
     def test_start_services_unregistered_service(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test starting unregistered services."""
         result: FlextResult[dict[str, str]] = docker_manager.start_services_for_test(
-            service_names=["nonexistent_service"], test_name="test"
+            service_names=["nonexistent_service"],
+            test_name="test",
         )
 
         assert result.is_failure
         assert result.error is not None and "not registered" in result.error
 
     def test_health_check_unregistered_service(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test health check for unregistered service."""
         result = docker_manager.get_service_health_status("nonexistent_service")
@@ -510,7 +534,10 @@ class TestIntegrationScenarios:
         """Test complete service lifecycle from registration to cleanup."""
         # Step 1: Register services
         db_result = docker_manager.register_service(
-            "database", "test_db", ports=[5432], health_check_cmd="pg_isready"
+            "database",
+            "test_db",
+            ports=[5432],
+            health_check_cmd="pg_isready",
         )
         assert db_result.is_success
 
@@ -530,7 +557,8 @@ class TestIntegrationScenarios:
             # Step 3: Start services for test
             start_result: FlextResult[dict[str, str]] = (
                 docker_manager.start_services_for_test(
-                    service_names=["api", "database"], test_name="integration_test"
+                    service_names=["api", "database"],
+                    test_name="integration_test",
                 )
             )
             assert start_result.is_success
@@ -544,7 +572,8 @@ class TestIntegrationScenarios:
             assert stop_result.is_success
 
     def test_dependency_resolution_complex(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test complex dependency resolution scenario."""
         # Create a more complex dependency graph

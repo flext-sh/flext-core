@@ -234,7 +234,7 @@ class FlextTestsHypothesis:
                             FlextTestsHypothesis.FlextStrategies._build_path,
                             p=st.text(
                                 alphabet=list(
-                                    string.ascii_lowercase + string.digits + "-_/"
+                                    string.ascii_lowercase + string.digits + "-_/",
                                 ),
                                 min_size=1,
                                 max_size=50,
@@ -505,7 +505,9 @@ class FlextTestsHypothesis:
             return st.one_of(
                 [
                     st.text(
-                        alphabet=list("🚀🎯✅❌🔧📊"), min_size=1, max_size=10
+                        alphabet=list("🚀🎯✅❌🔧📊"),
+                        min_size=1,
+                        max_size=10,
                     ),  # Emojis
                     st.text(
                         alphabet=list("áéíóúñü"),

@@ -9,7 +9,7 @@ from __future__ import annotations
 import threading
 import time
 from collections.abc import Callable
-from typing import cast, override
+from typing import Protocol, cast, override, runtime_checkable
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -19,6 +19,14 @@ from flext_core.result import FlextResult
 
 # ISSUE: Violates SOLID principles - massive god class with 1200+ lines spanning multiple responsibilities
 # ISSUE: Should be split into separate modules: FlextRegistry, FlextPipeline, FlextCircuitBreaker, FlextRateLimiter, etc.
+
+
+@runtime_checkable
+class HasResultValue(Protocol):
+    """Protocol for FlextResult-like objects with value and is_success attributes."""
+
+    value: object
+    is_success: bool
 
 
 class FlextProcessors:
@@ -175,7 +183,8 @@ class FlextProcessors:
         )
 
         rate_limit = self._config.get(
-            "rate_limit", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+            "rate_limit",
+            FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         )
         self._rate_limit = (
             int(rate_limit)
@@ -234,7 +243,7 @@ class FlextProcessors:
         # Check circuit breaker
         if self._circuit_breaker.get(name, False):
             return FlextResult[object].fail(
-                f"Circuit breaker open for processor '{name}'"
+                f"Circuit breaker open for processor '{name}'",
             )
 
         # Check rate limit
@@ -252,7 +261,7 @@ class FlextProcessors:
 
             if rate_data["count"] >= self._rate_limit:
                 return FlextResult[object].fail(
-                    f"Rate limit exceeded for processor '{name}'"
+                    f"Rate limit exceeded for processor '{name}'",
                 )
 
             rate_data["count"] += 1
@@ -380,7 +389,9 @@ class FlextProcessors:
         return self._circuit_breaker.get(name, False)
 
     def process_batch(
-        self, name: str, data_list: list[object]
+        self,
+        name: str,
+        data_list: list[object],
     ) -> FlextResult[list[object]]:
         """Process a batch of data items.
 
@@ -397,14 +408,16 @@ class FlextProcessors:
             result = self.process(name, data)
             if result.is_failure:
                 return FlextResult[list[object]].fail(
-                    f"Batch processing failed: {result.error}"
+                    f"Batch processing failed: {result.error}",
                 )
             results.append(result.value)
 
         return FlextResult[list[object]].ok(results)
 
     def process_parallel(
-        self, name: str, data_list: list[object]
+        self,
+        name: str,
+        data_list: list[object],
     ) -> FlextResult[list[object]]:
         """Process data items in parallel.
 
@@ -489,7 +502,7 @@ class FlextProcessors:
 
         if self._circuit_breaker_threshold < FlextConstants.Core.ZERO:
             return FlextResult[None].fail(
-                "Circuit breaker threshold must be non-negative"
+                "Circuit breaker threshold must be non-negative",
             )
 
         if self._rate_limit < FlextConstants.Core.ZERO:
@@ -563,7 +576,7 @@ class FlextProcessors:
             try:
                 config = FlextConfig.get_global_instance()
                 return float(
-                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT)
+                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT),
                 )
             except Exception:
                 return float(FlextConstants.Defaults.TIMEOUT)
@@ -583,7 +596,7 @@ class FlextProcessors:
                         config,
                         "max_batch_size",
                         FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-                    )
+                    ),
                 )
             except Exception:
                 return FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
@@ -600,8 +613,10 @@ class FlextProcessors:
                 config = FlextConfig.get_global_instance()
                 return int(
                     getattr(
-                        config, "max_handlers", FlextConstants.Container.MAX_SERVICES
-                    )
+                        config,
+                        "max_handlers",
+                        FlextConstants.Container.MAX_SERVICES,
+                    ),
                 )
             except Exception:
                 return FlextConstants.Container.MAX_SERVICES
@@ -628,7 +643,8 @@ class FlextProcessors:
             self._handlers: dict[str, object] = {}
 
         def register(
-            self, registration: FlextModels.HandlerRegistration
+            self,
+            registration: FlextModels.HandlerRegistration,
         ) -> FlextResult[None]:
             """Register a handler using Pydantic model validation.
 
@@ -686,11 +702,14 @@ class FlextProcessors:
 
             """
             return self.get(name).flat_map(
-                lambda handler: self._execute_handler_safely(handler, request, name)
+                lambda handler: self._execute_handler_safely(handler, request, name),
             )
 
         def _execute_handler_safely(
-            self, handler: object, request: object, name: str
+            self,
+            handler: object,
+            request: object,
+            name: str,
         ) -> FlextResult[object]:
             """Execute handler with proper method resolution and error handling.
 
@@ -703,14 +722,17 @@ class FlextProcessors:
                 # Check for handle method first
                 if hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
                     handle_method = getattr(
-                        handler, FlextConstants.Mixins.METHOD_HANDLE, None
+                        handler,
+                        FlextConstants.Mixins.METHOD_HANDLE,
+                        None,
                     )
                     if handle_method is not None and callable(handle_method):
                         result: object = handle_method(request)
                         if isinstance(result, FlextResult):
                             # Cast to FlextResult[object] to ensure type compatibility
                             typed_result: FlextResult[object] = cast(
-                                "FlextResult[object]", result
+                                "FlextResult[object]",
+                                result,
                             )
                             return typed_result
                         return FlextResult[object].ok(result)
@@ -721,7 +743,8 @@ class FlextProcessors:
                     if isinstance(handler_result, FlextResult):
                         # Cast to FlextResult[object] to ensure type compatibility
                         handler_typed_result: FlextResult[object] = cast(
-                            "FlextResult[object]", handler_result
+                            "FlextResult[object]",
+                            handler_result,
                         )
                         return handler_typed_result
                     return FlextResult[object].ok(handler_result)
@@ -764,7 +787,8 @@ class FlextProcessors:
             return self._handlers.get(name)
 
         def execute_with_timeout(
-            self, config: FlextModels.HandlerExecutionConfig
+            self,
+            config: FlextModels.HandlerExecutionConfig,
         ) -> FlextResult[object]:
             """Execute handler with timeout using HandlerExecutionConfig model.
 
@@ -774,7 +798,9 @@ class FlextProcessors:
 
             """
             timeout_seconds = getattr(
-                config, "timeout_seconds", FlextProcessors.Config.get_default_timeout()
+                config,
+                "timeout_seconds",
+                FlextProcessors.Config.get_default_timeout(),
             )
 
             # Create a dummy success result with valid data for timeout operation
@@ -785,7 +811,8 @@ class FlextProcessors:
             )
 
         def execute_with_fallback(
-            self, config: FlextModels.HandlerExecutionConfig
+            self,
+            config: FlextModels.HandlerExecutionConfig,
         ) -> FlextResult[object]:
             """Execute handler with fallback handlers using HandlerExecutionConfig model.
 
@@ -808,7 +835,8 @@ class FlextProcessors:
             return primary_result
 
         def execute_batch(
-            self, config: FlextModels.BatchProcessingConfig | object
+            self,
+            config: FlextModels.BatchProcessingConfig | object,
         ) -> FlextResult[list[object]]:
             """Execute multiple handlers using BatchProcessingConfig model.
 
@@ -835,7 +863,7 @@ class FlextProcessors:
                 data_items = getattr(config, "data_items")
                 continue_on_error = getattr(config, "continue_on_error", True)
             else:
-                data_items = config.data_items
+                data_items = getattr(config, "data_items")
                 continue_on_error = config.continue_on_error
 
             # Validate batch size limits
@@ -918,7 +946,8 @@ class FlextProcessors:
 
             """
             return FlextResult.pipeline(
-                data, *[self._process_step(step) for step in self._steps]
+                data,
+                *[self._process_step(step) for step in self._steps],
             )
 
         def process_conditionally(
@@ -939,7 +968,7 @@ class FlextProcessors:
                         data=data,
                         context=request.context,
                         timeout_seconds=request.timeout_seconds,
-                    )
+                    ),
                 )
 
             return (
@@ -948,7 +977,8 @@ class FlextProcessors:
             )
 
         def process_with_timeout(
-            self, request: FlextModels.ProcessingRequest
+            self,
+            request: FlextModels.ProcessingRequest,
         ) -> FlextResult[object]:
             """Process data with timeout using ProcessingRequest model.
 
@@ -957,7 +987,9 @@ class FlextProcessors:
 
             """
             timeout_seconds = getattr(
-                request, "timeout_seconds", FlextProcessors.Config.get_default_timeout()
+                request,
+                "timeout_seconds",
+                FlextProcessors.Config.get_default_timeout(),
             )
 
             # Validate timeout bounds
@@ -1017,7 +1049,8 @@ class FlextProcessors:
             return primary_result
 
         def process_batch(
-            self, config: FlextModels.BatchProcessingConfig | object
+            self,
+            config: FlextModels.BatchProcessingConfig | object,
         ) -> FlextResult[list[object]]:
             """Process batch of data using validated BatchProcessingConfig model.
 
@@ -1046,7 +1079,7 @@ class FlextProcessors:
                 data_items = getattr(config, "data_items")
                 continue_on_error = getattr(config, "continue_on_error", True)
             else:
-                data_items = config.data_items
+                data_items = getattr(config, "data_items")
                 continue_on_error = config.continue_on_error
 
             # Validate batch size limits
@@ -1059,7 +1092,9 @@ class FlextProcessors:
 
             # Process all data items using parallel processing
             return FlextResult.parallel_map(
-                data_items, self.process, fail_fast=not continue_on_error
+                data_items,
+                self.process,
+                fail_fast=not continue_on_error,
             )
 
         def process_with_validation(
@@ -1081,7 +1116,8 @@ class FlextProcessors:
             return self.process(request.data)
 
         def _process_step(
-            self, step: object
+            self,
+            step: object,
         ) -> Callable[[object], FlextResult[object]]:
             """Convert pipeline step to FlextResult-returning function.
 
@@ -1092,7 +1128,7 @@ class FlextProcessors:
 
             def step_processor(current: object) -> FlextResult[object]:
                 return FlextResult[object].from_exception(
-                    lambda: self._execute_step(step, current)
+                    lambda: self._execute_step(step, current),
                 )
 
             return step_processor
@@ -1279,7 +1315,8 @@ class FlextProcessors:
                                 )
                             # Extract the actual data from FlextResult if it's a FlextResult
                             if hasattr(handler_result, "value") and hasattr(
-                                handler_result, "is_success"
+                                handler_result,
+                                "is_success",
                             ):
                                 result = handler_result.value
                             else:
@@ -1305,8 +1342,8 @@ class FlextProcessors:
 
                 """
                 # Extract data from FlextResult if it's a FlextResult
-                if hasattr(request, "value") and hasattr(request, "is_success"):
-                    actual_request = getattr(request, "value")
+                if isinstance(request, HasResultValue):
+                    actual_request = request.value
                 else:
                     actual_request = request
 

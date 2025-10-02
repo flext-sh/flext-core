@@ -722,7 +722,8 @@ class TestFlextContainer:
                 raise RuntimeError(msg)
 
         container._services = cast(
-            "FlextTypes.Core.Dict", FailingDict(container._services)
+            "FlextTypes.Core.Dict",
+            FailingDict(container._services),
         )
 
         result = container.clear()
@@ -749,7 +750,8 @@ class TestFlextContainer:
                 raise RuntimeError(msg)
 
         container._services = cast(
-            "FlextTypes.Core.Dict", FailingDict(container._services)
+            "FlextTypes.Core.Dict",
+            FailingDict(container._services),
         )
 
         result = container.list_services()
@@ -768,7 +770,8 @@ class TestFlextContainer:
                 raise RuntimeError(msg)
 
         container._services = cast(
-            "FlextTypes.Core.Dict", FailingDict(container._services)
+            "FlextTypes.Core.Dict",
+            FailingDict(container._services),
         )
 
         result = container.get_service_names()
@@ -787,7 +790,8 @@ class TestFlextContainer:
                 raise RuntimeError(msg)
 
         container._services = cast(
-            "FlextTypes.Core.Dict", FailingDict(container._services)
+            "FlextTypes.Core.Dict",
+            FailingDict(container._services),
         )
 
         result = container.get_info()

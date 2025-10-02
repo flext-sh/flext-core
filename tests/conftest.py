@@ -26,7 +26,6 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-from flext_tests import FlextTestsAsyncs
 
 
 # Core Fixtures
@@ -606,15 +605,6 @@ def logging_test_env() -> Generator[None]:
 #     """Use FlextTestsMatchers directly."""
 #     return FlextTestsMatchers()
 #
-@pytest.fixture
-def async_test_utils() -> FlextTestsAsyncs:
-    """Provide async test utilities.
-
-    Returns:
-        FlextTestsAsyncs: Async test utilities instance.
-
-    """
-    return FlextTestsAsyncs()
 
 
 #
@@ -677,4 +667,4 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "core: Core framework tests")
     config.addinivalue_line("markers", "performance: Performance tests")
     config.addinivalue_line("markers", "slow: Slow-running tests")
-    config.addinivalue_line("markers", "asyncio: Async tests")
+    config.addinivalue_line("markers", " tests")

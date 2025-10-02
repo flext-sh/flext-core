@@ -78,7 +78,7 @@ class Money(FlextModels.Value):
         if self.currency != other.currency:
             return FlextResult[Money].fail("Currency mismatch")
         return FlextResult[Money].ok(
-            Money(amount=self.amount + other.amount, currency=self.currency)
+            Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
     def subtract(self, other: Money) -> FlextResult[Money]:
@@ -88,7 +88,7 @@ class Money(FlextModels.Value):
         if self.amount < other.amount:
             return FlextResult[Money].fail("Insufficient funds")
         return FlextResult[Money].ok(
-            Money(amount=self.amount - other.amount, currency=self.currency)
+            Money(amount=self.amount - other.amount, currency=self.currency),
         )
 
 
@@ -260,7 +260,7 @@ class Order(FlextModels.AggregateRoot):
         # Check if order is modifiable
         if self.status not in {"DRAFT", "PENDING"}:
             return FlextResult[None].fail(
-                f"Cannot modify order in {self.status} status"
+                f"Cannot modify order in {self.status} status",
             )
 
         # Check stock availability
@@ -297,7 +297,7 @@ class Order(FlextModels.AggregateRoot):
         """Remove order line."""
         if self.status not in {"DRAFT", "PENDING"}:
             return FlextResult[None].fail(
-                f"Cannot modify order in {self.status} status"
+                f"Cannot modify order in {self.status} status",
             )
 
         # Find and remove line
@@ -376,7 +376,7 @@ class Order(FlextModels.AggregateRoot):
         """Cancel order with reason."""
         if self.status in {"SHIPPED", "DELIVERED", "CANCELLED"}:
             return FlextResult[None].fail(
-                f"Cannot cancel order in {self.status} status"
+                f"Cannot cancel order in {self.status} status",
             )
 
         self.status = "CANCELLED"
@@ -499,7 +499,8 @@ class ComprehensiveModelsService(FlextService[Order]):
             print(f"✅ Stock added, new stock: {product.stock}")
 
         new_price = Money(
-            amount=product.price.amount - Decimal("50.00"), currency="USD"
+            amount=product.price.amount - Decimal("50.00"),
+            currency="USD",
         )
         result = product.adjust_price(new_price)
         if result.is_success:
@@ -604,7 +605,8 @@ class ComprehensiveModelsService(FlextService[Order]):
         )
 
         purchase_amount = Money(
-            amount=self._realistic["order"]["total"], currency="USD"
+            amount=self._realistic["order"]["total"],
+            currency="USD",
         )
         can_purchase = customer.can_purchase(purchase_amount)
         if can_purchase.is_success:
@@ -613,7 +615,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         result = customer.make_purchase(purchase_amount)
         if result.is_success:
             print(
-                f"✅ Purchase completed, new balance: ${customer.current_balance.amount}"
+                f"✅ Purchase completed, new balance: ${customer.current_balance.amount}",
             )
 
         excessive = Money(amount=Decimal(2000), currency="USD")

@@ -474,7 +474,7 @@ class TestFlextExceptions:
         """Test exceptions thread safety."""
         # Disable rate limiting for thread safety test
         exceptions = FlextExceptions(
-            config={"rate_limit": 100, "rate_limit_window": 60}
+            config={"rate_limit": 100, "rate_limit_window": 60},
         )
 
         def test_handler(exc: Exception) -> FlextResult[str]:

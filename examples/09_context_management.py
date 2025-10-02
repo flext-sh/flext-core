@@ -20,7 +20,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import json
 import time
 import warnings
@@ -47,7 +46,8 @@ class ContextManagementService(FlextService[dict[str, str]]):
     def execute(self) -> FlextResult[dict[str, str]]:
         """Execute method required by FlextService."""
         self._logger.info(
-            "Executing context demo", extra={"data": {"demo": "context_management"}}
+            "Executing context demo",
+            extra={"data": {"demo": "context_management"}},
         )
         return FlextResult[dict[str, str]].ok({
             "status": "completed",
@@ -406,41 +406,40 @@ class ContextManagementService(FlextService[dict[str, str]]):
         print("\n✅ Restored from snapshot")
         print(f"  User ID: {FlextContext.Request.get_user_id()}")
 
-    # ========== ASYNC CONTEXT ==========
+    # ========== CONTEXT ==========
 
-    async def demonstrate_async_context(self) -> None:
-        """Show context preservation across async operations."""
-        print("\n=== Async Context Management ===")
+    def demonstrate_context(self) -> None:
+        """Show context preservation across operations."""
+        print("\n=== Context Management ===")
 
         # Set context in main thread
-        FlextContext.Variables.Request.USER_ID.set("async-user-123")
+        FlextContext.Variables.Request.USER_ID.set("-user-123")
         FlextContext.Correlation.set_correlation_id(str(uuid4()))
 
         correlation = FlextContext.Correlation.get_correlation_id()
         print(f"Main thread correlation: {correlation}")
 
-        # Define async tasks that use context
-        async def async_task(task_id: int) -> str:
-            """Async task that accesses context."""
+        # Define tasks that use context
+        def sync_task(task_id: int) -> str:
+            """Synchronous task that accesses context."""
             # Context should be preserved
             user = FlextContext.Request.get_user_id()
             corr = FlextContext.Correlation.get_correlation_id()
 
-            # Simulate async work
-            await asyncio.sleep(0.1)
+            # Simulate work
+            time.sleep(0.1)
 
             return f"Task {task_id}: user={user}, correlation={corr[:8] if corr else 'None'}..."
 
-        # Run multiple async tasks
-        tasks = [async_task(i) for i in range(3)]
-        results = await asyncio.gather(*tasks)
+        # Run multiple tasks
+        results = [sync_task(i) for i in range(3)]
 
-        print("\nAsync task results:")
+        print("\nSync task results:")
         for result in results:
             print(f"  {result}")
 
-        # Context still available after async operations
-        print(f"\nContext after async: {FlextContext.Request.get_user_id()}")
+        # Context still available after operations
+        print(f"\nContext after sync tasks: {FlextContext.Request.get_user_id()}")
 
     # ========== CONTEXT PATTERNS ==========
 
@@ -580,9 +579,9 @@ def main() -> None:
     service.demonstrate_context_utilities()
     service.demonstrate_context_patterns()
 
-    # Async context (run in event loop)
-    print("\n=== Running Async Context Demo ===")
-    asyncio.run(service.demonstrate_async_context())
+    # Context demo (synchronous execution)
+    print("\n=== Running Context Demo ===")
+    service.demonstrate_context()
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()

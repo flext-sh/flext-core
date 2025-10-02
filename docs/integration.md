@@ -77,7 +77,7 @@ with FlextContext.Operation.scope("legacy-import", metadata={"source": "legacy"}
 ## Context & Logging
 
 - Use `FlextLogger` everywhere (including CLI scripts) so correlation IDs from `FlextContext` automatically appear in logs.
-- Ensure asynchronous or threaded code wraps work in `FlextContext` scopes to retain metadata.
+- Ensure hronous or threaded code wraps work in `FlextContext` scopes to retain metadata.
 - Observability teams can extend log processors without patching downstream packages because the shared context is enforced.
 
 ---

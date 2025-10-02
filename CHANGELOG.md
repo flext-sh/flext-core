@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### 1.0.0 Release Preparation
+
 - ABI finalization and dependency version locking
 - Comprehensive API stability documentation
 - Ecosystem compatibility testing
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Core Foundation
+
 - **API Stability Guarantees**: Complete documentation of stable APIs for 1.x series (see [API_STABILITY.md](API_STABILITY.md))
 - **Semantic Versioning Strategy**: Formal SemVer 2.0.0 commitment with deprecation policy (see [VERSIONING.md](VERSIONING.md))
 - **Migration Guide**: Complete upgrade documentation from 0.x to 1.0 (see [MIGRATION_0x_TO_1.0.md](MIGRATION_0x_TO_1.0.md))
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `FlextModels.HttpResponse`: Base HTTP response model with computed properties
 
 #### Documentation
+
 - **1.0.0 Roadmap**: Complete 5-week release timeline in README.md
 - **Ecosystem Compatibility Report**: Testing results for top 5 dependent projects
 - **Stability Guarantees**: Three-level API stability classification (100%, 99%, 95%)
@@ -40,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Dependency Management (ABI Stability)
+
 - **pydantic**: Locked to `>=2.11.7,<3.0.0` (Pydantic 2.x API stable)
 - **pydantic-settings**: Locked to `>=2.10.1,<3.0.0` (aligned with pydantic)
 - **pyyaml**: Locked to `>=6.0.2,<7.0.0` (YAML 6.x stable)
@@ -54,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 These APIs are **guaranteed stable forever** in the 1.x series:
 
 #### FlextResult - Railway-Oriented Programming
+
 ```python
 # All methods and properties guaranteed
 result = FlextResult[T].ok(value)          # Create success
@@ -76,6 +81,7 @@ result.bind(func) -> FlextResult[U]
 ```
 
 #### FlextContainer - Dependency Injection
+
 ```python
 # All methods guaranteed
 container = FlextContainer.get_global()
@@ -88,6 +94,7 @@ container.clear()
 ```
 
 #### FlextModels - Domain-Driven Design
+
 ```python
 # All base classes guaranteed
 class MyEntity(FlextModels.Entity): pass
@@ -100,12 +107,14 @@ class MyResponse(FlextModels.HttpResponse): pass
 ```
 
 #### FlextService - Service Pattern
+
 ```python
 # Service base class guaranteed
 class MyService(FlextService[ConfigType]): pass
 ```
 
 #### FlextLogger - Structured Logging
+
 ```python
 # All log levels guaranteed
 logger = FlextLogger(__name__)
@@ -143,6 +152,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 ### Added
 
 #### HTTP Primitives Foundation
+
 - **FlextConstants.Http**: Complete HTTP constants namespace
   - Status codes (HTTP_OK, HTTP_CREATED, HTTP_BAD_REQUEST, etc.)
   - Status ranges (SUCCESS_MIN/MAX, CLIENT_ERROR_MIN/MAX, etc.)
@@ -161,6 +171,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
   - Status range validation
 
 #### Documentation Improvements
+
 - Complete API reference for HTTP primitives
 - Examples for extending HTTP base models
 - Integration patterns with flext-api and flext-web
@@ -186,6 +197,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 ### Added
 
 #### Core Foundation
+
 - **FlextResult[T]**: Railway-oriented programming with dual `.value`/`.data` access
 - **FlextContainer**: Singleton dependency injection with typed service keys
 - **FlextModels**: Domain-driven design patterns (Entity, Value, AggregateRoot)
@@ -193,6 +205,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 - **FlextLogger**: Structured logging with context propagation and correlation IDs
 
 #### Advanced Patterns
+
 - **FlextContext**: Request/operation context with metadata
 - **FlextCqrs**: Command/Query/Event patterns
 - **FlextBus**: Message bus with middleware pipeline and caching
@@ -201,6 +214,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 - **FlextProcessors**: Message processing orchestration
 
 #### Infrastructure
+
 - **FlextConfig**: Layered configuration with .env, TOML, YAML support
 - **FlextMixins**: Reusable behaviors (timestamps, serialization, validation)
 - **FlextUtilities**: Domain utilities (validation, conversion, type guards)
@@ -224,6 +238,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 **BETA RELEASES** - Feature development and stabilization
 
 ### Added
+
 - Initial implementation of core patterns
 - Basic dependency injection
 - Domain-driven design foundations
@@ -231,6 +246,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 - Structured logging
 
 ### Changed
+
 - Multiple API refinements based on ecosystem feedback
 - Performance improvements
 - Type system enhancements
@@ -251,6 +267,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 **Time Required**: < 5 minutes
 
 **Steps**:
+
 1. Update dependency: `flext-core>=1.0.0,<2.0.0`
 2. Run tests (no changes needed)
 3. Deploy with confidence
@@ -272,6 +289,7 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 **Timeline**: Minimum 2 minor versions before removal
 
 **Example**:
+
 - Version 1.0.0: Feature exists
 - Version 1.1.0: Feature deprecated with `DeprecationWarning`
 - Version 1.2.0: Feature still works with warning
@@ -309,18 +327,21 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 ### What Changes Are Allowed
 
 ✅ **PATCH** (1.0.0 → 1.0.1):
+
 - Bug fixes
 - Security patches
 - Documentation corrections
 - Internal implementation improvements
 
 ✅ **MINOR** (1.0.0 → 1.1.0):
+
 - New classes, methods, functions (additions only)
 - New optional parameters with defaults
 - Deprecation warnings (features still work)
 - Performance improvements
 
 ❌ **FORBIDDEN** in 1.x (Requires 2.0.0):
+
 - Removing public APIs
 - Changing method signatures without backward compatibility
 - Changing expected behavior
@@ -330,13 +351,13 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 
 ## Links
 
-- **Repository**: https://github.com/flext-sh/flext-core
+- **Repository**: <https://github.com/flext-sh/flext-core>
 - **Documentation**: [README.md](README.md)
 - **API Stability**: [API_STABILITY.md](API_STABILITY.md)
 - **Versioning**: [VERSIONING.md](VERSIONING.md)
 - **Migration Guide**: [MIGRATION_0x_TO_1.0.md](MIGRATION_0x_TO_1.0.md)
-- **Issues**: https://github.com/flext-sh/flext-core/issues
-- **Discussions**: https://github.com/flext-sh/flext-core/discussions
+- **Issues**: <https://github.com/flext-sh/flext-core/issues>
+- **Discussions**: <https://github.com/flext-sh/flext-core/discussions>
 
 ---
 

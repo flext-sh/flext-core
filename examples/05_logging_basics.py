@@ -57,7 +57,8 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
         """Execute method required by FlextService."""
         # This is a demonstration service, logs and returns status
         self._logger.info(
-            "Executing logging demonstration", extra={"data": {"demo": "logging"}}
+            "Executing logging demonstration",
+            extra={"data": {"demo": "logging"}},
         )
         return FlextResult[dict[str, str]].ok({
             "status": "completed",
@@ -238,7 +239,7 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
         try:
             {"key": "value"}["missing_key"]
         except KeyError as e:
-            logger.warning(f"Key not found: {e}", extra={"available_keys": ["key"]})
+            logger.warning("Key not found: %s", e, extra={"available_keys": ["key"]})
 
         # Log with custom error details
         error_details = {

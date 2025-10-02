@@ -443,10 +443,11 @@ class TestFlextCommandHandler:
     def test_process_command_handling_failure(self) -> None:
         """Test processing when handler fails."""
         config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command", default_name="FailingCommandHandler"
+            handler_type="command",
+            default_name="FailingCommandHandler",
         )
         handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler(
-            config=config
+            config=config,
         )
         command: FailingCommand = FailingCommand()
 
@@ -815,7 +816,8 @@ class TestCommandPatternIntegration:
 
         # Test 2: Handler that fails processing
         config2 = FlextModels.CqrsConfig.Handler.create_handler_config(
-            handler_type="command", default_name="FailingCommandHandler"
+            handler_type="command",
+            default_name="FailingCommandHandler",
         )
         failing_handler = FailingCommandHandler(config=config2)
         bus.register_handler(failing_handler)

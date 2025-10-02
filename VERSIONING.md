@@ -13,6 +13,7 @@ FLEXT-Core follows strict [Semantic Versioning 2.0.0](https://semver.org/) to pr
 **When to Increment**: Breaking changes to public API
 
 **Examples of Breaking Changes**:
+
 - Removing public classes, methods, or attributes
 - Changing method signatures (parameters, return types)
 - Changing expected behavior of core operations
@@ -20,12 +21,14 @@ FLEXT-Core follows strict [Semantic Versioning 2.0.0](https://semver.org/) to pr
 - Breaking changes in FlextResult, FlextContainer, FlextModels
 
 **Guarantees**:
+
 - **Minimum 6 months** between major version announcements
 - **Deprecation cycle**: Minimum 2 minor versions before removal
 - **Migration tools**: Automated migration utilities provided
 - **Documentation**: Complete migration guide with examples
 
 **Example**:
+
 ```python
 # 1.x.x - Current API
 result = FlextResult[str].ok("value")
@@ -41,6 +44,7 @@ data = result.data  # .value removed (would require migration)
 **When to Increment**: New features without breaking changes
 
 **Examples of Minor Changes**:
+
 - Adding new public classes, methods, or attributes
 - Adding optional parameters with defaults
 - Deprecating features (with warnings)
@@ -48,12 +52,14 @@ data = result.data  # .value removed (would require migration)
 - Performance improvements
 
 **Guarantees**:
+
 - **Zero breaking changes** to existing API
 - **Backward compatible**: All 1.x.y code works with 1.(x+1).0
 - **Deprecation warnings**: Clear warnings for deprecated features
 - **Documentation**: Comprehensive feature documentation
 
 **Example**:
+
 ```python
 # 1.0.0
 result = FlextResult[str].ok("value")
@@ -68,6 +74,7 @@ result_with_metadata = result.with_metadata({"key": "value"})  # NEW
 **When to Increment**: Bug fixes without breaking changes
 
 **Examples of Patch Changes**:
+
 - Fixing incorrect behavior
 - Security patches
 - Documentation corrections
@@ -75,11 +82,13 @@ result_with_metadata = result.with_metadata({"key": "value"})  # NEW
 - Internal refactoring without API changes
 
 **Guarantees**:
+
 - **Zero API changes**: Exact same public interface
 - **Safe upgrades**: Drop-in replacement
 - **Quick turnaround**: Released as needed for critical fixes
 
 **Example**:
+
 ```python
 # 1.0.0 - Bug in validation
 result = FlextResult[int].ok(-1)  # Should fail validation
@@ -108,6 +117,7 @@ dependencies = [
 ```
 
 **Rationale**:
+
 - Lower bound: Minimum required version with needed features
 - Upper bound: Prevent major version breaking changes
 - Range: Allow patch and minor updates within major version
@@ -119,6 +129,7 @@ requires-python = ">=3.13,<3.14"
 ```
 
 **Policy**:
+
 - **1.x series**: Python 3.13 only (current)
 - **Future versions**: May support 3.14+ in minor releases
 - **Deprecation**: Minimum 12 months notice before dropping Python version
@@ -130,6 +141,7 @@ requires-python = ">=3.13,<3.14"
 The following APIs are **guaranteed stable** throughout the 1.x series:
 
 #### Core Result Pattern
+
 ```python
 from flext_core import FlextResult
 
@@ -145,6 +157,7 @@ result.unwrap()    # T or raises
 ```
 
 #### Dependency Injection
+
 ```python
 from flext_core import FlextContainer
 
@@ -155,6 +168,7 @@ container.resolve(interface)
 ```
 
 #### Domain-Driven Design Models
+
 ```python
 from flext_core import FlextModels
 
@@ -165,6 +179,7 @@ class MyAggregate(FlextModels.AggregateRoot): ...
 ```
 
 #### Service Pattern
+
 ```python
 from flext_core import FlextService
 
@@ -173,6 +188,7 @@ class MyService(FlextService[ConfigType]): ...
 ```
 
 #### Structured Logging
+
 ```python
 from flext_core import FlextLogger
 
@@ -186,12 +202,14 @@ logger.info("message", extra={"key": "value"})
 **Minimum Lifecycle**: 2 minor versions
 
 **Example Timeline**:
+
 1. **Version 1.0.0**: Feature `old_method()` exists
 2. **Version 1.1.0**: Feature deprecated with `DeprecationWarning`
 3. **Version 1.2.0**: Feature still works with warning
 4. **Version 2.0.0**: Feature removed (major version bump required)
 
 **Deprecation Warnings**:
+
 ```python
 import warnings
 
@@ -249,6 +267,7 @@ All FLEXT ecosystem libraries depend on flext-core:
 - Enterprise tools (client-a-oud-mig, client-b-meltano-native)
 
 **Testing Requirements**:
+
 - All dependent projects must pass tests with new version
 - Integration tests validate backward compatibility
 - Performance regression tests ensure no degradation
@@ -256,19 +275,21 @@ All FLEXT ecosystem libraries depend on flext-core:
 ## Version History
 
 ### 0.9.9 (Current) - Release Candidate
+
 - Preparing for 1.0.0 stable release
 - API surface stabilized
 - Dependency versions locked
 - 79% test coverage achieved
 
 ### 1.0.0 (Planned: October 2025) - Stable Release
+
 - First stable release with API guarantees
 - Complete semantic versioning commitment
 - Full ecosystem compatibility validated
 
 ## Contact & Support
 
-- **Repository**: https://github.com/flext-sh/flext-core
-- **Issues**: https://github.com/flext-sh/flext-core/issues
-- **Documentation**: https://github.com/flext-sh/flext-core/blob/main/README.md
-- **Team**: team@flext.sh
+- **Repository**: <https://github.com/flext-sh/flext-core>
+- **Issues**: <https://github.com/flext-sh/flext-core/issues>
+- **Documentation**: <https://github.com/flext-sh/flext-core/blob/main/README.md>
+- **Team**: <team@flext.sh>

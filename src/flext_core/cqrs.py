@@ -100,7 +100,7 @@ class FlextCqrs:
         - [ ] Support command validation decorators
         - [ ] Implement command/query middleware decorators
         - [ ] Add handler composition utilities
-        - [ ] Support async command/query decorators
+        - [ ] Support command/query decorators
         - [ ] Implement retry decorators for handlers
         - [ ] Add circuit breaker decorators
         - [ ] Support handler metrics decorators
@@ -161,7 +161,7 @@ class FlextCqrs:
                     "handler_name": getattr(config, "handler_name", None),
                     "handler_type": getattr(config, "handler_type", None),
                 }
-                setattr(result, "_metadata", metadata)
+                result.metadata = metadata
 
             return result
 

@@ -12,9 +12,6 @@ from __future__ import annotations
 from typing import Self, override
 from urllib.parse import urljoin
 
-# BaseModel usage replaced with FlextModels - using foundation patterns
-from pytest_httpx import HTTPXMock
-
 from flext_core import (
     FlextConstants,
     FlextLogger,
@@ -166,8 +163,11 @@ class FlextTestsHttp:
         """Builder for complex HTTP testing scenarios."""
 
         @override
-        def __init__(self, httpx_mock: HTTPXMock) -> None:
+        def __init__(self, httpx_mock: object) -> None:
             """Initialize HTTP scenario builder."""
+            if HTTPXMock is None:
+                msg = "HTTPXMock not available - install pytest-httpx"
+                raise ImportError(msg)
             self.httpx_mock = httpx_mock
             self.scenarios: list[FlextTypes.Core.Dict] = []
 
@@ -448,7 +448,7 @@ class FlextTestsHttp:
 
     @staticmethod
     def create_scenario_builder(
-        httpx_mock: HTTPXMock,
+        httpx_mock: object,
     ) -> FlextTestsHttp.HTTPScenarioBuilder:
         """Create HTTP scenario builder.
 
@@ -500,7 +500,7 @@ class FlextTestsHttp:
 
     @staticmethod
     def mock_httpx_response(
-        httpx_mock: HTTPXMock,
+        httpx_mock: object,
         url: str,
         *,
         method: str = "GET",
@@ -510,7 +510,7 @@ class FlextTestsHttp:
     ) -> None:
         """Mock HTTPX response."""
         response_headers: dict[str, str] = {
-            "content-type": FlextConstants.Platform.MIME_TYPE_JSON
+            "content-type": FlextConstants.Platform.MIME_TYPE_JSON,
         }
         if headers:
             # Convert headers dict values to strings
