@@ -37,7 +37,6 @@ SPDX-License-Identifier: MIT.
 from __future__ import annotations
 
 import contextlib
-import inspect
 import logging
 import signal
 import time
@@ -1247,10 +1246,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         """
         try:
-            if inspect.iscoroutinefunction(func):
-                value: TResult = func()
-            else:
-                value = func()
+            value = func()
             return FlextResult[TResult].ok(value)
         except Exception as e:
             return FlextResult[TResult].fail(str(e))

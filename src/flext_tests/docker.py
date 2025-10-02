@@ -751,7 +751,7 @@ class FlextTestDocker:
         """Get container information."""
         try:
             client = self.get_client()
-            container = cast("Container", client.containers.get(name))
+            container = client.containers.get(name)
             status = (
                 ContainerStatus.RUNNING
                 if container.status == "running"
@@ -845,7 +845,7 @@ class FlextTestDocker:
         """Remove a Docker container."""
         try:
             client = self.get_client()
-            container = cast("Container", client.containers.get(name))
+            container = client.containers.get(name)
             container.remove(force=force)
             return FlextResult[str].ok(f"Container {name} removed")
         except NotFound:
@@ -876,7 +876,7 @@ class FlextTestDocker:
         """Get formatted container logs."""
         try:
             client = self.get_client()
-            container = cast("Container", client.containers.get(container_name))
+            container = client.containers.get(container_name)
             logs = container.logs(tail=tail, follow=follow, stream=False)
             return FlextResult[str].ok(logs.decode("utf-8"))
         except NotFound:
@@ -895,7 +895,7 @@ class FlextTestDocker:
         """Execute command in container."""
         try:
             client = self.get_client()
-            container = cast("Container", client.containers.get(container_name))
+            container = client.containers.get(container_name)
             result = container.exec_run(
                 command,
                 user=user if user is not None else "root",
@@ -1005,7 +1005,7 @@ class FlextTestDocker:
         tail_count = tail or self._DEFAULT_LOG_TAIL
         try:
             client = self.get_client()
-            container = cast("Container", client.containers.get(container_name))
+            container = client.containers.get(container_name)
             logs_bytes = container.logs(tail=tail_count)
             return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
         except NotFound:

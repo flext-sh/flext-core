@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import string
+import time
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Protocol, cast, override
@@ -443,18 +444,18 @@ class FlextTestsFixtures:
 
         def process(self, data: object) -> FlextTypes.Core.Dict:
             """Process data hronously."""
-            sleep(0.001)  # Simulate work
+            time.sleep(0.001)  # Simulate work
             return {"processed": True, "original": data}
 
         def validate(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Validate data hronously."""
-            sleep(0.001)  # Simulate work
+            time.sleep(0.001)  # Simulate work
             has_required = "required_field" in data
             return {"valid": has_required}
 
         def transform(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
             """Transform data hronously."""
-            sleep(0.001)  # Simulate work
+            time.sleep(0.001)  # Simulate work
             return {
                 "transformed": True,
                 "output": f"transformed_{data.get('input', '')}",
@@ -462,7 +463,7 @@ class FlextTestsFixtures:
 
         def fail_operation(self) -> FlextResult[object]:
             """Simulate failure."""
-            sleep(0.001)
+            time.sleep(0.001)
             return FlextResult[object].fail("operation_failed")
 
     class Executor:
