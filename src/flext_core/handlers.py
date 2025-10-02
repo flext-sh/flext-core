@@ -38,7 +38,11 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
-from typing import Literal, cast, override
+from typing import (
+    Literal,
+    cast,
+    override,
+)
 
 from pydantic import BaseModel
 
@@ -48,21 +52,30 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-HandlerModeLiteral = Literal["command", "query", "event", "saga"]
-HandlerTypeLiteral = Literal["command", "query", "event", "saga"]
 
-
-class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
+class FlextHandlers[MessageT_contra, ResultT](
+    FlextMixins, ABC, FlextProtocols.Application.Handler[MessageT_contra, ResultT]
+):
     """Handler base class for CQRS command and query implementations.
 
     FlextHandlers provides the foundation for implementing CQRS handlers
     with validation, execution context, metrics collection, and
     configuration management. Generic base supporting commands, queries,
     events, and sagas across all 32+ FLEXT projects.
+
+    **PROTOCOL IMPLEMENTATION**: This handler implements FlextProtocols.Application.Handler,
+    establishing the foundation pattern for ALL command/query/event handlers across the
+    FLEXT ecosystem.
+
+    Implements FlextProtocols through structural subtyping:
+    - Application.Handler: handle, execute, validate, can_handle, __call__ methods
+    - Application.Handler properties: handler_name, mode
+    - CQRS validation: validate_command, validate_query methods
 
     **Function**: Base class for CQRS handler implementations
         - Abstract base for command/query/event handlers
@@ -571,6 +584,37 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
+    def validate(self, data: MessageT_contra) -> FlextResult[None]:
+        """Validate input data based on handler mode for Application.Handler protocol.
+
+        Generic validation that delegates to mode-specific validation methods.
+        Part of FlextProtocols.Application.Handler protocol implementation.
+
+        Args:
+            data: The data to validate
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error details
+
+        Examples:
+            >>> handler = MyCommandHandler()
+            >>> result = handler.validate(command_data)
+            >>> if result.is_success:
+            ...     # Validation passed
+            ...     pass
+
+        """
+        if self.mode == "command":
+            return self.validate_command(cast("object", data))
+        if self.mode == "query":
+            return self.validate_query(cast("object", data))
+        # For event and saga handlers, use generic validation
+        return FlextHandlers._MessageValidator.validate_message(
+            data,
+            operation=self.mode,
+            revalidate_pydantic_messages=self._revalidate_pydantic_messages,
+        )
+
     def execute(self, message: MessageT_contra) -> FlextResult[ResultT]:
         """Execute the handler with the message.
 
@@ -582,6 +626,27 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         return self._run_pipeline(message, operation=self.mode)
+
+    def __call__(self, input_data: MessageT_contra) -> FlextResult[ResultT]:
+        """Callable interface for Application.Handler protocol.
+
+        Makes the handler callable as a function, delegating to execute() method
+        for consistent handler invocation. Part of FlextProtocols.Application.Handler
+        protocol implementation.
+
+        Args:
+            input_data: The input message to process
+
+        Returns:
+            FlextResult[ResultT]: Execution result
+
+        Examples:
+            >>> handler = MyCommandHandler()
+            >>> result = handler(command)  # Callable interface
+            >>> # Equivalent to: handler.execute(command)
+
+        """
+        return self.execute(input_data)
 
     def _run_pipeline(
         self,
@@ -941,10 +1006,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_command_handler[TCommand](
-            handler_func: Callable[[TCommand], FlextResult[object]],
+            handler_func: FlextTypes.Handlers.HandlerFunc,
             command_type: str,
-            validation_rules: list[Callable[[TCommand], FlextResult[None]]]
-            | None = None,
+            validation_rules: FlextTypes.Handlers.HandlerList | None = None,
         ) -> FlextHandlers[TCommand, object]:
             """Create a command handler with advanced validation patterns.
 
@@ -1002,7 +1066,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_query_handler[TQuery, TResult](
-            handler_func: Callable[[TQuery], FlextResult[TResult]],
+            handler_func: FlextTypes.Handlers.HandlerFunc,
             query_type: str,
             *,
             caching_enabled: bool = False,
@@ -1067,9 +1131,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_event_handler[TEvent](
-            handler_func: Callable[[TEvent], FlextResult[None]],
+            handler_func: FlextTypes.Handlers.HandlerFunc,
             event_type: str,
-            retry_policy: FlextTypes.Core.Dict | None = None,
+            retry_policy: FlextTypes.Handlers.HandlerConfig | None = None,
         ) -> FlextHandlers[TEvent, None]:
             """Create an event handler with retry patterns.
 
@@ -1150,8 +1214,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @staticmethod
         def create_saga_handler[TState](
-            saga_steps: list[Callable[[TState], FlextResult[TState]]],
-            compensation_steps: list[Callable[[TState], FlextResult[TState]]],
+            saga_steps: FlextTypes.Handlers.SagaSteps[TState],
+            compensation_steps: FlextTypes.Handlers.CompensationSteps[TState],
             saga_type: str,
         ) -> FlextHandlers[TState, TState]:
             """Create a saga handler for distributed transactions.
@@ -1197,7 +1261,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 @override
                 def handle(self, message: TState) -> FlextResult[TState]:
                     current_state = message
-                    executed_steps: list[int] = []
+                    executed_steps: FlextTypes.Core.IntList = []
 
                     # Execute saga steps
                     for i, step in enumerate(saga_steps):

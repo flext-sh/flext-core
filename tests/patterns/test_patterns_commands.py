@@ -489,7 +489,7 @@ class TestFlextCommandBus:
         # Verify the result is a failure
         assert result.is_failure
         assert result.error
-        assert "Invalid handler" in result.error
+        assert result.error is not None and "Invalid handler" in result.error
 
         # Verify no handlers were registered
         assert len(bus.get_all_handlers()) == 0

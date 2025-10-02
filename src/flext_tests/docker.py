@@ -12,12 +12,12 @@ import argparse
 import functools
 import json
 import subprocess
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Container, Iterator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import click
 import docker
@@ -30,7 +30,6 @@ from flext_core import FlextLogger, FlextResult, T
 
 if TYPE_CHECKING:
     from docker import DockerClient
-    from docker.models.containers import Container
 
 pytest_module: ModuleType | None = pytest
 
@@ -826,7 +825,7 @@ class FlextTestDocker:
             container = client.containers.run(
                 image,
                 name=container_name,
-                **cast("Any", run_kwargs),
+                **cast("object", run_kwargs),
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -1015,7 +1014,9 @@ class FlextTestDocker:
             return FlextResult[str].fail(f"Failed to fetch logs: {exc}")
 
     @classmethod
-    def register_pytest_fixtures(cls, namespace: dict[str, Any] | None = None) -> None:
+    def register_pytest_fixtures(
+        cls, namespace: dict[str, object] | None = None
+    ) -> None:
         """Register pytest fixtures that wrap FlextTestDocker operations."""
         if cls._PYTEST_REGISTERED:
             return
@@ -1347,23 +1348,23 @@ class FlextTestDocker:
             return FlextResult[str].ok("Logs displayed")
         return FlextResult[str].fail(f"Failed to get logs: {logs_result.error}")
 
-    def show_stack_status(self, compose_file: str) -> FlextResult[dict[str, Any]]:
+    def show_stack_status(self, compose_file: str) -> FlextResult[dict[str, object]]:
         """Return status information for the Docker Compose stack."""
         _ = compose_file  # compose file not required for stub implementation
         status_result = self.get_all_status()
         if status_result.is_failure:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Status check failed: {status_result.error}",
             )
 
-        status_info: dict[str, Any] = status_result.value.copy()
+        status_info: dict[str, object] = status_result.value.copy()
         running_services = self.get_running_services()
         if running_services.is_success:
             status_info["auto_managed_services"] = running_services.value
         else:
             status_info["auto_managed_services"] = []
 
-        return FlextResult[dict[str, Any]].ok(status_info)
+        return FlextResult[dict[str, object]].ok(status_info)
 
     def connect_to_service(self, service_name: str) -> FlextResult[str]:
         """Open an interactive session with a service container."""
@@ -1708,7 +1709,7 @@ class FlextTestDocker:
         )
         manager = cls(workspace_root=workspace_root)
 
-        command_result: FlextResult[Any] | None = None
+        command_result: FlextResult[object] | None = None
 
         if args.command == "init":
             if args.workspace_root is None:

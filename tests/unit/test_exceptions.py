@@ -302,7 +302,7 @@ class TestFlextExceptions:
         result = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None
-        assert "Circuit breaker is open" in result.error
+        assert result.error is not None and "Circuit breaker is open" in result.error
 
     def test_exceptions_handle_exception_with_rate_limiting(self) -> None:
         """Test exception handling with rate limiting."""

@@ -60,11 +60,9 @@ class FlextTestsFixtures:
 
         def __call__(self, func: object, /, *args: object, **kwargs: object) -> object:
             """Call method for benchmark fixture."""
-            ...
 
         def pedantic(self, func: object, /, *args: object, **kwargs: object) -> object:
             """Pedantic method for benchmark fixture."""
-            ...
 
     # === Factory Classes ===
 
@@ -473,7 +471,7 @@ class FlextTestsFixtures:
         def __init__(self) -> None:
             """Initialize executor."""
             self._running: bool = False
-            self._tasks: list[Task[object]] = []
+            self._tasks: list[object] = []
 
         def start(self) -> None:
             """Start executor."""
@@ -482,44 +480,31 @@ class FlextTestsFixtures:
         def stop(self) -> None:
             """Stop executor and cancel tasks."""
             self._running = False
-            for task in self._tasks:
-                if not task.done():
-                    task.cancel()
-            gather(*self._tasks, return_exceptions=True)
+            # Synchronous stub - no async operations to cancel
 
         def execute(self, coro: object) -> object:
-            """Execute coroutine."""
+            """Execute coroutine (sync stub)."""
             if not self._running:
                 self.start()
 
-            # Ensure coro is a coroutine before creating task
-            if not iscoroutine(coro):
-                msg = f"Expected coroutine, got {type(coro)}"
-                raise TypeError(msg)
-
-            task: Task[object] = create_task(coro)
-            self._tasks.append(task)
-            return task
+            # Synchronous stub - return the input object
+            # Real async operations should be converted to sync alternatives
+            self._tasks.append(coro)
+            return coro
 
         def execute_batch(
             self,
             coros: FlextTypes.Core.List,
         ) -> FlextTypes.Core.List:
-            """Execute multiple coroutines in batch."""
+            """Execute multiple coroutines in batch (sync stub)."""
             if not self._running:
                 self.start()
 
-            tasks: list[Task[object]] = []
+            # Synchronous stub - return the input coroutines as results
+            # Real async operations should be converted to sync alternatives
             for coro in coros:
-                if not iscoroutine(coro):
-                    msg = f"Expected coroutine, got {type(coro)}"
-                    raise TypeError(msg)
-                task = create_task(coro)
-                self._tasks.append(task)
-                tasks.append(task)
-
-            results: list[object] = list(gather(*tasks))
-            return list(results)
+                self._tasks.append(coro)
+            return list(coros)
 
         def cleanup(self) -> None:
             """Cleanup completed tasks."""

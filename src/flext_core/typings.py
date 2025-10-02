@@ -20,14 +20,15 @@ from __future__ import annotations
 from collections import OrderedDict
 from collections.abc import Callable as CollectionsCallable
 from typing import (
+    TYPE_CHECKING,
     Literal,
     ParamSpec,
     TypedDict,
     TypeVar,
 )
 
-# Basic type aliases at module level
-Callable = CollectionsCallable[..., object]  # Generic callable for any signature
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 # =============================================================================
 # CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
@@ -82,7 +83,6 @@ E = TypeVar("E")
 F = TypeVar("F")
 K = TypeVar("K")
 R = TypeVar("R")
-# P already defined as ParamSpec above
 
 # Type aliases - Python 3.13+ syntax
 type WorkspaceStatus = Literal["initializing", "ready", "error", "maintenance"]
@@ -136,18 +136,6 @@ TValue_co = TypeVar("TValue_co", covariant=True)
 TValueObject_co = TypeVar("TValueObject_co", covariant=True)
 UParallel = TypeVar("UParallel")
 UResource = TypeVar("UResource")
-
-
-# =============================================================================
-# TYPED DICTIONARIES - Structured data types
-# =============================================================================
-
-
-class RateLimiterState(TypedDict):
-    """Rate limiter state tracking structure."""
-
-    requests: list[float]
-    last_reset: float
 
 
 # =============================================================================
@@ -264,7 +252,7 @@ class FlextTypes:
     Example:
         Complete type usage with generics:
 
-        >>> def process[T](data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+        >>> def process[T](data: "Core.Dict") -> "Core.Dict":
         ...     return data
         >>> result = process({"key": "value"})
         >>> print(result)
@@ -285,15 +273,11 @@ class FlextTypes:
     class Core:
         """Core fundamental types used across all FLEXT modules."""
 
-        # Generic type variables (re-exported for convenience)
-        T = T
-        U = U
-        V = V
-        W = W
-
-        # Note: Use standard T | None syntax directly
-
-        # Basic types - moved to module level
+        # Core TypeVars - reference module-level TypeVars for backward compatibility
+        T = T  # noqa: F821
+        U = U  # noqa: F821
+        V = V  # noqa: F821
+        W = W  # noqa: F821
 
         # Basic collection types - simple type aliases (not using TypeAlias in class scope)
         Dict = dict[str, object]
@@ -331,17 +315,60 @@ class FlextTypes:
         OrderedDict = OrderedDict[str, object]
 
     # =========================================================================
-    # DOMAIN TYPES - Domain-Driven Design patterns
+    # DOMAIN TYPES - Domain-Driven Design patterns (ENHANCED for event sourcing)
     # =========================================================================
 
     class Domain:
-        """Domain types for DDD patterns."""
+        """Domain types for DDD and event sourcing patterns.
 
+        This namespace provides types for entities, value objects, aggregates,
+        and complex event sourcing scenarios.
+
+        Examples:
+            Event sourcing with typed events:
+
+            >>> events: FlextTypes.Domain.EventStream = [
+            ...     {
+            ...         "type": "UserCreated",
+            ...         "payload": {"id": "123"},
+            ...         "timestamp": 1234567890,
+            ...     },
+            ...     {
+            ...         "type": "UserUpdated",
+            ...         "payload": {"name": "John"},
+            ...         "timestamp": 1234567891,
+            ...     },
+            ... ]
+
+            Event handler registry:
+
+            >>> handlers: FlextTypes.Domain.EventHandlerRegistry = {
+            ...     "UserCreated": [handle_user_created, notify_user_created],
+            ...     "UserUpdated": [handle_user_updated],
+            ... }
+
+        """
+
+        # Basic DDD types (legacy - kept for compatibility)
         type EntityId = str
         type Entity = object
         type ValueObject = object
         type AggregateRoot = object
         type DomainEvent = dict[str, object]
+
+        # Event sourcing types (NEW - high value)
+        type EventType = str
+        type EventPayload = dict[str, object]
+        type EventMetadata = dict[str, str | int | float]
+        type DomainEventTyped = dict[str, EventType | EventPayload | EventMetadata]
+        type EventStream = list[DomainEventTyped]
+
+        type EventHandler = CollectionsCallable[[DomainEventTyped], FlextResult[None]]
+        type EventHandlerList = list[EventHandler]
+        type EventHandlerRegistry = dict[EventType, EventHandlerList]
+
+        type AggregateState = dict[str, object | list[object]]
+        type AggregateVersion = int
 
     # =========================================================================
     # SERVICE TYPES - Service layer patterns
@@ -381,15 +408,55 @@ class FlextTypes:
         ]
 
     # =========================================================================
-    # VALIDATION TYPES - Validation patterns
+    # VALIDATION TYPES - Validation patterns (ENHANCED for complex scenarios)
     # =========================================================================
 
     class Validation:
-        """Validation types."""
+        """Validation types for complex validation scenarios.
 
+        This namespace provides types for field-level validators, business rules,
+        invariant checking, and consistency rules across domain models.
+
+        Examples:
+            Field validators with FlextResult:
+
+            >>> field_validator: FlextTypes.Validation.FieldValidator[str] = (
+            ...     lambda value: FlextResult[None].ok(None)
+            ...     if "@" in value
+            ...     else FlextResult[None].fail("Invalid email")
+            ... )
+
+            Business rule registry:
+
+            >>> rules: FlextTypes.Validation.BusinessRuleRegistry = {
+            ...     "check_balance": lambda account: validate_balance(account),
+            ...     "check_credit": lambda account: validate_credit(account),
+            ... }
+
+        """
+
+        # Basic validators (legacy - kept for compatibility)
         type Validator = CollectionsCallable[[object], bool]
         type ValidationRule = CollectionsCallable[[object], bool]
         type BusinessRule = CollectionsCallable[[object], bool]
+
+        # Complex validation patterns (NEW - high value)
+        type FieldName = str
+        type FieldValidator[T] = CollectionsCallable[[T], FlextResult[None]]
+        type FieldValidators[T] = list[FieldValidator[T]]
+        type FieldValidatorRegistry[T] = dict[FieldName, FieldValidators[T]]
+
+        type EntityValidator[T] = CollectionsCallable[[T], FlextResult[None]]
+        type BusinessRuleFunc[T] = EntityValidator[T]
+        type BusinessRuleRegistry[T] = dict[str, BusinessRuleFunc[T]]
+
+        type Invariant[T] = CollectionsCallable[[T], FlextResult[None]]
+        type InvariantList[T] = list[Invariant[T]]
+
+        type ConsistencyRule[T, U] = CollectionsCallable[[T, U], FlextResult[None]]
+        type ConsistencyRuleRegistry[T] = dict[
+            str, dict[str, ConsistencyRule[T, object]]
+        ]
 
     # =========================================================================
     # OUTPUT TYPES - Generic output formatting types
@@ -440,6 +507,7 @@ class FlextTypes:
     class Processing:
         """Generic processing types for ecosystem patterns."""
 
+        # Processing status types
         type ProcessingStatus = Literal[
             "pending",
             "running",
@@ -465,6 +533,174 @@ class FlextTypes:
             "failed",
             "skipped",
         ]
+
+    # =========================================================================
+    # HANDLERS TYPES - CQRS handler registries and pipelines (NEW)
+    # =========================================================================
+
+    class Handlers:
+        """Complex CQRS handler types for command/query/event processing.
+
+        This namespace provides types for handler registries, middleware pipelines,
+        message routing, and handler configuration in CQRS patterns.
+
+        Examples:
+            Handler registry with callbacks:
+
+            >>> handlers: FlextTypes.Handlers.HandlerRegistry = {
+            ...     "CreateUser": [create_user_handler, log_user_created],
+            ...     "UpdateUser": [update_user_handler],
+            ... }
+
+            Middleware pipeline:
+
+            >>> pipeline: FlextTypes.Handlers.MiddlewarePipeline = [
+            ...     validate_middleware,
+            ...     auth_middleware,
+            ...     logging_middleware,
+            ... ]
+
+        """
+
+        # Handler identification
+        type HandlerName = str
+        type HandlerMode = Literal["command", "query", "event", "saga"]
+        type MessageType = str
+        type CorrelationId = str
+
+        # Handler functions
+        type Message = object
+        type HandlerFunc = CollectionsCallable[[Message], FlextResult[object]]
+        type HandlerList = list[HandlerFunc]
+        type HandlerRegistry = dict[HandlerName, HandlerList]
+
+        # Middleware types
+        type Context = dict[str, object]
+        type MiddlewareFunc = CollectionsCallable[[Context], Context]
+        type MiddlewarePipeline = list[MiddlewareFunc]
+        type MiddlewareConfig = dict[str, object | int | str]
+
+        # Handler configuration
+        type HandlerConfig = dict[str, object | dict[str, int | float | bool]]
+        type MessageRouter = dict[MessageType, HandlerFunc | HandlerList]
+
+        # Saga types (complex multi-step handlers)
+        type SagaStep[T] = CollectionsCallable[[T], FlextResult[T]]
+        type SagaSteps[T] = list[SagaStep[T]]
+        type CompensationStep[T] = SagaStep[T]
+        type CompensationSteps[T] = list[CompensationStep[T]]
+
+    # =========================================================================
+    # RELIABILITY TYPES - Circuit breaker, retry, and rate limiting (NEW)
+    # =========================================================================
+
+    class Reliability:
+        """Reliability pattern types for circuit breakers, retries, and rate limiting.
+
+        This namespace provides types for complex stateful reliability mechanisms
+        including circuit breakers, retry policies, and rate limiters.
+
+        Examples:
+            Circuit breaker state registry:
+
+            >>> breakers: FlextTypes.Reliability.CircuitBreakerRegistry = {
+            ...     "payment_service": {
+            ...         "state": "closed",
+            ...         "failure_count": 0,
+            ...         "last_failure": 0.0,
+            ...     }
+            ... }
+
+            Retry policy with strategy:
+
+            >>> policy: FlextTypes.Reliability.RetryPolicy = {
+            ...     "max_attempts": 3,
+            ...     "base_delay": 1.0,
+            ...     "strategy": exponential_backoff,
+            ... }
+
+        """
+
+        # Operation identification
+        type OperationId = str
+
+        # Circuit breaker types
+        type CircuitState = Literal["closed", "open", "half_open"]
+        type CircuitStats = dict[str, bool | int | float | list[float]]
+        type CircuitBreakerRegistry = dict[OperationId, CircuitStats]
+
+        # Retry types
+        type RetryStrategy = CollectionsCallable[[int], float]  # attempt -> delay
+        type RetryPolicy = dict[str, int | float | RetryStrategy]
+        type RetryPolicyRegistry = dict[OperationId, RetryPolicy]
+
+        # Rate limiting types
+        type RateLimitWindow = list[float]  # timestamps
+
+        # RateLimiterState - TypedDict for precise type safety (used by FlextExceptions)
+
+        class RateLimiterState(TypedDict):
+            """Rate limiter state tracking structure.
+
+            Used by FlextExceptions for tracking rate limiting state across
+            exception handling operations.
+            """
+
+            requests: list[float]
+            last_reset: float
+
+        type RateLimiterRegistry = dict[OperationId, RateLimiterState]
+
+        # Performance metrics
+        type PerformanceMetrics = dict[str, dict[str, int | float]]
+
+    # =========================================================================
+    # CONTEXT TYPES - Context and scope management (NEW)
+    # =========================================================================
+
+    class Context:
+        """Context and scope management types for cross-cutting concerns.
+
+        This namespace provides types for managing execution context, scopes,
+        and context propagation across service boundaries.
+
+        Examples:
+            Nested scope context:
+
+            >>> scopes: FlextTypes.Context.ScopeRegistry = {
+            ...     "global": {"user_id": "123", "tenant": "acme"},
+            ...     "request": {"request_id": "abc", "path": "/api/users"},
+            ... }
+
+            Context hooks:
+
+            >>> hooks: FlextTypes.Context.HookRegistry = {
+            ...     "before_request": [validate_hook, auth_hook],
+            ...     "after_request": [log_hook, metrics_hook],
+            ... }
+
+        """
+
+        # Context data
+        type ContextData = dict[str, object]
+        type ContextMetadata = dict[str, object]
+        type ContextDict = ContextData  # Alias
+
+        # Scope management
+        type ScopeName = str
+        type ScopeData = dict[str, object]
+        type ScopeRegistry = dict[ScopeName, ScopeData]
+        type NestedScopes = dict[ScopeName, dict[str, object]]
+
+        # Context hooks
+        type HookName = str
+        type HookFunc = CollectionsCallable[..., object]
+        type HookList = list[HookFunc]
+        type HookRegistry = dict[HookName, HookList]
+
+        # Statistics and tracking
+        type Statistics = dict[str, object]
+        type ContextStatistics = Statistics
 
     # =========================================================================
     # IDENTIFIER TYPES - Common identifier patterns
@@ -497,10 +733,10 @@ class FlextTypes:
     # =========================================================================
 
     # Direct access to Core types for convenience
-    ConfigValue = Core.ConfigValue
-    JsonValue = Core.JsonValue
-    ConfigDict = Core.ConfigDict
-    JsonDict = Core.JsonDict
+    ConfigValue = "Core.ConfigValue"
+    JsonValue = "Core.JsonValue"
+    ConfigDict = "Core.ConfigDict"
+    JsonDict = "Core.JsonDict"
     type Headers = Core.Headers
     type Metadata = Core.Metadata
     type Parameters = Core.Parameters
@@ -519,17 +755,14 @@ __all__: list[str] = [
     "E",
     "Event",
     "F",
-    # Main classes
     "FlextTypes",
     "K",
-    # Domain TypeVars
     "Message",
     "MessageT",
     "MessageT_contra",
     "P",
     "Query",
     "R",
-    "RateLimiterState",
     "ResultT",
     "T",
     "T1_co",

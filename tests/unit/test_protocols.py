@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
 import pytest
 
@@ -867,7 +867,7 @@ class TestFlextProtocols:
         # This should trigger exception handling - accepts any failure message
         result = protocols.validate_implementation("test_protocol", ValidImpl)
         assert result.is_failure
-        # Any failure is acceptable - the goal is to exercise error handling paths
+        # object failure is acceptable - the goal is to exercise error handling paths
         assert result.error is not None
 
     def test_protocols_add_middleware_non_callable(self) -> None:
@@ -909,7 +909,7 @@ class TestFlextProtocols:
         class TestProtocol(Protocol):
             def execute(self) -> str: ...
 
-        protocols._registry[cast("Any", 123)] = TestProtocol
+        protocols._registry[cast("object", 123)] = TestProtocol
 
         # Validate should detect the invalid name
         result = protocols.validate()
@@ -985,7 +985,7 @@ class TestFlextProtocols:
 
         # Corrupt the internal state to force exception during config update
         # Replace _config with something that doesn't have update method
-        protocols._config = cast("Any", "not a dict")
+        protocols._config = cast("object", "not a dict")
 
         result = protocols.import_config({"config": {"key": "value"}})
         assert result.is_failure

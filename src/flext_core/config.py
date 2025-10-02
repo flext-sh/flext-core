@@ -11,7 +11,7 @@ import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar, Protocol, Self, cast, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, Self, cast, runtime_checkable
 
 from pydantic import (
     Field,
@@ -27,12 +27,21 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+# Backward compatibility: re-export from protocols.py
+# Protocol now centralized in FlextProtocols.Foundation
+if TYPE_CHECKING:
+    from typing import Protocol, runtime_checkable
 
-@runtime_checkable
-class HasHandlerType(Protocol):
-    """Protocol for config objects with handler_type attribute."""
+    @runtime_checkable
+    class HasHandlerType(Protocol):
+        """Protocol for config objects with handler_type attribute."""
 
-    handler_type: str | None
+        handler_type: str | None
+
+else:
+    from flext_core.protocols import FlextProtocols
+
+    HasHandlerType = FlextProtocols.Foundation.HasHandlerType
 
 
 class FlextConfig(BaseSettings):
@@ -745,7 +754,7 @@ class FlextConfig(BaseSettings):
         return cls.model_validate(kwargs)
 
     @classmethod
-    def create_for_environment(cls, environment: str, **kwargs: Any) -> FlextConfig:
+    def create_for_environment(cls, environment: str, **kwargs: object) -> FlextConfig:
         """Create a FlextConfig instance for a specific environment.
 
         Args:

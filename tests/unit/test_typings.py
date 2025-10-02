@@ -6,6 +6,7 @@ TypeVars, type aliases, and FlextTypes namespace work correctly.
 
 from typing import get_args
 
+from flext_core.models import FlextModels
 from flext_core.typings import (
     Command,
     E,
@@ -19,7 +20,6 @@ from flext_core.typings import (
     P,
     Query,
     R,
-    RateLimiterState,
     ResultT,
     # Core TypeVars
     T,
@@ -156,7 +156,7 @@ class TestRateLimiterState:
     def test_ratelimiter_state_structure(self) -> None:
         """Test RateLimiterState has correct structure."""
         # Create an instance
-        state: RateLimiterState = {
+        state: FlextModels.RateLimiterState = {
             "requests": [1.0, 2.0, 3.0],
             "last_reset": 1234567890.0,
         }

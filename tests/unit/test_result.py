@@ -12,7 +12,7 @@ from __future__ import annotations
 import operator
 import time
 from collections.abc import Callable
-from typing import Any, cast
+from typing import cast
 
 import pytest
 
@@ -3500,7 +3500,7 @@ class TestFlextResultFinalPush:
         from flext_core.exceptions import FlextExceptions
 
         result1 = FlextResult[int].fail("Failed 1")
-        not_a_result = cast("Any", "not a FlextResult")
+        not_a_result = cast("object", "not a FlextResult")
 
         with pytest.raises(
             FlextExceptions.TypeError,

@@ -134,7 +134,7 @@ class TestFlextBus:
         result = bus.execute(command)
         assert result.is_failure
         assert result.error is not None
-        assert "Handler failed" in result.error
+        assert result.error is not None and "Handler failed" in result.error
 
     def test_get_registered_handlers(self) -> None:
         """Test getting registered handlers."""
@@ -202,7 +202,7 @@ class TestFlextBus:
         result = bus.execute(command)
         assert result.is_failure
         assert result.error is not None
-        assert "Handler error" in result.error
+        assert result.error is not None and "Handler error" in result.error
 
     def test_bus_performance(self) -> None:
         """Test bus performance characteristics."""

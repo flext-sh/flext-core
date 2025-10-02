@@ -115,7 +115,7 @@ git commit -m "Your commit message"
 # ✅ CORRECT - Complete type annotations
 from flext_core import FlextResult
 
-def process_data(input_data: dict[str, Any]) -> FlextResult[ProcessedData]:
+def process_data(input_data: dict[str, object]) -> FlextResult[ProcessedData]:
     """Process input data with type-safe error handling."""
     if not input_data:
         return FlextResult[ProcessedData].fail("Input cannot be empty")
@@ -554,18 +554,18 @@ class MyService:
 **Complete type annotations required**:
 
 ```python
-from typing import Any
+from typing import object
 from flext_core import FlextResult
 
 # ✅ CORRECT - Complete annotations
 def transform_data(
-    input_data: dict[str, Any],
+    input_data: dict[str, object],
     options: dict[str, bool] | None = None
-) -> FlextResult[dict[str, Any]]:
+) -> FlextResult[dict[str, object]]:
     """Transform data with optional configuration."""
     opts = options or {}
     transformed = {k: str(v) for k, v in input_data.items()}
-    return FlextResult[dict[str, Any]].ok(transformed)
+    return FlextResult[dict[str, object]].ok(transformed)
 
 # ❌ FORBIDDEN - Missing annotations
 def transform_data(input_data, options=None):
@@ -583,9 +583,9 @@ def transform_data(input_data, options=None):
 from flext_core import FlextResult
 
 def validate_and_process(
-    data: dict[str, Any],
+    data: dict[str, object],
     strict: bool = False
-) -> FlextResult[dict[str, Any]]:
+) -> FlextResult[dict[str, object]]:
     """Validate and process input data.
 
     This function validates the input data structure and
@@ -610,14 +610,14 @@ def validate_and_process(
         Strict mode requires 'email' field in input data.
     """
     if "id" not in data:
-        return FlextResult[dict[str, Any]].fail("ID required")
+        return FlextResult[dict[str, object]].fail("ID required")
 
     if strict and "email" not in data:
-        return FlextResult[dict[str, Any]].fail("Email required in strict mode")
+        return FlextResult[dict[str, object]].fail("Email required in strict mode")
 
     # Processing logic
     processed = {"id": data["id"], "status": "processed"}
-    return FlextResult[dict[str, Any]].ok(processed)
+    return FlextResult[dict[str, object]].ok(processed)
 ```
 
 ---

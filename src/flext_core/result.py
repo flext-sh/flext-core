@@ -44,9 +44,6 @@ import types
 from collections.abc import Callable, Iterator, Sequence
 from typing import TYPE_CHECKING, TypeGuard, cast, overload, override
 
-if TYPE_CHECKING:
-    from flext_core.exceptions import FlextExceptions
-
 from flext_core.constants import FlextConstants
 from flext_core.typings import (
     FlextTypes,
@@ -57,6 +54,9 @@ from flext_core.typings import (
     U,
     V,
 )
+
+if TYPE_CHECKING:
+    from flext_core.exceptions import FlextExceptions
 
 
 def _get_exceptions() -> type[FlextExceptions]:
@@ -144,7 +144,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         # Example 3: Dual API compatibility (ecosystem requirement)
         result = FlextResult[dict].ok({"key": "value"})
         if result.value != result.data:  # Both work (dual API)
-            raise ValueError("API inconsistency detected")
+            raise _get_exceptions().ValidationError(
+                "API inconsistency detected",
+                field="dual_api_compatibility",
+                validation_details="result.value != result.data",
+            )
         data = result.unwrap_or({})  # With default fallback
 
         # Example 4: Batch processing with error collection

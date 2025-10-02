@@ -14,7 +14,6 @@ import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from flext_core import FlextUtilities
 from flext_core.result import FlextResult
@@ -623,7 +622,7 @@ class TestFlextUtilitiesComprehensive:
         # Create a simple object to test cache operations
         class TestObj:
             def __init__(self) -> None:
-                self._cache: dict[str, Any] = {}
+                self._cache: dict[str, object] = {}
 
         test_obj = TestObj()
 

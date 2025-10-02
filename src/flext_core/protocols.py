@@ -6,11 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
-import time
 from abc import abstractmethod
-from collections.abc import Callable, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import (
@@ -18,12 +15,9 @@ from typing import (
     Generic,
     Protocol,
     overload,
-    override,
     runtime_checkable,
 )
 
-from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
@@ -48,84 +42,6 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-@runtime_checkable
-class ResultProtocol[T](Protocol):
-    """Protocol for Result type to break circular dependency.
-
-    This protocol defines the minimal interface needed by exceptions.py
-    without importing the concrete FlextResult class.
-    """
-
-    @property
-    def is_success(self) -> bool:
-        """Check if result represents success."""
-        ...
-
-    @property
-    def is_failure(self) -> bool:
-        """Check if result represents failure."""
-        ...
-
-    @property
-    def error(self) -> str | None:
-        """Get error message if failed."""
-        ...
-
-    @property
-    def value(self) -> T:
-        """Get success value or raise on failure."""
-        ...
-
-    def unwrap(self) -> T:
-        """Get value or raise if failed."""
-        ...
-
-    @classmethod
-    def ok(cls, data: T) -> ResultProtocol[T]:
-        """Create success result."""
-        ...
-
-    @classmethod
-    def fail(cls, error: str) -> ResultProtocol[T]:
-        """Create failure result."""
-        ...
-
-
-@runtime_checkable
-class ExceptionProtocol(Protocol):
-    """Protocol for Exception types to break circular dependency.
-
-    This protocol defines the minimal interface needed by result.py
-    without importing the concrete FlextExceptions class.
-    """
-
-    class OperationError(Exception):
-        """Protocol for operation errors."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            error_code: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize operation error with message and error code."""
-            ...
-
-    class FlextTypeError(Exception):
-        """Protocol for type errors (avoiding builtin TypeError shadow)."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            error_code: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize type error with message and error code."""
-            ...
-
-
 class FlextProtocols:
     """Grouped protocol interfaces underpinning modernization contracts.
 
@@ -133,11 +49,14 @@ class FlextProtocols:
     extension points relied upon during the 1.0.0 rollout. Provides
     type-safe protocol definitions for the entire FLEXT ecosystem.
 
+    # Re-export commonly used foundation protocols for convenience
+    HasModelDump = FlextProtocols.Foundation.HasModelDump
+
     **Function**: Protocol interface definitions for type safety
-        - Foundation protocols for validators and operations
-        - Domain protocols for DDD patterns (Service, Repository)
-        - Application protocols for CQRS handlers
-        - Infrastructure protocols for external systems
+    "ExceptionProtocol",  # Protocol for exception types (breaks circular dependency)
+    "FlextProtocols",  # Main hierarchical protocol architecture with Config
+    "HasModelDump",  # Convenience alias for foundation dump protocol
+    "ResultProtocol",  # Protocol for result types (breaks circular dependency)
         - Extension protocols for plugin architecture
         - Protocol registration and validation system
         - Circuit breaker and rate limiting for protocols
@@ -260,445 +179,6 @@ class FlextProtocols:
 
     """
 
-    @override
-    def __init__(self, config: FlextTypes.Core.Dict | None = None) -> None:
-        """Initialize FlextProtocols with optional configuration.
-
-        Args:
-            config: Optional configuration dictionary for protocols
-
-        """
-        self._registry: FlextTypes.Core.Dict = {}
-        self._middleware: FlextTypes.Core.List = []
-        self._config = config or {}
-        self._metrics: dict[str, int] = {}
-        self._audit_log: FlextTypes.Core.List = []
-        self._performance_metrics: dict[str, dict[str, int | float]] = {}
-        self._circuit_breaker: dict[str, bool] = {}
-        self._rate_limiter: dict[str, dict[str, int | float]] = {}
-        self._cache: dict[str, tuple[bool, float]] = {}
-        self._lock = threading.Lock()  # Thread safety lock
-        cache_ttl = self._config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL)
-        self._cache_ttl = (
-            float(cache_ttl)
-            if isinstance(cache_ttl, (int, float, str))
-            else float(FlextConstants.Defaults.CACHE_TTL)
-        )
-
-        circuit_threshold = self._config.get(
-            "circuit_breaker_threshold",
-            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
-        )
-        self._circuit_breaker_threshold = (
-            int(circuit_threshold)
-            if isinstance(circuit_threshold, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
-        )
-
-        rate_limit = self._config.get(
-            "rate_limit",
-            FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-        )
-        self._rate_limit = (
-            int(rate_limit)
-            if isinstance(rate_limit, (int, float, str))
-            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-        )
-
-        rate_window = self._config.get(
-            "rate_limit_window",
-            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-        )
-        self._rate_limit_window = (
-            int(rate_window)
-            if isinstance(rate_window, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
-        )
-
-        max_retries = self._config.get(
-            "max_retries",
-            FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
-        )
-        self._max_retries = (
-            int(max_retries)
-            if isinstance(max_retries, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
-        )
-
-        retry_delay = self._config.get("retry_delay", 0.1)
-        self._retry_delay = (
-            float(retry_delay) if isinstance(retry_delay, (int, float, str)) else 0.1
-        )
-
-        timeout = self._config.get(
-            "timeout",
-            float(FlextConstants.Network.DEFAULT_TIMEOUT),
-        )
-        self._timeout = (
-            float(timeout)
-            if isinstance(timeout, (int, float, str))
-            else float(FlextConstants.Network.DEFAULT_TIMEOUT)
-        )
-
-    def register(self, name: str, protocol: type[object] | None) -> FlextResult[None]:
-        """Register a protocol with the given name.
-
-        Args:
-            name: Name to register the protocol under
-            protocol: The protocol class to register
-
-        Returns:
-            FlextResult[None]: Success if registration succeeded, failure otherwise
-
-        """
-        with self._lock:
-            if not name:
-                return FlextResult[None].fail("Protocol name cannot be empty")
-
-            if protocol is None:
-                return FlextResult[None].fail("Protocol cannot be None")
-
-            if name in self._registry:
-                return FlextResult[None].fail(f"Protocol '{name}' already registered")
-
-            self._registry[name] = protocol
-            self._metrics["registrations"] = self._metrics.get("registrations", 0) + 1
-
-            return FlextResult[None].ok(None)
-
-    def unregister(self, name: str, protocol: type[object] | None) -> FlextResult[None]:
-        """Unregister a protocol with the given name.
-
-        Args:
-            name: Name of the protocol to unregister
-            protocol: The protocol class to unregister
-
-        Returns:
-            FlextResult[None]: Success if unregistration succeeded, failure otherwise
-
-        """
-        with self._lock:
-            if not name:
-                return FlextResult[None].fail("Protocol name cannot be empty")
-
-            if name not in self._registry:
-                return FlextResult[None].fail(f"Protocol '{name}' not found")
-
-            if self._registry[name] != protocol:
-                return FlextResult[None].fail(f"Protocol mismatch for '{name}'")
-
-            del self._registry[name]
-            self._metrics["unregistrations"] = (
-                self._metrics.get("unregistrations", 0) + 1
-            )
-
-            return FlextResult[None].ok(None)
-
-    def validate_implementation(
-        self,
-        name: str,
-        implementation: type[object] | None,
-    ) -> FlextResult[None]:
-        """Validate that an implementation conforms to a registered protocol.
-
-        Args:
-            name: Name of the registered protocol
-            implementation: Implementation class to validate
-
-        Returns:
-            FlextResult[None]: Success if validation passed, failure otherwise
-
-        """
-        with self._lock:
-            if name not in self._registry:
-                return FlextResult[None].fail(f"Protocol '{name}' not found")
-
-            protocol = self._registry[name]
-
-            # Check circuit breaker
-            if self._circuit_breaker.get(name, False):
-                return FlextResult[None].fail(
-                    f"Circuit breaker open for protocol '{name}'",
-                )
-
-            # Check rate limit
-            now = time.time()
-            rate_key = f"{name}_rate"
-            if rate_key not in self._rate_limiter:
-                self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
-
-            rate_data = self._rate_limiter[rate_key]
-            if now - rate_data["window_start"] > self._rate_limit_window:
-                rate_data["count"] = 0
-                rate_data["window_start"] = now
-
-            if rate_data["count"] >= self._rate_limit:
-                return FlextResult[None].fail(
-                    f"Rate limit exceeded for protocol '{name}'",
-                )
-
-            rate_data["count"] += 1
-
-            # Check cache
-            cache_key = f"{name}:{hash(str(implementation))}"
-            if cache_key in self._cache:
-                _, cached_time = self._cache[cache_key]
-                if time.time() - cached_time < self._cache_ttl:
-                    return FlextResult[None].ok(None)
-
-            # Apply middleware
-            processed_implementation = implementation
-            for middleware in self._middleware:
-                if callable(middleware):
-                    try:
-                        processed_implementation = middleware(processed_implementation)
-                    except Exception as e:
-                        return FlextResult[None].fail(f"Middleware error: {e}")
-
-            # Validate implementation
-            try:
-                # Basic validation - check if implementation has the expected methods
-                if hasattr(protocol, "__annotations__"):
-                    # For now, just do basic validation
-                    # In a real implementation, you'd check method signatures, etc.
-                    self._cache[cache_key] = (True, time.time())
-                    self._metrics["successful_validations"] = (
-                        self._metrics.get("successful_validations", 0) + 1
-                    )
-                    self._audit_log.append({
-                        "timestamp": time.time(),
-                        "protocol": name,
-                        "implementation": str(implementation),
-                        "status": "success",
-                    })
-                    return FlextResult[None].ok(None)
-                return FlextResult[None].fail(f"Protocol '{name}' has no annotations")
-            except Exception as e:
-                self._metrics["failed_validations"] = (
-                    self._metrics.get("failed_validations", 0) + 1
-                )
-                self._audit_log.append({
-                    "timestamp": time.time(),
-                    "protocol": name,
-                    "implementation": str(implementation),
-                    "status": "error",
-                    "error": str(e),
-                })
-                return FlextResult[None].fail(f"Validation error: {e}")
-
-    def add_middleware(self, middleware: object) -> None:
-        """Add middleware to the validation pipeline.
-
-        Args:
-            middleware: Middleware function to add
-
-        """
-        if callable(middleware):
-            self._middleware.append(middleware)
-        else:
-            error_msg = "Middleware must be callable"
-            raise FlextExceptions.TypeError(
-                message=error_msg,
-                error_code="TYPE_ERROR",
-            )
-
-    def get_metrics(self) -> dict[str, int]:
-        """Get current metrics.
-
-        Returns:
-            FlextTypes.Core.Dict: Current metrics
-
-        """
-        return self._metrics.copy()
-
-    def get_audit_log(self) -> FlextTypes.Core.List:
-        """Get audit log entries.
-
-        Returns:
-            FlextTypes.Core.List: Audit log entries
-
-        """
-        return self._audit_log.copy()
-
-    def get_performance_metrics(self) -> dict[str, dict[str, int | float]]:
-        """Get performance metrics.
-
-        Returns:
-            FlextTypes.Core.Dict: Performance metrics
-
-        """
-        return self._performance_metrics.copy()
-
-    def is_circuit_breaker_open(self, name: str) -> bool:
-        """Check if circuit breaker is open for a protocol.
-
-        Args:
-            name: Protocol name
-
-        Returns:
-            bool: True if circuit breaker is open
-
-        """
-        return self._circuit_breaker.get(name, False)
-
-    def validate_batch(
-        self,
-        name: str,
-        implementations: Sequence[type[object] | None],
-    ) -> FlextResult[list[FlextResult[None]]]:
-        """Validate multiple implementations against a protocol in batch.
-
-        Args:
-            name: Protocol name
-            implementations: List of implementations to validate
-
-        Returns:
-            FlextResult[list[FlextResult[None]]]: List of validation results
-
-        """
-        results: list[FlextResult[None]] = []
-        for impl in implementations:
-            result = self.validate_implementation(name, impl)
-            if result.is_failure:
-                return FlextResult[list[FlextResult[None]]].fail(
-                    f"Batch validation failed: {result.error}",
-                )
-            results.append(result)
-        return FlextResult[list[FlextResult[None]]].ok(results)
-
-    def validate_parallel(
-        self,
-        name: str,
-        implementations: Sequence[type[object] | None],
-    ) -> FlextResult[list[FlextResult[None]]]:
-        """Validate multiple implementations in parallel.
-
-        Args:
-            name: Protocol name
-            implementations: List of implementations to validate
-
-        Returns:
-            FlextResult[list[FlextResult[None]]]: List of validation results
-
-        """
-        with ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(self.validate_implementation, name, impl)
-                for impl in implementations
-            ]
-            results = [future.result() for future in futures]
-        return FlextResult[list[FlextResult[None]]].ok(results)
-
-    # =============================================================================
-    # Missing Methods for Test Compatibility
-    # =============================================================================
-
-    def cleanup(self) -> None:
-        """Clean up protocol registry resources."""
-        with self._lock:
-            self._registry.clear()
-            self._middleware.clear()
-            self._metrics.clear()
-            self._audit_log.clear()
-            self._performance_metrics.clear()
-            self._circuit_breaker.clear()
-
-    def get_protocols(self, name: str) -> FlextTypes.Core.List:
-        """Get registered protocols by name.
-
-        Args:
-            name: Protocol name
-
-        Returns:
-            FlextTypes.Core.List: List of protocol types
-
-        """
-        protocol = self._registry.get(name)
-        return [protocol] if protocol is not None else []
-
-    def clear_protocols(self) -> None:
-        """Clear all registered protocols."""
-        self._registry.clear()
-
-    def get_statistics(self) -> FlextTypes.Core.Dict:
-        """Get statistics about protocol usage.
-
-        Returns:
-            FlextTypes.Core.Dict: Statistics dictionary
-
-        """
-        return {
-            "protocols_registered": len(self._registry),
-            "middleware_count": len(self._middleware),
-            "metrics": self._metrics.copy(),
-            "cache_size": len(self._cache),
-            "audit_log_size": len(self._audit_log),
-        }
-
-    def validate(self) -> FlextResult[None]:
-        """Validate protocol registry configuration and state.
-
-        Returns:
-            FlextResult with validation result
-
-        """
-        try:
-            # Validate protocols
-            for name, protocol in self._registry.items():
-                if not isinstance(name, str):
-                    return FlextResult[None].fail(f"Invalid protocol name: {name}")
-                if not isinstance(protocol, type):
-                    return FlextResult[None].fail(f"Invalid protocol type for {name}")
-
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Protocol validation failed: {e}")
-
-    def export_config(self) -> FlextTypes.Core.Dict:
-        """Export configuration.
-
-        Returns:
-            FlextTypes.Core.Dict: Configuration dictionary
-
-        """
-        return {
-            "config": self._config.copy(),
-            "cache_ttl": self._cache_ttl,
-            "circuit_breaker_threshold": self._circuit_breaker_threshold,
-            "rate_limit": self._rate_limit,
-            "rate_limit_window": self._rate_limit_window,
-            "max_retries": self._max_retries,
-            "retry_delay": self._retry_delay,
-            "timeout": self._timeout,
-        }
-
-    def import_config(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
-        """Import configuration.
-
-        Args:
-            config: Configuration dictionary
-
-        Returns:
-            FlextResult indicating success or failure
-
-        """
-        try:
-            if "config" in config:
-                config_dict = config["config"]
-                if isinstance(config_dict, dict):
-                    self._config.update(config_dict)
-            if "cache_ttl" in config:
-                cache_ttl = config["cache_ttl"]
-                if isinstance(cache_ttl, (int, float, str)):
-                    self._cache_ttl = float(cache_ttl)
-            if "circuit_breaker_threshold" in config:
-                threshold = config["circuit_breaker_threshold"]
-                if isinstance(threshold, (int, str)):
-                    self._circuit_breaker_threshold = int(threshold)
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Config import failed: {e}")
-
     # =========================================================================
     # FOUNDATION LAYER - Core building blocks
     # =========================================================================
@@ -733,6 +213,83 @@ class FlextProtocols:
 
             def validate(self, data: T_contra) -> object:
                 """Validate input data according to the shared release policy."""
+                ...
+
+        @runtime_checkable
+        class HasModelDump(Protocol):
+            """Protocol for objects that have model_dump method.
+
+            Supports Pydantic's model_dump signature with optional mode parameter.
+            """
+
+            def model_dump(self, mode: str = "python") -> dict[str, object]:
+                """Dump the model to a dictionary.
+
+                Args:
+                    mode: Serialization mode ('python' or 'json')
+
+                Returns:
+                    Dictionary representation of the model
+
+                """
+                ...
+
+        @runtime_checkable
+        class HasModelFields(Protocol):
+            """Protocol for objects that have model_fields attribute.
+
+            Consolidated from mixins.py for centralized protocol management.
+            """
+
+            model_fields: dict[str, object]
+
+        @runtime_checkable
+        class HasValue(Protocol):
+            """Protocol for enum-like objects with a value attribute.
+
+            Consolidated from loggings.py for centralized protocol management.
+            """
+
+            value: object
+
+        @runtime_checkable
+        class HasResultValue(Protocol):
+            """Protocol for FlextResult-like objects with value and is_success attributes.
+
+            Consolidated from processors.py for centralized protocol management.
+            """
+
+            value: object
+            is_success: bool
+
+        @runtime_checkable
+        class HasTimestamps(Protocol):
+            """Protocol for objects with created_at and updated_at timestamps.
+
+            Consolidated from service.py for centralized protocol management.
+            """
+
+            created_at: object
+            updated_at: object
+
+        @runtime_checkable
+        class HasHandlerType(Protocol):
+            """Protocol for config objects with handler_type attribute.
+
+            Consolidated from config.py for centralized protocol management.
+            """
+
+            handler_type: str | None
+
+        @runtime_checkable
+        class HasValidateCommand(Protocol):
+            """Protocol for commands with validate_command method.
+
+            Consolidated from bus.py for centralized protocol management.
+            """
+
+            def validate_command(self) -> FlextResult[None]:
+                """Validate command and return FlextResult."""
                 ...
 
     # =========================================================================
@@ -1690,6 +1247,84 @@ class FlextProtocols:
 
                 """
                 ...
+
+
+@runtime_checkable
+class ResultProtocol[T](Protocol):
+    """Protocol for Result type to break circular dependency.
+
+    This protocol defines the minimal interface needed by exceptions.py
+    without importing the concrete FlextResult class.
+    """
+
+    @property
+    def is_success(self) -> bool:
+        """Check if result represents success."""
+        ...
+
+    @property
+    def is_failure(self) -> bool:
+        """Check if result represents failure."""
+        ...
+
+    @property
+    def error(self) -> str | None:
+        """Get error message if failed."""
+        ...
+
+    @property
+    def value(self) -> T:
+        """Get success value or raise on failure."""
+        ...
+
+    def unwrap(self) -> T:
+        """Get value or raise if failed."""
+        ...
+
+    @classmethod
+    def ok(cls, data: T) -> ResultProtocol[T]:
+        """Create success result."""
+        ...
+
+    @classmethod
+    def fail(cls, error: str) -> ResultProtocol[T]:
+        """Create failure result."""
+        ...
+
+
+@runtime_checkable
+class ExceptionProtocol(Protocol):
+    """Protocol for Exception types to break circular dependency.
+
+    This protocol defines the minimal interface needed by result.py
+    without importing the concrete FlextExceptions class.
+    """
+
+    class OperationError(Exception):
+        """Protocol for operation errors."""
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            error_code: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize operation error with message and error code."""
+            ...
+
+    class FlextTypeError(Exception):
+        """Protocol for type errors (avoiding builtin TypeError shadow)."""
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            error_code: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize type error with message and error code."""
+            ...
 
 
 __all__ = [

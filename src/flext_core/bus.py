@@ -10,7 +10,7 @@ import inspect
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
-from typing import Any, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -21,14 +21,23 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
+# Backward compatibility: re-export from protocols.py
+# Protocol now centralized in FlextProtocols.Foundation
+if TYPE_CHECKING:
+    from typing import Protocol, runtime_checkable
 
-@runtime_checkable
-class HasValidateCommand(Protocol):
-    """Protocol for commands with validate_command method."""
+    @runtime_checkable
+    class HasValidateCommand(Protocol):
+        """Protocol for commands with validate_command method."""
 
-    def validate_command(self) -> FlextResult[None]:
-        """Validate command and return FlextResult."""
-        ...
+        def validate_command(self) -> FlextResult[None]:
+            """Validate command and return FlextResult."""
+            ...
+
+else:
+    from flext_core.protocols import FlextProtocols
+
+    HasValidateCommand = FlextProtocols.Foundation.HasValidateCommand
 
 
 class FlextBus(FlextMixins):
@@ -189,7 +198,7 @@ class FlextBus(FlextMixins):
             self._cache: FlextTypes.Core.OrderedDict = OrderedDict()
             self._max_size = max_size
 
-        def get(self, key: str) -> FlextResult[Any] | None:
+        def get(self, key: str) -> FlextResult[object] | None:
             """Get cached result by key.
 
             Args:
@@ -202,9 +211,9 @@ class FlextBus(FlextMixins):
             result = self._cache.get(key)
             if result is not None:
                 self._cache.move_to_end(key)
-            return cast("FlextResult[Any] | None", result)
+            return cast("FlextResult[object] | None", result)
 
-        def put(self, key: str, result: FlextResult[Any]) -> None:
+        def put(self, key: str, result: FlextResult[object]) -> None:
             """Store result in cache.
 
             Args:
@@ -244,8 +253,8 @@ class FlextBus(FlextMixins):
         self._handlers: FlextTypes.Core.Dict = {}
 
         # Middleware pipeline - use parent's _middleware for callables only
-        # Middleware configurations stored separately
-        self._middleware_configs: list[dict[str, object]] = []
+        # Middleware configurations stored separately - using FlextTypes.Handlers
+        self._middleware_configs: list[FlextTypes.Handlers.MiddlewareConfig] = []
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Core.Dict = {}
         # Execution counter

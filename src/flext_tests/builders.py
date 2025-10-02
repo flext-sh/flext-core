@@ -36,7 +36,6 @@ class FlextTestsBuilders:
 
         def __call__(self, *args: object, **kwargs: object) -> object:
             """Call signature for test functions."""
-            ...
 
     @override
     def __init__(self) -> None:

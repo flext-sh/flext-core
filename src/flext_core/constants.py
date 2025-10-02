@@ -13,7 +13,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Final
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Final,
+)
+
+if TYPE_CHECKING:
+    from flext_core.__version__ import FlextVersion
+    from flext_core.typings import FlextTypes
 
 
 class FlextConstants:
@@ -132,19 +140,24 @@ class FlextConstants:
 
     """
 
-    # Project metadata (REQUIRED - Foundation Library)
-    CONSTANTS_VERSION = "1.0.0"
+    # Lazy version import to avoid circular dependency
+    @staticmethod
+    def _get_project_version() -> FlextVersion:  # type: ignore[name-defined]
+        """Lazy import VERSION to avoid circular dependency with __version__.py."""
+        from flext_core.__version__ import VERSION  # noqa: PLC0415
+
+        return VERSION
+
     PROJECT_PREFIX = "FLEXT_CORE"
-    PROJECT_NAME = "FLEXT Core Foundation"
+    CONSTANTS_VERSION: Final[str] = "0.9.9"  # Hardcoded to match Core.VERSION
+    PROJECT_NAME: Final[str] = "flext-core"
 
     class Core:
         """Core identifiers hardened for the 1.0.0 release cycle."""
 
         NAME: Final[str] = "FLEXT"  # Usage count: 1
-        VERSION: Final[str] = (
-            "0.9.9"  # Usage count: 8 - FIXED: synced with pyproject.toml
-        )
-        DEFAULT_VERSION: Final[str] = "1.0.0"  # Default version for components
+        VERSION: Final[str] = "0.9.9"
+        DEFAULT_VERSION: Final[str] = "0.9.9"
 
         # Semantic zero and initial values
         ZERO: Final[int] = 0  # Semantic zero for counters/initialization
@@ -1132,7 +1145,7 @@ class FlextConstants:
         class Environment:
             """Environment-specific logging configuration overrides."""
 
-            DEVELOPMENT: Final[dict[str, object]] = {
+            DEVELOPMENT: Final[FlextTypes.Core.ConfigDict] = {
                 "level": "DEBUG",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -1141,7 +1154,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            STAGING: Final[dict[str, object]] = {
+            STAGING: Final[FlextTypes.Core.ConfigDict] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -1150,7 +1163,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            PRODUCTION: Final[dict[str, object]] = {
+            PRODUCTION: Final[FlextTypes.Core.ConfigDict] = {
                 "level": "WARNING",
                 "console_enabled": False,
                 "file_enabled": True,
@@ -1159,7 +1172,7 @@ class FlextConstants:
                 "track_performance": False,
             }
 
-            TESTING: Final[dict[str, object]] = {
+            TESTING: Final[FlextTypes.Core.ConfigDict] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": False,
@@ -1533,6 +1546,35 @@ class FlextConstants:
         DEFAULT_USER_AGENT: Final[str] = "FLEXT/1.0.0"
         DEFAULT_CONTENT_TYPE: Final[str] = "application/json"
         DEFAULT_ACCEPT: Final[str] = "application/json"
+
+    class Web:
+        """Web application constants for client and server operations.
+
+        Shared web primitives for flext-web and web-based integrations.
+        Provides timeout and configuration constants for web applications.
+        """
+
+        class Timeout:
+            """Web timeout configuration constants."""
+
+            DEFAULT_TIMEOUT: Final[int] = 30  # Default web request timeout in seconds
+            TOTAL_TIMEOUT: Final[int] = 300  # Maximum total timeout for web operations
+            CONNECT_TIMEOUT: Final[int] = 10  # Connection timeout for web requests
+            READ_TIMEOUT: Final[int] = 30  # Read timeout for web responses
+
+    class Batch:
+        """Batch processing constants for data operations.
+
+        Shared batch processing primitives for all flext modules requiring
+        batch operations. Provides size limits and configuration constants.
+        """
+
+        class Default:
+            """Default batch processing configuration constants."""
+
+            DEFAULT_SIZE: Final[int] = 1000  # Standard batch size for processing
+            SMALL_SIZE: Final[int] = 100  # Small batch size for limited operations
+            LARGE_SIZE: Final[int] = 10000  # Large batch size for bulk operations
 
 
 __all__ = ["FlextConstants"]
