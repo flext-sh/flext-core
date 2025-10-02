@@ -159,6 +159,8 @@ class FlextConstants:
         MAX_PORT: Final[int] = 65535  # Usage count: 4
         TOTAL_TIMEOUT: Final[int] = 60  # Usage count: 0
         DEFAULT_TIMEOUT: Final[int] = 30  # Usage count: 4
+        DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10  # Usage count: 1
+        MAX_CONNECTION_POOL_SIZE: Final[int] = 100  # Usage count: 1
 
     class Validation:
         """Validation guardrails referenced in modernization docs.
@@ -268,7 +270,7 @@ class FlextConstants:
         )
 
         # Infrastructure errors (reserved for technical failures)
-        TIMEOUT_ERROR: Final[str] = "TIMEOUT_ERROR"  # Reserved for async operations
+        TIMEOUT_ERROR: Final[str] = "TIMEOUT_ERROR"  # Reserved for operations
         PROCESSING_ERROR: Final[str] = (
             "PROCESSING_ERROR"  # Reserved for batch processing
         )

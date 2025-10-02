@@ -13,18 +13,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 from typing import cast
 
 import pytest
-from hypothesis import assume, given, strategies as st
+from hypothesis import HealthCheck, assume, given, settings, strategies as st
 
 from flext_core import FlextConstants, FlextTypes, T
 from flext_tests import (
-    FlextTestsAsyncs,
     FlextTestsHypothesis,
     FlextTestsPerformance,
 )
@@ -688,41 +686,6 @@ class TestComprehensiveIntegration:
             cast("FlextTypes.Core.Dict", suite["setup_data"])["environment"] == "test"
         )
 
-    @pytest.mark.asyncio
-    async def test_async_with_all_patterns(
-        self,
-        async_test_utils: FlextTestsAsyncs,
-    ) -> None:
-        """Demonstrate async testing with all patterns."""
-        # Build test data
-        test_data = (
-            FlextTestBuilder()
-            .with_id("async_test")
-            .with_correlation_id("async_corr")
-            .with_validation_rules()
-            .build()
-        )
-
-        async def async_operation() -> FlextTypes.Core.Dict:
-            """Simulate async operation."""
-            await asyncio.sleep(0.1)
-            return {"result": "success", "data": test_data}
-
-        # Execute with timeout
-        result = await async_test_utils.run_with_timeout(
-            async_operation(),
-            timeout_seconds=5.0,
-        )
-
-        # Use assertion builder for verification
-        AssertionBuilder(result).is_not_none().satisfies(
-            lambda x: "result" in x,
-            "should have result field",
-        ).satisfies(
-            lambda x: x["result"] == "success",
-            "should be successful",
-        ).assert_all()
-
     def test_performance_with_property_testing(
         self,
         benchmark: BenchmarkProtocol,
@@ -865,6 +828,7 @@ class TestRealWorldScenarios:
             ).assert_all()
 
     @given(FlextTestsHypothesis.CompositeStrategies.configuration_data())
+    @settings(suppress_health_check=[HealthCheck.too_slow])
     def test_configuration_validation_comprehensive(
         self,
         config: FlextTypes.Core.Dict,

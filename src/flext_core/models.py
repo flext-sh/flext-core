@@ -1684,7 +1684,7 @@ class FlextModels:
         timeout_seconds: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds
         )
-        async_execution: bool = False
+        execution: bool = False
         enable_validation: bool = True
 
         @field_validator("context")

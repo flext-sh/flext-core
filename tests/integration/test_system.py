@@ -269,7 +269,7 @@ class TestCompleteFlextSystemIntegration:
         resultado_com_erro = FlextResult[str].fail("erro_original")
         # Use or_else_get for error recovery instead of flat_map
         resultado_recuperado = resultado_com_erro.or_else_get(
-            lambda: FlextResult[str].ok("valor_recuperado")
+            lambda: FlextResult[str].ok("valor_recuperado"),
         )
         assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"

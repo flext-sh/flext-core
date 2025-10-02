@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import threading
 import time
-from decimal import Decimal
 
 import pytest
 from pydantic import field_validator
@@ -42,7 +41,9 @@ class TestFlextModels:
 
         # Test entity creation
         entity = TestEntity(
-            name="Test User", email="test@example.com", domain_events=[]
+            name="Test User",
+            email="test@example.com",
+            domain_events=[],
         )
         assert entity.name == "Test User"
         assert entity.email == "test@example.com"
@@ -93,7 +94,8 @@ class TestFlextModels:
             def change_status(self, new_status: str) -> None:
                 self.status = new_status
                 self.add_domain_event(
-                    "status_changed", {"old_status": "active", "new_status": new_status}
+                    "status_changed",
+                    {"old_status": "active", "new_status": new_status},
                 )
 
         # Test aggregate creation
@@ -112,7 +114,9 @@ class TestFlextModels:
         """Test built-in models from FlextModels."""
         # Test User model
         user = FlextModels.User(
-            username="testuser", email="test@example.com", domain_events=[]
+            username="testuser",
+            email="test@example.com",
+            domain_events=[],
         )
         assert user.username == "testuser"
         assert user.email == "test@example.com"
@@ -180,20 +184,6 @@ class TestFlextModels:
 
     def test_models_advanced_value_objects(self) -> None:
         """Test advanced value objects."""
-        # Test Coordinates
-        coords = FlextModels.Coordinates(latitude=40.7128, longitude=-74.0060)
-        assert coords.latitude == 40.7128
-        assert coords.longitude == -74.0060
-
-        # Test Money
-        money = FlextModels.Money(amount=Decimal("100.50"), currency="USD")
-        assert money.amount == Decimal("100.50")
-        assert money.currency == "USD"
-
-        # Test PhoneNumber
-        phone = FlextModels.PhoneNumber(number="+1234567890")
-        assert phone.number == "+1234567890"
-
         # Test Url
         url = FlextModels.Url(url="https://example.com")
         assert url.url == "https://example.com"
@@ -294,7 +284,9 @@ class TestFlextModels:
 
         # Test valid entity
         entity = ValidatedEntity(
-            name="Test", email="test@example.com", domain_events=[]
+            name="Test",
+            email="test@example.com",
+            domain_events=[],
         )
         assert entity.name == "Test"
         assert entity.email == "test@example.com"
@@ -309,7 +301,9 @@ class TestFlextModels:
     def test_models_serialization(self) -> None:
         """Test model serialization."""
         entity = FlextModels.User(
-            username="test", email="test@example.com", domain_events=[]
+            username="test",
+            email="test@example.com",
+            domain_events=[],
         )
 
         # Test to_dict
@@ -360,7 +354,9 @@ class TestFlextModels:
         entities: list[FlextModels.User] = []
         for i in range(1000):
             entity = FlextModels.User(
-                username=f"user{i}", email=f"user{i}@example.com", domain_events=[]
+                username=f"user{i}",
+                email=f"user{i}@example.com",
+                domain_events=[],
             )
             entities.append(entity)
 

@@ -9,8 +9,8 @@ from __future__ import annotations
 import inspect
 import time
 from collections import OrderedDict
-from collections.abc import Mapping
-from typing import Any, cast
+from collections.abc import Callable, Mapping
+from typing import Any, Protocol, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -22,64 +22,13 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class _CqrsCache:
-    """Private CQRS-specific cache manager for command/query result caching.
+@runtime_checkable
+class HasValidateCommand(Protocol):
+    """Protocol for commands with validate_command method."""
 
-    Moved from FlextUtilities to follow SOLID Single Responsibility Principle.
-    This is bus-specific caching logic, not a general utility.
-    """
-
-    def __init__(self, max_size: int = FlextConstants.Defaults.MAX_CACHE_SIZE) -> None:
-        """Initialize CQRS cache manager.
-
-        Args:
-            max_size: Maximum number of cached results
-
-        """
-        # Use FlextTypes instead of OrderedDict directly
-        self._cache: FlextTypes.Core.OrderedDict = OrderedDict()
-        self._max_size = max_size
-
-    def get(self, key: str) -> FlextResult[Any] | None:
-        """Get cached result by key.
-
-        Args:
-            key: Cache key
-
-        Returns:
-            Cached result or None if not found
-
-        """
-        result = self._cache.get(key)
-        if result is not None:
-            self._cache.move_to_end(key)
-        return cast("FlextResult[Any] | None", result)
-
-    def put(self, key: str, result: FlextResult[Any]) -> None:
-        """Store result in cache.
-
-        Args:
-            key: Cache key
-            result: Result to cache
-
-        """
-        self._cache[key] = result
-        self._cache.move_to_end(key)
-        while len(self._cache) > self._max_size:
-            self._cache.popitem(last=False)
-
-    def clear(self) -> None:
-        """Clear all cached results."""
-        self._cache.clear()
-
-    def size(self) -> int:
-        """Get current cache size.
-
-        Returns:
-            Number of cached items
-
-        """
-        return len(self._cache)
+    def validate_command(self) -> FlextResult[None]:
+        """Validate command and return FlextResult."""
+        ...
 
 
 class FlextBus(FlextMixins):
@@ -115,7 +64,7 @@ class FlextBus(FlextMixins):
         - FlextUtilities for validation and processing
         - FlextTypes for type definitions
         - OrderedDict for handler registry ordering
-        - _CqrsCache for query result caching (internal)
+        - FlextBus._CqrsCache for query result caching (nested class)
         - inspect module for handler introspection
 
     **How to use**: Command/query dispatch patterns
@@ -183,7 +132,7 @@ class FlextBus(FlextMixins):
         _middleware_instances (dict): Cached middleware instances.
         _execution_count (int): Total handler executions.
         _auto_handlers (list): Auto-discovered handlers.
-        _cache (_CqrsCache): Query result cache.
+        _cache (FlextBus._CqrsCache): Query result cache (nested class).
         _logger (FlextLogger): Bus operation logger.
 
     Returns:
@@ -220,6 +169,67 @@ class FlextBus(FlextMixins):
 
     """
 
+    class _CqrsCache:
+        """Private CQRS-specific cache manager for command/query result caching.
+
+        Nested class for bus-specific caching logic following SOLID principles.
+        This is an implementation detail of FlextBus, not a general utility.
+        """
+
+        def __init__(
+            self, max_size: int = FlextConstants.Defaults.MAX_CACHE_SIZE
+        ) -> None:
+            """Initialize CQRS cache manager.
+
+            Args:
+                max_size: Maximum number of cached results
+
+            """
+            # Use FlextTypes instead of OrderedDict directly
+            self._cache: FlextTypes.Core.OrderedDict = OrderedDict()
+            self._max_size = max_size
+
+        def get(self, key: str) -> FlextResult[Any] | None:
+            """Get cached result by key.
+
+            Args:
+                key: Cache key
+
+            Returns:
+                Cached result or None if not found
+
+            """
+            result = self._cache.get(key)
+            if result is not None:
+                self._cache.move_to_end(key)
+            return cast("FlextResult[Any] | None", result)
+
+        def put(self, key: str, result: FlextResult[Any]) -> None:
+            """Store result in cache.
+
+            Args:
+                key: Cache key
+                result: Result to cache
+
+            """
+            self._cache[key] = result
+            self._cache.move_to_end(key)
+            while len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
+
+        def clear(self) -> None:
+            """Clear all cached results."""
+            self._cache.clear()
+
+        def size(self) -> int:
+            """Get current cache size.
+
+            Returns:
+                Number of cached items
+
+            """
+            return len(self._cache)
+
     def __init__(
         self,
         bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
@@ -244,7 +254,9 @@ class FlextBus(FlextMixins):
         self._auto_handlers: FlextTypes.Core.List = []
 
         # Cache configuration - use dedicated CqrsCache manager
-        self._cache: _CqrsCache = _CqrsCache(max_size=self._config_model.max_cache_size)
+        self._cache: FlextBus._CqrsCache = FlextBus._CqrsCache(
+            max_size=self._config_model.max_cache_size
+        )
 
         # Timing
         self._created_at: float = time.time()
@@ -254,7 +266,8 @@ class FlextBus(FlextMixins):
         self.logger = FlextLogger(self.__class__.__name__)
 
     def _create_config_model(
-        self, bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None
+        self,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None,
     ) -> FlextModels.CqrsConfig.Bus:
         """Create configuration model from input."""
         if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
@@ -262,7 +275,7 @@ class FlextBus(FlextMixins):
         if isinstance(bus_config, dict):
             # Cast dict to proper types for Bus model
             config_dict = dict(
-                bus_config
+                bus_config,
             )  # Create a new dict to avoid mutating the original
             return FlextModels.CqrsConfig.Bus.model_validate(config_dict)
         return FlextModels.CqrsConfig.Bus()
@@ -290,7 +303,7 @@ class FlextBus(FlextMixins):
 
     @staticmethod
     def create_simple_handler(
-        handler_func: FlextTypes.Core.Callable,
+        handler_func: Callable[..., object],
         handler_config: FlextModels.CqrsConfig.Handler
         | FlextTypes.Core.Dict
         | None = None,
@@ -319,7 +332,7 @@ class FlextBus(FlextMixins):
 
     @staticmethod
     def create_query_handler(
-        handler_func: FlextTypes.Core.Callable,
+        handler_func: Callable[..., object],
         handler_config: FlextModels.CqrsConfig.Handler
         | FlextTypes.Core.Dict
         | None = None,
@@ -352,7 +365,8 @@ class FlextBus(FlextMixins):
         return str(command_type_obj)
 
     def _normalize_middleware_config(
-        self, middleware_config: object | None
+        self,
+        middleware_config: object | None,
     ) -> FlextTypes.Core.Dict:
         """Convert middleware configuration into a dictionary."""
         if middleware_config is None:
@@ -399,7 +413,7 @@ class FlextBus(FlextMixins):
             handle_method = getattr(handler, FlextConstants.Mixins.METHOD_HANDLE, None)
             if not callable(handle_method):
                 return FlextResult[None].fail(
-                    f"Invalid handler: must have callable '{FlextConstants.Mixins.METHOD_HANDLE}' method"
+                    f"Invalid handler: must have callable '{FlextConstants.Mixins.METHOD_HANDLE}' method",
                 )
 
             # Add to auto-discovery list
@@ -429,7 +443,7 @@ class FlextBus(FlextMixins):
             command_type_obj, handler = args
             if handler is None or command_type_obj is None:
                 return FlextResult[None].fail(
-                    "Invalid arguments: command_type and handler are required"
+                    "Invalid arguments: command_type and handler are required",
                 )
 
             if isinstance(command_type_obj, str) and not command_type_obj.strip():
@@ -446,7 +460,7 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         return FlextResult[None].fail(
-            f"register_handler takes 1 or 2 arguments but {len(args)} were given"
+            f"register_handler takes 1 or 2 arguments but {len(args)} were given",
         )
 
     def find_handler(self, command: object) -> object | None:
@@ -495,8 +509,8 @@ class FlextBus(FlextMixins):
         command_type = type(command)
 
         # Validate command if it has custom validation method (not Pydantic field validator)
-        if hasattr(command, "validate_command"):
-            validation_method = getattr(command, "validate_command")
+        if isinstance(command, HasValidateCommand):
+            validation_method = command.validate_command
             # Check if it's a custom validation method (callable without parameters)
             # and returns a FlextResult (not a Pydantic field validator)
             if callable(validation_method):
@@ -532,7 +546,7 @@ class FlextBus(FlextMixins):
                 except Exception as e:
                     # If calling without parameters fails, it's likely a Pydantic field validator
                     # Skip custom validation in this case
-                    self.logger.debug(f"Skipping Pydantic field validator: {e}")
+                    self.logger.debug("Skipping Pydantic field validator: %s", e)
 
         is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
 
@@ -623,7 +637,8 @@ class FlextBus(FlextMixins):
         # Sort middleware by order
         def get_order(middleware_config: FlextTypes.Core.Dict) -> int:
             order_value = middleware_config.get(
-                "order", FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+                "order",
+                FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER,
             )
             if isinstance(order_value, str):
                 try:
@@ -665,7 +680,8 @@ class FlextBus(FlextMixins):
                 middleware_id=middleware_id_value or "",
                 middleware_type=str(middleware_type_value),
                 order=config_dict.get(
-                    "order", FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+                    "order",
+                    FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER,
                 ),
             )
 
@@ -737,7 +753,8 @@ class FlextBus(FlextMixins):
                     if isinstance(result, FlextResult):
                         # Cast to FlextResult[object] to ensure type compatibility
                         typed_result: FlextResult[object] = cast(
-                            "FlextResult[object]", result
+                            "FlextResult[object]",
+                            result,
                         )
                         if typed_result.is_success:
                             return typed_result
@@ -787,7 +804,7 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         config_data: FlextTypes.Core.Dict = self._normalize_middleware_config(
-            middleware_config
+            middleware_config,
         )
         if not config_data:
             config_data = {}
@@ -795,7 +812,9 @@ class FlextBus(FlextMixins):
         middleware_id = config_data.get("middleware_id")
         if middleware_id is None:
             middleware_id = getattr(
-                middleware, "middleware_id", f"mw_{len(self._middleware_configs)}"
+                middleware,
+                "middleware_id",
+                f"mw_{len(self._middleware_configs)}",
             )
             config_data["middleware_id"] = middleware_id
 

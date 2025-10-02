@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests.asyncs import FlextTestsAsyncs
 from flext_tests.builders import FlextTestsBuilders
 from flext_tests.docker import (
     ContainerInfo,
@@ -35,7 +34,6 @@ __all__ = [
     "ContainerInfo",
     "ContainerStatus",
     "FlextTestDocker",
-    "FlextTestsAsyncs",
     "FlextTestsBuilders",
     "FlextTestsDomains",
     "FlextTestsFactories",

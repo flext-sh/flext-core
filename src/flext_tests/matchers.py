@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import functools
 import json
 import os
@@ -890,7 +889,8 @@ class FlextTestsMatchers:
                 raise AssertionError(msg)
         # It's a type
         elif not isinstance(expected_type, type) or not isinstance(
-            value, expected_type
+            value,
+            expected_type,
         ):
             type_name = getattr(expected_type, "__name__", str(expected_type))
             msg = f"Expected {type_name}, got {type(value).__name__}"
@@ -1101,16 +1101,16 @@ class FlextTestsMatchers:
         return FlextTestsMatchers.CoreMatchers.be_failure(result)
 
     # =========================================================================
-    # ASYNC TESTING UTILITIES
+    # TESTING UTILITIES
     # =========================================================================
 
     @staticmethod
-    async def simulate_delay(seconds: float) -> None:
-        """Simulate async delay for test compatibility."""
-        await asyncio.sleep(seconds)
+    def simulate_delay(seconds: float) -> None:
+        """Simulate delay for test compatibility."""
+        sleep(seconds)
 
     @staticmethod
-    async def run_with_timeout(
+    def run_with_timeout(
         coro: Awaitable[object],
         timeout_seconds: float,
     ) -> object:
@@ -1128,17 +1128,17 @@ class FlextTestsMatchers:
 
         """
         try:
-            return await asyncio.wait_for(coro, timeout=timeout_seconds)
+            return wait_for(coro, timeout=timeout_seconds)
         except TimeoutError:
             # Auto-retry once with extended timeout
             try:
-                return await asyncio.wait_for(coro, timeout=timeout_seconds * 2)
+                return wait_for(coro, timeout=timeout_seconds * 2)
             except TimeoutError:
                 msg = f"Operation timed out after {timeout_seconds * 2} seconds"
                 raise TimeoutError(msg) from None
 
     @staticmethod
-    async def run_parallel_tasks(tasks: list[Awaitable[object]]) -> list[object]:
+    def run_parallel_tasks(tasks: list[Awaitable[object]]) -> list[object]:
         """Run tasks in parallel for test compatibility.
 
         Args:
@@ -1148,10 +1148,10 @@ class FlextTestsMatchers:
             list[object]: List of task results
 
         """
-        return list(await asyncio.gather(*tasks, return_exceptions=True))
+        return list(gather(*tasks, return_exceptions=True))
 
     @staticmethod
-    async def run_concurrently(
+    def run_concurrently(
         func: Callable[[object], object],
         *args: object,
         **_kwargs: object,
@@ -1168,10 +1168,10 @@ class FlextTestsMatchers:
 
         """
         partial_func = functools.partial(func, *args)
-        return await asyncio.get_event_loop().run_in_executor(None, partial_func)
+        return get_event_loop().run_in_executor(None, partial_func)
 
     @staticmethod
-    async def test_race_condition(
+    def test_race_condition(
         func1: Callable[..., object],
         func2: Callable[..., object],
     ) -> tuple[object, object]:
@@ -1185,13 +1185,13 @@ class FlextTestsMatchers:
             tuple[object, object]: Tuple of results from both functions
 
         """
-        return await asyncio.gather(
-            asyncio.get_event_loop().run_in_executor(None, func1),
-            asyncio.get_event_loop().run_in_executor(None, func2),
+        return gather(
+            get_event_loop().run_in_executor(None, func1),
+            get_event_loop().run_in_executor(None, func2),
         )
 
     @staticmethod
-    async def measure_concurrency_performance(
+    def measure_concurrency_performance(
         func: Callable[..., object],
         concurrency_level: int,
     ) -> FlextTypes.Core.Dict:
@@ -1208,12 +1208,12 @@ class FlextTestsMatchers:
         start_time = time.time()
 
         tasks = [
-            asyncio.get_event_loop().run_in_executor(None, func)
+            get_event_loop().run_in_executor(None, func)
             for _ in range(concurrency_level)
         ]
 
         results: list[object] = list(
-            await asyncio.gather(*tasks, return_exceptions=True)
+            gather(*tasks, return_exceptions=True),
         )
         end_time = time.time()
 
@@ -1261,12 +1261,12 @@ class FlextTestsMatchers:
         return TimeoutContext(timeout)
 
     @staticmethod
-    def create_async_mock(
+    def create_mock(
         return_value: object = None,
         side_effect: object = None,
         delay: float = 0.0,
     ) -> object:
-        """Create async mock for test compatibility.
+        """Create mock for test compatibility.
 
         Args:
             return_value: Value to return from mock calls
@@ -1274,11 +1274,11 @@ class FlextTestsMatchers:
             delay: Delay in seconds before returning
 
         Returns:
-            object: Async mock instance
+            object: mock instance
 
         """
 
-        class AsyncMock:
+        class Mock:
             @override
             def __init__(
                 self,
@@ -1292,20 +1292,20 @@ class FlextTestsMatchers:
                 self.call_count = 0
                 self.call_args_list: list[object] = []
 
-            async def __call__(self, *args: object, **kwargs: object) -> object:
+            def __call__(self, *args: object, **kwargs: object) -> object:
                 self.call_count += 1
                 self.call_args_list.append((args, kwargs))
 
                 if self.delay > 0:
-                    await asyncio.sleep(self.delay)
+                    sleep(self.delay)
 
                 if self.side_effect is not None:
                     if isinstance(self.side_effect, Exception):
                         raise self.side_effect
                     if callable(self.side_effect):
                         result: object = self.side_effect(*args, **kwargs)
-                        if asyncio.iscoroutine(result):
-                            return await result
+                        if iscoroutine(result):
+                            return result
                         return result
                     return self.side_effect
 
@@ -1321,15 +1321,15 @@ class FlextTestsMatchers:
                 """Check if mock was called."""
                 return self.call_count > 0
 
-        return AsyncMock(return_value, side_effect, delay)
+        return Mock(return_value, side_effect, delay)
 
     @staticmethod
-    def create_flaky_async_mock(
+    def create_flaky_mock(
         success_return: object = None,
         failure_exception: object = None,
         failure_rate: float = 0.3,
     ) -> object:
-        """Ultra-simple flaky async mock for test compatibility.
+        """Ultra-simple flaky mock for test compatibility.
 
         Args:
             success_return: Value to return on successful calls
@@ -1337,12 +1337,12 @@ class FlextTestsMatchers:
             failure_rate: Rate of failures (0.0 to 1.0)
 
         Returns:
-            object: Flaky async mock instance
+            object: Flaky mock instance
 
         """
 
-        class FlakyAsyncMock:
-            """Flaky async mock for test compatibility."""
+        class FlakyMock:
+            """Flaky mock for test compatibility."""
 
             @override
             def __init__(
@@ -1358,7 +1358,7 @@ class FlextTestsMatchers:
                 self.failure_rate = failure_rate
                 self.call_count = 0
 
-            async def __call__(self, *_args: object, **_kwargs: object) -> object:
+            def __call__(self, *_args: object, **_kwargs: object) -> object:
                 self.call_count += 1
 
                 if random.random() < self.failure_rate:
@@ -1366,9 +1366,9 @@ class FlextTestsMatchers:
                         raise self.failure_exception
 
                     class MockFailureError(Exception):
-                        """Exception raised when flaky async mock simulates a failure.
+                        """Exception raised when flaky mock simulates a failure.
 
-                        This exception is used internally by FlakyAsyncMock to simulate
+                        This exception is used internally by FlakyMock to simulate
                         random failures during testing scenarios.
                         """
 
@@ -1376,7 +1376,7 @@ class FlextTestsMatchers:
 
                 return self.success_return
 
-        return FlakyAsyncMock(success_return, failure_exception, failure_rate)
+        return FlakyMock(success_return, failure_exception, failure_rate)
 
     @staticmethod
     def managed_resource(
@@ -1428,12 +1428,12 @@ class FlextTestsMatchers:
         return ManagedResourceContext(resource_factory, cleanup_func)
 
     @staticmethod
-    async def create_test_context(
+    def create_test_context(
         setup_func: object = None,
         teardown_func: object = None,
         context_data: FlextTypes.Core.Dict | None = None,
     ) -> object:
-        """Create async context manager for test compatibility.
+        """Create context manager for test compatibility.
 
         Args:
             setup_func: Function to run during setup
@@ -1458,16 +1458,16 @@ class FlextTestsMatchers:
                 self.context_data: FlextTypes.Core.Dict = context_data or {}
                 self.result: object = None
 
-            async def __aenter__(self) -> Self:
+            def __aenter__(self) -> Self:
                 if self.setup_func and callable(self.setup_func):
                     result: object = self.setup_func()
-                    if asyncio.iscoroutine(result):
-                        self.result = await result
+                    if iscoroutine(result):
+                        self.result = result
                     else:
                         self.result = result
                 return self
 
-            async def __aexit__(
+            def __aexit__(
                 self,
                 exc_type: object,
                 exc_val: object,
@@ -1475,8 +1475,8 @@ class FlextTestsMatchers:
             ) -> None:
                 if self.teardown_func and callable(self.teardown_func):
                     cleanup_result: object = self.teardown_func()
-                    if asyncio.iscoroutine(cleanup_result):
-                        await cleanup_result
+                    if iscoroutine(cleanup_result):
+                        cleanup_result
 
         return TestContext(setup_func, teardown_func, context_data)
 

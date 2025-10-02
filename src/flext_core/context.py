@@ -30,23 +30,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-@dataclass(slots=True)
-class _ContextData:
-    """Lightweight container for initializing context state."""
-
-    data: dict[str, object] = field(default_factory=dict)
-    metadata: dict[str, object] = field(default_factory=dict)
-
-
-@dataclass(slots=True)
-class _ContextExport:
-    """Typed snapshot returned by `export_snapshot`."""
-
-    data: dict[str, object] = field(default_factory=dict)
-    metadata: dict[str, object] = field(default_factory=dict)
-    statistics: dict[str, object] = field(default_factory=dict)
-
-
 class FlextContext:
     """Hierarchical context manager for request-, service-, and perf-scopes.
 
@@ -166,10 +149,41 @@ class FlextContext:
 
     """
 
+    # =========================================================================
+    # PRIVATE HELPERS - Internal data structures
+    # =========================================================================
+
+    @dataclass(slots=True)
+    class _ContextData:
+        """Lightweight container for initializing context state.
+
+        Nested class for context-specific initialization data following
+        SOLID principles. This is an implementation detail of FlextContext.
+        """
+
+        data: dict[str, object] = field(default_factory=dict)
+        metadata: dict[str, object] = field(default_factory=dict)
+
+    @dataclass(slots=True)
+    class _ContextExport:
+        """Typed snapshot returned by `export_snapshot`.
+
+        Nested class for context-specific export data following
+        SOLID principles. This is an implementation detail of FlextContext.
+        """
+
+        data: dict[str, object] = field(default_factory=dict)
+        metadata: dict[str, object] = field(default_factory=dict)
+        statistics: dict[str, object] = field(default_factory=dict)
+
+    # =========================================================================
+    # LIFECYCLE METHODS
+    # =========================================================================
+
     @override
     def __init__(
         self,
-        initial_data: _ContextData | dict[str, object] | None = None,
+        initial_data: FlextContext._ContextData | dict[str, object] | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -178,9 +192,9 @@ class FlextContext:
 
         """
         if initial_data is None:
-            context_data = _ContextData()
+            context_data = FlextContext._ContextData()
         elif isinstance(initial_data, dict):
-            context_data = _ContextData(data=initial_data)
+            context_data = FlextContext._ContextData(data=initial_data)
         else:
             context_data = initial_data
 
@@ -619,14 +633,14 @@ class FlextContext:
         export_snapshot = self.export_snapshot()
         return dict(export_snapshot.data)
 
-    def export_snapshot(self) -> _ContextExport:
+    def export_snapshot(self) -> FlextContext._ContextExport:
         """Return typed export snapshot including metadata and statistics."""
         with self._lock:
             all_data: dict[str, object] = {}
             for scope_data in self._scopes.values():
                 all_data.update(scope_data)
 
-            return _ContextExport(
+            return FlextContext._ContextExport(
                 data=all_data,
                 metadata=self._metadata.copy(),
                 statistics=self._statistics.copy(),
@@ -1266,7 +1280,9 @@ class FlextContext:
 
         @classmethod
         def create_for_handler(
-            cls, handler_name: str, handler_mode: str
+            cls,
+            handler_name: str,
+            handler_mode: str,
         ) -> FlextContext.HandlerExecutionContext:
             """Create execution context for a handler.
 

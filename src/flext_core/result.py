@@ -144,7 +144,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         # Example 3: Dual API compatibility (ecosystem requirement)
         result = FlextResult[dict].ok({"key": "value"})
-        assert result.value == result.data  # Both work
+        if result.value != result.data:  # Both work (dual API)
+            raise ValueError("API inconsistency detected")
         data = result.unwrap_or({})  # With default fallback
 
         # Example 4: Batch processing with error collection
@@ -159,7 +160,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         ```
 
     **TODO**: Enhancements for 1.0.0+ releases
-        - [ ] Add async/await support for FlextResult[Awaitable[T]]
+        - [ ] Add /support for FlextResult[Awaitable[T]]
         - [ ] Implement result combination optimizations (parallel)
         - [ ] Add error context with stack traces for debugging
         - [ ] Support custom error types beyond strings
@@ -222,6 +223,13 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     _error: str | None
     _error_code: str | None
     _error_data: FlextTypes.Core.Dict
+
+    # =========================================================================
+    # CONSTANTS - ERROR MESSAGES
+    # =========================================================================
+
+    _FIRST_ARG_FAILED_MSG: str = "First argument failed"
+    _SECOND_ARG_FAILED_MSG: str = "Second argument failed"
 
     # =========================================================================
     # NESTED HELPER CLASSES - UNIFIED ARCHITECTURE PATTERN
@@ -446,11 +454,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
             if result1.is_failure:
                 return FlextResult[TResult].fail(
-                    result1.error or "First argument failed"
+                    result1.error or FlextResult._FIRST_ARG_FAILED_MSG,
                 )
             if result2.is_failure:
                 return FlextResult[TResult].fail(
-                    result2.error or "Second argument failed"
+                    result2.error or FlextResult._SECOND_ARG_FAILED_MSG,
                 )
             return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
 
@@ -464,19 +472,19 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
             if result1.is_failure:
                 return FlextResult[TResult].fail(
-                    result1.error or "First argument failed"
+                    result1.error or FlextResult._FIRST_ARG_FAILED_MSG,
                 )
             if result2.is_failure:
                 return FlextResult[TResult].fail(
-                    result2.error or "Second argument failed"
+                    result2.error or FlextResult._SECOND_ARG_FAILED_MSG,
                 )
             if result3.is_failure:
                 return FlextResult[TResult].fail(
-                    result3.error or "Third argument failed"
+                    result3.error or "Third argument failed",
                 )
 
             return FlextResult[TResult].ok(
-                func(result1.unwrap(), result2.unwrap(), result3.unwrap())
+                func(result1.unwrap(), result2.unwrap(), result3.unwrap()),
             )
 
     # Python 3.13+ discriminated union architecture.
@@ -526,6 +534,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         self._error_code = error_code
         self._error_data = error_data or {}
+        self.metadata: object | None = None
 
     def _is_success_state(self, value: T_co | None) -> TypeGuard[T_co]:
         """Type guard for success state checking."""
@@ -547,8 +556,18 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return self._error is None
 
     @property
+    def success(self) -> bool:
+        """Return ``True`` when the result carries a successful payload, alternative name for is_success."""
+        return self._error is None
+
+    @property
     def is_failure(self) -> bool:
         """Return ``True`` when the result represents a failure."""
+        return self._error is not None
+
+    @property
+    def failed(self) -> bool:
+        """Return ``True`` when the result represents a failure, alternative name for is_failure."""
         return self._error is not None
 
     @property
@@ -667,7 +686,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         # Create a new instance with the correct type annotation
         return FlextResult[TResult](
-            error=actual_error, error_code=error_code, error_data=error_data
+            error=actual_error,
+            error_code=error_code,
+            error_data=error_data,
         )
 
     # Operations
@@ -836,10 +857,12 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             # Use explicit type annotations to help the type checker
             # Cast to object to avoid generic type issues
             self_data_obj: object = cast(
-                "object", getattr(cast("object", self), "_data", None)
+                "object",
+                getattr(cast("object", self), "_data", None),
             )
             other_data_obj: object = cast(
-                "object", getattr(cast("object", other), "_data", None)
+                "object",
+                getattr(cast("object", other), "_data", None),
             )
 
             # Avoid direct comparison of generic types by using identity check first
@@ -1040,7 +1063,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     @classmethod
     def from_exception[T](
-        cls: type[FlextResult[T]], func: Callable[[], T]
+        cls: type[FlextResult[T]],
+        func: Callable[[], T],
     ) -> FlextResult[T]:
         """Create a result from a function that might raise exception."""
         try:
@@ -1174,7 +1198,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     @classmethod
     def collect_failures(
-        cls, results: list[FlextResult[TUtil]]
+        cls,
+        results: list[FlextResult[TUtil]],
     ) -> FlextTypes.Core.StringList:
         """Collect error messages from failures."""
         return FlextResult._Utils.collect_failures(results)
@@ -1197,36 +1222,25 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return FlextResult._Utils.batch_process(items, processor)
 
     @classmethod
-    def safe_call(
-        cls: type[FlextResult[T_co]],
-        func: Callable[[], T_co],
-    ) -> FlextResult[T_co]:
-        """Execute function safely, wrapping result."""
-        try:
-            return FlextResult[T_co].ok(func())
-        except Exception as e:
-            return FlextResult[T_co].fail(str(e))
-
-    @classmethod
-    async def safe_call_async[TResult](
+    def safe_call[TResult](
         cls: type[FlextResult[TResult]],
         func: Callable[[], TResult],
     ) -> FlextResult[TResult]:
-        """Execute async function safely, wrapping result.
+        """Execute function safely, wrapping result.
 
         Args:
-            func: Async callable that returns TResult
+            func: callable that returns TResult
 
         Returns:
-            FlextResult[TResult] wrapping the async function result or error
+            FlextResult[TResult] wrapping the function result or error
 
         Example:
             ```python
-            async def fetch_data() -> dict:
-                return await api.get_data()
+            def fetch_data() -> dict:
+                return api.get_data()
 
 
-            result = await FlextResult[dict].safe_call_async(fetch_data)
+            result = FlextResult[dict].safe_call(fetch_data)
             if result.is_success:
                 data = result.unwrap()
             ```
@@ -1234,7 +1248,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """
         try:
             if inspect.iscoroutinefunction(func):
-                value: TResult = await func()
+                value: TResult = func()
             else:
                 value = func()
             return FlextResult[TResult].ok(value)
@@ -1298,7 +1312,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             if predicate(self.unwrap()):
                 return self
             return FlextResult[T_co].fail(
-                f"{FlextConstants.Messages.VALIDATION_FAILED} (predicate)"
+                f"{FlextConstants.Messages.VALIDATION_FAILED} (predicate)",
             )
         except Exception as e:
             return FlextResult[T_co].fail(f"Predicate evaluation failed: {e}")
@@ -1959,7 +1973,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     @staticmethod
     def _is_flattenable_sequence(item: object) -> bool:
         return isinstance(item, Sequence) and not isinstance(
-            item, (str, bytes, bytearray)
+            item,
+            (str, bytes, bytearray),
         )
 
     @staticmethod
@@ -1967,7 +1982,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         flat: list[object] = []
         for item in items:
             if FlextResult._is_flattenable_sequence(item) and isinstance(
-                item, (list, tuple)
+                item,
+                (list, tuple),
             ):
                 flat.extend(FlextResult._flatten_variadic_args(*item))
             else:
@@ -1979,7 +1995,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         flat_callables: list[Callable[..., object]] = []
         for item in items:
             if FlextResult._is_flattenable_sequence(item) and isinstance(
-                item, (list, tuple)
+                item,
+                (list, tuple),
             ):
                 flat_callables.extend(FlextResult._flatten_callable_args(*item))
             else:

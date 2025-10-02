@@ -153,7 +153,8 @@ class TestFlextProtocols:
                 return "test_result"
 
         result = protocols.validate_implementation(
-            "nonexistent_protocol", TestImplementation
+            "nonexistent_protocol",
+            TestImplementation,
         )
         assert result.is_failure
         assert result.error is not None and "not found" in result.error
@@ -171,7 +172,8 @@ class TestFlextProtocols:
 
         protocols.register("test_protocol", TestProtocol)
         result = protocols.validate_implementation(
-            "test_protocol", InvalidImplementation
+            "test_protocol",
+            InvalidImplementation,
         )
         # Note: Current implementation may not validate method signatures
         # This test verifies the container handles the validation
@@ -215,7 +217,8 @@ class TestFlextProtocols:
 
         protocols.register("test_protocol", TestProtocol)
         result = protocols.validate_implementation(
-            "test_protocol", TimeoutImplementation
+            "test_protocol",
+            TimeoutImplementation,
         )
         # Note: Current implementation may not enforce timeouts
         # This test verifies the container handles the validation
@@ -234,7 +237,8 @@ class TestFlextProtocols:
 
         protocols.register("test_protocol", TestProtocol)
         result = protocols.validate_implementation(
-            "test_protocol", ValidatedImplementation
+            "test_protocol",
+            ValidatedImplementation,
         )
         assert result.is_success
 
@@ -400,7 +404,8 @@ class TestFlextProtocols:
         # Execute validations to test circuit breaker functionality
         for _ in range(5):
             result = protocols.validate_implementation(
-                "test_protocol", FailingImplementation
+                "test_protocol",
+                FailingImplementation,
             )
             # Note: Current implementation may not enforce circuit breakers
             # This test verifies the container handles the validation
@@ -426,7 +431,8 @@ class TestFlextProtocols:
         # Execute validations within rate limit
         for _i in range(2):
             result = protocols.validate_implementation(
-                "test_protocol", TestImplementation
+                "test_protocol",
+                TestImplementation,
             )
             assert result.is_success
 
@@ -618,7 +624,8 @@ class TestFlextProtocols:
 
         def validate_implementation(_thread_id: int) -> None:
             result = protocols.validate_implementation(
-                "test_protocol", TestImplementation
+                "test_protocol",
+                TestImplementation,
             )
             results.append(result)
 
@@ -1020,7 +1027,7 @@ class TestFlextProtocols:
             config={
                 "rate_limit": 2,  # Max 2 requests
                 "rate_limit_window": 1,  # 1 second window
-            }
+            },
         )
 
         # Define a protocol

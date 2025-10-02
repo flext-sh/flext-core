@@ -378,7 +378,9 @@ class AssertionBuilder:
         return self
 
     def satisfies(
-        self, condition: Callable[[object], bool], description: str = ""
+        self,
+        condition: Callable[[object], bool],
+        description: str = "",
     ) -> AssertionBuilder:
         """Satisfies method.
 

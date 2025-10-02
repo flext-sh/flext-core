@@ -346,19 +346,22 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             def __init__(self) -> None:
                 """Initialize registry."""
                 self._handlers: dict[
-                    str, FlextProcessors.Implementation.BasicHandler
+                    str,
+                    FlextProcessors.Implementation.BasicHandler,
                 ] = {}
                 self._logger = FlextLogger(__name__)
 
             def register(
-                self, name: str, handler: FlextProcessors.Implementation.BasicHandler
+                self,
+                name: str,
+                handler: FlextProcessors.Implementation.BasicHandler,
             ) -> FlextResult[None]:
                 """Register a handler."""
                 if name in self._handlers:
                     return FlextResult[None].fail(f"Handler {name} already registered")
 
                 self._handlers[name] = handler
-                self._logger.info(f"Registered handler: {name}")
+                self._logger.info("Registered handler: %s", name)
                 return FlextResult[None].ok(None)
 
             def unregister(self, name: str) -> FlextResult[None]:
@@ -367,11 +370,12 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                     return FlextResult[None].fail(f"Handler {name} not found")
 
                 del self._handlers[name]
-                self._logger.info(f"Unregistered handler: {name}")
+                self._logger.info("Unregistered handler: %s", name)
                 return FlextResult[None].ok(None)
 
             def get(
-                self, name: str
+                self,
+                name: str,
             ) -> FlextResult[FlextProcessors.Implementation.BasicHandler]:
                 """Get a handler by name."""
                 handler = self._handlers.get(name)
@@ -381,17 +385,19 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                     ].fail(f"Handler {name} not found")
 
                 return FlextResult[FlextProcessors.Implementation.BasicHandler].ok(
-                    handler
+                    handler,
                 )
 
             def execute(
-                self, name: str, request: dict[str, object]
+                self,
+                name: str,
+                request: dict[str, object],
             ) -> FlextResult[str]:
                 """Execute a handler by name."""
                 handler_result = self.get(name)
                 if handler_result.is_failure:
                     return FlextResult[str].fail(
-                        handler_result.error or "Handler not found"
+                        handler_result.error or "Handler not found",
                     )
 
                 handler = handler_result.unwrap()
@@ -503,13 +509,15 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 # Simulate intermittent failure
                 if self._attempt < self._max_retries:
                     self._logger.warning(
-                        f"Attempt {self._attempt} failed", extra={"handler": self.name}
+                        f"Attempt {self._attempt} failed",
+                        extra={"handler": self.name},
                     )
                     return FlextResult[str].fail(f"Attempt {self._attempt} failed")
 
                 # Success on final attempt
                 self._logger.info(
-                    f"Success on attempt {self._attempt}", extra={"handler": self.name}
+                    f"Success on attempt {self._attempt}",
+                    extra={"handler": self.name},
                 )
                 return FlextResult[str].ok(f"Success on attempt {self._attempt}")
 
@@ -578,14 +586,14 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         # Successful request
         result = breaker.handle({"data": "test", "force_fail": False})
         print(
-            f"Request 1: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}"
+            f"Request 1: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}",
         )
 
         # Failing requests trigger circuit breaker
         for i in range(3):
             result = breaker.handle({"data": "test", "force_fail": True})
             print(
-                f"Request {i + 2}: {'✅' if result.is_success else '❌'} {result.error if result.is_failure else ''}"
+                f"Request {i + 2}: {'✅' if result.is_success else '❌'} {result.error if result.is_failure else ''}",
             )
 
         # Circuit is now open
@@ -596,7 +604,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         breaker.reset()
         result = breaker.handle({"data": "test", "force_fail": False})
         print(
-            f"Request 6 (after reset): {'✅' if result.is_success else '❌'} Success after reset"
+            f"Request 6 (after reset): {'✅' if result.is_success else '❌'} Success after reset",
         )
 
     # ========== DEPRECATED PATTERNS ==========
@@ -638,7 +646,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
         # OLD: Synchronous-only processing (DEPRECATED)
         warnings.warn(
-            "Sync-only processing is DEPRECATED! Design for async compatibility.",
+            "Sync-only processing is DEPRECATED! Design for compatibility.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -646,9 +654,9 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         print("def process(data):")
         print("    return processed_data")
 
-        print("\n✅ CORRECT WAY (async-ready):")
+        print("\n✅ CORRECT WAY (-ready):")
         print("def handle(self, request: dict) -> FlextResult[dict]:")
-        print("    # Returns FlextResult for async composition")
+        print("    # Returns FlextResult for composition")
 
 
 def main() -> None:

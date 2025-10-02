@@ -26,6 +26,9 @@ from typing import (
     TypeVar,
 )
 
+# Basic type aliases at module level
+Callable = CollectionsCallable[..., object]  # Generic callable for any signature
+
 # =============================================================================
 # CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
 # =============================================================================
@@ -290,8 +293,7 @@ class FlextTypes:
 
         # Note: Use standard T | None syntax directly
 
-        # Basic types
-        type Callable = CollectionsCallable
+        # Basic types - moved to module level
 
         # Basic collection types - simple type aliases (not using TypeAlias in class scope)
         Dict = dict[str, object]
@@ -360,7 +362,12 @@ class FlextTypes:
         """Configuration types."""
 
         type Environment = Literal[
-            "development", "staging", "production", "testing", "test", "local"
+            "development",
+            "staging",
+            "production",
+            "testing",
+            "test",
+            "local",
         ]
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         type ConfigSerializer = CollectionsCallable[
@@ -368,7 +375,7 @@ class FlextTypes:
                 dict[
                     str,
                     str | int | float | bool | list[object] | dict[str, object] | None,
-                ]
+                ],
             ],
             str,
         ]
@@ -434,17 +441,29 @@ class FlextTypes:
         """Generic processing types for ecosystem patterns."""
 
         type ProcessingStatus = Literal[
-            "pending", "running", "completed", "failed", "cancelled"
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
         ]
         type ProcessingMode = Literal["batch", "stream", "parallel", "sequential"]
         type ValidationLevel = Literal["strict", "lenient", "standard"]
         type ProcessingPhase = Literal["prepare", "execute", "validate", "complete"]
         type HandlerType = Literal["command", "query", "event", "processor"]
         type WorkflowStatus = Literal[
-            "pending", "running", "completed", "failed", "cancelled"
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
         ]
         type StepStatus = Literal[
-            "pending", "running", "completed", "failed", "skipped"
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "skipped",
         ]
 
     # =========================================================================

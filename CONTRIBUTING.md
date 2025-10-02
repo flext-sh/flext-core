@@ -261,7 +261,7 @@ Follow conventional commits:
 
 ```bash
 # Feature
-git commit -m "feat(result): add async support for FlextResult"
+git commit -m "feat(result): add support for FlextResult"
 
 # Bug fix
 git commit -m "fix(container): resolve singleton registration issue"

@@ -38,6 +38,9 @@ from flext_core import (
 
 from .example_scenarios import ExampleScenarios
 
+# Constants
+UNKNOWN_ERROR_MSG = "Unknown error"
+
 
 class ProductId(FlextModels.Value):
     """Product identifier value object."""
@@ -70,7 +73,7 @@ class Money(FlextModels.Value):
         if self.currency != other.currency:
             return FlextResult[Money].fail("Cannot add different currencies")
         return FlextResult[Money].ok(
-            Money(amount=self.amount + other.amount, currency=self.currency)
+            Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
 
@@ -123,7 +126,7 @@ class Order(FlextModels.AggregateRoot):
     items: list[OrderItem] = Field(default_factory=list)
     status: str = "DRAFT"
     total: Money = Field(
-        default_factory=lambda: Money(amount=Decimal(0), currency="USD")
+        default_factory=lambda: Money(amount=Decimal(0), currency="USD"),
     )
 
     def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
@@ -251,7 +254,8 @@ class InventoryService(FlextService[dict[str, object]]):
         return FlextResult[dict[str, object]].ok({"status": "inventory_service_ready"})
 
     def process_operation(
-        self, data: dict[str, str | int]
+        self,
+        data: dict[str, str | int],
     ) -> FlextResult[dict[str, object]]:
         """Process inventory operation."""
         operation = data.get("operation")
@@ -268,10 +272,10 @@ class InventoryService(FlextService[dict[str, object]]):
                             "name": product.name,
                             "price": str(product.price.amount),
                             "stock": product.stock,
-                        }
+                        },
                     })
                 return FlextResult[dict[str, object]].fail(
-                    result.error or "Unknown error"
+                    result.error or UNKNOWN_ERROR_MSG,
                 )
             return FlextResult[dict[str, object]].fail("Invalid product ID type")
 
@@ -287,7 +291,9 @@ class PaymentService(FlextService[dict[str, object]]):
         self._logger = FlextLogger(__name__)
 
     def process_payment(
-        self, order: Order, method: str
+        self,
+        order: Order,
+        method: str,
     ) -> FlextResult[dict[str, object]]:
         """Process payment for order."""
         self._logger.info(
@@ -321,7 +327,7 @@ class PaymentService(FlextService[dict[str, object]]):
             })
 
         return FlextResult[dict[str, object]].fail(
-            f"Unsupported payment method: {method}"
+            f"Unsupported payment method: {method}",
         )
 
     def execute(self) -> FlextResult[dict[str, object]]:
@@ -329,7 +335,8 @@ class PaymentService(FlextService[dict[str, object]]):
         return FlextResult[dict[str, object]].ok({"status": "payment_service_ready"})
 
     def process_operation(
-        self, data: dict[str, str | int]
+        self,
+        data: dict[str, str | int],
     ) -> FlextResult[dict[str, str | int]]:
         """Process payment operation."""
         _ = data  # This would process the payment based on data
@@ -348,7 +355,9 @@ class OrderService(FlextService[dict[str, object]]):
         self._metadata = self._scenarios.metadata(tags=["integration", "demo"])
 
     def create_order(
-        self, customer_id: str, items: list[dict[str, str | int]]
+        self,
+        customer_id: str,
+        items: list[dict[str, str | int]],
     ) -> FlextResult[Order]:
         """Create and process an order."""
         # Create correlation ID for tracking
@@ -373,7 +382,7 @@ class OrderService(FlextService[dict[str, object]]):
             if isinstance(product_id, str) and isinstance(quantity, int):
                 product_result = inventory.get_product(product_id)
                 if product_result.is_failure:
-                    self._logger.info(f"Product not found: {product_id}")
+                    self._logger.info("Product not found: %s", product_id)
                     continue
 
                 product = product_result.unwrap()
@@ -408,7 +417,9 @@ class OrderService(FlextService[dict[str, object]]):
         return FlextResult[Order].ok(order)
 
     def submit_order(
-        self, order: Order, payment_method: str
+        self,
+        order: Order,
+        payment_method: str,
     ) -> FlextResult[dict[str, object]]:
         """Submit order with payment processing."""
         self._logger.info("Submitting order", extra={"order_id": order.id})
@@ -417,7 +428,7 @@ class OrderService(FlextService[dict[str, object]]):
         submit_result = order.submit()
         if submit_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                submit_result.error or "Unknown error"
+                submit_result.error or UNKNOWN_ERROR_MSG,
             )
 
         # Get payment service
@@ -432,14 +443,15 @@ class OrderService(FlextService[dict[str, object]]):
             # Rollback order status
             order.status = "PAYMENT_FAILED"
             return FlextResult[dict[str, object]].fail(
-                f"Payment failed: {payment_result.error}"
+                f"Payment failed: {payment_result.error}",
             )
 
         # Update order status
         order.status = "PAID"
         payment_data = payment_result.unwrap()
         order.add_domain_event(
-            "OrderPaid", {"order_id": order.id, "transaction": payment_data}
+            "OrderPaid",
+            {"order_id": order.id, "transaction": payment_data},
         )
 
         # Send confirmation message
@@ -469,11 +481,11 @@ class OrderService(FlextService[dict[str, object]]):
             "order_id": order.id,
             "status": order.status,
             "total": str(order.total.amount),
-            "confirmation": confirmation_payload.message_id,
+            "confirmation": confirmation_payload.id,
         }
         # Add payment data as string representation to avoid type issues
         result_data["payment_transaction_id"] = str(
-            payment_data.get("transaction_id", "N/A")
+            payment_data.get("transaction_id", "N/A"),
         )
         result_data["payment_status"] = str(payment_data.get("status", "unknown"))
 
@@ -484,7 +496,8 @@ class OrderService(FlextService[dict[str, object]]):
         return FlextResult[dict[str, object]].ok({"status": "order_service_ready"})
 
     def process_operation(
-        self, data: dict[str, object]
+        self,
+        data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Process order operation."""
         operation = data.get("operation")
@@ -497,7 +510,7 @@ class OrderService(FlextService[dict[str, object]]):
                 order_result = self.create_order(customer_id, items)
                 if order_result.is_failure:
                     return FlextResult[dict[str, object]].fail(
-                        order_result.error or "Unknown error"
+                        order_result.error or UNKNOWN_ERROR_MSG,
                     )
 
                 order = order_result.unwrap()
@@ -507,7 +520,7 @@ class OrderService(FlextService[dict[str, object]]):
                 if isinstance(payment_method, str):
                     return self.submit_order(order, payment_method)
                 return FlextResult[dict[str, object]].fail(
-                    "Invalid payment method type"
+                    "Invalid payment method type",
                 )
 
         return FlextResult[dict[str, object]].fail(f"Unknown operation: {operation}")
@@ -541,12 +554,12 @@ class OrderValidationHandler:
             for item in items:
                 if not item.get("product_id"):
                     return FlextResult[dict[str, object]].fail(
-                        "Product ID required for all items"
+                        "Product ID required for all items",
                     )
                 quantity = item.get("quantity")
                 if not isinstance(quantity, int) or quantity <= 0:
                     return FlextResult[dict[str, object]].fail(
-                        "Valid quantity required for all items"
+                        "Valid quantity required for all items",
                     )
 
         request["validated"] = True
@@ -763,7 +776,7 @@ def demonstrate_complete_integration() -> None:
             })
         else:
             result = FlextResult[dict[str, object]].fail(
-                "Invalid validation data types"
+                "Invalid validation data types",
             )
 
         if result.is_failure:

@@ -34,6 +34,7 @@ pytest tests/
 **ZERO Breaking Changes** - All 0.9.9 APIs work identically in 1.0.0
 
 **What's New**:
+
 - ✅ **Stability Guarantees**: API stability documented and guaranteed for 1.x series
 - ✅ **Dependency Locks**: Version bounds prevent breaking changes from dependencies
 - ✅ **Semantic Versioning**: Formal SemVer 2.0.0 commitment with deprecation policy
@@ -43,18 +44,18 @@ pytest tests/
 
 ## Compatibility Matrix
 
-| Component | 0.9.9 API | 1.0.0 API | Migration Required |
-|-----------|-----------|-----------|-------------------|
-| FlextResult[T] | `.value`, `.data` | `.value`, `.data` (both guaranteed) | ❌ None |
-| FlextContainer | `.get_global()` | `.get_global()` | ❌ None |
-| FlextModels | Entity/Value/Aggregate | Entity/Value/Aggregate | ❌ None |
-| FlextService | Base class | Base class | ❌ None |
-| FlextLogger | `__name__` constructor | `__name__` constructor | ❌ None |
-| FlextConfig | `.get_global_instance()` | `.get_global_instance()` | ❌ None |
-| FlextBus | Event bus API | Event bus API | ❌ None |
-| FlextCqrs | CQRS patterns | CQRS patterns | ❌ None |
-| HTTP Constants | ❌ Not available | ✅ FlextConstants.Http | ✅ Optional enhancement |
-| HTTP Models | ❌ Not available | ✅ HttpRequest/HttpResponse | ✅ Optional enhancement |
+| Component      | 0.9.9 API                | 1.0.0 API                           | Migration Required      |
+| -------------- | ------------------------ | ----------------------------------- | ----------------------- |
+| FlextResult[T] | `.value`, `.data`        | `.value`, `.data` (both guaranteed) | ❌ None                 |
+| FlextContainer | `.get_global()`          | `.get_global()`                     | ❌ None                 |
+| FlextModels    | Entity/Value/Aggregate   | Entity/Value/Aggregate              | ❌ None                 |
+| FlextService   | Base class               | Base class                          | ❌ None                 |
+| FlextLogger    | `__name__` constructor   | `__name__` constructor              | ❌ None                 |
+| FlextConfig    | `.get_global_instance()` | `.get_global_instance()`            | ❌ None                 |
+| FlextBus       | Event bus API            | Event bus API                       | ❌ None                 |
+| FlextCqrs      | CQRS patterns            | CQRS patterns                       | ❌ None                 |
+| HTTP Constants | ❌ Not available         | ✅ FlextConstants.Http              | ✅ Optional enhancement |
+| HTTP Models    | ❌ Not available         | ✅ HttpRequest/HttpResponse         | ✅ Optional enhancement |
 
 ---
 
@@ -568,17 +569,19 @@ pytest --cov=src --cov-report=term-missing tests/
 **Solution**: This should not happen (zero breaking changes). If you encounter this:
 
 1. Verify you're actually using 1.0.0:
+
    ```python
    import flext_core
    print(flext_core.__version__)  # Should be 1.0.x
    ```
 
 2. Check for indirect dependencies that might have changed:
+
    ```bash
    pip list | grep flext
    ```
 
-3. Report the issue: https://github.com/flext-sh/flext-core/issues
+3. Report the issue: <https://github.com/flext-sh/flext-core/issues>
 
 ---
 
@@ -624,7 +627,7 @@ python -c "from flext_core import __version__; print(__version__)"
 If you encounter migration problems:
 
 1. **Check this guide** for common scenarios
-2. **Search existing issues**: https://github.com/flext-sh/flext-core/issues
+2. **Search existing issues**: <https://github.com/flext-sh/flext-core/issues>
 3. **Create new issue** with:
    - Your flext-core version (0.9.x and 1.0.x)
    - Python version
@@ -643,6 +646,7 @@ If you encounter migration problems:
 ### Q2: What's the benefit of upgrading to 1.0.0?
 
 **A**:
+
 - **API Stability**: Guaranteed no breaking changes in 1.x series
 - **Dependency Locks**: Protection against breaking changes from dependencies
 - **Long-term Support**: Minimum 2 minor version deprecation cycle
@@ -656,6 +660,7 @@ If you encounter migration problems:
 ### Q4: How long will 1.0.0 be supported?
 
 **A**: The entire 1.x series will be supported with:
+
 - Security patches for critical issues
 - Bug fixes in patch releases (1.0.1, 1.0.2, etc.)
 - New features in minor releases (1.1.0, 1.2.0, etc.)
@@ -664,6 +669,7 @@ If you encounter migration problems:
 ### Q5: What happens if I need a feature that requires breaking changes?
 
 **A**: We will:
+
 1. Add the feature in a backward-compatible way (if possible)
 2. Deprecate old API with warnings (minimum 2 minor versions)
 3. Provide migration tools and documentation
@@ -676,7 +682,8 @@ If you encounter migration problems:
 ### Q7: What if I find a breaking change in 1.0.0?
 
 **A**: This would be a critical bug. Please report it immediately:
-- GitHub Issues: https://github.com/flext-sh/flext-core/issues
+
+- GitHub Issues: <https://github.com/flext-sh/flext-core/issues>
 - Label: "stability-guarantee"
 - Priority: P0 (hotfix within 48 hours)
 
@@ -687,6 +694,7 @@ If you encounter migration problems:
 **Migration Complexity**: ⭐ Trivial (0/5 difficulty)
 
 **Time Required**:
+
 - Small projects: < 5 minutes
 - Large projects: < 30 minutes
 - Ecosystem-wide: < 2 hours
@@ -698,6 +706,7 @@ If you encounter migration problems:
 **Risk Level**: 🟢 Minimal (100% backward compatible)
 
 **Recommended Approach**:
+
 1. Update dependency to `flext-core>=1.0.0,<2.0.0`
 2. Run your test suite
 3. Deploy with confidence

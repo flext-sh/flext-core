@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import string
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -434,91 +433,91 @@ class FlextTestsFixtures:
 
     # === Service Classes ===
 
-    class AsyncTestService:
-        """Test service for async testing."""
+    class TestService:
+        """Test service for testing."""
 
         @override
         def __init__(self) -> None:
-            """Initialize async test service."""
-            self._executor = FlextTestsFixtures.AsyncExecutor()
+            """Initialize test service."""
+            self._executor = FlextTestsFixtures.Executor()
 
-        async def process(self, data: object) -> FlextTypes.Core.Dict:
-            """Process data asynchronously."""
-            await asyncio.sleep(0.001)  # Simulate async work
+        def process(self, data: object) -> FlextTypes.Core.Dict:
+            """Process data hronously."""
+            sleep(0.001)  # Simulate work
             return {"processed": True, "original": data}
 
-        async def validate(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
-            """Validate data asynchronously."""
-            await asyncio.sleep(0.001)  # Simulate async work
+        def validate(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+            """Validate data hronously."""
+            sleep(0.001)  # Simulate work
             has_required = "required_field" in data
             return {"valid": has_required}
 
-        async def transform(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
-            """Transform data asynchronously."""
-            await asyncio.sleep(0.001)  # Simulate async work
+        def transform(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+            """Transform data hronously."""
+            sleep(0.001)  # Simulate work
             return {
                 "transformed": True,
                 "output": f"transformed_{data.get('input', '')}",
             }
 
-        async def fail_operation(self) -> FlextResult[object]:
-            """Simulate async failure."""
-            await asyncio.sleep(0.001)
-            return FlextResult[object].fail("async_operation_failed")
+        def fail_operation(self) -> FlextResult[object]:
+            """Simulate failure."""
+            sleep(0.001)
+            return FlextResult[object].fail("operation_failed")
 
-    class AsyncExecutor:
-        """Async executor for testing."""
+    class Executor:
+        """executor for testing."""
 
         @override
         def __init__(self) -> None:
-            """Initialize async executor."""
+            """Initialize executor."""
             self._running: bool = False
-            self._tasks: list[asyncio.Task[object]] = []
+            self._tasks: list[Task[object]] = []
 
-        async def start(self) -> None:
+        def start(self) -> None:
             """Start executor."""
             self._running = True
 
-        async def stop(self) -> None:
+        def stop(self) -> None:
             """Stop executor and cancel tasks."""
             self._running = False
             for task in self._tasks:
                 if not task.done():
                     task.cancel()
-            await asyncio.gather(*self._tasks, return_exceptions=True)
+            gather(*self._tasks, return_exceptions=True)
 
-        async def execute(self, coro: object) -> object:
+        def execute(self, coro: object) -> object:
             """Execute coroutine."""
             if not self._running:
-                await self.start()
+                self.start()
 
             # Ensure coro is a coroutine before creating task
-            if not asyncio.iscoroutine(coro):
+            if not iscoroutine(coro):
                 msg = f"Expected coroutine, got {type(coro)}"
                 raise TypeError(msg)
 
-            task: asyncio.Task[object] = asyncio.create_task(coro)
+            task: Task[object] = create_task(coro)
             self._tasks.append(task)
-            return await task
+            return task
 
-        async def execute_batch(
+        def execute_batch(
             self,
             coros: FlextTypes.Core.List,
         ) -> FlextTypes.Core.List:
             """Execute multiple coroutines in batch."""
             if not self._running:
-                await self.start()
+                self.start()
 
-            tasks: list[asyncio.Task[object]] = []
+            tasks: list[Task[object]] = []
             for coro in coros:
-                if not asyncio.iscoroutine(coro):
+                if not iscoroutine(coro):
                     msg = f"Expected coroutine, got {type(coro)}"
                     raise TypeError(msg)
-                task = asyncio.create_task(coro)
+                task = create_task(coro)
                 self._tasks.append(task)
                 tasks.append(task)
 
-            results: list[object] = list(await asyncio.gather(*tasks))
+            results: list[object] = list(gather(*tasks))
             return list(results)
 
         def cleanup(self) -> None:

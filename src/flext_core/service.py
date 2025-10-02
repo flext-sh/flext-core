@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from typing import Protocol, cast, override
+from typing import Protocol, cast, override, runtime_checkable
 
 from pydantic import ConfigDict
 
@@ -32,6 +32,14 @@ class OperationCallable(Protocol):
     """Protocol for operation callables."""
 
     def __call__(self, *args: object, **kwargs: object) -> object: ...
+
+
+@runtime_checkable
+class HasTimestamps(Protocol):
+    """Protocol for objects with created_at and updated_at timestamps."""
+
+    created_at: object
+    updated_at: object
 
 
 class FlextService[TDomainResult](
@@ -198,7 +206,8 @@ class FlextService[TDomainResult](
     # =============================================================================
 
     def execute_with_full_validation(
-        self, request: FlextModels.DomainServiceExecutionRequest
+        self,
+        request: FlextModels.DomainServiceExecutionRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute with comprehensive validation using DomainServiceExecutionRequest model.
 
@@ -214,7 +223,7 @@ class FlextService[TDomainResult](
             return FlextResult[TDomainResult].fail(
                 f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
                 if validation_result.error
-                else FlextConstants.Messages.VALIDATION_FAILED
+                else FlextConstants.Messages.VALIDATION_FAILED,
             )
 
         return self.execute()
@@ -287,7 +296,8 @@ class FlextService[TDomainResult](
         return FlextResult[None].ok(None)
 
     def validate_with_request(
-        self, request: FlextModels.DomainServiceExecutionRequest
+        self,
+        request: FlextModels.DomainServiceExecutionRequest,
     ) -> FlextResult[None]:
         """Validate using DomainServiceExecutionRequest model.
 
@@ -304,7 +314,7 @@ class FlextService[TDomainResult](
             if business_result.is_failure:
                 return FlextResult[None].fail(
                     f"{FlextConstants.Messages.VALIDATION_FAILED}"
-                    f" (business rules): {business_result.error}"
+                    f" (business rules): {business_result.error}",
                 )
 
         return FlextResult[None].ok(None)
@@ -337,13 +347,13 @@ class FlextService[TDomainResult](
                         f": {config_validation.error}"
                         if config_validation.error
                         else ""
-                    )
+                    ),
                 )
 
             business_validation = self.validate_business_rules()
             if business_validation.is_failure:
                 return FlextResult[TDomainResult].fail(
-                    f"Business rules validation failed: {business_validation.error}"
+                    f"Business rules validation failed: {business_validation.error}",
                 )
 
         raw_arguments = getattr(operation, "arguments", None)
@@ -354,7 +364,8 @@ class FlextService[TDomainResult](
         elif isinstance(raw_arguments, dict):
             if "args" in raw_arguments:
                 nested_args: object = cast("FlextTypes.Core.Dict", raw_arguments).get(
-                    "args", None
+                    "args",
+                    None,
                 )
                 if isinstance(nested_args, (list, tuple, set)):
                     positional_arguments = tuple(cast("Iterable[object]", nested_args))
@@ -364,7 +375,7 @@ class FlextService[TDomainResult](
                     positional_arguments = (nested_args,)
             else:
                 positional_arguments = tuple(
-                    cast("Iterable[object]", raw_arguments.values())
+                    cast("Iterable[object]", raw_arguments.values()),
                 )
         else:
             positional_arguments = (raw_arguments,)
@@ -374,14 +385,14 @@ class FlextService[TDomainResult](
             keyword_arguments: FlextTypes.Core.Dict = {}
         elif isinstance(raw_keyword_arguments, dict):
             keyword_arguments = dict(
-                cast("Mapping[str, object]", raw_keyword_arguments)
+                cast("Mapping[str, object]", raw_keyword_arguments),
             )
         else:
             try:
                 keyword_arguments = dict(raw_keyword_arguments)
             except Exception as exc:  # pragma: no cover - defensive branch
                 return FlextResult[TDomainResult].fail(
-                    f"Invalid keyword arguments for operation '{operation_name}': {exc}"
+                    f"Invalid keyword arguments for operation '{operation_name}': {exc}",
                 )
 
         retry_config_data: FlextTypes.Core.Dict = (
@@ -392,11 +403,11 @@ class FlextService[TDomainResult](
             try:
                 # Use Pydantic model_validate for proper type conversion
                 retry_config = FlextModels.RetryConfiguration.model_validate(
-                    retry_config_data
+                    retry_config_data,
                 )
             except Exception as exc:
                 return FlextResult[TDomainResult].fail(
-                    f"Invalid retry configuration for operation '{operation_name}': {exc}"
+                    f"Invalid retry configuration for operation '{operation_name}': {exc}",
                 )
         else:
             retry_config = None
@@ -423,7 +434,7 @@ class FlextService[TDomainResult](
         if backoff_multiplier <= FlextConstants.Core.INITIAL_TIME:
             backoff_multiplier = 1.0
         exponential_backoff = bool(
-            retry_config.exponential_backoff if retry_config is not None else False
+            retry_config.exponential_backoff if retry_config is not None else False,
         )
         retry_exception_filters = (
             tuple(retry_config.retry_on_exceptions)
@@ -453,7 +464,8 @@ class FlextService[TDomainResult](
             if isinstance(result, FlextResult):
                 # Cast to FlextResult[TDomainResult] to ensure type compatibility
                 typed_result: FlextResult[TDomainResult] = cast(
-                    "FlextResult[TDomainResult]", result
+                    "FlextResult[TDomainResult]",
+                    result,
                 )
                 return typed_result
             return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
@@ -466,7 +478,8 @@ class FlextService[TDomainResult](
 
             def timeout_handler(_signum: int, _frame: object) -> None:
                 raise FlextExceptions.TimeoutError(
-                    timeout_message, operation=operation_name
+                    timeout_message,
+                    operation=operation_name,
                 )
 
             previous_handler = signal.getsignal(signal.SIGALRM)
@@ -501,7 +514,7 @@ class FlextService[TDomainResult](
                     if isinstance(exc, TimeoutError) and timeout_seconds > 0:
                         return FlextResult[TDomainResult].fail(message)
                     return FlextResult[TDomainResult].fail(
-                        f"Operation '{operation_name}' failed: {message}"
+                        f"Operation '{operation_name}' failed: {message}",
                     )
 
                 if retry_config is not None and current_delay > 0:
@@ -526,15 +539,16 @@ class FlextService[TDomainResult](
             if isinstance(last_exception, TimeoutError) and timeout_seconds > 0:
                 return FlextResult[TDomainResult].fail(message)
             return FlextResult[TDomainResult].fail(
-                f"Operation '{operation_name}' failed: {message}"
+                f"Operation '{operation_name}' failed: {message}",
             )
 
         return FlextResult[TDomainResult].fail(
-            f"Operation '{operation_name}' failed without explicit error"
+            f"Operation '{operation_name}' failed without explicit error",
         )
 
     def execute_with_request(
-        self, _request: FlextModels.DomainServiceExecutionRequest
+        self,
+        _request: FlextModels.DomainServiceExecutionRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute with DomainServiceExecutionRequest model containing execution settings.
 
@@ -579,7 +593,8 @@ class FlextService[TDomainResult](
             return FlextResult[TDomainResult].fail(str(e))
 
     def execute_conditionally(
-        self, condition: FlextModels.ConditionalExecutionRequest
+        self,
+        condition: FlextModels.ConditionalExecutionRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute only if condition is met using ConditionalExecutionRequest model.
 
@@ -608,7 +623,8 @@ class FlextService[TDomainResult](
         return FlextResult[TDomainResult].fail("Condition not met")
 
     def execute_batch_with_request(
-        self, request: FlextModels.DomainServiceBatchRequest
+        self,
+        request: FlextModels.DomainServiceBatchRequest,
     ) -> FlextResult[list[TDomainResult]]:
         """Execute batch operations using DomainServiceBatchRequest model.
 
@@ -638,13 +654,14 @@ class FlextService[TDomainResult](
 
         if errors and not getattr(request, "continue_on_failure", False):
             return FlextResult[list[TDomainResult]].fail(
-                f"Batch execution failed: {'; '.join(errors)}"
+                f"Batch execution failed: {'; '.join(errors)}",
             )
 
         return FlextResult[list[TDomainResult]].ok(results)
 
     def execute_with_metrics_request(
-        self, _request: FlextModels.DomainServiceMetricsRequest
+        self,
+        _request: FlextModels.DomainServiceMetricsRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute with metrics using DomainServiceMetricsRequest model.
 
@@ -684,7 +701,8 @@ class FlextService[TDomainResult](
             return FlextResult[TDomainResult].fail(f"Metrics execution error: {e}")
 
     def execute_with_resource_request(
-        self, request: FlextModels.DomainServiceResourceRequest
+        self,
+        request: FlextModels.DomainServiceResourceRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute with resource management using DomainServiceResourceRequest model.
 
@@ -715,7 +733,8 @@ class FlextService[TDomainResult](
                 pass
 
     def validate_and_transform(
-        self, config: FlextModels.ValidationConfiguration
+        self,
+        config: FlextModels.ValidationConfiguration,
     ) -> FlextResult[TDomainResult]:
         """Validate and transform using ValidationConfiguration model.
 
@@ -733,7 +752,7 @@ class FlextService[TDomainResult](
                 return FlextResult[TDomainResult].fail(
                     f"{FlextConstants.Messages.VALIDATION_FAILED}: {validation_result.error}"
                     if validation_result.error
-                    else FlextConstants.Messages.VALIDATION_FAILED
+                    else FlextConstants.Messages.VALIDATION_FAILED,
                 )
 
         # Execute after successful validation
@@ -771,7 +790,8 @@ class FlextService[TDomainResult](
 
         @staticmethod
         def cleanup_execution_context(
-            service: object, context: FlextTypes.Core.Dict
+            service: object,
+            context: FlextTypes.Core.Dict,
         ) -> None:
             """Cleanup execution context after service execution."""
             # Default implementation - can be extended by subclasses
@@ -788,16 +808,16 @@ class FlextService[TDomainResult](
             }
 
             # Add timestamp information if available
-            if hasattr(service, "created_at"):
-                metadata["created_at"] = getattr(service, "created_at")
-            if hasattr(service, "updated_at"):
-                metadata["updated_at"] = getattr(service, "updated_at")
+            if isinstance(service, HasTimestamps):
+                metadata["created_at"] = service.created_at
+                metadata["updated_at"] = service.updated_at
 
             return metadata
 
         @staticmethod
         def format_service_info(
-            _service: object, metadata: FlextTypes.Core.Dict
+            _service: object,
+            metadata: FlextTypes.Core.Dict,
         ) -> str:
             """Format service information for display."""
             return f"Service: {metadata.get('service_class', 'Unknown')} ({metadata.get('service_module', 'Unknown')})"

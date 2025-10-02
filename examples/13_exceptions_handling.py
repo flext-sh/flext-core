@@ -34,6 +34,9 @@ from flext_core import (
     FlextService,
 )
 
+# Constants
+DEMO_EXCEPTION_MSG = "Demo exception raised: %s"
+
 
 class ComprehensiveExceptionService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextExceptions patterns and methods."""
@@ -108,7 +111,7 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
                     "errors": [
                         {"field": "name", "error": "Required field"},
                         {"field": "age", "error": "Must be positive"},
-                    ]
+                    ],
                 },
             )
         except FlextExceptions.ValidationError as e:
@@ -427,7 +430,8 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
                 raise FlextExceptions.ValidationError(msg, field=f"field_{i}")
             except Exception as e:
                 self._logger.debug(
-                    f"Demo exception raised: {e}"
+                    DEMO_EXCEPTION_MSG,
+                    e,
                 )  # Log for demo tracking
 
         for i in range(2):
@@ -436,14 +440,15 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
                 raise FlextExceptions.ConnectionError(msg, service=f"service_{i}")
             except Exception as e:
                 self._logger.debug(
-                    f"Demo exception raised: {e}"
+                    DEMO_EXCEPTION_MSG,
+                    e,
                 )  # Log for demo tracking
 
         try:
             msg = "Critical failure"
             raise FlextExceptions.CriticalError(msg)
         except Exception as e:
-            self._logger.debug(f"Demo exception raised: {e}")  # Log for demo tracking
+            self._logger.debug("Demo exception raised: %s", e)  # Log for demo tracking
 
         # Get metrics
         metrics = FlextExceptions.get_metrics()

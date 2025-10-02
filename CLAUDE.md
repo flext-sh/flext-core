@@ -9,11 +9,13 @@
 ## 📋 DOCUMENT STRUCTURE & REFERENCES
 
 **Quick Links**:
+
 - **[~/.claude/commands/flext.md](~/.claude/commands/flext.md)**: Optimization command (USE with `/flext` for refactoring)
 - **[../CLAUDE.md](../CLAUDE.md)**: Workspace-level domain library standards
 - **[README.md](README.md)**: Project overview and quick start
 
 **Document Purpose**:
+
 - **This file**: flext-core specific development patterns, API details, and foundation responsibilities
 - **[~/.claude/commands/flext.md](~/.claude/commands/flext.md)**: Practical MCP workflows and refactoring commands
 - **[../CLAUDE.md](../CLAUDE.md)**: Domain library architecture and ecosystem standards
@@ -27,6 +29,7 @@
 **CRITICAL ROLE**: flext-core is the FOUNDATION library for the entire FLEXT ecosystem. Every change here impacts 32+ dependent projects. This requires the highest quality standards and zero tolerance for breaking changes.
 
 **CORE RESPONSIBILITIES**:
+
 - ✅ **Railway Pattern Foundation**: FlextResult[T] with .data/.value compatibility
 - ✅ **Dependency Injection**: FlextContainer.get_global() with type safety
 - ✅ **Domain Models**: FlextModels.Entity/Value/AggregateRoot for DDD patterns
@@ -36,6 +39,7 @@
 - ✅ **Evidence-Based Quality**: 79% coverage proven stable, targeting 85% for 1.0.0
 
 **ECOSYSTEM IMPACT** (32+ Projects Depend on This):
+
 - **Domain Libraries (13)**: flext-cli, flext-ldap, flext-ldif, flext-api, flext-web, flext-db-oracle, flext-meltano, flext-oracle-wms, flext-oracle-oic, flext-auth, flext-observability, flext-grpc
 - **Singer Platform (15+)**: Taps, targets, and DBT transformations
 - **Enterprise Tools**: algar-oud-mig, gruponos-meltano-native
@@ -44,6 +48,7 @@
 **NOTE**: All domain libraries build on flext-core patterns. Changes here ripple through entire ecosystem. See [~/.claude/commands/flext.md](~/.claude/commands/flext.md) for complete domain library list.
 
 **QUALITY IMPERATIVES**:
+
 - 🔴 **ZERO tolerance** for API breaking changes without deprecation cycle
 - 🟢 **85%+ test coverage** with REAL functional tests (current: 79%)
 - 🟢 **Zero errors** in MyPy strict mode, PyRight, and Ruff for ALL src/ code
@@ -335,7 +340,7 @@ def access_result_data(result: FlextResult[User]) -> User | None:
 
 ### Foundation Export Strategy (ECOSYSTEM API AUTHORITY)
 
-**CRITICAL**: flext-core __init__.py defines the API for entire ecosystem. Changes here impact all dependent projects.
+**CRITICAL**: flext-core **init**.py defines the API for entire ecosystem. Changes here impact all dependent projects.
 
 ```python
 # ✅ CORRECT - Root module imports (ECOSYSTEM STANDARD)
@@ -494,6 +499,7 @@ done
 ### Foundation Development Standards (ZERO FALLBACK POLICY)
 
 **ABSOLUTELY FORBIDDEN IN FLEXT-CORE**:
+
 - ❌ **Try/except fallback patterns** - core library must handle errors explicitly
 - ❌ **Multiple classes per module** - single responsibility, unified classes only
 - ❌ **Helper functions outside classes** - everything must be properly organized
@@ -502,6 +508,7 @@ done
 - ❌ **API breaking changes** - maintain compatibility or deprecate properly
 
 **MANDATORY IN FLEXT-CORE**:
+
 - ✅ **Explicit FlextResult error handling** - demonstrate ecosystem patterns
 - ✅ **Complete type annotations** - set standard for dependent projects
 - ✅ **Backward API compatibility** - maintain .data/.value dual access
@@ -654,6 +661,7 @@ print('✅ API patterns consistent across ecosystem')
 **CRITICAL: FLEXT-Core v0.9.9 → v1.0.0 Stable Release**
 
 **Key Documentation**:
+
 - 📋 [VERSIONING.md](VERSIONING.md) - Semantic versioning strategy and release process
 - 📋 [API_STABILITY.md](API_STABILITY.md) - Comprehensive API stability guarantees
 - 📋 [README.md](README.md) - Updated with 1.0.0 roadmap and timeline
@@ -661,6 +669,7 @@ print('✅ API patterns consistent across ecosystem')
 ### **Foundation Library 1.0.0 Readiness Assessment**
 
 **Current Status (v0.9.9)**:
+
 - ✅ **79% Test Coverage** - Proven stable across 32+ dependent projects
 - ✅ **API Surface Mature** - 20+ stable exports serving entire ecosystem
 - ✅ **Zero Breaking Changes** - Railway pattern, DI container, DDD models stable
@@ -672,6 +681,7 @@ print('✅ API patterns consistent across ecosystem')
 ### **MANDATORY 1.0.0 PREPARATION CHECKLIST**
 
 #### **Phase 1: API Stabilization (Weeks 1-2)** ✅ COMPLETED
+
 - [x] **API Surface Audit**: Verified 20+ stable exports
 - [x] **Version Update**: v0.9.9 preparation release completed
 - [x] **ABI Finalization**: Dependency versions locked in pyproject.toml (see VERSIONING.md)
@@ -681,24 +691,28 @@ print('✅ API patterns consistent across ecosystem')
 - [ ] **Migration Documentation**: Create complete 0.x → 1.0 upgrade guide
 
 #### **Phase 2: Quality Assurance (Weeks 2-3)**
+
 - [ ] **Test Coverage Enhancement**: Target 85% from proven 79% baseline
 - [ ] **Ecosystem Integration Testing**: Validate all 32+ dependent projects
 - [ ] **Security Audit**: Complete pip-audit and dependency updates
 - [ ] **Performance Baselines**: Establish regression test suite
 
 #### **Phase 3: Ecosystem Validation (Weeks 3-4)**
+
 - [ ] **Dependent Project Testing**: flext-api, flext-cli, flext-auth compatibility
 - [ ] **Singer Platform Validation**: All taps and targets working
 - [ ] **Migration Path Testing**: Upgrade scenarios verified
 - [ ] **Documentation Completion**: API reference with examples
 
 #### **Phase 4: Release Preparation (Week 4)**
+
 - [ ] **CI/CD Pipeline**: Automated 1.0.0 release process
 - [ ] **CHANGELOG.md**: Complete with breaking changes documentation
 - [ ] **Release Artifacts**: Migration tools and compatibility guide
 - [ ] **Final Integration Testing**: Cross-ecosystem validation
 
 #### **Phase 5: 1.0.0 Launch (Week 5)**
+
 - [ ] **Tagged Release**: Semantic versioning with stability guarantee
 - [ ] **PyPI Publication**: Development Status :: 5 - Production/Stable
 - [ ] **Ecosystem Migration**: Support for dependent projects
@@ -709,14 +723,16 @@ print('✅ API patterns consistent across ecosystem')
 > **Complete details in [API_STABILITY.md](API_STABILITY.md) and [VERSIONING.md](VERSIONING.md)**
 
 **API Compatibility Promise**:
+
 - ✅ **FlextResult[T]** - `.data`/`.value` dual access permanently supported (Level 1: 100% stable)
 - ✅ **FlextContainer.get_global()** - Singleton pattern guaranteed stable (Level 1: 100% stable)
 - ✅ **FlextModels.Entity/Value/AggregateRoot** - DDD patterns locked (Level 1: 100% stable)
 - ✅ **FlextService** - Service base class interface stable (Level 1: 100% stable)
-- ✅ **FlextLogger(__name__)** - Logging interface guaranteed (Level 1: 100% stable)
+- ✅ **FlextLogger(**name**)** - Logging interface guaranteed (Level 1: 100% stable)
 - ✅ **HTTP Primitives** - FlextConstants.Http, HttpRequest/HttpResponse models (Level 1: 100% stable, new in 0.9.9)
 
 **Breaking Change Policy (1.x series)**:
+
 - **GUARANTEED**: No breaking changes to core APIs in 1.x releases
 - **GUARANTEED**: Deprecation cycle minimum 2 minor versions (6+ months notice)
 - **GUARANTEED**: Migration tools and automated utilities provided
@@ -724,6 +740,7 @@ print('✅ API patterns consistent across ecosystem')
 - **GUARANTEED**: Security patches within 48 hours for stability issues
 
 **Dependency Version Locks** (ABI Stability):
+
 - pydantic: `>=2.11.7,<3.0.0` (Pydantic 2.x API stable)
 - pydantic-settings: `>=2.10.1,<3.0.0` (aligned with pydantic)
 - pyyaml: `>=6.0.2,<7.0.0` (YAML 6.x stable)
@@ -734,16 +751,19 @@ print('✅ API patterns consistent across ecosystem')
 ### **POST-1.0.0 DEVELOPMENT ROADMAP**
 
 **1.1.0 - Enhanced Features** (Q4 2025):
+
 - Advanced plugin architecture patterns
 - Enhanced performance monitoring integration
 - Extended ecosystem validation framework
 
 **1.2.0 - Ecosystem Expansion** (Q1 2026):
+
 - Event sourcing pattern implementations
 - Distributed tracing support integration
 - Advanced configuration management features
 
 **2.0.0 - Next Generation** (2026):
+
 - Python 3.14+ support with advanced type features
 - Breaking changes with comprehensive migration tools
 - Advanced architectural pattern evolution
@@ -753,6 +773,7 @@ print('✅ API patterns consistent across ecosystem')
 **FLEXT-CORE DEPENDENCY TREE** - 32+ Projects Depend on This Foundation:
 
 ### Direct Dependencies (IMMEDIATE IMPACT)
+
 - **Infrastructure Libraries** (6): flext-db-oracle, flext-ldap, flext-grpc, flext-auth, flext-cli, flext-api
 - **Application Services** (5): flext-web, flext-observability, flext-meltano, flext-quality, algar-oud-mig
 - **Data Integration** (8): Oracle OIC/WMS adapters, DBT transformations, ETL pipelines
@@ -806,12 +827,14 @@ print('✅ Backward compatibility maintained')
 ### Foundation Quality Metrics (EVIDENCE-BASED TARGETS)
 
 **CURRENT FOUNDATION STATUS** (proven achievable):
+
 - ✅ **79% Test Coverage** - real functional tests, proven stable
 - ✅ **Zero MyPy Errors** - strict mode compliance in src/
 - ✅ **API Compatibility** - .data/.value dual access working
 - ✅ **32+ Projects** - successfully depending on this foundation
 
 **TARGET IMPROVEMENTS** (realistic based on current state):
+
 - 🎯 **85% Test Coverage** - incremental improvement from proven 79%
 - 🎯 **Zero PyRight Errors** - secondary type checking compliance
 - 🎯 **Complete API Documentation** - all public APIs with examples
@@ -908,7 +931,7 @@ make validate || echo \"❌ QUALITY REGRESSION DETECTED\"
 
 **ABSOLUTE REQUIREMENTS** for core development:
 
-- 🔍 **READ actual __init__.py** before claiming exports exist
+- 🔍 **READ actual **init**.py** before claiming exports exist
 - 🔍 **TEST actual imports** before documenting API patterns
 - 🔍 **RUN actual code** before claiming functionality works
 - 🔍 **VERIFY ecosystem impact** before making any API changes
@@ -939,7 +962,9 @@ pytest tests/ --cov=src/flext_core --tb=no -q | tail -3
 ## 🔗 MCP SERVER INTEGRATION
 
 ### Mandatory MCP Server Usage (FOUNDATION COMPLIANCE)
+
 As defined in [../CLAUDE.md](../CLAUDE.md), all FLEXT development MUST use:
+
 - **serena**: All semantic code operations, symbol analysis, and refactoring
 - **sequential-thinking**: Complex problem decomposition and planning
 - **context7**: Third-party library documentation and API references

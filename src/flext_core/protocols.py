@@ -296,7 +296,8 @@ class FlextProtocols:
         )
 
         rate_limit = self._config.get(
-            "rate_limit", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+            "rate_limit",
+            FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         )
         self._rate_limit = (
             int(rate_limit)
@@ -315,7 +316,8 @@ class FlextProtocols:
         )
 
         max_retries = self._config.get(
-            "max_retries", FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+            "max_retries",
+            FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
         )
         self._max_retries = (
             int(max_retries)
@@ -329,7 +331,8 @@ class FlextProtocols:
         )
 
         timeout = self._config.get(
-            "timeout", float(FlextConstants.Network.DEFAULT_TIMEOUT)
+            "timeout",
+            float(FlextConstants.Network.DEFAULT_TIMEOUT),
         )
         self._timeout = (
             float(timeout)
@@ -392,7 +395,9 @@ class FlextProtocols:
             return FlextResult[None].ok(None)
 
     def validate_implementation(
-        self, name: str, implementation: type[object] | None
+        self,
+        name: str,
+        implementation: type[object] | None,
     ) -> FlextResult[None]:
         """Validate that an implementation conforms to a registered protocol.
 
@@ -413,7 +418,7 @@ class FlextProtocols:
             # Check circuit breaker
             if self._circuit_breaker.get(name, False):
                 return FlextResult[None].fail(
-                    f"Circuit breaker open for protocol '{name}'"
+                    f"Circuit breaker open for protocol '{name}'",
                 )
 
             # Check rate limit
@@ -429,7 +434,7 @@ class FlextProtocols:
 
             if rate_data["count"] >= self._rate_limit:
                 return FlextResult[None].fail(
-                    f"Rate limit exceeded for protocol '{name}'"
+                    f"Rate limit exceeded for protocol '{name}'",
                 )
 
             rate_data["count"] += 1
@@ -537,7 +542,9 @@ class FlextProtocols:
         return self._circuit_breaker.get(name, False)
 
     def validate_batch(
-        self, name: str, implementations: Sequence[type[object] | None]
+        self,
+        name: str,
+        implementations: Sequence[type[object] | None],
     ) -> FlextResult[list[FlextResult[None]]]:
         """Validate multiple implementations against a protocol in batch.
 
@@ -554,13 +561,15 @@ class FlextProtocols:
             result = self.validate_implementation(name, impl)
             if result.is_failure:
                 return FlextResult[list[FlextResult[None]]].fail(
-                    f"Batch validation failed: {result.error}"
+                    f"Batch validation failed: {result.error}",
                 )
             results.append(result)
         return FlextResult[list[FlextResult[None]]].ok(results)
 
     def validate_parallel(
-        self, name: str, implementations: Sequence[type[object] | None]
+        self,
+        name: str,
+        implementations: Sequence[type[object] | None],
     ) -> FlextResult[list[FlextResult[None]]]:
         """Validate multiple implementations in parallel.
 
@@ -963,14 +972,16 @@ class FlextProtocols:
 
             @abstractmethod
             def execute_step(
-                self, step_data: FlextTypes.Core.Dict
+                self,
+                step_data: FlextTypes.Core.Dict,
             ) -> FlextResult[TState]:
                 """Execute a saga step."""
                 ...
 
             @abstractmethod
             def compensate_step(
-                self, step_data: FlextTypes.Core.Dict
+                self,
+                step_data: FlextTypes.Core.Dict,
             ) -> FlextResult[TState]:
                 """Compensate a saga step."""
                 ...
@@ -1148,14 +1159,18 @@ class FlextProtocols:
 
             @abstractmethod
             def start_saga(
-                self, saga_type: str, initial_data: FlextTypes.Core.Dict
+                self,
+                saga_type: str,
+                initial_data: FlextTypes.Core.Dict,
             ) -> FlextResult[str]:
                 """Start a new saga."""
                 ...
 
             @abstractmethod
             def execute_saga_step(
-                self, saga_id: str, step_data: FlextTypes.Core.Dict
+                self,
+                saga_id: str,
+                step_data: FlextTypes.Core.Dict,
             ) -> FlextResult[TState]:
                 """Execute a saga step."""
                 ...
@@ -1191,21 +1206,26 @@ class FlextProtocols:
 
             @abstractmethod
             def get_events(
-                self, aggregate_id: str, from_version: int = 0
+                self,
+                aggregate_id: str,
+                from_version: int = 0,
             ) -> FlextResult[FlextTypes.Core.List]:
                 """Get events for an aggregate."""
                 ...
 
             @abstractmethod
             def get_events_by_type(
-                self, event_type: str, from_timestamp: datetime | None = None
+                self,
+                event_type: str,
+                from_timestamp: datetime | None = None,
             ) -> FlextResult[FlextTypes.Core.List]:
                 """Get events by type."""
                 ...
 
             @abstractmethod
             def get_events_by_correlation_id(
-                self, correlation_id: str
+                self,
+                correlation_id: str,
             ) -> FlextResult[FlextTypes.Core.List]:
                 """Get events by correlation ID."""
                 ...
@@ -1231,7 +1251,9 @@ class FlextProtocols:
 
             @abstractmethod
             def unsubscribe(
-                self, event_type: str, handler: object
+                self,
+                event_type: str,
+                handler: object,
             ) -> FlextResult[None]:
                 """Unsubscribe from an event type."""
                 ...
@@ -1318,7 +1340,10 @@ class FlextProtocols:
             """Log renderer protocol for formatting log entries."""
 
             def __call__(
-                self, logger: object, method_name: str, event_dict: FlextTypes.Core.Dict
+                self,
+                logger: object,
+                method_name: str,
+                event_dict: FlextTypes.Core.Dict,
             ) -> str:
                 """Render log entry to string format.
 
@@ -1594,7 +1619,9 @@ class FlextProtocols:
 
             @overload
             def register_handler(
-                self, handler: Callable[[object], object], /
+                self,
+                handler: Callable[[object], object],
+                /,
             ) -> FlextResult[None]: ...
 
             @overload

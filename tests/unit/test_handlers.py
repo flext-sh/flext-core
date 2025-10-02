@@ -41,7 +41,8 @@ class TestFlextHandlers:
     def test_handlers_initialization(self) -> None:
         """Test handlers initialization."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_1", handler_name="Test Handler 1"
+            handler_id="test_handler_1",
+            handler_name="Test Handler 1",
         )
         handlers = ConcreteTestHandler(config=config)
         assert handlers is not None
@@ -62,7 +63,8 @@ class TestFlextHandlers:
     def test_handlers_handle_success(self) -> None:
         """Test successful handler execution."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_3", handler_name="Test Handler 3"
+            handler_id="test_handler_3",
+            handler_name="Test Handler 3",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -73,7 +75,8 @@ class TestFlextHandlers:
     def test_handlers_handle_failure(self) -> None:
         """Test handler execution with failure."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_4", handler_name="Test Handler 4"
+            handler_id="test_handler_4",
+            handler_name="Test Handler 4",
         )
         handler = FailingTestHandler(config=config)
 
@@ -102,7 +105,8 @@ class TestFlextHandlers:
     def test_handlers_execution_context(self) -> None:
         """Test handler execution context creation."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_6", handler_name="Test Handler 6"
+            handler_id="test_handler_6",
+            handler_name="Test Handler 6",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -113,7 +117,8 @@ class TestFlextHandlers:
     def test_handlers_message_types(self) -> None:
         """Test accepted message types computation."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_7", handler_name="Test Handler 7"
+            handler_id="test_handler_7",
+            handler_name="Test Handler 7",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -123,7 +128,8 @@ class TestFlextHandlers:
     def test_handlers_revalidation_setting(self) -> None:
         """Test revalidation setting extraction."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_8", handler_name="Test Handler 8"
+            handler_id="test_handler_8",
+            handler_name="Test Handler 8",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -132,7 +138,8 @@ class TestFlextHandlers:
     def test_handlers_type_warning_tracking(self) -> None:
         """Test type warning emission tracking."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_9", handler_name="Test Handler 9"
+            handler_id="test_handler_9",
+            handler_name="Test Handler 9",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -142,7 +149,8 @@ class TestFlextHandlers:
     def test_handlers_different_types(self) -> None:
         """Test handlers with different message and result types."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_10", handler_name="Test Handler 10"
+            handler_id="test_handler_10",
+            handler_name="Test Handler 10",
         )
 
         # Test with different types
@@ -245,7 +253,8 @@ class TestFlextHandlers:
     def test_handlers_abstract_method_implementation(self) -> None:
         """Test that concrete handlers must implement handle method."""
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_abstract_handler", handler_name="Test Abstract Handler"
+            handler_id="test_abstract_handler",
+            handler_name="Test Abstract Handler",
         )
 
         # This should work - concrete implementation
@@ -283,7 +292,8 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
 
         assert isinstance(
-            handler._execution_context, FlextContext.HandlerExecutionContext
+            handler._execution_context,
+            FlextContext.HandlerExecutionContext,
         )
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
@@ -686,12 +696,13 @@ class TestFlextHandlers:
             return f"invalid_config_{message!s}"
 
         invalid_config: dict[str, object] = {
-            "handler_type": "invalid_type"  # Invalid value
+            "handler_type": "invalid_type",  # Invalid value
         }
 
         with pytest.raises(ValueError) as exc_info:
             FlextHandlers.from_callable(
-                invalid_config_handler, handler_config=invalid_config
+                invalid_config_handler,
+                handler_config=invalid_config,
             )
 
         assert "Invalid handler config:" in str(exc_info.value)
@@ -712,7 +723,8 @@ class TestFlextHandlers:
         )
 
         handler = FlextHandlers.from_callable(
-            pydantic_config_handler, handler_config=config
+            pydantic_config_handler,
+            handler_config=config,
         )
 
         assert handler.handler_name == "Pydantic Handler"

@@ -240,7 +240,9 @@ class FlextExceptions:
     # =============================================================================
 
     def register_handler(
-        self, exception_type: type[Exception], handler: object
+        self,
+        exception_type: type[Exception],
+        handler: object,
     ) -> FlextResult[None]:
         """Register exception handler for specific exception type.
 
@@ -258,10 +260,11 @@ class FlextExceptions:
             try:
                 # Validate that exception_type is actually a type that inherits from Exception
                 if not isinstance(exception_type, type) or not issubclass(
-                    exception_type, Exception
+                    exception_type,
+                    Exception,
                 ):
                     return FlextResult[None].fail(
-                        f"Invalid exception type: {exception_type}"
+                        f"Invalid exception type: {exception_type}",
                     )
 
                 if exception_type not in self._handlers:
@@ -274,7 +277,9 @@ class FlextExceptions:
                 return FlextResult[None].fail(f"Failed to register handler: {e}")
 
     def unregister_handler(
-        self, exception_type: type[Exception], handler: object
+        self,
+        exception_type: type[Exception],
+        handler: object,
     ) -> FlextResult[None]:
         """Unregister exception handler.
 
@@ -302,7 +307,9 @@ class FlextExceptions:
             return FlextResult[None].fail(f"Failed to unregister handler: {e}")
 
     def handle_exception(
-        self, exception: Exception, correlation_id: str | None = None
+        self,
+        exception: Exception,
+        correlation_id: str | None = None,
     ) -> FlextResult[None]:
         """Handle exception using registered handlers.
 
@@ -331,7 +338,8 @@ class FlextExceptions:
 
             # Check rate limiting
             rate_limit = self._config.get(
-                "rate_limit", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+                "rate_limit",
+                FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             )
             rate_limit_window = self._config.get(
                 "rate_limit_window",
@@ -388,11 +396,12 @@ class FlextExceptions:
                     try:
                         processed_exception = middleware(processed_exception)
                     except Exception as middleware_error:
-                        self.logger.warning(f"Middleware error: {middleware_error}")
+                        self.logger.warning("Middleware error: %s", middleware_error)
 
             # Execute handlers with timeout
             timeout_seconds = self._config.get(
-                "timeout", FlextConstants.Defaults.TIMEOUT_SECONDS
+                "timeout",
+                FlextConstants.Defaults.TIMEOUT_SECONDS,
             )
             timeout_value = (
                 float(timeout_seconds)
@@ -404,7 +413,7 @@ class FlextExceptions:
             handler_exceptions = []
 
             with concurrent.futures.ThreadPoolExecutor(
-                max_workers=len(handlers)
+                max_workers=len(handlers),
             ) as executor:
                 # Submit all handlers
                 future_to_handler = {
@@ -416,7 +425,8 @@ class FlextExceptions:
                 # Wait for results with timeout
                 try:
                     for future in concurrent.futures.as_completed(
-                        future_to_handler, timeout=timeout_value
+                        future_to_handler,
+                        timeout=timeout_value,
                     ):
                         try:
                             handler_result = future.result()
@@ -436,7 +446,7 @@ class FlextExceptions:
             # If any handler raised an exception, return failure
             if handler_exceptions:
                 return FlextResult[None].fail(
-                    f"Handler exception: {handler_exceptions[0]}"
+                    f"Handler exception: {handler_exceptions[0]}",
                 )
 
             # Record in audit log
@@ -495,7 +505,7 @@ class FlextExceptions:
             ):
                 self._circuit_breakers[exception_name] = True
                 return FlextResult[None].fail(
-                    "Circuit breaker opened due to repeated failures"
+                    "Circuit breaker opened due to repeated failures",
                 )
 
             # Check if any handler failed
@@ -562,7 +572,8 @@ class FlextExceptions:
                 try:
                     start_time = time.time()
                     result = cast(
-                        "Callable[[Exception, str | None], FlextResult[None]]", handler
+                        "Callable[[Exception, str | None], FlextResult[None]]",
+                        handler,
                     )(exception, correlation_id)
                     execution_time = time.time() - start_time
 
@@ -577,7 +588,8 @@ class FlextExceptions:
                     if "handler_executions" not in FlextExceptions._metrics:
                         FlextExceptions._metrics["handler_executions"] = {}
                     handler_exec = cast(
-                        "dict[str, int]", FlextExceptions._metrics["handler_executions"]
+                        "dict[str, int]",
+                        FlextExceptions._metrics["handler_executions"],
                     )
                     handler_exec[handler_name] = handler_exec.get(handler_name, 0) + 1
 
@@ -587,7 +599,8 @@ class FlextExceptions:
                                 cast(
                                     "int",
                                     FlextExceptions._metrics.get(
-                                        "successful_executions", 0
+                                        "successful_executions",
+                                        0,
                                     ),
                                 )
                                 + 1
@@ -597,7 +610,8 @@ class FlextExceptions:
                                 cast(
                                     "int",
                                     FlextExceptions._metrics.get(
-                                        "failed_executions", 0
+                                        "failed_executions",
+                                        0,
                                     ),
                                 )
                                 + 1
@@ -608,14 +622,15 @@ class FlextExceptions:
                 except Exception as handler_error:
                     execution_time = time.time() - start_time
                     error_result = FlextResult[None].fail(
-                        f"Handler execution failed: {handler_error}"
+                        f"Handler execution failed: {handler_error}",
                     )
                     results.append(error_result)
 
                     # Record failure metrics (using ClassVar via class)
                     FlextExceptions._metrics["failed_executions"] = (
                         cast(
-                            "int", FlextExceptions._metrics.get("failed_executions", 0)
+                            "int",
+                            FlextExceptions._metrics.get("failed_executions", 0),
                         )
                         + 1
                     )
@@ -625,7 +640,8 @@ class FlextExceptions:
                     if "handler_failures" not in FlextExceptions._metrics:
                         FlextExceptions._metrics["handler_failures"] = {}
                     handler_fail = cast(
-                        "dict[str, int]", FlextExceptions._metrics["handler_failures"]
+                        "dict[str, int]",
+                        FlextExceptions._metrics["handler_failures"],
                     )
                     handler_fail[handler_name] = handler_fail.get(handler_name, 0) + 1
 
@@ -653,7 +669,7 @@ class FlextExceptions:
                 if self._circuit_breaker_failures[exception_name] >= failure_threshold:
                     self._circuit_breakers[exception_name] = True
                     return FlextResult[None].fail(
-                        "Circuit breaker opened due to repeated failures"
+                        "Circuit breaker opened due to repeated failures",
                     )
 
             # Check if any handler failed
@@ -711,7 +727,7 @@ class FlextExceptions:
         valid_exceptions = [exc for exc in exceptions if isinstance(exc, Exception)]
 
         with concurrent.futures.ThreadPoolExecutor(
-            max_workers=len(valid_exceptions)
+            max_workers=len(valid_exceptions),
         ) as executor:
             futures = [
                 executor.submit(self.handle_exception, exc) for exc in valid_exceptions
@@ -810,11 +826,11 @@ class FlextExceptions:
             for exception_type, handlers in self._handlers.items():
                 if not isinstance(exception_type, type):
                     return FlextResult[None].fail(
-                        f"Invalid exception type: {exception_type}"
+                        f"Invalid exception type: {exception_type}",
                     )
                 if not isinstance(handlers, list):
                     return FlextResult[None].fail(
-                        f"Invalid handlers list for {exception_type}"
+                        f"Invalid handlers list for {exception_type}",
                     )
 
             return FlextResult[None].ok(None)
@@ -1039,7 +1055,7 @@ class FlextExceptions:
 
             # Extract common parameters using helper
             base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs
+                kwargs,
             )
 
             # Build context with specific fields
@@ -1333,7 +1349,8 @@ class FlextExceptions:
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
                 base_context: dict[str, object] | None = cast(
-                    "dict[str, object]", context_raw
+                    "dict[str, object]",
+                    context_raw,
                 )
             else:
                 base_context = None
@@ -1367,7 +1384,8 @@ class FlextExceptions:
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
                 base_context: dict[str, object] | None = cast(
-                    "dict[str, object]", context_raw
+                    "dict[str, object]",
+                    context_raw,
                 )
             else:
                 base_context = None
@@ -1447,7 +1465,7 @@ class FlextExceptions:
         """Create exception with automatic type selection."""
         # Extract common parameters using helper
         base_context, correlation_id, extracted_error_code = cls._extract_common_kwargs(
-            kwargs
+            kwargs,
         )
         final_error_code = error_code or extracted_error_code
 

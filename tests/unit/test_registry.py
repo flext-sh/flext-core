@@ -30,7 +30,8 @@ class ConcreteTestHandler(FlextHandlers[object, object]):
 def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler:
     """Create a test handler with default config."""
     config = FlextModels.CqrsConfig.Handler(
-        handler_id=handler_id, handler_name=f"Test Handler {handler_id}"
+        handler_id=handler_id,
+        handler_name=f"Test Handler {handler_id}",
     )
     return ConcreteTestHandler(config=config)
 
@@ -51,7 +52,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_1", handler_name="Test Handler 1"
+            handler_id="test_handler_1",
+            handler_name="Test Handler 1",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -74,7 +76,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_1", handler_name="Test Handler 1"
+            handler_id="test_handler_1",
+            handler_name="Test Handler 1",
         )
         handler1 = ConcreteTestHandler(config=config)
         handler2 = ConcreteTestHandler(config=config)
@@ -99,7 +102,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_binding_handler", handler_name="Test Binding Handler"
+            handler_id="test_binding_handler",
+            handler_name="Test Binding Handler",
         )
         handler = ConcreteTestHandler(config=config)
         bindings = [(object, handler)]
@@ -124,8 +128,9 @@ class TestFlextRegistry:
 
         handler = ConcreteTestHandler(
             config=FlextModels.CqrsConfig.Handler(
-                handler_id="test", handler_name="Test"
-            )
+                handler_id="test",
+                handler_name="Test",
+            ),
         )
 
         function_map = {object: handler}
@@ -159,7 +164,7 @@ class TestFlextRegistry:
                 handler_mode="command",
                 timestamp="2025-01-01T00:00:00Z",
                 status="active",
-            )
+            ),
         )
         summary.errors.append("test_error")
 
@@ -174,7 +179,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_1", handler_name="Test Handler 1"
+            handler_id="test_handler_1",
+            handler_name="Test Handler 1",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -221,7 +227,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_1", handler_name="Test Handler 1"
+            handler_id="test_handler_1",
+            handler_name="Test Handler 1",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -236,8 +243,9 @@ class TestFlextRegistry:
 
         handler = ConcreteTestHandler(
             config=FlextModels.CqrsConfig.Handler(
-                handler_id="test", handler_name="Test"
-            )
+                handler_id="test",
+                handler_name="Test",
+            ),
         )
         key = registry._resolve_binding_key(handler, object)
         assert isinstance(key, str)
@@ -250,8 +258,9 @@ class TestFlextRegistry:
 
         handler = ConcreteTestHandler(
             config=FlextModels.CqrsConfig.Handler(
-                handler_id="test", handler_name="Test"
-            )
+                handler_id="test",
+                handler_name="Test",
+            ),
         )
 
         key = registry._resolve_binding_key_from_entry(handler, object)
@@ -264,7 +273,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.CqrsConfig.Handler(
-            handler_id="test_handler_1", handler_name="Test Handler 1"
+            handler_id="test_handler_1",
+            handler_name="Test Handler 1",
         )
         handler = ConcreteTestHandler(config=config)
 
@@ -313,7 +323,7 @@ class TestFlextRegistry:
                 handler_mode="command",
                 timestamp="2025-01-01T00:00:00Z",
                 status="active",
-            )
+            ),
         )
 
         # Add skipped handler
@@ -344,7 +354,7 @@ class TestFlextRegistry:
 
         # This should fail and hit line 259-260
         result = registry.register_handler(
-            cast("FlextHandlers[object, object]", InvalidHandler())
+            cast("FlextHandlers[object, object]", InvalidHandler()),
         )
         assert result.is_failure
 
@@ -371,7 +381,8 @@ class TestFlextRegistry:
         # Test actual failure by providing bad data to _process_single_handler
         summary = FlextRegistry.Summary()
         invalid_result = registry._process_single_handler(
-            cast("FlextHandlers[object, object]", InvalidHandler()), summary
+            cast("FlextHandlers[object, object]", InvalidHandler()),
+            summary,
         )
         assert invalid_result.is_failure
 
@@ -390,7 +401,9 @@ class TestFlextRegistry:
 
         # Test with actual error message
         registry._add_registration_error(
-            "test_handler2", "Specific error message", summary
+            "test_handler2",
+            "Specific error message",
+            summary,
         )
         assert len(summary.errors) == 2
         assert "Specific error message" in summary.errors[1]
@@ -521,7 +534,8 @@ class TestFlextRegistry:
                 pass
 
         result = registry._process_single_handler(
-            cast("FlextHandlers[object, object]", BadHandler()), summary
+            cast("FlextHandlers[object, object]", BadHandler()),
+            summary,
         )
         assert result.is_failure
 
@@ -546,7 +560,7 @@ class TestFlextRegistry:
 
         # This should trigger line 277-279 (early return on processing failure)
         result = registry.register_handlers(
-            cast("list[FlextHandlers[object, object]]", [FailingHandler()])
+            cast("list[FlextHandlers[object, object]]", [FailingHandler()]),
         )
         assert result.is_failure
         # Error message comes from the dispatcher, not the literal "Handler processing failed"
@@ -630,7 +644,7 @@ class TestFlextRegistry:
 
         # Create function map with tuple entry - cast str to type[object] for key compatibility
         function_map: dict[type[object], tuple[object, ...]] = {
-            str: (handler_func, config_dict)
+            str: (handler_func, config_dict),
         }
 
         result = registry.register_function_map(function_map)

@@ -124,7 +124,7 @@ class TestFlextBus:
         class FailingHandler:
             def handle(self, command: TestCommand) -> FlextResult[str]:
                 return FlextResult[str].fail(
-                    f"Handler failed for command: {command.data}"
+                    f"Handler failed for command: {command.data}",
                 )
 
         handler = FailingHandler()
@@ -261,7 +261,9 @@ class TestFlextBus:
 
         class TestMiddleware:
             def process(
-                self, command: TestCommand, handler: object
+                self,
+                command: TestCommand,
+                handler: object,
             ) -> FlextResult[None]:
                 # Log the middleware processing
                 _ = command  # Use command parameter to avoid unused argument warning
@@ -403,9 +405,9 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_clear(self) -> None:
         """Test cache clear functionality (line 73)."""
-        from flext_core.bus import _CqrsCache
+        from flext_core.bus import FlextBus
 
-        cache = _CqrsCache(max_size=10)
+        cache = FlextBus._CqrsCache(max_size=10)
 
         # Add items to cache
         result1 = FlextResult[str].ok("test1")
@@ -430,7 +432,9 @@ class TestFlextBusMissingCoverage:
 
         # Create a Bus config model instance
         bus_model = FlextModels.CqrsConfig.Bus(
-            enable_middleware=True, enable_caching=False, max_cache_size=50
+            enable_middleware=True,
+            enable_caching=False,
+            max_cache_size=50,
         )
 
         # Should return the same instance
@@ -581,7 +585,8 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_middleware": False})
 
         def test_middleware(
-            command_type: type, command: object
+            command_type: type,
+            command: object,
         ) -> tuple[type, object] | None:
             """Test middleware function that matches expected signature."""
             return None
@@ -769,7 +774,8 @@ class TestFlextBusMissingCoverage:
 
         class BadHandler:
             def handle(
-                self, command: TestCommand
+                self,
+                command: TestCommand,
             ) -> str:  # Returns str, not FlextResult
                 return f"raw_{command.data}"
 
@@ -982,7 +988,8 @@ class TestFlextBusMissingCoverage:
 
         class RawHandler:
             def handle(
-                self, command: TestCommand
+                self,
+                command: TestCommand,
             ) -> dict:  # Returns dict, not FlextResult
                 return {"processed": command.data}
 

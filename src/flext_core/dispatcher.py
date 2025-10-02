@@ -126,7 +126,7 @@ class FlextDispatcher:
     **TODO**: Enhanced dispatcher features for 1.0.0+ releases
         - [ ] Add distributed tracing integration (OpenTelemetry)
         - [ ] Implement priority queue for message ordering
-        - [ ] Support async dispatch patterns with asyncio
+        - [ ] Support dispatch patterns with io
         - [ ] Add circuit breaker auto-recovery with backoff
         - [ ] Implement adaptive rate limiting based on metrics
         - [ ] Support message routing and transformation
@@ -196,7 +196,8 @@ class FlextDispatcher:
             bus_config: dict[str, object] = dict(global_config.get_cqrs_bus_config())
             # Map timeout_seconds to execution_timeout for bus compatibility
             bus_config["execution_timeout"] = bus_config.get(
-                "timeout_seconds", FlextConstants.Defaults.TIMEOUT
+                "timeout_seconds",
+                FlextConstants.Defaults.TIMEOUT,
             )
             config = {
                 "auto_context": getattr(global_config, "dispatcher_auto_context", True),
@@ -206,10 +207,14 @@ class FlextDispatcher:
                     FlextConstants.Defaults.TIMEOUT,
                 ),
                 "enable_metrics": getattr(
-                    global_config, "dispatcher_enable_metrics", True
+                    global_config,
+                    "dispatcher_enable_metrics",
+                    True,
                 ),
                 "enable_logging": getattr(
-                    global_config, "dispatcher_enable_logging", True
+                    global_config,
+                    "dispatcher_enable_logging",
+                    True,
                 ),
                 "max_retries": getattr(
                     global_config,
@@ -231,7 +236,7 @@ class FlextDispatcher:
             if not isinstance(bus_config_raw, dict):
                 global_config = FlextConfig.get_global_instance()
                 default_bus_config: dict[str, object] = dict(
-                    global_config.get_cqrs_bus_config()
+                    global_config.get_cqrs_bus_config(),
                 )
 
                 if "execution_timeout" in config:
@@ -247,7 +252,7 @@ class FlextDispatcher:
             # At this point, bus_config_raw is guaranteed to be a dict due to the isinstance check above
             bus_config_dict = cast("dict[str, object]", bus_config_raw)
             execution_timeout_value: object | None = bus_config_dict.get(
-                "execution_timeout"
+                "execution_timeout",
             )
             config.setdefault("execution_timeout", execution_timeout_value)
 
@@ -303,7 +308,8 @@ class FlextDispatcher:
         self._rate_limit_requests: dict[str, list[float]] = {}
         self._rate_limit_state: dict[str, dict[str, float | int]] = {}
         rate_limit_raw = config.get(
-            "rate_limit", FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
+            "rate_limit",
+            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
         )
         self._rate_limit = (
             int(rate_limit_raw)
@@ -326,7 +332,7 @@ class FlextDispatcher:
         self._rate_limit_block_grace = float(
             rate_limit_grace_raw
             if isinstance(rate_limit_grace_raw, (int, float, str))
-            else max(1.0, 0.5 * self._rate_limit_window)
+            else max(1.0, 0.5 * self._rate_limit_window),
         )
 
         # Audit and performance tracking
@@ -337,7 +343,7 @@ class FlextDispatcher:
         self._use_timeout_executor = bool(
             config.get("enable_timeout_executor", False)
             or ("timeout" in config)
-            or ("execution_timeout" in config)
+            or ("execution_timeout" in config),
         )
 
         # Thread pool for timeout handling (lazy initialization)
@@ -381,19 +387,20 @@ class FlextDispatcher:
             not in FlextConstants.Dispatcher.VALID_HANDLER_MODES
         ):
             return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE
+                FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE,
             )
 
         # Validate handler is provided
         if request.get("handler") is None:
             return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_HANDLER_REQUIRED
+                FlextConstants.Dispatcher.ERROR_HANDLER_REQUIRED,
             )
 
         # Register with bus
         bus_result = (
             self._bus.register_handler(
-                request.get("message_type"), request.get("handler")
+                request.get("message_type"),
+                request.get("handler"),
             )
             if request.get("message_type")
             else self._bus.register_handler(request.get("handler"))
@@ -401,7 +408,7 @@ class FlextDispatcher:
 
         if bus_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                f"Bus registration failed: {bus_result.error}"
+                f"Bus registration failed: {bus_result.error}",
             )
 
         # Create registration details
@@ -462,7 +469,7 @@ class FlextDispatcher:
                 )
                 if handler_result.is_failure:
                     return FlextResult[dict[str, object]].fail(
-                        handler_result.error or "Handler creation failed"
+                        handler_result.error or "Handler creation failed",
                     )
                 resolved_handler = handler_result.data
 
@@ -478,13 +485,14 @@ class FlextDispatcher:
             # Ensure we have a handler, not a string
             if isinstance(message_type_or_handler, str):
                 return FlextResult[dict[str, object]].fail(
-                    "Cannot register handler: message type string provided without handler"
+                    "Cannot register handler: message type string provided without handler",
                 )
 
             # Convert callable to FlextHandlers if needed
             resolved_handler = message_type_or_handler
             if callable(message_type_or_handler) and not isinstance(
-                message_type_or_handler, FlextHandlers
+                message_type_or_handler,
+                FlextHandlers,
             ):
                 handler_result = self.create_handler_from_function(
                     handler_func=message_type_or_handler,
@@ -493,7 +501,7 @@ class FlextDispatcher:
                 )
                 if handler_result.is_failure:
                     return FlextResult[dict[str, object]].fail(
-                        handler_result.error or "Handler creation failed"
+                        handler_result.error or "Handler creation failed",
                     )
                 resolved_handler = handler_result.data
 
@@ -584,17 +592,19 @@ class FlextDispatcher:
         # Validate mode
         if mode not in FlextConstants.Dispatcher.VALID_HANDLER_MODES:
             return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE
+                FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE,
             )
 
         # Create handler from function
         handler_result = self.create_handler_from_function(
-            handler_func, handler_config, mode
+            handler_func,
+            handler_config,
+            mode,
         )
 
         if handler_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                f"Handler creation failed: {handler_result.error}"
+                f"Handler creation failed: {handler_result.error}",
             )
 
         # Register the created handler
@@ -635,7 +645,7 @@ class FlextDispatcher:
 
         except Exception as error:
             return FlextResult[FlextHandlers[object, object]].fail(
-                f"Handler creation failed: {error}"
+                f"Handler creation failed: {error}",
             )
 
     # ------------------------------------------------------------------
@@ -659,7 +669,7 @@ class FlextDispatcher:
         # Validate request
         if request.get("message") is None:
             return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_MESSAGE_REQUIRED
+                FlextConstants.Dispatcher.ERROR_MESSAGE_REQUIRED,
             )
 
         # Get timeout from request override or config
@@ -897,7 +907,8 @@ class FlextDispatcher:
 
         # Execute dispatch with retry logic using bus directly
         max_retries_raw = self._config.get(
-            "max_retries", FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+            "max_retries",
+            FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
         )
         max_retries: int = (
             int(max_retries_raw)
@@ -919,9 +930,10 @@ class FlextDispatcher:
                     cast(
                         "int | float",
                         self._config.get(
-                            "timeout", FlextConstants.Defaults.TIMEOUT_SECONDS
+                            "timeout",
+                            FlextConstants.Defaults.TIMEOUT_SECONDS,
                         ),
-                    )
+                    ),
                 )
                 if timeout_override:
                     timeout_seconds = float(timeout_override)
@@ -953,7 +965,7 @@ class FlextDispatcher:
                         if future is not None:
                             future.cancel()
                         return FlextResult[object].fail(
-                            f"Operation timeout after {timeout_seconds} seconds"
+                            f"Operation timeout after {timeout_seconds} seconds",
                         )
                     except RuntimeError:
                         # Executor was shut down; reinitialize and retry immediately
@@ -970,7 +982,9 @@ class FlextDispatcher:
 
                     # Record successful dispatch in processors
                     self._record_dispatch_success(
-                        message_type, attempt_duration, attempt + 1
+                        message_type,
+                        attempt_duration,
+                        attempt + 1,
                     )
                     return FlextResult[object].ok(bus_result.value)
 
@@ -981,12 +995,15 @@ class FlextDispatcher:
 
                 # Record failed dispatch in processors
                 self._record_dispatch_failure(
-                    message_type, attempt_duration, bus_result.error, attempt + 1
+                    message_type,
+                    attempt_duration,
+                    bus_result.error,
+                    attempt + 1,
                 )
 
                 # Check if this is a temporary failure that should be retried
                 if attempt < max_retries - 1 and "Temporary failure" in str(
-                    bus_result.error
+                    bus_result.error,
                 ):
                     time.sleep(retry_delay)
                     continue
@@ -1003,7 +1020,10 @@ class FlextDispatcher:
 
                 # Record failed dispatch in processors
                 self._record_dispatch_failure(
-                    message_type, attempt_duration, str(e), attempt + 1
+                    message_type,
+                    attempt_duration,
+                    str(e),
+                    attempt + 1,
                 )
 
                 if attempt < max_retries - 1:
@@ -1015,7 +1035,10 @@ class FlextDispatcher:
         end_time = time.time()
         total_duration = end_time - start_time
         self._record_dispatch_failure(
-            message_type, total_duration, "Max retries exceeded", max_retries
+            message_type,
+            total_duration,
+            "Max retries exceeded",
+            max_retries,
         )
         return FlextResult[object].fail("Max retries exceeded")
 
@@ -1048,7 +1071,10 @@ class FlextDispatcher:
         return self._executor
 
     def _record_dispatch_success(
-        self, message_type: str, duration: float, attempts: int
+        self,
+        message_type: str,
+        duration: float,
+        attempts: int,
     ) -> None:
         """Record successful dispatch."""
         # Record in audit log
@@ -1080,7 +1106,11 @@ class FlextDispatcher:
         metrics["success_count"] += 1
 
     def _record_dispatch_failure(
-        self, message_type: str, duration: float, error: str | None, attempts: int
+        self,
+        message_type: str,
+        duration: float,
+        error: str | None,
+        attempts: int,
     ) -> None:
         """Record failed dispatch."""
         # Record in audit log
@@ -1136,7 +1166,8 @@ class FlextDispatcher:
     # Context management
     # ------------------------------------------------------------------
     def _normalize_context_metadata(
-        self, metadata: object | None
+        self,
+        metadata: object | None,
     ) -> FlextTypes.Core.Dict | None:
         """Normalize metadata payloads to plain dictionaries."""
         if metadata is None:
@@ -1283,7 +1314,7 @@ class FlextDispatcher:
             return FlextResult[FlextDispatcher].ok(instance)
         except Exception as error:
             return FlextResult[FlextDispatcher].fail(
-                f"Dispatcher creation failed: {error}"
+                f"Dispatcher creation failed: {error}",
             )
 
     @classmethod
@@ -1299,7 +1330,7 @@ class FlextDispatcher:
             return FlextResult[FlextDispatcher].ok(instance)
         except Exception as error:
             return FlextResult[FlextDispatcher].fail(
-                f"Dispatcher creation failed: {error}"
+                f"Dispatcher creation failed: {error}",
             )
 
     # =============================================================================
@@ -1353,7 +1384,9 @@ class FlextDispatcher:
                 if hasattr(handler, "original_callable"):
                     # Type-safe access to original_callable attribute
                     original_callable: object = getattr(
-                        handler, "original_callable", None
+                        handler,
+                        "original_callable",
+                        None,
                     )
                     if original_callable is not None:
                         result.append(original_callable)
@@ -1502,7 +1535,7 @@ class FlextDispatcher:
                 import_result = self._processors.import_config(processor_config)
                 if import_result.is_failure:
                     return FlextResult[None].fail(
-                        f"Processor config import failed: {import_result.error}"
+                        f"Processor config import failed: {import_result.error}",
                     )
 
             return FlextResult[None].ok(None)
@@ -1510,7 +1543,9 @@ class FlextDispatcher:
             return FlextResult[None].fail(f"Config import failed: {e}")
 
     def dispatch_batch(
-        self, message_type: str, messages: list[object]
+        self,
+        message_type: str,
+        messages: list[object],
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch using processors."""
         # Use processors batch processing

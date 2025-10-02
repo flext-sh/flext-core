@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import asyncio
 import operator
 import time
 from collections.abc import Callable
@@ -892,7 +891,7 @@ class TestFlextResult:
         # Failure case with failed recovery
         result = FlextResult[int].fail("Error occurred")
         recovered = result.recover_with(
-            lambda _: FlextResult[int].fail("Recovery failed")
+            lambda _: FlextResult[int].fail("Recovery failed"),
         )
         assert recovered.is_failure
         assert recovered.error is not None and "Recovery failed" in recovered.error
@@ -1343,7 +1342,9 @@ class TestFlextResult:
             resources_cleaned.append(resource)
 
         result = FlextResult.ok("dummy").with_resource(
-            create_resource, operation, cleanup
+            create_resource,
+            operation,
+            cleanup,
         )
         assert result.is_success
         assert result.value == 18  # len("test_resource") + len("dummy")
@@ -1411,7 +1412,9 @@ class TestFlextResult:
             return FlextResult[int].ok(attempt_count)
 
         result = FlextResult.ok(5).retry_until_success(
-            unstable_operation, max_attempts=5, backoff_factor=1.1
+            unstable_operation,
+            max_attempts=5,
+            backoff_factor=1.1,
         )
         assert result.is_success
         assert result.value == 3
@@ -1426,7 +1429,9 @@ class TestFlextResult:
             return FlextResult[int].fail("Always fails")
 
         result = FlextResult.ok(5).retry_until_success(
-            always_failing, max_attempts=2, backoff_factor=1.1
+            always_failing,
+            max_attempts=2,
+            backoff_factor=1.1,
         )
         assert result.is_failure
         assert attempt_count == 10  # 5 + 5 from two attempts
@@ -1539,14 +1544,20 @@ class TestFlextResult:
 
         # Test all validations pass
         result = FlextResult.validate_all(
-            42, validate_positive, validate_even, validate_less_than_100
+            42,
+            validate_positive,
+            validate_even,
+            validate_less_than_100,
         )
         assert result.is_success
         assert result.value == 42
 
         # Test validation failure
         result = FlextResult.validate_all(
-            43, validate_positive, validate_even, validate_less_than_100
+            43,
+            validate_positive,
+            validate_even,
+            validate_less_than_100,
         )
         assert result.is_failure
         # Check that error message contains validation failure info
@@ -1960,7 +1971,9 @@ class TestFlextResultAdditionalCoverage:
 
         # Hash with failure
         failure = FlextResult.fail(
-            "error", error_code="ERR_001", error_data={"detail": "info"}
+            "error",
+            error_code="ERR_001",
+            error_data={"detail": "info"},
         )
         hash3 = hash(failure)
         assert isinstance(hash3, int)
@@ -2074,26 +2087,26 @@ class TestFlextResultAdditionalCoverage:
         combined = FlextResult.combine(result1, failure, result3)
         assert combined.is_failure
 
-    def test_result_safe_call_async(self) -> None:
-        """Test safe_call_async for async operations (lines 1237-1244)."""
-        # safe_call_async takes func with NO arguments
+    def test_result_safe_call(self) -> None:
+        """Test safe_call for operations (lines 1237-1244)."""
+        # safe_call takes func with NO arguments
 
-        async def async_operation() -> int:
-            await asyncio.sleep(0.01)
+        def operation() -> int:
+            time.sleep(0.01)
             return 42
 
-        # Run async operation
-        result = asyncio.run(FlextResult.safe_call_async(async_operation))
+        # Run operation
+        result = FlextResult.safe_call(operation)
         assert result.is_success
         assert result.value == 42
 
-        # Async operation that fails
-        async def failing_async_operation() -> int:
-            await asyncio.sleep(0.01)
-            msg = "Async error"
+        # operation that fails
+        def failing_operation() -> int:
+            time.sleep(0.01)
+            msg = "error"
             raise ValueError(msg)
 
-        result = asyncio.run(FlextResult.safe_call_async(failing_async_operation))
+        result = FlextResult.safe_call(failing_operation)
         assert result.is_failure
 
     def test_result_operator_rshift(self) -> None:
@@ -2255,7 +2268,10 @@ class TestFlextResultAdditionalCoverage:
 
         # Lift ternary function
         combined = FlextResult.applicative_lift3(
-            lambda a, b, c: a + b + c, result1, result2, result3
+            lambda a, b, c: a + b + c,
+            result1,
+            result2,
+            result3,
         )
         assert combined.is_success
         assert combined.value == 35
@@ -2298,14 +2314,18 @@ class TestFlextResultAdditionalCoverage:
 
         # Condition true
         result = FlextResult.ok(50).if_then_else(
-            lambda x: x > 40, then_action, else_action
+            lambda x: x > 40,
+            then_action,
+            else_action,
         )
         assert result.is_success
         assert result.value == "then:50"
 
         # Condition false
         result = FlextResult.ok(30).if_then_else(
-            lambda x: x > 40, then_action, else_action
+            lambda x: x > 40,
+            then_action,
+            else_action,
         )
         assert result.is_success
         assert result.value == "else:30"
@@ -2358,7 +2378,9 @@ class TestFlextResultAdditionalCoverage:
 
         # Use resource
         result = FlextResult.ok(42).with_resource(
-            resource_factory, use_resource, cleanup
+            resource_factory,
+            use_resource,
+            cleanup,
         )
         assert result.is_success
         assert result.value == "used with 42"
@@ -2410,7 +2432,9 @@ class TestFlextResultAdditionalCoverage:
 
         # Retry until success
         result = FlextResult.ok(21).retry_until_success(
-            flaky_operation, max_attempts=5, backoff_factor=0.01
+            flaky_operation,
+            max_attempts=5,
+            backoff_factor=0.01,
         )
         assert result.is_success
         assert result.value == 42
@@ -2545,7 +2569,8 @@ class TestFlextResultFinalCoverage:
 
         # Accessing value on failure should raise FlextExceptions.TypeError
         with pytest.raises(
-            FlextExceptions.TypeError, match="Attempted to access value"
+            FlextExceptions.TypeError,
+            match="Attempted to access value",
         ):
             _ = result.value
 
@@ -2699,18 +2724,17 @@ class TestFlextResultFinalCoverage:
         result_fail = FlextResult.try_all([always_fails, always_fails])
         assert result_fail.is_failure
 
-    def test_safe_call_async_error_path(self) -> None:
-        """Test safe_call_async exception handling (lines 1237-1244, 1241)."""
-        import asyncio
+    def test_safe_call_error_path(self) -> None:
+        """Test safe_call exception handling (lines 1237-1244, 1241)."""
 
-        async def async_raises() -> int:
-            msg = "Async operation failed"
+        def raises() -> int:
+            msg = "operation failed"
             raise ValueError(msg)
 
-        # Run async test
-        result = asyncio.run(FlextResult.safe_call_async(async_raises))
+        # Run test
+        result = FlextResult.safe_call(raises)
         assert result.is_failure
-        assert "Async operation failed" in str(result.error)
+        assert "operation failed" in str(result.error)
 
     def test_matmul_operator_combination(self) -> None:
         """Test __matmul__ operator for combining results (lines 1260, 1262)."""
@@ -2893,7 +2917,9 @@ class TestFlextResultFinalCoverage:
             pass
 
         result = FlextResult.ok(42).with_resource(
-            resource_factory, operation_raises, cleanup
+            resource_factory,
+            operation_raises,
+            cleanup,
         )
 
         # Should catch exception and return failure
@@ -2962,7 +2988,9 @@ class TestFlextResultFinalCoverage:
             return FlextResult[int].fail(f"Attempt {call_count} failed")
 
         result = FlextResult.ok(42).retry_until_success(
-            always_fails, max_attempts=3, backoff_factor=0.01
+            always_fails,
+            max_attempts=3,
+            backoff_factor=0.01,
         )
 
         # Should fail after max_attempts
@@ -3093,7 +3121,10 @@ class TestFlextResultEdgeCases:
         result4 = FlextResult[int].fail("Error 2")
 
         successes, errors = FlextResult.collect_all_errors(
-            result1, result2, result3, result4
+            result1,
+            result2,
+            result3,
+            result4,
         )
 
         # Should have collected both successes and errors
@@ -3324,7 +3355,8 @@ class TestFlextResultFinalPush:
 
         # expect should raise for None data
         with pytest.raises(
-            FlextExceptions.OperationError, match="Success result has None data"
+            FlextExceptions.OperationError,
+            match="Success result has None data",
         ):
             result.expect("Expected non-None value")
 
@@ -3508,14 +3540,13 @@ class TestFlextResultFinalPush:
 class TestFlextResultFinalCoveragePush:
     """Final tests to reach 95%+ coverage - targeting remaining 71 uncovered lines."""
 
-    def test_safe_call_async_non_coroutine(self) -> None:
-        """Test safe_call_async with non-coroutine function (line 1241)."""
-        import asyncio
+    def test_safe_call_non_coroutine(self) -> None:
+        """Test safe_call with non-coroutine function (line 1241)."""
 
         def sync_func() -> int:
             return 42
 
-        result = asyncio.run(FlextResult.safe_call_async(sync_func))
+        result = FlextResult.safe_call(sync_func)
         assert result.is_success
         assert result.unwrap() == 42
 
@@ -3705,7 +3736,9 @@ class TestFlextResultFinalCoveragePush:
             raise RuntimeError(f"Attempt {attempt_count} failed")
 
         retried = result.retry_until_success(
-            failing_operation, max_attempts=2, backoff_factor=0.01
+            failing_operation,
+            max_attempts=2,
+            backoff_factor=0.01,
         )
         assert retried.is_failure
         assert "All 2 retry attempts failed" in str(retried.error)

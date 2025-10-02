@@ -51,7 +51,7 @@ class TestFlextCqrs:
         assert result.error_code is None
         assert result.error_data == {}
 
-    def test_cqrs_results_success_with_metadata(self) -> None:
+    def test_cqrs_results_success_withmetadata(self) -> None:
         """Test CQRS Results success with configuration metadata."""
         data = {"user_id": "123", "name": "John Doe"}
         config = FlextModels.CqrsConfig.Handler(
@@ -64,10 +64,10 @@ class TestFlextCqrs:
 
         assert result.is_success
         assert result.value == data
-        assert hasattr(result, "_metadata")
+        assert hasattr(result, "metadata")
 
         # Verify metadata is properly attached
-        metadata = getattr(result, "_metadata")
+        metadata = cast("dict[str, object]", result.metadata)
         assert metadata is not None
         assert metadata["handler_id"] == "test_handler_123"
         assert metadata["handler_name"] == "TestHandler"
@@ -80,7 +80,7 @@ class TestFlextCqrs:
 
         assert result.is_success
         assert result.value == data
-        assert not hasattr(result, "_metadata")
+        assert result.metadata is None
 
     def test_cqrs_results_failure_basic(self) -> None:
         """Test basic CQRS Results failure functionality."""
@@ -94,7 +94,8 @@ class TestFlextCqrs:
     def test_cqrs_results_failure_with_custom_error_code(self) -> None:
         """Test CQRS Results failure with custom error code."""
         result = FlextCqrs.Results.failure(
-            "Validation failed", error_code="VALIDATION_ERROR"
+            "Validation failed",
+            error_code="VALIDATION_ERROR",
         )
 
         assert result.is_failure
@@ -114,7 +115,7 @@ class TestFlextCqrs:
         assert result.error == "Email is required"
         assert result.error_data == error_data
 
-    def test_cqrs_results_failure_with_config_metadata(self) -> None:
+    def test_cqrs_results_failure_with_configmetadata(self) -> None:
         """Test CQRS Results failure with configuration metadata enhancement."""
         config = FlextModels.CqrsConfig.Handler(
             handler_id="validation_handler",
@@ -170,7 +171,7 @@ class TestFlextCqrs:
         """Test command creation with validation errors."""
         # Missing required fields
         invalid_data: dict[str, object] = {
-            "payload": {"name": "John"}  # Missing command_type
+            "payload": {"name": "John"},  # Missing command_type
         }
         with pytest.raises(Exception):  # Pydantic raises ValidationError
             FlextModels.Command.model_validate(invalid_data)
@@ -202,7 +203,7 @@ class TestFlextCqrs:
         """Test query creation with validation errors."""
         # Invalid query data structure
         invalid_data: dict[str, object] = {
-            "filters": "not_a_dict"  # Should be dict
+            "filters": "not_a_dict",  # Should be dict
         }
         with pytest.raises(Exception):  # Pydantic raises ValidationError
             FlextModels.Query.model_validate(invalid_data)
@@ -272,7 +273,7 @@ class TestFlextCqrs:
 
         # Apply decorator
         decorated_handler = FlextCqrs.Decorators.command_handler(TestCommand)(
-            handle_test_command
+            handle_test_command,
         )
 
         # Test the decorated function
@@ -304,7 +305,8 @@ class TestFlextCqrs:
         }
 
         decorated_handler = FlextCqrs.Decorators.command_handler(
-            ProcessOrderCommand, config=config
+            ProcessOrderCommand,
+            config=config,
         )(process_order_handler)
 
         # Test functionality
@@ -331,7 +333,8 @@ class TestFlextCqrs:
         invalid_config = {"invalid_key": "invalid_value"}
 
         decorated_handler = FlextCqrs.Decorators.command_handler(
-            SimpleCommand, config=invalid_config
+            SimpleCommand,
+            config=invalid_config,
         )(simple_handler)
 
         # Should still work with basic config
@@ -342,7 +345,7 @@ class TestFlextCqrs:
         assert decorated_handler.__dict__["handler_config"].handler_type == "command"
         assert decorated_handler.__dict__["handler_config"].handler_mode == "command"
 
-    def test_cqrs_decorators_preserves_function_metadata(self) -> None:
+    def test_cqrs_decorators_preserves_functionmetadata(self) -> None:
         """Test that decorator preserves original function metadata."""
 
         @dataclass
@@ -358,7 +361,7 @@ class TestFlextCqrs:
         documented_handler.__doc__ = "Custom documentation"
 
         decorated = FlextCqrs.Decorators.command_handler(DataCommand)(
-            documented_handler
+            documented_handler,
         )
 
         # Verify metadata preservation
@@ -413,7 +416,7 @@ class TestFlextCqrs:
 
             # Create handler configs
             config = FlextModels.CqrsConfig.Handler.create_handler_config(
-                "command" if i % 2 == 0 else "query"
+                "command" if i % 2 == 0 else "query",
             )
             assert isinstance(config, FlextModels.CqrsConfig.Handler)
 
@@ -443,22 +446,25 @@ class TestFlextCqrs:
 
         # Create handler configurations
         command_config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            "command", default_name="UserCommandHandler"
+            "command",
+            default_name="UserCommandHandler",
         )
         assert isinstance(command_config, FlextModels.CqrsConfig.Handler)
 
         query_config = FlextModels.CqrsConfig.Handler.create_handler_config(
-            "query", default_name="UserQueryHandler"
+            "query",
+            default_name="UserQueryHandler",
         )
         assert isinstance(query_config, FlextModels.CqrsConfig.Handler)
 
         # Test result creation with real data
         success_result = FlextCqrs.Results.success(
-            {"user_id": "user_123", "created": True}, command_config
+            {"user_id": "user_123", "created": True},
+            command_config,
         )
         assert success_result.is_success
-        assert hasattr(success_result, "_metadata")
-        metadata = getattr(success_result, "_metadata")
+        assert hasattr(success_result, "metadata")
+        metadata = cast("dict[str, object]", success_result.metadata)
         assert metadata is not None
         assert metadata["handler_name"] == "UserCommandHandler"
 
@@ -486,7 +492,7 @@ class TestFlextCqrs:
                 # Cases 1, 3 should fail validation
                 assert i in {1, 3}, f"Test case {i} raised unexpected ValidationError"
 
-    def test_cqrs_metadata_handling_comprehensive(self) -> None:
+    def test_cqrsmetadata_handling_comprehensive(self) -> None:
         """Test comprehensive metadata handling across all operations."""
         # Test command metadata
         command_config = FlextModels.CqrsConfig.Handler(
@@ -534,10 +540,11 @@ class TestFlextCqrs:
 
         # Test result metadata
         success_result = FlextCqrs.Results.success(
-            {"result": "success", "count": 42}, command_config
+            {"result": "success", "count": 42},
+            command_config,
         )
-        assert hasattr(success_result, "_metadata")
-        metadata = getattr(success_result, "_metadata")
+        assert hasattr(success_result, "metadata")
+        metadata = cast("dict[str, object]", success_result.metadata)
         assert metadata is not None
         assert isinstance(metadata, dict)
         assert metadata["handler_id"] == "meta_test_cmd"
@@ -547,7 +554,8 @@ class TestFlextCqrs:
         assert isinstance(failure_result.error_data, dict)
         assert "handler_id" in failure_result.error_data
         handler_metadata = cast(
-            "dict[str, object]", failure_result.error_data["handler_metadata"]
+            "dict[str, object]",
+            failure_result.error_data["handler_metadata"],
         )
         assert handler_metadata["cache"] is True
 

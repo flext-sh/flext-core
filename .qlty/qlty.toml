@@ -66,6 +66,7 @@ name = "actionlint"
 
 [[plugin]]
 name = "bandit"
+exclude_patterns = ["tests/**", "**/test_*.py", "**/*_test.py"]
 
 [[plugin]]
 name = "checkov"

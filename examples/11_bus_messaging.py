@@ -48,7 +48,8 @@ class BusMessagingService(FlextService[dict[str, object]]):
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute method required by FlextService."""
         self._logger.info(
-            "Executing bus demo", extra={"data": {"demo": "bus_messaging"}}
+            "Executing bus demo",
+            extra={"data": {"demo": "bus_messaging"}},
         )
         return FlextResult[dict[str, object]].ok({
             "status": "processed",
@@ -182,7 +183,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
                     "created_at": time.time(),
                 }
 
-                self._logger.info(f"Order placed: {order_id}")
+                self._logger.info("Order placed: %s", order_id)
                 return FlextResult[str].ok(order_id)
 
             def handle_cancel_order(self, cmd: CancelOrderCommand) -> FlextResult[None]:
@@ -193,7 +194,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
                 order = self._orders[cmd.order_id]
                 if order["status"] != "placed":
                     return FlextResult[None].fail(
-                        f"Cannot cancel order in {order['status']} status"
+                        f"Cannot cancel order in {order['status']} status",
                     )
 
                 order["status"] = "cancelled"
@@ -211,7 +212,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
                 order = self._orders[cmd.order_id]
                 if order["status"] != "placed":
                     return FlextResult[None].fail(
-                        f"Cannot ship order in {order['status']} status"
+                        f"Cannot ship order in {order['status']} status",
                     )
 
                 order["status"] = "shipped"
@@ -242,14 +243,17 @@ class BusMessagingService(FlextService[dict[str, object]]):
 
             print("\n2. Ship Order:")
             ship_cmd = ShipOrderCommand(
-                order_id=str(order_id), carrier="FedEx", tracking_number="1234567890"
+                order_id=str(order_id),
+                carrier="FedEx",
+                tracking_number="1234567890",
             )
             ship_result = bus.execute(ship_cmd)
             print(f"  {'✅' if ship_result.is_success else '❌'} Order shipped")
 
             print("\n3. Try to Cancel Shipped Order:")
             cancel_cmd = CancelOrderCommand(
-                order_id=str(order_id), reason="Customer request"
+                order_id=str(order_id),
+                reason="Customer request",
             )
             cancel_result = bus.execute(cancel_cmd)
             if cancel_result.is_failure:
@@ -277,14 +281,15 @@ class BusMessagingService(FlextService[dict[str, object]]):
             ) -> FlextResult[object]:
                 """Log before and after."""
                 message_type = type(message).__name__
-                self._logger.info(f"Processing: {message_type}")
+                self._logger.info("Processing: %s", message_type)
 
                 start = time.time()
                 result = next_handler(message)
                 duration = time.time() - start
 
                 self._logger.info(
-                    f"Completed: {message_type}",
+                    "Completed: %s",
+                    message_type,
                     extra={"duration": duration, "success": bool(result.is_success)},
                 )
                 return result
@@ -307,7 +312,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
                         default_value = getattr(field_info, "default", None)
                         if value is None and default_value is None:
                             return FlextResult[object].fail(
-                                f"Field {field_name} is required"
+                                f"Field {field_name} is required",
                             )
 
                 return next_handler(message)
@@ -382,7 +387,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
         cmd = TestCommand(value="test-value")
         result = bus.execute(cmd)
         print(
-            f"  Result: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}"
+            f"  Result: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}",
         )
 
         print("\n2. Performance stats:")
@@ -523,7 +528,9 @@ class BusMessagingService(FlextService[dict[str, object]]):
 
         # Configure bus with error handling
         config = FlextModels.CqrsConfig.Bus(
-            enable_middleware=True, enable_metrics=True, execution_timeout=1
+            enable_middleware=True,
+            enable_metrics=True,
+            execution_timeout=1,
         )
         bus = FlextBus(bus_config=config)
 
@@ -553,7 +560,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
         cmd = FailingCommand(fail_type="validation")
         result = bus.execute(cmd)
         print(
-            f"  Result: {'✅' if result.is_success else '❌'} {result.error if result.is_failure else ''}"
+            f"  Result: {'✅' if result.is_success else '❌'} {result.error if result.is_failure else ''}",
         )
 
         print("\n2. Success case:")

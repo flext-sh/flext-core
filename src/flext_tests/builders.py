@@ -411,7 +411,8 @@ class FlextTestsBuilders:
                 container_services = getattr(self, "_container_services", {})
                 for name, service in container_services.items():
                     register_result: FlextResult[None] = container.register(
-                        name, service
+                        name,
+                        service,
                     )
                     if register_result.is_failure:
                         msg = f"Failed to register service {name}: {register_result.error}"
@@ -422,7 +423,8 @@ class FlextTestsBuilders:
                 container_factories = getattr(self, "_container_factories", {})
                 for name, factory in container_factories.items():
                     factory_result: FlextResult[None] = container.register_factory(
-                        name, factory
+                        name,
+                        factory,
                     )
                     if factory_result.is_failure:
                         msg = (

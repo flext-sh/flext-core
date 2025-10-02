@@ -270,14 +270,15 @@ class TestServiceIntegrationPatterns:
         start_time = time.perf_counter()
         # Type check large_dataset before passing to process_pipeline
         if isinstance(large_dataset, (list, dict)) or hasattr(
-            large_dataset, "__iter__"
+            large_dataset,
+            "__iter__",
         ):
             # Cast to expected type to satisfy Pyrefly
             result = process_pipeline(
                 cast(
                     "list[int] | dict[str, dict[str, dict[str, list[int]]]]",
                     large_dataset,
-                )
+                ),
             )
         else:
             pytest.skip("large_dataset is not a valid type for process_pipeline")
@@ -394,7 +395,7 @@ class TestServiceIntegrationPatterns:
             # Send notification
             if isinstance(user_result.value, dict):
                 return retrieved_notification_service.send(
-                    str(user_result.value["email"])
+                    str(user_result.value["email"]),
                 )
             return FlextResult[str].fail("User data is not a dictionary")
 
