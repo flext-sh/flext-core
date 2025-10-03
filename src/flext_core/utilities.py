@@ -179,7 +179,11 @@ _config = FlextConfig()
         FlextConstants: For validation limits and defaults.
         FlextModels: For domain model validation patterns.
 
-    """
+"""
+
+
+class FlextUtilities:
+    """Comprehensive utility functions for FLEXT ecosystem operations."""
 
     @staticmethod
     def safe_json_parse(json_string: str) -> FlextResult[FlextTypes.Dict]:
@@ -1445,14 +1449,17 @@ _config = FlextConfig()
                 fail_fast: If True, stop on first error; if False, accumulate all errors
 
             """
+            # Use config value if not provided
+            size = batch_size if batch_size is not None else _config.batch_size
+
             # Validate batch size
-            if batch_size <= FlextConstants.Core.ZERO:
+            if size <= FlextConstants.Core.ZERO:
                 return FlextResult[list[U]].fail("Batch size must be positive")
 
             return FlextUtilities.Utilities.process_batches_railway(
                 items,
                 processor,
-                batch_size,
+                size,
                 fail_fast=fail_fast,
             )
 
@@ -2034,15 +2041,19 @@ _config = FlextConfig()
         @staticmethod
         def retry_with_backoff(
             operation: Callable[[], FlextResult[T]],
-            max_retries: int = 3,
-            initial_delay: float = 1.0,
+            max_retries: int | None = None,
+            initial_delay: float | None = None,
             backoff_factor: float = 2.0,
         ) -> FlextResult[T]:
             """Enhanced retry with exponential backoff using railway patterns."""
+            # Use config values if not provided
+            retries = max_retries if max_retries is not None else _config.max_retry_attempts
+            delay = initial_delay if initial_delay is not None else _config.retry_delay_seconds
+
             # Simple implementation that tries the operation multiple times
             last_error = "Operation failed"
 
-            for attempt in range(max_retries):
+            for attempt in range(retries):
                 try:
                     result: FlextResult[T] = operation()
                     if result.is_success:
@@ -2050,8 +2061,8 @@ _config = FlextConfig()
                     last_error = result.error or f"Attempt {attempt + 1} failed"
 
                     # Add delay before next attempt (exponential backoff)
-                    if attempt < max_retries - 1:  # Don't wait after last attempt
-                        time.sleep(initial_delay * (backoff_factor**attempt))
+                    if attempt < retries - 1:  # Don't wait after last attempt
+                        time.sleep(delay * (backoff_factor**attempt))
 
                 except Exception as e:
                     last_error = f"Exception in attempt {attempt + 1}: {e}"
@@ -2884,8 +2895,8 @@ _config = FlextConfig()
         @staticmethod
         def compose_retry[T](
             func: Callable[[T], FlextResult[T]],
-            max_retries: int = 3,
-            retry_delay: float = 1.0,
+            max_retries: int | None = None,
+            retry_delay: float | None = None,
         ) -> Callable[[T], FlextResult[T]]:
             """Compose retry logic using railway patterns.
 
@@ -2906,21 +2917,24 @@ _config = FlextConfig()
                 ```
 
             """
+            # Use config values if not provided
+            retries = max_retries if max_retries is not None else _config.max_retry_attempts
+            delay = retry_delay if retry_delay is not None else _config.retry_delay_seconds
 
             def retry_composed(value: T) -> FlextResult[T]:
                 last_error = None
-                for attempt in range(max_retries + 1):
+                for attempt in range(retries + 1):
                     result = func(value)
                     if result.is_success:
                         return result
                     last_error = result.error
-                    if attempt < max_retries:
-                        time.sleep(retry_delay)
+                    if attempt < retries:
+                        time.sleep(delay)
 
                 return FlextResult[T].fail(
-                    f"Function failed after {max_retries} retries: {last_error}",
+                    f"Function failed after {retries} retries: {last_error}",
                     error_code="RETRY_EXHAUSTED",
-                    error_data={"max_retries": max_retries, "last_error": last_error},
+                    error_data={"max_retries": retries, "last_error": last_error},
                 )
 
             return retry_composed
