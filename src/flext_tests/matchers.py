@@ -1106,7 +1106,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def run_with_timeout(
-        coro: Awaitable[object],
+        _coro: Awaitable[object],
         timeout_seconds: float,  # noqa: ARG004
     ) -> object:
         """Run coroutine with timeout and auto-retry for test compatibility (sync stub).
@@ -1180,7 +1180,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def measure_concurrency_performance(
-        func: Callable[..., object],
+        _func: Callable[..., object],
         concurrency_level: int,
     ) -> FlextTypes.Core.Dict:
         """Ultra-simple for test compatibility - measures concurrency performance (sync stub).

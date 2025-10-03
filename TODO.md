@@ -114,7 +114,7 @@
   - Release workflow (PyPI, Docker, GitHub releases)
   - Security scanning workflow
 - [x] **COMPLETED**: Automated testing across Python 3.13+ versions
-  - Python 3.13 (primary target, requires-python = ">=3.13,<3.14")
+  - Python 3.13 (primary target, requires-Python = ">=3.13,<3.14")
   - Python 3.12 (backward compatibility validation)
   - Multi-platform matrix testing
 - [x] **COMPLETED**: Release process automation
@@ -150,7 +150,6 @@
 | **FlextModels**    | ✅ Complete      | 100%     | DDD Foundation      |
 | **FlextConfig**    | ✅ Solid         | 89%      | Configuration Ready |
 | **FlextUtilities** | ✅ Comprehensive | 93%      | Validation Complete |
-
 
 **Overall Assessment**: A-grade foundation library ready for 1.0.0 stabilization
 

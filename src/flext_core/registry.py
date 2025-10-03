@@ -102,7 +102,6 @@ class FlextRegistry:
             print(f"{handler_type}: {len(handler_list)} handlers")
         ```
 
-    **TODO**: Enhanced registry features for 1.0.0+ releases
         - [ ] Add handler versioning and migration support
         - [ ] Implement handler dependency resolution
         - [ ] Support handler lifecycle hooks and callbacks

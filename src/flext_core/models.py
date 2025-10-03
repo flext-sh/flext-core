@@ -1431,9 +1431,7 @@ class FlextModels:
     class BatchProcessingConfig(StrictArbitraryTypesModel):
         """Enhanced batch processing configuration."""
 
-        batch_size: int = Field(
-            default_factory=lambda: _config.batch_size
-        )
+        batch_size: int = Field(default_factory=lambda: _config.batch_size)
         max_workers: int = Field(default_factory=lambda: _config.max_workers)
         timeout_per_item: int = Field(
             default_factory=lambda: int(_config.timeout_seconds)
@@ -1692,9 +1690,7 @@ class FlextModels:
         operations: Annotated[list[FlextTypes.Dict], Field(default_factory=list)]
         parallel_execution: bool = False
         stop_on_error: bool = True
-        batch_size: int = Field(
-            default_factory=lambda: _config.batch_size
-        )
+        batch_size: int = Field(default_factory=lambda: _config.batch_size)
         timeout_per_operation: int = Field(
             default_factory=lambda: int(_config.timeout_seconds)
         )
@@ -1919,9 +1915,7 @@ class FlextModels:
         half_open_max_calls: int = Field(
             default_factory=lambda: _config.max_retry_attempts
         )
-        sliding_window_size: int = Field(
-            default_factory=lambda: _config.batch_size
-        )
+        sliding_window_size: int = Field(default_factory=lambda: _config.batch_size)
         minimum_throughput: int = Field(
             default=FlextConstants.Cqrs.DEFAULT_MINIMUM_THROUGHPUT,
             description="Minimum throughput threshold",
