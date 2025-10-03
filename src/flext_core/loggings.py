@@ -39,12 +39,16 @@ import structlog
 from pydantic import Field, field_validator, model_validator
 from structlog.typing import EventDict, Processor
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Module-level configuration instance for runtime defaults
+_config = FlextConfig()
 
 if TYPE_CHECKING:
     pass
@@ -760,7 +764,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         log_verbosity: str = FlextConstants.Logging.VERBOSITY,
         log_file: str | None = None,
         log_file_max_size: int = FlextConstants.Logging.MAX_FILE_SIZE,
-        log_file_backup_count: int = 5,
+        log_file_backup_count: int | None = None,
         console_enabled: bool = FlextConstants.Logging.CONSOLE_ENABLED,
         console_color_enabled: bool = FlextConstants.Logging.CONSOLE_COLOR_ENABLED,
         track_performance: bool = FlextConstants.Logging.TRACK_PERFORMANCE,
@@ -851,7 +855,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             file_handler = logging.handlers.RotatingFileHandler(
                 filename=log_file,
                 maxBytes=log_file_max_size,
-                backupCount=log_file_backup_count,
+                backupCount=log_file_backup_count if log_file_backup_count is not None else _config.log_file_backup_count,
                 encoding="utf-8",
             )
             logger.addHandler(file_handler)
