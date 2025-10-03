@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator
 
-from flext_core import FlextBus, FlextModels, FlextResult
+from flext_core import FlextBus, FlextModels, FlextResult, FlextTypes
 
 
 class TestFlextBus:
@@ -24,7 +24,7 @@ class TestFlextBus:
 
     def test_bus_with_custom_config(self) -> None:
         """Test bus initialization with custom configuration."""
-        config: dict[str, object] = {"enable_middleware": True, "enable_caching": False}
+        config: FlextTypes.Dict = {"enable_middleware": True, "enable_caching": False}
         bus = FlextBus(bus_config=config)
         assert bus is not None
         assert bus.config.enable_caching is False
@@ -407,7 +407,7 @@ class TestFlextBusMissingCoverage:
         """Test cache clear functionality (line 73)."""
         from flext_core.bus import FlextBus
 
-        cache = FlextBus._CqrsCache(max_size=10)
+        cache = FlextBus._Cache(max_size=10)
 
         # Add items to cache
         result1 = FlextResult[str].ok("test1")
@@ -448,7 +448,7 @@ class TestFlextBusMissingCoverage:
         from collections.abc import Mapping as ABCMapping
 
         class CustomMapping(ABCMapping):
-            def __init__(self, data: dict[str, object]) -> None:
+            def __init__(self, data: FlextTypes.Dict) -> None:
                 self._data = data
 
             def __getitem__(self, key: str) -> object:
@@ -489,7 +489,7 @@ class TestFlextBusMissingCoverage:
         """Test _normalize_middleware_config with dict method (lines 369-379)."""
 
         class LegacyConfig:
-            def dict(self) -> dict[str, object]:
+            def dict(self) -> FlextTypes.Dict:
                 return {"legacy": True, "version": 1}
 
         bus = FlextBus()
@@ -504,11 +504,11 @@ class TestFlextBusMissingCoverage:
         """Test _normalize_middleware_config when method() raises TypeError (lines 374-375)."""
 
         class BrokenConfig:
-            def model_dump(self, *args: object) -> dict[str, object]:
+            def model_dump(self, *args: object) -> FlextTypes.Dict:
                 msg = "Required parameter missing"
                 raise TypeError(msg)
 
-            def dict(self) -> dict[str, object]:
+            def dict(self) -> FlextTypes.Dict:
                 return {"fallback": True}
 
         bus = FlextBus()

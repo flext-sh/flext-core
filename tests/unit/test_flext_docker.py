@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from docker.errors import DockerException
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_tests import FlextTestDocker
 
 
@@ -112,7 +112,9 @@ class TestAutoServiceManagement:
         assert api_result.is_success
 
         # Check dependency graph
-        api_deps: dict[str, list[str]] = docker_manager.get_service_dependency_graph()
+        api_deps: dict[str, FlextTypes.StringList] = (
+            docker_manager.get_service_dependency_graph()
+        )
         assert "api" in api_deps
         assert "database" in api_deps["api"]
 
@@ -157,7 +159,7 @@ services:
             assert "api" in services
 
             # Check dependency graph was built
-            compose_deps: dict[str, list[str]] = (
+            compose_deps: dict[str, FlextTypes.StringList] = (
                 docker_manager.get_service_dependency_graph()
             )
             assert "api" in compose_deps
@@ -184,7 +186,7 @@ services:
         with patch.object(docker_manager, "start_container") as mock_start:
             mock_start.return_value = FlextResult[str].ok("started")
 
-            result: FlextResult[dict[str, str]] = (
+            result: FlextResult[FlextTypes.StringDict] = (
                 docker_manager.start_services_for_test(
                     service_names=["api", "database", "cache"],
                     test_name="integration_test",
@@ -192,7 +194,7 @@ services:
             )
 
             assert result.is_success
-            services_status: dict[str, str] = result.unwrap()
+            services_status: FlextTypes.StringDict = result.unwrap()
 
             # Verify the method returns success status
             assert services_status["status"] == "services_started"
@@ -494,9 +496,11 @@ class TestErrorHandling:
         docker_manager: FlextTestDocker,
     ) -> None:
         """Test starting unregistered services."""
-        result: FlextResult[dict[str, str]] = docker_manager.start_services_for_test(
-            service_names=["nonexistent_service"],
-            test_name="test",
+        result: FlextResult[FlextTypes.StringDict] = (
+            docker_manager.start_services_for_test(
+                service_names=["nonexistent_service"],
+                test_name="test",
+            )
         )
 
         assert result.is_failure
@@ -555,7 +559,7 @@ class TestIntegrationScenarios:
             mock_start.return_value = FlextResult[str].ok("started")
 
             # Step 3: Start services for test
-            start_result: FlextResult[dict[str, str]] = (
+            start_result: FlextResult[FlextTypes.StringDict] = (
                 docker_manager.start_services_for_test(
                     service_names=["api", "database"],
                     test_name="integration_test",
@@ -577,7 +581,7 @@ class TestIntegrationScenarios:
     ) -> None:
         """Test complex dependency resolution scenario."""
         # Create a more complex dependency graph
-        services: list[tuple[str, list[str], list[int]]] = [
+        services: list[tuple[str, FlextTypes.StringList, list[int]]] = [
             ("database", [], [5432]),
             ("cache", [], [6379]),
             ("message_queue", [], [5672]),
@@ -589,7 +593,7 @@ class TestIntegrationScenarios:
         # Register all services
         for name, deps, ports in services:
             name: str
-            deps: list[str]
+            deps: FlextTypes.StringList
             ports: list[int]
             result = docker_manager.register_service(
                 service_name=name,
@@ -600,7 +604,7 @@ class TestIntegrationScenarios:
             assert result.is_success
 
         # Test dependency graph
-        dependency_graph: dict[str, list[str]] = (
+        dependency_graph: dict[str, FlextTypes.StringList] = (
             docker_manager.get_service_dependency_graph()
         )
         assert "api_service" in dependency_graph["web_service"]

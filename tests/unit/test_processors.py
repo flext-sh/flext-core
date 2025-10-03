@@ -9,7 +9,7 @@ from __future__ import annotations
 import threading
 import time
 
-from flext_core import FlextProcessors, FlextResult
+from flext_core import FlextProcessors, FlextResult, FlextTypes
 
 
 class TestFlextProcessors:
@@ -23,7 +23,7 @@ class TestFlextProcessors:
 
     def test_processors_with_custom_config(self) -> None:
         """Test processors initialization with custom configuration."""
-        config: dict[str, object] = {"max_retries": 3, "timeout": 30}
+        config: FlextTypes.Dict = {"max_retries": 3, "timeout": 30}
         processors = FlextProcessors(config=config)
         assert processors is not None
 
@@ -223,7 +223,7 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        data_list: list[object] = ["test1", "test2", "test3"]
+        data_list: FlextTypes.List = ["test1", "test2", "test3"]
         result = processors.process_batch("test_processor", data_list)
         assert result.is_success
         assert len(result.data) == 3
@@ -238,7 +238,7 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        data_list: list[object] = ["test1", "test2", "test3"]
+        data_list: FlextTypes.List = ["test1", "test2", "test3"]
 
         start_time = time.time()
         result = processors.process_parallel("test_processor", data_list)

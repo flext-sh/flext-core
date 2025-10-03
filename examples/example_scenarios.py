@@ -12,7 +12,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Final
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_tests import FlextTestsFactories
 
 
@@ -23,7 +23,7 @@ class ExampleScenarios:
 
     @classmethod
     @lru_cache(maxsize=1)
-    def dataset(cls) -> dict[str, object]:
+    def dataset(cls) -> FlextTypes.Dict:
         """Return a reusable dataset with users, configs, and fields."""
         builder = FlextTestsFactories.TestDataBuilder()
         return (
@@ -34,34 +34,34 @@ class ExampleScenarios:
         )
 
     @staticmethod
-    def validation_data() -> dict[str, object]:
+    def validation_data() -> FlextTypes.Dict:
         """Return shared validation data used by multiple examples."""
         return FlextTestsFactories.create_validation_test_data()
 
     @staticmethod
-    def realistic_data() -> dict[str, object]:
+    def realistic_data() -> FlextTypes.Dict:
         """Return realistic integration-style data for advanced flows."""
         return FlextTestsFactories.create_realistic_test_data()
 
     @staticmethod
-    def user(**overrides: object) -> dict[str, object]:
+    def user(**overrides: object) -> FlextTypes.Dict:
         """Return a single user dictionary."""
         return FlextTestsFactories.UserFactory.create(**overrides)
 
     @staticmethod
-    def users(count: int = _DEFAULT_USER_COUNT) -> list[dict[str, object]]:
+    def users(count: int = _DEFAULT_USER_COUNT) -> list[FlextTypes.Dict]:
         """Return multiple users."""
         return FlextTestsFactories.UserFactory.create_batch(count)
 
     @staticmethod
-    def config(*, production: bool = False, **overrides: object) -> dict[str, object]:
+    def config(*, production: bool = False, **overrides: object) -> FlextTypes.Dict:
         """Return environment configuration data."""
         if production:
             return FlextTestsFactories.ConfigFactory.production_config(**overrides)
         return FlextTestsFactories.ConfigFactory.create(**overrides)
 
     @staticmethod
-    def service_batch(logger_name: str = "example_batch") -> dict[str, object]:
+    def service_batch(logger_name: str = "example_batch") -> FlextTypes.Dict:
         """Return services ready for ``FlextContainer.batch_register``."""
         return {
             "logger": FlextLogger(logger_name),
@@ -70,7 +70,7 @@ class ExampleScenarios:
         }
 
     @staticmethod
-    def payload(**overrides: object) -> dict[str, object]:
+    def payload(**overrides: object) -> FlextTypes.Dict:
         """Return a messaging payload."""
         return ExampleScenarios.realistic_data()["api_response"] | overrides
 
@@ -85,12 +85,12 @@ class ExampleScenarios:
         return FlextTestsFactories.ResultFactory.failure_result(message)
 
     @staticmethod
-    def user_result(success: bool = True) -> FlextResult[dict[str, object]]:
+    def user_result(success: bool = True) -> FlextResult[FlextTypes.Dict]:
         """Return a user-specific ``FlextResult``."""
         return FlextTestsFactories.ResultFactory.user_result(success=success)
 
     @staticmethod
-    def error_scenario(error_type: str = "ValidationError") -> dict[str, object]:
+    def error_scenario(error_type: str = "ValidationError") -> FlextTypes.Dict:
         """Return a structured error scenario for examples."""
         return {
             "error_type": error_type,
@@ -101,7 +101,7 @@ class ExampleScenarios:
         }
 
     @staticmethod
-    def metadata(source: str = "examples", **extra: object) -> dict[str, object]:
+    def metadata(source: str = "examples", **extra: object) -> FlextTypes.Dict:
         """Return standard metadata for logging and utilities examples."""
         tags = extra.pop("tags", ["scenario", "demo"])
         return {

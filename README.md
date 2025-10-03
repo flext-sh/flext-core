@@ -64,7 +64,7 @@ FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT 
 - ✅ **FlextModels** - DDD patterns (Entity, Value, AggregateRoot)
 - ✅ **FlextLogger** - Structured logging interface
 - ✅ **FlextConfig** - Configuration management API
-- ✅ **FlextBus/FlextCqrs** - Messaging and CQRS patterns
+- ✅ **FlextBus** - Messaging patterns
 - ✅ **HTTP Primitives** - Constants, request/response models (new in 0.9.9)
 
 **Semantic Versioning Promise**:
@@ -119,7 +119,6 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 
 **Application Layer**:
 
-- `FlextCqrs` - Command/Query/Event patterns
 - `FlextHandlers` - Handler registry and execution
 - `FlextBus` - Message bus with middleware pipeline
 - `FlextDispatcher` - Unified dispatcher façade

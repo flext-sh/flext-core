@@ -7,11 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-import logging
 import threading
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Protocol, Self, cast, runtime_checkable
+from typing import Any, ClassVar, Protocol, Self
 
 from pydantic import (
     Field,
@@ -20,37 +19,55 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic._internal._model_construction import (
+    ModelMetaclass,  # type: ignore[attr-defined,import]  # noqa: PLC2701
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
-# Backward compatibility: re-export from protocols.py
-# Protocol now centralized in FlextProtocols.Foundation
-if TYPE_CHECKING:
-    from typing import Protocol, runtime_checkable
 
-    @runtime_checkable
-    class HasHandlerType(Protocol):
-        """Protocol for config objects with handler_type attribute."""
+# Pydantic 2 compatible metaclass that allows Protocol inheritance
+class ProtocolCompatibleMeta(ModelMetaclass, type(Protocol)):
+    """Metaclass combining Pydantic's ModelMetaclass with Protocol's metaclass.
 
-        handler_type: str | None
-
-else:
-    from flext_core.protocols import FlextProtocols
-
-    HasHandlerType = FlextProtocols.Foundation.HasHandlerType
+    This allows FlextConfig to inherit from both BaseSettings (Pydantic)
+    and Protocol classes, enabling structural typing while maintaining
+    Pydantic 2.x functionality.
+    """
 
 
-class FlextConfig(BaseSettings):
+class FlextConfig(
+    BaseSettings,
+    FlextProtocols.Infrastructure.Configurable,
+    metaclass=ProtocolCompatibleMeta,
+):
     """Configuration management system for FLEXT ecosystem.
 
     FlextConfig provides centralized configuration management using
     Pydantic Settings with environment variable support. Global singleton
     pattern ensures consistent configuration across all 32+ dependent
-    FLEXT projects. Access via FlextConfig.get_global_instance().
+    FLEXT projects. Create instances directly with FlextConfig().
+
+    Implements Infrastructure layer protocols for type-safe configuration
+    management across the FLEXT ecosystem.
+
+    **Newer Features - Configuration Source Pattern**:
+    FlextConfig now serves as the central source of configuration for all
+    FlextModels classes. When a FlextConfig instance is created or updated,
+    it automatically synchronizes with the models module, ensuring that
+    model classes like TimeoutableMixin, RetryableMixin, and others use
+    the correct configuration values as defaults.
+
+    This enables a clean separation where:
+    - FlextConfig manages all configuration state and validation
+    - FlextModels classes use FlextConfig as their configuration source
+    - No manual factory methods needed - direct model instantiation works
+    - Configuration changes propagate automatically to all model classes
 
     **Function**: Centralized configuration with environment support
         - Global singleton configuration instance
@@ -84,8 +101,8 @@ class FlextConfig(BaseSettings):
         ```python
         from flext_core import FlextConfig
 
-        # Example 1: Get global configuration instance
-        config = FlextConfig.get_global_instance()
+        # Example 1: Create configuration instance
+        config = FlextConfig()
 
         # Example 2: Access configuration values
         log_level = config.log_level
@@ -114,6 +131,17 @@ class FlextConfig(BaseSettings):
         # Example 7: Secret configuration (from environment)
         # Set FLEXT_SECRET_KEY in environment
         secret = config.secret_key  # Returns SecretStr
+
+        # Example 8: Configuration source for models (newer feature)
+        # FlextConfig automatically serves as configuration source for models
+        from flext_core.models import FlextModels
+
+        # Model classes automatically use FlextConfig values as defaults
+        bus = FlextModels.Bus()  # Uses config.dispatcher_timeout_seconds
+        cache = FlextModels.Cache(key="test", value="data")  # Uses config.cache_ttl
+
+        # Configuration changes propagate automatically
+        config.timeout_seconds = 120  # All new models will use 120s timeout
         ```
 
     Args:
@@ -139,13 +167,12 @@ class FlextConfig(BaseSettings):
         ValueError: When required configuration missing.
 
     Note:
-        Global singleton pattern - use get_global_instance() not
-        direct instantiation. Environment variables prefixed with
-        FLEXT_ override defaults. SecretStr protects sensitive data.
-        Configuration validated on load. Thread-safe singleton.
+        Direct instantiation pattern - create with FlextConfig().
+        Environment variables prefixed with FLEXT_ override defaults.
+        SecretStr protects sensitive data. Configuration validated on load.
 
     Warning:
-        Never instantiate FlextConfig directly - use singleton.
+        Never commit secrets to source control.
         Never commit secrets to source control. Always use
         environment variables for production secrets. Configuration
         changes require application restart (no hot-reload yet).
@@ -153,7 +180,7 @@ class FlextConfig(BaseSettings):
     Example:
         Complete configuration management workflow:
 
-        >>> config = FlextConfig.get_global_instance()
+        >>> config = FlextConfig()
         >>> print(config.environment)
         development
         >>> print(config.log_level)
@@ -194,7 +221,7 @@ class FlextConfig(BaseSettings):
             # Try to extract from config object
             if handler_config is not None:
                 # Try attribute access
-                if isinstance(handler_config, HasHandlerType):
+                if isinstance(handler_config, FlextProtocols.Foundation.HasHandlerType):
                     config_mode: str | None = handler_config.handler_type
                     if config_mode in {"command", "query"}:
                         return str(config_mode)
@@ -216,10 +243,10 @@ class FlextConfig(BaseSettings):
             handler_mode: str | None = None,
             handler_name: str | None = None,
             handler_id: str | None = None,
-            handler_config: FlextTypes.Core.Dict | None = None,
+            handler_config: FlextTypes.Dict | None = None,
             command_timeout: int = 0,
             max_command_retries: int = 0,
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Create handler configuration dictionary.
 
             Args:
@@ -250,7 +277,7 @@ class FlextConfig(BaseSettings):
                 handler_name = f"{resolved_mode.capitalize()} Handler"
 
             # Create base config
-            config: FlextTypes.Core.Dict = {
+            config: FlextTypes.Dict = {
                 "handler_id": handler_id,
                 "handler_name": handler_name,
                 "handler_type": resolved_mode,
@@ -299,7 +326,7 @@ class FlextConfig(BaseSettings):
 
     # Core application configuration - using FlextConstants for defaults
     app_name: str = Field(
-        default=FlextConstants.Core.NAME + " Application",
+        default=f"{FlextConstants.Core.NAME} Application",
         description="Application name for configuration identification",
     )
 
@@ -505,6 +532,56 @@ class FlextConfig(BaseSettings):
         default=False,
         description="Enable circuit breaker functionality",
     )
+    circuit_breaker_threshold: int = Field(
+        default=5,
+        ge=1,
+        le=100,
+        description="Circuit breaker failure threshold before opening",
+    )
+
+    # Rate limiting configuration
+    rate_limit_max_requests: int = Field(
+        default=100,
+        ge=1,
+        le=10000,
+        description="Maximum requests allowed in rate limit window",
+    )
+    rate_limit_window_seconds: int = Field(
+        default=60,
+        ge=1,
+        le=3600,
+        description="Rate limit time window in seconds",
+    )
+
+    # Batch processing configuration
+    batch_size: int = Field(
+        default=100,
+        ge=1,
+        le=10000,
+        description="Default batch size for batch operations",
+    )
+    cache_size: int = Field(
+        default=1000,
+        ge=1,
+        le=1000000,
+        description="Default cache size for caching operations",
+    )
+
+    # Retry configuration
+    retry_delay_seconds: float = Field(
+        default=1.0,
+        ge=0.1,
+        le=300.0,
+        description="Default delay between retry attempts in seconds",
+    )
+
+    # Validation configuration
+    validation_timeout_ms: int = Field(
+        default=100,
+        ge=1,
+        le=10000,
+        description="Maximum validation time in milliseconds",
+    )
 
     # Validation configuration
     validation_strict_mode: bool = Field(
@@ -584,6 +661,77 @@ class FlextConfig(BaseSettings):
         description="Minimum phone number digit count for validation",
     )
 
+    def __call__(self, key: str) -> object:
+        """Direct value access: config('log_level') with Pydantic 2 enhancements.
+
+        Enables simplified configuration access by field name with advanced
+        Pydantic 2 Settings features including nested field access and
+        type-safe value retrieval.
+
+        Pydantic 2 Settings features:
+        - Direct field access with dot notation support
+        - Nested configuration access (e.g., 'cache_config.ttl')
+        - Computed field support
+        - Type-safe value extraction with proper validation
+
+        Args:
+            key: Configuration field name (e.g., 'log_level', 'timeout_seconds')
+                 Supports dot notation for nested access (e.g., 'cache_config.ttl')
+
+        Returns:
+            The configuration value for the specified field
+
+        Raises:
+            KeyError: If the configuration key doesn't exist
+
+        Example:
+            >>> config = FlextConfig()
+            >>> config("log_level")
+            'INFO'
+            >>> config("timeout_seconds")
+            30
+            >>> # Nested access with dot notation
+            >>> config("cache_config.ttl")
+            300
+            >>> # Computed field access
+            >>> config("is_debug_enabled")
+            False
+
+        """
+        # Support nested field access with dot notation
+        if "." in key:
+            parts = key.split(".", 1)
+            first_key = parts[0]
+            remaining_key = parts[1]
+
+            if not hasattr(self, first_key):
+                msg = f"Configuration key '{first_key}' not found"
+                raise KeyError(msg)
+
+            # Get the nested object
+            nested_obj = getattr(self, first_key)
+
+            # Handle dict access
+            if isinstance(nested_obj, dict):
+                if remaining_key not in nested_obj:
+                    msg = f"Configuration key '{key}' not found in nested config"
+                    raise KeyError(msg)
+                return nested_obj[remaining_key]
+
+            # Handle object attribute access
+            if hasattr(nested_obj, remaining_key):
+                return getattr(nested_obj, remaining_key)
+
+            msg = f"Configuration key '{remaining_key}' not found in '{first_key}'"
+            raise KeyError(msg)
+
+        # Direct field access
+        if not hasattr(self, key):
+            msg = f"Configuration key '{key}' not found"
+            raise KeyError(msg)
+
+        return getattr(self, key)
+
     # Field validators
     @field_validator("environment")
     @classmethod
@@ -639,29 +787,53 @@ class FlextConfig(BaseSettings):
 
         return self
 
+    @model_validator(mode="after")
+    def synchronize_models_config(self) -> FlextConfig:
+        """Synchronize models module configuration when FlextConfig is created/updated.
+
+        This ensures that FlextModels classes use the current FlextConfig instance
+        as their configuration source, enabling the newer pattern where FlextConfig
+        serves as the central source of configuration for all model classes.
+        """
+        # Update models config to use this instance as the source
+        FlextConfig._update_models_config(self)
+        return self
+
     # Singleton pattern methods
     @classmethod
     def get_global_instance(cls) -> Self:
-        """Get the global singleton instance per class (supports inheritance).
+        """REMOVED: Use direct instantiation with FlextConfig().
 
-        Each subclass gets its own singleton instance, preventing conflicts
-        in the FLEXT ecosystem where multiple config classes may coexist.
+        Migration:
+            # Old pattern
+            config = FlextConfig.get_global_instance()
 
-        Returns:
-            Singleton instance of the specific config class.
+            # New pattern - create instance directly
+            config = FlextConfig()
+
+            # Or for singleton pattern, manage explicitly
+            _config_lock = threading.RLock()
+            _config_instance: FlextConfig | None = None
+
+            with _config_lock:
+                if _config_instance is None:
+                    _config_instance = FlextConfig()
+                config = _config_instance
 
         """
-        if cls not in cls._instances:
-            with cls._lock:
-                if cls not in cls._instances:
-                    cls._instances[cls] = cls()
-        return cast("Self", cls._instances[cls])
+        msg = (
+            "FlextConfig.get_global_instance() has been removed. "
+            "Use FlextConfig() to create instances directly."
+        )
+        raise NotImplementedError(msg)
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
         """Set the global singleton instance per class."""
         with cls._lock:
             cls._instances[cls] = instance
+            # Update models module config when FlextConfig changes
+            cls._update_models_config(instance)
 
     @classmethod
     def reset_global_instance(cls) -> None:
@@ -669,80 +841,69 @@ class FlextConfig(BaseSettings):
         with cls._lock:
             if cls in cls._instances:
                 del cls._instances[cls]
+                # Reset models config to default when global instance is reset
+                cls._reset_models_config()
+
+    @classmethod
+    def _update_models_config(cls, config_instance: FlextConfig) -> None:
+        """Update the models module configuration to use the current FlextConfig instance.
+
+        This ensures that FlextModels classes use the correct configuration source.
+        The models module maintains a module-level _config instance that gets updated
+        when the global FlextConfig changes.
+        """
+        try:
+            # Import models module and update its config
+            import flext_core.models as models_module
+            models_module._config = config_instance  # type: ignore[attr-defined]  # noqa: SLF001
+        except ImportError:
+            # Models module not yet imported, will use default when imported
+            pass
+
+    @classmethod
+    def _reset_models_config(cls) -> None:
+        """Reset the models module configuration to default FlextConfig instance."""
+        try:
+            import flext_core.models as models_module
+            models_module._config = FlextConfig()  # type: ignore[attr-defined]  # noqa: SLF001
+        except ImportError:
+            # Models module not yet imported
+            pass
 
     @classmethod
     def get_or_create_shared_instance(
         cls,
         project_name: str | None = None,
-        **overrides: FlextTypes.Core.Value,
+        **overrides: FlextTypes.Value,
     ) -> FlextConfig:
-        """Get or create a shared singleton instance with project-specific overrides.
+        """REMOVED: Create config directly and apply overrides.
 
-        This method supports inverse dependency injection where multiple projects
-        can share the same FlextConfig singleton instance while allowing project-specific
-        configuration overrides to be applied.
-
-        Args:
-            project_name: Optional project name for logging and identification
-            **overrides: Project-specific configuration overrides
-
-        Returns:
-            FlextConfig: The shared singleton instance with any overrides applied
-
-        """
-        instance = cls.get_global_instance()
-
-        # If overrides are provided, create a merged instance but keep using the singleton
-        if overrides:
-            # Apply overrides without breaking the singleton pattern
-            for key, value in overrides.items():
-                if hasattr(instance, key):
-                    setattr(instance, key, value)
-
-        # Log project access for debugging if project_name provided
-        if project_name:
-            logger = logging.getLogger(__name__)
-            logger.debug(
-                "Project '%s' accessing shared FlextConfig instance",
-                project_name,
+        Migration:
+            # Old pattern
+            config = FlextConfig.get_or_create_shared_instance(
+                project_name="my-project",
+                debug=True
             )
 
-        return instance
+            # New pattern - create and configure
+            config = FlextConfig()
+            config.debug = True
 
-    @classmethod
-    def create_project_config(
-        cls,
-        project_name: str,
-        **project_defaults: FlextTypes.Core.Value,
-    ) -> FlextConfig:
-        """Create a project-specific configuration that inherits from the global singleton.
-
-        This factory method is designed for projects that need their own Config class
-        but want to maintain compatibility with the shared FlextConfig singleton.
-
-        Args:
-            project_name: Name of the project (e.g., 'flext-api', 'flext-auth')
-            **project_defaults: Project-specific default values
-
-        Returns:
-            FlextConfig: Project configuration instance based on global singleton
+            # For logging project access
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug("Project 'my-project' using FlextConfig instance")
 
         """
-        # Get the base configuration from singleton
-        base_config = cls.get_global_instance()
-
-        # Create project-specific overrides
-        project_overrides: FlextTypes.Core.Dict = {
-            "app_name": f"{project_name} Application",
-            **project_defaults,
-        }
-
-        # Use the merge method to create a new instance with project specifics
-        return base_config.merge(project_overrides)
+        msg = (
+            "FlextConfig.get_or_create_shared_instance() has been removed. "
+            "Create FlextConfig() directly and set attributes as needed."
+        )
+        raise NotImplementedError(msg)
 
     # Class methods for creating instances
     @classmethod
-    def create(cls, **kwargs: FlextTypes.Core.ConfigValue) -> FlextConfig:
+    def create(cls, **kwargs: FlextTypes.ConfigValue) -> FlextConfig:
         """Create a new FlextConfig instance with the given parameters.
 
         Args:
@@ -754,7 +915,7 @@ class FlextConfig(BaseSettings):
         return cls.model_validate(kwargs)
 
     @classmethod
-    def create_for_environment(cls, environment: str, **kwargs: object) -> FlextConfig:
+    def create_for_environment(cls, environment: str, **kwargs: Any) -> FlextConfig:
         """Create a FlextConfig instance for a specific environment.
 
         Args:
@@ -813,83 +974,113 @@ class FlextConfig(BaseSettings):
         """Check if running in production environment."""
         return self.environment.lower() == "production"
 
-    def get_logging_config(self) -> FlextTypes.Core.Dict:
-        """Get logging configuration as dictionary."""
-        return {
-            "level": self.log_level,
-            "json_output": self.json_output,
-            "include_source": self.include_source,
-            "structured_output": self.structured_output,
-            "log_verbosity": self.log_verbosity,
-            "log_format": self.log_format,
-            "log_file": self.log_file,
-            "log_file_max_size": self.log_file_max_size,
-            "log_file_backup_count": self.log_file_backup_count,
-            "console_enabled": self.console_enabled,
-            "console_color_enabled": self.console_color_enabled,
-            "track_performance": self.track_performance,
-            "track_timing": self.track_timing,
-            "include_context": self.include_context,
-            "include_correlation_id": self.include_correlation_id,
-            "mask_sensitive_data": self.mask_sensitive_data,
-        }
+    def get_logging_config(self) -> FlextTypes.Dict:
+        """REMOVED: Access config attributes directly.
 
-    def get_database_config(self) -> FlextTypes.Core.Dict:
-        """Get database configuration as dictionary."""
-        return {
-            "url": self.database_url,
-            "pool_size": self.database_pool_size,
-        }
+        Migration:
+            # Old pattern
+            logging_config = config.get_logging_config()
 
-    def get_cache_config(self) -> FlextTypes.Core.Dict:
-        """Get cache configuration as dictionary."""
-        return {
-            "ttl": self.cache_ttl,
-            "max_size": self.cache_max_size,
-            "enabled": self.enable_caching,
-        }
-
-    def get_cqrs_bus_config(self) -> FlextTypes.Core.Dict:
-        """Get CQRS bus configuration as dictionary."""
-        return {
-            "auto_context": self.dispatcher_auto_context,
-            "timeout_seconds": self.dispatcher_timeout_seconds,
-            "enable_metrics": self.dispatcher_enable_metrics,
-            "enable_logging": self.dispatcher_enable_logging,
-        }
-
-    def get_metadata(self) -> FlextTypes.Core.Dict:
-        """Get application metadata as dictionary."""
-        return {
-            "app_name": self.app_name,
-            "version": self.version,
-            "environment": self.environment,
-            "debug": self.debug,
-            "trace": self.trace,
-        }
-
-    def merge(self, overrides: FlextTypes.Core.Dict | FlextConfig) -> FlextConfig:
-        """Create a new FlextConfig instance with merged values.
-
-        Args:
-            overrides: Dictionary of values to override or another FlextConfig instance
-
-        Returns:
-            New FlextConfig instance with merged values
+            # New pattern - direct attribute access
+            logging_config = {
+                "level": config.log_level,
+                "json_output": config.json_output,
+                "include_source": config.include_source,
+                # ... other logging attributes as needed
+            }
 
         """
-        current_data = self.model_dump()
+        msg = (
+            "FlextConfig.get_logging_config() has been removed. "
+            "Access logging configuration attributes directly."
+        )
+        raise NotImplementedError(msg)
 
-        if isinstance(overrides, FlextConfig):
-            # If it's another FlextConfig, get its data as dict
-            override_data = overrides.model_dump()
-        else:
-            # If it's a dict, use it directly
-            override_data = overrides
+    def get_database_config(self) -> FlextTypes.Dict:
+        """REMOVED: Access config attributes directly.
 
-        current_data.update(override_data)
-        # Use model_validate to ensure proper type checking
-        return FlextConfig.model_validate(current_data)
+        Migration:
+            # Old pattern
+            db_config = config.get_database_config()
+
+            # New pattern - direct attribute access
+            db_config = {
+                "url": config.database_url,
+                "pool_size": config.database_pool_size,
+            }
+
+        """
+        msg = (
+            "FlextConfig.get_database_config() has been removed. "
+            "Access database configuration attributes directly."
+        )
+        raise NotImplementedError(msg)
+
+    def get_cache_config(self) -> FlextTypes.Dict:
+        """REMOVED: Access config attributes directly.
+
+        Migration:
+            # Old pattern
+            cache_config = config.get_cache_config()
+
+            # New pattern - direct attribute access
+            cache_config = {
+                "ttl": config.cache_ttl,
+                "max_size": config.cache_max_size,
+                "enabled": config.enable_caching,
+            }
+
+        """
+        msg = (
+            "FlextConfig.get_cache_config() has been removed. "
+            "Access cache configuration attributes directly."
+        )
+        raise NotImplementedError(msg)
+
+    def get_cqrs_bus_config(self) -> FlextTypes.Dict:
+        """REMOVED: Access config attributes directly.
+
+        Migration:
+            # Old pattern
+            bus_config = config.get_cqrs_bus_config()
+
+            # New pattern - direct attribute access
+            bus_config = {
+                "auto_context": config.dispatcher_auto_context,
+                "timeout_seconds": config.dispatcher_timeout_seconds,
+                "enable_metrics": config.dispatcher_enable_metrics,
+                "enable_logging": config.dispatcher_enable_logging,
+            }
+
+        """
+        msg = (
+            "FlextConfig.get_cqrs_bus_config() has been removed. "
+            "Access CQRS bus configuration attributes directly."
+        )
+        raise NotImplementedError(msg)
+
+    def get_metadata(self) -> FlextTypes.Dict:
+        """REMOVED: Access config attributes directly.
+
+        Migration:
+            # Old pattern
+            metadata = config.get_metadata()
+
+            # New pattern - direct attribute access
+            metadata = {
+                "app_name": config.app_name,
+                "version": config.version,
+                "environment": config.environment,
+                "debug": config.debug,
+                "trace": config.trace,
+            }
+
+        """
+        msg = (
+            "FlextConfig.get_metadata() has been removed. "
+            "Access metadata attributes directly."
+        )
+        raise NotImplementedError(msg)
 
     # Computed fields for derived configuration
 
@@ -908,7 +1099,7 @@ class FlextConfig(BaseSettings):
         return self.log_level
 
     @computed_field
-    def cache_config(self) -> FlextTypes.Core.Dict:
+    def cache_config(self) -> FlextTypes.Dict:
         """Get cache configuration as dictionary."""
         return {
             "ttl": self.cache_ttl,
@@ -917,7 +1108,7 @@ class FlextConfig(BaseSettings):
         }
 
     @computed_field
-    def security_config(self) -> FlextTypes.Core.Dict:
+    def security_config(self) -> FlextTypes.Dict:
         """Get security configuration as dictionary."""
         return {
             "secret_key_configured": self.secret_key is not None,
@@ -926,24 +1117,134 @@ class FlextConfig(BaseSettings):
             "bcrypt_rounds": self.bcrypt_rounds,
         }
 
-    # SecretStr accessor methods for sensitive configuration
-    def get_secret_key_value(self) -> str | None:
-        """Get the actual secret key value (safely extract from SecretStr)."""
-        if self.secret_key is not None:
-            return self.secret_key.get_secret_value()
-        return None
+    # =========================================================================
+    # Infrastructure Protocol Implementations
+    # =========================================================================
 
-    def get_api_key_value(self) -> str | None:
-        """Get the actual API key value (safely extract from SecretStr)."""
-        if self.api_key is not None:
-            return self.api_key.get_secret_value()
-        return None
+    # Infrastructure.Configurable protocol methods
+    def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
+        """Configure component with provided settings.
+
+        Implements Infrastructure.Configurable protocol.
+
+        Args:
+            config: Configuration dictionary to apply
+
+        Returns:
+            FlextResult[None]: Success if configuration valid, failure otherwise
+
+        """
+        try:
+            # Update current instance with provided config
+            for key, value in config.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+
+            # Validate after configuration
+            return self.validate_runtime_requirements()
+        except Exception as e:
+            return FlextResult[None].fail(f"Configuration failed: {e}")
+
+    # Infrastructure.ConfigValidator protocol methods
+    def validate_runtime_requirements(self) -> FlextResult[None]:
+        """Validate configuration meets runtime requirements.
+
+        Implements Infrastructure.ConfigValidator protocol.
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error details
+
+        """
+        # Validate environment
+        env_validation = self.validate_environment(self.environment)
+        if not env_validation:
+            return FlextResult[None].fail(f"Invalid environment: {self.environment}")
+
+        # Validate log level
+        try:
+            self.validate_log_level(self.log_level)
+        except FlextExceptions.ValidationError as e:
+            return FlextResult[None].fail(str(e))
+
+        # Debug/trace consistency is validated by model_validator automatically
+
+        return FlextResult[None].ok(None)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for configuration consistency.
+
+        Implements Infrastructure.ConfigValidator protocol.
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error details
+
+        """
+        # Production environment checks
+        if self.is_production():
+            if self.debug:
+                return FlextResult[None].fail(
+                    "Debug mode cannot be enabled in production"
+                )
+            if self.trace:
+                return FlextResult[None].fail(
+                    "Trace mode cannot be enabled in production"
+                )
+
+        # Security configuration checks
+        if self.is_production() and not self.secret_key:
+            return FlextResult[None].fail(
+                "Secret key required in production environment"
+            )
+
+        return FlextResult[None].ok(None)
+
+    # Infrastructure.ConfigPersistence protocol methods
+    def save_to_file(
+        self,
+        file_path: str | Path,
+        **kwargs: Any,
+    ) -> FlextResult[None]:
+        """Save configuration to file.
+
+        Implements Infrastructure.ConfigPersistence protocol.
+
+        Args:
+            file_path: Path to save configuration file
+            **kwargs: Additional save options (e.g., indent, sort_keys)
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
+        try:
+            path = Path(file_path)
+
+            # Get configuration data
+            config_data = self.model_dump()
+
+            # Handle SecretStr fields - don't serialize actual values
+            if config_data.get("secret_key"):
+                config_data["secret_key"] = "***REDACTED***"  # noqa: S105
+            if config_data.get("api_key"):
+                config_data["api_key"] = "***REDACTED***"
+
+            # Determine format from extension
+            if path.suffix.lower() == ".json":
+                indent = int(kwargs.get("indent", self.json_indent))
+                sort_keys = bool(kwargs.get("sort_keys", self.json_sort_keys))
+
+                with path.open("w", encoding="utf-8") as f:
+                    json.dump(config_data, f, indent=indent, sort_keys=sort_keys)
+
+                return FlextResult[None].ok(None)
+
+            return FlextResult[None].fail(f"Unsupported file format: {path.suffix}")
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Save failed: {e}")
 
 
-# This resolves any forward reference issues that may occur during model construction
 FlextConfig.model_rebuild()
-
-# Direct class access - no legacy aliases
 
 __all__ = [
     "FlextConfig",

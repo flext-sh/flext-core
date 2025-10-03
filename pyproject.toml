@@ -255,7 +255,7 @@
         "../flext-ldif/src",
         "../flext-meltano/src",
         "../flext-observability/src",
-        "../flext-oracle-oic-ext/src",
+        "../flext-oracle-oic/src",
         "../flext-oracle-wms/src",
         "../flext-plugin/src",
         "../flext-quality/src",

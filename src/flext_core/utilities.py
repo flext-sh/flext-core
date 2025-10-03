@@ -42,7 +42,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import Dict, FlextTypes, T, U
+from flext_core.typings import FlextTypes, T, U
 
 
 class FlextUtilities:
@@ -56,7 +56,7 @@ class FlextUtilities:
 
     **Function**: Centralized utility functions with railway patterns
         - Validation helpers (18 nested classes with 100+ validators)
-        - Data transformation utilities (JSON, dict, list operations)
+        - Data transformation utilities (JSON, FlextTypes.Dict, list operations)
         - Processing utilities (batch, parallel, sequential)
         - Type conversions with proper error handling
         - Type guards and runtime type checking
@@ -180,20 +180,20 @@ class FlextUtilities:
     """
 
     @staticmethod
-    def safe_json_parse(json_string: str) -> FlextResult[dict[str, object]]:
+    def safe_json_parse(json_string: str) -> FlextResult[FlextTypes.Dict]:
         """Parse JSON string with error handling (convenience method).
 
         Args:
             json_string: JSON string to parse
 
         Returns:
-            FlextResult[dict]: Parsed JSON data or error
+            FlextResult[FlextTypes.Dict]: Parsed JSON data or error
 
         """
         return FlextUtilities.Transformation.safe_json_parse(json_string)
 
     @staticmethod
-    def safe_json_stringify(data: dict[str, object]) -> FlextResult[str]:
+    def safe_json_stringify(data: FlextTypes.Dict) -> FlextResult[str]:
         """Stringify data to JSON with error handling (convenience method).
 
         Args:
@@ -207,17 +207,19 @@ class FlextUtilities:
 
     @staticmethod
     def validate_data(
-        data: dict[str, object],
-        required_fields: list[str] | dict[str, type | tuple[type, ...]] | None = None,
-    ) -> FlextResult[dict[str, object]]:
+        data: FlextTypes.Dict,
+        required_fields: FlextTypes.StringList
+        | FlextTypes.Dict[str, type | tuple[type, ...]]
+        | None = None,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Validate dictionary data (convenience method).
 
         Args:
             data: Dictionary to validate
-            required_fields: Optional list of field names or dict mapping fields to types
+            required_fields: Optional list of field names or FlextTypes.Dict mapping fields to types
 
         Returns:
-            FlextResult[dict]: Validated data or error
+            FlextResult[FlextTypes.Dict]: Validated data or error
 
         """
         return FlextUtilities.Validation.validate_data(data, required_fields)
@@ -431,7 +433,7 @@ class FlextUtilities:
         @staticmethod
         def validate_environment_value(
             value: str,
-            allowed_environments: list[str],
+            allowed_environments: FlextTypes.StringList,
         ) -> FlextResult[str]:
             """Validate environment value against allowed list."""
             string_result = FlextUtilities.Validation.validate_string(
@@ -553,7 +555,7 @@ class FlextUtilities:
                     )
                 if retries > FlextConstants.Reliability.MAX_RETRY_ATTEMPTS:
                     return FlextResult[int].fail(
-                        f"Retry count too high (max {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}), got {retries}",
+                        f"Retry count too high (max {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}), got {retries}"
                     )
                 return FlextResult[int].ok(retries)
             except (ValueError, TypeError):
@@ -612,7 +614,7 @@ class FlextUtilities:
                 max_http_status = FlextConstants.Platform.MAX_HTTP_STATUS_RANGE
                 if not (min_http_status <= status_code <= max_http_status):
                     return FlextResult[int].fail(
-                        f"HTTP status code must be between {FlextConstants.Platform.MIN_HTTP_STATUS_RANGE} and {FlextConstants.Platform.MAX_HTTP_STATUS_RANGE}, got {status_code}",
+                        f"HTTP status code must be between {min_http_status} and {max_http_status}, got {status_code}"
                     )
                 return FlextResult[int].ok(status_code)
             except (ValueError, TypeError):
@@ -800,23 +802,23 @@ class FlextUtilities:
 
         @staticmethod
         def validate_data(
-            data: dict[str, object],
-            required_fields: list[str]
-            | dict[str, type | tuple[type, ...]]
+            data: FlextTypes.Dict,
+            required_fields: FlextTypes.StringList
+            | FlextTypes.Dict[str, type | tuple[type, ...]]
             | None = None,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Validate dictionary data with optional required fields and type checking.
 
             Args:
                 data: Dictionary to validate
-                required_fields: Optional list of field names or dict mapping fields to types
+                required_fields: Optional list of field names or FlextTypes.Dict mapping fields to types
 
             Returns:
-                FlextResult[dict]: Validated data or error
+                FlextResult[FlextTypes.Dict]: Validated data or error
 
             """
             if not isinstance(data, dict):
-                return FlextResult[dict].fail("Data must be a dictionary")
+                return FlextResult[FlextTypes.Dict].fail("Data must be a dictionary")
 
             if required_fields:
                 if isinstance(required_fields, list):
@@ -825,22 +827,22 @@ class FlextUtilities:
                         field for field in required_fields if field not in data
                     ]
                     if missing_fields:
-                        return FlextResult[dict].fail(
+                        return FlextResult[FlextTypes.Dict].fail(
                             f"Missing required fields: {', '.join(missing_fields)}"
                         )
                 elif isinstance(required_fields, dict):
                     # Type validation
                     for field, expected_type in required_fields.items():
                         if field not in data:
-                            return FlextResult[dict].fail(
+                            return FlextResult[FlextTypes.Dict].fail(
                                 f"Missing required field: {field}"
                             )
                         if not isinstance(data[field], expected_type):
-                            return FlextResult[dict].fail(
+                            return FlextResult[FlextTypes.Dict].fail(
                                 f"Field '{field}' has incorrect type: expected {expected_type}, got {type(data[field])}"
                             )
 
-            return FlextResult[dict].ok(data)
+            return FlextResult[FlextTypes.Dict].ok(data)
 
     class Transformation:
         """Data transformation utilities using railway composition."""
@@ -868,7 +870,7 @@ class FlextUtilities:
             return FlextResult[str].ok(limited_name)
 
         @staticmethod
-        def parse_comma_separated(value: str) -> FlextResult[list[str]]:
+        def parse_comma_separated(value: str) -> FlextResult[FlextTypes.StringList]:
             """Parse comma-separated string into list."""
             validation_result = FlextUtilities.Validation.validate_string(
                 value,
@@ -876,13 +878,13 @@ class FlextUtilities:
                 field_name="comma-separated value",
             )
             if validation_result.is_failure:
-                return FlextResult[list[str]].fail(
+                return FlextResult[FlextTypes.StringList].fail(
                     validation_result.error or "Validation failed",
                 )
 
             v: str = validation_result.unwrap()
             items = [item.strip() for item in v.split(",") if item.strip()]
-            return FlextResult[list[str]].ok(items)
+            return FlextResult[FlextTypes.StringList].ok(items)
 
         @staticmethod
         def format_error_message(
@@ -903,31 +905,35 @@ class FlextUtilities:
             return FlextResult[str].ok(formatted_msg)
 
         @staticmethod
-        def safe_json_parse(json_string: str) -> FlextResult[dict]:
+        def safe_json_parse(json_string: str) -> FlextResult[FlextTypes.Dict]:
             """Parse JSON string with error handling using railway pattern.
 
             Args:
                 json_string: JSON string to parse
 
             Returns:
-                FlextResult[dict]: Parsed JSON data or error
+                FlextResult[FlextTypes.Dict]: Parsed JSON data or error
 
             """
             if not json_string:
-                return FlextResult[dict].fail("JSON string cannot be empty")
+                return FlextResult[FlextTypes.Dict].fail("JSON string cannot be empty")
 
             try:
                 data = json.loads(json_string)
                 if not isinstance(data, dict):
-                    return FlextResult[dict].fail("Parsed JSON is not a dictionary")
-                return FlextResult[dict].ok(data)
+                    return FlextResult[FlextTypes.Dict].fail(
+                        "Parsed JSON is not a dictionary"
+                    )
+                return FlextResult[FlextTypes.Dict].ok(data)
             except json.JSONDecodeError as e:
-                return FlextResult[dict].fail(f"JSON parse error: {e}")
+                return FlextResult[FlextTypes.Dict].fail(f"JSON parse error: {e}")
             except Exception as e:
-                return FlextResult[dict].fail(f"Unexpected error parsing JSON: {e}")
+                return FlextResult[FlextTypes.Dict].fail(
+                    f"Unexpected error parsing JSON: {e}"
+                )
 
         @staticmethod
-        def safe_json_stringify(data: dict) -> FlextResult[str]:
+        def safe_json_stringify(data: FlextTypes.Dict) -> FlextResult[str]:
             """Stringify data to JSON with error handling using railway pattern.
 
             Args:
@@ -1349,12 +1355,12 @@ class FlextUtilities:
 
         @staticmethod
         def merge_dictionaries(
-            *dicts: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            *dicts: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Merge multiple dictionaries with conflict detection."""
             # Merge with conflict detection
-            result: dict[str, object] = {}
-            conflicts: list[str] = []
+            result: FlextTypes.Dict = {}
+            conflicts: FlextTypes.StringList = []
 
             for d in dicts:
                 for key, value in d.items():
@@ -1363,15 +1369,15 @@ class FlextUtilities:
                     result[key] = value
 
             if conflicts:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"Dictionary merge conflicts: {'; '.join(conflicts)}",
                 )
 
-            return FlextResult[dict[str, object]].ok(result)
+            return FlextResult[FlextTypes.Dict].ok(result)
 
         @staticmethod
         def deep_get(
-            data: dict[str, object],
+            data: FlextTypes.Dict,
             path: str,
             default: object = None,
         ) -> FlextResult[object]:
@@ -1385,7 +1391,7 @@ class FlextUtilities:
                 current: object = data  # Start with the data object
                 for key in keys:
                     if isinstance(current, dict):
-                        # Type narrow: current is now dict[str, object] due to isinstance check
+                        # Type narrow: current is now FlextTypes.Dict due to isinstance check
                         dict_current = current
                         if key in dict_current:
                             current_value = dict_current[key]
@@ -1399,20 +1405,20 @@ class FlextUtilities:
                 return FlextResult[object].fail(f"Error accessing path '{path}': {e}")
 
         @staticmethod
-        def ensure_list(value: object) -> FlextResult[list[object]]:
+        def ensure_list(value: object) -> FlextResult[FlextTypes.List]:
             """Ensure value is a list, wrapping single values."""
             if isinstance(value, list):
-                return FlextResult[list[object]].ok(cast("list[object]", value))
+                return FlextResult[FlextTypes.List].ok(cast("FlextTypes.List", value))
             if value is None:
-                return FlextResult[list[object]].ok([])
-            return FlextResult[list[object]].ok([value])
+                return FlextResult[FlextTypes.List].ok([])
+            return FlextResult[FlextTypes.List].ok([value])
 
         @staticmethod
         def filter_none_values(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Remove None values from dictionary."""
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 k: v for k, v in data.items() if v is not None
             })
 
@@ -1531,7 +1537,7 @@ class FlextUtilities:
                     if hasattr(obj, attr_name):
                         cache_attr = getattr(obj, attr_name, None)
                         if cache_attr is not None:
-                            # Clear dict-like caches
+                            # Clear FlextTypes.Dict-like caches
                             if hasattr(cache_attr, "clear") and callable(
                                 cache_attr.clear,
                             ):
@@ -1584,7 +1590,7 @@ class FlextUtilities:
 
             if isinstance(value, FlextProtocols.Foundation.HasModelDump):
                 try:
-                    dumped: dict[str, object] = value.model_dump()
+                    dumped: FlextTypes.Dict = value.model_dump()
                 except TypeError:
                     dumped = {}
                 return ("pydantic", FlextUtilities.Cache.normalize_component(dumped))
@@ -1599,7 +1605,7 @@ class FlextUtilities:
                 )
 
             if isinstance(value, Mapping):
-                # Return sorted dict for cache-friendly deterministic ordering
+                # Return sorted FlextTypes.Dict for cache-friendly deterministic ordering
                 mapping_value = cast("Mapping[object, object]", value)
                 sorted_items = sorted(
                     mapping_value.items(),
@@ -1634,8 +1640,8 @@ class FlextUtilities:
 
             try:
                 # Cast to proper type for type checker
-                value_vars_dict: dict[str, object] = cast(
-                    "Dict",
+                value_vars_dict: FlextTypes.Dict = cast(
+                    "FlextTypes.Dict",
                     vars(value),
                 )
             except TypeError:
@@ -1685,7 +1691,7 @@ class FlextUtilities:
                 # For dictionaries, sort keys
                 if isinstance(command, dict):
                     dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
-                        cast("Dict", command),
+                        cast("FlextTypes.Dict", command),
                     )
                     return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"
 
@@ -1709,14 +1715,14 @@ class FlextUtilities:
             """Recursively sort dictionary keys for deterministic ordering.
 
             Args:
-                obj: Object to sort (dict, list, or other)
+                obj: Object to sort (FlextTypes.Dict, list, or other)
 
             Returns:
                 Object with sorted keys
 
             """
             if isinstance(obj, dict):
-                dict_obj: dict[str, object] = cast("Dict", obj)
+                dict_obj: FlextTypes.Dict = cast("FlextTypes.Dict", obj)
                 sorted_items: list[tuple[object, object]] = sorted(
                     dict_obj.items(),
                     key=lambda x: str(x[0]),
@@ -1726,7 +1732,7 @@ class FlextUtilities:
                     for k, v in sorted_items
                 }
             if isinstance(obj, list):
-                obj_list: list[object] = cast("list[object]", obj)
+                obj_list: FlextTypes.List = cast("FlextTypes.List", obj)
                 return [FlextUtilities.Cache.sort_dict_keys(item) for item in obj_list]
             if isinstance(obj, tuple):
                 obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
@@ -2237,23 +2243,6 @@ class FlextUtilities:
                 f"All {max_attempts} attempts failed. Last error: {last_error}",
             )
 
-    # Note: This class handles table/display formatting, while "TypeConversions" handles type conversions
-    class TableConversion:
-        """Data conversion utilities for table formatting and display."""
-
-        @staticmethod
-        def normalize_data_for_table(
-            data: list[object],
-        ) -> FlextResult[list[dict[str, object]]]:
-            """Normalize data for table display."""
-            if all(isinstance(item, dict) for item in data):
-                return FlextResult[list[dict[str, object]]].ok(
-                    cast("list[dict[str, object]]", data),
-                )
-            return FlextResult[list[dict[str, object]]].fail(
-                "Data must be list of dictionaries",
-            )
-
     class TypeGuards:
         """Type guard utilities for runtime type checking."""
 
@@ -2265,12 +2254,12 @@ class FlextUtilities:
         @staticmethod
         def is_dict_non_empty(value: object) -> bool:
             """Check if value is a non-empty dictionary."""
-            return isinstance(value, dict) and len(cast("Dict", value)) > 0
+            return isinstance(value, dict) and len(cast("FlextTypes.Dict", value)) > 0
 
         @staticmethod
         def is_list_non_empty(value: object) -> bool:
             """Check if value is a non-empty list."""
-            return isinstance(value, list) and len(cast("list[object]", value)) > 0
+            return isinstance(value, list) and len(cast("FlextTypes.List", value)) > 0
 
     class TypeChecker:
         """Handler type checking utilities for FlextHandlers complexity reduction.
@@ -2293,7 +2282,7 @@ class FlextUtilities:
                 Tuple of accepted message types
 
             """
-            message_types: list[object] = []
+            message_types: FlextTypes.List = []
             message_types.extend(cls._extract_generic_message_types(handler_class))
 
             if not message_types:
@@ -2304,7 +2293,7 @@ class FlextUtilities:
             return tuple(message_types)
 
         @classmethod
-        def _extract_generic_message_types(cls, handler_class: type) -> list[object]:
+        def _extract_generic_message_types(cls, handler_class: type) -> FlextTypes.List:
             """Extract message types from generic base annotations.
 
             Args:
@@ -2314,7 +2303,7 @@ class FlextUtilities:
                 List of message types from generic annotations
 
             """
-            message_types: list[object] = []
+            message_types: FlextTypes.List = []
             for base in getattr(handler_class, "__orig_bases__", ()) or ():
                 origin = get_origin(base)
                 # Check by name to avoid circular import
@@ -2351,7 +2340,7 @@ class FlextUtilities:
                 type_hints = get_type_hints(
                     handle_method,
                     globalns=getattr(handle_method, "__globals__", {}),
-                    localns=dict(vars(handler_class)),
+                    localns=FlextTypes.Dict(vars(handler_class)),
                 )
             except (NameError, AttributeError, TypeError):
                 type_hints = {}
@@ -2509,8 +2498,8 @@ class FlextUtilities:
         """
 
         _SERIALIZABLE_MESSAGE_EXPECTATION = (
-            "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
-            "model_dump/dict/as_dict/__slots__ representations"
+            "FlextTypes.Dict, str, int, float, bool, dataclass, attrs class, or object exposing "
+            "model_dump/FlextTypes.Dict/as_dict/__slots__ representations"
         )
 
         @classmethod
@@ -2672,8 +2661,8 @@ class FlextUtilities:
             operation_name = operation or "message"
             context_operation = operation or "unknown"
 
-            if isinstance(message, (dict, str, int, float, bool)):
-                return cast("dict[str, object] | str | int | float | bool", message)
+            if isinstance(message, (FlextTypes.Dict, str, int, float, bool)):
+                return cast("FlextTypes.Dict | str | int | float | bool", message)
 
             if message is None:
                 msg = f"Invalid message type for {operation_name}: NoneType"
@@ -2704,8 +2693,8 @@ class FlextUtilities:
                 and hasattr(message, "__attrs_attrs__")
                 and hasattr(message, "__class__")
             ):
-                # This is an attrs instance, convert to dict manually
-                result: dict[str, object] = {}
+                # This is an attrs instance, convert to FlextTypes.Dict manually
+                result: FlextTypes.Dict = {}
                 for attr_field in attrs_fields:
                     field_name = attr_field.name
                     if hasattr(message, field_name):
@@ -2714,14 +2703,14 @@ class FlextUtilities:
 
             # Try common serialization methods
             logger = FlextLogger(__name__)
-            for method_name in ("model_dump", "dict", "as_dict"):
+            for method_name in ("model_dump", "FlextTypes.Dict", "as_dict"):
                 method = getattr(message, method_name, None)
                 if callable(method):
                     try:
                         result_data = method()
-                        # Type narrow to dict and return immediately if valid
+                        # Type narrow to FlextTypes.Dict and return immediately if valid
                         if isinstance(result_data, dict):
-                            return cast("Dict", result_data)
+                            return cast("FlextTypes.Dict", result_data)
                     except Exception as e:
                         # Log the exception for debugging purposes as required by S112
                         logger.debug(
@@ -2738,7 +2727,9 @@ class FlextUtilities:
                 if isinstance(slots, str):
                     slot_names: tuple[str, ...] = (slots,)
                 elif isinstance(slots, (list, tuple)):
-                    slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
+                    slot_names = tuple(
+                        cast("FlextTypes.StringList | tuple[str, ...]", slots)
+                    )
                 else:
                     msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
                     raise FlextExceptions.TypeError(
@@ -2991,11 +2982,11 @@ class FlextUtilities:
 
     @staticmethod
     def run_external_command(
-        cmd: list[str],
+        cmd: FlextTypes.StringList,
         *,
         capture_output: bool = True,
         check: bool = True,
-        env: dict[str, str] | None = None,
+        env: FlextTypes.StringDict | None = None,
         cwd: str | pathlib.Path | None = None,
         timeout: float | None = None,
         command_input: str | bytes | None = None,

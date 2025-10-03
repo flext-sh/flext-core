@@ -15,7 +15,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextConfig
+from flext_core import FlextConfig, FlextTypes
 
 
 class TestFlextConfig:
@@ -63,7 +63,7 @@ class TestFlextConfig:
         assert config_dict["version"] == "1.0.0"
         assert config_dict["environment"] == "test"
 
-    def test_config_from_json_file(self, temp_directory: Path) -> None:
+    def test_config_from_json_file(self, tmp_path: Path) -> None:
         """Test config loading from JSON file."""
         config_data = {
             "app_name": "json_app",
@@ -72,7 +72,7 @@ class TestFlextConfig:
             "debug": True,
         }
 
-        json_file = temp_directory / "config.json"
+        json_file = tmp_path / "config.json"
         with Path(json_file).open("w", encoding="utf-8") as f:
             json.dump(config_data, f)
 
@@ -84,7 +84,7 @@ class TestFlextConfig:
         assert config.environment == "staging"
         assert config.debug is True
 
-    def test_config_from_json_file_alternative(self, temp_directory: Path) -> None:
+    def test_config_from_json_file_alternative(self, tmp_path: Path) -> None:
         """Test config loading from JSON file with different data."""
         config_data = {
             "app_name": "json_app_alt",
@@ -93,7 +93,7 @@ class TestFlextConfig:
             "debug": False,
         }
 
-        json_file = temp_directory / "config_alt.json"
+        json_file = tmp_path / "config_alt.json"
 
         with Path(json_file).open("w", encoding="utf-8") as f:
             json.dump(config_data, f)
@@ -111,11 +111,11 @@ class TestFlextConfig:
         result = FlextConfig.from_file("nonexistent.json")
         assert result.is_failure
 
-    def test_config_save_to_file(self, temp_directory: Path) -> None:
+    def test_config_save_to_file(self, tmp_path: Path) -> None:
         """Test config saving to file."""
         config = FlextConfig(app_name="save_app", version="5.0.0", environment="test")
 
-        config_file = temp_directory / "saved_config.json"
+        config_file = tmp_path / "saved_config.json"
         # Test model_dump method instead
         config_dict = config.model_dump()
         assert config_dict["app_name"] == "save_app"
@@ -176,26 +176,6 @@ class TestFlextConfig:
             for key in ["FLEXT_APP_NAME", "FLEXT_VERSION", "FLEXT_ENVIRONMENT"]:
                 if key in os.environ:
                     del os.environ[key]
-
-    def test_config_merge(self) -> None:
-        """Test config merging."""
-        base_config = FlextConfig(
-            app_name="base_app",
-            version="1.0.0",
-            environment="development",
-        )
-
-        override_config = FlextConfig(
-            app_name="override_app",
-            version="2.0.0",
-            debug=True,
-        )
-
-        merged_config = base_config.merge(override_config)
-        assert merged_config.app_name == "override_app"
-        assert merged_config.version == "2.0.0"
-        assert merged_config.environment == "development"  # From base
-        assert merged_config.debug is True  # From override
 
     def test_config_clone(self) -> None:
         """Test config cloning."""
@@ -292,24 +272,27 @@ class TestFlextConfig:
         assert ("version", "value2") in items
 
     def test_config_singleton_pattern(self) -> None:
-        """Test config singleton pattern."""
-        config1 = FlextConfig.get_global_instance()
-        config2 = FlextConfig.get_global_instance()
+        """Test config creates independent instances with same defaults."""
+        config1 = FlextConfig()
+        config2 = FlextConfig()
 
-        assert config1 is config2
+        # Each call creates a new instance (no longer singleton)
+        assert config1 is not config2
+        # But they have the same default configuration values
+        assert config1.model_dump() == config2.model_dump()
 
     def test_config_singleton_reset(self) -> None:
         """Test config singleton reset."""
-        config1 = FlextConfig.get_global_instance()
+        config1 = FlextConfig()
         FlextConfig.reset_global_instance()
-        config2 = FlextConfig.get_global_instance()
+        config2 = FlextConfig()
 
         assert config1 is not config2
 
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
         config = FlextConfig()
-        results: list[str] = []
+        results: FlextTypes.StringList = []
 
         def set_value(thread_id: int) -> None:
             # Use Pydantic field assignment instead of non-existent set_value
@@ -449,7 +432,7 @@ class TestFlextConfig:
 
         # Test with additional config that should be merged
         additional_config = cast(
-            "dict[str, object]",
+            "FlextTypes.Dict",
             {"custom_field": "custom_value", "another_field": 42},
         )
 
@@ -507,45 +490,26 @@ class TestFlextConfig:
 
         assert "Trace mode requires debug mode" in str(exc_info.value)
 
-    def test_config_get_or_create_shared_instance_with_overrides(self) -> None:
-        """Test get_or_create_shared_instance with overrides (line 663-679)."""
+    def test_config_create_and_configure_pattern(self) -> None:
+        """Test direct instantiation and configuration pattern."""
         from flext_core import FlextConfig
 
-        # Reset global instance first
-        FlextConfig.reset_global_instance()
+        # New pattern - create and configure directly
+        config = FlextConfig()
 
-        # Create initial instance
-        initial = FlextConfig.get_global_instance()
+        # Apply project-specific overrides
+        config.app_name = "Test Application"
+        config.debug = True
 
-        # Get instance with overrides - this tests line 668-670
-        # The setattr will attempt to modify the field
-        instance = FlextConfig.get_or_create_shared_instance(
-            project_name="test_project",
-            overrides={"app_name": "Test Application"},
-        )
+        # Verify configuration applied
+        assert config.app_name == "Test Application"
+        assert config.debug is True
 
-        # Verify it's the same singleton instance
-        assert instance is initial
+        # Create another instance - each is independent
+        config2 = FlextConfig()
 
-        # Verify project_name logging path was hit (line 673-677)
-        instance2 = FlextConfig.get_or_create_shared_instance(
-            project_name="another_project",
-        )
-        assert instance is instance2  # Should be same singleton
-
-        # Reset after test
-        FlextConfig.reset_global_instance()
-
-    def test_config_create_project_config(self) -> None:
-        """Test create_project_config method (line 682-708)."""
-        from flext_core import FlextConfig
-
-        # Create project-specific config
-        project_config = FlextConfig.create_project_config(
-            project_name="test_project",
-            debug=True,
-            log_level="DEBUG",
-        )
-
-        assert project_config.debug is True
-        assert project_config.log_level == "DEBUG"
+        # Verify it has default values (not the overrides from config)
+        assert (
+            config2.app_name == "FLEXT Application"
+        )  # Default value from FlextConstants
+        assert config2.debug is False  # Default value

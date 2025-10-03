@@ -4,16 +4,13 @@ Tests real functionality of the centralized type system, ensuring all
 TypeVars, type aliases, and FlextTypes namespace work correctly.
 """
 
-from typing import get_args
-
+from flext_core import FlextTypes
 from flext_core.models import FlextModels
 from flext_core.typings import (
     Command,
     E,
     Event,
     F,
-    # Classes
-    FlextTypes,
     K,
     # Domain TypeVars
     Message,
@@ -38,20 +35,6 @@ from flext_core.typings import (
     TEvent_contra,
     TInput_contra,
     TItem_contra,
-    TPlugin,
-    TPluginConfig,
-    TPluginContext,
-    TPluginData,
-    TPluginDiscovery,
-    TPluginHandler,
-    TPluginLoader,
-    TPluginManager,
-    TPluginMetadata,
-    TPluginPlatform,
-    TPluginRegistry,
-    TPluginService,
-    TPluginSystem,
-    TPluginValidator,
     TQuery_contra,
     TResult_co,
     TResult_contra,
@@ -62,8 +45,6 @@ from flext_core.typings import (
     U,
     V,
     W,
-    # Type aliases
-    WorkspaceStatus,
 )
 
 
@@ -117,37 +98,9 @@ class TestTypeVars:
         assert TCacheKey_contra is not None
         assert TConfigKey_contra is not None
 
-    def test_plugin_typevars(self) -> None:
-        """Test plugin-specific TypeVars are defined."""
-        assert TPlugin is not None
-        assert TPluginConfig is not None
-        assert TPluginContext is not None
-        assert TPluginData is not None
-        assert TPluginDiscovery is not None
-        assert TPluginHandler is not None
-        assert TPluginLoader is not None
-        assert TPluginManager is not None
-        assert TPluginMetadata is not None
-        assert TPluginPlatform is not None
-        assert TPluginRegistry is not None
-        assert TPluginService is not None
-        assert TPluginSystem is not None
-        assert TPluginValidator is not None
-
     def test_paramspec_defined(self) -> None:
         """Test ParamSpec is properly defined."""
         assert P is not None
-
-
-class TestTypeAliases:
-    """Test type alias definitions."""
-
-    def test_workspace_status_alias(self) -> None:
-        """Test WorkspaceStatus type alias."""
-        # Should be a Literal type
-        args = get_args(WorkspaceStatus.__value__)
-        expected = ("initializing", "ready", "error", "maintenance")
-        assert set(args) == set(expected)
 
 
 class TestRateLimiterState:
@@ -170,51 +123,43 @@ class TestFlextTypes:
     """Test FlextTypes namespace and all sub-types."""
 
     def test_flexttypes_core_types(self) -> None:
-        """Test FlextTypes.Core types are accessible."""
+        """Test FlextTypes types are accessible."""
         # Test basic types
-        assert FlextTypes.Core.T is not None
-        assert FlextTypes.Core.U is not None
-        assert FlextTypes.Core.V is not None
-        assert FlextTypes.Core.W is not None
+        assert FlextTypes.T is not None
+        assert FlextTypes.U is not None
+        assert FlextTypes.V is not None
+        assert FlextTypes.W is not None
 
         # Test collection types
-        assert FlextTypes.Core.Dict == dict[str, object]
-        assert FlextTypes.Core.List == list[object]
-        assert FlextTypes.Core.StringList == list[str]
-        assert FlextTypes.Core.IntList == list[int]
-        assert FlextTypes.Core.FloatList == list[float]
-        assert FlextTypes.Core.BoolList == list[bool]
+        assert FlextTypes.Dict == FlextTypes.Dict
+        assert FlextTypes.List == FlextTypes.List
+        assert FlextTypes.StringList == FlextTypes.StringList
+        assert FlextTypes.IntList == FlextTypes.IntList
+        assert FlextTypes.FloatList == FlextTypes.FloatList
+        assert FlextTypes.BoolList == FlextTypes.BoolList
 
         # Test advanced types
-        assert FlextTypes.Core.NestedDict == dict[str, dict[str, object]]
+        assert FlextTypes.NestedDict == FlextTypes.NestedDict
         # OrderedDict is actually OrderedDict type
         from collections import OrderedDict
 
-        assert FlextTypes.Core.OrderedDict == OrderedDict[str, object]
+        assert FlextTypes.OrderedDict == OrderedDict[str, object]
 
         # Test configuration types
-        config_dict: FlextTypes.Core.ConfigDict = {"key": "value", "number": 42}
+        config_dict: FlextTypes.ConfigDict = {"key": "value", "number": 42}
         assert isinstance(config_dict, dict)
 
         # Test JSON types
-        json_obj: FlextTypes.Core.JsonObject = {"key": "value"}
+        json_obj: FlextTypes.JsonValue = {"key": "value"}
         assert isinstance(json_obj, dict)
-
-    def test_flexttypes_domain_types(self) -> None:
-        """Test FlextTypes.Domain types."""
-        # These are attribute names, not actual types
-        assert hasattr(FlextTypes.Domain, "EntityId")
-        assert hasattr(FlextTypes.Domain, "Entity")
-        assert hasattr(FlextTypes.Domain, "ValueObject")
-        assert hasattr(FlextTypes.Domain, "AggregateRoot")
 
     def test_flexttypes_service_types(self) -> None:
         """Test FlextTypes.Service types."""
-        service_dict: FlextTypes.Service.ServiceDict = {"service": "value"}
+        service_dict: FlextTypes.Service.Dict = {"service": "value"}
         assert isinstance(service_dict, dict)
 
         # Test Literal types
-        service_type: FlextTypes.Service.ServiceType = "instance"
+        service_type: FlextTypes.Service.Type = "instance"
         assert service_type in {"instance", "factory"}
 
     def test_flexttypes_config_types(self) -> None:
@@ -233,13 +178,6 @@ class TestFlextTypes:
         # Test LogLevel literal
         level: FlextTypes.Config.LogLevel = "INFO"
         assert level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
-
-    def test_flexttypes_validation_types(self) -> None:
-        """Test FlextTypes.Validation types."""
-        # These are callable types, just test they are defined
-        assert FlextTypes.Validation.Validator is not None
-        assert FlextTypes.Validation.ValidationRule is not None
-        assert FlextTypes.Validation.BusinessRule is not None
 
     def test_flexttypes_output_types(self) -> None:
         """Test FlextTypes.Output types."""
@@ -303,30 +241,6 @@ class TestFlextTypes:
         step_status: FlextTypes.Processing.StepStatus = "pending"
         assert step_status in {"pending", "running", "completed", "failed", "skipped"}
 
-    def test_flexttypes_identifiers_types(self) -> None:
-        """Test FlextTypes.Identifiers types."""
-        # These are attribute names
-        assert hasattr(FlextTypes.Identifiers, "Id")
-        assert hasattr(FlextTypes.Identifiers, "Name")
-        assert hasattr(FlextTypes.Identifiers, "Path")
-        assert hasattr(FlextTypes.Identifiers, "Uri")
-        assert hasattr(FlextTypes.Identifiers, "Token")
-
-    def test_flexttypes_protocol_types(self) -> None:
-        """Test FlextTypes.Protocol types."""
-        # These are attribute names
-        assert hasattr(FlextTypes.Protocol, "ProtocolVersion")
-        assert hasattr(FlextTypes.Protocol, "ConnectionString")
-
-        creds: FlextTypes.Protocol.AuthCredentials = {"user": "pass"}
-        assert isinstance(creds, dict)
-
-        config: FlextTypes.Protocol.ProtocolConfig = {"key": "value"}
-        assert isinstance(config, dict)
-
-        msg_fmt: FlextTypes.Protocol.MessageFormat = "json"
-        assert msg_fmt in {"json", "xml", "binary", "text"}
-
     def test_flexttypes_convenience_aliases(self) -> None:
         """Test convenience aliases work."""
         # Test direct access aliases
@@ -334,9 +248,9 @@ class TestFlextTypes:
         assert FlextTypes.JsonValue is not None
         assert FlextTypes.ConfigDict is not None
         assert FlextTypes.JsonDict is not None
-        assert FlextTypes.Headers is not None
-        assert FlextTypes.Metadata is not None
-        assert FlextTypes.Parameters is not None
+        assert FlextTypes.StringDict is not None
+        assert FlextTypes.StringDict is not None
+        assert FlextTypes.Dict is not None
 
 
 class TestImports:

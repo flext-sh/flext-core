@@ -115,7 +115,7 @@ git commit -m "Your commit message"
 # ✅ CORRECT - Complete type annotations
 from flext_core import FlextResult
 
-def process_data(input_data: dict[str, object]) -> FlextResult[ProcessedData]:
+def process_data(input_data: FlextTypes.Dict) -> FlextResult[ProcessedData]:
     """Process input data with type-safe error handling."""
     if not input_data:
         return FlextResult[ProcessedData].fail("Input cannot be empty")
@@ -559,13 +559,13 @@ from flext_core import FlextResult
 
 # ✅ CORRECT - Complete annotations
 def transform_data(
-    input_data: dict[str, object],
-    options: dict[str, bool] | None = None
-) -> FlextResult[dict[str, object]]:
+    input_data: FlextTypes.Dict,
+    options: FlextTypes.BoolDict | None = None
+) -> FlextResult[FlextTypes.Dict]:
     """Transform data with optional configuration."""
     opts = options or {}
     transformed = {k: str(v) for k, v in input_data.items()}
-    return FlextResult[dict[str, object]].ok(transformed)
+    return FlextResult[FlextTypes.Dict].ok(transformed)
 
 # ❌ FORBIDDEN - Missing annotations
 def transform_data(input_data, options=None):
@@ -583,9 +583,9 @@ def transform_data(input_data, options=None):
 from flext_core import FlextResult
 
 def validate_and_process(
-    data: dict[str, object],
+    data: FlextTypes.Dict,
     strict: bool = False
-) -> FlextResult[dict[str, object]]:
+) -> FlextResult[FlextTypes.Dict]:
     """Validate and process input data.
 
     This function validates the input data structure and
@@ -610,14 +610,14 @@ def validate_and_process(
         Strict mode requires 'email' field in input data.
     """
     if "id" not in data:
-        return FlextResult[dict[str, object]].fail("ID required")
+        return FlextResult[FlextTypes.Dict].fail("ID required")
 
     if strict and "email" not in data:
-        return FlextResult[dict[str, object]].fail("Email required in strict mode")
+        return FlextResult[FlextTypes.Dict].fail("Email required in strict mode")
 
     # Processing logic
     processed = {"id": data["id"], "status": "processed"}
-    return FlextResult[dict[str, object]].ok(processed)
+    return FlextResult[FlextTypes.Dict].ok(processed)
 ```
 
 ---

@@ -18,7 +18,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 ┌─────────────────────────────────────────────────────────────┐
 │                    Application Layer                         │
 │   (Use cases, orchestration)                                │
-│   FlextCqrs, FlextHandlers, FlextBus, FlextDispatcher       │
+│   FlextHandlers, FlextBus, FlextDispatcher                  │
 │   FlextRegistry, FlextProcessors                            │
 └─────────────────────────────────────────────────────────────┘
                             ↓
@@ -163,7 +163,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 
 **Key Patterns**:
 
-1. **CQRS** (`FlextCqrs`, `FlextBus`):
+1. **CQRS** (`FlextBus`):
 
    ```python
    # Command - write operation
@@ -357,7 +357,7 @@ FlextContainer                     │
 FlextModels ←────── FlextService   │
     ↑                   ↑          │
     │                   │          │
-FlextCqrs ←─── FlextHandlers       │
+    |          FlextHandlers       │
     ↑              ↑               │
     │              │               │
 FlextBus ──────────┘               │

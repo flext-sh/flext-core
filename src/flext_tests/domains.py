@@ -39,7 +39,7 @@ class FlextTestsDomains:
         age: int
         is_active: bool
         created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
-        metadata: FlextTypes.Core.Dict
+        metadata: FlextTypes.Dict
 
     class TestConfig(FlextModels.TimestampedModel):
         """Test configuration model for factory testing."""
@@ -49,7 +49,7 @@ class FlextTestsDomains:
         debug: bool = False  # Override base class field with default
         timeout: int
         max_connections: int
-        features: FlextTypes.Core.StringList
+        features: FlextTypes.StringList
 
     class TestField(FlextModels.TimestampedModel):
         """Test field model for factory testing."""
@@ -76,7 +76,7 @@ class FlextTestsDomains:
             default_factory=lambda: datetime.now(tz=UTC),
         )
         version: int = 1
-        metadata: ClassVar[FlextTypes.Core.Dict] = {}
+        metadata: ClassVar[FlextTypes.Dict] = {}
 
     class BaseTestValueObject(FlextModels.TimestampedModel):
         """Base test value object for domain testing."""
@@ -84,19 +84,19 @@ class FlextTestsDomains:
         value: str
         description: str
         category: str
-        tags: ClassVar[FlextTypes.Core.StringList] = []
+        tags: ClassVar[FlextTypes.StringList] = []
 
     # === User Data Factory ===
 
     @staticmethod
-    def create_user(**overrides: object) -> FlextTypes.Core.Dict:
+    def create_user(**overrides: object) -> FlextTypes.Dict:
         """Create user data dict.
 
         Returns:
-            FlextTypes.Core.Dict: User data dictionary with generated values
+            FlextTypes.Dict: User data dictionary with generated values
 
         """
-        data: FlextTypes.Core.Dict = {
+        data: FlextTypes.Dict = {
             "id": str(uuid.uuid4()),
             "name": f"User {random.randint(100, 999)}",
             "email": f"user{random.randint(1, 1000)}@example.com",
@@ -108,11 +108,11 @@ class FlextTestsDomains:
         return data
 
     @staticmethod
-    def batch_users(count: int = 5) -> list[FlextTypes.Core.Dict]:
+    def batch_users(count: int = 5) -> list[FlextTypes.Dict]:
         """Create batch of user data.
 
         Returns:
-            list[FlextTypes.Core.Dict]: List of user data dictionaries
+            list[FlextTypes.Dict]: List of user data dictionaries
 
         """
         return [FlextTestsDomains.create_user() for _ in range(count)]
@@ -120,14 +120,14 @@ class FlextTestsDomains:
     # === Configuration Data Factory ===
 
     @staticmethod
-    def create_configuration(**overrides: object) -> FlextTypes.Core.Dict:
+    def create_configuration(**overrides: object) -> FlextTypes.Dict:
         """Create configuration data dict.
 
         Returns:
-            FlextTypes.Core.Dict: Configuration data dictionary with generated values
+            FlextTypes.Dict: Configuration data dictionary with generated values
 
         """
-        data: FlextTypes.Core.Dict = {
+        data: FlextTypes.Dict = {
             "database_url": f"postgresql://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.POSTGRES_DEFAULT_PORT}/test",
             "log_level": "INFO",
             "debug": False,
@@ -141,14 +141,14 @@ class FlextTestsDomains:
     # === Service Data Factory ===
 
     @staticmethod
-    def create_service(**overrides: object) -> FlextTypes.Core.Dict:
+    def create_service(**overrides: object) -> FlextTypes.Dict:
         """Create service data dict.
 
         Returns:
-            FlextTypes.Core.Dict: Service data dictionary with generated values
+            FlextTypes.Dict: Service data dictionary with generated values
 
         """
-        data: FlextTypes.Core.Dict = {
+        data: FlextTypes.Dict = {
             "name": f"test_service_{random.randint(1, 100)}",
             "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
             "port": random.randint(
@@ -164,14 +164,14 @@ class FlextTestsDomains:
     # === Payload Data Factory ===
 
     @staticmethod
-    def create_payload(**overrides: object) -> FlextTypes.Core.Dict:
+    def create_payload(**overrides: object) -> FlextTypes.Dict:
         """Create payload data dict.
 
         Returns:
-            FlextTypes.Core.Dict: Payload data dictionary with generated values
+            FlextTypes.Dict: Payload data dictionary with generated values
 
         """
-        data: FlextTypes.Core.Dict = {
+        data: FlextTypes.Dict = {
             "message_id": str(uuid.uuid4()),
             "type": "user_created",
             "timestamp": "2024-01-01T00:00:00Z",
@@ -184,11 +184,11 @@ class FlextTestsDomains:
     # === Validation Test Cases ===
 
     @staticmethod
-    def valid_email_cases() -> FlextTypes.Core.StringList:
+    def valid_email_cases() -> FlextTypes.StringList:
         """Return valid email test cases.
 
         Returns:
-            FlextTypes.Core.StringList: List of valid email addresses for testing
+            FlextTypes.StringList: List of valid email addresses for testing
 
         """
         return [
@@ -199,11 +199,11 @@ class FlextTestsDomains:
         ]
 
     @staticmethod
-    def invalid_email_cases() -> FlextTypes.Core.StringList:
+    def invalid_email_cases() -> FlextTypes.StringList:
         """Return invalid email test cases.
 
         Returns:
-            FlextTypes.Core.StringList: List of invalid email addresses for testing
+            FlextTypes.StringList: List of invalid email addresses for testing
 
         """
         return [
@@ -237,11 +237,11 @@ class FlextTestsDomains:
     # === Realistic Data Factory ===
 
     @staticmethod
-    def user_registration_data() -> FlextTypes.Core.Dict:
+    def user_registration_data() -> FlextTypes.Dict:
         """Create realistic user registration data.
 
         Returns:
-            FlextTypes.Core.Dict: User registration data dictionary with realistic values
+            FlextTypes.Dict: User registration data dictionary with realistic values
 
         """
         return {
@@ -258,11 +258,11 @@ class FlextTestsDomains:
         }
 
     @staticmethod
-    def order_data() -> FlextTypes.Core.Dict:
+    def order_data() -> FlextTypes.Dict:
         """Create realistic order data.
 
         Returns:
-            FlextTypes.Core.Dict: Order data dictionary with realistic values
+            FlextTypes.Dict: Order data dictionary with realistic values
 
         """
         return {
@@ -283,11 +283,11 @@ class FlextTestsDomains:
         }
 
     @staticmethod
-    def api_response_data() -> FlextTypes.Core.Dict:
+    def api_response_data() -> FlextTypes.Dict:
         """Create realistic API response data.
 
         Returns:
-            FlextTypes.Core.Dict: API response data dictionary with realistic values
+            FlextTypes.Dict: API response data dictionary with realistic values
 
         """
         return {

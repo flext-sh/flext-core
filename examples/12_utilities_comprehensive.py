@@ -24,22 +24,23 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 
-class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
+class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
     """Service demonstrating essential FlextUtilities patterns."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._cache: dict[str, object] = {}
+        self._cache: FlextTypes.Dict = {}
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
         self._logger.info("Executing utilities demo")
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "status": "completed",
             "utilities_executed": True,
         })

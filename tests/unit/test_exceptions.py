@@ -10,7 +10,7 @@ import threading
 import time
 from typing import cast
 
-from flext_core import FlextExceptions, FlextResult
+from flext_core import FlextExceptions, FlextResult, FlextTypes
 
 
 class TestFlextExceptions:
@@ -24,7 +24,7 @@ class TestFlextExceptions:
 
     def test_exceptions_with_custom_config(self) -> None:
         """Test exceptions initialization with custom configuration."""
-        config: dict[str, object] = {"max_retries": 3, "timeout": 30}
+        config: FlextTypes.Dict = {"max_retries": 3, "timeout": 30}
         exceptions = FlextExceptions(config=config)
         assert exceptions is not None
 
@@ -360,7 +360,7 @@ class TestFlextExceptions:
         # Check audit log
         audit_log = exceptions.get_audit_log()
         assert len(audit_log) >= 1
-        first_entry = cast("dict[str, object]", audit_log[0])
+        first_entry = cast("FlextTypes.Dict", audit_log[0])
         assert first_entry["exception_type"] == "ValueError"
 
     def test_exceptions_handle_exception_with_performance_monitoring(self) -> None:
@@ -464,9 +464,9 @@ class TestFlextExceptions:
 
         stats = exceptions.get_statistics()
         # Check that ValueError is tracked in performance metrics
-        perf_metrics = cast("dict[str, object]", stats["performance_metrics"])
+        perf_metrics = cast("FlextTypes.Dict", stats["performance_metrics"])
         assert "ValueError" in perf_metrics
-        value_error_stats = cast("dict[str, object]", perf_metrics["ValueError"])
+        value_error_stats = cast("FlextTypes.Dict", perf_metrics["ValueError"])
         handled_count = cast("int", value_error_stats["handled"])
         assert handled_count >= 1
 

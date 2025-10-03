@@ -29,7 +29,7 @@ poetry add "flext-core>=1.0.0,<2.0.0"
 pytest tests/
 ```
 
-### What's Changed in 1.0.0?
+### What's Changed in 1.0.0
 
 **ZERO Breaking Changes** - All 0.9.9 APIs work identically in 1.0.0
 
@@ -53,7 +53,6 @@ pytest tests/
 | FlextLogger    | `__name__` constructor   | `__name__` constructor              | ❌ None                 |
 | FlextConfig    | `.get_global_instance()` | `.get_global_instance()`            | ❌ None                 |
 | FlextBus       | Event bus API            | Event bus API                       | ❌ None                 |
-| FlextCqrs      | CQRS patterns            | CQRS patterns                       | ❌ None                 |
 | HTTP Constants | ❌ Not available         | ✅ FlextConstants.Http              | ✅ Optional enhancement |
 | HTTP Models    | ❌ Not available         | ✅ HttpRequest/HttpResponse         | ✅ Optional enhancement |
 
@@ -169,7 +168,7 @@ from pydantic import BaseModel
 class MyHttpRequest(BaseModel):
     url: str
     method: str
-    headers: dict[str, str] = {}
+    headers: FlextTypes.StringDict = {}
     body: str | None = None
 ```
 
@@ -241,7 +240,7 @@ python -c "
 from flext_core import (
     FlextResult, FlextContainer, FlextModels,
     FlextService, FlextLogger, FlextConfig,
-    FlextBus, FlextCqrs, FlextConstants
+    FlextBus, FlextConstants
 )
 
 # Test FlextResult - railway pattern
@@ -639,11 +638,11 @@ If you encounter migration problems:
 
 ## FAQ
 
-### Q1: Do I need to change any code to upgrade to 1.0.0?
+### Q1: Do I need to change any code to upgrade to 1.0.0
 
 **A**: No. The 1.0.0 release is 100% backward compatible with 0.9.9. All your existing code will work without modifications.
 
-### Q2: What's the benefit of upgrading to 1.0.0?
+### Q2: What's the benefit of upgrading to 1.0.0
 
 **A**:
 
@@ -653,11 +652,11 @@ If you encounter migration problems:
 - **HTTP Primitives**: New standardized HTTP constants and models (optional)
 - **Production Confidence**: Formal stability commitment for enterprise use
 
-### Q3: Can I stay on 0.9.9?
+### Q3: Can I stay on 0.9.9
 
 **A**: Yes, 0.9.9 will continue to work. However, we recommend upgrading to benefit from stability guarantees and future enhancements in the 1.x series.
 
-### Q4: How long will 1.0.0 be supported?
+### Q4: How long will 1.0.0 be supported
 
 **A**: The entire 1.x series will be supported with:
 
@@ -666,7 +665,7 @@ If you encounter migration problems:
 - New features in minor releases (1.1.0, 1.2.0, etc.)
 - No breaking changes until 2.0.0 (planned 2026+)
 
-### Q5: What happens if I need a feature that requires breaking changes?
+### Q5: What happens if I need a feature that requires breaking changes
 
 **A**: We will:
 
@@ -675,11 +674,11 @@ If you encounter migration problems:
 3. Provide migration tools and documentation
 4. Only remove deprecated features in 2.0.0 (with 6+ months notice)
 
-### Q6: Will my domain library (flext-api, flext-cli, etc.) work with 1.0.0?
+### Q6: Will my domain library (flext-api, flext-cli, etc.) work with 1.0.0
 
 **A**: Yes. All FLEXT domain libraries are tested with 1.0.0 before release. Update flext-core first, then test your application.
 
-### Q7: What if I find a breaking change in 1.0.0?
+### Q7: What if I find a breaking change in 1.0.0
 
 **A**: This would be a critical bug. Please report it immediately:
 

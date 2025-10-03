@@ -76,16 +76,22 @@ class TestMigrationScenario2:
 
     def test_container_global_instance(self) -> None:
         """Verify FlextContainer.get_global() continues working."""
-        container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        container = manager.get_or_create()
         assert container is not None
 
         # Verify singleton pattern
-        container2 = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        container2 = manager.get_or_create()
         assert container is container2
 
     def test_container_registration_and_resolution(self) -> None:
         """Verify service registration and resolution."""
-        container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        container = manager.get_or_create()
 
         # Register a simple service
         class TestService:
@@ -302,7 +308,6 @@ class TestBackwardCompatibility:
             FlextConstants,
             FlextContainer,
             FlextContext,
-            FlextCqrs,
             FlextDispatcher,
             FlextExceptions,
             FlextHandlers,
@@ -328,7 +333,6 @@ class TestBackwardCompatibility:
         assert FlextConfig is not None
         assert FlextConstants is not None
         assert FlextContext is not None
-        assert FlextCqrs is not None
         assert FlextDispatcher is not None
         assert FlextExceptions is not None
         assert FlextHandlers is not None
@@ -381,7 +385,9 @@ class TestBackwardCompatibility:
         _ = result.data  # No warning
 
         # Container patterns work
-        container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        container = manager.get_or_create()
         assert container is not None
 
 

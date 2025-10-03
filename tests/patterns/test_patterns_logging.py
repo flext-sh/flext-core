@@ -29,7 +29,7 @@ class TestFlextContext:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: FlextTypes.Core.Dict = {}
+        context: FlextTypes.Dict = {}
 
         assert isinstance(context, dict)
         if len(context) != 0:
@@ -37,7 +37,7 @@ class TestFlextContext:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: FlextTypes.Core.Dict = {
+        context: FlextTypes.Dict = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -54,7 +54,7 @@ class TestFlextContext:
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
         # Test with partial context
-        context: FlextTypes.Core.Dict = {
+        context: FlextTypes.Dict = {
             "user_id": "123",
         }
 
@@ -64,7 +64,7 @@ class TestFlextContext:
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: FlextTypes.Core.Dict = {
+        context: FlextTypes.Dict = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -85,7 +85,7 @@ class TestFlextContext:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: FlextTypes.Core.Dict = {
+        context: FlextTypes.Dict = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
@@ -99,7 +99,7 @@ class TestFlextContext:
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: FlextTypes.Core.Dict = {
+        context: FlextTypes.Dict = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",

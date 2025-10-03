@@ -36,10 +36,10 @@ class FlextTestsUtilities:
     class ITestFactory(Protocol[T]):
         """Protocol for test factories."""
 
-        def create(self, **kwargs: object) -> T:
+        def create(self, **kwargs: object) -> T | None:
             """Create test instance."""
 
-        def create_many(self, count: int, **kwargs: object) -> list[T]:
+        def create_many(self, count: int, **kwargs: object) -> list[T] | None:
             """Create multiple test instances."""
 
     @runtime_checkable
@@ -109,7 +109,7 @@ class FlextTestsUtilities:
             *,
             size: int = 10,
             prefix: str = "test",
-        ) -> list[FlextTypes.Core.Dict]:
+        ) -> list[FlextTypes.Dict]:
             """Create test data using FlextUtilities.Generators."""
             # Use FlextUtilities.Generators for data generation
             return [
@@ -131,7 +131,7 @@ class FlextTestsUtilities:
         def __init__(self, model_class: type[T]) -> None:
             """Initialize test factory."""
             self._model_class = model_class
-            self._defaults: FlextTypes.Core.Dict = {}
+            self._defaults: FlextTypes.Dict = {}
 
         def set_defaults(
             self,
@@ -153,7 +153,7 @@ class FlextTestsUtilities:
 
         def create_batch(
             self,
-            specifications: list[FlextTypes.Core.Dict],
+            specifications: list[FlextTypes.Dict],
         ) -> list[T]:
             """Create objects from specifications."""
             return [self.create(**spec) for spec in specifications]
@@ -337,20 +337,20 @@ class FlextTestsUtilities:
         def __init__(self, service_type: str = "generic", **config: object) -> None:
             """Initialize functional test service using FlextProcessors."""
             self.service_type = service_type
-            self.config: dict[str, object] = config
+            self.config: FlextTypes.Dict = config
             self.call_history: list[
-                tuple[str, tuple[object, ...], FlextTypes.Core.Dict]
+                tuple[str, tuple[object, ...], FlextTypes.Dict]
             ] = []
-            self.return_values: FlextTypes.Core.Dict = {}
-            self.side_effects: dict[str, list[object]] = {}
-            self.should_fail: dict[str, bool] = {}
-            self.failure_messages: dict[str, str] = {}
+            self.return_values: FlextTypes.Dict = {}
+            self.side_effects: dict[str, FlextTypes.List] = {}
+            self.should_fail: FlextTypes.BoolDict = {}
+            self.failure_messages: FlextTypes.StringDict = {}
 
         def configure_method(
             self,
             method_name: str,
             return_value: object = None,
-            side_effect: list[object] | None = None,
+            side_effect: FlextTypes.List | None = None,
             *,
             should_fail: bool = False,
             failure_message: str = "Method failed",
@@ -441,7 +441,7 @@ class FlextTestsUtilities:
         def get_calls_for_method(
             self,
             method_name: str,
-        ) -> list[tuple[tuple[object, ...], FlextTypes.Core.Dict]]:
+        ) -> list[tuple[tuple[object, ...], FlextTypes.Dict]]:
             """Get all calls for a specific method.
 
             Args:
@@ -472,7 +472,7 @@ class FlextTestsUtilities:
             self.target: object = target
             self.attribute: str = attribute
             # Handle new parameter correctly - check if it was explicitly passed
-            options_dict: dict[str, object] = dict(
+            options_dict: FlextTypes.Dict = dict(
                 options,
             )  # Convert to dict for easier handling
             if "new" in options_dict:
@@ -481,7 +481,7 @@ class FlextTestsUtilities:
             else:
                 self.new_value = new_value
                 self.has_new = new_value is not None
-            self.options: dict[str, object] = options_dict
+            self.options: FlextTypes.Dict = options_dict
             self.original_value: object = None
             self.create: bool = bool(options_dict.get("create"))
             self.had_attribute: bool = False
@@ -592,8 +592,8 @@ class FlextTestsUtilities:
         name: str = "test"
         value: int = 42
         active: bool = True
-        tags: ClassVar[list[str]] = []
-        metadata: ClassVar[FlextTypes.Core.Dict] = {}
+        tags: ClassVar[FlextTypes.StringList] = []
+        metadata: ClassVar[FlextTypes.Dict] = {}
 
         def activate(self) -> FlextResult[None]:
             """Activate the test model."""
@@ -618,12 +618,12 @@ class FlextTestsUtilities:
         # Build base_url without deep dynamic __import__ chains to avoid runtime errors
 
         base_url: str = f"http://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.FLEXT_API_PORT}"
-        headers: ClassVar[dict[str, str]] = {}
+        headers: ClassVar[FlextTypes.StringDict] = {}
 
     # === UTILITY FUNCTIONS ===
 
     @staticmethod
-    def create_ldap_test_config() -> FlextTypes.Core.Dict:
+    def create_ldap_test_config() -> FlextTypes.Dict:
         """Create LDAP test configuration for testing.
 
         Returns:
@@ -645,7 +645,7 @@ class FlextTestsUtilities:
         *,
         success: bool = True,
         data: object = None,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Create API test response structure.
 
         Args:
@@ -742,12 +742,12 @@ class FlextTestsUtilities:
         *,
         size: int = 10,
         prefix: str = "test",
-    ) -> list[FlextTypes.Core.Dict]:
+    ) -> list[FlextTypes.Dict]:
         """Create test data quickly."""
         return cls.TestUtilities.create_test_data(size=size, prefix=prefix)
 
     @classmethod
-    def create_ldap_config(cls: type[Self]) -> FlextTypes.Core.Dict:
+    def create_ldap_config(cls: type[Self]) -> FlextTypes.Dict:
         """Create LDAP test configuration."""
         return FlextTestsUtilities.create_ldap_test_config()
 
@@ -757,7 +757,7 @@ class FlextTestsUtilities:
         *,
         success: bool = True,
         data: object = None,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Create API test response."""
         return cls.create_api_test_response(success=success, data=data)
 

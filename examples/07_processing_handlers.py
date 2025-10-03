@@ -27,18 +27,20 @@ from flext_core import (
     FlextProcessors,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 from .example_scenarios import ExampleScenarios
 
 
-class ProcessingPatternsService(FlextService[dict[str, object]]):
+class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextProcessors patterns."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
         self._logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios
         self._user = self._scenarios.user()
@@ -47,10 +49,10 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         self._invalid_user = {**self._user, "email": "invalid", "role": "user"}
         self._metadata = self._scenarios.metadata(tags=["processors", "demo"])
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
         self._logger.info("Executing processing demo")
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "status": "processed",
             "handlers_executed": True,
         })
@@ -196,7 +198,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         authz_handler = AuthorizationHandler("Authorizer")
         process_handler = ProcessingHandler("Processor")
 
-        def execute_pipeline(request: dict[str, object]) -> FlextResult[str]:
+        def execute_pipeline(request: FlextTypes.Dict) -> FlextResult[str]:
             """Execute the handler pipeline."""
             result = auth_handler.handle(request)
             if result.is_failure:
@@ -209,7 +211,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             return process_handler.handle(request)
 
         print("\n1. Valid request through pipeline:")
-        valid_request: dict[str, object] = {
+        valid_request: FlextTypes.Dict = {
             "token": self._admin_user["token"],
             "role": self._admin_user["role"],
             "action": "delete_user",
@@ -220,7 +222,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             print(f"✅ Pipeline success: {result.unwrap()}")
 
         print("\n2. Request with invalid token:")
-        invalid_token: dict[str, object] = {
+        invalid_token: FlextTypes.Dict = {
             "token": "invalid",
             "role": self._admin_user["role"],
             "action": "delete_user",
@@ -231,7 +233,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             print(f"❌ Pipeline failed at auth: {result.error}")
 
         print("\n3. Request with insufficient permissions:")
-        insufficient: dict[str, object] = {
+        insufficient: FlextTypes.Dict = {
             "token": self._admin_user["token"],
             "role": self._invalid_user.get("role", "user"),
             "action": "delete_user",
@@ -250,17 +252,17 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         class PaymentStrategy:
             """Base payment processing strategy."""
 
-            def process(self, amount: float) -> FlextResult[dict[str, object]]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process payment with specific strategy."""
                 raise NotImplementedError
 
         class CreditCardStrategy(PaymentStrategy):
             """Credit card payment strategy."""
 
-            def process(self, amount: float) -> FlextResult[dict[str, object]]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process credit card payment."""
                 fee = amount * 0.029
-                return FlextResult[dict[str, object]].ok({
+                return FlextResult[FlextTypes.Dict].ok({
                     "method": "credit_card",
                     "amount": amount,
                     "fee": round(fee, 2),
@@ -271,10 +273,10 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         class PayPalStrategy(PaymentStrategy):
             """PayPal payment strategy."""
 
-            def process(self, amount: float) -> FlextResult[dict[str, object]]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process PayPal payment."""
                 fee = amount * 0.034 + 0.30
-                return FlextResult[dict[str, object]].ok({
+                return FlextResult[FlextTypes.Dict].ok({
                     "method": "paypal",
                     "amount": amount,
                     "fee": round(fee, 2),
@@ -285,10 +287,10 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         class BankTransferStrategy(PaymentStrategy):
             """Bank transfer payment strategy."""
 
-            def process(self, amount: float) -> FlextResult[dict[str, object]]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process bank transfer."""
                 fee = 5.00
-                return FlextResult[dict[str, object]].ok({
+                return FlextResult[FlextTypes.Dict].ok({
                     "method": "bank_transfer",
                     "amount": amount,
                     "fee": fee,
@@ -311,11 +313,11 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 self,
                 method: str,
                 amount: float,
-            ) -> FlextResult[dict[str, object]]:
+            ) -> FlextResult[FlextTypes.Dict]:
                 """Process payment with selected strategy."""
                 strategy = self._strategies.get(method)
                 if strategy is None:
-                    return FlextResult[dict[str, object]].fail("Unknown payment method")
+                    return FlextResult[FlextTypes.Dict].fail("Unknown payment method")
                 return strategy.process(amount)
 
         processor = PaymentProcessor()
@@ -391,7 +393,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             def execute(
                 self,
                 name: str,
-                request: dict[str, object],
+                request: FlextTypes.Dict,
             ) -> FlextResult[str]:
                 """Execute a handler by name."""
                 handler_result = self.get(name)
@@ -403,7 +405,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                 handler = handler_result.unwrap()
                 return handler.handle(request)
 
-            def list_handlers(self) -> list[str]:
+            def list_handlers(self) -> FlextTypes.StringList:
                 """List all registered handlers."""
                 return list(self._handlers.keys())
 
@@ -458,7 +460,7 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         print(f"Registered handlers: {registry.list_handlers()}")
 
         # Dynamic handler execution
-        test_request: dict[str, object] = {"text": "Hello FLEXT"}
+        test_request: FlextTypes.Dict = {"text": "Hello FLEXT"}
 
         print("\n1. Uppercase handler:")
         result = registry.execute("uppercase", test_request)

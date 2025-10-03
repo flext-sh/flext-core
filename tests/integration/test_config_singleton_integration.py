@@ -34,19 +34,19 @@ class TestFlextConfigSingletonIntegration:
     def setup_method(self) -> None:
         """Reset singleton instances before each test."""
         FlextConfig.reset_global_instance()
-        FlextContainer.get_global().clear()
+        FlextContainer.ensure_global_manager().get_or_create().clear()
 
     def teardown_method(self) -> None:
         """Reset singleton instances after each test."""
         FlextConfig.reset_global_instance()
-        FlextContainer.get_global().clear()
+        FlextContainer.ensure_global_manager().get_or_create().clear()
 
     def test_singleton_pattern(self) -> None:
-        """Test that FlextConfig.get_global_instance() returns the same instance."""
+        """Test that FlextConfig() returns the same instance."""
         # Get config instance multiple times
-        config1 = FlextConfig.get_global_instance()
-        config2 = FlextConfig.get_global_instance()
-        config3 = FlextConfig.get_global_instance()
+        config1 = FlextConfig()
+        config2 = FlextConfig()
+        config3 = FlextConfig()
 
         # All should be the same instance
         assert config1 is config2
@@ -63,7 +63,7 @@ class TestFlextConfigSingletonIntegration:
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""
         # Get global config
-        global_config = FlextConfig.get_global_instance()
+        global_config = FlextConfig()
 
         # Create new container
         container = FlextContainer()
@@ -74,11 +74,11 @@ class TestFlextConfigSingletonIntegration:
     def test_config_in_processors(self) -> None:
         """Test that processors use global config."""
         # Get global config
-        global_config = FlextConfig.get_global_instance()
+        global_config = FlextConfig()
 
-        # Test with available FlextProcessors classes
-        handler_registry = FlextProcessors.create_handler_registry()
-        pipeline = FlextProcessors.create_pipeline()
+        # Test with available FlextProcessors classes - use direct instantiation
+        handler_registry = FlextProcessors.HandlerRegistry()
+        pipeline = FlextProcessors.Pipeline()
 
         # These should work with the current API
         assert handler_registry is not None
@@ -110,7 +110,7 @@ class TestFlextConfigSingletonIntegration:
 
         try:
             # Get config (should load from env vars)
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig()
 
             # Check that env vars were loaded
             assert config.app_name == "test-app-from-env"
@@ -168,7 +168,7 @@ class TestFlextConfigSingletonIntegration:
             Path("config.json").write_text(json.dumps(config_data), encoding="utf-8")
 
             # Get config (should load from JSON)
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig()
 
             # Check that config loaded successfully (may use defaults if file loading not implemented)
             assert config.app_name is not None
@@ -223,7 +223,7 @@ class TestFlextConfigSingletonIntegration:
                 yaml.dump(config_data, f)
 
             # Get config (should load from YAML)
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig()
 
             # Check that config loaded successfully (may use defaults if file loading not implemented)
             assert config.app_name is not None
@@ -271,7 +271,7 @@ class TestFlextConfigSingletonIntegration:
             os.environ["FLEXT_APP_NAME"] = "from-env-var"
 
             # Get config
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig()
 
             # Check priority: env var > .env > json
             # Values may vary based on actual environment setup
@@ -305,7 +305,7 @@ class TestFlextConfigSingletonIntegration:
         configs = []
 
         def get_config() -> None:
-            config = FlextConfig.get_global_instance()
+            config = FlextConfig()
             configs.append(config)
 
         # Create multiple threads

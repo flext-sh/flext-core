@@ -7,7 +7,7 @@ handler implementations in FLEXT applications.
 Dependency Layer: 13 (Application Services)
 Dependencies: FlextConstants, FlextTypes, FlextExceptions, FlextResult,
               FlextConfig, FlextUtilities, FlextLoggings, FlextMixins,
-              FlextModels, FlextContainer, FlextProcessors, FlextCqrs
+              FlextModels, FlextContainer, FlextProcessors
 Used by: FlextBus, FlextDispatcher, FlextRegistry, and ecosystem handler implementations
 
 Simplified and refactored to use extracted components for reduced complexity
@@ -46,6 +46,7 @@ from typing import (
 
 from pydantic import BaseModel
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
@@ -56,6 +57,9 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Module-level configuration instance for runtime defaults
+_config = FlextConfig()
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -350,7 +354,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             context_operation = operation or "unknown"
 
             if isinstance(message, (dict, str, int, float, bool)):
-                return cast("FlextTypes.Core.Dict | str | int | float | bool", message)
+                return cast("FlextTypes.Dict | str | int | float | bool", message)
 
             if message is None:
                 msg = f"Invalid message type for {operation_name}: NoneType"
@@ -380,7 +384,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 and hasattr(message, "__attrs_attrs__")
                 and hasattr(message, "__class__")
             ):
-                result: FlextTypes.Core.Dict = {}
+                result: FlextTypes.Dict = {}
                 for attr_field in attrs_fields:
                     field_name = attr_field.name
                     if hasattr(message, field_name):
@@ -394,7 +398,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     try:
                         result_data = method()
                         if isinstance(result_data, dict):
-                            return cast("FlextTypes.Core.Dict", result_data)
+                            return cast("FlextTypes.Dict", result_data)
                     except Exception as e:
                         logger = FlextLogger(__name__)
                         logger.debug(
@@ -408,7 +412,9 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if isinstance(slots, str):
                     slot_names: tuple[str, ...] = (slots,)
                 elif isinstance(slots, (list, tuple)):
-                    slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
+                    slot_names = tuple(
+                        cast("FlextTypes.StringList | tuple[str, ...]", slots)
+                    )
                 else:
                     msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
                     raise FlextExceptions.TypeError(
@@ -487,7 +493,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Default to False if not specified
         return False
 
-    def can_handle(self, message_type: type) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if this handler can handle the given message type.
 
         Args:
@@ -584,7 +590,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
-    def validate(self, data: MessageT_contra) -> FlextResult[None]:
+    def validate(self, data: object) -> FlextResult[None]:
         """Validate input data based on handler mode for Application.Handler protocol.
 
         Generic validation that delegates to mode-specific validation methods.
@@ -650,7 +656,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def _run_pipeline(
         self,
-        message: MessageT_contra | FlextTypes.Core.Dict,
+        message: MessageT_contra | FlextTypes.Dict,
         operation: str = "command",
     ) -> FlextResult[ResultT]:
         """Run the handler pipeline with message processing.
@@ -784,9 +790,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         handler_name: str | None = None,
         handler_type: Literal["command", "query"] = "command",
         mode: str | None = None,
-        handler_config: FlextModels.CqrsConfig.Handler
-        | FlextTypes.Core.Dict
-        | None = None,
+        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Dict | None = None,
     ) -> FlextHandlers[object, object]:
         """Create a handler from a callable function.
 
@@ -949,7 +953,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         ) -> None:
             """Log handler error event with structured logging."""
             if logger is not None:
-                kwargs: FlextTypes.Core.Dict = {
+                kwargs: FlextTypes.Dict = {
                     "handler_mode": handler_mode,
                     "message_type": message_type,
                     "message_id": message_id,
@@ -1010,59 +1014,43 @@ class FlextHandlers[MessageT_contra, ResultT](
             command_type: str,
             validation_rules: FlextTypes.Handlers.HandlerList | None = None,
         ) -> FlextHandlers[TCommand, object]:
-            """Create a command handler with advanced validation patterns.
+            """REMOVED: Use direct class definition instead of factory method.
 
-            Args:
-                handler_func: Command handling function
-                command_type: Type of command this handler processes
-                validation_rules: Optional validation rules to apply
-
-            Returns:
-                FlextHandlers[TCommand, TResult]: Configured command handler
-
-            Example:
-                ```python
-                handler = FlextHandlers.AdvancedPatterns.create_command_handler(
+            Migration:
+                # Old pattern
+                handler = FlextHandlers.HandlerPatterns.create_command_handler(
                     lambda cmd: process_create_order(cmd),
                     "CreateOrder",
-                    [
-                        lambda c: validate_order_data(c),
-                        lambda c: validate_customer_permissions(c),
-                    ],
+                    [validate_order_data, validate_customer_permissions],
                 )
-                ```
 
-            """
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id=f"{command_type.lower()}_handler",
-                handler_name=f"{command_type}Handler",
-                handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                metadata={
-                    "command_type": command_type,
-                    "validation_rules": validation_rules,
-                },
-            )
+                # New pattern - define handler class directly
+                class CreateOrderHandler(FlextHandlers[CreateOrderCommand, object]):
+                    def __init__(self) -> None:
+                        config = FlextModels.CqrsConfig.Handler(
+                            handler_id="create_order_handler",
+                            handler_name="CreateOrderHandler",
+                            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                        )
+                        super().__init__(config=config)
 
-            class CommandHandler(FlextHandlers[TCommand, object]):
-                @override
-                def handle(self, message: TCommand) -> FlextResult[object]:
-                    # Apply validation rules if provided
-                    if validation_rules:
-                        for rule in validation_rules:
+                    def handle(self, message: CreateOrderCommand) -> FlextResult[object]:
+                        # Apply validation
+                        for rule in [validate_order_data, validate_customer_permissions]:
                             result = rule(message)
                             if result.is_failure:
-                                return FlextResult[object].fail(
-                                    f"Command validation failed: {result.error}",
-                                    error_code="COMMAND_VALIDATION_FAILED",
-                                    error_data={
-                                        "command_type": command_type,
-                                        "error": result.error,
-                                    },
-                                )
+                                return FlextResult[object].fail(f"Validation failed: {result.error}")
 
-                    return handler_func(message)
+                        return process_create_order(message)
 
-            return CommandHandler(config=config)
+                handler = CreateOrderHandler()
+
+            """
+            msg = (
+                "FlextHandlers.HandlerPatterns.create_command_handler() has been removed. "
+                "Define handler classes directly instead of using factory methods."
+            )
+            raise NotImplementedError(msg)
 
         @staticmethod
         def create_query_handler[TQuery, TResult](
@@ -1072,62 +1060,44 @@ class FlextHandlers[MessageT_contra, ResultT](
             caching_enabled: bool = False,
             cache_ttl: int = FlextConstants.Defaults.CACHE_TTL,
         ) -> FlextHandlers[TQuery, TResult]:
-            """Create a query handler with caching patterns.
+            """REMOVED: Use direct class definition instead of factory method.
 
-            Args:
-                handler_func: Query handling function
-                query_type: Type of query this handler processes
-                caching_enabled: Whether to enable caching
-                cache_ttl: Cache time-to-live in seconds
-
-            Returns:
-                FlextHandlers[TQuery, TResult]: Configured query handler
-
-            Example:
-                ```python
-                handler = FlextHandlers.AdvancedPatterns.create_query_handler(
+            Migration:
+                # Old pattern
+                handler = FlextHandlers.HandlerPatterns.create_query_handler(
                     lambda q: get_order_by_id(q),
                     "GetOrderById",
                     caching_enabled=True,
                     cache_ttl=600,
                 )
-                ```
+
+                # New pattern - define handler class directly
+                class GetOrderByIdHandler(FlextHandlers[GetOrderByIdQuery, OrderResult]):
+                    def __init__(self, cache_ttl: int | None = None) -> None:
+                        # Use config value if not provided
+                        ttl = cache_ttl if cache_ttl is not None else _config.cache_ttl
+                        config = FlextModels.CqrsConfig.Handler(
+                            handler_id="get_order_by_id_handler",
+                            handler_name="GetOrderByIdHandler",
+                            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+                            metadata={"caching_enabled": True, "cache_ttl": ttl},
+                        )
+                        super().__init__(config=config)
+                        self._cache_ttl = cache_ttl
+
+                    def handle(self, message: GetOrderByIdQuery) -> FlextResult[OrderResult]:
+                        # Implement caching logic
+                        result = get_order_by_id(message)
+                        return result
+
+                handler = GetOrderByIdHandler(cache_ttl=600)
 
             """
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id=f"{query_type.lower()}_handler",
-                handler_name=f"{query_type}Handler",
-                handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-                metadata={
-                    "query_type": query_type,
-                    "caching_enabled": caching_enabled,
-                    "cache_ttl": cache_ttl,
-                },
+            msg = (
+                "FlextHandlers.HandlerPatterns.create_query_handler() has been removed. "
+                "Define handler classes directly instead of using factory methods."
             )
-
-            class QueryHandler(FlextHandlers[TQuery, TResult]):
-                @override
-                def handle(self, message: TQuery) -> FlextResult[TResult]:
-                    # Implement caching logic if enabled
-                    if caching_enabled:
-                        # cache_key = f"{query_type}:{hash(str(message))}"
-                        # In real implementation, would check cache here
-                        # cached_result = cache.get(cache_key)
-                        # if cached_result:
-                        #     return cached_result
-                        pass
-
-                    result = handler_func(message)
-
-                    # Cache result if enabled and successful
-                    if caching_enabled and result.is_success:
-                        # In real implementation, would cache result here
-                        # cache.set(cache_key, result, ttl=cache_ttl)
-                        pass
-
-                    return result
-
-            return QueryHandler(config=config)
+            raise NotImplementedError(msg)
 
         @staticmethod
         def create_event_handler[TEvent](
@@ -1135,82 +1105,57 @@ class FlextHandlers[MessageT_contra, ResultT](
             event_type: str,
             retry_policy: FlextTypes.Handlers.HandlerConfig | None = None,
         ) -> FlextHandlers[TEvent, None]:
-            """Create an event handler with retry patterns.
+            """REMOVED: Use direct class definition instead of factory method.
 
-            Args:
-                handler_func: Event handling function
-                event_type: Type of event this handler processes
-                retry_policy: Optional retry policy configuration
-
-            Returns:
-                FlextHandlers[TEvent, None]: Configured event handler
-
-            Example:
-                ```python
-                handler = FlextHandlers.AdvancedPatterns.create_event_handler(
+            Migration:
+                # Old pattern
+                handler = FlextHandlers.HandlerPatterns.create_event_handler(
                     lambda e: handle_order_created(e),
                     "OrderCreated",
                     retry_policy={
-                        "max_retries": FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
-                        "retry_delay": FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+                        "max_retries": 3,
+                        "retry_delay": 1.0,
                     },
                 )
-                ```
 
-            """
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id=f"{event_type.lower()}_handler",
-                handler_name=f"{event_type}Handler",
-                handler_type=FlextConstants.Cqrs.EVENT_HANDLER_TYPE,
-                metadata={"event_type": event_type, "retry_policy": retry_policy},
-            )
+                # New pattern - define handler class directly
+                class OrderCreatedHandler(FlextHandlers[OrderCreatedEvent, None]):
+                    def __init__(
+                        self,
+                        max_retries: int | None = None,
+                        retry_delay: float | None = None,
+                    ) -> None:
+                        # Use config values if not provided
+                        retries = max_retries if max_retries is not None else _config.max_retry_attempts
+                        delay = retry_delay if retry_delay is not None else _config.retry_delay_seconds
+                        config = FlextModels.CqrsConfig.Handler(
+                            handler_id="order_created_handler",
+                            handler_name="OrderCreatedHandler",
+                            handler_type=FlextConstants.Cqrs.EVENT_HANDLER_TYPE,
+                        )
+                        super().__init__(config=config)
+                        self._max_retries = retries
+                        self._retry_delay = delay
 
-            class EventHandler(FlextHandlers[TEvent, None]):
-                @override
-                def handle(self, message: TEvent) -> FlextResult[None]:
-                    # Implement retry logic if policy provided
-                    if retry_policy:
-                        max_retries_val = retry_policy.get(
-                            "max_retries", FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-                        )
-                        retry_delay_val = retry_policy.get(
-                            "retry_delay",
-                            FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
-                        )
-                        max_retries = (
-                            int(max_retries_val)
-                            if isinstance(max_retries_val, (int, str))
-                            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-                        )
-                        retry_delay = (
-                            float(retry_delay_val)
-                            if isinstance(retry_delay_val, (int, float, str))
-                            else float(
-                                FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
-                            )
-                        )
-
+                    def handle(self, message: OrderCreatedEvent) -> FlextResult[None]:
+                        # Implement retry logic
                         result = None
-                        for attempt in range(max_retries + 1):
-                            result = handler_func(message)
+                        for attempt in range(self._max_retries + 1):
+                            result = handle_order_created(message)
                             if result.is_success:
                                 return result
+                            if attempt < self._max_retries:
+                                time.sleep(self._retry_delay)
+                        return FlextResult[None].fail(f"Failed after retries: {result.error if result else 'Unknown'}")
 
-                            if attempt < max_retries:
-                                time.sleep(retry_delay)
+                handler = OrderCreatedHandler(max_retries=3, retry_delay=1.0)
 
-                        return FlextResult[None].fail(
-                            f"Event handling failed after {max_retries} retries: {result.error if result else 'No attempts made'}",
-                            error_code="EVENT_HANDLING_FAILED",
-                            error_data={
-                                "event_type": event_type,
-                                "max_retries": max_retries,
-                            },
-                        )
-
-                    return handler_func(message)
-
-            return EventHandler(config=config)
+            """
+            msg = (
+                "FlextHandlers.HandlerPatterns.create_event_handler() has been removed. "
+                "Define handler classes directly instead of using factory methods."
+            )
+            raise NotImplementedError(msg)
 
         @staticmethod
         def create_saga_handler[TState](
@@ -1218,84 +1163,51 @@ class FlextHandlers[MessageT_contra, ResultT](
             compensation_steps: FlextTypes.Handlers.CompensationSteps[TState],
             saga_type: str,
         ) -> FlextHandlers[TState, TState]:
-            """Create a saga handler for distributed transactions.
+            """REMOVED: Use direct class definition instead of factory method.
 
-            Args:
-                saga_steps: List of saga step functions
-                compensation_steps: List of compensation functions (in reverse order)
-                saga_type: Type of saga this handler manages
-
-            Returns:
-                FlextHandlers[TState, TState]: Configured saga handler
-
-            Example:
-                ```python
-                handler = FlextHandlers.AdvancedPatterns.create_saga_handler(
-                    [
-                        lambda state: create_order(state),
-                        lambda state: reserve_inventory(state),
-                        lambda state: process_payment(state),
-                    ],
-                    [
-                        lambda state: refund_payment(state),
-                        lambda state: release_inventory(state),
-                        lambda state: cancel_order(state),
-                    ],
+            Migration:
+                # Old pattern
+                handler = FlextHandlers.HandlerPatterns.create_saga_handler(
+                    [create_order, reserve_inventory, process_payment],
+                    [refund_payment, release_inventory, cancel_order],
                     "OrderProcessingSaga",
                 )
-                ```
+
+                # New pattern - define handler class directly
+                class OrderProcessingSagaHandler(FlextHandlers[OrderState, OrderState]):
+                    def __init__(self) -> None:
+                        config = FlextModels.CqrsConfig.Handler(
+                            handler_id="order_processing_saga",
+                            handler_name="OrderProcessingSagaHandler",
+                            handler_type=FlextConstants.Cqrs.SAGA_HANDLER_TYPE,
+                        )
+                        super().__init__(config=config)
+                        self._steps = [create_order, reserve_inventory, process_payment]
+                        self._compensations = [refund_payment, release_inventory, cancel_order]
+
+                    def handle(self, message: OrderState) -> FlextResult[OrderState]:
+                        current_state = message
+                        executed: list[int] = []
+                        for i, step in enumerate(self._steps):
+                            result = step(current_state)
+                            if result.is_failure:
+                                for j in range(len(executed) - 1, -1, -1):
+                                    self._compensations[j](current_state)
+                                return FlextResult[OrderState].fail(f"Step {i} failed")
+                            current_state = result.unwrap()
+                            executed.append(i)
+                        return FlextResult[OrderState].ok(current_state)
+
+                handler = OrderProcessingSagaHandler()
 
             """
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id=f"{saga_type.lower()}_handler",
-                handler_name=f"{saga_type}Handler",
-                handler_type=FlextConstants.Cqrs.SAGA_HANDLER_TYPE,
-                metadata={
-                    "saga_type": saga_type,
-                    "saga_steps": saga_steps,
-                    "compensation_steps": compensation_steps,
-                },
+            msg = (
+                "FlextHandlers.HandlerPatterns.create_saga_handler() has been removed. "
+                "Define handler classes directly instead of using factory methods."
             )
-
-            class SagaHandler(FlextHandlers[TState, TState]):
-                @override
-                def handle(self, message: TState) -> FlextResult[TState]:
-                    current_state = message
-                    executed_steps: FlextTypes.Core.IntList = []
-
-                    # Execute saga steps
-                    for i, step in enumerate(saga_steps):
-                        result = step(current_state)
-                        if result.is_failure:
-                            # Execute compensation steps in reverse order
-                            for j in range(len(executed_steps) - 1, -1, -1):
-                                compensation_result = compensation_steps[j](
-                                    current_state
-                                )
-                                if compensation_result.is_failure:
-                                    return FlextResult[TState].fail(
-                                        f"Saga compensation failed at step {j}: {compensation_result.error}",
-                                        error_code="SAGA_COMPENSATION_FAILED",
-                                        error_data={
-                                            "saga_type": saga_type,
-                                            "failed_step": i,
-                                            "compensation_step": j,
-                                        },
-                                    )
-                            return FlextResult[TState].fail(
-                                f"Saga step {i} failed: {result.error}",
-                                error_code="SAGA_STEP_FAILED",
-                                error_data={"saga_type": saga_type, "failed_step": i},
-                            )
-
-                        current_state = result.unwrap()
-                        executed_steps.append(i)
-
-                    return FlextResult[TState].ok(current_state)
-
-            return SagaHandler(config=config)
+            raise NotImplementedError(msg)
 
 
-__all__: FlextTypes.Core.StringList = [
+__all__: FlextTypes.StringList = [
     "FlextHandlers",
 ]

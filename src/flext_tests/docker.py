@@ -26,7 +26,7 @@ from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
 
-from flext_core import FlextLogger, FlextResult, T
+from flext_core import FlextLogger, FlextResult, FlextTypes, T
 
 if TYPE_CHECKING:
     from docker import DockerClient
@@ -72,7 +72,7 @@ class ContainerInfo:
 
     name: str
     status: ContainerStatus
-    ports: dict[str, str]
+    ports: FlextTypes.StringDict
     image: str
     container_id: str = ""
 
@@ -84,7 +84,7 @@ class FlextTestDocker:
     _cli_group: ClassVar[click.Group | None] = None
     _workspace_parser: ClassVar[argparse.ArgumentParser | None] = None
     _DEFAULT_LOG_TAIL: ClassVar[int] = 100
-    _CLI_CONTAINER_CHOICES: ClassVar[list[str]] = [
+    _CLI_CONTAINER_CHOICES: ClassVar[FlextTypes.StringList] = [
         "flext-shared-ldap",
         "flext-postgres",
         "flext-redis",
@@ -99,7 +99,7 @@ class FlextTestDocker:
         self.workspace_root = workspace_root or Path.cwd()
         self.client: DockerClient | None = None  # Will be set by _get_client()
         self._registered_services: set[str] = set()
-        self._service_dependencies: dict[str, list[str]] = {}
+        self._service_dependencies: dict[str, FlextTypes.StringList] = {}
 
         # Initialize nested managers
         self._container_manager = None
@@ -213,7 +213,7 @@ class FlextTestDocker:
         """
         return container_name in self._dirty_containers
 
-    def get_dirty_containers(self) -> list[str]:
+    def get_dirty_containers(self) -> FlextTypes.StringList:
         """Get list of all dirty containers.
 
         Returns:
@@ -222,14 +222,14 @@ class FlextTestDocker:
         """
         return list(self._dirty_containers)
 
-    def cleanup_dirty_containers(self) -> FlextResult[dict[str, str]]:
+    def cleanup_dirty_containers(self) -> FlextResult[FlextTypes.StringDict]:
         """Clean up all dirty containers by recreating them with fresh volumes.
 
         Returns:
             FlextResult with dict of container names to cleanup status
 
         """
-        results: dict[str, str] = {}
+        results: FlextTypes.StringDict = {}
 
         for container_name in list(self._dirty_containers):
             self._logger.info(
@@ -296,21 +296,27 @@ class FlextTestDocker:
                 else:
                     results[container_name] = f"Restart failed: {start_result.error}"
 
-        return FlextResult[dict[str, str]].ok(results)
+        return FlextResult[FlextTypes.StringDict].ok(results)
 
     # Essential methods that are being called by other files
-    def start_all(self) -> FlextResult[dict[str, str]]:
+    def start_all(self) -> FlextResult[FlextTypes.StringDict]:
         """Start all containers."""
-        return FlextResult[dict[str, str]].ok({"message": "All containers started"})
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All containers started"
+        })
 
-    def stop_all(self, *, remove: bool = False) -> FlextResult[dict[str, str]]:
+    def stop_all(self, *, remove: bool = False) -> FlextResult[FlextTypes.StringDict]:
         """Stop all containers."""
         _ = remove  # Parameter required by API but not used in stub implementation
-        return FlextResult[dict[str, str]].ok({"message": "All containers stopped"})
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All containers stopped"
+        })
 
-    def reset_all(self) -> FlextResult[dict[str, str]]:
+    def reset_all(self) -> FlextResult[FlextTypes.StringDict]:
         """Reset all containers."""
-        return FlextResult[dict[str, str]].ok({"message": "All containers reset"})
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All containers reset"
+        })
 
     def reset_container(self, name: str) -> FlextResult[str]:
         """Reset a specific container."""
@@ -330,9 +336,9 @@ class FlextTestDocker:
         container_name: str,
         ports: list[int] | None = None,
         health_check_cmd: str | None = None,
-        depends_on: list[str] | None = None,
+        depends_on: FlextTypes.StringList | None = None,
         startup_timeout: int = 30,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Register a service for testing."""
         self._registered_services.add(service_name)
 
@@ -348,7 +354,7 @@ class FlextTestDocker:
             health_check_cmd,
             startup_timeout,
         )  # Unused parameters
-        return FlextResult[dict[str, str]].ok({
+        return FlextResult[FlextTypes.StringDict].ok({
             "service": service_name,
             "status": "registered",
         })
@@ -395,26 +401,26 @@ class FlextTestDocker:
 
     def start_services_for_test(
         self,
-        required_services: list[str] | None = None,
+        required_services: FlextTypes.StringList | None = None,
         test_name: str | None = None,
-        service_names: list[str] | None = None,
-    ) -> FlextResult[dict[str, str]]:
+        service_names: FlextTypes.StringList | None = None,
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Start services for testing."""
         if service_names:
             # Check if all services are registered
             for service_name in service_names:
                 if service_name not in self._registered_services:
-                    return FlextResult[dict[str, str]].fail(
+                    return FlextResult[FlextTypes.StringDict].fail(
                         f"Service '{service_name}' is not registered",
                     )
 
         _ = test_name  # Unused parameter
         _ = required_services  # Unused parameter
-        return FlextResult[dict[str, str]].ok({"status": "services_started"})
+        return FlextResult[FlextTypes.StringDict].ok({"status": "services_started"})
 
-    def get_running_services(self) -> FlextResult[list[str]]:
+    def get_running_services(self) -> FlextResult[FlextTypes.StringList]:
         """Get list of running services."""
-        return FlextResult[list[str]].ok([])
+        return FlextResult[FlextTypes.StringList].ok([])
 
     def compose_up(
         self,
@@ -442,7 +448,7 @@ class FlextTestDocker:
         context_path: str | None = None,
         tag: str = "latest",
         dockerfile: str = "Dockerfile",
-        build_args: dict[str, str] | None = None,
+        build_args: FlextTypes.StringDict | None = None,
         *,  # Force keyword-only arguments for boolean parameters
         no_cache: bool = False,
         pull: bool = False,
@@ -461,34 +467,42 @@ class FlextTestDocker:
         )  # Parameters required by API but not used in stub implementation
         return FlextResult[str].ok(f"Image {tag} built successfully")
 
-    def cleanup_networks(self) -> FlextResult[list[str]]:
+    def cleanup_networks(self) -> FlextResult[FlextTypes.StringList]:
         """Clean up unused networks."""
-        return FlextResult[list[str]].ok([])
+        return FlextResult[FlextTypes.StringList].ok([])
 
-    def cleanup_volumes(self) -> FlextResult[dict[str, int | list[str]]]:
+    def cleanup_volumes(self) -> FlextResult[dict[str, int | FlextTypes.StringList]]:
         """Clean up unused volumes."""
-        return FlextResult[dict[str, int | list[str]]].ok({"removed": 0, "volumes": []})
+        return FlextResult[dict[str, int | FlextTypes.StringList]].ok({
+            "removed": 0,
+            "volumes": [],
+        })
 
-    def cleanup_images(self) -> FlextResult[dict[str, int | list[str]]]:
+    def cleanup_images(self) -> FlextResult[dict[str, int | FlextTypes.StringList]]:
         """Clean up unused images."""
-        return FlextResult[dict[str, int | list[str]]].ok({"removed": 0, "images": []})
+        return FlextResult[dict[str, int | FlextTypes.StringList]].ok({
+            "removed": 0,
+            "images": [],
+        })
 
-    def cleanup_all_test_containers(self) -> FlextResult[dict[str, str]]:
+    def cleanup_all_test_containers(self) -> FlextResult[FlextTypes.StringDict]:
         """Clean up all test containers."""
-        return FlextResult[dict[str, str]].ok({
+        return FlextResult[FlextTypes.StringDict].ok({
             "message": "All test containers cleaned up",
         })
 
-    def stop_services_for_test(self, test_name: str) -> FlextResult[dict[str, str]]:
+    def stop_services_for_test(
+        self, test_name: str
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Stop services for a specific test."""
-        return FlextResult[dict[str, str]].ok({
+        return FlextResult[FlextTypes.StringDict].ok({
             "message": f"Services stopped for test {test_name}",
         })
 
     def auto_discover_services(
         self,
         compose_file_path: str | None = None,
-    ) -> FlextResult[list[str]]:
+    ) -> FlextResult[FlextTypes.StringList]:
         """Auto-discover services."""
         try:
             if compose_file_path and compose_file_path.endswith(".yml"):
@@ -498,7 +512,7 @@ class FlextTestDocker:
                     content = f.read()
 
                     # Find service names and their dependencies
-                    lines: list[str] = content.split("\n")
+                    lines: FlextTypes.StringList = content.split("\n")
                     current_service: str | None = None
                     in_depends_on = False
 
@@ -553,21 +567,21 @@ class FlextTestDocker:
                             self._service_dependencies[service_name] = []
                             in_depends_on = False
 
-                return FlextResult[list[str]].ok(services)
-            return FlextResult[list[str]].ok([])
+                return FlextResult[FlextTypes.StringList].ok(services)
+            return FlextResult[FlextTypes.StringList].ok([])
         except Exception:
-            return FlextResult[list[str]].ok([])
+            return FlextResult[FlextTypes.StringList].ok([])
 
     def get_service_health_status(
         self,
         service_name: str,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Get service health status."""
         if service_name not in self._registered_services:
-            return FlextResult[dict[str, str]].fail(
+            return FlextResult[FlextTypes.StringDict].fail(
                 f"Service '{service_name}' is not registered",
             )
-        return FlextResult[dict[str, str]].ok({
+        return FlextResult[FlextTypes.StringDict].ok({
             "status": "healthy",
             "container_status": "running",
             "health_check": "passed",
@@ -595,39 +609,42 @@ class FlextTestDocker:
         _ = command  # Parameter required by API but not used in stub implementation
         return FlextResult[str].ok(f"Interactive command executed in {container_name}")
 
-    def list_volumes(self) -> FlextResult[list[str]]:
+    def list_volumes(self) -> FlextResult[FlextTypes.StringList]:
         """List Docker volumes."""
-        return FlextResult[list[str]].ok([])
+        return FlextResult[FlextTypes.StringList].ok([])
 
-    def get_service_dependency_graph(self) -> dict[str, list[str]]:
+    def get_service_dependency_graph(self) -> dict[str, FlextTypes.StringList]:
         """Get service dependency graph."""
         return self._service_dependencies.copy()
 
     def images_formatted(
         self,
         format_string: str = "{{.Repository}}:{{.Tag}}",
-    ) -> FlextResult[list[str]]:
+    ) -> FlextResult[FlextTypes.StringList]:
         """Get formatted list of images."""
         # Parameter required by API but not used in stub implementation
         _ = format_string
-        return FlextResult[list[str]].ok(["test:latest"])
+        return FlextResult[FlextTypes.StringList].ok(["test:latest"])
 
     def list_containers_formatted(
         self,
         *,
         show_all: bool = False,
         format_string: str = "{{.Names}} ({{.Status}})",
-    ) -> FlextResult[list[str]]:
+    ) -> FlextResult[FlextTypes.StringList]:
         """Get formatted list of containers."""
         _ = (
             show_all,
             format_string,
         )  # Parameters required by API but not used in stub implementation
-        return FlextResult[list[str]].ok(["test_container_1", "test_container_2"])
+        return FlextResult[FlextTypes.StringList].ok([
+            "test_container_1",
+            "test_container_2",
+        ])
 
-    def list_networks(self) -> FlextResult[list[str]]:
+    def list_networks(self) -> FlextResult[FlextTypes.StringList]:
         """List Docker networks."""
-        return FlextResult[list[str]].ok([])
+        return FlextResult[FlextTypes.StringList].ok([])
 
     # Class attributes that are expected
     SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = {
@@ -756,7 +773,7 @@ class FlextTestDocker:
                 if container.status == "running"
                 else ContainerStatus.STOPPED
             )
-            image_tags: list[str] = (
+            image_tags: FlextTypes.StringList = (
                 container.image.tags
                 if container.image and hasattr(container.image, "tags")
                 else []
@@ -783,7 +800,7 @@ class FlextTestDocker:
         *,
         tag: str,
         dockerfile: str = "Dockerfile",
-        build_args: dict[str, str] | None = None,
+        build_args: FlextTypes.StringDict | None = None,
         no_cache: bool = False,
         pull: bool = False,
     ) -> FlextResult[str]:
@@ -797,8 +814,8 @@ class FlextTestDocker:
         *,
         name: str | None = None,
         ports: dict[str, int | list[int] | tuple[str, int]] | None = None,
-        environment: dict[str, str] | None = None,
-        volumes: dict[str, dict[str, str]] | list[str] | None = None,
+        environment: FlextTypes.StringDict | None = None,
+        volumes: dict[str, FlextTypes.StringDict] | FlextTypes.StringList | None = None,
         detach: bool = True,
         remove: bool = False,
         command: str | None = None,
@@ -808,7 +825,7 @@ class FlextTestDocker:
             client = self.get_client()
             container_name = name or f"flext-container-{hash(image)}"
             # Prepare parameters for docker run
-            run_kwargs: dict[str, object] = {
+            run_kwargs: FlextTypes.Dict = {
                 "detach": detach,
                 "remove": remove,
             }
@@ -923,7 +940,7 @@ class FlextTestDocker:
                     if container.status == "running"
                     else ContainerStatus.STOPPED
                 )
-                image_tags: list[str] = (
+                image_tags: FlextTypes.StringList = (
                     container.image.tags
                     if container.image and hasattr(container.image, "tags")
                     else []
@@ -1014,9 +1031,7 @@ class FlextTestDocker:
             return FlextResult[str].fail(f"Failed to fetch logs: {exc}")
 
     @classmethod
-    def register_pytest_fixtures(
-        cls, namespace: dict[str, object] | None = None
-    ) -> None:
+    def register_pytest_fixtures(cls, namespace: FlextTypes.Dict | None = None) -> None:
         """Register pytest fixtures that wrap FlextTestDocker operations."""
         if cls._PYTEST_REGISTERED:
             return
@@ -1171,7 +1186,7 @@ class FlextTestDocker:
         @pytest.fixture
         def all_containers_running(
             docker_control: FlextTestDocker,
-        ) -> Iterator[dict[str, str]]:
+        ) -> Iterator[FlextTypes.StringDict]:
             start_result = docker_control.start_all()
             if start_result.is_failure:
                 if pytest is not None:
@@ -1228,11 +1243,11 @@ class FlextTestDocker:
 
     def build_workspace_projects(
         self,
-        projects: list[str],
+        projects: FlextTypes.StringList,
         registry: str = "flext",
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Build Docker images for a set of workspace projects."""
-        results: dict[str, str] = {}
+        results: FlextTypes.StringDict = {}
 
         for project in projects:
             project_path = self.workspace_root / project
@@ -1268,7 +1283,7 @@ class FlextTestDocker:
             else:
                 results[project] = f"Build failed: {build_result.error}"
 
-        return FlextResult[dict[str, str]].ok(results)
+        return FlextResult[FlextTypes.StringDict].ok(results)
 
     def build_single_image(
         self,
@@ -1348,23 +1363,23 @@ class FlextTestDocker:
             return FlextResult[str].ok("Logs displayed")
         return FlextResult[str].fail(f"Failed to get logs: {logs_result.error}")
 
-    def show_stack_status(self, compose_file: str) -> FlextResult[dict[str, object]]:
+    def show_stack_status(self, compose_file: str) -> FlextResult[FlextTypes.Dict]:
         """Return status information for the Docker Compose stack."""
         _ = compose_file  # compose file not required for stub implementation
         status_result = self.get_all_status()
         if status_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Status check failed: {status_result.error}",
             )
 
-        status_info: dict[str, object] = status_result.value.copy()
+        status_info: FlextTypes.Dict = status_result.value.copy()
         running_services = self.get_running_services()
         if running_services.is_success:
             status_info["auto_managed_services"] = running_services.value
         else:
             status_info["auto_managed_services"] = []
 
-        return FlextResult[dict[str, object]].ok(status_info)
+        return FlextResult[FlextTypes.Dict].ok(status_info)
 
     def connect_to_service(self, service_name: str) -> FlextResult[str]:
         """Open an interactive session with a service container."""
@@ -1394,7 +1409,7 @@ class FlextTestDocker:
         prune_system: bool = False,
     ) -> FlextResult[str]:
         """Clean up containers, networks, volumes, and images."""
-        operations: list[str] = []
+        operations: FlextTypes.StringList = []
 
         running_services = self.get_running_services()
         if running_services.is_success:
@@ -1446,14 +1461,14 @@ class FlextTestDocker:
         compose_file: str,
         *,
         timeout: int = 30,
-    ) -> FlextResult[dict[str, str]]:
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Perform health checks for services in the compose stack."""
         _ = timeout  # Compatibility with previous signature
-        health: dict[str, str] = {}
+        health: FlextTypes.StringDict = {}
 
         discovery = self.auto_discover_services(compose_file)
         if discovery.is_failure:
-            return FlextResult[dict[str, str]].fail(
+            return FlextResult[FlextTypes.StringDict].fail(
                 f"Service discovery failed: {discovery.error}",
             )
 
@@ -1466,11 +1481,13 @@ class FlextTestDocker:
             else:
                 health[service] = f"Health check failed: {health_result.error}"
 
-        return FlextResult[dict[str, str]].ok(health)
+        return FlextResult[FlextTypes.StringDict].ok(health)
 
-    def validate_workspace(self, workspace_root: Path) -> FlextResult[dict[str, str]]:
+    def validate_workspace(
+        self, workspace_root: Path
+    ) -> FlextResult[FlextTypes.StringDict]:
         """Validate Docker operations within a workspace."""
-        results: dict[str, str] = {}
+        results: FlextTypes.StringDict = {}
 
         try:
             docker_manager = FlextTestDocker(workspace_root=workspace_root)
@@ -1504,7 +1521,7 @@ class FlextTestDocker:
         except Exception as exc:
             results["docker_connection"] = f"❌ Failed: {exc}"
 
-        return FlextResult[dict[str, str]].ok(results)
+        return FlextResult[FlextTypes.StringDict].ok(results)
 
     @classmethod
     def _get_workspace_parser(cls) -> argparse.ArgumentParser:
@@ -1695,7 +1712,7 @@ class FlextTestDocker:
         return parser
 
     @classmethod
-    def run_workspace_command(cls, argv: list[str] | None = None) -> int:
+    def run_workspace_command(cls, argv: FlextTypes.StringList | None = None) -> int:
         """Execute workspace manager commands using FlextTestDocker."""
         parser = cls._get_workspace_parser()
         args = parser.parse_args(argv)
@@ -2106,6 +2123,6 @@ def main() -> None:
     FlextTestDocker.run_cli()
 
 
-def workspace_main(argv: list[str] | None = None) -> int:
+def workspace_main(argv: FlextTypes.StringList | None = None) -> int:
     """Entry point compatible with the former workspace manager script."""
     return FlextTestDocker.run_workspace_command(argv)

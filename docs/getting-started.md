@@ -390,7 +390,7 @@ class MyService(FlextService):
 ```python
 class Order(FlextModels.AggregateRoot):
     """Order aggregate root."""
-    items: list[str]
+    items: FlextTypes.StringList
     total: float
 
     def place_order(self) -> FlextResult[None]:

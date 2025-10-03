@@ -52,13 +52,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: FlextTypes.Core.Dict) -> None:
+    def __init__(self, name: str, data: FlextTypes.Dict) -> None:
         """Initialize mockscenario:."""
         self.name = name
-        self.given = cast("FlextTypes.Core.Dict", data.get("given", {}))
-        self.when = cast("FlextTypes.Core.Dict", data.get("when", {}))
-        self.then = cast("FlextTypes.Core.Dict", data.get("then", {}))
-        self.tags = cast("FlextTypes.Core.StringList", data.get("tags", []))
+        self.given = cast("FlextTypes.Dict", data.get("given", {}))
+        self.when = cast("FlextTypes.Dict", data.get("when", {}))
+        self.then = cast("FlextTypes.Dict", data.get("then", {}))
+        self.tags = cast("FlextTypes.StringList", data.get("tags", []))
         self.priority = str(data.get("priority", "normal"))
 
 
@@ -68,10 +68,10 @@ class GivenWhenThenBuilder:
     def __init__(self, name: str) -> None:
         """Initialize givenwhenthenbuilder:."""
         self.name = name
-        self._given: FlextTypes.Core.Dict = {}
-        self._when: FlextTypes.Core.Dict = {}
-        self._then: FlextTypes.Core.Dict = {}
-        self._tags: FlextTypes.Core.StringList = []
+        self._given: FlextTypes.Dict = {}
+        self._when: FlextTypes.Dict = {}
+        self._then: FlextTypes.Dict = {}
+        self._tags: FlextTypes.StringList = []
         self._priority = "normal"
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
@@ -148,7 +148,7 @@ class FlextTestBuilder:
 
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
-        self._data: FlextTypes.Core.Dict = {}
+        self._data: FlextTypes.Dict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -214,11 +214,11 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> FlextTypes.Core.Dict:
+    def build(self) -> FlextTypes.Dict:
         """Build method.
 
         Returns:
-            FlextTypes.Core.Dict: Copy of the built data.
+            FlextTypes.Dict: Copy of the built data.
 
         """
         return self._data.copy()
@@ -230,9 +230,9 @@ class ParameterizedTestBuilder:
     def __init__(self, test_name: str) -> None:
         """Initialize parameterizedtestbuilder:."""
         self.test_name = test_name
-        self._cases: list[FlextTypes.Core.Dict] = []
-        self._success_cases: list[FlextTypes.Core.Dict] = []
-        self._failure_cases: list[FlextTypes.Core.Dict] = []
+        self._cases: list[FlextTypes.Dict] = []
+        self._success_cases: list[FlextTypes.Dict] = []
+        self._failure_cases: list[FlextTypes.Dict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """add_case method.
@@ -246,7 +246,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[FlextTypes.Core.Dict],
+        cases: list[FlextTypes.Dict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -259,7 +259,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FlextTypes.Core.Dict],
+        cases: list[FlextTypes.Dict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -270,11 +270,11 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FlextTypes.Core.Dict]:
+    def build(self) -> list[FlextTypes.Dict]:
         """Build method.
 
         Returns:
-            list[FlextTypes.Core.Dict]: Copy of the test cases.
+            list[FlextTypes.Dict]: Copy of the test cases.
 
         """
         return self._cases.copy()
@@ -296,11 +296,11 @@ class ParameterizedTestBuilder:
         ]
         return success_params + failure_params
 
-    def build_test_ids(self) -> FlextTypes.Core.StringList:
+    def build_test_ids(self) -> FlextTypes.StringList:
         """build_test_ids method.
 
         Returns:
-            FlextTypes.Core.StringList: List of test IDs.
+            FlextTypes.StringList: List of test IDs.
 
         """
         return [
@@ -512,7 +512,7 @@ class TestAdvancedPatterns:
 
         scenario = MockScenario(
             "api_request",
-            cast("FlextTypes.Core.Dict", scenario_data),
+            cast("FlextTypes.Dict", scenario_data),
         )
 
         assert scenario.name == "api_request"

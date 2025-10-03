@@ -41,12 +41,13 @@ class FlextTestsBuilders:
     def __init__(self) -> None:
         """Initialize unified test builders service."""
         try:
-            self._container: FlextContainer | None = FlextContainer.get_global()
+            manager = FlextContainer.ensure_global_manager()
+            self._container: FlextContainer | None = manager.get_or_create()
         except Exception:
             self._container = None
 
         # Dynamic container attributes (set by methods when needed)
-        self._container_services: FlextTypes.Core.Dict = {}
+        self._container_services: FlextTypes.Dict = {}
         self._container_factories: dict[str, Callable[[], object]] = {}
 
         # Attributes for deprecated builder patterns
@@ -57,7 +58,7 @@ class FlextTestsBuilders:
         self._result_data: object = None
         self._result_error: str = ""
         self._result_error_code: str | None = None
-        self._result_error_data: FlextTypes.Core.Dict | None = None
+        self._result_error_data: FlextTypes.Dict | None = None
 
     # === Result Builder Methods (Unified) ===
 
@@ -74,7 +75,7 @@ class FlextTestsBuilders:
         self,
         error: str = "test_error",
         error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
+        error_data: FlextTypes.Dict | None = None,
     ) -> FlextResult[object]:
         """Create a failed FlextResult for testing.
 
@@ -208,7 +209,7 @@ class FlextTestsBuilders:
         if not field_name:
             field_name = field_id
 
-        config: FlextTypes.Core.Dict = {
+        config: FlextTypes.Dict = {
             "required": required,
         }
 
@@ -280,7 +281,7 @@ class FlextTestsBuilders:
     def create_test_callable(
         self,
         return_value: object = None,
-        return_values: FlextTypes.Core.List | None = None,
+        return_values: FlextTypes.List | None = None,
         side_effect: BaseException | None = None,
         behavior: _TestCallableProtocol | None = None,
     ) -> _TestCallableProtocol:
@@ -356,7 +357,7 @@ class FlextTestsBuilders:
         self,
         error: str,
         error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
+        error_data: FlextTypes.Dict | None = None,
     ) -> FlextTestsBuilders:
         """Set failure result with error details (deprecated method)."""
         self._result_error = error
@@ -376,8 +377,8 @@ class FlextTestsBuilders:
             # FlextResult building pattern (deprecated)
             if getattr(self, "_result_success", True):
                 result_data = getattr(self, "_result_data", "test_data")
-                data: FlextTypes.Core.Dict = (
-                    cast("FlextTypes.Core.Dict", result_data)
+                data: FlextTypes.Dict = (
+                    cast("FlextTypes.Dict", result_data)
                     if isinstance(result_data, dict)
                     else {"data": result_data}
                 )
@@ -386,8 +387,8 @@ class FlextTestsBuilders:
             error = getattr(self, "_result_error", "Test error")
             error_code = getattr(self, "_result_error_code", None)
             error_data_raw = getattr(self, "_result_error_data", None)
-            error_data: FlextTypes.Core.Dict = (
-                cast("FlextTypes.Core.Dict", error_data_raw)
+            error_data: FlextTypes.Dict = (
+                cast("FlextTypes.Dict", error_data_raw)
                 if isinstance(error_data_raw, dict)
                 else {}
             )

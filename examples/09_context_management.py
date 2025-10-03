@@ -31,25 +31,26 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 
-class ContextManagementService(FlextService[dict[str, str]]):
+class ContextManagementService(FlextService[FlextTypes.StringDict]):
     """Service demonstrating ALL FlextContext patterns."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._config = FlextConfig.get_global_instance()
+        self._config = FlextConfig()
 
-    def execute(self) -> FlextResult[dict[str, str]]:
+    def execute(self) -> FlextResult[FlextTypes.StringDict]:
         """Execute method required by FlextService."""
         self._logger.info(
             "Executing context demo",
             extra={"data": {"demo": "context_management"}},
         )
-        return FlextResult[dict[str, str]].ok({
+        return FlextResult[FlextTypes.StringDict].ok({
             "status": "completed",
             "context_managed": "true",
         })
@@ -196,7 +197,7 @@ class ContextManagementService(FlextService[dict[str, str]]):
         print("\n=== Request Context ===")
 
         # Set request context
-        request_data: dict[str, object] = {
+        request_data: FlextTypes.Dict = {
             "method": "POST",
             "path": "/api/orders",
             "user_id": "USER-456",
@@ -371,15 +372,15 @@ class ContextManagementService(FlextService[dict[str, str]]):
         print("\n=== Context Utilities ===")
 
         # Merge contexts
-        context1: dict[str, str] = {"user": "alice", "role": "admin"}
-        context2: dict[str, str] = {"tenant": "acme", "role": "superadmin"}
+        context1: FlextTypes.StringDict = {"user": "alice", "role": "admin"}
+        context2: FlextTypes.StringDict = {"tenant": "acme", "role": "superadmin"}
 
-        merged: dict[str, str] = {**context1, **context2}
+        merged: FlextTypes.StringDict = {**context1, **context2}
         print("✅ Contexts merged:")
         print(f"  Result: {merged}")
 
         # Copy context
-        original: dict[str, object] = {
+        original: FlextTypes.Dict = {
             "data": {"nested": "value"},
             "id": 123,
         }

@@ -23,9 +23,7 @@ from flext_core import (
     FlextConfig,
     FlextConstants,
     FlextContainer,
-    FlextCqrs,
     FlextExceptions,
-    FlextHandlers,
     FlextResult,
     FlextTypes,
     FlextUtilities,
@@ -52,7 +50,6 @@ class TestFlextCoreWildcardExports:
             "FlextTypes": "Type system and protocol definitions",
             "FlextConfig": "Configuration management system",
             "FlextContainer": "Dependency injection container",
-            "FlextCqrs": "CQRS utilities",
             "FlextHandlers": "Handlers for CQRS patterns",
         }
 
@@ -182,15 +179,6 @@ class TestFlextCoreWildcardExports:
         assert resolved_result.is_success
         assert resolved_result.value == "test_value"
 
-    def test_flext_commands_functionality(self) -> None:
-        """Test that CQRS components work after wildcard import."""
-        # Test command pattern components
-        assert hasattr(FlextCqrs, "Results") or hasattr(FlextCqrs, "Factories")
-
-        # Test handler functionality
-        assert hasattr(FlextHandlers, "handle") or hasattr(FlextHandlers, "execute")
-        # CQRS components provide command patterns
-
     def test_no_import_duplications(self) -> None:
         """Test that there are no duplicate exports in wildcard import."""
         # Get all exported names
@@ -207,7 +195,7 @@ class TestFlextCoreWildcardExports:
         """Test that legacy imports still work alongside wildcard imports."""
         # Test that ERROR_CODES mapping is available for legacy compatibility
         if "ERROR_CODES" in globals():
-            error_codes: dict[str, str] = globals()["ERROR_CODES"]
+            error_codes: FlextTypes.StringDict = globals()["ERROR_CODES"]
             assert isinstance(error_codes, dict)
             assert len(error_codes) > 0
 
@@ -234,7 +222,6 @@ class TestFlextCoreWildcardExports:
             "Config",  # FlextConfig
             "Container",  # FlextContainer
             "Handler",  # FlextHandlers, FlextQueryHandler
-            "Cqrs",  # FlextCqrs for CQRS patterns
         ]
 
         exported_names = [name for name in globals() if not name.startswith("_")]
@@ -255,7 +242,7 @@ class TestFlextCoreIntegrationScenarios:
         operation_id = FlextUtilities.Generators.generate_id()  # Use actual method
 
         # 2. Create a result and validate it
-        result = FlextResult[FlextTypes.Core.Headers].ok(
+        result = FlextResult[FlextTypes.StringDict].ok(
             {
                 "operation_id": operation_id,
                 "status": "started",
@@ -277,7 +264,7 @@ class TestFlextCoreIntegrationScenarios:
 
         # 4. Handle any potential errors using exception system
         def _handle_workflow_failure(
-            result: FlextResult[FlextTypes.Core.Headers],
+            result: FlextResult[FlextTypes.StringDict],
         ) -> None:
             if not result.is_success:
                 error_msg = "Workflow failed"
@@ -380,7 +367,7 @@ class TestFlextCoreExportCompleteness:
         # This test ensures no important classes are missing from exports
 
         # Get all classes from the current module's globals
-        exported_classes: list[str] = []
+        exported_classes: FlextTypes.StringList = []
         for name, obj in globals().items():
             if inspect.isclass(obj) and not name.startswith("_"):
                 exported_classes.append(name)
@@ -391,7 +378,7 @@ class TestFlextCoreExportCompleteness:
     def test_all_public_functions_exported(self) -> None:
         """Test that all public functions from major modules are exported."""
         # Get all functions from the current module's globals
-        exported_functions: list[str] = []
+        exported_functions: FlextTypes.StringList = []
         for name, obj in globals().items():
             if inspect.isfunction(obj) and not name.startswith("_"):
                 exported_functions.append(name)

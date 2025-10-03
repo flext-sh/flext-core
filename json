@@ -1,19 +1,934 @@
-ERROR Class member `DistinguishedName.create` overrides parent class `Value` in an inconsistent manner [bad-override]
-   --> /home/marlonsc/flext/flext-ldap/src/flext_ldap/models.py:216:13
+ERROR Class member `FlextBus.unsubscribe` overrides parent class `EventPublisher` in an inconsistent manner [bad-override]
+   --> src/flext_core/bus.py:962:9
     |
-216 |         def create(cls, *args: object, **kwargs: object) -> FlextResult[FlextLdapModels.DistinguishedName]:
-    |             ^^^^^^
+962 |     def unsubscribe(self, event_type: str, handler: object) -> bool:
+    |         ^^^^^^^^^^^
     |
-  `DistinguishedName.create` has type `BoundMethod[type[FlextLdapModels.DistinguishedName], (cls: type[FlextLdapModels.DistinguishedName], *args: object, **kwargs: object) -> FlextResult[FlextLdapModels.DistinguishedName]]`, which is not assignable to `BoundMethod[type[FlextLdapModels.DistinguishedName], (cls: type[FlextLdapModels.DistinguishedName], *args: object, **kwargs: object) -> FlextResult[object]]`, the type of `Value.create`
-ERROR Returned type `FlextResult[object]` is not assignable to declared return type `FlextResult[FlextLdapModels.DistinguishedName]` [bad-return]
-   --> /home/marlonsc/flext/flext-ldap/src/flext_ldap/models.py:232:24
+  `FlextBus.unsubscribe` has type `BoundMethod[FlextBus, (self: FlextBus, event_type: str, handler: object) -> bool]`, which is not assignable to `BoundMethod[FlextBus, (self: FlextBus, event_type: str, handler: object) -> FlextResult[None]]`, the type of `EventPublisher.unsubscribe`
+ERROR Class `FlextProtocols` has no class attribute `HasHandlerType` [missing-attribute]
+   --> src/flext_core/config.py:205:47
     |
-232 |                 return FlextResult[object].ok(dn_obj)
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+205 |                 if isinstance(handler_config, FlextProtocols.HasHandlerType):
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-ERROR Argument `type[FlextResult[object]]` is not assignable to parameter `cls` with type `type[FlextResult[FlextLdapModels.DistinguishedName]]` in function `flext_core.result.FlextResult.fail` [bad-argument-type]
-   --> /home/marlonsc/flext/flext-ldap/src/flext_ldap/models.py:234:48
+ERROR Expected a callable, got `PydanticDescriptorProxy[ModelValidatorDecoratorInfo]` [not-callable]
+    --> src/flext_core/config.py:1012:13
+     |
+1012 |             self.validate_debug_trace_consistency()
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Argument `object` is not assignable to parameter `indent` with type `int | str | None` in function `json.dump` [bad-argument-type]
+    --> src/flext_core/config.py:1082:54
+     |
+1082 |                     json.dump(config_data, f, indent=indent, sort_keys=sort_keys)
+     |                                                      ^^^^^^
+     |
+ERROR Argument `object` is not assignable to parameter `sort_keys` with type `bool` in function `json.dump` [bad-argument-type]
+    --> src/flext_core/config.py:1082:72
+     |
+1082 |                     json.dump(config_data, f, indent=indent, sort_keys=sort_keys)
+     |                                                                        ^^^^^^^^^
+     |
+ERROR `+` is not supported between `dict[str, bool | float | int | list[float]]` and `Literal[1]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:714:21
     |
-234 |                 return FlextResult[object].fail(str(e))
-    |                                                ^^^^^^^^
+714 |                     self._circuit_breaker_failures.get(message_type, 0) + 1
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
+  Argument `dict[str, bool | float | int | list[float]]` is not assignable to parameter `value` with type `int` in function `int.__radd__`
+ERROR Cannot set item in `dict[str, dict[str, bool | float | int | list[float]]]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:714:21
+    |
+714 |                     self._circuit_breaker_failures.get(message_type, 0) + 1
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `int` is not assignable to parameter `value` with type `dict[str, bool | float | int | list[float]]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, dict[str, bool | float | int | list[float]]]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:718:64
+    |
+718 |                 self._circuit_breaker_failures[message_type] = 0
+    |                                                                ^
+    |
+  Argument `Literal[0]` is not assignable to parameter `value` with type `dict[str, bool | float | int | list[float]]` in function `dict.__setitem__`
+ERROR `>=` is not supported between `dict[str, bool | float | int | list[float]]` and `int` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:842:12
+    |
+842 |         if failures >= self._circuit_breaker_threshold:
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `dict[str, bool | float | int | list[float]]` is not assignable to parameter `value` with type `int` in function `int.__le__`
+ERROR Cannot set item in `dict[str, TypedDict[FlextTypes.Reliability.RateLimiterState]]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:850:52
+    |
+850 |             self._rate_limit_state[message_type] = state
+    |                                                    ^^^^^
+    |
+  Argument `dict[str, float | int]` is not assignable to parameter `value` with type `TypedDict[FlextTypes.Reliability.RateLimiterState]` in function `dict.__setitem__`
+ERROR `<` is not supported between `float` and `object` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:852:12
+    |
+852 |         if current_time < state.get("block_until", 0.0):
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `float` in function `float.__lt__`
+ERROR `-` is not supported between `float` and `object` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:856:13
+    |
+856 |             current_time - state.get("window_start", current_time)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `object` is not assignable to parameter `value` with type `float` in function `float.__sub__`
+ERROR TypedDict `RateLimiterState` does not have key `count` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:859:19
+    |
+859 |             state["count"] = 0
+    |                   ^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `window_start` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:860:19
+    |
+860 |             state["window_start"] = current_time
+    |                   ^^^^^^^^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `block_until` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:861:19
+    |
+861 |             state["block_until"] = 0.0
+    |                   ^^^^^^^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `count` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:863:18
+    |
+863 |         if state["count"] >= self._rate_limit:
+    |                  ^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `block_until` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:864:19
+    |
+864 |             state["block_until"] = (
+    |                   ^^^^^^^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `count` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:869:15
+    |
+869 |         state["count"] += 1
+    |               ^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `block_until` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:871:19
+    |
+871 |             state["block_until"] = (
+    |                   ^^^^^^^^^^^^^
+    |
+ERROR TypedDict `RateLimiterState` does not have key `block_until` [typed-dict-key-error]
+   --> src/flext_core/dispatcher.py:875:19
+    |
+875 |             state["block_until"] = 0.0
+    |                   ^^^^^^^^^^^^^
+    |
+ERROR Cannot set item in `dict[str, dict[str, bool | float | int | list[float]]]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:979:68
+    |
+979 |                     self._circuit_breaker_failures[message_type] = 0
+    |                                                                    ^
+    |
+  Argument `Literal[0]` is not assignable to parameter `value` with type `dict[str, bool | float | int | list[float]]` in function `dict.__setitem__`
+ERROR `+` is not supported between `dict[str, bool | float | int | list[float]]` and `Literal[1]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:991:21
+    |
+991 |                     self._circuit_breaker_failures.get(message_type, 0) + 1
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `dict[str, bool | float | int | list[float]]` is not assignable to parameter `value` with type `int` in function `int.__radd__`
+ERROR Cannot set item in `dict[str, dict[str, bool | float | int | list[float]]]` [unsupported-operation]
+   --> src/flext_core/dispatcher.py:991:21
+    |
+991 |                     self._circuit_breaker_failures.get(message_type, 0) + 1
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Argument `int` is not assignable to parameter `value` with type `dict[str, bool | float | int | list[float]]` in function `dict.__setitem__`
+ERROR `+` is not supported between `dict[str, bool | float | int | list[float]]` and `Literal[1]` [unsupported-operation]
+    --> src/flext_core/dispatcher.py:1016:21
+     |
+1016 |                     self._circuit_breaker_failures.get(message_type, 0) + 1
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+  Argument `dict[str, bool | float | int | list[float]]` is not assignable to parameter `value` with type `int` in function `int.__radd__`
+ERROR Cannot set item in `dict[str, dict[str, bool | float | int | list[float]]]` [unsupported-operation]
+    --> src/flext_core/dispatcher.py:1016:21
+     |
+1016 |                     self._circuit_breaker_failures.get(message_type, 0) + 1
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+  Argument `int` is not assignable to parameter `value` with type `dict[str, bool | float | int | list[float]]` in function `dict.__setitem__`
+ERROR `>=` is not supported between `dict[str, bool | float | int | list[float]]` and `int` [unsupported-operation]
+    --> src/flext_core/dispatcher.py:1564:16
+     |
+1564 |         return failures >= self._circuit_breaker_threshold
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+  Argument `dict[str, bool | float | int | list[float]]` is not assignable to parameter `value` with type `int` in function `int.__le__`
+ERROR Class `FlextTypes` has no class attribute `Resilience` [missing-attribute]
+   --> src/flext_core/exceptions.py:172:40
+    |
+172 |         self._rate_limiters: dict[str, FlextTypes.Resilience.RateLimiterState] = {}
+    |                                        ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class member `FlextHandlers.can_handle` overrides parent class `Handler` in an inconsistent manner [bad-override]
+   --> src/flext_core/handlers.py:492:9
+    |
+492 |     def can_handle(self, message_type: type) -> bool:
+    |         ^^^^^^^^^^
+    |
+  `FlextHandlers.can_handle` has type `BoundMethod[FlextHandlers[MessageT_contra, ResultT], (self: FlextHandlers[MessageT_contra, ResultT], message_type: type) -> bool]`, which is not assignable to `BoundMethod[FlextHandlers[MessageT_contra, ResultT], (self: FlextHandlers[MessageT_contra, ResultT], message_type: object) -> bool]`, the type of `Handler.can_handle`
+ERROR Class member `FlextHandlers.validate` overrides parent class `FlextMixins` in an inconsistent manner [bad-override]
+   --> src/flext_core/handlers.py:589:9
+    |
+589 |     def validate(self, data: MessageT_contra) -> FlextResult[None]:
+    |         ^^^^^^^^
+    |
+  `FlextHandlers.validate` has type `BoundMethod[FlextHandlers[MessageT_contra, ResultT], (self: FlextHandlers[MessageT_contra, ResultT], data: MessageT_contra) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextHandlers[MessageT_contra, ResultT], (self: FlextHandlers[MessageT_contra, ResultT], data: object) -> FlextResult[object]]`, the type of `FlextMixins.validate`
+ERROR Returned type `FlextResult[object]` is not assignable to declared return type `FlextResult[TResult]` [bad-return]
+    --> src/flext_core/handlers.py:1128:28
+     |
+1128 |                     return result
+     |                            ^^^^^^
+     |
+ERROR Returned type `FlextResult[object]` is not assignable to declared return type `FlextResult[None]` [bad-return]
+    --> src/flext_core/handlers.py:1197:40
+     |
+1197 | ...                   return result
+     |                              ^^^^^^
+     |
+ERROR Returned type `FlextResult[object]` is not assignable to declared return type `FlextResult[None]` [bad-return]
+    --> src/flext_core/handlers.py:1211:28
+     |
+1211 |                     return handler_func(message)
+     |                            ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class member `FlextLogger.set_request_context` overrides parent class `LogContextManager` in an inconsistent manner [bad-override]
+    --> src/flext_core/loggings.py:1583:9
+     |
+1583 |     def set_request_context(self, **context: object) -> FlextResult[None]:
+     |         ^^^^^^^^^^^^^^^^^^^
+     |
+  `FlextLogger.set_request_context` has type `BoundMethod[FlextLogger, (self: FlextLogger, **context: object) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextLogger, (self: FlextLogger, model: object) -> FlextResult[None]]`, the type of `LogContextManager.set_request_context`
+ERROR Class member `FlextLogger.debug` overrides parent class `LoggerProtocol` in an inconsistent manner [bad-override]
+    --> src/flext_core/loggings.py:2007:9
+     |
+2007 |     def debug(
+     |         ^^^^^
+     |
+  `FlextLogger.debug` has type `BoundMethod[FlextLogger, (self: FlextLogger, message: str, *args: object, **context: object) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextLogger, (self: FlextLogger, message: str, **kwargs: object) -> None]`, the type of `LoggerProtocol.debug`
+ERROR Class member `FlextLogger.info` overrides parent class `LoggerProtocol` in an inconsistent manner [bad-override]
+    --> src/flext_core/loggings.py:2045:9
+     |
+2045 |     def info(self, message: str, *args: object, **context: object) -> FlextResult[None]:
+     |         ^^^^
+     |
+  `FlextLogger.info` has type `BoundMethod[FlextLogger, (self: FlextLogger, message: str, *args: object, **context: object) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextLogger, (self: FlextLogger, message: str, **kwargs: object) -> None]`, the type of `LoggerProtocol.info`
+ERROR Class member `FlextLogger.warning` overrides parent class `LoggerProtocol` in an inconsistent manner [bad-override]
+    --> src/flext_core/loggings.py:2078:9
+     |
+2078 |     def warning(
+     |         ^^^^^^^
+     |
+  `FlextLogger.warning` has type `BoundMethod[FlextLogger, (self: FlextLogger, message: str, *args: object, **context: object) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextLogger, (self: FlextLogger, message: str, **kwargs: object) -> None]`, the type of `LoggerProtocol.warning`
+ERROR Class member `FlextLogger.error` overrides parent class `LoggerProtocol` in an inconsistent manner [bad-override]
+    --> src/flext_core/loggings.py:2116:9
+     |
+2116 |     def error(self, message: str, *args: object, **kwargs: object) -> FlextResult[None]:
+     |         ^^^^^
+     |
+  `FlextLogger.error` has type `BoundMethod[FlextLogger, (self: FlextLogger, message: str, *args: object, **kwargs: object) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextLogger, (self: FlextLogger, message: str, **kwargs: object) -> None]`, the type of `LoggerProtocol.error`
+ERROR Class member `FlextLogger.critical` overrides parent class `LoggerProtocol` in an inconsistent manner [bad-override]
+    --> src/flext_core/loggings.py:2166:9
+     |
+2166 |     def critical(
+     |         ^^^^^^^^
+     |
+  `FlextLogger.critical` has type `BoundMethod[FlextLogger, (self: FlextLogger, message: str, *args: object, **kwargs: object) -> FlextResult[None]]`, which is not assignable to `BoundMethod[FlextLogger, (self: FlextLogger, message: str, **kwargs: object) -> None]`, the type of `LoggerProtocol.critical`
+ERROR Object of class `HasModelFields` has no attribute `model_dump` [missing-attribute]
+   --> src/flext_core/mixins.py:167:37
+    |
+167 |             data: FlextTypes.Dict = model_obj.model_dump()
+    |                                     ^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `HasModelFields` has no attribute `model_dump` [missing-attribute]
+   --> src/flext_core/mixins.py:210:22
+    |
+210 |             result = model_obj.model_dump()
+    |                      ^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Could not find name `FlextConfig` [unknown-name]
+  --> src/flext_core/models.py:80:28
+   |
+80 | def _get_flext_config() -> FlextConfig:
+   |                            ^^^^^^^^^^^
+   |
+ERROR Class member `Entity.updated_at` overrides parent class `HasTimestamps` in an inconsistent manner [bad-override]
+   --> src/flext_core/models.py:599:22
+    |
+599 |                 self.updated_at = datetime.now(UTC)
+    |                      ^^^^^^^^^^
+    |
+  `Entity.updated_at` has type `datetime | None`, which is not consistent with `object` in `HasTimestamps.updated_at` (the type of read-write attributes cannot be changed)
+ERROR `object` is not assignable to attribute `_cache_ttl` with type `float` [bad-assignment]
+    --> src/flext_core/protocols.py:1265:34
+     |
+1265 |         self._cache_ttl: float = self._config.get("cache_ttl", 300.0)
+     |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `object` is not assignable to attribute `_circuit_breaker_threshold` with type `int` [bad-assignment]
+    --> src/flext_core/protocols.py:1266:48
+     |
+1266 |           self._circuit_breaker_threshold: int = self._config.get(
+     |  ________________________________________________^
+1267 | |             "circuit_breaker_threshold", 5
+1268 | |         )
+     | |_________^
+     |
+ERROR Argument `dict[str, int | list[@_]]` is not assignable to parameter `data` with type `dict[str, object]` in function `flext_core.result.FlextResult.ok` [bad-argument-type]
+    --> src/flext_core/protocols.py:1385:48
+     |
+1385 |         return FlextResult[FlextTypes.Dict].ok(summary)
+     |                                                ^^^^^^^
+     |
+ERROR `object` is not assignable to attribute `_cache_ttl` with type `float` [bad-assignment]
+    --> src/flext_core/protocols.py:1401:27
+     |
+1401 |         self._cache_ttl = self._config.get("cache_ttl", self._cache_ttl)
+     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `object` is not assignable to attribute `_circuit_breaker_threshold` with type `int` [bad-assignment]
+    --> src/flext_core/protocols.py:1402:43
+     |
+1402 |           self._circuit_breaker_threshold = self._config.get(
+     |  ___________________________________________^
+1403 | |             "circuit_breaker_threshold", self._circuit_breaker_threshold
+1404 | |         )
+     | |_________^
+     |
+ERROR Class member `FlextService.execute` overrides parent class `Service` in an inconsistent manner [bad-override]
+   --> src/flext_core/service.py:212:9
+    |
+212 |     def execute(self) -> FlextResult[TDomainResult]:
+    |         ^^^^^^^
+    |
+  `FlextService.execute` has type `BoundMethod[FlextService[TDomainResult], (self: FlextService[TDomainResult]) -> FlextResult[TDomainResult]]`, which is not assignable to `BoundMethod[FlextService[TDomainResult], (self: object) -> FlextResult[object]]`, the type of `Service.execute`
+ERROR Class member `FlextService.execute_operation` overrides parent class `Service` in an inconsistent manner [bad-override]
+   --> src/flext_core/service.py:342:9
+    |
+342 |     def execute_operation(
+    |         ^^^^^^^^^^^^^^^^^
+    |
+  `FlextService.execute_operation` has type `BoundMethod[FlextService[TDomainResult], (self: FlextService[TDomainResult], operation: FlextModels.OperationExecutionRequest) -> FlextResult[TDomainResult]]`, which is not assignable to `BoundMethod[FlextService[TDomainResult], (self: FlextService[TDomainResult], operation: object) -> FlextResult[object]]`, the type of `Service.execute_operation`
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+   --> src/flext_core/utilities.py:183:58
+    |
+183 |     def safe_json_parse(json_string: str) -> FlextResult[FlextTypes.Dict]:
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+   --> src/flext_core/utilities.py:196:35
+    |
+196 |     def safe_json_stringify(data: FlextTypes.Dict) -> FlextResult[str]:
+    |                                   ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+   --> src/flext_core/utilities.py:210:15
+    |
+210 |         data: FlextTypes.Dict,
+    |               ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR `TypeAlias[Dict, type[dict[str, object]]]` is not subscriptable [unsupported-operation]
+   --> src/flext_core/utilities.py:212:11
+    |
+212 |         | FlextTypes.Dict[str, type | tuple[type, ...]]
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+   --> src/flext_core/utilities.py:214:22
+    |
+214 |     ) -> FlextResult[FlextTypes.Dict]:
+    |                      ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+   --> src/flext_core/utilities.py:805:19
+    |
+805 |             data: FlextTypes.Dict,
+    |                   ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR `TypeAlias[Dict, type[dict[str, object]]]` is not subscriptable [unsupported-operation]
+   --> src/flext_core/utilities.py:807:15
+    |
+807 |             | FlextTypes.Dict[str, type | tuple[type, ...]]
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+   --> src/flext_core/utilities.py:809:26
+    |
+809 |         ) -> FlextResult[FlextTypes.Dict]:
+    |                          ^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+   --> src/flext_core/utilities.py:820:37
+    |
+820 |             if not isinstance(data, FlextTypes.Dict):
+    |                                     ^^^^^^^^^^^^^^^
+    |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+   --> src/flext_core/utilities.py:833:50
+    |
+833 |                 elif isinstance(required_fields, FlextTypes.Dict):
+    |                                                  ^^^^^^^^^^^^^^^
+    |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+   --> src/flext_core/utilities.py:923:41
+    |
+923 |                 if not isinstance(data, FlextTypes.Dict):
+    |                                         ^^^^^^^^^^^^^^^
+    |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+   --> src/flext_core/utilities.py:942:37
+    |
+942 |             if not isinstance(data, FlextTypes.Dict):
+    |                                     ^^^^^^^^^^^^^^^
+    |
+ERROR Returned type `dict[str, bool | float | int | list[float] | str | None]` is not assignable to declared return type `dict[str, bool | float | int | list[float]]` [bad-return]
+   --> src/flext_core/utilities.py:963:20
+    |
+963 |               return {
+    |  ____________________^
+964 | |                 "operation_id": operation_id,
+965 | |                 "state": "closed",
+966 | |                 "failure_count": 0,
+967 | |                 "last_failure_time": None,
+968 | |                 "next_retry_time": None,
+    | |_________________________________________^
+    |
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:1080:46
+     |
+1080 |                     state["circuit_state"] = "HALF_OPEN"
+     |                                              ^^^^^^^^^^^
+     |
+  Argument `Literal['HALF_OPEN']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:1096:46
+     |
+1096 |                     state["circuit_state"] = "CLOSED"
+     |                                              ^^^^^^^^
+     |
+  Argument `Literal['CLOSED']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:1112:46
+     |
+1112 |                     state["circuit_state"] = "OPEN"
+     |                                              ^^^^^^
+     |
+  Argument `Literal['OPEN']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:1133:46
+     |
+1133 |                     state["circuit_state"] = "OPEN"
+     |                                              ^^^^^^
+     |
+  Argument `Literal['OPEN']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, dict[str, bool | float | int | list[float]]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:1155:65
+     |
+1155 |                       cls._circuit_breaker_states[operation_id] = {
+     |  _________________________________________________________________^
+1156 | |                         "circuit_state": "CLOSED",  # CLOSED, OPEN, HALF_OPEN
+1157 | |                         "failure_count": 0,
+1158 | |                         "last_failure_time": 0.0,
+1159 | |                         "last_success_time": time.time(),
+1160 | |                     }
+     | |_____________________^
+     |
+  Argument `dict[str, bool | float | int | list[float] | str]` is not assignable to parameter `value` with type `dict[str, bool | float | int | list[float]]` in function `dict.__setitem__`
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1354:21
+     |
+1354 |             *dicts: FlextTypes.Dict,
+     |                     ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1355:26
+     |
+1355 |         ) -> FlextResult[FlextTypes.Dict]:
+     |                          ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1358:21
+     |
+1358 |             result: FlextTypes.Dict = {}
+     |                     ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1368:36
+     |
+1368 |                 return FlextResult[FlextTypes.Dict].fail(
+     |                                    ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1372:32
+     |
+1372 |             return FlextResult[FlextTypes.Dict].ok(result)
+     |                                ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1376:19
+     |
+1376 |             data: FlextTypes.Dict,
+     |                   ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+    --> src/flext_core/utilities.py:1389:44
+     |
+1389 |                     if isinstance(current, FlextTypes.Dict):
+     |                                            ^^^^^^^^^^^^^^^
+     |
+ERROR `in` is not supported between `str` and `object` [unsupported-operation]
+    --> src/flext_core/utilities.py:1392:28
+     |
+1392 |                         if key in dict_current:
+     |                            ^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Cannot index into `object` [index-error]
+    --> src/flext_core/utilities.py:1393:45
+     |
+1393 | ...                   current_value = dict_current[key]
+     |                                       ^^^^^^^^^^^^^^^^^
+     |
+  Object of class `object` has no attribute `__getitem__`
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1414:19
+     |
+1414 |             data: FlextTypes.Dict,
+     |                   ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1415:26
+     |
+1415 |         ) -> FlextResult[FlextTypes.Dict]:
+     |                          ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1417:32
+     |
+1417 |             return FlextResult[FlextTypes.Dict].ok({
+     |                                ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1589:29
+     |
+1589 |                     dumped: FlextTypes.Dict = value.model_dump()
+     |                             ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1639:34
+     |
+1639 |                 value_vars_dict: FlextTypes.Dict = cast(
+     |                                  ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+    --> src/flext_core/utilities.py:1688:40
+     |
+1688 |                 if isinstance(command, FlextTypes.Dict):
+     |                                        ^^^^^^^^^^^^^^^
+     |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+    --> src/flext_core/utilities.py:1720:32
+     |
+1720 |             if isinstance(obj, FlextTypes.Dict):
+     |                                ^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:1721:27
+     |
+1721 |                 dict_obj: FlextTypes.Dict = cast("FlextTypes.Dict", obj)
+     |                           ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:2157:46
+     |
+2157 |                     state["circuit_state"] = "HALF_OPEN"
+     |                                              ^^^^^^^^^^^
+     |
+  Argument `Literal['HALF_OPEN']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:2173:46
+     |
+2173 |                     state["circuit_state"] = "CLOSED"
+     |                                              ^^^^^^^^
+     |
+  Argument `Literal['CLOSED']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:2189:46
+     |
+2189 |                     state["circuit_state"] = "OPEN"
+     |                                              ^^^^^^
+     |
+  Argument `Literal['OPEN']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Cannot set item in `dict[str, bool | float | int | list[float]]` [unsupported-operation]
+    --> src/flext_core/utilities.py:2210:46
+     |
+2210 |                     state["circuit_state"] = "OPEN"
+     |                                              ^^^^^^
+     |
+  Argument `Literal['OPEN']` is not assignable to parameter `value` with type `bool | float | int | list[float]` in function `dict.__setitem__`
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+    --> src/flext_core/utilities.py:2253:38
+     |
+2253 |             return isinstance(value, FlextTypes.Dict) and len(cast("FlextTypes.Dict", value)) > 0
+     |                                      ^^^^^^^^^^^^^^^
+     |
+ERROR Expected a callable, got `TypeAlias[Dict, type[dict[str, object]]]` [not-callable]
+    --> src/flext_core/utilities.py:2339:29
+     |
+2339 |                     localns=FlextTypes.Dict(vars(handler_class)),
+     |                             ^^^^^^^^^^^^^^^
+     |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+    --> src/flext_core/utilities.py:2660:36
+     |
+2660 |             if isinstance(message, (FlextTypes.Dict, str, int, float, bool)):
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:2661:30
+     |
+2661 |                 return cast("FlextTypes.Dict | str | int | float | bool", message)
+     |                              ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
+    --> src/flext_core/utilities.py:2693:25
+     |
+2693 |                 result: FlextTypes.Dict = {}
+     |                         ^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Expected class object, got `TypeAliasType` [invalid-argument]
+    --> src/flext_core/utilities.py:2708:52
+     |
+2708 |                         if isinstance(result_data, FlextTypes.Dict):
+     |                                                    ^^^^^^^^^^^^^^^
+     |
+ERROR No matching overload found for function `docker.models.containers.ContainerCollection.run` [no-matching-overload]
+   --> src/flext_tests/docker.py:842:46
+    |
+842 |               container = client.containers.run(
+    |  ______________________________________________^
+843 | |                 image,
+844 | |                 name=container_name,
+845 | |                 **cast("object", run_kwargs),
+846 | |             )
+    | |_____________^
+    |
+  Possible overloads:
+  (image: Image | str, command: list[str] | str | None = None, stdout: bool = True, stderr: bool = False, remove: bool = False, *, auto_remove: bool = False, blkio_weight_device: list[TypedDict[ContainerWeightDevice]] | None = None, blkio_weight: int | None = None, cap_add: list[str] | None = None, cap_drop: list[str] | None = None, cgroup_parent: str | None = None, cgroupns: Literal['host', 'private'] | None = None, cpu_count: int | None = None, cpu_percent: int | None = None, cpu_period: int | None = None, cpu_quota: int | None = None, cpu_rt_period: int | None = None, cpu_rt_runtime: int | None = None, cpu_shares: int | None = None, cpuset_cpus: str | None = None, cpuset_mems: str | None = None, detach: Literal[False] = False, device_cgroup_rules: list[Any] | None = None, device_read_bps: list[Mapping[str, int | str]] | None = None, device_read_iops: list[Mapping[str, int | str]] | None = None, device_write_bps: list[Mapping[str, int | str]] | None = None, device_write_iops: list[Mapping[str, int | str]] | None = None, devices: list[str] | None = None, device_requests: list[DeviceRequest] | None = None, dns: list[Any] | None = None, dns_opt: list[Any] | None = None, dns_search: list[Any] | None = None, domainname: list[Any] | str | None = None, entrypoint: list[str] | str | None = None, environment: dict[str, str] | list[str] | None = None, extra_hosts: dict[str, str] | None = None, group_add: Iterable[int | str] | None = None, healthcheck: dict[Any, Any] | None = None, hostname: str | None = None, init: bool | None = None, init_path: str | None = None, ipc_mode: str | None = None, isolation: str | None = None, kernel_memory: int | str | None = None, labels: dict[str, str] | list[str] | None = None, links: Iterable[tuple[str, str | None]] | dict[str, str | None] | dict[str, str] | dict[str, None] | None = None, log_config: LogConfig | None = None, lxc_conf: dict[Any, Any] | None = None, mac_address: str | None = None, mem_limit: int | str | None = None, mem_reservation: int | str | None = None, mem_swappiness: int | None = None, memswap_limit: int | str | None = None, mounts: list[Mount] | None = None, name: str | None = None, nano_cpus: int | None = None, network: str | None = None, network_disabled: bool = False, network_mode: str | None = None, networking_config: dict[str, EndpointConfig] | None = None, oom_kill_disable: bool = False, oom_score_adj: int | None = None, pid_mode: str | None = None, pids_limit: int | None = None, platform: str | None = None, ports: Mapping[str, int | list[int] | tuple[str, int] | None] | None = None, privileged: bool = False, publish_all_ports: bool = False, read_only: bool | None = None, restart_policy: TypedDict[_RestartPolicy] | None = None, runtime: str | None = None, security_opt: list[str] | None = None, shm_size: int | str | None = None, stdin_open: bool = False, stop_signal: str | None = None, storage_opt: dict[Any, Any] | None = None, stream: bool = False, sysctls: dict[Any, Any] | None = None, tmpfs: dict[str, str] | None = None, tty: bool = False, ulimits: list[Ulimit] | None = None, use_config_proxy: bool | None = None, user: int | str | None = None, userns_mode: str | None = None, uts_mode: str | None = None, version: str | None = None, volume_driver: str | None = None, volumes: dict[str, dict[str, str]] | list[str] | None = None, volumes_from: list[str] | None = None, working_dir: str | None = None) -> bytes [closest match]
+  (image: Image | str, command: list[str] | str | None = None, stdout: bool = True, stderr: bool = False, remove: bool = False, *, auto_remove: bool = False, blkio_weight_device: list[TypedDict[ContainerWeightDevice]] | None = None, blkio_weight: int | None = None, cap_add: list[str] | None = None, cap_drop: list[str] | None = None, cgroup_parent: str | None = None, cgroupns: Literal['host', 'private'] | None = None, cpu_count: int | None = None, cpu_percent: int | None = None, cpu_period: int | None = None, cpu_quota: int | None = None, cpu_rt_period: int | None = None, cpu_rt_runtime: int | None = None, cpu_shares: int | None = None, cpuset_cpus: str | None = None, cpuset_mems: str | None = None, detach: Literal[True], device_cgroup_rules: list[Any] | None = None, device_read_bps: list[Mapping[str, int | str]] | None = None, device_read_iops: list[Mapping[str, int | str]] | None = None, device_write_bps: list[Mapping[str, int | str]] | None = None, device_write_iops: list[Mapping[str, int | str]] | None = None, devices: list[str] | None = None, device_requests: list[DeviceRequest] | None = None, dns: list[Any] | None = None, dns_opt: list[Any] | None = None, dns_search: list[Any] | None = None, domainname: list[Any] | str | None = None, entrypoint: list[str] | str | None = None, environment: dict[str, str] | list[str] | None = None, extra_hosts: dict[str, str] | None = None, group_add: Iterable[int | str] | None = None, healthcheck: dict[Any, Any] | None = None, hostname: str | None = None, init: bool | None = None, init_path: str | None = None, ipc_mode: str | None = None, isolation: str | None = None, kernel_memory: int | str | None = None, labels: dict[str, str] | list[str] | None = None, links: Iterable[tuple[str, str | None]] | dict[str, str | None] | dict[str, str] | dict[str, None] | None = None, log_config: LogConfig | None = None, lxc_conf: dict[Any, Any] | None = None, mac_address: str | None = None, mem_limit: int | str | None = None, mem_reservation: int | str | None = None, mem_swappiness: int | None = None, memswap_limit: int | str | None = None, mounts: list[Mount] | None = None, name: str | None = None, nano_cpus: int | None = None, network: str | None = None, network_disabled: bool = False, network_mode: str | None = None, networking_config: dict[str, EndpointConfig] | None = None, oom_kill_disable: bool = False, oom_score_adj: int | None = None, pid_mode: str | None = None, pids_limit: int | None = None, platform: str | None = None, ports: Mapping[str, int | list[int] | tuple[str, int] | None] | None = None, privileged: bool = False, publish_all_ports: bool = False, read_only: bool | None = None, restart_policy: TypedDict[_RestartPolicy] | None = None, runtime: str | None = None, security_opt: list[str] | None = None, shm_size: int | str | None = None, stdin_open: bool = False, stop_signal: str | None = None, storage_opt: dict[Any, Any] | None = None, stream: bool = False, sysctls: dict[Any, Any] | None = None, tmpfs: dict[str, str] | None = None, tty: bool = False, ulimits: list[Ulimit] | None = None, use_config_proxy: bool | None = None, user: int | str | None = None, userns_mode: str | None = None, uts_mode: str | None = None, version: str | None = None, volume_driver: str | None = None, volumes: dict[str, dict[str, str]] | list[str] | None = None, volumes_from: list[str] | None = None, working_dir: str | None = None) -> Container
+ERROR Object of class `Container` has no attribute `status` [missing-attribute]
+   --> src/flext_tests/docker.py:940:24
+    |
+940 |                     if container.status == "running"
+    |                        ^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `Container` has no attribute `image` [missing-attribute]
+   --> src/flext_tests/docker.py:945:24
+    |
+945 |                     if container.image and hasattr(container.image, "tags")
+    |                        ^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `Container` has no attribute `name` [missing-attribute]
+   --> src/flext_tests/docker.py:951:34
+    |
+951 |                         name=str(container.name),
+    |                                  ^^^^^^^^^^^^^^
+    |
+ERROR `dict[str, ContainerInfo]` is not assignable to `dict[str, object]` [bad-assignment]
+    --> src/flext_tests/docker.py:1375:40
+     |
+1375 |         status_info: FlextTypes.Dict = status_result.value.copy()
+     |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1734:30
+     |
+1734 |             command_result = manager.init_workspace(Path(args.workspace_root))
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[dict[str, str]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1737:30
+     |
+1737 |             command_result = manager.build_workspace_projects(projects, args.registry)
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1739:30
+     |
+1739 |               command_result = manager.build_single_image(
+     |  ______________________________^
+1740 | |                 args.name,
+1741 | |                 args.dockerfile,
+1742 | |                 args.context,
+1743 | |             )
+     | |_____________^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1745:30
+     |
+1745 |               command_result = manager.start_compose_stack(
+     |  ______________________________^
+1746 | |                 args.compose_file,
+1747 | |                 args.network,
+1748 | |             )
+     | |_____________^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1750:30
+     |
+1750 |             command_result = manager.stop_compose_stack(args.compose_file)
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1752:30
+     |
+1752 |             command_result = manager.restart_compose_stack(args.compose_file)
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1754:30
+     |
+1754 |               command_result = manager.show_stack_logs(
+     |  ______________________________^
+1755 | |                 args.compose_file,
+1756 | |                 follow=args.follow,
+1757 | |             )
+     | |_____________^
+     |
+ERROR `FlextResult[dict[str, object]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1762:30
+     |
+1762 |             command_result = status_result
+     |                              ^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1764:30
+     |
+1764 |             command_result = manager.connect_to_service(args.service)
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1766:30
+     |
+1766 |             command_result = manager.execute_in_service(args.service, args.command)
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1768:30
+     |
+1768 |               command_result = manager.cleanup_workspace(
+     |  ______________________________^
+1769 | |                 remove_volumes=args.remove_volumes,
+1770 | |                 remove_networks=args.remove_networks,
+1771 | |                 prune_system=args.prune_system,
+1772 | |             )
+     | |_____________^
+     |
+ERROR `FlextResult[dict[str, str]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1774:30
+     |
+1774 |               command_result = manager.health_check_stack(
+     |  ______________________________^
+1775 | |                 args.compose_file,
+1776 | |                 timeout=args.timeout,
+1777 | |             )
+     | |_____________^
+     |
+ERROR `FlextResult[str]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1779:30
+     |
+1779 |             command_result = manager.create_network(args.name, driver=args.driver)
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `FlextResult[list[str]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1788:30
+     |
+1788 |             command_result = volumes
+     |                              ^^^^^^^
+     |
+ERROR `FlextResult[list[str]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1797:30
+     |
+1797 |             command_result = images
+     |                              ^^^^^^
+     |
+ERROR `FlextResult[list[ContainerInfo]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1810:30
+     |
+1810 |             command_result = containers
+     |                              ^^^^^^^^^^
+     |
+ERROR `FlextResult[dict[str, str]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+    --> src/flext_tests/docker.py:1814:30
+     |
+1814 |             command_result = manager.validate_workspace(Path(args.workspace_root))
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Object of class `NoneType` has no attribute `is_success` [missing-attribute]
+    --> src/flext_tests/docker.py:1815:16
+     |
+1815 |             if command_result.is_success:
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR Object of class `NoneType` has no attribute `value` [missing-attribute]
+    --> src/flext_tests/docker.py:1816:35
+     |
+1816 |                 for key, value in command_result.value.items():
+     |                                   ^^^^^^^^^^^^^^^^^^^^
+     |
+ERROR `not in` is not supported between `str` and `bool` [unsupported-operation]
+  --> src/flext_tests/http_support.py:85:55
+   |
+85 |                 field for field in required_fields if field not in response_data
+   |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR `not in` is not supported between `str` and `float` [unsupported-operation]
+  --> src/flext_tests/http_support.py:85:55
+   |
+85 |                 field for field in required_fields if field not in response_data
+   |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR `not in` is not supported between `str` and `int` [unsupported-operation]
+  --> src/flext_tests/http_support.py:85:55
+   |
+85 |                 field for field in required_fields if field not in response_data
+   |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR `not in` is not supported between `str` and `None` [unsupported-operation]
+  --> src/flext_tests/http_support.py:85:55
+   |
+85 |                 field for field in required_fields if field not in response_data
+   |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+ERROR `not in` is not supported between `Literal['error']` and `bool` [unsupported-operation]
+   --> src/flext_tests/http_support.py:107:16
+    |
+107 |             if "error" not in response_data:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR `not in` is not supported between `Literal['error']` and `float` [unsupported-operation]
+   --> src/flext_tests/http_support.py:107:16
+    |
+107 |             if "error" not in response_data:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR `not in` is not supported between `Literal['error']` and `int` [unsupported-operation]
+   --> src/flext_tests/http_support.py:107:16
+    |
+107 |             if "error" not in response_data:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR `not in` is not supported between `Literal['error']` and `None` [unsupported-operation]
+   --> src/flext_tests/http_support.py:107:16
+    |
+107 |             if "error" not in response_data:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Cannot index into `bool` [index-error]
+   --> src/flext_tests/http_support.py:113:26
+    |
+113 |             error_data = response_data["error"]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Object of class `bool` has no attribute `__getitem__`
+ERROR Cannot index into `float` [index-error]
+   --> src/flext_tests/http_support.py:113:26
+    |
+113 |             error_data = response_data["error"]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Object of class `float` has no attribute `__getitem__`
+ERROR Cannot index into `int` [index-error]
+   --> src/flext_tests/http_support.py:113:26
+    |
+113 |             error_data = response_data["error"]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    |
+  Object of class `int` has no attribute `__getitem__`
+ERROR Cannot index into `list[object]` [index-error]
+   --> src/flext_tests/http_support.py:113:26
+    |
+113 |             error_data = response_data["error"]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    |
+  No matching overload found for function `list.__getitem__`
+  Possible overloads:
+  (i: SupportsIndex, /) -> object [closest match]
+  (s: slice[Any, Any, Any], /) -> list[object]
+ERROR Cannot index into `str` [index-error]
+   --> src/flext_tests/http_support.py:113:26
+    |
+113 |             error_data = response_data["error"]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    |
+  No matching overload found for function `str.__getitem__`
+  Possible overloads:
+  (key: SupportsIndex | slice[Any, Any, Any], /) -> LiteralString
+  (key: SupportsIndex | slice[Any, Any, Any], /) -> str [closest match]
+ERROR `None` is not subscriptable [unsupported-operation]
+   --> src/flext_tests/http_support.py:113:26
+    |
+113 |             error_data = response_data["error"]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `object` has no attribute `add_response` [missing-attribute]
+   --> src/flext_tests/http_support.py:190:13
+    |
+190 |             self.httpx_mock.add_response(
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `object` has no attribute `add_response` [missing-attribute]
+   --> src/flext_tests/http_support.py:232:13
+    |
+232 |             self.httpx_mock.add_response(
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `object` has no attribute `add_response` [missing-attribute]
+   --> src/flext_tests/http_support.py:268:17
+    |
+268 |                 self.httpx_mock.add_response(
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `object` has no attribute `add_response` [missing-attribute]
+   --> src/flext_tests/http_support.py:279:13
+    |
+279 |             self.httpx_mock.add_response(
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `object` has no attribute `add_response` [missing-attribute]
+   --> src/flext_tests/http_support.py:314:17
+    |
+314 |                 self.httpx_mock.add_response(
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `object` has no attribute `add_response` [missing-attribute]
+   --> src/flext_tests/http_support.py:518:9
+    |
+518 |         httpx_mock.add_response(
+    |         ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Function declared to return `T` but is missing an explicit `return` [bad-return]
+  --> src/flext_tests/performance.py:34:10
+   |
+34 |     ) -> T:
+   |          ^
+   |
+ERROR Function declared to return `dict[str, object]` but is missing an explicit `return` [bad-return]
+  --> src/flext_tests/performance.py:38:32
+   |
+38 |     def stats(self: object) -> FlextTypes.Dict:
+   |                                ^^^^^^^^^^^^^^^
+   |

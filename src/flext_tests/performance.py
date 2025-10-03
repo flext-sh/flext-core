@@ -35,7 +35,7 @@ class BenchmarkProtocol(Protocol[P, T]):
         """Call the benchmark function."""
 
     @property
-    def stats(self: object) -> FlextTypes.Core.Dict:
+    def stats(self: object) -> FlextTypes.Dict:
         """Benchmark statistics."""
 
 
@@ -67,14 +67,14 @@ class FlextTestsPerformance:
         @override
         def __init__(self: Self) -> None:
             """Initialize complexityanalyzer:."""
-            self.measurements: list[FlextTypes.Core.Dict] = []
+            self.measurements: list[FlextTypes.Dict] = []
 
         def measure_complexity(
             self,
             function: Callable[[int], object],
             input_sizes: list[int],
             operation_name: str = "operation",
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Measure function performance across different input sizes.
 
             Args:
@@ -83,10 +83,10 @@ class FlextTestsPerformance:
                 operation_name: Name of the operation being measured
 
             Returns:
-                FlextTypes.Core.Dict: Performance measurement results
+                FlextTypes.Dict: Performance measurement results
 
             """
-            results: list[FlextTypes.Core.Dict] = []
+            results: list[FlextTypes.Dict] = []
 
             for size in input_sizes:
                 start_time = time.perf_counter()
@@ -98,7 +98,7 @@ class FlextTestsPerformance:
                 end_time = time.perf_counter()
                 duration = end_time - start_time
 
-                result_dict: FlextTypes.Core.Dict = {
+                result_dict: FlextTypes.Dict = {
                     "input_size": size,
                     "duration_seconds": duration,
                     "duration_ms": duration * 1000,
@@ -108,7 +108,7 @@ class FlextTestsPerformance:
             # Analyze complexity pattern
             complexity_analysis = self._analyze_complexity_pattern(results)
 
-            measurement: FlextTypes.Core.Dict = {
+            measurement: FlextTypes.Dict = {
                 "operation": operation_name,
                 "results": results,
                 "complexity_analysis": complexity_analysis,
@@ -120,15 +120,15 @@ class FlextTestsPerformance:
 
         def _analyze_complexity_pattern(
             self,
-            results: list[FlextTypes.Core.Dict],
-        ) -> FlextTypes.Core.Dict:
+            results: list[FlextTypes.Dict],
+        ) -> FlextTypes.Dict:
             """Analyze if the performance follows common complexity patterns.
 
             Args:
                 results: List of performance measurement results
 
             Returns:
-                FlextTypes.Core.Dict: Complexity pattern analysis
+                FlextTypes.Dict: Complexity pattern analysis
 
             """
             if len(results) < 2:
@@ -172,7 +172,7 @@ class FlextTestsPerformance:
         @override
         def __init__(self: Self) -> None:
             """Initialize stresstestrunner:."""
-            self.results: list[FlextTypes.Core.Dict] = []
+            self.results: list[FlextTypes.Dict] = []
 
         def run_load_test(
             self,
@@ -181,7 +181,7 @@ class FlextTestsPerformance:
             *,  # concurrent is keyword-only to avoid boolean trap
             _concurrent: bool = False,  # Currently unused but reserved for future use
             operation_name: str = "load_test",
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Run load test with specified iterations.
 
             Args:
@@ -191,7 +191,7 @@ class FlextTestsPerformance:
                 operation_name: Name of the operation being tested
 
             Returns:
-                FlextTypes.Core.Dict: Load test results
+                FlextTypes.Dict: Load test results
 
             """
             start_time = time.perf_counter()
@@ -208,7 +208,7 @@ class FlextTestsPerformance:
             end_time = time.perf_counter()
             total_duration = end_time - start_time
 
-            result: FlextTypes.Core.Dict = {
+            result: FlextTypes.Dict = {
                 "operation": operation_name,
                 "iterations": iterations,
                 "successes": successes,
@@ -231,7 +231,7 @@ class FlextTestsPerformance:
             function: Callable[[], object],
             duration_seconds: float = 60.0,
             operation_name: str = "endurance_test",
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Run endurance test for specified duration.
 
             Args:
@@ -240,7 +240,7 @@ class FlextTestsPerformance:
                 operation_name: Name of the operation being tested
 
             Returns:
-                FlextTypes.Core.Dict: Endurance test results
+                FlextTypes.Dict: Endurance test results
 
             """
             start_time = time.perf_counter()
@@ -259,7 +259,7 @@ class FlextTestsPerformance:
 
             actual_duration = time.perf_counter() - start_time
 
-            result: FlextTypes.Core.Dict = {
+            result: FlextTypes.Dict = {
                 "operation": operation_name,
                 "planned_duration_seconds": duration_seconds,
                 "actual_duration_seconds": actual_duration,
@@ -282,7 +282,7 @@ class FlextTestsPerformance:
         @override
         def __init__(self: Self) -> None:
             """Initialize performanceprofiler:."""
-            self.measurements: list[FlextTypes.Core.Dict] = []
+            self.measurements: list[FlextTypes.Dict] = []
 
         @contextmanager
         def profile_memory(self, operation_name: str = "operation") -> Generator[None]:
@@ -398,7 +398,7 @@ class FlextTestsPerformance:
             func: Callable[[int], T],
             sizes: list[int],
             expected_complexity: str = "O(n)",
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Benchmark function complexity across different input sizes.
 
             Args:
@@ -408,10 +408,10 @@ class FlextTestsPerformance:
                 expected_complexity: Expected complexity class
 
             Returns:
-                FlextTypes.Core.Dict: Complexity benchmark results
+                FlextTypes.Dict: Complexity benchmark results
 
             """
-            results: dict[int, FlextTypes.Core.Dict] = {}
+            results: dict[int, FlextTypes.Dict] = {}
 
             for size in sizes:
                 # Benchmark for this size
@@ -434,19 +434,17 @@ class FlextTestsPerformance:
                 )
             )
 
-            # Convert to FlextTypes.Core.Dict for return type
-            final_results: FlextTypes.Core.Dict = {
-                str(k): v for k, v in results.items()
-            }
+            # Convert to FlextTypes.Dict for return type
+            final_results: FlextTypes.Dict = {str(k): v for k, v in results.items()}
             final_results["complexity_analysis"] = complexity_analysis
 
             return final_results
 
         @staticmethod
         def _analyze_complexity(
-            results: dict[int, FlextTypes.Core.Dict],
+            results: dict[int, FlextTypes.Dict],
             expected: str,
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Analyze time complexity from benchmark results.
 
             Args:
@@ -454,11 +452,11 @@ class FlextTestsPerformance:
                 expected: Expected complexity class
 
             Returns:
-                FlextTypes.Core.Dict: Complexity analysis results
+                FlextTypes.Dict: Complexity analysis results
 
             """
             sizes = sorted(results.keys())
-            times: list[float] = []
+            times: FlextTypes.FloatList = []
             for size in sizes:
                 mean_time = results[size]["mean_time"]
                 if isinstance(mean_time, (int, float)):
@@ -475,7 +473,7 @@ class FlextTestsPerformance:
                 return {"error": "Need at least 2 data points"}
 
             # Calculate growth ratios
-            growth_ratios: list[float] = []
+            growth_ratios: FlextTypes.FloatList = []
             for i in range(1, len(sizes)):
                 size_ratio = sizes[i] / sizes[i - 1]
                 time_ratio = times[i] / times[i - 1] if times[i - 1] != 0 else 1.0
@@ -551,7 +549,7 @@ class FlextTestsPerformance:
             thread_counts: list[int],
             *args: object,
             **kwargs: object,
-        ) -> dict[int, FlextTypes.Core.Dict]:
+        ) -> dict[int, FlextTypes.Dict]:
             """Benchmark function with different thread counts.
 
             Args:
@@ -562,10 +560,10 @@ class FlextTestsPerformance:
                 **kwargs: Keyword arguments for the function
 
             Returns:
-                dict[int, FlextTypes.Core.Dict]: Parallel benchmark results
+                dict[int, FlextTypes.Dict]: Parallel benchmark results
 
             """
-            results: dict[int, FlextTypes.Core.Dict] = {}
+            results: dict[int, FlextTypes.Dict] = {}
 
             for thread_count in thread_counts:
 
@@ -697,7 +695,7 @@ class FlextTestsPerformance:
             iterations: int = 100,
             *args: P.args,
             **kwargs: P.kwargs,
-        ) -> dict[str, float]:
+        ) -> FlextTypes.FloatDict:
             """Benchmark function.
 
             Args:
@@ -707,10 +705,10 @@ class FlextTestsPerformance:
                 **kwargs: Keyword arguments for the function
 
             Returns:
-                dict[str, float]: Benchmark statistics
+                FlextTypes.FloatDict: Benchmark statistics
 
             """
-            times: list[float] = []
+            times: FlextTypes.FloatList = []
 
             for _ in range(iterations):
                 start_time = time.perf_counter()
@@ -736,7 +734,7 @@ class FlextTestsPerformance:
             concurrency_levels: list[int],
             *args: P.args,
             **kwargs: P.kwargs,
-        ) -> dict[int, FlextTypes.Core.Dict]:
+        ) -> dict[int, FlextTypes.Dict]:
             """Benchmark function with different concurrency levels.
 
             Args:
@@ -746,23 +744,23 @@ class FlextTestsPerformance:
                 **kwargs: Keyword arguments for the function
 
             Returns:
-                dict[int, FlextTypes.Core.Dict]: Concurrency benchmark results
+                dict[int, FlextTypes.Dict]: Concurrency benchmark results
 
             """
-            results: dict[int, FlextTypes.Core.Dict] = {}
+            results: dict[int, FlextTypes.Dict] = {}
 
             for concurrency in concurrency_levels:
 
                 def concurrent_execution(
                     workers: int = concurrency,
-                ) -> FlextTypes.Core.List:
+                ) -> FlextTypes.List:
                     """concurrent_execution method.
 
                     Args:
                         workers: Number of concurrent workers
 
                     Returns:
-                        FlextTypes.Core.List: List of concurrent execution results
+                        FlextTypes.List: List of concurrent execution results
 
                     """
                     tasks = [func(*args, **kwargs) for _ in range(workers)]
@@ -931,7 +929,7 @@ class FlextTestsPerformance:
         func: Callable[[], object],
         iterations: int = 1000,
         operation_name: str = "load_test",
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Quick access to stress testing.
 
         Args:
@@ -940,7 +938,7 @@ class FlextTestsPerformance:
             operation_name: Name of the operation being tested
 
         Returns:
-            FlextTypes.Core.Dict: Stress test results
+            FlextTypes.Dict: Stress test results
 
         """
         runner = FlextTestsPerformance.StressTestRunner()
@@ -951,7 +949,7 @@ class FlextTestsPerformance:
         function: Callable[[int], object],
         input_sizes: list[int],
         operation_name: str = "operation",
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Quick access to complexity analysis.
 
         Args:
@@ -960,7 +958,7 @@ class FlextTestsPerformance:
             operation_name: Name of the operation being analyzed
 
         Returns:
-            FlextTypes.Core.Dict: Complexity analysis results
+            FlextTypes.Dict: Complexity analysis results
 
         """
         analyzer = FlextTestsPerformance.ComplexityAnalyzer()

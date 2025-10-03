@@ -44,7 +44,7 @@ TIER3_PROJECTS=(
     "flext-plugin"
     "flext-quality"
     "flext-oracle-wms"
-    "flext-oracle-oic-ext"
+    "flext-oracle-oic"
 )
 
 # Tier 4: Data pipeline (MEDIUM)

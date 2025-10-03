@@ -18,6 +18,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 # No module-level functions to import from service
@@ -143,15 +144,15 @@ class SampleExceptionService(FlextService[str]):
         return FlextResult[str].ok("Success")
 
 
-class ComplexTypeService(FlextService[dict[str, object]]):
+class ComplexTypeService(FlextService[FlextTypes.Dict]):
     """Test service with complex types for testing."""
 
-    data: dict[str, object] = Field(default_factory=dict)
-    items: list[object] = Field(default_factory=list)
+    data: FlextTypes.Dict = Field(default_factory=dict)
+    items: FlextTypes.List = Field(default_factory=list)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute operation with complex types."""
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "data": self.data,
             "items": self.items,
         })
@@ -1029,14 +1030,18 @@ class TestServiceCoverageImprovements:
     def test_execute_batch_with_request_success(self) -> None:
         """Test execute_batch_with_request with success."""
 
-        class BatchService(FlextService[list[str]]):
-            def execute(self) -> FlextResult[list[str]]:
-                return FlextResult[list[str]].ok(["item1", "item2", "item3"])
+        class BatchService(FlextService[FlextTypes.StringList]):
+            def execute(self) -> FlextResult[FlextTypes.StringList]:
+                return FlextResult[FlextTypes.StringList].ok([
+                    "item1",
+                    "item2",
+                    "item3",
+                ])
 
             def execute_batch_with_request(
                 self,
                 request: FlextModels.DomainServiceBatchRequest,
-            ) -> FlextResult[list[list[str]]]:
+            ) -> FlextResult[list[FlextTypes.StringList]]:
                 # Process in batches
                 batch_size = getattr(request, "batch_size", 10)
                 result = self.execute()
@@ -1046,10 +1051,10 @@ class TestServiceCoverageImprovements:
                     batch_count = len(items) // batch_size + (
                         1 if len(items) % batch_size > 0 else 0
                     )
-                    return FlextResult[list[list[str]]].ok([
+                    return FlextResult[list[FlextTypes.StringList]].ok([
                         [f"batch_{i}"] for i in range(batch_count)
                     ])
-                return FlextResult[list[list[str]]].fail(
+                return FlextResult[list[FlextTypes.StringList]].fail(
                     result.error or "Batch execution failed",
                 )
 
@@ -1617,7 +1622,7 @@ class TestServiceComprehensiveCoverage:
     def test_execution_helper_cleanup_context(self) -> None:
         """Test _ExecutionHelper.cleanup_execution_context."""
         service = SampleUserService()
-        context: dict[str, object] = {"test": "context"}
+        context: FlextTypes.Dict = {"test": "context"}
 
         # Should not raise an exception
         service._ExecutionHelper.cleanup_execution_context(service, context)
@@ -1651,7 +1656,7 @@ class TestServiceComprehensiveCoverage:
     def test_metadata_helper_format_service_info(self) -> None:
         """Test _MetadataHelper.format_service_info."""
         service = SampleUserService()
-        metadata: dict[str, object] = {
+        metadata: FlextTypes.Dict = {
             "service_class": "TestService",
             "service_module": "test_module",
         }
@@ -2093,7 +2098,7 @@ class TestServiceComprehensiveCoverage:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
-            def model_dump(self, **_kwargs: object) -> dict[str, object]:
+            def model_dump(self, **_kwargs: object) -> FlextTypes.Dict:
                 msg = "Dump failed"
                 raise RuntimeError(msg)
 
@@ -2302,16 +2307,16 @@ class Executable:
         return FlextResult[object].ok("success")
 
 
-class BatchService(FlextService[list[str]]):
+class BatchService(FlextService[FlextTypes.StringList]):
     """Test service for batch processing."""
 
-    def execute(self) -> FlextResult[list[str]]:
-        return FlextResult[list[str]].ok(["item1", "item2", "item3"])
+    def execute(self) -> FlextResult[FlextTypes.StringList]:
+        return FlextResult[FlextTypes.StringList].ok(["item1", "item2", "item3"])
 
     def execute_batch_with_request(
         self,
         request: FlextModels.DomainServiceBatchRequest,
-    ) -> FlextResult[list[list[str]]]:
+    ) -> FlextResult[list[FlextTypes.StringList]]:
         # Process in batches
         batch_size = getattr(request, "batch_size", 10)
         result = self.execute()
@@ -2321,24 +2326,24 @@ class BatchService(FlextService[list[str]]):
             batch_count = len(items) // batch_size + (
                 1 if len(items) % batch_size > 0 else 0
             )
-            return FlextResult[list[list[str]]].ok([
+            return FlextResult[list[FlextTypes.StringList]].ok([
                 [f"batch_{i}"] for i in range(batch_count)
             ])
-        return FlextResult[list[list[str]]].fail(
+        return FlextResult[list[FlextTypes.StringList]].fail(
             result.error or "Batch execution failed",
         )
 
     def test_execute_with_metrics_request_success(self) -> None:
         """Test execute_with_metrics_request with success."""
 
-        class MetricsService(FlextService[dict[str, object]]):
-            def execute(self) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({"status": "success"})
+        class MetricsService(FlextService[FlextTypes.Dict]):
+            def execute(self) -> FlextResult[FlextTypes.Dict]:
+                return FlextResult[FlextTypes.Dict].ok({"status": "success"})
 
             def execute_with_metrics_request(
                 self,
                 _request: FlextModels.DomainServiceMetricsRequest,
-            ) -> FlextResult[dict[str, object]]:
+            ) -> FlextResult[FlextTypes.Dict]:
                 # Collect metrics if requested
                 collect_metrics = getattr(_request, "collect_metrics", False)
                 result = self.execute()
@@ -2350,7 +2355,7 @@ class BatchService(FlextService[list[str]]):
                         "memory_usage": 1024,
                         "cpu_usage": 0.5,
                     }
-                    return FlextResult[dict[str, object]].ok(metrics_data)
+                    return FlextResult[FlextTypes.Dict].ok(metrics_data)
                 return result
 
         service = MetricsService()
@@ -2490,7 +2495,7 @@ class BatchService(FlextService[list[str]]):
                 return FlextResult[str].ok("success")
 
         service = RetryService()
-        retry_config: dict[str, object] = {
+        retry_config: FlextTypes.Dict = {
             "max_attempts": 3,
             "retry_delay": 0.01,
             "backoff_multiplier": 0,  # Zero or negative should default to 1.0
@@ -2522,7 +2527,7 @@ class BatchService(FlextService[list[str]]):
                 return FlextResult[str].ok("success_after_retry")
 
         service = RetryNoFilterService()
-        retry_config: dict[str, object] = {
+        retry_config: FlextTypes.Dict = {
             "max_attempts": 3,
             "retry_delay": 0.01,
             # No exception_filters - should retry all exceptions

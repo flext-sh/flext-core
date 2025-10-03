@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextDispatcher, FlextModels, FlextResult
+from flext_core import FlextDispatcher, FlextModels, FlextResult, FlextTypes
 from flext_core.handlers import FlextHandlers
 
 
@@ -22,7 +22,7 @@ class TestFlextDispatcherCoverage:
         assert dispatcher is not None
 
         # Test with configuration
-        config: dict[str, object] = {"timeout": 30, "max_retries": 3}
+        config: FlextTypes.Dict = {"timeout": 30, "max_retries": 3}
         dispatcher_with_config = FlextDispatcher(config=config)
         assert dispatcher_with_config is not None
 
@@ -91,16 +91,18 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: list[str]) -> FlextResult[list[str]]:
+            def handle(
+                self, message: FlextTypes.StringList
+            ) -> FlextResult[FlextTypes.StringList]:
                 processed = [f"Batch: {msg}" for msg in message]
-                return FlextResult[list[str]].ok(processed)
+                return FlextResult[FlextTypes.StringList].ok(processed)
 
         handler = BatchHandler()
         registration_result = dispatcher.register_handler("batch_message", handler)
         assert registration_result.is_success
 
         # Test batch dispatch - returns list of FlextResult objects
-        messages: list[object] = ["msg1", "msg2", "msg3"]
+        messages: FlextTypes.List = ["msg1", "msg2", "msg3"]
         batch_results = dispatcher.dispatch_batch("batch_message", messages)
         assert isinstance(batch_results, list)
         # Check that at least some results are present
@@ -153,11 +155,6 @@ class TestFlextDispatcherCoverage:
                 super().__init__(config=config)
 
             def handle(self, message: str) -> FlextResult[str]:
-                # Simulate work
-                sleep(0.001)
-                return FlextResult[str].ok(f": {message}")
-
-            def handle(self, message: str) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Sync: {message}")
 
         handler = Handler()
@@ -169,7 +166,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test context creation and usage
-        context: dict[str, object] = {"user_id": "123", "operation": "test"}
+        context: FlextTypes.Dict = {"user_id": "123", "operation": "test"}
 
         # Create a context-aware handler with proper config
         class ContextHandler(FlextHandlers):
@@ -224,8 +221,8 @@ class TestFlextDispatcherCoverage:
             dispatch_result = dispatcher.dispatch("metrics_message", f"test_{i}")
             assert dispatch_result.is_success
 
-        # Test metrics retrieval
-        metrics = dispatcher.get_metrics()
+        # Test metrics retrieval - use direct method
+        metrics = dispatcher.get_performance_metrics()
         assert isinstance(metrics, dict)
 
     def test_dispatcher_handler_validation(self) -> None:
@@ -257,7 +254,7 @@ class TestFlextDispatcherCoverage:
     def test_dispatcher_configuration_management(self) -> None:
         """Test configuration management functionality."""
         # Test with various configuration options
-        configs: list[dict[str, object]] = [
+        configs: list[FlextTypes.Dict] = [
             {"timeout": 10},
             {"max_retries": 5},
             {"enable_metrics": True},
@@ -271,7 +268,7 @@ class TestFlextDispatcherCoverage:
 
     def test_dispatcher_audit_logging(self) -> None:
         """Test audit logging functionality."""
-        config: dict[str, object] = {"enable_audit": True}
+        config: FlextTypes.Dict = {"enable_audit": True}
         dispatcher = FlextDispatcher(config=config)
 
         # Create a handler for audit testing with proper config
@@ -298,7 +295,7 @@ class TestFlextDispatcherCoverage:
 
     def test_dispatcher_retry_functionality(self) -> None:
         """Test retry functionality in dispatcher."""
-        config: dict[str, object] = {"max_retries": 3}
+        config: FlextTypes.Dict = {"max_retries": 3}
         dispatcher = FlextDispatcher(config=config)
 
         # Create a handler that fails initially
@@ -333,7 +330,7 @@ class TestFlextDispatcherCoverage:
 
     def test_dispatcher_timeout_handling(self) -> None:
         """Test timeout handling in dispatcher."""
-        config: dict[str, object] = {"timeout": 1}  # 1 second timeout
+        config: FlextTypes.Dict = {"timeout": 1}  # 1 second timeout
         dispatcher = FlextDispatcher(config=config)
 
         # Create a quick handler with proper config
@@ -417,7 +414,7 @@ class TestFlextDispatcherCoverage:
 
         # Test cleanup operations (if available)
         # This tests methods like clearing metrics, resetting state, etc.
-        metrics = dispatcher.get_metrics()
+        metrics = dispatcher.get_performance_metrics()
         assert isinstance(metrics, dict)
 
         # Test multiple operations to ensure state management

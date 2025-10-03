@@ -121,7 +121,8 @@ class FlextService[TDomainResult](
 
         # Example 4: Execute with timeout
         operation_request = OperationExecutionRequest(
-            operation_callable=lambda: service.execute(), timeout_seconds=5.0
+            operation_callable=lambda: service.execute(),
+            timeout_seconds=FlextConstants.Defaults.OPERATION_TIMEOUT_SECONDS,
         )
         result = service.execute_operation(operation_request)
 
@@ -256,11 +257,11 @@ class FlextService[TDomainResult](
         except Exception:
             return False
 
-    def get_service_info(self) -> FlextTypes.Core.Dict:
+    def get_service_info(self) -> FlextTypes.Dict:
         """Get service information for diagnostics (Domain.Service protocol).
 
         Returns:
-            FlextTypes.Core.Dict: Service information including type and configuration
+            FlextTypes.Dict: Service information including type and configuration
 
         """
         return {"service_type": self.__class__.__name__}
@@ -272,43 +273,19 @@ class FlextService[TDomainResult](
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for the domain service (Domain.Service protocol).
 
-        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-        ❌ CRITICAL ISSUE: Business rules validation should be centralized in FlextModels.Validation
-        ❌ INLINE VALIDATION: This is inline validation that should be centralized
-
-        🔧 REQUIRED ACTION:
-        - Move business rules validation to FlextModels.Validation
-        - Use FlextModels validation patterns for domain validation
-        - Remove inline validation from service base class
-
-        📍 SHOULD BE USED INSTEAD: FlextModels.Validation.validate_business_rules()
-
         Returns:
             FlextResult[None]: Success if valid, failure with error details
 
         """
-        # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
         return FlextResult[None].ok(None)
 
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration (Domain.Service protocol).
 
-        🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-        ❌ CRITICAL ISSUE: Configuration validation should be centralized in FlextConfig.Validation
-        ❌ INLINE VALIDATION: This is inline validation that should be centralized
-
-        🔧 REQUIRED ACTION:
-        - Move configuration validation to FlextConfig.Validation
-        - Use FlextConfig validation patterns for configuration validation
-        - Remove inline validation from service base class
-
-        📍 SHOULD BE USED INSTEAD: FlextConfig.Validation.validate_service_config()
-
         Returns:
             FlextResult[None]: Success if valid, failure with error details
 
         """
-        # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextConfig.Validation
         return FlextResult[None].ok(None)
 
     def validate_with_request(
@@ -354,121 +331,22 @@ class FlextService[TDomainResult](
         """
         operation_name = getattr(operation, "operation_name", "operation")
 
-        if getattr(operation, "enable_validation", True):
-            config_validation = self.validate_config()
-            if config_validation.is_failure:
-                return FlextResult[TDomainResult].fail(
-                    f"{FlextConstants.Messages.VALIDATION_FAILED} (pre-execution)"
-                    + (
-                        f": {config_validation.error}"
-                        if config_validation.error
-                        else ""
-                    ),
-                )
+        # Pre-execution validation
+        validation_result = self._validate_operation_pre_execution(operation_name)
+        if validation_result.is_failure:
+            return validation_result
 
-            business_validation = self.validate_business_rules()
-            if business_validation.is_failure:
-                return FlextResult[TDomainResult].fail(
-                    f"Business rules validation failed: {business_validation.error}",
-                )
+        # Parse arguments
+        arguments_result = self._parse_operation_arguments(operation, operation_name)
+        if arguments_result.is_failure:
+            return arguments_result
 
-        raw_arguments = getattr(operation, "arguments", None)
-        if raw_arguments is None:
-            positional_arguments: tuple[object, ...] = ()
-        elif isinstance(raw_arguments, (list, tuple, set)):
-            positional_arguments = tuple(cast("Iterable[object]", raw_arguments))
-        elif isinstance(raw_arguments, dict):
-            if "args" in raw_arguments:
-                nested_args: object = cast("FlextTypes.Core.Dict", raw_arguments).get(
-                    "args",
-                    None,
-                )
-                if isinstance(nested_args, (list, tuple, set)):
-                    positional_arguments = tuple(cast("Iterable[object]", nested_args))
-                elif nested_args is None:
-                    positional_arguments = ()
-                else:
-                    positional_arguments = (nested_args,)
-            else:
-                positional_arguments = tuple(
-                    cast("Iterable[object]", raw_arguments.values()),
-                )
-        else:
-            positional_arguments = (raw_arguments,)
+        positional_arguments, keyword_arguments = arguments_result.unwrap()
 
-        raw_keyword_arguments = getattr(operation, "keyword_arguments", None)
-        if raw_keyword_arguments is None:
-            keyword_arguments: FlextTypes.Core.Dict = {}
-        elif isinstance(raw_keyword_arguments, dict):
-            keyword_arguments = dict(
-                cast("Mapping[str, object]", raw_keyword_arguments),
-            )
-        else:
-            try:
-                keyword_arguments = dict(raw_keyword_arguments)
-            except Exception as exc:  # pragma: no cover - defensive branch
-                return FlextResult[TDomainResult].fail(
-                    f"Invalid keyword arguments for operation '{operation_name}': {exc}",
-                )
+        # Parse timeout
+        timeout_seconds = self._parse_timeout(operation)
 
-        retry_config_data: FlextTypes.Core.Dict = (
-            getattr(operation, "retry_config", {}) or {}
-        )
-        retry_config: FlextModels.RetryConfiguration | None
-        if retry_config_data:
-            try:
-                # Use Pydantic model_validate for proper type conversion
-                retry_config = FlextModels.RetryConfiguration.model_validate(
-                    retry_config_data,
-                )
-            except Exception as exc:
-                return FlextResult[TDomainResult].fail(
-                    f"Invalid retry configuration for operation '{operation_name}': {exc}",
-                )
-        else:
-            retry_config = None
-
-        max_attempts = (
-            max(1, int(retry_config.max_attempts)) if retry_config is not None else 1
-        )
-
-        base_delay = (
-            float(retry_config.initial_delay_seconds)
-            if retry_config is not None
-            else 0.0
-        )
-        base_delay = max(0.0, base_delay)
-        max_delay_seconds = (
-            float(retry_config.max_delay_seconds)
-            if retry_config is not None
-            else base_delay
-        )
-        max_delay_seconds = max(base_delay, max_delay_seconds)
-        backoff_multiplier = (
-            float(retry_config.backoff_multiplier) if retry_config is not None else 1.0
-        )
-        if backoff_multiplier <= FlextConstants.Core.INITIAL_TIME:
-            backoff_multiplier = 1.0
-        exponential_backoff = bool(
-            retry_config.exponential_backoff if retry_config is not None else False,
-        )
-        retry_exception_filters = (
-            tuple(retry_config.retry_on_exceptions)
-            if retry_config is not None and retry_config.retry_on_exceptions
-            else ()
-        )
-
-        raw_timeout = getattr(operation, "timeout_seconds", None)
-        try:
-            timeout_seconds = (
-                float(raw_timeout)
-                if raw_timeout is not None
-                else FlextConstants.Core.INITIAL_TIME
-            )
-        except (TypeError, ValueError):  # pragma: no cover - defensive branch
-            timeout_seconds = FlextConstants.Core.INITIAL_TIME
-        timeout_seconds = max(FlextConstants.Core.INITIAL_TIME, timeout_seconds)
-
+        # Execute operation directly (simplified from complex retry logic)
         def call_operation() -> FlextResult[TDomainResult]:
             # operation_callable is already validated as Callable[..., object] in the model
             operation_callable = cast(
@@ -489,81 +367,28 @@ class FlextService[TDomainResult](
                 return typed_result
             return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
 
-        def call_with_timeout() -> FlextResult[TDomainResult]:
-            if timeout_seconds <= 0:
-                return call_operation()
+        if timeout_seconds <= 0:
+            return call_operation()
 
-            timeout_message = f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
+        # Execute with timeout constraint
+        timeout_message = (
+            f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
+        )
 
-            def timeout_handler(_signum: int, _frame: object) -> None:
-                raise FlextExceptions.TimeoutError(
-                    timeout_message,
-                    operation=operation_name,
-                )
-
-            previous_handler = signal.getsignal(signal.SIGALRM)
-            try:
-                signal.signal(signal.SIGALRM, timeout_handler)
-                signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
-                return call_operation()
-            finally:
-                signal.setitimer(signal.ITIMER_REAL, 0)
-                signal.signal(signal.SIGALRM, previous_handler)
-
-        def should_retry(exc: Exception, attempt: int) -> bool:
-            if attempt >= max_attempts:
-                return False
-            if retry_config is None:
-                return False
-            if not retry_exception_filters:
-                return True
-            return any(isinstance(exc, allowed) for allowed in retry_exception_filters)
-
-        current_delay = base_delay
-        last_exception: Exception | None = None
-
-        attempt = 1
-        while attempt <= max_attempts:
-            try:
-                return call_with_timeout()
-            except Exception as exc:
-                last_exception = exc
-                if not should_retry(exc, attempt):
-                    message = str(exc) or exc.__class__.__name__
-                    if isinstance(exc, TimeoutError) and timeout_seconds > 0:
-                        return FlextResult[TDomainResult].fail(message)
-                    return FlextResult[TDomainResult].fail(
-                        f"Operation '{operation_name}' failed: {message}",
-                    )
-
-                if retry_config is not None and current_delay > 0:
-                    time.sleep(current_delay)
-
-                if retry_config is not None:
-                    if exponential_backoff:
-                        if current_delay <= 0:
-                            current_delay = base_delay
-                        else:
-                            next_delay = current_delay * backoff_multiplier
-                            if max_delay_seconds > 0:
-                                next_delay = min(next_delay, max_delay_seconds)
-                            current_delay = max(base_delay, next_delay)
-                    else:
-                        current_delay = base_delay
-
-                attempt += 1
-
-        if last_exception is not None:
-            message = str(last_exception) or last_exception.__class__.__name__
-            if isinstance(last_exception, TimeoutError) and timeout_seconds > 0:
-                return FlextResult[TDomainResult].fail(message)
-            return FlextResult[TDomainResult].fail(
-                f"Operation '{operation_name}' failed: {message}",
+        def timeout_handler(_signum: int, _frame: object) -> None:
+            raise FlextExceptions.TimeoutError(
+                timeout_message,
+                operation=operation_name,
             )
 
-        return FlextResult[TDomainResult].fail(
-            f"Operation '{operation_name}' failed without explicit error",
-        )
+        previous_handler = signal.getsignal(signal.SIGALRM)
+        try:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+            return call_operation()
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            signal.signal(signal.SIGALRM, previous_handler)
 
     def execute_with_request(
         self,
@@ -655,7 +480,7 @@ class FlextService[TDomainResult](
 
         """
         results: list[TDomainResult] = []
-        errors: list[str] = []
+        errors: FlextTypes.StringList = []
 
         for i in range(request.batch_size):
             try:
@@ -692,7 +517,7 @@ class FlextService[TDomainResult](
 
         """
         start_time = time.time()
-        metrics_data: FlextTypes.Core.Dict = {}
+        metrics_data: FlextTypes.Dict = {}
 
         try:
             # Collect pre-execution metrics
@@ -732,7 +557,7 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with resource error
 
         """
-        acquired_resources: list[str] = []
+        acquired_resources: FlextTypes.StringList = []
 
         try:
             # Acquire resources
@@ -778,6 +603,244 @@ class FlextService[TDomainResult](
         return self.execute()
 
     # =============================================================================
+    # OPERATION HELPER METHODS - Simplified execution logic
+    # =============================================================================
+
+    def _validate_operation_pre_execution(
+        self, operation_name: str
+    ) -> FlextResult[None]:
+        """Validate operation before execution."""
+        config_validation = self.validate_config()
+        if config_validation.is_failure:
+            return FlextResult[None].fail(
+                f"Operation '{operation_name}' failed validation (pre-execution)"
+                + (f": {config_validation.error}" if config_validation.error else ""),
+            )
+
+        business_validation = self.validate_business_rules()
+        if business_validation.is_failure:
+            return FlextResult[None].fail(
+                f"Business rules validation failed: {business_validation.error}",
+            )
+
+        return FlextResult[None].ok(None)
+
+    def _parse_operation_arguments(
+        self,
+        operation: FlextModels.OperationExecutionRequest,
+        operation_name: str,
+    ) -> FlextResult[tuple[tuple[object, ...], FlextTypes.Dict]]:
+        """Parse operation arguments into positional and keyword arguments."""
+        raw_arguments = getattr(operation, "arguments", None)
+        if raw_arguments is None:
+            return FlextResult[tuple[tuple[object, ...], FlextTypes.Dict]].ok(((), {}))
+
+        # Handle positional arguments
+        if isinstance(raw_arguments, (list, tuple, set)):
+            positional_arguments = tuple(cast("Iterable[object]", raw_arguments))
+        elif isinstance(raw_arguments, dict):
+            if "args" in raw_arguments:
+                nested_args: object = cast("FlextTypes.Dict", raw_arguments).get(
+                    "args", None
+                )
+                if isinstance(nested_args, (list, tuple, set)):
+                    positional_arguments = tuple(cast("Iterable[object]", nested_args))
+                elif nested_args is None:
+                    positional_arguments = ()
+                else:
+                    positional_arguments = (nested_args,)
+            else:
+                positional_arguments = tuple(
+                    cast("Iterable[object]", raw_arguments.values())
+                )
+        else:
+            positional_arguments = (raw_arguments,)
+
+        # Handle keyword arguments
+        raw_keyword_arguments = getattr(operation, "keyword_arguments", None)
+        if raw_keyword_arguments is None:
+            keyword_arguments: FlextTypes.Dict = {}
+        elif isinstance(raw_keyword_arguments, dict):
+            keyword_arguments = dict(
+                cast("Mapping[str, object]", raw_keyword_arguments)
+            )
+        else:
+            try:
+                keyword_arguments = dict(raw_keyword_arguments)
+            except Exception as exc:
+                return FlextResult[tuple[tuple[object, ...], FlextTypes.Dict]].fail(
+                    f"Invalid keyword arguments for operation '{operation_name}': {exc}",
+                )
+
+        return FlextResult[tuple[tuple[object, ...], FlextTypes.Dict]].ok((
+            positional_arguments,
+            keyword_arguments,
+        ))
+
+    def _parse_retry_configuration(
+        self,
+        operation: FlextModels.OperationExecutionRequest,
+        operation_name: str,
+    ) -> FlextResult[FlextModels.RetryConfiguration | None]:
+        """Parse retry configuration from operation."""
+        retry_config_data: FlextTypes.Dict = (
+            getattr(operation, "retry_config", {}) or {}
+        )
+
+        if not retry_config_data:
+            return FlextResult[FlextModels.RetryConfiguration | None].ok(None)
+
+        try:
+            retry_config = FlextModels.RetryConfiguration.model_validate(
+                retry_config_data
+            )
+            return FlextResult[FlextModels.RetryConfiguration | None].ok(retry_config)
+        except Exception as exc:
+            return FlextResult[FlextModels.RetryConfiguration | None].fail(
+                f"Invalid retry configuration for operation '{operation_name}': {exc}",
+            )
+
+    def _parse_timeout(self, operation: FlextModels.OperationExecutionRequest) -> float:
+        """Parse timeout from operation."""
+        raw_timeout = getattr(operation, "timeout_seconds", None)
+        try:
+            timeout_seconds = (
+                float(raw_timeout)
+                if raw_timeout is not None
+                else FlextConstants.Core.INITIAL_TIME
+            )
+        except (TypeError, ValueError):
+            timeout_seconds = FlextConstants.Core.INITIAL_TIME
+        return max(FlextConstants.Core.INITIAL_TIME, timeout_seconds)
+
+    def _extract_retry_parameters(
+        self, retry_config: FlextModels.RetryConfiguration | None
+    ) -> tuple[int, float, float, float, bool, tuple[type[BaseException], ...]]:
+        """Extract retry parameters from configuration."""
+        if retry_config is None:
+            return (1, 0.0, 0.0, 1.0, False, ())
+
+        max_attempts = max(1, int(retry_config.max_attempts))
+        base_delay = max(0.0, float(retry_config.initial_delay_seconds))
+        max_delay = max(base_delay, float(retry_config.max_delay_seconds))
+        backoff_multiplier = max(1.0, float(retry_config.backoff_multiplier))
+        exponential_backoff = bool(retry_config.exponential_backoff)
+        retry_exception_filters = (
+            tuple(retry_config.retry_on_exceptions)
+            if retry_config.retry_on_exceptions
+            else ()
+        )
+
+        return (
+            max_attempts,
+            base_delay,
+            max_delay,
+            backoff_multiplier,
+            exponential_backoff,
+            retry_exception_filters,
+        )
+
+    def _execute_with_retry_and_timeout(
+        self,
+        operation: FlextModels.OperationExecutionRequest,
+        operation_name: str,
+        positional_arguments: tuple[object, ...],
+        keyword_arguments: FlextTypes.Dict,
+        timeout_seconds: float,
+        retry_params: tuple[
+            int, float, float, float, bool, tuple[type[BaseException], ...]
+        ],
+    ) -> FlextResult[TDomainResult]:
+        """Execute operation with retry and timeout logic."""
+        (
+            max_attempts,
+            base_delay,
+            max_delay,
+            backoff_multiplier,
+            exponential_backoff,
+            retry_filters,
+        ) = retry_params
+
+        def call_operation() -> FlextResult[TDomainResult]:
+            operation_callable = cast(
+                "FlextProtocols.Foundation.OperationCallable",
+                operation.operation_callable,
+            )
+            result: object = operation_callable(
+                *positional_arguments, **keyword_arguments
+            )
+
+            if isinstance(result, FlextResult):
+                return cast("FlextResult[TDomainResult]", result)
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+
+        def call_with_timeout() -> FlextResult[TDomainResult]:
+            if timeout_seconds <= 0:
+                return call_operation()
+
+            def timeout_handler(_signum: int, _frame: object) -> None:
+                msg = f"Operation '{operation_name}' timed out after {timeout_seconds} seconds"
+                raise FlextExceptions.TimeoutError(
+                    msg,
+                    operation=operation_name,
+                )
+
+            previous_handler = signal.getsignal(signal.SIGALRM)
+            try:
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                return call_operation()
+            finally:
+                signal.setitimer(signal.ITIMER_REAL, 0)
+                signal.signal(signal.SIGALRM, previous_handler)
+
+        def should_retry(exc: Exception, attempt: int) -> bool:
+            if attempt >= max_attempts:
+                return False
+            if not retry_filters:
+                return True
+            return any(isinstance(exc, allowed) for allowed in retry_filters)
+
+        current_delay = base_delay
+        last_exception: Exception | None = None
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return call_with_timeout()
+            except Exception as exc:
+                last_exception = exc
+                if not should_retry(exc, attempt):
+                    message = str(exc) or exc.__class__.__name__
+                    if isinstance(exc, TimeoutError) and timeout_seconds > 0:
+                        return FlextResult[TDomainResult].fail(message)
+                    return FlextResult[TDomainResult].fail(
+                        f"Operation '{operation_name}' failed: {message}",
+                    )
+
+                if current_delay > 0:
+                    time.sleep(current_delay)
+
+                if exponential_backoff:
+                    next_delay = current_delay * backoff_multiplier
+                    if max_delay > 0:
+                        next_delay = min(next_delay, max_delay)
+                    current_delay = max(base_delay, next_delay)
+                else:
+                    current_delay = base_delay
+
+        if last_exception is not None:
+            message = str(last_exception) or last_exception.__class__.__name__
+            if isinstance(last_exception, TimeoutError) and timeout_seconds > 0:
+                return FlextResult[TDomainResult].fail(message)
+            return FlextResult[TDomainResult].fail(
+                f"Operation '{operation_name}' failed: {message}",
+            )
+
+        return FlextResult[TDomainResult].fail(
+            f"Operation '{operation_name}' failed without explicit error",
+        )
+
+    # =============================================================================
     # NESTED HELPER CLASSES - Following FLEXT unified class pattern
     # =============================================================================
 
@@ -800,7 +863,7 @@ class FlextService[TDomainResult](
         """Nested execution helper - no loose functions."""
 
         @staticmethod
-        def prepare_execution_context(service: object) -> FlextTypes.Core.Dict:
+        def prepare_execution_context(service: object) -> FlextTypes.Dict:
             """Prepare execution context for the service."""
             return {
                 "service_type": service.__class__.__name__,
@@ -810,7 +873,7 @@ class FlextService[TDomainResult](
         @staticmethod
         def cleanup_execution_context(
             service: object,
-            context: FlextTypes.Core.Dict,
+            context: FlextTypes.Dict,
         ) -> None:
             """Cleanup execution context after service execution."""
             # Default implementation - can be extended by subclasses
@@ -819,9 +882,9 @@ class FlextService[TDomainResult](
         """Nested metadata helper - no loose functions."""
 
         @staticmethod
-        def extract_service_metadata(service: object) -> FlextTypes.Core.Dict:
+        def extract_service_metadata(service: object) -> FlextTypes.Dict:
             """Extract metadata from service instance."""
-            metadata: FlextTypes.Core.Dict = {
+            metadata: FlextTypes.Dict = {
                 "service_class": service.__class__.__name__,
                 "service_module": service.__class__.__module__,
             }
@@ -836,7 +899,7 @@ class FlextService[TDomainResult](
         @staticmethod
         def format_service_info(
             _service: object,
-            metadata: FlextTypes.Core.Dict,
+            metadata: FlextTypes.Dict,
         ) -> str:
             """Format service information for display."""
             return f"Service: {metadata.get('service_class', 'Unknown')} ({metadata.get('service_module', 'Unknown')})"
@@ -855,6 +918,6 @@ class FlextService[TDomainResult](
         return FlextMixins.to_json(serialization_request)
 
 
-__all__: FlextTypes.Core.StringList = [
+__all__: FlextTypes.StringList = [
     "FlextService",
 ]

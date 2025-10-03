@@ -10,37 +10,24 @@ import inspect
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Backward compatibility: re-export from protocols.py
-# Protocol now centralized in FlextProtocols.Foundation
-if TYPE_CHECKING:
-    from typing import Protocol, runtime_checkable
 
-    @runtime_checkable
-    class HasValidateCommand(Protocol):
-        """Protocol for commands with validate_command method."""
-
-        def validate_command(self) -> FlextResult[None]:
-            """Validate command and return FlextResult."""
-            ...
-
-else:
-    from flext_core.protocols import FlextProtocols
-
-    HasValidateCommand = FlextProtocols.Foundation.HasValidateCommand
-
-
-class FlextBus(FlextMixins):
+class FlextBus(
+    FlextProtocols.Commands.CommandBus,
+    FlextProtocols.Commands.Middleware,
+    FlextMixins,
+):
     """Command/Query bus for CQRS pattern implementation.
 
     FlextBus provides message dispatching for Command Query
@@ -73,7 +60,7 @@ class FlextBus(FlextMixins):
         - FlextUtilities for validation and processing
         - FlextTypes for type definitions
         - OrderedDict for handler registry ordering
-        - FlextBus._CqrsCache for query result caching (nested class)
+        - FlextBus._Cache for query result caching (nested class)
         - inspect module for handler introspection
 
     **How to use**: Command/query dispatch patterns
@@ -141,7 +128,7 @@ class FlextBus(FlextMixins):
         _middleware_instances (dict): Cached middleware instances.
         _execution_count (int): Total handler executions.
         _auto_handlers (list): Auto-discovered handlers.
-        _cache (FlextBus._CqrsCache): Query result cache (nested class).
+        _cache (FlextBus._Cache): Query result cache (nested class).
         _logger (FlextLogger): Bus operation logger.
 
     Returns:
@@ -178,8 +165,8 @@ class FlextBus(FlextMixins):
 
     """
 
-    class _CqrsCache:
-        """Private CQRS-specific cache manager for command/query result caching.
+    class _Cache:
+        """Private cache manager for command/query result caching.
 
         Nested class for bus-specific caching logic following SOLID principles.
         This is an implementation detail of FlextBus, not a general utility.
@@ -188,14 +175,14 @@ class FlextBus(FlextMixins):
         def __init__(
             self, max_size: int = FlextConstants.Defaults.MAX_CACHE_SIZE
         ) -> None:
-            """Initialize CQRS cache manager.
+            """Initialize cache manager.
 
             Args:
                 max_size: Maximum number of cached results
 
             """
             # Use FlextTypes instead of OrderedDict directly
-            self._cache: FlextTypes.Core.OrderedDict = OrderedDict()
+            self._cache: FlextTypes.OrderedDictType = OrderedDict()
             self._max_size = max_size
 
         def get(self, key: str) -> FlextResult[object] | None:
@@ -241,7 +228,7 @@ class FlextBus(FlextMixins):
 
     def __init__(
         self,
-        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Dict | None = None,
     ) -> None:
         """Initialize FlextBus with configuration."""
         super().__init__()
@@ -250,20 +237,20 @@ class FlextBus(FlextMixins):
         self._config_model = self._create_config_model(bus_config)
 
         # Handler registry
-        self._handlers: FlextTypes.Core.Dict = {}
+        self._handlers: FlextTypes.Dict = {}
 
         # Middleware pipeline - use parent's _middleware for callables only
         # Middleware configurations stored separately - using FlextTypes.Handlers
         self._middleware_configs: list[FlextTypes.Handlers.MiddlewareConfig] = []
         # Middleware instances cache
-        self._middleware_instances: FlextTypes.Core.Dict = {}
+        self._middleware_instances: FlextTypes.Dict = {}
         # Execution counter
         self._execution_count: int = FlextConstants.Core.ZERO
         # Auto-discovery handlers (single-arg registration)
-        self._auto_handlers: FlextTypes.Core.List = []
+        self._auto_handlers: FlextTypes.List = []
 
         # Cache configuration - use dedicated CqrsCache manager
-        self._cache: FlextBus._CqrsCache = FlextBus._CqrsCache(
+        self._cache: FlextBus._Cache = FlextBus._Cache(
             max_size=self._config_model.max_cache_size
         )
 
@@ -276,7 +263,7 @@ class FlextBus(FlextMixins):
 
     def _create_config_model(
         self,
-        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Dict | None,
     ) -> FlextModels.CqrsConfig.Bus:
         """Create configuration model from input."""
         if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
@@ -297,73 +284,75 @@ class FlextBus(FlextMixins):
     @classmethod
     def create_command_bus(
         cls,
-        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Core.Dict | None = None,
+        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Dict | None = None,
     ) -> FlextBus:
-        """Create factory helper mirroring the documented ``create_command_bus`` API.
+        """REMOVED: Use direct instantiation with FlextBus().
 
-        Args:
-            bus_config: Bus configuration or None for defaults
+        Migration:
+            # Old pattern
+            bus = FlextBus.create_command_bus(config)
 
-        Returns:
-            FlextBus: Configured command bus instance
+            # New pattern - create instance directly
+            bus = FlextBus(bus_config=config)
 
         """
-        return cls(bus_config=bus_config)
+        msg = (
+            "FlextBus.create_command_bus() has been removed. "
+            "Use FlextBus(bus_config=...) to create instances directly."
+        )
+        raise NotImplementedError(msg)
 
     @staticmethod
     def create_simple_handler(
         handler_func: Callable[..., object],
-        handler_config: FlextModels.CqrsConfig.Handler
-        | FlextTypes.Core.Dict
-        | None = None,
+        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Dict | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a bare callable into a CQRS command handler with validation.
+        """REMOVED: Use FlextHandlers.from_callable() directly.
 
-        Args:
-            handler_func: A callable that takes a single argument (the command payload) and returns a result.
-                The function should implement the business logic for the command.
-            handler_config: Optional handler configuration, either as a `FlextModels.CqrsConfig.Handler` instance
-                or a dictionary. If None, default configuration is used.
+        Migration:
+            # Old pattern
+            handler = FlextBus.create_simple_handler(my_func, config)
 
-        Returns:
-            FlextHandlers[object, object]: A CQRS command handler that wraps the provided callable,
-                with input/output validation and result wrapping. See `FlextHandlers.from_callable` for details.
+            # New pattern - use FlextHandlers directly
+            handler = FlextHandlers.from_callable(
+                callable_func=my_func,
+                handler_name=my_func.__name__,
+                handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                handler_config=config
+            )
 
         """
-        handler_name = getattr(handler_func, "__name__", "SimpleHandler")
-
-        return FlextHandlers.from_callable(
-            callable_func=handler_func,
-            handler_name=handler_name,
-            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            handler_config=handler_config,
+        msg = (
+            "FlextBus.create_simple_handler() has been removed. "
+            "Use FlextHandlers.from_callable() directly."
         )
+        raise NotImplementedError(msg)
 
     @staticmethod
     def create_query_handler(
         handler_func: Callable[..., object],
-        handler_config: FlextModels.CqrsConfig.Handler
-        | FlextTypes.Core.Dict
-        | None = None,
+        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Dict | None = None,
     ) -> FlextHandlers[object, object]:
-        """Wrap a callable into a CQRS query handler that returns `FlextResult`.
+        """REMOVED: Use FlextHandlers.from_callable() directly.
 
-        Args:
-            handler_func: The callable function to wrap
-            handler_config: Handler configuration or None for defaults
+        Migration:
+            # Old pattern
+            handler = FlextBus.create_query_handler(my_func, config)
 
-        Returns:
-            FlextHandlers: Configured query handler instance
+            # New pattern - use FlextHandlers directly
+            handler = FlextHandlers.from_callable(
+                callable_func=my_func,
+                handler_name=my_func.__name__,
+                handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+                handler_config=config
+            )
 
         """
-        handler_name = getattr(handler_func, "__name__", "SimpleQueryHandler")
-
-        return FlextHandlers.from_callable(
-            callable_func=handler_func,
-            handler_name=handler_name,
-            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            handler_config=handler_config,
+        msg = (
+            "FlextBus.create_query_handler() has been removed. "
+            "Use FlextHandlers.from_callable() directly."
         )
+        raise NotImplementedError(msg)
 
     @staticmethod
     def _normalize_command_key(command_type_obj: object) -> str:
@@ -376,13 +365,13 @@ class FlextBus(FlextMixins):
     def _normalize_middleware_config(
         self,
         middleware_config: object | None,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Convert middleware configuration into a dictionary."""
         if middleware_config is None:
             return {}
 
         if isinstance(middleware_config, dict):
-            return cast("FlextTypes.Core.Dict", middleware_config)
+            return cast("FlextTypes.Dict", middleware_config)
 
         if isinstance(middleware_config, Mapping):
             # Cast to proper type for type checker
@@ -399,7 +388,7 @@ class FlextBus(FlextMixins):
                 if isinstance(result, Mapping):
                     return dict(cast("Mapping[str, object]", result))
                 if isinstance(result, dict):
-                    return cast("FlextTypes.Core.Dict", result)
+                    return cast("FlextTypes.Dict", result)
 
         return {}
 
@@ -419,10 +408,11 @@ class FlextBus(FlextMixins):
                 return FlextResult[None].fail("Handler cannot be None")
 
             # Validate handler has required method
-            handle_method = getattr(handler, FlextConstants.Mixins.METHOD_HANDLE, None)
+            method_name = FlextConstants.Mixins.METHOD_HANDLE
+            handle_method = getattr(handler, method_name, None)
             if not callable(handle_method):
                 return FlextResult[None].fail(
-                    f"Invalid handler: must have callable '{FlextConstants.Mixins.METHOD_HANDLE}' method",
+                    f"Invalid handler: must have callable '{method_name}' method"
                 )
 
             # Add to auto-discovery list
@@ -518,7 +508,7 @@ class FlextBus(FlextMixins):
         command_type = type(command)
 
         # Validate command if it has custom validation method (not Pydantic field validator)
-        if isinstance(command, HasValidateCommand):
+        if isinstance(command, FlextProtocols.Foundation.HasValidateCommand):
             validation_method = command.validate_command
             # Check if it's a custom validation method (callable without parameters)
             # and returns a FlextResult (not a Pydantic field validator)
@@ -625,6 +615,25 @@ class FlextBus(FlextMixins):
 
         return result
 
+    def process(self, command: object, handler: object) -> object:
+        """Process command through middleware pipeline.
+
+        Args:
+            command: The command being processed
+            handler: The handler that will process the command
+
+        Returns:
+            The result of middleware processing
+
+        """
+        # Apply middleware pipeline
+        middleware_result: FlextResult[None] = self._apply_middleware(command, handler)
+        if middleware_result.is_failure:
+            return middleware_result
+
+        # Execute the handler
+        return self._execute_handler(handler, command)
+
     def _apply_middleware(
         self,
         command: object,
@@ -644,7 +653,7 @@ class FlextBus(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(middleware_config: FlextTypes.Core.Dict) -> int:
+        def get_order(middleware_config: FlextTypes.Dict) -> int:
             order_value = middleware_config.get(
                 "order",
                 FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER,
@@ -773,7 +782,7 @@ class FlextBus(FlextMixins):
                 except Exception as e:
                     return FlextResult[object].fail(
                         f"Handler execution failed: {e}",
-                        error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
+                        error_code=str(FlextConstants.Errors.COMMAND_PROCESSING_FAILED),
                     )
 
         # No valid handler method found
@@ -790,13 +799,13 @@ class FlextBus(FlextMixins):
 
         return FlextResult[object].fail(
             f"Handler has no callable {formatted_methods} method",
-            error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
+            error_code=str(FlextConstants.Errors.COMMAND_BUS_ERROR),
         )
 
     def add_middleware(
         self,
         middleware: object,
-        middleware_config: FlextTypes.Core.Dict | None = None,
+        middleware_config: FlextTypes.Dict | None = None,
     ) -> FlextResult[None]:
         """Append middleware with validated configuration metadata.
 
@@ -812,7 +821,7 @@ class FlextBus(FlextMixins):
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
 
-        config_data: FlextTypes.Core.Dict = self._normalize_middleware_config(
+        config_data: FlextTypes.Dict = self._normalize_middleware_config(
             middleware_config,
         )
         if not config_data:
@@ -848,11 +857,11 @@ class FlextBus(FlextMixins):
 
         return FlextResult[None].ok(None)
 
-    def get_all_handlers(self) -> FlextTypes.Core.List:
+    def get_all_handlers(self) -> FlextTypes.List:
         """Return all registered handler instances.
 
         Returns:
-            FlextTypes.Core.List: List of all registered handlers
+            FlextTypes.List: List of all registered handlers
 
         """
         return list(self._handlers.values())
@@ -864,7 +873,7 @@ class FlextBus(FlextMixins):
             command_type: The command type or name to unregister.
 
         Returns:
-            FlextResult[None]: Success if handler was removed, failure otherwise
+            FlextResult[None]: Success if handler was removed, failure if not found
 
         """
         for key in list(self._handlers.keys()):
@@ -895,13 +904,15 @@ class FlextBus(FlextMixins):
                 )
                 return FlextResult[None].ok(None)
 
-        return FlextResult[None].fail(f"Handler for {command_type} not found")
+        return FlextResult[None].fail(
+            f"Handler not found for command type: {command_type}"
+        )
 
-    def get_registered_handlers(self) -> FlextTypes.Core.Dict:
+    def get_registered_handlers(self) -> FlextTypes.Dict:
         """Expose the handler registry keyed by command identifiers.
 
         Returns:
-            FlextTypes.Core.Dict: Dictionary of registered handlers
+            FlextTypes.Dict: Dictionary of registered handlers
 
         """
         return {str(k): v for k, v in self._handlers.items()}
@@ -911,9 +922,95 @@ class FlextBus(FlextMixins):
         self._handlers.clear()
         self._auto_handlers.clear()
 
+    # =========================================================================
+    # EVENT PUBLISHER PROTOCOL IMPLEMENTATION (Phase 4.3)
+    # =========================================================================
+
+    def publish_event(self, event: object) -> FlextResult[None]:
+        """Publish a domain event.
+
+        Args:
+            event: Domain event to publish
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
+        try:
+            # Use existing execute mechanism for event publishing
+            result = self.execute(event)
+
+            if result.is_failure:
+                return FlextResult[None].fail(
+                    f"Event publishing failed: {result.error}"
+                )
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Event publishing error: {e}")
+
+    def publish_events(self, events: FlextTypes.List) -> FlextResult[None]:
+        """Publish multiple domain events.
+
+        Args:
+            events: List of domain events to publish
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
+        try:
+            for event in events:
+                result = self.publish_event(event)
+                if result.is_failure:
+                    return result
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Batch event publishing error: {e}")
+
+    def subscribe(self, event_type: str, handler: object) -> FlextResult[None]:
+        """Subscribe to an event type.
+
+        Args:
+            event_type: Type of event to subscribe to
+            handler: Handler callable for the event
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
+        try:
+            # Use existing register_handler mechanism
+            return self.register_handler(event_type, handler)
+        except Exception as e:
+            return FlextResult[None].fail(f"Event subscription error: {e}")
+
+    def unsubscribe(
+        self,
+        event_type: str,
+        _handler: object,
+    ) -> FlextResult[None]:
+        """Unsubscribe from an event type.
+
+        Args:
+            event_type: Type of event to unsubscribe from
+            handler: Handler to remove (reserved for future use)
+
+        Returns:
+            FlextResult[None]: Success or error result
+
+        """
+        try:
+            # Use existing unregister_handler mechanism which returns FlextResult
+            return self.unregister_handler(event_type)
+        except Exception as e:
+            self.logger.exception("Event unsubscription error")
+            return FlextResult[None].fail(f"Event unsubscription error: {e}")
+
 
 # Direct class access - no legacy aliases
 
-__all__: FlextTypes.Core.StringList = [
+__all__: FlextTypes.StringList = [
     "FlextBus",
 ]
