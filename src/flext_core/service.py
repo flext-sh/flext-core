@@ -264,7 +264,7 @@ class FlextService[TDomainResult](
             FlextTypes.Dict: Service information including type and configuration
 
         """
-        return {"service_type": self.__class__.__name__}
+        return {"service_type": self.__class__.__name__}  # type: ignore[misc]
 
     # =============================================================================
     # VALIDATION METHODS (Domain.Service protocol)
@@ -334,12 +334,12 @@ class FlextService[TDomainResult](
         # Pre-execution validation
         validation_result = self._validate_operation_pre_execution(operation_name)
         if validation_result.is_failure:
-            return validation_result
+            return validation_result  # type: ignore[return-value]
 
         # Parse arguments
         arguments_result = self._parse_operation_arguments(operation, operation_name)
         if arguments_result.is_failure:
-            return arguments_result
+            return arguments_result  # type: ignore[return-value]
 
         positional_arguments, keyword_arguments = arguments_result.unwrap()
 
@@ -522,7 +522,7 @@ class FlextService[TDomainResult](
         try:
             # Collect pre-execution metrics
             metrics_data["start_time"] = start_time
-            metrics_data["service_type"] = self.__class__.__name__
+            metrics_data["service_type"] = self.__class__.__name__  # type: ignore[misc]
 
             # Execute operation
             result = self.execute()

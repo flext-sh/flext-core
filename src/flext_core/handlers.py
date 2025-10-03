@@ -596,7 +596,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         Part of FlextProtocols.Application.Handler protocol implementation.
 
         Args:
-            _data: The data to validate
+            data: The data to validate
 
         Returns:
             FlextResult[None]: Success if valid, failure with error details

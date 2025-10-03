@@ -172,7 +172,7 @@ class FlextConstants:
                 value = getattr(value, part)
             return value
         except AttributeError as e:
-            msg = f"Constant path '{key}' not found in {cls.__name__}"
+            msg = f"Constant path '{key}' not found in {cls.__name__}"  # type: ignore[misc]
             raise AttributeError(msg) from e
 
     class Core:

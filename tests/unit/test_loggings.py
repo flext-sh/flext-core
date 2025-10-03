@@ -474,12 +474,14 @@ class TestFlextLogger:
         result = logger.validate()
         assert result.is_success
 
-    def test_logger_logging_with_singleton_pattern(self) -> None:
-        """Test logging with singleton pattern."""
-        logger1 = FlextLogger.get_instance("test_logger")
-        logger2 = FlextLogger.get_instance("test_logger")
+    def test_logger_logging_with_instance_creation(self) -> None:
+        """Test logging instance creation with caching."""
+        logger1 = FlextLogger("test_logger")
+        logger2 = FlextLogger("test_logger")
 
+        # Instances are cached by default (singleton-like behavior)
         assert logger1 is logger2
+        assert logger1.name == logger2.name == "test_logger"
 
     def test_logger_logging_with_singleton_reset(self) -> None:
         """Test logging with different instances."""

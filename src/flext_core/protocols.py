@@ -9,6 +9,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import (
+    TYPE_CHECKING,
     Generic,
     Protocol,
     overload,
@@ -18,10 +19,14 @@ from typing import (
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
+    T_co,
     T_contra,
     TInput_contra,
     TResult,
 )
+
+if TYPE_CHECKING:
+    from flext_core.models import FlextModels
 
 # =============================================================================
 # Core Protocols for Breaking Circular Dependencies
@@ -294,20 +299,20 @@ class FlextProtocols:
         # Domain protocols providing service and repository patterns
 
         @runtime_checkable
-        class Service(Protocol):
+        class Service(Protocol[T_co]):
             """Domain service contract aligned with FlextService implementation."""
 
             @abstractmethod
-            def execute(self: object) -> FlextResult[object]:
+            def execute(self) -> FlextResult[T_co]:
                 """Execute the main domain operation.
 
                 Returns:
-                    FlextResult[object]: Success with domain result or failure with error
+                    FlextResult[T_co]: Success with domain result or failure with error
 
                 """
                 ...
 
-            def is_valid(self: object) -> bool:
+            def is_valid(self) -> bool:
                 """Check if the domain service is in a valid state.
 
                 Returns:
@@ -316,7 +321,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate_business_rules(self: object) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 """Validate business rules for the domain service.
 
                 Returns:
@@ -325,7 +330,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate_config(self: object) -> FlextResult[None]:
+            def validate_config(self) -> FlextResult[None]:
                 """Validate service configuration.
 
                 Returns:
@@ -334,14 +339,16 @@ class FlextProtocols:
                 """
                 ...
 
-            def execute_operation(self, operation: object) -> FlextResult[object]:
+            def execute_operation(
+                self, operation: FlextModels.OperationExecutionRequest
+            ) -> FlextResult[T_co]:
                 """Execute operation using OperationExecutionRequest model.
 
                 Args:
                     operation: OperationExecutionRequest containing operation settings
 
                 Returns:
-                    FlextResult[object]: Success with result or failure with error
+                    FlextResult[T_co]: Success with result or failure with error
 
                 """
                 ...
@@ -443,7 +450,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate(self, data: TInput_contra) -> FlextResult[None]:
+            def validate(self, _data: TInput_contra) -> FlextResult[None]:
                 """Validate input before processing and wrap the outcome in ``FlextResult``."""
                 ...
 
@@ -516,29 +523,41 @@ class FlextProtocols:
 
         @runtime_checkable
         class LoggerProtocol(Protocol):
-            """Logger protocol with standard logging methods."""
+            """Logger protocol with standard logging methods returning FlextResult."""
 
-            def trace(self, message: str, **kwargs: object) -> None:
+            def trace(
+                self, message: str, *args: object, **kwargs: object
+            ) -> FlextResult[None]:
                 """Log trace message."""
                 ...
 
-            def debug(self, message: str, **kwargs: object) -> None:
+            def debug(
+                self, message: str, *args: object, **context: object
+            ) -> FlextResult[None]:
                 """Log debug message."""
                 ...
 
-            def info(self, message: str, **kwargs: object) -> None:
+            def info(
+                self, message: str, *args: object, **context: object
+            ) -> FlextResult[None]:
                 """Log info message."""
                 ...
 
-            def warning(self, message: str, **kwargs: object) -> None:
+            def warning(
+                self, message: str, *args: object, **context: object
+            ) -> FlextResult[None]:
                 """Log warning message."""
                 ...
 
-            def error(self, message: str, **kwargs: object) -> None:
+            def error(
+                self, message: str, *args: object, **kwargs: object
+            ) -> FlextResult[None]:
                 """Log error message."""
                 ...
 
-            def critical(self, message: str, **kwargs: object) -> None:
+            def critical(
+                self, message: str, *args: object, **kwargs: object
+            ) -> FlextResult[None]:
                 """Log critical message."""
                 ...
 
