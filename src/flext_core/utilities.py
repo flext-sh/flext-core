@@ -2678,7 +2678,7 @@ class FlextUtilities:
             operation_name = operation or "message"
             context_operation = operation or "unknown"
 
-            if isinstance(message, (FlextTypes.Dict, str, int, float, bool)):
+            if isinstance(message, (dict, str, int, float, bool)):
                 return cast("FlextTypes.Dict | str | int | float | bool", message)
 
             if message is None:
