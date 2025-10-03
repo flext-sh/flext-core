@@ -1936,15 +1936,16 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         del self._local.operations[operation_id]
 
     # LoggerProtocol implementation - Standard logging methods with enhanced context
-    def trace(self, message: str, *args: object, **context: object) -> None:
+    def trace(self, message: str, *args: object, **kwargs: object) -> FlextResult[None]:
         """Log trace message - LoggerProtocol implementation."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("TRACE", formatted_message, context)
+        entry = self._build_log_entry("TRACE", formatted_message, kwargs)
         entry_dict: FlextTypes.Dict = entry.to_dict()
         self._structlog_logger.debug(
             formatted_message,
             **entry_dict,
-        )  # Use debug since structlog doesn't have trace  # Use debug since structlog doesn't have trace
+        )  # Use debug since structlog doesn't have trace
+        return FlextResult[None].ok(None)
 
     def start_trace(
         self,

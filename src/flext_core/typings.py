@@ -593,7 +593,9 @@ class FlextTypes:
 
         # Circuit breaker types
         type CircuitState = Literal["closed", "open", "half_open"]
-        type CircuitStats = dict[str, bool | int | float | FlextTypes.FloatList]
+        type CircuitStats = dict[
+            str, bool | int | float | str | FlextTypes.FloatList | None
+        ]
         type CircuitBreakerRegistry = dict[str, FlextTypes.Reliability.CircuitStats]
 
         # Retry types

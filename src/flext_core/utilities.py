@@ -213,7 +213,7 @@ class FlextUtilities:
     def validate_data(
         data: FlextTypes.Dict,
         required_fields: FlextTypes.StringList
-        | FlextTypes.Dict[str, type | tuple[type, ...]]
+        | FlextTypes.Dict[str, type | tuple[type, ...]]  # type: ignore[misc]
         | None = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Validate dictionary data (convenience method).
@@ -808,7 +808,7 @@ class FlextUtilities:
         def validate_data(
             data: FlextTypes.Dict,
             required_fields: FlextTypes.StringList
-            | FlextTypes.Dict[str, type | tuple[type, ...]]
+            | FlextTypes.Dict[str, type | tuple[type, ...]]  # type: ignore[misc]
             | None = None,
         ) -> FlextResult[FlextTypes.Dict]:
             """Validate dictionary data with optional required fields and type checking.
@@ -2367,7 +2367,7 @@ class FlextUtilities:
                 type_hints = get_type_hints(
                     handle_method,
                     globalns=getattr(handle_method, "__globals__", {}),
-                    localns=FlextTypes.Dict(vars(handler_class)),
+                    localns=dict(vars(handler_class)),
                 )
             except (NameError, AttributeError, TypeError):
                 type_hints = {}
