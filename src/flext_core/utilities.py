@@ -44,9 +44,11 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T, U
 
+# Module-level configuration instance for runtime defaults
+_config = FlextConfig()
 
-class FlextUtilities:
-    """Comprehensive utility functions for FLEXT ecosystem operations.
+
+"""Comprehensive utility functions for FLEXT ecosystem operations.
 
     FlextUtilities provides centralized validation, transformation, and
     processing utilities using FlextResult railway patterns. Includes
