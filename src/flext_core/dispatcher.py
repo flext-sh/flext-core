@@ -126,7 +126,6 @@ class FlextDispatcher:
         # Later restore with import_config()
         ```
 
-    **TODO**: Enhanced dispatcher features for 1.0.0+ releases
         - [ ] Add distributed tracing integration (OpenTelemetry)
         - [ ] Implement priority queue for message ordering
         - [ ] Support dispatch patterns with io

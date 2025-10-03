@@ -15,6 +15,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from flext_core import FlextTypes, FlextUtilities
 from flext_core.result import FlextResult
 

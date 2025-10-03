@@ -214,7 +214,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         return self.configure_container(config)
 
-    @override
     def get_config(self) -> FlextTypes.Dict:
         """Get current configuration - Configurable protocol implementation.
 

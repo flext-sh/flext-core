@@ -161,12 +161,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         with FlextResult.ok(resource).expect("Resource required") as r:
             r.perform_operations()
         ```
-
-    **TODO**: Enhancements for 1.0.0+ releases
-        - [ ] Add /support for FlextResult[Awaitable[T]]
-        - [ ] Implement result combination optimizations (parallel)
-        - [ ] Add error context with stack traces for debugging
-        - [ ] Support custom error types beyond strings
         - [ ] Add performance metrics collection and telemetry
         - [ ] Implement lazy evaluation for chained operations
         - [ ] Add Result.from_exception() factory method

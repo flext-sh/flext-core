@@ -160,7 +160,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         logger = handler.logger
         ```
 
-    **TODO**: Enhanced handler features for 1.0.0+ releases
         - [ ] Add /handler support for concurrency
         - [ ] Implement handler chaining for workflows
         - [ ] Add enhanced validation with custom rules
