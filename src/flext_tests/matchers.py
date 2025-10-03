@@ -1105,9 +1105,15 @@ class FlextTestsMatchers:
         time.sleep(seconds)
 
     @staticmethod
+<<<<<<< HEAD
     def run_with_timeout(
         _coro: Awaitable[object],
         _timeout_seconds: float,
+=======
+    def run_with_timeout(  # noqa: ARG004
+        coro: Awaitable[object],
+        timeout_seconds: float,  # noqa: ARG004
+>>>>>>> refs/remotes/origin/main
     ) -> object:
         """Run coroutine with timeout and auto-retry for test compatibility (sync stub).
 
@@ -1124,14 +1130,22 @@ class FlextTestsMatchers:
         return None
 
     @staticmethod
+<<<<<<< HEAD
     def run_parallel_tasks(_tasks: list[Awaitable[object]]) -> FlextTypes.List:
+=======
+    def run_parallel_tasks(tasks: list[Awaitable[object]]) -> list[object]:  # noqa: ARG004
+>>>>>>> refs/remotes/origin/main
         """Run tasks in parallel for test compatibility (sync stub).
 
         Args:
             tasks: List of awaitable tasks (ignored in sync implementation)
 
         Returns:
+<<<<<<< HEAD
             FlextTypes.List: Empty list (sync stub implementation)
+=======
+            list[object]: Empty list (sync stub implementation)
+>>>>>>> refs/remotes/origin/main
 
         """
         # Synchronous stub - return empty list
@@ -1139,10 +1153,17 @@ class FlextTestsMatchers:
         return []
 
     @staticmethod
+<<<<<<< HEAD
     def run_concurrently(
         _func: Callable[[object], object],
         *_args: object,
         **_kwargs: object,
+=======
+    def run_concurrently(  # noqa: ARG004
+        func: Callable[[object], object],  # noqa: ARG004
+        *args: object,  # noqa: ARG004
+        **_kwargs: object,  # noqa: ARG004
+>>>>>>> refs/remotes/origin/main
     ) -> object:
         """Ultra-simple for test compatibility - runs tasks concurrently (sync stub).
 
@@ -1180,9 +1201,15 @@ class FlextTestsMatchers:
 
     @staticmethod
     def measure_concurrency_performance(
+<<<<<<< HEAD
         _func: Callable[..., object],
         _concurrency_level: int,
     ) -> FlextTypes.Dict:
+=======
+        func: Callable[..., object],
+        concurrency_level: int,
+    ) -> FlextTypes.Core.Dict:
+>>>>>>> refs/remotes/origin/main
         """Ultra-simple for test compatibility - measures concurrency performance (sync stub).
 
         Args:
@@ -1197,7 +1224,11 @@ class FlextTestsMatchers:
         # Real async operations should be converted to sync alternatives
         return {
             "total_time": 0.0,
+<<<<<<< HEAD
             "concurrency_level": _concurrency_level,
+=======
+            "concurrency_level": concurrency_level,
+>>>>>>> refs/remotes/origin/main
             "results": [],
             "success_count": 0,
             "error_count": 0,
