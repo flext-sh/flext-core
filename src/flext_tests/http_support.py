@@ -71,9 +71,9 @@ class FlextTestsHttp:
 
         def validate_response_structure(
             self,
-            response_data: FlextTypes.Core.JsonObject,
-            required_fields: FlextTypes.Core.StringList,
-            _: FlextTypes.Core.StringList | None = None,
+            response_data: FlextTypes.JsonValue,
+            required_fields: FlextTypes.StringList,
+            _: FlextTypes.StringList | None = None,
         ) -> FlextResult[None]:
             """Validate API response structure.
 
@@ -95,7 +95,7 @@ class FlextTestsHttp:
 
         def validate_error_response(
             self,
-            response_data: FlextTypes.Core.JsonObject,
+            response_data: FlextTypes.JsonValue,
             expected_error_code: str | None = None,
         ) -> FlextResult[None]:
             """Validate error response format.
@@ -130,19 +130,19 @@ class FlextTestsHttp:
             method: str,
             endpoint: str,
             data: object | None = None,
-            headers: FlextTypes.Core.Headers | None = None,
-        ) -> FlextTypes.Core.Dict:
-            """Create test request data using ``FlextTypes.Core.Dict``.
+            headers: FlextTypes.StringDict | None = None,
+        ) -> FlextTypes.Dict:
+            """Create test request data using ``FlextTypes.Dict``.
 
             Returns:
-                FlextTypes.Core.Dict: Test request payload expressed via the official alias
+                FlextTypes.Dict: Test request payload expressed via the official alias
 
             """
-            request_headers: FlextTypes.Core.Headers = self.default_headers.copy()
+            request_headers: FlextTypes.StringDict = self.default_headers.copy()
             if headers:
                 request_headers.update(headers)
 
-            request_data: FlextTypes.Core.Dict = {
+            request_data: FlextTypes.Dict = {
                 "method": method.upper(),
                 "url": self.build_url(endpoint),
                 "headers": request_headers,
@@ -165,7 +165,7 @@ class FlextTestsHttp:
         def __init__(self, httpx_mock: object) -> None:
             """Initialize HTTP scenario builder."""
             self.httpx_mock = httpx_mock
-            self.scenarios: list[FlextTypes.Core.Dict] = []
+            self.scenarios: list[FlextTypes.Dict] = []
 
         def add_successful_request(
             self,
@@ -173,7 +173,7 @@ class FlextTestsHttp:
             method: str = "GET",
             response_data: object | None = None,
             status_code: int = 200,
-            headers: FlextTypes.Core.Headers | None = None,
+            headers: FlextTypes.StringDict | None = None,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
             """Add successful request scenario.
 
@@ -331,11 +331,11 @@ class FlextTestsHttp:
 
             return self
 
-        def build_scenario(self: Self) -> FlextTypes.Core.Dict:
+        def build_scenario(self: Self) -> FlextTypes.Dict:
             """Build test scenario.
 
             Returns:
-                FlextTypes.Core.Dict: Test scenario configuration dictionary
+                FlextTypes.Dict: Test scenario configuration dictionary
 
             """
             return {
@@ -352,13 +352,13 @@ class FlextTestsHttp:
         @staticmethod
         def create_webhook_payload(
             event_type: str,
-            data: FlextTypes.Core.Dict,
+            data: FlextTypes.Dict,
             webhook_id: str | None = None,
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Create webhook payload.
 
             Returns:
-                FlextTypes.Core.Dict: Webhook payload dictionary
+                FlextTypes.Dict: Webhook payload dictionary
 
             """
             return {
@@ -396,11 +396,11 @@ class FlextTestsHttp:
         def create_webhook_response(
             status: str = "received",
             message: str = "Webhook processed successfully",
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Create webhook response.
 
             Returns:
-                FlextTypes.Core.Dict: Webhook response dictionary
+                FlextTypes.Dict: Webhook response dictionary
 
             """
             return {
@@ -416,7 +416,7 @@ class FlextTestsHttp:
 
         method: str
         url: str
-        headers: FlextTypes.Core.Dict | None = None
+        headers: FlextTypes.Dict | None = None
         data: object | None = None
         timeout: float = float(FlextConstants.Defaults.TIMEOUT)
 
@@ -424,9 +424,9 @@ class FlextTestsHttp:
         """HTTP test response model extending FlextModels foundation."""
 
         status_code: int
-        headers: FlextTypes.Core.Dict
+        headers: FlextTypes.Dict
         data: object | None = None
-        json_data: FlextTypes.Core.JsonObject | None = None
+        json_data: FlextTypes.JsonValue | None = None
 
     # === Convenience Factory Methods ===
 
@@ -459,7 +459,7 @@ class FlextTestsHttp:
         method: str,
         url: str,
         data: object | None = None,
-        headers: FlextTypes.Core.Dict | None = None,
+        headers: FlextTypes.Dict | None = None,
     ) -> FlextTestsHttp.HTTPTestRequest:
         """Create test request.
 
@@ -477,9 +477,9 @@ class FlextTestsHttp:
     @staticmethod
     def create_test_response(
         status_code: int,
-        headers: FlextTypes.Core.Dict | None = None,
+        headers: FlextTypes.Dict | None = None,
         data: object | None = None,
-        json_data: FlextTypes.Core.JsonObject | None = None,
+        json_data: FlextTypes.JsonValue | None = None,
     ) -> FlextTestsHttp.HTTPTestResponse:
         """Create test response.
 
@@ -502,10 +502,10 @@ class FlextTestsHttp:
         method: str = "GET",
         json_data: object | None = None,
         status_code: int = 200,
-        headers: FlextTypes.Core.Dict | None = None,
+        headers: FlextTypes.Dict | None = None,
     ) -> None:
         """Mock HTTPX response."""
-        response_headers: dict[str, str] = {
+        response_headers: FlextTypes.StringDict = {
             "content-type": FlextConstants.Platform.MIME_TYPE_JSON,
         }
         if headers:

@@ -34,33 +34,35 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveLoggingService(FlextService[dict[str, str]]):
+class ComprehensiveLoggingService(FlextService[FlextTypes.StringDict]):
     """Service demonstrating ALL FlextLogger patterns and methods."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
         self._logger = FlextLogger(__name__)
-        self._config = FlextConfig.get_global_instance()
+        self._config = FlextConfig()
         self._scenarios = ExampleScenarios
         self._metadata = self._scenarios.metadata(tags=["logging", "demo"])
         self._user = self._scenarios.user()
         self._payload = self._scenarios.payload()
 
-    def execute(self) -> FlextResult[dict[str, str]]:
+    def execute(self) -> FlextResult[FlextTypes.StringDict]:
         """Execute method required by FlextService."""
         # This is a demonstration service, logs and returns status
         self._logger.info(
             "Executing logging demonstration",
             extra={"data": {"demo": "logging"}},
         )
-        return FlextResult[dict[str, str]].ok({
+        return FlextResult[FlextTypes.StringDict].ok({
             "status": "completed",
             "logged": "True",
         })
@@ -336,7 +338,7 @@ class ComprehensiveLoggingService(FlextService[dict[str, str]]):
             print(f"❌ Configuration failed: {result.error}")
 
         # Check current configuration
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
         print(f"Current log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
         print(f"Include source: {config.include_source}")

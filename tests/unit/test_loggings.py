@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 
 class TestFlextLogger:
@@ -185,7 +185,7 @@ class TestFlextLogger:
         """Test logging with empty data."""
         logger = FlextLogger("test_logger")
 
-        empty_data: dict[str, str | list[str] | dict[str, str]] = {
+        empty_data: dict[str, str | FlextTypes.StringList | FlextTypes.StringDict] = {
             "empty_string": "",
             "empty_list": [],
             "empty_dict": {},
@@ -276,7 +276,7 @@ class TestFlextLogger:
 
         # Middleware functionality is not currently implemented in FlextLogger
         # The add_middleware method exists but is a placeholder
-        def middleware(message: str, **kwargs: object) -> tuple[str, dict[str, object]]:
+        def middleware(message: str, **kwargs: object) -> tuple[str, FlextTypes.Dict]:
             return message, kwargs
 
         logger.add_middleware(middleware)  # This is a no-op
@@ -302,7 +302,7 @@ class TestFlextLogger:
         class TestHandler(logging.Handler):
             def __init__(self) -> None:
                 super().__init__()
-                self.messages: list[str] = []
+                self.messages: FlextTypes.StringList = []
 
             def emit(self, record: logging.LogRecord) -> None:
                 self.messages.append(record.getMessage())

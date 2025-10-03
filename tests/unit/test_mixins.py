@@ -9,7 +9,7 @@ from __future__ import annotations
 import threading
 import time
 
-from flext_core import FlextMixins
+from flext_core import FlextMixins, FlextTypes
 
 
 class TestFlextMixins:
@@ -262,7 +262,7 @@ class TestFlextMixins:
 
         mixins.register("test_mixin", TestMixin)
 
-        classes: list[object] = [TestClass1, TestClass2, TestClass3]
+        classes: FlextTypes.List = [TestClass1, TestClass2, TestClass3]
         results = mixins.apply_batch(classes)
         if results.is_success and results.data:
             assert len(results.data) == 3
@@ -294,7 +294,7 @@ class TestFlextMixins:
 
         mixins.register("test_mixin", TestMixin)
 
-        classes: list[object] = [TestClass1, TestClass2, TestClass3]
+        classes: FlextTypes.List = [TestClass1, TestClass2, TestClass3]
 
         start_time = time.time()
         results = mixins.apply_parallel(classes)

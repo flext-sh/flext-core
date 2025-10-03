@@ -33,6 +33,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 
@@ -105,7 +106,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         """Initialize with dependencies."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
         # In-memory stores for demo
         self._users: dict[str, User] = {}
         self._events: list[UserCreatedEvent] = []
@@ -465,7 +467,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         """Show comprehensive error handling patterns."""
         print("\n=== Error Handling Patterns ===")
 
-        class ValidationHandler(FlextHandlers[dict[str, object], dict[str, object]]):
+        class ValidationHandler(FlextHandlers[FlextTypes.Dict, FlextTypes.Dict]):
             """Handler demonstrating various error scenarios."""
 
             def __init__(self) -> None:
@@ -483,14 +485,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
             def handle(
                 self,
-                message: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
+                message: FlextTypes.Dict,
+            ) -> FlextResult[FlextTypes.Dict]:
                 """Handle validation with comprehensive error handling."""
                 self._logger.info("Processing validation request")
 
                 # Required field validation
                 if not message.get("id"):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         "Missing required field: id",
                         error_code="MISSING_FIELD",
                         error_data={
@@ -501,7 +503,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 # Type validation
                 if not isinstance(message.get("amount"), (int, float)):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         "Invalid type for amount field",
                         error_code="TYPE_ERROR",
                         error_data={
@@ -514,14 +516,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Business rule validation
                 amount_value = message.get("amount", 0)
                 if not isinstance(amount_value, (int, float)):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         "Amount must be a number",
                         error_code="TYPE_ERROR",
                     )
 
                 amount: int | float = amount_value
                 if amount < 0:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         "Amount cannot be negative",
                         error_code="BUSINESS_RULE_VIOLATION",
                         error_data={"rule": "positive_amount", "value": amount},
@@ -535,7 +537,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     "status": "validated",
                 }
 
-                return FlextResult[dict[str, object]].ok(validated_data)
+                return FlextResult[FlextTypes.Dict].ok(validated_data)
 
         # Test error handling
         print("\n1. Error Handling Scenarios:")
@@ -576,7 +578,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         class ProcessOrderCommand:
             order_id: str
             customer_id: str
-            items: list[dict[str, object]]
+            items: list[FlextTypes.Dict]
             total_amount: Decimal
 
         class OrderValidationHandler(
@@ -636,7 +638,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             ) -> FlextResult[ProcessOrderCommand]:
                 """Enrich order with additional data."""
                 # Simulate enrichment by adding timestamps and IDs
-                enriched_items: list[dict[str, object]] = []
+                enriched_items: list[FlextTypes.Dict] = []
                 for item in message.items:
                     enriched_item = item.copy()
                     enriched_item["item_id"] = f"ITEM-{uuid4().hex[:8]}"

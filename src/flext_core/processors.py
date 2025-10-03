@@ -20,6 +20,10 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
+
+# Module-level configuration instance for runtime defaults
+_config = FlextConfig()
 
 
 class FlextProcessors:
@@ -141,20 +145,20 @@ class FlextProcessors:
     """
 
     @override
-    def __init__(self, config: dict[str, object] | None = None) -> None:
+    def __init__(self, config: FlextTypes.Dict | None = None) -> None:
         """Initialize FlextProcessors with optional configuration.
 
         Args:
             config: Optional configuration dictionary for processors
 
         """
-        self._registry: dict[str, object] = {}
-        self._middleware: list[object] = []
+        self._registry: FlextTypes.Dict = {}
+        self._middleware: FlextTypes.List = []
         self._config = config or {}
         self._metrics: dict[str, int] = {}
-        self._audit_log: list[dict[str, object]] = []
-        self._performance_metrics: dict[str, float] = {}
-        self._circuit_breaker: dict[str, bool] = {}
+        self._audit_log: list[FlextTypes.Dict] = []
+        self._performance_metrics: FlextTypes.FloatDict = {}
+        self._circuit_breaker: FlextTypes.BoolDict = {}
         self._rate_limiter: dict[str, dict[str, int | float]] = {}
         self._cache: dict[str, tuple[object, float]] = {}
         self._lock = threading.Lock()  # Thread safety lock
@@ -167,32 +171,32 @@ class FlextProcessors:
 
         circuit_threshold = self._config.get(
             "circuit_breaker_threshold",
-            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+            5,  # Default circuit breaker threshold
         )
         self._circuit_breaker_threshold = (
             int(circuit_threshold)
             if isinstance(circuit_threshold, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
+            else _config.circuit_breaker_threshold
         )
 
         rate_limit = self._config.get(
             "rate_limit",
-            FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
+            _config.max_retry_attempts,
         )
         self._rate_limit = (
             int(rate_limit)
             if isinstance(rate_limit, (int, float, str))
-            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+            else _config.max_retry_attempts
         )
 
         rate_window = self._config.get(
             "rate_limit_window",
-            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            60,  # Default rate limit window (60 seconds)
         )
         self._rate_limit_window = (
             int(rate_window)
             if isinstance(rate_window, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
+            else _config.rate_limit_window_seconds
         )
 
     def register(self, name: str, processor: object) -> FlextResult[None]:
@@ -351,20 +355,20 @@ class FlextProcessors:
         """
         return self._metrics.copy()
 
-    def get_audit_log(self) -> list[dict[str, object]]:
+    def get_audit_log(self) -> list[FlextTypes.Dict]:
         """Get audit log of processing operations.
 
         Returns:
-            list[dict[str, object]]: Audit log entries
+            list[FlextTypes.Dict]: Audit log entries
 
         """
         return self._audit_log.copy()
 
-    def get_performance_metrics(self) -> dict[str, float]:
+    def get_performance_metrics(self) -> FlextTypes.FloatDict:
         """Get performance metrics.
 
         Returns:
-            dict[str, float]: Performance metrics
+            FlextTypes.FloatDict: Performance metrics
 
         """
         return self._performance_metrics.copy()
@@ -384,8 +388,8 @@ class FlextProcessors:
     def process_batch(
         self,
         name: str,
-        data_list: list[object],
-    ) -> FlextResult[list[object]]:
+        data_list: FlextTypes.List,
+    ) -> FlextResult[FlextTypes.List]:
         """Process a batch of data items.
 
         Args:
@@ -393,25 +397,25 @@ class FlextProcessors:
             data_list: List of data items to process
 
         Returns:
-            FlextResult[list[object]]: List of processed results
+            FlextResult[FlextTypes.List]: List of processed results
 
         """
         results = []
         for data in data_list:
             result = self.process(name, data)
             if result.is_failure:
-                return FlextResult[list[object]].fail(
+                return FlextResult[FlextTypes.List].fail(
                     f"Batch processing failed: {result.error}",
                 )
             results.append(result.value)
 
-        return FlextResult[list[object]].ok(results)
+        return FlextResult[FlextTypes.List].ok(results)
 
     def process_parallel(
         self,
         name: str,
-        data_list: list[object],
-    ) -> FlextResult[list[object]]:
+        data_list: FlextTypes.List,
+    ) -> FlextResult[FlextTypes.List]:
         """Process data items in parallel.
 
         Args:
@@ -419,21 +423,21 @@ class FlextProcessors:
             data_list: List of data items to process
 
         Returns:
-            FlextResult[list[object]]: List of processed results
+            FlextResult[FlextTypes.List]: List of processed results
 
         """
         # ISSUE: Code doesn't do what it means to do - method name suggests parallel but just calls sequential batch processing
         # For now, just process sequentially - can be enhanced with actual parallel processing
         return self.process_batch(name, data_list)
 
-    def get_processors(self, name: str) -> list[object]:
+    def get_processors(self, name: str) -> FlextTypes.List:
         """Get registered processors by name.
 
         Args:
             name: Processor name
 
         Returns:
-            list[object]: List of processors with the given name
+            FlextTypes.List: List of processors with the given name
 
         """
         if name in self._registry:
@@ -445,11 +449,11 @@ class FlextProcessors:
         self._registry.clear()
         self._metrics["clear_operations"] = self._metrics.get("clear_operations", 0) + 1
 
-    def get_statistics(self) -> dict[str, object]:
+    def get_statistics(self) -> FlextTypes.Dict:
         """Get comprehensive statistics.
 
         Returns:
-            dict[str, object]: Statistics dictionary
+            FlextTypes.Dict: Statistics dictionary
 
         """
         return {
@@ -503,11 +507,11 @@ class FlextProcessors:
 
         return FlextResult[None].ok(None)
 
-    def export_config(self) -> dict[str, object]:
+    def export_config(self) -> FlextTypes.Dict:
         """Export current configuration.
 
         Returns:
-            dict[str, object]: Configuration dictionary
+            FlextTypes.Dict: Configuration dictionary
 
         """
         return {
@@ -519,7 +523,7 @@ class FlextProcessors:
             "middleware_count": len(self._middleware),
         }
 
-    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
+    def import_config(self, config: FlextTypes.Dict) -> FlextResult[None]:
         """Import configuration.
 
         Args:
@@ -583,16 +587,15 @@ class FlextProcessors:
 
             """
             try:
-                config = FlextConfig.get_global_instance()
                 return int(
                     getattr(
-                        config,
+                        _config,
                         "max_batch_size",
-                        FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+                        100,  # Default batch size
                     ),
                 )
             except Exception:
-                return FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+                return _config.batch_size
 
         @classmethod
         def get_max_handlers(cls) -> int:
@@ -633,7 +636,7 @@ class FlextProcessors:
         @override
         def __init__(self) -> None:
             """Initialize handler registry."""
-            self._handlers: dict[str, object] = {}
+            self._handlers: FlextTypes.Dict = {}
 
         def register(
             self,
@@ -830,11 +833,11 @@ class FlextProcessors:
         def execute_batch(
             self,
             config: FlextModels.BatchProcessingConfig | object,
-        ) -> FlextResult[list[object]]:
+        ) -> FlextResult[FlextTypes.List]:
             """Execute multiple handlers using BatchProcessingConfig model.
 
             Returns:
-                FlextResult[list[object]]: List of handler results or a failed
+                FlextResult[FlextTypes.List]: List of handler results or a failed
                 FlextResult if validation or batch processing fails.
 
             """
@@ -842,7 +845,7 @@ class FlextProcessors:
             if not isinstance(config, FlextModels.BatchProcessingConfig):
                 # For mock objects, validate they have required attributes
                 if not hasattr(config, "data_items"):
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.List].fail(
                         "Config must be BatchProcessingConfig or have data_items attribute",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -862,7 +865,7 @@ class FlextProcessors:
             # Validate batch size limits
             max_batch_size = FlextProcessors.Config.get_max_batch_size()
             if len(data_items) > max_batch_size:
-                return FlextResult[list[object]].fail(
+                return FlextResult[FlextTypes.List].fail(
                     f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -880,7 +883,7 @@ class FlextProcessors:
                     handler_name, request_data = cast("tuple[str, object]", item)
                     handler_requests.append((handler_name, request_data))
                 else:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.List].fail(
                         "Each data item must be a tuple of (handler_name, request_data)",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -918,14 +921,14 @@ class FlextProcessors:
             """Initialize processing pipeline."""
             self._steps: list[
                 Callable[[object], FlextResult[object] | object]
-                | dict[str, object]
+                | FlextTypes.Dict
                 | object
             ] = []
 
         def add_step(
             self,
             step: Callable[[object], FlextResult[object] | object]
-            | dict[str, object]
+            | FlextTypes.Dict
             | object,
         ) -> None:
             """Add a processing step."""
@@ -955,7 +958,7 @@ class FlextProcessors:
 
             """
 
-            def process_data(data: dict[str, object]) -> FlextResult[object]:
+            def process_data(data: FlextTypes.Dict) -> FlextResult[object]:
                 return self.process(
                     FlextModels.ProcessingRequest(
                         data=data,
@@ -965,7 +968,7 @@ class FlextProcessors:
                 )
 
             return (
-                FlextResult[dict[str, object]].ok(request.data).when(condition)
+                FlextResult[FlextTypes.Dict].ok(request.data).when(condition)
                 >> process_data
             )
 
@@ -1044,21 +1047,21 @@ class FlextProcessors:
         def process_batch(
             self,
             config: FlextModels.BatchProcessingConfig | object,
-        ) -> FlextResult[list[object]]:
+        ) -> FlextResult[FlextTypes.List]:
             """Process batch of data using validated BatchProcessingConfig model.
 
             Args:
                 config: BatchProcessingConfig model with data items and processing options
 
             Returns:
-                FlextResult[list[object]]: List of processed data items or a failure.
+                FlextResult[FlextTypes.List]: List of processed data items or a failure.
 
             """
             # Validate config is a BatchProcessingConfig or has required attributes
             if not isinstance(config, FlextModels.BatchProcessingConfig):
                 # For mock objects, validate they have required attributes
                 if not hasattr(config, "data_items"):
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.List].fail(
                         "Config must be BatchProcessingConfig or have data_items attribute",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -1078,7 +1081,7 @@ class FlextProcessors:
             # Validate batch size limits
             max_batch_size = FlextProcessors.Config.get_max_batch_size()
             if len(data_items) > max_batch_size:
-                return FlextResult[list[object]].fail(
+                return FlextResult[FlextTypes.List].fail(
                     f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -1161,7 +1164,7 @@ class FlextProcessors:
 
             # Handle dictionary merging
             if isinstance(current, dict) and isinstance(step, dict):
-                merged_dict: dict[str, object] = {**current, **step}
+                merged_dict: FlextTypes.Dict = {**current, **step}
                 return merged_dict
 
             # Replace current data
@@ -1170,23 +1173,39 @@ class FlextProcessors:
     # Factory methods for convenience
     @staticmethod
     def create_handler_registry() -> HandlerRegistry:
-        """Create a new handler registry.
+        """REMOVED: Use direct instantiation with FlextProcessors.HandlerRegistry().
 
-        Returns:
-            HandlerRegistry: A fresh handler registry instance.
+        Migration:
+            # Old pattern
+            registry = FlextProcessors.create_handler_registry()
+
+            # New pattern - create instance directly
+            registry = FlextProcessors.HandlerRegistry()
 
         """
-        return FlextProcessors.HandlerRegistry()
+        msg = (
+            "FlextProcessors.create_handler_registry() has been removed. "
+            "Use FlextProcessors.HandlerRegistry() to create instances directly."
+        )
+        raise NotImplementedError(msg)
 
     @staticmethod
     def create_pipeline() -> Pipeline:
-        """Create a new processing pipeline.
+        """REMOVED: Use direct instantiation with FlextProcessors.Pipeline().
 
-        Returns:
-            Pipeline: A new processing pipeline instance.
+        Migration:
+            # Old pattern
+            pipeline = FlextProcessors.create_pipeline()
+
+            # New pattern - create instance directly
+            pipeline = FlextProcessors.Pipeline()
 
         """
-        return FlextProcessors.Pipeline()
+        msg = (
+            "FlextProcessors.create_pipeline() has been removed. "
+            "Use FlextProcessors.Pipeline() to create instances directly."
+        )
+        raise NotImplementedError(msg)
 
     @staticmethod
     def is_handler_safe(handler: object) -> bool:
@@ -1245,7 +1264,7 @@ class FlextProcessors:
             @override
             def __init__(self) -> None:
                 """Initialize handler registry."""
-                self._handlers: dict[str, object] = {}
+                self._handlers: FlextTypes.Dict = {}
 
             def register(self, name: str, handler: object) -> None:
                 """Register handler."""
@@ -1279,7 +1298,7 @@ class FlextProcessors:
             def __init__(self, name: str) -> None:
                 """Initialize handler chain with name."""
                 self.name = name
-                self._handlers: list[object] = []
+                self._handlers: FlextTypes.List = []
 
             def add_handler(self, handler: object) -> None:
                 """Add handler to chain."""

@@ -230,7 +230,7 @@ if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
 
 # Centralized error messages
 return FlextResult[dict].fail(
-    FlextConstants.Messages.INVALID_EMAIL,
+    FlextConstants["Messages.INVALID_EMAIL"],
     error_code="VALIDATION_ERROR"
 )
 ```
@@ -288,7 +288,7 @@ FLEXT ecosystem needed consistent type definitions across 32+ projects with Pyth
 **Key Components**:
 
 1. **TypeVars** - Central repository for all generic type variables
-2. **FlextTypes.Core** - Fundamental types (Dict, List, StringList)
+2. **FlextTypes** - Fundamental types (Dict, List, StringList)
 3. **FlextTypes.Message** - CQRS message types
 4. **FlextTypes.Handler** - Handler types for commands/queries
 5. **Python 3.13+ Syntax** - Modern union types (X | Y), type keyword
@@ -298,16 +298,16 @@ FLEXT ecosystem needed consistent type definitions across 32+ projects with Pyth
 from flext_core import FlextTypes
 
 # Core types
-def process_data(data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+def process_data(data: FlextTypes.Dict) -> FlextTypes.Dict:
     return {"processed": True, **data}
 
 # Configuration types
-def load_config() -> FlextTypes.Core.ConfigDict:
+def load_config() -> FlextTypes.ConfigDict:
     return {"timeout": 30, "retries": 3}
 
 # Generic type variables
-T = FlextTypes.Core.T
-U = FlextTypes.Core.U
+T = FlextTypes.T
+U = FlextTypes.U
 ```
 
 ### Type Variable Organization
@@ -332,14 +332,14 @@ U = FlextTypes.Core.U
 
 **Considerations**:
 - Raw dict/list types still valid Python
-- FlextTypes.Core.Dict = `dict[str, object]` (specific use case)
-- Not all dict/list should be converted to FlextTypes.Core
+- FlextTypes.Dict = `FlextTypes.Dict` (specific use case)
+- Not all dict/list should be converted to FlextTypes
 
 ### Status
 
 **ACCEPTED** - Centralized type system with 50+ TypeVars and comprehensive type aliases.
 
-**AUDIT NOTE** (v0.9.9): Confirmed 170+ dict and 242+ list usages are correctly typed with specific type parameters. Conversion to `FlextTypes.Core.Dict/List` would lose type information.
+**AUDIT NOTE** (v0.9.9): Confirmed 170+ dict and 242+ list usages are correctly typed with specific type parameters. Conversion to `FlextTypes.Dict/List` would lose type information.
 
 ---
 

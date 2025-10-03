@@ -26,7 +26,7 @@ class TestFlextProtocols:
 
     def test_protocols_with_custom_config(self) -> None:
         """Test protocols initialization with custom configuration."""
-        config: dict[str, object] = {"max_retries": 3, "timeout": 30}
+        config: FlextTypes.Dict = {"max_retries": 3, "timeout": 30}
         protocols = FlextProtocols(config=config)
         assert protocols is not None
 
@@ -608,7 +608,7 @@ class TestFlextProtocols:
     def test_protocols_thread_safety(self) -> None:
         """Test protocols thread safety."""
         # Use a config with higher rate limit to avoid interference in thread safety test
-        config: FlextTypes.Core.Dict = {"rate_limit": 100, "rate_limit_window": 60}
+        config: FlextTypes.Dict = {"rate_limit": 100, "rate_limit_window": 60}
         protocols = FlextProtocols(config)
 
         class TestProtocol(Protocol):
@@ -942,7 +942,7 @@ class TestFlextProtocols:
 
         # Import config with nested config dict
         config = cast(
-            "dict[str, object]",
+            "FlextTypes.Dict",
             {
                 "config": {"custom_key": "custom_value", "another_key": 42},
                 "cache_ttl": 120,
@@ -964,7 +964,7 @@ class TestFlextProtocols:
         protocols = FlextProtocols()
 
         # Import config with string representations of numbers
-        config: FlextTypes.Core.Dict = {
+        config: FlextTypes.Dict = {
             "cache_ttl": "180.5",
             "circuit_breaker_threshold": "15",
         }

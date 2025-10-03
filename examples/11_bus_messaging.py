@@ -33,25 +33,27 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 
-class BusMessagingService(FlextService[dict[str, object]]):
+class BusMessagingService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextBus patterns."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
         self._logger = FlextLogger(__name__)
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
         self._logger.info(
             "Executing bus demo",
             extra={"data": {"demo": "bus_messaging"}},
         )
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "status": "processed",
             "bus_executed": True,
         })
@@ -94,10 +96,10 @@ class BusMessagingService(FlextService[dict[str, object]]):
             print(f"  Creating user: {cmd.name} with ID {user_id}")
             return FlextResult[str].ok(user_id)
 
-        def handle_get_user(query: GetUserQuery) -> FlextResult[dict[str, object]]:
+        def handle_get_user(query: GetUserQuery) -> FlextResult[FlextTypes.Dict]:
             """Handle user query."""
             print(f"  Getting user: {query.user_id}")
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "id": query.user_id,
                 "name": "John Doe",
                 "email": "john@example.com",
@@ -139,7 +141,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             """Command to place an order."""
 
             customer_id: str
-            items: list[dict[str, object]]
+            items: list[FlextTypes.Dict]
             payment_method: str
 
         @dataclass
@@ -162,7 +164,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             """Handles order commands."""
 
             def __init__(self) -> None:
-                self._orders: dict[str, dict[str, object]] = {}
+                self._orders: FlextTypes.NestedDict = {}
                 self._logger = FlextLogger(__name__)
 
             def handle_place_order(self, cmd: PlaceOrderCommand) -> FlextResult[str]:
@@ -322,7 +324,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             """Tracks performance metrics."""
 
             def __init__(self) -> None:
-                self._metrics: dict[str, list[float]] = {}
+                self._metrics: dict[str, FlextTypes.FloatList] = {}
 
             def __call__(
                 self,
@@ -346,9 +348,9 @@ class BusMessagingService(FlextService[dict[str, object]]):
 
                 return result
 
-            def get_stats(self) -> dict[str, dict[str, float]]:
+            def get_stats(self) -> dict[str, FlextTypes.FloatDict]:
                 """Get performance statistics."""
-                stats: dict[str, dict[str, float]] = {}
+                stats: dict[str, FlextTypes.FloatDict] = {}
                 for msg_type, durations in self._metrics.items():
                     stats[msg_type] = {
                         "count": float(len(durations)),
@@ -424,8 +426,8 @@ class BusMessagingService(FlextService[dict[str, object]]):
         def handle_command2(cmd: Command2) -> FlextResult[str]:
             return FlextResult[str].ok(cmd.value.upper())
 
-        def handle_query1(query: Query1) -> FlextResult[dict[str, object]]:
-            return FlextResult[dict[str, object]].ok({"id": query.id, "found": True})
+        def handle_query1(query: Query1) -> FlextResult[FlextTypes.Dict]:
+            return FlextResult[FlextTypes.Dict].ok({"id": query.id, "found": True})
 
         bus.register_handler(Command1, handle_command1)
         bus.register_handler(Command2, handle_command2)
@@ -499,7 +501,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             keyword: str
             limit: int = 10
 
-        def search(keyword: str, limit: int = 10) -> list[str]:
+        def search(keyword: str, limit: int = 10) -> FlextTypes.StringList:
             """Perform search."""
             # Simulate search
             return [f"{keyword}-{i}" for i in range(limit)]

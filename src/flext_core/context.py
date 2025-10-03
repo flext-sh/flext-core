@@ -55,7 +55,7 @@ class FlextContext:
     **Uses**: Core infrastructure for context management
         - contextvars for thread-local context variables
         - threading.RLock for thread-safe operations
-        - FlextTypes.Core.Dict for type-safe dictionaries
+        - FlextTypes.Dict for type-safe dictionaries
         - FlextResult[T] for operation results
         - datetime for timestamp operations
         - uuid for correlation ID generation
@@ -68,8 +68,8 @@ class FlextContext:
         ```python
         from flext_core import FlextContext
 
-        # Example 1: Global context singleton
-        context = FlextContext.get_global()
+        # Example 1: Create context instance
+        context = FlextContext()
         context.set("user_id", "123")
         user_id = context.get("user_id")
 
@@ -135,7 +135,7 @@ class FlextContext:
     Example:
         Complete context workflow with correlation and timing:
 
-        >>> context = FlextContext.get_global()
+        >>> context = FlextContext()
         >>> with FlextContext.Correlation.new_correlation() as cid:
         ...     with FlextContext.Performance.timed_operation() as m:
         ...         context.set("processed", True)
@@ -164,8 +164,8 @@ class FlextContext:
         SOLID principles. This is an implementation detail of FlextContext.
         """
 
-        data: FlextTypes.Context.ContextData = field(default_factory=dict)
-        metadata: FlextTypes.Context.ContextMetadata = field(default_factory=dict)
+        data: FlextTypes.Dict = field(default_factory=dict)
+        metadata: FlextTypes.Dict = field(default_factory=dict)
 
     @dataclass(slots=True)
     class _ContextExport:
@@ -175,9 +175,9 @@ class FlextContext:
         SOLID principles. This is an implementation detail of FlextContext.
         """
 
-        data: FlextTypes.Context.ContextData = field(default_factory=dict)
-        metadata: FlextTypes.Context.ContextMetadata = field(default_factory=dict)
-        statistics: FlextTypes.Context.ContextStatistics = field(default_factory=dict)
+        data: FlextTypes.Dict = field(default_factory=dict)
+        metadata: FlextTypes.Dict = field(default_factory=dict)
+        statistics: FlextTypes.Dict = field(default_factory=dict)
 
     # =========================================================================
     # LIFECYCLE METHODS
@@ -186,7 +186,7 @@ class FlextContext:
     @override
     def __init__(
         self,
-        initial_data: FlextContext._ContextData | dict[str, object] | None = None,
+        initial_data: FlextContext._ContextData | FlextTypes.Dict | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -201,10 +201,10 @@ class FlextContext:
         else:
             context_data = initial_data
 
-        self._data: FlextTypes.Context.ContextData = context_data.data
-        self._metadata: FlextTypes.Context.ContextMetadata = context_data.metadata
+        self._data: FlextTypes.Dict = context_data.data
+        self._metadata: FlextTypes.Dict = context_data.metadata
         self._hooks: FlextTypes.Context.HookRegistry = {}
-        self._statistics: FlextTypes.Context.ContextStatistics = {
+        self._statistics: FlextTypes.Dict = {
             "operations": {
                 "set": 0,
                 "get": 0,
@@ -370,7 +370,7 @@ class FlextContext:
                 if isinstance(clear_count, int):
                     operations["clear"] = clear_count + 1
 
-    def keys(self) -> list[str]:
+    def keys(self) -> FlextTypes.StringList:
         """Get all keys in the context.
 
         Returns:
@@ -386,7 +386,7 @@ class FlextContext:
                 all_keys.update(scope_data.keys())
             return list(all_keys)
 
-    def values(self) -> FlextTypes.Core.List:
+    def values(self) -> FlextTypes.List:
         """Get all values in the context.
 
         Returns:
@@ -397,7 +397,7 @@ class FlextContext:
             return []
 
         with self._lock:
-            all_values: FlextTypes.Core.List = []
+            all_values: FlextTypes.List = []
             for scope_data in self._scopes.values():
                 all_values.extend(scope_data.values())
             return all_values
@@ -418,7 +418,7 @@ class FlextContext:
                 all_items.extend(scope_data.items())
             return all_items
 
-    def merge(self, other: FlextContext | FlextTypes.Core.Dict) -> FlextContext:
+    def merge(self, other: FlextContext | FlextTypes.Dict) -> FlextContext:
         """Merge another context or dictionary into this context.
 
         Args:
@@ -583,7 +583,7 @@ class FlextContext:
         with self._lock:
             return self._metadata.get(key, default)
 
-    def get_all_metadata(self) -> FlextTypes.Core.Dict:
+    def get_all_metadata(self) -> FlextTypes.Dict:
         """Get all metadata from the context.
 
         Returns:
@@ -593,7 +593,7 @@ class FlextContext:
         with self._lock:
             return self._metadata.copy()
 
-    def get_all_data(self) -> FlextTypes.Core.Dict:
+    def get_all_data(self) -> FlextTypes.Dict:
         """Get all data from the context.
 
         Returns:
@@ -603,7 +603,7 @@ class FlextContext:
         with self._lock:
             return self._data.copy()
 
-    def get_statistics(self) -> FlextTypes.Core.Dict:
+    def get_statistics(self) -> FlextTypes.Dict:
         """Get context statistics.
 
         Returns:
@@ -631,7 +631,7 @@ class FlextContext:
         with self._lock:
             return self._scopes.copy()
 
-    def export(self) -> FlextTypes.Core.Dict:
+    def export(self) -> FlextTypes.Dict:
         """Export context data as a dictionary for compatibility consumers."""
         export_snapshot = self.export_snapshot()
         return dict(export_snapshot.data)
@@ -639,7 +639,7 @@ class FlextContext:
     def export_snapshot(self) -> FlextContext._ContextExport:
         """Return typed export snapshot including metadata and statistics."""
         with self._lock:
-            all_data: dict[str, object] = {}
+            all_data: FlextTypes.Dict = {}
             for scope_data in self._scopes.values():
                 all_data.update(scope_data)
 
@@ -649,7 +649,7 @@ class FlextContext:
                 statistics=self._statistics.copy(),
             )
 
-    def import_data(self, data: FlextTypes.Core.Dict) -> None:
+    def import_data(self, data: FlextTypes.Dict) -> None:
         """Import context data.
 
         Args:
@@ -669,22 +669,48 @@ class FlextContext:
 
     @classmethod
     def get_global(cls) -> FlextContext:
-        """Get the global context instance.
+        """REMOVED: Use direct instantiation or pass instance explicitly.
 
-        Returns:
-            The global FlextContext instance
+        Migration:
+            # Old pattern
+            context = FlextContext.get_global()
+
+            # New pattern - create instance
+            context = FlextContext()
+
+            # Or for singleton pattern, manage explicitly
+            _context_lock = threading.RLock()
+            _context_instance: FlextContext | None = None
+
+            with _context_lock:
+                if _context_instance is None:
+                    _context_instance = FlextContext()
+                context = _context_instance
 
         """
-        with cls._global_lock:
-            if cls._global_context is None:
-                cls._global_context = cls()
-            return cls._global_context
+        msg = (
+            "FlextContext.get_global() has been removed. "
+            "Use FlextContext() to create instances directly."
+        )
+        raise NotImplementedError(msg)
 
     @classmethod
     def reset_global(cls) -> None:
-        """Reset the global context instance."""
-        with cls._global_lock:
-            cls._global_context = None
+        """REMOVED: Manage singleton lifecycle explicitly if needed.
+
+        Migration:
+            # Old pattern
+            FlextContext.reset_global()
+
+            # New pattern - manage your own singleton
+            _context_instance = None  # Reset in your own code
+
+        """
+        msg = (
+            "FlextContext.reset_global() has been removed. "
+            "Manage singleton lifecycle explicitly in your code."
+        )
+        raise NotImplementedError(msg)
 
     # =========================================================================
     # Static Methods - Context variables organized by functionality
@@ -745,8 +771,8 @@ class FlextContext:
                 "operation_start_time",
                 default=None,
             )
-            OPERATION_METADATA: Final[ContextVar[FlextTypes.Core.Dict | None]] = (
-                ContextVar("operation_metadata", default=None)
+            OPERATION_METADATA: Final[ContextVar[FlextTypes.Dict | None]] = ContextVar(
+                "operation_metadata", default=None
             )
 
     # =========================================================================
@@ -943,7 +969,7 @@ class FlextContext:
             user_id: str | None = None,
             operation_name: str | None = None,
             request_id: str | None = None,
-            metadata: FlextTypes.Core.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
         ) -> Generator[None]:
             """Create request metadata context scope with automatic cleanup."""
             # Save current context (for potential future use in logging/debugging)
@@ -1009,12 +1035,12 @@ class FlextContext:
             FlextContext.Variables.Performance.OPERATION_START_TIME.set(start_time)
 
         @staticmethod
-        def get_operation_metadata() -> FlextTypes.Core.Dict | None:
+        def get_operation_metadata() -> FlextTypes.Dict | None:
             """Get operation metadata from context."""
             return FlextContext.Variables.Performance.OPERATION_METADATA.get()
 
         @staticmethod
-        def set_operation_metadata(metadata: FlextTypes.Core.Dict) -> None:
+        def set_operation_metadata(metadata: FlextTypes.Dict) -> None:
             """Set operation metadata in context."""
             FlextContext.Variables.Performance.OPERATION_METADATA.set(metadata)
 
@@ -1031,10 +1057,10 @@ class FlextContext:
         @contextmanager
         def timed_operation(
             operation_name: str | None = None,
-        ) -> Generator[FlextTypes.Core.Dict]:
+        ) -> Generator[FlextTypes.Dict]:
             """Create timed operation context with performance tracking."""
             start_time = datetime.now(UTC)
-            operation_metadata: FlextTypes.Core.Dict = {
+            operation_metadata: FlextTypes.Dict = {
                 "start_time": start_time,
                 "operation_name": operation_name,
             }
@@ -1090,7 +1116,7 @@ class FlextContext:
         """Context serialization and deserialization for cross-service communication."""
 
         @staticmethod
-        def get_full_context() -> FlextTypes.Core.Dict:
+        def get_full_context() -> FlextTypes.Dict:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             return {
@@ -1106,9 +1132,9 @@ class FlextContext:
             }
 
         @staticmethod
-        def get_correlation_context() -> FlextTypes.Core.Headers:
+        def get_correlation_context() -> FlextTypes.StringDict:
             """Get correlation context for cross-service propagation."""
-            context: FlextTypes.Core.Headers = {}
+            context: FlextTypes.StringDict = {}
 
             correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
             if correlation_id:
@@ -1195,7 +1221,7 @@ class FlextContext:
         def get_context_summary() -> str:
             """Get a human-readable context summary for debugging."""
             context = FlextContext.Serialization.get_full_context()
-            parts: FlextTypes.Core.StringList = []
+            parts: FlextTypes.StringList = []
 
             correlation_id = context["correlation_id"]
             if isinstance(correlation_id, str) and correlation_id:
@@ -1237,7 +1263,7 @@ class FlextContext:
             self.handler_name = handler_name
             self.handler_mode = handler_mode
             self._start_time: float | None = None
-            self._metrics_state: FlextTypes.Core.Dict | None = None
+            self._metrics_state: FlextTypes.Dict | None = None
 
         def start_execution(self) -> None:
             """Start execution timing."""
@@ -1256,7 +1282,7 @@ class FlextContext:
             elapsed = time.time() - self._start_time
             return round(elapsed * 1000, 2)
 
-        def get_metrics_state(self) -> FlextTypes.Core.Dict:
+        def get_metrics_state(self) -> FlextTypes.Dict:
             """Get current metrics state.
 
             Returns:
@@ -1267,7 +1293,7 @@ class FlextContext:
                 self._metrics_state = {}
             return self._metrics_state
 
-        def set_metrics_state(self, state: FlextTypes.Core.Dict) -> None:
+        def set_metrics_state(self, state: FlextTypes.Dict) -> None:
             """Set metrics state.
 
             Args:
@@ -1300,6 +1326,6 @@ class FlextContext:
             return cls(handler_name, handler_mode)
 
 
-__all__: FlextTypes.Core.StringList = [
+__all__: FlextTypes.StringList = [
     "FlextContext",
 ]

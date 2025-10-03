@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import OrderedDict
-from collections.abc import Callable as CollectionsCallable
+from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
     Literal,
@@ -41,22 +41,6 @@ P = ParamSpec("P")
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
-
-# Plugin-specific TypeVars
-TPlugin = TypeVar("TPlugin")
-TPluginConfig = TypeVar("TPluginConfig")
-TPluginContext = TypeVar("TPluginContext")
-TPluginData = TypeVar("TPluginData")
-TPluginDiscovery = TypeVar("TPluginDiscovery")
-TPluginHandler = TypeVar("TPluginHandler")
-TPluginLoader = TypeVar("TPluginLoader")
-TPluginManager = TypeVar("TPluginManager")
-TPluginMetadata = TypeVar("TPluginMetadata")
-TPluginPlatform = TypeVar("TPluginPlatform")
-TPluginRegistry = TypeVar("TPluginRegistry")
-TPluginService = TypeVar("TPluginService")
-TPluginSystem = TypeVar("TPluginSystem")
-TPluginValidator = TypeVar("TPluginValidator")
 
 # Covariant type variables (read-only)
 T1_co = TypeVar("T1_co", covariant=True)
@@ -83,13 +67,6 @@ E = TypeVar("E")
 F = TypeVar("F")
 K = TypeVar("K")
 R = TypeVar("R")
-
-# Type aliases - Python 3.13+ syntax
-type WorkspaceStatus = Literal["initializing", "ready", "error", "maintenance"]
-
-# Module-level type aliases for common types (can be imported directly)
-type Dict = dict[str, object]
-type List = list[object]
 
 # Domain-specific type variables
 Message = TypeVar("Message")
@@ -136,7 +113,8 @@ TValue_co = TypeVar("TValue_co", covariant=True)
 TValueObject_co = TypeVar("TValueObject_co", covariant=True)
 UParallel = TypeVar("UParallel")
 UResource = TypeVar("UResource")
-
+TPlugin = TypeVar("TPlugin")
+TPluginConfig = TypeVar("TPluginConfig")
 
 # =============================================================================
 # FLEXT TYPES NAMESPACE - Centralized type system for the FLEXT ecosystem
@@ -177,12 +155,12 @@ class FlextTypes:
 
 
         # Example 1: Use core dict type
-        def process_data(data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+        def process_data(data: FlextTypes.Dict) -> FlextTypes.Dict:
             return {"processed": True, **data}
 
 
         # Example 2: Use configuration types
-        def load_config() -> FlextTypes.Core.ConfigDict:
+        def load_config() -> FlextTypes.ConfigDict:
             return {
                 "timeout": FlextConstants.Network.DEFAULT_TIMEOUT,
                 "retries": FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
@@ -190,7 +168,7 @@ class FlextTypes:
 
 
         # Example 3: Use headers type
-        def build_headers(token: str) -> FlextTypes.Core.Headers:
+        def build_headers(token: str) -> FlextTypes.StringDict:
             return {"Authorization": f"Bearer {token}"}
 
 
@@ -213,7 +191,7 @@ class FlextTypes:
 
 
         # Example 7: Use string lists
-        tags: FlextTypes.Core.StringList = ["tag1", "tag2"]
+        tags: FlextTypes.StringList = ["tag1", "tag2"]
         ```
 
     **TODO**: Enhanced type features for 1.0.0+ releases
@@ -252,7 +230,7 @@ class FlextTypes:
     Example:
         Complete type usage with generics:
 
-        >>> def process[T](data: "Core.Dict") -> "Core.Dict":
+        >>> def process[T](data: "Dict") -> "Dict":
         ...     return data
         >>> result = process({"key": "value"})
         >>> print(result)
@@ -270,49 +248,37 @@ class FlextTypes:
     # CORE TYPES - Fundamental building blocks
     # =========================================================================
 
-    class Core:
-        """Core fundamental types used across all FLEXT modules."""
+    # Basic collection types
+    type Dict = dict[str, object]
+    type List = list[object]
+    type StringList = list[str]
+    type IntList = list[int]
+    type FloatList = list[float]
+    type BoolList = list[bool]
 
-        # Core TypeVars - reference module-level TypeVars for backward compatibility
-        T = T  # noqa: F821
-        U = U  # noqa: F821
-        V = V  # noqa: F821
-        W = W  # noqa: F821
+    # Advanced collection types
+    type NestedDict = dict[str, FlextTypes.Dict]
+    type StringDict = dict[str, str]
+    type IntDict = dict[str, int]
+    type FloatDict = dict[str, float]
+    type BoolDict = dict[str, bool]
 
-        # Basic collection types - simple type aliases (not using TypeAlias in class scope)
-        Dict = dict[str, object]
-        List = list[object]
-        StringList = list[str]
-        IntList = list[int]
-        FloatList = list[float]
-        BoolList = list[bool]
+    # Configuration types
+    type ConfigValue = (
+        str | int | float | bool | FlextTypes.List | FlextTypes.Dict | None
+    )
+    type ConfigDict = dict[str, FlextTypes.ConfigValue]
 
-        # Advanced collection types
-        NestedDict = dict[str, dict[str, object]]
-        type Headers = dict[str, str]
-        type Metadata = dict[str, str]
-        type Parameters = dict[str, object]
-        type CounterDict = dict[str, int]
+    # JSON types with modern Python 3.13+ syntax
+    type JsonValue = FlextTypes.ConfigValue
+    type JsonArray = list[FlextTypes.JsonValue]
+    type JsonDict = dict[str, FlextTypes.JsonValue]
 
-        # Configuration types
-        type ConfigValue = (
-            str | int | float | bool | list[object] | dict[str, object] | None
-        )
-        type ConfigDict = dict[str, ConfigValue]
+    # Value types
+    type Value = str | int | float | bool | object | None
 
-        # JSON types with modern Python 3.13+ syntax
-        type JsonValue = (
-            str | int | float | bool | list[object] | dict[str, object] | None
-        )
-        type JsonObject = dict[str, JsonValue]
-        type JsonArray = list[JsonValue]
-        type JsonDict = dict[str, JsonValue]
-
-        # Value types
-        type Value = str | int | float | bool | object | None
-
-        # Collection types with ordering
-        OrderedDict = OrderedDict[str, object]
+    # Collection types with ordering
+    type OrderedDictType = OrderedDict[str, object]
 
     # =========================================================================
     # DOMAIN TYPES - Domain-Driven Design patterns (ENHANCED for event sourcing)
@@ -349,25 +315,25 @@ class FlextTypes:
 
         """
 
-        # Basic DDD types (legacy - kept for compatibility)
-        type EntityId = str
-        type Entity = object
-        type ValueObject = object
-        type AggregateRoot = object
-        type DomainEvent = dict[str, object]
-
-        # Event sourcing types (NEW - high value)
+        # Event sourcing types
         type EventType = str
-        type EventPayload = dict[str, object]
+        type EventPayload = FlextTypes.Dict
         type EventMetadata = dict[str, str | int | float]
-        type DomainEventTyped = dict[str, EventType | EventPayload | EventMetadata]
-        type EventStream = list[DomainEventTyped]
+        type EventTyped = dict[
+            str,
+            FlextTypes.Domain.EventType
+            | FlextTypes.Domain.EventPayload
+            | FlextTypes.Domain.EventMetadata,
+        ]
+        type EventStream = list[FlextTypes.Domain.EventTyped]
 
-        type EventHandler = CollectionsCallable[[DomainEventTyped], FlextResult[None]]
-        type EventHandlerList = list[EventHandler]
-        type EventHandlerRegistry = dict[EventType, EventHandlerList]
+        type EventHandler = Callable[[FlextTypes.Domain.EventTyped], FlextResult[None]]
+        type EventHandlerList = list[FlextTypes.Domain.EventHandler]
+        type EventHandlerRegistry = dict[
+            FlextTypes.Domain.EventType, FlextTypes.Domain.EventHandlerList
+        ]
 
-        type AggregateState = dict[str, object | list[object]]
+        type AggregateState = dict[str, object | FlextTypes.List]
         type AggregateVersion = int
 
     # =========================================================================
@@ -377,9 +343,9 @@ class FlextTypes:
     class Service:
         """Service layer types."""
 
-        type ServiceDict = dict[str, object]
-        type FactoryDict = dict[str, CollectionsCallable[[], object]]
-        type ServiceType = Literal["instance", "factory"]
+        type Dict = FlextTypes.Dict
+        type Type = Literal["instance", "factory"]
+        type FactoryDict = dict[str, Callable[[], object]]
 
     # =========================================================================
     # CONFIG TYPES - Configuration and settings
@@ -397,11 +363,11 @@ class FlextTypes:
             "local",
         ]
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        type ConfigSerializer = CollectionsCallable[
+        type Serializer = Callable[
             [
                 dict[
                     str,
-                    str | int | float | bool | list[object] | dict[str, object] | None,
+                    str | int | float | bool | FlextTypes.List | FlextTypes.Dict | None,
                 ],
             ],
             str,
@@ -426,36 +392,33 @@ class FlextTypes:
             ...     else FlextResult[None].fail("Invalid email")
             ... )
 
-            Business rule registry:
-
-            >>> rules: FlextTypes.Validation.BusinessRuleRegistry = {
-            ...     "check_balance": lambda account: validate_balance(account),
-            ...     "check_credit": lambda account: validate_credit(account),
-            ... }
-
         """
 
-        # Basic validators (legacy - kept for compatibility)
-        type Validator = CollectionsCallable[[object], bool]
-        type ValidationRule = CollectionsCallable[[object], bool]
-        type BusinessRule = CollectionsCallable[[object], bool]
+        # Basic validators
+        type Rule = Callable[[object], bool]
+        type Validator = Rule
+        type BusinessRule = Rule
 
         # Complex validation patterns (NEW - high value)
         type FieldName = str
-        type FieldValidator[T] = CollectionsCallable[[T], FlextResult[None]]
-        type FieldValidators[T] = list[FieldValidator[T]]
-        type FieldValidatorRegistry[T] = dict[FieldName, FieldValidators[T]]
+        type FieldValidator[T] = Callable[[T], FlextResult[None]]
+        type FieldValidators[T] = list[FlextTypes.Validation.FieldValidator[T]]
+        type FieldValidatorRegistry[T] = dict[
+            FlextTypes.Validation.FieldName, FlextTypes.Validation.FieldValidators[T]
+        ]
 
-        type EntityValidator[T] = CollectionsCallable[[T], FlextResult[None]]
-        type BusinessRuleFunc[T] = EntityValidator[T]
-        type BusinessRuleRegistry[T] = dict[str, BusinessRuleFunc[T]]
+        type EntityValidator[T] = FlextTypes.Validation.FieldValidator[T]
+        type BusinessRuleFunc[T] = FlextTypes.Validation.EntityValidator[T]
+        type BusinessRuleRegistry[T] = dict[
+            str, FlextTypes.Validation.BusinessRuleFunc[T]
+        ]
 
-        type Invariant[T] = CollectionsCallable[[T], FlextResult[None]]
-        type InvariantList[T] = list[Invariant[T]]
+        type Invariant[T] = FlextTypes.Validation.FieldValidator[T]
+        type InvariantList[T] = list[FlextTypes.Validation.Invariant[T]]
 
-        type ConsistencyRule[T, U] = CollectionsCallable[[T, U], FlextResult[None]]
+        type ConsistencyRule[T, U] = Callable[[T, U], FlextResult[None]]
         type ConsistencyRuleRegistry[T] = dict[
-            str, dict[str, ConsistencyRule[T, object]]
+            str, dict[str, FlextTypes.Validation.ConsistencyRule[T, object]]
         ]
 
     # =========================================================================
@@ -476,8 +439,8 @@ class FlextTypes:
     class ServiceOrchestration:
         """Service orchestration types."""
 
-        type ServiceOrchestrator = dict[str, object]
-        type AdvancedServiceOrchestrator = dict[str, object]
+        type ServiceOrchestrator = FlextTypes.Dict
+        type AdvancedServiceOrchestrator = FlextTypes.Dict
 
     # =========================================================================
     # PROJECT TYPES - Project management types
@@ -498,7 +461,7 @@ class FlextTypes:
             "JAVASCRIPT",
         ]
         type ProjectStatus = Literal["active", "inactive", "deprecated", "archived"]
-        type ProjectConfig = dict[str, object]
+        type ProjectConfig = FlextTypes.Dict
 
     # =========================================================================
     # PROCESSING TYPES - Generic processing patterns
@@ -526,6 +489,14 @@ class FlextTypes:
             "failed",
             "cancelled",
         ]
+
+        WorkspaceStatus = Literal[
+            "initializing",
+            "ready",
+            "error",
+            "maintenance",
+        ]
+
         type StepStatus = Literal[
             "pending",
             "running",
@@ -563,32 +534,29 @@ class FlextTypes:
         """
 
         # Handler identification
-        type HandlerName = str
-        type HandlerMode = Literal["command", "query", "event", "saga"]
-        type MessageType = str
-        type CorrelationId = str
+        type Mode = Literal["command", "query", "event", "saga"]
 
         # Handler functions
-        type Message = object
-        type HandlerFunc = CollectionsCallable[[Message], FlextResult[object]]
-        type HandlerList = list[HandlerFunc]
-        type HandlerRegistry = dict[HandlerName, HandlerList]
+        type HandlerFunc = Callable[[object], FlextResult[object]]
+        type HandlerList = list[FlextTypes.Handlers.HandlerFunc]
+        type HandlerRegistry = dict[str, FlextTypes.Handlers.HandlerList]
 
         # Middleware types
-        type Context = dict[str, object]
-        type MiddlewareFunc = CollectionsCallable[[Context], Context]
-        type MiddlewarePipeline = list[MiddlewareFunc]
+        type MiddlewareFunc = Callable[[FlextTypes.Dict], FlextTypes.Dict]
+        type MiddlewarePipeline = list[FlextTypes.Handlers.MiddlewareFunc]
         type MiddlewareConfig = dict[str, object | int | str]
 
         # Handler configuration
         type HandlerConfig = dict[str, object | dict[str, int | float | bool]]
-        type MessageRouter = dict[MessageType, HandlerFunc | HandlerList]
+        type MessageRouter = dict[
+            str, FlextTypes.Handlers.HandlerFunc | FlextTypes.Handlers.HandlerList
+        ]
 
         # Saga types (complex multi-step handlers)
-        type SagaStep[T] = CollectionsCallable[[T], FlextResult[T]]
-        type SagaSteps[T] = list[SagaStep[T]]
-        type CompensationStep[T] = SagaStep[T]
-        type CompensationSteps[T] = list[CompensationStep[T]]
+        type SagaStep[T] = Callable[[T], FlextResult[T]]
+        type SagaSteps[T] = list[FlextTypes.Handlers.SagaStep[T]]
+        type CompensationStep[T] = FlextTypes.Handlers.SagaStep[T]
+        type CompensationSteps[T] = list[FlextTypes.Handlers.CompensationStep[T]]
 
     # =========================================================================
     # RELIABILITY TYPES - Circuit breaker, retry, and rate limiting (NEW)
@@ -621,23 +589,15 @@ class FlextTypes:
 
         """
 
-        # Operation identification
-        type OperationId = str
-
         # Circuit breaker types
         type CircuitState = Literal["closed", "open", "half_open"]
-        type CircuitStats = dict[str, bool | int | float | list[float]]
-        type CircuitBreakerRegistry = dict[OperationId, CircuitStats]
+        type CircuitStats = dict[str, bool | int | float | FlextTypes.FloatList]
+        type CircuitBreakerRegistry = dict[str, FlextTypes.Reliability.CircuitStats]
 
         # Retry types
-        type RetryStrategy = CollectionsCallable[[int], float]  # attempt -> delay
-        type RetryPolicy = dict[str, int | float | RetryStrategy]
-        type RetryPolicyRegistry = dict[OperationId, RetryPolicy]
-
-        # Rate limiting types
-        type RateLimitWindow = list[float]  # timestamps
-
-        # RateLimiterState - TypedDict for precise type safety (used by FlextExceptions)
+        type RetryStrategy = Callable[[int], float]  # attempt -> delay
+        type RetryPolicy = dict[str, int | float | FlextTypes.Reliability.RetryStrategy]
+        type RetryPolicyRegistry = dict[str, FlextTypes.Reliability.RetryPolicy]
 
         class RateLimiterState(TypedDict):
             """Rate limiter state tracking structure.
@@ -646,10 +606,10 @@ class FlextTypes:
             exception handling operations.
             """
 
-            requests: list[float]
+            requests: FlextTypes.FloatList
             last_reset: float
 
-        type RateLimiterRegistry = dict[OperationId, RateLimiterState]
+        type RateLimiterRegistry = dict[str, FlextTypes.Reliability.RateLimiterState]
 
         # Performance metrics
         type PerformanceMetrics = dict[str, dict[str, int | float]]
@@ -681,73 +641,16 @@ class FlextTypes:
 
         """
 
-        # Context data
-        type ContextData = dict[str, object]
-        type ContextMetadata = dict[str, object]
-        type ContextDict = ContextData  # Alias
-
         # Scope management
-        type ScopeName = str
-        type ScopeData = dict[str, object]
-        type ScopeRegistry = dict[ScopeName, ScopeData]
-        type NestedScopes = dict[ScopeName, dict[str, object]]
+        type ScopeRegistry = dict[str, FlextTypes.Dict]
 
         # Context hooks
-        type HookName = str
-        type HookFunc = CollectionsCallable[..., object]
-        type HookList = list[HookFunc]
-        type HookRegistry = dict[HookName, HookList]
+        type HookFunc = Callable[[], None]
+        type HookList = list[FlextTypes.Context.HookFunc]
+        type HookRegistry = dict[str, FlextTypes.Context.HookList]
 
-        # Statistics and tracking
-        type Statistics = dict[str, object]
-        type ContextStatistics = Statistics
-
-    # =========================================================================
-    # IDENTIFIER TYPES - Common identifier patterns
-    # =========================================================================
-
-    class Identifiers:
-        """Common identifier and path types used across FLEXT modules."""
-
-        type Id = str
-        type Name = str
-        type Path = str
-        type Uri = str
-        type Token = str
-
-    # =========================================================================
-    # PROTOCOL TYPES - Generic protocol patterns
-    # =========================================================================
-
-    class Protocol:
-        """Generic protocol type definitions."""
-
-        type ProtocolVersion = str
-        type ConnectionString = str
-        type AuthCredentials = dict[str, str]
-        type ProtocolConfig = dict[str, object]
-        type MessageFormat = Literal["json", "xml", "binary", "text"]
-
-    # =========================================================================
-    # CONVENIENCE ALIASES - Direct access to commonly used types
-    # =========================================================================
-
-    # Direct access to Core types for convenience
-    ConfigValue = "Core.ConfigValue"
-    JsonValue = "Core.JsonValue"
-    ConfigDict = "Core.ConfigDict"
-    JsonDict = "Core.JsonDict"
-    type Headers = Core.Headers
-    type Metadata = Core.Metadata
-    type Parameters = Core.Parameters
-
-
-# =========================================================================
-# PUBLIC API EXPORTS - Essential TypeVars and types only
-# =========================================================================
 
 __all__: list[str] = [
-    # Core TypeVars
     "T1",
     "T2",
     "T3",
@@ -795,6 +698,8 @@ __all__: list[str] = [
     "TKey_contra",
     "TMessage",
     "TParallel",
+    "TPlugin",
+    "TPluginConfig",
     "TQuery",
     "TQuery_contra",
     "TResource",
@@ -816,5 +721,4 @@ __all__: list[str] = [
     "UResource",
     "V",
     "W",
-    "WorkspaceStatus",
 ]

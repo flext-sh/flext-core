@@ -30,28 +30,30 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveConfigService(FlextService[dict[str, object]]):
+class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextConfig patterns and methods."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
         self._logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios
         self._reference_config = self._scenarios.config()
         self._production_config = self._scenarios.config(production=True)
         self._metadata = self._scenarios.metadata(tags=["config", "demo"])
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
-        config = FlextConfig.get_global_instance()
-        return FlextResult[dict[str, object]].ok({
+        config = FlextConfig()
+        return FlextResult[FlextTypes.Dict].ok({
             "environment": config.environment,
             "debug": config.debug,
             "log_level": config.log_level,
@@ -65,7 +67,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("\n=== Global Singleton Configuration ===")
 
         # Get global instance (thread-safe singleton)
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
         print(f"✅ Global config instance: {type(config).__name__}")
 
         # Access basic settings
@@ -75,7 +77,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print(f"App name: {config.app_name}")
 
         # Same instance everywhere
-        config2 = FlextConfig.get_global_instance()
+        config2 = FlextConfig()
         print(f"Same instance: {config is config2}")
 
     # ========== ENVIRONMENT CONFIGURATION ==========
@@ -84,7 +86,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show environment-specific configuration."""
         print("\n=== Environment Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
         target_env = self._production_config.get("environment", "production")
 
         print(f"Current environment: {config.environment}")
@@ -110,7 +112,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show logging configuration."""
         print("\n=== Logging Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         print(f"Log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
@@ -129,7 +131,13 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print(f"Console enabled: {config.console_enabled}")
         print(f"Console colors: {config.console_color_enabled}")
 
-        log_config = config.get_logging_config()
+        # Access logging configuration directly from config attributes
+        log_config = {
+            "log_level": config.log_level,
+            "json_output": config.json_output,
+            "include_source": config.include_source,
+            "log_verbosity": config.log_verbosity,
+        }
         print(f"Full logging config: {log_config}")
 
     # ========== DATABASE CONFIGURATION ==========
@@ -138,7 +146,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show database configuration."""
         print("\n=== Database Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
         reference_url = self._reference_config.get("database_url", "Not configured")
 
         print(f"Database URL: {config.database_url or reference_url}")
@@ -154,7 +162,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show cache configuration."""
         print("\n=== Cache Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
         reference_ttl = self._reference_config.get("api_timeout", 30)
 
         print(f"Enable caching: {config.enable_caching}")
@@ -166,7 +174,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show performance configuration."""
         print("\n=== Performance Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         print(f"Max workers: {config.max_workers}")
         print(f"Timeout seconds: {config.timeout_seconds}s")
@@ -186,7 +194,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show CQRS and event bus configuration."""
         print("\n=== CQRS/Event Bus Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         # Get CQRS bus configuration
         cqrs_config = config.get_cqrs_bus_config()
@@ -204,7 +212,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show API and security configuration."""
         print("\n=== API/Security Configuration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         # API key for authentication
         print(f"API key configured: {'Yes' if config.api_key else 'No'}")
@@ -229,7 +237,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show metadata access."""
         print("\n=== Metadata Access ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         metadata = config.get_metadata()
         print(f"Service metadata: {metadata}")
@@ -271,7 +279,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show configuration validation."""
         print("\n=== Configuration Validation ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         validations = [
             (
@@ -306,7 +314,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show dynamic configuration patterns."""
         print("\n=== Dynamic Configuration ===")
 
-        FlextConfig.get_global_instance()
+        FlextConfig()
 
         print("Note: FlextConfig is immutable after initialization")
         print("To change config, create new instance with environment variables")
@@ -329,7 +337,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show configuration export patterns."""
         print("\n=== Configuration Export ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         # Export as dictionary (safe, no secrets)
         config_dict = config.model_dump(exclude={"api_key"})
@@ -358,14 +366,16 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         """Show configuration helper methods."""
         print("\n=== Configuration Methods ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextConfig()
 
         # Helper methods
         print("Available helper methods:")
         print(f"  - is_development(): {config.is_development()}")
         print(f"  - is_production(): {config.is_production()}")
         print("  - get_metadata(): Returns service metadata")
-        print("  - get_logging_config(): Returns logging configuration")
+        print(
+            "  - Logging config accessed via direct attributes (log_level, json_output, etc.)"
+        )
         print("  - get_database_config(): Returns database configuration")
         print("  - get_cache_config(): Returns cache configuration")
         print("  - get_cqrs_bus_config(): Returns CQRS bus configuration")
@@ -391,7 +401,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("DEBUG = True")
 
         print("\n✅ CORRECT WAY (FlextConfig):")
-        print("config = FlextConfig.get_global_instance()")
+        print("config = FlextConfig()")
         print("database_url = config.database_url")
 
         # OLD: Global variables (DEPRECATED)
@@ -405,7 +415,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("host = config.DB_HOST")
 
         print("\n✅ CORRECT WAY (singleton):")
-        print("config = FlextConfig.get_global_instance()")
+        print("config = FlextConfig()")
         print("url = config.database_url")
 
         # OLD: Dictionary configuration (DEPRECATED)
@@ -419,7 +429,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print("host = config.get('host', 'default')")
 
         print("\n✅ CORRECT WAY (typed config):")
-        print("config = FlextConfig.get_global_instance()")
+        print("config = FlextConfig()")
         print("url = config.database_url  # Type-safe!")
 
 

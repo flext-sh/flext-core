@@ -338,7 +338,7 @@ class TestCleanArchitecturePatterns:
                 query = request
 
                 # Simulate data retrieval
-                user_data: FlextTypes.Core.Dict = {
+                user_data: FlextTypes.Dict = {
                     "id": query.user_id,
                     "name": "John Doe",
                     "email": "john@example.com",
@@ -375,23 +375,23 @@ class TestEnterprisePatterns:
             @staticmethod
             def create_service(
                 service_type: str,
-            ) -> FlextResult[FlextTypes.Core.Headers]:
+            ) -> FlextResult[FlextTypes.Headers]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[FlextTypes.Core.Headers].ok(
+                    return FlextResult[FlextTypes.Headers].ok(
                         {
                             "type": "email",
                             "provider": "smtp",
                         },
                     )
                 if service_type == "sms":
-                    return FlextResult[FlextTypes.Core.Headers].ok(
+                    return FlextResult[FlextTypes.StringDict].ok(
                         {
                             "type": "sms",
                             "provider": "twilio",
                         },
                     )
-                return FlextResult[FlextTypes.Core.Headers].fail(
+                return FlextResult[FlextTypes.StringDict].fail(
                     f"Unknown service type: {service_type}",
                 )
 
@@ -418,7 +418,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize builder."""
-                self._config: FlextTypes.Core.Dict = {}
+                self._config: FlextTypes.Dict = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -435,14 +435,14 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> FlextResult[FlextTypes.Core.Dict]:
+            def build(self) -> FlextResult[FlextTypes.Dict]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[FlextTypes.Core.Dict].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         "Configuration cannot be empty",
                     )
 
-                return FlextResult[FlextTypes.Core.Dict].ok(self._config.copy())
+                return FlextResult[FlextTypes.Dict].ok(self._config.copy())
 
         # Test builder usage
         config_result = (
@@ -456,12 +456,12 @@ class TestEnterprisePatterns:
         assert config_result.is_success
         config = config_result.value
         assert isinstance(config, dict)
-        config_dict = config  # Already FlextTypes.Core.Dict from assertion
-        database_dict = cast("FlextTypes.Core.Dict", config_dict["database"])
+        config_dict = config  # Already FlextTypes.Dict from assertion
+        database_dict = cast("FlextTypes.Dict", config_dict["database"])
         assert database_dict["host"] == "localhost"
-        logging_dict = cast("FlextTypes.Core.Dict", config_dict["logging"])
+        logging_dict = cast("FlextTypes.Dict", config_dict["logging"])
         assert logging_dict["level"] == "INFO"
-        cache_dict = cast("FlextTypes.Core.Dict", config_dict["cache"])
+        cache_dict = cast("FlextTypes.Dict", config_dict["cache"])
         assert cache_dict["enabled"]
 
     @pytest.mark.architecture
@@ -474,7 +474,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize repository."""
-                self._data: FlextTypes.Core.Dict = {}
+                self._data: FlextTypes.Dict = {}
                 self._query_count = 0
 
             def save(self, entity_id: str, data: object) -> FlextResult[None]:
@@ -511,7 +511,7 @@ class TestEnterprisePatterns:
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success
-            entity_data = cast("FlextTypes.Core.Dict", query_result.value)
+            entity_data = cast("FlextTypes.Dict", query_result.value)
             assert entity_data["id"] == i
 
         query_duration = time.time() - start_time
@@ -604,15 +604,15 @@ class TestEventDrivenPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[FlextTypes.Core.Dict] = []
+        observers: list[FlextTypes.Dict] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
         # Create observers
-        obs1: FlextTypes.Core.Dict = {"name": "Observer1", "state": None}
-        obs2: FlextTypes.Core.Dict = {"name": "Observer2", "state": None}
+        obs1: FlextTypes.Dict = {"name": "Observer1", "state": None}
+        obs2: FlextTypes.Dict = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
 
         # Test notifications

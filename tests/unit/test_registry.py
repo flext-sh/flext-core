@@ -16,6 +16,7 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
+    FlextTypes,
 )
 
 
@@ -28,7 +29,21 @@ class ConcreteTestHandler(FlextHandlers[object, object]):
 
 
 def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler:
-    """Create a test handler with default config."""
+    """DEPRECATED: Create handlers directly in tests.
+
+    Migration:
+        # Old pattern
+        handler = create_test_handler("my_handler")
+
+        # New pattern - direct instantiation
+        config = FlextModels.CqrsConfig.Handler(
+            handler_id="my_handler",
+            handler_name="Test Handler my_handler",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+    This helper remains for backward compatibility but will be removed.
+    """
     config = FlextModels.CqrsConfig.Handler(
         handler_id=handler_id,
         handler_name=f"Test Handler {handler_id}",
@@ -514,7 +529,7 @@ class TestFlextRegistry:
         assert "str" in key2
 
         # Test with dict entry
-        dict_entry: dict[str, object] = {"command_type": int}
+        dict_entry: FlextTypes.Dict = {"command_type": int}
         key3 = registry._resolve_binding_key_from_entry(dict_entry, int)
         assert key3 is not None
 
@@ -698,7 +713,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(FlextDispatcher())
 
         # Test with dict entry (non-tuple, non-FlextHandlers)
-        dict_entry: dict[str, object] = {"some_key": "some_value"}
+        dict_entry: FlextTypes.Dict = {"some_key": "some_value"}
 
         key = registry._resolve_binding_key_from_entry(dict_entry, str)
         assert key is not None

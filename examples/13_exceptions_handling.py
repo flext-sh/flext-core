@@ -32,25 +32,27 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 # Constants
 DEMO_EXCEPTION_MSG = "Demo exception raised: %s"
 
 
-class ComprehensiveExceptionService(FlextService[dict[str, object]]):
+class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextExceptions patterns and methods."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
         self._logger = FlextLogger(__name__)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
         self._logger.info("Executing exception demonstration")
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextTypes.Dict].ok({
             "status": "completed",
             "exceptions_demonstrated": True,
         })
@@ -66,7 +68,7 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
             msg = "Base error occurred"
             raise FlextExceptions.BaseError(
                 msg,
-                code=FlextConstants.Errors.GENERIC_ERROR,
+                code=str(FlextConstants.Errors.GENERIC_ERROR),
                 context={"operation": "demo", "severity": "low"},
                 correlation_id=str(uuid4()),
             )

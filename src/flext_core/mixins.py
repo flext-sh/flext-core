@@ -164,7 +164,7 @@ class FlextMixins:
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
             model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
-            data: dict[str, object] = model_obj.model_dump()
+            data: FlextTypes.Dict = model_obj.model_dump()
             return json.dumps(
                 data,
                 indent=request.indent,
@@ -191,7 +191,7 @@ class FlextMixins:
         )
 
     @staticmethod
-    def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Core.Dict:
+    def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Dict:
         """Convert object to dictionary using SerializationRequest model.
 
         Args:
@@ -210,15 +210,15 @@ class FlextMixins:
             result = model_obj.model_dump()
             if isinstance(result, dict):
                 return result
-            return cast("FlextTypes.Core.Dict", {"model_dump": result})
+            return cast("FlextTypes.Dict", {"model_dump": result})
 
         # Use __dict__ if available
         if hasattr(obj, "__dict__"):
-            return cast("FlextTypes.Core.Dict", obj.__dict__)
+            return cast("FlextTypes.Dict", obj.__dict__)
 
         # Fallback to type representation
         return cast(
-            "FlextTypes.Core.Dict",
+            "FlextTypes.Dict",
             {"type": type(obj).__name__, "value": str(obj)},
         )
 
@@ -391,7 +391,7 @@ class FlextMixins:
         """
         # Check for Pydantic model with model_dump method
         if isinstance(obj, FlextProtocols.Foundation.HasModelDump):
-            model_data: dict[str, object] = obj.model_dump()
+            model_data: FlextTypes.Dict = obj.model_dump()
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
                 raise FlextExceptions.NotFoundError(msg, field=parameter)
@@ -528,7 +528,7 @@ class FlextMixins:
         @staticmethod
         def create_entity[T](
             entity_type: str,
-            entity_data: FlextTypes.Core.Dict,
+            entity_data: FlextTypes.Dict,
             validation_rules: list[Callable[[T], FlextResult[None]]] | None = None,
         ) -> FlextResult[T]:
             """Create an entity with validation patterns.
@@ -581,7 +581,7 @@ class FlextMixins:
         @staticmethod
         def create_value_object[T](
             value_type: str,
-            value_data: FlextTypes.Core.Dict,
+            value_data: FlextTypes.Dict,
             invariants: list[Callable[[T], FlextResult[None]]] | None = None,
         ) -> FlextResult[T]:
             """Create a value object with invariant validation.
@@ -634,7 +634,7 @@ class FlextMixins:
         @staticmethod
         def create_aggregate_root[T](
             aggregate_type: str,
-            aggregate_data: FlextTypes.Core.Dict,
+            aggregate_data: FlextTypes.Dict,
             business_rules: list[Callable[[T], FlextResult[None]]] | None = None,
         ) -> FlextResult[T]:
             """Create an aggregate root with business rule validation.
@@ -687,7 +687,7 @@ class FlextMixins:
         @staticmethod
         def create_domain_event(
             event_type: str,
-            event_data: FlextTypes.Core.Dict,
+            event_data: FlextTypes.Dict,
             aggregate_id: str,
             correlation_id: str | None = None,
         ) -> FlextResult[object]:
@@ -742,7 +742,7 @@ class FlextMixins:
         @staticmethod
         def create_command(
             command_type: str,
-            command_data: FlextTypes.Core.Dict,
+            command_data: FlextTypes.Dict,
             correlation_id: str | None = None,
         ) -> FlextResult[object]:
             """Create a command with proper metadata.
@@ -790,7 +790,7 @@ class FlextMixins:
         @staticmethod
         def create_query(
             query_type: str,
-            query_data: FlextTypes.Core.Dict,
+            query_data: FlextTypes.Dict,
             correlation_id: str | None = None,
         ) -> FlextResult[object]:
             """Create a query with proper metadata.
@@ -847,9 +847,9 @@ class FlextMixins:
             Callable[[type, object], tuple[type, object] | None]
         ] = []
         self._metrics: dict[str, dict[str, int]] = {}
-        self._audit_log: list[dict[str, object]] = []
+        self._audit_log: list[FlextTypes.Dict] = []
         self._performance_metrics: dict[str, dict[str, float | int]] = {}
-        self._circuit_breaker: dict[str, bool] = {}
+        self._circuit_breaker: FlextTypes.BoolDict = {}
         self._rate_limit_requests: dict[str, list[datetime]] = {}
 
     def register(self, name: str, mixin: type) -> FlextResult[None]:
@@ -940,7 +940,9 @@ class FlextMixins:
 
                 # Try with retry logic (up to 3 attempts) and timeout
                 max_retries = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-                timeout_seconds = 0.15  # 150ms timeout - test-specific value for quick timeout testing
+                timeout_seconds = (
+                    FlextConstants.Container.MIN_TIMEOUT_SECONDS
+                )  # Quick timeout for testing
 
                 for attempt in range(max_retries):
                     try:
@@ -1170,11 +1172,11 @@ class FlextMixins:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to add middleware: {e}")
 
-    def get_metrics(self) -> dict[str, object]:
+    def get_metrics(self) -> FlextTypes.Dict:
         """Get mixin metrics."""
-        return cast("dict[str, object]", self._metrics.copy())
+        return cast("FlextTypes.Dict", self._metrics.copy())
 
-    def get_audit_log(self) -> list[dict[str, object]]:
+    def get_audit_log(self) -> list[FlextTypes.Dict]:
         """Get audit log."""
         return self._audit_log.copy()
 
@@ -1204,9 +1206,9 @@ class FlextMixins:
         """Clear all mixins."""
         self._registry.clear()
 
-    def get_statistics(self) -> dict[str, object]:
+    def get_statistics(self) -> FlextTypes.Dict:
         """Get mixin statistics."""
-        stats: dict[str, object] = {
+        stats: FlextTypes.Dict = {
             "total_mixins": len(self._registry),
             "middleware_count": len(self._middleware),
             "audit_log_entries": len(self._audit_log),
@@ -1225,18 +1227,18 @@ class FlextMixins:
 
         return stats
 
-    def validate(self, data: object) -> FlextResult[object]:
+    def validate(self, _data: object) -> FlextResult[None]:
         """Validate data using mixins."""
         try:
-            validation_result = {"valid": True, "data": data}
-            return FlextResult[object].ok(validation_result)
+            # Validation successful - return None for success
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult[object].fail(f"Validation failed: {e}")
+            return FlextResult[None].fail(f"Validation failed: {e}")
 
-    def export_config(self) -> FlextResult[dict[str, object]]:
+    def export_config(self) -> FlextResult[FlextTypes.Dict]:
         """Export mixin configuration."""
         try:
-            config: dict[str, object] = {
+            config: FlextTypes.Dict = {
                 "registry": self._registry.copy(),
                 "middleware": self._middleware.copy(),
                 "metrics": self._metrics.copy(),
@@ -1246,11 +1248,11 @@ class FlextMixins:
             mixin_names = {mixin_name: mixin_name for mixin_name in self._registry}
             config.update(mixin_names)
 
-            return FlextResult[dict[str, object]].ok(config)
+            return FlextResult[FlextTypes.Dict].ok(config)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Export failed: {e}")
+            return FlextResult[FlextTypes.Dict].fail(f"Export failed: {e}")
 
-    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
+    def import_config(self, config: FlextTypes.Dict) -> FlextResult[None]:
         """Import mixin configuration."""
         try:
             if "registry" in config and isinstance(config["registry"], dict):
@@ -1270,7 +1272,7 @@ class FlextMixins:
         except Exception as e:
             return FlextResult[None].fail(f"Import failed: {e}")
 
-    def apply_batch(self, data_list: list[object]) -> FlextResult[list[object]]:
+    def apply_batch(self, data_list: FlextTypes.List) -> FlextResult[FlextTypes.List]:
         """Apply mixins to a batch of data."""
         try:
             processed_list = []
@@ -1279,14 +1281,16 @@ class FlextMixins:
                 if result.is_success:
                     processed_list.append(result.value)
                 else:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.List].fail(
                         f"Batch processing failed: {result.error}",
                     )
-            return FlextResult[list[object]].ok(processed_list)
+            return FlextResult[FlextTypes.List].ok(processed_list)
         except Exception as e:
-            return FlextResult[list[object]].fail(f"Batch processing failed: {e}")
+            return FlextResult[FlextTypes.List].fail(f"Batch processing failed: {e}")
 
-    def apply_parallel(self, data_list: list[object]) -> FlextResult[list[object]]:
+    def apply_parallel(
+        self, data_list: FlextTypes.List
+    ) -> FlextResult[FlextTypes.List]:
         """Apply mixins to data in parallel."""
         try:
             processed_list = []
@@ -1295,12 +1299,12 @@ class FlextMixins:
                 if result.is_success:
                     processed_list.append(result.value)
                 else:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.List].fail(
                         f"Parallel processing failed: {result.error}",
                     )
-            return FlextResult[list[object]].ok(processed_list)
+            return FlextResult[FlextTypes.List].ok(processed_list)
         except Exception as e:
-            return FlextResult[list[object]].fail(f"Parallel processing failed: {e}")
+            return FlextResult[FlextTypes.List].fail(f"Parallel processing failed: {e}")
 
     def _check_circuit_breaker(self, name: str) -> None:
         """Check if circuit breaker should be opened based on failure rate."""

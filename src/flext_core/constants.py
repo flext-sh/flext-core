@@ -19,8 +19,9 @@ from typing import (
     Final,
 )
 
+from flext_core.__version__ import __version__
+
 if TYPE_CHECKING:
-    from flext_core.__version__ import FlextVersion
     from flext_core.typings import FlextTypes
 
 
@@ -140,24 +141,52 @@ class FlextConstants:
 
     """
 
-    # Lazy version import to avoid circular dependency
-    @staticmethod
-    def _get_project_version() -> FlextVersion:  # type: ignore[name-defined]
-        """Lazy import VERSION to avoid circular dependency with __version__.py."""
-        from flext_core.__version__ import VERSION  # noqa: PLC0415
-
-        return VERSION
-
     PROJECT_PREFIX = "FLEXT_CORE"
-    CONSTANTS_VERSION: Final[str] = "0.9.9"  # Hardcoded to match Core.VERSION
+    CONSTANTS_VERSION: Final[str] = __version__  # Hardcoded to match Core.VERSION
     PROJECT_NAME: Final[str] = "flext-core"
+
+    # Direct access support - backward compatible with deprecation warnings
+    _deprecation_warnings_shown: ClassVar[set[str]] = set()
+
+    def __class_getitem__(cls, key: str) -> object:
+        """Direct value access: FlextConstants['Errors.VALIDATION_ERROR'].
+
+        Enables simplified constant access by string key path.
+
+        Args:
+            key: Dot-separated path to constant (e.g., 'Errors.VALIDATION_ERROR')
+
+        Returns:
+            The constant value at the specified path
+
+        Raises:
+            AttributeError: If the key path doesn't exist
+
+        Example:
+            >>> FlextConstants.Errors.VALIDATION_ERROR
+            'VALIDATION_ERROR'
+            >>> FlextConstants.Config.DEFAULT_TIMEOUT
+            30
+
+        """
+        # Parse nested key like "Errors.VALIDATION_ERROR"
+        parts = key.split(".")
+        value: object = cls
+
+        try:
+            for part in parts:
+                value = getattr(value, part)
+            return value
+        except AttributeError as e:
+            msg = f"Constant path '{key}' not found in {cls.__name__}"
+            raise AttributeError(msg) from e
 
     class Core:
         """Core identifiers hardened for the 1.0.0 release cycle."""
 
         NAME: Final[str] = "FLEXT"  # Usage count: 1
-        VERSION: Final[str] = "0.9.9"
-        DEFAULT_VERSION: Final[str] = "0.9.9"
+        VERSION: Final[str] = __version__
+        DEFAULT_VERSION: Final[str] = __version__
 
         # Semantic zero and initial values
         ZERO: Final[int] = 0  # Semantic zero for counters/initialization
@@ -245,9 +274,7 @@ class FlextConstants:
         TYPE_ERROR: Final[str] = "TYPE_ERROR"  # Usage count: 4
         CONFIG_ERROR: Final[str] = "CONFIG_ERROR"  # Usage count: 1
         GENERIC_ERROR: Final[str] = "GENERIC_ERROR"  # Usage count: 3
-        COMMAND_PROCESSING_FAILED: Final[str] = (
-            "COMMAND_PROCESSING_FAILED"  # Usage count: 4
-        )
+        COMMAND_PROCESSING_FAILED: Final[str] = "COMMAND_PROCESSING_FAILED"
         UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"  # Usage count: 1
 
         # Serialization errors (reserved for FlextResult operations)
@@ -411,7 +438,7 @@ class FlextConstants:
     class Config:
         """Configuration defaults anchoring the unified lifecycle."""
 
-        ENVIRONMENTS: Final[list[str]] = [  # Usage count: 3
+        ENVIRONMENTS: Final[FlextTypes.StringList] = [  # Usage count: 3
             "development",
             "staging",
             "production",
@@ -419,7 +446,7 @@ class FlextConstants:
             "local",
         ]
         DEFAULT_ENVIRONMENT: Final[str] = "development"  # Usage count: 0
-        DOTENV_FILES: Final[list[str]] = [
+        DOTENV_FILES: Final[FlextTypes.StringList] = [
             ".env",
             ".internal.invalid",
             ".env.production",
@@ -472,6 +499,14 @@ class FlextConstants:
             DATETIME = "datetime"  # Usage count: 0
             UUID = "uuid"  # Usage count: 0
             EMAIL = "email"  # Usage count: 0
+
+        class WorkspaceStatus(StrEnum):
+            """Enumeration capturing core workspace states."""
+
+            INITIALIZING = "initializing"
+            READY = "ready"
+            ERROR = "error"
+            MAINTENANCE = "maintenance"
 
     class Platform:
         """Platform defaults referenced by CLI and adapter packages.
@@ -1145,7 +1180,7 @@ class FlextConstants:
         class Environment:
             """Environment-specific logging configuration overrides."""
 
-            DEVELOPMENT: Final[FlextTypes.Core.ConfigDict] = {
+            DEVELOPMENT: Final[FlextTypes.ConfigDict] = {
                 "level": "DEBUG",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -1154,7 +1189,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            STAGING: Final[FlextTypes.Core.ConfigDict] = {
+            STAGING: Final[FlextTypes.ConfigDict] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -1163,7 +1198,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            PRODUCTION: Final[FlextTypes.Core.ConfigDict] = {
+            PRODUCTION: Final[FlextTypes.ConfigDict] = {
                 "level": "WARNING",
                 "console_enabled": False,
                 "file_enabled": True,
@@ -1172,7 +1207,7 @@ class FlextConstants:
                 "track_performance": False,
             }
 
-            TESTING: Final[FlextTypes.Core.ConfigDict] = {
+            TESTING: Final[FlextTypes.ConfigDict] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": False,

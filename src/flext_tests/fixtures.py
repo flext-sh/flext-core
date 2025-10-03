@@ -72,7 +72,7 @@ class FlextTestsFixtures:
         @override
         def __init__(self) -> None:
             """Initialize factory registry."""
-            self.factories: FlextTypes.Core.Dict = {}
+            self.factories: FlextTypes.Dict = {}
 
         def register(self, name: str, factory: object) -> None:
             """Register a factory."""
@@ -95,7 +95,7 @@ class FlextTestsFixtures:
             length: int = 10,
             prefix: str = "",
             count: int | None = None,
-        ) -> list[str]:
+        ) -> FlextTypes.StringList:
             """Create a sequence of test data.
 
             Args:
@@ -115,21 +115,21 @@ class FlextTestsFixtures:
         @staticmethod
         def create_timeline_events(
             count: int = 5,
-        ) -> list[FlextTypes.Core.Dict]:
-            """Create timeline events using ``list[FlextTypes.Core.Dict]``.
+        ) -> list[FlextTypes.Dict]:
+            """Create timeline events using ``list[FlextTypes.Dict]``.
 
             Args:
                 count: Number of events to create
 
             Returns:
-                list[FlextTypes.Core.Dict]: Event payloads leveraging the official alias
+                list[FlextTypes.Dict]: Event payloads leveraging the official alias
 
             """
             base_time = datetime.now(UTC)
-            events: list[FlextTypes.Core.Dict] = []
+            events: list[FlextTypes.Dict] = []
 
             for i in range(count):
-                event: FlextTypes.Core.Dict = {
+                event: FlextTypes.Dict = {
                     "id": f"event_{i}",
                     "timestamp": base_time + timedelta(hours=i),
                     "type": "test_event",
@@ -143,14 +143,14 @@ class FlextTestsFixtures:
         """Factory for creating performance test data."""
 
         @staticmethod
-        def create_large_payload(size_mb: float = 1.0) -> FlextTypes.Core.Dict:
-            """Create a large payload via the ``FlextTypes.Core.Dict`` alias.
+        def create_large_payload(size_mb: float = 1.0) -> FlextTypes.Dict:
+            """Create a large payload via the ``FlextTypes.Dict`` alias.
 
             Args:
                 size_mb: Size in megabytes
 
             Returns:
-                FlextTypes.Core.Dict: Large payload data using the official alias
+                FlextTypes.Dict: Large payload data using the official alias
 
             """
             # Calculate approximate size in bytes
@@ -169,18 +169,18 @@ class FlextTestsFixtures:
             }
 
         @staticmethod
-        def create_nested_structure(depth: int = 3) -> FlextTypes.Core.Dict:
-            """Create a nested data structure with ``FlextTypes.Core.Dict``.
+        def create_nested_structure(depth: int = 3) -> FlextTypes.Dict:
+            """Create a nested data structure with ``FlextTypes.Dict``.
 
             Args:
                 depth: Nesting depth
 
             Returns:
-                FlextTypes.Core.Dict: Nested payload expressed with the alias
+                FlextTypes.Dict: Nested payload expressed with the alias
 
             """
 
-            def create_nested(current_depth: int) -> FlextTypes.Core.Dict:
+            def create_nested(current_depth: int) -> FlextTypes.Dict:
                 if current_depth <= 1:
                     return {"value": f"depth_{current_depth}"}
 
@@ -226,17 +226,17 @@ class FlextTestsFixtures:
             return ValueError("Simulated validation error for testing")
 
         @staticmethod
-        def create_error_scenario(error_type: str) -> FlextTypes.Core.Dict:
-            """Create an error scenario using ``FlextTypes.Core.Dict``.
+        def create_error_scenario(error_type: str) -> FlextTypes.Dict:
+            """Create an error scenario using ``FlextTypes.Dict``.
 
             Args:
                 error_type: Type of error scenario
 
             Returns:
-                FlextTypes.Core.Dict: Error scenario payload with official alias
+                FlextTypes.Dict: Error scenario payload with official alias
 
             """
-            scenarios: dict[str, FlextTypes.Core.Dict] = {
+            scenarios: FlextTypes.NestedDict = {
                 "ValidationError": {
                     "type": "validation",
                     "message": "Validation failed",
@@ -272,27 +272,27 @@ class FlextTestsFixtures:
         @override
         def __init__(self) -> None:
             """Initialize session service."""
-            self._data: dict[str, FlextTypes.Core.Dict] = {}
+            self._data: FlextTypes.NestedDict = {}
 
         def create_session(
             self,
             session_id: str,
-            data: FlextTypes.Core.Dict | None = None,
-        ) -> FlextTypes.Core.Dict:
-            """Create a new session using ``FlextTypes.Core.Dict``.
+            data: FlextTypes.Dict | None = None,
+        ) -> FlextTypes.Dict:
+            """Create a new session using ``FlextTypes.Dict``.
 
             Args:
                 session_id: Session identifier
                 data: Initial session data
 
             Returns:
-                FlextTypes.Core.Dict: Session payload stored with the official alias
+                FlextTypes.Dict: Session payload stored with the official alias
 
             """
-            session_data: FlextTypes.Core.Dict = data or {}
+            session_data: FlextTypes.Dict = data or {}
             session_data["id"] = session_id
             session_data["created_at"] = "2024-01-01T00:00:00Z"
-            session: FlextTypes.Core.Dict = {
+            session: FlextTypes.Dict = {
                 "id": session_id,
                 "created_at": "2024-01-01T00:00:00Z",
                 "data": session_data,
@@ -300,14 +300,14 @@ class FlextTestsFixtures:
             self._data[session_id] = session
             return session
 
-        def get_session(self, session_id: str) -> FlextTypes.Core.Dict | None:
-            """Get session by ID using ``FlextTypes.Core.Dict``.
+        def get_session(self, session_id: str) -> FlextTypes.Dict | None:
+            """Get session by ID using ``FlextTypes.Dict``.
 
             Args:
                 session_id: Session identifier
 
             Returns:
-                FlextTypes.Core.Dict | None: Stored session data if present
+                FlextTypes.Dict | None: Stored session data if present
 
             """
             return self._data.get(session_id)
@@ -315,9 +315,9 @@ class FlextTestsFixtures:
         def update_session(
             self,
             session_id: str,
-            data: FlextTypes.Core.Dict,
+            data: FlextTypes.Dict,
         ) -> bool:
-            """Update session data expressed as ``FlextTypes.Core.Dict``.
+            """Update session data expressed as ``FlextTypes.Dict``.
 
             Args:
                 session_id: Session identifier
@@ -330,7 +330,7 @@ class FlextTestsFixtures:
             if session_id in self._data:
                 session = self._data[session_id]
                 if "data" in session and isinstance(session["data"], dict):
-                    cast("dict[str, object]", session["data"]).update(data)
+                    cast("FlextTypes.Dict", session["data"]).update(data)
                 else:
                     session["data"] = data
                 return True
@@ -440,18 +440,18 @@ class FlextTestsFixtures:
             """Initialize test service."""
             self._executor = FlextTestsFixtures.Executor()
 
-        def process(self, data: object) -> FlextTypes.Core.Dict:
+        def process(self, data: object) -> FlextTypes.Dict:
             """Process data hronously."""
             time.sleep(0.001)  # Simulate work
             return {"processed": True, "original": data}
 
-        def validate(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+        def validate(self, data: FlextTypes.Dict) -> FlextTypes.Dict:
             """Validate data hronously."""
             time.sleep(0.001)  # Simulate work
             has_required = "required_field" in data
             return {"valid": has_required}
 
-        def transform(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+        def transform(self, data: FlextTypes.Dict) -> FlextTypes.Dict:
             """Transform data hronously."""
             time.sleep(0.001)  # Simulate work
             return {
@@ -471,7 +471,7 @@ class FlextTestsFixtures:
         def __init__(self) -> None:
             """Initialize executor."""
             self._running: bool = False
-            self._tasks: list[object] = []
+            self._tasks: FlextTypes.List = []
 
         def start(self) -> None:
             """Start executor."""
@@ -494,8 +494,8 @@ class FlextTestsFixtures:
 
         def execute_batch(
             self,
-            coros: FlextTypes.Core.List,
-        ) -> FlextTypes.Core.List:
+            coros: FlextTypes.List,
+        ) -> FlextTypes.List:
             """Execute multiple coroutines in batch (sync stub)."""
             if not self._running:
                 self.start()
@@ -516,9 +516,9 @@ class FlextTestsFixtures:
         @override
         def __init__(self) -> None:
             """Initialize test data service."""
-            self._data_store: FlextTypes.Core.Dict = {}
+            self._data_store: FlextTypes.Dict = {}
             self._call_count: int = 0
-            self._operations_log: list[str] = []
+            self._operations_log: FlextTypes.StringList = []
 
         def store(self, key: str, value: object) -> None:
             """Store data and log operation."""
@@ -544,7 +544,7 @@ class FlextTestsFixtures:
                 return True
             return False
 
-        def get_all_keys(self) -> list[str]:
+        def get_all_keys(self) -> FlextTypes.StringList:
             """Get all stored keys."""
             return list(self._data_store.keys())
 
@@ -552,7 +552,7 @@ class FlextTestsFixtures:
             """Get number of retrieve calls made."""
             return self._call_count
 
-        def get_operations_log(self) -> list[str]:
+        def get_operations_log(self) -> FlextTypes.StringList:
             """Get log of all operations performed."""
             return self._operations_log.copy()
 
@@ -636,8 +636,8 @@ class FlextTestsFixtures:
         )
 
     @staticmethod
-    def create_test_data() -> FlextTypes.Core.Dict:
-        """Create test data using the ``FlextTypes.Core.Dict`` alias."""
+    def create_test_data() -> FlextTypes.Dict:
+        """Create test data using the ``FlextTypes.Dict`` alias."""
         return {
             "id": FlextTestsFixtures.generate_test_id(),
             "name": "test_data",
@@ -667,10 +667,10 @@ class FlextTestsFixtures:
 
         @staticmethod
         def create_processing_command(
-            data: FlextTypes.Core.Dict | None = None,
-        ) -> FlextTypes.Core.Dict:
-            """Create processing command using ``FlextTypes.Core.Dict``."""
-            command_data: FlextTypes.Core.Dict = data or {"test": "value"}
+            data: FlextTypes.Dict | None = None,
+        ) -> FlextTypes.Dict:
+            """Create processing command using ``FlextTypes.Dict``."""
+            command_data: FlextTypes.Dict = data or {"test": "value"}
 
             return {
                 "command": "process",

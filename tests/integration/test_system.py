@@ -177,7 +177,9 @@ class TestCompleteFlextSystemIntegration:
     def _test_container_system(self) -> None:
         """Test container system (Dependency Injection)."""
         # Teste do sistema de container
-        container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        container = manager.get_or_create()
 
         # Registrar serviço
         register_result = container.register("test_service", "test_value")
@@ -199,28 +201,28 @@ class TestCompleteFlextSystemIntegration:
 
         # Simulação de processamento de dados completo
         def processar_dados_usuario(
-            dados: FlextTypes.Core.Headers,
-        ) -> FlextResult[FlextTypes.Core.Headers]:
+            dados: FlextTypes.StringDict,
+        ) -> FlextResult[FlextTypes.StringDict]:
             """Função que simula processamento completo usando todo o sistema.
 
             Returns:
-                FlextResult[FlextTypes.Core.Headers]: Resultado do processamento ou erro.
+                FlextResult[FlextTypes.StringDict]: Resultado do processamento ou erro.
 
             """
             # Validar entrada
             if not dados:
-                return FlextResult[FlextTypes.Core.Headers].fail(
+                return FlextResult[FlextTypes.StringDict].fail(
                     "Dados não fornecidos",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Processar dados
-            dados_processados: dict[str, str] = {}
+            dados_processados: FlextTypes.StringDict = {}
 
             # FlextValidations was completely removed - using direct validation
             for key, value in dados.items():
                 if len(value.strip()) == 0:
-                    return FlextResult[FlextTypes.Core.Headers].fail(
+                    return FlextResult[FlextTypes.StringDict].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -234,7 +236,7 @@ class TestCompleteFlextSystemIntegration:
             )
             dados_processados["processado_por"] = "sistema_flext"
 
-            return FlextResult[FlextTypes.Core.Headers].ok(dados_processados)
+            return FlextResult[FlextTypes.StringDict].ok(dados_processados)
 
         # Teste do processamento completo
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
@@ -320,7 +322,9 @@ class TestCompleteFlextSystemIntegration:
         assert FlextTypes is not None
 
         # Verificar que o sistema está pronto para uso em produção
-        container_final = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        container_final = manager.get_or_create()
         assert container_final is not None
 
         # Teste final de integração

@@ -207,7 +207,6 @@ Future deprecations will follow minimum 2 minor version policy (e.g., 1.0 → 1.
 #### Advanced Patterns
 
 - **FlextContext**: Request/operation context with metadata
-- **FlextCqrs**: Command/Query/Event patterns
 - **FlextBus**: Message bus with middleware pipeline and caching
 - **FlextDispatcher**: Unified command/query dispatcher
 - **FlextRegistry**: Handler registry management

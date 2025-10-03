@@ -25,7 +25,7 @@ Usage:
 
     result: FlextResult[object] = validate_data({"key": value})
     if result.is_success:
-        validated_data: FlextTypes.Core.Dict = (
+        validated_data: FlextTypes.Dict = (
             result.unwrap()
         )  # Safe extraction after success check
     ```
@@ -71,8 +71,8 @@ class _DualAccessMethod:
 
     def __init__(
         self,
-        instance_impl: Callable[..., object],
-        class_impl: Callable[..., object],
+        instance_impl: Callable[[object], object],
+        class_impl: Callable[[type], object],
     ) -> None:
         self._instance_impl = instance_impl
         self._class_impl = class_impl
@@ -81,7 +81,7 @@ class _DualAccessMethod:
         self,
         instance: object | None,
         owner: type[object],
-    ) -> Callable[..., object]:
+    ) -> Callable[[object], object]:
         if instance is None:
             return types.MethodType(self._class_impl, owner)
         return types.MethodType(self._instance_impl, instance)
@@ -184,7 +184,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         _data (T_co | None): Internal success value storage.
         _error (str | None): Internal error message storage.
         _error_code (str | None): Internal error code storage.
-        _error_data (FlextTypes.Core.Dict): Internal error metadata.
+        _error_data (FlextTypes.Dict): Internal error metadata.
 
     Returns:
         FlextResult[T]: A result instance wrapping success or failure.
@@ -225,7 +225,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     _data: T_co | None
     _error: str | None
     _error_code: str | None
-    _error_data: FlextTypes.Core.Dict
+    _error_data: FlextTypes.Dict
 
     # =========================================================================
     # CONSTANTS - ERROR MESSAGES
@@ -310,7 +310,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         def collect_failures[TCollectFail](
             cls,
             results: list[FlextResult[TCollectFail]],
-        ) -> FlextTypes.Core.StringList:
+        ) -> FlextTypes.StringList:
             """Collect all error messages from failed results."""
             return [r.error for r in results if r.is_failure and r.error]
 
@@ -319,11 +319,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             cls,
             items: list[TBatch],
             processor: Callable[[TBatch], FlextResult[UBatch]],
-        ) -> tuple[list[UBatch], FlextTypes.Core.StringList]:
+        ) -> tuple[list[UBatch], FlextTypes.StringList]:
             """Process batch and separate successes from failures."""
             results: list[FlextResult[UBatch]] = [processor(item) for item in items]
             successes: list[UBatch] = cls.collect_successes(results)
-            failures: FlextTypes.Core.StringList = cls.collect_failures(results)
+            failures: FlextTypes.StringList = cls.collect_failures(results)
             return successes, failures
 
     class _Collections:
@@ -353,7 +353,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         ) -> FlextResult[list[TAccumulate]]:
             """Accumulate all errors or return all successes."""
             successes: list[TAccumulate] = []
-            errors: FlextTypes.Core.StringList = []
+            errors: FlextTypes.StringList = []
 
             for result in results:
                 if result.is_success:
@@ -392,7 +392,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 return FlextResult[list[UPar]].ok(fast_successes)
 
             successes: list[UPar] = []
-            errors: FlextTypes.Core.StringList = []
+            errors: FlextTypes.StringList = []
             for result in results:
                 if result.is_failure:
                     error_msg = result.error or "Operation failed"
@@ -512,7 +512,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         data: None = None,
         error: str,
         error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
+        error_data: FlextTypes.Dict | None = None,
     ) -> None: ...
 
     def __init__(
@@ -521,7 +521,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         data: T_co | None = None,
         error: str | None = None,
         error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
+        error_data: FlextTypes.Dict | None = None,
     ) -> None:
         """Initialize result with either success data or error."""
         # Architectural invariant: exactly one of data or error must be provided.
@@ -608,7 +608,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return self._error_code
 
     @property
-    def error_data(self) -> FlextTypes.Core.Dict:
+    def error_data(self) -> FlextTypes.Dict:
         """Return the structured error metadata dictionary for observability."""
         return self._error_data
 
@@ -649,7 +649,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         /,
         *,
         error_code: str | None = None,
-        error_data: FlextTypes.Core.Dict | None = None,
+        error_data: FlextTypes.Dict | None = None,
     ) -> FlextResult[TResult]:
         """Create a failed FlextResult with structured error information.
 
@@ -806,10 +806,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 error_code="OPERATION_ERROR",
             )
 
-        # Data validation removed for performance
-        # if self._data is None:
-        #     msg = "Success result has None data - this should not happen"
-        #     raise RuntimeError(msg)
         return cast("T_co", self._data)
 
     def __exit__(
@@ -946,20 +942,12 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def unwrap_or(self, default: T_co) -> T_co:
         """Return value or default if failed."""
         if self.is_success:
-            # Data validation removed for performance
-            # if self._data is None:
-            #     msg = "Success result must have data"
-            #     raise RuntimeError(msg)
             return cast("T_co", self._data)
         return default
 
     def unwrap(self) -> T_co:
         """Get value or raise if failed."""
         if self.is_success:
-            # Data validation removed for performance
-            # if self._data is None:
-            #     msg = "Success result must have data"
-            #     raise RuntimeError(msg)
             return cast("T_co", self._data)
         error_msg = self._error or "Operation failed"
         raise _get_exceptions().OperationError(
@@ -1018,10 +1006,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         try:
             # Apply predicate using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
-            # Data validation removed for performance
-            # if self._data is None:
-            #     msg = "Success result has None data - this should not happen"
-            #     raise RuntimeError(msg)
             if predicate(cast("T_co", self._data)):
                 return self
             return FlextResult[T_co].fail(error_msg)
@@ -1062,7 +1046,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return None
 
         error_msg = self._error or "Result failed"
-        return RuntimeError(error_msg)
+        return _get_exceptions().OperationError(
+            message=error_msg, error_code="OPERATION_ERROR"
+        )
 
     @classmethod
     def from_exception[T](
@@ -1186,12 +1172,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def unwrap_or_raise(
         cls,
         result: FlextResult[TUtil],
-        exception_type: type[Exception] = RuntimeError,
+        exception_type: type[Exception] | None = None,
     ) -> TUtil:
         """Unwrap or raise exception."""
         # ISSUE: Duplicates unwrap method functionality - instance method already does the same thing
         if result.is_success:
             return result.value
+        if exception_type is None:
+            exception_type = _get_exceptions().OperationError
         raise exception_type(result.error or "Operation failed")
 
     @classmethod
@@ -1203,7 +1191,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def collect_failures(
         cls,
         results: list[FlextResult[TUtil]],
-    ) -> FlextTypes.Core.StringList:
+    ) -> FlextTypes.StringList:
         """Collect error messages from failures."""
         return FlextResult._Utils.collect_failures(results)
 
@@ -1220,7 +1208,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         cls,
         items: list[TItem],
         processor: Callable[[TItem], FlextResult[TUtil]],
-    ) -> tuple[list[TUtil], FlextTypes.Core.StringList]:
+    ) -> tuple[list[TUtil], FlextTypes.StringList]:
         """Process batch and separate successes from failures."""
         return FlextResult._Utils.batch_process(items, processor)
 
@@ -1647,7 +1635,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def collect_all_errors[TCollect](
         cls,
         *results: FlextResult[TCollect],
-    ) -> tuple[list[TCollect], FlextTypes.Core.StringList]:
+    ) -> tuple[list[TCollect], FlextTypes.StringList]:
         """Collect all successful values and all error messages.
 
         Args:
@@ -1658,7 +1646,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         """
         successes: list[TCollect] = []
-        errors: FlextTypes.Core.StringList = []
+        errors: FlextTypes.StringList = []
 
         for result in results:
             if result.is_success:
@@ -1707,7 +1695,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     ) -> FlextResult[list[U]]:
         """Type-safe error accumulation for parallel operations."""
         successes: list[U] = []
-        errors: list[str] = []
+        errors: FlextTypes.StringList = []
         for result in results:
             if result.is_failure:
                 error_msg = result.error or "Operation failed"
@@ -1849,12 +1837,12 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
             # Add timing metadata
             if result.is_success:
-                success_enhanced_data: FlextTypes.Core.Dict = (
+                success_enhanced_data: FlextTypes.Dict = (
                     dict(result.error_data) if result.error_data else {}
                 )
                 success_enhanced_data["execution_time"] = elapsed
                 return FlextResult[TTimeout].ok(result.unwrap())
-            failure_enhanced_data: FlextTypes.Core.Dict = (
+            failure_enhanced_data: FlextTypes.Dict = (
                 dict(result.error_data) if result.error_data else {}
             )
             failure_enhanced_data["execution_time"] = elapsed
@@ -1963,9 +1951,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     # Factory methods moved from nested Result class to main FlextResult class
     @staticmethod
-    def dict_result() -> type[FlextResult[dict[str, str]]]:
-        """Factory for FlextResult[dict[str, str]]."""
-        return FlextResult[dict[str, str]]
+    def dict_result() -> type[FlextResult[FlextTypes.StringDict]]:
+        """Factory for FlextResult[FlextTypes.StringDict]."""
+        return FlextResult[FlextTypes.StringDict]
 
     # Type alias moved from nested Result class
     type Success = str  # Generic success type without FlextResult dependency
@@ -1978,8 +1966,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         )
 
     @staticmethod
-    def _flatten_variadic_args(*items: object) -> list[object]:
-        flat: list[object] = []
+    def _flatten_variadic_args(*items: object) -> FlextTypes.List:
+        flat: FlextTypes.List = []
         for item in items:
             if FlextResult._is_flattenable_sequence(item) and isinstance(
                 item,
@@ -1991,8 +1979,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return flat
 
     @staticmethod
-    def _flatten_callable_args(*items: object) -> list[Callable[..., object]]:
-        flat_callables: list[Callable[..., object]] = []
+    def _flatten_callable_args(*items: object) -> list[Callable[[], object]]:
+        flat_callables: list[Callable[[], object]] = []
         for item in items:
             if FlextResult._is_flattenable_sequence(item) and isinstance(
                 item,
@@ -2010,6 +1998,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return flat_callables
 
 
-__all__: list[str] = [
+__all__: FlextTypes.StringList = [
     "FlextResult",  # Main unified result class
 ]

@@ -146,7 +146,7 @@ done
 ### ✅ DO (Shown in Examples)
 
 - Use `FlextResult[T]` for all error handling (no exceptions in business logic)
-- Access configuration via `FlextConfig.get_global_instance()`
+- Access configuration via `FlextConfig()` (direct instantiation)
 - Use `FlextContainer.get_global()` for dependency injection
 - Model domains with `FlextModels.Entity/Value/AggregateRoot`
 - Structure logs with `FlextLogger(__name__)` and context binding

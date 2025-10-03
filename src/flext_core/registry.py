@@ -10,25 +10,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 from typing import (
-    TYPE_CHECKING,
     Literal,
     cast,
     override,
 )
-
-if TYPE_CHECKING:
-    from flext_core.models import FlextModels
-
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
 
 from flext_core.constants import FlextConstants
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextRegistry:
@@ -156,8 +151,8 @@ class FlextRegistry:
         """Aggregated outcome used for 1.0.0 handler adoption tracking."""
 
         registered: list[FlextModels.RegistrationDetails] = field(default_factory=list)
-        skipped: list[str] = field(default_factory=list)
-        errors: list[str] = field(default_factory=list)
+        skipped: FlextTypes.StringList = field(default_factory=list)
+        errors: FlextTypes.StringList = field(default_factory=list)
 
         @property
         def is_success(self) -> bool:
@@ -297,7 +292,7 @@ class FlextRegistry:
             return FlextResult[None].ok(None)
 
         # Handler is already the correct type
-        registration_result: FlextResult[dict[str, object]] = (
+        registration_result: FlextResult[FlextTypes.Dict] = (
             self._dispatcher.register_handler(handler)
         )
         if registration_result.is_success:
@@ -431,7 +426,7 @@ class FlextRegistry:
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ]
-            | dict[str, object]
+            | FlextTypes.Dict
             | tuple[object, ...]
             | None,
         ],
@@ -460,7 +455,7 @@ class FlextRegistry:
                                 "Callable[[object], object | FlextResult[object]]",
                                 handler_func,
                             ),
-                            cast("dict[str, object] | None", handler_config),
+                            cast("FlextTypes.Dict | None", handler_config),
                             "command",
                         )
                         if handler_result.is_success:
@@ -548,7 +543,7 @@ class FlextRegistry:
             Callable[[object], object | FlextResult[object]],
             object | FlextResult[object],
         ]
-        | dict[str, object]
+        | FlextTypes.Dict
         | tuple[object, ...]
         | None,
         message_type: type[object],

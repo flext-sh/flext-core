@@ -139,7 +139,6 @@ Key Features:
 - Production-ready Railway-oriented programming patterns
 - Complete DDD support with FlextModels
 - Dependency injection via FlextContainer
-- CQRS patterns with FlextCqrs
 - Comprehensive utilities and constants
 - 74% test coverage with 100% API validation
 

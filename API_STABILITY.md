@@ -136,19 +136,6 @@ context.clear()
 # May receive: New helper methods (backward compatible)
 ```
 
-#### FlextCqrs - Command Query Responsibility Segregation
-
-```python
-from flext_core import FlextCqrs
-
-# ✅ STABLE - Core CQRS pattern
-cqrs = FlextCqrs()
-result = cqrs.execute_command(command)
-result = cqrs.execute_query(query)
-
-# May receive: New handler types (backward compatible)
-```
-
 #### FlextBus - Event Bus
 
 ```python
@@ -319,7 +306,7 @@ class HttpRequest(FlextModels.HttpRequest):
     # Inherited fields:
     # - url: str
     # - method: str
-    # - headers: dict[str, str]
+    # - headers: FlextTypes.StringDict
     # - body: str | dict | None
     # - timeout: float
 
@@ -331,7 +318,7 @@ class HttpResponse(FlextModels.HttpResponse):
     """Extend HTTP response base."""
     # Inherited fields:
     # - status_code: int
-    # - headers: dict[str, str]
+    # - headers: FlextTypes.StringDict
     # - body: str | dict | None
     # - elapsed_time: float
 

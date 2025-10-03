@@ -42,7 +42,7 @@ class FlextTestsMatchers:
     class ResultLike(Protocol):
         """Protocol for result-like objects."""
 
-        def __bool__(self: object) -> bool:
+        def __bool__(self: object) -> bool | None:
             """Return boolean representation of the result."""
 
     class SuccessResultLike(ResultLike, Protocol):
@@ -68,10 +68,10 @@ class FlextTestsMatchers:
     class ContainerLike(Protocol):
         """Protocol for container-like objects."""
 
-        def __len__(self: object) -> int:
+        def __len__(self: object) -> int | None:
             """Return length of the container."""
 
-        def __contains__(self, item: object) -> bool:
+        def __contains__(self, item: object) -> bool | None:
             """Check if item is contained in the container."""
 
     class ErrorResultLike(Protocol):
@@ -99,7 +99,7 @@ class FlextTestsMatchers:
     class EmptyCheckable(Protocol):
         """Protocol for objects that can be checked for emptiness."""
 
-        def __len__(self: object) -> int:
+        def __len__(self: object) -> int | None:
             """Return length of the object."""
 
     class HasIsEmpty(Protocol):
@@ -582,10 +582,10 @@ class FlextTestsMatchers:
             # Handle dict comparison
             if isinstance(obj1, dict) and isinstance(obj2, dict):
                 # Type narrow the objects to dicts for proper inference
-                dict1: dict[str, object] = {
+                dict1: FlextTypes.Dict = {
                     str(k): v for k, v in cast("dict[object, object]", obj1).items()
                 }
-                dict2: dict[str, object] = {
+                dict2: FlextTypes.Dict = {
                     str(k): v for k, v in cast("dict[object, object]", obj2).items()
                 }
                 return dict1.keys() == dict2.keys() and all(
@@ -596,8 +596,8 @@ class FlextTestsMatchers:
             # Handle list/tuple comparison
             if isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
                 # Type narrow for proper inference
-                seq1 = cast("list[object] | tuple[object, ...]", obj1)
-                seq2 = cast("list[object] | tuple[object, ...]", obj2)
+                seq1 = cast("FlextTypes.List | tuple[object, ...]", obj1)
+                seq2 = cast("FlextTypes.List | tuple[object, ...]", obj2)
                 return len(seq1) == len(seq2) and all(
                     starmap(
                         FlextTestsMatchers.CoreMatchers.be_equivalent_to,
@@ -762,7 +762,7 @@ class FlextTestsMatchers:
             if not callable(func) or len(input_sizes) < 2:
                 return False
 
-            times: list[float] = []
+            times: FlextTypes.FloatList = []
             try:
                 for size in input_sizes:
                     start_time = time.time()
@@ -793,7 +793,7 @@ class FlextTestsMatchers:
             """Initialize benchmark fixture with name and iteration count."""
             self.name = name
             self.iterations = iterations
-            self.results: list[float] = []
+            self.results: FlextTypes.FloatList = []
 
         def add_measurement(self, duration: float) -> None:
             """Add performance measurement.
@@ -997,7 +997,7 @@ class FlextTestsMatchers:
     @staticmethod
     def assert_json_structure(
         obj: object,
-        expected_keys: list[str],
+        expected_keys: FlextTypes.StringList,
         *,
         exact_match: bool = True,
     ) -> None:
@@ -1018,11 +1018,11 @@ class FlextTestsMatchers:
 
         for key in expected_keys:
             if key not in obj:
-                msg = f"Missing key '{key}' in {list(cast('list[str]', obj.keys()))}"
+                msg = f"Missing key '{key}' in {list(cast('FlextTypes.StringList', obj.keys()))}"
                 raise AssertionError(msg)
 
         if exact_match:
-            obj_keys: set[str] = set(cast("list[str]", obj.keys()))
+            obj_keys: set[str] = set(cast("FlextTypes.StringList", obj.keys()))
             expected_keys_set: set[str] = set(expected_keys)
             if obj_keys != expected_keys_set:
                 extra_keys: set[str] = obj_keys - expected_keys_set
@@ -1124,14 +1124,14 @@ class FlextTestsMatchers:
         return None
 
     @staticmethod
-    def run_parallel_tasks(_tasks: list[Awaitable[object]]) -> list[object]:
+    def run_parallel_tasks(_tasks: list[Awaitable[object]]) -> FlextTypes.List:
         """Run tasks in parallel for test compatibility (sync stub).
 
         Args:
             tasks: List of awaitable tasks (ignored in sync implementation)
 
         Returns:
-            list[object]: Empty list (sync stub implementation)
+            FlextTypes.List: Empty list (sync stub implementation)
 
         """
         # Synchronous stub - return empty list
@@ -1182,7 +1182,7 @@ class FlextTestsMatchers:
     def measure_concurrency_performance(
         _func: Callable[..., object],
         _concurrency_level: int,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Ultra-simple for test compatibility - measures concurrency performance (sync stub).
 
         Args:
@@ -1190,14 +1190,14 @@ class FlextTestsMatchers:
             concurrency_level: Number of concurrent executions (ignored in sync implementation)
 
         Returns:
-            FlextTypes.Core.Dict: Performance measurement results using the official alias
+            FlextTypes.Dict: Performance measurement results using the official alias
 
         """
         # Synchronous stub - return mock performance data
         # Real async operations should be converted to sync alternatives
         return {
             "total_time": 0.0,
-            "concurrency_level": concurrency_level,
+            "concurrency_level": _concurrency_level,
             "results": [],
             "success_count": 0,
             "error_count": 0,
@@ -1268,7 +1268,7 @@ class FlextTestsMatchers:
                 self.side_effect = side_effect
                 self.delay = delay
                 self.call_count = 0
-                self.call_args_list: list[object] = []
+                self.call_args_list: FlextTypes.List = []
 
             def __call__(self, *args: object, **kwargs: object) -> object:
                 self.call_count += 1
@@ -1407,14 +1407,14 @@ class FlextTestsMatchers:
     def create_test_context(
         setup_func: object = None,
         teardown_func: object = None,
-        context_data: FlextTypes.Core.Dict | None = None,
+        context_data: FlextTypes.Dict | None = None,
     ) -> object:
         """Create context manager for test compatibility.
 
         Args:
             setup_func: Function to run during setup
             teardown_func: Function to run during teardown
-            context_data: Additional context data using ``FlextTypes.Core.Dict``
+            context_data: Additional context data using ``FlextTypes.Dict``
 
         Returns:
             object: Test context manager
@@ -1427,11 +1427,11 @@ class FlextTestsMatchers:
                 self,
                 setup_func: object = None,
                 teardown_func: object = None,
-                context_data: FlextTypes.Core.Dict | None = None,
+                context_data: FlextTypes.Dict | None = None,
             ) -> None:
                 self.setup_func = setup_func
                 self.teardown_func = teardown_func
-                self.context_data: FlextTypes.Core.Dict = context_data or {}
+                self.context_data: FlextTypes.Dict = context_data or {}
                 self.result: object = None
 
             def __enter__(self) -> Self:

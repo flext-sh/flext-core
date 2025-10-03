@@ -67,7 +67,7 @@ class TestFlextCoreWildcardExports:
 
         # Verify each essential module is available in globals
         current_globals = globals()
-        missing_modules: list[str] = []
+        missing_modules: FlextTypes.StringList = []
 
         for module_name in essential_modules:
             if module_name not in current_globals:
@@ -255,7 +255,7 @@ class TestFlextCoreIntegrationScenarios:
         assert isinstance(operation_id, str)
 
         # 2. Create a result
-        result = FlextResult[FlextTypes.Core.Dict].ok(
+        result = FlextResult[FlextTypes.Dict].ok(
             {
                 "operation_id": operation_id,
                 "status": "started",

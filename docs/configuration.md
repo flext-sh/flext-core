@@ -177,7 +177,7 @@ class YamlConfig(FlextConfig):
 config = YamlConfig.from_yaml("config.yaml")
 ```
 
-**config.yaml**:
+**config.YAML**:
 
 ```yaml
 service_name: myapp
@@ -298,7 +298,7 @@ class AdvancedConfig(FlextConfig):
     redis_url: str
     redis_max_connections: int = Field(ge=1, le=1000)
     cache_ttl_seconds: int = Field(ge=60)
-    feature_flags: dict[str, bool] = {}
+    feature_flags: FlextTypes.BoolDict = {}
 
     @field_validator("redis_url")
     @classmethod
@@ -546,8 +546,8 @@ class GoodConfig(FlextConfig):
     port: int
     enabled: bool
     timeout: float
-    options: dict[str, object]
-    tags: list[str]
+    options: FlextTypes.Dict
+    tags: FlextTypes.StringList
 ```
 
 ### 2. Provide Sensible Defaults
@@ -593,7 +593,7 @@ class SecureConfig(FlextConfig):
     """Configuration with security validation."""
     api_key: str
     secret_key: str
-    allowed_hosts: list[str]
+    allowed_hosts: FlextTypes.StringList
 
     @field_validator("api_key", "secret_key")
     @classmethod
@@ -605,7 +605,7 @@ class SecureConfig(FlextConfig):
 
     @field_validator("allowed_hosts")
     @classmethod
-    def validate_hosts(cls, v: list[str]) -> list[str]:
+    def validate_hosts(cls, v: FlextTypes.StringList) -> FlextTypes.StringList:
         """Ensure at least one host is configured."""
         if not v:
             raise ValueError("At least one allowed host required")

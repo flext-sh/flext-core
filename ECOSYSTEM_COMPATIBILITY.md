@@ -170,7 +170,6 @@ assert auth is not None
 
 - Authentication registry initialized successfully
 - 9 command/query handlers registered with FlextBus
-- FlextCqrs integration operational
 - JWT and bcrypt configuration verified (30min expiry, 12 rounds)
 
 ---
@@ -271,17 +270,6 @@ logger.info("Test message", extra={"key": "value"})
 
 ---
 
-### FlextCqrs Command/Query Pattern ✅
-
-**Projects Using FlextCqrs**:
-
-- flext-ldap (6 CQRS handlers)
-- flext-auth (9 command/query handlers)
-
-**Result**: ✅ VERIFIED - CQRS pattern working correctly
-
----
-
 ### FlextDispatcher Message Routing ✅
 
 **Projects Using FlextDispatcher**:
@@ -344,7 +332,6 @@ logger.info("Test message", extra={"key": "value"})
 - ✅ FlextModels - Entity, Value, AggregateRoot patterns
 - ✅ FlextService - Service base class
 - ✅ FlextBus - Event bus operations
-- ✅ FlextCqrs - Command/query separation
 - ✅ FlextDispatcher - Message routing
 - ✅ FlextRegistry - Component registration
 

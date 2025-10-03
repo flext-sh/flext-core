@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from flext_core import FlextUtilities
+from flext_core import FlextTypes, FlextUtilities
 from flext_core.result import FlextResult
 
 
@@ -307,7 +307,7 @@ class TestFlextUtilitiesComprehensive:
         assert ">" not in result.value
 
         # Test comma-separated parsing
-        comma_result: FlextResult[list[str]] = (
+        comma_result: FlextResult[FlextTypes.StringList] = (
             FlextUtilities.Transformation.parse_comma_separated("a,b,c")
         )
         assert comma_result.is_success
@@ -404,9 +404,9 @@ class TestFlextUtilitiesComprehensive:
         assert cast_result2.is_failure
 
         # Test dictionary merging with no conflicts
-        dict1: dict[str, object] = {"a": 1, "b": 2}
-        dict2: dict[str, object] = {"c": 4, "d": 5}
-        result: FlextResult[dict[str, object]] = (
+        dict1: FlextTypes.Dict = {"a": 1, "b": 2}
+        dict2: FlextTypes.Dict = {"c": 4, "d": 5}
+        result: FlextResult[FlextTypes.Dict] = (
             FlextUtilities.Utilities.merge_dictionaries(dict1, dict2)
         )
         assert result.is_success
@@ -416,15 +416,15 @@ class TestFlextUtilitiesComprehensive:
         assert result.value["d"] == 5
 
         # Test dictionary merging with conflicts (should fail)
-        dict3: dict[str, object] = {"a": 1, "b": 2}
-        dict4: dict[str, object] = {"b": 3, "c": 4}
-        result2: FlextResult[dict[str, object]] = (
+        dict3: FlextTypes.Dict = {"a": 1, "b": 2}
+        dict4: FlextTypes.Dict = {"b": 3, "c": 4}
+        result2: FlextResult[FlextTypes.Dict] = (
             FlextUtilities.Utilities.merge_dictionaries(dict3, dict4)
         )
         assert result2.is_failure
 
         # Test deep get
-        data: dict[str, object] = {"a": {"b": {"c": "value"}}}
+        data: FlextTypes.Dict = {"a": {"b": {"c": "value"}}}
         deep_result = FlextUtilities.Utilities.deep_get(data, "a.b.c")
         assert deep_result.is_success
         assert deep_result.value == "value"
@@ -448,7 +448,7 @@ class TestFlextUtilitiesComprehensive:
         assert list_result3.value == []
 
         # Test filter none values
-        data_with_none: dict[str, object] = {"a": 1, "b": None, "c": 3}
+        data_with_none: FlextTypes.Dict = {"a": 1, "b": None, "c": 3}
         filter_result = FlextUtilities.Utilities.filter_none_values(data_with_none)
         assert filter_result.is_success
         assert "a" in filter_result.value
@@ -622,7 +622,7 @@ class TestFlextUtilitiesComprehensive:
         # Create a simple object to test cache operations
         class TestObj:
             def __init__(self) -> None:
-                self._cache: dict[str, object] = {}
+                self._cache: FlextTypes.Dict = {}
 
         test_obj = TestObj()
 
@@ -838,7 +838,7 @@ class TestFlextUtilitiesComprehensive:
     def test_conversion_operations(self) -> None:
         """Test data conversion operations."""
         # Test data normalization for table
-        data: list[object] = [
+        data: FlextTypes.List = [
             {"name": "John", "age": 30, "city": "NYC"},
             {"name": "Jane", "age": 25, "city": "LA"},
         ]

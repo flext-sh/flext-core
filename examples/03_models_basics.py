@@ -25,6 +25,7 @@ from __future__ import annotations
 import warnings
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import cast
 from uuid import uuid4
 
 from pydantic import Field
@@ -35,6 +36,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 from .example_scenarios import ExampleScenarios
@@ -401,7 +403,8 @@ class ComprehensiveModelsService(FlextService[Order]):
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+        self._container = manager.get_or_create()
         self._logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios
         self._dataset = self._scenarios.dataset()
@@ -424,7 +427,8 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show value object patterns."""
         print("\n=== Value Objects ===")
 
-        sample_email = self._validation["valid_emails"][0]
+        validation_data = cast("FlextTypes.Dict", self._validation)
+        sample_email = cast("FlextTypes.List", validation_data["valid_emails"])[0]
         email_result = Email.create_email(sample_email)
         if email_result.is_success:
             email: Email = email_result.unwrap()

@@ -366,7 +366,7 @@ class FlextTestsHypothesis:
             return f"{z:05d}"
 
         @staticmethod
-        def addresses() -> st.SearchStrategy[dict[str, object]]:
+        def addresses() -> st.SearchStrategy[FlextTypes.Dict]:
             """Generate address objects."""
             street_names = [
                 "Main St",
@@ -405,7 +405,7 @@ class FlextTestsHypothesis:
             ]
 
             return cast(
-                "st.SearchStrategy[dict[str, object]]",
+                "st.SearchStrategy[FlextTypes.Dict]",
                 st.builds(
                     dict,
                     street=st.builds(
@@ -534,7 +534,7 @@ class FlextTestsHypothesis:
             )
 
         @staticmethod
-        def malformed_data() -> st.SearchStrategy[FlextTypes.Core.Dict]:
+        def malformed_data() -> st.SearchStrategy[FlextTypes.Dict]:
             """Generate malformed data structures."""
             return st.one_of(
                 [
@@ -650,7 +650,7 @@ class FlextTestsHypothesis:
             data: object,
             id_val: str,
             scenario_name: str,
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Build test scenario dictionary with metadata."""
             return {
                 "scenario": scenario_name,
@@ -664,10 +664,10 @@ class FlextTestsHypothesis:
             strategy: st.SearchStrategy[object],
             scenario_name: str = "test_scenario",
             _min_examples: int = 10,
-        ) -> st.SearchStrategy[FlextTypes.Core.Dict]:
+        ) -> st.SearchStrategy[FlextTypes.Dict]:
             """Generate test scenarios with metadata."""
 
-            def _scenario_builder(data: object, id_val: str) -> FlextTypes.Core.Dict:
+            def _scenario_builder(data: object, id_val: str) -> FlextTypes.Dict:
                 return FlextTestsHypothesis.PropertyTestHelpers._build_test_scenario(
                     data,
                     id_val,
@@ -686,11 +686,11 @@ class FlextTestsHypothesis:
         """Pre-configured composite strategies for common testing scenarios."""
 
         @staticmethod
-        def user_profiles() -> st.SearchStrategy[FlextTypes.Core.Dict]:
+        def user_profiles() -> st.SearchStrategy[FlextTypes.Dict]:
             """Complete user profile data."""
 
             @st.composite
-            def _user_profile(draw: st.DrawFn) -> FlextTypes.Core.Dict:
+            def _user_profile(draw: st.DrawFn) -> FlextTypes.Dict:
                 return {
                     "id": draw(FlextTestsHypothesis.FlextStrategies.flext_ids()),
                     "name": draw(
@@ -721,11 +721,11 @@ class FlextTestsHypothesis:
             return _user_profile()
 
         @staticmethod
-        def api_requests() -> st.SearchStrategy[FlextTypes.Core.Dict]:
+        def api_requests() -> st.SearchStrategy[FlextTypes.Dict]:
             """API request-like data structures."""
 
             @st.composite
-            def _api_request(draw: st.DrawFn) -> FlextTypes.Core.Dict:
+            def _api_request(draw: st.DrawFn) -> FlextTypes.Dict:
                 return {
                     "method": draw(
                         st.sampled_from(["GET", "POST", "PUT", "DELETE", "PATCH"]),
@@ -768,11 +768,11 @@ class FlextTestsHypothesis:
             return f"postgresql://{host}:{port}/{db}"
 
         @staticmethod
-        def configuration_data() -> st.SearchStrategy[FlextTypes.Core.Dict]:
+        def configuration_data() -> st.SearchStrategy[FlextTypes.Dict]:
             """Configuration-like data structures."""
 
             @st.composite
-            def _config_data(draw: st.DrawFn) -> FlextTypes.Core.Dict:
+            def _config_data(draw: st.DrawFn) -> FlextTypes.Dict:
                 return {
                     "database_url": draw(
                         st.builds(
@@ -850,12 +850,12 @@ class FlextTestsHypothesis:
         return FlextTestsHypothesis.FlextStrategies.emails()
 
     @staticmethod
-    def quick_user_profile() -> st.SearchStrategy[FlextTypes.Core.Dict]:
+    def quick_user_profile() -> st.SearchStrategy[FlextTypes.Dict]:
         """Quick access to user profile strategy."""
         return FlextTestsHypothesis.CompositeStrategies.user_profiles()
 
     @staticmethod
-    def quick_api_request() -> st.SearchStrategy[FlextTypes.Core.Dict]:
+    def quick_api_request() -> st.SearchStrategy[FlextTypes.Dict]:
         """Quick access to API request strategy."""
         return FlextTestsHypothesis.CompositeStrategies.api_requests()
 

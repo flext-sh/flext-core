@@ -104,14 +104,14 @@ class FlextExceptions:
         config: Optional configuration dict for exception handling.
 
     Attributes:
-        _config (FlextTypes.Core.Dict): Exception handler configuration.
-        _handlers (FlextTypes.Core.Dict): Registered exception handlers by type.
-        _middleware (FlextTypes.Core.List): Middleware pipeline for errors.
-        _audit_log (FlextTypes.Core.List): Audit log of all exceptions.
-        _performance_metrics (FlextTypes.Core.Dict): Performance tracking data.
-        _circuit_breakers (FlextTypes.Core.Dict): Circuit breaker states.
-        _rate_limiters (FlextTypes.Core.Dict): Rate limiting configuration.
-        _cache (FlextTypes.Core.Dict): Exception handler cache.
+        _config (FlextTypes.Dict): Exception handler configuration.
+        _handlers (FlextTypes.Dict): Registered exception handlers by type.
+        _middleware (FlextTypes.List): Middleware pipeline for errors.
+        _audit_log (FlextTypes.List): Audit log of all exceptions.
+        _performance_metrics (FlextTypes.Dict): Performance tracking data.
+        _circuit_breakers (FlextTypes.Dict): Circuit breaker states.
+        _rate_limiters (FlextTypes.Dict): Rate limiting configuration.
+        _cache (FlextTypes.Dict): Exception handler cache.
 
     Returns:
         FlextExceptions: Instance for exception factory operations.
@@ -154,7 +154,7 @@ class FlextExceptions:
 
     """
 
-    def __init__(self, config: FlextTypes.Core.Dict | None = None) -> None:
+    def __init__(self, config: FlextTypes.Dict | None = None) -> None:
         """Initialize FlextExceptions with configuration.
 
         Args:
@@ -162,15 +162,15 @@ class FlextExceptions:
 
         """
         self._config = config or {}
-        self._handlers: dict[type[Exception], list[object]] = {}
-        self._middleware: FlextTypes.Core.List = []
-        self._audit_log: FlextTypes.Core.List = []
+        self._handlers: dict[type[Exception], FlextTypes.List] = {}
+        self._middleware: FlextTypes.List = []
+        self._audit_log: FlextTypes.List = []
         self._performance_metrics: dict[str, dict[str, float | int]] = {}
-        self._circuit_breakers: dict[str, bool] = {}
+        self._circuit_breakers: FlextTypes.BoolDict = {}
         self._circuit_breaker_failures: dict[str, int] = {}  # Track failure counts
         self.logger = logging.getLogger(__name__)
-        self._rate_limiters: dict[str, FlextTypes.Resilience.RateLimiterState] = {}
-        self._cache: FlextTypes.Core.Dict = {}
+        self._rate_limiters: dict[str, FlextTypes.Reliability.RateLimiterState] = {}
+        self._cache: FlextTypes.Dict = {}
         self._lock = threading.Lock()  # Thread safety lock
 
     def __call__(
@@ -205,7 +205,7 @@ class FlextExceptions:
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
 
-    _metrics: ClassVar[FlextTypes.Core.Dict] = {}
+    _metrics: ClassVar[FlextTypes.Dict] = {}
 
     # Type conversion mapping for cleaner type resolution
     _TYPE_MAP: ClassVar[dict[str, type]] = {
@@ -226,7 +226,7 @@ class FlextExceptions:
         )
 
     @classmethod
-    def get_metrics(cls) -> FlextTypes.Core.Dict:
+    def get_metrics(cls) -> FlextTypes.Dict:
         """Get exception counts."""
         return dict(cls._metrics)
 
@@ -759,7 +759,7 @@ class FlextExceptions:
         """
         return self._circuit_breakers.get(exception_type, False)
 
-    def get_audit_log(self) -> FlextTypes.Core.List:
+    def get_audit_log(self) -> FlextTypes.List:
         """Get audit log of exception handling.
 
         Returns:
@@ -777,7 +777,7 @@ class FlextExceptions:
         """
         return self._performance_metrics.copy()
 
-    def get_handlers(self, exception_type: type[Exception]) -> FlextTypes.Core.List:
+    def get_handlers(self, exception_type: type[Exception]) -> FlextTypes.List:
         """Get handlers for specific exception type.
 
         Args:
@@ -795,7 +795,7 @@ class FlextExceptions:
 
     def get_statistics(
         self,
-    ) -> FlextTypes.Core.Dict:
+    ) -> FlextTypes.Dict:
         """Get statistics about exception handling.
 
         Returns:
@@ -837,7 +837,7 @@ class FlextExceptions:
         except Exception as e:
             return FlextResult[None].fail(f"Validation failed: {e}")
 
-    def export_config(self) -> FlextTypes.Core.Dict:
+    def export_config(self) -> FlextTypes.Dict:
         """Export configuration.
 
         Returns:
@@ -851,7 +851,7 @@ class FlextExceptions:
             "audit_log_size": len(self._audit_log),
         }
 
-    def import_config(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
+    def import_config(self, config: FlextTypes.Dict) -> FlextResult[None]:
         """Import configuration.
 
         Args:
@@ -865,7 +865,7 @@ class FlextExceptions:
 
         try:
             if "config" in config and isinstance(config["config"], dict):
-                config_dict = cast("FlextTypes.Core.Dict", config["config"])
+                config_dict = cast("FlextTypes.Dict", config["config"])
                 self._config.update(config_dict)
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -900,7 +900,7 @@ class FlextExceptions:
             super().__init__(message)
             self.message = message
             self.code = code or FlextConstants.Errors.GENERIC_ERROR
-            self.context: FlextTypes.Core.Dict = dict(context or {})
+            self.context: FlextTypes.Dict = dict(context or {})
             self.correlation_id = correlation_id or f"flext_{int(time.time() * 1000)}"
             self.timestamp = time.time()
             FlextExceptions.record_exception(self.__class__.__name__)
@@ -919,9 +919,9 @@ class FlextExceptions:
         def _build_context(
             base_context: Mapping[str, object] | None,
             **additional_context: object,
-        ) -> FlextTypes.Core.Dict:
+        ) -> FlextTypes.Dict:
             """Build context dictionary from base context and additional items."""
-            context_dict: FlextTypes.Core.Dict = (
+            context_dict: FlextTypes.Dict = (
                 dict(base_context) if isinstance(base_context, dict) else {}
             )
             context_dict.update(additional_context)
@@ -929,12 +929,12 @@ class FlextExceptions:
 
         @staticmethod
         def _extract_common_kwargs(
-            kwargs: FlextTypes.Core.Dict,
-        ) -> tuple[FlextTypes.Core.Dict | None, str | None, str | None]:
+            kwargs: FlextTypes.Dict,
+        ) -> tuple[FlextTypes.Dict | None, str | None, str | None]:
             """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
             context_raw = kwargs.get("context")
             context = (
-                cast("FlextTypes.Core.Dict", context_raw)
+                cast("FlextTypes.Dict", context_raw)
                 if isinstance(context_raw, dict)
                 else None
             )
@@ -958,12 +958,12 @@ class FlextExceptions:
 
     @staticmethod
     def _extract_common_kwargs(
-        kwargs: FlextTypes.Core.Dict,
-    ) -> tuple[FlextTypes.Core.Dict | None, str | None, str | None]:
+        kwargs: FlextTypes.Dict,
+    ) -> tuple[FlextTypes.Dict | None, str | None, str | None]:
         """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
         context_raw = kwargs.get("context")
         context = (
-            cast("FlextTypes.Core.Dict", context_raw)
+            cast("FlextTypes.Dict", context_raw)
             if isinstance(context_raw, dict)
             else None
         )
@@ -999,7 +999,7 @@ class FlextExceptions:
             base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
 
             # Build context with specific fields
-            context_data: FlextTypes.Core.Dict = {"attribute_name": attribute_name}
+            context_data: FlextTypes.Dict = {"attribute_name": attribute_name}
             if attribute_context:
                 context_data["attribute_context"] = dict(attribute_context)
 
@@ -1073,8 +1073,8 @@ class FlextExceptions:
                 correlation_id=correlation_id,
             )
 
-    class _ConfigurationError(BaseError, ValueError):
-        """System configuration error."""
+    class _ConfigurationError(BaseError, KeyError):
+        """System configuration error - inherits from KeyError for backward compatibility."""
 
         def __init__(
             self,
@@ -1088,7 +1088,7 @@ class FlextExceptions:
             self.config_file = config_file
             context_raw = kwargs.get("context", {})
             if isinstance(context_raw, dict):
-                context_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", context_raw)
+                context_dict: FlextTypes.Dict = cast("FlextTypes.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"config_key": config_key, "config_file": config_file})
@@ -1116,7 +1116,7 @@ class FlextExceptions:
             self.endpoint = endpoint
             context_raw = kwargs.get("context", {})
             if isinstance(context_raw, dict):
-                context_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", context_raw)
+                context_dict: FlextTypes.Dict = cast("FlextTypes.Dict", context_raw)
             else:
                 context_dict = {}
             context_dict.update({"service": service, "endpoint": endpoint})
@@ -1348,8 +1348,8 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                base_context: FlextTypes.Core.Dict | None = cast(
-                    "FlextTypes.Core.Dict",
+                base_context: FlextTypes.Dict | None = cast(
+                    "FlextTypes.Dict",
                     context_raw,
                 )
             else:
@@ -1360,7 +1360,7 @@ class FlextExceptions:
             )
 
             # Add remaining kwargs to context for full functionality
-            context_dict: FlextTypes.Core.Dict
+            context_dict: FlextTypes.Dict
             if base_context is not None:
                 context_dict = dict(base_context)
                 context_dict.update(kwargs)
@@ -1383,8 +1383,8 @@ class FlextExceptions:
             # Extract special parameters
             context_raw = kwargs.pop("context", None)
             if isinstance(context_raw, dict):
-                base_context: FlextTypes.Core.Dict | None = cast(
-                    "FlextTypes.Core.Dict",
+                base_context: FlextTypes.Dict | None = cast(
+                    "FlextTypes.Dict",
                     context_raw,
                 )
             else:
@@ -1397,7 +1397,7 @@ class FlextExceptions:
             error_code = str(error_code_raw) if error_code_raw is not None else None
 
             # Add remaining kwargs to context for full functionality
-            context_dict: FlextTypes.Core.Dict
+            context_dict: FlextTypes.Dict
             if base_context is not None:
                 context_dict = dict(base_context)
                 context_dict.update(kwargs)
@@ -1577,6 +1577,6 @@ class FlextExceptions:
         }
 
 
-__all__: FlextTypes.Core.StringList = [
+__all__: FlextTypes.StringList = [
     "FlextExceptions",
 ]

@@ -8,12 +8,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from types import SimpleNamespace
 from typing import cast
 
 import pytest
 
-from flext_core import FlextHandlers, FlextModels, FlextResult
+from flext_core import FlextHandlers, FlextModels, FlextResult, FlextTypes
 from flext_core.context import FlextContext
 from flext_core.mixins import FlextMixins
 
@@ -669,7 +670,7 @@ class TestFlextHandlers:
         def dict_config_handler(message: str) -> str:
             return f"dict_config_{message}"
 
-        handler_config: dict[str, object] = {
+        handler_config: FlextTypes.Dict = {
             "handler_id": "custom_id",
             "handler_name": "Custom Name",
             "handler_type": "command",
@@ -694,7 +695,7 @@ class TestFlextHandlers:
                 return f"invalid_config_{message}"
             return f"invalid_config_{message!s}"
 
-        invalid_config: dict[str, object] = {
+        invalid_config: FlextTypes.Dict = {
             "handler_type": "invalid_type",  # Invalid value
         }
 

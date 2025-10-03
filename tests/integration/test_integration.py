@@ -47,7 +47,7 @@ class FunctionalExternalService:
     def __init__(self) -> None:
         """Initialize functional external service with processing state."""
         self.call_count = 0
-        self.processed_items: FlextTypes.Core.StringList = []
+        self.processed_items: FlextTypes.StringList = []
         self.should_fail = False
         self.failure_message = "Service unavailable"
 
@@ -120,10 +120,10 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, object]
+        sample_data: FlextTypes.Dict
         | bool
         | list[int]
-        | FlextTypes.Core.Headers
+        | FlextTypes.Config.Environment
         | None,
     ) -> None:
         """Test comprehensive integration of core library exports.
@@ -139,8 +139,8 @@ class TestLibraryIntegration:
         # Arrange
         if not isinstance(sample_data, dict):
             pytest.skip("sample_data is not a dictionary")
-        # Type narrow sample_data to dict[str, object] for indexing
-        sample_dict = cast("dict[str, object]", sample_data)
+        # Type narrow sample_data to FlextTypes.Dict for indexing
+        sample_dict = cast("FlextTypes.Dict", sample_data)
         test_value: str = cast("str", sample_dict["string"])
 
         # Act - Test FlextResult creation
@@ -172,7 +172,9 @@ class TestLibraryIntegration:
         assert service_result.value == test_value
 
         # Act - Test global container access
-        global_container = FlextContainer.get_global()
+        manager = FlextContainer.ensure_global_manager()
+
+        global_container = manager.get_or_create()
 
         # Assert - Global container availability
         assert isinstance(global_container, FlextContainer)

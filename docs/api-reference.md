@@ -12,7 +12,6 @@ from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextContext,
-    FlextCqrs,
     FlextDispatcher,
     FlextRegistry,
     FlextService,

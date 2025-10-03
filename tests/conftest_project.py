@@ -30,11 +30,11 @@ from flext_core import (
 
 # Core Fixtures
 @pytest.fixture
-def test_scenario() -> FlextTypes.Core.Headers:
+def test_scenario() -> FlextTypes.Config.Environment:
     """Basic test scenario fixture.
 
     Returns:
-        FlextTypes.Core.Headers: Test scenario data with status and environment.
+        FlextTypes.StringDict: Test scenario data with status and environment.
 
     """
     return {"status": "test", "environment": "test"}
@@ -58,7 +58,7 @@ def clean_container() -> Generator[FlextContainer]:
 
 
 @pytest.fixture
-def sample_data() -> FlextTypes.Core.Dict:
+def sample_data() -> FlextTypes.Dict:
     """Provide deterministic sample data for tests.
 
     Enterprise-grade test data factory providing consistent, typed sample data
@@ -82,7 +82,7 @@ def sample_data() -> FlextTypes.Core.Dict:
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, object] | FlextTypes.Core.StringList | None:
+def test_user_data() -> FlextTypes.Dict | FlextTypes.StringList | None:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns
@@ -136,7 +136,7 @@ def mock_external_service() -> object:
     class MockExternalService:
         def __init__(self) -> None:
             self.call_count = 0
-            self.processed_items: list[object] = []
+            self.processed_items: FlextTypes.List = []
             self._should_fail = False
             self._failure_message = ""
 
@@ -225,7 +225,7 @@ def error_context() -> dict[str, str | None]:
 
 # Test Data Constants - Centralized test data and constants
 @pytest.fixture
-def test_constants() -> dict[str, object]:
+def test_constants() -> FlextTypes.Dict:
     """Provide centralized test constants for all tests.
 
     Centralized constants used across multiple test files to ensure
@@ -285,7 +285,7 @@ def test_constants() -> dict[str, object]:
 
 
 @pytest.fixture
-def test_contexts() -> dict[str, dict[str, object]]:
+def test_contexts() -> FlextTypes.NestedDict:
     """Provide common test contexts for various scenarios.
 
     Pre-defined contexts for testing different scenarios like
@@ -336,7 +336,7 @@ def test_contexts() -> dict[str, dict[str, object]]:
 
 
 @pytest.fixture
-def test_payloads() -> dict[str, dict[str, object]]:
+def test_payloads() -> FlextTypes.NestedDict:
     """Provide common test payloads for different operations.
 
     Standardized payloads for testing commands, queries, events,
@@ -388,7 +388,7 @@ def test_payloads() -> dict[str, dict[str, object]]:
 
 
 @pytest.fixture
-def test_error_scenarios() -> dict[str, dict[str, object]]:
+def test_error_scenarios() -> FlextTypes.NestedDict:
     """Provide common error scenarios for testing.
 
     Pre-defined error scenarios for testing error handling,
@@ -445,7 +445,7 @@ def test_error_scenarios() -> dict[str, dict[str, object]]:
 
 
 @pytest.fixture
-def performance_threshold() -> dict[str, float]:
+def performance_threshold() -> FlextTypes.FloatDict:
     """Provide performance thresholds for testing.
 
     Performance threshold configuration for validating
@@ -465,7 +465,7 @@ def performance_threshold() -> dict[str, float]:
 
 
 @pytest.fixture
-def benchmark_data() -> FlextTypes.Core.Dict:
+def benchmark_data() -> FlextTypes.Dict:
     """Provide standardized data for performance testing.
 
     Benchmark data factory for testing performance characteristics
@@ -539,7 +539,9 @@ def _isolate_flext_core_state() -> None:
     """
     # Individual components isolation - FlextCore facade was removed
     # Reset container singleton state if needed
-    FlextContainer.get_global().clear()
+    manager = FlextContainer.ensure_global_manager()
+    container = manager.get_or_create()
+    container.clear()
 
 
 @pytest.fixture
