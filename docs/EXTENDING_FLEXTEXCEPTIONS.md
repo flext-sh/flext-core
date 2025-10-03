@@ -526,15 +526,15 @@ def run_tap(tap_name: str, config: dict) -> FlextResult[dict]:
 
 FlextExceptions reserves error code ranges for different domains:
 
-| Range | Domain | Example |
-|-------|--------|---------|
-| `VALIDATION_ERROR_001-099` | Core validation errors | `VALIDATION_ERROR_002` |
-| `CONFIGURATION_ERROR_001-099` | Core config errors | `CONFIGURATION_ERROR_003` |
-| `OPERATION_ERROR_001-099` | Core operation errors | `OPERATION_ERROR_001` |
-| `API_ERROR_001-099` | flext-api HTTP errors | `API_ERROR_404` |
-| `LDAP_ERROR_001-099` | flext-ldap LDAP errors | `LDAP_ERROR_032` |
-| `CLI_ERROR_001-099` | flext-cli command errors | `CLI_ERROR_002` |
-| `PIPELINE_ERROR_001-099` | flext-meltano pipeline errors | `PIPELINE_ERROR_001` |
+| Range                         | Domain                        | Example                   |
+| ----------------------------- | ----------------------------- | ------------------------- |
+| `VALIDATION_ERROR_001-099`    | Core validation errors        | `VALIDATION_ERROR_002`    |
+| `CONFIGURATION_ERROR_001-099` | Core config errors            | `CONFIGURATION_ERROR_003` |
+| `OPERATION_ERROR_001-099`     | Core operation errors         | `OPERATION_ERROR_001`     |
+| `API_ERROR_001-099`           | flext-api HTTP errors         | `API_ERROR_404`           |
+| `LDAP_ERROR_001-099`          | flext-ldap LDAP errors        | `LDAP_ERROR_032`          |
+| `CLI_ERROR_001-099`           | flext-cli command errors      | `CLI_ERROR_002`           |
+| `PIPELINE_ERROR_001-099`      | flext-meltano pipeline errors | `PIPELINE_ERROR_001`      |
 
 ### Custom Error Code Pattern
 

@@ -984,8 +984,14 @@ class FlextUtilities:
         ) -> FlextResult[T]:
             """Retry operation with exponential backoff using advanced railway pattern."""
             # Use config values if not provided
-            retries = max_retries if max_retries is not None else _config.max_retry_attempts
-            delay = delay_seconds if delay_seconds is not None else _config.retry_delay_seconds
+            retries = (
+                max_retries if max_retries is not None else _config.max_retry_attempts
+            )
+            delay = (
+                delay_seconds
+                if delay_seconds is not None
+                else _config.retry_delay_seconds
+            )
 
             # Validate parameters first
             retry_validation = FlextUtilities.Validation.validate_retry_count(
@@ -2045,8 +2051,14 @@ class FlextUtilities:
         ) -> FlextResult[T]:
             """Enhanced retry with exponential backoff using railway patterns."""
             # Use config values if not provided
-            retries = max_retries if max_retries is not None else _config.max_retry_attempts
-            delay = initial_delay if initial_delay is not None else _config.retry_delay_seconds
+            retries = (
+                max_retries if max_retries is not None else _config.max_retry_attempts
+            )
+            delay = (
+                initial_delay
+                if initial_delay is not None
+                else _config.retry_delay_seconds
+            )
 
             # Simple implementation that tries the operation multiple times
             last_error = "Operation failed"
@@ -2916,8 +2928,12 @@ class FlextUtilities:
 
             """
             # Use config values if not provided
-            retries = max_retries if max_retries is not None else _config.max_retry_attempts
-            delay = retry_delay if retry_delay is not None else _config.retry_delay_seconds
+            retries = (
+                max_retries if max_retries is not None else _config.max_retry_attempts
+            )
+            delay = (
+                retry_delay if retry_delay is not None else _config.retry_delay_seconds
+            )
 
             def retry_composed(value: T) -> FlextResult[T]:
                 last_error = None

@@ -854,7 +854,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             file_handler = logging.handlers.RotatingFileHandler(
                 filename=log_file,
                 maxBytes=log_file_max_size,
-                backupCount=log_file_backup_count if log_file_backup_count is not None else _config.log_file_backup_count,
+                backupCount=log_file_backup_count
+                if log_file_backup_count is not None
+                else _config.log_file_backup_count,
                 encoding="utf-8",
             )
             logger.addHandler(file_handler)

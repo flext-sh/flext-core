@@ -26,20 +26,21 @@ Example: `VALIDATION_ERROR_001`, `CONFIG_MISSING_KEY_001`
 **Inherits From**: `ValueError`
 **HTTP Status**: 400 Bad Request
 
-| Code | Description | Context Fields | Example |
-|------|-------------|----------------|---------|
-| `VALIDATION_ERROR_001` | Required field missing | field, value | Email is required |
-| `VALIDATION_ERROR_002` | Invalid format | field, value, validation_details | Invalid email format |
-| `VALIDATION_ERROR_003` | Value out of range | field, value, min, max | Age must be between 18-100 |
-| `VALIDATION_ERROR_004` | Invalid type | field, expected_type, actual_type | Expected string, got integer |
-| `VALIDATION_ERROR_005` | Duplicate value | field, value, validation_details | Username already exists |
-| `VALIDATION_ERROR_006` | Invalid length | field, value, min_length, max_length | Password must be 8-64 characters |
-| `VALIDATION_ERROR_007` | Pattern mismatch | field, value, pattern | Phone must match +1-XXX-XXX-XXXX |
-| `VALIDATION_ERROR_008` | Invalid enum value | field, value, allowed_values | Status must be: active, inactive, pending |
-| `VALIDATION_ERROR_009` | Constraint violation | field, value, constraint | Must be unique |
-| `VALIDATION_ERROR_010` | Business rule violation | field, value, rule | Cannot delete active user |
+| Code                   | Description             | Context Fields                       | Example                                   |
+| ---------------------- | ----------------------- | ------------------------------------ | ----------------------------------------- |
+| `VALIDATION_ERROR_001` | Required field missing  | field, value                         | Email is required                         |
+| `VALIDATION_ERROR_002` | Invalid format          | field, value, validation_details     | Invalid email format                      |
+| `VALIDATION_ERROR_003` | Value out of range      | field, value, min, max               | Age must be between 18-100                |
+| `VALIDATION_ERROR_004` | Invalid type            | field, expected_type, actual_type    | Expected string, got integer              |
+| `VALIDATION_ERROR_005` | Duplicate value         | field, value, validation_details     | Username already exists                   |
+| `VALIDATION_ERROR_006` | Invalid length          | field, value, min_length, max_length | Password must be 8-64 characters          |
+| `VALIDATION_ERROR_007` | Pattern mismatch        | field, value, pattern                | Phone must match +1-XXX-XXX-XXXX          |
+| `VALIDATION_ERROR_008` | Invalid enum value      | field, value, allowed_values         | Status must be: active, inactive, pending |
+| `VALIDATION_ERROR_009` | Constraint violation    | field, value, constraint             | Must be unique                            |
+| `VALIDATION_ERROR_010` | Business rule violation | field, value, rule                   | Cannot delete active user                 |
 
 **Usage Example**:
+
 ```python
 raise FlextExceptions.ValidationError(
     "Email is required",
@@ -57,20 +58,21 @@ raise FlextExceptions.ValidationError(
 **Inherits From**: `KeyError`
 **HTTP Status**: 500 Internal Server Error
 
-| Code | Description | Context Fields | Example |
-|------|-------------|----------------|---------|
-| `CONFIG_MISSING_KEY_001` | Required config key missing | config_key, config_file | database_url not in settings.yaml |
-| `CONFIG_INVALID_VALUE_002` | Invalid config value | config_key, value, expected | Invalid port number |
-| `CONFIG_FILE_NOT_FOUND_003` | Configuration file missing | config_file, config_path | settings.yaml not found |
-| `CONFIG_PARSE_ERROR_004` | Configuration parse failure | config_file, parse_error | Invalid YAML syntax |
-| `CONFIG_TYPE_MISMATCH_005` | Wrong config value type | config_key, expected_type, actual_type | timeout must be integer |
-| `CONFIG_DEPRECATED_006` | Deprecated configuration used | config_key, deprecated_since, alternative | Use new_config instead |
-| `CONFIG_CONFLICT_007` | Conflicting configurations | config_keys, conflict_reason | Cannot use both X and Y |
-| `CONFIG_INCOMPLETE_008` | Incomplete configuration | config_section, missing_keys | Database config incomplete |
-| `CONFIG_INVALID_FORMAT_009` | Invalid format | config_key, format, actual | Invalid URL format |
-| `CONFIG_PERMISSION_010` | Permission denied | config_file, permission_required | Cannot read /etc/app/config.yaml |
+| Code                        | Description                   | Context Fields                            | Example                           |
+| --------------------------- | ----------------------------- | ----------------------------------------- | --------------------------------- |
+| `CONFIG_MISSING_KEY_001`    | Required config key missing   | config_key, config_file                   | database_url not in settings.YAML |
+| `CONFIG_INVALID_VALUE_002`  | Invalid config value          | config_key, value, expected               | Invalid port number               |
+| `CONFIG_FILE_NOT_FOUND_003` | Configuration file missing    | config_file, config_path                  | settings.YAML not found           |
+| `CONFIG_PARSE_ERROR_004`    | Configuration parse failure   | config_file, parse_error                  | Invalid YAML syntax               |
+| `CONFIG_TYPE_MISMATCH_005`  | Wrong config value type       | config_key, expected_type, actual_type    | timeout must be integer           |
+| `CONFIG_DEPRECATED_006`     | Deprecated configuration used | config_key, deprecated_since, alternative | Use new_config instead            |
+| `CONFIG_CONFLICT_007`       | Conflicting configurations    | config_keys, conflict_reason              | Cannot use both X and Y           |
+| `CONFIG_INCOMPLETE_008`     | Incomplete configuration      | config_section, missing_keys              | Database config incomplete        |
+| `CONFIG_INVALID_FORMAT_009` | Invalid format                | config_key, format, actual                | Invalid URL format                |
+| `CONFIG_PERMISSION_010`     | Permission denied             | config_file, permission_required          | Cannot read /etc/app/config.YAML  |
 
 **Usage Example**:
+
 ```python
 raise FlextExceptions.ConfigurationError(
     "Database URL not configured",
@@ -88,20 +90,21 @@ raise FlextExceptions.ConfigurationError(
 **Inherits From**: `FileNotFoundError`
 **HTTP Status**: 404 Not Found
 
-| Code | Description | Context Fields | Example |
-|------|-------------|----------------|---------|
-| `NOT_FOUND_FILE_001` | File not found | resource_path, resource_type | /data/users.csv not found |
-| `NOT_FOUND_RESOURCE_002` | Resource not found | resource_type, resource_id | User ID user-123 not found |
-| `NOT_FOUND_DIRECTORY_003` | Directory not found | resource_path | /data/exports/ not found |
-| `NOT_FOUND_ENDPOINT_004` | API endpoint not found | endpoint, method | GET /api/v2/users not found |
-| `NOT_FOUND_SERVICE_005` | Service not found | service_name, service_type | LDAP service not available |
-| `NOT_FOUND_DATABASE_006` | Database not found | database_name | Database 'analytics' not found |
-| `NOT_FOUND_TABLE_007` | Table not found | table_name, database | Table 'users' not found in DB |
-| `NOT_FOUND_RECORD_008` | Record not found | table, record_id | No record with ID 42 in users |
-| `NOT_FOUND_MODULE_009` | Module not found | module_name | Module 'custom_plugin' not found |
-| `NOT_FOUND_ATTRIBUTE_010` | Attribute not found | object_type, attribute_name | User has no 'phone' attribute |
+| Code                      | Description            | Context Fields               | Example                          |
+| ------------------------- | ---------------------- | ---------------------------- | -------------------------------- |
+| `NOT_FOUND_FILE_001`      | File not found         | resource_path, resource_type | /data/users.csv not found        |
+| `NOT_FOUND_RESOURCE_002`  | Resource not found     | resource_type, resource_id   | User ID user-123 not found       |
+| `NOT_FOUND_DIRECTORY_003` | Directory not found    | resource_path                | /data/exports/ not found         |
+| `NOT_FOUND_ENDPOINT_004`  | API endpoint not found | endpoint, method             | GET /api/v2/users not found      |
+| `NOT_FOUND_SERVICE_005`   | Service not found      | service_name, service_type   | LDAP service not available       |
+| `NOT_FOUND_DATABASE_006`  | Database not found     | database_name                | Database 'analytics' not found   |
+| `NOT_FOUND_TABLE_007`     | Table not found        | table_name, database         | Table 'users' not found in DB    |
+| `NOT_FOUND_RECORD_008`    | Record not found       | table, record_id             | No record with ID 42 in users    |
+| `NOT_FOUND_MODULE_009`    | Module not found       | module_name                  | Module 'custom_plugin' not found |
+| `NOT_FOUND_ATTRIBUTE_010` | Attribute not found    | object_type, attribute_name  | User has no 'phone' attribute    |
 
 **Usage Example**:
+
 ```python
 raise FlextExceptions.NotFoundError(
     "User not found",
@@ -119,20 +122,21 @@ raise FlextExceptions.NotFoundError(
 **Inherits From**: `TypeError`
 **HTTP Status**: 400 Bad Request
 
-| Code | Description | Context Fields | Example |
-|------|-------------|----------------|---------|
-| `TYPE_MISMATCH_001` | Type mismatch | expected_type, actual_type, field | Expected str, got int |
-| `TYPE_CONVERSION_002` | Type conversion failed | source_type, target_type, value | Cannot convert '2025-13-01' to date |
-| `TYPE_INVALID_CAST_003` | Invalid type cast | from_type, to_type | Cannot cast User to dict |
-| `TYPE_NULL_NOT_ALLOWED_004` | Null/None not allowed | field, expected_type | User.email cannot be None |
-| `TYPE_COLLECTION_MISMATCH_005` | Collection type wrong | expected_collection, actual_collection | Expected list, got tuple |
-| `TYPE_CALLABLE_REQUIRED_006` | Callable required | field, actual_type | Handler must be callable |
-| `TYPE_PROTOCOL_VIOLATION_007` | Protocol not implemented | protocol, missing_methods | Missing 'handle' method |
-| `TYPE_GENERIC_MISMATCH_008` | Generic type mismatch | expected_generic, actual_generic | Expected List[str], got List[int] |
-| `TYPE_ANNOTATION_MISSING_009` | Type annotation missing | parameter, function | Parameter 'data' has no type hint |
-| `TYPE_INCOMPATIBLE_010` | Incompatible types | type_a, type_b, operation | Cannot add str + int |
+| Code                           | Description              | Context Fields                         | Example                             |
+| ------------------------------ | ------------------------ | -------------------------------------- | ----------------------------------- |
+| `TYPE_MISMATCH_001`            | Type mismatch            | expected_type, actual_type, field      | Expected str, got int               |
+| `TYPE_CONVERSION_002`          | Type conversion failed   | source_type, target_type, value        | Cannot convert '2025-13-01' to date |
+| `TYPE_INVALID_CAST_003`        | Invalid type cast        | from_type, to_type                     | Cannot cast User to dict            |
+| `TYPE_NULL_NOT_ALLOWED_004`    | Null/None not allowed    | field, expected_type                   | User.email cannot be None           |
+| `TYPE_COLLECTION_MISMATCH_005` | Collection type wrong    | expected_collection, actual_collection | Expected list, got tuple            |
+| `TYPE_CALLABLE_REQUIRED_006`   | Callable required        | field, actual_type                     | Handler must be callable            |
+| `TYPE_PROTOCOL_VIOLATION_007`  | Protocol not implemented | protocol, missing_methods              | Missing 'handle' method             |
+| `TYPE_GENERIC_MISMATCH_008`    | Generic type mismatch    | expected_generic, actual_generic       | Expected List[str], got List[int]   |
+| `TYPE_ANNOTATION_MISSING_009`  | Type annotation missing  | parameter, function                    | Parameter 'data' has no type hint   |
+| `TYPE_INCOMPATIBLE_010`        | Incompatible types       | type_a, type_b, operation              | Cannot add str + int                |
 
 **Usage Example**:
+
 ```python
 raise FlextExceptions.TypeError(
     "Expected string, got integer",
@@ -151,20 +155,21 @@ raise FlextExceptions.TypeError(
 **Inherits From**: `RuntimeError`
 **HTTP Status**: 500 Internal Server Error
 
-| Code | Description | Context Fields | Example |
-|------|-------------|----------------|---------|
-| `OPERATION_FAILED_001` | Generic operation failure | operation, details | Database query failed |
-| `OPERATION_STATE_INVALID_002` | Invalid state for operation | current_state, required_state, operation | Cannot delete active user |
-| `OPERATION_PRECONDITION_003` | Precondition not met | operation, precondition, actual_state | User must be logged in |
-| `OPERATION_POSTCONDITION_004` | Postcondition failed | operation, expected_result, actual_result | Transaction not committed |
-| `OPERATION_CONCURRENT_005` | Concurrent modification | resource, operation | Resource modified by another process |
-| `OPERATION_ROLLBACK_006` | Operation rolled back | operation, rollback_reason | Transaction rolled back due to error |
-| `OPERATION_PARTIAL_007` | Partial operation failure | operation, successful_count, failed_count | 5 of 10 users created |
-| `OPERATION_CIRCUIT_OPEN_008` | Circuit breaker open | service, failure_threshold | Service unavailable (circuit open) |
-| `OPERATION_RATE_LIMITED_009` | Rate limit exceeded | operation, limit, window | Max 100 requests per minute |
-| `OPERATION_QUOTA_EXCEEDED_010` | Quota exceeded | resource, quota_limit, current_usage | Storage quota exceeded |
+| Code                           | Description                 | Context Fields                            | Example                              |
+| ------------------------------ | --------------------------- | ----------------------------------------- | ------------------------------------ |
+| `OPERATION_FAILED_001`         | Generic operation failure   | operation, details                        | Database query failed                |
+| `OPERATION_STATE_INVALID_002`  | Invalid state for operation | current_state, required_state, operation  | Cannot delete active user            |
+| `OPERATION_PRECONDITION_003`   | Precondition not met        | operation, precondition, actual_state     | User must be logged in               |
+| `OPERATION_POSTCONDITION_004`  | Postcondition failed        | operation, expected_result, actual_result | Transaction not committed            |
+| `OPERATION_CONCURRENT_005`     | Concurrent modification     | resource, operation                       | Resource modified by another process |
+| `OPERATION_ROLLBACK_006`       | Operation rolled back       | operation, rollback_reason                | Transaction rolled back due to error |
+| `OPERATION_PARTIAL_007`        | Partial operation failure   | operation, successful_count, failed_count | 5 of 10 users created                |
+| `OPERATION_CIRCUIT_OPEN_008`   | Circuit breaker open        | service, failure_threshold                | Service unavailable (circuit open)   |
+| `OPERATION_RATE_LIMITED_009`   | Rate limit exceeded         | operation, limit, window                  | Max 100 requests per minute          |
+| `OPERATION_QUOTA_EXCEEDED_010` | Quota exceeded              | resource, quota_limit, current_usage      | Storage quota exceeded               |
 
 **Usage Example**:
+
 ```python
 raise FlextExceptions.OperationError(
     "Cannot delete active user",
@@ -183,20 +188,21 @@ raise FlextExceptions.OperationError(
 **Inherits From**: `TimeoutError`
 **HTTP Status**: 504 Gateway Timeout
 
-| Code | Description | Context Fields | Example |
-|------|-------------|----------------|---------|
-| `TIMEOUT_OPERATION_001` | Operation timeout | operation, timeout_seconds, elapsed_time | Database query timeout (30s) |
-| `TIMEOUT_CONNECTION_002` | Connection timeout | host, port, timeout_seconds | Connection to 10.0.0.1:5432 timeout |
-| `TIMEOUT_REQUEST_003` | Request timeout | url, method, timeout_seconds | GET /api/users timeout after 60s |
-| `TIMEOUT_LOCK_004` | Lock acquisition timeout | lock_name, timeout_seconds | Failed to acquire lock after 10s |
-| `TIMEOUT_RESPONSE_005` | Response timeout | service, operation, timeout_seconds | Service response timeout |
-| `TIMEOUT_TRANSACTION_006` | Transaction timeout | transaction_id, timeout_seconds | Transaction timeout after 30s |
-| `TIMEOUT_BATCH_007` | Batch operation timeout | batch_size, processed_count, timeout_seconds | Processed 500/1000 before timeout |
-| `TIMEOUT_DEADLINE_008` | Deadline exceeded | operation, deadline, current_time | Deadline 2025-10-02T10:00 exceeded |
-| `TIMEOUT_RETRY_EXHAUSTED_009` | Retry attempts exhausted | operation, max_retries, total_time | Failed after 3 retries (90s) |
-| `TIMEOUT_KEEPALIVE_010` | Keepalive timeout | connection, idle_time | Connection idle for 300s |
+| Code                          | Description              | Context Fields                               | Example                             |
+| ----------------------------- | ------------------------ | -------------------------------------------- | ----------------------------------- |
+| `TIMEOUT_OPERATION_001`       | Operation timeout        | operation, timeout_seconds, elapsed_time     | Database query timeout (30s)        |
+| `TIMEOUT_CONNECTION_002`      | Connection timeout       | host, port, timeout_seconds                  | Connection to 10.0.0.1:5432 timeout |
+| `TIMEOUT_REQUEST_003`         | Request timeout          | url, method, timeout_seconds                 | GET /api/users timeout after 60s    |
+| `TIMEOUT_LOCK_004`            | Lock acquisition timeout | lock_name, timeout_seconds                   | Failed to acquire lock after 10s    |
+| `TIMEOUT_RESPONSE_005`        | Response timeout         | service, operation, timeout_seconds          | Service response timeout            |
+| `TIMEOUT_TRANSACTION_006`     | Transaction timeout      | transaction_id, timeout_seconds              | Transaction timeout after 30s       |
+| `TIMEOUT_BATCH_007`           | Batch operation timeout  | batch_size, processed_count, timeout_seconds | Processed 500/1000 before timeout   |
+| `TIMEOUT_DEADLINE_008`        | Deadline exceeded        | operation, deadline, current_time            | Deadline 2025-10-02T10:00 exceeded  |
+| `TIMEOUT_RETRY_EXHAUSTED_009` | Retry attempts exhausted | operation, max_retries, total_time           | Failed after 3 retries (90s)        |
+| `TIMEOUT_KEEPALIVE_010`       | Keepalive timeout        | connection, idle_time                        | Connection idle for 300s            |
 
 **Usage Example**:
+
 ```python
 raise FlextExceptions.TimeoutError(
     "Database query timeout",
@@ -282,14 +288,14 @@ error_analytics = {
 
 ## HTTP Status Code Mapping
 
-| Error Category | HTTP Status | Description |
-|---------------|-------------|-------------|
-| ValidationError | 400 | Bad Request |
-| ConfigurationError | 500 | Internal Server Error |
-| NotFoundError | 404 | Not Found |
-| TypeError | 400 | Bad Request |
-| OperationError | 500 | Internal Server Error |
-| TimeoutError | 504 | Gateway Timeout |
+| Error Category     | HTTP Status | Description           |
+| ------------------ | ----------- | --------------------- |
+| ValidationError    | 400         | Bad Request           |
+| ConfigurationError | 500         | Internal Server Error |
+| NotFoundError      | 404         | Not Found             |
+| TypeError          | 400         | Bad Request           |
+| OperationError     | 500         | Internal Server Error |
+| TimeoutError       | 504         | Gateway Timeout       |
 
 ---
 
@@ -338,6 +344,7 @@ class CustomValidationError(FlextExceptions.ValidationError):
 4. Remove after proper deprecation cycle
 
 Example:
+
 ```python
 # DEPRECATED: Use VALIDATION_ERROR_011 instead
 # Will be removed in v2.0.0

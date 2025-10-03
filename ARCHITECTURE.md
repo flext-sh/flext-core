@@ -41,6 +41,7 @@ During v0.9.9 optimization review, it was discovered that both `FlextDispatcher`
 **KEEP SEPARATION** - The duplication is intentional and serves different architectural concerns:
 
 **FlextProcessors** (Layer: Processing Utilities)
+
 - **Purpose**: Batch processing with reliability patterns
 - **Scope**: General-purpose processing infrastructure
 - **Patterns**: Circuit breaker, rate limiting, retry logic
@@ -48,6 +49,7 @@ During v0.9.9 optimization review, it was discovered that both `FlextDispatcher`
 - **Dependency**: Foundation layer (FlextResult, FlextTypes)
 
 **FlextDispatcher** (Layer: Orchestration)
+
 - **Purpose**: Request orchestration and routing
 - **Scope**: Command/Query/Event dispatching
 - **Patterns**: Circuit breaker, rate limiting, middleware pipeline
@@ -57,12 +59,14 @@ During v0.9.9 optimization review, it was discovered that both `FlextDispatcher`
 ### Consequences
 
 **Benefits**:
+
 - Clear separation of concerns (SRP - Single Responsibility Principle)
 - Independent evolution of processing vs orchestration layers
 - No circular dependencies between layers
 - Each layer can optimize for its specific use case
 
 **Trade-offs**:
+
 - Apparent code duplication (acceptable for architectural clarity)
 - Must maintain two implementations (acceptable complexity cost)
 
@@ -118,6 +122,7 @@ value3 = result.unwrap()    # Explicit unwrap after success check
 ### Consequences
 
 **Benefits**:
+
 - Type-safe error handling across entire ecosystem
 - Composable operations via monadic patterns
 - No try/except fallback patterns needed
@@ -125,6 +130,7 @@ value3 = result.unwrap()    # Explicit unwrap after success check
 - ABI stability through dual access API
 
 **Ecosystem Impact**:
+
 - ALL 32+ projects depend on this pattern
 - Breaking changes to FlextResult would cascade across ecosystem
 - Deprecation cycle requires 2+ minor versions minimum
@@ -167,12 +173,14 @@ if db_result.success:
 ### Rationale
 
 **Why Global Singleton**:
+
 - Avoids constructor injection complexity in domain services
 - Single source of truth for service registry
 - Thread-safe access across entire application
 - Simple API for service registration and retrieval
 
 **Why Not Constructor Injection**:
+
 - Would require passing container through entire call stack
 - Increases coupling and ceremony in domain layer
 - More complex for ecosystem projects to adopt
@@ -180,12 +188,14 @@ if db_result.success:
 ### Consequences
 
 **Benefits**:
+
 - Simple API for service management
 - No constructor pollution with container parameter
 - Type-safe service retrieval via FlextResult
 - Thread-safe singleton pattern
 
 **Trade-offs**:
+
 - Global state (acceptable for DI container use case)
 - Testing requires container cleanup between tests
 - Service lifetimes managed explicitly
@@ -209,12 +219,14 @@ FLEXT ecosystem needed single source of truth for constants across 32+ projects 
 **CREATE** Layer 0 foundation constants module (`constants.py`):
 
 **Key Principles**:
+
 - ZERO dependencies (pure Python stdlib)
 - Immutable with `typing.Final`
 - Organized by domain namespaces
 - All ecosystem projects import from here
 
 **Structure**:
+
 ```python
 from flext_core import FlextConstants
 
@@ -256,6 +268,7 @@ FlextConstants
 ### Consequences
 
 **Benefits**:
+
 - Single source of truth for all constants
 - No magic strings across ecosystem
 - Type-safe constant access
@@ -263,6 +276,7 @@ FlextConstants
 - Easy to update and maintain
 
 **Maintenance Requirements**:
+
 - Document usage count for each constant
 - Reserve constants for future use (API stability)
 - Maintain backward compatibility in 1.x series
@@ -294,6 +308,7 @@ FLEXT ecosystem needed consistent type definitions across 32+ projects with Pyth
 5. **Python 3.13+ Syntax** - Modern union types (X | Y), type keyword
 
 **Structure**:
+
 ```python
 from flext_core import FlextTypes
 
@@ -313,11 +328,13 @@ U = FlextTypes.U
 ### Type Variable Organization
 
 **Core TypeVars**:
+
 - `T`, `U`, `V`, `W` - General purpose
 - `T_co`, `T_contra` - Variance annotations
 - `Message`, `Command`, `Query`, `Event` - CQRS patterns
 
 **Domain-Specific TypeVars**:
+
 - `TPlugin*` - Plugin system (14 TypeVars)
 - `TCommand_contra`, `TQuery_contra` - Handler contravariance
 - `MessageT`, `ResultT` - Message processing
@@ -325,12 +342,14 @@ U = FlextTypes.U
 ### Consequences
 
 **Benefits**:
+
 - Single source of truth for all types
 - Consistent type annotations across ecosystem
 - Python 3.13+ modern syntax adoption
 - Clear type variable purpose and usage
 
 **Considerations**:
+
 - Raw dict/list types still valid Python
 - FlextTypes.Dict = `FlextTypes.Dict` (specific use case)
 - Not all dict/list should be converted to FlextTypes

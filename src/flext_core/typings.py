@@ -279,6 +279,9 @@ class FlextTypes:
     # Collection types with ordering
     type OrderedDictType = OrderedDict[str, object]
 
+    # Assign for backward compatibility - moved outside class
+    # OrderedDict = OrderedDict[str, object]  # Will be assigned after class definition
+
     # =========================================================================
     # DOMAIN TYPES - Domain-Driven Design patterns (ENHANCED for event sourcing)
     # =========================================================================
@@ -647,6 +650,16 @@ class FlextTypes:
         type HookFunc = Callable[..., object]
         type HookList = list[FlextTypes.Context.HookFunc]
         type HookRegistry = dict[str, FlextTypes.Context.HookList]
+
+        # Note: Type variables are assigned at module level below
+
+
+# Assign type variables to FlextTypes class for backward compatibility
+FlextTypes.T = T
+FlextTypes.U = U
+FlextTypes.V = V
+FlextTypes.W = W
+FlextTypes.OrderedDict = OrderedDict[str, object]
 
 
 __all__: list[str] = [

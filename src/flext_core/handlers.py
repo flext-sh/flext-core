@@ -589,14 +589,14 @@ class FlextHandlers[MessageT_contra, ResultT](
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
-    def validate(self, data: object) -> FlextResult[None]:
+    def validate(self, _data: object) -> FlextResult[None]:
         """Validate input data based on handler mode for Application.Handler protocol.
 
         Generic validation that delegates to mode-specific validation methods.
         Part of FlextProtocols.Application.Handler protocol implementation.
 
         Args:
-            data: The data to validate
+            _data: The data to validate
 
         Returns:
             FlextResult[None]: Success if valid, failure with error details
@@ -610,12 +610,12 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
         if self.mode == "command":
-            return self.validate_command(cast("object", data))
+            return self.validate_command(_data)
         if self.mode == "query":
-            return self.validate_query(cast("object", data))
+            return self.validate_query(_data)
         # For event and saga handlers, use generic validation
         return FlextHandlers._MessageValidator.validate_message(
-            data,
+            _data,
             operation=self.mode,
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )

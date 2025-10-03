@@ -855,6 +855,7 @@ class FlextConfig(
         try:
             # Import models module and update its config
             import flext_core.models as models_module
+
             models_module._config = config_instance  # type: ignore[attr-defined]  # noqa: SLF001
         except ImportError:
             # Models module not yet imported, will use default when imported
@@ -865,6 +866,7 @@ class FlextConfig(
         """Reset the models module configuration to default FlextConfig instance."""
         try:
             import flext_core.models as models_module
+
             models_module._config = FlextConfig()  # type: ignore[attr-defined]  # noqa: SLF001
         except ImportError:
             # Models module not yet imported

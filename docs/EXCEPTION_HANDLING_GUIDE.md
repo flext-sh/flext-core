@@ -23,9 +23,10 @@
 
 FlextExceptions provides a structured exception hierarchy for the FLEXT ecosystem, replacing generic Python exceptions with context-rich, traceable errors. All exceptions include error codes, correlation IDs, and structured context for improved debugging and monitoring.
 
-### Why FlextExceptions?
+### Why FlextExceptions
 
 **Before** (Generic Exceptions):
+
 ```python
 raise ValueError("Invalid email format")
 # ❌ No error code
@@ -35,6 +36,7 @@ raise ValueError("Invalid email format")
 ```
 
 **After** (FlextExceptions):
+
 ```python
 raise FlextExceptions.ValidationError(
     "Invalid email format",
@@ -156,33 +158,37 @@ FlextExceptions (Base Exception)
 
 All FlextExceptions support these fields:
 
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `error_code` | str | Auto-generated error classification | "VALIDATION_ERROR" |
-| `correlation_id` | UUID | Unique ID for distributed tracing | "550e8400-e29b-41d4-a716-446655440000" |
-| `message` | str | Human-readable error message | "Email is required" |
-| `field` | str | Field/attribute name that failed | "email" |
-| `value` | Any | Actual value that caused the error | "invalid@" |
-| `timestamp` | datetime | When the error occurred | "2025-10-02T10:30:00Z" |
+| Field            | Type     | Description                         | Example                                |
+| ---------------- | -------- | ----------------------------------- | -------------------------------------- |
+| `error_code`     | str      | Auto-generated error classification | "VALIDATION_ERROR"                     |
+| `correlation_id` | UUID     | Unique ID for distributed tracing   | "550e8400-e29b-41d4-a716-446655440000" |
+| `message`        | str      | Human-readable error message        | "Email is required"                    |
+| `field`          | str      | Field/attribute name that failed    | "email"                                |
+| `value`          | Any      | Actual value that caused the error  | "invalid@"                             |
+| `timestamp`      | datetime | When the error occurred             | "2025-10-02T10:30:00Z"                 |
 
 ### Exception-Specific Context
 
 **ValidationError**:
+
 - `field`: Field name that failed validation
 - `value`: Actual value that failed
 - `validation_details`: Additional validation context
 
 **ConfigurationError**:
+
 - `config_key`: Configuration key name
 - `config_file`: Configuration file path
 - `config_section`: Configuration section name
 
 **NotFoundError**:
+
 - `resource_type`: Type of resource not found
 - `resource_id`: Resource identifier
 - `resource_path`: File/path not found
 
 **TypeError**:
+
 - `expected_type`: Expected type (str, int, etc.)
 - `actual_type`: Actual type received
 - `field`: Field name with type mismatch
@@ -382,14 +388,14 @@ grep -r "raise ValueError\|raise KeyError\|raise TypeError" src/ --include="*.py
 
 ### Step 2: Map to FlextExceptions
 
-| Generic Exception | FlextException | Use Case |
-|------------------|----------------|----------|
-| `ValueError` | `ValidationError` | Input/data validation |
-| `KeyError` | `ConfigurationError` | Configuration/settings |
-| `FileNotFoundError` | `NotFoundError` | Missing resources |
-| `TypeError` | `TypeError` | Type mismatches |
-| `RuntimeError` | `OperationError` | Operation failures |
-| `TimeoutError` | `TimeoutError` | Timeout scenarios |
+| Generic Exception   | FlextException       | Use Case               |
+| ------------------- | -------------------- | ---------------------- |
+| `ValueError`        | `ValidationError`    | Input/data validation  |
+| `KeyError`          | `ConfigurationError` | Configuration/settings |
+| `FileNotFoundError` | `NotFoundError`      | Missing resources      |
+| `TypeError`         | `TypeError`          | Type mismatches        |
+| `RuntimeError`      | `OperationError`     | Operation failures     |
+| `TimeoutError`      | `TimeoutError`       | Timeout scenarios      |
 
 ### Step 3: Add Import
 
@@ -401,6 +407,7 @@ from flext_core import FlextExceptions
 ### Step 4: Replace Exceptions
 
 **Before**:
+
 ```python
 def validate_email(email: str) -> None:
     if not email:
@@ -410,6 +417,7 @@ def validate_email(email: str) -> None:
 ```
 
 **After**:
+
 ```python
 def validate_email(email: str) -> None:
     if not email:
@@ -430,6 +438,7 @@ def validate_email(email: str) -> None:
 ### Step 5: Update Exception Handlers
 
 **Before**:
+
 ```python
 try:
     validate_email(email)
@@ -438,6 +447,7 @@ except ValueError as e:
 ```
 
 **After** (Enhanced):
+
 ```python
 try:
     validate_email(email)
@@ -452,6 +462,7 @@ except FlextExceptions.ValidationError as e:
 ```
 
 **After** (Backward Compatible):
+
 ```python
 try:
     validate_email(email)
@@ -479,11 +490,13 @@ poetry run pytest --cov=src --cov-fail-under=75
 ### 1. Always Provide Context
 
 ❌ **Bad** - No context:
+
 ```python
 raise FlextExceptions.ValidationError("Invalid input")
 ```
 
 ✅ **Good** - Rich context:
+
 ```python
 raise FlextExceptions.ValidationError(
     "Invalid input",
@@ -496,11 +509,13 @@ raise FlextExceptions.ValidationError(
 ### 2. Use Specific Exception Types
 
 ❌ **Bad** - Generic exception:
+
 ```python
 raise FlextExceptions.OperationError("Something failed")
 ```
 
 ✅ **Good** - Specific exception:
+
 ```python
 raise FlextExceptions.ValidationError(
     "Email validation failed",
@@ -512,11 +527,13 @@ raise FlextExceptions.ValidationError(
 ### 3. Include Error Details
 
 ❌ **Bad** - Vague message:
+
 ```python
 raise FlextExceptions.ConfigurationError("Config error")
 ```
 
 ✅ **Good** - Detailed message:
+
 ```python
 raise FlextExceptions.ConfigurationError(
     "Database URL not configured in settings.yaml",
@@ -529,6 +546,7 @@ raise FlextExceptions.ConfigurationError(
 ### 4. Catch Specific Exceptions
 
 ❌ **Bad** - Catch all:
+
 ```python
 try:
     operation()
@@ -537,6 +555,7 @@ except Exception as e:
 ```
 
 ✅ **Good** - Catch specific:
+
 ```python
 try:
     operation()
@@ -549,12 +568,14 @@ except FlextExceptions.ConfigurationError as e:
 ### 5. Log Structured Context
 
 ❌ **Bad** - String formatting:
+
 ```python
 except FlextExceptions.ValidationError as e:
     logger.error(f"Error: {e}")
 ```
 
 ✅ **Good** - Structured logging:
+
 ```python
 except FlextExceptions.ValidationError as e:
     logger.error(
@@ -569,6 +590,7 @@ except FlextExceptions.ValidationError as e:
 ### 6. Maintain Backward Compatibility
 
 ✅ **Good** - Both patterns work:
+
 ```python
 # New code uses FlextExceptions
 try:
@@ -592,6 +614,7 @@ except ValueError as e:  # FlextExceptions.ValidationError inherits from ValueEr
 All FLEXT domain libraries should use FlextExceptions:
 
 **flext-api** (HTTP operations):
+
 ```python
 from flext_core import FlextExceptions
 
@@ -607,6 +630,7 @@ class ApiClient:
 ```
 
 **flext-ldap** (LDAP operations):
+
 ```python
 from flext_core import FlextExceptions
 
@@ -621,6 +645,7 @@ class LdapClient:
 ```
 
 **flext-cli** (CLI operations):
+
 ```python
 from flext_core import FlextExceptions
 
@@ -638,6 +663,7 @@ class CliHandler:
 ### Error Monitoring Integration
 
 **Prometheus Metrics**:
+
 ```python
 from prometheus_client import Counter
 
@@ -658,6 +684,7 @@ except FlextExceptions.ValidationError as e:
 ```
 
 **Distributed Tracing**:
+
 ```python
 from opentelemetry import trace
 
