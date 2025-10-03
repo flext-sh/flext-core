@@ -977,20 +977,24 @@ _config = FlextConfig()
         @staticmethod
         def retry_operation[T](
             operation: Callable[[], FlextResult[T]],
-            max_retries: int = 3,
-            delay_seconds: float = 1.0,
+            max_retries: int | None = None,
+            delay_seconds: float | None = None,
         ) -> FlextResult[T]:
             """Retry operation with exponential backoff using advanced railway pattern."""
+            # Use config values if not provided
+            retries = max_retries if max_retries is not None else _config.max_retry_attempts
+            delay = delay_seconds if delay_seconds is not None else _config.retry_delay_seconds
+
             # Validate parameters first
             retry_validation = FlextUtilities.Validation.validate_retry_count(
-                max_retries,
+                retries,
             )
             if retry_validation.is_failure:
                 error_msg = retry_validation.error or "Invalid retry count"
                 return FlextResult[T].fail(error_msg)
 
             delay_validation = FlextUtilities.Validation.validate_timeout_seconds(
-                delay_seconds,
+                delay,
             )
             if delay_validation.is_failure:
                 error_msg = delay_validation.error or "Invalid delay seconds"
@@ -999,13 +1003,13 @@ _config = FlextConfig()
             # Implement retry logic with exponential backoff
             result: FlextResult[T] = FlextResult[T].fail("No attempts made")
 
-            for attempt in range(max_retries + 1):
+            for attempt in range(retries + 1):
                 result = operation()
                 if result.is_success:
                     return result
 
-                if attempt < max_retries:  # Don't sleep after the last attempt
-                    time.sleep(delay_seconds * (2**attempt))  # Exponential backoff
+                if attempt < retries:  # Don't sleep after the last attempt
+                    time.sleep(delay * (2**attempt))  # Exponential backoff
 
             return result  # Return the last failure result
 
@@ -1428,7 +1432,7 @@ _config = FlextConfig()
         def batch_process(
             items: list[T],
             processor: Callable[[T], FlextResult[U]],
-            batch_size: int = 100,
+            batch_size: int | None = None,
             *,
             fail_fast: bool = False,
         ) -> FlextResult[list[U]]:
