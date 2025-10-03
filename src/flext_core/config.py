@@ -32,7 +32,7 @@ from flext_core.typings import FlextTypes
 
 
 # Pydantic 2 compatible metaclass that allows Protocol inheritance
-class ProtocolCompatibleMeta(ModelMetaclass, type(Protocol)):
+class ProtocolCompatibleMeta(ModelMetaclass, type(Protocol)):  # type: ignore[misc]
     """Metaclass combining Pydantic's ModelMetaclass with Protocol's metaclass.
 
     This allows FlextConfig to inherit from both BaseSettings (Pydantic)

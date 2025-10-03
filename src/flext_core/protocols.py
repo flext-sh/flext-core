@@ -118,7 +118,6 @@ class FlextProtocols:
         batch_result = protocols.validate_batch("services", implementations)
         ```
 
-    **TODO**: Enhanced protocol features for 1.0.0+ releases
         - [ ] Add distributed protocol validation across services
         - [ ] Implement protocol versioning for evolution
         - [ ] Support protocol composition and inheritance
@@ -787,10 +786,9 @@ class FlextProtocols:
         self._registry: dict[str, type] = {}
         self._middleware: list[Callable] = []
         self._config: FlextTypes.Dict = config or {}
-        self._cache_ttl: float = float(self._config.get("cache_ttl", 300.0) or 300.0)
-        self._circuit_breaker_threshold: int = int(
-            self._config.get("circuit_breaker_threshold", 5) or 5
-        )
+        self._cache_ttl: float = float(str(self._config.get("cache_ttl", 300.0) or 300.0))
+        self._circuit_breaker_threshold: int = int(str(
+            self._config.get("circuit_breaker_threshold", 5) or 5))
 
     def register(self, name: str, protocol_type: type) -> FlextResult[None]:
         """Register a protocol type for validation.
@@ -923,15 +921,15 @@ class FlextProtocols:
             return FlextResult[None].fail("Config must be a dictionary")
 
         self._config.update(config)
-        self._cache_ttl = float(
+        self._cache_ttl = float(str(
             self._config.get("cache_ttl", self._cache_ttl) or self._cache_ttl
-        )
-        self._circuit_breaker_threshold = int(
+        ))
+        self._circuit_breaker_threshold = int(str(
             self._config.get(
                 "circuit_breaker_threshold", self._circuit_breaker_threshold
             )
             or self._circuit_breaker_threshold
-        )
+        ))
         return FlextResult[None].ok(None)
 
     def add_middleware(self, middleware: object) -> FlextResult[None]:

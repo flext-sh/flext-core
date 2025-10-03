@@ -171,7 +171,6 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         )
         ```
 
-    **TODO**: Enhanced logging features for 1.0.0+ releases
         - [ ] Add distributed tracing integration (Jaeger, Zipkin)
         - [ ] Implement log sampling for high-volume scenarios
         - [ ] Add enhanced sanitization patterns for PII data
@@ -869,7 +868,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         level_upper = level.upper()
         if level_upper not in valid_levels:
             warnings.warn(
-                f"Invalid log level: {level}. Using {FlextConstants['Logging.DEFAULT_LEVEL']}",
+                f"Invalid log level: {level}. Using {FlextConstants.Logging.DEFAULT_LEVEL}",
                 UserWarning,
                 stacklevel=3,
             )

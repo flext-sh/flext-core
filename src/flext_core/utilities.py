@@ -122,7 +122,6 @@ _config = FlextConfig()
         )
         ```
 
-    **TODO**: Enhanced utility features for 1.0.0+ releases
         - [ ] Add more validation patterns (credit cards, phone, etc.)
         - [ ] Implement performance optimization for hot paths
         - [ ] Add utility variants for concurrent operations
@@ -178,8 +177,7 @@ _config = FlextConfig()
         FlextResult: For railway-oriented error handling.
         FlextConstants: For validation limits and defaults.
         FlextModels: For domain model validation patterns.
-
-"""
+        """
 
 
 class FlextUtilities:

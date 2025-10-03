@@ -194,7 +194,6 @@ class FlextTypes:
         tags: FlextTypes.StringList = ["tag1", "tag2"]
         ```
 
-    **TODO**: Enhanced type features for 1.0.0+ releases
         - [ ] Add type validation decorators
         - [ ] Implement runtime type checking utilities
         - [ ] Support type narrowing helpers
@@ -645,7 +644,7 @@ class FlextTypes:
         type ScopeRegistry = dict[str, FlextTypes.Dict]
 
         # Context hooks
-        type HookFunc = Callable[[], None]
+        type HookFunc = Callable[..., object]
         type HookList = list[FlextTypes.Context.HookFunc]
         type HookRegistry = dict[str, FlextTypes.Context.HookList]
 

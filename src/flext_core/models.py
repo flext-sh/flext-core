@@ -237,7 +237,6 @@ class FlextModels:
             timestamp: datetime
         ```
 
-    **TODO**: Enhanced DDD support for 1.0.0+ releases
         - [ ] Add domain event versioning for evolution
         - [ ] Implement event store patterns with snapshots
         - [ ] Support aggregate snapshots for performance
@@ -456,7 +455,7 @@ class FlextModels:
 
             if not isinstance(timeout_value, int):
                 # Type guard for runtime safety
-                timeout_value = int(timeout_value)
+                timeout_value = int(str(timeout_value))
 
             return cls(timeout_seconds=timeout_value)
 
@@ -517,7 +516,7 @@ class FlextModels:
 
             if not isinstance(max_retries, int):
                 # Type guard for runtime safety
-                max_retries = int(max_retries)
+                max_retries = int(str(max_retries))
 
             return cls(max_retry_attempts=max_retries)
 
@@ -556,7 +555,7 @@ class FlextModels:
     # METACLASSES - Foundation metaclasses for advanced model patterns
     # =============================================================================
 
-    class ServiceMeta(type(BaseModel), type(Protocol)):
+    class ServiceMeta(type(BaseModel), type(Protocol)):  # type: ignore[misc]
         """Combined metaclass for domain services supporting Pydantic, ABC, and Protocol.
 
         Resolves metaclass conflict when inheriting from Pydantic BaseModel (ModelMetaclass),
@@ -616,20 +615,6 @@ class FlextModels:
         warnings: bool = True
         mode: str = "python"
         context: FlextTypes.Dict | None = None
-
-        @property
-        def limit(self) -> int:
-            """Get limit (same as size) - computed field."""
-            return self.size
-
-        def to_dict(self) -> FlextTypes.Dict:
-            """Convert pagination to dictionary."""
-            return {
-                "page": self.page,
-                "size": self.size,
-                "offset": self.offset,
-                "limit": self.limit,
-            }
 
     # Base model classes from DDD patterns
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
@@ -3333,13 +3318,11 @@ class FlextModels:
         )
 
         @computed_field
-        @property
         def offset(self) -> int:
             """Calculate offset from page and size - computed field."""
             return (self.page - 1) * self.size
 
         @computed_field
-        @property
         def limit(self) -> int:
             """Get limit (same as size) - computed field."""
             return self.size

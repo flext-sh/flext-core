@@ -97,16 +97,6 @@ class FlextMixins:
         # ... operation ...
         metrics = FlextMixins.stop_performance_monitoring(perf_req)
         ```
-
-    **TODO**: Enhanced mixin features for 1.0.0+ releases
-        - [ ] Add aspect-oriented programming support
-        - [ ] Implement automatic validation on operations
-        - [ ] Support mixin composition and chaining
-        - [ ] Add mixin conflict detection and resolution
-        - [ ] Implement mixin hot-swapping capabilities
-        - [ ] Support mixin versioning for compatibility
-        - [ ] Add mixin performance profiling
-        - [ ] Implement mixin testing utilities
         - [ ] Support mixin documentation generation
         - [ ] Add mixin migration tools
 

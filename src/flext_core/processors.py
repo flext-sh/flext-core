@@ -101,7 +101,6 @@ class FlextProcessors:
         print(f"Total operations: {len(metrics)}")
         ```
 
-    **TODO**: Enhanced processor features for 1.0.0+ releases
         - [ ] Split into focused modules (Registry, Pipeline, etc)
         - [ ] Add distributed processor coordination
         - [ ] Implement processor dependency resolution
