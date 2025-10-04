@@ -1576,9 +1576,7 @@ class FlextConfig(
                 "Retry attempts cannot be negative"
             )
 
-        return FlextResult[FlextTypes.Dict].ok(
-            cast("FlextTypes.Dict", base_config)
-        )
+        return FlextResult[FlextTypes.Dict].ok(cast("FlextTypes.Dict", base_config))
 
     def validate_flext_core_integration(self) -> FlextResult[None]:
         """Validate flext-core integration configuration with comprehensive checks.

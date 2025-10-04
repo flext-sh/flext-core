@@ -70,7 +70,9 @@ class ExampleScenarios:
     def realistic_data() -> RealisticDataDict:
         """Return realistic integration-style data for advanced flows."""
         # Type narrowing through casting for type safety
-        return cast("RealisticDataDict", FlextTestsFactories.create_realistic_test_data())
+        return cast(
+            "RealisticDataDict", FlextTestsFactories.create_realistic_test_data()
+        )
 
     @staticmethod
     def user(**overrides: object) -> FlextTypes.Dict:
