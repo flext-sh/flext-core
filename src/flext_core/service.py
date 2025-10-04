@@ -237,7 +237,7 @@ class FlextService[TDomainResult](
         """
         if self._logger is None:
             # Import avoided via TYPE_CHECKING at module level
-            from flext_core.loggings import FlextLogger  # noqa: PLC0415
+            from flext_core.loggings import FlextLogger
 
             self._logger = FlextLogger(type(self).__name__)
         return self._logger
@@ -251,7 +251,7 @@ class FlextService[TDomainResult](
 
         """
         if self._container is None:
-            from flext_core.container import FlextContainer  # noqa: PLC0415
+            from flext_core.container import FlextContainer
 
             self._container = FlextContainer.get_global()
         return self._container
@@ -265,7 +265,7 @@ class FlextService[TDomainResult](
 
         """
         if self._config is None:
-            from flext_core.config import FlextConfig  # noqa: PLC0415
+            from flext_core.config import FlextConfig
 
             self._config = FlextConfig()
         return self._config

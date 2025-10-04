@@ -317,7 +317,7 @@ class TestExceptionTranslation:
         container = FlextContainer()
 
         # Try to register non-callable as factory
-        result = container.register_factory("bad_factory", "not_callable")  # type: ignore
+        result = container.register_factory("bad_factory", "not_callable")
         assert result.is_failure
         assert "must be callable" in result.error.lower()
 

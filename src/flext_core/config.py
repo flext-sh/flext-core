@@ -889,10 +889,10 @@ class FlextConfig(
             # Import models module and update its config
             # NOTE: This access to private _config is necessary for the current
             # architecture where models use global config for field defaults.
-            # TODO(#1): Refactor to use proper dependency injection pattern.  # noqa: FIX002
+            # TODO(#1): Refactor to use proper dependency injection pattern.
             import flext_core.models as models_module
 
-            models_module._config = config_instance  # noqa: SLF001
+            models_module._config = config_instance
         except ImportError:
             # Models module not yet imported, will use default when imported
             pass
@@ -904,10 +904,10 @@ class FlextConfig(
             # Import models module and update its config
             # NOTE: This access to private _config is necessary for the current
             # architecture where models use global config for field defaults.
-            # TODO(#1): Refactor to use proper dependency injection pattern.  # noqa: FIX002
+            # TODO(#1): Refactor to use proper dependency injection pattern.
             import flext_core.models as models_module
 
-            models_module._config = FlextConfig()  # noqa: SLF001
+            models_module._config = FlextConfig()
         except ImportError:
             # Models module not yet imported
             pass
@@ -1549,7 +1549,7 @@ class FlextConfig(
         }
 
         # Apply overrides
-        base_config.update(overrides)  # type: ignore[arg-type]
+        base_config.update(overrides)
 
         # Validate service configuration
         timeout_value = base_config.get("timeout_seconds", self.timeout_seconds)
