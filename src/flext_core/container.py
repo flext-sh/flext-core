@@ -11,10 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 import threading
 from collections.abc import Callable
 from typing import cast, override
+
+# External Dependencies - Dependency Injection
+from dependency_injector import containers, providers
 
 # Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
@@ -172,9 +176,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return self._container
 
     def __init__(self) -> None:
-        """Initialize container with optimized data structures."""
+        """Initialize container with optimized data structures and internal DI."""
         super().__init__()
-        # Core service storage with type safety
+
+        # Internal dependency-injector container (NEW v1.1.0)
+        # Provides advanced DI features while maintaining backward compatibility
+        self._di_container: containers.DynamicContainer = containers.DynamicContainer()
+
+        # Core service storage with type safety (MAINTAINED for compatibility)
         self._services: FlextTypes.Dict = {}
         self._factories: FlextTypes.Dict = {}
 
@@ -182,6 +191,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._flext_config: FlextConfig = FlextConfig()
         self._global_config: FlextTypes.Dict = self._create_container_config()
         self._user_overrides: FlextTypes.Dict = {}
+
+        # Sync FlextConfig to internal DI container
+        self._sync_config_to_di()
 
     def _create_container_config(self) -> FlextTypes.Dict:
         """Create container configuration from FlextConfig defaults."""
@@ -204,6 +216,38 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             .strip()
             .lower(),
         }
+
+    def _sync_config_to_di(self) -> None:
+        """Sync FlextConfig to internal dependency-injector container.
+
+        Creates a Configuration provider in the DI container that mirrors
+        FlextConfig values. This enables DI-based configuration injection
+        while maintaining FlextConfig as the source of truth.
+
+        Note:
+            Added in v1.1.0 as part of internal DI wrapper implementation.
+            This is an internal method - external API unchanged.
+
+        """
+        # Create configuration provider
+        config_provider = providers.Configuration()
+
+        # Sync all FlextConfig fields to DI config
+        config_dict = {
+            "environment": getattr(self._flext_config, "environment", "production"),
+            "debug": getattr(self._flext_config, "debug", False),
+            "trace": getattr(self._flext_config, "trace", False),
+            "log_level": getattr(self._flext_config, "log_level", "INFO"),
+            "max_workers": getattr(self._flext_config, "max_workers", 4),
+            "timeout_seconds": getattr(
+                self._flext_config,
+                "timeout_seconds",
+                FlextConstants.Container.TIMEOUT_SECONDS,
+            ),
+        }
+
+        config_provider.from_dict(config_dict)
+        self._di_container.config = config_provider
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -287,17 +331,36 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         )
 
     def _store_service(self, name: str, service: object) -> FlextResult[None]:
-        """Store service in registry with conflict detection.
+        """Store service in registry AND internal DI container with conflict detection.
+
+        Stores in both tracking dict (backward compatibility) and internal
+        dependency-injector container (advanced DI features). Uses Singleton
+        provider pattern to ensure single instance.
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
+
+        Note:
+            Updated in v1.1.0 to use internal DI container while maintaining API.
 
         """
         if name in self._services:
             return FlextResult[None].fail(f"Service '{name}' already registered")
 
-        self._services[name] = service
-        return FlextResult[None].ok(None)
+        try:
+            # Store in tracking dict (backward compatibility)
+            self._services[name] = service
+
+            # Store in internal DI container using Singleton provider
+            # Capture service in lambda to avoid late binding issues
+            provider = providers.Singleton(lambda s=service: s)
+            self._di_container.set_provider(name, provider)
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            # Rollback on failure
+            self._services.pop(name, None)
+            return FlextResult[None].fail(f"Service storage failed: {e}")
 
     def register_factory(
         self,
@@ -319,10 +382,17 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         name: str,
         factory: Callable[[], object],
     ) -> FlextResult[None]:
-        """Store factory with callable validation.
+        """Store factory in registry AND internal DI container with callable validation.
+
+        Stores in both tracking dict (backward compatibility) and internal
+        dependency-injector container using Factory provider. Each call to the
+        factory creates a new instance (unlike Singleton).
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
+
+        Note:
+            Updated in v1.1.0 to use DI Factory provider while maintaining API.
 
         """
         # Validate that factory is actually callable
@@ -332,8 +402,20 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         if name in self._factories:
             return FlextResult[None].fail(f"Factory '{name}' already registered")
 
-        self._factories[name] = factory
-        return FlextResult[None].ok(None)
+        try:
+            # Store in tracking dict (backward compatibility)
+            self._factories[name] = factory
+
+            # Store in internal DI container using Factory provider
+            # Factory provider creates new instance on each call
+            provider = providers.Factory(factory)
+            self._di_container.set_provider(name, provider)
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            # Rollback on failure
+            self._factories.pop(name, None)
+            return FlextResult[None].fail(f"Factory storage failed: {e}")
 
     def unregister(self, name: str) -> FlextResult[None]:
         """Unregister service or factory with validation.
@@ -345,10 +427,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return self._validate_service_name(name).flat_map(self._remove_service)
 
     def _remove_service(self, name: str) -> FlextResult[None]:
-        """Remove service from both registries.
+        """Remove service from tracking dicts AND internal DI container.
 
         Returns:
             FlextResult[None]: Success if removed or failure with error.
+
+        Note:
+            Updated in v1.1.0 to remove from DI container as well.
 
         """
         service_found = name in self._services
@@ -357,9 +442,17 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         if not service_found and not factory_found:
             return FlextResult[None].fail(f"Service '{name}' not registered")
 
-        # Remove from both registries
+        # Remove from tracking dicts (backward compatibility)
         self._services.pop(name, None)
         self._factories.pop(name, None)
+
+        # Remove from internal DI container (access as attribute)
+        # Best-effort removal - failure is non-critical since tracking dicts are cleaned
+        if hasattr(self._di_container, name):
+            with contextlib.suppress(AttributeError, KeyError):
+                # Expected: provider doesn't exist or already removed
+                # Non-critical: tracking dicts are authoritative
+                delattr(self._di_container, name)
 
         return FlextResult[None].ok(None)
 
@@ -373,21 +466,36 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return self._validate_service_name(name).flat_map(self._resolve_service)
 
     def _resolve_service(self, name: str) -> FlextResult[object]:
-        """Resolve service from registry or factory.
+        """Resolve service via internal DI container with FlextResult wrapping.
+
+        Resolves from dependency-injector container which handles both direct
+        services (Singleton providers) and factories (Factory providers).
+        Maintains FlextResult pattern for consistency with ecosystem.
 
         Returns:
             FlextResult[object]: Success with service instance or failure with error.
 
+        Note:
+            Updated in v1.1.0 to use DI container resolution while maintaining API.
+            DynamicContainer stores providers like a dict, so we access by attribute.
+
         """
-        # Check direct service registry first
-        if name in self._services:
-            return FlextResult[object].ok(self._services[name])
+        try:
+            # Resolve via internal DI container (access as attribute, not dict)
+            # DynamicContainer allows attribute-style access: container.service_name()
+            if hasattr(self._di_container, name):
+                provider = getattr(self._di_container, name)
+                service = provider()
 
-        # Try factory resolution with caching
-        if name in self._factories:
-            return self._invoke_factory_and_cache(name)
+                # Cache factory results in tracking dict for compatibility
+                if name in self._factories and name not in self._services:
+                    self._services[name] = service
 
-        return FlextResult[object].fail(f"Service '{name}' not found")
+                return FlextResult[object].ok(service)
+
+            return FlextResult[object].fail(f"Service '{name}' not found")
+        except Exception as e:
+            return FlextResult[object].fail(f"Service resolution failed: {e}")
 
     def _invoke_factory_and_cache(self, name: str) -> FlextResult[object]:
         """Invoke factory and cache result.
