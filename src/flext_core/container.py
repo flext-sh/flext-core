@@ -5,6 +5,13 @@ The container is the canonical runtime surface described in ``README.md`` and
 ``FlextConfig`` and ``FlextDispatcher`` so every package shares the same
 service lifecycle during the modernization rollout.
 
+**Implementation (v1.1.0+)**: Internal dependency-injector wrapper
+    - Uses dependency-injector DynamicContainer as internal implementation
+    - Maintains dual storage (tracking dicts + DI container) for compatibility
+    - Preserves FlextResult railway pattern for all operations
+    - Zero breaking changes to public API
+    - See ADR-001-dependency-injector-wrapper.md for architecture details
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -51,6 +58,15 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         - Implement Configurable protocol for 1.0.0 compliance
         - Support service lifecycle management (singleton pattern)
 
+    **Implementation (v1.1.0+)**: Internal dependency-injector wrapper
+        - dependency-injector DynamicContainer as internal backend
+        - Dual storage pattern: tracking dicts (compatibility) + DI container (features)
+        - Lazy singleton pattern for factories (providers.Singleton(factory))
+        - FlextConfig synchronized to DI Configuration provider
+        - Zero breaking changes - all existing API methods unchanged
+        - FlextResult railway pattern preserved for all operations
+        - See docs/architecture/adr/ADR-001-dependency-injector-wrapper.md
+
     **Uses**: Core infrastructure components
         - FlextResult[T] for all operation results (railway pattern)
         - FlextConfig for container configuration and defaults
@@ -60,6 +76,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         - inspect module for dependency resolution and auto-wiring
         - FlextConstants for timeout and configuration defaults
         - FlextTypes for type definitions and aliases
+        - dependency_injector.containers.DynamicContainer (v1.1.0+, internal)
+        - dependency_injector.providers (v1.1.0+, internal)
 
     **How to use**: Service registration and retrieval patterns
         ```python
