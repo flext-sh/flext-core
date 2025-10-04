@@ -95,183 +95,184 @@
             "types-toml>=0.10.8.20240310",
         ]
 
-[tool.poetry]
-    packages = [
-        { include = "flext_core", from = "src" },
-        { include = "flext_tests", from = "src" },
-    ]
+[tool]
+    [tool.poetry]
+        packages = [
+            { include = "flext_core", from = "src" },
+            { include = "flext_tests", from = "src" },
+        ]
 
-    [tool.poetry.group.dev.dependencies]
-        docker       = "^7.1.0"
-        pyrefly      = "^0.34.0"
-        types-pyyaml = "^6.0.12.20250822"
+        [tool.poetry.group.dev.dependencies]
+            docker       = "^7.1.0"
+            pyrefly      = "^0.34.0"
+            types-pyyaml = "^6.0.12.20250822"
 
-    [tool.poetry.group.typings.dependencies]
-        types-colorama = ">=0.4.15.20240311"
-        types-pexpect  = ">=4.9.0.20250516"
-        types-pygments = ">=2.19.0.20250715"
+        [tool.poetry.group.typings.dependencies]
+            types-colorama = ">=0.4.15.20240311"
+            types-pexpect  = ">=4.9.0.20250516"
+            types-pygments = ">=2.19.0.20250715"
 
-[tool.bandit]
-    exclude_dirs = [
-        ".archive",
-        ".git",
-        ".mypy_cache",
-        ".pyrefly_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".venv",
-        "__pycache__",
-        "archive",
-        "build",
-        "dist",
-        "htmlcov",
-        "reports",
-        "src/flext_tests",
-        "tests",
-        "venv",
-    ]
-    skips = [
-        "B101",
-        "B104",
-        "B105",
-        "B311",
-        "B404",
-        "B601",
-        "B603",
-    ]
+    [tool.bandit]
+        exclude_dirs = [
+            ".archive",
+            ".git",
+            ".mypy_cache",
+            ".pyrefly_cache",
+            ".pytest_cache",
+            ".ruff_cache",
+            ".venv",
+            "__pycache__",
+            "archive",
+            "build",
+            "dist",
+            "htmlcov",
+            "reports",
+            "src/flext_tests",
+            "tests",
+            "venv",
+        ]
+        skips = [
+            "B101",
+            "B104",
+            "B105",
+            "B311",
+            "B404",
+            "B601",
+            "B603",
+        ]
 
-[tool.coverage]
-    extend = "../.coverage-shared.toml"
+    [tool.coverage]
+        extend = "../.coverage-shared.toml"
 
-[tool.deptry]
-    exclude = [
-        ".archive",
-        ".git",
-        ".meltano",
-        ".mypy_cache",
-        ".pyrefly_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".venv",
-        "__pycache__",
-        "build",
-        "dist",
-        "htmlcov",
-        "node_modules",
-        "reports",
-        "vendor",
-        "venv",
-    ]
-    known_first_party = [
-        "flext_core",
-        "flext_tests",
-    ]
-    pep621_dev_dependency_groups = [
-        "dev",
-        "security",
-        "test",
-        "typings",
-    ]
-
-[tool.pytest.ini_options]
-    addopts = [
-        "--maxfail=1000000",
-        "--strict-config",
-        "--strict-markers",
-        "--tb=short",
-        "-ra",
-    ]
-    filterwarnings = [
-        "ignore::DeprecationWarning:pyasn1(.*|$)",
-    ]
-    markers = [
-        "advanced: Advanced functionality tests",
-        "architecture: Architectural pattern tests",
-        "benchmark: Performance benchmark tests",
-        "boundary: Boundary condition tests",
-        "cleanup: Cleanup tests",
-        "concurrency: Concurrency and threading tests",
-        "core: Core framework functionality tests",
-        "coverage: Coverage improvement tests",
-        "dbt: dbt transformation tests",
-        "ddd: Domain-driven design tests",
-        "destructive: Tests that may modify external systems",
-        "e2e: End-to-end tests",
-        "error_path: Error path scenario tests",
-        "happy_path: Happy path scenario tests",
-        "integration: Integration tests",
-        "memory: Memory usage tests",
-        "oracle: Oracle database tests",
-        "parametrize_advanced: Advanced parametrized tests",
-        "pep8: PEP8 compliance validation tests",
-        "performance: Performance tests",
-        "race_condition: Race condition tests",
-        "regression: Regression testing and detection",
-        "slow: Slow tests",
-        "smoke: Smoke tests",
-        "snapshot: Snapshot regression tests",
-        "tap: Singer tap tests",
-        "target: Singer target tests",
-        "timeout: Tests that may timeout",
-        "unit: Unit tests",
-    ]
-    minversion = "8.0"
-    python_classes = [
-        "Test*",
-    ]
-    python_files = [
-        "*_test.py",
-        "test_*.py",
-    ]
-    python_functions = [
-        "test_*",
-    ]
-    testpaths = [
-        "tests",
-    ]
-
-[tool.ruff]
-    extend = "../ruff-shared.toml"
-
-    [tool.ruff.lint.isort]
-        known-first-party = [
+    [tool.deptry]
+        exclude = [
+            ".archive",
+            ".git",
+            ".meltano",
+            ".mypy_cache",
+            ".pyrefly_cache",
+            ".pytest_cache",
+            ".ruff_cache",
+            ".venv",
+            "__pycache__",
+            "build",
+            "dist",
+            "htmlcov",
+            "node_modules",
+            "reports",
+            "vendor",
+            "venv",
+        ]
+        known_first_party = [
             "flext_core",
             "flext_tests",
         ]
+        pep621_dev_dependency_groups = [
+            "dev",
+            "security",
+            "test",
+            "typings",
+        ]
 
-[tool.pyrefly]
-    python-version = "3.13"
-    search-path = [
-        "../flext-api/src",
-        "../flext-auth/src",
-        "../flext-cli/src",
-        "../flext-db-oracle/src",
-        "../flext-dbt-ldap/src",
-        "../flext-dbt-ldif/src",
-        "../flext-dbt-oracle-wms/src",
-        "../flext-dbt-oracle/src",
-        "../flext-grpc/src",
-        "../flext-ldap/src",
-        "../flext-ldif/src",
-        "../flext-meltano/src",
-        "../flext-observability/src",
-        "../flext-oracle-oic/src",
-        "../flext-oracle-wms/src",
-        "../flext-plugin/src",
-        "../flext-quality/src",
-        "../flext-tap-ldap/src",
-        "../flext-tap-ldif/src",
-        "../flext-tap-oracle-oic/src",
-        "../flext-tap-oracle-wms/src",
-        "../flext-tap-oracle/src",
-        "../flext-target-ldap/src",
-        "../flext-target-ldif/src",
-        "../flext-target-oracle-oic/src",
-        "../flext-target-oracle-wms/src",
-        "../flext-target-oracle/src",
-        "../flext-web/src",
-        "examples",
-        "scripts",
-        "src",
-        "tests",
-    ]
+    [tool.pytest.ini_options]
+        addopts = [
+            "--maxfail=1000000",
+            "--strict-config",
+            "--strict-markers",
+            "--tb=short",
+            "-ra",
+        ]
+        filterwarnings = [
+            "ignore::DeprecationWarning:pyasn1(.*|$)",
+        ]
+        markers = [
+            "advanced: Advanced functionality tests",
+            "architecture: Architectural pattern tests",
+            "benchmark: Performance benchmark tests",
+            "boundary: Boundary condition tests",
+            "cleanup: Cleanup tests",
+            "concurrency: Concurrency and threading tests",
+            "core: Core framework functionality tests",
+            "coverage: Coverage improvement tests",
+            "dbt: dbt transformation tests",
+            "ddd: Domain-driven design tests",
+            "destructive: Tests that may modify external systems",
+            "e2e: End-to-end tests",
+            "error_path: Error path scenario tests",
+            "happy_path: Happy path scenario tests",
+            "integration: Integration tests",
+            "memory: Memory usage tests",
+            "oracle: Oracle database tests",
+            "parametrize_advanced: Advanced parametrized tests",
+            "pep8: PEP8 compliance validation tests",
+            "performance: Performance tests",
+            "race_condition: Race condition tests",
+            "regression: Regression testing and detection",
+            "slow: Slow tests",
+            "smoke: Smoke tests",
+            "snapshot: Snapshot regression tests",
+            "tap: Singer tap tests",
+            "target: Singer target tests",
+            "timeout: Tests that may timeout",
+            "unit: Unit tests",
+        ]
+        minversion = "8.0"
+        python_classes = [
+            "Test*",
+        ]
+        python_files = [
+            "*_test.py",
+            "test_*.py",
+        ]
+        python_functions = [
+            "test_*",
+        ]
+        testpaths = [
+            "tests",
+        ]
+
+    [tool.ruff]
+        extend = "../ruff-shared.toml"
+
+        [tool.ruff.lint.isort]
+            known-first-party = [
+                "flext_core",
+                "flext_tests",
+            ]
+
+    [tool.pyrefly]
+        python-version = "3.13"
+        search-path = [
+            "../flext-api/src",
+            "../flext-auth/src",
+            "../flext-cli/src",
+            "../flext-db-oracle/src",
+            "../flext-dbt-ldap/src",
+            "../flext-dbt-ldif/src",
+            "../flext-dbt-oracle-wms/src",
+            "../flext-dbt-oracle/src",
+            "../flext-grpc/src",
+            "../flext-ldap/src",
+            "../flext-ldif/src",
+            "../flext-meltano/src",
+            "../flext-observability/src",
+            "../flext-oracle-oic/src",
+            "../flext-oracle-wms/src",
+            "../flext-plugin/src",
+            "../flext-quality/src",
+            "../flext-tap-ldap/src",
+            "../flext-tap-ldif/src",
+            "../flext-tap-oracle-oic/src",
+            "../flext-tap-oracle-wms/src",
+            "../flext-tap-oracle/src",
+            "../flext-target-ldap/src",
+            "../flext-target-ldif/src",
+            "../flext-target-oracle-oic/src",
+            "../flext-target-oracle-wms/src",
+            "../flext-target-oracle/src",
+            "../flext-web/src",
+            "examples",
+            "scripts",
+            "src",
+            "tests",
+        ]

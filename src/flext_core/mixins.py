@@ -18,14 +18,21 @@ from typing import (
     override,
 )
 
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
 
 
@@ -501,9 +508,9 @@ class FlextMixins:
         attribute assignment or ``model_copy(update=...)```.
 
         Example:
-            config: dict[str, object] = FlextConfig.get_global_instance()
+            config: FlextTypes.Dict = FlextConfig.get_global_instance()
             debug_mode = config.debug
-            config.debug: dict[str, object] = True
+            config.debug: FlextTypes.Dict = True
             updated = config.model_copy(update={"timeout_seconds": 60})
 
         """
@@ -1312,3 +1319,6 @@ class FlextMixins:
     def is_circuit_breaker_open(self, name: str) -> bool:
         """Check if circuit breaker is open."""
         return self._circuit_breaker.get(name, False)
+
+
+__all__ = ["FlextMixins"]

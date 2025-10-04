@@ -657,7 +657,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         print("    return processed_data")
 
         print("\n✅ CORRECT WAY (-ready):")
-        print("def handle(self, request: dict) -> FlextResult[dict]:")
+        print("def handle(self, request: dict) -> FlextResult[FlextTypes.Dict]:")
         print("    # Returns FlextResult for composition")
 
 

@@ -86,7 +86,7 @@ class FunctionalUserService:
         """Get user by ID - functional implementation.
 
         Returns:
-            FlextResult[dict]: Success with user data or failure with error message.
+            FlextResult[FlextTypes.Dict]: Success with user data or failure with error message.
 
         """
         self.call_count += 1

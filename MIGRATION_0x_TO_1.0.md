@@ -371,13 +371,13 @@ if __name__ == "__main__":
 ```python
 from flext_core import FlextResult
 
-def process_user(user_id: str) -> FlextResult[dict]:
+def process_user(user_id: str) -> FlextResult[FlextTypes.Dict]:
     """Process user with railway pattern."""
     if not user_id:
-        return FlextResult[dict].fail("User ID required")
+        return FlextResult[FlextTypes.Dict].fail("User ID required")
 
     user_data = {"id": user_id, "name": "Alice"}
-    return FlextResult[dict].ok(user_data)
+    return FlextResult[FlextTypes.Dict].ok(user_data)
 
 # Using the result
 result = process_user("user_123")
@@ -447,13 +447,13 @@ from flext_core import FlextService, FlextResult
 class UserService(FlextService):
     """User domain service."""
 
-    def create_user(self, name: str, email: str) -> FlextResult[dict]:
+    def create_user(self, name: str, email: str) -> FlextResult[FlextTypes.Dict]:
         """Create a new user."""
         if not email or "@" not in email:
-            return FlextResult[dict].fail("Invalid email")
+            return FlextResult[FlextTypes.Dict].fail("Invalid email")
 
         user = {"name": name, "email": email}
-        return FlextResult[dict].ok(user)
+        return FlextResult[FlextTypes.Dict].ok(user)
 
 # Use the service
 service = UserService()

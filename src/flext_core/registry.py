@@ -18,10 +18,19 @@ from typing import (
     override,
 )
 
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 6 - Orchestration
 from flext_core.dispatcher import FlextDispatcher
+
+# Layer 5 - Advanced Infrastructure
 from flext_core.handlers import FlextHandlers
+
+# Layer 3 - Core Infrastructure
 from flext_core.models import FlextModels
+
+# Layer 2 - Early Foundation
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 

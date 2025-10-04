@@ -16,7 +16,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_core.exceptions import FlextExceptions
 
 
@@ -143,10 +143,10 @@ class TestFlextResult:
     def test_result_railway_composition(self) -> None:
         """Test railway-oriented composition."""
 
-        def validate_input(data: dict) -> FlextResult[dict]:
+        def validate_input(data: dict) -> FlextResult[FlextTypes.Dict]:
             if not data.get("value"):
-                return FlextResult[dict].fail("Missing value")
-            return FlextResult[dict].ok(data)
+                return FlextResult[FlextTypes.Dict].fail("Missing value")
+            return FlextResult[FlextTypes.Dict].ok(data)
 
         def process_data(data: dict) -> FlextResult[int]:
             return FlextResult[int].ok(data["value"] * 2)
@@ -179,7 +179,7 @@ class TestFlextResult:
 
     def test_result_backward_compatibility(self) -> None:
         """Test backward compatibility of .data and .value properties."""
-        result = FlextResult[dict].ok({"key": "value"})
+        result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
 
         # Both .data and .value should work for ecosystem compatibility
         assert result.data == {"key": "value"}
@@ -978,15 +978,15 @@ class TestFlextResult:
         assert result.is_failure
 
     def test_result_safe_unwrap_or_none_static_method(self) -> None:
-        """Test safe_unwrap_or_none static method."""
+        """Test value_or_none instance property (replaces safe_unwrap_or_none static method)."""
         # Success result
         result = FlextResult[int].ok(42)
-        value = FlextResult.safe_unwrap_or_none(result)
+        value = result.value_or_none
         assert value == 42
 
         # Failure result
         result = FlextResult[int].fail("Error")
-        value = FlextResult.safe_unwrap_or_none(result)
+        value = result.value_or_none
         assert value is None
 
     def test_result_unwrap_or_raise_static_method(self) -> None:
@@ -1000,7 +1000,7 @@ class TestFlextResult:
         result = FlextResult[int].fail("Error occurred")
         with pytest.raises(RuntimeError) as exc_info:
             FlextResult.unwrap_or_raise(result)
-        assert str(exc_info.value) == "Error occurred"
+        assert str(exc_info.value) == "[OPERATION_ERROR] Error occurred"
 
         # Failure result with custom exception
         result = FlextResult[int].fail("Error occurred")
@@ -3038,7 +3038,7 @@ class TestFlextResultFinalCoverage:
 
     def test_dict_result_factory(self) -> None:
         """Test dict_result type factory (lines 1995-1996)."""
-        # dict_result returns a type alias/factory for FlextResult[dict]
+        # dict_result returns a type alias/factory for FlextResult[FlextTypes.Dict]
         factory = FlextResult.dict_result()
 
         # factory is a type, not a function - use it for type hints
@@ -3046,7 +3046,7 @@ class TestFlextResultFinalCoverage:
         assert factory is not None
 
         # Create result using FlextResult.ok with dict
-        result = FlextResult[dict].ok({"key": "value"})
+        result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
         assert isinstance(result, FlextResult)
         assert result.value == {"key": "value"}
 

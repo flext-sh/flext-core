@@ -16,9 +16,14 @@ import threading
 from collections.abc import Callable
 from typing import cast, override
 
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
+
+# Layer 2 - Early Foundation
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T

@@ -39,8 +39,13 @@ import structlog
 from pydantic import Field, field_validator, model_validator
 from structlog.typing import EventDict, Processor
 
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols

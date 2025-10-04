@@ -52,7 +52,6 @@ from typing import (
     Annotated,
     ClassVar,
     Literal,
-    Protocol,
     Self,
     cast,
     override,
@@ -72,8 +71,13 @@ from pydantic import (
 from pydantic.main import IncEx
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -555,7 +559,7 @@ class FlextModels:
     # METACLASSES - Foundation metaclasses for advanced model patterns
     # =============================================================================
 
-    class ServiceMeta(type(BaseModel), type(Protocol)):  # type: ignore[misc]
+    class ServiceMeta(type):
         """Combined metaclass for domain services supporting Pydantic, ABC, and Protocol.
 
         Resolves metaclass conflict when inheriting from Pydantic BaseModel (ModelMetaclass),
@@ -968,7 +972,7 @@ class FlextModels:
 
         user_id: str
         expires_at: datetime
-        data: dict[str, object] = Field(default_factory=dict)
+        data: FlextTypes.Dict = Field(default_factory=dict)
 
     class Task(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Task model for background processing.
@@ -1026,6 +1030,21 @@ class FlextModels:
         window_seconds: int = FlextConstants.Performance.DEFAULT_RATE_LIMIT_WINDOW
         current_count: int = 0
         reset_at: datetime | None = None
+
+    class RateLimiterState(ArbitraryTypesModel):
+        """Rate limiter state tracking structure.
+
+        Used for tracking rate limiting state across operations,
+        including current count, window boundaries, and reset times.
+        """
+
+        key: str
+        limit: int
+        current_count: int = 0
+        window_start: datetime
+        window_seconds: int = FlextConstants.Performance.DEFAULT_RATE_LIMIT_WINDOW
+        reset_at: datetime | None = None
+        is_blocked: bool = False
 
     class Circuit(ArbitraryTypesModel):
         """Circuit breaker model."""

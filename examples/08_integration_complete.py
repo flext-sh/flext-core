@@ -30,6 +30,7 @@ from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextContext,
+    FlextCore,
     FlextLogger,
     FlextModels,
     FlextResult,
@@ -37,10 +38,54 @@ from flext_core import (
     FlextTypes,
 )
 
-from .example_scenarios import ExampleScenarios
+from .example_scenarios import (
+    ExampleScenarios,
+    OrderItemDict,
+    RealisticDataDict,
+    RealisticOrderDict,
+)
 
 # Constants
 UNKNOWN_ERROR_MSG = "Unknown error"
+
+
+# Type guard helper functions (Python 3.13+ pattern)
+def assert_logger_initialized(logger: FlextLogger | None) -> FlextLogger:
+    """Type guard to assert logger is initialized.
+
+    Args:
+        logger: Logger instance or None.
+
+    Returns:
+        Non-None logger instance.
+
+    Raises:
+        FlextExceptions.ConfigurationError: If logger is None.
+
+    """
+    if logger is None:
+        msg = "Logger must be initialized"
+        raise FlextCore.Exceptions.ConfigurationError(msg)
+    return logger
+
+
+def assert_container_initialized(container: FlextContainer | None) -> FlextContainer:
+    """Type guard to assert container is initialized.
+
+    Args:
+        container: Container instance or None.
+
+    Returns:
+        Non-None container instance.
+
+    Raises:
+        FlextExceptions.ConfigurationError: If container is None.
+
+    """
+    if container is None:
+        msg = "Container must be initialized"
+        raise FlextCore.Exceptions.ConfigurationError(msg)
+    return container
 
 
 class ProductId(FlextModels.Value):
@@ -209,13 +254,15 @@ class InventoryService(FlextService[FlextTypes.Dict]):
         super().__init__()
         self._logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios
-        self._products: dict[str, Product] = {}
+        self._products = {}
         self._initialize_products()
 
     def _initialize_products(self) -> None:
         """Initialize sample products."""
-        realistic_order = self._scenarios.realistic_data()["order"]
+        realistic_data: RealisticDataDict = self._scenarios.realistic_data()
+        realistic_order: RealisticOrderDict = realistic_data["order"]
         products: list[Product] = []
+        item: OrderItemDict
         for item in realistic_order["items"]:
             amount_raw = item.get("price", Decimal(0))
             amount = (
@@ -346,6 +393,9 @@ class PaymentService(FlextService[FlextTypes.Dict]):
 
 class OrderService(FlextService[FlextTypes.Dict]):
     """Order processing service - orchestrates the workflow."""
+
+    _logger: FlextLogger  # Type annotation for attribute
+    _container: FlextContainer  # Type annotation for attribute
 
     def __init__(self) -> None:
         """Initialize with dependencies from container."""
@@ -615,8 +665,8 @@ def demonstrate_complete_integration() -> None:
     print("E-Commerce Order Processing System")
     print("=" * 60)
 
-    scenario_data = ExampleScenarios.realistic_data()
-    order_template = scenario_data["order"]
+    scenario_data: RealisticDataDict = ExampleScenarios.realistic_data()
+    order_template: RealisticOrderDict = scenario_data["order"]
     user_pool = ExampleScenarios.users()
 
     # 1. Configuration setup
@@ -856,9 +906,286 @@ def demonstrate_complete_integration() -> None:
     print("=" * 60)
 
 
+# ========== USING FLEXTCORE UNIFIED FACADE (MODERN PATTERN) ==========
+
+
+def demonstrate_flextcore_unified_access() -> None:
+    """Demonstrate the modern FlextCore unified facade pattern.
+
+    This shows how FlextCore provides a single entry point for accessing
+    ALL flext-core components with improved convenience and discoverability.
+    """
+    print("\n" + "=" * 60)
+    print("FLEXTCORE UNIFIED FACADE DEMONSTRATION")
+    print("Modern pattern for complete flext-core access")
+    print("=" * 60)
+
+    # 1. Setup complete infrastructure with single call
+    print("\n=== 1. Unified Infrastructure Setup ===")
+    setup_result = FlextCore.setup_service_infrastructure("ecommerce-service")
+
+    if setup_result.is_success:
+        infra = setup_result.unwrap()
+        print("  ✅ Complete infrastructure initialized:")
+        print(f"     - Config: {type(infra['config']).__name__}")
+        print(f"     - Container: {type(infra['container']).__name__}")
+        print(f"     - Logger: {type(infra['logger']).__name__}")
+        print(f"     - Bus: {type(infra['bus']).__name__}")
+        print(f"     - Context: {type(infra['context']).__name__}")
+
+    # 2. Direct class access through FlextCore
+    print("\n=== 2. Direct Component Access ===")
+    result = FlextResult[str].ok("Order created successfully")
+    config = FlextCore.Config()
+    timeout = FlextCore.Constants.Defaults.TIMEOUT
+
+    print(f"  ✅ Result access: {result.value}")
+    print(f"  ✅ Config access: log_level = {config.log_level}")
+    print(f"  ✅ Constants access: timeout = {timeout}")
+
+    # 3. Factory methods for convenience
+    print("\n=== 3. Convenience Factory Methods ===")
+    success = FlextCore.create_result_ok({"order_id": "ORD-123", "status": "created"})
+    failure = FlextCore.create_result_fail("Payment declined", "PAYMENT_ERROR")
+    logger = FlextCore.create_logger("ecommerce")
+
+    print(f"  ✅ Success result: {success.value}")
+    print(f"  ✅ Failure result: {failure.error}")
+    print(f"  ✅ Logger created: {logger}")
+
+    # 4. Instance-based access to all components
+    print("\n=== 4. Unified Core Instance ===")
+    core = FlextCore()
+
+    # Access all components through one object
+    core_config = core.config
+    core_container = core.container
+    core_logger = core.logger
+    core_bus = core.bus
+    core_context = core.context
+
+    print(f"  ✅ Config: {type(core_config).__name__}")
+    print(f"  ✅ Container: {type(core_container).__name__}")
+    print(f"  ✅ Logger: {type(core_logger).__name__}")
+    print(f"  ✅ Bus: {type(core_bus).__name__}")
+    print(f"  ✅ Context: {type(core_context).__name__}")
+
+    # 5. Railway pattern with FlextCore
+    print("\n=== 5. Railway Pattern via FlextCore ===")
+
+    def validate_order(data: dict) -> FlextResult[FlextTypes.Dict]:
+        if not data.get("customer_id"):
+            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    def process_order(data: dict) -> FlextResult[FlextTypes.Dict]:
+        data["processed"] = True
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    # Compose operations
+    order_data = {"customer_id": "CUST-001", "amount": 100}
+    pipeline_result = validate_order(order_data).flat_map(process_order)
+
+    if pipeline_result.is_success:
+        print(f"  ✅ Pipeline result: {pipeline_result.value}")
+
+    print("\n" + "=" * 60)
+    print("✅ FLEXTCORE UNIFIED FACADE DEMONSTRATED!")
+    print("Single entry point for all flext-core functionality")
+    print("=" * 60)
+
+
+def demonstrate_flextcore_11_features() -> None:
+    """Demonstrate FlextCore 1.1.0 convenience methods.
+
+    Shows the four new convenience methods added in version 1.1.0:
+    1. publish_event() - Event publishing with correlation tracking
+    2. create_service() - Service creation with infrastructure injection
+    3. build_pipeline() - Railway-oriented pipeline builder
+    4. request_context() - Request context manager
+    """
+    print("\n" + "=" * 60)
+    print("FLEXTCORE 1.1.0 CONVENIENCE METHODS")
+    print("=" * 60)
+
+    # 1. Event Publishing with Correlation Tracking
+    print("\n=== 1. Event Publishing ===")
+    core = FlextCore()
+
+    # Publish events with automatic correlation tracking
+    event_result = core.publish_event(
+        "order.created",
+        {"order_id": "ORD-123", "customer_id": "CUST-456", "amount": 99.99},
+    )
+
+    if event_result.is_success:
+        print("  ✅ Event published successfully")
+
+    # Publish with custom correlation ID
+    correlation_result = core.publish_event(
+        "payment.processed",
+        {"payment_id": "PAY-789", "status": "completed"},
+        correlation_id="req-abc-123",
+    )
+
+    if correlation_result.is_success:
+        print("  ✅ Event published with custom correlation ID")
+
+    # 2. Service Creation with Infrastructure Injection
+    print("\n=== 2. Service Creation ===")
+
+    class OrderProcessingService(FlextService):
+        def execute(self) -> FlextResult[str]:
+            return FlextResult[str].ok("Order processed successfully")
+
+    # Create service with automatic infrastructure setup
+    service_result = FlextCore.create_service(
+        OrderProcessingService, "order-processing"
+    )
+
+    if service_result.is_success:
+        service = service_result.unwrap()
+        exec_result = service.execute()
+        print(f"  ✅ Service created and executed: {exec_result.value}")
+
+    # 3. Railway Pipeline Builder
+    print("\n=== 3. Pipeline Builder ===")
+
+    # Define pipeline operations
+    def validate_order_data(data: dict) -> FlextResult[FlextTypes.Dict]:
+        if not data.get("order_id"):
+            return FlextResult[FlextTypes.Dict].fail("Order ID required")
+        if not data.get("amount"):
+            return FlextResult[FlextTypes.Dict].fail("Amount required")
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    def check_inventory(data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Simulate inventory check
+        data["inventory_checked"] = True
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    def calculate_shipping(data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Simulate shipping calculation
+        amount = data.get("amount", 0)
+        shipping = amount * Decimal("0.1")  # 10% shipping
+        data["shipping"] = float(shipping)
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    def apply_discounts(data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Simulate discount application
+        data["discount_applied"] = True
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    # Build pipeline
+    order_pipeline = FlextCore.build_pipeline(
+        validate_order_data, check_inventory, calculate_shipping, apply_discounts
+    )
+
+    # Execute pipeline
+    order_data = {"order_id": "ORD-999", "amount": 100.00}
+    pipeline_result = order_pipeline(order_data)
+
+    if pipeline_result.is_success:
+        final_order = cast("FlextCore.Types.Dict", pipeline_result.unwrap())
+        print(f"  ✅ Pipeline completed: {len(final_order)} fields")
+        print(f"     - Inventory checked: {final_order.get('inventory_checked')}")
+        print(f"     - Shipping: ${final_order.get('shipping'):.2f}")
+        print(f"     - Discount applied: {final_order.get('discount_applied')}")
+
+    # 4. Request Context Manager
+    print("\n=== 4. Request Context Manager ===")
+
+    # Use context manager for request-scoped data
+    with core.request_context(
+        request_id="req-12345",
+        user_id="user-789",
+        client_ip="192.168.1.100",
+        user_agent="Mozilla/5.0",
+    ) as context:
+        print(f"  ✅ Request context active: {context.get('request_id')}")
+        print(f"     - User ID: {context.get('user_id')}")
+        print(f"     - Client IP: {context.get('client_ip')}")
+
+        # Context is automatically cleaned up on exit
+
+    # 5. Complete Integration - All Features Together
+    print("\n=== 5. Complete Integration Example ===")
+
+    # Define a complete order processing workflow
+    def validate_customer(data: dict) -> FlextResult[FlextTypes.Dict]:
+        if not data.get("customer_id"):
+            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
+        data["customer_validated"] = True
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    def reserve_inventory(data: dict) -> FlextResult[FlextTypes.Dict]:
+        data["inventory_reserved"] = True
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    def process_payment(data: dict) -> FlextResult[FlextTypes.Dict]:
+        data["payment_processed"] = True
+        return FlextResult[FlextTypes.Dict].ok(data)
+
+    # Build complete workflow pipeline
+    workflow = FlextCore.build_pipeline(
+        validate_customer, reserve_inventory, process_payment
+    )
+
+    # Execute within request context
+    with core.request_context(request_id="complete-req-001") as ctx:
+        request_id = ctx.get("request_id")
+
+        # Process order through pipeline
+        order_input = {
+            "customer_id": "CUST-001",
+            "order_id": "ORD-001",
+            "amount": 250.00,
+        }
+
+        workflow_result = workflow(order_input)
+
+        if workflow_result.is_success:
+            completed_order = cast("FlextCore.Types.Dict", workflow_result.unwrap())
+
+            # Publish success event with request correlation
+            core.publish_event(
+                "order.workflow.completed",
+                {
+                    "order_id": completed_order["order_id"],
+                    "customer_id": completed_order["customer_id"],
+                    "steps_completed": 3,
+                },
+                correlation_id=request_id,
+            )
+
+            print("  ✅ Complete workflow executed successfully")
+            print(
+                f"     - Customer validated: {completed_order.get('customer_validated')}"
+            )
+            print(
+                f"     - Inventory reserved: {completed_order.get('inventory_reserved')}"
+            )
+            print(
+                f"     - Payment processed: {completed_order.get('payment_processed')}"
+            )
+            print(f"     - Event published with correlation: {request_id}")
+
+    print("\n" + "=" * 60)
+    print("✅ FLEXTCORE 1.1.0 CONVENIENCE METHODS DEMONSTRATED!")
+    print("Event publishing, service creation, pipelines, and context management")
+    print("=" * 60)
+
+
 def main() -> None:
     """Main entry point."""
+    # Traditional pattern
     demonstrate_complete_integration()
+
+    # Modern FlextCore pattern (1.0.0)
+    demonstrate_flextcore_unified_access()
+
+    # FlextCore 1.1.0 convenience methods
+    demonstrate_flextcore_11_features()
 
 
 if __name__ == "__main__":

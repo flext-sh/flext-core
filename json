@@ -288,7 +288,7 @@ ERROR `object` is not assignable to attribute `_circuit_breaker_threshold` with 
 1268 | |         )
      | |_________^
      |
-ERROR Argument `dict[str, int | list[@_]]` is not assignable to parameter `data` with type `dict[str, object]` in function `flext_core.result.FlextResult.ok` [bad-argument-type]
+ERROR Argument `dict[str, int | list[@_]]` is not assignable to parameter `data` with type `FlextTypes.Dict` in function `flext_core.result.FlextResult.ok` [bad-argument-type]
     --> src/flext_core/protocols.py:1385:48
      |
 1385 |         return FlextResult[FlextTypes.Dict].ok(summary)
@@ -341,7 +341,7 @@ ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
 210 |         data: FlextTypes.Dict,
     |               ^^^^^^^^^^^^^^^^^^^^^
     |
-ERROR `TypeAlias[Dict, type[dict[str, object]]]` is not subscriptable [unsupported-operation]
+ERROR `TypeAlias[Dict, type[FlextTypes.Dict]]` is not subscriptable [unsupported-operation]
    --> src/flext_core/utilities.py:212:11
     |
 212 |         | FlextTypes.Dict[str, type | tuple[type, ...]]
@@ -359,7 +359,7 @@ ERROR Class `FlextTypes` has no class attribute `FlextTypes` [missing-attribute]
 805 |             data: FlextTypes.Dict,
     |                   ^^^^^^^^^^^^^^^^^^^^^
     |
-ERROR `TypeAlias[Dict, type[dict[str, object]]]` is not subscriptable [unsupported-operation]
+ERROR `TypeAlias[Dict, type[FlextTypes.Dict]]` is not subscriptable [unsupported-operation]
    --> src/flext_core/utilities.py:807:15
     |
 807 |             | FlextTypes.Dict[str, type | tuple[type, ...]]
@@ -585,7 +585,7 @@ ERROR Expected class object, got `TypeAliasType` [invalid-argument]
 2253 |             return isinstance(value, FlextTypes.Dict) and len(cast("FlextTypes.Dict", value)) > 0
      |                                      ^^^^^^^^^^^^^^^
      |
-ERROR Expected a callable, got `TypeAlias[Dict, type[dict[str, object]]]` [not-callable]
+ERROR Expected a callable, got `TypeAlias[Dict, type[FlextTypes.Dict]]` [not-callable]
     --> src/flext_core/utilities.py:2339:29
      |
 2339 |                     localns=FlextTypes.Dict(vars(handler_class)),
@@ -647,7 +647,7 @@ ERROR Object of class `Container` has no attribute `name` [missing-attribute]
 951 |                         name=str(container.name),
     |                                  ^^^^^^^^^^^^^^
     |
-ERROR `dict[str, ContainerInfo]` is not assignable to `dict[str, object]` [bad-assignment]
+ERROR `dict[str, ContainerInfo]` is not assignable to `FlextTypes.Dict` [bad-assignment]
     --> src/flext_tests/docker.py:1375:40
      |
 1375 |         status_info: FlextTypes.Dict = status_result.value.copy()
@@ -708,7 +708,7 @@ ERROR `FlextResult[str]` is not assignable to variable `command_result` with typ
 1757 | |             )
      | |_____________^
      |
-ERROR `FlextResult[dict[str, object]]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
+ERROR `FlextResult[FlextTypes.Dict]` is not assignable to variable `command_result` with type `FlextResult[object] | None` [bad-assignment]
     --> src/flext_tests/docker.py:1762:30
      |
 1762 |             command_result = status_result
@@ -926,7 +926,7 @@ ERROR Function declared to return `T` but is missing an explicit `return` [bad-r
 34 |     ) -> T:
    |          ^
    |
-ERROR Function declared to return `dict[str, object]` but is missing an explicit `return` [bad-return]
+ERROR Function declared to return `FlextTypes.Dict` but is missing an explicit `return` [bad-return]
   --> src/flext_tests/performance.py:38:32
    |
 38 |     def stats(self: object) -> FlextTypes.Dict:

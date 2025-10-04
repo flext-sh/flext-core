@@ -35,6 +35,7 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
+from flext_core.handlers import FlextHandlers
 
 
 class BusMessagingService(FlextService[FlextTypes.Dict]):
@@ -132,7 +133,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         print("\n=== Command Bus Pattern ===")
 
         # Create dedicated command bus
-        bus = FlextBus.create_command_bus()
+        bus = FlextBus()
         print("✅ Command bus created")
 
         # Define domain commands
@@ -482,7 +483,8 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 return calculate(cmd.a, cmd.b, cmd.operation)
             return 0
 
-        handler = bus.create_simple_handler(handler_func=calculate_wrapper)
+        # Create handler from callable
+        handler = FlextHandlers.from_callable(callable_func=calculate_wrapper)
 
         bus.register_handler(CalculateCommand, handler)
 
@@ -512,7 +514,9 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 return search(query.keyword, query.limit)
             return []
 
-        query_handler = bus.create_query_handler(handler_func=search_wrapper)
+        query_handler = FlextHandlers.from_callable(
+            callable_func=search_wrapper, handler_type="query"
+        )
 
         bus.register_handler(SearchQuery, query_handler)
 
