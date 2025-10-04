@@ -1246,7 +1246,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         left_val = self.unwrap()
         right_val = other.unwrap()
         combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        return FlextResult[tuple[T_co, U]].ok(combined_tuple)  # type: ignore[return-value]
+        return FlextResult[tuple[T_co, U]].ok(combined_tuple)
 
     def cast_fail(self) -> FlextResult[object]:
         """Cast a failed result to a different type."""

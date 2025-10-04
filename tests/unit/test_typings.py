@@ -14,19 +14,16 @@ from flext_core.typings import (
     Event,
     F,
     K,
-    # Domain TypeVars
     Message,
     P,
     Query,
     R,
     ResultT,
-    # Core TypeVars
     T,
     T1_co,
     T2_co,
     T3_co,
     T_contra,
-    # Service/infrastructure TypeVars
     TAggregate_co,
     TCacheKey_contra,
     TCacheValue_co,
