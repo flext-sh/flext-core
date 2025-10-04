@@ -385,14 +385,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Store factory in registry AND internal DI container with callable validation.
 
         Stores in both tracking dict (backward compatibility) and internal
-        dependency-injector container using Factory provider. Each call to the
-        factory creates a new instance (unlike Singleton).
+        dependency-injector container using Singleton provider with factory.
+        This ensures factory is called once and result is cached (lazy singleton).
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
 
         Note:
-            Updated in v1.1.0 to use DI Factory provider while maintaining API.
+            Updated in v1.1.0 to use DI Singleton(factory) for cached factory results.
 
         """
         # Validate that factory is actually callable
@@ -406,9 +406,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Store in tracking dict (backward compatibility)
             self._factories[name] = factory
 
-            # Store in internal DI container using Factory provider
-            # Factory provider creates new instance on each call
-            provider = providers.Factory(factory)
+            # Store in internal DI container using Singleton with factory
+            # This creates lazy singleton: factory called once, result cached
+            provider = providers.Singleton(factory)
             self._di_container.set_provider(name, provider)
 
             return FlextResult[None].ok(None)
@@ -495,6 +495,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
             return FlextResult[object].fail(f"Service '{name}' not found")
         except Exception as e:
+            # Preserve factory error messages for compatibility
+            if name in self._factories:
+                return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
             return FlextResult[object].fail(f"Service resolution failed: {e}")
 
     def _invoke_factory_and_cache(self, name: str) -> FlextResult[object]:
