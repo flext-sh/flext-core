@@ -10,7 +10,7 @@ import json
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar, Protocol, Self
+from typing import ClassVar, Self, cast
 
 from pydantic import (
     Field,
@@ -18,9 +18,6 @@ from pydantic import (
     computed_field,
     field_validator,
     model_validator,
-)
-from pydantic._internal._model_construction import (
-    ModelMetaclass,  # type: ignore[attr-defined,import]  # noqa: PLC2701
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -31,43 +28,35 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-# Pydantic 2 compatible metaclass that allows Protocol inheritance
-class ProtocolCompatibleMeta(ModelMetaclass, type(Protocol)):  # type: ignore[misc]
-    """Metaclass combining Pydantic's ModelMetaclass with Protocol's metaclass.
-
-    This allows FlextConfig to inherit from both BaseSettings (Pydantic)
-    and Protocol classes, enabling structural typing while maintaining
-    Pydantic 2.x functionality.
-    """
-
-
 class FlextConfig(
     BaseSettings,
-    FlextProtocols.Infrastructure.Configurable,
-    metaclass=ProtocolCompatibleMeta,
 ):
-    """Configuration management system for FLEXT ecosystem.
+    """Configuration management system for FLEXT ecosystem - OPTIMIZATION SHOWCASE.
 
-    FlextConfig provides centralized configuration management using
-    Pydantic Settings with environment variable support. Global singleton
-    pattern ensures consistent configuration across all 32+ dependent
-    FLEXT projects. Create instances directly with FlextConfig().
+    FLEXT-CORE OPTIMIZATION PATTERNS DEMONSTRATED:
 
-    Implements Infrastructure layer protocols for type-safe configuration
-    management across the FLEXT ecosystem.
+    🚀 NAMESPACE CLASS PATTERN
+    Single unified class with nested helper classes and comprehensive functionality:
+    - Nested HandlerConfiguration class for CQRS handler config resolution
+    - All configuration logic centralized in one class
+    - No loose helper functions - everything properly organized
 
-    **Newer Features - Configuration Source Pattern**:
-    FlextConfig now serves as the central source of configuration for all
-    FlextModels classes. When a FlextConfig instance is created or updated,
-    it automatically synchronizes with the models module, ensuring that
-    model classes like TimeoutableMixin, RetryableMixin, and others use
-    the correct configuration values as defaults.
+    🔧 FLEXT-CORE INTEGRATION
+    Complete integration with flext-core ecosystem:
+    - FlextConstants for all default values and validation limits
+    - FlextResult for all operation results (railway pattern)
+    - FlextExceptions for structured error handling
+    - FlextProtocols for interface compliance
+    - FlextTypes for type definitions
 
-    This enables a clean separation where:
-    - FlextConfig manages all configuration state and validation
-    - FlextModels classes use FlextConfig as their configuration source
-    - No manual factory methods needed - direct model instantiation works
-    - Configuration changes propagate automatically to all model classes
+    ⚙️ PYDANTIC 2.11+ BASESETTINGS
+    Modern configuration management:
+    - Environment variable support with FLEXT_ prefix
+    - Field validators for custom validation logic
+    - Model validators for cross-field validation
+    - Computed fields for derived configuration values
+    - SecretStr for sensitive data protection
+    - SettingsConfigDict for advanced configuration options
 
     **Function**: Centralized configuration with environment support
         - Global singleton configuration instance
@@ -84,70 +73,112 @@ class FlextConfig(
         - Computed fields for derived configuration
         - Validation methods for configuration integrity
 
-    **Uses**: Pydantic Settings for configuration management
-        - BaseSettings for environment-based configuration
-        - Field for default values and validation rules
-        - SecretStr for sensitive data protection
-        - field_validator for custom validation logic
-        - model_validator for cross-field validation
-        - computed_field for derived properties
-        - FlextConstants for configuration defaults
-        - FlextResult[T] for operation results
+    **Uses**: Core infrastructure patterns
+        - FlextConstants for configuration defaults and limits
+        - FlextResult[T] for all operation results (railway pattern)
+        - FlextExceptions for structured error handling
         - FlextTypes for type definitions
         - threading.Lock for singleton thread safety
         - json module for configuration serialization
 
-    **How to use**: Access and configure via singleton
-        ```python
-        from flext_core import FlextConfig
+    OPTIMIZATION EXAMPLES:
 
-        # Example 1: Create configuration instance
+    ```python
+    # ✅ CORRECT - Complete flext-core integration with optimization patterns
+    from flext_core import FlextConfig, FlextConstants, FlextResult
+
+    # Example 1: Enhanced configuration with computed fields
+    config = FlextConfig()
+
+    # Use computed fields for derived configuration
+    print(f"Debug enabled: {config.is_debug_enabled}")  # From debug or trace
+    print(f"Effective log level: {config.effective_log_level}")  # Considers debug/trace
+
+    # Access component-specific configuration
+    container_config = config.get_component_config("container")
+    if container_config.is_success:
+        settings = container_config.unwrap()
+        print(f"Max workers: {settings['max_workers']}")
+
+
+    # Example 2: Railway pattern for configuration operations
+    def validate_and_create_config() -> FlextResult[FlextConfig]:
         config = FlextConfig()
 
-        # Example 2: Access configuration values
-        log_level = config.log_level
-        timeout = config.timeout_seconds
-        environment = config.environment
+        # Validate integration with railway pattern
+        validation = config.validate_flext_core_integration()
+        if validation.is_failure:
+            return FlextResult[FlextConfig].fail(
+                f"Integration failed: {validation.error}"
+            )
 
-        # Example 3: Environment variable override
-        # Set FLEXT_LOG_LEVEL=DEBUG in environment
-        # config.log_level will be "DEBUG"
+        return FlextResult[FlextConfig].ok(config)
 
-        # Example 4: Check configuration validity
-        validation_result = config.validate_environment()
-        if validation_result.is_success:
-            print("Configuration valid")
 
-        # Example 5: Access computed fields
-        metadata = config.metadata_config
-        print(f"App: {metadata['app_name']}")
+    # Example 3: Service configuration with flext-core integration
+    service_config = config.create_service_config(
+        "user_service", timeout_seconds=60, enable_caching=True
+    )
+    if service_config.is_success:
+        settings = service_config.unwrap()
+        print(f"Service timeout: {settings['timeout_seconds']}")
 
-        # Example 6: Configuration profiles
-        if config.environment == "production":
-            # Production-specific configuration
-            config.debug = False
-            config.trace = False
+    # Example 4: Integration validation
+    setup_result = config.validate_flext_core_integration()
+    if setup_result.is_success:
+        print("✅ All flext-core components properly integrated")
+    else:
+        print(f"❌ Integration issues: {setup_result.error}")
 
-        # Example 7: Secret configuration (from environment)
-        # Set FLEXT_SECRET_KEY in environment
-        secret = config.secret_key  # Returns SecretStr
+    # Example 5: Practical integration example
+    example = config.get_integration_example("service")
+    if example.is_success:
+        print(f"Service integration pattern: {example.unwrap()[:100]}...")
 
-        # Example 8: Configuration source for models (newer feature)
-        # FlextConfig automatically serves as configuration source for models
-        from flext_core.models import FlextModels
+    # Example 6: Nested helper class usage (optimization pattern)
+    handler_mode = FlextConfig.HandlerConfiguration.resolve_handler_mode(
+        handler_mode="command", handler_config={"handler_type": "query"}
+    )
+    print(f"Resolved handler mode: {handler_mode}")
+    ```
 
-        # Model classes automatically use FlextConfig values as defaults
-        bus = FlextModels.Bus()  # Uses config.dispatcher_timeout_seconds
-        cache = FlextModels.Cache(key="test", value="data")  # Uses config.cache_ttl
+    BEFORE vs AFTER OPTIMIZATION:
 
-        # Configuration changes propagate automatically
-        config.timeout_seconds = 120  # All new models will use 120s timeout
-        ```
+    ```python
+    # ❌ BEFORE - Scattered configuration, no integration
+    class OldConfig:
+        def __init__(self):
+            self.log_level = "INFO"
+            self.timeout = 30
 
-    Args:
+        def get_logging_config(self):
+            return {"level": self.log_level}
+
+
+    # ✅ AFTER - Unified configuration with flext-core integration
+    class FlextConfig(BaseSettings):  # Single class pattern
+        log_level: str = Field(default="INFO")  # Pydantic field
+
+        @computed_field  # Derived configuration
+        def logging_config(self) -> dict:
+            return {
+                "level": self.effective_log_level,  # Considers debug/trace
+                "format": self.log_format,
+                "structured": self.structured_output,
+            }
+
+        def get_component_config(self, component: str) -> FlextResult[FlextTypes.Dict]:
+            # Integration with flext-core components
+            return FlextResult[FlextTypes.Dict].ok({
+                "component": component,
+                "config": "enhanced",
+            })
+    ```
+
+    **Args**:
         **data: Configuration values as keyword arguments.
 
-    Attributes:
+    **Attributes**:
         environment (str): Runtime environment (dev/staging/prod).
         debug (bool): Debug mode flag for development.
         trace (bool): Trace mode for detailed logging.
@@ -159,41 +190,43 @@ class FlextConfig(
         database_url (str): Database connection URL.
         cache_ttl (int): Cache time-to-live in seconds.
 
-    Returns:
-        FlextConfig: Singleton configuration instance.
+    **Returns**:
+        FlextConfig: Optimized configuration instance with full flext-core integration.
 
-    Raises:
+    **Raises**:
         ValidationError: When configuration validation fails.
         ValueError: When required configuration missing.
 
-    Note:
+    **Note**:
         Direct instantiation pattern - create with FlextConfig().
         Environment variables prefixed with FLEXT_ override defaults.
         SecretStr protects sensitive data. Configuration validated on load.
+        All operations use FlextResult for consistency.
 
-    Warning:
+    **Warning**:
         Never commit secrets to source control.
-        Never commit secrets to source control. Always use
-        environment variables for production secrets. Configuration
-        changes require application restart (no hot-reload yet).
+        Configuration changes require application restart.
+        Always validate integration before production deployment.
 
-    Example:
-        Complete configuration management workflow:
+    **Example**:
+        Complete optimization showcase:
 
         >>> config = FlextConfig()
-        >>> print(config.environment)
+        >>> print(f"Environment: {config.environment}")
         development
-        >>> print(config.log_level)
+        >>> print(f"Debug enabled: {config.is_debug_enabled}")
+        False
+        >>> print(f"Effective log level: {config.effective_log_level}")
         INFO
-        >>> validation = config.validate_environment()
-        >>> print(validation.is_success)
+        >>> integration = config.validate_flext_core_integration()
+        >>> print(f"Integration valid: {integration.is_success}")
         True
 
-    See Also:
-        FlextConstants: For configuration defaults.
+    **See Also**:
+        FlextConstants: For configuration defaults and validation limits.
         FlextContainer: For dependency injection integration.
         FlextLogger: For logging configuration usage.
-
+        FlextUtilities: For configuration validation utilities.
     """
 
     class HandlerConfiguration:
@@ -799,50 +832,50 @@ class FlextConfig(
         FlextConfig._update_models_config(self)
         return self
 
-    # Singleton pattern methods
+    # Singleton pattern implementation
+    _global_instance: ClassVar[FlextConfig | None] = None
+    _instance_lock: ClassVar[threading.Lock] = threading.Lock()
+
+    def __new__(cls) -> Self:
+        """Implement singleton pattern for FlextConfig instances."""
+        if cls._global_instance is None:
+            with cls._instance_lock:
+                if cls._global_instance is None:
+                    cls._global_instance = super().__new__(cls)
+                    # Update models module config when global instance is created
+                    cls._update_models_config(cls._global_instance)
+        return cls._global_instance
+
     @classmethod
     def get_global_instance(cls) -> Self:
-        """REMOVED: Use direct instantiation with FlextConfig().
+        """Get or create the global singleton configuration instance.
 
-        Migration:
-            # Old pattern
-            config = FlextConfig.get_global_instance()
+        Returns:
+            FlextConfig: The global configuration instance.
 
-            # New pattern - create instance directly
-            config = FlextConfig()
-
-            # Or for singleton pattern, manage explicitly
-            _config_lock = threading.RLock()
-            _config_instance: FlextConfig | None = None
-
-            with _config_lock:
-                if _config_instance is None:
-                    _config_instance = FlextConfig()
-                config = _config_instance
+        Example:
+            >>> config = FlextConfig.get_global_instance()
+            >>> config2 = FlextConfig.get_global_instance()
+            >>> assert config is config2  # Same instance
 
         """
-        msg = (
-            "FlextConfig.get_global_instance() has been removed. "
-            "Use FlextConfig() to create instances directly."
-        )
-        raise NotImplementedError(msg)
+        return cls()
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
         """Set the global singleton instance per class."""
-        with cls._lock:
-            cls._instances[cls] = instance
+        with cls._instance_lock:
+            cls._global_instance = instance
             # Update models module config when FlextConfig changes
             cls._update_models_config(instance)
 
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global instance for this specific class (mainly for testing)."""
-        with cls._lock:
-            if cls in cls._instances:
-                del cls._instances[cls]
-                # Reset models config to default when global instance is reset
-                cls._reset_models_config()
+        with cls._instance_lock:
+            cls._global_instance = None
+            # Reset models config to default when global instance is reset
+            cls._reset_models_config()
 
     @classmethod
     def _update_models_config(cls, config_instance: FlextConfig) -> None:
@@ -854,9 +887,12 @@ class FlextConfig(
         """
         try:
             # Import models module and update its config
+            # NOTE: This access to private _config is necessary for the current
+            # architecture where models use global config for field defaults.
+            # TODO(#1): Refactor to use proper dependency injection pattern.  # noqa: FIX002
             import flext_core.models as models_module
 
-            models_module._config = config_instance  # type: ignore[attr-defined]  # noqa: SLF001
+            models_module._config = config_instance  # noqa: SLF001
         except ImportError:
             # Models module not yet imported, will use default when imported
             pass
@@ -865,9 +901,13 @@ class FlextConfig(
     def _reset_models_config(cls) -> None:
         """Reset the models module configuration to default FlextConfig instance."""
         try:
+            # Import models module and update its config
+            # NOTE: This access to private _config is necessary for the current
+            # architecture where models use global config for field defaults.
+            # TODO(#1): Refactor to use proper dependency injection pattern.  # noqa: FIX002
             import flext_core.models as models_module
 
-            models_module._config = FlextConfig()  # type: ignore[attr-defined]  # noqa: SLF001
+            models_module._config = FlextConfig()  # noqa: SLF001
         except ImportError:
             # Models module not yet imported
             pass
@@ -917,7 +957,9 @@ class FlextConfig(
         return cls.model_validate(kwargs)
 
     @classmethod
-    def create_for_environment(cls, environment: str, **kwargs: Any) -> FlextConfig:
+    def create_for_environment(
+        cls, environment: str, **kwargs: FlextTypes.ConfigValue
+    ) -> FlextConfig:
         """Create a FlextConfig instance for a specific environment.
 
         Args:
@@ -927,7 +969,9 @@ class FlextConfig(
 
         """
         # Pydantic BaseSettings handles kwargs validation and type conversion automatically
-        return cls(environment=environment, **kwargs)
+        # Include environment in the validation data
+        config_data = {"environment": environment, **kwargs}
+        return cls.model_validate(config_data)
 
     @classmethod
     def from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
@@ -1119,6 +1163,123 @@ class FlextConfig(
             "bcrypt_rounds": self.bcrypt_rounds,
         }
 
+    @computed_field
+    def database_config(self) -> FlextTypes.Dict:
+        """Get database configuration as dictionary with enhanced flext-core integration."""
+        return {
+            "url": self.database_url,
+            "pool_size": self.database_pool_size,
+            "connection_config": {
+                "min_size": FlextConstants.Performance.MIN_DB_POOL_SIZE,
+                "max_size": self.database_pool_size,
+                "timeout_seconds": self.timeout_seconds,
+                "retry_attempts": self.max_retry_attempts,
+            },
+            "health_check_enabled": self.enable_metrics,
+        }
+
+    @computed_field
+    def dispatcher_config(self) -> FlextTypes.Dict:
+        """Get dispatcher configuration with flext-core integration patterns."""
+        return {
+            "auto_context": self.dispatcher_auto_context,
+            "timeout_seconds": self.dispatcher_timeout_seconds,
+            "enable_metrics": self.dispatcher_enable_metrics,
+            "enable_logging": self.dispatcher_enable_logging,
+            "performance_config": {
+                "max_workers": self.max_workers,
+                "batch_size": self.batch_size,
+                "enable_circuit_breaker": self.enable_circuit_breaker,
+                "circuit_breaker_threshold": self.circuit_breaker_threshold,
+            },
+        }
+
+    @computed_field
+    def logging_config(self) -> FlextTypes.Dict:
+        """Get comprehensive logging configuration with flext-core patterns."""
+        return {
+            "level": self.effective_log_level,
+            "format": self.log_format,
+            "output": {
+                "console": self.console_enabled,
+                "console_color": self.console_color_enabled,
+                "file": self.log_file,
+                "json": self.json_output,
+            },
+            "features": {
+                "include_source": self.include_source,
+                "structured": self.structured_output,
+                "performance_tracking": self.track_performance,
+                "timing_tracking": self.track_timing,
+                "context_inclusion": self.include_context,
+                "correlation_id": self.include_correlation_id,
+                "sensitive_data_masking": self.mask_sensitive_data,
+            },
+            "verbosity": self.log_verbosity,
+        }
+
+    @computed_field
+    def performance_config(self) -> FlextTypes.Dict:
+        """Get performance configuration with flext-core optimization patterns."""
+        return {
+            "caching": {
+                "enabled": self.enable_caching,
+                "ttl": self.cache_ttl,
+                "max_size": self.cache_max_size,
+            },
+            "processing": {
+                "max_workers": self.max_workers,
+                "batch_size": self.batch_size,
+                "timeout_seconds": self.timeout_seconds,
+            },
+            "reliability": {
+                "retry_attempts": self.max_retry_attempts,
+                "retry_delay_seconds": self.retry_delay_seconds,
+                "circuit_breaker_enabled": self.enable_circuit_breaker,
+                "circuit_breaker_threshold": self.circuit_breaker_threshold,
+            },
+            "rate_limiting": {
+                "max_requests": self.rate_limit_max_requests,
+                "window_seconds": self.rate_limit_window_seconds,
+            },
+        }
+
+    @computed_field
+    def metadata_config(self) -> FlextTypes.Dict:
+        """Get application metadata with flext-core integration."""
+        return {
+            "app_name": self.app_name,
+            "version": self.version,
+            "environment": self.environment,
+            "debug_mode": self.debug,
+            "trace_mode": self.trace,
+            "effective_log_level": self.effective_log_level,
+            "is_debug_enabled": self.is_debug_enabled,
+            "is_production": self.is_production(),
+            "is_development": self.is_development(),
+        }
+
+    @computed_field
+    def validation_config(self) -> FlextTypes.Dict:
+        """Get validation configuration with flext-core patterns."""
+        return {
+            "strict_mode": self.validation_strict_mode,
+            "timeout_ms": self.validation_timeout_ms,
+            "name_length_limits": {
+                "max_length": self.max_name_length,
+                "min_length": 1,
+            },
+            "phone_validation": {
+                "min_digits": self.min_phone_digits,
+                "max_digits": 15,
+            },
+            "serialization": {
+                "encoding": self.serialization_encoding,
+                "use_utc": self.use_utc_timestamps,
+                "auto_update": self.timestamp_auto_update,
+            },
+        }
+
     # =========================================================================
     # Infrastructure Protocol Implementations
     # =========================================================================
@@ -1204,7 +1365,7 @@ class FlextConfig(
     def save_to_file(
         self,
         file_path: str | Path,
-        **kwargs: Any,
+        **kwargs: FlextTypes.ConfigValue,
     ) -> FlextResult[None]:
         """Save configuration to file.
 
@@ -1226,14 +1387,24 @@ class FlextConfig(
 
             # Handle SecretStr fields - don't serialize actual values
             if config_data.get("secret_key"):
-                config_data["secret_key"] = "***REDACTED***"  # noqa: S105
+                config_data["secret_key"] = FlextConstants.Messages.REDACTED_SECRET
             if config_data.get("api_key"):
-                config_data["api_key"] = "***REDACTED***"
+                config_data["api_key"] = FlextConstants.Messages.REDACTED_SECRET
 
             # Determine format from extension
             if path.suffix.lower() == ".json":
-                indent = int(kwargs.get("indent", self.json_indent))
-                sort_keys = bool(kwargs.get("sort_keys", self.json_sort_keys))
+                indent_value = kwargs.get("indent", self.json_indent)
+                indent = (
+                    int(indent_value)
+                    if indent_value is not None and isinstance(indent_value, (int, str))
+                    else self.json_indent
+                )
+                sort_keys_value = kwargs.get("sort_keys", self.json_sort_keys)
+                sort_keys = (
+                    bool(sort_keys_value)
+                    if sort_keys_value is not None
+                    else self.json_sort_keys
+                )
 
                 with path.open("w", encoding="utf-8") as f:
                     json.dump(config_data, f, indent=indent, sort_keys=sort_keys)
@@ -1244,6 +1415,336 @@ class FlextConfig(
 
         except Exception as e:
             return FlextResult[None].fail(f"Save failed: {e}")
+
+    # =========================================================================
+    # Enhanced flext-core Integration Methods
+    # =========================================================================
+
+    def get_component_config(self, component: str) -> FlextResult[FlextTypes.Dict]:
+        """Get configuration for specific flext-core component with integration patterns.
+
+        Demonstrates advanced flext-core integration by providing component-specific
+        configuration that integrates with FlextContainer, FlextBus, FlextDispatcher, etc.
+
+        Args:
+            component: Component name ('container', 'bus', 'dispatcher', 'logger', 'context')
+
+        Returns:
+            FlextResult containing component configuration or error
+
+        Example:
+            >>> config = FlextConfig()
+            >>> container_config = config.get_component_config("container")
+            >>> if container_config.is_success:
+            ...     print(
+            ...         f"Container max workers: {container_config.unwrap()['max_workers']}"
+            ...     )
+
+        """
+        component_configs = {
+            "container": {
+                "max_workers": self.max_workers,
+                "enable_circuit_breaker": self.enable_circuit_breaker,
+                "performance_monitoring": self.enable_metrics,
+                "health_check_interval": self.timeout_seconds // 4,
+                "registry": {
+                    "auto_register": True,
+                    "enable_metrics": self.dispatcher_enable_metrics,
+                    "enable_logging": self.dispatcher_enable_logging,
+                },
+            },
+            "bus": {
+                "auto_context": self.dispatcher_auto_context,
+                "timeout_seconds": self.dispatcher_timeout_seconds,
+                "enable_metrics": self.dispatcher_enable_metrics,
+                "enable_logging": self.dispatcher_enable_logging,
+                "performance_config": {
+                    "batch_size": self.batch_size,
+                    "max_workers": self.max_workers,
+                },
+            },
+            "dispatcher": {
+                "auto_context": self.dispatcher_auto_context,
+                "timeout_seconds": self.dispatcher_timeout_seconds,
+                "enable_metrics": self.dispatcher_enable_metrics,
+                "enable_logging": self.dispatcher_enable_logging,
+                "circuit_breaker": {
+                    "enabled": self.enable_circuit_breaker,
+                    "threshold": self.circuit_breaker_threshold,
+                },
+            },
+            "logger": {
+                "level": self.effective_log_level,
+                "structured": self.structured_output,
+                "include_context": self.include_context,
+                "include_correlation_id": self.include_correlation_id,
+                "performance_tracking": self.track_performance,
+                "timing_tracking": self.track_timing,
+            },
+            "context": {
+                "auto_propagation": self.dispatcher_auto_context,
+                "correlation_id_enabled": self.include_correlation_id,
+                "performance_tracking": self.track_performance,
+                "metadata_inclusion": self.include_context,
+            },
+        }
+
+        if component not in component_configs:
+            return FlextResult[FlextTypes.Dict].fail(
+                f"Unknown component: {component}. Available: {list(component_configs.keys())}"
+            )
+
+        from typing import cast
+
+        return FlextResult[FlextTypes.Dict].ok(
+            cast("FlextTypes.Dict", component_configs[component])
+        )
+
+    def create_service_config(
+        self, service_name: str, **overrides: FlextTypes.ConfigValue
+    ) -> FlextResult[FlextTypes.Dict]:
+        """Create service configuration with flext-core integration patterns.
+
+        Demonstrates how FlextConfig integrates with FlextService, FlextContainer,
+        and other flext-core components to provide comprehensive service configuration.
+
+        Args:
+            service_name: Name of the service to configure
+            **overrides: Service-specific configuration overrides
+
+        Returns:
+            FlextResult containing complete service configuration
+
+        Example:
+            >>> config = FlextConfig()
+            >>> service_config = config.create_service_config(
+            ...     "user_service", timeout_seconds=60, enable_caching=True
+            ... )
+            >>> if service_config.is_success:
+            ...     print(f"Service config: {service_config.unwrap()}")
+
+        """
+        # Base service configuration using flext-core patterns
+        base_config = {
+            "service_name": service_name,
+            "timeout_seconds": self.timeout_seconds,
+            "max_retry_attempts": self.max_retry_attempts,
+            "enable_caching": self.enable_caching,
+            "enable_metrics": self.enable_metrics,
+            "enable_tracing": self.enable_tracing,
+            "performance_config": {
+                "batch_size": self.batch_size,
+                "max_workers": min(self.max_workers, 4),  # Service-specific limit
+                "circuit_breaker_enabled": self.enable_circuit_breaker,
+            },
+            "logging_config": {
+                "level": self.effective_log_level,
+                "include_context": self.include_context,
+                "structured": self.structured_output,
+            },
+            "context_config": {
+                "auto_context": self.dispatcher_auto_context,
+                "correlation_id": self.include_correlation_id,
+            },
+        }
+
+        # Apply overrides
+        base_config.update(overrides)  # type: ignore[arg-type]
+
+        # Validate service configuration
+        timeout_value = base_config.get("timeout_seconds", self.timeout_seconds)
+        timeout_seconds = (
+            int(timeout_value)
+            if isinstance(timeout_value, (int, str))
+            else self.timeout_seconds
+        )
+
+        retry_value = base_config.get("max_retry_attempts", self.max_retry_attempts)
+        max_retry_attempts = (
+            int(retry_value)
+            if isinstance(retry_value, (int, str))
+            else self.max_retry_attempts
+        )
+
+        if timeout_seconds < 1:
+            return FlextResult[FlextTypes.Dict].fail(
+                "Service timeout must be at least 1 second"
+            )
+
+        if max_retry_attempts < 0:
+            return FlextResult[FlextTypes.Dict].fail(
+                "Retry attempts cannot be negative"
+            )
+
+        return FlextResult[FlextTypes.Dict].ok(
+            cast("FlextTypes.Dict", base_config)
+        )
+
+    def validate_flext_core_integration(self) -> FlextResult[None]:
+        """Validate flext-core integration configuration with comprehensive checks.
+
+        Demonstrates advanced flext-core integration by validating that all
+        components work together properly with proper error handling and logging.
+
+        Returns:
+            FlextResult indicating success or detailed failure information
+
+        Example:
+            >>> config = FlextConfig()
+            >>> validation = config.validate_flext_core_integration()
+            >>> if validation.is_failure:
+            ...     print(f"Integration issues: {validation.error}")
+
+        """
+        issues = []
+
+        # Validate component compatibility
+        if self.enable_circuit_breaker and not self.enable_metrics:
+            issues.append("Circuit breaker requires metrics to be enabled")
+
+        if self.enable_tracing and not self.include_correlation_id:
+            issues.append("Tracing works best with correlation ID enabled")
+
+        if self.trace and not self.debug:
+            issues.append("Trace mode requires debug mode to be enabled")
+
+        # Validate resource limits
+        if self.max_workers > FlextConstants.Container.MAX_WORKERS:
+            issues.append(
+                f"Max workers {self.max_workers} exceeds recommended limit {FlextConstants.Container.MAX_WORKERS}"
+            )
+
+        if self.database_pool_size > FlextConstants.Performance.MAX_DB_POOL_SIZE:
+            issues.append(
+                f"Database pool size {self.database_pool_size} exceeds maximum {FlextConstants.Performance.MAX_DB_POOL_SIZE}"
+            )
+
+        # Validate timeout consistency
+        if self.dispatcher_timeout_seconds > self.timeout_seconds * 2:
+            issues.append(
+                "Dispatcher timeout should not exceed general timeout by more than 2x"
+            )
+
+        if issues:
+            return FlextResult[None].fail(
+                f"Flext-core integration issues: {'; '.join(issues)}"
+            )
+
+        return FlextResult[None].ok(None)
+
+    def get_integration_example(self, pattern: str) -> FlextResult[str]:
+        """Get flext-core integration examples for common patterns.
+
+        Provides practical examples of how to integrate FlextConfig with other
+        flext-core components, demonstrating best practices for the ecosystem.
+
+        Args:
+            pattern: Integration pattern ('service', 'handler', 'middleware', 'pipeline')
+
+        Returns:
+            FlextResult containing example code or error
+
+        Example:
+            >>> config = FlextConfig()
+            >>> example = config.get_integration_example("service")
+            >>> if example.is_success:
+            ...     print(f"Service integration example: {example.unwrap()}")
+
+        """
+        examples = {
+            "service": """
+# Example: Service with FlextConfig integration
+from flext_core import FlextConfig, FlextService, FlextLogger, FlextResult
+
+class MyService(FlextService):
+    def __init__(self, config: FlextConfig | None = None):
+        super().__init__()
+        self._config = config or FlextConfig()
+        self._logger = FlextLogger(__name__)
+
+    async def process(self, data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use config for timeout and validation
+        timeout = self._config.timeout_seconds
+        max_retries = self._config.max_retry_attempts
+
+        # Validate using config settings
+        if len(data) > self._config.batch_size:
+            return FlextResult[FlextTypes.Dict].fail("Data batch too large")
+
+        return FlextResult[FlextTypes.Dict].ok({"processed": True})
+""",
+            "handler": """
+# Example: Handler with FlextConfig integration
+from flext_core import FlextConfig, FlextHandlers, FlextResult
+
+class MyHandler(FlextHandlers[dict, dict]):
+    def __init__(self, config: FlextConfig | None = None):
+        super().__init__()
+        self._config = config or FlextConfig()
+
+    def handle(self, command: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use config for validation and processing
+        if not command:
+            return FlextResult[FlextTypes.Dict].fail("Command cannot be empty")
+
+        # Process with config-driven settings
+        result = {"handled": True, "timestamp": "now"}
+        return FlextResult[FlextTypes.Dict].ok(result)
+""",
+            "middleware": """
+# Example: Middleware with FlextConfig integration
+from flext_core import FlextConfig, FlextResult
+
+class MyMiddleware:
+    def __init__(self, config: FlextConfig | None = None):
+        self._config = config or FlextConfig()
+
+    def process_request(self, request: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use config for rate limiting and validation
+        if self._config.rate_limit_max_requests <= 0:
+            return FlextResult[FlextTypes.Dict].fail("Rate limiting disabled")
+
+        # Validate request size
+        if len(str(request)) > self._config.validation_timeout_ms:
+            return FlextResult[FlextTypes.Dict].fail("Request too large")
+
+        return FlextResult[FlextTypes.Dict].ok(request)
+""",
+            "pipeline": """
+# Example: Pipeline with FlextConfig integration
+from flext_core import FlextConfig, FlextResult
+
+class MyPipeline:
+    def __init__(self, config: FlextConfig | None = None):
+        self._config = config or FlextConfig()
+        self._steps = []
+
+    def add_step(self, step_func):
+        self._steps.append(step_func)
+        return self
+
+    def execute(self, data: dict) -> FlextResult[FlextTypes.Dict]:
+        # Use config for pipeline settings
+        if len(self._steps) > self._config.batch_size:
+            return FlextResult[FlextTypes.Dict].fail("Too many pipeline steps")
+
+        # Execute with config-driven error handling
+        for step in self._steps:
+            result = step(data)
+            if result.is_failure:
+                return result
+
+        return FlextResult[FlextTypes.Dict].ok({"pipeline_completed": True})
+""",
+        }
+
+        if pattern not in examples:
+            available = ", ".join(examples.keys())
+            return FlextResult[str].fail(
+                f"Unknown pattern: {pattern}. Available: {available}"
+            )
+
+        return FlextResult[str].ok(examples[pattern].strip())
 
 
 FlextConfig.model_rebuild()

@@ -17,15 +17,28 @@ from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import (
+    TYPE_CHECKING,
     cast,
     override,
 )
 
+if TYPE_CHECKING:
+    from flext_core.config import FlextConfig
+    from flext_core.container import FlextContainer
+    from flext_core.loggings import FlextLogger
+
 from pydantic import ConfigDict
 
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
+
+# Layer 5 - Advanced Infrastructure
 from flext_core.mixins import FlextMixins
+
+# Layer 3 - Core Infrastructure
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -36,9 +49,7 @@ class FlextService[TDomainResult](
     FlextModels.ArbitraryTypesModel,
     FlextMixins.Serializable,
     FlextMixins.Loggable,
-    FlextProtocols.Domain.Service,  # Protocol inheritance now works with ServiceMeta
     ABC,
-    metaclass=FlextModels.ServiceMeta,
 ):
     """Domain service base using railway patterns with Pydantic models.
 
@@ -200,10 +211,64 @@ class FlextService[TDomainResult](
         use_enum_values=True,
     )
 
+    # Dependency injection attributes (set by infrastructure)
+    _container: FlextContainer | None = None
+    _logger: FlextLogger | None = None
+    _config: FlextConfig | None = None
+    _bus: object | None = None  # FlextBus type to avoid circular import
+    _context: object | None = None  # FlextContext type to avoid circular import
+
     @override
     def __init__(self, **data: object) -> None:
         """Initialize domain service with Pydantic validation."""
         super().__init__(**data)
+
+    # =============================================================================
+    # DEPENDENCY INJECTION PROPERTIES - Lazy initialization
+    # =============================================================================
+
+    @property
+    def logger(self) -> FlextLogger:
+        """Get logger instance with lazy initialization.
+
+        Returns:
+            FlextLogger instance for this service.
+
+        """
+        if self._logger is None:
+            # Import avoided via TYPE_CHECKING at module level
+            from flext_core.loggings import FlextLogger  # noqa: PLC0415
+
+            self._logger = FlextLogger(type(self).__name__)
+        return self._logger
+
+    @property
+    def container(self) -> FlextContainer:
+        """Get dependency injection container with lazy initialization.
+
+        Returns:
+            FlextContainer global instance.
+
+        """
+        if self._container is None:
+            from flext_core.container import FlextContainer  # noqa: PLC0415
+
+            self._container = FlextContainer.get_global()
+        return self._container
+
+    @property
+    def config(self) -> FlextConfig:
+        """Get configuration instance with lazy initialization.
+
+        Returns:
+            FlextConfig instance.
+
+        """
+        if self._config is None:
+            from flext_core.config import FlextConfig  # noqa: PLC0415
+
+            self._config = FlextConfig()
+        return self._config
 
     # =============================================================================
     # ABSTRACT METHODS - Must be implemented by subclasses (Domain.Service protocol)
@@ -264,7 +329,7 @@ class FlextService[TDomainResult](
             FlextTypes.Dict: Service information including type and configuration
 
         """
-        return {"service_type": self.__class__.__name__}  # type: ignore[misc]
+        return {"service_type": type(self).__name__}
 
     # =============================================================================
     # VALIDATION METHODS (Domain.Service protocol)
@@ -334,12 +399,12 @@ class FlextService[TDomainResult](
         # Pre-execution validation
         validation_result = self._validate_operation_pre_execution(operation_name)
         if validation_result.is_failure:
-            return validation_result  # type: ignore[return-value]
+            return cast("FlextResult[TDomainResult]", validation_result)
 
         # Parse arguments
         arguments_result = self._parse_operation_arguments(operation, operation_name)
         if arguments_result.is_failure:
-            return arguments_result  # type: ignore[return-value]
+            return cast("FlextResult[TDomainResult]", arguments_result)
 
         positional_arguments, keyword_arguments = arguments_result.unwrap()
 
@@ -522,7 +587,7 @@ class FlextService[TDomainResult](
         try:
             # Collect pre-execution metrics
             metrics_data["start_time"] = start_time
-            metrics_data["service_type"] = self.__class__.__name__  # type: ignore[misc]
+            metrics_data["service_type"] = type(self).__name__
 
             # Execute operation
             result = self.execute()

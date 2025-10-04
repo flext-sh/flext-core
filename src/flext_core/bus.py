@@ -12,14 +12,23 @@ from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from typing import cast
 
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 5 - Advanced Infrastructure
 from flext_core.handlers import FlextHandlers
+
+# Layer 3 - Core Infrastructure
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
+
+# Layer 2 - Early Foundation
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
 
 
@@ -181,8 +190,8 @@ class FlextBus(
                 max_size: Maximum number of cached results
 
             """
-            # Use FlextTypes instead of OrderedDict directly
-            self._cache: FlextTypes.OrderedDictType = OrderedDict()
+            # Use OrderedDict runtime type with explicit annotation
+            self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
             self._max_size = max_size
 
         def get(self, key: str) -> FlextResult[object] | None:
@@ -198,7 +207,7 @@ class FlextBus(
             result = self._cache.get(key)
             if result is not None:
                 self._cache.move_to_end(key)
-            return cast("FlextResult[object] | None", result)
+            return result
 
         def put(self, key: str, result: FlextResult[object]) -> None:
             """Store result in cache.
@@ -498,7 +507,9 @@ class FlextBus(
 
         """
         # Check if bus is enabled
-        if not self._config_model.enable_middleware and self._middleware:
+        if not self._config_model.enable_middleware and (
+            self._middleware_configs or self._middleware_instances
+        ):
             return FlextResult[object].fail(
                 "Middleware pipeline is disabled but middleware is configured",
                 error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,

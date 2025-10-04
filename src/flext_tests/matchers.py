@@ -1107,7 +1107,7 @@ class FlextTestsMatchers:
     @staticmethod
     def run_with_timeout(
         _coro: Awaitable[object],
-        timeout_seconds: float,  # noqa: ARG004
+        _timeout_seconds: float,
     ) -> object:
         """Run coroutine with timeout and auto-retry for test compatibility (sync stub).
 
@@ -1124,7 +1124,7 @@ class FlextTestsMatchers:
         return None
 
     @staticmethod
-    def run_parallel_tasks(tasks: list[Awaitable[object]]) -> list[object]:  # noqa: ARG004
+    def run_parallel_tasks(_tasks: list[Awaitable[object]]) -> list[object]:
         """Run tasks in parallel for test compatibility (sync stub).
 
         Args:
@@ -1140,8 +1140,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def run_concurrently(
-        func: Callable[[object], object],  # noqa: ARG004
-        *args: object,  # noqa: ARG004
+        _func: Callable[[object], object],
+        *_args: object,
         **_kwargs: object,
     ) -> object:
         """Ultra-simple for test compatibility - runs tasks concurrently (sync stub).

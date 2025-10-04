@@ -46,16 +46,25 @@ from typing import (
 
 from pydantic import BaseModel
 
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
+
+# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
+
+# Layer 5 - Advanced Infrastructure
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
 
 # Module-level configuration instance for runtime defaults

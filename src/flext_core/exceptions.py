@@ -86,7 +86,7 @@ class FlextExceptions:
 
         # Example 4: Circuit breaker pattern for fault tolerance
         if exc_factory.is_circuit_open("external_api"):
-            return FlextResult[dict].fail("Circuit breaker open")
+            return FlextResult[FlextTypes.Dict].fail("Circuit breaker open")
 
         # Example 5: Get exception metrics for monitoring
         metrics = FlextExceptions.get_metrics()

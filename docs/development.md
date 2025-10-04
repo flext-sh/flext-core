@@ -535,18 +535,18 @@ class MyService:
         self._container = FlextContainer.get_global()
         self._logger = FlextLogger(__name__)
 
-    def process(self, data: dict) -> FlextResult[dict]:
+    def process(self, data: dict) -> FlextResult[FlextTypes.Dict]:
         """Process with injected dependencies."""
         # Get configuration from container
         config_result = self._container.get("config")
         if config_result.is_failure:
-            return FlextResult[dict].fail("Config unavailable")
+            return FlextResult[FlextTypes.Dict].fail("Config unavailable")
 
         config = config_result.unwrap()
         self._logger.info("Processing", extra={"data": data})
 
         # Use config and process
-        return FlextResult[dict].ok({"result": "processed"})
+        return FlextResult[FlextTypes.Dict].ok({"result": "processed"})
 ```
 
 ### 3. Type Safety

@@ -359,7 +359,7 @@ pytest tests/unit/test_result.py -v
 ### Pattern 1: Validation with Railway
 
 ```python
-def validate_and_process(data: dict) -> FlextResult[dict]:
+def validate_and_process(data: dict) -> FlextResult[FlextTypes.Dict]:
     """Validate and process data."""
     return (
         validate_schema(data)
@@ -378,11 +378,11 @@ class MyService(FlextService):
         self._container = FlextContainer.get_global()
         self._logger_result = self._container.get("logger")
 
-    def process(self, data: dict) -> FlextResult[dict]:
+    def process(self, data: dict) -> FlextResult[FlextTypes.Dict]:
         if self._logger_result.is_success:
             self._logger_result.unwrap().info("Processing", extra=data)
         # Business logic here
-        return FlextResult[dict].ok(data)
+        return FlextResult[FlextTypes.Dict].ok(data)
 ```
 
 ### Pattern 3: Domain Event

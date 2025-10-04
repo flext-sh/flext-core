@@ -4,6 +4,8 @@ Tests real functionality of the centralized type system, ensuring all
 TypeVars, type aliases, and FlextTypes namespace work correctly.
 """
 
+from collections import OrderedDict
+
 from flext_core import FlextTypes
 from flext_core.models import FlextModels
 from flext_core.typings import (
@@ -141,7 +143,6 @@ class TestFlextTypes:
         # Test advanced types
         assert FlextTypes.NestedDict == FlextTypes.NestedDict
         # OrderedDict is actually OrderedDict type
-        from collections import OrderedDict
 
         assert FlextTypes.OrderedDict == OrderedDict[str, object]
 

@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections import UserDict
 from collections.abc import Callable
 from typing import Never, cast
 
@@ -738,7 +737,7 @@ class TestFlextContainer:
 
         # Simulate exception by corrupting internal state
         # Replace _services dict with object that raises on clear()
-        class FailingDict(UserDict[str, object]):
+        class FailingDict(FlextTypes.Dict):
             def clear(self) -> None:
                 msg = "Clear failed"
                 raise RuntimeError(msg)
@@ -766,7 +765,7 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Corrupt _services to trigger exception
-        class FailingDict(UserDict[str, object]):
+        class FailingDict(FlextTypes.Dict):
             def keys(self) -> Never:
                 msg = "Keys failed"
                 raise RuntimeError(msg)
@@ -825,7 +824,7 @@ class TestFlextContainer:
         config: FlextTypes.Dict = {"invalid_key": object()}
 
         # Corrupt _user_overrides to trigger exception
-        class FailingDict(UserDict[str, object]):
+        class FailingDict(FlextTypes.Dict):
             def update(self, *args: object, **kwargs: object) -> None:
                 msg = "Update failed"
                 raise RuntimeError(msg)

@@ -22,38 +22,31 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
+from typing import cast
 
-from flext_core import (
-    FlextConfig,
-    FlextConstants,
-    FlextContainer,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
+class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
     """Service demonstrating ALL FlextConfig patterns and methods."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        manager = FlextContainer.ensure_global_manager()
+        manager = FlextCore.Container.ensure_global_manager()
         self._container = manager.get_or_create()
-        self._logger = FlextLogger(__name__)
+        self._logger = FlextCore.Logger(__name__)
         self._scenarios = ExampleScenarios
         self._reference_config = self._scenarios.config()
         self._production_config = self._scenarios.config(production=True)
         self._metadata = self._scenarios.metadata(tags=["config", "demo"])
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Execute method required by FlextService."""
-        config = FlextConfig()
-        return FlextResult[FlextTypes.Dict].ok({
+        config = FlextCore.Config()
+        return FlextCore.Result[FlextCore.Types.Dict].ok({
             "environment": config.environment,
             "debug": config.debug,
             "log_level": config.log_level,
@@ -67,7 +60,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print("\n=== Global Singleton Configuration ===")
 
         # Get global instance (thread-safe singleton)
-        config = FlextConfig()
+        config = FlextCore.Config()
         print(f"✅ Global config instance: {type(config).__name__}")
 
         # Access basic settings
@@ -77,7 +70,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print(f"App name: {config.app_name}")
 
         # Same instance everywhere
-        config2 = FlextConfig()
+        config2 = FlextCore.Config()
         print(f"Same instance: {config is config2}")
 
     # ========== ENVIRONMENT CONFIGURATION ==========
@@ -86,7 +79,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show environment-specific configuration."""
         print("\n=== Environment Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
         target_env = self._production_config.get("environment", "production")
 
         print(f"Current environment: {config.environment}")
@@ -112,7 +105,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show logging configuration."""
         print("\n=== Logging Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
         print(f"Log level: {config.log_level}")
         print(f"JSON output: {config.json_output}")
@@ -146,14 +139,18 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show database configuration."""
         print("\n=== Database Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
         reference_url = self._reference_config.get("database_url", "Not configured")
 
         print(f"Database URL: {config.database_url or reference_url}")
         print(f"Reference URL: {reference_url}")
         print(f"Database pool size: {config.database_pool_size}")
 
-        db_config = config.get_database_config()
+        # Direct attribute access (get_database_config removed)
+        db_config = {
+            "url": config.database_url,
+            "pool_size": config.database_pool_size,
+        }
         print(f"Database config: {db_config}")
 
     # ========== CACHE CONFIGURATION ==========
@@ -162,7 +159,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show cache configuration."""
         print("\n=== Cache Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
         reference_ttl = self._reference_config.get("api_timeout", 30)
 
         print(f"Enable caching: {config.enable_caching}")
@@ -174,7 +171,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show performance configuration."""
         print("\n=== Performance Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
         print(f"Max workers: {config.max_workers}")
         print(f"Timeout seconds: {config.timeout_seconds}s")
@@ -194,10 +191,16 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show CQRS and event bus configuration."""
         print("\n=== CQRS/Event Bus Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
-        # Get CQRS bus configuration
-        cqrs_config = config.get_cqrs_bus_config()
+        # Direct attribute access (get_cqrs_bus_config removed)
+        cqrs_config = {
+            "auto_context": config.dispatcher_auto_context,
+            "timeout_seconds": config.dispatcher_timeout_seconds,
+            "enable_metrics": config.dispatcher_enable_metrics,
+            "enable_logging": config.dispatcher_enable_logging,
+            "log_verbosity": config.log_verbosity,
+        }
         print(f"CQRS bus config: {cqrs_config}")
         print(f"CQRS log verbosity: {cqrs_config.get('log_verbosity')}")
 
@@ -212,7 +215,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show API and security configuration."""
         print("\n=== API/Security Configuration ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
         # API key for authentication
         print(f"API key configured: {'Yes' if config.api_key else 'No'}")
@@ -237,9 +240,16 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show metadata access."""
         print("\n=== Metadata Access ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
-        metadata = config.get_metadata()
+        # Direct attribute access (get_metadata removed)
+        metadata = {
+            "app_name": config.app_name,
+            "version": config.version,
+            "environment": config.environment,
+            "debug": config.debug,
+            "trace": config.trace,
+        }
         print(f"Service metadata: {metadata}")
         print(f"Scenario metadata: {self._metadata}")
 
@@ -261,7 +271,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             "FLEXT_DEBUG": str(self._reference_config.get("debug", False)).lower(),
             "FLEXT_LOG_LEVEL": self._reference_config.get(
                 "log_level",
-                FlextConstants.Logging.INFO,
+                FlextCore.Constants.Logging.INFO,
             ),
             "FLEXT_DATABASE_URL": self._reference_config.get(
                 "database_url",
@@ -279,7 +289,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show configuration validation."""
         print("\n=== Configuration Validation ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
         validations = [
             (
@@ -289,7 +299,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             ),
             (
                 "log_level",
-                config.log_level in FlextConstants.Logging.VALID_LEVELS,
+                config.log_level in FlextCore.Constants.Logging.VALID_LEVELS,
             ),
             ("timeout_seconds", config.timeout_seconds > 0),
             ("max_workers", config.max_workers > 0),
@@ -314,13 +324,13 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show dynamic configuration patterns."""
         print("\n=== Dynamic Configuration ===")
 
-        FlextConfig()
+        FlextCore.Config()
 
         print("Note: FlextConfig is immutable after initialization")
         print("To change config, create new instance with environment variables")
 
         print("\nCreating config for different environment:")
-        test_config = FlextConfig.create_for_environment("test")
+        test_config = FlextCore.Config.create_for_environment("test")
         print(f"Test environment config: {test_config.environment}")
         print(f"Test debug mode: {test_config.debug}")
         print(
@@ -337,7 +347,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show configuration export patterns."""
         print("\n=== Configuration Export ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
         # Export as dictionary (safe, no secrets)
         config_dict = config.model_dump(exclude={"api_key"})
@@ -366,19 +376,15 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show configuration helper methods."""
         print("\n=== Configuration Methods ===")
 
-        config = FlextConfig()
+        config = FlextCore.Config()
 
         # Helper methods
         print("Available helper methods:")
         print(f"  - is_development(): {config.is_development()}")
         print(f"  - is_production(): {config.is_production()}")
-        print("  - get_metadata(): Returns service metadata")
         print(
-            "  - Logging config accessed via direct attributes (log_level, json_output, etc.)"
+            "  - Config accessed via direct attributes (app_name, database_url, etc.)"
         )
-        print("  - get_database_config(): Returns database configuration")
-        print("  - get_cache_config(): Returns cache configuration")
-        print("  - get_cqrs_bus_config(): Returns CQRS bus configuration")
         print(
             "  - create_for_environment(env): Creates config for specific environment",
         )
@@ -391,7 +397,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
         # OLD: Hard-coded configuration (DEPRECATED)
         warnings.warn(
-            "Hard-coded configuration is DEPRECATED! Use FlextConfig.",
+            "Hard-coded configuration is DEPRECATED! Use FlextCore.Config.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -401,7 +407,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print("DEBUG = True")
 
         print("\n✅ CORRECT WAY (FlextConfig):")
-        print("config = FlextConfig()")
+        print("config = FlextCore.Config()")
         print("database_url = config.database_url")
 
         # OLD: Global variables (DEPRECATED)
@@ -415,12 +421,12 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print("host = config.DB_HOST")
 
         print("\n✅ CORRECT WAY (singleton):")
-        print("config = FlextConfig()")
+        print("config = FlextCore.Config()")
         print("url = config.database_url")
 
         # OLD: Dictionary configuration (DEPRECATED)
         warnings.warn(
-            "Dictionary-based config is DEPRECATED! Use typed FlextConfig.",
+            "Dictionary-based config is DEPRECATED! Use typed FlextCore.Config.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -429,8 +435,75 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print("host = config.get('host', 'default')")
 
         print("\n✅ CORRECT WAY (typed config):")
-        print("config = FlextConfig()")
+        print("config = FlextCore.Config()")
         print("url = config.database_url  # Type-safe!")
+
+
+def demonstrate_flextcore_config_access() -> None:
+    """Demonstrate FlextCore unified access to configuration.
+
+    Shows how FlextCore provides convenient access to configuration
+    alongside other flext-core components.
+    """
+    print("\n" + "=" * 60)
+    print("FLEXTCORE UNIFIED CONFIG ACCESS")
+    print("Modern pattern for configuration with FlextCore")
+    print("=" * 60)
+
+    # 1. Access config through FlextCore instance
+    print("\n=== 1. Config Access Through FlextCore ===")
+    core = FlextCore()
+    config = core.config
+    print(f"  ✅ Config accessed: {type(config).__name__}")
+    print(f"  ✅ Environment: {config.environment}")
+    print(f"  ✅ Log level: {config.log_level}")
+
+    # 2. Direct class access for configuration
+    print("\n=== 2. Direct Config Class Access ===")
+    direct_config = FlextCore.Config()
+    print(f"  ✅ Direct instantiation: {type(direct_config).__name__}")
+    print(f"  ✅ Debug mode: {direct_config.debug}")
+
+    # 3. Factory method for configuration
+    print("\n=== 3. Config Factory Method ===")
+    factory_config = FlextCore.get_config()
+    print(f"  ✅ Factory config: {type(factory_config).__name__}")
+    print(f"  ✅ Timeout: {factory_config.timeout_seconds}s")
+
+    # 4. Combined config with other components
+    print("\n=== 4. Config with Integrated Components ===")
+    logger = core.logger
+    container = core.container
+
+    logger.info("Configuration loaded", extra={"env": config.environment})
+    container.register("config", config)
+
+    print(f"  ✅ Logger integrated: {type(logger).__name__}")
+    print("  ✅ Config registered in container")
+    services_result = container.list_services()
+    service_count = len(services_result.unwrap()) if services_result.is_success else 0
+    print(f"  ✅ Services: {service_count}")
+
+    # 5. Infrastructure setup with configuration
+    print("\n=== 5. Infrastructure with Custom Config ===")
+    custom_config = FlextCore.Config()
+    setup_result = FlextCore.setup_service_infrastructure(
+        "config-demo-service", config=custom_config
+    )
+
+    if setup_result.is_success:
+        infra = cast("FlextCore.Types.Dict", setup_result.unwrap())
+        infra_config = cast("FlextCore.Config", infra["config"])
+
+        print("  ✅ Infrastructure initialized with custom config:")
+        print(f"     - Config type: {type(infra_config).__name__}")
+        print(f"     - Environment: {infra_config.environment}")
+        print(f"     - Same instance: {infra_config is custom_config}")
+
+    print("\n" + "=" * 60)
+    print("✅ FlextCore config demonstration complete!")
+    print("Benefits: Unified access, lazy loading, integrated patterns")
+    print("=" * 60)
 
 
 def main() -> None:
@@ -466,6 +539,9 @@ def main() -> None:
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
+
+    # Modern FlextCore pattern demonstration
+    demonstrate_flextcore_config_access()
 
     print("\n" + "=" * 60)
     print("✅ ALL FlextConfig methods demonstrated!")

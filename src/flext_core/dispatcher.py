@@ -25,16 +25,25 @@ from contextvars import Token
 from dataclasses import dataclass
 from typing import Literal, cast, override
 
+# Layer 5 - Advanced Infrastructure
 from flext_core.bus import FlextBus
+
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.processors import FlextProcessors
+
+# Layer 2 - Early Foundation
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
 
 # Module-level configuration instance for runtime defaults

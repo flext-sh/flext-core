@@ -225,7 +225,7 @@ class FlextApiExceptions:
             super().__init__(message, status_code=429, context=context, **kwargs)
 
 # Usage example
-def fetch_resource(resource_id: str) -> FlextResult[dict]:
+def fetch_resource(resource_id: str) -> FlextResult[FlextTypes.Dict]:
     response = make_request(f"/api/resources/{resource_id}")
 
     if response.status_code == 404:
@@ -235,7 +235,7 @@ def fetch_resource(resource_id: str) -> FlextResult[dict]:
             method="GET",
         )
 
-    return FlextResult[dict].ok(response.json())
+    return FlextResult[FlextTypes.Dict].ok(response.json())
 ```
 
 ---
@@ -305,7 +305,7 @@ class FlextLdapExceptions:
             super().__init__(message, dn=dn, ldap_code=34, **kwargs)
 
 # Usage example
-def get_ldap_entry(connection: LDAPConnection, dn: str) -> FlextResult[dict]:
+def get_ldap_entry(connection: LDAPConnection, dn: str) -> FlextResult[FlextTypes.Dict]:
     try:
         entry = connection.search(dn, search_scope="BASE")
         if not entry:
@@ -313,7 +313,7 @@ def get_ldap_entry(connection: LDAPConnection, dn: str) -> FlextResult[dict]:
                 f"LDAP entry not found: {dn}",
                 dn=dn,
             )
-        return FlextResult[dict].ok(entry)
+        return FlextResult[FlextTypes.Dict].ok(entry)
     except ldap3.LDAPNoSuchObjectResult:
         raise FlextLdapExceptions.EntryNotFoundError(
             f"LDAP entry does not exist: {dn}",
@@ -402,14 +402,14 @@ class FlextCliExceptions:
             super().__init__(message, context=context, exit_code=2, **kwargs)
 
 # Usage example
-def validate_cli_args(args: dict) -> FlextResult[dict]:
+def validate_cli_args(args: dict) -> FlextResult[FlextTypes.Dict]:
     if "config" not in args:
         raise FlextCliExceptions.MissingRequiredArgumentError(
             "Missing required argument: --config",
             required_args=["config"],
             command="flext-cli run",
         )
-    return FlextResult[dict].ok(args)
+    return FlextResult[FlextTypes.Dict].ok(args)
 ```
 
 ---
@@ -506,10 +506,10 @@ class FlextMeltanoExceptions:
             )
 
 # Usage example
-def run_tap(tap_name: str, config: dict) -> FlextResult[dict]:
+def run_tap(tap_name: str, config: dict) -> FlextResult[FlextTypes.Dict]:
     try:
         result = execute_tap(tap_name, config)
-        return FlextResult[dict].ok(result)
+        return FlextResult[FlextTypes.Dict].ok(result)
     except Exception as e:
         raise FlextMeltanoExceptions.TapExtractionError(
             f"Tap extraction failed: {e}",

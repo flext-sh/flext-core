@@ -9,11 +9,39 @@ and easy to read.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from functools import lru_cache
-from typing import Final
+from typing import Final, TypedDict, cast
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 from flext_tests import FlextTestsFactories
+
+
+# TypedDict definitions for type-safe scenario data
+class OrderItemDict(TypedDict):
+    """Typed dictionary for order items."""
+
+    product_id: str
+    name: str
+    price: Decimal | float
+    quantity: int
+
+
+class RealisticOrderDict(TypedDict):
+    """Typed dictionary for realistic order data."""
+
+    customer_id: str
+    items: list[OrderItemDict]
+    order_id: str  # Order identifier used by examples
+    total: float  # Order total amount used by examples
+
+
+class RealisticDataDict(TypedDict):
+    """Typed dictionary for complete realistic data."""
+
+    order: RealisticOrderDict
+    api_response: FlextTypes.Dict
+    user_registration: FlextTypes.Dict  # User registration data used by examples
 
 
 class ExampleScenarios:
@@ -39,9 +67,10 @@ class ExampleScenarios:
         return FlextTestsFactories.create_validation_test_data()
 
     @staticmethod
-    def realistic_data() -> FlextTypes.Dict:
+    def realistic_data() -> RealisticDataDict:
         """Return realistic integration-style data for advanced flows."""
-        return FlextTestsFactories.create_realistic_test_data()
+        # Type narrowing through casting for type safety
+        return cast("RealisticDataDict", FlextTestsFactories.create_realistic_test_data())
 
     @staticmethod
     def user(**overrides: object) -> FlextTypes.Dict:

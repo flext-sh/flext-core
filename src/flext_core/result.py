@@ -17,10 +17,10 @@ Usage:
     from flext_core import FlextResult
 
 
-    def validate_data(data: dict) -> FlextResult[dict]:
+    def validate_data(data: dict) -> FlextResult[FlextTypes.Dict]:
         if not data:
-            return FlextResult[dict].fail("Data cannot be empty")
-        return FlextResult[dict].ok(data)
+            return FlextResult[FlextTypes.Dict].fail("Data cannot be empty")
+        return FlextResult[FlextTypes.Dict].ok(data)
 
 
     result: FlextResult[object] = validate_data({"key": value})
@@ -42,7 +42,7 @@ import signal
 import time
 import types
 from collections.abc import Callable, Iterator, Sequence
-from typing import TYPE_CHECKING, TypeGuard, cast, overload, override
+from typing import TYPE_CHECKING, Self, TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import (
@@ -142,7 +142,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         )
 
         # Example 3: Dual API compatibility (ecosystem requirement)
-        result = FlextResult[dict].ok({"key": "value"})
+        result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
         if result.value != result.data:  # Both work (dual API)
             raise _get_exceptions().ValidationError(
                 "API inconsistency detected",
@@ -161,12 +161,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         with FlextResult.ok(resource).expect("Resource required") as r:
             r.perform_operations()
         ```
-        - [ ] Add performance metrics collection and telemetry
-        - [ ] Implement lazy evaluation for chained operations
-        - [ ] Add Result.from_exception() factory method
-        - [ ] Support error recovery strategies (fallback chains)
-        - [ ] Implement result caching for expensive operations
-        - [ ] Add validation DSL for common patterns
 
     Args:
         value: The success value wrapped in the result (if successful).
@@ -607,7 +601,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return self._error_data
 
     @classmethod
-    def ok(cls: type[FlextResult[T_co]], data: T_co) -> FlextResult[T_co]:
+    def ok(cls, data: T_co) -> Self:
         """Create a successful FlextResult wrapping the provided data.
 
         This is the primary way to create successful results throughout the
@@ -617,7 +611,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             data: The successful data to wrap in the result.
 
         Returns:
-            FlextResult[T_co]: A successful FlextResult containing the provided data.
+            Self: A successful FlextResult containing the provided data.
 
         Example:
             ```python
@@ -637,14 +631,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     # the instance property `success`. Use `ok()` instead.
 
     @classmethod
-    def fail[TResult](
-        cls: type[FlextResult[TResult]],
+    def fail(
+        cls,
         error: str | None,
         /,
         *,
         error_code: str | None = None,
         error_data: FlextTypes.Dict | None = None,
-    ) -> FlextResult[TResult]:
+    ) -> Self:
         """Create a failed FlextResult with structured error information.
 
         This is the primary way to create failed results throughout the FLEXT
@@ -657,7 +651,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             error_data: Optional additional error data/metadata for diagnostics.
 
         Returns:
-            FlextResult[TResult]: A failed FlextResult with the provided error information.
+            Self: A failed FlextResult with the provided error information.
 
         Example:
             ```python
@@ -682,7 +676,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             actual_error = error
 
         # Create a new instance with the correct type annotation
-        return FlextResult[TResult](
+        return cls(
             error=actual_error,
             error_code=error_code,
             error_data=error_data,
@@ -815,7 +809,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     @property
     def value_or_none(self) -> T_co | None:
         """Get value or None if failed."""
-        # ISSUE: Duplicates safe_unwrap_or_none class method - same functionality exists as static method
         return self._data if self.is_success else None
 
     def expect(self, message: str) -> T_co:
@@ -1157,12 +1150,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     # =========================================================================
 
     @classmethod
-    def safe_unwrap_or_none(cls, result: FlextResult[T_co]) -> T_co | None:
-        """Unwrap value or None if failed."""
-        # ISSUE: Duplicates value_or_none property - same functionality exists as instance property
-        return result.value if result.is_success else None
-
-    @classmethod
     def unwrap_or_raise(
         cls,
         result: FlextResult[TUtil],
@@ -1225,7 +1212,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 return api.get_data()
 
 
-            result = FlextResult[dict].safe_call(fetch_data)
+            result = FlextResult[FlextTypes.Dict].safe_call(fetch_data)
             if result.is_success:
                 data = result.unwrap()
             ```
@@ -1259,7 +1246,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         left_val = self.unwrap()
         right_val = other.unwrap()
         combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        return FlextResult[tuple[T_co, U]].ok(combined_tuple)
+        return FlextResult[tuple[T_co, U]].ok(combined_tuple)  # type: ignore[return-value]
 
     def cast_fail(self) -> FlextResult[object]:
         """Cast a failed result to a different type."""

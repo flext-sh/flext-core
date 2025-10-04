@@ -81,12 +81,6 @@ class FlextConstants:
         success_msg = FlextConstants.Messages.OPERATION_SUCCESS
         failure_msg = FlextConstants.Messages.OPERATION_FAILURE
         ```
-        - [ ] Implement constant deprecation warnings
-        - [ ] Add constant usage tracking and metrics
-        - [ ] Support constant documentation generation
-        - [ ] Implement constant type validation at runtime
-        - [ ] Add constant groups for feature flags
-        - [ ] Support constant internationalization (i18n)
 
     Attributes:
         CONSTANTS_VERSION (str): Constants module version.
@@ -172,7 +166,7 @@ class FlextConstants:
                 value = getattr(value, part)
             return value
         except AttributeError as e:
-            msg = f"Constant path '{key}' not found in {cls.__name__}"  # type: ignore[misc]
+            msg = f"Constant path '{key}' not found in FlextConstants"
             raise AttributeError(msg) from e
 
     class Core:
@@ -195,6 +189,9 @@ class FlextConstants:
         MAX_PORT: Final[int] = 65535  # Usage count: 4
         TOTAL_TIMEOUT: Final[int] = 60  # Usage count: 0
         DEFAULT_TIMEOUT: Final[int] = 30  # Usage count: 4
+        DEFAULT_MAX_RETRIES: Final[int] = (
+            3  # Default retry attempts for network operations
+        )
         DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10  # Usage count: 1
         MAX_CONNECTION_POOL_SIZE: Final[int] = 100  # Usage count: 1
 
@@ -334,24 +331,24 @@ class FlextConstants:
         Usage example:
             from flext_core import FlextConstants, FlextResult, FlextException
 
-            def process_user_input(data: dict) -> FlextResult[dict]:
+            def process_user_input(data: dict) -> FlextResult[FlextTypes.Dict]:
                 if not data:
-                    return FlextResult[dict].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         FlextConstants.Messages.NULL_DATA,
                         error_code="VALIDATION_ERROR"
                     )
 
                 if "name" not in data or not data["name"]:
-                    return FlextResult[dict].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         FlextConstants.Messages.VALUE_EMPTY,
                         error_code="VALIDATION_ERROR"
                     )
 
                 try:
                     processed = transform_data(data)
-                    return FlextResult[dict].ok(processed)
+                    return FlextResult[FlextTypes.Dict].ok(processed)
                 except Exception as e:
-                    return FlextResult[dict].fail(
+                    return FlextResult[FlextTypes.Dict].fail(
                         FlextConstants.Messages.OPERATION_FAILED,
                         error_code="OPERATION_ERROR"
                     )
@@ -376,6 +373,9 @@ class FlextConstants:
         UNKNOWN_ERROR: Final[str] = "Unknown error"  # Usage count: 0
         NULL_DATA: Final[str] = (
             "Data cannot be null"  # Usage count: 0  # Usage count: 0
+        )
+        REDACTED_SECRET: Final[str] = (
+            "***REDACTED***"  # For hiding sensitive data in logs
         )
 
     class Entities:
@@ -557,6 +557,7 @@ class FlextConstants:
         MYSQL_DEFAULT_PORT: Final[int] = 3306
         REDIS_DEFAULT_PORT: Final[int] = 6379
         MONGODB_DEFAULT_PORT: Final[int] = 27017
+        DATABASE_DEFAULT_PORT: Final[int] = 1521  # Oracle database default port
         DEFAULT_HTTP_PORT: Final[int] = 8080  # Alternative HTTP port
 
         # HTTP status code validation ranges
@@ -742,6 +743,12 @@ class FlextConstants:
         DEFAULT_INITIAL_DELAY_SECONDS: Final[float] = 1.0
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
         DEFAULT_FALLBACK_DELAY: Final[float] = 0.1
+
+        # Backward compatibility aliases for batch processing
+        DEFAULT_BATCH_SIZE: Final[int] = 1000  # Alias for BatchProcessing.DEFAULT_SIZE
+        MAX_BATCH_SIZE_VALIDATION: Final[int] = (
+            10000  # Maximum batch size for validation
+        )
 
         # Batch processing constants - consolidated from duplicates
         class BatchProcessing:

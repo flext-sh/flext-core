@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 """01 - FlextResult Fundamentals: Complete Railway-Oriented Programming.
 
-This example demonstrates the COMPLETE FlextResult[T] API - the foundation
+This example demonstrates the COMPLETE FlextCore.Result[T] API - the foundation
 for error handling across the entire FLEXT ecosystem. FlextResult provides
 railway-oriented programming that eliminates exceptions in business logic.
 
@@ -27,7 +27,7 @@ import warnings
 from collections.abc import Callable
 from typing import cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextCore, FlextResult
 
 from .example_scenarios import ExampleScenarios
 
@@ -41,12 +41,12 @@ class ComprehensiveResultService:
         _scenarios = ExampleScenarios
 
         @classmethod
-        def dataset(cls) -> FlextTypes.Dict:
+        def dataset(cls) -> FlextCore.Types.Dict:
             """Return a reusable dataset with users, configs, and fields."""
             return cls._scenarios.dataset()
 
         @classmethod
-        def validation_data(cls) -> FlextTypes.Dict:
+        def validation_data(cls) -> FlextCore.Types.Dict:
             """Return shared validation data used by multiple examples."""
             return cls._scenarios.validation_data()
 
@@ -68,12 +68,12 @@ class ComprehensiveResultService:
             cls,
             *,
             success: bool = True,
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextResult[FlextCore.Types.Dict]:
             """Return a user-specific ``FlextResult``."""
             return cls._scenarios.user_result(success=success)
 
         @classmethod
-        def metadata(cls) -> FlextTypes.Dict:
+        def metadata(cls) -> FlextCore.Types.Dict:
             """Return a structured error scenario from fixtures."""
             return cls._scenarios.metadata(tags=["result", "demo"])
 
@@ -86,10 +86,10 @@ class ComprehensiveResultService:
     def __init__(self) -> None:
         """Initialize with FlextLogger for structured logging."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
-        self._dataset: FlextTypes.Dict = self.Scenario.dataset()
-        self._validation: FlextTypes.Dict = self.Scenario.validation_data()
-        self._metadata: FlextTypes.Dict = self.Scenario.metadata()
+        self._logger = FlextCore.Logger(__name__)
+        self._dataset: FlextCore.Types.Dict = self.Scenario.dataset()
+        self._validation: FlextCore.Types.Dict = self.Scenario.validation_data()
+        self._metadata: FlextCore.Types.Dict = self.Scenario.metadata()
 
     # ========== BASIC OPERATIONS ==========
 
@@ -110,13 +110,13 @@ class ComprehensiveResultService:
         print(f"🔥 .safe_call() for exceptions: {from_exc}")
 
     def demonstrate_value_extraction(self) -> None:
-        """Show all ways to extract values from FlextResult."""
+        """Show all ways to extract values from FlextCore.Result."""
         print("\n=== Value Extraction ===")
 
         dataset = self._dataset
-        users_list = cast("FlextTypes.List", dataset["users"])
-        user_payload = cast("FlextTypes.Dict", users_list[0])
-        success = FlextResult[FlextTypes.Dict].ok(user_payload)
+        users_list = cast("FlextCore.Types.List", dataset["users"])
+        user_payload = cast("FlextCore.Types.Dict", users_list[0])
+        success = FlextResult[FlextCore.Types.Dict].ok(user_payload)
         failure = self.Scenario.result_failure("error")
 
         print(f".unwrap() on success: {success.unwrap()['email']}")
@@ -222,7 +222,7 @@ class ComprehensiveResultService:
         """Operations on collections of FlextResults."""
         print("\n=== Collection Operations ===")
 
-        results: list[FlextResult[FlextTypes.Dict]] = [
+        results: list[FlextResult[FlextCore.Types.Dict]] = [
             self.Scenario.user_result(success=True),
             self.Scenario.user_result(success=True),
             self.Scenario.user_result(success=True),
@@ -249,8 +249,10 @@ class ComprehensiveResultService:
         print("\n=== Validation Chaining ===")
 
         validation_data = self._validation
-        sample_email = cast("FlextTypes.List", validation_data["valid_emails"])[0]
-        invalid_email = cast("FlextTypes.List", validation_data["invalid_emails"])[0]
+        sample_email = cast("FlextCore.Types.List", validation_data["valid_emails"])[0]
+        invalid_email = cast("FlextCore.Types.List", validation_data["invalid_emails"])[
+            0
+        ]
 
         def validate_not_empty(value: object) -> FlextResult[str]:
             str_value = cast("str", value)
@@ -381,7 +383,7 @@ class ComprehensiveResultService:
 
         # OLD: Manual try/except (DEPRECATED)
         warnings.warn(
-            "Manual try/except is DEPRECATED! Use FlextResult.safe_call() instead.",
+            "Manual try/except is DEPRECATED! Use FlextCore.Result.safe_call() instead.",
             DeprecationWarning,
             stacklevel=2,
         )

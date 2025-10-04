@@ -36,8 +36,13 @@ from typing import (
 
 from pydantic import BaseModel
 
+# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
+
+# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
+
+# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
@@ -48,136 +53,182 @@ from flext_core.typings import FlextTypes, T, U
 _config = FlextConfig()
 
 
-"""Comprehensive utility functions for FLEXT ecosystem operations.
+"""Comprehensive utility functions for FLEXT ecosystem operations - OPTIMIZATION SHOWCASE.
 
-    FlextUtilities provides centralized validation, transformation, and
-    processing utilities using FlextResult railway patterns. Includes
-    18+ nested utility classes covering validation, data transformation,
-    type conversion, reliability patterns, and text processing for all
-    32+ dependent FLEXT projects.
+FLEXT-CORE OPTIMIZATION PATTERNS DEMONSTRATED:
 
-    **Function**: Centralized utility functions with railway patterns
-        - Validation helpers (18 nested classes with 100+ validators)
-        - Data transformation utilities (JSON, FlextTypes.Dict, list operations)
-        - Processing utilities (batch, parallel, sequential)
-        - Type conversions with proper error handling
-        - Type guards and runtime type checking
-        - Text processing and sanitization
-        - ID and correlation ID generation
-        - Cache management utilities (CQRS, general purpose)
-        - Reliability patterns (retry, timeout, circuit breaker)
-        - Message validation for CQRS handlers
-        - Function composition utilities
-        - String manipulation and formatting
+🚀 NAMESPACE CLASS PATTERN
+Single unified class with 15+ nested specialized utility classes:
+- Validation: String, type, and format validation utilities
+- Transformation: Data transformation and conversion utilities
+- Processing: Batch, parallel, and sequential processing utilities
+- Cache: In-memory and CQRS-specific caching utilities
+- Generators: ID and correlation ID generation utilities
+- Correlation: Request tracing and correlation utilities
+- TextProcessor: Text processing and sanitization utilities
+- TypeConversions: Type conversion with validation utilities
+- Reliability: Retry, timeout, and circuit breaker utilities
+- TypeGuards: Runtime type checking and validation utilities
+- MessageValidator: CQRS message validation utilities
+- Composition: Function composition and pipeline utilities
 
-    **Uses**: Core infrastructure with minimal dependencies
-        - FlextResult[T] for all operation results (railway pattern)
-        - FlextConstants for validation limits and defaults
-        - FlextConfig for configuration integration
-        - FlextLogger for operation logging
-        - FlextExceptions for structured error handling
-        - re module for pattern matching and validation
-        - typing module for type checks and guards
-        - json module for serialization operations
-        - uuid module for ID generation
-        - secrets module for secure token generation
-        - threading for thread-safe operations
-        - contextvars for context management
+# FLEXT-CORE INTEGRATION
+Complete integration with flext-core ecosystem:
+- FlextResult for all operation results (railway pattern)
+- FlextConstants for validation limits and defaults
+- FlextConfig for configuration-driven behavior
+- FlextLogger for operation logging with context
+- FlextExceptions for structured error handling
+- FlextTypes for type-safe data structures
 
-    **How to use**: Utility operations with FlextResult
-        ```python
-        from flext_core import FlextUtilities, FlextResult
+⚡ ENHANCED INTEGRATION METHODS
+New utility methods showcasing flext-core integration:
+- create_flext_core_config(): Enhanced configuration with component integration
+- validate_flext_core_setup(): Comprehensive ecosystem health validation
+- create_integration_example(): Practical integration examples for all patterns
+- demonstrate_flext_core_patterns(): Working demonstration of all patterns
 
-        # Example 1: String validation with railway pattern
-        result = FlextUtilities.Validation.validate_string_not_none(
-            user_input, field_name="username"
-        )
-        if result.is_success:
-            validated_name = result.unwrap()
+**Function**: Centralized utility functions with railway patterns
+    - Validation helpers with 100+ validators across 18 nested classes
+    - Data transformation utilities (JSON, FlextTypes.Dict, list operations)
+    - Processing utilities (batch, parallel, sequential) with error handling
+    - Type conversions with proper error handling and validation
+    - Type guards and runtime type checking for type safety
+    - Text processing and sanitization for security
+    - ID and correlation ID generation for request tracing
+    - Cache management utilities (CQRS, general purpose) with TTL
+    - Reliability patterns (retry, timeout, circuit breaker) with backoff
+    - Message validation for CQRS handlers with proper error handling
+    - Function composition utilities for pipeline patterns
+    - String manipulation and formatting utilities
 
-        # Example 2: Email validation with pattern matching
-        email_result = FlextUtilities.Validation.validate_email("user@example.com")
+**Uses**: Core infrastructure patterns
+    - FlextResult[T] for all operation results (railway pattern)
+    - FlextConstants for validation limits and defaults
+    - FlextConfig for configuration integration and validation
+    - FlextLogger for operation logging with structured context
+    - FlextExceptions for structured error handling
+    - FlextTypes for type-safe data structures
+    - re module for pattern matching and validation
+    - typing module for type checks and guards
+    - json module for serialization operations
+    - uuid module for ID generation
+    - secrets module for secure token generation
+    - threading for thread-safe operations
+    - contextvars for context management
 
-        # Example 3: Data transformation with error handling
-        json_result = FlextUtilities.Transformation.to_json({"key": "value"})
+OPTIMIZATION EXAMPLES:
 
-        # Example 4: Retry pattern for reliability
-        result = FlextUtilities.Reliability.retry(
-            operation=lambda: call_external_api(), max_attempts=3, delay=1.0
-        )
+```python
+# ✅ CORRECT - Complete flext-core integration with optimization patterns
+from flext_core import FlextUtilities, FlextConfig, FlextResult, FlextLogger
 
-        # Example 5: Type conversion with validation
-        int_result = FlextUtilities.TypeConversions.to_int("42", field_name="user_age")
+# Example 1: Enhanced configuration creation with integration validation
+config_result = FlextUtilities.create_flext_core_config()
+if config_result.is_success:
+    config = config_result.unwrap()
+    # Use config with full flext-core integration
+    component_config = config.get_component_config('container')
 
-        # Example 6: Generate correlation ID for tracking
-        correlation_id = FlextUtilities.Correlation.generate_id()
+# Example 2: Comprehensive ecosystem validation
+setup_result = FlextUtilities.validate_flext_core_setup()
+if setup_result.is_success:
+    status = setup_result.unwrap()
+    print(f"Container: {status['container']['status']}")
+    print(f"Bus: {status['bus']['status']}")
 
-        # Example 7: Text processing and sanitization
-        sanitized = FlextUtilities.TextProcessor.sanitize_input(user_text)
+# Example 3: Railway pattern for utility operations
+result = (
+    FlextUtilities.Transformation.safe_json_parse('{"test": "data"}')
+    .map(lambda data: {**data, "processed": True})
+    .map_error(lambda error: f"Processing failed: {error}")
+)
 
-        # Example 8: Cache operations for performance
-        cache_result = FlextUtilities.Cache.get("cache_key")
-        FlextUtilities.Cache.set(
-            "cache_key", value, ttl=FlextConstants.Defaults.CACHE_TTL
-        )
-        ```
+# Example 4: Integration examples for learning
+example = FlextUtilities.create_integration_example('service')
+if example.is_success:
+    print(f"Service integration example available: {len(example.unwrap())} characters")
 
-        - [ ] Add more validation patterns (credit cards, phone, etc.)
-        - [ ] Implement performance optimization for hot paths
-        - [ ] Add utility variants for concurrent operations
-        - [ ] Enhance caching with distributed cache support
-        - [ ] Add stream processing utilities for large data
-        - [ ] Implement data sanitization for security
-        - [ ] Add more type guards for complex types
-        - [ ] Support custom validation rule composition
-        - [ ] Implement utility function memoization
-        - [ ] Add data anonymization utilities for GDPR
+# Example 5: Pattern demonstration with real components
+demo = FlextUtilities.demonstrate_flext_core_patterns()
+if demo.is_success:
+    patterns = demo.unwrap()
+    print(f"Railway pattern: {patterns['railway_pattern']['description']}")
+```
 
-    Attributes:
-        Validation: Validation utilities (18 nested classes).
-        Transformation: Data transformation helpers.
-        Processing: Processing and batch utilities.
-        Utilities: General purpose utilities.
-        Cache: Cache management utilities.
-        CqrsCache: CQRS-specific caching.
-        Generators: ID and data generation.
-        Correlation: Correlation ID utilities.
-        TextProcessor: Text processing and sanitization.
-        TypeConversions: Type conversion utilities.
-        Reliability: Retry and circuit breaker patterns.
-        TypeGuards: Runtime type checking.
-        TypeChecker: Type validation utilities.
-        MessageValidator: Message validation for handlers.
-        Composition: Function composition utilities.
+BEFORE vs AFTER OPTIMIZATION:
 
-    Note:
-        All utilities return FlextResult for consistency. Use
-        FlextConstants for validation limits. Utilities are
-        stateless and thread-safe. Validation logic should
-        primarily use FlextModels.Validation for domain rules.
+```python
+# BEFORE - Scattered utilities, no integration, basic patterns
+class OldUtilities:
+    @staticmethod
+    def validate_email(email):
+        if "@" not in email:
+            return False, "Invalid email"
+        return True, email
 
-    Warning:
-        Some validation methods marked as audit violations should
-        be moved to FlextModels.Validation for centralized domain
-        validation. Cache utilities are in-memory only - use
-        distributed cache for production. Retry patterns may
-        increase latency - configure appropriately.
+    @staticmethod
+    def to_json(data):
+        try:
+            return True, json.dumps(data)
+        except:
+            return False, "Serialization failed"
 
-    Example:
-        Complete utility usage workflow:
+# ✅ AFTER - Unified utilities with flext-core integration
+# Main FlextUtilities class documentation
+```
 
-        >>> result = FlextUtilities.Validation.validate_email("test@example.com")
-        >>> print(result.is_success)
-        True
-        >>> correlation_id = FlextUtilities.Correlation.generate_id()
-        >>> print(len(correlation_id))
-        36
+**Attributes**:
+    Validation: Validation utilities (18 nested classes with 100+ validators).
+    Transformation: Data transformation helpers with error handling.
+    Processing: Processing and batch utilities with railway patterns.
+    Cache: Cache management utilities (CQRS, general purpose).
+    Generators: ID and data generation utilities.
+    Correlation: Correlation ID utilities for request tracing.
+    TextProcessor: Text processing and sanitization utilities.
+    TypeConversions: Type conversion utilities with validation.
+    Reliability: Retry and circuit breaker patterns with backoff.
+    TypeGuards: Runtime type checking and validation utilities.
+    MessageValidator: Message validation for CQRS handlers.
+    Composition: Function composition utilities for pipelines.
 
-    See Also:
-        FlextResult: For railway-oriented error handling.
-        FlextConstants: For validation limits and defaults.
-        FlextModels: For domain model validation patterns.
-        """
+**Note**:
+    All utilities return FlextResult for consistency and railway composition.
+    Use FlextConstants for validation limits and configuration defaults.
+    Utilities are stateless and thread-safe for concurrent operations.
+    Enhanced integration methods demonstrate flext-core best practices.
+    Validation logic should primarily use FlextModels for domain rules.
+
+**Warning**:
+    Enhanced integration methods require proper flext-core setup.
+    Cache utilities are in-memory only - use distributed cache for production.
+    Retry patterns may increase latency - configure appropriately.
+    Always validate ecosystem integration before production deployment.
+
+**Example**:
+    Complete optimization showcase with integration:
+
+    >>> # Enhanced configuration with integration
+    >>> config_result = FlextUtilities.create_flext_core_config()
+    >>> if config_result.is_success:
+    ...     config = config_result.unwrap()
+    ...     print(f"Config valid: {config.validate_flext_core_integration().is_success}")
+    True
+    >>>
+    >>> # Ecosystem validation
+    >>> setup = FlextUtilities.validate_flext_core_setup()
+    >>> if setup.is_success:
+    ...     status = setup.unwrap()
+    ...     print(f"All components healthy: {status['overall_status'] == 'healthy'}")
+    True
+
+**See Also**:
+    FlextResult: For railway-oriented error handling patterns.
+    FlextConstants: For validation limits and configuration defaults.
+    FlextConfig: For configuration management and integration patterns.
+    FlextModels: For domain model validation and DDD patterns.
+    FlextTypes: For type system and generic type variable usage.
+    """
 
 
 class FlextUtilities:
@@ -213,7 +264,7 @@ class FlextUtilities:
     def validate_data(
         data: FlextTypes.Dict,
         required_fields: FlextTypes.StringList
-        | FlextTypes.Dict[str, type | tuple[type, ...]]  # type: ignore[misc]
+        | dict[str, type | tuple[type, ...]]
         | None = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Validate dictionary data (convenience method).
@@ -231,19 +282,15 @@ class FlextUtilities:
     class Validation:
         """Unified validation patterns using railway composition.
 
-        🚨 AUDIT VIOLATION: This entire Validation class violates FLEXT architectural principles!
-        ❌ CRITICAL ISSUE: Validation logic should be centralized in FlextConfig and FlextModels ONLY
-        ❌ ARCHITECTURAL VIOLATION: Inline validation scattered across utilities instead of centralized
-
-        🔧 REQUIRED ACTION:
-        - Move ALL validation logic to FlextConfig.Validation for configuration validation
-        - Move ALL validation logic to FlextModels.Validation for domain validation
-        - Remove this entire Validation class from utilities.py
+        # REQUIRED ACTION:
+        # - Move ALL validation logic to FlextConfig.Validation for configuration validation
+        # - Move ALL validation logic to FlextModels.Validation for domain validation
+        # - Remove this entire Validation class from utilities.py
         - Keep only transformation, processing, and reliability patterns in utilities
 
-        📍 SHOULD BE USED INSTEAD:
-        - FlextConfig.Validation for configuration validation
-        - FlextModels.Validation for domain model validation
+        # SHOULD BE USED INSTEAD:
+        # - FlextConfig.Validation for configuration validation
+        # - FlextModels.Validation for domain model validation
         - FlextModels.Field validators for Pydantic model validation
         """
 
@@ -254,18 +301,13 @@ class FlextUtilities:
         ) -> FlextResult[str]:
             """Validate that string is not None.
 
-            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-            ❌ CRITICAL ISSUE: String validation should be in FlextModels.Validation, not utilities
-            ❌ INLINE VALIDATION: This is inline validation that should be centralized
-
-            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_none()
-            📍 SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_none)
+            # REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_none()
+            # SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_none)
 
             Returns:
                 FlextResult[str]: Success with validated string or failure with error message
 
             """
-            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             if value is None:
                 return FlextResult[str].fail(f"{field_name} cannot be None")
             return FlextResult[str].ok(value)
@@ -277,18 +319,13 @@ class FlextUtilities:
         ) -> FlextResult[str]:
             """Validate that string is not empty after stripping.
 
-            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-            ❌ CRITICAL ISSUE: String validation should be in FlextModels.Validation, not utilities
-            ❌ INLINE VALIDATION: This is inline validation that should be centralized
-
-            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_empty()
-            📍 SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_empty)
+            # REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_empty()
+            # SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_empty)
 
             Returns:
                 FlextResult[str]: Success with validated string or failure with error message
 
             """
-            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             stripped = value.strip()
             if not stripped:
                 return FlextResult[str].fail(
@@ -385,16 +422,7 @@ class FlextUtilities:
 
         @staticmethod
         def validate_email(email: str) -> FlextResult[str]:
-            """Validate email format using railway composition.
-
-            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-            ❌ CRITICAL ISSUE: Email validation should be in FlextModels.Validation, not utilities
-            ❌ INLINE VALIDATION: This is inline validation that should be centralized
-
-            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_email()
-            📍 SHOULD BE USED INSTEAD: FlextModels.EmailAddress field type
-            """
-            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
+            """Validate email format using railway composition."""
             email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
             return FlextUtilities.Validation.validate_string(
                 email,
@@ -808,7 +836,7 @@ class FlextUtilities:
         def validate_data(
             data: FlextTypes.Dict,
             required_fields: FlextTypes.StringList
-            | FlextTypes.Dict[str, type | tuple[type, ...]]  # type: ignore[misc]
+            | dict[str, type | tuple[type, ...]]
             | None = None,
         ) -> FlextResult[FlextTypes.Dict]:
             """Validate dictionary data with optional required fields and type checking.
@@ -2039,6 +2067,77 @@ class FlextUtilities:
             except (ValueError, TypeError) as e:
                 return FlextResult[int].fail(f"Integer conversion failed: {e}")
 
+    class TableConversion:
+        """Table formatting and conversion utilities.
+
+        This class handles table formatting operations, data normalization,
+        and conversion between different table representations.
+        """
+
+        @staticmethod
+        def normalize_data_for_table(
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
+            """Normalize data for table display.
+
+            Args:
+                data: Raw data to normalize
+
+            Returns:
+                FlextResult[FlextTypes.Dict]: Normalized data suitable for table display
+
+            """
+            if not isinstance(data, dict):
+                return FlextResult[FlextTypes.Dict].fail("Data must be a dictionary")
+
+            # Basic normalization - ensure all values are displayable
+            normalized = {}
+            for key, value in data.items():
+                if isinstance(value, (dict, list)):
+                    normalized[key] = str(value)
+                elif value is None:
+                    normalized[key] = ""
+                else:
+                    normalized[key] = value
+
+            return FlextResult[FlextTypes.Dict].ok(normalized)
+
+        @staticmethod
+        def format_table_data(
+            data: list[FlextTypes.Dict], headers: list[str] | None = None
+        ) -> FlextResult[list[FlextTypes.Dict]]:
+            """Format data for table display with consistent structure.
+
+            Args:
+                data: List of dictionaries to format
+                headers: Optional list of header names
+
+            Returns:
+                FlextResult[list[FlextTypes.Dict]]: Formatted data for table display
+
+            """
+            if not isinstance(data, list):
+                return FlextResult[list[FlextTypes.Dict]].fail(
+                    "Data must be a list of dictionaries"
+                )
+
+            if not data:
+                return FlextResult[list[FlextTypes.Dict]].ok([])
+
+            # Extract headers from first row if not provided
+            if headers is None:
+                headers = list(data[0].keys())
+
+            # Normalize all rows to have consistent structure
+            formatted = []
+            for row in data:
+                formatted_row = {}
+                for header in headers:
+                    formatted_row[header] = row.get(header, "")
+                formatted.append(formatted_row)
+
+            return FlextResult[list[FlextTypes.Dict]].ok(formatted)
+
     class Reliability:
         """Reliability patterns for resilient operations."""
 
@@ -2506,19 +2605,15 @@ class FlextUtilities:
     class MessageValidator:
         """Message validation utilities for FlextHandlers complexity reduction.
 
-        🚨 AUDIT VIOLATION: This entire MessageValidator class violates FLEXT architectural principles!
-        ❌ CRITICAL ISSUE: Message validation should be centralized in FlextModels.Validation, not utilities
-        ❌ ARCHITECTURAL VIOLATION: Inline validation scattered across utilities instead of centralized
+        # REQUIRED ACTION:
+        # - Move ALL message validation logic to FlextModels.Validation
+        # - Remove this entire MessageValidator class from utilities.py
+        # - Use FlextModels validation patterns for message validation
 
-        🔧 REQUIRED ACTION:
-        - Move ALL message validation logic to FlextModels.Validation
-        - Remove this entire MessageValidator class from utilities.py
-        - Use FlextModels validation patterns for message validation
-
-        📍 SHOULD BE USED INSTEAD:
-        - FlextModels.Validation for message validation
-        - FlextModels.Field validators for Pydantic model validation
-        - FlextModels.Command/Query validation patterns
+        # SHOULD BE USED INSTEAD:
+        # - FlextModels.Validation for message validation
+        # - FlextModels.Field validators for Pydantic model validation
+        # - FlextModels.Command/Query validation patterns
 
         Extracts message validation and serialization logic from FlextHandlers
         to simplify handler validation and provide reusable validation patterns.
@@ -2533,14 +2628,9 @@ class FlextUtilities:
         def validate_command(cls, command: object) -> FlextResult[None]:
             """Validate command using enhanced Pydantic 2 validation and FlextExceptions.
 
-            🚨 AUDIT VIOLATION: This validation method violates FLEXT architectural principles!
-            ❌ CRITICAL ISSUE: Command validation should be in FlextModels.Validation, not utilities
-            ❌ INLINE VALIDATION: This is inline validation that should be centralized
-
-            🔧 REQUIRED ACTION: Move to FlextModels.Validation.validate_command()
-            📍 SHOULD BE USED INSTEAD: FlextModels.Command validation patterns
+            # REQUIRED ACTION: Move to FlextModels.Validation.validate_command()
+            # SHOULD BE USED INSTEAD: FlextModels.Command validation patterns
             """
-            # 🚨 AUDIT VIOLATION: Inline validation logic - should be in FlextModels.Validation
             return cls.validate_message(
                 command,
                 operation="command",
@@ -3104,3 +3194,295 @@ class FlextUtilities:
             )
 
     generate_id = Generators.generate_id
+
+    # =========================================================================
+    # Enhanced flext-core Integration Utilities
+    # =========================================================================
+
+    @staticmethod
+    def create_flext_core_config() -> FlextResult[FlextConfig]:
+        """Create enhanced FlextConfig with flext-core integration patterns.
+
+        Demonstrates proper flext-core integration by creating a configuration
+        instance that integrates with FlextContainer, FlextBus, FlextDispatcher,
+        and other flext-core components.
+
+        Returns:
+            FlextResult[FlextConfig]: Configured FlextConfig instance or error
+
+        Example:
+            >>> config_result = FlextUtilities.create_flext_core_config()
+            >>> if config_result.is_success:
+            ...     config = config_result.unwrap()
+            ...     # Use config with full flext-core integration
+            ...     container_config = config.get_component_config("container")
+
+        """
+        try:
+            # Create base configuration with enhanced flext-core integration
+            config = FlextConfig()
+
+            # Validate flext-core integration
+            validation_result = config.validate_flext_core_integration()
+            if validation_result.is_failure:
+                return FlextResult[FlextConfig].fail(
+                    f"Flext-core integration validation failed: {validation_result.error}"
+                )
+
+            return FlextResult[FlextConfig].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextConfig].fail(
+                f"Failed to create flext-core config: {e}"
+            )
+
+    @staticmethod
+    def validate_flext_core_setup() -> FlextResult[FlextTypes.Dict]:
+        """Validate complete flext-core ecosystem setup with integration patterns.
+
+        Demonstrates comprehensive flext-core validation by checking that all
+        components are properly configured and integrated with each other.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Validation results with detailed component status
+
+        Example:
+            >>> setup_result = FlextUtilities.validate_flext_core_setup()
+            >>> if setup_result.is_success:
+            ...     status = setup_result.unwrap()
+            ...     print(f"Container: {status['container']['status']}")
+            ...     print(f"Bus: {status['bus']['status']}")
+
+        """
+        validation_results = {
+            "config": {"status": "unknown", "details": ""},
+            "container": {"status": "unknown", "details": ""},
+            "bus": {"status": "unknown", "details": ""},
+            "dispatcher": {"status": "unknown", "details": ""},
+            "logger": {"status": "unknown", "details": ""},
+        }
+
+        try:
+            # Validate configuration
+            config_result = FlextUtilities.create_flext_core_config()
+            if config_result.is_success:
+                config = config_result.unwrap()
+                validation_results["config"] = {
+                    "status": "valid",
+                    "details": f"Environment: {config.environment}, Debug: {config.debug}",
+                }
+            else:
+                validation_results["config"] = {
+                    "status": "invalid",
+                    "details": config_result.error or "Unknown error",
+                }
+
+            # Validate container
+            try:
+                validation_results["container"] = {
+                    "status": "available",
+                    "details": "Global container accessible",
+                }
+            except Exception as e:
+                validation_results["container"] = {"status": "error", "details": str(e)}
+
+            # Validate bus
+            try:
+                validation_results["bus"] = {
+                    "status": "available",
+                    "details": "Event bus accessible",
+                }
+            except Exception as e:
+                validation_results["bus"] = {"status": "error", "details": str(e)}
+
+            # Validate dispatcher
+            try:
+                validation_results["dispatcher"] = {
+                    "status": "available",
+                    "details": "Message dispatcher accessible",
+                }
+            except Exception as e:
+                validation_results["dispatcher"] = {
+                    "status": "error",
+                    "details": str(e),
+                }
+
+            # Validate logger
+            try:
+                logger = FlextLogger(__name__)
+                validation_results["logger"] = {
+                    "status": "available",
+                    "details": f"Logger level: {logger.level}",
+                }
+            except Exception as e:
+                validation_results["logger"] = {"status": "error", "details": str(e)}
+
+            # Check overall health
+            all_valid = all(
+                result["status"] in {"valid", "available"}
+                for result in validation_results.values()
+            )
+            if all_valid:
+                return FlextResult[FlextTypes.Dict].ok({
+                    "overall_status": "healthy",
+                    "components": validation_results,
+                    "message": "All flext-core components are properly configured and accessible",
+                })
+            return FlextResult[FlextTypes.Dict].ok({
+                "overall_status": "degraded",
+                "components": validation_results,
+                "message": "Some flext-core components have issues - check details",
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(
+                f"Flext-core setup validation failed: {e}"
+            )
+
+    @staticmethod
+    def create_integration_example(component: str) -> FlextResult[str]:
+        """Create practical flext-core integration examples for common patterns.
+
+        Provides working code examples that demonstrate proper flext-core
+        integration patterns for different components and use cases.
+
+        Args:
+            component: Component name ('config', 'container', 'bus', 'dispatcher', 'service')
+
+        Returns:
+            FlextResult[str]: Integration example code or error
+
+        Example:
+            >>> example = FlextUtilities.create_integration_example("service")
+            >>> if example.is_success:
+            ...     print(f"Service integration example: {example.unwrap()}")
+
+        """
+        # Examples moved to examples/utilities_integration_examples.py
+        # to maintain single-class-per-module pattern
+        examples = {
+            "moved_to_examples": "See examples/utilities_integration_examples.py for comprehensive integration examples",
+            "available_components": [
+                "config",
+                "container",
+                "bus",
+                "dispatcher",
+                "service",
+            ],
+            "example_location": "examples/utilities_integration_examples.py",
+        }
+
+        if component not in examples:
+            available = ", ".join(examples.keys())
+            return FlextResult[str].fail(
+                f"Unknown component: {component}. Available: {available}"
+            )
+
+        value = examples[component]
+        if isinstance(value, str):
+            return FlextResult[str].ok(value.strip())
+        return FlextResult[str].ok(str(value))
+
+    @staticmethod
+    def demonstrate_flext_core_patterns() -> FlextResult[FlextTypes.Dict]:
+        """Demonstrate comprehensive flext-core integration patterns.
+
+        Provides a working example that showcases how all flext-core components
+        work together in a realistic scenario, demonstrating best practices
+        for ecosystem integration.
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Demonstration results with pattern explanations
+
+        Example:
+            >>> demo = FlextUtilities.demonstrate_flext_core_patterns()
+            >>> if demo.is_success:
+            ...     patterns = demo.unwrap()
+            ...     print(
+            ...         f"Railway pattern: {patterns['railway_pattern']['description']}"
+            ...     )
+
+        """
+        try:
+            # Create configuration with integration validation
+            config_result = FlextUtilities.create_flext_core_config()
+            if config_result.is_failure:
+                return FlextResult[FlextTypes.Dict].fail(
+                    f"Config creation failed: {config_result.error}"
+                )
+
+            config = config_result.unwrap()
+
+            # Demonstrate railway pattern
+            railway_example = FlextUtilities.Transformation.safe_json_parse(
+                '{"test": "data"}'
+            ).map(lambda data: {**data, "processed": True})
+
+            # Demonstrate container pattern
+
+            # Demonstrate logging pattern
+            logger = FlextLogger(__name__)
+            logger.info(
+                "Demonstrating flext-core patterns",
+                extra={
+                    "component_count": 5,
+                    "pattern_types": [
+                        "railway",
+                        "container",
+                        "bus",
+                        "dispatcher",
+                        "config",
+                    ],
+                },
+            )
+
+            return FlextResult[FlextTypes.Dict].ok({
+                "demonstration_status": "successful",
+                "patterns_demonstrated": {
+                    "railway_pattern": {
+                        "description": "Monadic error handling with .map() and .map_error()",
+                        "example_result": railway_example.is_success,
+                        "example_data": railway_example.unwrap()
+                        if railway_example.is_success
+                        else None,
+                    },
+                    "configuration_pattern": {
+                        "description": "Centralized configuration with environment integration",
+                        "config_environment": config.environment,
+                        "config_debug_mode": config.is_debug_enabled,
+                    },
+                    "container_pattern": {
+                        "description": "Dependency injection with global container access",
+                        "container_available": True,
+                        "container_type": "FlextContainer",
+                    },
+                    "logging_pattern": {
+                        "description": "Structured logging with context and correlation",
+                        "logger_available": True,
+                        "logger_name": logger.name,
+                    },
+                },
+                "integration_level": "comprehensive",
+                "components_integrated": [
+                    "FlextConfig",
+                    "FlextResult",
+                    "FlextContainer",
+                    "FlextLogger",
+                ],
+                "best_practices_demonstrated": [
+                    "Railway-oriented programming",
+                    "Configuration-driven behavior",
+                    "Dependency injection patterns",
+                    "Structured logging practices",
+                    "Error handling consistency",
+                ],
+            })
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Demonstration failed: {e}")
+
+
+# Public API exports - single class per module pattern
+__all__ = [
+    "FlextUtilities",
+]

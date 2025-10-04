@@ -241,7 +241,7 @@ if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
     return FlextResult[str].fail("Name too short")
 
 # Centralized error messages
-return FlextResult[dict].fail(
+return FlextResult[FlextTypes.Dict].fail(
     FlextConstants["Messages.INVALID_EMAIL"],
     error_code="VALIDATION_ERROR"
 )

@@ -200,7 +200,7 @@ def complex_function(
     param1: str,
     param2: int,
     optional: bool = False
-) -> FlextResult[dict]:
+) -> FlextResult[FlextTypes.Dict]:
     """Brief description of function purpose.
 
     Longer description explaining behavior, edge cases,
