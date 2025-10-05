@@ -35,14 +35,18 @@ class TestFlextExceptions:
         def test_handler(exc: Exception) -> FlextResult[str]:
             return FlextResult[str].ok(f"handled_{type(exc).__name__}")
 
-        result = exceptions.register_handler(ValueError, test_handler)
+        result: FlextResult[object] = exceptions.register_handler(
+            ValueError, test_handler
+        )
         assert result.is_success
 
     def test_exceptions_register_handler_invalid(self) -> None:
         """Test exception handler registration with invalid parameters."""
         exceptions = FlextExceptions()
 
-        result = exceptions.register_handler(cast("type[Exception]", ""), object())
+        result: FlextResult[object] = exceptions.register_handler(
+            cast("type[Exception]", ""), object()
+        )
         assert result.is_failure
 
     def test_exceptions_unregister_handler(self) -> None:
@@ -53,7 +57,9 @@ class TestFlextExceptions:
             return FlextResult[str].ok(f"handled_{type(exc).__name__}")
 
         exceptions.register_handler(ValueError, test_handler)
-        result = exceptions.unregister_handler(ValueError, test_handler)
+        result: FlextResult[object] = exceptions.unregister_handler(
+            ValueError, test_handler
+        )
         assert result.is_success
 
     def test_exceptions_unregister_nonexistent_handler(self) -> None:
@@ -63,7 +69,9 @@ class TestFlextExceptions:
         def test_handler(exc: Exception) -> FlextResult[str]:
             return FlextResult[str].ok(f"handled_{type(exc).__name__}")
 
-        result = exceptions.unregister_handler(ValueError, test_handler)
+        result: FlextResult[object] = exceptions.unregister_handler(
+            ValueError, test_handler
+        )
         assert result.is_failure
 
     def test_exceptions_handle_exception(self) -> None:
@@ -76,7 +84,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
         assert isinstance(result.data, str) and "handled_ValueError" in result.data
 
@@ -85,7 +93,7 @@ class TestFlextExceptions:
         exceptions = FlextExceptions()
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "No handler found" in result.error
 
@@ -99,7 +107,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, failing_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "Handler failed" in result.error
 
@@ -114,7 +122,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, exception_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "Handler exception" in result.error
 
@@ -129,7 +137,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, retry_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
         # The current implementation returns a single result when there's only one handler
         assert isinstance(result.data, str)
@@ -146,7 +154,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, timeout_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "timeout" in result.error.lower()
 
@@ -162,7 +170,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, validated_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
 
     def test_exceptions_handle_exception_with_middleware(self) -> None:
@@ -183,7 +191,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
         assert middleware_called is True
 
@@ -197,7 +205,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
 
     def test_exceptions_handle_exception_with_metrics(self) -> None:
@@ -210,7 +218,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
 
         # Check metrics
@@ -231,7 +239,9 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc, correlation_id="test_corr_123")
+        result: FlextResult[object] = exceptions.handle_exception(
+            exc, correlation_id="test_corr_123"
+        )
         assert result.is_success
 
     def test_exceptions_handle_exception_with_batch(self) -> None:
@@ -249,7 +259,7 @@ class TestFlextExceptions:
             ValueError("Test error 3"),
         ]
 
-        results = exceptions.handle_batch(exceptions_list)
+        results: list[FlextResult[object]] = exceptions.handle_batch(exceptions_list)
         assert len(results) == 3
         assert all(result.is_success for result in results)
 
@@ -270,7 +280,7 @@ class TestFlextExceptions:
         ]
 
         start_time = time.time()
-        results = exceptions.handle_parallel(exceptions_list)
+        results: list[FlextResult[object]] = exceptions.handle_parallel(exceptions_list)
         end_time = time.time()
 
         assert len(results) == 3
@@ -299,7 +309,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None and "Circuit breaker is open" in result.error
@@ -316,12 +326,12 @@ class TestFlextExceptions:
         # Execute handlers within rate limit
         for i in range(2):
             exc = ValueError(f"Test error {i}")
-            result = exceptions.handle_exception(exc)
+            result: FlextResult[object] = exceptions.handle_exception(exc)
             assert result.is_success
 
         # Exceed rate limit
         exc = ValueError("Test error 3")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "rate limit" in result.error.lower()
 
@@ -336,11 +346,11 @@ class TestFlextExceptions:
 
         # First handling should cache result
         exc = ValueError("Test error")
-        result1 = exceptions.handle_exception(exc)
+        result1: FlextResult[object] = exceptions.handle_exception(exc)
         assert result1.is_success
 
         # Second handling should use cache
-        result2 = exceptions.handle_exception(exc)
+        result2: FlextResult[object] = exceptions.handle_exception(exc)
         assert result2.is_success
         assert result1.data == result2.data
 
@@ -354,7 +364,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
 
         # Check audit log
@@ -374,7 +384,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
 
         # Check performance metrics
@@ -393,7 +403,7 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, error_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "Handler error" in result.error
 
@@ -407,14 +417,14 @@ class TestFlextExceptions:
         exceptions.register_handler(ValueError, test_handler)
 
         exc = ValueError("Test error")
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_success
 
         # Cleanup
         exceptions.cleanup()
 
         # After cleanup, handlers should be cleared
-        result = exceptions.handle_exception(exc)
+        result: FlextResult[object] = exceptions.handle_exception(exc)
         assert result.is_failure
         assert result.error is not None and "No handler found" in result.error
 
@@ -482,14 +492,14 @@ class TestFlextExceptions:
 
         exceptions.register_handler(ValueError, test_handler)
 
-        results = []
+        results: list[FlextResult[object]] = []
 
         def handle_exception(thread_id: int) -> None:
             exc = ValueError(f"Test error {thread_id}")
             result = exceptions.handle_exception(exc)
             results.append(result)
 
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(10):
             thread = threading.Thread(target=handle_exception, args=(i,))
             threads.append(thread)
@@ -546,7 +556,7 @@ class TestFlextExceptions:
 
         exceptions.register_handler(ValueError, test_handler)
 
-        result = exceptions.validate()
+        result: FlextResult[object] = exceptions.validate()
         assert result.is_success
 
     def test_exceptions_export_import(self) -> None:
@@ -566,7 +576,7 @@ class TestFlextExceptions:
 
         # Create new exceptions and import configuration
         new_exceptions = FlextExceptions()
-        result = new_exceptions.import_config(config)
+        result: FlextResult[object] = new_exceptions.import_config(config)
         assert result.is_success
 
         # Verify config was imported (handlers are not preserved in export/import)

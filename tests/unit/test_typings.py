@@ -7,7 +7,6 @@ TypeVars, type aliases, and FlextTypes namespace work correctly.
 from collections import OrderedDict
 
 from flext_core import FlextTypes
-from flext_core.models import FlextModels
 from flext_core.typings import (
     Command,
     E,
@@ -108,7 +107,7 @@ class TestRateLimiterState:
     def test_ratelimiter_state_structure(self) -> None:
         """Test RateLimiterState has correct structure."""
         # Create an instance
-        state: FlextModels.RateLimiterState = {
+        state: FlextTypes.Reliability.RateLimiterState = {
             "requests": [1.0, 2.0, 3.0],
             "last_reset": 1234567890.0,
         }

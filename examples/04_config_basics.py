@@ -33,12 +33,9 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
     """Service demonstrating ALL FlextConfig patterns and methods."""
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        manager = FlextCore.Container.ensure_global_manager()
-        self._container = manager.get_or_create()
-        self._logger = FlextCore.Logger(__name__)
-        self._scenarios = ExampleScenarios
+        self._scenarios = ExampleScenarios()
         self._reference_config = self._scenarios.config()
         self._production_config = self._scenarios.config(production=True)
         self._metadata = self._scenarios.metadata(tags=["config", "demo"])

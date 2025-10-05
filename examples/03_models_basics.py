@@ -434,16 +434,16 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
             print(f"✅ Email created: {email.address}")
 
         order_data: RealisticOrderDict = self._realistic["order"]
-        money = Money(amount=order_data["total"], currency="USD")
+        money = Money(amount=Decimal(order_data["total"]), currency="USD")
         print(f"Money: ${money.amount} {money.currency}")
 
-        user_reg = cast("FlextCore.Types.Dict", self._realistic["user_registration"])
+        user_reg = self._realistic["user_registration"]
         address_data = cast("FlextCore.Types.Dict", user_reg["address"])
         address = Address(
-            street=str(address_data["street"]),
-            city=str(address_data["city"]),
-            state=str(address_data["state"]),
-            zip_code=str(address_data["zip"]),
+            street=str(address_data.get("street", "")),
+            city=str(address_data.get("city", "")),
+            state=str(address_data.get("state", "")),
+            zip_code=str(address_data.get("zip", "")),
         )
         print(f"Address:\n{address.format_for_shipping()}")
 
@@ -464,8 +464,8 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
             else order_data["items"][1]
         )
 
-        money1 = Money(amount=first_item["price"], currency="USD")
-        money2 = Money(amount=second_item["price"], currency="USD")
+        money1 = Money(amount=Decimal(first_item["price"]), currency="USD")
+        money2 = Money(amount=Decimal(second_item["price"]), currency="USD")
 
         result = money1.add(money2)
         if result.is_success:
@@ -492,7 +492,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
         product = Product(
             id=str(product_data["product_id"]),
             name=str(product_data["name"]),
-            price=Money(amount=product_data["price"], currency="USD"),
+            price=Money(amount=Decimal(product_data["price"]), currency="USD"),
             sku=str(product_data["product_id"])[:8],
             stock=10,
         )
@@ -520,14 +520,14 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
         product1 = Product(
             id=str(base_item["product_id"]),
             name=str(base_item["name"]),
-            price=Money(amount=base_item["price"], currency="USD"),
+            price=Money(amount=Decimal(base_item["price"]), currency="USD"),
             sku=str(base_item["product_id"])[:8],
         )
 
         product2 = Product(
             id=product1.id,
             name=f"{base_item['name']} Variant",
-            price=Money(amount=base_item["price"], currency="USD"),
+            price=Money(amount=Decimal(base_item["price"]), currency="USD"),
             sku=f"{product1.sku}-VAR",
         )
 
@@ -537,7 +537,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
         product3 = Product(
             id=str(uuid4()),
             name=str(alt_item["name"]),
-            price=Money(amount=alt_item["price"], currency="USD"),
+            price=Money(amount=Decimal(alt_item["price"]), currency="USD"),
             sku=str(uuid4())[:8],
         )
 
@@ -561,7 +561,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
             product = Product(
                 id=str(item["product_id"]),
                 name=str(item["name"]),
-                price=Money(amount=item["price"], currency="USD"),
+                price=Money(amount=Decimal(item["price"]), currency="USD"),
                 sku=str(item["product_id"])[:8],
                 stock=max(item.get("quantity", 1) * 5, 5),
             )
@@ -587,7 +587,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
 
         users_list = cast("list", self._dataset["users"])
         user_data = cast("FlextCore.Types.Dict", users_list[0])
-        user_reg2 = cast("FlextCore.Types.Dict", self._realistic["user_registration"])
+        user_reg2 = self._realistic["user_registration"]
         address_data2 = cast("FlextCore.Types.Dict", user_reg2["address"])
 
         customer = Customer(
@@ -611,7 +611,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
         )
 
         purchase_amount = Money(
-            amount=self._realistic["order"]["total"],
+            amount=Decimal(self._realistic["order"]["total"]),
             currency="USD",
         )
         can_purchase = customer.can_purchase(purchase_amount)
@@ -645,11 +645,11 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
                     product_id=str(item["product_id"]),
                     product_name=str(item["name"]),
                     quantity=int(item["quantity"]),
-                    unit_price=Money(amount=item["price"], currency="USD"),
+                    unit_price=Money(amount=Decimal(item["price"]), currency="USD"),
                 )
                 for item in order_data["items"]
             ],
-            total_amount=Money(amount=order_data["total"], currency="USD"),
+            total_amount=Money(amount=Decimal(order_data["total"]), currency="USD"),
         )
 
         order_dict = order.model_dump()

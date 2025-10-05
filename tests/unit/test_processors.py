@@ -59,9 +59,6 @@ class TestFlextProcessors:
         """Test unregistering non-existent processor."""
         processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextResult[str]:
-            return FlextResult[str].ok(f"processed_{_data}")
-
         result = processors.unregister("nonexistent_processor")
         assert result.is_failure
 
@@ -429,13 +426,13 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        results = []
+        results: list[FlextResult[object]] = []
 
         def process_data(thread_id: int) -> None:
             result = processors.process("test_processor", f"data_{thread_id}")
             results.append(result)
 
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(10):
             thread = threading.Thread(target=process_data, args=(i,))
             threads.append(thread)

@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Never, cast
 
-from flext_core import FlextConstants, FlextContainer, FlextTypes
+from flext_core import FlextConstants, FlextContainer, FlextResult, FlextTypes
 
 
 class TestFlextContainer:
@@ -27,6 +27,7 @@ class TestFlextContainer:
 
         class TestService:
             def __init__(self) -> None:
+                super().__init__()
                 self.value = "test"
 
         service_instance = TestService()
@@ -40,10 +41,12 @@ class TestFlextContainer:
         # Register a dependency
         class Dependency:
             def __init__(self) -> None:
+                super().__init__()
                 self.name = "dependency"
 
         class Service:
             def __init__(self, dependency: Dependency) -> None:
+                super().__init__()
                 self.dependency = dependency
                 self.initialized = True
 
@@ -65,10 +68,12 @@ class TestFlextContainer:
         # Register a dependency
         class Dependency:
             def __init__(self) -> None:
+                super().__init__()
                 self.name = "dependency"
 
         class Service:
             def __init__(self, dependency: Dependency) -> None:
+                super().__init__()
                 self.dependency = dependency
                 self.initialized = True
 
@@ -92,6 +97,7 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self, _missing_dep: object) -> None:
+                super().__init__()
                 self.initialized = True
 
         # Auto-wire service with missing dependency
@@ -190,7 +196,8 @@ class TestFlextContainer:
         get_result = container.get("service1")
         assert get_result.is_success
         assert isinstance(get_result.value, dict)
-        assert get_result.value["key"] == "original"
+        value = cast("FlextTypes.Dict", get_result.value)
+        assert value["key"] == "original"
 
     def test_container_batch_register_empty(self) -> None:
         """Test batch registration with empty dict."""
@@ -244,10 +251,13 @@ class TestFlextContainer:
             return {"created": "by_factory"}
 
         # Service doesn't exist, should create using factory
-        result = container.get_or_create("test_service", factory)
+        result: FlextResult[FlextTypes.StringDict] = container.get_or_create(
+            "test_service", factory
+        )
         assert result.is_success
         assert isinstance(result.value, dict)
-        assert result.value["created"] == "by_factory"
+        value = result.value
+        assert value["created"] == "by_factory"
 
         # Service now exists, should return existing
         result2 = container.get_or_create("test_service", factory)
@@ -310,7 +320,7 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Direct access pattern - build info dict manually
-        info = {
+        info: FlextTypes.Dict = {
             "service_count": len(
                 set(container._services.keys()) | set(container._factories.keys())
             ),
@@ -354,14 +364,16 @@ class TestFlextContainer:
         result1 = container.get("cached_service")
         assert result1.is_success
         assert isinstance(result1.value, dict)
-        assert result1.value["call_count"] == "1"
+        value1 = cast("FlextTypes.Dict", result1.value)
+        assert value1["call_count"] == "1"
         assert call_count == 1
 
         # Second call should return cached instance
         result2 = container.get("cached_service")
         assert result2.is_success
         assert isinstance(result2.value, dict)
-        assert result2.value["call_count"] == "1"  # Same instance, not recreated
+        value2 = cast("FlextTypes.Dict", result2.value)
+        assert value2["call_count"] == "1"  # Same instance, not recreated
         assert call_count == 1  # Factory not called again
 
     def test_container_clear(self) -> None:
@@ -411,7 +423,9 @@ class TestFlextContainer:
         """Test getting non-existent service with typing."""
         container = FlextContainer()
 
-        result = container.get_typed("nonexistent", dict)
+        result: FlextResult[dict[str, object]] = container.get_typed(
+            "nonexistent", dict
+        )
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None and "not found" in result.error
@@ -568,10 +582,13 @@ class TestFlextContainer:
         global_container.register("typed_service", service)
 
         # Get with typing
-        result = global_container.get_typed("typed_service", dict)
+        result: FlextResult[dict[str, object]] = global_container.get_typed(
+            "typed_service", dict
+        )
         assert result.is_success
         assert isinstance(result.value, dict)
-        assert result.value["type"] == "test"
+        value = result.value
+        assert value["type"] == "test"
 
     def test_container_module_utilities(self) -> None:
         """Test module utilities creation."""

@@ -394,16 +394,10 @@ class PaymentService(FlextService[FlextTypes.Dict]):
 class OrderService(FlextService[FlextTypes.Dict]):
     """Order processing service - orchestrates the workflow."""
 
-    _logger: FlextLogger  # Type annotation for attribute
-    _container: FlextContainer  # Type annotation for attribute
-
     def __init__(self) -> None:
-        """Initialize with dependencies from container."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        manager = FlextContainer.ensure_global_manager()
-        self._container = manager.get_or_create()
-        self._logger = FlextLogger(__name__)
-        self._scenarios = ExampleScenarios
+        self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["integration", "demo"])
 
     def create_order(
@@ -414,11 +408,11 @@ class OrderService(FlextService[FlextTypes.Dict]):
         """Create and process an order."""
         # Create correlation ID for tracking
         correlation_id = str(uuid4())
-        self._logger.bind(correlation_id=correlation_id)
-        self._logger.info("Creating order", extra={"customer_id": customer_id})
+        self.logger.bind(correlation_id=correlation_id)
+        self.logger.info("Creating order", extra={"customer_id": customer_id})
 
         # Get services from container
-        inventory_result = self._container.get_typed("inventory", InventoryService)
+        inventory_result = self.container.get_typed("inventory", InventoryService)
         if inventory_result.is_failure:
             return FlextResult[Order].fail("Inventory service not available")
         inventory = inventory_result.unwrap()
@@ -434,7 +428,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
             if isinstance(product_id, str) and isinstance(quantity, int):
                 product_result = inventory.get_product(product_id)
                 if product_result.is_failure:
-                    self._logger.info("Product not found: %s", product_id)
+                    self.logger.info("Product not found: %s", product_id)
                     continue
 
                 product = product_result.unwrap()
@@ -442,13 +436,13 @@ class OrderService(FlextService[FlextTypes.Dict]):
                 # Add to order
                 add_result = order.add_item(product, quantity)
                 if add_result.is_failure:
-                    self._logger.warning(
+                    self.logger.warning(
                         f"Failed to add item: {add_result.error}",
                         extra={"product_id": product.id},
                     )
                     continue
 
-                self._logger.info(
+                self.logger.info(
                     "Item added to order",
                     extra={"product_id": product.id, "quantity": quantity},
                 )
@@ -457,7 +451,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
         if not order.items:
             return FlextResult[Order].fail("No items could be added to order")
 
-        self._logger.info(
+        self.logger.info(
             "Order created successfully",
             extra={
                 "order_id": order.id,
@@ -474,7 +468,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
         payment_method: str,
     ) -> FlextResult[FlextTypes.Dict]:
         """Submit order with payment processing."""
-        self._logger.info("Submitting order", extra={"order_id": order.id})
+        self.logger.info("Submitting order", extra={"order_id": order.id})
 
         # Submit the order
         submit_result = order.submit()
@@ -484,7 +478,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
             )
 
         # Get payment service
-        payment_service_result = self._container.get_typed("payment", PaymentService)
+        payment_service_result = self.container.get_typed("payment", PaymentService)
         if payment_service_result.is_failure:
             return FlextResult[FlextTypes.Dict].fail("Payment service not available")
         payment = payment_service_result.unwrap()
@@ -520,7 +514,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
             message_type="order_confirmation",
         )
 
-        self._logger.info(
+        self.logger.info(
             "Order processed successfully",
             extra={
                 "order_id": order.id,
@@ -586,6 +580,7 @@ class OrderValidationHandler:
 
     def __init__(self) -> None:
         """Initialize handler."""
+        super().__init__()
         self.name = "OrderValidator"
         self._logger = FlextLogger(__name__)
 
@@ -623,6 +618,7 @@ class OrderEnrichmentHandler:
 
     def __init__(self) -> None:
         """Initialize handler."""
+        super().__init__()
         self.name = "OrderEnricher"
         self._logger = FlextLogger(__name__)
 
@@ -973,12 +969,12 @@ def demonstrate_flextcore_unified_access() -> None:
     # 5. Railway pattern with FlextCore
     print("\n=== 5. Railway Pattern via FlextCore ===")
 
-    def validate_order(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def validate_order(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         if not data.get("customer_id"):
             return FlextResult[FlextTypes.Dict].fail("Customer ID required")
         return FlextResult[FlextTypes.Dict].ok(data)
 
-    def process_order(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def process_order(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         data["processed"] = True
         return FlextResult[FlextTypes.Dict].ok(data)
 
@@ -1052,26 +1048,27 @@ def demonstrate_flextcore_11_features() -> None:
     print("\n=== 3. Pipeline Builder ===")
 
     # Define pipeline operations
-    def validate_order_data(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def validate_order_data(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         if not data.get("order_id"):
             return FlextResult[FlextTypes.Dict].fail("Order ID required")
         if not data.get("amount"):
             return FlextResult[FlextTypes.Dict].fail("Amount required")
         return FlextResult[FlextTypes.Dict].ok(data)
 
-    def check_inventory(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def check_inventory(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         # Simulate inventory check
         data["inventory_checked"] = True
         return FlextResult[FlextTypes.Dict].ok(data)
 
-    def calculate_shipping(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def calculate_shipping(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         # Simulate shipping calculation
-        amount = data.get("amount", 0)
+        amount_raw = data.get("amount", 0)
+        amount = Decimal(str(amount_raw)) if amount_raw else Decimal(0)
         shipping = amount * Decimal("0.1")  # 10% shipping
         data["shipping"] = float(shipping)
         return FlextResult[FlextTypes.Dict].ok(data)
 
-    def apply_discounts(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def apply_discounts(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         # Simulate discount application
         data["discount_applied"] = True
         return FlextResult[FlextTypes.Dict].ok(data)
@@ -1082,7 +1079,7 @@ def demonstrate_flextcore_11_features() -> None:
     )
 
     # Execute pipeline
-    order_data = {"order_id": "ORD-999", "amount": 100.00}
+    order_data: dict[str, object] = {"order_id": "ORD-999", "amount": 100.00}
     pipeline_result = order_pipeline(order_data)
 
     if pipeline_result.is_success:
@@ -1112,17 +1109,17 @@ def demonstrate_flextcore_11_features() -> None:
     print("\n=== 5. Complete Integration Example ===")
 
     # Define a complete order processing workflow
-    def validate_customer(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def validate_customer(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         if not data.get("customer_id"):
             return FlextResult[FlextTypes.Dict].fail("Customer ID required")
         data["customer_validated"] = True
         return FlextResult[FlextTypes.Dict].ok(data)
 
-    def reserve_inventory(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def reserve_inventory(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         data["inventory_reserved"] = True
         return FlextResult[FlextTypes.Dict].ok(data)
 
-    def process_payment(data: dict) -> FlextResult[FlextTypes.Dict]:
+    def process_payment(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         data["payment_processed"] = True
         return FlextResult[FlextTypes.Dict].ok(data)
 
@@ -1136,7 +1133,7 @@ def demonstrate_flextcore_11_features() -> None:
         request_id = ctx.get("request_id")
 
         # Process order through pipeline
-        order_input = {
+        order_input: dict[str, object] = {
             "customer_id": "CUST-001",
             "order_id": "ORD-001",
             "amount": 250.00,

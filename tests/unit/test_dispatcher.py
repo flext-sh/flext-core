@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextDispatcher, FlextModels, FlextResult, FlextTypes
 from flext_core.handlers import FlextHandlers
 
@@ -31,7 +33,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create a simple handler with proper config
-        class TestHandler(FlextHandlers):
+        class TestHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="test_handler",
@@ -41,8 +43,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Handled: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Handled: {message}")
 
         handler = TestHandler()
 
@@ -55,7 +57,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create and register a handler with proper config
-        class SimpleHandler(FlextHandlers):
+        class SimpleHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="simple_handler",
@@ -65,8 +67,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Processed: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Processed: {message}")
 
         handler = SimpleHandler()
         registration_result = dispatcher.register_handler("simple_message", handler)
@@ -81,7 +83,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create a batch handler with proper config
-        class BatchHandler(FlextHandlers):
+        class BatchHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="batch_handler",
@@ -91,18 +93,20 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(
-                self, message: FlextTypes.StringList
-            ) -> FlextResult[FlextTypes.StringList]:
-                processed = [f"Batch: {msg}" for msg in message]
-                return FlextResult[FlextTypes.StringList].ok(processed)
+            def handle(self, message: object) -> FlextResult[object]:
+                if isinstance(message, list):
+                    # message is guaranteed to be list here, cast to proper type
+                    message_list = cast("list[object]", message)
+                    processed = [f"Batch: {cast('str', msg)}" for msg in message_list]
+                    return FlextResult[object].ok(processed)
+                return FlextResult[object].fail("Invalid message type")
 
         handler = BatchHandler()
         registration_result = dispatcher.register_handler("batch_message", handler)
         assert registration_result.is_success
 
         # Test batch dispatch - returns list of FlextResult objects
-        messages: FlextTypes.List = ["msg1", "msg2", "msg3"]
+        messages: list[object] = ["msg1", "msg2", "msg3"]
         batch_results = dispatcher.dispatch_batch("batch_message", messages)
         assert isinstance(batch_results, list)
         # Check that at least some results are present
@@ -116,7 +120,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create a failing handler with proper config
-        class FailingHandler(FlextHandlers):
+        class FailingHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="failing_handler",
@@ -126,10 +130,10 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
+            def handle(self, message: object) -> FlextResult[object]:
                 # Parameter is intentionally unused in this test
                 _ = message  # Mark as intentionally unused
-                return FlextResult[str].fail("Handler failed")
+                return FlextResult[object].fail("Handler failed")
 
         handler = FailingHandler()
         registration_result = dispatcher.register_handler("failing_message", handler)
@@ -144,7 +148,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create an handler with proper config
-        class Handler(FlextHandlers):
+        class Handler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="handler",
@@ -154,8 +158,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Sync: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Sync: {message}")
 
         handler = Handler()
         registration_result = dispatcher.register_handler("message", handler)
@@ -169,7 +173,7 @@ class TestFlextDispatcherCoverage:
         context: FlextTypes.Dict = {"user_id": "123", "operation": "test"}
 
         # Create a context-aware handler with proper config
-        class ContextHandler(FlextHandlers):
+        class ContextHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="context_handler",
@@ -179,8 +183,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Context: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Context: {message}")
 
         handler = ContextHandler()
         registration_result = dispatcher.register_handler("context_message", handler)
@@ -199,7 +203,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create a simple handler to generate metrics with proper config
-        class MetricsHandler(FlextHandlers):
+        class MetricsHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="metrics_handler",
@@ -209,8 +213,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Metrics: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Metrics: {message}")
 
         handler = MetricsHandler()
         registration_result = dispatcher.register_handler("metrics_message", handler)
@@ -234,7 +238,7 @@ class TestFlextDispatcherCoverage:
         assert result.is_failure
 
         # Test with valid handler
-        class ValidHandler(FlextHandlers):
+        class ValidHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="valid_handler",
@@ -244,8 +248,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(message)
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(message)
 
         handler = ValidHandler()
         result = dispatcher.register_handler("valid_type", handler)
@@ -272,7 +276,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher(config=config)
 
         # Create a handler for audit testing with proper config
-        class AuditHandler(FlextHandlers):
+        class AuditHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="audit_handler",
@@ -282,8 +286,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Audited: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Audited: {message}")
 
         handler = AuditHandler()
         registration_result = dispatcher.register_handler("audit_message", handler)
@@ -301,7 +305,7 @@ class TestFlextDispatcherCoverage:
         # Create a handler that fails initially
         call_count = 0
 
-        class RetryHandler(FlextHandlers):
+        class RetryHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="retry_handler",
@@ -311,12 +315,12 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
+            def handle(self, message: object) -> FlextResult[object]:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    return FlextResult[str].fail("Temporary failure")
-                return FlextResult[str].ok(f"Success after retry: {message}")
+                    return FlextResult[object].fail("Temporary failure")
+                return FlextResult[object].ok(f"Success after retry: {message}")
 
         handler = RetryHandler()
         registration_result = dispatcher.register_handler("retry_message", handler)
@@ -334,7 +338,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher(config=config)
 
         # Create a quick handler with proper config
-        class QuickHandler(FlextHandlers):
+        class QuickHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="quick_handler",
@@ -344,8 +348,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Quick: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Quick: {message}")
 
         handler = QuickHandler()
         registration_result = dispatcher.register_handler("quick_message", handler)
@@ -362,7 +366,7 @@ class TestFlextDispatcherCoverage:
         # Register multiple handlers
         for i in range(3):
 
-            class TestHandler(FlextHandlers):
+            class TestHandler(FlextHandlers[object, object]):
                 """Test handler for multiple handler registration."""
 
                 def __init__(self, handler_id: int) -> None:
@@ -376,8 +380,8 @@ class TestFlextDispatcherCoverage:
                     # Store handler_id as a different attribute since handler_id is a property
                     self.my_handler_id = handler_id
 
-                def handle(self, message: str) -> FlextResult[str]:
-                    return FlextResult[str].ok(
+                def handle(self, message: object) -> FlextResult[object]:
+                    return FlextResult[object].ok(
                         f"Handler {self.my_handler_id}: {message}",
                     )
 
@@ -395,7 +399,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create and register handlers with proper config
-        class CleanupHandler(FlextHandlers):
+        class CleanupHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="cleanup_handler",
@@ -405,8 +409,8 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Cleanup: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Cleanup: {message}")
 
         handler = CleanupHandler()
         registration_result = dispatcher.register_handler("cleanup_message", handler)
@@ -431,7 +435,7 @@ class TestFlextDispatcherCoverage:
         assert result.is_failure
 
         # Test with empty message type
-        class EdgeHandler(FlextHandlers):
+        class EdgeHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="edge_handler",
@@ -441,13 +445,13 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(message)
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(message)
 
         handler = EdgeHandler()
 
         # Test various edge case inputs
-        edge_cases = [None, "", " ", "\t", "\n"]
+        edge_cases: list[str | None] = [None, "", " ", "\t", "\n"]
         for case in edge_cases:
             if case is not None:  # Skip None to avoid obvious failures
                 result = dispatcher.register_handler(case, handler)
@@ -458,7 +462,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Create a performance handler with proper config
-        class PerfHandler(FlextHandlers):
+        class PerfHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="perf_handler",
@@ -468,15 +472,15 @@ class TestFlextDispatcherCoverage:
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"Perf: {message}")
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult[object].ok(f"Perf: {message}")
 
         handler = PerfHandler()
         registration_result = dispatcher.register_handler("perf_message", handler)
         assert registration_result.is_success
 
         # Test multiple quick dispatches
-        results = []
+        results: list[FlextResult[object]] = []
         for i in range(10):
             result = dispatcher.dispatch("perf_message", f"perf_test_{i}")
             results.append(result)
@@ -492,7 +496,7 @@ class TestFlextDispatcherCoverage:
         # Test function-based handler creation
         def simple_function_handler(message: object) -> object | FlextResult[object]:
             if isinstance(message, str):
-                return FlextResult[str].ok(f"Function: {message}")
+                return FlextResult[object].ok(f"Function: {message}")
             return FlextResult[object].fail("Invalid message type")
 
         # Test if dispatcher can handle function handlers - provide required parameters
@@ -508,7 +512,7 @@ class TestFlextDispatcherCoverage:
             pass
 
         # Test class-based handlers with proper config
-        class ComplexHandler(FlextHandlers):
+        class ComplexHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
                 config = FlextModels.CqrsConfig.Handler(
                     handler_id="complex_handler",
@@ -519,9 +523,9 @@ class TestFlextDispatcherCoverage:
                 super().__init__(config=config)
                 self.processed_count = 0
 
-            def handle(self, message: str) -> FlextResult[str]:
+            def handle(self, message: object) -> FlextResult[object]:
                 self.processed_count += 1
-                return FlextResult[str].ok(
+                return FlextResult[object].ok(
                     f"Complex ({self.processed_count}): {message}",
                 )
 

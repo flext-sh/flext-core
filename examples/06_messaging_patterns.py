@@ -35,15 +35,11 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
     """Service demonstrating messaging and event patterns."""
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        manager = FlextCore.Container.ensure_global_manager()
-        self._container = manager.get_or_create()
-        self._logger = FlextCore.Logger(__name__)
-        self._config = FlextCore.Config()
         self._event_store: list[FlextCore.Models.DomainEvent] = []
         self._message_queue: list[FlextCore.Models.Payload[FlextCore.Types.Dict]] = []
-        self._scenarios = ExampleScenarios
+        self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["messaging", "demo"])
         # Filter out incompatible metadata fields for Payload models
         self._safe_metadata = {k: v for k, v in self._metadata.items() if k != "tags"}

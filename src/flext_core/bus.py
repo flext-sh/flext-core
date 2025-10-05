@@ -12,23 +12,14 @@ from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from typing import cast
 
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
-
-# Layer 5 - Advanced Infrastructure
 from flext_core.handlers import FlextHandlers
-
-# Layer 3 - Core Infrastructure
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-
-# Layer 2 - Early Foundation
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
 
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 import operator
 import time
 from collections.abc import Callable
-from typing import cast
+from typing import Any
 
 import pytest
 
@@ -54,7 +54,11 @@ class TestFlextResult:
     def test_result_map_success(self) -> None:
         """Test map operation on successful result."""
         result = FlextResult[int].ok(5)
-        mapped = result.map(lambda x: x * 2)
+
+        def double(x: int) -> int:
+            return x * 2
+
+        mapped = result.map(double)
 
         assert mapped.is_success
         assert mapped.value == 10
@@ -62,7 +66,11 @@ class TestFlextResult:
     def test_result_map_failure(self) -> None:
         """Test map operation on failed result."""
         result = FlextResult[int].fail("test_error")
-        mapped = result.map(lambda x: x * 2)
+
+        def double(x: int) -> int:
+            return x * 2
+
+        mapped = result.map(double)
 
         assert mapped.is_failure
         assert mapped.error == "test_error"
@@ -70,7 +78,11 @@ class TestFlextResult:
     def test_result_flat_map_success(self) -> None:
         """Test flat_map operation on successful result."""
         result = FlextResult[int].ok(5)
-        flat_mapped = result.flat_map(lambda x: FlextResult[str].ok(f"value_{x}"))
+
+        def to_string_result(x: int) -> FlextResult[str]:
+            return FlextResult[str].ok(f"value_{x}")
+
+        flat_mapped = result.flat_map(to_string_result)
 
         assert flat_mapped.is_success
         assert flat_mapped.value == "value_5"
@@ -86,7 +98,11 @@ class TestFlextResult:
     def test_result_when_success(self) -> None:
         """Test when operation on successful result."""
         result = FlextResult[int].ok(5)
-        when_result = result.when(lambda x: x > 3)
+
+        def is_greater_than_3(x: int) -> bool:
+            return x > 3
+
+        when_result = result.when(is_greater_than_3)
 
         assert when_result.is_success
         assert when_result.value == 5
@@ -94,7 +110,11 @@ class TestFlextResult:
     def test_result_when_failure(self) -> None:
         """Test when operation on failed result."""
         result = FlextResult[int].ok(2)
-        when_result = result.when(lambda x: x > 3)
+
+        def is_greater_than_3(x: int) -> bool:
+            return x > 3
+
+        when_result = result.when(is_greater_than_3)
 
         assert when_result.is_failure
         assert (
@@ -137,18 +157,18 @@ class TestFlextResult:
         """Test expect operation on failure."""
         failure_result = FlextResult[str].fail("error")
 
-        with pytest.raises(RuntimeError, match="Should fail"):
+        with pytest.raises(FlextExceptions.BaseError, match="Should fail"):
             failure_result.expect("Should fail")
 
     def test_result_railway_composition(self) -> None:
         """Test railway-oriented composition."""
 
-        def validate_input(data: dict) -> FlextResult[FlextTypes.Dict]:
+        def validate_input(data: dict[str, Any]) -> FlextResult[FlextTypes.Dict]:
             if not data.get("value"):
                 return FlextResult[FlextTypes.Dict].fail("Missing value")
             return FlextResult[FlextTypes.Dict].ok(data)
 
-        def process_data(data: dict) -> FlextResult[int]:
+        def process_data(data: dict[str, Any]) -> FlextResult[int]:
             return FlextResult[int].ok(data["value"] * 2)
 
         def format_result(value: int) -> FlextResult[str]:
@@ -266,7 +286,7 @@ class TestFlextResult:
     def test_result_tap_method(self) -> None:
         """Test tap method."""
         result = FlextResult[str].ok("test")
-        tapped_values = []
+        tapped_values: list[str] = []
 
         tapped = result.tap(tapped_values.append)
         assert tapped.is_success
@@ -276,7 +296,7 @@ class TestFlextResult:
     def test_result_tap_method_failure(self) -> None:
         """Test tap method on failure."""
         result = FlextResult[str].fail("error")
-        tapped_values = []
+        tapped_values: list[str] = []
 
         tapped = result.tap(tapped_values.append)
         assert tapped.is_failure
@@ -286,7 +306,11 @@ class TestFlextResult:
     def test_result_recover_method(self) -> None:
         """Test recover method."""
         result = FlextResult[str].fail("error")
-        recovered = result.recover(lambda e: f"recovered_{e}")
+
+        def recover_func(e: str) -> str:
+            return f"recovered_{e}"
+
+        recovered = result.recover(recover_func)
 
         assert recovered.is_success
         assert recovered.value == "recovered_error"
@@ -294,7 +318,11 @@ class TestFlextResult:
     def test_result_recover_method_success(self) -> None:
         """Test recover method on success."""
         result = FlextResult[str].ok("success")
-        recovered = result.recover(lambda e: f"recovered_{e}")
+
+        def recover_func(e: str) -> str:
+            return f"recovered_{e}"
+
+        recovered = result.recover(recover_func)
 
         assert recovered.is_success
         assert recovered.value == "success"
@@ -321,7 +349,10 @@ class TestFlextResult:
         """Test or_else_get method."""
         result1 = FlextResult[str].fail("error1")
 
-        or_result = result1.or_else_get(lambda: FlextResult[str].ok("fallback"))
+        def fallback_func() -> FlextResult[str]:
+            return FlextResult[str].ok("fallback")
+
+        or_result = result1.or_else_get(fallback_func)
         assert or_result.is_success
         assert or_result.value == "fallback"
 
@@ -336,7 +367,11 @@ class TestFlextResult:
     def test_result_unless_method(self) -> None:
         """Test unless method."""
         result = FlextResult[int].ok(5)
-        unless_result = result.unless(lambda x: x > 3)
+
+        def is_greater_than_3(x: int) -> bool:
+            return x > 3
+
+        unless_result = result.unless(is_greater_than_3)
 
         assert unless_result.is_failure
         assert (
@@ -347,7 +382,11 @@ class TestFlextResult:
     def test_result_unless_method_success(self) -> None:
         """Test unless method on success."""
         result = FlextResult[int].ok(2)
-        unless_result = result.unless(lambda x: x > 3)
+
+        def is_greater_than_3(x: int) -> bool:
+            return x > 3
+
+        unless_result = result.unless(is_greater_than_3)
 
         assert unless_result.is_success
         assert unless_result.value == 2
@@ -355,7 +394,11 @@ class TestFlextResult:
     def test_result_with_context_method(self) -> None:
         """Test with_context method."""
         result = FlextResult[str].fail("error")
-        context_result = result.with_context(lambda e: f"Context: {e}")
+
+        def add_context(e: str) -> str:
+            return f"Context: {e}"
+
+        context_result = result.with_context(add_context)
 
         assert context_result.is_failure
         assert (
@@ -366,7 +409,11 @@ class TestFlextResult:
     def test_result_with_context_method_success(self) -> None:
         """Test with_context method on success."""
         result = FlextResult[str].ok("success")
-        context_result = result.with_context(lambda e: f"Context: {e}")
+
+        def add_context(e: str) -> str:
+            return f"Context: {e}"
+
+        context_result = result.with_context(add_context)
 
         assert context_result.is_success
         assert context_result.value == "success"
@@ -464,7 +511,11 @@ class TestFlextResult:
     def test_result_rshift_operator(self) -> None:
         """Test >> operator (flat_map)."""
         result = FlextResult[int].ok(5)
-        mapped = result >> (lambda x: FlextResult[int].ok(x * 2))
+
+        def double_func(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x * 2)
+
+        mapped = result >> double_func
 
         assert mapped.is_success
         assert mapped.value == 10
@@ -472,7 +523,11 @@ class TestFlextResult:
     def test_result_lshift_operator(self) -> None:
         """Test << operator (map)."""
         result = FlextResult[int].ok(5)
-        mapped = result << (lambda x: x * 2)
+
+        def double_value(x: int) -> int:
+            return x * 2
+
+        mapped = result << double_value
 
         assert mapped.is_success
         assert mapped.value == 10
@@ -498,7 +553,11 @@ class TestFlextResult:
     def test_result_mod_operator(self) -> None:
         """Test % operator (when)."""
         result = FlextResult[int].ok(5)
-        filtered = result % (lambda x: x > 3)
+
+        def is_greater_than_3(x: int) -> bool:
+            return x > 3
+
+        filtered = result % is_greater_than_3
 
         assert filtered.is_success
         assert filtered.value == 5
@@ -998,7 +1057,7 @@ class TestFlextResult:
 
         # Failure result with default exception
         result = FlextResult[int].fail("Error occurred")
-        with pytest.raises(RuntimeError) as exc_info:
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
             FlextResult.unwrap_or_raise(result)
         assert str(exc_info.value) == "[OPERATION_ERROR] Error occurred"
 
@@ -1364,7 +1423,7 @@ class TestFlextResult:
             _ = value
             finally_called.append(True)
 
-        result = FlextResult.ok("dummy").bracket(operation, finally_action)
+        result = FlextResult[str].ok("dummy").bracket(operation, finally_action)
         assert result.is_success
         assert result.value == 42
         assert len(finally_called) == 1
@@ -1376,7 +1435,7 @@ class TestFlextResult:
             _ = value
             return FlextResult[int].fail("Operation failed")
 
-        result = FlextResult.ok("dummy").bracket(failing_operation, finally_action)
+        result = FlextResult[str].ok("dummy").bracket(failing_operation, finally_action)
         assert result.is_failure
         assert len(finally_called) == 1  # Finally should still be called
 
@@ -1387,7 +1446,7 @@ class TestFlextResult:
             _ = value
             return FlextResult[str].ok("Quick result")
 
-        result = FlextResult.ok("dummy").with_timeout(1.0, quick_operation)
+        result = FlextResult[str].ok("dummy").with_timeout(1.0, quick_operation)
         assert result.is_success
         assert result.value == "Quick result"
 
@@ -1411,10 +1470,14 @@ class TestFlextResult:
                 return FlextResult[int].fail(f"Attempt {attempt_count} failed")
             return FlextResult[int].ok(attempt_count)
 
-        result = FlextResult.ok(5).retry_until_success(
-            unstable_operation,
-            max_attempts=5,
-            backoff_factor=1.1,
+        result = (
+            FlextResult[int]
+            .ok(5)
+            .retry_until_success(
+                unstable_operation,
+                max_attempts=5,
+                backoff_factor=1.1,
+            )
         )
         assert result.is_success
         assert result.value == 3
@@ -1428,10 +1491,14 @@ class TestFlextResult:
             attempt_count += value
             return FlextResult[int].fail("Always fails")
 
-        result = FlextResult.ok(5).retry_until_success(
-            always_failing,
-            max_attempts=2,
-            backoff_factor=1.1,
+        result = (
+            FlextResult[int]
+            .ok(5)
+            .retry_until_success(
+                always_failing,
+                max_attempts=2,
+                backoff_factor=1.1,
+            )
         )
         assert result.is_failure
         assert attempt_count == 10  # 5 + 5 from two attempts
@@ -1444,12 +1511,12 @@ class TestFlextResult:
                 return FlextResult[int].ok(current_state + 1)
             return FlextResult[int].fail("Max state reached")
 
-        result = FlextResult.ok(5)
+        result = FlextResult[int].ok(5)
         transitioned = result.transition(state_machine)
         assert transitioned.is_success
         assert transitioned.value == 6
 
-        result = FlextResult.ok(15)
+        result = FlextResult[int].ok(15)
         transitioned = result.transition(state_machine)
         assert transitioned.is_failure
         assert (
@@ -1517,7 +1584,7 @@ class TestFlextResult:
         result._error = None  # Still looks like success
 
         # Should raise OperationError when accessing value
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
             _ = result._ensure_success_data()
 
         assert "Success result has None data" in str(exc_info.value)
@@ -1566,12 +1633,12 @@ class TestFlextResult:
     def test_result_class_or_instance_method_descriptor(self) -> None:
         """Test ClassOrInstanceMethod descriptor behavior."""
         # Test calling as class method
-        result = FlextResult.ok(42)
+        result = FlextResult[int].ok(42)
         assert result.is_success
         assert result.value == 42
 
         # Test calling as instance method through chain
-        initial = FlextResult.ok(10)
+        initial = FlextResult[int].ok(10)
         chained = initial.flat_map(lambda x: FlextResult.ok(x * 2))
         assert chained.is_success
         assert chained.value == 20
@@ -1579,14 +1646,14 @@ class TestFlextResult:
         # Verify the descriptor works for both contexts
         # Class context
         class_result = FlextResult.sequence([
-            FlextResult.ok(1),
-            FlextResult.ok(2),
-            FlextResult.ok(3),
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
         ])
         assert class_result.is_success
 
         # Instance context through map
-        instance_result = FlextResult.ok([1, 2, 3])
+        instance_result = FlextResult[list[int]].ok([1, 2, 3])
         mapped = instance_result.map(lambda x: [i * 2 for i in x])
         assert mapped.is_success
 
@@ -1620,7 +1687,7 @@ class TestFlextResult:
         assert success  # Direct boolean context
 
         # Failure is falsy
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
         assert bool(failure) is False
         assert not failure  # Direct boolean context
 
@@ -1702,7 +1769,7 @@ class TestFlextResult:
     def test_result_or_operator_coverage(self) -> None:
         """Test __or__ operator with various scenarios."""
         success = FlextResult[int].ok(42)
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
 
         # Success | default -> unwrapped value
         result = success | 100
@@ -1720,7 +1787,7 @@ class TestFlextResult:
     def test_result_dict_result_static_method(self) -> None:
         """Test dict_result static method."""
         # dict_result() returns a type, not an instance
-        result_type = FlextResult.dict_result()
+        result_type = FlextResult[int].dict_result()
 
         # Use the type to create instances
         data = {"key": "value", "count": "42"}
@@ -1735,37 +1802,37 @@ class TestFlextResult:
         """Test sequence static method with list of results."""
         # All results succeed
         results = [
-            FlextResult.ok(1),
-            FlextResult.ok(2),
-            FlextResult.ok(3),
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
         ]
-        combined = FlextResult.sequence(results)
+        combined = FlextResult[int].sequence(results)
         assert combined.is_success
         assert combined.value == [1, 2, 3]
 
         # One result fails
         results = [
-            FlextResult.ok(1),
-            FlextResult.fail("Validation error"),
-            FlextResult.ok(3),
+            FlextResult[int].ok(1),
+            FlextResult[int].fail("Validation error"),
+            FlextResult[int].ok(3),
         ]
-        combined = FlextResult.sequence(results)
+        combined = FlextResult[int].sequence(results)
         assert combined.is_failure
         assert "Validation error" in str(combined.error)
 
     def test_result_sequence_accepts_list_only(self) -> None:
         """Test sequence accepts list parameter (not variadic args)."""
-        result1 = FlextResult.ok(1)
-        result2 = FlextResult.ok(2)
-        result3 = FlextResult.ok(3)
+        result1 = FlextResult[int].ok(1)
+        result2 = FlextResult[int].ok(2)
+        result3 = FlextResult[int].ok(3)
 
         # sequence() accepts a list of results
-        combined = FlextResult.sequence([result1, result2, result3])
+        combined = FlextResult[int].sequence([result1, result2, result3])
         assert combined.is_success
         assert combined.value == [1, 2, 3]
 
         # Test with empty list
-        combined = FlextResult.sequence([])
+        combined = FlextResult[int].sequence([])
         assert combined.is_success
         assert combined.value == []
 
@@ -1806,7 +1873,7 @@ class TestFlextResultAdditionalCoverage:
         """Test ClassOrInstanceMethod descriptor in class context (lines 76-77)."""
         # Access descriptor through class (not instance)
         # This triggers the instance is None path
-        ok_method = FlextResult.ok
+        ok_method = FlextResult[int].ok
         assert callable(ok_method)
 
         # Call it as class method
@@ -1821,7 +1888,7 @@ class TestFlextResultAdditionalCoverage:
         items = [1, 2, 3]
 
         # Traverse and apply transformation
-        traversed = FlextResult.traverse(items, lambda x: FlextResult.ok(x * 2))
+        traversed = FlextResult.traverse(items, lambda x: FlextResult[int].ok(x * 2))
         assert traversed.is_success
         assert traversed.value == [2, 4, 6]
 
@@ -1829,7 +1896,7 @@ class TestFlextResultAdditionalCoverage:
         def transform_with_failure(x: int) -> FlextResult[int]:
             if x == 2:
                 return FlextResult[int].fail("error at 2")
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         traversed = FlextResult.traverse(items, transform_with_failure)
         assert traversed.is_failure
@@ -1838,23 +1905,25 @@ class TestFlextResultAdditionalCoverage:
         """Test _Collections.accumulate_errors (lines 327-350)."""
         # accumulate_errors takes *results (variadic), not a list
         # All success - accumulate values
-        r1 = FlextResult.ok(1)
-        r2 = FlextResult.ok(2)
-        r3 = FlextResult.ok(3)
+        r1: FlextResult[int] = FlextResult[int].ok(1)
+        r2: FlextResult[int] = FlextResult[int].ok(2)
+        r3: FlextResult[int] = FlextResult[int].ok(3)
 
-        accumulated = FlextResult.accumulate_errors(r1, r2, r3)
+        accumulated: FlextResult[list[int]] = FlextResult.accumulate_errors(r1, r2, r3)
         assert accumulated.is_success
         assert accumulated.value == [1, 2, 3]
 
         # Mix of success and failure - accumulate all errors
-        r4 = FlextResult[int].fail("error1")
-        r5 = FlextResult[int].fail("error2")
+        r4: FlextResult[int] = FlextResult[int].fail("error1")
+        r5: FlextResult[int] = FlextResult[int].fail("error2")
 
-        accumulated = FlextResult.accumulate_errors(r1, r4, r2, r5)
-        assert accumulated.is_failure
+        accumulated_fail: FlextResult[list[int]] = FlextResult.accumulate_errors(
+            r1, r4, r2, r5
+        )
+        assert accumulated_fail.is_failure
         # Should contain both errors
-        assert "error1" in str(accumulated.error)
-        assert "error2" in str(accumulated.error)
+        assert "error1" in str(accumulated_fail.error)
+        assert "error2" in str(accumulated_fail.error)
 
     def test_collections_parallel_map_method(self) -> None:
         """Test _Collections.parallel_map for concurrent processing (lines 352-383)."""
@@ -1862,7 +1931,8 @@ class TestFlextResultAdditionalCoverage:
         data = [1, 2, 3, 4, 5]
 
         def process(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            result: FlextResult[int] = FlextResult[int].ok(x * 2)
+            return result
 
         result = FlextResult.parallel_map(data, process)
         assert result.is_success
@@ -1871,11 +1941,15 @@ class TestFlextResultAdditionalCoverage:
         # Parallel map with failure
         def process_with_failure(x: int) -> FlextResult[int]:
             if x == 3:
-                return FlextResult.fail("Failed at 3")
-            return FlextResult.ok(x * 2)
+                fail_result: FlextResult[int] = FlextResult[int].fail("Failed at 3")
+                return fail_result
+            success_result: FlextResult[int] = FlextResult[int].ok(x * 2)
+            return success_result
 
-        result = FlextResult.parallel_map(data, process_with_failure)
-        assert result.is_failure
+        parallel_result: FlextResult[list[int]] = FlextResult.parallel_map(
+            data, process_with_failure
+        )
+        assert parallel_result.is_failure
 
     def test_functional_validate_all_internal(self) -> None:
         """Test _Collections.validate_all method (lines 385-412)."""
@@ -1903,7 +1977,7 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_map_with_exception_handling(self) -> None:
         """Test map method exception paths (lines 691-700)."""
-        success = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult.ok(42)
 
         # Map with function that raises exception
         def failing_transform(x: int) -> int:
@@ -1913,28 +1987,29 @@ class TestFlextResultAdditionalCoverage:
             return x * 2
 
         # Should handle exception gracefully
-        result = success.map(failing_transform)
+        result: FlextResult[int] = success.map(failing_transform)
         # Implementation should either propagate or wrap exception
         assert result.is_failure or result.is_success
 
     def test_result_flat_map_with_exception_handling(self) -> None:
         """Test flat_map method exception paths (lines 725-734)."""
-        success = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult.ok(42)
 
         # flat_map with function that raises exception
         def failing_bind(x: int) -> FlextResult[int]:
             if x > 40:
                 msg = "Value too large"
                 raise ValueError(msg)
-            return FlextResult.ok(x * 2)
+            result: FlextResult[int] = FlextResult[int].ok(x * 2)
+            return result
 
         # Should handle exception gracefully
-        result = success.flat_map(failing_bind)
+        result: FlextResult[int] = success.flat_map(failing_bind)
         assert result.is_failure or result.is_success
 
     def test_result_expect_with_custom_message(self) -> None:
         """Test expect method with custom error message (lines 815-816)."""
-        failure = FlextResult[int].fail("Original error")
+        failure: FlextResult[int] = FlextResult[int].fail("Original error")
 
         # expect should raise with custom message
         with pytest.raises(FlextExceptions.OperationError) as exc_info:
@@ -1944,7 +2019,7 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_eq_with_exception_handling(self) -> None:
         """Test __eq__ exception handling path (lines 861-862)."""
-        result1 = FlextResult.ok(42)
+        result1: FlextResult[int] = FlextResult[int].ok(42)
 
         # Create an object that raises on comparison
         class BadComparison:
@@ -1965,12 +2040,15 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash1, int)
 
         # Hash with complex data
-        result_dict = FlextResult.ok({"key": "value", "nested": {"a": 1}})
+        result_dict: FlextResult[dict] = FlextResult.ok({
+            "key": "value",
+            "nested": {"a": 1},
+        })
         hash2 = hash(result_dict)
         assert isinstance(hash2, int)
 
         # Hash with failure
-        failure = FlextResult.fail(
+        failure: FlextResult[dict] = FlextResult.fail(
             "error",
             error_code="ERR_001",
             error_data={"detail": "info"},
@@ -1980,20 +2058,22 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_unwrap_or_with_default(self) -> None:
         """Test unwrap_or with various defaults (lines 915-916)."""
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
 
         # unwrap_or with default
-        value = failure.unwrap_or(999)
-        assert value == 999
+        default_value: int = failure.unwrap_or(999)
+        assert default_value == 999
 
         # unwrap_or on success
-        success = FlextResult.ok(42)
-        value = success.unwrap_or(999)
-        assert value == 42
+        success: FlextResult[int] = FlextResult.ok(42)
+        success_value: int = success.unwrap_or(999)
+        assert success_value == 42
 
     def test_result_unwrap_with_failure(self) -> None:
         """Test unwrap on failure raises exception (lines 938-939)."""
-        failure = FlextResult[int].fail("Cannot unwrap", error_code="UNWRAP_ERROR")
+        failure: FlextResult[int] = FlextResult[int].fail(
+            "Cannot unwrap", error_code="UNWRAP_ERROR"
+        )
 
         with pytest.raises(FlextExceptions.OperationError) as exc_info:
             failure.unwrap()
@@ -2002,22 +2082,22 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_recover_with_function(self) -> None:
         """Test recover with recovery function (lines 952-954)."""
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
 
         # Recover with function that returns new value
-        recovered = failure.recover(lambda err: 999)
-        assert recovered.is_success
-        assert recovered.value == 999
+        recovered_fail: FlextResult[int] = failure.recover(lambda err: 999)
+        assert recovered_fail.is_success
+        assert recovered_fail.value == 999
 
         # Recover on success does nothing
-        success = FlextResult.ok(42)
-        recovered = success.recover(lambda err: 999)
-        assert recovered.is_success
-        assert recovered.value == 42
+        success: FlextResult[int] = FlextResult.ok(42)
+        recovered_success: FlextResult[int] = success.recover(lambda err: 999)
+        assert recovered_success.is_success
+        assert recovered_success.value == 42
 
     def test_result_recover_with_function_returning_result(self) -> None:
         """Test recover_with for monadic recovery (lines 966-968)."""
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
 
         # recover_with with function returning FlextResult
         def recovery(err: str) -> FlextResult[int]:
@@ -2029,30 +2109,34 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_filter_with_predicate_failure(self) -> None:
         """Test filter when predicate fails (lines 1002-1003)."""
-        success = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult.ok(42)
 
         # Filter with failing predicate
-        filtered = success.filter(lambda x: x < 40, "Value too large")
-        assert filtered.is_failure
-        assert "Value too large" in str(filtered.error)
+        filtered_fail: FlextResult[int] = success.filter(
+            lambda x: x < 40, "Value too large"
+        )
+        assert filtered_fail.is_failure
+        assert "Value too large" in str(filtered_fail.error)
 
         # Filter with passing predicate
-        filtered = success.filter(lambda x: x > 40, "Value too small")
-        assert filtered.is_success
-        assert filtered.value == 42
+        filtered_success: FlextResult[int] = success.filter(
+            lambda x: x > 40, "Value too small"
+        )
+        assert filtered_success.is_success
+        assert filtered_success.value == 42
 
     def test_result_zip_with_combining_results(self) -> None:
         """Test zip_with for combining two results (lines 1018, 1024-1025)."""
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
+        result1: FlextResult[int] = FlextResult.ok(10)
+        result2: FlextResult[int] = FlextResult.ok(20)
 
         # Zip with combiner function
-        combined = result1.zip_with(result2, operator.add)
+        combined: FlextResult[int] = result1.zip_with(result2, operator.add)
         assert combined.is_success
         assert combined.value == 30
 
         # Zip with failure
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
         combined = result1.zip_with(failure, operator.add)
         assert combined.is_failure
 
@@ -2066,7 +2150,7 @@ class TestFlextResultAdditionalCoverage:
         assert "Error message" in str(exc)
 
         # Success returns None
-        success = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult.ok(42)
         exc = success.to_exception()
         assert exc is None
 
@@ -2083,7 +2167,7 @@ class TestFlextResultAdditionalCoverage:
         assert combined.value == [1, 2, 3]
 
         # Combine with failure
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
         combined = FlextResult.combine(result1, failure, result3)
         assert combined.is_failure
 
@@ -2111,20 +2195,20 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_operator_rshift(self) -> None:
         """Test >> operator for composition (line 1260)."""
-        result = FlextResult.ok(10)
+        result = FlextResult[int].ok(10)
 
         # Use >> for flat_map
-        chained = result >> (lambda x: FlextResult.ok(x * 2))
+        chained = result >> (lambda x: FlextResult[int].ok(x * 2))
         assert chained.is_success
         assert chained.value == 20
 
     def test_result_operator_lshift(self) -> None:
         """Test << operator for reverse composition (line 1262)."""
-        result = FlextResult.ok(10)
+        result = FlextResult[int].ok(10)
 
         # Use << for reverse flat_map
         def func(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         chained = result << func
         assert chained.is_success
@@ -2132,8 +2216,8 @@ class TestFlextResultAdditionalCoverage:
     def test_result_operator_truediv(self) -> None:
         """Test / operator for alternative fallback (line 1289)."""
         # / operator takes another FlextResult, returns first success
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
+        result1 = FlextResult[int].ok(10)
+        result2 = FlextResult[int].ok(20)
 
         # First success wins
         combined = result1 / result2
@@ -2141,14 +2225,14 @@ class TestFlextResultAdditionalCoverage:
         assert combined.value == 10
 
         # Fallback to second if first fails
-        failure = FlextResult[int].fail("error")
+        failure: FlextResult[int] = FlextResult[int].fail("error")
         combined = failure / result2
         assert combined.is_success
         assert combined.value == 20
 
     def test_result_operator_mod(self) -> None:
         """Test % operator for filter (line 1292)."""
-        result = FlextResult.ok(10)
+        result = FlextResult[int].ok(10)
 
         # Use % for filter
         filtered = result % (lambda x: x > 5)
@@ -2159,8 +2243,8 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_operator_and(self) -> None:
         """Test & operator for zip (line 1299)."""
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
+        result1 = FlextResult[int].ok(10)
+        result2 = FlextResult[int].ok(20)
 
         # Use & to combine
         combined = result1 & result2
@@ -2202,15 +2286,15 @@ class TestFlextResultAdditionalCoverage:
             return FlextResult[None].ok(None)
 
         def executor(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         # Valid and execute
-        result = FlextResult.ok(20).validate_and_execute(validator, executor)
+        result = FlextResult[int].ok(20).validate_and_execute(validator, executor)
         assert result.is_success
         assert result.value == 40
 
         # Invalid - execution skipped
-        result = FlextResult.ok(5).validate_and_execute(validator, executor)
+        result = FlextResult[int].ok(5).validate_and_execute(validator, executor)
         assert result.is_failure
 
     def test_result_pipeline_composition(self) -> None:
@@ -2218,13 +2302,13 @@ class TestFlextResultAdditionalCoverage:
         # pipeline takes initial_value and *operations (variadic)
 
         def add_10(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x + 10)
+            return FlextResult[int].ok(x + 10)
 
         def multiply_2(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         def subtract_5(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x - 5)
+            return FlextResult[int].ok(x - 5)
 
         # Pipeline: (5 + 10) * 2 - 5 = 25
         result = FlextResult.pipeline(5, add_10, multiply_2, subtract_5)
@@ -2242,7 +2326,7 @@ class TestFlextResultAdditionalCoverage:
             return FlextResult[int].fail("Attempt 2 failed")
 
         def attempt3() -> FlextResult[int]:
-            return FlextResult.ok(42)
+            return FlextResult[int].ok(42)
 
         # Try multiple attempts on a failed result
         initial_failure = FlextResult[int].fail("Initial failure")
@@ -2252,8 +2336,8 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_applicative_lift2(self) -> None:
         """Test applicative_lift2 for lifting binary functions (line 1528)."""
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
+        result1 = FlextResult[int].ok(10)
+        result2 = FlextResult[int].ok(20)
 
         # Lift binary function
         combined = FlextResult.applicative_lift2(operator.add, result1, result2)
@@ -2262,9 +2346,9 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_applicative_lift3(self) -> None:
         """Test applicative_lift3 for lifting ternary functions (line 1567)."""
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
-        result3 = FlextResult.ok(5)
+        result1 = FlextResult[int].ok(10)
+        result2 = FlextResult[int].ok(20)
+        result3 = FlextResult[int].ok(5)
 
         # Lift ternary function
         combined = FlextResult.applicative_lift3(
@@ -2281,12 +2365,12 @@ class TestFlextResultAdditionalCoverage:
         # when is instance method, takes predicate that tests the value
 
         # When condition is true
-        result = FlextResult.ok(42).when(lambda x: x > 40)
+        result = FlextResult[int].ok(42).when(lambda x: x > 40)
         assert result.is_success
         assert result.value == 42
 
         # When condition is false
-        result = FlextResult.ok(42).when(lambda x: x < 40)
+        result = FlextResult[int].ok(42).when(lambda x: x < 40)
         assert result.is_failure
 
     def test_result_unless_conditional(self) -> None:
@@ -2294,12 +2378,12 @@ class TestFlextResultAdditionalCoverage:
         # unless is instance method, inverse of when
 
         # Unless condition is false - proceeds
-        result = FlextResult.ok(42).unless(lambda x: x < 40)
+        result = FlextResult[int].ok(42).unless(lambda x: x < 40)
         assert result.is_success
         assert result.value == 42
 
         # Unless condition is true - fails
-        result = FlextResult.ok(42).unless(lambda x: x > 40)
+        result = FlextResult[int].ok(42).unless(lambda x: x > 40)
         assert result.is_failure
 
     def test_result_if_then_else_branching(self) -> None:
@@ -2313,19 +2397,27 @@ class TestFlextResultAdditionalCoverage:
             return FlextResult.ok(f"else:{x}")
 
         # Condition true
-        result = FlextResult.ok(50).if_then_else(
-            lambda x: x > 40,
-            then_action,
-            else_action,
+        result = (
+            FlextResult[int]
+            .ok(50)
+            .if_then_else(
+                lambda x: x > 40,
+                then_action,
+                else_action,
+            )
         )
         assert result.is_success
         assert result.value == "then:50"
 
         # Condition false
-        result = FlextResult.ok(30).if_then_else(
-            lambda x: x > 40,
-            then_action,
-            else_action,
+        result = (
+            FlextResult[int]
+            .ok(30)
+            .if_then_else(
+                lambda x: x > 40,
+                then_action,
+                else_action,
+            )
         )
         assert result.is_success
         assert result.value == "else:30"
@@ -2360,6 +2452,7 @@ class TestFlextResultAdditionalCoverage:
 
         class TestResource:
             def __init__(self) -> None:
+                super().__init__()
                 self.closed = False
 
             def close(self) -> None:
@@ -2377,10 +2470,14 @@ class TestFlextResultAdditionalCoverage:
             r.close()
 
         # Use resource
-        result = FlextResult.ok(42).with_resource(
-            resource_factory,
-            use_resource,
-            cleanup,
+        result = (
+            FlextResult[int]
+            .ok(42)
+            .with_resource(
+                resource_factory,
+                use_resource,
+                cleanup,
+            )
         )
         assert result.is_success
         assert result.value == "used with 42"
@@ -2399,7 +2496,7 @@ class TestFlextResultAdditionalCoverage:
             resources_released.append(resource)
 
         # Bracket pattern
-        result = FlextResult.ok("resource1").bracket(use_resource, release)
+        result = FlextResult[str].ok("resource1").bracket(use_resource, release)
         assert result.is_success
         assert result.value == "used resource1"
         assert len(resources_released) == 1
@@ -2410,10 +2507,10 @@ class TestFlextResultAdditionalCoverage:
         # operation takes unwrapped value and returns FlextResult
 
         def quick_operation(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         # Operation within timeout
-        result = FlextResult.ok(21).with_timeout(1.0, quick_operation)
+        result = FlextResult[int].ok(21).with_timeout(1.0, quick_operation)
         assert result.is_success
         assert result.value == 42
 
@@ -2428,13 +2525,17 @@ class TestFlextResultAdditionalCoverage:
             attempts.append(1)
             if len(attempts) < 3:
                 return FlextResult[int].fail("Not yet")
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         # Retry until success
-        result = FlextResult.ok(21).retry_until_success(
-            flaky_operation,
-            max_attempts=5,
-            backoff_factor=0.01,
+        result = (
+            FlextResult[int]
+            .ok(21)
+            .retry_until_success(
+                flaky_operation,
+                max_attempts=5,
+                backoff_factor=0.01,
+            )
         )
         assert result.is_success
         assert result.value == 42
@@ -2509,7 +2610,7 @@ class TestFlextResultFinalCoverage:
 
         # When accessed from class (not instance), descriptor returns class method
         # Test that classmethod path works
-        result_mapped = FlextResult.ok(10).map(lambda x: x * 2)
+        result_mapped = FlextResult[int].ok(10).map(lambda x: x * 2)
         assert result_mapped.value == 20
 
     def test_functional_kleisli_compose_failure_propagation(self) -> None:
@@ -2569,7 +2670,7 @@ class TestFlextResultFinalCoverage:
 
         # Accessing value on failure should raise FlextExceptions.TypeError
         with pytest.raises(
-            FlextExceptions.TypeError,
+            FlextExceptions.ValidationError,
             match="Attempted to access value",
         ):
             _ = result.value
@@ -2581,7 +2682,7 @@ class TestFlextResultFinalCoverage:
             msg = "Mapping function error"
             raise ValueError(msg)
 
-        result = FlextResult.ok(42)
+        result = FlextResult[int].ok(42)
         mapped = result.map(raises_error)
 
         # Should catch exception and return failure
@@ -2595,7 +2696,7 @@ class TestFlextResultFinalCoverage:
             msg = "Flat map error"
             raise RuntimeError(msg)
 
-        result = FlextResult.ok(42)
+        result = FlextResult[int].ok(42)
         flat_mapped = result.flat_map(raises_error)
 
         # Should catch exception and return failure
@@ -2609,18 +2710,22 @@ class TestFlextResultFinalCoverage:
         # Enter on failure should raise FlextExceptions.OperationError
         result = FlextResult[int].fail("Context error")
 
-        with pytest.raises(FlextExceptions.OperationError, match="Context error"):
+        with pytest.raises(FlextExceptions.BaseError, match="Context error"):
             with result:
                 pass
 
     def test_equality_complex_data_structures(self) -> None:
         """Test __eq__ with complex nested data (lines 853-854, 861-862)."""
         # Test equality with nested dictionaries
-        data1 = {"nested": {"value": 42, "list": [1, 2, 3]}}
-        data2 = {"nested": {"value": 42, "list": [1, 2, 3]}}
+        data1: dict[str, dict[str, object]] = {
+            "nested": {"value": 42, "list": [1, 2, 3]}
+        }
+        data2: dict[str, dict[str, object]] = {
+            "nested": {"value": 42, "list": [1, 2, 3]}
+        }
 
-        result1 = FlextResult.ok(data1)
-        result2 = FlextResult.ok(data2)
+        result1 = FlextResult[dict[str, dict[str, object]]].ok(data1)
+        result2 = FlextResult[dict[str, dict[str, object]]].ok(data2)
 
         # Should be equal even with complex structures
         assert result1 == result2
@@ -2628,8 +2733,8 @@ class TestFlextResultFinalCoverage:
     def test_hash_with_unhashable_data(self) -> None:
         """Test __hash__ with unhashable data types (lines 877-884)."""
         # Lists are unhashable, should handle gracefully
-        result_with_list = FlextResult.ok([1, 2, 3])
-        result_with_dict = FlextResult.ok({"key": "value"})
+        result_with_list = FlextResult[list[int]].ok([1, 2, 3])
+        result_with_dict = FlextResult[dict[str, str]].ok({"key": "value"})
 
         # Should be able to hash results even with unhashable data
         hash1 = hash(result_with_list)
@@ -2683,7 +2788,7 @@ class TestFlextResultFinalCoverage:
             msg = "Predicate error"
             raise ValueError(msg)
 
-        result = FlextResult.ok(42)
+        result = FlextResult[int].ok(42)
         filtered = result.filter(predicate_raises, "Should pass")
 
         # Should catch exception and return failure
@@ -2696,8 +2801,8 @@ class TestFlextResultFinalCoverage:
             msg = "Combine error"
             raise RuntimeError(msg)
 
-        result1 = FlextResult.ok(1)
-        result2 = FlextResult.ok(2)
+        result1 = FlextResult[int].ok(1)
+        result2 = FlextResult[int].ok(2)
 
         # zip_with re-raises exceptions
         with pytest.raises(RuntimeError, match="Combine error"):
@@ -2738,8 +2843,8 @@ class TestFlextResultFinalCoverage:
 
     def test_matmul_operator_combination(self) -> None:
         """Test __matmul__ operator for combining results (lines 1260, 1262)."""
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
+        result1 = FlextResult[int].ok(10)
+        result2 = FlextResult[int].ok(20)
 
         # @ operator combines into tuple
         combined = result1 @ result2
@@ -2758,7 +2863,7 @@ class TestFlextResultFinalCoverage:
             msg = "Predicate error"
             raise RuntimeError(msg)
 
-        result = FlextResult.ok(42)
+        result = FlextResult[int].ok(42)
 
         # % operator is filter - should handle exceptions
         filtered = result % predicate_raises
@@ -2787,7 +2892,7 @@ class TestFlextResultFinalCoverage:
         def executor(x: int) -> FlextResult[str]:
             return FlextResult[str].ok(f"Executed {x}")
 
-        result = FlextResult.ok(42).validate_and_execute(validator, executor)
+        result = FlextResult[int].ok(42).validate_and_execute(validator, executor)
         assert result.is_failure
         assert "Validation failed" in str(result.error)
 
@@ -3186,35 +3291,6 @@ class TestFlextResultEdgeCases:
 class TestFlextResultFinalPush:
     """Final push for 95%+ coverage - targeting remaining uncovered lines."""
 
-    def test_descriptor_instance_impl_assignment(self) -> None:
-        """Test descriptor __init__ instance_impl assignment (line 68)."""
-
-        # Create a descriptor instance - using actual _DualAccessMethod class
-        def instance_method(self: object, x: int) -> int:
-            return x * 2
-
-        def class_method(cls: type, x: int) -> int:
-            return x * 3
-
-        from flext_core.result import _DualAccessMethod
-
-        descriptor = _DualAccessMethod(instance_method, class_method)
-        assert descriptor._instance_impl == instance_method
-
-    def test_descriptor_class_impl_assignment(self) -> None:
-        """Test descriptor __init__ class_impl assignment (line 69)."""
-
-        def instance_method(self: object, x: int) -> int:
-            return x * 2
-
-        def class_method(cls: type, x: int) -> int:
-            return x * 3
-
-        from flext_core.result import _DualAccessMethod
-
-        descriptor = _DualAccessMethod(instance_method, class_method)
-        assert descriptor._class_impl == class_method
-
     def test_descriptor_class_access_path(self) -> None:
         """Test descriptor __get__ class access path (lines 76-78)."""
         # Access descriptor from class (not instance)
@@ -3355,7 +3431,7 @@ class TestFlextResultFinalPush:
 
         # expect should raise for None data
         with pytest.raises(
-            FlextExceptions.OperationError,
+            FlextExceptions.BaseError,
             match="Success result has None data",
         ):
             result.expect("Expected non-None value")
@@ -3365,6 +3441,7 @@ class TestFlextResultFinalPush:
 
         class CustomObject:
             def __init__(self, value: int) -> None:
+                super().__init__()
                 self.value = value
 
             def __eq__(self, other: object) -> bool:
@@ -3398,6 +3475,7 @@ class TestFlextResultFinalPush:
 
         class SimplePerson:
             def __init__(self, name: str, age: int) -> None:
+                super().__init__()
                 self.name = name
                 self.age = age
 
@@ -3410,6 +3488,7 @@ class TestFlextResultFinalPush:
 
         class UnhashableAttributes:
             def __init__(self) -> None:
+                super().__init__()
                 self.data = {"key": [1, 2, 3]}  # Lists are unhashable
 
         result = FlextResult[UnhashableAttributes].ok(UnhashableAttributes())
@@ -3500,10 +3579,10 @@ class TestFlextResultFinalPush:
         from flext_core.exceptions import FlextExceptions
 
         result1 = FlextResult[int].fail("Failed 1")
-        not_a_result = cast("object", "not a FlextResult")
+        not_a_result: object = "not a FlextResult"
 
         with pytest.raises(
-            FlextExceptions.TypeError,
+            FlextExceptions.ValidationError,
             match="first_success expects FlextResult instances",
         ):
             FlextResult.first_success(result1, not_a_result)
@@ -3759,5 +3838,5 @@ class TestFlextResultFinalCoveragePush:
         """Test _flatten_callable_args with non-callable (lines 1995-1996)."""
         from flext_core.exceptions import FlextExceptions
 
-        with pytest.raises(FlextExceptions.TypeError, match="Expected callable"):
+        with pytest.raises(FlextExceptions.ValidationError, match="Expected callable"):
             FlextResult._flatten_callable_args("not a callable")

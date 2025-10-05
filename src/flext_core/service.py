@@ -17,28 +17,18 @@ from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import (
-    TYPE_CHECKING,
     cast,
     override,
 )
 
-if TYPE_CHECKING:
-    from flext_core.config import FlextConfig
-    from flext_core.container import FlextContainer
-    from flext_core.loggings import FlextLogger
-
 from pydantic import ConfigDict
 
-# Layer 1 - Foundation
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-
-# Layer 2 - Early Foundation
+from flext_core.container import FlextContainer
 from flext_core.exceptions import FlextExceptions
-
-# Layer 5 - Advanced Infrastructure
+from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
-
-# Layer 3 - Core Infrastructure
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -236,9 +226,6 @@ class FlextService[TDomainResult](
 
         """
         if self._logger is None:
-            # Import avoided via TYPE_CHECKING at module level
-            from flext_core.loggings import FlextLogger
-
             self._logger = FlextLogger(type(self).__name__)
         return self._logger
 
@@ -251,8 +238,6 @@ class FlextService[TDomainResult](
 
         """
         if self._container is None:
-            from flext_core.container import FlextContainer
-
             self._container = FlextContainer.get_global()
         return self._container
 
@@ -265,8 +250,6 @@ class FlextService[TDomainResult](
 
         """
         if self._config is None:
-            from flext_core.config import FlextConfig
-
             self._config = FlextConfig()
         return self._config
 

@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterator
+from typing import cast
+
+from pydantic import Field
 
 from flext_core import (
     FlextBus,
@@ -250,10 +253,10 @@ class TestFlextBus:
         bus.register_handler("TestCommand", handler)
 
         # Simulate concurrent access
-        results = []
+        results: list[FlextResult[object]] = []
         for i in range(10):
             command = TestCommand(data=f"data_{i}")
-            result = bus.execute(command)
+            result: FlextResult[object] = bus.execute(command)
             results.append(result)
 
         # All operations should succeed
@@ -327,10 +330,8 @@ class TestFlextBus:
         """Test bus caching functionality."""
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class TestQuery:
-            def __init__(self, data: str) -> None:
-                self.data = data
-                self.query_id = "test_query"
+        class TestQuery(FlextModels.Query):
+            data: str
 
         class TestQueryHandler:
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -339,7 +340,7 @@ class TestFlextBus:
         handler = TestQueryHandler()
         bus.register_handler("TestQuery", handler)
 
-        query = TestQuery("test_data")
+        query = TestQuery(data="test_data")
 
         # First execution should cache the result
         result1 = bus.execute(query)
@@ -358,11 +359,11 @@ class TestFlextBusMissingCoverage:
         """Test cache hit path (lines 53-56)."""
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class TestQuery:
-            def __init__(self, data: str) -> None:
-                self.data = data
-                # Use consistent query_id for cache key
-                self.query_id = f"test_query_{data}"
+        class TestQuery(FlextModels.Query):
+            data: str
+
+            def __init__(self, data: str, **kwargs: object) -> None:
+                super().__init__(data=data, query_id=f"test_query_{data}", **kwargs)
 
         class TestQueryHandler:
             def __init__(self) -> None:
@@ -377,7 +378,7 @@ class TestFlextBusMissingCoverage:
         bus.register_handler(TestQuery, handler)
 
         # Use same query instance to ensure same cache key
-        query = TestQuery("test")
+        query = TestQuery(data="test")
 
         # First call - cache miss
         result1 = bus.execute(query)
@@ -393,10 +394,9 @@ class TestFlextBusMissingCoverage:
         """Test cache overflow handling (lines 66-69)."""
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 2})
 
-        class TestQuery:
-            def __init__(self, query_id: str, data: str) -> None:
-                self.query_id = query_id
-                self.data = data
+        class TestQuery(FlextModels.Query):
+            query_id: str
+            data: str
 
         class TestQueryHandler:
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -406,9 +406,9 @@ class TestFlextBusMissingCoverage:
         bus.register_handler(TestQuery, handler)
 
         # Add 3 queries to cache with max_size=2
-        query1 = TestQuery("q1", "data1")
-        query2 = TestQuery("q2", "data2")
-        query3 = TestQuery("q3", "data3")
+        query1 = TestQuery(query_id="q1", data="data1")
+        query2 = TestQuery(query_id="q2", data="data2")
+        query3 = TestQuery(query_id="q3", data="data3")
 
         result1 = bus.execute(query1)
         result2 = bus.execute(query2)
@@ -425,8 +425,8 @@ class TestFlextBusMissingCoverage:
         cache = FlextBus._Cache(max_size=10)
 
         # Add items to cache
-        result1 = FlextResult[str].ok("test1")
-        result2 = FlextResult[str].ok("test2")
+        result1: FlextResult[object] = FlextResult[object].ok("test1")
+        result2: FlextResult[object] = FlextResult[object].ok("test2")
         cache.put("key1", result1)
         cache.put("key2", result2)
 
@@ -462,7 +462,7 @@ class TestFlextBusMissingCoverage:
         """Test _normalize_middleware_config with Mapping (lines 361-363)."""
         from collections.abc import Mapping as ABCMapping
 
-        class CustomMapping(ABCMapping):
+        class CustomMapping(ABCMapping[str, object]):
             def __init__(self, data: FlextTypes.Dict) -> None:
                 self._data = data
 
@@ -546,9 +546,8 @@ class TestFlextBusMissingCoverage:
         """Test command validation with custom validator that returns failure (lines 509-532)."""
         bus = FlextBus()
 
-        class ValidatedCommand:
-            def __init__(self, data: str) -> None:
-                self.data = data
+        class ValidatedCommand(FlextModels.Command):
+            data: str
 
             def validate_command(self) -> FlextResult[None]:
                 """Custom validation that fails."""
@@ -573,9 +572,8 @@ class TestFlextBusMissingCoverage:
         """Test validation exception handling (lines 533-536)."""
         bus = FlextBus()
 
-        class ProblemCommand:
-            def __init__(self, data: str) -> None:
-                self.data = data
+        class ProblemCommand(FlextModels.Command):
+            data: str
 
             def validate_business_rules(self, *args: object) -> FlextResult[None]:
                 """Validation that requires parameters (Pydantic-style)."""
@@ -589,7 +587,7 @@ class TestFlextBusMissingCoverage:
         bus.register_handler(ProblemCommand, handler)
 
         # Execute command - validation exception handled (lines 533-536)
-        command = ProblemCommand("test")
+        command = ProblemCommand(data="test")
         result = bus.execute(command)
         # Should succeed despite validation method signature issue
         assert result.is_success
@@ -629,10 +627,11 @@ class TestFlextBusMissingCoverage:
         """Test query detection using query_id attribute (line 538)."""
         bus = FlextBus(bus_config={"enable_caching": True})
 
-        class TestQuery:
-            def __init__(self, data: str) -> None:
-                self.data = data
-                self.query_id = f"query_{data}"  # This makes it a query (line 538)
+        class TestQuery(FlextModels.Query):
+            data: str
+
+            def __init__(self, data: str, **kwargs: object) -> None:
+                super().__init__(data=data, query_id=f"query_{data}", **kwargs)
 
         class TestHandler:
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -640,7 +639,7 @@ class TestFlextBusMissingCoverage:
 
         bus.register_handler(TestQuery, TestHandler())
 
-        query = TestQuery("test")
+        query = TestQuery(data="test")
         result = bus.execute(query)
         assert result.is_success
 
@@ -648,9 +647,8 @@ class TestFlextBusMissingCoverage:
         """Test query detection using 'Query' in class name (line 538)."""
         bus = FlextBus(bus_config={"enable_caching": True})
 
-        class UserQuery:  # Name contains "Query" (line 538)
-            def __init__(self, user_id: str) -> None:
-                self.user_id = user_id
+        class UserQuery(FlextModels.Query):  # Name contains "Query" (line 538)
+            user_id: str
 
         class TestHandler:
             def handle(self, query: UserQuery) -> FlextResult[str]:
@@ -658,7 +656,7 @@ class TestFlextBusMissingCoverage:
 
         bus.register_handler(UserQuery, TestHandler())
 
-        query = UserQuery("123")
+        query = UserQuery(user_id="123")
         result = bus.execute(query)
         assert result.is_success
 
@@ -666,8 +664,11 @@ class TestFlextBusMissingCoverage:
         """Test _generate_cache_key method is called for queries (lines 543-554)."""
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class CacheableQuery:
-            def __init__(self, query_id: str, param1: str, param2: int) -> None:
+        class CacheableQuery(FlextModels.Query):
+            def __init__(
+                self, query_id: str, param1: str, param2: int, **kwargs: object
+            ) -> None:
+                super().__init__(**kwargs)
                 self.query_id = query_id
                 self.param1 = param1
                 self.param2 = param2
@@ -676,9 +677,9 @@ class TestFlextBusMissingCoverage:
             def __init__(self) -> None:
                 self.call_count = 0
 
-            def handle(self, query: CacheableQuery) -> FlextResult[dict]:
+            def handle(self, query: CacheableQuery) -> FlextResult[dict[str, object]]:
                 self.call_count += 1
-                return FlextResult[dict].ok({
+                return FlextResult[dict[str, object]].ok({
                     "query_id": query.query_id,
                     "param1": query.param1,
                     "param2": query.param2,
@@ -689,7 +690,7 @@ class TestFlextBusMissingCoverage:
         bus.register_handler(CacheableQuery, handler)
 
         # Create query instance
-        query = CacheableQuery("q1", "value1", 42)
+        query = CacheableQuery(query_id="q1", param1="value1", param2=42)
 
         # First query execution - tests cache key generation path (lines 543-554)
         result1 = bus.execute(query)
@@ -728,9 +729,8 @@ class TestFlextBusMissingCoverage:
         """Test caching of successful query results (lines 597-605)."""
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class TestQuery:
-            def __init__(self, query_id: str) -> None:
-                self.query_id = query_id
+        class TestQuery(FlextModels.Query):
+            query_id: str
 
         class TestHandler:
             def __init__(self) -> None:
@@ -744,7 +744,7 @@ class TestFlextBusMissingCoverage:
         bus.register_handler(TestQuery, handler)
 
         # Create single query instance
-        query = TestQuery("test_query")
+        query = TestQuery(query_id="test_query")
 
         # Execute query - should cache successful result (lines 597-605)
         result1 = bus.execute(query)
@@ -934,10 +934,11 @@ class TestFlextBusMissingCoverage:
         """Test _generate_cache_key calls utility method (line 702)."""
         bus = FlextBus(bus_config={"enable_caching": True})
 
-        class TestQuery:
-            def __init__(self, data: str) -> None:
-                self.query_id = f"query_{data}"
-                self.data = data
+        class TestQuery(FlextModels.Query):
+            data: str
+
+            def __init__(self, data: str, **kwargs: object) -> None:
+                super().__init__(data=data, query_id=f"query_{data}", **kwargs)
 
         class TestHandler:
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -946,7 +947,7 @@ class TestFlextBusMissingCoverage:
         bus.register_handler(TestQuery, TestHandler())
 
         # Execute query to trigger cache key generation (line 702)
-        query = TestQuery("test")
+        query = TestQuery(data="test")
         result = bus.execute(query)
         assert result.is_success
 
@@ -1011,7 +1012,7 @@ class TestFlextBusMissingCoverage:
             def handle(
                 self,
                 command: TestCommand,
-            ) -> dict:  # Returns dict, not FlextResult
+            ) -> dict[str, object]:  # Returns dict, not FlextResult
                 return {"processed": command.data}
 
         bus.register_handler(TestCommand, RawHandler())
@@ -1095,16 +1096,16 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 5})
 
         class TestQuery(FlextModels.Query):
-            query_id: str
-            data: str
+            query_id: str = ""
+            data: str = ""
 
         execution_count = 0
 
         class TestQueryHandler:
-            def handle(self, query: TestQuery) -> FlextResult[dict]:
+            def handle(self, query: TestQuery) -> FlextResult[dict[str, object]]:
                 nonlocal execution_count
                 execution_count += 1
-                return FlextResult[dict].ok({
+                return FlextResult[dict[str, object]].ok({
                     "result": query.data,
                     "count": execution_count,
                 })
@@ -1134,10 +1135,10 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus()
 
         class TestEvent(FlextModels.DomainEvent):
-            event_type: str
-            aggregate_id: str
-            event_id: str
-            data: str
+            event_type: str = ""
+            aggregate_id: str = ""
+            event_id: str = ""
+            data: FlextTypes.Domain.EventPayload = Field(default_factory=dict)
 
         execution_count = 0
 
@@ -1156,7 +1157,7 @@ class TestFlextBusMissingCoverage:
             event_type="TestEvent",
             aggregate_id="agg1",
             event_id="event1",
-            data="test_data",
+            data={"value": "test_data"},
         )
         result = bus.publish_event(event)
         assert result.is_success
@@ -1168,16 +1169,16 @@ class TestFlextBusMissingCoverage:
                 event_type="TestEvent",
                 aggregate_id="agg2",
                 event_id="event2",
-                data="test_data2",
+                data={"value": "test_data2"},
             ),
             TestEvent(
                 event_type="TestEvent",
                 aggregate_id="agg3",
                 event_id="event3",
-                data="test_data3",
+                data={"value": "test_data3"},
             ),
         ]
-        result = bus.publish_events(events)
+        result = bus.publish_events(cast("list[object]", events))
         assert result.is_success
         assert execution_count == 3
 
@@ -1189,13 +1190,13 @@ class TestFlextBusMissingCoverage:
         """Test middleware pipeline functionality."""
         bus = FlextBus(bus_config={"enable_middleware": True})
 
-        execution_order = []
+        execution_order: list[str] = []
 
         class LoggingMiddleware:
             def process(self, command: object, handler: object) -> FlextResult[object]:
                 execution_order.append("middleware_before")
                 # Call the handler (next in chain)
-                result = handler.handle(command)
+                result: FlextResult[object] = getattr(handler, "handle")(command)
                 execution_order.append("middleware_after")
                 # Return the handler result
                 return result
@@ -1246,7 +1247,7 @@ class TestFlextBusMissingCoverage:
 
     def test_bus_configuration_functionality(self) -> None:
         """Test bus configuration and property access."""
-        config = {
+        config: dict[str, object] = {
             "enable_caching": True,
             "max_cache_size": 10,
             "enable_middleware": False,
@@ -1274,9 +1275,9 @@ class TestFlextBusMissingCoverage:
         cache = FlextBus._Cache(max_size=3)
 
         # Test cache operations
-        cache.put("key1", FlextResult[str].ok("value1"))
-        cache.put("key2", FlextResult[str].ok("value2"))
-        cache.put("key3", FlextResult[str].ok("value3"))
+        cache.put("key1", FlextResult[object].ok("value1"))
+        cache.put("key2", FlextResult[object].ok("value2"))
+        cache.put("key3", FlextResult[object].ok("value3"))
 
         # Test cache retrieval
         result1 = cache.get("key1")
@@ -1287,7 +1288,7 @@ class TestFlextBusMissingCoverage:
         assert cache.size() == 3
 
         # Test cache eviction (add 4th item, should evict least recently used)
-        cache.put("key4", FlextResult[str].ok("value4"))
+        cache.put("key4", FlextResult[object].ok("value4"))
         assert cache.size() == 3
 
         # key2 should be evicted (least recently used)

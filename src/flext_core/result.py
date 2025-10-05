@@ -47,7 +47,6 @@ from typing import TYPE_CHECKING, Self, TypeGuard, cast, overload, override
 from flext_core.constants import FlextConstants
 from flext_core.typings import (
     FlextTypes,
-    T,
     TItem,
     TResult,
     TUtil,
@@ -64,27 +63,6 @@ def _get_exceptions() -> type[FlextExceptions]:
     from flext_core.exceptions import FlextExceptions
 
     return FlextExceptions
-
-
-class _DualAccessMethod:
-    """Descriptor that exposes both instance and class-level callables under one name."""
-
-    def __init__(
-        self,
-        instance_impl: Callable[[object], object],
-        class_impl: Callable[[type], object],
-    ) -> None:
-        self._instance_impl = instance_impl
-        self._class_impl = class_impl
-
-    def __get__(
-        self,
-        instance: object | None,
-        owner: type[object],
-    ) -> Callable[[object], object]:
-        if instance is None:
-            return types.MethodType(self._class_impl, owner)
-        return types.MethodType(self._instance_impl, instance)
 
 
 # =============================================================================
@@ -517,7 +495,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             # Failure path: ensure data is None for type consistency.
             self._data = None
             # Ensure error is never None for failure results
-            self._error = error if error is not None else "Unknown error"
+            self._error = error
         else:
             # Success path: data can be T_co (including None if T_co allows it).
             self._data = data
@@ -532,10 +510,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return self._error is None and value is not None
 
     def _ensure_success_data(self) -> T_co:
-        """Ensure success data is available or raise OperationError."""
+        """Ensure success data is available or raise BaseError."""
         if self._data is None and self._error is None:
             msg = "Success result has None data"
-            raise _get_exceptions().OperationError(
+            raise _get_exceptions().BaseError(
                 message=msg,
                 error_code="OPERATION_ERROR",
             )
@@ -563,12 +541,12 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     @property
     def value(self) -> T_co:
-        """Return the success payload, raising :class:`TypeError` on failure."""
+        """Return the success payload, raising :class:`ValidationError` on failure."""
         if self.is_failure:
             msg = "Attempted to access value on failed result"
-            raise _get_exceptions().TypeError(
+            raise _get_exceptions().ValidationError(
                 message=msg,
-                error_code="TYPE_ERROR",
+                error_code="VALIDATION_ERROR",
             )
         # For success case, _data contains the actual value (which may be None for FlextResult[None])
         # Cast to T_co since we know this is a success result
@@ -789,7 +767,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise _get_exceptions().OperationError(
+            raise _get_exceptions().BaseError(
                 message=error_msg,
                 error_code="OPERATION_ERROR",
             )
@@ -815,14 +793,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Get value or raise with custom message."""
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise _get_exceptions().OperationError(
+            raise _get_exceptions().BaseError(
                 message=msg,
                 error_code="OPERATION_ERROR",
             )
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = "Success result has None data"
-            raise _get_exceptions().OperationError(
+            raise _get_exceptions().BaseError(
                 message=msg,
                 error_code="OPERATION_ERROR",
             )
@@ -917,14 +895,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return self
         return alternative
 
-    def or_else_get(self, func: Callable[[], FlextResult[T_co]]) -> FlextResult[T_co]:
+    def or_else_get(self, func: Callable[[], FlextResult[T_co]]) -> Self:
         """Return this result if successful, otherwise return result of func."""
         if self.is_success:
             return self
         try:
-            return func()
+            return cast("Self", func())
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult[T_co].fail(str(e))
+            return cast("Self", FlextResult[T_co].fail(str(e)))
 
     def unwrap_or(self, default: T_co) -> T_co:
         """Return value or default if failed."""
@@ -937,7 +915,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         if self.is_success:
             return cast("T_co", self._data)
         error_msg = self._error or "Operation failed"
-        raise _get_exceptions().OperationError(
+        raise _get_exceptions().BaseError(
             message=error_msg,
             error_code="OPERATION_ERROR",
         )
@@ -1033,7 +1011,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return None
 
         error_msg = self._error or "Result failed"
-        return _get_exceptions().OperationError(
+        return _get_exceptions().BaseError(
             message=error_msg, error_code="OPERATION_ERROR"
         )
 
@@ -1086,9 +1064,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 filtered.append(entry)
             else:
                 msg = "first_success expects FlextResult instances"
-                raise _get_exceptions().TypeError(
+                raise _get_exceptions().ValidationError(
                     message=msg,
-                    error_code="TYPE_ERROR",
+                    error_code="VALIDATION_ERROR",
                 )
 
         if not filtered:
@@ -1160,7 +1138,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         if result.is_success:
             return result.value
         if exception_type is None:
-            exception_type = _get_exceptions().OperationError
+            raise _get_exceptions().BaseError(
+                result.error or "Operation failed", error_code="OPERATION_ERROR"
+            )
         raise exception_type(result.error or "Operation failed")
 
     @classmethod
@@ -1197,11 +1177,18 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     def safe_call[TResult](
         cls: type[FlextResult[TResult]],
         func: Callable[[], TResult],
+        *,
+        error_code: str | None = None,
     ) -> FlextResult[TResult]:
-        """Execute function safely, wrapping result.
+        """Execute function safely, wrapping result in FlextResult.
+
+        Similar to dry-python/returns @safe decorator but as a classmethod
+        for inline use. Catches all exceptions and converts them to
+        FlextResult failures with optional error code.
 
         Args:
-            func: callable that returns TResult
+            func: Callable that returns TResult
+            error_code: Optional error code for failures (defaults to OPERATION_ERROR)
 
         Returns:
             FlextResult[TResult] wrapping the function result or error
@@ -1212,7 +1199,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 return api.get_data()
 
 
+            # Basic usage
             result = FlextResult[FlextTypes.Dict].safe_call(fetch_data)
+
+            # With error code
+            result = FlextResult[FlextTypes.Dict].safe_call(
+                fetch_data, error_code="API_ERROR"
+            )
+
             if result.is_success:
                 data = result.unwrap()
             ```
@@ -1222,7 +1216,10 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             value = func()
             return FlextResult[TResult].ok(value)
         except Exception as e:
-            return FlextResult[TResult].fail(str(e))
+            return FlextResult[TResult].fail(
+                str(e),
+                error_code=error_code or FlextConstants.Errors.OPERATION_ERROR,
+            )
 
     # === MONADIC COMPOSITION ADVANCED OPERATORS (Python 3.13) ===
 
@@ -1236,17 +1233,30 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
     def __matmul__(self, other: FlextResult[U]) -> FlextResult[tuple[T_co, U]]:
         """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION."""
-        # Use map2 pattern to avoid type inference issues
+        # Use applicative functor pattern
         if self.is_failure:
-            return cast("FlextResult[tuple[T_co, U]]", self.cast_fail())
+            # Create a failed result with the correct type
+            failed_result: FlextResult[tuple[T_co, U]] = FlextResult(
+                error=self._error or "Unknown error",
+                error_code=self._error_code,
+                error_data=self._error_data,
+            )
+            return failed_result
         if other.is_failure:
-            return cast("FlextResult[tuple[T_co, U]]", other.cast_fail())
+            # Create a failed result with the correct type
+            other_failed_result: FlextResult[tuple[T_co, U]] = FlextResult(
+                error=other._error or "Unknown error",
+                error_code=other._error_code,
+                error_data=other._error_data,
+            )
+            return other_failed_result
 
         # Both successful - combine values
         left_val = self.unwrap()
         right_val = other.unwrap()
         combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        return FlextResult[tuple[T_co, U]].ok(combined_tuple)
+        success_result: FlextResult[tuple[T_co, U]] = FlextResult(data=combined_tuple)
+        return success_result
 
     def cast_fail(self) -> FlextResult[object]:
         """Cast a failed result to a different type."""
@@ -1971,14 +1981,89 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             else:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
-                    raise _get_exceptions().TypeError(
+                    raise _get_exceptions().ValidationError(
                         message=msg,
-                        error_code="TYPE_ERROR",
+                        error_code="VALIDATION_ERROR",
                     )
                 flat_callables.append(item)
         return flat_callables
 
 
+# =============================================================================
+# MODULE-LEVEL CONVENIENCE FUNCTIONS
+# =============================================================================
+
+
+def safe[TResult](
+    func: Callable[..., TResult] | None = None,
+    *,
+    error_code: str | None = None,
+) -> (
+    Callable[..., FlextResult[TResult]]
+    | Callable[[Callable[..., TResult]], Callable[..., FlextResult[TResult]]]
+):
+    """Decorator to wrap function in FlextResult error handling.
+
+    Inspired by dry-python/returns @safe decorator. Converts any function
+    into one that returns FlextResult[T] instead of raising exceptions.
+
+    Args:
+        func: Function to wrap
+        error_code: Optional error code for failures (defaults to OPERATION_ERROR)
+
+    Returns:
+        Wrapped function returning FlextResult[TResult]
+
+    Example:
+        ```python
+        from flext_core import FlextResult, safe
+
+
+        @safe
+        def fetch_user(user_id: int) -> dict:
+            return api.get_user(user_id)  # May raise exceptions
+
+
+        @safe(error_code="DB_ERROR")
+        def query_database(query: str) -> list[dict]:
+            return db.execute(query)  # May raise exceptions
+
+
+        # Usage
+        result = fetch_user(123)
+        if result.is_success:
+            user = result.unwrap()
+
+        # Railway-oriented composition
+        user_result = (
+            fetch_user(123)
+            .flat_map(lambda u: validate_user(u))
+            .map(lambda u: format_response(u))
+        )
+        ```
+
+    """
+
+    def decorator(f: Callable[..., TResult]) -> Callable[..., FlextResult[TResult]]:
+        def wrapper(*args: object, **kwargs: object) -> FlextResult[TResult]:
+            try:
+                value = f(*args, **kwargs)
+                return FlextResult[TResult].ok(value)
+            except Exception as e:
+                return FlextResult[TResult].fail(
+                    str(e),
+                    error_code=error_code or FlextConstants.Errors.OPERATION_ERROR,
+                )
+
+        return wrapper
+
+    # Support both @safe and @safe(error_code="...")
+    if func is None:
+        return decorator
+    return decorator(func)
+
+
 __all__: FlextTypes.StringList = [
     "FlextResult",  # Main unified result class
+    "safe",  # Convenience decorator
 ]

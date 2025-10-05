@@ -22,19 +22,13 @@ import contextlib
 import inspect
 import threading
 from collections.abc import Callable
-from typing import cast, override
+from typing import Self, cast, override
 
-# External Dependencies - Dependency Injection
 from dependency_injector import containers, providers
 
-# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
-
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
-
-# Layer 2 - Early Foundation
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
@@ -44,9 +38,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     """Global dependency injection container for FLEXT ecosystem.
 
     FlextContainer provides centralized service management using the
-    singleton pattern. Access via FlextContainer.ensure_global_manager().get_or_create()
-    for consistent dependency injection throughout applications and all
-    32+ dependent FLEXT projects.
+    singleton pattern. Access via FlextContainer() for consistent dependency
+    injection throughout applications and all 32+ dependent FLEXT projects.
 
     **Function**: Service registry and dependency injection manager
         - Register services and factories globally with validation
@@ -84,8 +77,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         from flext_core import FlextContainer, FlextLogger, FlextResult
 
         # Example 1: Get global singleton instance
-        manager = FlextContainer.ensure_global_manager()
-        container = manager.get_or_create()
+        container = FlextContainer()
 
         # Example 2: Register services with validation
         logger = FlextLogger(__name__)
@@ -118,7 +110,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         ```
 
     Args:
-        None: Constructor called internally via ensure_global_manager().get_or_create() singleton.
+        None: Direct instantiation returns the global singleton instance.
 
     Attributes:
         _services (FlextTypes.Dict): Registered service instances.
@@ -128,7 +120,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         _user_overrides (FlextTypes.Dict): User config overrides.
 
     Returns:
-        FlextContainer: Singleton container instance via ensure_global_manager().get_or_create().
+        FlextContainer: The global singleton container instance.
 
     Raises:
         ValueError: When service registration validation fails.
@@ -137,20 +129,17 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     Note:
         Thread-safe singleton pattern with double-checked locking.
-        All operations return FlextResult for railway pattern. Use
-        ensure_global_manager().get_or_create() instead of direct instantiation.
-        Container integrates with FlextConfig for ecosystem-wide settings.
+        All operations return FlextResult for railway pattern. Container
+        integrates with FlextConfig for ecosystem-wide settings.
 
     Warning:
-        Never instantiate FlextContainer directly - always use
-        ensure_global_manager().get_or_create(). Batch operations rollback on first failure.
+        Batch operations rollback on first failure.
         Service names must be unique across the container.
 
     Example:
         Complete service lifecycle management:
 
-        >>> manager = FlextContainer.ensure_global_manager()
-        >>> container = manager.get_or_create()
+        >>> container = FlextContainer()
         >>> result = container.register("db", DatabaseService())
         >>> print(result.is_success)
         True
@@ -190,11 +179,22 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             if self._container is None:
                 with self._lock:
                     if self._container is None:
-                        self._container = FlextContainer()
+                        # Create instance using parent __new__ and __init__
+                        instance = object.__new__(FlextContainer)
+                        instance.__init__()
+                        self._container = instance
             return self._container
 
+    def __new__(cls) -> Self:
+        """Create or return the global singleton instance."""
+        return cls.get_global()
+
     def __init__(self) -> None:
-        """Initialize container with optimized data structures and internal DI."""
+        """Initialize container with optimized data structures and internal DI.
+
+        Note: This method is called only once for the singleton instance.
+        Subsequent calls to FlextContainer() return the same instance.
+        """
         super().__init__()
 
         # Internal dependency-injector container (NEW v1.1.0)
@@ -238,33 +238,25 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def _sync_config_to_di(self) -> None:
         """Sync FlextConfig to internal dependency-injector container.
 
-        Creates a Configuration provider in the DI container that mirrors
-        FlextConfig values. This enables DI-based configuration injection
-        while maintaining FlextConfig as the source of truth.
+        Uses FlextConfig's DI Configuration provider which is linked to
+        Pydantic 2 BaseSettings, implementing the pattern from:
+        https://python-dependency-injector.ets-labs.org/providers/configuration.html
+
+        This enables:
+        - Bidirectional sync between Pydantic and DI Configuration
+        - Configuration values injectable through DI container
+        - Pydantic validation preserved
+        - FlextConfig as the single source of truth
 
         Note:
             Added in v1.1.0 as part of internal DI wrapper implementation.
-            This is an internal method - external API unchanged.
+            Enhanced to use FlextConfig's DI provider for proper Pydantic integration.
 
         """
-        # Create configuration provider
-        config_provider = providers.Configuration()
-
-        # Sync all FlextConfig fields to DI config
-        config_dict = {
-            "environment": getattr(self._flext_config, "environment", "production"),
-            "debug": getattr(self._flext_config, "debug", False),
-            "trace": getattr(self._flext_config, "trace", False),
-            "log_level": getattr(self._flext_config, "log_level", "INFO"),
-            "max_workers": getattr(self._flext_config, "max_workers", 4),
-            "timeout_seconds": getattr(
-                self._flext_config,
-                "timeout_seconds",
-                FlextConstants.Container.TIMEOUT_SECONDS,
-            ),
-        }
-
-        config_provider.from_dict(config_dict)
+        # Use FlextConfig's DI Configuration provider
+        # This provider is linked to Pydantic settings and automatically
+        # syncs configuration values
+        config_provider = FlextConfig.get_di_config_provider()
         self._di_container.config = config_provider
 
     # =========================================================================
@@ -333,9 +325,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             from flext_core.result import FlextResult
             from flext_core.container import FlextContainer, FlextLogger
 
-            manager = FlextContainer.ensure_global_manager()
-            container = manager.get_or_create()
-
+            container = FlextContainer()
             logger = FlextLogger(__name__)
 
             result: FlextResult[object] = container.register("logger", logger)
@@ -352,8 +342,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Store service in registry AND internal DI container with conflict detection.
 
         Stores in both tracking dict (backward compatibility) and internal
-        dependency-injector container (advanced DI features). Uses Singleton
-        provider pattern to ensure single instance.
+        dependency-injector container (advanced DI features). Uses Object
+        provider for existing service instances.
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
@@ -369,9 +359,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Store in tracking dict (backward compatibility)
             self._services[name] = service
 
-            # Store in internal DI container using Singleton provider
-            # Capture service in lambda to avoid late binding issues
-            provider = providers.Singleton(lambda s=service: s)
+            # Store in internal DI container using Object provider
+            # Object provider is for existing instances (singletons by nature)
+            provider = providers.Object(service)
             self._di_container.set_provider(name, provider)
 
             return FlextResult[None].ok(None)
@@ -1012,7 +1002,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         Note:
             This method provides backward compatibility.
-            Use ensure_global_manager().get_or_create() for new code.
+            For new code, use FlextContainer() directly.
 
         """
         manager = cls.ensure_global_manager()

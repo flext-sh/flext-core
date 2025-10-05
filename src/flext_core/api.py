@@ -14,24 +14,15 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import cast, override
+from typing import ClassVar, cast, override
 from uuid import uuid4
 
-# Layer 5 - Advanced Infrastructure
 from flext_core.bus import FlextBus
-
-# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
-
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-
-# Layer 6 - Orchestration
 from flext_core.dispatcher import FlextDispatcher
-
-# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
@@ -41,10 +32,8 @@ from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
-
-# Layer 4 - Service
 from flext_core.service import FlextService
-from flext_core.typings import FlextTypes, T
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
@@ -90,17 +79,16 @@ class FlextCore(FlextService[None]):
     config = core.config
     container = core.container
     logger = core.logger
-    bus = core.bus
 
-    # Or use direct class access
+    # Or use direct class access (namespace pattern)
     result = FlextResult[str].ok("success")
     user = FlextCore.Models.Entity(id="123", name="John")
     timeout = FlextCore.Constants.Defaults.TIMEOUT
 
-    # Factory methods for common patterns
-    success = FlextCore.create_result_ok("data")
-    failure = FlextCore.create_result_fail[str]("error", "ERROR_CODE")
-    log = FlextCore.create_logger(__name__)
+    # Factory methods for common components
+    logger = FlextCore.ComponentFactory.create_logger(__name__)
+    container = FlextCore.ComponentFactory.create_container()
+    bus = FlextCore.ComponentFactory.create_bus()
     ```
 
     **Architecture**:
@@ -127,61 +115,49 @@ class FlextCore(FlextService[None]):
     # while avoiding Pydantic field interpretation. TypeAliasType instances enable
     # usage like: def foo() -> FlextCore.Types.Dict: ...
 
-    # Core patterns (most commonly used)
-    class Result[T](FlextResult[T]):
-        """Result namespace."""
+    # Direct class references (not fields) - following namespace class pattern
+    Result: ClassVar[type[FlextResult]] = FlextResult
+    Config: ClassVar[type[FlextConfig]] = FlextConfig
+    Container: ClassVar[type[FlextContainer]] = FlextContainer
+    Logger: ClassVar[type[FlextLogger]] = FlextLogger
+    Models: ClassVar[type[FlextModels]] = FlextModels
+    Constants: ClassVar[type[FlextConstants]] = FlextConstants
+    Types: ClassVar[type[FlextTypes]] = FlextTypes
+    Exceptions: ClassVar[type[FlextExceptions]] = FlextExceptions
+    Protocols: ClassVar[type[FlextProtocols]] = FlextProtocols
+    Bus: ClassVar[type[FlextBus]] = FlextBus
+    Context: ClassVar[type[FlextContext]] = FlextContext
+    Handlers: ClassVar[type[FlextHandlers]] = FlextHandlers
+    Processors: ClassVar[type[FlextProcessors]] = FlextProcessors
+    Registry: ClassVar[type[FlextRegistry]] = FlextRegistry
+    Dispatcher: ClassVar[type[FlextDispatcher]] = FlextDispatcher
+    Mixins: ClassVar[type[FlextMixins]] = FlextMixins
+    Utilities: ClassVar[type[FlextUtilities]] = FlextUtilities
+    Service: ClassVar[type[FlextService]] = FlextService
 
-    class Config(FlextConfig):
-        """Config namespace."""
+    # Nested helper classes for complex operations
+    class ComponentFactory:
+        """Factory methods for creating commonly used component instances."""
 
-    class Container(FlextContainer):
-        """Container namespace."""
+        @staticmethod
+        def create_logger(name: str) -> FlextLogger:
+            """Create a new logger instance with the given name."""
+            return FlextLogger(name)
 
-    class Logger(FlextLogger):
-        """Logger namespace."""
+        @staticmethod
+        def create_container() -> FlextContainer:
+            """Create a new container instance."""
+            return FlextContainer()
 
-    class Service[T](FlextService[T]):
-        """Service namespace."""
+        @staticmethod
+        def create_bus() -> FlextBus:
+            """Create a new event bus instance."""
+            return FlextBus()
 
-    class Models(FlextModels):
-        """Models namespace."""
-
-    class Constants(FlextConstants):
-        """Constants namespace."""
-
-    class Types(FlextTypes):
-        """Types namespace."""
-
-    class Exceptions(FlextExceptions):
-        """Exceptions namespace."""
-
-    class Protocols(FlextProtocols):
-        """Protocols namespace."""
-
-    # Advanced integration components
-    class Bus(FlextBus):
-        """Bus namespace."""
-
-    class Context(FlextContext):
-        """Context namespace."""
-
-    class Handlers(FlextHandlers):
-        """Handlers namespace."""
-
-    class Processors(FlextProcessors):
-        """Processors namespace."""
-
-    class Registry(FlextRegistry):
-        """Registry namespace."""
-
-    class Dispatcher(FlextDispatcher):
-        """Dispatcher namespace."""
-
-    class Mixins(FlextMixins):
-        """Mixins namespace."""
-
-    class Utilities(FlextUtilities):
-        """Utilities namespace."""
+        @staticmethod
+        def create_context() -> FlextContext:
+            """Create a new context instance."""
+            return FlextContext()
 
     # =================================================================
     # INSTANCE INITIALIZATION
@@ -317,97 +293,6 @@ class FlextCore(FlextService[None]):
         if self._registry is None:
             self._registry = FlextRegistry(dispatcher=self.dispatcher)
         return self._registry
-
-    # =================================================================
-    # FACTORY METHODS (Convenience creation patterns)
-    # =================================================================
-
-    @staticmethod
-    def create_result_ok[T](value: T) -> FlextResult[T]:
-        """Create successful result with value.
-
-        Args:
-            value: The success value to wrap.
-
-        Returns:
-            FlextResult in success state with value.
-
-        Example:
-            >>> result = FlextCore.create_result_ok("success")
-            >>> assert result.is_success
-            >>> assert result.value == "success"
-
-        """
-        return FlextResult[T].ok(value)
-
-    @staticmethod
-    def create_result_fail[T](
-        error: str,
-        error_code: str | None = None,
-    ) -> FlextResult[T]:
-        """Create failed result with error.
-
-        Args:
-            error: Error message describing the failure.
-            error_code: Optional error code for categorization.
-
-        Returns:
-            FlextResult in failure state with error.
-
-        Example:
-            >>> result = FlextCore.create_result_fail[str](
-            ...     "Operation failed", "OP_FAILED"
-            ... )
-            >>> assert result.is_failure
-            >>> assert result.error == "Operation failed"
-
-        """
-        return FlextResult[T].fail(error, error_code=error_code)
-
-    @staticmethod
-    def create_logger(name: str) -> FlextLogger:
-        """Create logger instance for module.
-
-        Args:
-            name: Logger name (typically __name__).
-
-        Returns:
-            FlextLogger instance configured for the module.
-
-        Example:
-            >>> logger = FlextCore.create_logger(__name__)
-            >>> logger.info("Logging message")
-
-        """
-        return FlextLogger(name)
-
-    @staticmethod
-    def get_container() -> FlextContainer:
-        """Get global dependency injection container.
-
-        Returns:
-            Global FlextContainer singleton instance.
-
-        Example:
-            >>> container = FlextCore.get_container()
-            >>> container.register("service", MyService())
-
-        """
-        return FlextContainer.get_global()
-
-    @staticmethod
-    def get_config() -> FlextConfig:
-        """Get configuration instance (direct instantiation).
-
-        Returns:
-            FlextConfig instance with current configuration.
-
-        Example:
-            >>> config = FlextCore.get_config()
-            >>> log_level = config.log_level
-
-        """
-        return FlextConfig()
 
     # =================================================================
     # INTEGRATION HELPERS (Common patterns)
@@ -810,6 +695,13 @@ class FlextCore(FlextService[None]):
             error_msg = f"Query handler creation failed: {e}"
             return FlextResult[FlextTypes.Dict].fail(error_msg)
 
+
+# =================================================================
+# CLASS ATTRIBUTE ASSIGNMENTS (avoid Pydantic Config conflict)
+# =================================================================
+
+# Add Config as a class attribute after class definition to avoid Pydantic conflict
+FlextCore.Config = FlextConfig
 
 # =================================================================
 # MODULE EXPORTS

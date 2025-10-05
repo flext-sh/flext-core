@@ -20,6 +20,7 @@ from typing import (
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
+    T,
     T_co,
     T_contra,
     TInput_contra,
@@ -300,11 +301,11 @@ class FlextProtocols:
         # Domain protocols providing service and repository patterns
 
         @runtime_checkable
-        class Service(Protocol[T_co]):
+        class Service(Protocol[T]):
             """Domain service contract aligned with FlextService implementation."""
 
             @abstractmethod
-            def execute(self) -> FlextResult[T_co]:
+            def execute(self) -> FlextResult[T]:
                 """Execute the main domain operation.
 
                 Returns:
@@ -814,7 +815,7 @@ class FlextProtocols:
             str(self._config.get("circuit_breaker_threshold", 5) or 5)
         )
 
-    def register(self, name: str, protocol_type: type) -> FlextResult[None]:
+    def register(self, name: str, protocol_type: type | None) -> FlextResult[None]:
         """Register a protocol type for validation.
 
         Args:

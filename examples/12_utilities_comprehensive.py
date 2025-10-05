@@ -21,7 +21,6 @@ from __future__ import annotations
 import time
 
 from flext_core import (
-    FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
@@ -32,14 +31,13 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
     """Service demonstrating essential FlextUtilities patterns."""
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
         self._cache: FlextTypes.Dict = {}
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
-        self._logger.info("Executing utilities demo")
+        self.logger.info("Executing utilities demo")
         return FlextResult[FlextTypes.Dict].ok({
             "status": "completed",
             "utilities_executed": True,
