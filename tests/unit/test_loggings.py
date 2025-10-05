@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextContext, FlextLogger, FlextResult, FlextTypes
 
 
 class TestFlextLogger:
@@ -80,6 +80,29 @@ class TestFlextLogger:
 
         result = logger.info("Test message", correlation_id="test_corr_123")
         assert result.is_success
+
+    def test_logger_uses_context_correlation_without_manual_set(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Ensure context correlation IDs are injected without manual overrides."""
+
+        logger = FlextLogger("test_logger")
+
+        captured: dict[str, Any] = {}
+
+        def fake_info(event: str, *args: Any, **kwargs: Any) -> None:
+            captured["event"] = event
+            captured["args"] = args
+            captured["kwargs"] = kwargs
+
+        monkeypatch.setattr(logger._structlog_logger, "info", fake_info)
+
+        with FlextContext.Correlation.new_correlation() as correlation_id:
+            result = logger.info("Context correlation message")
+
+        assert result.is_success
+        assert "kwargs" in captured
+        assert captured["kwargs"].get("correlation_id") == correlation_id
 
     def test_logger_logging_with_exception(self) -> None:
         """Test logging with exception."""

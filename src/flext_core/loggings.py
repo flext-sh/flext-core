@@ -1257,6 +1257,16 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
         """
         return datetime.now(UTC).isoformat()
 
+    def _get_active_correlation_id(self) -> str | None:
+        """Resolve the active correlation ID from context or cached overrides."""
+
+        from flext_core.context import FlextContext
+
+        context_correlation_id = FlextContext.Correlation.get_correlation_id()
+        if context_correlation_id:
+            return context_correlation_id
+        return self._correlation_id
+
     def _get_environment_from_config(self) -> str:
         """Get environment from FlextConfig singleton.
 
@@ -1492,9 +1502,10 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 "include_correlation_id",
                 FlextConstants.Logging.INCLUDE_CORRELATION_ID,
             )
-            and self._correlation_id
         ):
-            correlation_id = self._correlation_id
+            active_correlation_id = self._get_active_correlation_id()
+            if active_correlation_id:
+                correlation_id = active_correlation_id
 
         # Determine line number for the model - proper type handling
         line_number: int | None = None
@@ -1769,8 +1780,9 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 consolidated["request"] = request_ctx
 
         # Add correlation ID if available
-        if self._correlation_id:
-            consolidated["correlation_id"] = self._correlation_id
+        active_correlation_id = self._get_active_correlation_id()
+        if active_correlation_id:
+            consolidated["correlation_id"] = active_correlation_id
 
         return consolidated
 
@@ -2409,7 +2421,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             str | None: Instance correlation ID or None if not set
 
         """
-        return self._correlation_id
+        return self._get_active_correlation_id()
 
     def set_correlation_id_internal(self, correlation_id: str) -> None:
         """Set instance correlation ID (internal use).
@@ -2461,7 +2473,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
             "level": self._level,
             "service_name": getattr(self, "_service_name", None),
             "service_version": getattr(self, "_service_version", None),
-            "correlation_id": getattr(self, "_correlation_id", None),
+            "correlation_id": self._get_active_correlation_id(),
         }
 
     @classmethod
