@@ -793,6 +793,10 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         try:
             self._services.clear()
             self._factories.clear()
+            # Reset the internal DI container to drop registered providers
+            self._di_container = containers.DynamicContainer()
+            # Reapply configuration provider to ensure consistency post-reset
+            self._sync_config_to_di()
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Failed to clear container: {e}")

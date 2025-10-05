@@ -392,3 +392,26 @@ class TestBackwardCompatibility:
         assert len(list_result.value) == 0
         assert len(container._services) == 0
         assert len(container._factories) == 0
+
+
+class TestContainerReset:
+    """Tests for container reset behavior via clear()."""
+
+    def test_clear_resets_di_state(self) -> None:
+        """Services are no longer resolvable after clear()."""
+
+        container = FlextContainer()
+        service_data = {"value": "to be cleared"}
+
+        register_result = container.register("clearable_service", service_data)
+        assert register_result.is_success
+
+        # Sanity check service resolves prior to clear
+        resolve_result = container.get("clearable_service")
+        assert resolve_result.is_success and resolve_result.value is service_data
+
+        clear_result = container.clear()
+        assert clear_result.is_success
+
+        post_clear_result = container.get("clearable_service")
+        assert post_clear_result.is_failure
