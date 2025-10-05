@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import ClassVar, cast, override
+from typing import cast, override
 from uuid import uuid4
 
 from flext_core.bus import FlextBus
@@ -116,24 +116,58 @@ class FlextCore(FlextService[None]):
     # usage like: def foo() -> FlextCore.Types.Dict: ...
 
     # Direct class references (not fields) - following namespace class pattern
-    Result: ClassVar[type[FlextResult]] = FlextResult
-    Config: ClassVar[type[FlextConfig]] = FlextConfig
-    Container: ClassVar[type[FlextContainer]] = FlextContainer
-    Logger: ClassVar[type[FlextLogger]] = FlextLogger
-    Models: ClassVar[type[FlextModels]] = FlextModels
-    Constants: ClassVar[type[FlextConstants]] = FlextConstants
-    Types: ClassVar[type[FlextTypes]] = FlextTypes
-    Exceptions: ClassVar[type[FlextExceptions]] = FlextExceptions
-    Protocols: ClassVar[type[FlextProtocols]] = FlextProtocols
-    Bus: ClassVar[type[FlextBus]] = FlextBus
-    Context: ClassVar[type[FlextContext]] = FlextContext
-    Handlers: ClassVar[type[FlextHandlers]] = FlextHandlers
-    Processors: ClassVar[type[FlextProcessors]] = FlextProcessors
-    Registry: ClassVar[type[FlextRegistry]] = FlextRegistry
-    Dispatcher: ClassVar[type[FlextDispatcher]] = FlextDispatcher
-    Mixins: ClassVar[type[FlextMixins]] = FlextMixins
-    Utilities: ClassVar[type[FlextUtilities]] = FlextUtilities
-    Service: ClassVar[type[FlextService]] = FlextService
+    type Result[T] = FlextResult[T]
+
+    class Handlers[T, U](FlextHandlers[T, U]):
+        """Handlers class for FlextCore."""
+
+    class Service[T](FlextService[T]):
+        """Service class for FlextCore."""
+
+    class Config(FlextConfig):
+        """Config class for FlextCore."""
+
+    class Container(FlextContainer):
+        """Container class for FlextCore."""
+
+    class Logger(FlextLogger):
+        """Logger class for FlextCore."""
+
+    class Models(FlextModels):
+        """Models class for FlextCore."""
+
+    class Constants(FlextConstants):
+        """Constants class for FlextCore."""
+
+    class Types(FlextTypes):
+        """Types class for FlextCore."""
+
+    class Exceptions(FlextExceptions):
+        """Exceptions class for FlextCore."""
+
+    class Protocols(FlextProtocols):
+        """Protocols class for FlextCore."""
+
+    class Bus(FlextBus):
+        """Bus class for FlextCore."""
+
+    class Context(FlextContext):
+        """Context class for FlextCore."""
+
+    class Processors(FlextProcessors):
+        """Processors class for FlextCore."""
+
+    class Registry(FlextRegistry):
+        """Registry class for FlextCore."""
+
+    class Dispatcher(FlextDispatcher):
+        """Dispatcher class for FlextCore."""
+
+    class Mixins(FlextMixins):
+        """Mixins class for FlextCore."""
+
+    class Utilities(FlextUtilities):
+        """Utilities class for FlextCore."""
 
     # Nested helper classes for complex operations
     class ComponentFactory:
