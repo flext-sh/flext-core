@@ -593,9 +593,16 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             FlextTypes.Dict: Snapshot containing services and factories.
 
         """
+        di_provider_names: list[str] = []
+        providers_map = getattr(self._di_container, "providers", None)
+        if providers_map is not None:
+            with contextlib.suppress(Exception):
+                di_provider_names = list(providers_map.keys())
+
         return {
             "services": self._services.copy(),
             "factories": self._factories.copy(),
+            "di_providers": di_provider_names,
         }
 
     def _process_batch_registrations(
@@ -632,9 +639,27 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         factories_snapshot = snapshot.get("factories")
 
         if isinstance(services_snapshot, dict):
-            self._services = services_snapshot
+            self._services = services_snapshot.copy()
+        else:
+            self._services = {}
         if isinstance(factories_snapshot, dict):
-            self._factories = factories_snapshot
+            self._factories = factories_snapshot.copy()
+        else:
+            self._factories = {}
+
+        # Reset DI container to ensure providers outside the snapshot are removed
+        self._di_container = containers.DynamicContainer()
+        self._sync_config_to_di()
+
+        for name, service in self._services.items():
+            with contextlib.suppress(Exception):
+                provider = providers.Object(service)
+                self._di_container.set_provider(name, provider)
+
+        for name, factory in self._factories.items():
+            with contextlib.suppress(Exception):
+                provider = providers.Singleton(factory)
+                self._di_container.set_provider(name, provider)
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection

@@ -225,6 +225,29 @@ class TestServiceUnregistrationSync:
         assert result.error is not None and "not registered" in result.error.lower()
 
 
+class TestBatchRegisterRollbackSync:
+    """Test that batch_register rollbacks also reset the DI container."""
+
+    def test_batch_register_failure_resets_di_state(self) -> None:
+        """Failed batch registration should remove partially added DI providers."""
+
+        container = FlextContainer()
+        good_service = {"value": "ok"}
+
+        services_with_failure = {
+            "good": good_service,
+            "bad/service": {"value": "bad"},
+        }
+
+        result = container.batch_register(services_with_failure)
+
+        assert result.is_failure
+        assert "good" not in container._services
+        assert "good" not in container._factories
+        assert not hasattr(container._di_container, "good")
+        assert container.get("good").is_failure
+
+
 class TestFlextConfigSync:
     """Test FlextConfig synchronization with DI container."""
 
