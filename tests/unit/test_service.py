@@ -907,8 +907,7 @@ class TestServiceCoverageImprovements:
                     business_result = self.validate_business_rules()
                     if business_result.is_failure:
                         return FlextResult[None].fail(
-                            f"{FlextConstants.Messages.VALIDATION_FAILED}"
-                            f" (business rules): {business_result.error}",
+                            f"{FlextConstants.Messages.VALIDATION_FAILED} (business rules): {business_result.error}"
                         )
                 return FlextResult[None].ok(None)
 

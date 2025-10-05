@@ -1,16 +1,28 @@
-"""Layer 2: Exception hierarchy aligned with the FLEXT 1.0.0 modernization charter.
+"""Namespace class for FLEXT exception hierarchy.
 
-This module provides structured exception classes with error codes and correlation
-tracking for the entire FLEXT ecosystem. Use FlextException hierarchy for all
-error handling throughout FLEXT applications.
+This module provides the FlextExceptions namespace class containing
+structured exception types with error codes and correlation tracking
+for the entire FLEXT ecosystem.
 
-Dependency Layer: 2 (Early Foundation)
-Dependencies: FlextConstants, FlextTypes
-Used by: All FlextCore modules requiring structured error handling
+Namespace Class Pattern:
+- FlextExceptions (namespace class)
+  - BaseError (base exception class)
+  - ValidationError (validation failures)
+  - ConfigurationError (configuration issues)
+  - ConnectionError (network/connection failures)
+  - TimeoutError (operation timeouts)
+  - AuthenticationError (auth failures)
+  - AuthorizationError (permission failures)
+  - NotFoundError (resource not found)
+  - ConflictError (resource conflicts)
+  - RateLimitError (rate limiting)
+  - CircuitBreakerError (circuit breaker open)
 
-Error codes, correlation tracking, and structured payloads match the guidance
-in ``README.md`` and ``docs/architecture.md`` so diagnostics remain uniform
-across packages.
+All exceptions include:
+- Error codes for categorization
+- Correlation IDs for tracking
+- Structured metadata and context
+- Proper inheritance hierarchy
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,1296 +30,462 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import concurrent.futures
-import logging
-import threading
 import time
-from collections.abc import Callable, Mapping
-from typing import ClassVar, cast, override
+from typing import Any
 
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
-    """Hierarchical exception system with structured error handling.
+    """Namespace class for FLEXT exception hierarchy.
 
-    FlextExceptions provides a comprehensive exception hierarchy with
-    error codes, correlation tracking, and metrics collection for the
-    entire FLEXT ecosystem. Use for consistent error handling across
-    all 32+ dependent projects.
+    Provides structured exception types with error codes, correlation tracking,
+    and consistent error handling across the entire FLEXT ecosystem.
 
-    **Function**: Structured exception hierarchy with diagnostics
-        - Provide hierarchical exception types (15+ specialized)
-        - Support error codes and correlation IDs for tracking
-        - Include structured error metadata and context
-        - Register exception handlers with middleware pipeline
-        - Implement circuit breaker pattern for fault tolerance
-        - Support rate limiting for error prevention
-        - Collect performance metrics and audit logs
-        - Enable exception chaining and error recovery
-
-    **Uses**: Core infrastructure and monitoring components
-        - FlextResult[T] for operation results and error handling
-        - FlextConstants for error codes and system defaults
-        - FlextTypes for type definitions and error metadata
-        - concurrent.futures for parallelism in error handling
-        - logging module for error logging and diagnostics
-        - time module for performance tracking and metrics
-        - ClassVar for shared metrics across all instances
-
-    **How to use**: Exception handling patterns
+    Usage:
         ```python
-        from flext_core import FlextExceptions, FlextResult
+        from flext_core import FlextExceptions
 
-        # Example 1: Create structured exception with error code
-        exc_factory = FlextExceptions()
-        error = exc_factory.create(
-            "Validation failed", error_code="VALIDATION_ERROR", field="email"
+        # Raise structured exceptions
+        raise FlextExceptions.ValidationError(
+            "Invalid email format", error_code="VAL_EMAIL", field="email"
         )
 
-
-        # Example 2: Register exception handler with middleware
-        def handle_validation_error(error: Exception) -> FlextResult[None]:
-            logger.error(f"Validation error: {error}")
-            return FlextResult[None].ok(None)
-
-
-        exc_factory.register_handler(
-            FlextExceptions.ValidationError, handle_validation_error
-        )
-
-        # Example 3: Use specific exception types
+        # Catch specific exception types
         try:
-            validate_data(input_data)
-        except FlextExceptions.ValidationError as e:
-            print(f"Validation failed: {e.error_code}")
-
-        # Example 4: Circuit breaker pattern for fault tolerance
-        if exc_factory.is_circuit_open("external_api"):
-            return FlextResult[FlextTypes.Dict].fail("Circuit breaker open")
-
-        # Example 5: Get exception metrics for monitoring
-        metrics = FlextExceptions.get_metrics()
-        print(f"Validation errors: {metrics.get('ValidationError', 0)}")
-
-        # Example 6: Callable factory pattern
-        error = exc_factory(
-            "Database connection failed",
-            operation="db_connect",
-            error_code="CONNECTION_ERROR",
-        )
+            validate_data(data)
+        except FlextExceptions.ConfigurationError as e:
+            logger.error(f"Config error: {e.error_code}")
         ```
-
-    Args:
-        config: Optional configuration dict for exception handling.
-
-    Attributes:
-        _config (FlextTypes.Dict): Exception handler configuration.
-        _handlers (FlextTypes.Dict): Registered exception handlers by type.
-        _middleware (FlextTypes.List): Middleware pipeline for errors.
-        _audit_log (FlextTypes.List): Audit log of all exceptions.
-        _performance_metrics (FlextTypes.Dict): Performance tracking data.
-        _circuit_breakers (FlextTypes.Dict): Circuit breaker states.
-        _rate_limiters (FlextTypes.Dict): Rate limiting configuration.
-        _cache (FlextTypes.Dict): Exception handler cache.
-
-    Returns:
-        FlextExceptions: Instance for exception factory operations.
-
-    Raises:
-        BaseError: Base class for all FLEXT exceptions.
-        ValidationError: For validation failures with field context.
-        ConfigurationError: For configuration issues.
-        ConnectionError: For network and connection failures.
-        TimeoutError: For operation timeout scenarios.
-
-    Note:
-        Use FlextExceptions hierarchy for ALL error handling in
-        ecosystem. Exception types include error codes, correlation
-        IDs, and structured metadata. Metrics tracked globally via
-        ClassVar. Circuit breakers prevent cascading failures.
-
-    Warning:
-        Always use error codes for categorization. Never raise raw
-        Python exceptions in FLEXT code - use hierarchy. Circuit
-        breakers open after threshold failures. Rate limiters may
-        drop errors to prevent overload.
-
-    Example:
-        Complete exception handling workflow:
-
-        >>> exc = FlextExceptions()
-        >>> error = exc.create("Invalid input", error_code="VAL_001")
-        >>> print(error.error_code)
-        VAL_001
-        >>> FlextExceptions.record_exception("ValidationError")
-        >>> metrics = FlextExceptions.get_metrics()
-        >>> print(metrics["ValidationError"])
-        1
-
-    See Also:
-        FlextResult: For railway-oriented error handling.
-        FlextConstants: For error code definitions.
-        FlextLogger: For error logging integration.
-
     """
 
-    def __init__(self, config: FlextTypes.Dict | None = None) -> None:
-        """Initialize FlextExceptions with configuration.
-
-        Args:
-            config: Optional configuration dictionary
-
-        """
-        self._config = config or {}
-        self._handlers: dict[type[Exception], FlextTypes.List] = {}
-        self._middleware: FlextTypes.List = []
-        self._audit_log: FlextTypes.List = []
-        self._performance_metrics: dict[str, dict[str, float | int]] = {}
-        self._circuit_breakers: FlextTypes.BoolDict = {}
-        self._circuit_breaker_failures: dict[str, int] = {}  # Track failure counts
-        self.logger = logging.getLogger(__name__)
-        self._rate_limiters: dict[str, FlextTypes.Reliability.RateLimiterState] = {}
-        self._cache: FlextTypes.Dict = {}
-        self._lock = threading.Lock()  # Thread safety lock
-
-    def __call__(
-        self,
-        message: str,
-        *,
-        operation: str | None = None,  # Operation context for error tracking
-        field: str | None = None,  # Field name for validation errors
-        config_key: str | None = None,  # Configuration key for config errors
-        error_code: str | None = None,  # Error code for categorization
-        **kwargs: object,
-    ) -> FlextExceptions.BaseError:
-        """Allow FlextExceptions() to be called directly."""
-        # Custom __call__ method to make exceptions callable
-        return self.create(
-            message,
-            operation=operation,
-            field=field,
-            config_key=config_key,
-            error_code=error_code,
-            **kwargs,
-        )
-
-    @staticmethod
-    def _get_result_class() -> type:  # Return generic type to avoid forward reference
-        """Get FlextResult class lazily to avoid circular imports."""
-        from flext_core.result import FlextResult
-
-        return FlextResult
-
-    # =============================================================================
-    # Metrics Domain: Exception metrics and monitoring functionality
-    # =============================================================================
-
-    _metrics: ClassVar[FlextTypes.Dict] = {}
-
-    # Type conversion mapping for cleaner type resolution
-    _TYPE_MAP: ClassVar[dict[str, type]] = {
-        "str": str,
-        "int": int,
-        "float": float,
-        "bool": bool,
-        "list": list,
-        "dict": dict,
-    }
-
-    @classmethod
-    def record_exception(cls, exception_type: str) -> None:
-        """Record exception occurrence."""
-        current_count = cls._metrics.get(exception_type, 0)
-        cls._metrics[exception_type] = (
-            int(current_count) + 1 if isinstance(current_count, (int, str)) else 1
-        )
-
-    @classmethod
-    def get_metrics(cls) -> FlextTypes.Dict:
-        """Get exception counts."""
-        return dict(cls._metrics)
-
-    @classmethod
-    def clear_metrics(cls) -> None:
-        """Clear all exception metrics."""
-        cls._metrics.clear()
-
-    # =============================================================================
-    # Handler Registry Methods
-    # =============================================================================
-
-    def register_handler(
-        self,
-        exception_type: type[Exception],
-        handler: object,
-    ) -> FlextResult[None]:
-        """Register exception handler for specific exception type.
-
-        Args:
-            exception_type: Type of exception to handle
-            handler: Handler function or object
-
-        Returns:
-            FlextResult with success or failure
-
-        """
-        from flext_core.result import FlextResult
-
-        with self._lock:
-            try:
-                # Validate that exception_type is actually a type that inherits from Exception
-                if not isinstance(exception_type, type) or not issubclass(
-                    exception_type,
-                    Exception,
-                ):
-                    return FlextResult[None].fail(
-                        f"Invalid exception type: {exception_type}",
-                    )
-
-                if exception_type not in self._handlers:
-                    self._handlers[exception_type] = []
-                handlers_list = self._handlers[exception_type]
-                if isinstance(handlers_list, list):
-                    handlers_list.append(handler)
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Failed to register handler: {e}")
-
-    def unregister_handler(
-        self,
-        exception_type: type[Exception],
-        handler: object,
-    ) -> FlextResult[None]:
-        """Unregister exception handler.
-
-        Args:
-            exception_type: Type of exception
-            handler: Handler to remove
-
-        Returns:
-            FlextResult with success or failure
-
-        """
-        from flext_core.result import FlextResult
-
-        try:
-            if (
-                exception_type in self._handlers
-                and handler in self._handlers[exception_type]
-            ):
-                self._handlers[exception_type].remove(handler)
-                if not self._handlers[exception_type]:
-                    del self._handlers[exception_type]
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail("Handler not found")
-        except Exception as e:
-            return FlextResult[None].fail(f"Failed to unregister handler: {e}")
-
-    def handle_exception(
-        self,
-        exception: Exception,
-        correlation_id: str | None = None,
-    ) -> FlextResult[None]:
-        """Handle exception using registered handlers.
-
-        Args:
-            exception: Exception to handle
-            correlation_id: Optional correlation ID
-
-        Returns:
-            FlextResult with handling result
-
-        """
-        from flext_core.result import FlextResult
-
-        try:
-            start_time = time.time()
-            exception_type = type(exception)
-            handlers = self._handlers.get(exception_type, [])
-
-            if not handlers:
-                return FlextResult[None].fail("No handler found")
-
-            # Check circuit breaker
-            exception_type_name = exception_type.__name__
-            if self.is_circuit_breaker_open(exception_type_name):
-                return FlextResult[None].fail("Circuit breaker is open")
-
-            # Check rate limiting
-            rate_limit = self._config.get(
-                "rate_limit",
-                FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-            )
-            rate_limit_window = self._config.get(
-                "rate_limit_window",
-                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-            )
-
-            # Ensure proper types
-            rate_limit = (
-                int(rate_limit)
-                if isinstance(rate_limit, (int, str))
-                else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-            )
-            rate_limit_window = (
-                float(rate_limit_window)
-                if isinstance(rate_limit_window, (int, float, str))
-                else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
-            )
-
-            current_time = time.time()
-            rate_limit_key = f"{exception_type_name}_rate_limit"
-
-            if rate_limit_key not in self._rate_limiters:
-                self._rate_limiters[rate_limit_key] = {
-                    "requests": [],
-                    "last_reset": current_time,
-                }
-
-            rate_limiter = self._rate_limiters[rate_limit_key]
-
-            # Clean old requests outside the window
-            requests_list = rate_limiter["requests"]
-            if isinstance(requests_list, list):
-                rate_limiter["requests"] = [
-                    req_time
-                    for req_time in requests_list
-                    if isinstance(req_time, (int, float))
-                    and current_time - req_time < rate_limit_window
-                ]
-
-            # Check if rate limit exceeded
-            requests_list = rate_limiter["requests"]
-            if isinstance(requests_list, list) and len(requests_list) >= rate_limit:
-                return FlextResult[None].fail("Rate limit exceeded")
-
-            # Add current request
-            requests_list = rate_limiter["requests"]
-            if isinstance(requests_list, list):
-                requests_list.append(current_time)
-
-            # Apply middleware
-            processed_exception = exception
-            for middleware in self._middleware:
-                if callable(middleware):
-                    try:
-                        processed_exception = middleware(processed_exception)
-                    except Exception as middleware_error:
-                        self.logger.warning("Middleware error: %s", middleware_error)
-
-            # Execute handlers with timeout
-            timeout_seconds = self._config.get(
-                "timeout",
-                FlextConstants.Defaults.TIMEOUT_SECONDS,
-            )
-            timeout_value = (
-                float(timeout_seconds)
-                if isinstance(timeout_seconds, (int, float, str))
-                else float(FlextConstants.Defaults.TIMEOUT_SECONDS)
-            )
-
-            results = []
-            handler_exceptions = []
-
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=len(handlers),
-            ) as executor:
-                # Submit all handlers
-                future_to_handler = {
-                    executor.submit(handler, processed_exception): handler
-                    for handler in handlers
-                    if callable(handler)
-                }
-
-                # Wait for results with timeout
-                try:
-                    for future in concurrent.futures.as_completed(
-                        future_to_handler,
-                        timeout=timeout_value,
-                    ):
-                        try:
-                            handler_result = future.result()
-                            results.append(handler_result)
-                        except Exception as handler_error:
-                            handler_exceptions.append(str(handler_error))
-                            results.append(f"Handler error: {handler_error}")
-                except concurrent.futures.TimeoutError:
-                    return FlextResult[None].fail("Handler timeout")
-
-                # Add non-callable handlers
-                non_callable_handlers = [
-                    handler for handler in handlers if not callable(handler)
-                ]
-                results.extend(non_callable_handlers)
-
-            # If any handler raised an exception, return failure
-            if handler_exceptions:
-                return FlextResult[None].fail(
-                    f"Handler exception: {handler_exceptions[0]}",
-                )
-
-            # Record in audit log
-            self._audit_log.append({
-                "exception_type": exception_type.__name__,
-                "exception_message": str(exception),
-                "handlers_executed": len(handlers),
-                "correlation_id": correlation_id,
-                "timestamp": time.time(),
-            })
-
-            # Update performance metrics
-            exception_name = exception_type.__name__
-            execution_time = time.time() - start_time
-
-            if exception_name not in self._performance_metrics:
-                self._performance_metrics[exception_name] = {
-                    "handled": 0,
-                    "errors": 0,
-                    "total_execution_time": 0.0,
-                    "execution_count": 0,
-                    "avg_execution_time": 0.0,
-                }
-
-            # Update execution time metrics
-            self._performance_metrics[exception_name]["total_execution_time"] += (
-                execution_time
-            )
-            self._performance_metrics[exception_name]["execution_count"] += 1
-            self._performance_metrics[exception_name]["avg_execution_time"] = (
-                self._performance_metrics[exception_name]["total_execution_time"]
-                / self._performance_metrics[exception_name]["execution_count"]
-            )
-
-            # Check circuit breaker threshold
-            threshold_value = self._config.get("circuit_breaker_threshold", 5)
-            circuit_breaker_threshold = (
-                int(threshold_value) if isinstance(threshold_value, (int, str)) else 5
-            )
-
-            # Count failures in results
-            failure_count = sum(
-                1
-                for result in results
-                if isinstance(result, FlextResult) and result.is_failure
-            )
-            if failure_count > 0:
-                self._performance_metrics[exception_name]["errors"] += failure_count
-            else:
-                self._performance_metrics[exception_name]["handled"] += 1
-
-            # Check circuit breaker threshold after updating metrics
-            if (
-                self._performance_metrics[exception_name]["errors"]
-                >= circuit_breaker_threshold
-            ):
-                self._circuit_breakers[exception_name] = True
-                return FlextResult[None].fail(
-                    "Circuit breaker opened due to repeated failures",
-                )
-
-            # Check if any handler failed
-            if any(
-                isinstance(result, FlextResult) and result.is_failure
-                for result in results
-            ):
-                # Return the first failure
-                for result in results:
-                    if isinstance(result, FlextResult) and result.is_failure:
-                        return result
-
-            # Return single result if only one handler, otherwise return list
-            if len(results) == 1:
-                result = results[0]
-                if isinstance(result, FlextResult):
-                    return result
-                return FlextResult[None].ok(None)
-
-            # Ensure proper types
-            rate_limit = (
-                int(rate_limit)
-                if isinstance(rate_limit, (int, str))
-                else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-            )
-            rate_limit_window = (
-                float(rate_limit_window)
-                if isinstance(rate_limit_window, (int, float, str))
-                else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
-            )
-
-            current_time = time.time()
-            rate_limit_key = f"{exception_type_name}_rate_limit"
-
-            if rate_limit_key not in self._rate_limiters:
-                self._rate_limiters[rate_limit_key] = {
-                    "requests": [],
-                    "last_reset": current_time,
-                }
-
-            rate_limiter = self._rate_limiters[rate_limit_key]
-
-            # Clean old requests outside the window
-            requests_list = rate_limiter["requests"]
-            if isinstance(requests_list, list):
-                rate_limiter["requests"] = [
-                    req_time
-                    for req_time in requests_list
-                    if isinstance(req_time, (int, float))
-                    and current_time - req_time < rate_limit_window
-                ]
-
-            # Check if rate limit exceeded
-            requests_list = rate_limiter["requests"]
-            if isinstance(requests_list, list) and len(requests_list) >= rate_limit:
-                return FlextResult[None].fail("Rate limit exceeded")
-
-            requests_list = rate_limiter["requests"]
-            if isinstance(requests_list, list):
-                requests_list.append(current_time)
-
-            # Execute handlers
-            for handler in handlers:
-                try:
-                    start_time = time.time()
-                    result = cast(
-                        "Callable[[Exception, str | None], FlextResult[None]]",
-                        handler,
-                    )(exception, correlation_id)
-                    execution_time = time.time() - start_time
-
-                    # Record metrics (using ClassVar via class)
-                    handler_name = getattr(handler, "__name__", str(handler))
-                    FlextExceptions._metrics["total_executions"] = (
-                        cast("int", FlextExceptions._metrics.get("total_executions", 0))
-                        + 1
-                    )
-
-                    # Initialize handler_executions dict if needed
-                    if "handler_executions" not in FlextExceptions._metrics:
-                        FlextExceptions._metrics["handler_executions"] = {}
-                    handler_exec = cast(
-                        "dict[str, int]",
-                        FlextExceptions._metrics["handler_executions"],
-                    )
-                    handler_exec[handler_name] = handler_exec.get(handler_name, 0) + 1
-
-                    if isinstance(result, FlextResult):
-                        if result.is_success:
-                            FlextExceptions._metrics["successful_executions"] = (
-                                cast(
-                                    "int",
-                                    FlextExceptions._metrics.get(
-                                        "successful_executions",
-                                        0,
-                                    ),
-                                )
-                                + 1
-                            )
-                        else:
-                            FlextExceptions._metrics["failed_executions"] = (
-                                cast(
-                                    "int",
-                                    FlextExceptions._metrics.get(
-                                        "failed_executions",
-                                        0,
-                                    ),
-                                )
-                                + 1
-                            )
-
-                    results.append(result)
-
-                except Exception as handler_error:
-                    execution_time = time.time() - start_time
-                    error_result = FlextResult[None].fail(
-                        f"Handler execution failed: {handler_error}",
-                    )
-                    results.append(error_result)
-
-                    # Record failure metrics (using ClassVar via class)
-                    FlextExceptions._metrics["failed_executions"] = (
-                        cast(
-                            "int",
-                            FlextExceptions._metrics.get("failed_executions", 0),
-                        )
-                        + 1
-                    )
-                    handler_name = getattr(handler, "__name__", str(handler))
-
-                    # Initialize handler_failures dict if needed
-                    if "handler_failures" not in FlextExceptions._metrics:
-                        FlextExceptions._metrics["handler_failures"] = {}
-                    handler_fail = cast(
-                        "dict[str, int]",
-                        FlextExceptions._metrics["handler_failures"],
-                    )
-                    handler_fail[handler_name] = handler_fail.get(handler_name, 0) + 1
-
-            # Check circuit breaker
-            if any(
-                isinstance(result, FlextResult) and result.is_failure
-                for result in results
-            ):
-                # Update circuit breaker
-                exception_name = exception_type.__name__
-                self._circuit_breaker_failures[exception_name] = (
-                    self._circuit_breaker_failures.get(exception_name, 0) + 1
-                )
-
-                failure_threshold_raw = self._config.get(
-                    "circuit_breaker_failure_threshold",
-                    5,  # Default threshold
-                )
-                failure_threshold = (
-                    int(failure_threshold_raw)
-                    if isinstance(failure_threshold_raw, (int, str))
-                    else 5
-                )
-
-                if self._circuit_breaker_failures[exception_name] >= failure_threshold:
-                    self._circuit_breakers[exception_name] = True
-                    return FlextResult[None].fail(
-                        "Circuit breaker opened due to repeated failures",
-                    )
-
-            # Check if any handler failed
-            if any(
-                isinstance(result, FlextResult) and result.is_failure
-                for result in results
-            ):
-                # Return the first failure
-                for result in results:
-                    if isinstance(result, FlextResult) and result.is_failure:
-                        return result
-
-            # Return single result if only one handler, otherwise return list
-            if len(results) == 1:
-                result = results[0]
-                if isinstance(result, FlextResult):
-                    return result
-                return FlextResult[None].ok(None)
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Exception handling failed: {e}")
-
-    def handle_batch(self, exceptions: list[Exception]) -> list[FlextResult[None]]:
-        """Handle multiple exceptions in batch.
-
-        Args:
-            exceptions: List of exceptions to handle
-
-        Returns:
-            List of FlextResults with handling results
-
-        """
-        if not isinstance(exceptions, list):
-            return []
-        return [
-            self.handle_exception(exc)
-            for exc in exceptions
-            if isinstance(exc, Exception)
-        ]
-
-    def handle_parallel(self, exceptions: list[Exception]) -> list[FlextResult[None]]:
-        """Handle multiple exceptions in parallel.
-
-        Args:
-            exceptions: List of exceptions to handle
-
-        Returns:
-            List of FlextResults with handling results
-
-        """
-        if not isinstance(exceptions, list):
-            return []
-
-        parallel_results: list[FlextResult[None]] = []
-        valid_exceptions = [exc for exc in exceptions if isinstance(exc, Exception)]
-
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=len(valid_exceptions),
-        ) as executor:
-            futures = [
-                executor.submit(self.handle_exception, exc) for exc in valid_exceptions
-            ]
-            parallel_results.extend(
-                future.result() for future in concurrent.futures.as_completed(futures)
-            )
-
-        return parallel_results
-
-    def add_middleware(self, middleware: object) -> None:
-        """Add middleware for exception processing.
-
-        Args:
-            middleware: Middleware function or object
-
-        """
-        self._middleware.append(middleware)
-
-    def is_circuit_breaker_open(self, exception_type: str) -> bool:
-        """Check if circuit breaker is open for exception type.
-
-        Args:
-            exception_type: Name of exception type
-
-        Returns:
-            True if circuit breaker is open
-
-        """
-        return self._circuit_breakers.get(exception_type, False)
-
-    def get_audit_log(self) -> FlextTypes.List:
-        """Get audit log of exception handling.
-
-        Returns:
-            List of audit log entries
-
-        """
-        return self._audit_log.copy()
-
-    def get_performance_metrics(self) -> dict[str, dict[str, float | int]]:
-        """Get performance metrics.
-
-        Returns:
-            Dictionary of performance metrics
-
-        """
-        return self._performance_metrics.copy()
-
-    def get_handlers(self, exception_type: type[Exception]) -> FlextTypes.List:
-        """Get handlers for specific exception type.
-
-        Args:
-            exception_type: Type of exception
-
-        Returns:
-            List of handlers
-
-        """
-        return self._handlers.get(exception_type, []).copy()
-
-    def clear_handlers(self) -> None:
-        """Clear all registered handlers."""
-        self._handlers.clear()
-
-    def get_statistics(
-        self,
-    ) -> FlextTypes.Dict:
-        """Get statistics about exception handling.
-
-        Returns:
-            Dictionary with handler counts and performance_metrics
-
-        """
-        return {
-            "total_handlers": sum(
-                len(handlers) for handlers in self._handlers.values()
-            ),
-            "exception_types": len(self._handlers),
-            "middleware_count": len(self._middleware),
-            "audit_log_entries": len(self._audit_log),
-            "performance_metrics": self._performance_metrics.copy(),
-        }
-
-    def validate(self) -> FlextResult[None]:
-        """Validate configuration and handlers.
-
-        Returns:
-            FlextResult with validation result
-
-        """
-        from flext_core.result import FlextResult
-
-        try:
-            # Validate handlers
-            for exception_type, handlers in self._handlers.items():
-                if not isinstance(exception_type, type):
-                    return FlextResult[None].fail(
-                        f"Invalid exception type: {exception_type}",
-                    )
-                if not isinstance(handlers, list):
-                    return FlextResult[None].fail(
-                        f"Invalid handlers list for {exception_type}",
-                    )
-
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Validation failed: {e}")
-
-    def export_config(self) -> FlextTypes.Dict:
-        """Export configuration.
-
-        Returns:
-            Dictionary of configuration
-
-        """
-        return {
-            "config": self._config.copy(),
-            "handler_count": len(self._handlers),
-            "middleware_count": len(self._middleware),
-            "audit_log_size": len(self._audit_log),
-        }
-
-    def import_config(self, config: FlextTypes.Dict) -> FlextResult[None]:
-        """Import configuration.
-
-        Args:
-            config: Configuration dictionary
-
-        Returns:
-            FlextResult with import result
-
-        """
-        from flext_core.result import FlextResult
-
-        try:
-            if "config" in config and isinstance(config["config"], dict):
-                config_dict = cast("FlextTypes.Dict", config["config"])
-                self._config.update(config_dict)
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Config import failed: {e}")
-
-    def cleanup(self) -> None:
-        """Clean up resources."""
-        self._handlers.clear()
-        self._middleware.clear()
-        self._audit_log.clear()
-        self._performance_metrics.clear()
-        self._circuit_breakers.clear()
-        self._rate_limiters.clear()
-        self._cache.clear()
-
-    # =============================================================================
-    # BASE EXCEPTION CLASS - Clean hierarchical approach
-    # =============================================================================
-
     class BaseError(Exception):
-        """Base exception with structured error handling."""
+        """Base exception class for all FLEXT exceptions.
+
+        Provides common functionality including error codes, correlation IDs,
+        and structured metadata for all FLEXT exceptions.
+
+        Attributes:
+            error_code: Error code for categorization
+            correlation_id: Correlation ID for tracking
+            metadata: Additional structured metadata
+            timestamp: When the error occurred
+
+        """
 
         def __init__(
             self,
             message: str,
             *,
-            code: str | None = None,
-            context: Mapping[str, object] | None = None,
+            error_code: str | None = None,
             correlation_id: str | None = None,
+            metadata: FlextTypes.Dict | None = None,
+            **kwargs: object,
         ) -> None:
-            """Initialize structured exception."""
+            """Initialize base error with structured information.
+
+            Args:
+                message: Error message
+                error_code: Optional error code for categorization
+                correlation_id: Optional correlation ID for tracking
+                metadata: Optional additional metadata
+                **kwargs: Additional keyword arguments
+
+            """
             super().__init__(message)
             self.message = message
-            self.code = code or FlextConstants.Errors.GENERIC_ERROR
-            self.context: FlextTypes.Dict = dict(context or {})
-            self.correlation_id = correlation_id or f"flext_{int(time.time() * 1000)}"
+            self.error_code = error_code
+            self.correlation_id = correlation_id
+            self.metadata = metadata or {}
             self.timestamp = time.time()
-            FlextExceptions.record_exception(self.__class__.__name__)
 
-        @override
+            # Store additional kwargs in metadata
+            self.metadata.update(kwargs)
+
         def __str__(self) -> str:
-            """Return string representation with error code and message."""
-            return f"[{self.code}] {self.message}"
+            """String representation with error code."""
+            if self.error_code:
+                return f"[{self.error_code}] {self.message}"
+            return self.message
 
-        @property
-        def error_code(self) -> str:
-            """Get error code as string."""
-            return str(self.code)
+        def to_dict(self) -> FlextTypes.Dict:
+            """Convert exception to dictionary representation."""
+            return {
+                "error_type": self.__class__.__name__,
+                "message": self.message,
+                "error_code": self.error_code,
+                "correlation_id": self.correlation_id,
+                "timestamp": self.timestamp,
+                "metadata": self.metadata,
+            }
 
-        @staticmethod
-        def _build_context(
-            base_context: Mapping[str, object] | None,
-            **additional_context: object,
-        ) -> FlextTypes.Dict:
-            """Build context dictionary from base context and additional items."""
-            context_dict: FlextTypes.Dict = (
-                dict(base_context) if isinstance(base_context, dict) else {}
-            )
-            context_dict.update(additional_context)
-            return context_dict
+    class ValidationError(BaseError):
+        """Exception raised for validation failures.
 
-        @staticmethod
-        def _extract_common_kwargs(
-            kwargs: FlextTypes.Dict,
-        ) -> tuple[FlextTypes.Dict | None, str | None, str | None]:
-            """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
-            context_raw = kwargs.get("context")
-            context = (
-                cast("FlextTypes.Dict", context_raw)
-                if isinstance(context_raw, dict)
-                else None
-            )
-
-            correlation_id_raw = kwargs.get("correlation_id")
-            correlation_id = (
-                str(correlation_id_raw) if correlation_id_raw is not None else None
-            )
-
-            error_code_raw = kwargs.get("error_code")
-            error_code = str(error_code_raw) if error_code_raw is not None else None
-
-            return context, correlation_id, error_code
-
-        @staticmethod
-        def _convert_type_name(type_name: str | None) -> type | str:
-            """Convert type name string to actual type object."""
-            if not type_name:
-                return ""
-            return FlextExceptions._TYPE_MAP.get(type_name, type_name)
-
-    @staticmethod
-    def _extract_common_kwargs(
-        kwargs: FlextTypes.Dict,
-    ) -> tuple[FlextTypes.Dict | None, str | None, str | None]:
-        """Extract common kwargs (context, correlation_id, error_code) from kwargs."""
-        context_raw = kwargs.get("context")
-        context = (
-            cast("FlextTypes.Dict", context_raw)
-            if isinstance(context_raw, dict)
-            else None
-        )
-
-        correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id = (
-            str(correlation_id_raw) if correlation_id_raw is not None else None
-        )
-
-        error_code_raw = kwargs.get("error_code")
-        error_code = str(error_code_raw) if error_code_raw is not None else None
-
-        return context, correlation_id, error_code
-
-    # =============================================================================
-    # SPECIFIC EXCEPTION CLASSES - Clean subclass hierarchy
-    # =============================================================================
-
-    class _AttributeError(BaseError, AttributeError):
-        """Attribute access failure with attribute context."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            attribute_name: str | None = None,
-            attribute_context: Mapping[str, object] | None = None,
-            **kwargs: object,
-        ) -> None:
-            self.attribute_name = attribute_name
-
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            # Build context with specific fields
-            context_data: FlextTypes.Dict = {"attribute_name": attribute_name}
-            if attribute_context:
-                context_data["attribute_context"] = dict(attribute_context)
-
-            context = self._build_context(base_context, **context_data)
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.OPERATION_ERROR,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _OperationError(BaseError, RuntimeError):
-        """Generic operation failure."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            operation: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            self.operation = operation
-
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            # Build context with specific fields
-            context = self._build_context(base_context, operation=operation)
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.OPERATION_ERROR,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _ValidationError(BaseError, ValueError):
-        """Data validation failure."""
+        Used when input data fails validation rules, including field-level
+        validation errors with specific field information.
+        """
 
         def __init__(
             self,
             message: str,
             *,
             field: str | None = None,
-            value: object = None,
-            validation_details: object = None,
+            value: Any = None,
             **kwargs: object,
         ) -> None:
-            self.field = field
-            self.value = value
-            self.validation_details = validation_details
+            """Initialize validation error.
 
-            # Extract common parameters using helper
-            base_context, correlation_id, error_code = self._extract_common_kwargs(
-                kwargs,
-            )
+            Args:
+                message: Validation error message
+                field: Optional field name that failed validation
+                value: Optional invalid value
+                **kwargs: Additional metadata
 
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                field=field,
-                value=value,
-                validation_details=validation_details,
-            )
-
+            """
             super().__init__(
                 message,
-                code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
-                context=context,
-                correlation_id=correlation_id,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                field=field,
+                value=value,
+                **kwargs,
             )
+            self.field = field
+            self.value = value
 
-    class _ConfigurationError(BaseError, KeyError):
-        """System configuration error - inherits from KeyError for backward compatibility."""
+    class ConfigurationError(BaseError):
+        """Exception raised for configuration-related errors.
+
+        Used when configuration loading, parsing, or validation fails,
+        including missing required configuration or invalid values.
+        """
 
         def __init__(
             self,
             message: str,
             *,
             config_key: str | None = None,
-            config_file: str | None = None,
+            config_source: str | None = None,
             **kwargs: object,
         ) -> None:
+            """Initialize configuration error.
+
+            Args:
+                message: Configuration error message
+                config_key: Optional configuration key that caused the error
+                config_source: Optional configuration source (file, env, etc.)
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+                config_key=config_key,
+                config_source=config_source,
+                **kwargs,
+            )
             self.config_key = config_key
-            self.config_file = config_file
-            context_raw = kwargs.get("context", {})
-            if isinstance(context_raw, dict):
-                context_dict: FlextTypes.Dict = cast("FlextTypes.Dict", context_raw)
-            else:
-                context_dict = {}
-            context_dict.update({"config_key": config_key, "config_file": config_file})
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.CONFIGURATION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
-            )
+            self.config_source = config_source
 
-    class _ConnectionError(BaseError, ConnectionError):
-        """Network or service connection failure."""
+    class ConnectionError(BaseError):
+        """Exception raised for connection-related failures.
+
+        Used when network connections, database connections, or service
+        connections fail, including timeouts and unreachable endpoints.
+        """
 
         def __init__(
             self,
             message: str,
             *,
-            service: str | None = None,
-            endpoint: str | None = None,
+            host: str | None = None,
+            port: int | None = None,
+            timeout: float | None = None,
             **kwargs: object,
         ) -> None:
-            self.service = service
-            self.endpoint = endpoint
-            context_raw = kwargs.get("context", {})
-            if isinstance(context_raw, dict):
-                context_dict: FlextTypes.Dict = cast("FlextTypes.Dict", context_raw)
-            else:
-                context_dict = {}
-            context_dict.update({"service": service, "endpoint": endpoint})
+            """Initialize connection error.
+
+            Args:
+                message: Connection error message
+                host: Optional host that failed to connect
+                port: Optional port that failed to connect
+                timeout: Optional timeout value
+                **kwargs: Additional metadata
+
+            """
             super().__init__(
                 message,
-                code=FlextConstants.Errors.CONNECTION_ERROR,
-                context=context_dict,
-                correlation_id=str(kwargs.get("correlation_id"))
-                if kwargs.get("correlation_id") is not None
-                else None,
+                error_code=FlextConstants.Errors.CONNECTION_ERROR,
+                host=host,
+                port=port,
+                timeout=timeout,
+                **kwargs,
             )
+            self.host = host
+            self.port = port
+            self.timeout = timeout
 
-    class _ProcessingError(BaseError, RuntimeError):
-        """Business logic or data processing failure."""
+    class TimeoutError(BaseError):
+        """Exception raised for operation timeouts.
 
-        def __init__(
-            self,
-            message: str,
-            *,
-            business_rule: str | None = None,
-            operation: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            self.business_rule = business_rule
-            self.operation = operation
-
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                business_rule=business_rule,
-                operation=operation,
-            )
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.PROCESSING_ERROR,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _TimeoutError(BaseError, TimeoutError):
-        """Operation timeout with timing context."""
+        Used when operations exceed configured timeout limits,
+        including network timeouts, processing timeouts, and I/O timeouts.
+        """
 
         def __init__(
             self,
             message: str,
             *,
             timeout_seconds: float | None = None,
+            operation: str | None = None,
             **kwargs: object,
         ) -> None:
-            self.timeout_seconds = timeout_seconds
+            """Initialize timeout error.
 
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+            Args:
+                message: Timeout error message
+                timeout_seconds: Optional timeout duration in seconds
+                operation: Optional operation that timed out
+                **kwargs: Additional metadata
 
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.TIMEOUT_ERROR,
                 timeout_seconds=timeout_seconds,
+                operation=operation,
+                **kwargs,
             )
+            self.timeout_seconds = timeout_seconds
+            self.operation = operation
 
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.TIMEOUT_ERROR,
-                context=context,
-                correlation_id=correlation_id,
-            )
+    class AuthenticationError(BaseError):
+        """Exception raised for authentication failures.
 
-    class _NotFoundError(BaseError, FileNotFoundError):
-        """Resource not found."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            resource_id: str | None = None,
-            resource_type: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            self.resource_id = resource_id
-            self.resource_type = resource_type
-
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                resource_id=resource_id,
-                resource_type=resource_type,
-            )
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.NOT_FOUND,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _AlreadyExistsError(BaseError, FileExistsError):
-        """Resource already exists."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            resource_id: str | None = None,
-            resource_type: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            self.resource_id = resource_id
-            self.resource_type = resource_type
-
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                resource_id=resource_id,
-                resource_type=resource_type,
-            )
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.ALREADY_EXISTS,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _PermissionError(BaseError, PermissionError):
-        """Insufficient permissions."""
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            required_permission: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            self.required_permission = required_permission
-
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                required_permission=required_permission,
-            )
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.PERMISSION_ERROR,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _AuthenticationError(BaseError, PermissionError):
-        """Authentication failure."""
+        Used when authentication credentials are invalid, expired,
+        or authentication services are unavailable.
+        """
 
         def __init__(
             self,
             message: str,
             *,
             auth_method: str | None = None,
+            user_id: str | None = None,
             **kwargs: object,
         ) -> None:
-            self.auth_method = auth_method
+            """Initialize authentication error.
 
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+            Args:
+                message: Authentication error message
+                auth_method: Optional authentication method used
+                user_id: Optional user ID that failed authentication
+                **kwargs: Additional metadata
 
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                auth_method=auth_method,
-            )
-
+            """
             super().__init__(
                 message,
-                code=FlextConstants.Errors.AUTHENTICATION_ERROR,
-                context=context,
-                correlation_id=correlation_id,
+                error_code=FlextConstants.Errors.AUTHENTICATION_ERROR,
+                auth_method=auth_method,
+                user_id=user_id,
+                **kwargs,
             )
+            self.auth_method = auth_method
+            self.user_id = user_id
 
-    class _TypeError(BaseError, TypeError):
-        """Type validation failure."""
+    class AuthorizationError(BaseError):
+        """Exception raised for authorization failures.
+
+        Used when authenticated users lack permissions for requested operations,
+        including role-based and resource-based authorization failures.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            user_id: str | None = None,
+            resource: str | None = None,
+            permission: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize authorization error.
+
+            Args:
+                message: Authorization error message
+                user_id: Optional user ID that was denied access
+                resource: Optional resource being accessed
+                permission: Optional permission being checked
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.PERMISSION_ERROR,
+                user_id=user_id,
+                resource=resource,
+                permission=permission,
+                **kwargs,
+            )
+            self.user_id = user_id
+            self.resource = resource
+            self.permission = permission
+
+    class NotFoundError(BaseError):
+        """Exception raised when requested resources are not found.
+
+        Used when database records, files, endpoints, or other resources
+        cannot be located or do not exist.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            resource_type: str | None = None,
+            resource_id: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize not found error.
+
+            Args:
+                message: Not found error message
+                resource_type: Optional type of resource not found
+                resource_id: Optional ID of resource not found
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                **kwargs,
+            )
+            self.resource_type = resource_type
+            self.resource_id = resource_id
+
+    class ConflictError(BaseError):
+        """Exception raised for resource conflicts.
+
+        Used when operations conflict with existing state, including
+        concurrent modifications, duplicate resources, and constraint violations.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            resource_type: str | None = None,
+            resource_id: str | None = None,
+            conflict_reason: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize conflict error.
+
+            Args:
+                message: Conflict error message
+                resource_type: Optional type of resource in conflict
+                resource_id: Optional ID of resource in conflict
+                conflict_reason: Optional reason for the conflict
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.ALREADY_EXISTS,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                conflict_reason=conflict_reason,
+                **kwargs,
+            )
+            self.resource_type = resource_type
+            self.resource_id = resource_id
+            self.conflict_reason = conflict_reason
+
+    class RateLimitError(BaseError):
+        """Exception raised when rate limits are exceeded.
+
+        Used when operations exceed configured rate limits,
+        including API rate limits and resource usage limits.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            limit: int | None = None,
+            window_seconds: int | None = None,
+            retry_after: int | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize rate limit error.
+
+            Args:
+                message: Rate limit error message
+                limit: Optional rate limit that was exceeded
+                window_seconds: Optional time window for rate limiting
+                retry_after: Optional seconds to wait before retrying
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                limit=limit,
+                window_seconds=window_seconds,
+                retry_after=retry_after,
+                **kwargs,
+            )
+            self.limit = limit
+            self.window_seconds = window_seconds
+            self.retry_after = retry_after
+
+    class CircuitBreakerError(BaseError):
+        """Exception raised when circuit breaker is open.
+
+        Used when circuit breakers are open due to repeated failures,
+        preventing further operations until the circuit resets.
+        """
+
+        def __init__(
+            self,
+            message: str,
+            *,
+            service_name: str | None = None,
+            failure_count: int | None = None,
+            reset_timeout: int | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize circuit breaker error.
+
+            Args:
+                message: Circuit breaker error message
+                service_name: Optional name of service with open circuit
+                failure_count: Optional number of failures that opened circuit
+                reset_timeout: Optional seconds until circuit resets
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.EXTERNAL_SERVICE_ERROR,
+                service_name=service_name,
+                failure_count=failure_count,
+                reset_timeout=reset_timeout,
+                **kwargs,
+            )
+            self.service_name = service_name
+            self.failure_count = failure_count
+            self.reset_timeout = reset_timeout
+
+    class TypeError(BaseError):
+        """Exception raised for type-related errors.
+
+        Used when type validation, conversion, or type mismatches occur,
+        including invalid type arguments and type constraint violations.
+        """
 
         def __init__(
             self,
@@ -1317,266 +495,104 @@ class FlextExceptions:
             actual_type: str | None = None,
             **kwargs: object,
         ) -> None:
+            """Initialize type error.
+
+            Args:
+                message: Type error message
+                expected_type: Optional expected type name
+                actual_type: Optional actual type name
+                **kwargs: Additional metadata
+
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.TYPE_ERROR,
+                expected_type=expected_type,
+                actual_type=actual_type,
+                **kwargs,
+            )
             self.expected_type = expected_type
             self.actual_type = actual_type
 
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
+    class OperationError(BaseError):
+        """Exception raised for operation-related errors.
 
-            # Convert type names to actual types using helper
-            expected_type_obj = self._convert_type_name(expected_type)
-            actual_type_obj = self._convert_type_name(actual_type)
-
-            # Build context with specific fields
-            context = self._build_context(
-                base_context,
-                expected_type=expected_type_obj,
-                actual_type=actual_type_obj,
-            )
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.TYPE_ERROR,
-                context=context,
-                correlation_id=correlation_id,
-            )
-
-    class _CriticalError(BaseError, SystemError):
-        """Critical system error."""
-
-        def __init__(self, message: str, **kwargs: object) -> None:
-            # Extract special parameters
-            context_raw = kwargs.pop("context", None)
-            if isinstance(context_raw, dict):
-                base_context: FlextTypes.Dict | None = cast(
-                    "FlextTypes.Dict",
-                    context_raw,
-                )
-            else:
-                base_context = None
-            correlation_id_raw = kwargs.pop("correlation_id", None)
-            correlation_id = (
-                str(correlation_id_raw) if correlation_id_raw is not None else None
-            )
-
-            # Add remaining kwargs to context for full functionality
-            context_dict: FlextTypes.Dict
-            if base_context is not None:
-                context_dict = dict(base_context)
-                context_dict.update(kwargs)
-            elif kwargs:
-                context_dict = dict(kwargs)
-            else:
-                context_dict = {}
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.CRITICAL_ERROR,
-                context=context_dict,
-                correlation_id=correlation_id,
-            )
-
-    class _Error(BaseError, RuntimeError):
-        """Generic FLEXT error."""
-
-        def __init__(self, message: str, **kwargs: object) -> None:
-            # Extract special parameters
-            context_raw = kwargs.pop("context", None)
-            if isinstance(context_raw, dict):
-                base_context: FlextTypes.Dict | None = cast(
-                    "FlextTypes.Dict",
-                    context_raw,
-                )
-            else:
-                base_context = None
-            correlation_id_raw = kwargs.pop("correlation_id", None)
-            correlation_id = (
-                str(correlation_id_raw) if correlation_id_raw is not None else None
-            )
-            error_code_raw = kwargs.pop("error_code", None)
-            error_code = str(error_code_raw) if error_code_raw is not None else None
-
-            # Add remaining kwargs to context for full functionality
-            context_dict: FlextTypes.Dict
-            if base_context is not None:
-                context_dict = dict(base_context)
-                context_dict.update(kwargs)
-            elif kwargs:
-                context_dict = dict(kwargs)
-            else:
-                context_dict = {}
-
-            super().__init__(
-                message,
-                code=error_code or FlextConstants.Errors.GENERIC_ERROR,
-                context=context_dict,
-                correlation_id=correlation_id,
-            )
-
-    class _UserError(BaseError, TypeError):
-        """User input or API usage error."""
-
-        def __init__(self, message: str, **kwargs: object) -> None:
-            # Extract common parameters using helper
-            base_context, correlation_id, _ = self._extract_common_kwargs(kwargs)
-
-            super().__init__(
-                message,
-                code=FlextConstants.Errors.TYPE_ERROR,
-                context=base_context or {},
-                correlation_id=correlation_id,
-            )
-
-    # =============================================================================
-    # PUBLIC API ALIASES - Real exception classes with clean names
-    # =============================================================================
-
-    AttributeError = _AttributeError
-    OperationError = _OperationError
-    ValidationError = _ValidationError
-    ConfigurationError = _ConfigurationError
-    ConnectionError = _ConnectionError
-    ProcessingError = _ProcessingError
-    TimeoutError = _TimeoutError
-    NotFoundError = _NotFoundError
-    AlreadyExistsError = _AlreadyExistsError
-    PermissionError = _PermissionError
-    AuthenticationError = _AuthenticationError
-    TypeError = _TypeError
-    CriticalError = _CriticalError
-    Error = _Error
-    UserError = _UserError
-
-    # =============================================================================
-    # DIRECT CALLABLE INTERFACE - For general usage
-    # =============================================================================
-
-    @classmethod
-    def create(
-        cls,
-        message: str,
-        *,
-        operation: str | None = None,
-        field: str | None = None,
-        config_key: str | None = None,
-        error_code: str | None = None,
-        **kwargs: object,
-    ) -> BaseError:
-        """Create exception with automatic type selection."""
-        # Extract common parameters using helper
-        base_context, correlation_id, extracted_error_code = cls._extract_common_kwargs(
-            kwargs,
-        )
-        final_error_code = error_code or extracted_error_code
-
-        # Exception type mapping for cleaner selection
-        if operation is not None:
-            return cls._OperationError(
-                message,
-                operation=operation,
-                context=base_context,
-                correlation_id=correlation_id,
-                error_code=final_error_code,
-            )
-
-        if field is not None:
-            return cls._ValidationError(
-                message,
-                field=field,
-                value=kwargs.get("value"),
-                validation_details=kwargs.get("validation_details"),
-                context=base_context,
-                correlation_id=correlation_id,
-                error_code=final_error_code,
-            )
-
-        if config_key is not None:
-            config_file = (
-                str(kwargs.get("config_file"))
-                if isinstance(kwargs.get("config_file"), str)
-                else None
-            )
-            return cls._ConfigurationError(
-                message,
-                config_key=config_key,
-                config_file=config_file,
-                context=base_context,
-                correlation_id=correlation_id,
-                error_code=final_error_code,
-            )
-
-        # Default to general error
-        return cls._Error(
-            message,
-            context=base_context,
-            correlation_id=correlation_id,
-            error_code=final_error_code,
-        )
-
-    # =============================================================================
-    # UTILITY METHODS
-    # =============================================================================
-
-    @staticmethod
-    def create_module_exception_classes(
-        module_name: str,
-    ) -> dict[str, type[BaseException]]:
-        """Create module-specific exception classes.
-
-        Creates a dictionary of exception classes tailored for a specific module,
-        following the FLEXT ecosystem naming conventions.
-
-        Args:
-            module_name: Name of the module (e.g., "flext_grpc")
-
-        Returns:
-            Dictionary mapping exception names to exception classes
-
+        Used when operations fail due to business logic, invalid states,
+        or operation-specific constraints.
         """
-        # Normalize module name for class naming
-        normalized_name = module_name.upper().replace("-", "_").replace(".", "_")
 
-        # Create base exception class for the module
-        class ModuleBaseError(FlextExceptions.BaseError):
-            """Base exception for module-specific errors."""
+        def __init__(
+            self,
+            message: str,
+            *,
+            operation: str | None = None,
+            reason: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize operation error.
 
-        # Create configuration error class
-        class ModuleConfigurationError(ModuleBaseError):
-            """Configuration-related errors for the module."""
+            Args:
+                message: Operation error message
+                operation: Optional operation name that failed
+                reason: Optional reason for the failure
+                **kwargs: Additional metadata
 
-        # Create connection error class
-        class ModuleConnectionError(ModuleBaseError):
-            """Connection-related errors for the module."""
-
-        # Create validation error class
-        class ModuleValidationError(ModuleBaseError):
-            """Validation-related errors for the module."""
-
-        # Create authentication error class
-        class ModuleAuthenticationError(ModuleBaseError):
-            """Authentication-related errors for the module."""
-
-        # Create processing error class
-        class ModuleProcessingError(ModuleBaseError):
-            """Processing-related errors for the module."""
-
-        # Create timeout error class
-        class ModuleTimeoutError(ModuleBaseError):
-            """Timeout-related errors for the module."""
-
-        # Return dictionary with module-specific naming
-        return {
-            f"{normalized_name}BaseError": ModuleBaseError,
-            f"{normalized_name}Error": ModuleBaseError,  # General error alias
-            f"{normalized_name}ConfigurationError": ModuleConfigurationError,
-            f"{normalized_name}ConnectionError": ModuleConnectionError,
-            f"{normalized_name}ValidationError": ModuleValidationError,
-            f"{normalized_name}AuthenticationError": ModuleAuthenticationError,
-            f"{normalized_name}ProcessingError": ModuleProcessingError,
-            f"{normalized_name}TimeoutError": ModuleTimeoutError,
-        }
+            """
+            super().__init__(
+                message,
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                operation=operation,
+                reason=reason,
+                **kwargs,
+            )
+            self.operation = operation
+            self.reason = reason
 
 
-__all__: FlextTypes.StringList = [
+# Module-level convenience functions for backward compatibility
+def create_error(
+    error_type: str,
+    message: str,
+    **kwargs: Any,
+) -> FlextExceptions.BaseError:
+    """Create an error instance by type name.
+
+    Args:
+        error_type: Name of the error class (e.g., 'ValidationError')
+        message: Error message
+        **kwargs: Additional arguments for error constructor
+
+    Returns:
+        Error instance
+
+    Raises:
+        ValueError: If error type is not recognized
+
+    """
+    error_classes = {
+        "ValidationError": FlextExceptions.ValidationError,
+        "ConfigurationError": FlextExceptions.ConfigurationError,
+        "ConnectionError": FlextExceptions.ConnectionError,
+        "TimeoutError": FlextExceptions.TimeoutError,
+        "AuthenticationError": FlextExceptions.AuthenticationError,
+        "AuthorizationError": FlextExceptions.AuthorizationError,
+        "NotFoundError": FlextExceptions.NotFoundError,
+        "ConflictError": FlextExceptions.ConflictError,
+        "RateLimitError": FlextExceptions.RateLimitError,
+        "CircuitBreakerError": FlextExceptions.CircuitBreakerError,
+        "TypeError": FlextExceptions.TypeError,
+        "OperationError": FlextExceptions.OperationError,
+    }
+
+    error_class = error_classes.get(error_type)
+    if not error_class:
+        msg = f"Unknown error type: {error_type}"
+        raise ValueError(msg)
+
+    return error_class(message, **kwargs)
+
+
+__all__ = [
     "FlextExceptions",
+    "create_error",
 ]

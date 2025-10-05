@@ -54,7 +54,7 @@ class TestFlextCoreClassAttributes:
 
     def test_core_patterns_available(self) -> None:
         """Test core pattern classes are available."""
-        assert issubclass(FlextCore.Result, FlextResult)
+        assert FlextCore.Result is FlextResult
         assert issubclass(FlextCore.Config, FlextConfig)
         assert issubclass(FlextCore.Container, FlextContainer)
         assert issubclass(FlextCore.Logger, FlextLogger)
@@ -194,7 +194,9 @@ class TestFlextCoreFactoryMethods:
 
     def test_create_result_fail(self) -> None:
         """Test creating failed result."""
-        result = FlextCore.create_result_fail("error message", "ERROR_CODE")
+        result: FlextResult[None] = FlextCore.create_result_fail(
+            "error message", "ERROR_CODE"
+        )
         assert result.is_failure
         assert result.error == "error message"
 
@@ -369,7 +371,7 @@ class TestFlextCoreUsagePatterns:
     def test_service_creation_pattern(self) -> None:
         """Test creating services using FlextCore."""
 
-        class MyService(FlextCore.Service):
+        class MyService(FlextCore.Service[str]):
             def __init__(self) -> None:
                 super().__init__()
                 # Store logger in private attribute to avoid Pydantic validation
@@ -435,7 +437,7 @@ class TestFlextCore11Features:
         """Test successful event publishing with correlation tracking."""
         core = FlextCore()
 
-        event_data = {"user_id": "123", "action": "login"}
+        event_data: FlextTypes.Dict = {"user_id": "123", "action": "login"}
         result = core.publish_event("user.login", event_data)
 
         assert result.is_success
@@ -446,7 +448,7 @@ class TestFlextCore11Features:
         core = FlextCore()
 
         custom_correlation = "test-correlation-123"
-        event_data = {"user_id": "456"}
+        event_data: FlextTypes.Dict = {"user_id": "456"}
 
         result = core.publish_event(
             "user.action", event_data, correlation_id=custom_correlation
@@ -466,7 +468,7 @@ class TestFlextCore11Features:
     def test_create_service_success(self) -> None:
         """Test service creation with infrastructure injection."""
 
-        class TestService(FlextService):
+        class TestService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("service_executed")
 
@@ -480,7 +482,7 @@ class TestFlextCore11Features:
     def test_create_service_with_kwargs(self) -> None:
         """Test service creation stores kwargs for later use."""
 
-        class ConfigurableService(FlextService):
+        class ConfigurableService(FlextService[str]):
             def __init__(self, custom_value: str = "default") -> None:
                 super().__init__()
                 self._custom_value = custom_value
@@ -500,7 +502,7 @@ class TestFlextCore11Features:
     def test_create_service_with_custom_config(self) -> None:
         """Test service creation with custom config."""
 
-        class SimpleService(FlextService):
+        class SimpleService(FlextService[None]):
             def execute(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
@@ -550,7 +552,7 @@ class TestFlextCore11Features:
         result = pipeline(5)
 
         assert result.is_failure
-        assert "Operation failed" in result.error
+        assert result.error is not None and "Operation failed" in result.error
 
     def test_build_pipeline_with_exception(self) -> None:
         """Test pipeline exception handling."""
@@ -567,7 +569,7 @@ class TestFlextCore11Features:
         result = pipeline(5)
 
         assert result.is_failure
-        assert "Pipeline operation failed" in result.error
+        assert result.error is not None and "Pipeline operation failed" in result.error
 
     def test_request_context_manager(self) -> None:
         """Test request context manager setup and cleanup."""
@@ -679,12 +681,12 @@ class TestFlextCoreIntegration:
             request_id="integration-123", user_id="user-789"
         ) as context:
             # Build processing pipeline
-            def validate(data: dict) -> FlextResult[FlextTypes.Dict]:
+            def validate(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
                 if not data.get("valid"):
                     return FlextResult[FlextTypes.Dict].fail("Validation failed")
                 return FlextResult[FlextTypes.Dict].ok(data)
 
-            def enrich(data: dict) -> FlextResult[FlextTypes.Dict]:
+            def enrich(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
                 enriched = {**data, "enriched": True}
                 return FlextResult[FlextTypes.Dict].ok(enriched)
 
@@ -696,10 +698,17 @@ class TestFlextCoreIntegration:
             # Publish event on success
             if result.is_success:
                 data = result.unwrap()
+                request_id = context.get("request_id")
                 event_result = core.publish_event(
-                    "data.processed", data, correlation_id=context.get("request_id")
+                    "data.processed",
+                    data if isinstance(data, dict) else {},
+                    correlation_id=request_id if isinstance(request_id, str) else None,
                 )
                 assert event_result.is_success
 
             assert result.is_success
-            assert result.value["enriched"] is True
+            processed_data = result.unwrap()
+            assert (
+                isinstance(processed_data, dict)
+                and processed_data.get("enriched") is True
+            )

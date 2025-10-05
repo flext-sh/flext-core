@@ -27,9 +27,7 @@ from uuid import uuid4
 
 from flext_core import (
     FlextConstants,
-    FlextContainer,
     FlextExceptions,
-    FlextLogger,
     FlextResult,
     FlextService,
     FlextTypes,
@@ -43,15 +41,12 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextExceptions patterns and methods."""
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        manager = FlextContainer.ensure_global_manager()
-        self._container = manager.get_or_create()
-        self._logger = FlextLogger(__name__)
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
-        self._logger.info("Executing exception demonstration")
+        self.logger.info("Executing exception demonstration")
         return FlextResult[FlextTypes.Dict].ok({
             "status": "completed",
             "exceptions_demonstrated": True,

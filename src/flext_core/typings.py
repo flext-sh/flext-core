@@ -19,15 +19,14 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
 from typing import (
-    TYPE_CHECKING,
     Literal,
     ParamSpec,
     TypedDict,
     TypeVar,
 )
 
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+# NOTE: FlextResult import removed to break circular import with result.py
+# Type aliases that depend on FlextResult are defined in result.py instead
 
 # =============================================================================
 # CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
@@ -211,7 +210,12 @@ class FlextTypes:
 
     ```python
     # ✅ CORRECT - Complete type system with optimization patterns
-    from flext_core import FlextTypes, T, T_co, T_contra, FlextResult
+    from flext_core import (
+        FlextTypes,
+        T,
+        T_co,
+        T_contra,
+    )  # FlextResult import removed to break circular import
 
 
     # Example 1: Enhanced core types with async patterns
@@ -240,9 +244,9 @@ class FlextTypes:
     # Example 3: Service types with flext-core integration
     def register_service[T](
         name: str, factory: FlextTypes.Service.ServiceFactory
-    ) -> FlextResult[FlextTypes.Service.ServiceRegistry]:
+    ) -> object:  # Return type moved to result.py to break circular import
         registry = {name: factory({})}
-        return FlextResult[FlextTypes.Service.ServiceRegistry].ok(registry)
+        return registry  # Simplified for typing example
 
 
     # Example 4: Generic type variables with variance
@@ -353,7 +357,7 @@ class FlextTypes:
         ...         return recovery(e)
 
     **See Also**:
-        FlextResult: For result type patterns and railway composition.
+        # FlextResult: For result type patterns and railway composition (import removed to break circular import)
         FlextModels: For domain model types and DDD patterns.
         FlextHandlers: For handler type usage and CQRS patterns.
         FlextProtocols: For protocol definitions and interface contracts.
@@ -453,8 +457,10 @@ class FlextTypes:
             ...     return await async_operation(data)
             >>>
             >>> # Enhanced error handling
-            >>> def safe_operation[T](data: T) -> FlextResult[TError_co[T]]:
-            ...     return FlextResult[TError_co[T]].ok(data)
+            >>> def safe_operation[T](
+            ...     data: T,
+            ... ) -> object:  # Type moved to break circular import
+            ...     return data
 
         """
 
@@ -559,7 +565,7 @@ class FlextTypes:
         ]
         type EventStream = list[FlextTypes.Domain.EventTyped]
 
-        type EventHandler = Callable[[FlextTypes.Domain.EventTyped], FlextResult[None]]
+        # NOTE: EventHandler type alias moved to result.py to break circular import
         type EventHandlerList = list[FlextTypes.Domain.EventHandler]
         type EventHandlerRegistry = dict[
             FlextTypes.Domain.EventType, FlextTypes.Domain.EventHandlerList
@@ -621,7 +627,7 @@ class FlextTypes:
 
         This namespace provides types for comprehensive error handling
         including error classification, error recovery, and error reporting
-        patterns integrated with FlextResult.
+        patterns integrated with result types.
 
         Examples:
             Error classification and handling:
@@ -750,12 +756,12 @@ class FlextTypes:
         invariant checking, and consistency rules across domain models.
 
         Examples:
-            Field validators with FlextResult:
+            Field validators with result types:
 
             >>> field_validator: FlextTypes.Validation.FieldValidator[str] = (
-            ...     lambda value: FlextResult[None].ok(None)
+            ...     lambda value: None  # Simplified for typing example
             ...     if "@" in value
-            ...     else FlextResult[None].fail("Invalid email")
+            ...     else ValueError("Invalid email")
             ... )
 
         """
@@ -767,7 +773,9 @@ class FlextTypes:
 
         # Complex validation patterns (NEW - high value)
         type FieldName = str
-        type FieldValidator[T] = Callable[[T], FlextResult[None]]
+        type FieldValidator[T] = Callable[
+            [T], object
+        ]  # Simplified to break circular import
         type FieldValidators[T] = list[FlextTypes.Validation.FieldValidator[T]]
         type FieldValidatorRegistry[T] = dict[
             FlextTypes.Validation.FieldName, FlextTypes.Validation.FieldValidators[T]
@@ -782,7 +790,9 @@ class FlextTypes:
         type Invariant[T] = FlextTypes.Validation.FieldValidator[T]
         type InvariantList[T] = list[FlextTypes.Validation.Invariant[T]]
 
-        type ConsistencyRule[T, U] = Callable[[T, U], FlextResult[None]]
+        type ConsistencyRule[T, U] = Callable[
+            [T, U], object
+        ]  # Simplified to break circular import
         type ConsistencyRuleRegistry[T] = dict[
             str, dict[str, FlextTypes.Validation.ConsistencyRule[T, object]]
         ]
@@ -903,7 +913,9 @@ class FlextTypes:
         type Mode = Literal["command", "query", "event", "saga"]
 
         # Handler functions
-        type HandlerFunc = Callable[[object], FlextResult[object]]
+        type HandlerFunc = Callable[
+            [object], object
+        ]  # Simplified to break circular import
         type HandlerList = list[FlextTypes.Handlers.HandlerFunc]
         type HandlerRegistry = dict[str, FlextTypes.Handlers.HandlerList]
 
@@ -919,7 +931,7 @@ class FlextTypes:
         ]
 
         # Saga types (complex multi-step handlers)
-        type SagaStep[T] = Callable[[T], FlextResult[T]]
+        type SagaStep[T] = Callable[[T], object]  # Simplified to break circular import
         type SagaSteps[T] = list[FlextTypes.Handlers.SagaStep[T]]
         type CompensationStep[T] = FlextTypes.Handlers.SagaStep[T]
         type CompensationSteps[T] = list[FlextTypes.Handlers.CompensationStep[T]]

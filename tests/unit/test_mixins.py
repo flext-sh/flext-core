@@ -9,7 +9,7 @@ from __future__ import annotations
 import threading
 import time
 
-from flext_core import FlextMixins, FlextTypes
+from flext_core import FlextMixins, FlextResult, FlextTypes
 
 
 class TestFlextMixins:
@@ -60,10 +60,6 @@ class TestFlextMixins:
     def test_mixins_unregister_nonexistent_mixin(self) -> None:
         """Test unregistering non-existent mixin."""
         mixins = FlextMixins()
-
-        class TestMixin:
-            def test_method(self) -> str:
-                return "test_result"
 
         result = mixins.unregister("nonexistent_mixin")
         assert result.is_failure
@@ -532,13 +528,13 @@ class TestFlextMixins:
 
         mixins.register("test_mixin", TestMixin)
 
-        results = []
+        results: list[FlextResult[object]] = []
 
         def apply_mixin(_thread_id: int) -> None:
             result = mixins.apply("test_mixin", TestClass)
             results.append(result)
 
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(10):
             thread = threading.Thread(target=apply_mixin, args=(i,))
             threads.append(thread)
@@ -599,9 +595,6 @@ class TestFlextMixins:
         class TestMixin:
             def test_method(self) -> str:
                 return "test_result"
-
-        class TestClass:
-            pass
 
         mixins.register("test_mixin", TestMixin)
 

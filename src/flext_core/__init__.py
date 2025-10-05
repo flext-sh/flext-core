@@ -47,6 +47,7 @@ from flext_core import (
     FlextLogger,  # Structured logging
     FlextService,  # Service base class
     FlextContainer,  # Dependency injection
+    safe,  # Decorator for safe function calls
 )
 
 # Create configuration with full flext-core integration
@@ -61,6 +62,17 @@ result = (
     .map(lambda d: format_output(d))
     .map_error(lambda e: log_error(e))
 )
+
+
+# Safe decorator for exception handling
+@safe
+def fetch_user(user_id: int) -> dict:
+    return api.get_user(user_id)  # Automatically wrapped in FlextResult
+
+
+@safe(error_code="DB_ERROR")
+def query_database(query: str) -> list[dict]:
+    return db.execute(query)  # Custom error code on failure
 
 
 # Extend DDD base classes
@@ -138,7 +150,7 @@ from flext_core.models import FlextModels
 from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
-from flext_core.result import FlextResult
+from flext_core.result import FlextResult, safe
 from flext_core.service import FlextService
 from flext_core.typings import (
     T1,
@@ -175,6 +187,8 @@ from flext_core.typings import (
     W,
 )
 from flext_core.utilities import FlextUtilities
+
+# Test infrastructure removed - not allowed in production src/
 
 # Aliases for consistency with domain library naming conventions
 FlextCoreAPI = FlextCore
@@ -233,4 +247,5 @@ __all__ = [
     "W",
     "__version__",
     "__version_info__",
+    "safe",  # Convenience decorator for safe function calls
 ]

@@ -27,7 +27,7 @@ import warnings
 from collections.abc import Callable
 from typing import cast
 
-from flext_core import FlextCore, FlextResult
+from flext_core import FlextCore, FlextResult, FlextLogger, FlextConstants, FlextTypes
 
 from .example_scenarios import ExampleScenarios
 
@@ -41,12 +41,12 @@ class ComprehensiveResultService:
         _scenarios = ExampleScenarios
 
         @classmethod
-        def dataset(cls) -> FlextCore.Types.Dict:
+        def dataset(cls) -> dict[str, object]:
             """Return a reusable dataset with users, configs, and fields."""
             return cls._scenarios.dataset()
 
         @classmethod
-        def validation_data(cls) -> FlextCore.Types.Dict:
+        def validation_data(cls) -> dict[str, object]:
             """Return shared validation data used by multiple examples."""
             return cls._scenarios.validation_data()
 
@@ -68,12 +68,12 @@ class ComprehensiveResultService:
             cls,
             *,
             success: bool = True,
-        ) -> FlextResult[FlextCore.Types.Dict]:
+        ) -> FlextResult[dict[str, object]]:
             """Return a user-specific ``FlextResult``."""
             return cls._scenarios.user_result(success=success)
 
         @classmethod
-        def metadata(cls) -> FlextCore.Types.Dict:
+        def metadata(cls) -> dict[str, object]:
             """Return a structured error scenario from fixtures."""
             return cls._scenarios.metadata(tags=["result", "demo"])
 
@@ -86,10 +86,10 @@ class ComprehensiveResultService:
     def __init__(self) -> None:
         """Initialize with FlextLogger for structured logging."""
         super().__init__()
-        self._logger = FlextCore.Logger(__name__)
-        self._dataset: FlextCore.Types.Dict = self.Scenario.dataset()
-        self._validation: FlextCore.Types.Dict = self.Scenario.validation_data()
-        self._metadata: FlextCore.Types.Dict = self.Scenario.metadata()
+        self._logger = FlextLogger(__name__)
+        self._dataset: dict[str, object] = self.Scenario.dataset()
+        self._validation: dict[str, object] = self.Scenario.validation_data()
+        self._metadata: dict[str, object] = self.Scenario.metadata()
 
     # ========== BASIC OPERATIONS ==========
 
@@ -114,9 +114,9 @@ class ComprehensiveResultService:
         print("\n=== Value Extraction ===")
 
         dataset = self._dataset
-        users_list = cast("FlextCore.Types.List", dataset["users"])
-        user_payload = cast("FlextCore.Types.Dict", users_list[0])
-        success = FlextResult[FlextCore.Types.Dict].ok(user_payload)
+        users_list = cast("list[object]", dataset["users"])
+        user_payload = cast("dict[str, object]", users_list[0])
+        success = FlextResult[dict[str, object]].ok(user_payload)
         failure = self.Scenario.result_failure("error")
 
         print(f".unwrap() on success: {success.unwrap()['email']}")
@@ -222,7 +222,7 @@ class ComprehensiveResultService:
         """Operations on collections of FlextResults."""
         print("\n=== Collection Operations ===")
 
-        results: list[FlextResult[FlextCore.Types.Dict]] = [
+        results: list[FlextResult[dict[str, object]]] = [
             self.Scenario.user_result(success=True),
             self.Scenario.user_result(success=True),
             self.Scenario.user_result(success=True),

@@ -28,8 +28,6 @@ from uuid import uuid4
 from flext_core import (
     FlextBus,
     FlextConstants,
-    FlextContainer,
-    FlextLogger,
     FlextModels,
     FlextResult,
     FlextService,
@@ -42,15 +40,12 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextBus patterns."""
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
-        manager = FlextContainer.ensure_global_manager()
-        self._container = manager.get_or_create()
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
-        self._logger.info(
+        self.logger.info(
             "Executing bus demo",
             extra={"data": {"demo": "bus_messaging"}},
         )
@@ -166,7 +161,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
             def __init__(self) -> None:
                 self._orders: FlextTypes.NestedDict = {}
-                self._logger = FlextLogger(__name__)
+                # Logger available via self.logger
 
             def handle_place_order(self, cmd: PlaceOrderCommand) -> FlextResult[str]:
                 """Place a new order."""
@@ -186,7 +181,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                     "created_at": time.time(),
                 }
 
-                self._logger.info("Order placed: %s", order_id)
+                self.logger.info("Order placed: %s", order_id)
                 return FlextResult[str].ok(order_id)
 
             def handle_cancel_order(self, cmd: CancelOrderCommand) -> FlextResult[None]:
@@ -204,7 +199,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 order["cancel_reason"] = cmd.reason
                 order["cancelled_at"] = time.time()
 
-                self._logger.info(f"Order cancelled: {cmd.order_id}")
+                self.logger.info(f"Order cancelled: {cmd.order_id}")
                 return FlextResult[None].ok(None)
 
             def handle_ship_order(self, cmd: ShipOrderCommand) -> FlextResult[None]:
@@ -223,7 +218,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 order["tracking_number"] = cmd.tracking_number
                 order["shipped_at"] = time.time()
 
-                self._logger.info(f"Order shipped: {cmd.order_id}")
+                self.logger.info(f"Order shipped: {cmd.order_id}")
                 return FlextResult[None].ok(None)
 
         # Register command handlers
@@ -275,7 +270,8 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             """Logs all bus operations."""
 
             def __init__(self) -> None:
-                self._logger = FlextLogger(__name__)
+                # Logger available via self.logger
+                pass
 
             def __call__(
                 self,
@@ -284,13 +280,13 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             ) -> FlextResult[object]:
                 """Log before and after."""
                 message_type = type(message).__name__
-                self._logger.info("Processing: %s", message_type)
+                self.logger.info("Processing: %s", message_type)
 
                 start = time.time()
                 result = next_handler(message)
                 duration = time.time() - start
 
-                self._logger.info(
+                self.logger.info(
                     "Completed: %s",
                     message_type,
                     extra={"duration": duration, "success": bool(result.is_success)},

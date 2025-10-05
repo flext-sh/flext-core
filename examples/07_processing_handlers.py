@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import time
 import warnings
+from typing import cast
 
 from flext_core import (
-    FlextContainer,
     FlextLogger,
     FlextProcessors,
     FlextResult,
@@ -37,16 +37,21 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextProcessors patterns."""
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        manager = FlextContainer.ensure_global_manager()
-        self._container = manager.get_or_create()
-        self._logger = FlextLogger(__name__)
-        self._scenarios = ExampleScenarios
+        self._scenarios = ExampleScenarios()
         self._user = self._scenarios.user()
         self._order = self._scenarios.realistic_data()["order"]
-        self._admin_user = {**self._user, "role": "admin", "token": "valid-token"}
-        self._invalid_user = {**self._user, "email": "invalid", "role": "user"}
+        self._admin_user: dict[str, object] = {
+            **self._user,
+            "role": "admin",
+            "token": "valid-token",
+        }
+        self._invalid_user: dict[str, object] = {
+            **self._user,
+            "email": "invalid",
+            "role": "user",
+        }
         self._metadata = self._scenarios.metadata(tags=["processors", "demo"])
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
@@ -101,7 +106,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         if result.is_success:
             print(f"✅ Validation passed: {result.unwrap()}")
 
-        invalid_request = {
+        invalid_request: dict[str, object] = {
             "email": self._invalid_user["email"],
             "name": self._invalid_user["name"],
         }
@@ -130,7 +135,8 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                token_value: str | None = request.get("token", None)
+                request_dict = cast("dict[str, object]", request)
+                token_value: str | None = request_dict.get("token", None)
                 if not token_value:
                     return FlextResult[str].fail("Authentication required")
 
@@ -158,11 +164,14 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                authenticated_value: bool | None = request.get("authenticated", None)
+                request_dict = cast("dict[str, object]", request)
+                authenticated_value: bool | None = request_dict.get(
+                    "authenticated", None
+                )
                 if not authenticated_value:
                     return FlextResult[str].fail("Not authenticated")
 
-                role_value: str | None = request.get("role", None)
+                role_value: str | None = request_dict.get("role", None)
                 if role_value != "admin":
                     return FlextResult[str].fail("Insufficient permissions")
 
@@ -184,7 +193,8 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                authorized_value: bool | None = request.get("authorized", None)
+                request_dict = cast("dict[str, object]", request)
+                authorized_value: bool | None = request_dict.get("authorized", None)
                 if not authorized_value:
                     return FlextResult[str].fail("Not authorized")
 
@@ -211,7 +221,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             return process_handler.handle(request)
 
         print("\n1. Valid request through pipeline:")
-        valid_request: FlextTypes.Dict = {
+        valid_request: dict[str, object] = {
             "token": self._admin_user["token"],
             "role": self._admin_user["role"],
             "action": "delete_user",
@@ -233,7 +243,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             print(f"❌ Pipeline failed at auth: {result.error}")
 
         print("\n3. Request with insufficient permissions:")
-        insufficient: FlextTypes.Dict = {
+        insufficient: dict[str, object] = {
             "token": self._admin_user["token"],
             "role": self._invalid_user.get("role", "user"),
             "action": "delete_user",
@@ -421,7 +431,8 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: str = request.get("text", "")
+                request_dict = cast("dict[str, object]", request)
+                text_value: str = request_dict.get("text", "")
                 if not isinstance(text_value, str):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Uppercase: {text_value.upper()}")
@@ -434,7 +445,8 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
 
-                text_value: str = request.get("text", "")
+                request_dict = cast("dict[str, object]", request)
+                text_value: str = request_dict.get("text", "")
                 if not isinstance(text_value, str):
                     text_value = str(text_value)
                 return FlextResult[str].ok(f"Lowercase: {text_value.lower()}")
@@ -546,7 +558,8 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     return FlextResult[str].fail("Request must be a dictionary")
 
                 # Simulate processing
-                force_fail_value: bool = request.get("force_fail", False)
+                request_dict = cast("dict[str, object]", request)
+                force_fail_value: bool = request_dict.get("force_fail", False)
                 should_fail = bool(force_fail_value)
 
                 if should_fail:

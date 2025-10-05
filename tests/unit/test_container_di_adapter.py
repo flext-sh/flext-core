@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from flext_core import FlextContainer, FlextResult
 
 
@@ -71,9 +73,9 @@ class TestServiceRegistrationSync:
     def test_register_factory_dual_storage(self) -> None:
         """Factory registration stores in both dict and DI container."""
         container = FlextContainer()
-        factory_calls = []
+        factory_calls: list[int] = []
 
-        def test_factory() -> dict:
+        def test_factory() -> dict[str, int]:
             factory_calls.append(1)
             return {"instance": len(factory_calls)}
 
@@ -106,7 +108,9 @@ class TestServiceRegistrationSync:
         # Duplicate registration fails
         result2 = container.register("service", {"value": 2})
         assert result2.is_failure
-        assert "already registered" in result2.error.lower()
+        assert (
+            result2.error is not None and "already registered" in result2.error.lower()
+        )
 
         # Original service unchanged
         assert container._services["service"] == {"value": 1}
@@ -130,9 +134,9 @@ class TestServiceResolutionSync:
     def test_get_factory_result_via_di(self) -> None:
         """Factory result is cached after first call (lazy singleton pattern)."""
         container = FlextContainer()
-        instance_count = []
+        instance_count: list[int] = []
 
-        def factory() -> dict:
+        def factory() -> dict[str, int]:
             instance_count.append(1)
             return {"instance": len(instance_count)}
 
@@ -142,7 +146,7 @@ class TestServiceResolutionSync:
         result1 = container.get("factory")
         assert result1.is_success
         instance1 = result1.value
-        assert instance1["instance"] == 1
+        assert cast("dict[str, int]", instance1)["instance"] == 1
 
         # Second retrieval - cached result returned
         result2 = container.get("factory")
@@ -151,7 +155,7 @@ class TestServiceResolutionSync:
 
         # Same instance (factory result cached)
         assert instance1 is instance2
-        assert instance2["instance"] == 1  # Same cached result
+        assert cast("dict[str, int]", instance2)["instance"] == 1  # Same cached result
         assert len(instance_count) == 1  # Factory only called once
 
     def test_get_nonexistent_service_fails(self) -> None:
@@ -160,7 +164,7 @@ class TestServiceResolutionSync:
 
         result = container.get("nonexistent")
         assert result.is_failure
-        assert "not found" in result.error.lower()
+        assert result.error is not None and "not found" in result.error.lower()
 
 
 class TestServiceUnregistrationSync:
@@ -193,7 +197,7 @@ class TestServiceUnregistrationSync:
         """Factory unregistration removes from both storages."""
         container = FlextContainer()
 
-        def factory() -> dict:
+        def factory() -> dict[str, str]:
             return {"value": "test"}
 
         # Register and verify
@@ -218,7 +222,7 @@ class TestServiceUnregistrationSync:
 
         result = container.unregister("nonexistent")
         assert result.is_failure
-        assert "not registered" in result.error.lower()
+        assert result.error is not None and "not registered" in result.error.lower()
 
 
 class TestFlextConfigSync:
@@ -229,7 +233,7 @@ class TestFlextConfigSync:
         container = FlextContainer()
 
         # Access the config provider
-        config_provider = container._di_container.config
+        config_provider = cast("Any", container._di_container.config)
 
         # Verify config values are synced
         # These should match FlextConfig defaults
@@ -319,7 +323,7 @@ class TestExceptionTranslation:
         # Try to register non-callable as factory
         result = container.register_factory("bad_factory", "not_callable")
         assert result.is_failure
-        assert "must be callable" in result.error.lower()
+        assert result.error is not None and "must be callable" in result.error.lower()
 
     def test_resolution_error_wrapped(self) -> None:
         """Service resolution errors are wrapped in FlextResult."""
@@ -364,7 +368,7 @@ class TestBackwardCompatibility:
         services = result.value
 
         # list_services returns list of service metadata dicts
-        service_names = [s["name"] for s in services]
+        service_names = [cast("dict[str, str]", s)["name"] for s in services]
         assert "service1" in service_names
         assert "service2" in service_names
         assert len(services) == 2

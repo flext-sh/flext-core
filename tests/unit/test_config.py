@@ -42,7 +42,7 @@ class TestFlextConfig:
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data = {
+        config_data: dict[str, str | int | float | bool] = {
             "app_name": "dict_app",
             "version": "2.0.0",
             "environment": "production",
@@ -65,7 +65,7 @@ class TestFlextConfig:
 
     def test_config_from_json_file(self, tmp_path: Path) -> None:
         """Test config loading from JSON file."""
-        config_data = {
+        config_data: dict[str, str | int | float | bool] = {
             "app_name": "json_app",
             "version": "3.0.0",
             "environment": "staging",
@@ -86,7 +86,7 @@ class TestFlextConfig:
 
     def test_config_from_json_file_alternative(self, tmp_path: Path) -> None:
         """Test config loading from JSON file with different data."""
-        config_data = {
+        config_data: dict[str, str | int | float | bool] = {
             "app_name": "json_app_alt",
             "version": "4.0.0",
             "environment": "development",

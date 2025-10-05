@@ -39,9 +39,6 @@ import structlog
 from pydantic import Field, field_validator, model_validator
 from structlog.typing import EventDict, Processor
 
-# Layer 3 - Core Infrastructure
-from flext_core.config import FlextConfig
-
 # Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 
@@ -52,8 +49,20 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
-# Module-level configuration instance for runtime defaults
-_config = FlextConfig()
+# Module-level configuration instance for runtime defaults (lazy loaded)
+_config: FlextTypes.Any = None
+
+
+def _get_config() -> FlextTypes.Any:
+    """Lazy load configuration to avoid import cycles."""
+    global _config
+    if _config is None:
+        # Lazy import to break circular dependency
+        from flext_core.config import FlextConfig
+
+        _config = FlextConfig()
+    return _config
+
 
 if TYPE_CHECKING:
     pass
@@ -861,7 +870,7 @@ class FlextLogger(FlextProtocols.Infrastructure.LoggerProtocol):
                 maxBytes=log_file_max_size,
                 backupCount=log_file_backup_count
                 if log_file_backup_count is not None
-                else _config.log_file_backup_count,
+                else _get_config().log_file_backup_count,
                 encoding="utf-8",
             )
             logger.addHandler(file_handler)

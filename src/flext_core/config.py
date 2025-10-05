@@ -1,5 +1,11 @@
 """Configuration subsystem delivering the FLEXT 1.0.0 alignment pillar.
 
+**Implementation (v1.1.0+)**: dependency-injector integration
+    - Bidirectional sync between Pydantic BaseSettings and DI Configuration
+    - FlextConfig values injectable through DI container
+    - Configuration provider for dependency injection
+    - Maintains Pydantic validation while enabling DI patterns
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -10,8 +16,9 @@ import json
 import threading
 import uuid
 from pathlib import Path
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self
 
+from dependency_injector import providers
 from pydantic import (
     Field,
     SecretStr,
@@ -23,7 +30,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -48,6 +54,14 @@ class FlextConfig(
     - FlextExceptions for structured error handling
     - FlextProtocols for interface compliance
     - FlextTypes for type definitions
+
+    🔌 DEPENDENCY INJECTION INTEGRATION (v1.1.0+)
+    Bidirectional sync with dependency-injector:
+    - Internal Configuration provider for DI container
+    - Pydantic validation + DI injectable values
+    - Automatic sync on config creation/update
+    - Register config instance in FlextContainer for injection
+    - Access config values via DI: container.config.log_level()
 
     ⚙️ PYDANTIC 2.11+ BASESETTINGS
     Modern configuration management:
@@ -254,6 +268,9 @@ class FlextConfig(
             # Try to extract from config object
             if handler_config is not None:
                 # Try attribute access
+                # Lazy import to avoid circular dependency
+                from flext_core.protocols import FlextProtocols
+
                 if isinstance(handler_config, FlextProtocols.Foundation.HasHandlerType):
                     config_mode: str | None = handler_config.handler_type
                     if config_mode in {"command", "query"}:
@@ -261,7 +278,7 @@ class FlextConfig(
 
                 # Try dict access
                 if isinstance(handler_config, dict):
-                    config_mode_dict = handler_config.get("handler_type")
+                    config_mode_dict: object = handler_config.get("handler_type")
                     if isinstance(config_mode_dict, str) and config_mode_dict in {
                         "command",
                         "query",
@@ -742,7 +759,7 @@ class FlextConfig(
                 raise KeyError(msg)
 
             # Get the nested object
-            nested_obj = getattr(self, first_key)
+            nested_obj: object = getattr(self, first_key)
 
             # Handle dict access
             if isinstance(nested_obj, dict):
@@ -832,19 +849,31 @@ class FlextConfig(
         FlextConfig._update_models_config(self)
         return self
 
-    # Singleton pattern implementation
-    _global_instance: ClassVar[FlextConfig | None] = None
+    # NOTE: Removed synchronize_di_config validator to avoid circular dependency
+    # The DI Configuration provider is created lazily when first accessed
+    # and automatically syncs with the Pydantic settings instance
+
+    # Dependency Injection integration (v1.1.0+)
+    _di_config_provider: ClassVar[providers.Configuration | None] = None
+    _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
+
+    # Singleton pattern implementation - per-class singletons
     _instance_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    def __new__(cls) -> Self:
-        """Implement singleton pattern for FlextConfig instances."""
-        if cls._global_instance is None:
+    def __new__(cls) -> FlextConfig | None:
+        """Implement singleton pattern with proper subclass support.
+
+        Each class (FlextConfig, FlextApiConfig, etc.) gets its own singleton instance.
+        This allows proper inheritance where subclasses maintain their own state.
+        """
+        if cls not in cls._instances:
             with cls._instance_lock:
-                if cls._global_instance is None:
-                    cls._global_instance = super().__new__(cls)
+                if cls not in cls._instances:
+                    instance = super().__new__(cls)
+                    cls._instances[cls] = instance
                     # Update models module config when global instance is created
-                    cls._update_models_config(cls._global_instance)
-        return cls._global_instance
+                    cls._update_models_config(instance)
+        return cls._instances[cls]
 
     @classmethod
     def get_global_instance(cls) -> Self:
@@ -863,9 +892,14 @@ class FlextConfig(
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
-        """Set the global singleton instance per class."""
+        """Set the global singleton instance for this class.
+
+        Args:
+            instance: Configuration instance to set as singleton for this class.
+
+        """
         with cls._instance_lock:
-            cls._global_instance = instance
+            cls._instances[cls] = instance
             # Update models module config when FlextConfig changes
             cls._update_models_config(instance)
 
@@ -889,7 +923,6 @@ class FlextConfig(
             # Import models module and update its config
             # NOTE: This access to private _config is necessary for the current
             # architecture where models use global config for field defaults.
-            # TODO(#1): Refactor to use proper dependency injection pattern.
             import flext_core.models as models_module
 
             models_module._config = config_instance
@@ -904,13 +937,97 @@ class FlextConfig(
             # Import models module and update its config
             # NOTE: This access to private _config is necessary for the current
             # architecture where models use global config for field defaults.
-            # TODO(#1): Refactor to use proper dependency injection pattern.
             import flext_core.models as models_module
 
             models_module._config = FlextConfig()
         except ImportError:
             # Models module not yet imported
             pass
+
+    @classmethod
+    def _get_or_create_di_provider(cls) -> providers.Configuration:
+        """Get or create the dependency-injector Configuration provider.
+
+        Creates a Configuration provider linked to Pydantic settings as described in:
+        https://python-dependency-injector.ets-labs.org/providers/configuration.html
+
+        Returns:
+            providers.Configuration: The DI Configuration provider instance.
+
+        """
+        if cls._di_config_provider is None:
+            with cls._di_provider_lock:
+                if cls._di_config_provider is None:
+                    # Create Configuration provider
+                    cls._di_config_provider = providers.Configuration()
+
+                    # Populate with Pydantic settings if instance exists for this class
+                    instance = cls._instances.get(cls)
+                    if instance is not None:
+                        # Convert Pydantic model to dict and populate DI provider
+                        config_dict = instance.model_dump()
+                        cls._di_config_provider.from_dict(config_dict)
+        return cls._di_config_provider
+
+    @classmethod
+    def _sync_to_di_provider(cls, config_instance: FlextConfig) -> None:
+        """Sync FlextConfig Pydantic settings to DI Configuration provider.
+
+        Implements bidirectional sync pattern from dependency-injector docs.
+        The Configuration provider automatically reads values from Pydantic settings.
+
+        Args:
+            config_instance: FlextConfig instance to sync to DI provider.
+
+        """
+        # Get or create the DI Configuration provider
+        di_provider = cls._get_or_create_di_provider()
+
+        # Update the provider with current Pydantic settings instance
+        # The provider automatically reads values from the Pydantic settings
+        di_provider.set_pydantic_settings([config_instance])
+
+    @classmethod
+    def get_di_config_provider(cls) -> providers.Configuration:
+        """Get the dependency-injector Configuration provider for FlextConfig.
+
+        This provider can be used in FlextContainer to make configuration
+        values injectable through dependency injection.
+
+        Returns:
+            providers.Configuration: Configuration provider for DI container.
+
+        Example:
+            >>> config_provider = FlextConfig.get_di_config_provider()
+            >>> # Access config values through DI
+            >>> log_level = config_provider.log_level()
+            >>> timeout = config_provider.timeout_seconds()
+
+        Example (in FlextContainer):
+            >>> # Register in DI container
+            >>> container._di_container.config = FlextConfig.get_di_config_provider()
+            >>> # Access via container
+            >>> log_level = container._di_container.config.log_level()
+
+        """
+        # Get or create the provider
+        provider = cls._get_or_create_di_provider()
+
+        # Ensure it's synced with current instance for this class
+        instance = cls._instances.get(cls)
+        if instance is not None:
+            provider.set_pydantic_settings([instance])
+
+        return provider
+
+    @classmethod
+    def reset_di_config_provider(cls) -> None:
+        """Reset the DI Configuration provider (mainly for testing).
+
+        Clears the cached Configuration provider, forcing recreation on next access.
+        """
+        with cls._di_provider_lock:
+            cls._di_config_provider = None
 
     @classmethod
     def get_or_create_shared_instance(
@@ -970,7 +1087,7 @@ class FlextConfig(
         """
         # Pydantic BaseSettings handles kwargs validation and type conversion automatically
         # Include environment in the validation data
-        config_data = {"environment": environment, **kwargs}
+        config_data: dict[str, object] = {"environment": environment, **kwargs}
         return cls.model_validate(config_data)
 
     @classmethod
@@ -1441,7 +1558,7 @@ class FlextConfig(
             ...     )
 
         """
-        component_configs = {
+        component_configs: dict[str, FlextTypes.Dict] = {
             "container": {
                 "max_workers": self.max_workers,
                 "enable_circuit_breaker": self.enable_circuit_breaker,
@@ -1494,11 +1611,7 @@ class FlextConfig(
                 f"Unknown component: {component}. Available: {list(component_configs.keys())}"
             )
 
-        from typing import cast
-
-        return FlextResult[FlextTypes.Dict].ok(
-            cast("FlextTypes.Dict", component_configs[component])
-        )
+        return FlextResult[FlextTypes.Dict].ok(component_configs[component])
 
     def create_service_config(
         self, service_name: str, **overrides: FlextTypes.ConfigValue
@@ -1525,7 +1638,7 @@ class FlextConfig(
 
         """
         # Base service configuration using flext-core patterns
-        base_config = {
+        base_config: FlextTypes.Dict = {
             "service_name": service_name,
             "timeout_seconds": self.timeout_seconds,
             "max_retry_attempts": self.max_retry_attempts,
@@ -1576,7 +1689,7 @@ class FlextConfig(
                 "Retry attempts cannot be negative"
             )
 
-        return FlextResult[FlextTypes.Dict].ok(cast("FlextTypes.Dict", base_config))
+        return FlextResult[FlextTypes.Dict].ok(base_config)
 
     def validate_flext_core_integration(self) -> FlextResult[None]:
         """Validate flext-core integration configuration with comprehensive checks.
@@ -1594,7 +1707,7 @@ class FlextConfig(
             ...     print(f"Integration issues: {validation.error}")
 
         """
-        issues = []
+        issues: list[str] = []
 
         # Validate component compatibility
         if self.enable_circuit_breaker and not self.enable_metrics:

@@ -35,18 +35,10 @@ from .example_scenarios import ExampleScenarios
 class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.StringDict]):
     """Service demonstrating ALL FlextLogger patterns and methods."""
 
-    _logger: FlextCore.Logger
-    _container: FlextCore.Container
-    _config: FlextCore.Config
-
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with automatic FlextCore infrastructure."""
         super().__init__()
-        manager = FlextCore.Container.ensure_global_manager()
-        self._container = manager.get_or_create()
-        self._logger = FlextCore.Logger(__name__)
-        self._config = FlextCore.Config()
-        self._scenarios = ExampleScenarios
+        self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["logging", "demo"])
         self._user = self._scenarios.user()
         self._payload = self._scenarios.payload()
@@ -54,7 +46,7 @@ class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.StringDict])
     def execute(self) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Execute method required by FlextService."""
         # This is a demonstration service, logs and returns status
-        self._logger.info(
+        self.logger.info(
             "Executing logging demonstration",
             extra={"data": {"demo": "logging"}},
         )
