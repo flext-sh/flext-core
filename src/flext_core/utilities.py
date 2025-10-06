@@ -36,20 +36,14 @@ from typing import (
 
 from pydantic import BaseModel
 
-# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
-
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
-
-# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T, U
 
-# Module-level configuration instance for runtime defaults
 _config = FlextConfig()
 
 
@@ -671,9 +665,6 @@ class FlextUtilities:
                 FlextResult[FlextTypes.Dict]: Validated data or error
 
             """
-            if not isinstance(data, dict):
-                return FlextResult[FlextTypes.Dict].fail("Data must be a dictionary")
-
             if required_fields:
                 if isinstance(required_fields, list):
                     # Simple presence check
@@ -684,7 +675,7 @@ class FlextUtilities:
                         return FlextResult[FlextTypes.Dict].fail(
                             f"Missing required fields: {', '.join(missing_fields)}"
                         )
-                elif isinstance(required_fields, dict):
+                else:
                     # Type validation
                     for field, expected_type in required_fields.items():
                         if field not in data:
@@ -797,9 +788,6 @@ class FlextUtilities:
                 FlextResult[str]: JSON string or error
 
             """
-            if not isinstance(data, dict):
-                return FlextResult[str].fail("Data must be a dictionary")
-
             try:
                 json_string = json.dumps(data)
                 return FlextResult[str].ok(json_string)
@@ -950,8 +938,7 @@ class FlextUtilities:
                 else:
                     # Circuit still open - reject immediately
                     return FlextResult[T].fail(
-                        f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. "
-                        f"Next retry in {recovery_timeout - (current_time - last_failure_time):.1f}s",
+                        f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. Next retry in {recovery_timeout - (current_time - last_failure_time):.1f}s",
                     )
 
             # Execute operation (CLOSED or HALF_OPEN state)
@@ -979,8 +966,7 @@ class FlextUtilities:
                     # Open circuit - failures exceeded threshold
                     state["circuit_state"] = "OPEN"
                     return FlextResult[T].fail(
-                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
-                        f"Error: {result.error}",
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. Error: {result.error}",
                     )
 
                 return result
@@ -1000,8 +986,7 @@ class FlextUtilities:
                 if new_failure_count >= failure_threshold:
                     state["circuit_state"] = "OPEN"
                     return FlextResult[T].fail(
-                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
-                        f"Exception: {e}",
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. Exception: {e}",
                     )
 
                 return FlextResult[T].fail(f"Circuit breaker operation failed: {e}")
@@ -1194,10 +1179,7 @@ class FlextUtilities:
                     if callable(target_type) and target_type is not object:
                         # Use proper type handling for constructor call
                         try:
-                            converted_value = cast(
-                                "Callable[[object], T]",
-                                target_type,
-                            )(value)
+                            converted_value = target_type(value)
                             return FlextResult[T].ok(converted_value)
                         except (TypeError, ValueError):
                             # If constructor fails with args, try no-arg constructor
@@ -1909,9 +1891,6 @@ class FlextUtilities:
                 FlextResult[FlextTypes.Dict]: Normalized data suitable for table display
 
             """
-            if not isinstance(data, dict):
-                return FlextResult[FlextTypes.Dict].fail("Data must be a dictionary")
-
             # Basic normalization - ensure all values are displayable
             normalized = {}
             for key, value in data.items():
@@ -1938,11 +1917,6 @@ class FlextUtilities:
                 FlextResult[list[FlextTypes.Dict]]: Formatted data for table display
 
             """
-            if not isinstance(data, list):
-                return FlextResult[list[FlextTypes.Dict]].fail(
-                    "Data must be a list of dictionaries"
-                )
-
             if not data:
                 return FlextResult[list[FlextTypes.Dict]].ok([])
 
@@ -2111,8 +2085,7 @@ class FlextUtilities:
                 else:
                     # Circuit still open - reject immediately
                     return FlextResult[TCircuit].fail(
-                        f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. "
-                        f"Next retry in {recovery_timeout - (current_time - last_failure_time):.1f}s",
+                        f"Circuit breaker OPEN - threshold {failure_threshold} exceeded. Next retry in {recovery_timeout - (current_time - last_failure_time):.1f}s",
                     )
 
             # Execute operation (CLOSED or HALF_OPEN state)
@@ -2161,8 +2134,7 @@ class FlextUtilities:
                 if new_failure_count >= failure_threshold:
                     state["circuit_state"] = "OPEN"
                     return FlextResult[TCircuit].fail(
-                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
-                        f"Exception: {e}",
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. Exception: {e}",
                     )
 
                 return FlextResult[TCircuit].fail(
@@ -2554,7 +2526,9 @@ class FlextUtilities:
                     return FlextResult[None].fail(
                         str(validation_error),
                         error_code=validation_error.error_code,
-                        error_data={"exception_context": validation_error.context},
+                        error_data={
+                            "exception_field": getattr(validation_error, "field", None)
+                        },
                     )
 
             # For non-Pydantic objects, ensure a serializable representation can be constructed
@@ -2565,7 +2539,7 @@ class FlextUtilities:
                     return FlextResult[None].fail(
                         str(exc),
                         error_code=exc.error_code,
-                        error_data={"exception_context": exc.context},
+                        error_data={"exception_type": type(exc).__name__},
                     )
 
                 fallback_error = FlextExceptions.TypeError(
@@ -2584,7 +2558,7 @@ class FlextUtilities:
                 return FlextResult[None].fail(
                     str(fallback_error),
                     error_code=fallback_error.error_code,
-                    error_data={"exception_context": fallback_error.context},
+                    error_data={"exception_type": type(fallback_error).__name__},
                 )
 
             return FlextResult[None].ok(None)
@@ -2978,10 +2952,10 @@ class FlextUtilities:
                 text=text if text is not None else True,
             )
 
-            return FlextResult.ok(result)
+            return FlextResult[subprocess.CompletedProcess[str]].ok(result)
 
         except subprocess.CalledProcessError as e:
-            return FlextResult.fail(
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
                 f"Command failed with exit code {e.returncode}",
                 error_code="COMMAND_FAILED",
                 error_data={
@@ -2992,7 +2966,7 @@ class FlextUtilities:
                 },
             )
         except subprocess.TimeoutExpired as e:
-            return FlextResult.fail(
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
                 f"Command timed out after {timeout} seconds",
                 error_code="COMMAND_TIMEOUT",
                 error_data={
@@ -3003,13 +2977,13 @@ class FlextUtilities:
                 },
             )
         except FileNotFoundError:
-            return FlextResult.fail(
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
                 f"Command not found: {cmd[0]}",
                 error_code="COMMAND_NOT_FOUND",
                 error_data={"cmd": cmd, "executable": cmd[0]},
             )
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
                 f"Unexpected error running command: {e!s}",
                 error_code="COMMAND_ERROR",
                 error_data={"cmd": cmd, "error": str(e)},
@@ -3044,12 +3018,7 @@ class FlextUtilities:
             # Create base configuration with enhanced flext-core integration
             config = FlextConfig()
 
-            # Validate flext-core integration
-            validation_result = config.validate_flext_core_integration()
-            if validation_result.is_failure:
-                return FlextResult[FlextConfig].fail(
-                    f"Flext-core integration validation failed: {validation_result.error}"
-                )
+            # Configuration created successfully
 
             return FlextResult[FlextConfig].ok(config)
 

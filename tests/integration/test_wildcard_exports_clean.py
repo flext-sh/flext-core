@@ -30,7 +30,7 @@ from flext_core import (
 )
 
 
-class TestFlextCoreWildcardExports:
+class TestFlextWildcardExports:
     """Integration tests for the flext-core wildcard export system."""
 
     def test_wildcard_import_works(self) -> None:
@@ -233,7 +233,7 @@ class TestFlextCoreWildcardExports:
             )
 
 
-class TestFlextCoreIntegrationScenarios:
+class TestFlextIntegrationScenarios:
     """Integration test scenarios using multiple flext-core components together."""
 
     def test_end_to_end_workflow(self) -> None:
@@ -334,7 +334,7 @@ class TestFlextCoreIntegrationScenarios:
 
 
 @pytest.mark.integration
-class TestFlextCoreImportPerformance:
+class TestFlextImportPerformance:
     """Performance tests for import system."""
 
     def test_import_time_reasonable(self) -> None:
@@ -359,7 +359,7 @@ class TestFlextCoreImportPerformance:
 
 @pytest.mark.integration
 @pytest.mark.slow
-class TestFlextCoreExportCompleteness:
+class TestFlextExportCompleteness:
     """Comprehensive tests for export completeness."""
 
     def test_all_public_classes_exported(self) -> None:

@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import os
 import threading
 import time
@@ -97,7 +96,7 @@ class TestFlextLogger:
         logger = FlextLogger("test_logger")
 
         structured_data: dict[str, Any] = {
-            "event": "user_action",
+            "action": "user_action",
             "data": {"key": "value"},
             "metadata": {"timestamp": "2025-01-01"},
         }
@@ -272,57 +271,38 @@ class TestFlextLogger:
         # (This is tested by the warning in the test output)
 
     def test_logger_logging_with_middleware(self) -> None:
-        """Test logging with middleware - currently not implemented."""
+        """Test logging with middleware - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        # Middleware functionality is not currently implemented in FlextLogger
-        # The add_middleware method exists but is a placeholder
-        def middleware(message: str, **kwargs: object) -> tuple[str, FlextTypes.Dict]:
-            return message, kwargs
-
-        logger.add_middleware(middleware)  # This is a no-op
+        # Middleware functionality is not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
         result = logger.info("Test message")
         assert result.is_success
-        # Note: middleware_called would be False since middleware is not implemented
 
     def test_logger_logging_with_filters(self) -> None:
-        """Test logging with filters."""
+        """Test logging with filters - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        def test_filter(record: logging.LogRecord) -> bool:
-            return "filtered" not in record.getMessage()
-
-        logger.add_filter(test_filter)
+        # Filter functionality is not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
         result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_handlers(self) -> None:
-        """Test logging with custom handlers - currently not implemented."""
+        """Test logging with custom handlers - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        class TestHandler(logging.Handler):
-            def __init__(self) -> None:
-                super().__init__()
-                self.messages: FlextTypes.StringList = []
-
-            def emit(self, record: logging.LogRecord) -> None:
-                self.messages.append(record.getMessage())
-
-        handler = TestHandler()
-        logger.add_handler(handler)  # This is a no-op placeholder
-
+        # Handler functionality is not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
         result = logger.info("Test message")
         assert result.is_success
-        # Note: handler.messages would be empty since handlers are not implemented
-        # The FlextLogger uses structlog internally, not standard Python logging handlers
 
     def test_logger_logging_with_formatters(self) -> None:
-        """Test logging with custom formatters."""
+        """Test logging with custom formatters - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        formatter = logging.Formatter("%(name)s - %(message)s")
-        logger.set_formatter(formatter)
-
+        # Formatter functionality is not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
         result = logger.info("Test message")
         assert result.is_success
 
@@ -330,11 +310,21 @@ class TestFlextLogger:
         """Test logging with different levels."""
         logger = FlextLogger("test_logger")
 
-        # Test all levels
-        levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        for level in levels:
-            result = logger.log(level, f"Test {level.lower()} message")
-            assert result.is_success
+        # Test all levels using the specific methods
+        result = logger.debug("Test debug message")
+        assert result.is_success
+
+        result = logger.info("Test info message")
+        assert result.is_success
+
+        result = logger.warning("Test warning message")
+        assert result.is_success
+
+        result = logger.error("Test error message")
+        assert result.is_success
+
+        result = logger.critical("Test critical message")
+        assert result.is_success
 
     def test_logger_logging_with_level_filtering(self) -> None:
         """Test logging with level filtering."""
@@ -389,12 +379,12 @@ class TestFlextLogger:
         end_time = time.time()
 
         # Should complete 100 operations in reasonable time
-        # Note: Structured logging with validation can be slower than simple logging
+        # The new thin FlextLogger is much faster
         total_time = end_time - start_time
+        assert total_time < 5.0  # Should be very fast with thin implementation
         assert (
-            total_time < 120.0
-        )  # Adjusted to realistic expectation for structured logging
-        assert total_time > 0.1  # Should take some time for 100 operations
+            total_time > 0.0001
+        )  # Should take some time for 100 operations (adjusted for thin implementation)
 
     def test_logger_logging_with_error_handling(self) -> None:
         """Test logging with error handling."""
@@ -405,37 +395,30 @@ class TestFlextLogger:
         assert result.is_success
 
     def test_logger_logging_with_cleanup(self) -> None:
-        """Test logging with cleanup."""
+        """Test logging with cleanup - not needed in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
 
-        # Cleanup
-        logger.cleanup()
-
-        # After cleanup, logging should still work
+        # Cleanup is not needed in the new thin FlextLogger
+        # Just test that logging still works
         result = logger.info("Test message after cleanup")
         assert result.is_success
 
     def test_logger_logging_with_statistics(self) -> None:
-        """Test logging with statistics - basic statistics available."""
+        """Test logging with statistics - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
         logger.info("Test message 1")
         logger.warning("Test message 2")
         logger.error("Test message 3")
 
-        stats = logger.get_statistics()
-        # The logger provides basic configuration statistics, not message counts
-        assert "logger_name" in stats
-        assert "logger_level" in stats
-        assert "service_name" in stats
-        assert "environment" in stats
-        assert "configured" in stats
-
-        # Message counting is not currently implemented
-        # The logger tracks configuration state, not message statistics
+        # Statistics functionality is not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
+        attrs = logger.get_logger_attributes()
+        assert "name" in attrs
+        assert "context" in attrs
 
     def test_logger_logging_with_audit(self) -> None:
         """Test logging with audit."""
@@ -445,44 +428,49 @@ class TestFlextLogger:
         assert result.is_success
 
     def test_logger_logging_with_context_management(self) -> None:
-        """Test logging with context management."""
+        """Test logging with context management - using FlextContext."""
+        from flext_core import FlextContext
+
         logger = FlextLogger("test_logger")
 
         # Test basic logging
         result = logger.info("Test message")
         assert result.is_success
 
-        # Test context management
-        result = logger.set_correlation_id("test-correlation-123")
-        assert result.is_success
+        # Test context management through FlextContext
+        FlextContext.Correlation.set_correlation_id("test-correlation-123")
 
         # Test logging with context
         result = logger.info("Test message with context", user_id="123", action="test")
         assert result.is_success
 
-        # Test request context
-        result = logger.set_request_context(service="test-service", version="1.0")
-        assert result.is_success
+        # Test service context
+        FlextContext.Service.set_service_name("test-service")
+        FlextContext.Service.set_service_version("1.0")
 
         # Verify logging works with context
         result = logger.info("Test message with request context")
         assert result.is_success
 
     def test_logger_validation(self) -> None:
-        """Test logger validation."""
+        """Test logger validation - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        result = logger.validate()
+        # Validation functionality is not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
+        result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_instance_creation(self) -> None:
-        """Test logging instance creation with caching."""
+        """Test logging instance creation - no caching in new FlextLogger."""
         logger1 = FlextLogger("test_logger")
         logger2 = FlextLogger("test_logger")
 
-        # Instances are cached by default (singleton-like behavior)
-        assert logger1 is logger2
-        assert logger1.name == logger2.name == "test_logger"
+        # The new FlextLogger doesn't cache instances
+        # Each call creates a new instance
+        assert logger1 is not logger2
+        # But they should have the same name
+        assert logger1._name == logger2._name == "test_logger"
 
     def test_logger_logging_with_singleton_reset(self) -> None:
         """Test logging with different instances."""
@@ -565,32 +553,24 @@ class TestFlextLogger:
         assert result.is_success
 
     def test_logger_logging_with_metrics_collection(self) -> None:
-        """Test logging with metrics collection."""
+        """Test logging with metrics collection - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
         logger.info("Test message 1")
         logger.warning("Test message 2")
         logger.error("Test message 3")
 
-        # FlextLogger doesn't have get_metrics method - test basic functionality instead
+        # Metrics collection is not implemented in the new thin FlextLogger
+        # Just test basic functionality
         attrs = logger.get_logger_attributes()
         assert attrs["name"] == "test_logger"
-        assert attrs["correlation_id"] is not None
+        assert "context" in attrs
 
     def test_logger_get_performance_metrics(self) -> None:
-        """Test getting logger performance metrics."""
+        """Test getting logger performance metrics - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        time.time()
-        logger.info("Test message")
-        time.time()
-
-        performance = logger.get_performance_metrics()
-        assert (
-            isinstance(performance["avg_logging_time"], (int, float))
-            and performance["avg_logging_time"] >= 0
-        )
-        assert (
-            isinstance(performance["total_logging_time"], (int, float))
-            and performance["total_logging_time"] >= 0
-        )
+        # Performance metrics are not implemented in the new thin FlextLogger
+        # Just test basic logging functionality
+        result = logger.info("Test message")
+        assert result.is_success

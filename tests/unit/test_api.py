@@ -1,6 +1,6 @@
-"""Tests for FlextCore unified facade.
+"""Tests for Flext unified facade.
 
-This module tests the FlextCore facade providing unified access to all
+This module tests the Flext facade providing unified access to all
 flext-core components with proper integration and modern patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,13 +12,12 @@ from __future__ import annotations
 import pytest
 
 from flext_core import (
+    Flext,
     FlextBus,
     FlextConfig,
     FlextConstants,
     FlextContainer,
     FlextContext,
-    FlextCore,
-    FlextCoreAPI,
     FlextDispatcher,
     FlextExceptions,
     FlextHandlers,
@@ -35,138 +34,138 @@ from flext_core import (
 )
 
 
-class TestFlextCoreImports:
-    """Test FlextCore import and alias functionality."""
+class TestFlextImports:
+    """Test Flext import and alias functionality."""
 
     def test_flextcore_import(self) -> None:
-        """Test FlextCore can be imported."""
-        assert FlextCore is not None
-        assert isinstance(FlextCore, type)
+        """Test Flext can be imported."""
+        assert Flext is not None
+        assert isinstance(Flext, type)
 
     def test_flextcore_alias(self) -> None:
-        """Test FlextCoreAPI alias works."""
-        assert FlextCoreAPI is not None
-        assert FlextCoreAPI is FlextCore
+        """Test Flext alias works."""
+        assert Flext is not None
+        assert hasattr(Flext, "__name__")
 
 
-class TestFlextCoreClassAttributes:
-    """Test FlextCore class-level component access."""
+class TestFlextClassAttributes:
+    """Test Flext class-level component access."""
 
     def test_core_patterns_available(self) -> None:
         """Test core pattern classes are available."""
-        assert FlextCore.Result is FlextResult
-        assert issubclass(FlextCore.Config, FlextConfig)
-        assert issubclass(FlextCore.Container, FlextContainer)
-        assert issubclass(FlextCore.Logger, FlextLogger)
-        assert issubclass(FlextCore.Service, FlextService)
+        assert Flext.Result is FlextResult
+        assert issubclass(Flext.Config, FlextConfig)
+        assert issubclass(Flext.Container, FlextContainer)
+        assert issubclass(Flext.Logger, FlextLogger)
+        assert issubclass(Flext.Service, FlextService)
 
     def test_namespace_classes_available(self) -> None:
         """Test namespace classes are available."""
-        assert issubclass(FlextCore.Models, FlextModels)
-        assert issubclass(FlextCore.Constants, FlextConstants)
-        assert issubclass(FlextCore.Types, FlextTypes)
-        assert issubclass(FlextCore.Exceptions, FlextExceptions)
-        assert issubclass(FlextCore.Protocols, FlextProtocols)
+        assert issubclass(Flext.Models, FlextModels)
+        assert issubclass(Flext.Constants, FlextConstants)
+        assert issubclass(Flext.Types, FlextTypes)
+        assert issubclass(Flext.Exceptions, FlextExceptions)
+        assert issubclass(Flext.Protocols, FlextProtocols)
 
     def test_advanced_components_available(self) -> None:
         """Test advanced integration components are available."""
-        assert issubclass(FlextCore.Bus, FlextBus)
-        assert issubclass(FlextCore.Context, FlextContext)
-        assert issubclass(FlextCore.Handlers, FlextHandlers)
-        assert issubclass(FlextCore.Processors, FlextProcessors)
-        assert issubclass(FlextCore.Registry, FlextRegistry)
-        assert issubclass(FlextCore.Dispatcher, FlextDispatcher)
-        assert issubclass(FlextCore.Mixins, FlextMixins)
-        assert issubclass(FlextCore.Utilities, FlextUtilities)
+        assert issubclass(Flext.Bus, FlextBus)
+        assert issubclass(Flext.Context, FlextContext)
+        assert issubclass(Flext.Handlers, FlextHandlers)
+        assert issubclass(Flext.Processors, FlextProcessors)
+        assert issubclass(Flext.Registry, FlextRegistry)
+        assert issubclass(Flext.Dispatcher, FlextDispatcher)
+        assert issubclass(Flext.Mixins, FlextMixins)
+        assert issubclass(Flext.Utilities, FlextUtilities)
 
 
-class TestFlextCoreInstantiation:
-    """Test FlextCore instance creation and initialization."""
+class TestFlextInstantiation:
+    """Test Flext instance creation and initialization."""
 
     def test_create_default_instance(self) -> None:
-        """Test creating FlextCore instance with defaults."""
-        core = FlextCore()
+        """Test creating Flext instance with defaults."""
+        core = Flext()
         assert core is not None
-        assert isinstance(core, FlextCore)
+        assert isinstance(core, Flext)
         assert isinstance(core, FlextService)
 
     def test_create_instance_with_config(self) -> None:
-        """Test creating FlextCore instance with custom config."""
+        """Test creating Flext instance with custom config."""
         custom_config = FlextConfig()
-        core = FlextCore(config=custom_config)
+        core = Flext(config=custom_config)
         assert core is not None
         assert core.config is custom_config
 
     def test_execute_method(self) -> None:
         """Test execute method returns success."""
-        core = FlextCore()
+        core = Flext()
         result = core.execute()
         assert result.is_success
         assert result.value is None
 
 
-class TestFlextCorePropertyAccessors:
-    """Test FlextCore property-based component access."""
+class TestFlextPropertyAccessors:
+    """Test Flext property-based component access."""
 
     def test_config_property(self) -> None:
         """Test config property returns FlextConfig instance."""
-        core = FlextCore()
+        core = Flext()
         config = core.config
         assert config is not None
         assert isinstance(config, FlextConfig)
 
     def test_container_property(self) -> None:
         """Test container property returns global container."""
-        core = FlextCore()
+        core = Flext()
         container = core.container
         assert container is not None
         assert isinstance(container, FlextContainer)
 
     def test_logger_property(self) -> None:
         """Test logger property returns FlextLogger instance."""
-        core = FlextCore()
+        core = Flext()
         logger = core.logger
         assert logger is not None
         assert isinstance(logger, FlextLogger)
 
     def test_bus_property(self) -> None:
         """Test bus property returns FlextBus instance."""
-        core = FlextCore()
+        core = Flext()
         bus = core.bus
         assert bus is not None
         assert isinstance(bus, FlextBus)
 
     def test_context_property(self) -> None:
         """Test context property returns FlextContext instance."""
-        core = FlextCore()
+        core = Flext()
         context = core.context
         assert context is not None
         assert isinstance(context, FlextContext)
 
     def test_dispatcher_property(self) -> None:
         """Test dispatcher property returns FlextDispatcher instance."""
-        core = FlextCore()
+        core = Flext()
         dispatcher = core.dispatcher
         assert dispatcher is not None
         assert isinstance(dispatcher, FlextDispatcher)
 
     def test_processors_property(self) -> None:
         """Test processors property returns FlextProcessors instance."""
-        core = FlextCore()
+        core = Flext()
         processors = core.processors
         assert processors is not None
         assert isinstance(processors, FlextProcessors)
 
     def test_registry_property(self) -> None:
         """Test registry property returns FlextRegistry instance."""
-        core = FlextCore()
+        core = Flext()
         registry = core.registry
         assert registry is not None
         assert isinstance(registry, FlextRegistry)
 
     def test_property_lazy_loading(self) -> None:
         """Test properties are lazy-loaded (same instance returned)."""
-        core = FlextCore()
+        core = Flext()
 
         # First access
         logger1 = core.logger
@@ -183,18 +182,18 @@ class TestFlextCorePropertyAccessors:
         assert context1 is context2
 
 
-class TestFlextCoreFactoryMethods:
-    """Test FlextCore factory methods for common patterns."""
+class TestFlextFactoryMethods:
+    """Test Flext factory methods for common patterns."""
 
     def test_create_result_ok(self) -> None:
         """Test creating successful result."""
-        result = FlextCore.create_result_ok("test_value")
+        result = Flext.create_result_ok("test_value")
         assert result.is_success
         assert result.value == "test_value"
 
     def test_create_result_fail(self) -> None:
         """Test creating failed result."""
-        result: FlextResult[None] = FlextCore.create_result_fail(
+        result: FlextResult[None] = Flext.create_result_fail(
             "error message", "ERROR_CODE"
         )
         assert result.is_failure
@@ -202,29 +201,29 @@ class TestFlextCoreFactoryMethods:
 
     def test_create_logger(self) -> None:
         """Test creating logger instance."""
-        logger = FlextCore.create_logger("test_module")
+        logger = Flext.create_logger("test_module")
         assert logger is not None
         assert isinstance(logger, FlextLogger)
 
     def test_get_container(self) -> None:
         """Test getting global container."""
-        container = FlextCore.get_container()
+        container = Flext.get_container()
         assert container is not None
         assert isinstance(container, FlextContainer)
 
     def test_get_config(self) -> None:
         """Test getting config instance."""
-        config = FlextCore.get_config()
+        config = Flext.get_config()
         assert config is not None
         assert isinstance(config, FlextConfig)
 
 
-class TestFlextCoreIntegrationHelpers:
-    """Test FlextCore integration helper methods."""
+class TestFlextIntegrationHelpers:
+    """Test Flext integration helper methods."""
 
     def test_setup_service_infrastructure_success(self) -> None:
         """Test successful service infrastructure setup."""
-        result = FlextCore.setup_service_infrastructure("test-service")
+        result = Flext.setup_service_infrastructure("test-service")
 
         assert result.is_success
         infra = result.unwrap()
@@ -246,7 +245,7 @@ class TestFlextCoreIntegrationHelpers:
     def test_setup_service_infrastructure_with_config(self) -> None:
         """Test service infrastructure setup with custom config."""
         custom_config = FlextConfig()
-        result = FlextCore.setup_service_infrastructure(
+        result = Flext.setup_service_infrastructure(
             "test-service", config=custom_config
         )
 
@@ -263,7 +262,7 @@ class TestFlextCoreIntegrationHelpers:
         def handler_func(cmd: object) -> FlextResult[object]:
             return FlextResult[object].ok({"processed": True})
 
-        result = FlextCore.create_command_handler(handler_func)
+        result = Flext.create_command_handler(handler_func)
         assert result.is_success
         handler = result.unwrap()
         # Handler is returned as object type from factory
@@ -278,50 +277,50 @@ class TestFlextCoreIntegrationHelpers:
         def handler_func(query: object) -> FlextResult[object]:
             return FlextResult[object].ok({"data": "result"})
 
-        result = FlextCore.create_query_handler(handler_func)
+        result = Flext.create_query_handler(handler_func)
         assert result.is_success
         handler = result.unwrap()
         # Handler is returned as object type from factory
         assert handler is not None
 
 
-class TestFlextCoreDirectClassAccess:
-    """Test direct class access patterns through FlextCore."""
+class TestFlextDirectClassAccess:
+    """Test direct class access patterns through Flext."""
 
     def test_result_creation_via_class(self) -> None:
-        """Test creating FlextResult through FlextCore.Result."""
-        result = FlextCore.Result[str].ok("test")
+        """Test creating FlextResult through Flext.Result."""
+        result = Flext.Result[str].ok("test")
         assert result.is_success
         assert result.value == "test"
 
     def test_models_entity_access(self) -> None:
-        """Test accessing FlextModels.Entity through FlextCore."""
+        """Test accessing FlextModels.Entity through Flext."""
         # FlextModels.Entity is a class, verify it's accessible
-        assert FlextCore.Models.Entity is not None
+        assert Flext.Models.Entity is not None
 
     def test_constants_access(self) -> None:
-        """Test accessing constants through FlextCore."""
-        timeout = FlextCore.Constants.Defaults.TIMEOUT
+        """Test accessing constants through Flext."""
+        timeout = Flext.Constants.Defaults.TIMEOUT
         assert timeout is not None
         assert isinstance(timeout, int)
 
     def test_types_access(self) -> None:
-        """Test accessing types through FlextCore."""
+        """Test accessing types through Flext."""
         # Verify FlextTypes is accessible
-        assert FlextCore.Types is not None
+        assert Flext.Types is not None
 
     def test_exceptions_access(self) -> None:
-        """Test accessing exceptions through FlextCore."""
+        """Test accessing exceptions through Flext."""
         # Verify base exception is accessible
-        assert FlextCore.Exceptions.BaseError is not None
+        assert Flext.Exceptions.BaseError is not None
 
 
-class TestFlextCoreUsagePatterns:
-    """Test common usage patterns with FlextCore."""
+class TestFlextUsagePatterns:
+    """Test common usage patterns with Flext."""
 
     def test_unified_access_pattern(self) -> None:
         """Test unified access to all components."""
-        core = FlextCore()
+        core = Flext()
 
         # Access all components through unified interface
         config = core.config
@@ -338,15 +337,15 @@ class TestFlextCoreUsagePatterns:
         assert context is not None
 
     def test_result_railway_pattern(self) -> None:
-        """Test railway pattern using FlextCore."""
+        """Test railway pattern using Flext."""
 
         def validate_input(data: str) -> FlextResult[str]:
             if not data:
-                return FlextCore.Result[str].fail("Data cannot be empty")
-            return FlextCore.Result[str].ok(data)
+                return Flext.Result[str].fail("Data cannot be empty")
+            return Flext.Result[str].ok(data)
 
         def process_data(data: str) -> FlextResult[str]:
-            return FlextCore.Result[str].ok(data.upper())
+            return Flext.Result[str].ok(data.upper())
 
         # Railway-oriented composition
         result = validate_input("test").flat_map(process_data)
@@ -357,7 +356,7 @@ class TestFlextCoreUsagePatterns:
     def test_combined_infrastructure_setup(self) -> None:
         """Test setting up complete infrastructure."""
         # Setup infrastructure
-        setup_result = FlextCore.setup_service_infrastructure("my-service")
+        setup_result = Flext.setup_service_infrastructure("my-service")
         assert setup_result.is_success
 
         infra = setup_result.unwrap()
@@ -369,16 +368,16 @@ class TestFlextCoreUsagePatterns:
         assert isinstance(container, FlextContainer)
 
     def test_service_creation_pattern(self) -> None:
-        """Test creating services using FlextCore."""
+        """Test creating services using Flext."""
 
-        class MyService(FlextCore.Service[str]):
+        class MyService(Flext.Service[str]):
             def __init__(self) -> None:
                 super().__init__()
                 # Store logger in private attribute to avoid Pydantic validation
-                self._logger = FlextCore.create_logger(__name__)
+                self._logger = Flext.create_logger(__name__)
 
             def execute(self) -> FlextResult[str]:
-                return FlextCore.Result[str].ok("Service executed")
+                return Flext.Result[str].ok("Service executed")
 
         service = MyService()
         result = service.execute()
@@ -387,11 +386,11 @@ class TestFlextCoreUsagePatterns:
         assert result.value == "Service executed"
 
 
-class TestFlextCoreBackwardCompatibility:
-    """Test that FlextCore doesn't break existing patterns."""
+class TestFlextBackwardCompatibility:
+    """Test that Flext doesn't break existing patterns."""
 
     def test_direct_imports_still_work(self) -> None:
-        """Test that direct imports still work alongside FlextCore."""
+        """Test that direct imports still work alongside Flext."""
         # Old pattern
         from flext_core import (
             FlextConfig,
@@ -414,7 +413,7 @@ class TestFlextCoreBackwardCompatibility:
     def test_both_patterns_coexist(self) -> None:
         """Test that both old and new patterns can be used together."""
         # New pattern
-        core = FlextCore()
+        core = Flext()
         core_logger = core.logger
 
         # Old pattern
@@ -430,12 +429,12 @@ class TestFlextCoreBackwardCompatibility:
 # =================================================================
 
 
-class TestFlextCore11Features:
-    """Test FlextCore 1.1.0 convenience methods."""
+class TestFlext11Features:
+    """Test Flext 1.1.0 convenience methods."""
 
     def test_publish_event_success(self) -> None:
         """Test successful event publishing with correlation tracking."""
-        core = FlextCore()
+        core = Flext()
 
         event_data: FlextTypes.Dict = {"user_id": "123", "action": "login"}
         result = core.publish_event("user.login", event_data)
@@ -445,7 +444,7 @@ class TestFlextCore11Features:
 
     def test_publish_event_with_custom_correlation(self) -> None:
         """Test event publishing with custom correlation ID."""
-        core = FlextCore()
+        core = Flext()
 
         custom_correlation = "test-correlation-123"
         event_data: FlextTypes.Dict = {"user_id": "456"}
@@ -458,7 +457,7 @@ class TestFlextCore11Features:
 
     def test_publish_event_with_empty_data(self) -> None:
         """Test event publishing with empty data dict."""
-        core = FlextCore()
+        core = Flext()
 
         result = core.publish_event("test.event", {})
 
@@ -472,7 +471,7 @@ class TestFlextCore11Features:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("service_executed")
 
-        result = FlextCore.create_service(TestService, "test-service")
+        result = Flext.create_service(TestService, "test-service")
 
         assert result.is_success
         service = result.unwrap()
@@ -490,7 +489,7 @@ class TestFlextCore11Features:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok(self._custom_value)
 
-        result = FlextCore.create_service(
+        result = Flext.create_service(
             ConfigurableService, "configurable-service", custom_value="test-value"
         )
 
@@ -508,7 +507,7 @@ class TestFlextCore11Features:
 
         custom_config = FlextConfig()
 
-        result = FlextCore.create_service(
+        result = Flext.create_service(
             SimpleService, "configured-service", config=custom_config
         )
 
@@ -527,7 +526,7 @@ class TestFlextCore11Features:
             return FlextResult[int].ok(x - 3)
 
         # Build pipeline: (5 + 1) * 2 - 3 = 9
-        pipeline = FlextCore.build_pipeline(add_one, multiply_two, subtract_three)
+        pipeline = Flext.build_pipeline(add_one, multiply_two, subtract_three)
 
         result = pipeline(5)
 
@@ -547,7 +546,7 @@ class TestFlextCore11Features:
             # This should never be called due to early termination
             return FlextResult[int].ok(x * 100)
 
-        pipeline = FlextCore.build_pipeline(succeed, fail, should_not_execute)
+        pipeline = Flext.build_pipeline(succeed, fail, should_not_execute)
 
         result = pipeline(5)
 
@@ -564,7 +563,7 @@ class TestFlextCore11Features:
             msg = "Unexpected error"
             raise ValueError(msg)
 
-        pipeline = FlextCore.build_pipeline(succeed, raise_exception)
+        pipeline = Flext.build_pipeline(succeed, raise_exception)
 
         result = pipeline(5)
 
@@ -573,7 +572,7 @@ class TestFlextCore11Features:
 
     def test_request_context_manager(self) -> None:
         """Test request context manager setup and cleanup."""
-        core = FlextCore()
+        core = Flext()
 
         with core.request_context() as context:
             # Context should be available
@@ -586,7 +585,7 @@ class TestFlextCore11Features:
 
     def test_request_context_with_custom_request_id(self) -> None:
         """Test request context with custom request ID."""
-        core = FlextCore()
+        core = Flext()
         custom_id = "test-request-123"
 
         with core.request_context(request_id=custom_id) as context:
@@ -595,7 +594,7 @@ class TestFlextCore11Features:
 
     def test_request_context_with_user_id(self) -> None:
         """Test request context with user ID tracking."""
-        core = FlextCore()
+        core = Flext()
 
         with core.request_context(user_id="user-456") as context:
             user_id = context.get("user_id")
@@ -603,7 +602,7 @@ class TestFlextCore11Features:
 
     def test_request_context_with_metadata(self) -> None:
         """Test request context with custom metadata."""
-        core = FlextCore()
+        core = Flext()
 
         with core.request_context(
             client_ip="192.168.1.1", user_agent="TestClient/1.0"
@@ -613,7 +612,7 @@ class TestFlextCore11Features:
 
     def test_request_context_cleanup(self) -> None:
         """Test that request context is properly cleaned up."""
-        core = FlextCore()
+        core = Flext()
 
         # Use context manager
         with core.request_context(request_id="cleanup-test") as context:
@@ -629,16 +628,16 @@ class TestFlextCore11Features:
 
 
 @pytest.mark.integration
-class TestFlextCoreIntegration:
-    """Integration tests for FlextCore with real components."""
+class TestFlextIntegration:
+    """Integration tests for Flext with real components."""
 
     def test_complete_workflow(self) -> None:
-        """Test complete workflow using FlextCore."""
+        """Test complete workflow using Flext."""
         # Setup
-        core = FlextCore()
+        core = Flext()
 
         # Create result
-        result = FlextCore.create_result_ok({"user_id": "123"})
+        result = Flext.create_result_ok({"user_id": "123"})
         assert result.is_success
 
         # Log operation
@@ -655,7 +654,7 @@ class TestFlextCoreIntegration:
     def test_service_infrastructure_integration(self) -> None:
         """Test complete service infrastructure integration."""
         # Setup infrastructure
-        result = FlextCore.setup_service_infrastructure("integration-test")
+        result = Flext.setup_service_infrastructure("integration-test")
         assert result.is_success
 
         infra = result.unwrap()
@@ -674,7 +673,7 @@ class TestFlextCoreIntegration:
 
     def test_11_features_integration(self) -> None:
         """Test 1.1.0 features working together in realistic scenario."""
-        core = FlextCore()
+        core = Flext()
 
         # Simulate request handling with full infrastructure
         with core.request_context(
@@ -690,7 +689,7 @@ class TestFlextCoreIntegration:
                 enriched = {**data, "enriched": True}
                 return FlextResult[FlextTypes.Dict].ok(enriched)
 
-            pipeline = FlextCore.build_pipeline(validate, enrich)
+            pipeline = Flext.build_pipeline(validate, enrich)
 
             # Process data through pipeline
             result = pipeline({"valid": True, "value": 42})

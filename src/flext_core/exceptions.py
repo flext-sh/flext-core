@@ -31,7 +31,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
@@ -81,7 +80,6 @@ class FlextExceptions:
             error_code: str | None = None,
             correlation_id: str | None = None,
             metadata: FlextTypes.Dict | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize base error with structured information.
 
@@ -90,7 +88,7 @@ class FlextExceptions:
                 error_code: Optional error code for categorization
                 correlation_id: Optional correlation ID for tracking
                 metadata: Optional additional metadata
-                **kwargs: Additional keyword arguments
+            : Additional keyword arguments
 
             """
             super().__init__(message)
@@ -99,9 +97,6 @@ class FlextExceptions:
             self.correlation_id = correlation_id
             self.metadata = metadata or {}
             self.timestamp = time.time()
-
-            # Store additional kwargs in metadata
-            self.metadata.update(kwargs)
 
         def __str__(self) -> str:
             """String representation with error code."""
@@ -132,8 +127,7 @@ class FlextExceptions:
             message: str,
             *,
             field: str | None = None,
-            value: Any = None,
-            **kwargs: object,
+            value: object | None = None,
         ) -> None:
             """Initialize validation error.
 
@@ -141,15 +135,12 @@ class FlextExceptions:
                 message: Validation error message
                 field: Optional field name that failed validation
                 value: Optional invalid value
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
                 message,
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                field=field,
-                value=value,
-                **kwargs,
             )
             self.field = field
             self.value = value
@@ -167,7 +158,6 @@ class FlextExceptions:
             *,
             config_key: str | None = None,
             config_source: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize configuration error.
 
@@ -175,7 +165,7 @@ class FlextExceptions:
                 message: Configuration error message
                 config_key: Optional configuration key that caused the error
                 config_source: Optional configuration source (file, env, etc.)
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -183,7 +173,6 @@ class FlextExceptions:
                 error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
                 config_key=config_key,
                 config_source=config_source,
-                **kwargs,
             )
             self.config_key = config_key
             self.config_source = config_source
@@ -202,7 +191,6 @@ class FlextExceptions:
             host: str | None = None,
             port: int | None = None,
             timeout: float | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize connection error.
 
@@ -211,7 +199,7 @@ class FlextExceptions:
                 host: Optional host that failed to connect
                 port: Optional port that failed to connect
                 timeout: Optional timeout value
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -220,7 +208,6 @@ class FlextExceptions:
                 host=host,
                 port=port,
                 timeout=timeout,
-                **kwargs,
             )
             self.host = host
             self.port = port
@@ -239,7 +226,6 @@ class FlextExceptions:
             *,
             timeout_seconds: float | None = None,
             operation: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize timeout error.
 
@@ -247,7 +233,7 @@ class FlextExceptions:
                 message: Timeout error message
                 timeout_seconds: Optional timeout duration in seconds
                 operation: Optional operation that timed out
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -255,7 +241,6 @@ class FlextExceptions:
                 error_code=FlextConstants.Errors.TIMEOUT_ERROR,
                 timeout_seconds=timeout_seconds,
                 operation=operation,
-                **kwargs,
             )
             self.timeout_seconds = timeout_seconds
             self.operation = operation
@@ -273,7 +258,6 @@ class FlextExceptions:
             *,
             auth_method: str | None = None,
             user_id: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize authentication error.
 
@@ -281,7 +265,7 @@ class FlextExceptions:
                 message: Authentication error message
                 auth_method: Optional authentication method used
                 user_id: Optional user ID that failed authentication
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -289,7 +273,6 @@ class FlextExceptions:
                 error_code=FlextConstants.Errors.AUTHENTICATION_ERROR,
                 auth_method=auth_method,
                 user_id=user_id,
-                **kwargs,
             )
             self.auth_method = auth_method
             self.user_id = user_id
@@ -308,7 +291,6 @@ class FlextExceptions:
             user_id: str | None = None,
             resource: str | None = None,
             permission: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize authorization error.
 
@@ -317,7 +299,7 @@ class FlextExceptions:
                 user_id: Optional user ID that was denied access
                 resource: Optional resource being accessed
                 permission: Optional permission being checked
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -326,7 +308,6 @@ class FlextExceptions:
                 user_id=user_id,
                 resource=resource,
                 permission=permission,
-                **kwargs,
             )
             self.user_id = user_id
             self.resource = resource
@@ -345,7 +326,6 @@ class FlextExceptions:
             *,
             resource_type: str | None = None,
             resource_id: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize not found error.
 
@@ -353,7 +333,7 @@ class FlextExceptions:
                 message: Not found error message
                 resource_type: Optional type of resource not found
                 resource_id: Optional ID of resource not found
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -361,7 +341,6 @@ class FlextExceptions:
                 error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
                 resource_type=resource_type,
                 resource_id=resource_id,
-                **kwargs,
             )
             self.resource_type = resource_type
             self.resource_id = resource_id
@@ -380,7 +359,6 @@ class FlextExceptions:
             resource_type: str | None = None,
             resource_id: str | None = None,
             conflict_reason: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize conflict error.
 
@@ -389,7 +367,7 @@ class FlextExceptions:
                 resource_type: Optional type of resource in conflict
                 resource_id: Optional ID of resource in conflict
                 conflict_reason: Optional reason for the conflict
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -398,7 +376,6 @@ class FlextExceptions:
                 resource_type=resource_type,
                 resource_id=resource_id,
                 conflict_reason=conflict_reason,
-                **kwargs,
             )
             self.resource_type = resource_type
             self.resource_id = resource_id
@@ -418,7 +395,6 @@ class FlextExceptions:
             limit: int | None = None,
             window_seconds: int | None = None,
             retry_after: int | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize rate limit error.
 
@@ -427,7 +403,7 @@ class FlextExceptions:
                 limit: Optional rate limit that was exceeded
                 window_seconds: Optional time window for rate limiting
                 retry_after: Optional seconds to wait before retrying
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -436,7 +412,6 @@ class FlextExceptions:
                 limit=limit,
                 window_seconds=window_seconds,
                 retry_after=retry_after,
-                **kwargs,
             )
             self.limit = limit
             self.window_seconds = window_seconds
@@ -456,7 +431,6 @@ class FlextExceptions:
             service_name: str | None = None,
             failure_count: int | None = None,
             reset_timeout: int | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize circuit breaker error.
 
@@ -465,7 +439,7 @@ class FlextExceptions:
                 service_name: Optional name of service with open circuit
                 failure_count: Optional number of failures that opened circuit
                 reset_timeout: Optional seconds until circuit resets
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -474,7 +448,6 @@ class FlextExceptions:
                 service_name=service_name,
                 failure_count=failure_count,
                 reset_timeout=reset_timeout,
-                **kwargs,
             )
             self.service_name = service_name
             self.failure_count = failure_count
@@ -493,7 +466,6 @@ class FlextExceptions:
             *,
             expected_type: str | None = None,
             actual_type: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize type error.
 
@@ -501,7 +473,7 @@ class FlextExceptions:
                 message: Type error message
                 expected_type: Optional expected type name
                 actual_type: Optional actual type name
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -509,7 +481,6 @@ class FlextExceptions:
                 error_code=FlextConstants.Errors.TYPE_ERROR,
                 expected_type=expected_type,
                 actual_type=actual_type,
-                **kwargs,
             )
             self.expected_type = expected_type
             self.actual_type = actual_type
@@ -527,7 +498,6 @@ class FlextExceptions:
             *,
             operation: str | None = None,
             reason: str | None = None,
-            **kwargs: object,
         ) -> None:
             """Initialize operation error.
 
@@ -535,7 +505,7 @@ class FlextExceptions:
                 message: Operation error message
                 operation: Optional operation name that failed
                 reason: Optional reason for the failure
-                **kwargs: Additional metadata
+            : Additional metadata
 
             """
             super().__init__(
@@ -543,7 +513,6 @@ class FlextExceptions:
                 error_code=FlextConstants.Errors.OPERATION_ERROR,
                 operation=operation,
                 reason=reason,
-                **kwargs,
             )
             self.operation = operation
             self.reason = reason
@@ -553,14 +522,12 @@ class FlextExceptions:
 def create_error(
     error_type: str,
     message: str,
-    **kwargs: Any,
 ) -> FlextExceptions.BaseError:
     """Create an error instance by type name.
 
     Args:
         error_type: Name of the error class (e.g., 'ValidationError')
         message: Error message
-        **kwargs: Additional arguments for error constructor
 
     Returns:
         Error instance
@@ -589,7 +556,7 @@ def create_error(
         msg = f"Unknown error type: {error_type}"
         raise ValueError(msg)
 
-    return error_class(message, **kwargs)
+    return error_class(message)
 
 
 __all__ = [

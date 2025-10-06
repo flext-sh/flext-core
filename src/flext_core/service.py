@@ -43,13 +43,6 @@ class FlextService[TDomainResult](
 ):
     """Domain service base using railway patterns with Pydantic models.
 
-    **PROTOCOL IMPLEMENTATION**: This service implements FlextProtocols.Domain.Service,
-    establishing the foundation pattern for ALL domain services across the FLEXT ecosystem.
-
-    Provides unified service pattern for FLEXT ecosystem with
-    FlextResult[T] error handling, Pydantic Generic[T] for type-safe
-    domain operations, and complete type annotations for consistency.
-
     **Function**: Domain service base class for business logic
         - Abstract execute() method for domain operations (Domain.Service protocol)
         - Business rule validation with FlextResult (Domain.Service protocol)
@@ -354,8 +347,7 @@ class FlextService[TDomainResult](
             business_result = self.validate_business_rules()
             if business_result.is_failure:
                 return FlextResult[None].fail(
-                    f"{FlextConstants.Messages.VALIDATION_FAILED}"
-                    f" (business rules): {business_result.error}",
+                    f"{FlextConstants.Messages.VALIDATION_FAILED} (business rules): {business_result.error}",
                 )
 
         return FlextResult[None].ok(None)
@@ -504,14 +496,14 @@ class FlextService[TDomainResult](
             if isinstance(result, FlextResult):
                 return result
             # Type assertion since we expect TDomainResult from the action
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))  # type: ignore[arg-type]
         # Execute false action if condition is not met
         if condition.false_action:
             result = condition.false_action(self)
             if isinstance(result, FlextResult):
                 return result
             # Type assertion since we expect TDomainResult from the action
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))  # type: ignore[arg-type]
         return FlextResult[TDomainResult].fail("Condition not met")
 
     def execute_batch_with_request(

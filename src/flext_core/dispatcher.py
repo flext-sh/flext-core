@@ -37,7 +37,6 @@ from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
-from flext_core.processors import FlextProcessors
 
 # Layer 2 - Early Foundation
 from flext_core.result import FlextResult
@@ -278,27 +277,6 @@ class FlextDispatcher:
 
         self._config: FlextTypes.Dict = config
 
-        # Initialize specialized processors for SOLID compliance
-        processor_config = {
-            "circuit_breaker_threshold": config.get(
-                "circuit_breaker_threshold",
-                _config.circuit_breaker_threshold,
-            ),
-            "rate_limit": config.get(
-                "rate_limit",
-                _config.rate_limit_max_requests,
-            ),
-            "rate_limit_window": config.get(
-                "rate_limit_window",
-                _config.rate_limit_window_seconds,
-            ),
-            "cache_ttl": config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL),
-        }
-        self._processors = FlextProcessors(processor_config)
-
-        # Register audit and metrics processors
-        self._setup_dispatch_processors()
-
         # Initialize bus
         bus_config_raw = config.get("bus_config")
         bus_config_dict_final: FlextTypes.Dict | None
@@ -326,7 +304,9 @@ class FlextDispatcher:
 
         # Rate limiting state - sliding window with count, window_start, block_until
         self._rate_limit_requests: dict[str, FlextTypes.FloatList] = {}
-        self._rate_limit_state: dict[str, dict[str, int | float]] = {}
+        self._rate_limit_state: dict[
+            str, FlextTypes.Reliability.DispatcherRateLimiterState
+        ] = {}
         rate_limit_raw = config.get(
             "rate_limit",
             _config.rate_limit_max_requests,
@@ -380,11 +360,6 @@ class FlextDispatcher:
         """Access the underlying bus implementation."""
         return self._bus
 
-    @property
-    def processors(self) -> FlextProcessors:
-        """Access the specialized processors for SOLID compliance."""
-        return self._processors
-
     # ------------------------------------------------------------------
     # Registration methods using structured models
     # ------------------------------------------------------------------
@@ -432,7 +407,7 @@ class FlextDispatcher:
             )
 
         # Create registration details
-        details = {
+        details: FlextTypes.Dict = {
             "registration_id": request.get("registration_id"),
             "message_type_name": getattr(request.get("message_type"), "__name__", None)
             if request.get("message_type")
@@ -445,9 +420,9 @@ class FlextDispatcher:
         if self._config.get("enable_logging"):
             self._logger.info(
                 "handler_registered",
-                registration_id=details.get("registration_id"),
-                handler_mode=details.get("handler_mode"),
-                message_type=details.get("message_type_name"),
+                registration_id=details.get("registration_id"),  # type: ignore[arg-type]
+                handler_mode=details.get("handler_mode"),  # type: ignore[arg-type]
+                message_type=details.get("message_type_name"),  # type: ignore[arg-type]
             )
 
         return FlextResult[FlextTypes.Dict].ok(details)
@@ -738,7 +713,7 @@ class FlextDispatcher:
                 self._circuit_breaker_failures[message_type] = 0
 
             # Add to audit log
-            audit_entry = {
+            audit_entry: FlextTypes.Dict = {
                 "timestamp": time.time(),
                 "message_type": message_type,
                 "success": execution_result.is_success,
@@ -746,7 +721,7 @@ class FlextDispatcher:
                 "correlation_id": request.get("correlation_id"),
                 "request_id": request.get("request_id"),
             }
-            self._audit_log.append(audit_entry)
+            self._audit_log.append(audit_entry)  # type: ignore[arg-type]
 
             # Update performance metrics
             if message_type not in self._performance_metrics:
@@ -866,8 +841,13 @@ class FlextDispatcher:
         current_time = time.time()
         state = self._rate_limit_state.get(message_type)
         if state is None:
-            state = {"count": 0, "window_start": current_time, "block_until": 0.0}
-            self._rate_limit_state[message_type] = state
+            new_state: FlextTypes.Reliability.DispatcherRateLimiterState = {
+                "count": 0,
+                "window_start": current_time,
+                "block_until": 0.0,
+            }
+            self._rate_limit_state[message_type] = new_state
+            state = new_state
 
         if current_time < state.get("block_until", 0.0):
             return FlextResult[object].fail("Rate limit exceeded")
@@ -1160,26 +1140,6 @@ class FlextDispatcher:
         )
         metrics["failure_count"] += 1
 
-    def _setup_dispatch_processors(self) -> None:
-        """Set up processors for audit and metrics collection."""
-
-        # Register audit processor
-        def audit_processor(data: FlextTypes.Dict) -> FlextTypes.Dict:
-            """Process audit data and add to audit log."""
-            if "timestamp" not in data:
-                data["timestamp"] = time.time()
-            # The processors automatically add to audit log in the process method
-            return data
-
-        self._processors.register("audit", audit_processor)
-
-        # Register metrics processor
-        def metrics_processor(data: FlextTypes.Dict) -> FlextTypes.Dict:
-            """Process metrics data."""
-            return data
-
-        self._processors.register("metrics", metrics_processor)
-
     # ------------------------------------------------------------------
     # Context management
     # ------------------------------------------------------------------
@@ -1361,9 +1321,6 @@ class FlextDispatcher:
                 if hasattr(self._bus, "cleanup"):
                     self._bus.cleanup()
 
-            # Clean up processors
-            self._processors.cleanup()
-
             # Clear internal state
             self._circuit_breaker_failures.clear()
             self._rate_limit_requests.clear()
@@ -1458,9 +1415,9 @@ class FlextDispatcher:
             Dictionary of configuration
 
         """
-        config = {}
+        config: FlextTypes.Dict = {}
 
-        if hasattr(self, "_config"):
+        if hasattr(self, "_config") and isinstance(self._config, dict):
             config.update(self._config)
 
         if hasattr(self, "_bus") and self._bus and hasattr(self._bus, "export_config"):
@@ -1483,7 +1440,7 @@ class FlextDispatcher:
             except Exception:
                 config["handlers"] = {}
 
-        return config
+        return cast("FlextTypes.Dict", config)
 
     def get_metrics(self) -> FlextTypes.Dict:
         """REMOVED: Use dispatcher.get_performance_metrics() directly.
@@ -1509,11 +1466,11 @@ class FlextDispatcher:
             if "handlers" in config:
                 handlers = config["handlers"]
                 if isinstance(handlers, dict):
-                    handlers_dict: FlextTypes.Dict = handlers
+                    handlers_dict: FlextTypes.Dict = handlers  # type: ignore[assignment]
                     for message_type, handler_list in handlers_dict.items():
                         message_type_str = str(message_type)
                         if not isinstance(handler_list, list):
-                            handlers_for_type: FlextTypes.List = [handler_list]
+                            handlers_for_type: FlextTypes.List = [handler_list]  # type: ignore[list-item]
                         else:
                             handlers_for_type = handler_list
                         for handler in handlers_for_type:
@@ -1529,25 +1486,11 @@ class FlextDispatcher:
             if "circuit_breaker_failures" in config:
                 failures = config["circuit_breaker_failures"]
                 if isinstance(failures, dict):
-                    self._circuit_breaker_failures.update(failures)
+                    self._circuit_breaker_failures.update(failures)  # type: ignore[arg-type]
             if "rate_limit_requests" in config:
                 requests = config["rate_limit_requests"]
                 if isinstance(requests, dict):
-                    self._rate_limit_requests.update(requests)
-
-            # Import processor state
-            processor_state = {}
-            if "performance_metrics" in config:
-                processor_state["performance_metrics"] = config["performance_metrics"]
-
-            if processor_state:
-                # Import processor configuration
-                processor_config: FlextTypes.Dict = dict(processor_state)
-                import_result = self._processors.import_config(processor_config)
-                if import_result.is_failure:
-                    return FlextResult[None].fail(
-                        f"Processor config import failed: {import_result.error}",
-                    )
+                    self._rate_limit_requests.update(requests)  # type: ignore[arg-type]
 
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -1559,12 +1502,7 @@ class FlextDispatcher:
         messages: FlextTypes.List,
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch using processors."""
-        # Use processors batch processing
-        batch_data = {"message_type": message_type, "messages": messages}
-        result = self._processors.process(f"batch_{message_type}", batch_data)
-        if result.is_success:
-            return cast("list[FlextResult[object]]", result.value)
-        # Fallback to individual processing
+        # Process messages individually (batch processing not available)
         results: list[FlextResult[object]] = []
         for message in messages:
             result = self.dispatch(message_type, message)

@@ -37,7 +37,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextProcessors patterns."""
 
     def __init__(self) -> None:
-        """Initialize with automatic FlextCore infrastructure."""
+        """Initialize with automatic Flext infrastructure."""
         super().__init__()
         self._scenarios = ExampleScenarios()
         self._user = self._scenarios.user()

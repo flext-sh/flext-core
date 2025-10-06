@@ -14,20 +14,14 @@ from typing import (
     override,
 )
 
-# Layer 3 - Core Infrastructure
 from flext_core.config import FlextConfig
-
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
-
-# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
-# Module-level configuration instance for runtime defaults
 _config = FlextConfig()
 
 
@@ -289,7 +283,7 @@ class FlextProcessors:
                 result = processor(processed_data)
                 if isinstance(result, FlextResult):
                     if result.is_success:
-                        self._cache[cache_key] = (result.value, time.time())
+                        self._cache[cache_key] = (result.value, time.time())  # type: ignore[attr-defined]
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
                         )
@@ -314,7 +308,7 @@ class FlextProcessors:
 
                 # Wrap non-FlextResult in FlextResult
                 result_wrapped = FlextResult[object].ok(result)
-                self._cache[cache_key] = (result, time.time())
+                self._cache[cache_key] = (result, time.time())  # type: ignore[assignment]
                 self._metrics["successful_processes"] = (
                     self._metrics.get("successful_processes", 0) + 1
                 )

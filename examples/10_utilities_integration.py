@@ -225,7 +225,7 @@ class IntegratedService:
         # Register this service in the container
         self._container.register("integrated_service", self)
 
-    async def process_request(self, request: dict) -> FlextResult[FlextTypes.Dict]:
+    def process_request(self, request: dict) -> FlextResult[FlextTypes.Dict]:
         """Process request with full flext-core integration."""
         # Log request with structured logging
         self._logger.info(

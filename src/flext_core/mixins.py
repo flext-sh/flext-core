@@ -851,7 +851,7 @@ class FlextMixins:
 
     def register(self, name: str, mixin: type) -> FlextResult[None]:
         """Register a mixin."""
-        if not name or mixin is None:
+        if not name:
             return FlextResult[None].fail("Invalid mixin name or mixin object")
         try:
             self._registry[name] = mixin

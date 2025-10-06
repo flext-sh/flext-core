@@ -1117,9 +1117,12 @@ class TestFlextResult:
 
     def test_result_cast_fail_method(self) -> None:
         """Test cast_fail method."""
-        # Success result should raise ValueError
+        # Success result should raise ValidationError
         result = FlextResult[int].ok(42)
-        with pytest.raises(ValueError, match="Cannot cast successful result to failed"):
+        with pytest.raises(
+            FlextExceptions.ValidationError,
+            match="Cannot cast successful result to failed",
+        ):
             result.cast_fail()
 
         # Failure result should remain failure

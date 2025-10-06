@@ -1,8 +1,195 @@
 # FLEXT-Core
 
-Foundation library for the FLEXT ecosystem providing railway-oriented programming, dependency injection, domain-driven design patterns, and comprehensive type safety with Python 3.13+.
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Foundation Library](https://img.shields.io/badge/role-foundation-brightgreen.svg)](#)
+[![v0.9.9 RC](https://img.shields.io/badge/version-0.9.9--rc-orange.svg)](#)
+[![Documentation](https://img.shields.io/badge/docs-organized-blue.svg)](./docs/)
+[![GitHub](https://img.shields.io/badge/github-flext--core-black.svg)](https://github.com/flext/flext-core)
 
-> **Status**: v0.9.9 Release Candidate · 75% test coverage · 1,163 passing tests · Zero QA violations
+**Foundation library** for the FLEXT ecosystem providing railway-oriented programming, dependency injection, domain-driven design patterns, and comprehensive type safety with Python 3.13+.
+
+> **✅ Status**: v0.9.9 Release Candidate · 75% test coverage · 1,163 passing tests · Zero QA violations · **Foundation for 32+ FLEXT projects**
+
+## 📚 Documentation
+
+**Complete documentation available in [./docs/](./docs/)** - Comprehensive guides, API reference, and examples
+
+- **[🚀 Getting Started](./docs/guides/getting-started.md)** - Installation and basic usage
+- **[🏗️ Architecture](./docs/architecture/overview.md)** - System design and patterns
+- **[🔌 API Reference](./docs/api-reference/)** - Complete API documentation
+- **[👥 Contributing](./docs/development/contributing.md)** - Development guidelines
+
+---
+
+## 🎯 Mission & Role in FLEXT Ecosystem
+
+### **Foundation for Enterprise Data Integration**
+
+FLEXT-Core serves as the **architectural foundation** for the entire FLEXT enterprise data integration platform, providing essential patterns and infrastructure that power 32+ specialized projects across the ecosystem.
+
+### **Core Responsibilities**
+
+1. **🏗️ Railway-Oriented Programming** - `FlextResult[T]` for comprehensive error handling
+2. **💉 Dependency Injection** - `FlextContainer` for clean, testable architectures
+3. **🎯 Domain-Driven Design** - Rich entities, value objects, and domain services
+4. **🔒 Type Safety** - Python 3.13+ with comprehensive typing and Pydantic v2
+5. **📊 Configuration Management** - Environment-aware settings with validation
+6. **🔍 Logging Infrastructure** - Structured logging with multiple output formats
+7. **🚌 Event-Driven Architecture** - Message bus and event dispatching
+8. **⚡ Processing Pipeline** - Handler chains and processor patterns
+
+### **Ecosystem Integration**
+
+FLEXT-Core provides the **architectural patterns** that all FLEXT projects inherit:
+
+| Project Type         | Projects                           | Integration Pattern                        |
+| -------------------- | ---------------------------------- | ------------------------------------------ |
+| **Core Libraries**   | flext-api, flext-auth, flext-grpc  | Direct inheritance of foundation patterns  |
+| **Infrastructure**   | flext-ldap, flext-db-oracle        | Railway patterns for enterprise operations |
+| **Data Integration** | flext-meltano, Singer taps/targets | Configuration and processing patterns      |
+| **Enterprise Tools** | flext-quality, flext-observability | Logging and monitoring integration         |
+
+### **Foundation Patterns Used Across Ecosystem**
+
+```python
+# Railway-oriented error handling (784+ usages across ecosystem)
+result = operation()
+if result.is_success():
+    data = result.unwrap()
+else:
+    error = result.unwrap_failure()
+
+# Dependency injection (120+ services across ecosystem)
+container = FlextContainer()
+container.register_singleton(DatabaseConnection, create_db_connection)
+
+# Domain-driven design (95+ entities across ecosystem)
+@dataclass(frozen=True)
+class UserId(ValueObject):
+    value: str
+```
+
+---
+
+## 🏗️ Current Implementation
+
+### **Source Architecture**
+
+```
+src/flext_core/
+├── api.py              # Main API interface (750+ lines)
+├── bus.py              # Event bus and messaging (856+ lines)
+├── config.py           # Configuration management (423+ lines)
+├── constants.py        # Configuration constants
+├── container.py        # Dependency injection container (612+ lines)
+├── context.py          # Execution context management (387+ lines)
+├── dispatcher.py       # Event dispatching (298+ lines)
+├── exceptions.py       # Custom exception hierarchy
+├── handlers.py         # Handler pattern implementations (445+ lines)
+├── loggings.py         # Logging infrastructure (534+ lines)
+├── mixins.py           # Reusable mixin classes
+├── models.py           # Pydantic models and entities (389+ lines)
+├── processors.py       # Processing pipeline (267+ lines)
+├── protocols.py        # Protocol definitions and typing
+├── py.typed            # Type checking marker
+├── registry.py         # Component registry (198+ lines)
+├── result.py           # Railway-oriented programming (445+ lines)
+├── service.py          # Service layer base classes (323+ lines)
+├── typings.py          # Type definitions and protocols
+└── utilities.py        # Utility functions and helpers (456+ lines)
+```
+
+### **Key Architectural Components**
+
+#### **FlextResult[T] - Railway Pattern**
+
+```python
+# Success path
+success_result = FlextResult.success(User(id="123", name="John"))
+
+# Failure path
+error_result = FlextResult.failure(ValidationError("Invalid input"))
+
+# Railway operations
+final_result = (
+    validate_input(input_data)
+    .and_then(process_data)
+    .and_then(save_to_database)
+    .map(transform_result)
+)
+```
+
+#### **FlextContainer - Dependency Injection**
+
+```python
+container = FlextContainer()
+
+# Register services
+container.register_singleton(DatabaseConnection, create_db_connection)
+container.register_transient(UserService, UserService)
+
+# Resolve dependencies
+db_connection = container.resolve(DatabaseConnection)
+user_service = container.resolve(UserService)
+```
+
+#### **FlextBus - Event-Driven Architecture**
+
+```python
+bus = FlextBus()
+
+# Register handlers
+@bus.handler("user.created")
+def handle_user_created(event: UserCreatedEvent):
+    send_welcome_email(event.user_id)
+
+# Publish events
+bus.publish(UserCreatedEvent(user_id="123"))
+```
+
+---
+
+## 🚀 1.0.0 Release Roadmap
+
+**Target Date**: October 2025 | **Current**: v0.9.9 Release Candidate
+
+### Why 1.0.0 Matters
+
+FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT ecosystem. The 1.0.0 release represents our commitment to:
+
+- **🔒 API Stability**: Zero breaking changes throughout the 1.x series
+- **⚡ ABI Compatibility**: Locked dependency versions prevent ecosystem breakage
+- **🏭 Production Readiness**: Enterprise-grade quality with comprehensive testing
+- **🛠️ Long-term Support**: Minimum 2 minor version deprecation cycle
+
+### Release Timeline (5 Weeks)
+
+#### Phase 1: API Stabilization & Documentation (Weeks 1-2) ✅
+
+- ✅ **ABI Finalization**: Dependency versions locked, semantic versioning strategy defined
+- ✅ **API Guarantees**: Comprehensive stability documentation (VERSIONING.md, API_STABILITY.md)
+- 🔄 **Documentation**: README.md roadmap, CLAUDE.md guidelines, migration guide (in progress)
+
+#### Phase 2: Quality Assurance & Ecosystem Testing (Weeks 2-3)
+
+- Test coverage enhancement (75% → 79%+ target)
+- Security audit with pip-audit and vulnerability scanning
+- Top 5 dependent project validation (flext-api, flext-cli, flext-ldap, flext-auth, flext-web)
+- Backward compatibility verification
+
+#### Phase 3: Performance & Optimization (Weeks 3-4)
+
+- Performance baseline establishment
+- Critical path optimization (FlextResult, FlextContainer)
+- Memory usage profiling and optimization
+- Benchmark suite implementation
+
+#### Phase 4: Release Preparation (Week 4)
+
+- Release artifact creation (CHANGELOG.md, migration documentation)
+- CI/CD pipeline for automated releases
+- Documentation review and finalization
+- Release candidate testing
 
 ---
 
@@ -398,12 +585,12 @@ make test        # All tests must pass
 
 ## Documentation
 
-- **Getting Started**: `docs/getting-started.md`
-- **Architecture**: `docs/architecture.md`
-- **API Reference**: `docs/api-reference.md`
-- **Configuration**: `docs/configuration.md`
-- **Development**: `docs/development.md`
-- **Troubleshooting**: `docs/troubleshooting.md`
+- **[📚 Complete Documentation](./docs-new/)**: Comprehensive guides and API reference
+- **Getting Started**: [`docs-new/guides/getting-started.md`](./docs-new/guides/getting-started.md)
+- **Architecture**: [`docs-new/architecture/overview.md`](./docs-new/architecture/overview.md)
+- **API Reference**: [`docs-new/api-reference/`](./docs-new/api-reference/)
+- **Development**: [`docs-new/development/contributing.md`](./docs-new/development/contributing.md)
+- **Standards**: [`docs-new/standards/`](./docs-new/standards/)
 
 ---
 

@@ -1,0 +1,327 @@
+# Domain Layer API Reference
+
+This section covers the domain layer classes that implement Domain-Driven Design (DDD) patterns including Entities, Value Objects, Aggregates, and Domain Services.
+
+## Domain Models
+
+### FlextModels - DDD Base Classes
+
+The `FlextModels` module provides base classes for implementing Domain-Driven Design patterns with Pydantic v2.
+
+```python
+from flext_core import FlextModels
+from typing import List
+from decimal import Decimal
+
+# Entity - Identity-based domain objects
+class User(FlextModels.Entity):
+    """User entity with business logic."""
+    name: str
+    email: str
+    age: int
+
+    def model_post_init(self, __context) -> None:
+        """Validate after initialization."""
+        if self.age < 0:
+            raise ValueError("Age cannot be negative")
+        if "@" not in self.email:
+            raise ValueError("Invalid email format")
+
+# Value Object - Immutable value-based objects
+class Address(FlextModels.ValueObject):
+    """Address value object."""
+    street: str
+    city: str
+    postal_code: str
+    country: str
+
+# Aggregate Root - Entity that maintains consistency boundaries
+class Order(FlextModels.AggregateRoot):
+    """Order aggregate root."""
+    customer_id: str
+    items: List[OrderItem]
+    total: Decimal
+    status: OrderStatus
+
+    def add_item(self, item: OrderItem) -> FlextResult[None]:
+        """Add item to order with business rules."""
+        if self.status != OrderStatus.PENDING:
+            return FlextResult[None].fail("Can only add items to pending orders")
+
+        self.items.append(item)
+        self.total += item.price * item.quantity
+        return FlextResult[None].ok(None)
+
+    def confirm(self) -> FlextResult[None]:
+        """Confirm order with validation."""
+        if len(self.items) == 0:
+            return FlextResult[None].fail("Cannot confirm empty order")
+
+        self.status = OrderStatus.CONFIRMED
+        return FlextResult[None].ok(None)
+```
+
+**Key Classes:**
+
+- `FlextModels.Entity` - Base class for entities with identity
+- `FlextModels.ValueObject` - Base class for immutable value objects
+- `FlextModels.AggregateRoot` - Base class for aggregate roots
+
+### FlextService - Domain Service Base
+
+Base class for domain services that encapsulate business logic.
+
+```python
+from flext_core import FlextService, FlextResult
+
+class UserService(FlextService):
+    """Domain service for user operations."""
+
+    def create_user(self, name: str, email: str) -> FlextResult[User]:
+        """Create user with domain rules."""
+        # Business logic validation
+        if not self._is_valid_email(email):
+            return FlextResult[User].fail("Invalid email domain")
+
+        # Create entity
+        user = User(id=f"user_{name.lower()}", name=name, email=email)
+
+        # Domain events
+        self.add_domain_event(UserCreatedEvent(user.id))
+
+        return FlextResult[User].ok(user)
+
+    def _is_valid_email(self, email: str) -> bool:
+        """Domain-specific email validation."""
+        allowed_domains = ["company.com", "partner.com"]
+        domain = email.split("@")[1] if "@" in email else ""
+        return domain in allowed_domains
+
+class OrderService(FlextService):
+    """Domain service for order operations."""
+
+    def process_order(self, order: Order) -> FlextResult[Order]:
+        """Process order with complex business rules."""
+        # Inventory check
+        inventory_result = self._check_inventory(order)
+        if inventory_result.is_failure:
+            return inventory_result
+
+        # Payment processing
+        payment_result = self._process_payment(order)
+        if payment_result.is_failure:
+            return payment_result
+
+        # Update order status
+        order.status = OrderStatus.PROCESSING
+        self.add_domain_event(OrderProcessedEvent(order.id))
+
+        return FlextResult[Order].ok(order)
+```
+
+**Key Methods:**
+
+- `add_domain_event(event)` - Add domain event for publishing
+- Business logic encapsulation for complex operations
+
+## Domain Events
+
+### Event System
+
+Domain events for decoupled communication between domain objects.
+
+```python
+from flext_core import DomainEvent, FlextResult
+from datetime import datetime
+
+class UserCreatedEvent(DomainEvent):
+    """Event raised when user is created."""
+    user_id: str
+    email: str
+    created_at: datetime
+
+class OrderConfirmedEvent(DomainEvent):
+    """Event raised when order is confirmed."""
+    order_id: str
+    customer_id: str
+    total_amount: Decimal
+
+# Publishing events
+user = User(id="user_123", name="Alice", email="alice@company.com")
+event = UserCreatedEvent(
+    user_id=user.id,
+    email=user.email,
+    created_at=datetime.utcnow()
+)
+
+# Events are collected by aggregate roots and published by infrastructure
+```
+
+## Domain Mixins
+
+### Reusable Behaviors
+
+Mixins that provide common domain behaviors.
+
+```python
+from flext_core import FlextMixins
+
+class AuditableEntity(FlextModels.Entity, FlextMixins.Auditable):
+    """Entity with audit trail."""
+    name: str
+
+    def model_post_init(self, __context) -> None:
+        """Initialize audit fields."""
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+
+class SoftDeletableEntity(FlextModels.Entity, FlextMixins.SoftDeletable):
+    """Entity that supports soft deletion."""
+    name: str
+
+    def delete(self) -> None:
+        """Soft delete the entity."""
+        self.deleted_at = datetime.utcnow()
+        self.is_deleted = True
+
+class VersionedEntity(FlextModels.Entity, FlextMixins.Versioned):
+    """Entity with optimistic locking."""
+    name: str
+    version: int = 1
+
+    def update_version(self) -> None:
+        """Increment version for optimistic locking."""
+        self.version += 1
+```
+
+**Available Mixins:**
+
+- `FlextMixins.Auditable` - Created/updated timestamps
+- `FlextMixins.SoftDeletable` - Soft deletion support
+- `FlextMixins.Versioned` - Optimistic locking version
+- `FlextMixins.Serializable` - JSON serialization helpers
+
+## Domain Utilities
+
+### Helper Functions
+
+Utility functions for common domain operations.
+
+```python
+from flext_core import FlextUtilities
+
+# Validation helpers
+is_valid_email = FlextUtilities.Validation.is_email("user@domain.com")
+is_valid_phone = FlextUtilities.Validation.is_phone("+1234567890")
+
+# Type guards
+def is_active_user(user: User) -> bool:
+    return FlextUtilities.TypeGuards.is_entity(user) and not user.is_deleted
+
+# Conversion helpers
+price_str = FlextUtilities.Conversion.decimal_to_string(Decimal("19.99"))
+price_decimal = FlextUtilities.Conversion.string_to_decimal("19.99")
+
+# String utilities
+slug = FlextUtilities.String.slugify("Hello World!")  # "hello-world"
+camel = FlextUtilities.String.to_camel_case("hello_world")  # "helloWorld"
+```
+
+## Quality Metrics
+
+| Module         | Coverage | Status       | Description                   |
+| -------------- | -------- | ------------ | ----------------------------- |
+| `models.py`    | 65%      | 🔄 Improving | DDD base classes and patterns |
+| `service.py`   | 92%      | ✅ Stable    | Domain service infrastructure |
+| `mixins.py`    | 57%      | 🔄 Improving | Reusable domain behaviors     |
+| `utilities.py` | 66%      | 🔄 Improving | Domain utility functions      |
+
+## Usage Examples
+
+### Complete Domain Model Example
+
+```python
+from flext_core import FlextModels, FlextService, FlextResult
+from typing import List
+from decimal import Decimal
+from datetime import datetime
+
+# Value Objects
+class Money(FlextModels.ValueObject):
+    amount: Decimal
+    currency: str
+
+class Address(FlextModels.ValueObject):
+    street: str
+    city: str
+    postal_code: str
+    country: str
+
+# Entity
+class Customer(FlextModels.Entity):
+    name: str
+    email: str
+    addresses: List[Address]
+
+# Aggregate Root
+class Order(FlextModels.AggregateRoot):
+    customer_id: str
+    items: List[OrderItem]
+    total: Money
+    status: OrderStatus
+
+    def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
+        if self.status != OrderStatus.PENDING:
+            return FlextResult[None].fail("Can only modify pending orders")
+
+        item = OrderItem(product=product, quantity=quantity)
+        self.items.append(item)
+        self.total = Money(
+            amount=self.total.amount + (product.price.amount * quantity),
+            currency=self.total.currency
+        )
+        return FlextResult[None].ok(None)
+
+# Domain Service
+class OrderService(FlextService):
+    def place_order(self, customer: Customer, items: List[OrderItem]) -> FlextResult[Order]:
+        # Business rule validation
+        if not items:
+            return FlextResult[Order].fail("Order must contain at least one item")
+
+        # Calculate total
+        total = Money(amount=Decimal("0"), currency="USD")
+        for item in items:
+            total.amount += item.product.price.amount * item.quantity
+
+        # Create order
+        order = Order(
+            id=f"order_{datetime.utcnow().timestamp()}",
+            customer_id=customer.id,
+            items=items,
+            total=total,
+            status=OrderStatus.PENDING
+        )
+
+        # Add domain event
+        self.add_domain_event(OrderPlacedEvent(order.id, customer.id, total.amount))
+
+        return FlextResult[Order].ok(order)
+
+# Usage
+customer = Customer(
+    id="cust_123",
+    name="Alice Johnson",
+    email="alice@company.com",
+    addresses=[]
+)
+
+service = OrderService()
+result = service.place_order(customer, [item1, item2])
+
+if result.is_success:
+    order = result.unwrap()
+    print(f"Order placed: {order.id} for ${order.total.amount}")
+```
+
+This domain layer provides a solid foundation for implementing business logic with proper separation of concerns and domain-driven design principles.
