@@ -230,7 +230,11 @@ class UserCreatedEvent:
         self.user_id = user_id
         self.email = email
 
+# Setup application
+bus = FlextBus()
+
 # Command Handlers
+@bus.command_handler
 class CreateUserHandler:
     def __init__(self, user_repository, email_service):
         self.user_repository = user_repository
@@ -257,6 +261,7 @@ class CreateUserHandler:
 
         return FlextResult[User].ok(user)
 
+@bus.command_handler
 class UpdateUserHandler:
     def handle(self, command: UpdateUserCommand) -> FlextResult[User]:
         user = self.user_repository.get_by_id(command.user_id)
@@ -275,6 +280,7 @@ class UpdateUserHandler:
         return FlextResult[User].ok(user)
 
 # Query Handlers
+@bus.query_handler
 class GetUserHandler:
     def __init__(self, user_repository):
         self.user_repository = user_repository
@@ -285,21 +291,11 @@ class GetUserHandler:
             return FlextResult[User].fail("User not found")
         return FlextResult[User].ok(user)
 
+@bus.query_handler
 class ListUsersHandler:
     def handle(self, query: ListUsersQuery) -> FlextResult[List[User]]:
         users = self.user_repository.list(limit=query.limit, offset=query.offset)
         return FlextResult[List[User]].ok(users)
-
-# Setup application
-bus = FlextBus()
-
-# Register command handlers
-bus.register_command_handler(CreateUserCommand, CreateUserHandler)
-bus.register_command_handler(UpdateUserCommand, UpdateUserHandler)
-
-# Register query handlers
-bus.register_query_handler(GetUserQuery, GetUserHandler)
-bus.register_query_handler(ListUsersQuery, ListUsersHandler)
 
 # Usage examples
 async def main():

@@ -163,35 +163,30 @@ event = UserCreatedEvent(
 
 Mixins that provide common domain behaviors.
 
+Each mixin ships with ready-to-use behavior:
+
+- `FlextMixins.Auditable` keeps `created_at` and `updated_at` timestamps in sync.
+- `FlextMixins.SoftDeletable` manages `is_deleted`/`deleted_at` flags and exposes `delete()`/`restore()` helpers.
+- `FlextMixins.Versioned` performs optimistic locking by auto-incrementing the `version` field whenever state changes.
+
 ```python
 from flext_core import FlextMixins
 
 class AuditableEntity(FlextModels.Entity, FlextMixins.Auditable):
-    """Entity with audit trail."""
+    """Entity with audit timestamps managed automatically."""
     name: str
-
-    def model_post_init(self, __context) -> None:
-        """Initialize audit fields."""
-        self.created_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+    # created_at / updated_at are added by the mixin on save or mutation
 
 class SoftDeletableEntity(FlextModels.Entity, FlextMixins.SoftDeletable):
-    """Entity that supports soft deletion."""
+    """Entity that gains soft-delete helpers from the mixin."""
     name: str
-
-    def delete(self) -> None:
-        """Soft delete the entity."""
-        self.deleted_at = datetime.utcnow()
-        self.is_deleted = True
+    # call instance.delete() / restore() provided by the mixin; it tracks deleted_at/is_deleted for you
 
 class VersionedEntity(FlextModels.Entity, FlextMixins.Versioned):
-    """Entity with optimistic locking."""
+    """Entity with optimistic locking handled by the mixin."""
     name: str
     version: int = 1
-
-    def update_version(self) -> None:
-        """Increment version for optimistic locking."""
-        self.version += 1
+    # mixin auto-increments version on state changes; override hooks only if custom logic is required
 ```
 
 **Available Mixins:**
@@ -290,9 +285,11 @@ class OrderService(FlextService):
             return FlextResult[Order].fail("Order must contain at least one item")
 
         # Calculate total
-        total = Money(amount=Decimal("0"), currency="USD")
+        total_amount = Decimal("0")
         for item in items:
-            total.amount += item.product.price.amount * item.quantity
+            total_amount += item.product.price.amount * item.quantity
+
+        total = Money(amount=total_amount, currency="USD")
 
         # Create order
         order = Order(
@@ -307,6 +304,22 @@ class OrderService(FlextService):
         self.add_domain_event(OrderPlacedEvent(order.id, customer.id, total.amount))
 
         return FlextResult[Order].ok(order)
+
+# Sample products and order items used below
+product1 = Product(
+    id="prod_storage",
+    name="Cloud Storage Plan",
+    price=Money(amount=Decimal("19.99"), currency="USD"),
+)
+
+product2 = Product(
+    id="prod_analytics",
+    name="Realtime Analytics Add-on",
+    price=Money(amount=Decimal("39.99"), currency="USD"),
+)
+
+item1 = OrderItem(product=product1, quantity=1)
+item2 = OrderItem(product=product2, quantity=2)
 
 # Usage
 customer = Customer(

@@ -420,9 +420,9 @@ class FlextDispatcher:
         if self._config.get("enable_logging"):
             self._logger.info(
                 "handler_registered",
-                registration_id=details.get("registration_id"),  # type: ignore[arg-type]
-                handler_mode=details.get("handler_mode"),  # type: ignore[arg-type]
-                message_type=details.get("message_type_name"),  # type: ignore[arg-type]
+                registration_id=details.get("registration_id"),
+                handler_mode=details.get("handler_mode"),
+                message_type=details.get("message_type_name"),
             )
 
         return FlextResult[FlextTypes.Dict].ok(details)
@@ -721,7 +721,7 @@ class FlextDispatcher:
                 "correlation_id": request.get("correlation_id"),
                 "request_id": request.get("request_id"),
             }
-            self._audit_log.append(audit_entry)  # type: ignore[arg-type]
+            self._audit_log.append(audit_entry)
 
             # Update performance metrics
             if message_type not in self._performance_metrics:
@@ -1440,7 +1440,7 @@ class FlextDispatcher:
             except Exception:
                 config["handlers"] = {}
 
-        return cast("FlextTypes.Dict", config)
+        return config
 
     def get_metrics(self) -> FlextTypes.Dict:
         """REMOVED: Use dispatcher.get_performance_metrics() directly.
@@ -1466,11 +1466,11 @@ class FlextDispatcher:
             if "handlers" in config:
                 handlers = config["handlers"]
                 if isinstance(handlers, dict):
-                    handlers_dict: FlextTypes.Dict = handlers  # type: ignore[assignment]
+                    handlers_dict: FlextTypes.Dict = handlers
                     for message_type, handler_list in handlers_dict.items():
                         message_type_str = str(message_type)
                         if not isinstance(handler_list, list):
-                            handlers_for_type: FlextTypes.List = [handler_list]  # type: ignore[list-item]
+                            handlers_for_type: FlextTypes.List = [handler_list]
                         else:
                             handlers_for_type = handler_list
                         for handler in handlers_for_type:
@@ -1486,11 +1486,11 @@ class FlextDispatcher:
             if "circuit_breaker_failures" in config:
                 failures = config["circuit_breaker_failures"]
                 if isinstance(failures, dict):
-                    self._circuit_breaker_failures.update(failures)  # type: ignore[arg-type]
+                    self._circuit_breaker_failures.update(failures)
             if "rate_limit_requests" in config:
                 requests = config["rate_limit_requests"]
                 if isinstance(requests, dict):
-                    self._rate_limit_requests.update(requests)  # type: ignore[arg-type]
+                    self._rate_limit_requests.update(requests)
 
             return FlextResult[None].ok(None)
         except Exception as e:

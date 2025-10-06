@@ -26,7 +26,7 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 from uuid import uuid4
 
-from flext_core import Flext
+from flext_core import Flext, FlextLogger
 
 from .example_scenarios import ExampleScenarios
 
@@ -37,6 +37,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
     def __init__(self) -> None:
         """Initialize with automatic Flext infrastructure."""
         super().__init__()
+        self._logger = FlextLogger(__name__)
         self._event_store: list[Flext.Models.DomainEvent] = []
         self._message_queue: list[Flext.Models.Payload[Flext.Types.Dict]] = []
         self._scenarios = ExampleScenarios()

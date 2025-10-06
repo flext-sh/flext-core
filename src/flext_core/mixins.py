@@ -284,7 +284,7 @@ class FlextMixins:
         """
         logger = FlextLogger(config.obj.__class__.__name__)
 
-        context = {
+        context: dict[str, object] = {
             "operation": config.operation,
             "object_type": type(config.obj).__name__,
             "timestamp": config.timestamp or datetime.now(UTC),
@@ -391,13 +391,15 @@ class FlextMixins:
             model_data: FlextTypes.Dict = obj.model_dump()
             if parameter not in model_data:
                 msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                raise FlextExceptions.NotFoundError(msg, field=parameter)
+                raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
             return model_data[parameter]
 
         # Fallback for non-Pydantic objects - direct attribute access
         if not hasattr(obj, parameter):
             msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-            raise FlextExceptions.NotFoundError(msg, field=parameter)
+            raise FlextExceptions.NotFoundError(
+                msg, resource_type=f"parameter '{parameter}'"
+            )
         return getattr(obj, parameter)
 
     @staticmethod
@@ -448,7 +450,7 @@ class FlextMixins:
 
         """
         if hasattr(singleton_class, "get_global_instance"):
-            get_global_instance_method = singleton_class.get_global_instance
+            get_global_instance_method = getattr(singleton_class, "get_global_instance")
             if callable(get_global_instance_method):
                 instance = get_global_instance_method()
                 return FlextMixins.get_config_parameter(instance, parameter)
@@ -456,7 +458,7 @@ class FlextMixins:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
-        raise FlextExceptions.AttributeError(msg)
+        raise FlextExceptions.ValidationError(msg)
 
     @staticmethod
     def set_singleton_parameter(
@@ -476,7 +478,7 @@ class FlextMixins:
 
         """
         if hasattr(singleton_class, "get_global_instance"):
-            get_global_instance_method = singleton_class.get_global_instance
+            get_global_instance_method = getattr(singleton_class, "get_global_instance")
             if callable(get_global_instance_method):
                 instance = get_global_instance_method()
                 return FlextMixins.set_config_parameter(instance, parameter, value)
@@ -712,7 +714,7 @@ class FlextMixins:
             """
             try:
                 # Create event with proper metadata
-                event_metadata = {
+                event_metadata: dict[str, object] = {
                     "event_id": FlextUtilities.Generators.generate_event_id(),
                     "event_type": event_type,
                     "aggregate_id": aggregate_id,
@@ -723,7 +725,7 @@ class FlextMixins:
                 }
 
                 # Combine event data with metadata
-                domain_event = {
+                domain_event: dict[str, object] = {
                     **event_data,
                     **event_metadata,
                 }
@@ -771,7 +773,7 @@ class FlextMixins:
                 }
 
                 # Combine command data with metadata
-                command = {
+                command: dict[str, object] = {
                     **command_data,
                     **command_metadata,
                 }
@@ -819,7 +821,7 @@ class FlextMixins:
                 }
 
                 # Combine query data with metadata
-                query = {
+                query: dict[str, object] = {
                     **query_data,
                     **query_metadata,
                 }
@@ -851,7 +853,7 @@ class FlextMixins:
 
     def register(self, name: str, mixin: type) -> FlextResult[None]:
         """Register a mixin."""
-        if not name:
+        if not name or mixin is None:
             return FlextResult[None].fail("Invalid mixin name or mixin object")
         try:
             self._registry[name] = mixin
@@ -1135,7 +1137,11 @@ class FlextMixins:
                     "All retry attempts failed without explicit error",
                 )
             # Fallback to old behavior for mixins without test_method
-            processed_data = {"processed": True, "mixin": name, "data": data}
+            processed_data: dict[str, object] = {
+                "processed": True,
+                "mixin": name,
+                "data": data,
+            }
             return FlextResult[object].ok(processed_data)
         except Exception as e:
             # Track metrics for general exceptions
@@ -1272,7 +1278,7 @@ class FlextMixins:
     def apply_batch(self, data_list: FlextTypes.List) -> FlextResult[FlextTypes.List]:
         """Apply mixins to a batch of data."""
         try:
-            processed_list = []
+            processed_list: list[object] = []
             for data in data_list:
                 result = self.apply("default", data)
                 if result.is_success:

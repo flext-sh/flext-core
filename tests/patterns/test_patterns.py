@@ -21,10 +21,9 @@ from typing import cast
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import FlextTypes, T
+from flext_core import FlextTypes
 
-# Removed imports from flext_tests as that module was removed
-# Using direct pytest and hypothesis for testing patterns
+FlextTypes.T
 
 
 def mark_test_pattern(

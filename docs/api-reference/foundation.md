@@ -36,6 +36,7 @@ result = divide(10, 2).map(lambda x: x * 2)  # FlextResult[float].ok(10.0)
 - `is_failure` - Check if result is failure
 - `unwrap()` - Extract value (throws on failure)
 - `unwrap_or(default)` - Extract value with default
+- `error` - Access the error message (for failure results)
 - `map(transform)` - Transform success value
 - `flat_map(transform)` - Transform and flatten
 - `filter(predicate)` - Filter success values
@@ -74,20 +75,13 @@ Comprehensive exception hierarchy with error codes and context.
 
 ```python
 from flext_core import FlextException, ErrorCode
-
-class ValidationError(FlextException):
+class ValidationException(FlextException):
     def __init__(self, field: str, value: Any):
         super().__init__(
             error_code=ErrorCode.VALIDATION_ERROR,
             message=f"Invalid value for {field}: {value}",
             context={"field": field, "value": value}
         )
-```
-
-**Key Classes:**
-
-- `FlextException` - Base exception class
-- `ErrorCode` - Enumeration of error codes
 - `ValidationException` - Field validation errors
 - `ConfigurationException` - Configuration errors
 
@@ -149,11 +143,12 @@ class UserService:
     def __init__(self):
         self.logger = FlextLogger(__name__)
 
-    def create_user(self, name: str, email: str) -> FlextResult[User]:
-        # Validation pipeline
-        validation = self._validate_input(name, email)
-        if validation.is_failure:
-            return validation
+from flext_core import FlextResult, FlextContainer, FlextLogger
+# Note: FlextLogger is documented in the Logging section
+
+class UserService:
+    def __init__(self):
+        self.logger = FlextLogger(__name__)
 
         # Business logic
         user = User(id=f"user_{name.lower()}", name=name, email=email)

@@ -30,7 +30,7 @@ from uuid import uuid4
 
 from pydantic import Field
 
-from flext_core import Flext
+from flext_core import Flext, FlextContainer, FlextLogger
 
 from .example_scenarios import ExampleScenarios, RealisticDataDict, RealisticOrderDict
 
@@ -398,9 +398,9 @@ class ComprehensiveModelsService(Flext.Service[Order]):
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        manager: Flext.Container.GlobalManager = Flext.Container.ensure_global_manager()
+        manager = FlextContainer.get_global_instance()
         self._container = manager.get_or_create()
-        self._logger = Flext.Logger(__name__)
+        self._logger = FlextLogger(__name__)
         self._scenarios: type[ExampleScenarios] = ExampleScenarios
         self._dataset: Flext.Types.Dict = self._scenarios.dataset()
         self._realistic: RealisticDataDict = self._scenarios.realistic_data()
@@ -668,7 +668,7 @@ class ComprehensiveModelsService(Flext.Service[Order]):
 
             def __init__(self) -> None:
                 self._storage: dict[str, Order] = {}
-                self._logger = Flext.Logger(__name__)
+                self._logger = FlextLogger(__name__)
 
             def save(self, order: Order) -> Flext.Result[None]:
                 """Save order aggregate."""

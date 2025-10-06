@@ -494,7 +494,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test function-based handler creation
-        def simple_function_handler(message: object) -> object | FlextResult[object]:
+        def simple_function_handler(message: object) -> FlextResult[object]:
             if isinstance(message, str):
                 return FlextResult[object].ok(f"Function: {message}")
             return FlextResult[object].fail("Invalid message type")

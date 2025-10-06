@@ -283,7 +283,7 @@ class FlextProcessors:
                 result = processor(processed_data)
                 if isinstance(result, FlextResult):
                     if result.is_success:
-                        self._cache[cache_key] = (result.value, time.time())  # type: ignore[attr-defined]
+                        self._cache[cache_key] = (result.value, time.time())
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
                         )
@@ -308,7 +308,7 @@ class FlextProcessors:
 
                 # Wrap non-FlextResult in FlextResult
                 result_wrapped = FlextResult[object].ok(result)
-                self._cache[cache_key] = (result, time.time())  # type: ignore[assignment]
+                self._cache[cache_key] = (result, time.time())
                 self._metrics["successful_processes"] = (
                     self._metrics.get("successful_processes", 0) + 1
                 )
@@ -1143,7 +1143,7 @@ class FlextProcessors:
                         msg = f"Pipeline step failed: {result.error}"
                         raise FlextExceptions.OperationError(
                             message=msg,
-                            error_code="OPERATION_ERROR",
+                            operation="pipeline_step",
                         )
                     # result.is_success is True here
                     step_result: object | None = cast(
@@ -1154,7 +1154,7 @@ class FlextProcessors:
                         msg = "Pipeline step returned None despite success"
                         raise FlextExceptions.OperationError(
                             message=msg,
-                            error_code="OPERATION_ERROR",
+                            operation="pipeline_step",
                         )
                     return step_result
                 # result is not a FlextResult, return it directly

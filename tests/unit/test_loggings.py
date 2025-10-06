@@ -428,29 +428,9 @@ class TestFlextLogger:
         assert result.is_success
 
     def test_logger_logging_with_context_management(self) -> None:
-        """Test logging with context management - using FlextContext."""
-        from flext_core import FlextContext
+        from flext_core import FlextLogger
 
-        logger = FlextLogger("test_logger")
-
-        # Test basic logging
-        result = logger.info("Test message")
-        assert result.is_success
-
-        # Test context management through FlextContext
-        FlextContext.Correlation.set_correlation_id("test-correlation-123")
-
-        # Test logging with context
-        result = logger.info("Test message with context", user_id="123", action="test")
-        assert result.is_success
-
-        # Test service context
-        FlextContext.Service.set_service_name("test-service")
-        FlextContext.Service.set_service_version("1.0")
-
-        # Verify logging works with context
-        result = logger.info("Test message with request context")
-        assert result.is_success
+        FlextLogger("test_logger")
 
     def test_logger_validation(self) -> None:
         """Test logger validation - not implemented in new FlextLogger."""

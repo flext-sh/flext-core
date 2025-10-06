@@ -45,24 +45,10 @@ from collections.abc import Callable, Iterator, Sequence
 from typing import TYPE_CHECKING, Self, TypeGuard, cast, overload, override
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import (
-    FlextTypes,
-    TItem,
-    TResult,
-    TUtil,
-    U,
-    V,
-)
+from flext_core.typings import FlextTypes, TItem, TResult, TUtil, U, V
 
 if TYPE_CHECKING:
     from flext_core.exceptions import FlextExceptions
-
-
-def _get_exceptions() -> type[FlextExceptions]:
-    """Lazy import FlextExceptions to avoid circular dependency."""
-    from flext_core.exceptions import FlextExceptions
-
-    return FlextExceptions
 
 
 # =============================================================================
@@ -122,16 +108,16 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         # Example 3: Dual API compatibility (ecosystem requirement)
         result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
         if result.value != result.data:  # Both work (dual API)
-            raise _get_exceptions().ValidationError(
+            raise FlextResult._get_exceptions().ValidationError(
                 "API inconsistency detected",
                 field="dual_api_compatibility",
-                validation_details="result.value != result.data",
+                metadata={"validation_details": "result.value != result.data"},
             )
         data = result.unwrap_or({})  # With default fallback
 
         # Example 4: Batch processing with error collection
         items = [1, 2, 3, 4, 5]
-        successes, failures = FlextResult._Utils.batch_process(
+        successes, failures = FlextResult.batch_process(
             items, lambda x: process_item(x)
         )
 
@@ -194,260 +180,15 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     _error_data: FlextTypes.Dict
 
     # =========================================================================
-    # NESTED HELPER CLASSES - UNIFIED ARCHITECTURE PATTERN
+    # PRIVATE MEMBERS - Internal helpers to avoid circular imports
     # =========================================================================
 
-    class _Utils:
-        """Utility methods for FlextResult static operations - NESTED HELPER."""
+    @staticmethod
+    def _get_exceptions() -> type[FlextExceptions]:
+        """Lazy import FlextExceptions to avoid circular dependency."""
+        from flext_core.exceptions import FlextExceptions
 
-        @staticmethod
-        def chain_results[TChain](
-            results: list[FlextResult[TChain]],
-        ) -> FlextResult[list[TChain]]:
-            """Chain multiple results into a single result containing a list."""
-            successful_results: list[TChain] = []
-            for result in results:
-                if not result.is_success:
-                    return FlextResult[list[TChain]].fail(
-                        f"Chain failed at result: {result.error}",
-                    )
-                successful_results.append(result.value)
-            return FlextResult[list[TChain]].ok(successful_results)
-
-        @staticmethod
-        def combine[TCombine](
-            *results: FlextResult[TCombine],
-        ) -> FlextResult[list[TCombine]]:
-            """Combine multiple results into a single result."""
-            values: list[TCombine] = []
-            for result in results:
-                if result.is_failure:
-                    return FlextResult[list[TCombine]].fail(
-                        result.error or "Combine operation failed",
-                    )
-                values.append(result.value)
-            return FlextResult[list[TCombine]].ok(values)
-
-        @staticmethod
-        def all_success[Tobject](*results: FlextResult[Tobject]) -> bool:
-            """Check if all results are successful."""
-            if not results:
-                return True
-            return all(result.is_success for result in results)
-
-        @staticmethod
-        def any_success[Tobject](*results: FlextResult[Tobject]) -> bool:
-            """Check if any result is successful."""
-            return any(result.is_success for result in results) if results else False
-
-        @classmethod
-        def sequence[TSeq](
-            cls,
-            results: list[FlextResult[TSeq]],
-        ) -> FlextResult[list[TSeq]]:
-            """Sequence a list of results into a result of list."""
-            values: list[TSeq] = []
-            for result in results:
-                if result.is_failure:
-                    return FlextResult[list[TSeq]].fail(
-                        result.error or "Sequence failed",
-                        error_code=result.error_code,
-                        error_data=result.error_data,
-                    )
-                values.append(result.unwrap())
-            return FlextResult[list[TSeq]].ok(values)
-
-        @classmethod
-        def collect_successes[TCollect](
-            cls,
-            results: list[FlextResult[TCollect]],
-        ) -> list[TCollect]:
-            """Collect all successful values from results."""
-            return [result.value for result in results if result.is_success]
-
-        @classmethod
-        def collect_failures[TCollectFail](
-            cls,
-            results: list[FlextResult[TCollectFail]],
-        ) -> FlextTypes.StringList:
-            """Collect all error messages from failed results."""
-            return [r.error for r in results if r.is_failure and r.error]
-
-        @classmethod
-        def batch_process[TBatch, UBatch](
-            cls,
-            items: list[TBatch],
-            processor: Callable[[TBatch], FlextResult[UBatch]],
-        ) -> tuple[list[UBatch], FlextTypes.StringList]:
-            """Process batch and separate successes from failures."""
-            results: list[FlextResult[UBatch]] = [processor(item) for item in items]
-            successes: list[UBatch] = cls.collect_successes(results)
-            failures: FlextTypes.StringList = cls.collect_failures(results)
-            return successes, failures
-
-    class _Collections:
-        """Collection operations for FlextResult - NESTED HELPER."""
-
-        @classmethod
-        def traverse[TTraverse, UTraverse](
-            cls,
-            items: list[TTraverse],
-            func: Callable[[TTraverse], FlextResult[UTraverse]],
-        ) -> FlextResult[list[UTraverse]]:
-            """Traverse a list with a function returning FlextResults."""
-            results: list[UTraverse] = []
-            for item in items:
-                result: FlextResult[UTraverse] = func(item)
-                if result.is_failure:
-                    return FlextResult[list[UTraverse]].fail(
-                        result.error or f"Traverse failed at item {item}",
-                    )
-                results.append(result.unwrap())
-            return FlextResult[list[UTraverse]].ok(results)
-
-        @classmethod
-        def accumulate_errors[TAccumulate](
-            cls,
-            *results: FlextResult[TAccumulate],
-        ) -> FlextResult[list[TAccumulate]]:
-            """Accumulate all errors or return all successes."""
-            successes: list[TAccumulate] = []
-            errors: FlextTypes.StringList = []
-
-            for result in results:
-                if result.is_success:
-                    successes.append(result.unwrap())
-                else:
-                    errors.append(result.error or "Unknown error")
-
-            if errors:
-                combined_error = "; ".join(errors)
-                return FlextResult[list[TAccumulate]].fail(
-                    f"Multiple errors occurred: {combined_error}",
-                    error_code="ACCUMULATED_ERRORS",
-                    error_data={"error_count": len(errors), "errors": errors},
-                )
-
-            return FlextResult[list[TAccumulate]].ok(successes)
-
-        @classmethod
-        def parallel_map[TPar, UPar](
-            cls,
-            items: list[TPar],
-            func: Callable[[TPar], FlextResult[UPar]],
-            *,
-            fail_fast: bool = True,
-        ) -> FlextResult[list[UPar]]:
-            """Map function over items in parallel (conceptually)."""
-            results: list[FlextResult[UPar]] = [func(item) for item in items]
-
-            if fail_fast:
-                fast_successes: list[UPar] = []
-                for result in results:
-                    if result.is_failure:
-                        error_msg = result.error or "Sequence operation failed"
-                        return FlextResult[list[UPar]].fail(error_msg)
-                    fast_successes.append(result.unwrap())
-                return FlextResult[list[UPar]].ok(fast_successes)
-
-            successes: list[UPar] = []
-            errors: FlextTypes.StringList = []
-            for result in results:
-                if result.is_failure:
-                    error_msg = result.error or "Operation failed"
-                    errors.append(error_msg)
-                else:
-                    successes.append(result.unwrap())
-
-            if errors:
-                return FlextResult[list[UPar]].fail("; ".join(errors))
-            return FlextResult[list[UPar]].ok(successes)
-
-        @classmethod
-        def validate_all[TValidateAll](
-            cls,
-            value: TValidateAll,
-            *validators: Callable[[TValidateAll], FlextResult[None]],
-        ) -> FlextResult[TValidateAll]:
-            """Validate data with multiple validators."""
-            validation_results: list[FlextResult[None]] = [
-                validator(value) for validator in validators
-            ]
-            errors = [
-                result.error
-                for result in validation_results
-                if result.is_failure and result.error
-            ]
-
-            if errors:
-                combined_error = "; ".join(errors)
-                return FlextResult[TValidateAll].fail(
-                    f"{FlextConstants.Messages.VALIDATION_FAILED}: {combined_error}",
-                    error_code="VALIDATION_FAILED",
-                    error_data={
-                        "validation_errors": errors,
-                        "error_count": len(errors),
-                    },
-                )
-
-            return FlextResult[TValidateAll].ok(value)
-
-    class _Functional:
-        """Functional programming utilities for FlextResult - NESTED HELPER."""
-
-        @staticmethod
-        def kleisli_compose[T_inner, U, V](
-            f: Callable[[T_inner], FlextResult[U]],
-            g: Callable[[U], FlextResult[V]],
-        ) -> Callable[[T_inner], FlextResult[V]]:
-            """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN."""
-
-            def composed(value: T_inner) -> FlextResult[V]:
-                return FlextResult[T_inner].ok(value).flat_map(f).flat_map(g)
-
-            return composed
-
-        @staticmethod
-        def applicative_lift2[T1, T2, TResult](
-            func: Callable[[T1, T2], TResult],
-            result1: FlextResult[T1],
-            result2: FlextResult[T2],
-        ) -> FlextResult[TResult]:
-            """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
-            if result1.is_failure:
-                return FlextResult[TResult].fail(
-                    result1.error or FlextConstants.Errors.FIRST_ARG_FAILED_MSG,
-                )
-            if result2.is_failure:
-                return FlextResult[TResult].fail(
-                    result2.error or FlextConstants.Errors.SECOND_ARG_FAILED_MSG,
-                )
-            return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
-
-        @staticmethod
-        def applicative_lift3[T1, T2, T3, TResult](
-            func: Callable[[T1, T2, T3], TResult],
-            result1: FlextResult[T1],
-            result2: FlextResult[T2],
-            result3: FlextResult[T3],
-        ) -> FlextResult[TResult]:
-            """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
-            if result1.is_failure:
-                return FlextResult[TResult].fail(
-                    result1.error or FlextConstants.Errors.FIRST_ARG_FAILED_MSG,
-                )
-            if result2.is_failure:
-                return FlextResult[TResult].fail(
-                    result2.error or FlextConstants.Errors.SECOND_ARG_FAILED_MSG,
-                )
-            if result3.is_failure:
-                return FlextResult[TResult].fail(
-                    result3.error or "Third argument failed",
-                )
-
-            return FlextResult[TResult].ok(
-                func(result1.unwrap(), result2.unwrap(), result3.unwrap()),
-            )
+        return FlextExceptions
 
     # Python 3.13+ discriminated union architecture.
 
@@ -506,7 +247,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Ensure success data is available or raise BaseError."""
         if self._data is None and self._error is None:
             msg = "Success result has None data"
-            raise _get_exceptions().BaseError(
+            raise FlextResult._get_exceptions().BaseError(
                 message=msg,
                 error_code="OPERATION_ERROR",
             )
@@ -537,7 +278,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Return the success payload, raising :class:`ValidationError` on failure."""
         if self.is_failure:
             msg = "Attempted to access value on failed result"
-            raise _get_exceptions().ValidationError(
+            raise FlextResult._get_exceptions().ValidationError(
                 message=msg,
                 error_code="VALIDATION_ERROR",
             )
@@ -659,7 +400,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         *results: FlextResult[TChain],
     ) -> FlextResult[list[TChain]]:
         """Collect a series of results, aborting on the first failure."""
-        return FlextResult._Utils.chain_results(list(results))
+        return FlextResult._chain_results_list(list(results))
+
+    @staticmethod
+    def combine[TCombine](
+        *results: FlextResult[TCombine],
+    ) -> FlextResult[list[TCombine]]:
+        """Combine multiple results into a single result."""
+        return FlextResult._combine_results(list(results))
 
     def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform the success payload using ``func`` while preserving errors."""
@@ -746,7 +494,9 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         if key == 1:
             return self._error
         msg = "FlextResult only supports indices 0 (data) and 1 (error)"
-        raise _get_exceptions().NotFoundError(msg, field=f"index[{key}]")
+        raise FlextResult._get_exceptions().NotFoundError(
+            msg, resource_type=f"index[{key}]"
+        )
 
     def __or__(self, default: T_co) -> T_co:
         """Use | operator for default values: result | default_value.."""
@@ -760,7 +510,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise _get_exceptions().BaseError(
+            raise FlextResult._get_exceptions().BaseError(
                 message=error_msg,
                 error_code="OPERATION_ERROR",
             )
@@ -786,14 +536,14 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Get value or raise with custom message."""
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise _get_exceptions().BaseError(
+            raise FlextResult._get_exceptions().BaseError(
                 message=msg,
                 error_code="OPERATION_ERROR",
             )
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = "Success result has None data"
-            raise _get_exceptions().BaseError(
+            raise FlextResult._get_exceptions().BaseError(
                 message=msg,
                 error_code="OPERATION_ERROR",
             )
@@ -908,7 +658,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         if self.is_success:
             return cast("T_co", self._data)
         error_msg = self._error or "Operation failed"
-        raise _get_exceptions().BaseError(
+        raise FlextResult._get_exceptions().BaseError(
             message=error_msg,
             error_code="OPERATION_ERROR",
         )
@@ -1004,7 +754,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return None
 
         error_msg = self._error or "Result failed"
-        return _get_exceptions().BaseError(
+        return FlextResult._get_exceptions().BaseError(
             message=error_msg, error_code="OPERATION_ERROR"
         )
 
@@ -1019,31 +769,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             return cls.fail(str(e))
 
-    @staticmethod
-    def combine[TCombine](
-        *results: FlextResult[TCombine],
-    ) -> FlextResult[list[TCombine]]:
-        """Combine multiple results into one."""
-        return FlextResult._Utils.combine(*results)
-
-    @staticmethod
-    def all_success[Tobject](*results: FlextResult[Tobject]) -> bool:
-        """Check success condition across results.
-
-        Implementation detail aligned with test expectations:
-        - Returns True when no results are provided (vacuous truth).
-        - Returns True only if all results are successful.
-        """
-        return FlextResult._Utils.all_success(*results)
-
-    @staticmethod
-    def any_success[Tobject](*results: FlextResult[Tobject]) -> bool:
-        """Check if object result succeeded.
-
-        For test compatibility: False for empty input, True otherwise.
-        """
-        return FlextResult._Utils.any_success(*results)
-
     @classmethod
     def first_success[T](
         cls: type[FlextResult[T]],
@@ -1054,10 +779,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         filtered: list[FlextResult[T]] = []
         for entry in flattened:
             if isinstance(entry, FlextResult):
+                # Type checker needs explicit cast since entry is typed as FlextResult[Unknown]
                 filtered.append(entry)
             else:
                 msg = "first_success expects FlextResult instances"
-                raise _get_exceptions().ValidationError(
+                raise FlextResult._get_exceptions().ValidationError(
                     message=msg,
                     error_code="VALIDATION_ERROR",
                 )
@@ -1085,7 +811,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             or first failure encountered.
 
         """
-        return FlextResult._Utils.sequence(results)
+        return FlextResult._sequence_results(results)
 
     @classmethod
     def try_all[T](
@@ -1131,23 +857,25 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         if result.is_success:
             return result.value
         if exception_type is None:
-            raise _get_exceptions().BaseError(
+            raise FlextResult._get_exceptions().BaseError(
                 result.error or "Operation failed", error_code="OPERATION_ERROR"
             )
         raise exception_type(result.error or "Operation failed")
 
     @classmethod
-    def collect_successes(cls, results: list[FlextResult[TUtil]]) -> list[TUtil]:
+    def collect_successes[TCollect](
+        cls, results: list[FlextResult[TCollect]]
+    ) -> list[TCollect]:
         """Collect successful values from results."""
-        return FlextResult._Utils.collect_successes(results)
+        return [result.value for result in results if result.is_success]
 
     @classmethod
-    def collect_failures(
+    def collect_failures[TCollectFail](
         cls,
-        results: list[FlextResult[TUtil]],
+        results: list[FlextResult[TCollectFail]],
     ) -> FlextTypes.StringList:
         """Collect error messages from failures."""
-        return FlextResult._Utils.collect_failures(results)
+        return [r.error for r in results if r.is_failure and r.error]
 
     @classmethod
     def success_rate(cls, results: list[FlextResult[TUtil]]) -> float:
@@ -1158,13 +886,16 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return (successes / len(results)) * 100.0
 
     @classmethod
-    def batch_process(
+    def batch_process[TBatch, UBatch](
         cls,
-        items: list[TItem],
-        processor: Callable[[TItem], FlextResult[TUtil]],
-    ) -> tuple[list[TUtil], FlextTypes.StringList]:
+        items: list[TBatch],
+        processor: Callable[[TBatch], FlextResult[UBatch]],
+    ) -> tuple[list[UBatch], FlextTypes.StringList]:
         """Process batch and separate successes from failures."""
-        return FlextResult._Utils.batch_process(items, processor)
+        results: list[FlextResult[UBatch]] = [processor(item) for item in items]
+        successes: list[UBatch] = cls.collect_successes(results)
+        failures: FlextTypes.StringList = cls.collect_failures(results)
+        return successes, failures
 
     @classmethod
     def safe_call[TResult](
@@ -1228,34 +959,37 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION."""
         # Use applicative functor pattern
         if self.is_failure:
-            # Create a failed result with the correct type
-            failed_result: FlextResult[tuple[T_co, U]] = FlextResult(
-                error=self._error or "Unknown error",
-                error_code=self._error_code,
-                error_data=self._error_data,
+            # Create a failed result with the correct type - directly construct to avoid type inference issues
+            return cast(
+                "FlextResult[tuple[T_co, U]]",
+                FlextResult(
+                    error=self._error or "Unknown error",
+                    error_code=self._error_code,
+                    error_data=self._error_data,
+                ),
             )
-            return failed_result
         if other.is_failure:
-            # Create a failed result with the correct type
-            other_failed_result: FlextResult[tuple[T_co, U]] = FlextResult(
-                error=other._error or "Unknown error",
-                error_code=other._error_code,
-                error_data=other._error_data,
+            # Create a failed result with the correct type - directly construct to avoid type inference issues
+            return cast(
+                "FlextResult[tuple[T_co, U]]",
+                FlextResult(
+                    error=other._error or "Unknown error",
+                    error_code=other._error_code,
+                    error_data=other._error_data,
+                ),
             )
-            return other_failed_result
 
         # Both successful - combine values
         left_val = self.unwrap()
         right_val = other.unwrap()
         combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        success_result: FlextResult[tuple[T_co, U]] = FlextResult(data=combined_tuple)
-        return success_result
+        return cast("FlextResult[tuple[T_co, U]]", FlextResult(data=combined_tuple))
 
     def cast_fail(self) -> FlextResult[object]:
         """Cast a failed result to a different type."""
         if self.is_success:
             msg = "Cannot cast successful result to failed"
-            raise _get_exceptions().ValidationError(
+            raise FlextResult._get_exceptions().ValidationError(
                 message=msg,
                 field="result",
             )
@@ -1300,13 +1034,21 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     # === ADVANCED MONADIC COMBINATORS (Category Theory) ===
 
     @classmethod
-    def traverse(
+    def traverse[TTraverse, UTraverse](
         cls,
-        items: list[TItem],
-        func: Callable[[TItem], FlextResult[TResult]],
-    ) -> FlextResult[list[TResult]]:
-        """Traverse operation from Category Theory - ADVANCED FUNCTIONAL PATTERN."""
-        return FlextResult._Collections.traverse(items, func)
+        items: list[TTraverse],
+        func: Callable[[TTraverse], FlextResult[UTraverse]],
+    ) -> FlextResult[list[UTraverse]]:
+        """Traverse a list with a function returning FlextResults."""
+        results: list[UTraverse] = []
+        for item in items:
+            result: FlextResult[UTraverse] = func(item)
+            if result.is_failure:
+                return FlextResult[list[UTraverse]].fail(
+                    result.error or f"Traverse failed at item {item}",
+                )
+            results.append(result.unwrap())
+        return FlextResult[list[UTraverse]].ok(results)
 
     # === RAILWAY-ORIENTED PROGRAMMING ENHANCEMENTS ===
 
@@ -1486,52 +1228,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 logger_func(self.error)
         return self
 
-    def kleisli_compose(
-        self,
-        f: Callable[[T_co], FlextResult[U]],
-        g: Callable[[U], FlextResult[V]],
-    ) -> Callable[[T_co], FlextResult[V]]:
-        """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN."""
-
-        def composed(value: T_co) -> FlextResult[V]:
-            return FlextResult[T_co].ok(value).flat_map(f).flat_map(g)
-
-        return composed
-
-    @classmethod
-    def applicative_lift2[T1, T2, TResult](
-        cls,
-        func: Callable[[T1, T2], TResult],
-        result1: FlextResult[T1],
-        result2: FlextResult[T2],
-    ) -> FlextResult[TResult]:
-        """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
-        if result1.is_failure:
-            return FlextResult[TResult].fail(result1.error or "First argument failed")
-        if result2.is_failure:
-            return FlextResult[TResult].fail(result2.error or "Second argument failed")
-
-        return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
-
-    @classmethod
-    def applicative_lift3[T1, T2, T3, TResult](
-        cls,
-        func: Callable[[T1, T2, T3], TResult],
-        result1: FlextResult[T1],
-        result2: FlextResult[T2],
-        result3: FlextResult[T3],
-    ) -> FlextResult[TResult]:
-        """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
-
-        def lift_func(t1_t2: tuple[T1, T2], t3: T3) -> TResult:
-            return func(t1_t2[0], t1_t2[1], t3)
-
-        return cls.applicative_lift2(
-            lift_func,
-            result1 @ result2,
-            result3,
-        )
-
     # === NEW ADVANCED MONADIC OPERATORS FOR COMPLEXITY REDUCTION ===
 
     def when(self, condition: Callable[[T_co], bool]) -> FlextResult[T_co]:
@@ -1600,20 +1296,29 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             return FlextResult[U].fail(f"Conditional branching failed: {e}")
 
     @classmethod
-    def accumulate_errors[TAccum](
+    def accumulate_errors[TAccumulate](
         cls,
-        *results: FlextResult[TAccum],
-    ) -> FlextResult[list[TAccum]]:
-        """Accumulate all errors instead of early termination.
+        *results: FlextResult[TAccumulate],
+    ) -> FlextResult[list[TAccumulate]]:
+        """Accumulate all errors or return all successes."""
+        successes: list[TAccumulate] = []
+        errors: FlextTypes.StringList = []
 
-        Args:
-            *results: Results to accumulate
+        for result in results:
+            if result.is_success:
+                successes.append(result.unwrap())
+            else:
+                errors.append(result.error or "Unknown error")
 
-        Returns:
-            Success with all values if no failures, or failure with all error messages
+        if errors:
+            combined_error = "; ".join(errors)
+            return FlextResult[list[TAccumulate]].fail(
+                f"Multiple errors occurred: {combined_error}",
+                error_code="ACCUMULATED_ERRORS",
+                error_data={"error_count": len(errors), "errors": errors},
+            )
 
-        """
-        return FlextResult._Collections.accumulate_errors(*results)
+        return FlextResult[list[TAccumulate]].ok(successes)
 
     @classmethod
     def collect_all_errors[TCollect](
@@ -1641,25 +1346,37 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         return successes, errors
 
     @classmethod
-    def parallel_map[TParallel, UParallel](
+    def parallel_map[TPar, UPar](
         cls,
-        items: list[TParallel],
-        mapper: Callable[[TParallel], FlextResult[UParallel]],
+        items: list[TPar],
+        func: Callable[[TPar], FlextResult[UPar]],
         *,
         fail_fast: bool = True,
-    ) -> FlextResult[list[UParallel]]:
-        """Map function over items with parallel semantics.
+    ) -> FlextResult[list[UPar]]:
+        """Map function over items in parallel (conceptually)."""
+        results: list[FlextResult[UPar]] = [func(item) for item in items]
 
-        Args:
-            items: Items to process
-            mapper: Function to map each item
-            fail_fast: If True, fail on first error; if False, accumulate all errors
+        if fail_fast:
+            fast_successes: list[UPar] = []
+            for result in results:
+                if result.is_failure:
+                    error_msg = result.error or "Sequence operation failed"
+                    return FlextResult[list[UPar]].fail(error_msg)
+                fast_successes.append(result.unwrap())
+            return FlextResult[list[UPar]].ok(fast_successes)
 
-        Returns:
-            Result containing list of mapped values or accumulated errors
+        successes: list[UPar] = []
+        errors: FlextTypes.StringList = []
+        for result in results:
+            if result.is_failure:
+                error_msg = result.error or "Operation failed"
+                errors.append(error_msg)
+            else:
+                successes.append(result.unwrap())
 
-        """
-        return FlextResult._Collections.parallel_map(items, mapper, fail_fast=fail_fast)
+        if errors:
+            return FlextResult[list[UPar]].fail("; ".join(errors))
+        return FlextResult[list[UPar]].ok(successes)
 
     @classmethod
     def _sequence_typed[U](cls, results: list[FlextResult[U]]) -> FlextResult[list[U]]:
@@ -1802,7 +1519,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 
         def timeout_handler(_signum: int, _frame: object) -> None:
             msg = f"Operation timed out after {timeout_seconds} seconds"
-            raise _get_exceptions().TimeoutError(
+            raise FlextResult._get_exceptions().TimeoutError(
                 message=msg,
                 error_code=FlextConstants.Errors.TIMEOUT_ERROR,
             )
@@ -1915,23 +1632,149 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         except Exception as e:
             return FlextResult[TState].fail(f"State transition failed: {e}")
 
+    # =========================================================================
+    # UTILITY METHODS - Moved from nested classes to main class
+    # =========================================================================
+
+    @staticmethod
+    def _chain_results_list[TChain](
+        results: list[FlextResult[TChain]],
+    ) -> FlextResult[list[TChain]]:
+        """Chain multiple results into a single result containing a list."""
+        successful_results: list[TChain] = []
+        for result in results:
+            if not result.is_success:
+                return FlextResult[list[TChain]].fail(
+                    f"Chain failed at result: {result.error}",
+                )
+            successful_results.append(result.value)
+        return FlextResult[list[TChain]].ok(successful_results)
+
+    @staticmethod
+    def _combine_results[TCombine](
+        results: list[FlextResult[TCombine]],
+    ) -> FlextResult[list[TCombine]]:
+        """Combine multiple results into a single result."""
+        values: list[TCombine] = []
+        for result in results:
+            if result.is_failure:
+                return FlextResult[list[TCombine]].fail(
+                    result.error or "Combine operation failed",
+                )
+            values.append(result.value)
+        return FlextResult[list[TCombine]].ok(values)
+
+    @staticmethod
+    def all_success[Tobject](*results: FlextResult[Tobject]) -> bool:
+        """Check if all results are successful."""
+        if not results:
+            return True
+        return all(result.is_success for result in results)
+
+    @staticmethod
+    def any_success[Tobject](*results: FlextResult[Tobject]) -> bool:
+        """Check if any result is successful."""
+        return any(result.is_success for result in results) if results else False
+
     @classmethod
-    def validate_all[TValidate](
+    def _sequence_results[TSeq](
         cls,
-        value: TValidate,
-        *validators: Callable[[TValidate], FlextResult[None]],
-    ) -> FlextResult[TValidate]:
-        """Run all validators on a value, accumulating errors.
+        results: list[FlextResult[TSeq]],
+    ) -> FlextResult[list[TSeq]]:
+        """Sequence a list of results into a result of list."""
+        values: list[TSeq] = []
+        for result in results:
+            if result.is_failure:
+                return FlextResult[list[TSeq]].fail(
+                    result.error or "Sequence failed",
+                    error_code=result.error_code,
+                    error_data=result.error_data,
+                )
+            values.append(result.unwrap())
+        return FlextResult[list[TSeq]].ok(values)
 
-        Args:
-            value: Value to validate
-            *validators: Validation functions
+    @classmethod
+    def validate_all[TValidateAll](
+        cls,
+        value: TValidateAll,
+        *validators: Callable[[TValidateAll], FlextResult[None]],
+    ) -> FlextResult[TValidateAll]:
+        """Validate data with multiple validators."""
+        validation_results: list[FlextResult[None]] = [
+            validator(value) for validator in validators
+        ]
+        errors = [
+            result.error
+            for result in validation_results
+            if result.is_failure and result.error
+        ]
 
-        Returns:
-            Original value if all validations pass, accumulated errors otherwise
+        if errors:
+            combined_error = "; ".join(errors)
+            return FlextResult[TValidateAll].fail(
+                f"{FlextConstants.Messages.VALIDATION_FAILED}: {combined_error}",
+                error_code="VALIDATION_FAILED",
+                error_data={
+                    "validation_errors": errors,
+                    "error_count": len(errors),
+                },
+            )
 
-        """
-        return FlextResult._Collections.validate_all(value, *validators)
+        return FlextResult[TValidateAll].ok(value)
+
+    @staticmethod
+    def kleisli_compose[T_inner, U, V](
+        f: Callable[[T_inner], FlextResult[U]],
+        g: Callable[[U], FlextResult[V]],
+    ) -> Callable[[T_inner], FlextResult[V]]:
+        """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN."""
+
+        def composed(value: T_inner) -> FlextResult[V]:
+            return FlextResult[T_inner].ok(value).flat_map(f).flat_map(g)
+
+        return composed
+
+    @staticmethod
+    def applicative_lift2[T1, T2, TResult](
+        func: Callable[[T1, T2], TResult],
+        result1: FlextResult[T1],
+        result2: FlextResult[T2],
+    ) -> FlextResult[TResult]:
+        """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
+        if result1.is_failure:
+            return FlextResult[TResult].fail(
+                result1.error or FlextConstants.Errors.FIRST_ARG_FAILED_MSG,
+            )
+        if result2.is_failure:
+            return FlextResult[TResult].fail(
+                result2.error or FlextConstants.Errors.SECOND_ARG_FAILED_MSG,
+            )
+        return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
+
+    @staticmethod
+    def applicative_lift3[T1, T2, T3, TResult](
+        func: Callable[[T1, T2, T3], TResult],
+        result1: FlextResult[T1],
+        result2: FlextResult[T2],
+        result3: FlextResult[T3],
+    ) -> FlextResult[TResult]:
+        """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
+        if result1.is_failure:
+            return FlextResult[TResult].fail(
+                result1.error or FlextConstants.Errors.FIRST_ARG_FAILED_MSG,
+            )
+        if result2.is_failure:
+            return FlextResult[TResult].fail(
+                result2.error or FlextConstants.Errors.SECOND_ARG_FAILED_MSG,
+            )
+        if result3.is_failure:
+            return FlextResult[TResult].fail(
+                result3.error or "Third argument failed",
+            )
+
+        return FlextResult[TResult].ok(
+            func(result1.unwrap(), result2.unwrap(), result3.unwrap()),
+        )
 
     # Factory methods moved from nested Result class to main FlextResult class
     @staticmethod
@@ -1971,12 +1814,19 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             else:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
-                    raise _get_exceptions().ValidationError(
+                    raise FlextResult._get_exceptions().ValidationError(
                         message=msg,
                         error_code="VALIDATION_ERROR",
                     )
                 flat_callables.append(item)
         return flat_callables
+
+    class _Utils:
+        """Backwards-compatible wrapper for legacy ``FlextResult._Utils`` access."""
+
+        @staticmethod
+        def combine(*results: FlextResult[TUtil]) -> FlextResult[list[TUtil]]:
+            return FlextResult.combine(*results)
 
 
 # =============================================================================
@@ -1984,6 +1834,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 # =============================================================================
 
 
-__all__: FlextTypes.StringList = [
+__all__: list[str] = [
     "FlextResult",  # Main unified result class
 ]

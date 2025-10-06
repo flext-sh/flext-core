@@ -1,8 +1,8 @@
 # !/usr/bin/env python3
-"""01 - FlextResult Fundamentals: Complete Railway-Oriented Programming.
+"""01 - Flext.Result Fundamentals: Complete Railway-Oriented Programming.
 
 This example demonstrates the COMPLETE Flext.Result[T] API - the foundation
-for error handling across the entire FLEXT ecosystem. FlextResult provides
+for error handling across the entire FLEXT ecosystem. Flext.Result provides
 railway-oriented programming that eliminates exceptions in business logic.
 
 Key Concepts Demonstrated:
@@ -147,7 +147,7 @@ class ComprehensiveResultService:
         result = Flext.Result[str].ok("test").map(to_upper)
         print(f".map(to_upper): {result.unwrap()}")
 
-        # FlatMap: chain operations that return FlextResult
+        # FlatMap: chain operations that return Flext.Result
         result = (
             Flext.Result[str].ok("hello").flat_map(validate_length).flat_map(add_prefix)
         )
@@ -219,7 +219,7 @@ class ComprehensiveResultService:
     # ========== COLLECTION OPERATIONS ==========
 
     def demonstrate_collection_operations(self) -> None:
-        """Operations on collections of FlextResults."""
+        """Operations on collections of Flext.Result instances."""
         print("\n=== Collection Operations ===")
 
         results: list[Flext.Result[Flext.Types.Dict]] = [

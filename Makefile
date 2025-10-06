@@ -187,8 +187,7 @@ clean: ## Clean build artifacts and cruft
 	find . -type f -name "*.temp" -delete 2>/dev/null || true
 	find . -type f -name ".DS_Store" -delete 2>/dev/null || true
 
-	# Log files
-	find . -type f -name "*.log" -delete 2>/dev/null || true
+
 
 	# Editor files
 	find . -type f -name ".vscode/settings.json" -delete 2>/dev/null || true

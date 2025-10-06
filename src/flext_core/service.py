@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import (
     cast,
+    get_args,
     override,
 )
 
@@ -496,14 +497,21 @@ class FlextService[TDomainResult](
             if isinstance(result, FlextResult):
                 return result
             # Type assertion since we expect TDomainResult from the action
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))  # type: ignore[arg-type]
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
         # Execute false action if condition is not met
         if condition.false_action:
             result = condition.false_action(self)
             if isinstance(result, FlextResult):
                 return result
-            # Type assertion since we expect TDomainResult from the action
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))  # type: ignore[arg-type]
+            # Validate the type before casting
+            if not isinstance(
+                result,
+                get_args(TDomainResult)[0] if get_args(TDomainResult) else object,
+            ):
+                return FlextResult[TDomainResult].fail(
+                    f"Action returned unexpected type: {type(result).__name__}"
+                )
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
         return FlextResult[TDomainResult].fail("Condition not met")
 
     def execute_batch_with_request(

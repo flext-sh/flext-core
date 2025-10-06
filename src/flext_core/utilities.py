@@ -1603,6 +1603,8 @@ class FlextUtilities:
                 max_size: Maximum number of cached results
 
             """
+            # CqrsCache doesn't inherit from any class, so no super() call needed
+
             self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
             self._max_size = max_size
 
@@ -2114,7 +2116,7 @@ class FlextUtilities:
                     state["circuit_state"] = "OPEN"
                     return FlextResult[TCircuit].fail(
                         f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
-                        f"Error: {result.error}",
+                        f"Error: {result.error}"
                     )
 
                 return result
@@ -2509,16 +2511,18 @@ class FlextUtilities:
                         value=str(message)[:100]
                         if hasattr(message, "__str__")
                         else "unknown",
-                        validation_details={
-                            "pydantic_exception": str(e),
-                            "model_class": message.__class__.__name__,
-                            "revalidated": True,
-                        },
-                        context={
-                            "operation": operation,
-                            "message_type": type(message).__name__,
-                            "validation_type": "pydantic_revalidation",
-                            "revalidate_pydantic_messages": revalidate_pydantic_messages,
+                        metadata={
+                            "validation_details": {
+                                "pydantic_exception": str(e),
+                                "model_class": message.__class__.__name__,
+                                "revalidated": True,
+                            },
+                            "context": {
+                                "operation": operation,
+                                "message_type": type(message).__name__,
+                                "validation_type": "pydantic_revalidation",
+                                "revalidate_pydantic_messages": revalidate_pydantic_messages,
+                            },
                         },
                         correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
                     )
@@ -2546,11 +2550,13 @@ class FlextUtilities:
                     f"Invalid message type for {operation}: {type(message).__name__}",
                     expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                     actual_type=type(message).__name__,
-                    context={
-                        "operation": operation,
-                        "message_type": type(message).__name__,
-                        "validation_type": "serializable_check",
-                        "original_exception": str(exc),
+                    metadata={
+                        "context": {
+                            "operation": operation,
+                            "message_type": type(message).__name__,
+                            "validation_type": "serializable_check",
+                            "original_exception": str(exc),
+                        },
                     },
                     correlation_id=f"type_validation_{int(time.time() * 1000)}",
                 )
@@ -2583,10 +2589,12 @@ class FlextUtilities:
                     msg,
                     expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                     actual_type="NoneType",
-                    context={
-                        "operation": context_operation,
-                        "message_type": type(None),
-                        "validation_type": "serializable_check",
+                    metadata={
+                        "context": {
+                            "operation": context_operation,
+                            "message_type": type(None),
+                            "validation_type": "serializable_check",
+                        },
                     },
                     correlation_id=f"message_serialization_{int(time.time() * 1000)}",
                 )
@@ -2649,11 +2657,13 @@ class FlextUtilities:
                         msg,
                         expected_type="str, list, or tuple",
                         actual_type=type(slots).__name__,
-                        context={
-                            "operation": context_operation,
-                            "message_type": type(message).__name__,
-                            "validation_type": "serializable_check",
-                            "__slots__": repr(slots),
+                        metadata={
+                            "context": {
+                                "operation": context_operation,
+                                "message_type": type(message).__name__,
+                                "validation_type": "serializable_check",
+                                "__slots__": repr(slots),
+                            },
                         },
                         correlation_id=f"message_serialization_{int(time.time() * 1000)}",
                     )
@@ -2675,10 +2685,12 @@ class FlextUtilities:
                 msg,
                 expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                 actual_type=type(message).__name__,
-                context={
-                    "operation": context_operation,
-                    "message_type": type(message).__name__,
-                    "validation_type": "serializable_check",
+                metadata={
+                    "context": {
+                        "operation": context_operation,
+                        "message_type": type(message).__name__,
+                        "validation_type": "serializable_check",
+                    },
                 },
                 correlation_id=f"message_serialization_{int(time.time() * 1000)}",
             )
@@ -2864,14 +2876,19 @@ class FlextUtilities:
                 ```
 
             """
-            circuit_state = {"failures": 0, "last_failure": 0.0, "is_open": False}
+            circuit_state: dict[str, object] = {
+                "failures": 0,
+                "last_failure": 0.0,
+                "is_open": False,
+            }
 
             def circuit_breaker_composed(value: T) -> FlextResult[T]:
                 current_time = time.time()
 
                 # Check if circuit is open and if we should attempt recovery
                 if circuit_state["is_open"]:
-                    if current_time - circuit_state["last_failure"] < recovery_timeout:
+                    last_failure = cast("float", circuit_state["last_failure"])
+                    if current_time - last_failure < recovery_timeout:
                         return FlextResult[T].fail(
                             "Circuit breaker is open",
                             error_code="CIRCUIT_BREAKER_OPEN",
@@ -2889,11 +2906,12 @@ class FlextUtilities:
                     circuit_state["failures"] = 0
                     return result
                 # Increment failure count
-                circuit_state["failures"] += 1
+                failures = cast("int", circuit_state["failures"])
+                circuit_state["failures"] = failures + 1
                 circuit_state["last_failure"] = current_time
 
                 # Open circuit if threshold reached
-                if circuit_state["failures"] >= failure_threshold:
+                if failures >= failure_threshold:
                     circuit_state["is_open"] = True
 
                 return result
@@ -3100,10 +3118,10 @@ class FlextUtilities:
 
             # Validate logger
             try:
-                logger = FlextLogger(__name__)
+                FlextLogger(__name__)
                 validation_results["logger"] = {
                     "status": "available",
-                    "details": f"Logger level: {logger.level}",
+                    "details": "Logger initialized successfully",
                 }
             except Exception as e:
                 validation_results["logger"] = {"status": "error", "details": str(e)}
@@ -3151,7 +3169,7 @@ class FlextUtilities:
         """
         # Examples moved to examples/utilities_integration_examples.py
         # to maintain single-class-per-module pattern
-        examples = {
+        examples: dict[str, object] = {
             "moved_to_examples": "See examples/utilities_integration_examples.py for comprehensive integration examples",
             "available_components": [
                 "config",

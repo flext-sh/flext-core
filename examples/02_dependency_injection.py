@@ -28,7 +28,7 @@ import warnings
 from datetime import UTC, datetime
 from typing import Protocol, cast, runtime_checkable
 
-from flext_core import Flext
+from flext_core import Flext, FlextContainer, FlextLogger
 
 from .example_scenarios import ExampleScenarios
 
@@ -541,6 +541,7 @@ class ComprehensiveDIService(Flext.Service[User]):
     def __init__(self) -> None:
         """Initialize with automatic Flext infrastructure."""
         super().__init__()
+        self.logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios()
         self._dataset = self._scenarios.dataset()
         self._config_data = self._scenarios.config()
@@ -698,7 +699,7 @@ class ComprehensiveDIService(Flext.Service[User]):
                 if isinstance(cached_data, dict):
                     print(f"✅ Cache test: {cached_data.get('email')}")
 
-            stats = cache.get_stats()
+            stats = getattr(cache, "get_stats", dict)()
             print(
                 f"   Cache stats: {stats.get('current_size', 0)} items, "
                 f"{stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses"
@@ -823,7 +824,7 @@ class ComprehensiveDIService(Flext.Service[User]):
         """Show global container patterns."""
         print("\n=== Global Container Patterns ===")
 
-        manager = Flext.Container.ensure_global_manager()
+        manager = FlextContainer.get_global_instance()
 
         global_container = manager.get_or_create()
         print(f"Global container: {type(global_container).__name__}")
@@ -916,14 +917,16 @@ class ComprehensiveDIService(Flext.Service[User]):
         print("container.register('database', DatabaseService())")
 
 
-def demonstrate_flextcore_di_access() -> None:
+def demonstrate_flext_di_access() -> None:
     """Demonstrate Flext unified access to dependency injection.
 
     Shows how Flext provides convenient access to the DI container
     alongside other flext-core components.
     """
     print("\n" + "=" * 60)
-    print("FLEXTCORE UNIFIED DI ACCESS")
+    print("FLEXT UNIFIED DI ACCESS")
+    print("Modern pattern for dependency injection with Flext")
+    print("=" * 60)
     print("Modern pattern for dependency injection with Flext")
     print("=" * 60)
 
@@ -961,7 +964,7 @@ def demonstrate_flextcore_di_access() -> None:
         print("  ✅ Infrastructure initialized with DI:")
         print(f"     - Container: {type(infra_container).__name__}")
         print(f"     - Logger: {type(infra_logger).__name__}")
-        infra_services_result = infra_container.list_services()
+        infra_services_result = getattr(infra_container, "list_services", list)()
         infra_service_count = (
             len(infra_services_result.unwrap())
             if infra_services_result.is_success
@@ -998,7 +1001,7 @@ def main() -> None:
     # - Type safety and error handling covered
 
     # Modern Flext pattern demonstration
-    demonstrate_flextcore_di_access()
+    demonstrate_flext_di_access()
 
     print("\n" + "=" * 60)
     print("✅ FlextContainer dependency injection demonstration complete!")

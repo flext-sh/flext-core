@@ -426,7 +426,7 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        results: list[FlextResult[object]] = []
+        results: list[FlextResult[str]] = []
 
         def process_data(thread_id: int) -> None:
             result = processors.process("test_processor", f"data_{thread_id}")

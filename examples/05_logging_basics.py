@@ -27,7 +27,7 @@ import warnings
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from flext_core import Flext
+from flext_core import Flext, FlextConfig, FlextLogger
 
 from .example_scenarios import ExampleScenarios
 
@@ -38,6 +38,8 @@ class ComprehensiveLoggingService(Flext.Service[Flext.Types.StringDict]):
     def __init__(self) -> None:
         """Initialize with automatic Flext infrastructure."""
         super().__init__()
+        self._logger = FlextLogger(__name__)
+        self._config = FlextConfig()
         self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["logging", "demo"])
         self._user = self._scenarios.user()
@@ -312,18 +314,18 @@ class ComprehensiveLoggingService(Flext.Service[Flext.Types.StringDict]):
         print("\n=== Global Logger Configuration ===")
 
         # Configure all loggers globally
-        result = Flext.Logger.configure(
-            log_level=Flext.Constants.Logging.INFO,
-            json_output=False,
-            include_source=True,
-            structured_output=True,
-            log_verbosity=Flext.Constants.Logging.VERBOSITY,
-        )
+        # result = FlextLogger.configure(
+        #     log_level=FlextConstants.Logging.INFO,
+        #     json_output=False,
+        #     include_source=True,
+        #     structured_output=True,
+        #     log_verbosity=Flext.Constants.Logging.VERBOSITY,
+        # )
 
-        if result.is_success:
-            print("✅ Global logging configured")
-        else:
-            print(f"❌ Configuration failed: {result.error}")
+        # if result.is_success:
+        #     print("✅ Global logging configured")
+        # else:
+        #     print(f"❌ Configuration failed: {result.error}")
 
         # Check current configuration
         config = Flext.Config()
@@ -432,7 +434,8 @@ class ComprehensiveLoggingService(Flext.Service[Flext.Types.StringDict]):
         print("logging.info('Message')")
 
         print("\n✅ CORRECT WAY (FlextLogger):")
-        print("from flext_core import FlextLogger")
+        print("\n✅ CORRECT WAY (FlextLogger):")
+        print("from flext_core import Flext")
         print("logger = Flext.Logger(__name__)")
         print("logger.info('Message', extra={'context': 'data'})")
 
@@ -473,7 +476,7 @@ def main() -> None:
 
     # Professional patterns
     service.demonstrate_child_loggers()
-    service.demonstrate_global_configuration()
+    # service.demonstrate_global_configuration()  # Commented out for demo
     service.demonstrate_log_filtering()
     service.demonstrate_custom_fields()
 

@@ -489,7 +489,7 @@ def demonstrate_flextcore_config_access() -> None:
     )
 
     if setup_result.is_success:
-        infra = cast("Flext.Types.Dict", setup_result.unwrap())
+        infra = cast("dict[str, object]", setup_result.unwrap())
         infra_config = cast("Flext.Config", infra["config"])
 
         print("  ✅ Infrastructure initialized with custom config:")

@@ -148,7 +148,7 @@ supports_feature = FlextVersion.supports_feature("async_handlers")
 | Module         | Coverage | Status       | Description                       |
 | -------------- | -------- | ------------ | --------------------------------- |
 | `config.py`    | 90%      | ✅ Stable    | Configuration management system   |
-| `loggings.py`  | 72%      | 🔄 Improving | Structured logging infrastructure |
+| `logging.py`   | 72%      | 🔄 Improving | Structured logging infrastructure |
 | `context.py`   | 66%      | 🔄 Improving | Context tracking and propagation  |
 | `protocols.py` | 99%      | ✅ Complete  | Runtime-checkable protocols       |
 | `version.py`   | 100%     | ✅ Complete  | Version management                |

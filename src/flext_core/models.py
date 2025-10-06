@@ -82,7 +82,6 @@ if TYPE_CHECKING:
     from flext_core.protocols import FlextProtocols
 
 
-
 class FlextModels:
     """Domain-Driven Design patterns for FLEXT ecosystem modeling.
 
@@ -247,6 +246,42 @@ class FlextModels:
             FlextModels._config_cache = FlextConfig()
         return FlextModels._config_cache
 
+    @classmethod
+    def get_timeout_seconds(cls) -> int:
+        """Get default timeout seconds from config."""
+        return cls._get_config().timeout_seconds
+
+    @classmethod
+    def get_max_retry_attempts(cls) -> int:
+        """Get default max retry attempts from config."""
+        return cls._get_config().max_retry_attempts
+
+    @classmethod
+    def get_max_workers(cls) -> int:
+        """Get default max workers from config."""
+        return cls._get_config().max_workers
+
+    @classmethod
+    def get_batch_size(cls) -> int:
+        """Get default batch size from config."""
+        return cls._get_config().batch_size
+
+    @classmethod
+    def get_ttl_seconds(cls) -> int:
+        """Get default TTL seconds (10x timeout)."""
+        return cls.get_timeout_seconds() * 10
+
+    # Config-driven fields (pull from global FlextConfig)
+    TimeoutField = Annotated[
+        int,
+        Field(default_factory=get_timeout_seconds),
+    ]
+    RetryField = Annotated[
+        int,
+        Field(default_factory=get_max_retry_attempts),
+    ]
+    MaxWorkersField = Annotated[int, Field(default_factory=get_max_workers)]
+
     class _BaseConfigDict:
         """Shared Pydantic 2.11 ConfigDict patterns for FlextModels classes.
 
@@ -318,19 +353,6 @@ class FlextModels:
     # Timestamp fields
     TimestampField = Annotated[
         datetime, Field(default_factory=lambda: datetime.now(UTC))
-    ]
-
-    # Config-driven fields (pull from global FlextConfig)
-    TimeoutField = Annotated[
-        int,
-        Field(default_factory=lambda: int(FlextModels._get_config().timeout_seconds)),
-    ]
-    RetryField = Annotated[
-        int,
-        Field(default_factory=lambda: FlextModels._get_config().max_retry_attempts),
-    ]
-    MaxWorkersField = Annotated[
-        int, Field(default_factory=lambda: FlextModels._get_config().max_workers)
     ]
 
     # Field-level serialization optimizations using Annotated types
@@ -421,7 +443,11 @@ class FlextModels:
 
         timeout_seconds: Annotated[
             int,
-            Field(default_factory=lambda: int(FlextModels._get_config().timeout_seconds)),
+            Field(
+                default_factory=lambda: __import__("flext_core.config")
+                .FlextConfig()
+                .timeout_seconds
+            ),
         ]
 
         @classmethod
@@ -444,7 +470,9 @@ class FlextModels:
 
             """
             # Use lazy-loaded config to avoid circular imports
-            config = FlextModels._get_config()
+            from flext_core.config import FlextConfig
+
+            config = FlextConfig()
 
             # Demonstrate FlextConfig("parameter") callable usage
             timeout_value = config("timeout_seconds")
@@ -479,7 +507,7 @@ class FlextModels:
 
         max_retry_attempts: Annotated[
             int,
-            Field(default_factory=lambda: FlextModels._get_config().max_retry_attempts),
+            Field(default_factory=FlextModels.get_max_retry_attempts),
         ]
         retry_policy: FlextTypes.Reliability.RetryPolicy = Field(default_factory=dict)
 
@@ -503,7 +531,9 @@ class FlextModels:
 
             """
             # Use lazy-loaded config to avoid circular imports
-            config = FlextModels._get_config()
+            from flext_core.config import FlextConfig
+
+            config = FlextConfig()
 
             # Demonstrate FlextConfig("parameter") callable usage
             max_retries = config("max_retry_attempts")
@@ -543,7 +573,21 @@ class FlextModels:
         Used by 17+ models in the codebase. This is the recommended base class for all FLEXT models.
         """
 
-        model_config = _BaseConfigDict.ARBITRARY
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            serialize_by_alias=True,
+            populate_by_name=True,
+            str_strip_whitespace=True,
+            str_to_lower=False,
+            str_to_upper=False,
+            defer_build=False,
+        )
 
     # =============================================================================
     # METACLASSES - Foundation metaclasses for advanced model patterns
@@ -578,7 +622,16 @@ class FlextModels:
         Enhanced with comprehensive Pydantic 2.11 features.
         """
 
-        model_config = _BaseConfigDict.STRICT
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            use_enum_values=True,
+            str_strip_whitespace=True,
+            str_to_lower=False,
+            str_to_upper=False,
+            defer_build=False,
+        )
 
     class FrozenStrictModel(BaseModel):
         """Immutable pattern: frozen with extra fields forbidden.
@@ -586,7 +639,17 @@ class FlextModels:
         Used by value objects and configuration models.
         """
 
-        model_config = _BaseConfigDict.FROZEN
+        model_config = ConfigDict(
+            validate_assignment=False,
+            validate_return=True,
+            validate_default=True,
+            use_enum_values=True,
+            str_strip_whitespace=True,
+            str_to_lower=False,
+            str_to_upper=False,
+            defer_build=False,
+            frozen=True,
+        )
 
     # =========================================================================
     # UTILITY TYPES - Centralized type definitions
@@ -964,7 +1027,7 @@ class FlextModels:
                 str_value: str
                 if isinstance(value, str):
                     str_value = value
-                elif isinstance(value, "FlextProtocols.Foundation.HasValue"):
+                elif hasattr(value, "value"):
                     # Handle enum-like objects
                     str_value = str(value.value)
                 else:
@@ -1275,9 +1338,10 @@ class FlextModels:
         key: str
         value: object
         ttl_seconds: int = Field(
-            default_factory=lambda: int(
-                FlextModels._get_config().timeout_seconds * 10
-            )  # TTL = 10x timeout
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
+            * 10
         )
         expires_at: datetime | None = None
 
@@ -1294,7 +1358,21 @@ class FlextModels:
         handlers: dict[str, FlextTypes.StringList] = Field(default_factory=dict)
         middlewares: FlextTypes.StringList = Field(default_factory=list)
 
-        model_config = _BaseConfigDict.ARBITRARY
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            serialize_by_alias=True,
+            populate_by_name=True,
+            str_strip_whitespace=True,
+            str_to_lower=False,
+            str_to_upper=False,
+            defer_build=False,
+        )
 
     class Payload[T](ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Enhanced payload model with computed field.
@@ -1445,7 +1523,9 @@ class FlextModels:
         failure_count: int = 0
         failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD
         timeout_seconds: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         last_failure: datetime | None = None
 
@@ -1454,7 +1534,9 @@ class FlextModels:
 
         attempt: int = 0
         max_attempts: int = Field(
-            default_factory=lambda: FlextModels._get_config().max_retry_attempts
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_retry_attempts
         )
         delay_seconds: float = FlextConstants.Performance.DEFAULT_DELAY_SECONDS
         backoff_multiplier: float = (
@@ -1790,10 +1872,14 @@ class FlextModels:
         data: FlextTypes.Dict = Field(default_factory=dict)
         context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         retry_attempts: int = Field(
-            default_factory=lambda: FlextModels._get_config().max_retry_attempts
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_retry_attempts
         )
         enable_validation: bool = True
 
@@ -1851,10 +1937,20 @@ class FlextModels:
     class BatchProcessingConfig(StrictArbitraryTypesModel):
         """Enhanced batch processing configuration."""
 
-        batch_size: int = Field(default_factory=lambda: FlextModels._get_config().batch_size)
-        max_workers: int = Field(default_factory=lambda: _get_config().max_workers)
+        batch_size: int = Field(
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .batch_size
+        )
+        max_workers: int = Field(
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_workers
+        )
         timeout_per_item: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         continue_on_error: bool = True
         data_items: Annotated[FlextTypes.List, Field(default_factory=list)]
@@ -1911,11 +2007,15 @@ class FlextModels:
         input_data: FlextTypes.Dict = Field(default_factory=dict)
         execution_context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         retry_on_failure: bool = True
         max_retries: int = Field(
-            default_factory=lambda: FlextModels._get_config().max_retry_attempts
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_retry_attempts
         )
         fallback_handlers: FlextTypes.StringList = Field(default_factory=list)
 
@@ -1943,7 +2043,10 @@ class FlextModels:
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_STOP_ON_ERROR
         )
         max_parallel: int = Field(
-            gt=0, default_factory=lambda: _get_config().max_workers
+            gt=0,
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_workers,
         )
 
         @field_validator("name")
@@ -2061,7 +2164,9 @@ class FlextModels:
         parameters: FlextTypes.Dict = Field(default_factory=dict)
         context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         execution: bool = False
         enable_validation: bool = True
@@ -2122,9 +2227,15 @@ class FlextModels:
         operations: Annotated[list[FlextTypes.Dict], Field(default_factory=list)]
         parallel_execution: bool = False
         stop_on_error: bool = True
-        batch_size: int = Field(default_factory=lambda: FlextModels._get_config().batch_size)
+        batch_size: int = Field(
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .batch_size
+        )
         timeout_per_operation: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
 
         @field_validator("operations")
@@ -2223,7 +2334,7 @@ class FlextModels:
         name: str
         operation_callable: object
         arguments: object = None
-        retry_config: FlextModels.RetryConfiguration | None = None
+        retry_config: object | None = None
         validate_before_execution: bool = True
 
     class OperationExecutionRequest(ArbitraryTypesModel):
@@ -2234,7 +2345,9 @@ class FlextModels:
         arguments: FlextTypes.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         retry_config: FlextTypes.Dict = Field(default_factory=dict)
 
@@ -2279,7 +2392,9 @@ class FlextModels:
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
-            default_factory=lambda: FlextModels._get_config().max_retry_attempts
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_retry_attempts
         )
         initial_delay_seconds: float = Field(
             default=FlextConstants.Performance.DEFAULT_INITIAL_DELAY_SECONDS, gt=0
@@ -2351,10 +2466,14 @@ class FlextModels:
             default=FlextConstants.Performance.DEFAULT_RECOVERY_TIMEOUT
         )
         half_open_max_calls: int = Field(
-            default_factory=lambda: FlextModels._get_config().max_retry_attempts
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .max_retry_attempts
         )
         sliding_window_size: int = Field(
-            default_factory=lambda: _get_config().batch_size
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .batch_size
         )
         minimum_throughput: int = Field(
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_MINIMUM_THROUGHPUT,
@@ -2499,7 +2618,9 @@ class FlextModels:
         resource_id: str | None = None
         action: Literal["acquire", "release", "check", "list[object]"] = "acquire"
         timeout_seconds: int = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds)
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds
         )
         metadata: FlextTypes.Dict = Field(default_factory=dict)
 
@@ -2953,7 +3074,7 @@ class FlextModels:
             *,
             by_alias: bool = True,
             ref_template: str = "#/$defs/{model}",
-            mode: str = FlextConstants.Cqrs.ModeLiteral.VALIDATION,
+            mode: Literal["validation", "serialization"] = "validation",
         ) -> FlextTypes.Dict:
             """Get optimized JSON schema for a model.
 
@@ -3477,11 +3598,12 @@ class FlextModels:
 
             """
             # Use config value if not provided
-            timeout_ms = (
-                max_validation_time_ms
-                if max_validation_time_ms is not None
-                else _get_config().validation_timeout_ms
-            )
+            if max_validation_time_ms is not None:
+                timeout_ms = max_validation_time_ms
+            else:
+                from flext_core.config import FlextConfig
+
+                timeout_ms = FlextConfig().validation_timeout_ms
             start_time = time_module.time()
 
             try:
@@ -3538,7 +3660,7 @@ class FlextModels:
                 )
             # Accumulate all errors
             validated_models = []
-            all_errors = []
+            all_errors: list[str] = []
 
             for model in models:
                 validation_result = FlextResult.validate_all(model, *validators)
@@ -3796,8 +3918,8 @@ class FlextModels:
             """Convert pagination to Pagination instance."""
             if isinstance(v, dict):
                 # Extract page and size from dict
-                page = v.get("page", 1)
-                size = v.get("size", 20)
+                page: object = v.get("page", 1)
+                size: object = v.get("size", 20)
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -3824,7 +3946,7 @@ class FlextModels:
             """Validate and create Query from payload."""
             try:
                 # Extract the required fields with proper typing
-                filters = query_payload.get("filters", {})
+                filters: object = query_payload.get("filters", {})
                 pagination_data = query_payload.get("pagination", {})
                 pagination = (
                     pagination_data
@@ -3930,7 +4052,9 @@ class FlextModels:
             default=None, description="Request body"
         )
         timeout: float = Field(
-            default_factory=lambda: int(FlextModels._get_config().timeout_seconds),
+            default_factory=lambda: __import__("flext_core.config")
+            .FlextConfig()
+            .timeout_seconds,
             ge=0.0,
             le=300.0,
             description="Request timeout in seconds",
@@ -4011,7 +4135,9 @@ class FlextModels:
                 raise FlextExceptions.ValidationError(
                     error_msg,
                     field="body",
-                    validation_details=f"Method {self.method} should not have body",
+                    metadata={
+                        "validation_details": f"Method {self.method} should not have body"
+                    },
                 )
 
             # Methods with body should have Content-Type header
@@ -4151,7 +4277,9 @@ class FlextModels:
                 raise FlextExceptions.ValidationError(
                     error_msg,
                     field="body",
-                    validation_details="Status 204 No Content should not have body",
+                    metadata={
+                        "validation_details": "Status 204 No Content should not have body"
+                    },
                 )
 
             # Validate elapsed time
@@ -4177,6 +4305,19 @@ class FlextModels:
         backoff_multiplier: float = 1.0
         exponential_backoff: bool = False
 
+
+# Config-driven fields (pull from global FlextConfig)
+FlextModels.TimeoutField = Annotated[
+    int,
+    Field(default_factory=FlextModels.get_timeout_seconds),
+]
+FlextModels.RetryField = Annotated[
+    int,
+    Field(default_factory=FlextModels.get_max_retry_attempts),
+]
+FlextModels.MaxWorkersField = Annotated[
+    int, Field(default_factory=FlextModels.get_max_workers)
+]
 
 __all__ = [
     "FlextModels",

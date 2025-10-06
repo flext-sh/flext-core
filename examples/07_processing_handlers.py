@@ -39,6 +39,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
     def __init__(self) -> None:
         """Initialize with automatic Flext infrastructure."""
         super().__init__()
+        self._logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios()
         self._user = self._scenarios.user()
         self._order = self._scenarios.realistic_data()["order"]
@@ -136,7 +137,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     return FlextResult[str].fail("Request must be a dictionary")
 
                 request_dict = cast("dict[str, object]", request)
-                token_value: str | None = request_dict.get("token", None)
+                token_value = cast("str | None", request_dict.get("token", None))
                 if not token_value:
                     return FlextResult[str].fail("Authentication required")
 

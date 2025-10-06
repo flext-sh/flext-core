@@ -27,16 +27,11 @@ from typing import (
     override,
 )
 
-from flext_core.exceptions import FlextExceptions
+import structlog
+import structlog.contextvars
+
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# Import structlog for context integration
-try:
-    import structlog.contextvars
-except ImportError:
-    # Fallback if structlog is not available
-    structlog = None
 
 
 class FlextContext:
@@ -248,12 +243,21 @@ class FlextContext:
         if not self._active:
             return
 
+        # Validate key type; allow empty keys for compatibility with validation flow
+        if not isinstance(key, str):
+            msg = "Key must be a string"
+            raise TypeError(msg)
+
+        if not key:
+            structlog.get_logger(__name__).warning(
+                "Context key is empty; validation will fail",
+                scope=scope,
+            )
+
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
             msg = "Value must be serializable"
-            raise FlextExceptions.TypeError(
-                message=msg,
-            )
+            raise TypeError(msg)
 
         with self._lock:
             # Ensure the scope exists in _scopes
@@ -509,7 +513,7 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            if all(isinstance(v, dict) for v in data.values()):  # type: ignore[arg-type]
+            if all(isinstance(v, dict) for v in data.values()):
                 # New scoped format
                 context._scopes = data
             else:
