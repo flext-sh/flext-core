@@ -97,11 +97,14 @@ class TestFlextProtocols:
         from flext_core import FlextResult
 
         class UserRepository:
-            def find_by_id(self, entity_id: str) -> FlextResult[dict]:
-                return FlextResult[dict].ok({"id": entity_id, "name": "Test"})
+            def find_by_id(self, entity_id: str) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({
+                    "id": entity_id,
+                    "name": "Test",
+                })
 
-            def save(self, entity: dict) -> FlextResult[dict]:
-                return FlextResult[dict].ok(entity)
+            def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok(entity)
 
             def delete(self, entity_id: str) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
@@ -122,8 +125,8 @@ class TestFlextProtocols:
         from flext_core import FlextResult
 
         class UserService:
-            def execute(self, **kwargs: object) -> FlextResult[dict]:
-                return FlextResult[dict].ok({"status": "success"})
+            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({"status": "success"})
 
         service = UserService()
         assert hasattr(service, "execute")
@@ -180,8 +183,10 @@ class TestFlextProtocols:
         from flext_core import FlextResult
 
         class CreateUserHandler:
-            def handle(self, command: dict) -> FlextResult[dict]:
-                return FlextResult[dict].ok({"user_id": "123"})
+            def handle(
+                self, command: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({"user_id": "123"})
 
         handler = CreateUserHandler()
         assert hasattr(handler, "handle")
@@ -268,11 +273,13 @@ class TestFlextProtocols:
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self, **kwargs: object) -> FlextResult[dict]:
-                return FlextResult[dict].ok({})
+            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({})
 
-            def handle(self, command: dict) -> FlextResult[dict]:
-                return FlextResult[dict].ok({})
+            def handle(
+                self, command: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({})
 
         service = AdvancedService()
         # Should implement both Service and Handler protocols

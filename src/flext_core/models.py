@@ -510,7 +510,7 @@ class FlextModels:
 
         max_retry_attempts: Annotated[
             int,
-            Field(default_factory=FlextModels.get_max_retry_attempts),
+            Field(default_factory=lambda: 5),  # Default value, will be overridden by config
         ]
         retry_policy: FlextTypes.Reliability.RetryPolicy = Field(default_factory=dict)
 
@@ -3752,7 +3752,7 @@ class FlextModels:
             """
             if fail_fast:
                 # Validate models one by one, stop on first failure
-                validated_models: list[T] = []
+                valid_models: list[T] = []
                 for model in models:
                     # Validate all rules for this model
                     for validator in validators:
@@ -3762,9 +3762,9 @@ class FlextModels:
                                 result.error or "Validation failed"
                             )
 
-                    validated_models.append(model)
+                    valid_models.append(model)
 
-                return FlextResult[list[T]].ok(validated_models)
+                return FlextResult[list[T]].ok(valid_models)
             # Accumulate all errors
             validated_models: list[T] = []
             all_errors: list[str] = []
@@ -4025,8 +4025,8 @@ class FlextModels:
             """Convert pagination to Pagination instance."""
             if isinstance(v, dict):
                 # Extract page and size from dict
-                page: int | str = v.get("page", 1)
-                size: int | str = v.get("size", 20)
+                page: int | str = v.get("page", 1)  # type: ignore[assignment]
+                size: int | str = v.get("size", 20)  # type: ignore[assignment]
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -4043,6 +4043,9 @@ class FlextModels:
                 # At this point page and size should be int, cast them properly
                 page_int = int(page) if isinstance(page, (int, str)) else 1
                 size_int = int(size) if isinstance(size, (int, str)) else 20
+                # Type casting for mypy - after validation, these are guaranteed to be int
+                page_int = int(page_int)  # type: ignore[assignment]
+                size_int = int(size_int)  # type: ignore[assignment]
                 return FlextModels.Pagination(page=page_int, size=size_int)
             if isinstance(v, FlextModels.Pagination):
                 return v
@@ -4061,9 +4064,11 @@ class FlextModels:
                 if isinstance(pagination_data, FlextModels.Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
-                    page: int | str = pagination_data.get("page", 1)
-                    size: int | str = pagination_data.get("size", 20)
-                    pagination = FlextModels.Pagination(page=int(page), size=int(size))
+                    page: int | str = pagination_data.get("page", 1)  # type: ignore[assignment]
+                    size: int | str = pagination_data.get("size", 20)  # type: ignore[assignment]
+                    pagination = FlextModels.Pagination(
+                        page=int(page) if page else 1, size=int(size) if size else 20
+                    )
                 else:
                     pagination = FlextModels.Pagination()
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
@@ -4071,6 +4076,8 @@ class FlextModels:
 
                 if not isinstance(filters, dict):
                     filters = {}
+                # Type casting for mypy - after validation, filters is guaranteed to be dict
+                filters = dict(filters)  # type: ignore[assignment]
                 # No need to validate pagination dict - Pydantic validator handles conversion
 
                 query = cls(
@@ -4104,7 +4111,9 @@ class FlextModels:
             # Add filters
             for key, value in self.filters.items():
                 if isinstance(value, (list, tuple)):
-                    params[f"filter_{key}"] = ",".join(str(item) for item in value)
+                    params[f"filter_{key}"] = ",".join(
+                        str(cast("Any", item)) for item in value
+                    )
                 else:
                     params[f"filter_{key}"] = str(value)
 

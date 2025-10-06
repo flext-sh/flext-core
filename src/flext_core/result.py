@@ -1360,7 +1360,7 @@ class FlextResult[T_co]:
             if io_container is not sentinel:
                 # Unwrap the IO container to get the actual value
                 # Cast is safe: IOSuccess container holds T-typed value
-                value: T = cast("T", io_container._inner_value)
+                value: T = cast("T", io_container._inner_value)  # noqa: SLF001
                 return cls.ok(value)
 
         # It's IOFailure - extract the error
@@ -1368,7 +1368,7 @@ class FlextResult[T_co]:
             # Extract the failure IO container
             io_container = io_result.failure()
             # Unwrap the IO container to get the error value
-            error_value = io_container._inner_value
+            error_value = io_container._inner_value  # noqa: SLF001
             error_msg = str(error_value) if error_value else "IO operation failed"
             return cls.fail(error_msg)
 

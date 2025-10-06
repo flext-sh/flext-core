@@ -1194,13 +1194,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-
-                    def _execute_validator() -> object:
-                        return validator(service)
-
-                    validation_result: FlextResult[object] = FlextResult[
-                        object
-                    ].from_callable(_execute_validator)
+                    validation_result: FlextResult[object] = validator(service)
                     if validation_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validation_result.error}"
