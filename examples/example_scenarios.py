@@ -14,7 +14,7 @@ from functools import lru_cache
 from typing import Final, TypedDict, cast
 
 from flext_core import Flext
-from flext_tests import FlextTestsMatchers
+from flext_tests.matchers import FlextTestsMatchers
 
 
 # TypedDict definitions for type-safe scenario data

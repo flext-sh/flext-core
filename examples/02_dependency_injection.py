@@ -656,8 +656,7 @@ class ComprehensiveDIService(Flext.Service[User]):
     def get_service_stats(self) -> Flext.Types.Dict:
         """Get comprehensive service statistics."""
         service_count = len(
-            set(self.container._services.keys())
-            | set(self.container._factories.keys())
+            set(self.container._services.keys()) | set(self.container._factories.keys())
         )
         return {
             "container_service_count": service_count,
@@ -685,8 +684,7 @@ class ComprehensiveDIService(Flext.Service[User]):
         print(f"Has database: {has_db}, Has cache: {has_cache}")
 
         service_count = len(
-            set(self.container._services.keys())
-            | set(self.container._factories.keys())
+            set(self.container._services.keys()) | set(self.container._factories.keys())
         )
         print(f"Service count: {service_count}")
 
@@ -838,8 +836,7 @@ class ComprehensiveDIService(Flext.Service[User]):
 
         # Build info manually since get_info() is removed
         service_count = len(
-            set(self.container._services.keys())
-            | set(self.container._factories.keys())
+            set(self.container._services.keys()) | set(self.container._factories.keys())
         )
         info = {
             "service_count": service_count,

@@ -301,7 +301,9 @@ class FlextProcessors(FlextMixins.Service):
                 result = processor(processed_data)
                 if isinstance(result, FlextResult):
                     if result.is_success:
-                        self._cache[cache_key] = (result.value, time.time())
+                        # Type: result is FlextResult[object] based on return type annotation
+                        result_value: object = result.value
+                        self._cache[cache_key] = (result_value, time.time())
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
                         )
@@ -322,7 +324,11 @@ class FlextProcessors(FlextMixins.Service):
                             "error": result.error,
                             "data_hash": hash(str(data)),
                         })
-                    return result
+                    # Type: result is FlextResult[object] based on function signature
+                    typed_result: FlextResult[object] = cast(
+                        "FlextResult[object]", result
+                    )
+                    return typed_result
 
                 # Wrap non-FlextResult in FlextResult
                 result_wrapped = FlextResult[object].ok(result)
@@ -416,14 +422,16 @@ class FlextProcessors(FlextMixins.Service):
             FlextResult[FlextTypes.List]: List of processed results
 
         """
-        results = []
+        results: FlextTypes.List = []
         for data in data_list:
             result = self.process(name, data)
             if result.is_failure:
                 return FlextResult[FlextTypes.List].fail(
                     f"Batch processing failed: {result.error}",
                 )
-            results.append(result.value)
+            # Type: result is FlextResult[object], result.value is object
+            result_value: object = result.value
+            results.append(result_value)
 
         return FlextResult[FlextTypes.List].ok(results)
 
@@ -507,9 +515,6 @@ class FlextProcessors(FlextMixins.Service):
             FlextResult[None]: Success if valid, failure otherwise
 
         """
-        if not isinstance(self._processor_config, dict):
-            return FlextResult[None].fail("Configuration must be a dictionary")
-
         if self._cache_ttl < FlextConstants.Core.ZERO:
             return FlextResult[None].fail("Cache TTL must be non-negative")
 
@@ -593,6 +598,7 @@ class FlextProcessors(FlextMixins.Service):
         @override
         def __init__(self) -> None:
             """Initialize handler registry."""
+            super().__init__()
             self._handlers: FlextTypes.Dict = {}
 
         def register(
@@ -876,6 +882,7 @@ class FlextProcessors(FlextMixins.Service):
         @override
         def __init__(self) -> None:
             """Initialize processing pipeline."""
+            super().__init__()
             self._steps: list[
                 Callable[[object], FlextResult[object] | object]
                 | FlextTypes.Dict
@@ -1192,6 +1199,7 @@ class FlextProcessors(FlextMixins.Service):
             @override
             def __init__(self, name: str) -> None:
                 """Initialize basic handler with name."""
+                super().__init__()
                 self.name = name
 
             @property
@@ -1222,6 +1230,7 @@ class FlextProcessors(FlextMixins.Service):
             @override
             def __init__(self) -> None:
                 """Initialize handler registry."""
+                super().__init__()
                 self._handlers: FlextTypes.Dict = {}
 
             def register(self, name: str, handler: object) -> None:
@@ -1255,6 +1264,7 @@ class FlextProcessors(FlextMixins.Service):
             @override
             def __init__(self, name: str) -> None:
                 """Initialize handler chain with name."""
+                super().__init__()
                 self.name = name
                 self._handlers: FlextTypes.List = []
 
@@ -1302,6 +1312,7 @@ class FlextProcessors(FlextMixins.Service):
             @override
             def __init__(self, name: str) -> None:
                 """Initialize chainable handler with name."""
+                super().__init__()
                 self.name = name
 
             def handle(self, request: object) -> FlextResult[object]:

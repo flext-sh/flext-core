@@ -145,11 +145,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 super().__init__(config=config)
                 self._users = user_store
                 self._events = event_store
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, message: CreateUserCommand) -> FlextResult[str]:
                 """Handle user creation command."""
-                self._logger.info(f"Creating user {message.user_id}")
+                self.logger.info(f"Creating user {message.user_id}")
 
                 # Validation
                 if message.user_id in self._users:
@@ -201,11 +201,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, message: UpdateUserCommand) -> FlextResult[None]:
                 """Handle user update command."""
-                self._logger.info(f"Updating user {message.user_id}")
+                self.logger.info(f"Updating user {message.user_id}")
 
                 if message.user_id not in self._users:
                     return FlextResult[None].fail(
@@ -291,11 +291,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, message: GetUserQuery) -> FlextResult[User]:
                 """Handle get user query."""
-                self._logger.info(f"Getting user {message.user_id}")
+                self.logger.info(f"Getting user {message.user_id}")
 
                 user = self._users.get(message.user_id)
                 if not user:
@@ -324,11 +324,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, message: ListUsersQuery) -> FlextResult[list[User]]:
                 """Handle list users query."""
-                self._logger.info(
+                self.logger.info(
                     f"Listing users (limit: {message.limit}, offset: {message.offset})",
                 )
 
@@ -478,14 +478,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     metadata={"description": "Demonstrates error handling patterns"},
                 )
                 super().__init__(config=config)
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(
                 self,
                 message: FlextTypes.Dict,
             ) -> FlextResult[FlextTypes.Dict]:
                 """Handle validation with comprehensive error handling."""
-                self._logger.info("Processing validation request")
+                self.logger.info("Processing validation request")
 
                 # Required field validation
                 if not message.get("id"):

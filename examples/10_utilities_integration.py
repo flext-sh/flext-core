@@ -245,11 +245,11 @@ class IntegratedService:
         """
         super().__init__()
         # MANUAL setup - compare with FlextMixins.Service automatic inheritance:
-        self._config = FlextConfig()                    # vs inherited self.config
-        self._container = FlextContainer.get_global()   # vs inherited self.container
-        self._bus = FlextBus()                          # vs inherited self.bus
-        self._dispatcher = FlextDispatcher()            # vs inherited self.dispatcher
-        self._logger = FlextLogger(__name__)            # vs inherited self.logger
+        self._config = FlextConfig()  # vs inherited self.config
+        self._container = FlextContainer.get_global()  # vs inherited self.container
+        self._bus = FlextBus()  # vs inherited self.bus
+        self._dispatcher = FlextDispatcher()  # vs inherited self.dispatcher
+        self.logger = FlextLogger(__name__)  # vs inherited self.logger
 
         # Register this service in the container
         self._container.register("integrated_service", self)
@@ -257,7 +257,7 @@ class IntegratedService:
     def process_request(self, request: dict) -> FlextResult[FlextTypes.Dict]:
         """Process request with full flext-core integration."""
         # Log request with structured logging
-        self._logger.info(
+        self.logger.info(
             "Processing request",
             extra={
                 "request_size": len(str(request)),
@@ -277,7 +277,7 @@ class IntegratedService:
         }
         event_result = self._bus.publish_event(event)
         if event_result.is_failure:
-            self._logger.warning(
+            self.logger.warning(
                 "Failed to publish processing event",
                 extra={"error": event_result.error},
             )
@@ -323,7 +323,7 @@ class IntegratedService:
 
 def demonstrate_new_flextresult_methods() -> None:
     """Demonstrate the 5 new FlextResult methods in utilities integration context.
-    
+
     Shows how the new v0.9.9+ methods work with complete utilities integration:
     - from_callable: Safe utility operations
     - flow_through: Utility pipeline composition
@@ -342,7 +342,7 @@ def demonstrate_new_flextresult_methods() -> None:
     def risky_config_operation() -> dict:
         """Configuration operation that might raise exceptions."""
         config = FlextConfig()
-        if not hasattr(config, 'batch_size'):
+        if not hasattr(config, "batch_size"):
             msg = "Configuration incomplete"
             raise FlextExceptions.ConfigurationError(msg)
         return {
@@ -386,7 +386,9 @@ def demonstrate_new_flextresult_methods() -> None:
         request_context = {"id": data["id"], "timestamp": "now"}
         reg_result = container.register(f"request_{data['id']}", request_context)
         if reg_result.is_failure:
-            return FlextResult[dict].fail(f"Container registration failed: {reg_result.error}")
+            return FlextResult[dict].fail(
+                f"Container registration failed: {reg_result.error}"
+            )
         enriched = {**data, "container_registered": True}
         return FlextResult[dict].ok(enriched)
 
@@ -400,7 +402,9 @@ def demonstrate_new_flextresult_methods() -> None:
         }
         pub_result = bus.publish_event(event)
         if pub_result.is_failure:
-            return FlextResult[dict].fail(f"Event publishing failed: {pub_result.error}")
+            return FlextResult[dict].fail(
+                f"Event publishing failed: {pub_result.error}"
+            )
         enriched = {**data, "event_published": True}
         return FlextResult[dict].ok(enriched)
 
@@ -421,7 +425,9 @@ def demonstrate_new_flextresult_methods() -> None:
         final_data = pipeline_result.unwrap()
         print(f"✅ Utility pipeline complete: {final_data['id']}")
         print(f"   Batch size: {final_data.get('batch_size', 'N/A')}")
-        print(f"   Container registered: {final_data.get('container_registered', False)}")
+        print(
+            f"   Container registered: {final_data.get('container_registered', False)}"
+        )
         print(f"   Event published: {final_data.get('event_published', False)}")
     else:
         print(f"❌ Pipeline failed: {pipeline_result.error}")
@@ -440,7 +446,9 @@ def demonstrate_new_flextresult_methods() -> None:
         message = {"type": "fallback_dispatch", "original_error": error}
         dispatch_result = dispatcher.dispatch(message)
         if dispatch_result.is_failure:
-            return FlextResult[dict].fail(f"Fallback also failed: {dispatch_result.error}")
+            return FlextResult[dict].fail(
+                f"Fallback also failed: {dispatch_result.error}"
+            )
         return FlextResult[dict].ok({"dispatcher": "fallback", "message_sent": True})
 
     # Try primary, fall back on failure
@@ -491,8 +499,12 @@ def demonstrate_new_flextresult_methods() -> None:
     print(f"   Container has services: {hasattr(container, '_services')}")
 
     # Try again with successful result (lazy function NOT called)
-    container_success_result = FlextResult[FlextContainer].ok(FlextContainer.get_global())
-    container_cached = container_success_result.value_or_call(create_expensive_container)
+    container_success_result = FlextResult[FlextContainer].ok(
+        FlextContainer.get_global()
+    )
+    container_cached = container_success_result.value_or_call(
+        create_expensive_container
+    )
     print(f"✅ Existing container used: {type(container_cached).__name__}")
     print("   No expensive creation needed")
 

@@ -66,9 +66,9 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
                     "context_variables",
                     "service_context",
                     "request_context",
-                    "performance_tracking"
+                    "performance_tracking",
                 ],
-            }
+            },
         )
 
     def execute(self) -> Flext.Result[Flext.Types.StringDict]:
@@ -127,8 +127,7 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
             }
 
             self.logger.info(
-                "FlextContext demonstration completed successfully",
-                extra=summary
+                "FlextContext demonstration completed successfully", extra=summary
             )
 
             return Flext.Result[Flext.Types.StringDict].ok(summary)
@@ -574,7 +573,7 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
 
     def demonstrate_new_flextresult_methods(self) -> None:
         """Demonstrate the 5 new FlextResult methods in context management.
-        
+
         Shows how the new v0.9.9+ methods integrate with context operations:
         - from_callable: Safe context operations
         - flow_through: Context pipeline composition
@@ -599,8 +598,10 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
                 )
             return {
                 "user_id": user_id,
-                "request_id": Flext.Context.Variables.Request.REQUEST_ID.get() or "unknown",
-                "service": Flext.Context.Variables.Service.SERVICE_NAME.get() or "unknown",
+                "request_id": Flext.Context.Variables.Request.REQUEST_ID.get()
+                or "unknown",
+                "service": Flext.Context.Variables.Service.SERVICE_NAME.get()
+                or "unknown",
             }
 
         # Set up context
@@ -699,7 +700,9 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
 
         if user_result.is_success:
             user_data = user_result.unwrap()
-            print(f"✅ User resolved: {user_data['user_id']} (source: {user_data['source']})")
+            print(
+                f"✅ User resolved: {user_data['user_id']} (source: {user_data['source']})"
+            )
         else:
             print(f"❌ All user resolution failed: {user_result.error}")
 
@@ -762,7 +765,9 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
             "user_id": "USER-CACHED-789",
             "name": "Jane Cached",
         })
-        cached_profile = cached_user.value_or_call(load_expensive_user_profile)  # Won't execute
+        cached_profile = cached_user.value_or_call(
+            load_expensive_user_profile
+        )  # Won't execute
         print(f"✅ Cached profile used: {cached_profile}")
 
         print("\n✅ NEW FLEXTRESULT METHODS DEMONSTRATED!")

@@ -50,8 +50,8 @@ class UserService(FlextService[dict[str, object]]):
     def create_user(self, username: str, email: str) -> FlextResult[dict[str, object]]:
         """Create user with automatic context enrichment."""
         # Context includes service metadata from __init__
-        if self._logger:
-            self._logger.info("Creating user", username=username, email=email)
+        if self.logger:
+            self.logger.info("Creating user", username=username, email=email)
 
         # Business logic
         user_data: dict[str, object] = {
@@ -102,8 +102,8 @@ class PaymentService(FlextService[dict[str, object]]):
         self._with_operation_context("process_payment", amount=amount)
 
         # All logs now include full context automatically
-        if self._logger:
-            self._logger.info(
+        if self.logger:
+            self.logger.info(
                 "Processing payment",
                 payment_id=payment_id,
                 amount=amount,

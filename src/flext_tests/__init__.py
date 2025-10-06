@@ -35,6 +35,7 @@ class FlextTestsMatchers:
         """Builder for test datasets."""
 
         def __init__(self) -> None:
+            """Initialize test data builder."""
             self._data: dict[str, object] = {}
 
         def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
@@ -51,7 +52,7 @@ class FlextTestsMatchers:
             return self
 
         def with_configs(
-            self, production: bool = False
+            self, *, production: bool = False
         ) -> FlextTestsMatchers.TestDataBuilder:
             """Add configuration to dataset."""
             self._data["configs"] = {
@@ -204,7 +205,7 @@ class FlextTestsMatchers:
             return FlextResult[object].fail(message)
 
         @staticmethod
-        def user_result(success: bool = True) -> object:
+        def user_result(*, success: bool = True) -> object:
             """Create a user-specific result."""
             from flext_core import FlextResult
 

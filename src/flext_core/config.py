@@ -21,7 +21,7 @@ import json
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar, Self, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from dependency_injector import providers
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
@@ -250,16 +250,25 @@ class FlextConfig(BaseSettings):
             if handler_config is not None:
                 # Try attribute access
                 # Lazy import to avoid circular dependency
-                from flext_core.protocols import FlextProtocols
+                if TYPE_CHECKING:
+                    from flext_core.protocols import FlextProtocols
 
-                if isinstance(handler_config, FlextProtocols.Foundation.HasHandlerType):
-                    config_mode: str | None = handler_config.handler_type
-                    if config_mode in {"command", "query"}:
-                        return str(config_mode)
+                try:
+                    from flext_core.protocols import FlextProtocols
+
+                    if isinstance(
+                        handler_config, FlextProtocols.Foundation.HasHandlerType
+                    ):
+                        config_mode: str | None = handler_config.handler_type
+                        if config_mode in {"command", "query"}:
+                            return str(config_mode)
+                except ImportError:
+                    # Handle case where protocols module not available
+                    pass
 
                 # Try dict access
                 if isinstance(handler_config, dict):
-                    config_mode_dict = handler_config.get("handler_type")
+                    config_mode_dict: object = handler_config.get("handler_type")
                     if isinstance(config_mode_dict, str) and config_mode_dict in {
                         "command",
                         "query",
@@ -972,10 +981,11 @@ class FlextConfig(BaseSettings):
 
             # Handle dict access
             if isinstance(nested_obj, dict):
-                if remaining_key not in nested_obj:
+                nested_dict = cast("dict[str, object]", nested_obj)
+                if remaining_key not in nested_dict:
                     msg = f"Configuration key '{key}' not found in nested config"
                     raise KeyError(msg)
-                return nested_obj[remaining_key]
+                return nested_dict[remaining_key]
 
             # Handle object attribute access
             if hasattr(nested_obj, remaining_key):
@@ -1020,7 +1030,14 @@ class FlextConfig(BaseSettings):
                 )
             except Exception:
                 # Don't fail validation if logging fails, but log to stderr for diagnostics
-                pass
+                import logging as python_logging
+
+                stderr_logger = python_logging.getLogger("flext.config.validation")
+                stderr_logger.exception(
+                    "Validation logging failed for field '%s'. Original validation error: %s",
+                    "environment",
+                    msg,
+                )
 
             raise FlextExceptions.ValidationError(
                 message=msg,
@@ -1048,7 +1065,14 @@ class FlextConfig(BaseSettings):
                 )
             except Exception:
                 # Don't fail validation if logging fails, but log to stderr for diagnostics
-                pass
+                import logging as python_logging
+
+                stderr_logger = python_logging.getLogger("flext.config.validation")
+                stderr_logger.exception(
+                    "Validation logging failed for field '%s'. Original validation error: %s",
+                    "log_level",
+                    msg,
+                )
 
             raise FlextExceptions.ValidationError(
                 message=msg,
@@ -1516,6 +1540,17 @@ class FlextConfig(BaseSettings):
                 "changed": changed_fields,
             }
 
+            # Type assertions for mypy
+            added_dict: dict[str, object] = cast(
+                "dict[str, object]", differences["added"]
+            )
+            removed_dict: dict[str, object] = cast(
+                "dict[str, object]", differences["removed"]
+            )
+            changed_dict: dict[str, dict[str, object]] = cast(
+                "dict[str, dict[str, object]]", differences["changed"]
+            )
+
             # Mask sensitive fields
             sensitive_fields = {"secret_key", "api_key", "jwt_secret", "database_url"}
             for section_data in differences.values():
@@ -1536,19 +1571,12 @@ class FlextConfig(BaseSettings):
 
             # Log the diff
             logger = structlog.get_logger()
-            changed_dict = differences["changed"]
-            added_dict = differences["added"]
-            removed_dict = differences["removed"]
             logger.info(
                 "config_diff_generated",
                 event_type="configuration_diff",
-                changes_count=len(changed_dict)
-                if isinstance(changed_dict, dict)
-                else 0,
-                additions_count=len(added_dict) if isinstance(added_dict, dict) else 0,
-                removals_count=len(removed_dict)
-                if isinstance(removed_dict, dict)
-                else 0,
+                changes_count=len(changed_dict),
+                additions_count=len(added_dict),
+                removals_count=len(removed_dict),
             )
 
             return FlextResult[FlextTypes.Dict].ok(differences)

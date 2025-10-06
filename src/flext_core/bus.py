@@ -139,7 +139,7 @@ class FlextBus(
         _execution_count (int): Total handler executions.
         _auto_handlers (list): Auto-discovered handlers.
         _cache (FlextBus._Cache): Query result cache (nested class).
-        _logger (FlextLogger): Bus operation logger.
+        logger (FlextLogger): Bus operation logger.
 
     Returns:
         FlextBus: Bus instance for CQRS message dispatching.

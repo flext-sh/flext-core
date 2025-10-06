@@ -536,10 +536,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         return self.get(name).flat_map(
-            lambda service: cast(
-                "FlextResult[T]",
-                self._validate_service_type(service, expected_type),
-            ),
+            lambda service: self._validate_service_type(service, expected_type),
         )
 
     def _validate_service_type[T](
@@ -1085,9 +1082,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             ... )
 
         """
+
         # Use from_callable to safely execute factory
-        factory_result = FlextResult.from_callable(
-            lambda: factory() if callable(factory) else factory
+        def _execute_factory() -> object:
+            return factory() if callable(factory) else factory
+
+        factory_result: FlextResult[object] = FlextResult[object].from_callable(
+            _execute_factory
         )
 
         if factory_result.is_failure:
@@ -1095,7 +1096,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 f"Factory execution failed: {factory_result.error}"
             )
 
-        service = factory_result.unwrap()
+        service: object = factory_result.unwrap()
         return self.register(name, service)
 
     def get_typed_with_recovery[T](
@@ -1130,10 +1131,15 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     f"Service '{name}' not found and no recovery factory provided"
                 )
 
-            factory_result = FlextResult.from_callable(
-                lambda: recovery_factory()
-                if callable(recovery_factory)
-                else recovery_factory
+            def _execute_recovery_factory() -> object:
+                return (
+                    recovery_factory()
+                    if callable(recovery_factory)
+                    else recovery_factory
+                )
+
+            factory_result: FlextResult[object] = FlextResult[object].from_callable(
+                _execute_recovery_factory
             )
 
             if factory_result.is_failure:
@@ -1141,10 +1147,10 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     f"Recovery factory failed: {factory_result.error}"
                 )
 
-            service = factory_result.unwrap()
+            service: object = factory_result.unwrap()
             if not isinstance(service, expected_type):
                 return FlextResult[T].fail(
-                    f"Recovery factory returned wrong type: expected {expected_type.__name__}, got {type(service).__name__}"
+                    f"Recovery factory returned wrong type: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
                 )
 
             # Register the recovered service for future use
@@ -1156,7 +1162,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def validate_and_get(
         self,
         name: str,
-        validators: list[object] | None = None,
+        validators: list[Callable[[object], FlextResult[object]]] | None = None,
     ) -> FlextResult[object]:
         """Get service and validate using flow_through pattern.
 
@@ -1188,9 +1194,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-                    validation_result = FlextResult.from_callable(
-                        lambda v=validator: v(service)
-                    )
+
+                    def _execute_validator() -> object:
+                        return validator(service)
+
+                    validation_result: FlextResult[object] = FlextResult[
+                        object
+                    ].from_callable(_execute_validator)
                     if validation_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validation_result.error}"

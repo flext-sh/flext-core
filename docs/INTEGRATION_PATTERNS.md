@@ -452,18 +452,18 @@ class TestUserService:
 ```python
 class OldService:
     def __init__(self):
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._container = FlextContainer.get_global()
 
     def process(self, data: dict) -> FlextResult[dict]:
-        self._logger.info("Processing")
+        self.logger.info("Processing")
         # Manual context setup
         FlextContext.Request.set_operation_name("process")
         # Manual timing
         start = time.time()
         result = self._do_process(data)
         duration = time.time() - start
-        self._logger.info(f"Took {duration}s")
+        self.logger.info(f"Took {duration}s")
         return result
 ```
 

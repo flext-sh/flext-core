@@ -36,7 +36,7 @@ class TestFlextProtocols:
         """Test that a class can implement HasResultValue."""
 
         class ResultContainer:
-            def __init__(self, value: str) -> None:
+            def __init__(self, value: str) -> None:  # type: ignore[reportMissingSuperCall]
                 self._value = value
 
             @property
@@ -59,7 +59,7 @@ class TestFlextProtocols:
         import time
 
         class TimestampedEntity:
-            def __init__(self) -> None:
+            def __init__(self) -> None:  # type: ignore[reportMissingSuperCall]
                 self.created_at = time.time()
                 self.updated_at = time.time()
 

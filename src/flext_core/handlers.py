@@ -658,7 +658,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         # Extract message ID
         message_id: str = "unknown"
         if isinstance(message, dict):
-            message_dict: dict[str, object] = message
+            message_dict = cast("dict[str, object]", message)
             message_id = (
                 str(message_dict.get(f"{operation}_id", "unknown"))
                 or str(message_dict.get("message_id", "unknown"))
@@ -692,7 +692,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             )
 
         # Validate message can be handled
-        message_type_obj: type[object] = type(message)
+        message_type_obj = cast("type[object]", type(message))
         if not self.can_handle(message_type_obj):
             FlextHandlers.Metrics.log_handler_cannot_handle(
                 logger=self.logger,

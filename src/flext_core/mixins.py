@@ -283,7 +283,7 @@ class FlextMixins:
         """
         logger = FlextLogger(config.obj.__class__.__name__)
 
-        context: dict[str, object] = {
+        context_data: dict[str, object] = {
             "operation": config.operation,
             "object_type": type(config.obj).__name__,
             "timestamp": config.timestamp or datetime.now(UTC),
@@ -291,7 +291,7 @@ class FlextMixins:
         }
 
         # Use bind for structured logging instead of extra parameter
-        bound_logger = logger.bind(**context)
+        bound_logger = logger.bind(**context_data)
 
         # Use specific level methods based on normalized level
         normalized_level = str(config.level).upper()
@@ -800,11 +800,7 @@ class FlextMixins:
 
             """
             context = structlog.contextvars.get_contextvars()
-            return {
-                k: v
-                for k, v in context.items()
-                if k.endswith("_ms")
-            }
+            return {k: v for k, v in context.items() if k.endswith("_ms")}
 
     class Validatable:
         """Returns-based validation mixin.
@@ -933,14 +929,14 @@ class FlextMixins:
 
             return FlextResult[T].ok(value)
 
-        def validate_range[T: (int, float)](
+        def validate_range(
             self,
-            value: T,
+            value: float,
             field_name: str,
             *,
-            min_value: T | None = None,
-            max_value: T | None = None,
-        ) -> FlextResult[T]:
+            min_value: float | None = None,
+            max_value: float | None = None,
+        ) -> FlextResult[float]:
             """Validate numeric value is within range.
 
             Args:
@@ -954,18 +950,18 @@ class FlextMixins:
 
             """
             if min_value is not None and value < min_value:
-                return FlextResult[T].fail(
+                return FlextResult[int | float].fail(
                     f"Field '{field_name}' must be >= {min_value}",
                     error_code="VALUE_TOO_SMALL",
                 )
 
             if max_value is not None and value > max_value:
-                return FlextResult[T].fail(
+                return FlextResult[int | float].fail(
                     f"Field '{field_name}' must be <= {max_value}",
                     error_code="VALUE_TOO_LARGE",
                 )
 
-            return FlextResult[T].ok(value)
+            return FlextResult[int | float].ok(value)
 
     # =============================================================================
     # ADVANCED PATTERNS - Domain-driven design and enterprise patterns
@@ -1746,7 +1742,7 @@ class FlextMixins:
     ) -> FlextResult[FlextTypes.List]:
         """Apply mixins to data in parallel."""
         try:
-            processed_list = []
+            processed_list: FlextTypes.List = []
             for data in data_list:
                 result = self.apply("default", data)
                 if result.is_success:
@@ -1758,6 +1754,10 @@ class FlextMixins:
             return FlextResult[FlextTypes.List].ok(processed_list)
         except Exception as e:
             return FlextResult[FlextTypes.List].fail(f"Parallel processing failed: {e}")
+        # This should never be reached, but added for type safety
+        return FlextResult[FlextTypes.List].fail(
+            "Unexpected error in parallel processing"
+        )
 
     def _check_circuit_breaker(self, name: str) -> None:
         """Check if circuit breaker should be opened based on failure rate."""
@@ -1810,7 +1810,8 @@ class FlextMixins:
 
         """
 
-        _container: ClassVar[FlextContainer | None] = None
+        # Class variable for lazy initialization of global container
+        _container_instance: FlextContainer | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize container for subclasses (ABI compatibility)."""
@@ -1820,10 +1821,13 @@ class FlextMixins:
         @property
         def container(self) -> FlextContainer:
             """Get global FlextContainer instance with lazy initialization."""
-            if FlextMixins.Container._container is None:
+            if (
+                not hasattr(FlextMixins.Container, "_container_instance")
+                or FlextMixins.Container._container_instance is None  # type: ignore[attr-defined]  # noqa: SLF001
+            ):
                 # Use direct instantiation to avoid deadlock in __new__ singleton pattern
-                FlextMixins.Container._container = FlextContainer()
-            return FlextMixins.Container._container
+                FlextMixins.Container._container_instance = FlextContainer()  # type: ignore[attr-defined]  # noqa: SLF001
+            return FlextMixins.Container._container_instance  # type: ignore[attr-defined]  # noqa: SLF001
 
         def _register_in_container(self, service_name: str) -> FlextResult[None]:
             """Register self in global container for service discovery."""
@@ -1863,7 +1867,8 @@ class FlextMixins:
 
         """
 
-        _context: ClassVar[object | None] = None
+        # Class variable for lazy initialization of global context
+        _context_instance: FlextContext | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize context for subclasses (ABI compatibility)."""
@@ -1871,11 +1876,14 @@ class FlextMixins:
             # Context is lazily initialized on first access
 
         @property
-        def context(self) -> object:
+        def context(self) -> FlextContext:
             """Get FlextContext instance with lazy initialization."""
-            if FlextMixins.Context._context is None:
-                FlextMixins.Context._context = FlextContext()
-            return FlextMixins.Context._context
+            if (
+                not hasattr(FlextMixins.Context, "_context_instance")
+                or FlextMixins.Context._context_instance is None  # type: ignore[attr-defined]  # noqa: SLF001
+            ):
+                FlextMixins.Context._context_instance = FlextContext()  # type: ignore[attr-defined]  # noqa: SLF001
+            return FlextMixins.Context._context_instance  # type: ignore[attr-defined]  # noqa: SLF001
 
         def _propagate_context(self, operation_name: str) -> None:
             """Propagate context for current operation with automatic setup."""
@@ -1913,7 +1921,7 @@ class FlextMixins:
             ```python
             class MyService(FlextMixins.Logging, FlextMixins.Context):
                 def process(self, data: dict):
-                    # _logger automatically available
+                    # logger automatically available
                     self._log_with_context("info", "Processing", size=len(data))
                     self.logger.debug("Details...")
             ```
@@ -1923,8 +1931,9 @@ class FlextMixins:
 
         """
 
-        _logger: ClassVar[FlextLogger | None] = None
-        _logger_name: ClassVar[str] = ""
+        # Class variables for lazy initialization of logger
+        _logger_instance: FlextLogger | None = None
+        _logger_name: str | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize logger for subclasses (ABI compatibility)."""
@@ -1935,12 +1944,15 @@ class FlextMixins:
         def logger(self) -> FlextLogger:
             """Get FlextLogger instance with lazy initialization."""
             if (
-                FlextMixins.Logging._logger is None
-                or FlextMixins.Logging._logger_name != self.__class__.__name__
+                not hasattr(FlextMixins.Logging, "_logger_instance")
+                or FlextMixins.Logging._logger_instance is None  # type: ignore[attr-defined]  # noqa: SLF001
+                or FlextMixins.Logging._logger_name != self.__class__.__name__  # type: ignore[attr-defined]  # noqa: SLF001
             ):
-                FlextMixins.Logging._logger_name = self.__class__.__name__
-                FlextMixins.Logging._logger = FlextLogger(self.__class__.__name__)
-            return FlextMixins.Logging._logger
+                FlextMixins.Logging._logger_name = self.__class__.__name__  # type: ignore[attr-defined]  # noqa: SLF001
+                FlextMixins.Logging._logger_instance = FlextLogger(  # type: ignore[attr-defined]  # noqa: SLF001
+                    self.__class__.__name__
+                )
+            return FlextMixins.Logging._logger_instance  # type: ignore[attr-defined]  # noqa: SLF001
 
         def _log_with_context(self, level: str, message: str, **extra: object) -> None:
             """Log message with automatic context data inclusion."""
@@ -2032,7 +2044,8 @@ class FlextMixins:
 
         """
 
-        _config: ClassVar[object | None] = None
+        # Class variable for lazy initialization of global config
+        _config_instance: FlextConfig | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize config for subclasses (ABI compatibility)."""
@@ -2040,11 +2053,16 @@ class FlextMixins:
             # Config is lazily initialized on first access
 
         @property
-        def config(self) -> object:
+        def config(self) -> FlextConfig:
             """Get FlextConfig global instance with lazy initialization."""
-            if FlextMixins.Configurable._config is None:
-                FlextMixins.Configurable._config = FlextConfig.get_global_instance()
-            return FlextMixins.Configurable._config
+            if (
+                not hasattr(FlextMixins.Configurable, "_config_instance")
+                or FlextMixins.Configurable._config_instance is None
+            ):  # type: ignore[attr-defined]
+                FlextMixins.Configurable._config_instance = (  # type: ignore[attr-defined]  # noqa: SLF001
+                    FlextConfig.get_global_instance()
+                )
+            return FlextMixins.Configurable._config_instance  # type: ignore[attr-defined]  # noqa: SLF001
 
         def _get_config_value(self, key: str, default: object = None) -> object:
             """Get configuration value with fallback to default."""
@@ -2146,7 +2164,7 @@ class FlextMixins:
 
             """
             # Add service identification to context
-            service_context = {
+            service_context: FlextTypes.Dict = {
                 "service_name": self.__class__.__name__,
                 "service_module": self.__class__.__module__,
                 **context_data,
@@ -2216,7 +2234,7 @@ class FlextMixins:
                 ```
 
             """
-            user_context = {
+            user_context: FlextTypes.Dict = {
                 "user_id": user_id,
                 **user_data,
             }

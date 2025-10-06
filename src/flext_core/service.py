@@ -503,25 +503,25 @@ class FlextService[TDomainResult](
         # Evaluate the condition
         if condition.condition(self):
             # Execute true action if condition is met
-            result = condition.true_action(self)
-            if isinstance(result, FlextResult):
-                return result
+            action_result = condition.true_action(self)
+            if isinstance(action_result, FlextResult):
+                return action_result
             # Type assertion since we expect TDomainResult from the action
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", action_result))
         # Execute false action if condition is not met
         if condition.false_action:
-            result = condition.false_action(self)
-            if isinstance(result, FlextResult):
-                return result
+            action_result = condition.false_action(self)
+            if isinstance(action_result, FlextResult):
+                return action_result
             # Validate the type before casting
             if not isinstance(
-                result,
+                action_result,
                 get_args(TDomainResult)[0] if get_args(TDomainResult) else object,
             ):
                 return FlextResult[TDomainResult].fail(
-                    f"Action returned unexpected type: {type(result).__name__}"
+                    f"Action returned unexpected type: {type(action_result).__name__}"
                 )
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+            return FlextResult[TDomainResult].ok(cast("TDomainResult", action_result))
         return FlextResult[TDomainResult].fail("Condition not met")
 
     def execute_batch_with_request(

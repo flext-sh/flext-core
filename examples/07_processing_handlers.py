@@ -64,7 +64,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         - self.metrics: FlextMetrics for handler observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not _logger
+        # Use self.logger from FlextMixins.Logging, not logger
         self._scenarios = ExampleScenarios()
         self._user = self._scenarios.user()
         self._order = self._scenarios.realistic_data()["order"]
@@ -87,7 +87,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 "service_type": "FlextProcessors & Handler Patterns demonstration",
                 "handler_types": ["BasicHandler", "Pipeline", "Strategy", "Registry"],
                 "processing_patterns": True,
-            }
+            },
         )
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
@@ -146,8 +146,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             }
 
             self.logger.info(
-                "FlextProcessors demonstration completed successfully",
-                extra=summary
+                "FlextProcessors demonstration completed successfully", extra=summary
             )
 
             return FlextResult[FlextTypes.Dict].ok(summary)
@@ -156,8 +155,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             error_msg = f"FlextProcessors demonstration failed: {e}"
             self.logger.exception(error_msg)
             return FlextResult[FlextTypes.Dict].fail(
-                error_msg,
-                error_code=FlextConstants.Errors.SERVICE_ERROR
+                error_msg, error_code=FlextConstants.Errors.SERVICE_ERROR
             )
 
     # ========== BASIC HANDLER PATTERNS ==========
@@ -172,11 +170,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, request: object) -> FlextResult[str]:
                 """Validate and process the request."""
-                self._logger.info(f"Validating request in {self.name}")
+                self.logger.info(f"Validating request in {self.name}")
 
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -224,11 +222,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, request: object) -> FlextResult[str]:
                 """Check authentication."""
-                self._logger.info("Authenticating request")
+                self.logger.info("Authenticating request")
 
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -253,11 +251,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, request: object) -> FlextResult[str]:
                 """Check authorization."""
-                self._logger.info("Authorizing request")
+                self.logger.info("Authorizing request")
 
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -282,11 +280,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, request: object) -> FlextResult[str]:
                 """Process the business logic."""
-                self._logger.info("Processing request")
+                self.logger.info("Processing request")
 
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -459,7 +457,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     str,
                     FlextProcessors.Implementation.BasicHandler,
                 ] = {}
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def register(
                 self,
@@ -471,7 +469,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     return FlextResult[bool].fail(f"Handler {name} already registered")
 
                 self._handlers[name] = handler
-                self._logger.info("Registered handler: %s", name)
+                self.logger.info("Registered handler: %s", name)
                 return FlextResult[bool].ok(True)
 
             def unregister(self, name: str) -> FlextResult[bool]:
@@ -480,7 +478,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     return FlextResult[bool].fail(f"Handler {name} not found")
 
                 del self._handlers[name]
-                self._logger.info("Unregistered handler: %s", name)
+                self.logger.info("Unregistered handler: %s", name)
                 return FlextResult[bool].ok(True)
 
             def get(
@@ -611,7 +609,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 super().__init__(name)
                 self._max_retries = max_retries
                 self._attempt = 0
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, request: object) -> FlextResult[str]:
                 """Handle with retry logic."""
@@ -620,14 +618,14 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
                 # Simulate intermittent failure
                 if self._attempt < self._max_retries:
-                    self._logger.warning(
+                    self.logger.warning(
                         f"Attempt {self._attempt} failed",
                         extra={"handler": self.name},
                     )
                     return FlextResult[str].fail(f"Attempt {self._attempt} failed")
 
                 # Success on final attempt
-                self._logger.info(
+                self.logger.info(
                     f"Success on attempt {self._attempt}",
                     extra={"handler": self.name},
                 )
@@ -643,7 +641,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 self._failure_count = 0
                 self._threshold = threshold
                 self._is_open = False
-                self._logger = FlextLogger(__name__)
+                self.logger = FlextLogger(__name__)
 
             def handle(self, request: object) -> FlextResult[str]:
                 """Handle with circuit breaker."""
@@ -664,7 +662,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     self._failure_count += 1
                     if self._failure_count >= self._threshold:
                         self._is_open = True
-                        self._logger.error(
+                        self.logger.error(
                             "Circuit breaker opened",
                             extra={"failures": self._failure_count},
                         )
@@ -678,7 +676,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 """Reset circuit breaker."""
                 self._is_open = False
                 self._failure_count = 0
-                self._logger.info("Circuit breaker reset")
+                self.logger.info("Circuit breaker reset")
 
         # Test retry handler
         print("\n1. Retry Handler:")
@@ -891,10 +889,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
         logger.info(
             "Handler configuration established",
-            extra={
-                "config": handler_config,
-                "pattern": "processing_handler"
-            }
+            extra={"config": handler_config, "pattern": "processing_handler"},
         )
         print("✅ Processing configuration constants demonstrated")
 
@@ -921,7 +916,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     "error_code": e.error_code,
                     "field": e.field,
                     "correlation_id": e.correlation_id,
-                }
+                },
             )
             print(f"✅ ValidationError logged: {e.error_code}")
             print(f"   Field: {e.field}")
@@ -942,7 +937,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     "resource_type": e.resource_type,
                     "resource_id": e.resource_id,
                     "correlation_id": e.correlation_id,
-                }
+                },
             )
             print(f"✅ NotFoundError logged: {e.error_code}")
             print(f"   Resource: {e.resource_type}/{e.resource_id}")
@@ -963,7 +958,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     "timeout_seconds": e.timeout_seconds,
                     "operation": e.operation,
                     "correlation_id": e.correlation_id,
-                }
+                },
             )
             print(f"✅ TimeoutError logged: {e.error_code}")
             print(f"   Timeout: {e.timeout_seconds}s for {e.operation}")
@@ -984,7 +979,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                     "config_key": e.config_key,
                     "config_source": e.config_source,
                     "correlation_id": e.correlation_id,
-                }
+                },
             )
             print(f"✅ ConfigurationError logged: {e.error_code}")
             print(f"   Config: {e.config_key} from {e.config_source}")
@@ -1016,7 +1011,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         # Type guards for handler input validation
         handler_input = {
             "handler_id": "data_processor",
-            "handler_type": "TransformHandler"
+            "handler_type": "TransformHandler",
         }
 
         handler_id = handler_input.get("handler_id", "")
@@ -1024,7 +1019,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             print(f"✅ Valid handler ID: {handler_id}")
 
         handler_type = handler_input.get("handler_type", "")
-        if isinstance(handler_type, str) and FlextRuntime.is_valid_identifier(handler_type):
+        if isinstance(handler_type, str) and FlextRuntime.is_valid_identifier(
+            handler_type
+        ):
             print(f"✅ Valid handler type: {handler_type}")
 
         # Path validation for handler configuration files
@@ -1119,8 +1116,12 @@ def main() -> None:
 
     print("\n" + "=" * 60)
     print("✅ ALL FlextProcessors patterns demonstrated!")
-    print("✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call")
-    print("🔧 Including foundation integration: FlextConstants processing, FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)")
+    print(
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+    )
+    print(
+        "🔧 Including foundation integration: FlextConstants processing, FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)"
+    )
     print("🎯 Next: See 08_*.py for additional advanced patterns")
     print("=" * 60)
 

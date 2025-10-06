@@ -1032,7 +1032,7 @@ class FlextModels:
                     str_value = value
                 elif hasattr(value, "value"):
                     # Handle enum-like objects
-                    str_value = str(value.value)
+                    str_value = str(getattr(value, "value"))
                 else:
                     # Fallback to string conversion
                     str_value = str(value)
@@ -1179,9 +1179,7 @@ class FlextModels:
                 List of uncommitted domain events (DomainEvent instances).
 
             """
-            return [
-                e for e in self.domain_events if isinstance(e, FlextModels.DomainEvent)
-            ]
+            return list(self.domain_events)
 
         def mark_events_as_committed(self) -> None:
             """Mark all domain events as committed and clear them.
@@ -1223,9 +1221,7 @@ class FlextModels:
 
             # Log clearing operation via structlog if there are events
             if events:
-                domain_events = [
-                    e for e in events if isinstance(e, FlextModels.DomainEvent)
-                ]
+                domain_events = list(events)
                 self._get_logger().debug(
                     "Domain events cleared",
                     aggregate_id=self.id,
@@ -3756,7 +3752,7 @@ class FlextModels:
             """
             if fail_fast:
                 # Validate models one by one, stop on first failure
-                validated_models = []
+                validated_models: list[T] = []
                 for model in models:
                     # Validate all rules for this model
                     for validator in validators:
@@ -3770,7 +3766,7 @@ class FlextModels:
 
                 return FlextResult[list[T]].ok(validated_models)
             # Accumulate all errors
-            validated_models = []
+            validated_models: list[T] = []
             all_errors: list[str] = []
 
             for model in models:
@@ -3855,7 +3851,7 @@ class FlextModels:
                 ```
 
             """
-            violations = []
+            violations: list[str] = []
             for rule_name, validator in consistency_rules.items():
                 result = validator(aggregate)
                 if result.is_failure:
@@ -4029,8 +4025,8 @@ class FlextModels:
             """Convert pagination to Pagination instance."""
             if isinstance(v, dict):
                 # Extract page and size from dict
-                page = v.get("page", 1)
-                size = v.get("size", 20)
+                page: int | str = v.get("page", 1)
+                size: int | str = v.get("size", 20)
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -4065,13 +4061,13 @@ class FlextModels:
                 if isinstance(pagination_data, FlextModels.Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
-                    page = pagination_data.get("page", 1)
-                    size = pagination_data.get("size", 20)
-                    pagination = FlextModels.Pagination(page=page, size=size)
+                    page: int | str = pagination_data.get("page", 1)
+                    size: int | str = pagination_data.get("size", 20)
+                    pagination = FlextModels.Pagination(page=int(page), size=int(size))
                 else:
                     pagination = FlextModels.Pagination()
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
-                query_type = query_payload.get("query_type")
+                query_type: object = query_payload.get("query_type")
 
                 if not isinstance(filters, dict):
                     filters = {}
