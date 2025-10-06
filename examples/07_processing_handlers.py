@@ -23,9 +23,13 @@ import warnings
 from typing import cast
 
 from flext_core import (
+    Flext,
+    FlextConstants,
+    FlextExceptions,
     FlextLogger,
     FlextProcessors,
     FlextResult,
+    FlextRuntime,
     FlextService,
     FlextTypes,
 )
@@ -34,10 +38,31 @@ from .example_scenarios import ExampleScenarios
 
 
 class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextProcessors patterns."""
+    """Service demonstrating ALL FlextProcessors patterns with FlextMixins.Service infrastructure.
+
+    This service inherits from FlextService to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - PROCESSORS FOCUS!)
+    - Inherited context property (FlextContext for handler execution tracking)
+    - Inherited config property (FlextConfig with processing settings)
+    - Inherited metrics property (FlextMetrics for handler observability)
+
+    The focus is on demonstrating FlextProcessors patterns (handlers, pipelines,
+    strategies, registry) with structured logging and handler execution tracking,
+    while leveraging complete FlextMixins.Service infrastructure for orchestration.
+    """
 
     def __init__(self) -> None:
-        """Initialize with automatic Flext infrastructure."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger initialization needed!
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for handler execution tracking
+        - self.config: FlextConfig with processing configuration
+        - self.metrics: FlextMetrics for handler observability
+        """
         super().__init__()
         # Use self.logger from FlextMixins.Logging, not _logger
         self._scenarios = ExampleScenarios()
@@ -55,13 +80,85 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         }
         self._metadata = self._scenarios.metadata(tags=["processors", "demo"])
 
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "ProcessingPatternsService initialized with inherited infrastructure",
+            extra={
+                "service_type": "FlextProcessors & Handler Patterns demonstration",
+                "handler_types": ["BasicHandler", "Pipeline", "Strategy", "Registry"],
+                "processing_patterns": True,
+            }
+        )
+
     def execute(self) -> FlextResult[FlextTypes.Dict]:
-        """Execute method required by FlextService."""
-        self.logger.info("Executing processing demo")
-        return FlextResult[FlextTypes.Dict].ok({
-            "status": "processed",
-            "handlers_executed": True,
-        })
+        """Execute all FlextProcessors pattern demonstrations.
+
+        Demonstrates inherited infrastructure alongside handler patterns:
+        - Inherited logger for structured handler execution logs
+        - Inherited context for handler execution tracking
+        - Complete handler pipeline and strategy patterns
+        - Registry pattern with handler discovery
+
+        Returns:
+            FlextResult[Dict] with demonstration summary including infrastructure details
+
+        """
+        self.logger.info("Starting comprehensive FlextProcessors demonstration")
+
+        try:
+            # Core patterns
+            self.demonstrate_basic_handlers()
+            self.demonstrate_handler_pipeline()
+
+            # Advanced patterns
+            self.demonstrate_strategy_pattern()
+            self.demonstrate_registry_pattern()
+
+            # Professional patterns
+            self.demonstrate_error_recovery()
+
+            # NEW: FlextResult v0.9.9+ methods for handlers
+            self.demonstrate_from_callable_handlers()
+            self.demonstrate_flow_through_handlers()
+            self.demonstrate_lash_handlers()
+            self.demonstrate_alt_handlers()
+            self.demonstrate_value_or_call_handlers()
+
+            # Deprecation warnings
+            self.demonstrate_deprecated_patterns()
+
+            summary = {
+                "demonstrations_completed": 11,
+                "status": "completed",
+                "infrastructure": {
+                    "logger": type(self.logger).__name__,
+                    "container": type(self.container).__name__,
+                    "context": type(self.context).__name__,
+                    "config": type(self.config).__name__,
+                },
+                "processing_features": {
+                    "basic_handlers": True,
+                    "handler_pipeline": True,
+                    "strategy_pattern": True,
+                    "registry_pattern": True,
+                    "error_recovery": True,
+                },
+            }
+
+            self.logger.info(
+                "FlextProcessors demonstration completed successfully",
+                extra=summary
+            )
+
+            return FlextResult[FlextTypes.Dict].ok(summary)
+
+        except Exception as e:
+            error_msg = f"FlextProcessors demonstration failed: {e}"
+            self.logger.exception(error_msg)
+            return FlextResult[FlextTypes.Dict].fail(
+                error_msg,
+                error_code=FlextConstants.Errors.SERVICE_ERROR
+            )
 
     # ========== BASIC HANDLER PATTERNS ==========
 
@@ -767,6 +864,174 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         default_response = failed_handler.value_or_call(create_default_handler_result)
         print(f"✅ Got default response: {default_response}")
 
+    def demonstrate_flext_constants_processing(self) -> None:
+        """Show FlextConstants integration with processing patterns."""
+        print("\n=== FlextConstants.Processing Integration (Layer 1) ===")
+
+        logger = FlextLogger(__name__)
+
+        # Processing timeout and batch constants
+        print(f"  DEFAULT_TIMEOUT: {FlextRuntime.DEFAULT_TIMEOUT}s")
+        print(f"  DEFAULT_MAX_WORKERS: {FlextRuntime.DEFAULT_MAX_WORKERS}")
+        print(f"  DEFAULT_BATCH_SIZE: {FlextRuntime.DEFAULT_BATCH_SIZE}")
+        print(f"  DEFAULT_RETRY_ATTEMPTS: {FlextRuntime.DEFAULT_RETRY_ATTEMPTS}")
+
+        # Error codes for handler failures
+        print(f"  VALIDATION_ERROR: {FlextConstants.Errors.VALIDATION_ERROR}")
+        print(f"  TIMEOUT_ERROR: {FlextConstants.Errors.TIMEOUT_ERROR}")
+        print(f"  NOT_FOUND_ERROR: {FlextConstants.Errors.NOT_FOUND_ERROR}")
+
+        # Use constants in handler configuration
+        handler_config: Flext.Types.Dict = {
+            "timeout": FlextRuntime.DEFAULT_TIMEOUT,
+            "max_workers": FlextRuntime.DEFAULT_MAX_WORKERS,
+            "batch_size": FlextRuntime.DEFAULT_BATCH_SIZE,
+            "retry_attempts": FlextRuntime.DEFAULT_RETRY_ATTEMPTS,
+        }
+
+        logger.info(
+            "Handler configuration established",
+            extra={
+                "config": handler_config,
+                "pattern": "processing_handler"
+            }
+        )
+        print("✅ Processing configuration constants demonstrated")
+
+    def demonstrate_flext_exceptions_processing(self) -> None:
+        """Show FlextExceptions integration with handler error handling."""
+        print("\n=== FlextExceptions Integration (Layer 2) ===")
+
+        logger = FlextLogger(__name__)
+
+        # Handler validation error
+        try:
+            handler_name = ""
+            if not handler_name:
+                error_message = "Handler name is required"
+                raise FlextExceptions.ValidationError(
+                    error_message,
+                    field="handler_name",
+                    value=handler_name,
+                )
+        except FlextExceptions.ValidationError as e:
+            logger.exception(
+                "Handler validation failed",
+                extra={
+                    "error_code": e.error_code,
+                    "field": e.field,
+                    "correlation_id": e.correlation_id,
+                }
+            )
+            print(f"✅ ValidationError logged: {e.error_code}")
+            print(f"   Field: {e.field}")
+
+        # Handler not found
+        try:
+            error_message = "Handler not found in registry"
+            raise FlextExceptions.NotFoundError(
+                error_message,
+                resource_type="handler",
+                resource_id="DataTransformHandler",
+            )
+        except FlextExceptions.NotFoundError as e:
+            logger.exception(
+                "Handler not found",
+                extra={
+                    "error_code": e.error_code,
+                    "resource_type": e.resource_type,
+                    "resource_id": e.resource_id,
+                    "correlation_id": e.correlation_id,
+                }
+            )
+            print(f"✅ NotFoundError logged: {e.error_code}")
+            print(f"   Resource: {e.resource_type}/{e.resource_id}")
+
+        # Handler timeout error
+        try:
+            error_message = "Handler processing timeout"
+            raise FlextExceptions.TimeoutError(
+                error_message,
+                timeout_seconds=FlextRuntime.DEFAULT_TIMEOUT,
+                operation="process_request",
+            )
+        except FlextExceptions.TimeoutError as e:
+            logger.exception(
+                "Handler timeout",
+                extra={
+                    "error_code": e.error_code,
+                    "timeout_seconds": e.timeout_seconds,
+                    "operation": e.operation,
+                    "correlation_id": e.correlation_id,
+                }
+            )
+            print(f"✅ TimeoutError logged: {e.error_code}")
+            print(f"   Timeout: {e.timeout_seconds}s for {e.operation}")
+
+        # Handler configuration error
+        try:
+            error_message = "Handler pipeline configuration invalid: max_workers=-1"
+            raise FlextExceptions.ConfigurationError(
+                error_message,
+                config_key="max_workers",
+                config_source="handler_config.yaml",
+            )
+        except FlextExceptions.ConfigurationError as e:
+            logger.exception(
+                "Handler configuration error",
+                extra={
+                    "error_code": e.error_code,
+                    "config_key": e.config_key,
+                    "config_source": e.config_source,
+                    "correlation_id": e.correlation_id,
+                }
+            )
+            print(f"✅ ConfigurationError logged: {e.error_code}")
+            print(f"   Config: {e.config_key} from {e.config_source}")
+
+    def demonstrate_flext_runtime_processing(self) -> None:
+        """Show FlextRuntime integration with processing defaults."""
+        print("\n=== FlextRuntime Integration (Layer 0.5) ===")
+
+        # FlextRuntime configuration defaults for processing
+        print(f"  DEFAULT_TIMEOUT: {FlextRuntime.DEFAULT_TIMEOUT}")
+        print(f"  DEFAULT_MAX_WORKERS: {FlextRuntime.DEFAULT_MAX_WORKERS}")
+        print(f"  DEFAULT_BATCH_SIZE: {FlextRuntime.DEFAULT_BATCH_SIZE}")
+        print(f"  DEFAULT_RETRY_ATTEMPTS: {FlextRuntime.DEFAULT_RETRY_ATTEMPTS}")
+        print(f"  DEFAULT_PAGE_SIZE: {FlextRuntime.DEFAULT_PAGE_SIZE}")
+
+        # Handler processing configuration
+        processing_config: Flext.Types.Dict = {
+            "timeout": FlextRuntime.DEFAULT_TIMEOUT,
+            "max_workers": FlextRuntime.DEFAULT_MAX_WORKERS,
+            "batch_size": FlextRuntime.DEFAULT_BATCH_SIZE,
+            "retry_attempts": FlextRuntime.DEFAULT_RETRY_ATTEMPTS,
+            "page_size": FlextRuntime.DEFAULT_PAGE_SIZE,
+        }
+
+        print("✅ Processing configuration:")
+        for key, value in processing_config.items():
+            print(f"   {key}: {value}")
+
+        # Type guards for handler input validation
+        handler_input = {
+            "handler_id": "data_processor",
+            "handler_type": "TransformHandler"
+        }
+
+        handler_id = handler_input.get("handler_id", "")
+        if isinstance(handler_id, str) and FlextRuntime.is_valid_identifier(handler_id):
+            print(f"✅ Valid handler ID: {handler_id}")
+
+        handler_type = handler_input.get("handler_type", "")
+        if isinstance(handler_type, str) and FlextRuntime.is_valid_identifier(handler_type):
+            print(f"✅ Valid handler type: {handler_type}")
+
+        # Path validation for handler configuration files
+        config_path = "/etc/flext/handlers.yaml"
+        if FlextRuntime.is_valid_path(config_path):
+            print(f"✅ Valid config path: {config_path}")
+
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated processing patterns."""
         print("\n=== ⚠️ DEPRECATED PATTERNS ===")
@@ -844,11 +1109,18 @@ def main() -> None:
     service.demonstrate_alt_handlers()
     service.demonstrate_value_or_call_handlers()
 
+    # Foundation layer integration (NEW in Phase 2)
+    service.demonstrate_flext_constants_processing()
+    service.demonstrate_flext_exceptions_processing()
+    service.demonstrate_flext_runtime_processing()
+
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 60)
     print("✅ ALL FlextProcessors patterns demonstrated!")
+    print("✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call")
+    print("🔧 Including foundation integration: FlextConstants processing, FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)")
     print("🎯 Next: See 08_*.py for additional advanced patterns")
     print("=" * 60)
 

@@ -18,15 +18,12 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
+from typing import Any, ParamSpec, TypeVar, cast
 
 import structlog
 
 from flext_core.container import FlextContainer
 from flext_core.result import FlextResult
-
-if TYPE_CHECKING:
-    from flext_core.loggings import FlextLogger
 
 # Type variables for decorator signatures
 P = ParamSpec("P")
@@ -70,16 +67,13 @@ def inject(**dependencies: type) -> Callable[[Callable[P, R]], Callable[P, R]]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # Get container from self if available, otherwise use global
-            if args and hasattr(args[0], "_container"):
-                container = args[0]._container
-            else:
-                container = FlextContainer.get_global()
+            container = FlextContainer.get_global()
 
             # Inject dependencies that aren't already provided
-            for name, service_type in dependencies.items():
+            for name in dependencies:
                 if name not in kwargs:
-                    # Resolve from container
-                    result = container.resolve(service_type)
+                    # Get from container
+                    result = container.get(str(name))
                     if result.is_success:
                         kwargs[name] = result.unwrap()
                     else:
@@ -135,7 +129,7 @@ def log_operation(
 
             # Get logger from self if available
             if args and hasattr(args[0], "_logger"):
-                logger: FlextLogger = args[0]._logger
+                logger = getattr(args[0], "_logger", structlog.get_logger())
             else:
                 logger = structlog.get_logger()
 
@@ -212,7 +206,7 @@ def track_performance(
 
             # Get logger from self if available
             if args and hasattr(args[0], "_logger"):
-                logger: FlextLogger = args[0]._logger
+                logger = getattr(args[0], "_logger", structlog.get_logger())
             else:
                 logger = structlog.get_logger()
 

@@ -81,6 +81,7 @@ from flext_core.typings import FlextTypes
 
 if TYPE_CHECKING:
     from flext_core.config import FlextConfig
+    from flext_core.loggings import FlextLogger
     from flext_core.protocols import FlextProtocols
 
 
@@ -1088,10 +1089,10 @@ class FlextModels:
         """
 
         # Class-level logger for domain event operations
-        _internal_logger: ClassVar[object] = None
+        _internal_logger: ClassVar[FlextLogger | None] = None
 
         @classmethod
-        def _get_logger(cls) -> object:
+        def _get_logger(cls) -> FlextLogger:
             """Get or create the internal logger (lazy initialization to avoid circular imports)."""
             if cls._internal_logger is None:
                 from flext_core.loggings import FlextLogger
@@ -1099,7 +1100,7 @@ class FlextModels:
                 cls._internal_logger = FlextLogger(__name__)
             return cls._internal_logger
 
-        domain_events: list[object] = Field(default_factory=list)
+        domain_events: list[FlextModels.DomainEvent] = Field(default_factory=list)
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -1171,7 +1172,7 @@ class FlextModels:
             self.increment_version()
             self.update_timestamp()
 
-        def get_uncommitted_events(self) -> list[object]:
+        def get_uncommitted_events(self) -> list[FlextModels.DomainEvent]:
             """Get uncommitted domain events without clearing them.
 
             Returns:
@@ -1207,7 +1208,7 @@ class FlextModels:
             # Clear all events
             self.domain_events.clear()
 
-        def clear_domain_events(self) -> FlextTypes.List:
+        def clear_domain_events(self) -> list[FlextModels.DomainEvent]:
             """Clear and return domain events.
 
             This method logs the clearing operation via structlog for
@@ -1218,7 +1219,7 @@ class FlextModels:
 
             """
             # Get events before clearing
-            events: FlextTypes.List = self.domain_events.copy()
+            events = self.domain_events.copy()
 
             # Log clearing operation via structlog if there are events
             if events:
@@ -4524,7 +4525,7 @@ class FlextModels:
             event_type: str,
             aggregate_id: str,
             data: FlextTypes.Dict | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Domain.EventMetadata | None = None,
         ) -> Any:  # providers.Callable
             """Create a Callable provider for domain events.
 

@@ -426,7 +426,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
                 msg = f"Validation {i}"
                 raise FlextExceptions.ValidationError(msg, field=f"field_{i}")
             except Exception as e:
-                self._logger.debug(
+                self.logger.debug(
                     DEMO_EXCEPTION_MSG,
                     e,
                 )  # Log for demo tracking
@@ -436,7 +436,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
                 msg = f"Connection {i}"
                 raise FlextExceptions.ConnectionError(msg, service=f"service_{i}")
             except Exception as e:
-                self._logger.debug(
+                self.logger.debug(
                     DEMO_EXCEPTION_MSG,
                     e,
                 )  # Log for demo tracking
@@ -445,7 +445,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
             msg = "Critical failure"
             raise FlextExceptions.CriticalError(msg)
         except Exception as e:
-            self._logger.debug("Demo exception raised: %s", e)  # Log for demo tracking
+            self.logger.debug("Demo exception raised: %s", e)  # Log for demo tracking
 
         # Get metrics
         metrics = FlextExceptions.get_metrics()

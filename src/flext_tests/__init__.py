@@ -9,11 +9,9 @@ Testing utilities and fixtures for FLEXT ecosystem projects.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
-if TYPE_CHECKING:
-    from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult, FlextTypes
 
 
 class FlextTestsDomains:
@@ -41,8 +39,6 @@ class FlextTestsMatchers:
 
         def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
             """Add users to dataset."""
-            from flext_core import FlextTypes
-
             self._data["users"] = [
                 {
                     "id": f"USER-{i}",

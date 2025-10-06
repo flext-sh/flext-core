@@ -37,22 +37,111 @@ from flext_core.handlers import FlextHandlers
 
 
 class BusMessagingService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextBus patterns."""
+    """Service demonstrating ALL FlextBus patterns with FlextMixins.Service infrastructure.
+
+    This service inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - BUS MESSAGING FOCUS!)
+    - Inherited context property (FlextContext for request/correlation tracking)
+    - Inherited config property (FlextConfig with bus processing settings)
+    - Inherited metrics property (FlextMetrics for bus observability)
+
+    FlextBus provides:
+    - Command Bus: Execute commands with single handlers
+    - Query Bus: Execute queries and return results
+    - Handler Registration: Register and discover handlers
+    - Middleware: Pre/post processing of messages
+    - Auto-discovery: Automatic handler registration
+    - Error Handling: Bus-level error management
+    - Performance Metrics: Execution tracking
+    """
 
     def __init__(self) -> None:
-        """Initialize with automatic Flext infrastructure."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Inherited properties (no manual instantiation needed):
+        - self.logger: FlextLogger with service context (bus messaging operations)
+        - self.container: FlextContainer singleton (for service dependencies)
+        - self.context: FlextContext (for correlation tracking)
+        - self.config: FlextConfig (for bus configuration)
+        - self.metrics: FlextMetrics (for bus observability)
+        """
         super().__init__()
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
-        """Execute method required by FlextService."""
+        # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
-            "Executing bus demo",
-            extra={"data": {"demo": "bus_messaging"}},
+            "BusMessagingService initialized with inherited infrastructure",
+            extra={
+                "service_type": "FlextBus Messaging & CQRS demonstration",
+                "bus_features": [
+                    "command_bus",
+                    "query_bus",
+                    "handler_registry",
+                    "middleware_pipeline",
+                    "auto_discovery",
+                    "error_handling",
+                    "performance_tracking",
+                ],
+            },
         )
-        return FlextResult[FlextTypes.Dict].ok({
-            "status": "processed",
-            "bus_executed": True,
-        })
+
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
+        """Execute all FlextBus pattern demonstrations.
+
+        Runs comprehensive bus messaging demonstrations:
+        1. Basic bus usage with commands and queries
+        2. Command bus pattern with domain commands
+        3. Middleware pattern with logging, validation, and performance
+        4. Handler discovery and management
+        5. Auto handlers with automatic registration
+        6. Error handling with bus-level error management
+        7. New FlextResult methods in bus context (v0.9.9+)
+        8. Deprecated patterns (for educational comparison)
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Execution summary with demonstration results
+
+        """
+        self.logger.info("Starting comprehensive FlextBus demonstration")
+
+        try:
+            # Run all 8 demonstrations
+            self.demonstrate_basic_bus()
+            self.demonstrate_command_bus()
+            self.demonstrate_middleware()
+            self.demonstrate_handler_discovery()
+            self.demonstrate_auto_handlers()
+            self.demonstrate_error_handling()
+            self.demonstrate_new_flextresult_methods()
+            self.demonstrate_deprecated_patterns()
+
+            summary = {
+                "status": "completed",
+                "demonstrations": 8,
+                "patterns": [
+                    "basic_bus",
+                    "command_bus",
+                    "middleware",
+                    "handler_discovery",
+                    "auto_handlers",
+                    "error_handling",
+                    "new_flextresult_methods",
+                    "deprecated_patterns",
+                ],
+                "bus_executed": True,
+            }
+
+            self.logger.info(
+                "FlextBus demonstration completed successfully",
+                extra={"summary": summary},
+            )
+
+            return FlextResult[FlextTypes.Dict].ok(summary)
+
+        except Exception as e:
+            error_msg = f"FlextBus demonstration failed: {e}"
+            self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
+            return FlextResult[FlextTypes.Dict].fail(error_msg)
 
     # ========== BASIC BUS USAGE ==========
 
@@ -572,6 +661,190 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
+    def demonstrate_new_flextresult_methods(self) -> None:
+        """Demonstrate the 5 new FlextResult methods in bus messaging context.
+        
+        Shows how the new v0.9.9+ methods work with bus messaging patterns:
+        - from_callable: Safe bus operations
+        - flow_through: Message pipeline composition
+        - lash: Bus fallback recovery
+        - alt: Handler alternatives
+        - value_or_call: Lazy bus initialization
+        """
+        print("\n" + "=" * 60)
+        print("NEW FLEXTRESULT METHODS - BUS MESSAGING CONTEXT")
+        print("Demonstrating v0.9.9+ methods with FlextBus patterns")
+        print("=" * 60)
+
+        # 1. from_callable - Safe Bus Operations
+        print("\n=== 1. from_callable: Safe Bus Operations ===")
+
+        def risky_bus_registration() -> FlextBus:
+            """Bus registration that might raise exceptions."""
+            bus_config = FlextModels.CqrsConfig.Bus(
+                enable_middleware=True,
+                enable_metrics=True,
+                execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
+            )
+            if not bus_config:
+                msg = "Bus configuration failed"
+                raise ValueError(msg)
+            return FlextBus(bus_config=bus_config)
+
+        # Safe bus creation without try/except
+        bus_result = FlextResult.from_callable(risky_bus_registration)
+        if bus_result.is_success:
+            bus = bus_result.unwrap()
+            print(f"✅ Bus created safely: {type(bus).__name__}")
+            print(f"   Middleware enabled: {bus.config.enable_middleware}")
+        else:
+            print(f"❌ Bus creation failed: {bus_result.error}")
+
+        # 2. flow_through - Message Pipeline Composition
+        print("\n=== 2. flow_through: Message Pipeline Composition ===")
+
+        def validate_message_format(data: dict) -> FlextResult[dict]:
+            """Validate message has required fields."""
+            if not data.get("type"):
+                return FlextResult[dict].fail("Message type required")
+            if not data.get("payload"):
+                return FlextResult[dict].fail("Message payload required")
+            return FlextResult[dict].ok(data)
+
+        def enrich_with_metadata(data: dict) -> FlextResult[dict]:
+            """Add bus metadata to message."""
+            enriched = {
+                **data,
+                "message_id": str(uuid4()),
+                "timestamp": time.time(),
+                "bus_version": "1.0",
+            }
+            return FlextResult[dict].ok(enriched)
+
+        def register_in_bus(data: dict) -> FlextResult[dict]:
+            """Register message in bus tracking."""
+            enriched = {
+                **data,
+                "registered": True,
+                "tracking_id": f"TRACK-{data.get('message_id', 'unknown')[:8]}",
+            }
+            return FlextResult[dict].ok(enriched)
+
+        def validate_complete(data: dict) -> FlextResult[dict]:
+            """Validate message is ready for bus."""
+            required_fields = ["type", "payload", "message_id", "timestamp", "registered"]
+            missing = [f for f in required_fields if f not in data]
+            if missing:
+                return FlextResult[dict].fail(f"Missing fields: {', '.join(missing)}")
+            return FlextResult[dict].ok(data)
+
+        # Flow through complete bus message pipeline
+        message_data = {
+            "type": "user.created",
+            "payload": {"user_id": "USER-001", "name": "Alice"},
+        }
+        pipeline_result = (
+            FlextResult[dict]
+            .ok(message_data)
+            .flow_through(
+                validate_message_format,
+                enrich_with_metadata,
+                register_in_bus,
+                validate_complete,
+            )
+        )
+
+        if pipeline_result.is_success:
+            final_message = pipeline_result.unwrap()
+            print(f"✅ Bus message pipeline complete: {final_message['type']}")
+            print(f"   Message ID: {final_message.get('message_id', 'N/A')[:36]}")
+            print(f"   Tracking ID: {final_message.get('tracking_id', 'N/A')}")
+            print(f"   Registered: {final_message.get('registered', False)}")
+        else:
+            print(f"❌ Pipeline failed: {pipeline_result.error}")
+
+        # 3. lash - Bus Fallback Recovery
+        print("\n=== 3. lash: Bus Fallback Recovery ===")
+
+        def primary_handler() -> FlextResult[str]:
+            """Primary handler that might fail."""
+            return FlextResult[str].fail("Primary handler unavailable")
+
+        def fallback_handler(error: str) -> FlextResult[str]:
+            """Fallback handler when primary fails."""
+            print(f"   ⚠️  Primary failed: {error}, using fallback...")
+            result_id = f"FALLBACK-{uuid4().hex[:8]}"
+            return FlextResult[str].ok(result_id)
+
+        # Try primary handler, fall back on failure
+        handler_result = primary_handler().lash(fallback_handler)
+        if handler_result.is_success:
+            result_id = handler_result.unwrap()
+            print(f"✅ Handler execution successful: {result_id}")
+        else:
+            print(f"❌ All handlers failed: {handler_result.error}")
+
+        # 4. alt - Handler Alternatives
+        print("\n=== 4. alt: Handler Alternatives ===")
+
+        def get_custom_bus_config() -> FlextResult[FlextModels.CqrsConfig.Bus]:
+            """Try to get custom bus configuration."""
+            return FlextResult[FlextModels.CqrsConfig.Bus].fail("Custom config not found")
+
+        def get_default_bus_config() -> FlextResult[FlextModels.CqrsConfig.Bus]:
+            """Provide default bus configuration."""
+            config = FlextModels.CqrsConfig.Bus(
+                enable_middleware=True,
+                enable_metrics=True,
+                execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
+                max_cache_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+            )
+            return FlextResult[FlextModels.CqrsConfig.Bus].ok(config)
+
+        # Try custom config, fall back to default
+        config_result = get_custom_bus_config().alt(get_default_bus_config())
+        if config_result.is_success:
+            config = config_result.unwrap()
+            print(f"✅ Bus config acquired: {type(config).__name__}")
+            print(f"   Middleware: {config.enable_middleware}")
+            print(f"   Metrics: {config.enable_metrics}")
+        else:
+            print(f"❌ No config available: {config_result.error}")
+
+        # 5. value_or_call - Lazy Bus Initialization
+        print("\n=== 5. value_or_call: Lazy Bus Initialization ===")
+
+        def create_expensive_bus() -> FlextBus:
+            """Create and configure a new bus (expensive operation)."""
+            print("   ⚙️  Creating new bus with full configuration...")
+            config = FlextModels.CqrsConfig.Bus(
+                enable_middleware=True,
+                enable_metrics=True,
+                execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
+                max_cache_size=1000,
+            )
+            # Register some handlers (expensive setup)
+            # Return directly to avoid RET504
+            return FlextBus(bus_config=config)
+
+        # Try to get existing bus, create new one if not available
+        bus_fail_result = FlextResult[FlextBus].fail("No existing bus")
+        bus = bus_fail_result.value_or_call(create_expensive_bus)
+        print(f"✅ Bus acquired: {type(bus).__name__}")
+        print(f"   Config enabled: {hasattr(bus, 'config')}")
+
+        # Try again with successful result (lazy function NOT called)
+        existing_bus = FlextBus()
+        bus_success_result = FlextResult[FlextBus].ok(existing_bus)
+        bus_cached = bus_success_result.value_or_call(create_expensive_bus)
+        print(f"✅ Existing bus used: {type(bus_cached).__name__}")
+        print("   No expensive creation needed")
+
+        print("\n" + "=" * 60)
+        print("✅ NEW FLEXTRESULT METHODS BUS MESSAGING DEMO COMPLETE!")
+        print("All 5 methods demonstrated with FlextBus messaging context")
+        print("=" * 60)
+
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated bus patterns."""
         print("\n=== ⚠️ DEPRECATED PATTERNS ===")
@@ -639,6 +912,9 @@ def main() -> None:
     # Auto handlers
     service.demonstrate_auto_handlers()
     service.demonstrate_error_handling()
+
+    # New FlextResult methods (v0.9.9+)
+    service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()

@@ -1762,7 +1762,7 @@ class FlextUtilities:
                                 pass
                             else:
                                 # For custom classes, try calling with the value
-                                converted_value = target_type(value)
+                                converted_value = target_type(value)  # type: ignore[call-arg]  # Generic type constructor call
                                 return FlextResult[T].ok(converted_value)
                         except (TypeError, ValueError):
                             # If constructor fails with args, try no-arg constructor
@@ -2485,16 +2485,16 @@ class FlextUtilities:
 
             """
             # Basic normalization - ensure all values are displayable
-            normalized = {}
+            normalized: dict[str, str] = {}
             for key, value in data.items():
                 if isinstance(value, (dict, list)):
                     normalized[key] = str(value)
                 elif value is None:
                     normalized[key] = ""
                 else:
-                    normalized[key] = value
+                    normalized[key] = str(value)
 
-            return FlextResult[FlextTypes.Dict].ok(normalized)
+            return FlextResult[dict[str, object]].ok(cast("dict[str, object]", normalized))
 
         @staticmethod
         def format_table_data(

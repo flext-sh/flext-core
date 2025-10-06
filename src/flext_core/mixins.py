@@ -206,10 +206,7 @@ class FlextMixins:
         if request.use_model_dump and hasattr(obj, "model_dump"):
             # Type narrow obj to have model_dump method
             model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
-            result = model_obj.model_dump()
-            if isinstance(result, dict):
-                return result
-            return cast("FlextTypes.Dict", {"model_dump": result})
+            return model_obj.model_dump()
 
         # Use __dict__ if available
         if hasattr(obj, "__dict__"):
@@ -806,7 +803,7 @@ class FlextMixins:
             return {
                 k: v
                 for k, v in context.items()
-                if isinstance(k, str) and k.endswith("_ms")
+                if k.endswith("_ms")
             }
 
     class Validatable:
@@ -1294,6 +1291,7 @@ class FlextMixins:
     @override
     def __init__(self) -> None:
         """Initialize FlextMixins instance with internal state."""
+        super().__init__()
         self._registry: dict[str, type] = {}
         self._middleware: list[
             Callable[[type, object], tuple[type, object] | None]

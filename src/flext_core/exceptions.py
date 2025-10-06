@@ -142,13 +142,9 @@ class FlextExceptions:
                     metadata=self.metadata,
                 )
             except Exception as e:
-                # Don't fail if logging fails, but print to stderr for diagnostics
-                import sys
-
-                print(
-                    f"Warning: Logging failed in exception handler: {e}",
-                    file=sys.stderr,
-                )
+                # Don't fail if logging fails, but log the error using standard logging
+                import logging
+                logging.getLogger(__name__).debug("Logging failed in exception handler: %s", e)
 
         def __str__(self) -> str:
             """String representation with error code and correlation ID."""
@@ -224,13 +220,9 @@ class FlextExceptions:
                     correlation_id=self.correlation_id,
                 )
             except Exception as e:
-                # Don't fail if logging fails, but print to stderr for diagnostics
-                import sys
-
-                print(
-                    f"Warning: Logging failed in exception handler: {e}",
-                    file=sys.stderr,
-                )
+                # Don't fail if logging fails, but log the error using standard logging
+                import logging
+                logging.getLogger(__name__).debug("Logging failed in exception handler: %s", e)
 
             return self
 

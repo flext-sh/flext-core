@@ -1006,13 +1006,14 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
 
         # Event processing error
         try:
+            error_message = "Event handler not found"
             raise FlextExceptions.NotFoundError(
-                "Event handler not found",
+                error_message,
                 resource_type="event_handler",
                 resource_id="OrderCreatedHandler",
             )
         except FlextExceptions.NotFoundError as e:
-            logger.error(
+            logger.exception(
                 "Event handler not found",
                 extra={
                     "error_code": e.error_code,
@@ -1026,13 +1027,14 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
 
         # Message routing error
         try:
+            error_message = "Message routing configuration invalid"
             raise FlextExceptions.ConfigurationError(
-                "Message routing configuration invalid",
+                error_message,
                 config_key="message_routing",
                 config_source="messaging_config.yaml",
             )
         except FlextExceptions.ConfigurationError as e:
-            logger.error(
+            logger.exception(
                 "Message routing configuration error",
                 extra={
                     "error_code": e.error_code,

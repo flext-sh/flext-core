@@ -25,28 +25,118 @@ import time
 import warnings
 from uuid import uuid4
 
-from flext_core import Flext, FlextLogger
+from flext_core import Flext, FlextExceptions
 
 
 class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
-    """Service demonstrating ALL FlextContext patterns."""
+    """Service demonstrating ALL FlextContext patterns with FlextMixins.Service infrastructure.
+
+    This service inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - CONTEXT FOCUS!)
+    - Inherited context property (FlextContext for request/correlation tracking)
+    - Inherited config property (FlextConfig with application settings)
+    - Inherited metrics property (FlextMetrics for observability)
+
+    The focus is on demonstrating FlextContext patterns: correlation tracking,
+    context variables, service context, request context, and performance tracking,
+    while leveraging complete FlextMixins.Service infrastructure.
+    """
 
     def __init__(self) -> None:
-        """Initialize with dependencies."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger initialization needed!
+        All infrastructure is inherited from Flext.Service base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for request/correlation tracking
+        - self.config: FlextConfig with application settings
+        - self.metrics: FlextMetrics for observability
+        """
         super().__init__()
-        self._logger = FlextLogger(__name__)
-        self._config = Flext.Config()
+
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "ContextManagementService initialized with inherited infrastructure",
+            extra={
+                "service_type": "Context Management demonstration",
+                "context_features": [
+                    "correlation_tracking",
+                    "context_variables",
+                    "service_context",
+                    "request_context",
+                    "performance_tracking"
+                ],
+            }
+        )
 
     def execute(self) -> Flext.Result[Flext.Types.StringDict]:
-        """Execute method required by FlextService."""
-        self._logger.info(
-            "Executing context demo",
-            extra={"data": {"demo": "context_management"}},
-        )
-        return Flext.Result[Flext.Types.StringDict].ok({
-            "status": "completed",
-            "context_managed": "true",
-        })
+        """Execute all context management demonstrations.
+
+        Demonstrates inherited infrastructure alongside context patterns:
+        - Inherited logger for structured logging
+        - Inherited context for correlation tracking
+        - Complete FlextContext API patterns
+        - Context variable management
+        - Performance tracking
+
+        Returns:
+            FlextResult[StringDict] with demonstration summary including infrastructure details
+
+        """
+        self.logger.info("Starting comprehensive FlextContext demonstration")
+
+        try:
+            # Context demonstrations
+            self.demonstrate_context_variables()
+            self.demonstrate_correlation_tracking()
+            self.demonstrate_service_context()
+            self.demonstrate_request_context()
+            self.demonstrate_performance_tracking()
+            self.demonstrate_serialization()
+            self.demonstrate_utilities()
+
+            # NEW: FlextResult v0.9.9+ methods for context
+            self.demonstrate_from_callable_context()
+            self.demonstrate_flow_through_context()
+            self.demonstrate_lash_context()
+            self.demonstrate_alt_context()
+            self.demonstrate_value_or_call_context()
+
+            # Deprecation warnings
+            self.demonstrate_deprecated_patterns()
+
+            summary = {
+                "demonstrations_completed": "12",
+                "status": "completed",
+                "context_managed": "true",
+                "infrastructure": {
+                    "logger": type(self.logger).__name__,
+                    "container": type(self.container).__name__,
+                    "context": type(self.context).__name__,
+                    "config": type(self.config).__name__,
+                },
+                "context_features": {
+                    "correlation_tracking": "true",
+                    "context_variables": "true",
+                    "service_context": "true",
+                    "request_context": "true",
+                    "performance_tracking": "true",
+                },
+            }
+
+            self.logger.info(
+                "FlextContext demonstration completed successfully",
+                extra=summary
+            )
+
+            return Flext.Result[Flext.Types.StringDict].ok(summary)
+
+        except Exception as e:
+            error_msg = f"FlextContext demonstration failed: {e}"
+            self.logger.exception(error_msg)
+            return Flext.Result[Flext.Types.StringDict].fail(error_msg)
 
     # ========== CONTEXT VARIABLES ==========
 
@@ -480,6 +570,204 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
+    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+
+    def demonstrate_new_flextresult_methods(self) -> None:
+        """Demonstrate the 5 new FlextResult methods in context management.
+        
+        Shows how the new v0.9.9+ methods integrate with context operations:
+        - from_callable: Safe context operations
+        - flow_through: Context pipeline composition
+        - lash: Context fallback recovery
+        - alt: Context provider alternatives
+        - value_or_call: Lazy context loading
+        """
+        print("\n=== NEW FLEXTRESULT METHODS (v0.9.9+) ===")
+
+        # 1. from_callable - Safe Context Operations
+        print("\n1. from_callable: Safe Context Operations")
+
+        def risky_context_operation() -> dict[str, str]:
+            """Context operation that might raise exceptions."""
+            user_id = Flext.Context.Variables.Request.USER_ID.get()
+            if not user_id:
+                msg = "User ID not found in context"
+                raise FlextExceptions.ValidationError(
+                    msg,
+                    field="user_id",
+                    value=None,
+                )
+            return {
+                "user_id": user_id,
+                "request_id": Flext.Context.Variables.Request.REQUEST_ID.get() or "unknown",
+                "service": Flext.Context.Variables.Service.SERVICE_NAME.get() or "unknown",
+            }
+
+        # Set up context
+        Flext.Context.Variables.Request.USER_ID.set("USER-SAFE-123")
+        Flext.Context.Variables.Request.REQUEST_ID.set(str(uuid4()))
+        Flext.Context.Variables.Service.SERVICE_NAME.set("context-service")
+
+        # Safe context extraction without try/except
+        result = Flext.Result.from_callable(risky_context_operation)
+        if result.is_success:
+            context_data = result.unwrap()
+            print(f"✅ Context extracted safely: user={context_data['user_id']}")
+        else:
+            print(f"❌ Context extraction failed: {result.error}")
+
+        # 2. flow_through - Context Pipeline Composition
+        print("\n2. flow_through: Context Pipeline Composition")
+
+        def validate_user_context(data: dict) -> Flext.Result[dict]:
+            """Validate user context exists."""
+            if not data.get("user_id"):
+                return Flext.Result[dict].fail("User context required")
+            return Flext.Result[dict].ok(data)
+
+        def enrich_with_correlation(data: dict) -> Flext.Result[dict]:
+            """Add correlation ID from context."""
+            correlation_id = Flext.Context.Correlation.get_correlation_id()
+            enriched = {**data, "correlation_id": correlation_id}
+            return Flext.Result[dict].ok(enriched)
+
+        def add_service_metadata(data: dict) -> Flext.Result[dict]:
+            """Add service metadata from context."""
+            enriched = {
+                **data,
+                "service_name": Flext.Context.Service.get_service_name(),
+                "service_version": Flext.Context.Service.get_service_version(),
+            }
+            return Flext.Result[dict].ok(enriched)
+
+        def validate_complete_context(data: dict) -> Flext.Result[dict]:
+            """Ensure all required context fields present."""
+            required = ["user_id", "correlation_id", "service_name"]
+            missing = [f for f in required if not data.get(f)]
+            if missing:
+                return Flext.Result[dict].fail(f"Missing context fields: {missing}")
+            return Flext.Result[dict].ok(data)
+
+        # Flow through context enrichment pipeline
+        context_data = {
+            "user_id": Flext.Context.Variables.Request.USER_ID.get(),
+            "timestamp": time.time(),
+        }
+        pipeline_result = (
+            Flext.Result[dict]
+            .ok(context_data)
+            .flow_through(
+                validate_user_context,
+                enrich_with_correlation,
+                add_service_metadata,
+                validate_complete_context,
+            )
+        )
+
+        if pipeline_result.is_success:
+            enriched_context = pipeline_result.unwrap()
+            print(f"✅ Context pipeline complete: {len(enriched_context)} fields")
+            print(f"   User: {enriched_context.get('user_id')}")
+            print(f"   Correlation: {enriched_context.get('correlation_id')}")
+            print(f"   Service: {enriched_context.get('service_name')}")
+        else:
+            print(f"❌ Pipeline failed: {pipeline_result.error}")
+
+        # 3. lash - Context Fallback Recovery
+        print("\n3. lash: Context Fallback Recovery")
+
+        def try_get_user_from_context() -> Flext.Result[dict]:
+            """Try to get user from primary context."""
+            user_id = Flext.Context.Variables.Request.USER_ID.get()
+            if not user_id:
+                return Flext.Result[dict].fail("User not in request context")
+            return Flext.Result[dict].ok({"user_id": user_id, "source": "context"})
+
+        def fallback_to_default_user(error: str) -> Flext.Result[dict]:
+            """Fallback to default anonymous user."""
+            print(f"   ⚠️  Context lookup failed: {error}, using fallback...")
+            return Flext.Result[dict].ok({
+                "user_id": "anonymous",
+                "source": "fallback",
+            })
+
+        # Clear user context to trigger fallback
+        Flext.Context.Variables.Request.USER_ID.set(None)
+
+        # Try context, fallback to default on failure
+        user_result = try_get_user_from_context().lash(fallback_to_default_user)
+
+        if user_result.is_success:
+            user_data = user_result.unwrap()
+            print(f"✅ User resolved: {user_data['user_id']} (source: {user_data['source']})")
+        else:
+            print(f"❌ All user resolution failed: {user_result.error}")
+
+        # 4. alt - Context Provider Alternatives
+        print("\n4. alt: Context Provider Alternatives")
+
+        def get_cached_service_config() -> Flext.Result[dict]:
+            """Try to get service config from cache context."""
+            # Simulate cache miss
+            return Flext.Result[dict].fail("Config not in cache context")
+
+        def get_default_service_config() -> Flext.Result[dict]:
+            """Get default service configuration."""
+            return Flext.Result[dict].ok({
+                "timeout": 30,
+                "max_retries": 3,
+                "log_level": "INFO",
+                "environment": Flext.Context.Service.get_service_name() or "unknown",
+            })
+
+        # Try cached config, fall back to default
+        config = get_cached_service_config().alt(get_default_service_config())
+
+        if config.is_success:
+            config_data = config.unwrap()
+            print(f"✅ Service config loaded: timeout={config_data.get('timeout')}s")
+            print(f"   Max retries: {config_data.get('max_retries')}")
+            print(f"   Environment: {config_data.get('environment')}")
+        else:
+            print(f"❌ No config sources available: {config.error}")
+
+        # 5. value_or_call - Lazy Context Loading
+        print("\n5. value_or_call: Lazy Context Loading")
+
+        def load_expensive_user_profile() -> dict[str, str]:
+            """Expensive user profile loading from database."""
+            print("   ⚙️  Loading user profile from database...")
+            time.sleep(0.1)  # Simulate expensive operation
+            return {
+                "user_id": "USER-LOADED-456",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "role": "admin",
+                "preferences": json.dumps({"theme": "dark", "lang": "en"}),
+            }
+
+        # User not in context, lazy-load profile
+        user_context: Flext.Result[dict[str, str]] = Flext.Result[dict[str, str]].fail(
+            "User not in context",
+        )
+
+        # Only loads if result is failure
+        user_profile = user_context.value_or_call(load_expensive_user_profile)
+        print(f"✅ User profile loaded: {user_profile.get('name')}")
+        print(f"   Email: {user_profile.get('email')}")
+        print(f"   Role: {user_profile.get('role')}")
+
+        # When user is in context, doesn't call the expensive function
+        cached_user: Flext.Result[dict[str, str]] = Flext.Result[dict[str, str]].ok({
+            "user_id": "USER-CACHED-789",
+            "name": "Jane Cached",
+        })
+        cached_profile = cached_user.value_or_call(load_expensive_user_profile)  # Won't execute
+        print(f"✅ Cached profile used: {cached_profile}")
+
+        print("\n✅ NEW FLEXTRESULT METHODS DEMONSTRATED!")
+        print("All 5 methods integrated with context management operations")
+
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated context patterns."""
         print("\n=== ⚠️ DEPRECATED PATTERNS ===")
@@ -560,6 +848,9 @@ def main() -> None:
     # Context demo (synchronous execution)
     print("\n=== Running Context Demo ===")
     service.demonstrate_context()
+
+    # New FlextResult methods (v0.9.9+)
+    service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
