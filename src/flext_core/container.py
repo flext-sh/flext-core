@@ -22,7 +22,7 @@ import contextlib
 import inspect
 import threading
 from collections.abc import Callable
-from typing import Self, cast, override
+from typing import TYPE_CHECKING, Self, cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -30,7 +30,10 @@ from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, T
+from flext_core.typings import FlextTypes
+
+if TYPE_CHECKING:
+    from dependency_injector.containers import DynamicContainer
 
 containers = FlextRuntime.dependency_containers()
 providers = FlextRuntime.dependency_providers()
@@ -186,7 +189,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         # Internal dependency-injector container (NEW v1.1.0)
         # Provides advanced DI features while maintaining backward compatibility
-        self._di_container: containers.DynamicContainer = containers.DynamicContainer()
+        self._di_container: object = containers.DynamicContainer()
 
         # Core service storage with type safety (MAINTAINED for compatibility)
         self._services: FlextTypes.Dict = {}
@@ -244,7 +247,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # This provider is linked to Pydantic settings and automatically
         # syncs configuration values
         config_provider = FlextConfig.get_di_config_provider()
-        self._di_container.config = config_provider
+        cast("DynamicContainer", self._di_container).config = config_provider
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -350,7 +353,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Store in internal DI container using Object provider
             # Object provider is for existing instances (singletons by nature)
             provider = providers.Object(service)
-            self._di_container.set_provider(name, provider)
+            cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
             return FlextResult[None].ok(None)
@@ -410,7 +413,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Store in internal DI container using Singleton with factory
             # This creates lazy singleton: factory called once, result cached
             provider = providers.Singleton(factory)
-            self._di_container.set_provider(name, provider)
+            cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
             return FlextResult[None].ok(None)
@@ -534,7 +537,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         return self.get(name).flat_map(
             lambda service: cast(
-                "FlextResult[object]",
+                "FlextResult[T]",
                 self._validate_service_type(service, expected_type),
             ),
         )
@@ -1032,6 +1035,172 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "module": module_name,
             "logger": f"flext.{module_name}",
         })
+
+    def get_with_fallback(
+        self,
+        primary_name: str,
+        *fallback_names: str,
+    ) -> FlextResult[object]:
+        """Get service trying multiple names using alt pattern.
+
+        Demonstrates alt for service resolution fallback chains.
+
+        Args:
+            primary_name: Primary service name to try
+            *fallback_names: Fallback service names to try in order
+
+        Returns:
+            FlextResult with service from first found name
+
+        Example:
+            >>> container = FlextContainer.get_global()
+            >>> service = container.get_with_fallback("db_service", "database", "db")
+
+        """
+        result = self.get(primary_name)
+        for fallback_name in fallback_names:
+            result = result.alt(self.get(fallback_name))
+        return result
+
+    def safe_register_from_factory(
+        self,
+        name: str,
+        factory: object,
+    ) -> FlextResult[None]:
+        """Register service from factory using from_callable pattern.
+
+        Demonstrates from_callable for safe factory registration.
+
+        Args:
+            name: Service name
+            factory: Factory callable
+
+        Returns:
+            FlextResult[None]: Success or error
+
+        Example:
+            >>> container = FlextContainer.get_global()
+            >>> result = container.safe_register_from_factory(
+            ...     "logger", lambda: create_logger()
+            ... )
+
+        """
+        # Use from_callable to safely execute factory
+        factory_result = FlextResult.from_callable(
+            lambda: factory() if callable(factory) else factory
+        )
+
+        if factory_result.is_failure:
+            return FlextResult[None].fail(
+                f"Factory execution failed: {factory_result.error}"
+            )
+
+        service = factory_result.unwrap()
+        return self.register(name, service)
+
+    def get_typed_with_recovery[T](
+        self,
+        name: str,
+        expected_type: type[T],
+        recovery_factory: object | None = None,
+    ) -> FlextResult[T]:
+        """Get typed service with recovery using lash pattern.
+
+        Demonstrates lash for error recovery with factory.
+
+        Args:
+            name: Service name
+            expected_type: Expected service type
+            recovery_factory: Optional factory to create service if not found
+
+        Returns:
+            FlextResult[T]: Service or recovered value
+
+        Example:
+            >>> container = FlextContainer.get_global()
+            >>> logger = container.get_typed_with_recovery(
+            ...     "logger", LoggerService, lambda: LoggerService()
+            ... )
+
+        """
+
+        def try_recovery(_error: str) -> FlextResult[T]:
+            if recovery_factory is None:
+                return FlextResult[T].fail(
+                    f"Service '{name}' not found and no recovery factory provided"
+                )
+
+            factory_result = FlextResult.from_callable(
+                lambda: recovery_factory()
+                if callable(recovery_factory)
+                else recovery_factory
+            )
+
+            if factory_result.is_failure:
+                return FlextResult[T].fail(
+                    f"Recovery factory failed: {factory_result.error}"
+                )
+
+            service = factory_result.unwrap()
+            if not isinstance(service, expected_type):
+                return FlextResult[T].fail(
+                    f"Recovery factory returned wrong type: expected {expected_type.__name__}, got {type(service).__name__}"
+                )
+
+            # Register the recovered service for future use
+            self.register(name, service)
+            return FlextResult[T].ok(service)
+
+        return self.get_typed(name, expected_type).lash(try_recovery)
+
+    def validate_and_get(
+        self,
+        name: str,
+        validators: list[object] | None = None,
+    ) -> FlextResult[object]:
+        """Get service and validate using flow_through pattern.
+
+        Demonstrates flow_through for service resolution and validation pipeline.
+
+        Args:
+            name: Service name
+            validators: Optional list of validation functions
+
+        Returns:
+            FlextResult with validated service
+
+        Example:
+            >>> def validate_not_none(s):
+            ...     return (
+            ...         FlextResult[object].ok(s)
+            ...         if s
+            ...         else FlextResult[object].fail("None")
+            ...     )
+            >>> container = FlextContainer.get_global()
+            >>> service = container.validate_and_get("logger", [validate_not_none])
+
+        """
+
+        def apply_validators(service: object) -> FlextResult[object]:
+            if not validators:
+                return FlextResult[object].ok(service)
+
+            result: FlextResult[object] = FlextResult[object].ok(service)
+            for validator in validators:
+                if callable(validator):
+                    validation_result = FlextResult.from_callable(
+                        lambda v=validator: v(service)
+                    )
+                    if validation_result.is_failure:
+                        return FlextResult[object].fail(
+                            f"Validation failed: {validation_result.error}"
+                        )
+                    # Continue with validated service
+                    result = validation_result
+
+            return result
+
+        return self.get(name).flat_map(apply_validators)
 
     @override
     def __repr__(self) -> str:

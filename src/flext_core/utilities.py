@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import contextvars
 import inspect
-import json
 import math
 import operator
 import os
@@ -26,23 +25,39 @@ import uuid
 from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, tzinfo
+
+# TYPE_CHECKING imports to avoid circular dependency
+# utilities.py is Layer 4, config.py is Layer 2 - should not import at runtime
 from typing import (
+    TYPE_CHECKING,
     ClassVar,
     cast,
     get_origin,
     get_type_hints,
 )
 
-from pydantic import BaseModel
+import orjson
+from dateutil import parser as dateutil_parser, tz as dateutil_tz
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    HttpUrl,
+    TypeAdapter,
+    ValidationError as PydanticValidationError,
+)
+from pydantic.types import conint, constr
 
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes, T, U
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
+
+if TYPE_CHECKING:
+    from flext_core.config import FlextConfig
 
 
 class FlextUtilities:
@@ -154,17 +169,32 @@ class FlextUtilities:
             max_length: int | None = None,
             field_name: str = "string",
         ) -> FlextResult[str]:
-            """Validate string length constraints."""
-            length = len(value)
-            if length < min_length:
-                return FlextResult[str].fail(
-                    f"{field_name} must be at least {min_length} characters, got {length}",
-                )
-            if max_length is not None and length > max_length:
-                return FlextResult[str].fail(
-                    f"{field_name} must be at most {max_length} characters, got {length}",
-                )
-            return FlextResult[str].ok(value)
+            """Validate string length constraints using Pydantic constr."""
+            try:
+                # Create constrained string type using Pydantic
+                if max_length is not None:
+                    constrained_str = constr(
+                        min_length=min_length, max_length=max_length
+                    )
+                else:
+                    constrained_str = constr(min_length=min_length)
+
+                # Validate using TypeAdapter
+                adapter = TypeAdapter(constrained_str)
+                validated = adapter.validate_python(value)
+                return FlextResult[str].ok(str(validated))
+            except (PydanticValidationError, ValueError) as e:
+                # Extract meaningful error message
+                length = len(value)
+                if length < min_length:
+                    return FlextResult[str].fail(
+                        f"{field_name} must be at least {min_length} characters, got {length}",
+                    )
+                if max_length is not None and length > max_length:
+                    return FlextResult[str].fail(
+                        f"{field_name} must be at most {max_length} characters, got {length}",
+                    )
+                return FlextResult[str].fail(f"{field_name} validation error: {e}")
 
         @staticmethod
         def validate_string_pattern(
@@ -236,45 +266,71 @@ class FlextUtilities:
 
         @staticmethod
         def validate_email(email: str) -> FlextResult[str]:
-            """Validate email format using railway composition."""
-            email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-            return FlextUtilities.Validation.validate_string(
-                email,
-                min_length=5,
-                max_length=254,
-                pattern=email_pattern,
-                field_name="email",
-            )
+            """Validate email format using Pydantic EmailStr (RFC 5322 compliant).
+
+            Uses Pydantic's EmailStr for robust email validation instead of custom regex.
+            EmailStr provides comprehensive validation including:
+            - Proper local and domain part validation
+            - RFC 5322 compliance
+            - Length constraints (max 254 chars)
+            - Automatic normalization
+            """
+            try:
+                # Pydantic EmailStr handles all RFC 5322 validation
+                email_adapter = TypeAdapter(EmailStr)
+                validated = email_adapter.validate_python(email)
+                return FlextResult[str].ok(str(validated))
+            except (PydanticValidationError, ValueError) as e:
+                return FlextResult[str].fail(f"Invalid email format: {e}")
 
         @staticmethod
         def validate_url(url: str) -> FlextResult[str]:
-            """Validate URL format using railway composition."""
-            url_pattern = r"^https?://[^\s/$.?#].[^\s]*$"
-            return FlextUtilities.Validation.validate_string(
-                url,
-                min_length=10,
-                pattern=url_pattern,
-                field_name="URL",
-            )
+            """Validate URL format using Pydantic HttpUrl (RFC 3986 compliant).
+
+            Uses Pydantic's HttpUrl for robust URL validation instead of custom regex.
+            HttpUrl provides comprehensive validation including:
+            - Protocol validation (http, https)
+            - Host/domain validation
+            - Port validation
+            - Path, query, and fragment handling
+            - RFC 3986 compliance
+            """
+            try:
+                # Use TypeAdapter for proper Pydantic HttpUrl validation
+                url_adapter = TypeAdapter(HttpUrl)
+                validated = url_adapter.validate_python(url)
+                return FlextResult[str].ok(str(validated))
+            except (PydanticValidationError, ValueError) as e:
+                return FlextResult[str].fail(f"Invalid URL format: {e}")
 
         @staticmethod
         def validate_port(port: int | str) -> FlextResult[int]:
-            """Validate network port number using explicit FlextResult patterns."""
-            # First validate the input type and convert to integer explicitly
-            port_conversion = FlextUtilities.Processing.convert_to_integer(port)
-            if port_conversion.is_failure:
-                return FlextResult[int].fail(
-                    f"Port must be a valid integer, got {port}: {port_conversion.error}",
-                )
+            """Validate network port number using Pydantic conint."""
+            try:
+                # Define port constraints (1-65535) using Pydantic
+                port_number = conint(ge=1, le=FlextConstants.Network.MAX_PORT)
 
-            port_int = port_conversion.unwrap()
+                # Validate using TypeAdapter (handles both int and str input)
+                adapter = TypeAdapter(port_number)
+                validated = adapter.validate_python(port)
+                return FlextResult[int].ok(int(validated))
+            except (PydanticValidationError, ValueError) as e:
+                # Provide meaningful error messages
+                if isinstance(port, str) and not port.isdigit():
+                    return FlextResult[int].fail(
+                        f"Port must be a valid integer, got {port}"
+                    )
 
-            # Then validate the port range
-            if not (1 <= port_int <= FlextConstants.Network.MAX_PORT):
-                return FlextResult[int].fail(
-                    f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}, got {port_int}",
-                )
-            return FlextResult[int].ok(port_int)
+                try:
+                    port_int = int(port)
+                    if port_int < 1 or port_int > FlextConstants.Network.MAX_PORT:
+                        return FlextResult[int].fail(
+                            f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}, got {port_int}",
+                        )
+                except (ValueError, TypeError):
+                    pass
+
+                return FlextResult[int].fail(f"Invalid port number: {e}")
 
         @staticmethod
         def validate_environment_value(
@@ -687,6 +743,159 @@ class FlextUtilities:
 
             return FlextResult[FlextTypes.Dict].ok(data)
 
+        class Providers:
+            """Dependency injection providers for validation services.
+
+            Enables validation services to be registered and injected via DI container.
+            This follows Phase 2 enhancement pattern for making utilities injectable.
+            """
+
+            @staticmethod
+            def create_validation_service_provider() -> object:  # providers.Singleton
+                """Create singleton provider for validation service.
+
+                Returns:
+                    providers.Singleton: Singleton validation service provider
+
+                Example:
+                    >>> from flext_core import FlextUtilities
+                    >>> provider = FlextUtilities.Validation.Providers.create_validation_service_provider()
+                    >>> # Register in container
+                    >>> container.register("validation_service", provider)
+
+                """
+                providers_module = FlextRuntime.dependency_providers()
+
+                class ValidationService:
+                    """Injectable validation service using FlextUtilities patterns."""
+
+                    @staticmethod
+                    def validate_string(
+                        value: str | None,
+                        field_name: str = "string",
+                        min_length: int = 1,
+                        max_length: int | None = None,
+                        pattern: str | None = None,
+                    ) -> FlextResult[str]:
+                        """Validate string with composable railway pattern.
+
+                        Args:
+                            value: String to validate
+                            field_name: Field name for error messages
+                            min_length: Minimum length (default: 1)
+                            max_length: Maximum length (default: None)
+                            pattern: Optional regex pattern
+
+                        Returns:
+                            FlextResult[str]: Validated string or error
+
+                        """
+                        return (
+                            FlextUtilities.Validation.validate_string_not_none(
+                                value, field_name
+                            )
+                            .flat_map(
+                                lambda v: FlextUtilities.Validation.validate_string_not_empty(
+                                    v, field_name
+                                )
+                            )
+                            .flat_map(
+                                lambda v: FlextUtilities.Validation.validate_string_length(
+                                    v, min_length, max_length, field_name
+                                )
+                            )
+                            .flat_map(
+                                lambda v: FlextUtilities.Validation.validate_string_pattern(
+                                    v, pattern, field_name
+                                )
+                                if pattern
+                                else FlextResult[str].ok(v)
+                            )
+                        )
+
+                    @staticmethod
+                    def validate_email(
+                        value: str | None, field_name: str = "email"
+                    ) -> FlextResult[str]:
+                        """Validate email address.
+
+                        Args:
+                            value: Email to validate
+                            field_name: Field name for error messages
+
+                        Returns:
+                            FlextResult[str]: Validated email or error
+
+                        """
+                        # First validate not none
+                        if value is None:
+                            return FlextResult[str].fail(f"{field_name} cannot be None")
+                        return FlextUtilities.Validation.validate_email(value)
+
+                    @staticmethod
+                    def validate_url(
+                        value: str | None, field_name: str = "url"
+                    ) -> FlextResult[str]:
+                        """Validate URL.
+
+                        Args:
+                            value: URL to validate
+                            field_name: Field name for error messages
+
+                        Returns:
+                            FlextResult[str]: Validated URL or error
+
+                        """
+                        # First validate not none
+                        if value is None:
+                            return FlextResult[str].fail(f"{field_name} cannot be None")
+                        return FlextUtilities.Validation.validate_url(value)
+
+                return providers_module.Singleton(ValidationService)
+
+            @staticmethod
+            def register_in_container(container: object) -> FlextResult[None]:
+                """Register validation service in DI container.
+
+                Args:
+                    container: DI container (FlextContainer or dependency_injector container)
+
+                Returns:
+                    FlextResult[None]: Success or failure
+
+                Example:
+                    >>> from flext_core import FlextContainer, FlextUtilities
+                    >>> container = FlextContainer.get_global()
+                    >>> result = (
+                    ...     FlextUtilities.Validation.Providers.register_in_container(
+                    ...         container
+                    ...     )
+                    ... )
+
+                """
+                try:
+                    validation_provider = FlextUtilities.Validation.Providers.create_validation_service_provider()
+
+                    # Register with FlextContainer
+                    if hasattr(container, "register"):
+                        result = container.register(
+                            "validation_service", validation_provider
+                        )
+                        if result.is_failure:
+                            return FlextResult[None].fail(
+                                f"Registration failed: {result.error}"
+                            )
+                        return FlextResult[None].ok(None)
+
+                    return FlextResult[None].fail(
+                        "Container does not support service registration"
+                    )
+
+                except Exception as e:
+                    return FlextResult[None].fail(
+                        f"Validation provider registration failed: {e}"
+                    )
+
     class Transformation:
         """Data transformation utilities using railway composition."""
 
@@ -749,7 +958,10 @@ class FlextUtilities:
 
         @staticmethod
         def safe_json_parse(json_string: str) -> FlextResult[FlextTypes.Dict]:
-            """Parse JSON string with error handling using railway pattern.
+            """Parse JSON string with error handling using orjson (3-5x faster).
+
+            Uses orjson library for high-performance JSON parsing with better
+            memory efficiency and native datetime/UUID support.
 
             Args:
                 json_string: JSON string to parse
@@ -762,13 +974,13 @@ class FlextUtilities:
                 return FlextResult[FlextTypes.Dict].fail("JSON string cannot be empty")
 
             try:
-                data = json.loads(json_string)
+                data = orjson.loads(json_string)
                 if not isinstance(data, dict):
                     return FlextResult[FlextTypes.Dict].fail(
                         "Parsed JSON is not a dictionary"
                     )
                 return FlextResult[FlextTypes.Dict].ok(data)
-            except json.JSONDecodeError as e:
+            except orjson.JSONDecodeError as e:
                 return FlextResult[FlextTypes.Dict].fail(f"JSON parse error: {e}")
             except Exception as e:
                 return FlextResult[FlextTypes.Dict].fail(
@@ -777,7 +989,10 @@ class FlextUtilities:
 
         @staticmethod
         def safe_json_stringify(data: FlextTypes.Dict) -> FlextResult[str]:
-            """Stringify data to JSON with error handling using railway pattern.
+            """Stringify data to JSON with error handling using orjson (3-5x faster).
+
+            Uses orjson library for high-performance JSON serialization with better
+            memory efficiency and native datetime/UUID support.
 
             Args:
                 data: Dictionary to convert to JSON
@@ -787,12 +1002,355 @@ class FlextUtilities:
 
             """
             try:
-                json_string = json.dumps(data)
+                json_bytes = orjson.dumps(data)
+                json_string = json_bytes.decode("utf-8")
                 return FlextResult[str].ok(json_string)
             except TypeError as e:
                 return FlextResult[str].fail(f"JSON stringify error: {e}")
             except Exception as e:
                 return FlextResult[str].fail(f"Unexpected error stringifying JSON: {e}")
+
+        @staticmethod
+        def safe_parse_int(value: str) -> FlextResult[int]:
+            """Parse string to integer using from_callable pattern.
+
+            Demonstrates the from_callable pattern for safe exception handling.
+
+            Args:
+                value: String to parse
+
+            Returns:
+                FlextResult[int]: Parsed integer or error
+
+            Example:
+                >>> FlextUtilities.Transformation.safe_parse_int("42")
+                <Success: 42>
+                >>> FlextUtilities.Transformation.safe_parse_int("invalid")
+                <Failure: ...>
+
+            """
+            return FlextResult.from_callable(lambda: int(value))
+
+        @staticmethod
+        def safe_parse_float(value: str) -> FlextResult[float]:
+            """Parse string to float using from_callable pattern.
+
+            Args:
+                value: String to parse
+
+            Returns:
+                FlextResult[float]: Parsed float or error
+
+            """
+            return FlextResult.from_callable(lambda: float(value))
+
+        @staticmethod
+        def validate_and_normalize_email(email: str) -> FlextResult[str]:
+            """Validate and normalize email using flow_through pattern.
+
+            Demonstrates flow_through for pipeline composition.
+
+            Args:
+                email: Email address to validate and normalize
+
+            Returns:
+                FlextResult[str]: Normalized email or error
+
+            Example:
+                >>> validate_and_normalize_email("  USER@EXAMPLE.COM  ")
+                <Success: user@example.com>
+
+            """
+
+            def check_not_empty(e: str) -> FlextResult[str]:
+                if not e.strip():
+                    return FlextResult[str].fail("Email cannot be empty")
+                return FlextResult[str].ok(e)
+
+            def normalize(e: str) -> FlextResult[str]:
+                return FlextResult[str].ok(e.strip().lower())
+
+            def validate_format(e: str) -> FlextResult[str]:
+                if "@" not in e or "." not in e.split("@")[1]:
+                    return FlextResult[str].fail("Invalid email format")
+                return FlextResult[str].ok(e)
+
+            return (
+                FlextResult[str]
+                .ok(email)
+                .flow_through(check_not_empty, normalize, validate_format)
+            )
+
+        @staticmethod
+        def parse_json_with_fallback(
+            json_string: str,
+            fallback_data: FlextTypes.Dict,
+        ) -> FlextTypes.Dict:
+            """Parse JSON with fallback using value_or pattern.
+
+            Demonstrates value_or_call for lazy fallback evaluation.
+
+            Args:
+                json_string: JSON string to parse
+                fallback_data: Fallback data if parsing fails
+
+            Returns:
+                Parsed dict or fallback
+
+            Example:
+                >>> parse_json_with_fallback('{"key": "value"}', {})
+                {'key': 'value'}
+                >>> parse_json_with_fallback("invalid", {"default": True})
+                {'default': True}
+
+            """
+
+            def get_fallback() -> FlextTypes.Dict:
+                return fallback_data
+
+            return FlextUtilities.Transformation.safe_json_parse(
+                json_string
+            ).value_or_call(get_fallback)
+
+        @staticmethod
+        def try_parse_with_recovery(
+            value: str,
+        ) -> FlextResult[int]:
+            """Try to parse int with error recovery using lash pattern.
+
+            Demonstrates lash for error recovery.
+
+            Args:
+                value: String to parse
+
+            Returns:
+                FlextResult[int]: Parsed value, recovered value, or error
+
+            Example:
+                >>> try_parse_with_recovery("42")
+                <Success: 42>
+                >>> try_parse_with_recovery("42.5")
+                <Success: 42>  # Recovered by parsing as float then truncating
+                >>> try_parse_with_recovery("invalid")
+                <Failure: ...>
+
+            """
+
+            def try_float_recovery(_error: str) -> FlextResult[int]:
+                """Try parsing as float and truncating."""
+                try:
+                    float_val = float(value)
+                    return FlextResult[int].ok(int(float_val))
+                except (ValueError, TypeError):
+                    return FlextResult[int].fail(f"Cannot parse '{value}' as number")
+
+            return FlextUtilities.Transformation.safe_parse_int(value).lash(
+                try_float_recovery
+            )
+
+        @staticmethod
+        def get_config_value_with_alternatives(
+            config_dict: FlextTypes.Dict,
+            primary_key: str,
+            *fallback_keys: str,
+        ) -> FlextResult[object]:
+            """Get config value trying multiple keys using alt pattern.
+
+            Demonstrates alt for fallback chaining.
+
+            Args:
+                config_dict: Configuration dictionary
+                primary_key: Primary key to try
+                *fallback_keys: Fallback keys to try in order
+
+            Returns:
+                FlextResult with value from first found key
+
+            Example:
+                >>> config = {"db_host": "localhost"}
+                >>> get_config_value_with_alternatives(
+                ...     config, "database_host", "db_host"
+                ... )
+                <Success: localhost>
+
+            """
+
+            def get_key(key: str) -> FlextResult[object]:
+                if key in config_dict:
+                    return FlextResult[object].ok(config_dict[key])
+                return FlextResult[object].fail(f"Key '{key}' not found")
+
+            result = get_key(primary_key)
+            for fallback_key in fallback_keys:
+                result = result.alt(get_key(fallback_key))
+
+            return result
+
+    class DateTime:
+        """DateTime operations using python-dateutil for robust parsing and manipulation.
+
+        Provides timezone-aware datetime handling, intelligent parsing, and formatting
+        utilities using the battle-tested python-dateutil library.
+        """
+
+        @staticmethod
+        def parse_datetime(
+            date_string: str,
+            default_timezone: tzinfo | None = None,
+        ) -> FlextResult[datetime]:
+            """Parse datetime string intelligently (ISO8601, RFC2822, common formats).
+
+            Uses dateutil.parser.parse() for intelligent datetime string parsing with
+            support for multiple formats including ISO 8601, RFC 2822, and common
+            date/time representations.
+
+            Args:
+                date_string: DateTime string to parse
+                default_timezone: Optional timezone to apply if none specified in string
+
+            Returns:
+                FlextResult[datetime]: Parsed datetime object or error
+
+            Examples:
+                >>> DateTime.parse_datetime("2025-01-15T10:30:00Z")
+                >>> DateTime.parse_datetime("Jan 15, 2025 10:30 AM")
+                >>> DateTime.parse_datetime("15/01/2025 10:30", default_timezone=tz.UTC)
+
+            """
+            if not date_string:
+                return FlextResult[datetime].fail("DateTime string cannot be empty")
+
+            try:
+                parsed_dt = dateutil_parser.parse(date_string)
+
+                # Apply default timezone if parsed datetime is naive
+                if default_timezone and parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=default_timezone)
+
+                return FlextResult[datetime].ok(parsed_dt)
+            except (ValueError, dateutil_parser.ParserError) as e:
+                return FlextResult[datetime].fail(f"DateTime parse error: {e}")
+            except Exception as e:
+                return FlextResult[datetime].fail(
+                    f"Unexpected error parsing datetime: {e}"
+                )
+
+        @staticmethod
+        def to_utc(dt: datetime) -> FlextResult[datetime]:
+            """Convert datetime to UTC timezone.
+
+            Converts timezone-aware datetime to UTC. If datetime is naive (no timezone),
+            treats it as UTC.
+
+            Args:
+                dt: DateTime object to convert
+
+            Returns:
+                FlextResult[datetime]: DateTime converted to UTC or error
+
+            """
+            try:
+                if dt.tzinfo is None:
+                    # Naive datetime - treat as UTC
+                    utc_dt = dt.replace(tzinfo=dateutil_tz.UTC)
+                else:
+                    # Convert to UTC
+                    utc_dt = dt.astimezone(dateutil_tz.UTC)
+
+                return FlextResult[datetime].ok(utc_dt)
+            except Exception as e:
+                return FlextResult[datetime].fail(f"UTC conversion error: {e}")
+
+        @staticmethod
+        def format_iso8601(dt: datetime) -> FlextResult[str]:
+            """Format datetime as ISO 8601 string.
+
+            Produces standard ISO 8601 formatted datetime string suitable for APIs
+            and data interchange.
+
+            Args:
+                dt: DateTime object to format
+
+            Returns:
+                FlextResult[str]: ISO 8601 formatted string or error
+
+            Example:
+                >>> DateTime.format_iso8601(datetime(2025, 1, 15, 10, 30))
+                FlextResult.ok("2025-01-15T10:30:00")
+
+            """
+            try:
+                iso_str = dt.isoformat()
+                return FlextResult[str].ok(iso_str)
+            except Exception as e:
+                return FlextResult[str].fail(f"ISO8601 format error: {e}")
+
+        @staticmethod
+        def is_valid_datetime(date_string: str) -> bool:
+            """Check if string can be parsed as valid datetime.
+
+            Args:
+                date_string: String to validate
+
+            Returns:
+                bool: True if string is valid datetime, False otherwise
+
+            """
+            try:
+                dateutil_parser.parse(date_string)
+                return True
+            except (ValueError, dateutil_parser.ParserError):
+                return False
+
+        @staticmethod
+        def add_days(dt: datetime, days: int) -> FlextResult[datetime]:
+            """Add or subtract days from datetime.
+
+            Args:
+                dt: DateTime object
+                days: Number of days to add (negative to subtract)
+
+            Returns:
+                FlextResult[datetime]: Modified datetime or error
+
+            """
+            try:
+                new_dt = dt + timedelta(days=days)
+                return FlextResult[datetime].ok(new_dt)
+            except Exception as e:
+                return FlextResult[datetime].fail(f"Error adding days: {e}")
+
+        @staticmethod
+        def add_hours(dt: datetime, hours: int) -> FlextResult[datetime]:
+            """Add or subtract hours from datetime.
+
+            Args:
+                dt: DateTime object
+                hours: Number of hours to add (negative to subtract)
+
+            Returns:
+                FlextResult[datetime]: Modified datetime or error
+
+            """
+            try:
+                new_dt = dt + timedelta(hours=hours)
+                return FlextResult[datetime].ok(new_dt)
+            except Exception as e:
+                return FlextResult[datetime].fail(f"Error adding hours: {e}")
+
+        @staticmethod
+        def get_current_utc() -> FlextResult[datetime]:
+            """Get current UTC datetime.
+
+            Returns:
+                FlextResult[datetime]: Current UTC datetime or error
+
+            """
+            try:
+                current_utc = datetime.now(dateutil_tz.UTC)
+                return FlextResult[datetime].ok(current_utc)
+            except Exception as e:
+                return FlextResult[datetime].fail(f"Error getting current UTC: {e}")
 
     class Processing:
         """Processing utilities with reliability patterns."""
@@ -883,11 +1441,20 @@ class FlextUtilities:
             operation: Callable[[], FlextResult[T]],
             failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
             recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
+            *,
+            enable_circuit_breaker: bool = True,
         ) -> FlextResult[T]:
-            """Circuit breaker pattern implementation with config integration."""
-            # Check if circuit breaker is enabled in configuration
-            config = FlextConfig.get_global_instance()
-            if not config.enable_circuit_breaker:
+            """Circuit breaker pattern implementation with optional config integration.
+
+            Args:
+                operation: Operation to execute
+                failure_threshold: Number of failures before opening circuit
+                recovery_timeout: Timeout before attempting recovery
+                enable_circuit_breaker: Whether circuit breaker is enabled (default: True).
+                    Pass config.enable_circuit_breaker to integrate with FlextConfig.
+
+            """
+            if not enable_circuit_breaker:
                 # Circuit breaker disabled - execute operation directly
                 try:
                     return operation()
@@ -1179,13 +1746,32 @@ class FlextUtilities:
                     if callable(target_type) and target_type is not object:
                         # Use proper type handling for constructor call
                         try:
-                            converted_value = target_type(value)
-                            return FlextResult[T].ok(converted_value)
+                            # Only try to call with value if it's a constructor that accepts arguments
+                            # Most Python types don't accept arbitrary arguments
+                            if target_type in {
+                                str,
+                                int,
+                                float,
+                                bool,
+                                list,
+                                dict,
+                                set,
+                                tuple,
+                            }:
+                                # These types have special constructors, handled above
+                                pass
+                            else:
+                                # For custom classes, try calling with the value
+                                converted_value = target_type(value)
+                                return FlextResult[T].ok(converted_value)
                         except (TypeError, ValueError):
                             # If constructor fails with args, try no-arg constructor
                             if callable(target_type) and target_type is not type:
-                                converted_value = target_type()
-                                return FlextResult[T].ok(converted_value)
+                                try:
+                                    converted_value = target_type()
+                                    return FlextResult[T].ok(converted_value)
+                                except (TypeError, ValueError):
+                                    pass
                             raise
                     # If no constructor or object type, return the value with proper type annotation
                     return FlextResult[T].ok(cast("T", value))
@@ -1269,7 +1855,7 @@ class FlextUtilities:
             })
 
         @staticmethod
-        def batch_process(
+        def batch_process[T, U](
             items: list[T],
             processor: Callable[[T], FlextResult[U]],
             batch_size: int | None = None,
@@ -1304,7 +1890,7 @@ class FlextUtilities:
             )
 
         @staticmethod
-        def process_batches_railway(
+        def process_batches_railway[T, U](
             items: list[T],
             processor: Callable[[T], FlextResult[U]],
             batch_size: int,
@@ -1430,7 +2016,8 @@ class FlextUtilities:
         @staticmethod
         def sort_key(value: object) -> str:
             """Return a deterministic string for ordering normalized cache components."""
-            return json.dumps(value, sort_keys=True, default=str)
+            json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
+            return json_bytes.decode("utf-8")
 
         @staticmethod
         def normalize_component(value: object) -> object:
@@ -1944,7 +2531,7 @@ class FlextUtilities:
         """Reliability patterns for resilient operations."""
 
         @staticmethod
-        def retry_with_backoff(
+        def retry_with_backoff[T](
             operation: Callable[[], FlextResult[T]],
             max_retries: int | None = None,
             initial_delay: float | None = None,
@@ -2038,11 +2625,20 @@ class FlextUtilities:
             operation: Callable[[], FlextResult[TCircuit]],
             failure_threshold: int = FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
             recovery_timeout: float = FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
+            *,
+            enable_circuit_breaker: bool = True,
         ) -> FlextResult[TCircuit]:
-            """Circuit breaker pattern using railway composition with config integration."""
-            # Check if circuit breaker is enabled in configuration
-            config = FlextConfig.get_global_instance()
-            if not config.enable_circuit_breaker:
+            """Circuit breaker pattern using railway composition with optional config integration.
+
+            Args:
+                operation: Operation to execute
+                failure_threshold: Number of failures before opening circuit
+                recovery_timeout: Timeout before attempting recovery
+                enable_circuit_breaker: Whether circuit breaker is enabled (default: True).
+                    Pass config.enable_circuit_breaker to integrate with FlextConfig.
+
+            """
+            if not enable_circuit_breaker:
                 # Circuit breaker disabled - execute operation directly
                 try:
                     return operation()
@@ -2419,7 +3015,13 @@ class FlextUtilities:
 
         Extracts message validation and serialization logic from FlextHandlers
         to simplify handler validation and provide reusable validation patterns.
+
+        Internal implementation note: Class uses a shared logger for internal
+        debug operations.
         """
+
+        # Class-level logger for internal debug operations
+        _internal_logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
         _SERIALIZABLE_MESSAGE_EXPECTATION = (
             "FlextTypes.Dict, str, int, float, bool, dataclass, attrs class, or object exposing "
@@ -2494,8 +3096,7 @@ class FlextUtilities:
                         # If calling without parameters fails, it's likely a Pydantic field validator
                         # Skip custom validation in this case - this is expected behavior
                         # Log at debug level since this is expected for Pydantic field validators
-                        logger = FlextLogger(__name__)
-                        logger.debug(
+                        cls._internal_logger.debug(
                             "Skipping validation method %s: %s",
                             validation_method_name,
                             e,
@@ -2629,7 +3230,6 @@ class FlextUtilities:
                 return result
 
             # Try common serialization methods
-            logger = FlextLogger(__name__)
             for method_name in ("model_dump", "FlextTypes.Dict", "as_dict"):
                 method = getattr(message, method_name, None)
                 if callable(method):
@@ -2640,7 +3240,7 @@ class FlextUtilities:
                             return cast("FlextTypes.Dict", result_data)
                     except Exception as e:
                         # Log the exception for debugging purposes as required by S112
-                        logger.debug(
+                        cls._internal_logger.debug(
                             f"Serialization method '{method_name}' failed for {type(message).__name__}: {e}",
                             method_name=method_name,
                             message_type=type(message).__name__,
@@ -2706,7 +3306,13 @@ class FlextUtilities:
 
         Provides utilities for composing complex operations using FlextResult
         monadic patterns and railway-oriented programming principles.
+
+        Internal implementation note: Class uses a shared logger for validation
+        and demonstration operations.
         """
+
+        # Class-level logger for internal operations
+        _internal_logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
         @staticmethod
         def compose_pipeline[T](
@@ -3032,7 +3638,7 @@ class FlextUtilities:
         and other flext-core components.
 
         Returns:
-            FlextResult[FlextConfig]: Configured FlextConfig instance or error
+            FlextResult["FlextConfig"]: Configured FlextConfig instance or error
 
         Example:
             >>> config_result = FlextUtilities.create_flext_core_config()
@@ -3041,17 +3647,22 @@ class FlextUtilities:
             ...     # Use config with full flext-core integration
             ...     container_config = config.get_component_config("container")
 
+        Note:
+            This method uses late import to avoid circular dependency.
+
         """
         try:
+            # Late import to avoid circular dependency (utilities -> config)
+            from flext_core.config import FlextConfig as _FlextConfig
+
             # Create base configuration with enhanced flext-core integration
-            config = FlextConfig()
+            config = _FlextConfig()
 
             # Configuration created successfully
-
-            return FlextResult[FlextConfig].ok(config)
+            return FlextResult["FlextConfig"].ok(config)
 
         except Exception as e:
-            return FlextResult[FlextConfig].fail(
+            return FlextResult["FlextConfig"].fail(
                 f"Failed to create flext-core config: {e}"
             )
 
@@ -3128,7 +3739,10 @@ class FlextUtilities:
 
             # Validate logger
             try:
-                FlextLogger(__name__)
+                # Use class-level logger to verify logger functionality
+                FlextUtilities.Composition._internal_logger.info(
+                    "Logger validation check"
+                )
                 validation_results["logger"] = {
                     "status": "available",
                     "details": "Logger initialized successfully",
@@ -3240,8 +3854,7 @@ class FlextUtilities:
             # Demonstrate container pattern
 
             # Demonstrate logging pattern
-            logger = FlextLogger(__name__)
-            logger.info(
+            FlextUtilities.Composition._internal_logger.info(
                 "Demonstrating flext-core patterns",
                 extra={
                     "component_count": 5,
@@ -3278,7 +3891,7 @@ class FlextUtilities:
                     "logging_pattern": {
                         "description": "Structured logging with context and correlation",
                         "logger_available": True,
-                        "logger_name": logger.name,
+                        "logger_name": FlextUtilities.Composition._internal_logger.name,
                     },
                 },
                 "integration_level": "comprehensive",

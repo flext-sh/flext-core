@@ -7,32 +7,34 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import functools
 import json
 import logging
 import threading
-from collections.abc import Callable
+import time
+import uuid
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from queue import Queue
 from typing import (
+    ClassVar,
     cast,
     override,
 )
 
-# Layer 3 - Core Infrastructure
+import structlog
+
 from flext_core.config import FlextConfig
-
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
-
-# Layer 2 - Early Foundation
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
 
 
@@ -501,21 +503,472 @@ class FlextMixins:
         Provides marker class for objects that can be logged using FlextMixins methods.
         """
 
-    class Configurable:
-        """Mixin for configuration capabilities.
+    # NOTE: Configurable mixin moved to line ~2026 with full implementation
+    # This marker class is deprecated in favor of the enhanced version
 
-        Components inheriting from this mixin should use native Pydantic accessors
-        for configuration management. Retrieve values with direct attribute access
-        (``config.debug``) or ``getattr`` and produce validated updates with
-        attribute assignment or ``model_copy(update=...)```.
+    # =============================================================================
+    # ENHANCED MIXINS - DI Integration with structlog, dependency_injector, returns
+    # =============================================================================
+
+    class LoggableDI:
+        """Enhanced Loggable mixin with dependency injection for logger.
+
+        Provides automatic logger injection from FlextContainer, eliminating
+        the need for manual FlextLogger(__name__) instantiation in every class.
+
+        This mixin uses lazy initialization and caching to minimize overhead
+        while providing full DI integration.
 
         Example:
-            config: FlextTypes.Dict = FlextConfig.get_global_instance()
-            debug_mode = config.debug
-            config.debug: FlextTypes.Dict = True
-            updated = config.model_copy(update={"timeout_seconds": 60})
+            class MyService(FlextMixins.LoggableDI):
+                def process(self):
+                    # Logger automatically available via DI
+                    self.logger.info("Processing started")
+                    return FlextResult[dict].ok({"status": "processed"})
 
         """
+
+        # Class-level cache for loggers to avoid repeated DI lookups
+        _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
+        _cache_lock: ClassVar[threading.Lock] = threading.Lock()
+
+        @classmethod
+        def _get_or_create_logger(cls) -> FlextLogger:
+            """Get or create DI-injected logger for this class.
+
+            Uses FlextContainer for dependency injection with fallback to
+            direct creation if DI is not available.
+
+            Returns:
+                FlextLogger instance from DI or newly created
+
+            """
+            # Generate unique logger name based on module and class
+            logger_name = f"{cls.__module__}.{cls.__name__}"
+
+            # Check cache first (thread-safe)
+            with cls._cache_lock:
+                if logger_name in cls._logger_cache:
+                    return cls._logger_cache[logger_name]
+
+            # Try to get from DI container
+            try:
+                container = FlextContainer.get_global()
+                logger_key = f"logger:{logger_name}"
+
+                # Attempt to retrieve logger from container
+                logger_result = container.get_typed(logger_key, FlextLogger)
+
+                if logger_result.is_success:
+                    logger = logger_result.unwrap()
+                    # Cache the result
+                    with cls._cache_lock:
+                        cls._logger_cache[logger_name] = logger
+                    return logger
+
+                # Logger not in container - create and register
+                logger = FlextLogger(logger_name)
+                container.register(logger_key, logger)
+
+                # Cache the result
+                with cls._cache_lock:
+                    cls._logger_cache[logger_name] = logger
+
+                return logger
+
+            except Exception:
+                # Fallback: create logger without DI if container unavailable
+                logger = FlextLogger(logger_name)
+                with cls._cache_lock:
+                    cls._logger_cache[logger_name] = logger
+                return logger
+
+        @property
+        def logger(self) -> FlextLogger:
+            """Access logger via property (DI-backed with caching).
+
+            Returns:
+                FlextLogger instance for this class
+
+            """
+            return self._get_or_create_logger()
+
+        @classmethod
+        def clear_logger_cache(cls) -> None:
+            """Clear logger cache (useful for testing)."""
+            with cls._cache_lock:
+                cls._logger_cache.clear()
+
+    class ContextAware:
+        """Context-aware mixin with structlog integration.
+
+        Provides automatic context management using structlog's contextvars
+        for automatic context propagation across the call stack.
+        """
+
+        @contextmanager
+        def operation_context(self, **context_data: object) -> Iterator[None]:
+            """Bind context for operation duration.
+
+            Automatically manages structlog context using contextvars,
+            ensuring context is properly propagated and cleaned up.
+
+            Args:
+                **context_data: Key-value pairs to bind to context
+
+            Example:
+                ```python
+                class MyService(FlextMixins.ContextAware):
+                    def process(self, user_id: str) -> FlextResult[dict]:
+                        with self.operation_context(
+                            user_id=user_id, operation="process"
+                        ):
+                            # Context automatically available in all logs
+                            return self._do_process()
+                ```
+
+            """
+            # Bind context using structlog's contextvars
+            structlog.contextvars.bind_contextvars(**context_data)
+
+            try:
+                yield
+            finally:
+                # Clear context on exit
+                structlog.contextvars.clear_contextvars()
+
+        @contextmanager
+        def correlation_context(
+            self, correlation_id: str | None = None
+        ) -> Iterator[str]:
+            """Manage correlation ID context.
+
+            Args:
+                correlation_id: Optional correlation ID, generates one if not provided
+
+            Returns:
+                The correlation ID being used
+
+            Example:
+                ```python
+                with self.correlation_context() as corr_id:
+                    # All operations automatically tagged with correlation_id
+                    self.process_data()
+                ```
+
+            """
+            # Generate correlation ID if not provided
+            if correlation_id is None:
+                correlation_id = f"corr-{uuid.uuid4().hex[:12]}"
+
+            # Bind correlation ID to context
+            structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+
+            try:
+                yield correlation_id
+            finally:
+                # Clear context on exit
+                structlog.contextvars.clear_contextvars()
+
+        def get_current_context(self) -> dict[str, object]:
+            """Get current structlog context.
+
+            Returns:
+                Dictionary containing current context variables
+
+            """
+            # Get current context from contextvars
+            return structlog.contextvars.get_contextvars()
+
+        def bind_context(self, **context_data: object) -> None:
+            """Permanently bind context data.
+
+            Unlike operation_context, this persists beyond the scope.
+
+            Args:
+                **context_data: Key-value pairs to bind
+
+            """
+            structlog.contextvars.bind_contextvars(**context_data)
+
+        def unbind_context(self, *keys: str) -> None:
+            """Unbind specific context keys.
+
+            Args:
+                *keys: Context keys to remove
+
+            """
+            structlog.contextvars.unbind_contextvars(*keys)
+
+        def clear_context(self) -> None:
+            """Clear all context variables."""
+            structlog.contextvars.clear_contextvars()
+
+    class Measurable:
+        """Performance measurement mixin with structlog integration.
+
+        Provides automatic timing and performance measurement with
+        integration into structlog for automatic logging.
+        """
+
+        @contextmanager
+        def measure_operation(
+            self,
+            operation_name: str,
+            *,
+            log_result: bool = True,
+            threshold_ms: float | None = None,
+        ) -> Iterator[None]:
+            """Measure operation duration with automatic logging.
+
+            Args:
+                operation_name: Name of the operation being measured
+                log_result: Whether to log the timing result
+                threshold_ms: Optional threshold in ms - log warning if exceeded
+
+            Example:
+                ```python
+                class DataProcessor(FlextMixins.Measurable):
+                    def process_batch(self, items: list) -> FlextResult[list]:
+                        with self.measure_operation("process_batch"):
+                            # Automatically timed and logged
+                            return self._process_items(items)
+                ```
+
+            """
+            logger = structlog.get_logger()
+            start_time = time.perf_counter()
+
+            try:
+                yield
+            finally:
+                duration_ms = (time.perf_counter() - start_time) * 1000
+
+                if log_result:
+                    log_data = {
+                        "operation": operation_name,
+                        "duration_ms": round(duration_ms, 2),
+                    }
+
+                    # Log warning if threshold exceeded
+                    if threshold_ms is not None and duration_ms > threshold_ms:
+                        logger.warning(
+                            f"Operation '{operation_name}' exceeded threshold",
+                            **log_data,
+                            threshold_ms=threshold_ms,
+                        )
+                    else:
+                        logger.info(
+                            f"Operation '{operation_name}' completed",
+                            **log_data,
+                        )
+
+        def measure_function[T](
+            self,
+            func: Callable[..., T],
+            operation_name: str | None = None,
+        ) -> Callable[..., T]:
+            """Decorator to measure function execution time.
+
+            Args:
+                func: Function to measure
+                operation_name: Optional operation name, defaults to function name
+
+            Returns:
+                Wrapped function with automatic timing
+
+            Example:
+                ```python
+                class Service(FlextMixins.Measurable):
+                    def process(self) -> FlextResult[dict]:
+                        measured_func = self.measure_function(self._process_impl)
+                        return measured_func()
+                ```
+
+            """
+            op_name = operation_name or func.__name__
+
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> T:
+                with self.measure_operation(op_name):
+                    return func(*args, **kwargs)
+
+            return wrapper
+
+        def get_timing_stats(self) -> dict[str, float]:
+            """Get timing statistics from structlog context.
+
+            Returns:
+                Dictionary with timing information if available
+
+            """
+            context = structlog.contextvars.get_contextvars()
+            return {
+                k: v
+                for k, v in context.items()
+                if isinstance(k, str) and k.endswith("_ms")
+            }
+
+    class Validatable:
+        """Returns-based validation mixin.
+
+        Provides railway-oriented validation patterns using
+        dry-python/returns for composable validation.
+        """
+
+        def validate_with_result[T](
+            self,
+            data: T,
+            validators: list[Callable[[T], FlextResult[None]]] | None = None,
+        ) -> FlextResult[T]:
+            """Validate data using returns Result type.
+
+            Args:
+                data: Data to validate
+                validators: Optional list of validation functions
+
+            Returns:
+                FlextResult containing validated data or error
+
+            Example:
+                ```python
+                class UserService(FlextMixins.Validatable):
+                    def create_user(self, data: dict) -> FlextResult[User]:
+                        return (
+                            self.validate_with_result(
+                                data,
+                                [
+                                    self._validate_email,
+                                    self._validate_age,
+                                ],
+                            )
+                            .flat_map(lambda d: self._create_user_entity(d))
+                            .map(lambda u: self._save_user(u))
+                        )
+                ```
+
+            """
+            if validators is None:
+                return FlextResult[T].ok(data)
+
+            # Apply each validator using railway pattern
+            result: FlextResult[T] = FlextResult[T].ok(data)
+            for validator in validators:
+                if result.is_failure:
+                    return result
+
+                validation = validator(data)
+                if validation.is_failure:
+                    return FlextResult[T].fail(
+                        validation.error or "Validation failed",
+                        error_code=validation.error_code,
+                    )
+
+            return result
+
+        def compose_validators[T](
+            self,
+            *validators: Callable[[T], FlextResult[None]],
+        ) -> Callable[[T], FlextResult[None]]:
+            """Compose multiple validators into a single validator.
+
+            Args:
+                *validators: Validator functions to compose
+
+            Returns:
+                Composed validator function
+
+            Example:
+                ```python
+                email_and_age_validator = self.compose_validators(
+                    validate_email,
+                    validate_age,
+                )
+                result = email_and_age_validator(user_data)
+                ```
+
+            """
+
+            def composed(data: T) -> FlextResult[None]:
+                for validator in validators:
+                    result = validator(data)
+                    if result.is_failure:
+                        return result
+                return FlextResult[None].ok(None)
+
+            return composed
+
+        def validate_field[T](
+            self,
+            value: T,
+            field_name: str,
+            *,
+            required: bool = True,
+            validator: Callable[[T], bool] | None = None,
+            error_message: str | None = None,
+        ) -> FlextResult[T]:
+            """Validate a single field with common checks.
+
+            Args:
+                value: Field value to validate
+                field_name: Name of the field
+                required: Whether field is required
+                validator: Optional custom validator function
+                error_message: Optional custom error message
+
+            Returns:
+                FlextResult containing validated value or error
+
+            """
+            # Check required
+            if required and value is None:
+                return FlextResult[T].fail(
+                    error_message or f"Field '{field_name}' is required",
+                    error_code="FIELD_REQUIRED",
+                )
+
+            # Apply custom validator if provided
+            if validator is not None and not validator(value):
+                return FlextResult[T].fail(
+                    error_message or f"Field '{field_name}' validation failed",
+                    error_code="FIELD_INVALID",
+                )
+
+            return FlextResult[T].ok(value)
+
+        def validate_range[T: (int, float)](
+            self,
+            value: T,
+            field_name: str,
+            *,
+            min_value: T | None = None,
+            max_value: T | None = None,
+        ) -> FlextResult[T]:
+            """Validate numeric value is within range.
+
+            Args:
+                value: Value to validate
+                field_name: Name of the field
+                min_value: Optional minimum value
+                max_value: Optional maximum value
+
+            Returns:
+                FlextResult containing validated value or error
+
+            """
+            if min_value is not None and value < min_value:
+                return FlextResult[T].fail(
+                    f"Field '{field_name}' must be >= {min_value}",
+                    error_code="VALUE_TOO_SMALL",
+                )
+
+            if max_value is not None and value > max_value:
+                return FlextResult[T].fail(
+                    f"Field '{field_name}' must be <= {max_value}",
+                    error_code="VALUE_TOO_LARGE",
+                )
+
+            return FlextResult[T].ok(value)
 
     # =============================================================================
     # ADVANCED PATTERNS - Domain-driven design and enterprise patterns
@@ -1326,5 +1779,518 @@ class FlextMixins:
         """Check if circuit breaker is open."""
         return self._circuit_breaker.get(name, False)
 
+    # =========================================================================
+    # CONTAINER INTEGRATION - Dependency Injection Infrastructure
+    # =========================================================================
 
-__all__ = ["FlextMixins"]
+    class Container:
+        """Container integration mixin for dependency injection.
+
+        **Function**: Automatic DI container access and service registration
+            - Lazy container access via property
+            - Automatic service registration via __init_subclass__
+            - Type-safe service resolution
+            - FlextResult-based error handling
+            - ABI compatibility through descriptors
+
+        **Uses**: Existing FlextCore infrastructure
+            - FlextContainer.get_global() for singleton access
+            - FlextResult[T] for operation results
+            - FlextLogger for diagnostics
+
+        **How to use**: Inherit to add container capabilities
+            ```python
+            class MyService(FlextMixins.Container):
+                def __init__(self):
+                    # _container automatically available
+                    db_result = self.container.get("database")
+                    if db_result.is_success:
+                        self.db = db_result.unwrap()
+            ```
+
+        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        ensuring existing code works without changes.
+
+        """
+
+        _container: ClassVar[FlextContainer | None] = None
+
+        def __init_subclass__(cls, **kwargs: object) -> None:
+            """Auto-initialize container for subclasses (ABI compatibility)."""
+            super().__init_subclass__(**kwargs)
+            # Container is lazily initialized on first access
+
+        @property
+        def container(self) -> FlextContainer:
+            """Get global FlextContainer instance with lazy initialization."""
+            if FlextMixins.Container._container is None:
+                # Use direct instantiation to avoid deadlock in __new__ singleton pattern
+                FlextMixins.Container._container = FlextContainer()
+            return FlextMixins.Container._container
+
+        def _register_in_container(self, service_name: str) -> FlextResult[None]:
+            """Register self in global container for service discovery."""
+            return self.container.register(service_name, self)
+
+    # =========================================================================
+    # CONTEXT INTEGRATION - Request Context and Correlation
+    # =========================================================================
+
+    class Context:
+        """Context integration mixin for correlation and request tracking.
+
+        **Function**: Automatic context management and propagation
+            - Request context with correlation IDs
+            - Service identification context
+            - Automatic context propagation
+            - Integration with FlextContext
+            - ABI compatibility through __init_subclass__
+
+        **Uses**: Existing FlextCore infrastructure
+            - FlextContext for context management
+            - FlextUtilities.Correlation for ID generation
+            - structlog.contextvars for propagation
+
+        **How to use**: Inherit to add context capabilities
+            ```python
+            class MyService(FlextMixins.Context):
+                def process(self, data: dict):
+                    # _context automatically available
+                    self._propagate_context("process_data")
+                    corr_id = self._get_correlation_id()
+                    return {"correlation_id": corr_id}
+            ```
+
+        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        ensuring existing code works without changes.
+
+        """
+
+        _context: ClassVar[object | None] = None
+
+        def __init_subclass__(cls, **kwargs: object) -> None:
+            """Auto-initialize context for subclasses (ABI compatibility)."""
+            super().__init_subclass__(**kwargs)
+            # Context is lazily initialized on first access
+
+        @property
+        def context(self) -> object:
+            """Get FlextContext instance with lazy initialization."""
+            if FlextMixins.Context._context is None:
+                FlextMixins.Context._context = FlextContext()
+            return FlextMixins.Context._context
+
+        def _propagate_context(self, operation_name: str) -> None:
+            """Propagate context for current operation with automatic setup."""
+            FlextContext.Request.set_operation_name(operation_name)
+            FlextContext.Utilities.ensure_correlation_id()
+
+        def _get_correlation_id(self) -> str | None:
+            """Get current correlation ID from context."""
+            return FlextContext.Correlation.get_correlation_id()
+
+        def _set_correlation_id(self, correlation_id: str) -> None:
+            """Set correlation ID in context."""
+            FlextContext.Correlation.set_correlation_id(correlation_id)
+
+    # =========================================================================
+    # LOGGING INTEGRATION - Context-Aware Structured Logging
+    # =========================================================================
+
+    class Logging:
+        """Logging integration mixin for context-aware structured logging.
+
+        **Function**: Structured logging with automatic context
+            - Context-aware log messages
+            - Correlation ID inclusion
+            - Operation name tracking
+            - FlextLogger integration
+            - ABI compatibility through __init_subclass__
+
+        **Uses**: Existing FlextCore infrastructure
+            - FlextLogger for structured logging
+            - FlextContext for correlation tracking
+            - FlextTypes for type safety
+
+        **How to use**: Inherit to add logging capabilities
+            ```python
+            class MyService(FlextMixins.Logging, FlextMixins.Context):
+                def process(self, data: dict):
+                    # _logger automatically available
+                    self._log_with_context("info", "Processing", size=len(data))
+                    self.logger.debug("Details...")
+            ```
+
+        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        ensuring existing code works without changes.
+
+        """
+
+        _logger: ClassVar[FlextLogger | None] = None
+        _logger_name: ClassVar[str] = ""
+
+        def __init_subclass__(cls, **kwargs: object) -> None:
+            """Auto-initialize logger for subclasses (ABI compatibility)."""
+            super().__init_subclass__(**kwargs)
+            # Logger is lazily initialized on first access
+
+        @property
+        def logger(self) -> FlextLogger:
+            """Get FlextLogger instance with lazy initialization."""
+            if (
+                FlextMixins.Logging._logger is None
+                or FlextMixins.Logging._logger_name != self.__class__.__name__
+            ):
+                FlextMixins.Logging._logger_name = self.__class__.__name__
+                FlextMixins.Logging._logger = FlextLogger(self.__class__.__name__)
+            return FlextMixins.Logging._logger
+
+        def _log_with_context(self, level: str, message: str, **extra: object) -> None:
+            """Log message with automatic context data inclusion."""
+            context_data: FlextTypes.Dict = {
+                "correlation_id": FlextContext.Correlation.get_correlation_id(),
+                "operation": FlextContext.Request.get_operation_name(),
+                **extra,
+            }
+
+            log_method = getattr(self.logger, level, self.logger.info)
+            log_method(message, extra=context_data)
+
+    # =========================================================================
+    # METRICS INTEGRATION - Performance Tracking
+    # =========================================================================
+
+    class Metrics:
+        """Metrics integration mixin for automatic performance tracking.
+
+        **Function**: Performance monitoring and timing
+            - Operation timing with context managers
+            - Automatic metric collection
+            - FlextContext.Performance integration
+            - ABI compatibility through __init_subclass__
+
+        **Uses**: Existing FlextCore infrastructure
+            - FlextContext.Performance.timed_operation for timing
+            - contextmanager for scope management
+            - FlextTypes for type safety
+
+        **How to use**: Inherit to add metrics capabilities
+            ```python
+            class MyService(FlextMixins.Metrics):
+                def process(self, data: dict):
+                    with self._track_operation("process_data") as metrics:
+                        result = self._do_processing(data)
+                        return result
+            ```
+
+        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        ensuring existing code works without changes.
+
+        """
+
+        def __init_subclass__(cls, **kwargs: object) -> None:
+            """Auto-initialize metrics for subclasses (ABI compatibility)."""
+            super().__init_subclass__(**kwargs)
+            # Metrics tracking is automatic via context managers
+
+        @contextmanager
+        def _track_operation(self, operation_name: str) -> Iterator[FlextTypes.Dict]:
+            """Track operation performance with automatic context integration."""
+            with FlextContext.Performance.timed_operation(operation_name) as metrics:
+                yield metrics
+
+    # =========================================================================
+    # SERVICE INTEGRATION - Complete Infrastructure Composition
+    # =========================================================================
+
+    # =========================================================================
+    # CONFIGURATION INTEGRATION - Configuration Management
+    # =========================================================================
+
+    class Configurable:
+        """Configuration integration mixin for automatic config access.
+
+        **Function**: Configuration management with automatic access
+            - Global configuration access
+            - Type-safe parameter retrieval
+            - FlextConfig integration
+            - ABI compatibility through __init_subclass__
+
+        **Uses**: Existing FlextCore infrastructure
+            - FlextConfig.get_global_instance() for config access
+            - FlextResult[T] for operation results
+            - FlextTypes for type safety
+
+        **How to use**: Inherit to add configuration capabilities
+            ```python
+            class MyService(FlextMixins.Configurable):
+                def __init__(self):
+                    # _config automatically available
+                    timeout = self.config.timeout_seconds
+                    debug = self._get_config_value("debug", default=False)
+            ```
+
+        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        ensuring existing code works without changes.
+
+        """
+
+        _config: ClassVar[object | None] = None
+
+        def __init_subclass__(cls, **kwargs: object) -> None:
+            """Auto-initialize config for subclasses (ABI compatibility)."""
+            super().__init_subclass__(**kwargs)
+            # Config is lazily initialized on first access
+
+        @property
+        def config(self) -> object:
+            """Get FlextConfig global instance with lazy initialization."""
+            if FlextMixins.Configurable._config is None:
+                FlextMixins.Configurable._config = FlextConfig.get_global_instance()
+            return FlextMixins.Configurable._config
+
+        def _get_config_value(self, key: str, default: object = None) -> object:
+            """Get configuration value with fallback to default."""
+            try:
+                return getattr(self.config, key, default)
+            except AttributeError:
+                return default
+
+        def _set_config_value(self, key: str, value: object) -> FlextResult[None]:
+            """Set configuration value with validation."""
+            try:
+                setattr(self.config, key, value)
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to set config value: {e}")
+
+    class Service(Container, Context, Logging, Metrics, Configurable):
+        """Complete service infrastructure composition mixin.
+
+        **Function**: Complete service infrastructure composition
+            - Dependency injection via Container
+            - Context management via Context
+            - Structured logging via Logging
+            - Performance tracking via Metrics
+            - Configuration management via Configurable
+            - Automatic service registration
+            - ABI compatibility through __init_subclass__
+
+        **Uses**: All FlextMixins infrastructure components
+            - FlextMixins.Container for DI
+            - FlextMixins.Context for context
+            - FlextMixins.Logging for logging
+            - FlextMixins.Metrics for performance
+            - FlextMixins.Configurable for configuration
+
+        **How to use**: Inherit to get all service capabilities
+            ```python
+            class MyService(FlextMixins.Service):
+                def __init__(self, service_name: str | None = None):
+                    self._init_service(service_name)
+
+                def process(self, data: dict):
+                    # All capabilities automatically available
+                    with self._track_operation("process"):
+                        self._propagate_context("process")
+                        self._log_with_context("info", "Processing", size=len(data))
+                        timeout = self._get_config_value("timeout", default=30)
+                        return {"processed": True}
+            ```
+
+        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        ensuring existing code works without changes.
+
+        """
+
+        def __init_subclass__(cls, **kwargs: object) -> None:
+            """Auto-initialize service infrastructure for subclasses."""
+            super().__init_subclass__(**kwargs)
+            # All mixin initialization handled by parent __init_subclass__ calls
+
+        def _init_service(self, service_name: str | None = None) -> None:
+            """Initialize service with automatic registration and setup."""
+            service_name = service_name or self.__class__.__name__
+
+            register_result = self._register_in_container(service_name)
+
+            if register_result.is_failure:
+                self.logger.warning(
+                    f"Service registration failed: {register_result.error}",
+                    extra={"service_name": service_name},
+                )
+
+        # =========================================================================
+        # CONTEXT ENRICHMENT METHODS - Automatic Context Management
+        # =========================================================================
+
+        def _enrich_context(self, **context_data: object) -> None:
+            """Automatically enrich structlog context with service information.
+
+            Adds service-level context that persists across all log messages
+            and operations within this service instance.
+
+            Args:
+                **context_data: Additional context data to bind
+
+            Example:
+                ```python
+                class OrderService(FlextMixins.Service):
+                    def __init__(self):
+                        self._init_service("OrderService")
+                        self._enrich_context(service_version="1.0.0", team="orders")
+
+                    def process_order(self, order_id: str):
+                        # Context automatically includes service info
+                        self._log_with_context(
+                            "info", "Processing order", order_id=order_id
+                        )
+                ```
+
+            """
+            # Add service identification to context
+            service_context = {
+                "service_name": self.__class__.__name__,
+                "service_module": self.__class__.__module__,
+                **context_data,
+            }
+            # Use structlog's contextvars directly
+            structlog.contextvars.bind_contextvars(**service_context)
+
+        def _with_correlation_id(self, correlation_id: str | None = None) -> str:
+            """Set or generate correlation ID for all operations in this service.
+
+            Automatically generates a new correlation ID if not provided and
+            binds it to the service context for all subsequent operations.
+
+            Args:
+                correlation_id: Optional correlation ID to use, generates one if None
+
+            Returns:
+                The correlation ID being used (generated or provided)
+
+            Example:
+                ```python
+                class PaymentService(FlextMixins.Service):
+                    def process_payment(
+                        self, payment_data: dict, corr_id: str | None = None
+                    ):
+                        # Ensure correlation ID is set
+                        correlation_id = self._with_correlation_id(corr_id)
+
+                        # All operations now have correlation ID in context
+                        self._log_with_context("info", "Processing payment")
+                        return self._do_payment(payment_data)
+                ```
+
+            """
+            if correlation_id is None:
+                # Generate new correlation ID
+                correlation_id = f"corr-{uuid.uuid4().hex[:12]}"
+
+            # Set correlation ID in FlextContext
+            self._set_correlation_id(correlation_id)
+
+            # Also bind to structlog context for automatic logging
+            structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+
+            return correlation_id
+
+        def _with_user_context(self, user_id: str, **user_data: object) -> None:
+            """Set user context for all operations in this service.
+
+            Binds user information to the service context for audit logging
+            and operation tracking.
+
+            Args:
+                user_id: User identifier
+                **user_data: Additional user context data (role, tenant, etc.)
+
+            Example:
+                ```python
+                class UserService(FlextMixins.Service):
+                    def update_profile(self, user_id: str, profile_data: dict):
+                        # Set user context for all operations
+                        self._with_user_context(user_id, role="customer")
+
+                        # All logs automatically include user context
+                        self._log_with_context("info", "Updating profile")
+                        return self._do_update(profile_data)
+                ```
+
+            """
+            user_context = {
+                "user_id": user_id,
+                **user_data,
+            }
+            # Use structlog's contextvars directly
+            structlog.contextvars.bind_contextvars(**user_context)
+
+        def _with_operation_context(
+            self,
+            operation_name: str,
+            **operation_data: object,
+        ) -> None:
+            """Set operation context for the current operation.
+
+            Binds operation-level information to the context for tracking
+            and debugging specific operations.
+
+            Args:
+                operation_name: Name of the operation being performed
+                **operation_data: Additional operation context data
+
+            Example:
+                ```python
+                class InventoryService(FlextMixins.Service):
+                    def reserve_items(self, order_id: str, items: list):
+                        # Set operation context
+                        self._with_operation_context(
+                            "reserve_items", order_id=order_id, item_count=len(items)
+                        )
+
+                        # All logs include operation context
+                        self._log_with_context("info", "Reserving items")
+                        return self._do_reserve(items)
+                ```
+
+            """
+            # Propagate context using inherited Context mixin method
+            self._propagate_context(operation_name)
+
+            # Bind additional operation data using structlog's contextvars
+            if operation_data:
+                structlog.contextvars.bind_contextvars(**operation_data)
+
+        def _clear_operation_context(self) -> None:
+            """Clear operation-specific context data.
+
+            Useful for cleanup after operation completion or for
+            resetting context between operations.
+
+            Example:
+                ```python
+                class BatchProcessor(FlextMixins.Service):
+                    def process_batch(self, items: list):
+                        for item in items:
+                            try:
+                                self._with_operation_context(
+                                    "process_item", item_id=item.id
+                                )
+                                self._process_single_item(item)
+                            finally:
+                                # Clean up context after each item
+                                self._clear_operation_context()
+                ```
+
+            """
+            # Clear structlog context using contextvars
+            structlog.contextvars.clear_contextvars()
+
+            # Clear FlextContext operation name
+            FlextContext.Request.set_operation_name("")
+
+
+__all__ = [
+    "FlextMixins",
+]

@@ -39,7 +39,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
     def __init__(self) -> None:
         """Initialize with automatic Flext infrastructure."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Use self.logger from FlextMixins.Logging, not _logger
         self._scenarios = ExampleScenarios()
         self._user = self._scenarios.user()
         self._order = self._scenarios.realistic_data()["order"]
@@ -57,7 +57,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute method required by FlextService."""
-        self._logger.info("Executing processing demo")
+        self.logger.info("Executing processing demo")
         return FlextResult[FlextTypes.Dict].ok({
             "status": "processed",
             "handlers_executed": True,
@@ -368,23 +368,23 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 self,
                 name: str,
                 handler: FlextProcessors.Implementation.BasicHandler,
-            ) -> FlextResult[None]:
+            ) -> FlextResult[bool]:
                 """Register a handler."""
                 if name in self._handlers:
-                    return FlextResult[None].fail(f"Handler {name} already registered")
+                    return FlextResult[bool].fail(f"Handler {name} already registered")
 
                 self._handlers[name] = handler
                 self._logger.info("Registered handler: %s", name)
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
-            def unregister(self, name: str) -> FlextResult[None]:
+            def unregister(self, name: str) -> FlextResult[bool]:
                 """Unregister a handler."""
                 if name not in self._handlers:
-                    return FlextResult[None].fail(f"Handler {name} not found")
+                    return FlextResult[bool].fail(f"Handler {name} not found")
 
                 del self._handlers[name]
                 self._logger.info("Unregistered handler: %s", name)
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
             def get(
                 self,
@@ -625,6 +625,148 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
+    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+
+    def demonstrate_from_callable_handlers(self) -> None:
+        """Show from_callable for safe handler execution."""
+        print("\n=== from_callable: Safe Handler Execution ===")
+
+        def risky_handler(data: dict) -> str:
+            """Handler that might raise exceptions."""
+            if not data.get("user_id"):
+                msg = "User ID required"
+                raise ValueError(msg)
+            return f"Processed user {data['user_id']}"
+
+        # Safe handler execution without try/except
+        result = FlextResult.from_callable(
+            lambda: risky_handler({"user_id": self._user["id"]}),
+        )
+        if result.is_success:
+            print(f"✅ Handler success: {result.unwrap()}")
+
+        # Failed execution captured as Result
+        failed = FlextResult.from_callable(
+            lambda: risky_handler({}),
+        )
+        if failed.is_failure:
+            print(f"❌ Handler failed: {failed.error}")
+
+    def demonstrate_flow_through_handlers(self) -> None:
+        """Show flow_through for handler pipeline composition."""
+        print("\n=== flow_through: Handler Pipeline ===")
+
+        def validate_handler(data: dict) -> FlextResult[dict]:
+            """Validate request data."""
+            if not data.get("email"):
+                return FlextResult[dict].fail("Email required")
+            return FlextResult[dict].ok(data)
+
+        def authenticate_handler(data: dict) -> FlextResult[dict]:
+            """Authenticate the request."""
+            authenticated = {**data, "authenticated": True}
+            return FlextResult[dict].ok(authenticated)
+
+        def authorize_handler(data: dict) -> FlextResult[dict]:
+            """Authorize the request."""
+            if data.get("role") != "REDACTED_LDAP_BIND_PASSWORD":
+                return FlextResult[dict].fail("Insufficient permissions")
+            authorized = {**data, "authorized": True}
+            return FlextResult[dict].ok(authorized)
+
+        # Flow through handler pipeline
+        request_data = {
+            "email": self._REDACTED_LDAP_BIND_PASSWORD_user["email"],
+            "role": self._REDACTED_LDAP_BIND_PASSWORD_user["role"],
+            "action": "delete",
+        }
+        result = (
+            FlextResult[dict]
+            .ok(request_data)
+            .flow_through(
+                validate_handler,
+                authenticate_handler,
+                authorize_handler,
+            )
+        )
+
+        if result.is_success:
+            final_data = result.unwrap()
+            print(f"✅ Pipeline complete: action={final_data.get('action')}")
+            print(f"   Authenticated: {final_data.get('authenticated')}")
+            print(f"   Authorized: {final_data.get('authorized')}")
+
+    def demonstrate_lash_handlers(self) -> None:
+        """Show lash for handler retry and fallback."""
+        print("\n=== lash: Handler Retry with Fallback ===")
+
+        attempt_count = {"count": 0}
+
+        def primary_handler(data: dict) -> FlextResult[str]:
+            """Try primary handler (might fail)."""
+            attempt_count["count"] += 1
+            if attempt_count["count"] < 3:
+                return FlextResult[str].fail("Primary handler unavailable")
+            return FlextResult[str].ok(f"Primary: Processed {data.get('action')}")
+
+        def fallback_handler(error: str) -> FlextResult[str]:
+            """Fallback handler on failure."""
+            print(f"   Falling back after: {error}")
+            return FlextResult[str].ok("Fallback: Request queued for retry")
+
+        request = {"action": "process_order", "order_id": self._order["order_id"]}
+
+        # Try primary, fall back on failure
+        result = primary_handler(request).lash(fallback_handler)
+        if result.is_success:
+            print(f"✅ Handler result: {result.unwrap()}")
+
+    def demonstrate_alt_handlers(self) -> None:
+        """Show alt for handler selection fallback."""
+        print("\n=== alt: Handler Selection Fallback ===")
+
+        def get_specialized_handler(action: str) -> FlextResult[str]:
+            """Try to get specialized handler."""
+            handlers = {
+                "payment": "PaymentHandler",
+                "shipping": "ShippingHandler",
+                "inventory": "InventoryHandler",
+            }
+            if action in handlers:
+                return FlextResult[str].ok(handlers[action])
+            return FlextResult[str].fail(f"No specialized handler for {action}")
+
+        def get_generic_handler() -> FlextResult[str]:
+            """Fallback to generic handler."""
+            return FlextResult[str].ok("GenericActionHandler")
+
+        # Try specialized, use generic as fallback
+        action = "notification"
+        handler = get_specialized_handler(action).alt(get_generic_handler())
+
+        if handler.is_success:
+            print(f"✅ Selected handler: {handler.unwrap()}")
+            print(f"   For action: {action}")
+
+    def demonstrate_value_or_call_handlers(self) -> None:
+        """Show value_or_call for lazy handler defaults."""
+        print("\n=== value_or_call: Lazy Handler Defaults ===")
+
+        def create_default_handler_result() -> str:
+            """Create default handler result (only called if needed)."""
+            print("   Generating default handler result...")
+            return "Default: Request acknowledged"
+
+        # Success case - default not called
+        handler_result = FlextResult[str].ok("Primary: Request processed successfully")
+        response = handler_result.value_or_call(create_default_handler_result)
+        print(f"✅ Got primary response: {response}")
+
+        # Failure case - default called lazily
+        failed_handler = FlextResult[str].fail("Handler error")
+        default_response = failed_handler.value_or_call(create_default_handler_result)
+        print(f"✅ Got default response: {default_response}")
+
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated processing patterns."""
         print("\n=== ⚠️ DEPRECATED PATTERNS ===")
@@ -694,6 +836,13 @@ def main() -> None:
 
     # Professional patterns
     service.demonstrate_error_recovery()
+
+    # NEW: FlextResult v0.9.9+ methods for handlers
+    service.demonstrate_from_callable_handlers()
+    service.demonstrate_flow_through_handlers()
+    service.demonstrate_lash_handlers()
+    service.demonstrate_alt_handlers()
+    service.demonstrate_value_or_call_handlers()
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()

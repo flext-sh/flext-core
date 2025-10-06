@@ -26,18 +26,45 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 from uuid import uuid4
 
-from flext_core import Flext, FlextLogger
+from flext_core import (
+    Flext,
+    FlextConstants,
+    FlextExceptions,
+    FlextLogger,
+    FlextRuntime,
+)
 
 from .example_scenarios import ExampleScenarios
 
 
 class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
-    """Service demonstrating messaging and event patterns."""
+    """Service demonstrating ALL messaging and event patterns with FlextMixins.Service infrastructure.
+
+    This service inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - MESSAGING FOCUS!)
+    - Inherited context property (FlextContext for request/correlation tracking)
+    - Inherited config property (FlextConfig with message processing settings)
+    - Inherited metrics property (FlextMetrics for message observability)
+
+    The focus is on demonstrating messaging patterns (Payloads, DomainEvents, CQRS)
+    with structured logging, correlation tracking, and event sourcing patterns,
+    while leveraging complete FlextMixins.Service infrastructure for orchestration.
+    """
 
     def __init__(self) -> None:
-        """Initialize with automatic Flext infrastructure."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger initialization needed!
+        All infrastructure is inherited from Flext.Service base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for correlation and request tracking
+        - self.config: FlextConfig with message processing configuration
+        - self.metrics: FlextMetrics for message observability
+        """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Use self.logger from FlextMixins.Logging, not _logger
         self._event_store: list[Flext.Models.DomainEvent] = []
         self._message_queue: list[Flext.Models.Payload[Flext.Types.Dict]] = []
         self._scenarios = ExampleScenarios()
@@ -49,14 +76,94 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         self._order = self._scenarios.realistic_data()["order"]
         self._api_payload = self._scenarios.payload()
 
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "MessagingPatternsService initialized with inherited infrastructure",
+            extra={
+                "service_type": "Messaging & Event Patterns demonstration",
+                "event_store_size": len(self._event_store),
+                "message_queue_size": len(self._message_queue),
+                "correlation_tracking": True,
+                "event_sourcing": True,
+            },
+        )
+
     def execute(self) -> Flext.Result[Flext.Types.Dict]:
-        """Execute method required by FlextService."""
-        self._logger.info("Executing messaging patterns demo")
-        return Flext.Result[Flext.Types.Dict].ok({
-            "status": "completed",
-            "events_processed": len(self._event_store),
-            "messages_queued": len(self._message_queue),
-        })
+        """Execute all messaging and event pattern demonstrations.
+
+        Demonstrates inherited infrastructure alongside messaging patterns:
+        - Inherited logger for structured messaging logs
+        - Inherited context for correlation tracking
+        - Complete event sourcing and CQRS patterns
+        - Foundation layer integration (FlextConstants, FlextExceptions, FlextRuntime)
+
+        Returns:
+            FlextResult[Dict] with demonstration summary including infrastructure details
+
+        """
+        self.logger.info("Starting comprehensive messaging patterns demonstration")
+
+        try:
+            # Basic patterns
+            self.demonstrate_basic_payload()
+            self.demonstrate_command_patterns()
+            self.demonstrate_query_patterns()
+
+            # Event patterns
+            self.demonstrate_domain_events()
+            self.demonstrate_event_aggregation()
+            self.demonstrate_event_replay()
+
+            # Routing and correlation
+            self.demonstrate_message_routing()
+            self.demonstrate_correlation_tracking()
+
+            # NEW: FlextResult v0.9.9+ methods for messaging
+            self.demonstrate_from_callable_messaging()
+            self.demonstrate_flow_through_messaging()
+            self.demonstrate_lash_messaging()
+            self.demonstrate_alt_messaging()
+            self.demonstrate_value_or_call_messaging()
+
+            # Foundation layer integration
+            self.demonstrate_flext_constants_messages()
+            self.demonstrate_flext_exceptions_messaging()
+            self.demonstrate_flext_runtime_messaging()
+
+            # Deprecation warnings
+            self.demonstrate_deprecated_patterns()
+
+            summary = {
+                "demonstrations_completed": 17,
+                "events_stored": len(self._event_store),
+                "messages_queued": len(self._message_queue),
+                "status": "completed",
+                "infrastructure": {
+                    "logger": type(self.logger).__name__,
+                    "container": type(self.container).__name__,
+                    "context": type(self.context).__name__,
+                    "config": type(self.config).__name__,
+                },
+                "messaging_features": {
+                    "event_sourcing": True,
+                    "correlation_tracking": True,
+                    "cqrs_patterns": True,
+                    "domain_events": True,
+                },
+            }
+
+            self.logger.info(
+                "Messaging patterns demonstration completed successfully", extra=summary
+            )
+
+            return Flext.Result[Flext.Types.Dict].ok(summary)
+
+        except Exception as e:
+            error_msg = f"Messaging patterns demonstration failed: {e}"
+            self.logger.exception(error_msg)
+            return Flext.Result[Flext.Types.Dict].fail(
+                error_msg, error_code=FlextConstants.Errors.SERVICE_ERROR
+            )
 
     def get_event_count(self) -> int:
         """Get the number of events stored."""
@@ -644,6 +751,333 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
 
         self._event_store.extend(events)
 
+    # ========== FOUNDATION LAYER INTEGRATION ==========
+
+    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+
+    def demonstrate_from_callable_messaging(self) -> None:
+        """Show from_callable for safe message processing."""
+        print("\n=== from_callable: Safe Message Processing ===")
+
+        def risky_message_parse(data: dict) -> Flext.Models.Payload[Flext.Types.Dict]:
+            """Message parsing that might raise exceptions."""
+            if not data.get("message_type"):
+                msg = "Message type required"
+                raise FlextExceptions.ValidationError(
+                    msg, field="message_type", value=None
+                )
+            return Flext.Models.Payload[Flext.Types.Dict](
+                data=data,
+                metadata={
+                    **self._safe_metadata,
+                    "message_type": data["message_type"],
+                },
+            )
+
+        # Safe message parsing without try/except
+        result = Flext.Result.from_callable(
+            lambda: risky_message_parse({"message_type": "order", "data": self._order}),
+        )
+        if result.is_success:
+            payload = result.unwrap()
+            print(f"✅ Message parsed: {payload.metadata.get('message_type')}")
+
+        # Failed parsing captured as Result
+        failed = Flext.Result.from_callable(
+            lambda: risky_message_parse({}),
+        )
+        if failed.is_failure:
+            print(f"❌ Parse failed: {failed.error}")
+
+    def demonstrate_flow_through_messaging(self) -> None:
+        """Show flow_through for message pipeline composition."""
+        print("\n=== flow_through: Message Pipeline ===")
+
+        def validate_message(
+            msg: Flext.Models.Payload[Flext.Types.Dict],
+        ) -> Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]:
+            """Validate message structure."""
+            if not msg.data.get("command"):
+                return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].fail(
+                    "Missing command"
+                )
+            return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(msg)
+
+        def enrich_message(
+            msg: Flext.Models.Payload[Flext.Types.Dict],
+        ) -> Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]:
+            """Add metadata to message."""
+            enriched = Flext.Models.Payload[Flext.Types.Dict](
+                data=msg.data,
+                metadata={
+                    **msg.metadata,
+                    "enriched": True,
+                    "enriched_at": datetime.now(UTC).isoformat(),
+                },
+            )
+            return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(enriched)
+
+        def route_message(
+            msg: Flext.Models.Payload[Flext.Types.Dict],
+        ) -> Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]:
+            """Add routing information."""
+            routed = Flext.Models.Payload[Flext.Types.Dict](
+                data=msg.data,
+                metadata={
+                    **msg.metadata,
+                    "target_service": "order_processor",
+                    "routing_key": "orders.process",
+                },
+            )
+            return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(routed)
+
+        # Create initial message
+        initial_msg = Flext.Models.Payload[Flext.Types.Dict](
+            data={"command": "ProcessOrder", "order_id": self._order["order_id"]},
+            metadata={**self._safe_metadata},
+        )
+
+        # Flow through message pipeline
+        result = (
+            Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]
+            .ok(initial_msg)
+            .flow_through(
+                validate_message,
+                enrich_message,
+                route_message,
+            )
+        )
+
+        if result.is_success:
+            final_msg = result.unwrap()
+            print(f"✅ Message pipeline complete: {final_msg.data['command']}")
+            print(f"   Enriched: {final_msg.metadata.get('enriched')}")
+            print(f"   Routed to: {final_msg.metadata.get('target_service')}")
+
+    def demonstrate_lash_messaging(self) -> None:
+        """Show lash for message retry and fallback."""
+        print("\n=== lash: Message Retry with Fallback ===")
+
+        attempt_count = {"count": 0}
+
+        def send_to_primary_queue(
+            msg: Flext.Models.Payload[Flext.Types.Dict],
+        ) -> Flext.Result[str]:
+            """Try sending to primary message queue (might fail)."""
+            attempt_count["count"] += 1
+            if attempt_count["count"] < 3:
+                return Flext.Result[str].fail("Primary queue unavailable")
+            return Flext.Result[str].ok(f"Sent to primary: {msg.data.get('command')}")
+
+        def send_to_backup_queue(error: str) -> Flext.Result[str]:
+            """Fallback to backup queue on failure."""
+            print(f"   Retrying via backup queue after: {error}")
+            return Flext.Result[str].ok("Sent to backup queue")
+
+        message = Flext.Models.Payload[Flext.Types.Dict](
+            data={"command": "ProcessPayment", "amount": 100},
+            metadata={**self._safe_metadata},
+        )
+
+        # Try primary, fall back to backup on failure
+        result = send_to_primary_queue(message).lash(send_to_backup_queue)
+        if result.is_success:
+            print(f"✅ Message sent: {result.unwrap()}")
+
+    def demonstrate_alt_messaging(self) -> None:
+        """Show alt for event handler fallback."""
+        print("\n=== alt: Event Handler Fallback ===")
+
+        def get_specialized_handler(event_type: str) -> Flext.Result[str]:
+            """Try to get specialized event handler."""
+            handlers = {
+                "OrderCreated": "OrderCreatedHandler",
+                "PaymentProcessed": "PaymentHandler",
+            }
+            if event_type in handlers:
+                return Flext.Result[str].ok(handlers[event_type])
+            return Flext.Result[str].fail(f"No specialized handler for {event_type}")
+
+        def get_default_handler() -> Flext.Result[str]:
+            """Fallback to default event handler."""
+            return Flext.Result[str].ok("DefaultEventHandler")
+
+        # Try specialized, use default as fallback
+        event_type = "UserRegistered"
+        handler = get_specialized_handler(event_type).alt(get_default_handler())
+
+        if handler.is_success:
+            print(f"✅ Event handler: {handler.unwrap()}")
+            print(f"   Event type: {event_type}")
+
+    def demonstrate_value_or_call_messaging(self) -> None:
+        """Show value_or_call for lazy message defaults."""
+        print("\n=== value_or_call: Lazy Message Defaults ===")
+
+        def create_default_payload() -> Flext.Models.Payload[Flext.Types.Dict]:
+            """Create default payload (only called if needed)."""
+            print("   Generating default payload...")
+            return Flext.Models.Payload[Flext.Types.Dict](
+                data={"type": "system", "message": "default"},
+                metadata={**self._safe_metadata, "is_default": True},
+            )
+
+        # Success case - default not called
+        msg_result = Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(
+            Flext.Models.Payload[Flext.Types.Dict](
+                data={"type": "user", "message": "Hello"},
+                metadata={**self._safe_metadata},
+            ),
+        )
+        payload = msg_result.value_or_call(create_default_payload)
+        print(f"✅ Got user payload: {payload.data['message']}")
+
+        # Failure case - default called lazily
+        failed_result = Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].fail(
+            "No message"
+        )
+        default_payload = failed_result.value_or_call(create_default_payload)
+        print(f"✅ Got default payload: {default_payload.data['message']}")
+
+    def demonstrate_flext_constants_messages(self) -> None:
+        """Show FlextConstants.Messages integration with messaging patterns."""
+        print("\n=== FlextConstants.Messages Integration (Layer 1) ===")
+
+        logger = FlextLogger(__name__)
+
+        # Message constants for validation
+        print("FlextConstants.Messages validation:")
+        print(f"  TYPE_MISMATCH: {FlextConstants.Messages.TYPE_MISMATCH}")
+        print(f"  INVALID_INPUT: {FlextConstants.Messages.INVALID_INPUT}")
+        print(f"  VALIDATION_FAILED: {FlextConstants.Messages.VALIDATION_FAILED}")
+
+        # Error codes for messaging
+        print("\nFlextConstants.Errors for messaging:")
+        print(f"  VALIDATION_ERROR: {FlextConstants.Errors.VALIDATION_ERROR}")
+        print(f"  NOT_FOUND_ERROR: {FlextConstants.Errors.NOT_FOUND_ERROR}")
+        print(f"  CONFIG_ERROR: {FlextConstants.Errors.CONFIG_ERROR}")
+
+        # Use constants in message validation
+        message_data: Flext.Types.Dict = {
+            "type": "UserCommand",
+            "payload": {"user_id": "123", "action": "update"},
+        }
+
+        if not message_data.get("type"):
+            logger.error(
+                FlextConstants.Messages.INVALID_INPUT,
+                extra={"error_code": FlextConstants.Errors.VALIDATION_ERROR},
+            )
+
+        logger.info(
+            "Message validated successfully",
+            extra={"message_type": message_data["type"], "validation_status": "passed"},
+        )
+
+        print("✅ FlextConstants.Messages integration demonstrated")
+
+    def demonstrate_flext_exceptions_messaging(self) -> None:
+        """Show FlextExceptions integration with messaging error handling."""
+        print("\n=== FlextExceptions Integration (Layer 2) ===")
+
+        logger = FlextLogger(__name__)
+
+        # Message validation error
+        try:
+            message_type = ""
+            if not message_type:
+                error_message = "Message type is required"
+                raise FlextExceptions.ValidationError(
+                    error_message,
+                    field="message_type",
+                    value=message_type,
+                )
+        except FlextExceptions.ValidationError as e:
+            logger.exception(
+                "Message validation failed",
+                extra={
+                    "error_code": e.error_code,
+                    "field": e.field,
+                    "correlation_id": e.correlation_id,
+                },
+            )
+            print(f"✅ ValidationError logged: {e.error_code}")
+            print(f"   Field: {e.field}")
+
+        # Event processing error
+        try:
+            raise FlextExceptions.NotFoundError(
+                "Event handler not found",
+                resource_type="event_handler",
+                resource_id="OrderCreatedHandler",
+            )
+        except FlextExceptions.NotFoundError as e:
+            logger.error(
+                "Event handler not found",
+                extra={
+                    "error_code": e.error_code,
+                    "resource_type": e.resource_type,
+                    "resource_id": e.resource_id,
+                    "correlation_id": e.correlation_id,
+                },
+            )
+            print(f"✅ NotFoundError logged: {e.error_code}")
+            print(f"   Resource: {e.resource_type}/{e.resource_id}")
+
+        # Message routing error
+        try:
+            raise FlextExceptions.ConfigurationError(
+                "Message routing configuration invalid",
+                config_key="message_routing",
+                config_source="messaging_config.yaml",
+            )
+        except FlextExceptions.ConfigurationError as e:
+            logger.error(
+                "Message routing configuration error",
+                extra={
+                    "error_code": e.error_code,
+                    "config_key": e.config_key,
+                    "config_source": e.config_source,
+                    "correlation_id": e.correlation_id,
+                },
+            )
+            print(f"✅ ConfigurationError logged: {e.error_code}")
+            print(f"   Config key: {e.config_key}, Source: {e.config_source}")
+
+        print("✅ FlextExceptions messaging integration demonstrated")
+
+    def demonstrate_flext_runtime_messaging(self) -> None:
+        """Show FlextRuntime integration with messaging defaults."""
+        print("\n=== FlextRuntime Integration (Layer 0.5) ===")
+
+        # FlextRuntime configuration defaults for messaging
+        print("FlextRuntime messaging defaults:")
+        print(f"  DEFAULT_TIMEOUT: {FlextRuntime.DEFAULT_TIMEOUT}")
+        print(f"  DEFAULT_MAX_WORKERS: {FlextRuntime.DEFAULT_MAX_WORKERS}")
+        print(f"  DEFAULT_BATCH_SIZE: {FlextRuntime.DEFAULT_BATCH_SIZE}")
+        print(f"  DEFAULT_RETRY_ATTEMPTS: {FlextRuntime.DEFAULT_RETRY_ATTEMPTS}")
+
+        # Message processing configuration
+        processing_config: Flext.Types.Dict = {
+            "timeout": FlextRuntime.DEFAULT_TIMEOUT,
+            "max_workers": FlextRuntime.DEFAULT_MAX_WORKERS,
+            "batch_size": FlextRuntime.DEFAULT_BATCH_SIZE,
+            "retry_attempts": FlextRuntime.DEFAULT_RETRY_ATTEMPTS,
+        }
+
+        print(f"\nMessage processing config: {processing_config}")
+
+        # Type guards for message validation
+        message_data = {"user_id": "test@example.com", "type": "UserCommand"}
+        email = message_data.get("user_id", "")
+
+        if isinstance(email, str) and FlextRuntime.is_valid_email(email):
+            print(f"✅ Valid email in message: {email}")
+        else:
+            print(f"❌ Invalid email in message: {email}")
+
+        print("✅ FlextRuntime messaging integration demonstrated")
+
     # ========== DEPRECATED PATTERNS ==========
 
     def demonstrate_deprecated_patterns(self) -> None:
@@ -721,6 +1155,18 @@ def main() -> None:
     service.demonstrate_message_routing()
     service.demonstrate_correlation_tracking()
 
+    # NEW: FlextResult v0.9.9+ methods for messaging
+    service.demonstrate_from_callable_messaging()
+    service.demonstrate_flow_through_messaging()
+    service.demonstrate_lash_messaging()
+    service.demonstrate_alt_messaging()
+    service.demonstrate_value_or_call_messaging()
+
+    # Foundation layer integration (NEW in Phase 2)
+    service.demonstrate_flext_constants_messages()
+    service.demonstrate_flext_exceptions_messaging()
+    service.demonstrate_flext_runtime_messaging()
+
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
 
@@ -730,6 +1176,12 @@ def main() -> None:
     print(f"📊 Events stored: {service.get_event_count()}")
     print(f"📬 Messages queued: {service.get_message_count()}")
     print("🎯 Next: See advanced examples for complex patterns")
+    print(
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+    )
+    print(
+        "🔧 Including foundation integration: FlextConstants.Messages, FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)"
+    )
     print("=" * 60)
 
 

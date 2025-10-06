@@ -14,7 +14,13 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextHandlers, FlextModels, FlextResult, FlextTypes
+from flext_core import (
+    FlextExceptions,
+    FlextHandlers,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+)
 from flext_core.context import FlextContext
 from flext_core.mixins import FlextMixins
 
@@ -263,15 +269,15 @@ class TestFlextHandlers:
         assert callable(handler.handle)
 
     def test_handlers_inheritance_chain(self) -> None:
-        """Test that handlers inherit from FlextMixins."""
+        """Test that handlers inherit from FlextMixins.Service."""
         config = FlextModels.CqrsConfig.Handler(
             handler_id="test_inheritance_handler",
             handler_name="Test Inheritance Handler",
         )
         handler = ConcreteTestHandler(config=config)
 
-        # Should inherit from FlextMixins
-        assert isinstance(handler, FlextMixins)
+        # Should inherit from FlextMixins.Service
+        assert isinstance(handler, FlextMixins.Service)
 
     def test_handlers_config_model_type(self) -> None:
         """Test that config model is properly typed."""
@@ -655,7 +661,7 @@ class TestFlextHandlers:
         def invalid_handler(message: str) -> str:
             return f"invalid_{message}"
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextHandlers.from_callable(
                 cast("Callable[[object], object]", invalid_handler),
                 handler_name="invalid_handler",
@@ -699,7 +705,7 @@ class TestFlextHandlers:
             "handler_type": "invalid_type",  # Invalid value
         }
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextHandlers.from_callable(
                 invalid_config_handler,
                 handler_config=invalid_config,

@@ -57,13 +57,24 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
+class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
     """Handler base class for CQRS command and query implementations.
 
     FlextHandlers provides the foundation for implementing CQRS handlers
     with validation, execution context, metrics collection, and
     configuration management. Generic base supporting commands, queries,
     events, and sagas across all 32+ FLEXT projects.
+
+    **Inherited Infrastructure** (from FlextMixins.Service):
+        - container: FlextContainer (via FlextMixins.Container)
+        - context: object (via FlextMixins.Context)
+        - logger: FlextLogger (via FlextMixins.Logging) - per-handler logger instance
+        - config: object (via FlextMixins.Configurable) - global config access
+        - _track_operation: context manager (via FlextMixins.Metrics)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
+
+    Internal implementation note: Class uses _internal_logger for internal
+    operations, while handlers access per-instance logger via inherited property.
 
     **PROTOCOL IMPLEMENTATION**: This handler implements FlextProtocols.Application.Handler,
     establishing the foundation pattern for ALL command/query/event handlers across the
@@ -212,6 +223,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
     """
 
+    # Class-level logger for internal operations (not for subclass use)
+    _internal_logger: FlextLogger = FlextLogger(__name__)
+
     class _MessageValidator:
         """Private message validation utilities for FlextHandlers.
 
@@ -264,8 +278,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                                     )
                     except Exception as e:
                         # Skip if it's a Pydantic field validator - validation will proceed below
-                        logger = FlextLogger(__name__)
-                        logger.debug(
+                        FlextHandlers._internal_logger.debug(
                             f"Skipping validation method {validation_method_name}: {type(e).__name__}"
                         )
 
@@ -378,8 +391,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         if isinstance(result_data, dict):
                             return cast("FlextTypes.Dict", result_data)
                     except Exception as e:
-                        logger = FlextLogger(__name__)
-                        logger.debug(
+                        FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
                         )
                         continue
@@ -433,6 +445,18 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         super().__init__()
+
+        # Initialize service infrastructure (DI, Context, Logging, Metrics)
+        self._init_service(f"flext_handler_{config.handler_name}")
+
+        # Enrich context with handler metadata (Phase 1 enhancement)
+        # This automatically adds handler information to all logs
+        self._enrich_context(
+            handler_name=config.handler_name,
+            handler_type=config.handler_type,
+            handler_class=self.__class__.__name__,
+        )
+
         self._config_model: FlextModels.CqrsConfig.Handler = config
         self._execution_context = (
             FlextContext.HandlerExecutionContext.create_for_handler(
@@ -476,15 +500,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             self._accepted_message_types, message_type
         )
 
-    @property
-    def logger(self) -> FlextLogger:
-        """Get logger instance for this handler.
-
-        Returns:
-            FlextLogger: Logger instance
-
-        """
-        return FlextLogger(self.__class__.__name__)
+    # NOTE: logger property inherited from FlextMixins.Logging
+    # Provides per-class logger instance via lazy initialization
 
     @property
     def handler_id(self) -> str:

@@ -52,6 +52,7 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Annotated,
+    Any,
     ClassVar,
     Literal,
     Self,
@@ -75,6 +76,7 @@ from pydantic.main import IncEx
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 if TYPE_CHECKING:
@@ -246,20 +248,20 @@ class FlextModels:
             FlextModels._config_cache = FlextConfig()
         return FlextModels._config_cache
 
-    @classmethod
-    def get_timeout_seconds(cls) -> int:
+    @staticmethod
+    def get_timeout_seconds() -> int:
         """Get default timeout seconds from config."""
-        return cls._get_config().timeout_seconds
+        return FlextModels._get_config().timeout_seconds
 
-    @classmethod
-    def get_max_retry_attempts(cls) -> int:
+    @staticmethod
+    def get_max_retry_attempts() -> int:
         """Get default max retry attempts from config."""
-        return cls._get_config().max_retry_attempts
+        return FlextModels._get_config().max_retry_attempts
 
-    @classmethod
-    def get_max_workers(cls) -> int:
+    @staticmethod
+    def get_max_workers() -> int:
         """Get default max workers from config."""
-        return cls._get_config().max_workers
+        return FlextModels._get_config().max_workers
 
     @classmethod
     def get_batch_size(cls) -> int:
@@ -1080,7 +1082,22 @@ class FlextModels:
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
+
+        Internal implementation note: Class uses a shared logger for domain
+        event operations (add, commit, clear).
         """
+
+        # Class-level logger for domain event operations
+        _internal_logger: ClassVar[object] = None
+
+        @classmethod
+        def _get_logger(cls) -> object:
+            """Get or create the internal logger (lazy initialization to avoid circular imports)."""
+            if cls._internal_logger is None:
+                from flext_core.loggings import FlextLogger
+
+                cls._internal_logger = FlextLogger(__name__)
+            return cls._internal_logger
 
         domain_events: list[object] = Field(default_factory=list)
 
@@ -1107,6 +1124,11 @@ class FlextModels:
 
             DomainEvent now uses IdentifiableMixin and TimestampableMixin,
             so id and created_at are auto-generated.
+
+            Args:
+                event_name: The type/name of the domain event
+                data: Event payload data
+
             """
             domain_event = FlextModels.DomainEvent(
                 event_type=event_name,
@@ -1116,6 +1138,16 @@ class FlextModels:
             )
             self.domain_events.append(domain_event)
 
+            # Log domain event addition via structlog
+            self._get_logger().debug(
+                "Domain event added",
+                event_type=event_name,
+                aggregate_id=self.id,
+                aggregate_type=self.__class__.__name__,
+                event_id=domain_event.id,
+                data_keys=list(data.keys()) if data else [],
+            )
+
             # Try to find and call event handler method
             event_type = data.get("event_type", "")
             handler_method_name = f"_apply_{str(event_type).lower()}"
@@ -1123,13 +1155,15 @@ class FlextModels:
                 try:
                     handler_method = getattr(self, handler_method_name)
                     handler_method(data)
+                    self._get_logger().debug(
+                        "Domain event handler executed",
+                        event_type=event_name,
+                        handler=handler_method_name,
+                        aggregate_id=self.id,
+                    )
                 except Exception as e:
                     # Log exception but don't re-raise to maintain resilience
-                    # Lazy import to avoid circular dependency (loggings.py -> models.py)
-                    from flext_core.loggings import FlextLogger
-
-                    logger = FlextLogger(__name__)
-                    logger.warning(
+                    self._get_logger().warning(
                         f"Domain event handler {handler_method_name} failed for event {event_name}: {e}"
                     )
 
@@ -1137,9 +1171,70 @@ class FlextModels:
             self.increment_version()
             self.update_timestamp()
 
+        def get_uncommitted_events(self) -> list[object]:
+            """Get uncommitted domain events without clearing them.
+
+            Returns:
+                List of uncommitted domain events (DomainEvent instances).
+
+            """
+            return [
+                e for e in self.domain_events if isinstance(e, FlextModels.DomainEvent)
+            ]
+
+        def mark_events_as_committed(self) -> None:
+            """Mark all domain events as committed and clear them.
+
+            This method logs the commitment via structlog and clears the event
+            list. Use this in event sourcing scenarios to track when events
+            have been persisted to the event store.
+            """
+            # Get uncommitted events before clearing
+            events = self.get_uncommitted_events()
+
+            # Log commitment via structlog if there are events
+            if events:
+                # Type-safe access to event_type
+                event_types = [e.event_type for e in events]
+                self._get_logger().info(
+                    "Domain events committed",
+                    aggregate_id=self.id,
+                    aggregate_type=self.__class__.__name__,
+                    event_count=len(events),
+                    event_types=event_types,
+                )
+
+            # Clear all events
+            self.domain_events.clear()
+
         def clear_domain_events(self) -> FlextTypes.List:
-            """Clear and return domain events."""
+            """Clear and return domain events.
+
+            This method logs the clearing operation via structlog for
+            observability and debugging purposes.
+
+            Returns:
+                List of domain events that were cleared.
+
+            """
+            # Get events before clearing
             events: FlextTypes.List = self.domain_events.copy()
+
+            # Log clearing operation via structlog if there are events
+            if events:
+                domain_events = [
+                    e for e in events if isinstance(e, FlextModels.DomainEvent)
+                ]
+                self._get_logger().debug(
+                    "Domain events cleared",
+                    aggregate_id=self.id,
+                    aggregate_type=self.__class__.__name__,
+                    event_count=len(domain_events),
+                    event_types=[e.event_type for e in domain_events]
+                    if domain_events
+                    else [],
+                )
+
             self.domain_events.clear()
             return events
 
@@ -1649,7 +1744,7 @@ class FlextModels:
                     message=result.error or "Invalid email format",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return result.unwrap()
+            return result.value
 
     class Host(Value):
         """Host/hostname value object."""
@@ -1666,7 +1761,7 @@ class FlextModels:
                     message=result.error or "Invalid hostname format",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return result.unwrap()
+            return result.value
 
     class EntityId(Value):
         """Entity identifier value object with validation."""
@@ -1683,7 +1778,7 @@ class FlextModels:
                     message=result.error or "Invalid entity ID format",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return result.unwrap()
+            return result.value
 
     class Url(Value):
         """Enhanced URL value object."""
@@ -1700,7 +1795,7 @@ class FlextModels:
                     message=result.error or "Invalid URL format",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return result.unwrap()
+            return result.value
 
     class Project(Entity):
         """Enhanced project entity with advanced validation."""
@@ -3523,7 +3618,13 @@ class FlextModels:
                 ```
 
             """
-            return FlextResult.validate_all(model, *rules)
+            # Validate all rules and return model if all pass
+            for rule in rules:
+                result = rule(model)
+                if result.is_failure:
+                    return FlextResult[T].fail(result.error or "Validation failed")
+
+            return FlextResult[T].ok(model)
 
         @staticmethod
         def validate_cross_fields[T](
@@ -3603,7 +3704,8 @@ class FlextModels:
             else:
                 from flext_core.config import FlextConfig
 
-                timeout_ms = FlextConfig().validation_timeout_ms
+                # Use global config instance for consistency
+                timeout_ms = FlextConfig.get_global_instance().validation_timeout_ms
             start_time = time_module.time()
 
             try:
@@ -3652,12 +3754,20 @@ class FlextModels:
 
             """
             if fail_fast:
-                return FlextResult.traverse(
-                    models,
-                    lambda model: FlextResult.validate_all(model, *validators).map(
-                        lambda _: model
-                    ),
-                )
+                # Validate models one by one, stop on first failure
+                validated_models = []
+                for model in models:
+                    # Validate all rules for this model
+                    for validator in validators:
+                        result = validator(model)
+                        if result.is_failure:
+                            return FlextResult[list[T]].fail(
+                                result.error or "Validation failed"
+                            )
+
+                    validated_models.append(model)
+
+                return FlextResult[list[T]].ok(validated_models)
             # Accumulate all errors
             validated_models = []
             all_errors: list[str] = []
@@ -3918,8 +4028,8 @@ class FlextModels:
             """Convert pagination to Pagination instance."""
             if isinstance(v, dict):
                 # Extract page and size from dict
-                page: object = v.get("page", 1)
-                size: object = v.get("size", 20)
+                page = v.get("page", 1)
+                size = v.get("size", 20)
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -3933,7 +4043,10 @@ class FlextModels:
                     except ValueError:
                         size = 20
 
-                return FlextModels.Pagination(page=page, size=size)
+                # At this point page and size should be int, cast them properly
+                page_int = int(page) if isinstance(page, (int, str)) else 1
+                size_int = int(size) if isinstance(size, (int, str)) else 20
+                return FlextModels.Pagination(page=page_int, size=size_int)
             if isinstance(v, FlextModels.Pagination):
                 return v
             # Default pagination
@@ -3948,13 +4061,14 @@ class FlextModels:
                 # Extract the required fields with proper typing
                 filters: object = query_payload.get("filters", {})
                 pagination_data = query_payload.get("pagination", {})
-                pagination = (
-                    pagination_data
-                    if isinstance(pagination_data, FlextModels.Pagination)
-                    else FlextModels.Pagination(**pagination_data)
-                    if isinstance(pagination_data, dict)
-                    else FlextModels.Pagination()
-                )
+                if isinstance(pagination_data, FlextModels.Pagination):
+                    pagination = pagination_data
+                elif isinstance(pagination_data, dict):
+                    page = pagination_data.get("page", 1)
+                    size = pagination_data.get("size", 20)
+                    pagination = FlextModels.Pagination(page=page, size=size)
+                else:
+                    pagination = FlextModels.Pagination()
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
                 query_type = query_payload.get("query_type")
 
@@ -4294,6 +4408,349 @@ class FlextModels:
             return self
 
     # ============================================================================
+    # Dependency Injection Providers (Phase 2 Enhancement)
+    # ============================================================================
+
+    class Providers:
+        """Dependency injection provider factory utilities for FlextModels.
+
+        Provides factory methods for creating dependency_injector providers
+        for domain model integration with the DI container.
+
+        This class demonstrates Phase 2 enhancement patterns:
+        - Entity providers for domain entity lifecycle management
+        - Value Object providers for immutable value creation
+        - Repository providers for aggregate persistence
+        - Domain Event providers for event sourcing
+        """
+
+        @staticmethod
+        def create_entity_factory_provider(
+            entity_class: type[FlextModels.Entity],
+        ) -> Any:  # providers.Factory
+            """Create a Factory provider for Entity instances.
+
+            Args:
+                entity_class: Entity class to create factory for
+
+            Returns:
+                Factory provider for creating entity instances
+
+            Example:
+                ```python
+                from flext_core import FlextModels
+
+
+                class User(FlextModels.Entity):
+                    name: str
+                    email: str
+
+
+                user_factory = FlextModels.Providers.create_entity_factory_provider(
+                    User
+                )
+                container.register("user_factory", user_factory)
+                ```
+
+            """
+            providers_module = FlextRuntime.dependency_providers()
+            return providers_module.Factory(entity_class)
+
+        @staticmethod
+        def create_value_factory_provider(
+            value_class: type[FlextModels.Value],
+        ) -> Any:  # providers.Factory
+            """Create a Factory provider for Value Object instances.
+
+            Args:
+                value_class: Value Object class to create factory for
+
+            Returns:
+                Factory provider for creating value object instances
+
+            Example:
+                ```python
+                from flext_core import FlextModels
+
+
+                class Email(FlextModels.Value):
+                    address: str
+
+
+                email_factory = FlextModels.Providers.create_value_factory_provider(
+                    Email
+                )
+                container.register("email_factory", email_factory)
+                ```
+
+            """
+            providers_module = FlextRuntime.dependency_providers()
+            return providers_module.Factory(value_class)
+
+        @staticmethod
+        def create_aggregate_factory_provider(
+            aggregate_class: type[FlextModels.AggregateRoot],
+        ) -> Any:  # providers.Factory
+            """Create a Factory provider for AggregateRoot instances.
+
+            Args:
+                aggregate_class: AggregateRoot class to create factory for
+
+            Returns:
+                Factory provider for creating aggregate root instances
+
+            Example:
+                ```python
+                from flext_core import FlextModels
+
+
+                class Order(FlextModels.AggregateRoot):
+                    order_id: str
+                    items: list[str]
+
+
+                order_factory = FlextModels.Providers.create_aggregate_factory_provider(
+                    Order
+                )
+                container.register("order_factory", order_factory)
+                ```
+
+            """
+            providers_module = FlextRuntime.dependency_providers()
+            return providers_module.Factory(aggregate_class)
+
+        @staticmethod
+        def create_domain_event_provider(
+            event_type: str,
+            aggregate_id: str,
+            data: FlextTypes.Dict | None = None,
+            metadata: FlextTypes.Dict | None = None,
+        ) -> Any:  # providers.Callable
+            """Create a Callable provider for domain events.
+
+            Args:
+                event_type: Type/name of the domain event
+                aggregate_id: ID of the aggregate that generated the event
+                data: Event payload data (optional)
+                metadata: Event metadata (optional)
+
+            Returns:
+                Callable provider for creating DomainEvent instances
+
+            Example:
+                ```python
+                from flext_core import FlextModels
+
+                event_provider = FlextModels.Providers.create_domain_event_provider(
+                    event_type="UserCreated",
+                    aggregate_id="user-123",
+                    data={"email": "user@example.com"},
+                    metadata={"version": "1.0", "source": "test"},
+                )
+                container.register("user_created_event", event_provider)
+                ```
+
+            """
+            providers_module = FlextRuntime.dependency_providers()
+
+            def create_event() -> FlextModels.DomainEvent:
+                return FlextModels.DomainEvent(
+                    event_type=event_type,
+                    aggregate_id=aggregate_id,
+                    data=data or {},
+                    metadata=metadata or {},
+                )
+
+            return providers_module.Callable(create_event)
+
+        @staticmethod
+        def create_command_factory_provider(
+            command_class: type[FlextModels.Command],
+        ) -> Any:  # providers.Factory
+            """Create a Factory provider for Command instances (CQRS).
+
+            Args:
+                command_class: Command class to create factory for
+
+            Returns:
+                Factory provider for creating command instances
+
+            Example:
+                ```python
+                from flext_core import FlextModels
+
+
+                class CreateUser(FlextModels.Command):
+                    name: str
+                    email: str
+
+
+                command_factory = FlextModels.Providers.create_command_factory_provider(
+                    CreateUser
+                )
+                container.register("create_user_command", command_factory)
+                ```
+
+            """
+            providers_module = FlextRuntime.dependency_providers()
+            return providers_module.Factory(command_class)
+
+        @staticmethod
+        def create_query_factory_provider(
+            query_class: type[FlextModels.Query],
+        ) -> Any:  # providers.Factory
+            """Create a Factory provider for Query instances (CQRS).
+
+            Args:
+                query_class: Query class to create factory for
+
+            Returns:
+                Factory provider for creating query instances
+
+            Example:
+                ```python
+                from flext_core import FlextModels
+
+
+                class GetUser(FlextModels.Query):
+                    user_id: str
+
+
+                query_factory = FlextModels.Providers.create_query_factory_provider(
+                    GetUser
+                )
+                container.register("get_user_query", query_factory)
+                ```
+
+            """
+            providers_module = FlextRuntime.dependency_providers()
+            return providers_module.Factory(query_class)
+
+        @staticmethod
+        def register_in_container(
+            container: Any,  # FlextContainer or dependency_injector.containers.Container
+            entity_classes: list[type[FlextModels.Entity]] | None = None,
+            value_classes: list[type[FlextModels.Value]] | None = None,
+            aggregate_classes: list[type[FlextModels.AggregateRoot]] | None = None,
+            command_classes: list[type[FlextModels.Command]] | None = None,
+            query_classes: list[type[FlextModels.Query]] | None = None,
+        ) -> FlextResult[None]:
+            """Register model providers in a DI container.
+
+            Args:
+                container: DI container to register providers in
+                entity_classes: List of Entity classes to register
+                value_classes: List of Value Object classes to register
+                aggregate_classes: List of AggregateRoot classes to register
+                command_classes: List of Command classes to register (CQRS)
+                query_classes: List of Query classes to register (CQRS)
+
+            Returns:
+                FlextResult indicating success or failure
+
+            Example:
+                ```python
+                from flext_core import FlextContainer, FlextModels
+
+
+                class User(FlextModels.Entity):
+                    name: str
+
+
+                class Email(FlextModels.Value):
+                    address: str
+
+
+                container = FlextContainer.get_global()
+                result = FlextModels.Providers.register_in_container(
+                    container, entity_classes=[User], value_classes=[Email]
+                )
+                ```
+
+            """
+            try:
+                # Register entity factories
+                if entity_classes:
+                    for entity_class in entity_classes:
+                        provider = FlextModels.Providers.create_entity_factory_provider(
+                            entity_class
+                        )
+                        service_name = f"{entity_class.__name__.lower()}_factory"
+                        if hasattr(container, "register"):
+                            result = container.register(service_name, provider)
+                            if result.is_failure:
+                                return FlextResult[None].fail(
+                                    f"Entity factory registration failed for {entity_class.__name__}: {result.error}"
+                                )
+
+                # Register value object factories
+                if value_classes:
+                    for value_class in value_classes:
+                        provider = FlextModels.Providers.create_value_factory_provider(
+                            value_class
+                        )
+                        service_name = f"{value_class.__name__.lower()}_factory"
+                        if hasattr(container, "register"):
+                            result = container.register(service_name, provider)
+                            if result.is_failure:
+                                return FlextResult[None].fail(
+                                    f"Value factory registration failed for {value_class.__name__}: {result.error}"
+                                )
+
+                # Register aggregate root factories
+                if aggregate_classes:
+                    for aggregate_class in aggregate_classes:
+                        provider = (
+                            FlextModels.Providers.create_aggregate_factory_provider(
+                                aggregate_class
+                            )
+                        )
+                        service_name = f"{aggregate_class.__name__.lower()}_factory"
+                        if hasattr(container, "register"):
+                            result = container.register(service_name, provider)
+                            if result.is_failure:
+                                return FlextResult[None].fail(
+                                    f"Aggregate factory registration failed for {aggregate_class.__name__}: {result.error}"
+                                )
+
+                # Register command factories (CQRS)
+                if command_classes:
+                    for command_class in command_classes:
+                        provider = (
+                            FlextModels.Providers.create_command_factory_provider(
+                                command_class
+                            )
+                        )
+                        service_name = f"{command_class.__name__.lower()}_factory"
+                        if hasattr(container, "register"):
+                            result = container.register(service_name, provider)
+                            if result.is_failure:
+                                return FlextResult[None].fail(
+                                    f"Command factory registration failed for {command_class.__name__}: {result.error}"
+                                )
+
+                # Register query factories (CQRS)
+                if query_classes:
+                    for query_class in query_classes:
+                        provider = FlextModels.Providers.create_query_factory_provider(
+                            query_class
+                        )
+                        service_name = f"{query_class.__name__.lower()}_factory"
+                        if hasattr(container, "register"):
+                            result = container.register(service_name, provider)
+                            if result.is_failure:
+                                return FlextResult[None].fail(
+                                    f"Query factory registration failed for {query_class.__name__}: {result.error}"
+                                )
+
+                return FlextResult[None].ok(None)
+
+            except Exception as e:
+                return FlextResult[None].fail(
+                    f"Model provider registration failed: {e}"
+                )
+
+    # ============================================================================
     # END OF FLEXT MODELS - Foundation library complete
     # ============================================================================
 
@@ -4304,23 +4761,3 @@ class FlextModels:
         retry_delay: float = 0.0
         backoff_multiplier: float = 1.0
         exponential_backoff: bool = False
-
-
-# Config-driven fields (pull from global FlextConfig)
-FlextModels.TimeoutField = Annotated[
-    int,
-    Field(default_factory=FlextModels.get_timeout_seconds),
-]
-FlextModels.RetryField = Annotated[
-    int,
-    Field(default_factory=FlextModels.get_max_retry_attempts),
-]
-FlextModels.MaxWorkersField = Annotated[
-    int, Field(default_factory=FlextModels.get_max_workers)
-]
-
-__all__ = [
-    "FlextModels",
-    # ModelDumpKwargs is now FlextModels.ModelDumpKwargs
-    # OperationCallable is now FlextProtocols.Foundation.OperationCallable
-]

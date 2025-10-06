@@ -149,6 +149,121 @@ bus.publish(UserCreatedEvent(user_id="123"))
 
 ---
 
+## ✨ Phase 1 Architectural Enhancements (v0.9.9)
+
+**Status**: ✅ Completed | **Impact**: Foundation for ecosystem-wide code reduction
+
+### **New Features**
+
+#### **1. Context Enrichment in FlextMixins.Service**
+
+Automatic context management for structured logging and distributed tracing:
+
+```python
+from flext_core import FlextService, FlextResult
+
+class PaymentService(FlextService[dict[str, object]]):
+    """Service with automatic context enrichment."""
+
+    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextResult[dict]:
+        # Generate correlation ID for distributed tracing
+        correlation_id = self._with_correlation_id()
+
+        # Set user context for audit trail
+        self._with_user_context(user_id, payment_id=payment_id)
+
+        # Set operation context for tracking
+        self._with_operation_context("process_payment", amount=amount)
+
+        # All logs now include full context automatically
+        self._logger.info("Processing payment", payment_id=payment_id, amount=amount)
+
+        # Business logic here...
+
+        # Clean up context
+        self._clear_operation_context()
+
+        return FlextResult[dict].ok({"status": "completed", "correlation_id": correlation_id})
+```
+
+**Available Methods**:
+- `_enrich_context(**context_data)` - Add service metadata to logs
+- `_with_correlation_id(correlation_id?)` - Set/generate correlation IDs for tracing
+- `_with_user_context(user_id, **user_data)` - Set user audit context
+- `_with_operation_context(operation_name, **data)` - Set operation tracking
+- `_clear_operation_context()` - Clean up context after operations
+
+#### **2. Automatic Context in FlextService & FlextHandlers**
+
+Both `FlextService` and `FlextHandlers` now automatically enrich context in `__init__`:
+
+```python
+class UserService(FlextService[User]):
+    def __init__(self, **data: object) -> None:
+        super().__init__(**data)
+        # Context automatically includes:
+        # - service_type: "UserService"
+        # - service_module: "my_app.services.user"
+
+class CreateOrderHandler(FlextHandlers.CommandHandler[CreateOrderCommand, Order]):
+    def __init__(self, **data: object) -> None:
+        config = FlextModels.CqrsConfig.Handler(
+            handler_name="CreateOrderHandler",
+            handler_type="command",
+        )
+        super().__init__(config=config)
+        # Context automatically includes:
+        # - handler_name: "CreateOrderHandler"
+        # - handler_type: "command"
+        # - handler_class: "CreateOrderHandler"
+```
+
+#### **3. Helper Method for Complete Automation**
+
+`FlextService.execute_with_context_enrichment()` provides complete automation:
+
+```python
+class OrderService(FlextService[Order]):
+    def process_order(
+        self,
+        order_id: str,
+        customer_id: str,
+        correlation_id: str | None = None,
+    ) -> FlextResult[Order]:
+        """Process order with complete automation."""
+        return self.execute_with_context_enrichment(
+            operation_name="process_order",
+            correlation_id=correlation_id,
+            user_id=customer_id,
+            order_id=order_id,
+        )
+        # Automatically handles:
+        # - Correlation ID generation/setting
+        # - User context enrichment
+        # - Operation context tracking
+        # - Performance tracking
+        # - Operation logging (start/complete/error)
+        # - Context cleanup
+```
+
+### **Benefits**
+
+- ✅ **Zero Boilerplate** - No manual context setup required
+- ✅ **Distributed Tracing** - Automatic correlation ID generation
+- ✅ **Audit Trail** - User context automatically captured
+- ✅ **Operation Tracking** - Performance and lifecycle tracking
+- ✅ **Structured Logging** - All logs include rich context
+- ✅ **Ecosystem Ready** - Available to all 32+ dependent projects
+
+### **Examples**
+
+See `examples/automation_showcase.py` for complete working examples demonstrating:
+- Basic service with automatic context enrichment
+- Payment service with correlation ID tracking
+- Order service using context enrichment helper method
+
+---
+
 ## 🚀 1.0.0 Release Roadmap
 
 **Target Date**: October 2025 | **Current**: v0.9.9 Release Candidate

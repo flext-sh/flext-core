@@ -28,7 +28,7 @@ import warnings
 from datetime import UTC, datetime
 from typing import Protocol, cast, runtime_checkable
 
-from flext_core import Flext, FlextContainer, FlextLogger
+from flext_core import Flext, FlextContainer
 
 from .example_scenarios import ExampleScenarios
 
@@ -441,7 +441,7 @@ class UserRepository(Flext.Service[User]):
 
         # Safe query construction - in real implementation use parameterized queries
         query = "SELECT * FROM users WHERE id = %s"
-        result = self._database.query_with_params(query, [user_id])
+        result = self._database.query_with_params(query, [user_id], dict)
         if result.is_failure:
             return Flext.Result[User].fail(
                 f"Database error: {result.error}",
@@ -536,18 +536,58 @@ class UserRepository(Flext.Service[User]):
 
 
 class ComprehensiveDIService(Flext.Service[User]):
-    """Service demonstrating ALL FlextContainer patterns and methods with enhanced monitoring."""
+    """Service demonstrating ALL FlextContainer patterns with FlextMixins.Service infrastructure.
+
+    This service inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton for DI)
+    - Inherited logger property (FlextLogger with service context)
+    - Inherited context property (FlextContext for request tracking)
+    - Inherited config property (FlextConfig with settings)
+    - Inherited metrics property (FlextMetrics for observability)
+
+    The focus is on demonstrating FlextContainer DI patterns while leveraging
+    the complete FlextMixins.Service infrastructure for service orchestration.
+    """
 
     def __init__(self) -> None:
-        """Initialize with automatic Flext infrastructure."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger or container initialization needed!
+        All infrastructure is inherited from Flext.Service base class:
+        - self.logger: FlextLogger with service context
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for request tracking
+        - self.config: FlextConfig with application settings
+        - self.metrics: FlextMetrics for observability
+        """
         super().__init__()
-        self.logger = FlextLogger(__name__)
         self._scenarios = ExampleScenarios()
         self._dataset = self._scenarios.dataset()
         self._config_data = self._scenarios.config()
 
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "ComprehensiveDIService initialized with inherited infrastructure",
+            extra={
+                "dataset_keys": list(self._dataset.keys()),
+                "config_keys": list(self._config_data.keys()),
+                "service_type": "FlextContainer DI demonstration",
+            },
+        )
+
     def execute(self) -> Flext.Result[User]:
-        """Execute with automatic error handling and monitoring."""
+        """Execute with automatic error handling and monitoring.
+
+        This method satisfies the FlextService abstract interface while
+        demonstrating FlextContainer DI patterns. Uses inherited infrastructure:
+        - self.container for service resolution and dependency injection
+        - self.logger for structured logging throughout execution
+        - self.context for request tracking (if needed)
+
+        Returns:
+            FlextResult containing User entity from DI container operations
+
+        """
         return self._execute_with_container_patterns()
 
     def _execute_with_container_patterns(self) -> Flext.Result[User]:
@@ -598,12 +638,16 @@ class ComprehensiveDIService(Flext.Service[User]):
                     cache_stats = cache.get_stats()
 
             # Log comprehensive statistics
+            service_count = len(
+                set(self.container._services.keys())
+                | set(self.container._factories.keys())
+            )
             self.logger.info(
                 "Service execution statistics",
                 extra={
                     "database_stats": db_stats,
                     "cache_stats": cache_stats,
-                    "container_service_count": self.container.get_service_count(),
+                    "container_service_count": service_count,
                 },
             )
         except Exception as e:
@@ -611,8 +655,11 @@ class ComprehensiveDIService(Flext.Service[User]):
 
     def get_service_stats(self) -> Flext.Types.Dict:
         """Get comprehensive service statistics."""
+        service_count = len(
+            set(self.container._services.keys()) | set(self.container._factories.keys())
+        )
         return {
-            "container_service_count": self.container.get_service_count(),
+            "container_service_count": service_count,
         }
 
     # ========== BASIC REGISTRATION ==========
@@ -636,8 +683,10 @@ class ComprehensiveDIService(Flext.Service[User]):
         has_cache = self.container.has("cache")
         print(f"Has database: {has_db}, Has cache: {has_cache}")
 
-        count = self.container.get_service_count()
-        print(f"Service count: {count}")
+        service_count = len(
+            set(self.container._services.keys()) | set(self.container._factories.keys())
+        )
+        print(f"Service count: {service_count}")
 
     # ========== SERVICE RESOLUTION ==========
 
@@ -785,7 +834,15 @@ class ComprehensiveDIService(Flext.Service[User]):
         result = self.container.configure_container(config)
         print(f"Container configuration: {result.is_success}")
 
-        info = self.container.get_info()
+        # Build info manually since get_info() is removed
+        service_count = len(
+            set(self.container._services.keys()) | set(self.container._factories.keys())
+        )
+        info = {
+            "service_count": service_count,
+            "direct_services": len(self.container._services),
+            "factories": len(self.container._factories),
+        }
         print(f"Container info: {info}")
 
     # ========== SERVICE LIFECYCLE ==========
@@ -824,9 +881,7 @@ class ComprehensiveDIService(Flext.Service[User]):
         """Show global container patterns."""
         print("\n=== Global Container Patterns ===")
 
-        manager = FlextContainer.get_global_instance()
-
-        global_container = manager.get_or_create()
+        global_container = FlextContainer.get_global()
         print(f"Global container: {type(global_container).__name__}")
 
         global_payload = self._scenarios.payload(type="global_service")
@@ -862,6 +917,160 @@ class ComprehensiveDIService(Flext.Service[User]):
         result = self.container.get_typed("wrong_type", DatabaseService)
         if result.is_failure:
             print(f"✅ Correct failure for type mismatch: {result.error}")
+
+    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+
+    def demonstrate_from_callable(self) -> None:
+        """Show from_callable for safe service initialization."""
+        print("\n=== from_callable(): Safe Service Initialization ===")
+
+        # Safe database connection initialization
+        def risky_db_connect() -> DatabaseService:
+            db = DatabaseService("postgresql://invalid-host/db")
+            connect_result = db.connect()
+            if connect_result.is_failure:
+                msg = "Database connection failed"
+                raise RuntimeError(msg)
+            return db
+
+        db_result = Flext.Result.from_callable(risky_db_connect)
+        if db_result.is_failure:
+            print(f"✅ Caught connection error safely: {db_result.error}")
+        else:
+            print("Database connected successfully")
+
+        # Safe cache initialization
+        def safe_cache_init() -> CacheService:
+            return CacheService(max_size=100, ttl_seconds=300)
+
+        cache_result = Flext.Result.from_callable(safe_cache_init)
+        if cache_result.is_success:
+            cache = cache_result.unwrap()
+            print(f"✅ Cache initialized: max_size={cache._max_size}")
+
+    def demonstrate_flow_through(self) -> None:
+        """Show pipeline composition for service initialization."""
+        print("\n=== flow_through(): Service Initialization Pipeline ===")
+
+        def create_database() -> Flext.Result[DatabaseService]:
+            """Create database service."""
+            db = DatabaseService("sqlite:///:memory:")
+            return Flext.Result[DatabaseService].ok(db)
+
+        def connect_database(db: DatabaseService) -> Flext.Result[DatabaseService]:
+            """Connect to database."""
+            result = db.connect()
+            if result.is_failure:
+                return Flext.Result[DatabaseService].fail(
+                    f"Connection failed: {result.error}"
+                )
+            return Flext.Result[DatabaseService].ok(db)
+
+        def validate_database(db: DatabaseService) -> Flext.Result[DatabaseService]:
+            """Validate database is ready."""
+            if not db._connected:
+                return Flext.Result[DatabaseService].fail("Database not connected")
+            return Flext.Result[DatabaseService].ok(db)
+
+        # Pipeline: create → connect → validate
+        result = (
+            Flext.Result[DatabaseService]
+            .ok(DatabaseService())
+            .flow_through(
+                lambda db: connect_database(db),
+                lambda db: validate_database(db),
+            )
+        )
+
+        if result.is_success:
+            db = result.unwrap()
+            print(f"✅ Service pipeline success: connected={db._connected}")
+        else:
+            print(f"Pipeline failure: {result.error}")
+
+    def demonstrate_lash(self) -> None:
+        """Show error recovery with fallback services."""
+        print("\n=== lash(): Service Fallback Pattern ===")
+
+        # Primary service that fails
+        def try_primary_database() -> Flext.Result[str]:
+            """Try to get data from primary database."""
+            return Flext.Result[str].fail("Primary database unavailable")
+
+        # Recovery function using cache
+        def recover_with_cache(error: str) -> Flext.Result[str]:
+            """Recover by using cache service."""
+            print(f"  Recovering from: {error}")
+            cache = CacheService()
+            cache.set("fallback_key", "cached_data")
+            cached_result = cache.get("fallback_key")
+            if cached_result.is_success:
+                data = cached_result.unwrap()
+                return Flext.Result[str].ok(str(data))
+            return Flext.Result[str].fail("Cache also unavailable")
+
+        result = try_primary_database().lash(recover_with_cache)
+        if result.is_success:
+            print(f"✅ Recovered with fallback: {result.unwrap()}")
+
+        # Success case - no recovery needed
+        def successful_operation() -> Flext.Result[str]:
+            return Flext.Result[str].ok("Primary success")
+
+        result = successful_operation().lash(recover_with_cache)
+        print(f"Primary success (no recovery): {result.unwrap()}")
+
+    def demonstrate_alt(self) -> None:
+        """Show fallback pattern for service resolution."""
+        print("\n=== alt(): Service Resolution Fallback ===")
+
+        # Try primary service, use fallback if fails
+        primary = self.container.get("non_existent_service")
+        fallback = Flext.Result[object].ok(CacheService())
+
+        result = primary.alt(fallback)
+        if result.is_success:
+            service = result.unwrap()
+            print(f"✅ Got fallback service: {type(service).__name__}")
+
+        # Chain multiple fallbacks
+        first = self.container.get("service1")
+        second = self.container.get("service2")
+        third = Flext.Result[object].ok(EmailService())
+
+        result = first.alt(second).alt(third)
+        if result.is_success:
+            service = result.unwrap()
+            print(f"Fallback chain: {type(service).__name__}")
+
+    def demonstrate_value_or_call(self) -> None:
+        """Show lazy default evaluation for expensive service creation."""
+        print("\n=== value_or_call(): Lazy Service Creation ===")
+
+        expensive_created = False
+
+        def expensive_service_creation() -> EmailService:
+            """Expensive service initialization."""
+            nonlocal expensive_created
+            expensive_created = True
+            print("  Creating expensive EmailService...")
+            return EmailService("expensive-smtp.example.com")
+
+        # Success case - expensive creation NOT called
+        success = self.container.get("database")
+        if success.is_success:
+            service = success.value_or_call(expensive_service_creation)
+            print(
+                f"✅ Success: {type(service).__name__}, expensive_created={expensive_created}"
+            )
+
+        # Failure case - expensive creation IS called
+        expensive_created = False
+        failure = self.container.get("non_existent_service")
+        service = failure.value_or_call(expensive_service_creation)
+        print(
+            f"Fallback: {type(service).__name__}, expensive_created={expensive_created}"
+        )
 
     # ========== DEPRECATED PATTERNS ==========
 
@@ -988,23 +1197,45 @@ def demonstrate_flext_di_access() -> None:
 
 def main() -> None:
     """Main entry point demonstrating all FlextContainer capabilities."""
-    ComprehensiveDIService()
+    service = ComprehensiveDIService()
 
     print("=" * 60)
     print("FLEXTCONTAINER COMPLETE API DEMONSTRATION")
     print("Foundation for Dependency Injection in FLEXT Ecosystem")
     print("=" * 60)
 
-    # Core patterns demonstrated above
-    # - Basic registration and resolution shown
-    # - Batch operations demonstrated
-    # - Type safety and error handling covered
+    # Core DI patterns
+    service.demonstrate_basic_registration()
+    service.demonstrate_service_resolution()
+    service.demonstrate_batch_operations()
+
+    # Advanced patterns
+    service.demonstrate_auto_wiring()
+    service.demonstrate_configuration()
+    service.demonstrate_service_lifecycle()
+
+    # Global container
+    service.demonstrate_global_container()
+    service.demonstrate_error_handling()
+
+    # New FlextResult methods (v0.9.9+)
+    service.demonstrate_from_callable()
+    service.demonstrate_flow_through()
+    service.demonstrate_lash()
+    service.demonstrate_alt()
+    service.demonstrate_value_or_call()
+
+    # Deprecation warnings
+    service.demonstrate_deprecated_patterns()
 
     # Modern Flext pattern demonstration
     demonstrate_flext_di_access()
 
     print("\n" + "=" * 60)
     print("✅ FlextContainer dependency injection demonstration complete!")
+    print(
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+    )
     print("🎯 Next: See 03_models_basics.py for FlextModels patterns")
     print("=" * 60)
 
