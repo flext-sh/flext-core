@@ -17,6 +17,7 @@ Used by: config, container, loggings, dispatcher and any lower-layer module
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from collections.abc import Callable, Sequence
@@ -237,8 +238,6 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
-            import json
-
             json.loads(value)
             return True
         except (json.JSONDecodeError, ValueError):
@@ -312,7 +311,7 @@ class FlextRuntime:
         # Strategy 1: Check for model_dump method (Pydantic)
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
             try:
-                result = obj.model_dump()
+                result = obj.model_dump()  # type: ignore[attr-defined]
                 if isinstance(result, dict):
                     return result
             except Exception as e:
@@ -326,7 +325,7 @@ class FlextRuntime:
         # Strategy 2: Check for dict method
         if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
             try:
-                result = obj.dict()
+                result = obj.dict()  # type: ignore[attr-defined]
                 if isinstance(result, dict):
                     return result
             except Exception as e:

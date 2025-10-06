@@ -742,7 +742,7 @@ class FlextMixins:
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
                 if log_result:
-                    log_data = {
+                    log_data: FlextTypes.Dict = {
                         "operation": operation_name,
                         "duration_ms": round(duration_ms, 2),
                     }
@@ -1304,8 +1304,8 @@ class FlextMixins:
 
     def register(self, name: str, mixin: type) -> FlextResult[None]:
         """Register a mixin."""
-        if not name or mixin is None:
-            return FlextResult[None].fail("Invalid mixin name or mixin object")
+        if not name:
+            return FlextResult[None].fail("Invalid mixin name")
         try:
             self._registry[name] = mixin
             return FlextResult[None].ok(None)
@@ -1654,7 +1654,7 @@ class FlextMixins:
 
     def get_mixins(self) -> set[object]:
         """Get all registered mixins."""
-        return {mixin for mixin in self._registry.values() if isinstance(mixin, type)}
+        return set(self._registry.values())
 
     def clear_mixins(self) -> None:
         """Clear all mixins."""
@@ -1676,8 +1676,7 @@ class FlextMixins:
                 mixin_name,
                 {"applications": 0, "successes": 0, "errors": 0, "timeouts": 0},
             )
-            if isinstance(mixin_stats, dict):
-                stats[mixin_name] = mixin_stats
+            stats[mixin_name] = mixin_stats
 
         return stats
 
