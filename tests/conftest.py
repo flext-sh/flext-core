@@ -29,6 +29,20 @@ from flext_core import (
 
 
 # Core Fixtures
+@pytest.fixture(autouse=True)
+def reset_container_singleton() -> Generator[None]:
+    """Reset FlextContainer singleton between tests for isolation.
+
+    This autouse fixture ensures that every test starts with a clean
+    FlextContainer singleton state, preventing test contamination.
+    """
+    # Clear singleton before test
+    FlextContainer._global_instance = None
+    yield
+    # Clear singleton after test
+    FlextContainer._global_instance = None
+
+
 @pytest.fixture
 def test_scenario() -> FlextTypes.Config.Environment:
     """Basic test scenario fixture.
@@ -51,10 +65,14 @@ def clean_container() -> Generator[FlextContainer]:
       FlextContainer instance with proper cleanup
 
     """
+    # Clear any existing singleton state before test
+    FlextContainer._global_instance = None
     container = FlextContainer()
+    container.clear()  # Ensure it starts clean
     yield container
-    # Cleanup: Clear the container after test
+    # Cleanup: Clear the container and reset singleton after test
     container.clear()
+    FlextContainer._global_instance = None
 
 
 @pytest.fixture

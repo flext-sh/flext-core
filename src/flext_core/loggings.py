@@ -3,28 +3,21 @@
 The module provides a thin wrapper around structlog with FLEXT-specific
 context management and configuration.
 
+Dependency Layer: 2 (Foundation Logging)
+Dependencies: structlog, result, typings
+Used by: All Flext modules requiring logging
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-import uuid
-from typing import TYPE_CHECKING
-
-import structlog
-import structlog.contextvars
-
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
-if TYPE_CHECKING:
-    from flext_core.config import FlextConfig
-
-# =============================================================================
-# STRUCTLOG CONFIGURATION
-# =============================================================================
-
+structlog = FlextRuntime.structlog()
 
 # =============================================================================
 # FLEXT LOGGER - THIN WRAPPER AROUND STRUCTLOG
@@ -34,51 +27,57 @@ if TYPE_CHECKING:
 class FlextLogger:
     """Thin wrapper around structlog with FLEXT-specific context management.
 
+    **Function**: Structured logging with context management
+        - Direct structlog integration with hardcoded defaults
+        - Provides FlextResult-wrapped logging methods
+        - Supports context binding and distributed tracing
+        - Clean Layer 2 dependency (no config imports)
+
+    **Uses**: Foundation layer components only
+        - structlog for structured logging
+        - FlextResult for railway pattern error handling
+        - FlextTypes for type definitions
+        - Python stdlib uuid for trace ID generation
+
     This class provides a minimal interface that leverages structlog's
     built-in capabilities for context management, configuration, and logging.
     """
 
     # =========================================================================
-    # PRIVATE MEMBERS - Configuration cache and structlog setup
+    # PRIVATE MEMBERS - Structlog configuration
     # =========================================================================
 
-    _config_cache: FlextConfig | None = None
+    _structlog_configured: bool = False
 
     @staticmethod
-    def _get_config() -> FlextConfig:
-        """Lazy load configuration to avoid import cycles."""
-        if FlextLogger._config_cache is None:
-            # Lazy import to break circular dependency
-            from flext_core.config import FlextConfig
+    def _configure_structlog_if_needed(
+        log_level: int | None = None,
+        *,
+        console_enabled: bool = True,
+    ) -> None:
+        """Configure structlog with provided settings.
 
-            # Store in class cache
-            FlextLogger._config_cache = FlextConfig()
-        return FlextLogger._config_cache
+        Args:
+            log_level: Logging level (e.g., logging.INFO, logging.DEBUG)
+            console_enabled: Use console renderer vs JSON renderer
 
-    @staticmethod
-    def _configure_structlog() -> None:
-        """Configure structlog with FLEXT-specific processors and settings."""
-        if structlog.is_configured():
+        Note:
+            Can be called with FlextConfig values to configure logging:
+            >>> from flext_core import FlextConfig
+            >>> config = FlextConfig()
+            >>> log_level_int = getattr(logging, config.log_level.upper())
+            >>> FlextLogger._configure_structlog_if_needed(log_level=log_level_int)
+
+        """
+        if FlextLogger._structlog_configured:
             return
 
-        # Get FLEXT configuration
-        config = FlextLogger._get_config()
-
-        # Configure structlog with FLEXT processors
-        structlog.configure(
-            processors=[
-                structlog.contextvars.merge_contextvars,  # Merge context variables
-                structlog.processors.add_log_level,  # Add log level
-                structlog.processors.TimeStamper(fmt="ISO"),  # Add timestamp
-                structlog.processors.StackInfoRenderer(),  # Add stack info
-                structlog.dev.ConsoleRenderer(colors=True)
-                if config.console_enabled
-                else structlog.processors.JSONRenderer(),  # JSON or console output
-            ],
-            wrapper_class=structlog.make_filtering_bound_logger(config.log_level),
-            logger_factory=structlog.PrintLoggerFactory(),
-            cache_logger_on_first_use=True,
+        FlextRuntime.configure_structlog(
+            log_level=log_level,
+            console_renderer=console_enabled,
         )
+
+        FlextLogger._structlog_configured = True
 
     def __init__(
         self,
@@ -94,23 +93,20 @@ class FlextLogger:
 
         Args:
             name: Logger name (typically __name__ or module path)
-            _level: Optional log level override
+            _level: Optional log level override (currently unused, for future)
             _service_name: Optional service name override
             _service_version: Optional service version override
             _correlation_id: Optional correlation ID override
             _force_new: Force creation of new instance (for testing)
 
         """
-        # Configure structlog if not already configured
-        FlextLogger._configure_structlog()
+        # Configure structlog if not already configured (NO config dependency)
+        FlextLogger._configure_structlog_if_needed()
 
         # Store logger name for later use
         self._name = name
 
-        # Create bound logger with initial context
-        self._logger = structlog.get_logger(name)
-
-        # Bind initial context if provided
+        # Build initial context
         context = {}
         if _service_name:
             context["service_name"] = _service_name
@@ -119,8 +115,8 @@ class FlextLogger:
         if _correlation_id:
             context["correlation_id"] = _correlation_id
 
-        if context:
-            self._logger = self._logger.bind(**context)
+        # Create bound logger with initial context
+        self._logger = structlog.get_logger(name).bind(**context)
 
     @property
     def name(self) -> str:
@@ -131,8 +127,8 @@ class FlextLogger:
         """Bind additional context to the logger."""
         # Create new instance with bound logger
         new_logger = FlextLogger.__new__(FlextLogger)
-        new_logger._name = self._name  # noqa: SLF001 - internal reassignment
-        new_logger._logger = self._logger.bind(**context)  # noqa: SLF001 - internal reassignment
+        new_logger._name = self._name  # noqa: SLF001
+        new_logger._logger = self._logger.bind(**context)  # noqa: SLF001
         return new_logger
 
     # =============================================================================
@@ -233,45 +229,6 @@ class FlextLogger:
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
-
-    # =============================================================================
-    # UTILITY METHODS
-    # =============================================================================
-
-    def get_logger_attributes(self) -> FlextTypes.Dict:
-        """Get logger attributes for debugging."""
-        return {
-            "name": self._name,
-            "context": dict(structlog.contextvars.get_contextvars()),
-        }
-
-    def start_trace(self, operation_name: str, **context: object) -> str:
-        """Start a distributed trace."""
-        trace_id = str(uuid.uuid4())[:8]
-        result = self.debug(
-            f"TRACE_START: {operation_name}",
-            trace_id=trace_id,
-            operation=operation_name,
-            **context,
-        )
-        # Note: trace_id returned even if logging fails
-        if result.is_failure:
-            # Could log to stderr or raise, depending on requirements
-            pass
-        return trace_id
-
-    def end_trace(self, trace_id: str, operation_name: str, **context: object) -> None:
-        """End a distributed trace."""
-        result = self.debug(
-            f"TRACE_END: {operation_name}",
-            trace_id=trace_id,
-            operation=operation_name,
-            **context,
-        )
-        # Note: failures are silently ignored
-        if result.is_failure:
-            # Could log to stderr or raise, depending on requirements
-            pass
 
 
 # MODULE EXPORTS

@@ -194,7 +194,7 @@ class FlextProtocols:
                 ...
 
         @runtime_checkable
-        class Validator(Protocol, Generic[FlextTypes.T_contra]):
+        class Validator(Protocol, Generic[T_contra]):  # type: ignore[valid-type]
             """Generic validator protocol reused by modernization guardrails."""
 
             def validate(self, data: T_contra) -> object:
@@ -292,7 +292,7 @@ class FlextProtocols:
         # Domain protocols providing service and repository patterns
 
         @runtime_checkable
-        class Service(Protocol, Generic[FlextTypes.T]):
+        class Service(Protocol, Generic[T]):
             """Domain service contract aligned with FlextService implementation."""
 
             @abstractmethod
@@ -356,7 +356,7 @@ class FlextProtocols:
                 ...
 
         @runtime_checkable
-        class Repository(Protocol, Generic[FlextTypes.T_contra]):
+        class Repository(Protocol, Generic[T_contra]):
             """Repository protocol shaping modernization data access patterns."""
 
             @abstractmethod
@@ -387,7 +387,7 @@ class FlextProtocols:
         """Application layer protocols - use cases and handlers."""
 
         @runtime_checkable
-        class Handler(Protocol, Generic[FlextTypes.TInput_contra, FlextTypes.TResult]):
+        class Handler(Protocol, Generic[TInput_contra, TResult]):
             """Application handler protocol aligned with FlextHandlers implementation."""
 
             @abstractmethod

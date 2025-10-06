@@ -1129,42 +1129,42 @@ def demonstrate_flextcore_11_features() -> None:
 
     # Execute within request context
     # with core.request_context(request_id="complete-req-001") as ctx:
-        # request_id = ctx.get("request_id")
+    # request_id = ctx.get("request_id")
 
-        # # Process order through pipeline
-        # order_input: dict[str, object] = {
-        #     "customer_id": "CUST-001",
-        #     "order_id": "ORD-001",
-        #     "amount": 250.00,
-        # }
+    # # Process order through pipeline
+    # order_input: dict[str, object] = {
+    #     "customer_id": "CUST-001",
+    #     "order_id": "ORD-001",
+    #     "amount": 250.00,
+    # }
 
-        # workflow_result = workflow(order_input)
+    # workflow_result = workflow(order_input)
 
-        # if workflow_result.is_success:
-        #     completed_order = cast("Flext.Types.Dict", workflow_result.unwrap())
+    # if workflow_result.is_success:
+    #     completed_order = cast("Flext.Types.Dict", workflow_result.unwrap())
 
-        #     # Publish success event with request correlation
-        #     core.publish_event(
-        #         "order.workflow.completed",
-        #         {
-        #             "order_id": completed_order["order_id"],
-        #             "customer_id": completed_order["customer_id"],
-        #             "steps_completed": 3,
-        #         },
-        #         correlation_id=request_id,
-        #     )
+    #     # Publish success event with request correlation
+    #     core.publish_event(
+    #         "order.workflow.completed",
+    #         {
+    #             "order_id": completed_order["order_id"],
+    #             "customer_id": completed_order["customer_id"],
+    #             "steps_completed": 3,
+    #         },
+    #         correlation_id=request_id,
+    #     )
 
-        #     print("  ✅ Complete workflow executed successfully")
-        #     print(
-        #         f"     - Customer validated: {completed_order.get('customer_validated')}"
-        #     )
-        #     print(
-        #         f"     - Inventory reserved: {completed_order.get('inventory_reserved')}"
-        #     )
-        #     print(
-        #         f"     - Payment processed: {completed_order.get('payment_processed')}"
-        #     )
-        #     print(f"     - Event published with correlation: {request_id}")
+    #     print("  ✅ Complete workflow executed successfully")
+    #     print(
+    #         f"     - Customer validated: {completed_order.get('customer_validated')}"
+    #     )
+    #     print(
+    #         f"     - Inventory reserved: {completed_order.get('inventory_reserved')}"
+    #     )
+    #     print(
+    #         f"     - Payment processed: {completed_order.get('payment_processed')}"
+    #     )
+    #     print(f"     - Event published with correlation: {request_id}")
 
     print("\n" + "=" * 60)
     print("✅ FLEXTCORE 1.1.0 CONVENIENCE METHODS DEMONSTRATED!")

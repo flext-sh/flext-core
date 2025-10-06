@@ -454,12 +454,11 @@ class TestFlextConfig:
     def test_config_validate_log_level_invalid(self) -> None:
         """Test log level validation with invalid level (line 597-601)."""
         import pytest
-        from pydantic import ValidationError
 
-        from flext_core import FlextConfig
+        from flext_core import FlextConfig, FlextExceptions
 
-        # Test with invalid log level - Pydantic raises ValidationError
-        with pytest.raises(ValidationError) as exc_info:
+        # Test with invalid log level - raises FlextExceptions.ValidationError
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextConfig(log_level="INVALID")
 
         assert "Invalid log level" in str(exc_info.value)
@@ -467,12 +466,11 @@ class TestFlextConfig:
     def test_config_validate_debug_trace_production_error(self) -> None:
         """Test debug cannot be enabled in production (line 608-613)."""
         import pytest
-        from pydantic import ValidationError
 
-        from flext_core import FlextConfig
+        from flext_core import FlextConfig, FlextExceptions
 
-        # Test production with debug=True should fail - Pydantic raises ValidationError
-        with pytest.raises(ValidationError) as exc_info:
+        # Test production with debug=True should fail - raises FlextExceptions.ValidationError
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextConfig(environment="PRODUCTION", debug=True)
 
         assert "Debug mode cannot be enabled in production" in str(exc_info.value)
@@ -480,12 +478,11 @@ class TestFlextConfig:
     def test_config_validate_trace_requires_debug(self) -> None:
         """Test trace requires debug to be enabled (line 616-620)."""
         import pytest
-        from pydantic import ValidationError
 
-        from flext_core import FlextConfig
+        from flext_core import FlextConfig, FlextExceptions
 
-        # Test trace=True with debug=False should fail - Pydantic raises ValidationError
-        with pytest.raises(ValidationError) as exc_info:
+        # Test trace=True with debug=False should fail - raises FlextExceptions.ValidationError
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextConfig(trace=True, debug=False)
 
         assert "Trace mode requires debug mode" in str(exc_info.value)

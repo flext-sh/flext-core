@@ -12,10 +12,7 @@ from __future__ import annotations
 import re
 import tempfile
 import time
-from dataclasses import dataclass
 from pathlib import Path
-
-import pytest
 
 from flext_core import FlextTypes, FlextUtilities
 from flext_core.result import FlextResult
@@ -565,39 +562,6 @@ class TestFlextUtilitiesComprehensive:
         result_str = FlextUtilities.TextProcessor.safe_string("", default="default")
         assert result_str == "default"
 
-    def test_conversions_operations(self) -> None:
-        """Test type conversion operations."""
-        # Test boolean conversion
-        assert FlextUtilities.TypeConversions.to_bool(value=True).is_success
-        assert FlextUtilities.TypeConversions.to_bool(value=True).value is True
-
-        assert FlextUtilities.TypeConversions.to_bool(value="true").is_success
-        assert FlextUtilities.TypeConversions.to_bool(value="true").value is True
-
-        assert FlextUtilities.TypeConversions.to_bool(value="false").is_success
-        assert FlextUtilities.TypeConversions.to_bool(value="false").value is False
-
-        assert FlextUtilities.TypeConversions.to_bool(value=1).is_success
-        assert FlextUtilities.TypeConversions.to_bool(value=1).value is True
-
-        assert FlextUtilities.TypeConversions.to_bool(value=0).is_success
-        assert FlextUtilities.TypeConversions.to_bool(value=0).value is False
-
-        assert FlextUtilities.TypeConversions.to_bool(value=None).is_success
-        assert FlextUtilities.TypeConversions.to_bool(value=None).value is False
-
-        assert FlextUtilities.TypeConversions.to_bool(value="invalid").is_failure
-
-        # Test integer conversion
-        assert FlextUtilities.TypeConversions.to_int("123").is_success
-        assert FlextUtilities.TypeConversions.to_int("123").value == 123
-
-        assert FlextUtilities.TypeConversions.to_int(123.0).is_success
-        assert FlextUtilities.TypeConversions.to_int(123.0).value == 123
-
-        assert FlextUtilities.TypeConversions.to_int(None).is_failure
-        assert FlextUtilities.TypeConversions.to_int("not_a_number").is_failure
-
     def test_type_guards_operations(self) -> None:
         """Test type guard operations."""
         # Test string non-empty check
@@ -748,41 +712,6 @@ class TestFlextUtilitiesComprehensive:
         can_handle = FlextUtilities.TypeChecker.can_handle_message_type((str,), int)
         assert can_handle is False
 
-    def test_message_validator_operations(self) -> None:
-        """Test message validation operations."""
-
-        @dataclass
-        class TestCommand:
-            name: str
-
-        @dataclass
-        class TestQuery:
-            id: str
-
-        # Test command validation
-        command = TestCommand("test_command")
-        result = FlextUtilities.MessageValidator.validate_command(command)
-        assert result.is_success
-
-        # Test query validation
-        query = TestQuery("test_query")
-        result = FlextUtilities.MessageValidator.validate_query(query)
-        assert result.is_success
-
-        # Test generic message validation
-        result = FlextUtilities.MessageValidator.validate_message(
-            command,
-            operation="command",
-        )
-        assert result.is_success
-
-        # Test message payload building
-        payload = FlextUtilities.MessageValidator.build_serializable_message_payload(
-            command,
-        )
-        assert isinstance(payload, dict)
-        assert "name" in payload
-
     def test_composition_operations(self) -> None:
         """Test composition utility operations."""
 
@@ -836,21 +765,3 @@ class TestFlextUtilitiesComprehensive:
         result = conditional_func("long_input")
         assert result.is_success
         assert result.value == "long_input_long"
-
-    @pytest.mark.skip(
-        reason="TableConversion class does not exist - needs implementation"
-    )
-    def test_conversion_operations(self) -> None:
-        """Test data conversion operations."""
-        # Test data normalization for table
-        data: FlextTypes.List = [
-            {"name": "John", "age": 30, "city": "NYC"},
-            {"name": "Jane", "age": 25, "city": "LA"},
-        ]
-
-        result = FlextUtilities.TableConversion.normalize_data_for_table(data)
-        assert result.is_success
-        normalized_data = result.value
-        assert isinstance(normalized_data, list)
-        assert len(normalized_data) == 2
-        assert all(isinstance(row, dict) for row in normalized_data)

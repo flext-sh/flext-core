@@ -1,10 +1,14 @@
 """Configuration subsystem delivering the FLEXT 1.0.0 alignment pillar.
 
-**Implementation (v1.1.0+)**: dependency-injector integration
-    - Bidirectional sync between Pydantic BaseSettings and DI Configuration
+Bidirectional sync between Pydantic BaseSettings and DI Configuration:
     - FlextConfig values injectable through DI container
     - Configuration provider for dependency injection
     - Maintains Pydantic validation while enabling DI patterns
+    - Clean Layer 2 dependency
+
+Dependency Layer: 2 (Foundation Configuration)
+Dependencies: dependency_injector, constants, exceptions, result, typings
+Used by: All Flext modules requiring configuration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,16 +21,18 @@ import json
 import threading
 import uuid
 from pathlib import Path
-from typing import ClassVar, Self, cast
+from typing import Any, ClassVar, Self, cast
 
-from dependency_injector import providers
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+providers = FlextRuntime.dependency_providers()
 
 
 class FlextConfig(
@@ -861,19 +867,19 @@ class FlextConfig(
     # and automatically syncs with the Pydantic settings instance
 
     # Dependency Injection integration (v1.1.0+)
-    _di_config_provider: ClassVar[providers.Configuration | None] = None
+    _di_config_provider: ClassVar[Any | None] = None  # providers.Configuration
     _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
 
     # Singleton pattern implementation - per-class singletons
     _instance_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    def __new__(cls, *args: object, **kwargs: object) -> Self:
+    def __new__(cls, **_data: object) -> Self:
         """Create new FlextConfig instance.
 
         Normal Pydantic instantiation - each call creates a new instance.
         Use get_global_instance() for singleton behavior.
         """
-        return super().__new__(cls, *args, **kwargs)
+        return super().__new__(cls)
 
     @classmethod
     def get_global_instance(cls) -> Self:
@@ -921,14 +927,14 @@ class FlextConfig(
             cls._instances.pop(cls, None)
 
     @classmethod
-    def _get_or_create_di_provider(cls) -> providers.Configuration:
+    def _get_or_create_di_provider(cls) -> Any:  # providers.Configuration
         """Get or create the dependency-injector Configuration provider.
 
         Creates a Configuration provider linked to Pydantic settings as described in:
         https://python-dependency-injector.ets-labs.org/providers/configuration.html
 
         Returns:
-            providers.Configuration: The DI Configuration provider instance.
+            Any: The DI Configuration provider instance (providers.Configuration)
 
         """
         if cls._di_config_provider is None:
@@ -964,14 +970,14 @@ class FlextConfig(
         di_provider.set_pydantic_settings([config_instance])
 
     @classmethod
-    def get_di_config_provider(cls) -> providers.Configuration:
+    def get_di_config_provider(cls) -> Any:  # providers.Configuration
         """Get the dependency-injector Configuration provider for FlextConfig.
 
         This provider can be used in FlextContainer to make configuration
         values injectable through dependency injection.
 
         Returns:
-            providers.Configuration: Configuration provider for DI container.
+            Any: Configuration provider for DI container (providers.Configuration)
 
         Example:
             >>> config_provider = FlextConfig.get_di_config_provider()

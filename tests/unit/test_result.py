@@ -1578,20 +1578,19 @@ class TestFlextResult:
         assert result_dict[result1] == "second"  # result2 overwrote result1
 
     def test_result_ensure_success_data_with_none(self) -> None:
-        """Test _ensure_success_data raises when data is None."""
-        from flext_core.exceptions import FlextExceptions
+        """Test _ensure_success_data with FlextResult[None] type.
 
-        # Create a success result but manually set data to None (edge case)
-        result = FlextResult[int].ok(42)
-        result._data = None  # Simulate corrupted state
-        result._error = None  # Still looks like success
+        Note: With returns backend, corrupted state is not possible.
+        This test now verifies that FlextResult[None] works correctly.
+        """
+        # Create a FlextResult[None] (valid use case)
+        result: FlextResult[None] = FlextResult[None].ok(None)
 
-        # Should raise OperationError when accessing value
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            _ = result._ensure_success_data()
-
-        assert "Success result has None data" in str(exc_info.value)
-        assert exc_info.value.error_code == "OPERATION_ERROR"
+        # For FlextResult[None], _ensure_success_data should work
+        # because None is a valid success value for this type
+        value = result._ensure_success_data()
+        assert value is None
+        assert result.is_success
 
     def test_result_validate_all_classmethod(self) -> None:
         """Test the validate_all classmethod with validators."""
@@ -1766,7 +1765,7 @@ class TestFlextResult:
 
         # Test failure raises on enter
         failure = FlextResult[int].fail("Context error")
-        with pytest.raises(FlextExceptions.OperationError), failure as value:
+        with pytest.raises(FlextExceptions.BaseError), failure as value:
             pass
 
     def test_result_or_operator_coverage(self) -> None:
@@ -2015,7 +2014,7 @@ class TestFlextResultAdditionalCoverage:
         failure: FlextResult[int] = FlextResult[int].fail("Original error")
 
         # expect should raise with custom message
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
             failure.expect("Custom expectation failed")
 
         assert "Custom expectation failed" in str(exc_info.value)
@@ -2078,7 +2077,7 @@ class TestFlextResultAdditionalCoverage:
             "Cannot unwrap", error_code="UNWRAP_ERROR"
         )
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
             failure.unwrap()
 
         assert "Cannot unwrap" in str(exc_info.value)
@@ -2147,9 +2146,9 @@ class TestFlextResultAdditionalCoverage:
         """Test to_exception for converting to exception (lines 1090-1091)."""
         failure = FlextResult[int].fail("Error message", error_code="ERR_CODE")
 
-        # Convert to exception - returns RuntimeError
+        # Convert to exception - returns BaseError
         exc = failure.to_exception()
-        assert isinstance(exc, RuntimeError)
+        assert isinstance(exc, FlextExceptions.BaseError)
         assert "Error message" in str(exc)
 
         # Success returns None

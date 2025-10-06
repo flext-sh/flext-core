@@ -92,6 +92,7 @@ from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
@@ -113,6 +114,7 @@ __all__ = [
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
+    "FlextRuntime",
     "FlextService",
     "FlextTypes",
     "FlextUtilities",

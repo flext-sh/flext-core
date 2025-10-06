@@ -44,8 +44,6 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T, U
 
-_config = FlextConfig()
-
 
 class FlextUtilities:
     """Comprehensive utility functions for FLEXT ecosystem operations."""
@@ -823,12 +821,14 @@ class FlextUtilities:
             """Retry operation with exponential backoff using advanced railway pattern."""
             # Use config values if not provided
             retries = (
-                max_retries if max_retries is not None else _config.max_retry_attempts
+                max_retries
+                if max_retries is not None
+                else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
             )
             delay = (
                 delay_seconds
                 if delay_seconds is not None
-                else _config.retry_delay_seconds
+                else FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
             )
 
             # Validate parameters first
@@ -1286,7 +1286,11 @@ class FlextUtilities:
 
             """
             # Use config value if not provided
-            size = batch_size if batch_size is not None else _config.batch_size
+            size = (
+                batch_size
+                if batch_size is not None
+                else FlextConstants.Performance.DEFAULT_BATCH_SIZE
+            )
 
             # Validate batch size
             if size <= FlextConstants.Core.ZERO:
@@ -1949,12 +1953,14 @@ class FlextUtilities:
             """Enhanced retry with exponential backoff using railway patterns."""
             # Use config values if not provided
             retries = (
-                max_retries if max_retries is not None else _config.max_retry_attempts
+                max_retries
+                if max_retries is not None
+                else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
             )
             delay = (
                 initial_delay
                 if initial_delay is not None
-                else _config.retry_delay_seconds
+                else FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
             )
 
             # Simple implementation that tries the operation multiple times
@@ -2827,10 +2833,14 @@ class FlextUtilities:
             """
             # Use config values if not provided
             retries = (
-                max_retries if max_retries is not None else _config.max_retry_attempts
+                max_retries
+                if max_retries is not None
+                else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
             )
             delay = (
-                retry_delay if retry_delay is not None else _config.retry_delay_seconds
+                retry_delay
+                if retry_delay is not None
+                else FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
             )
 
             def retry_composed(value: T) -> FlextResult[T]:

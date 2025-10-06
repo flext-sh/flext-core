@@ -46,28 +46,15 @@ from typing import (
 
 from pydantic import BaseModel
 
-# Layer 3 - Core Infrastructure
-from flext_core.config import FlextConfig
-
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
-
-# Layer 2 - Early Foundation
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
-
-# Layer 5 - Advanced Infrastructure
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# Layer 4 - Service
 from flext_core.utilities import FlextUtilities
-
-# Module-level configuration instance for runtime defaults
-_config = FlextConfig()
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
@@ -1057,7 +1044,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 class GetOrderByIdHandler(FlextHandlers[GetOrderByIdQuery, OrderResult]):
                     def __init__(self, cache_ttl: int | None = None) -> None:
                         # Use config value if not provided
-                        ttl = cache_ttl if cache_ttl is not None else _config.cache_ttl
+                        ttl = cache_ttl if cache_ttl is not None else FlextConstants.Performance.DEFAULT_TTL_SECONDS
                         config = FlextModels.CqrsConfig.Handler(
                             handler_id="get_order_by_id_handler",
                             handler_name="GetOrderByIdHandler",
@@ -1108,8 +1095,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         retry_delay: float | None = None,
                     ) -> None:
                         # Use config values if not provided
-                        retries = max_retries if max_retries is not None else _config.max_retry_attempts
-                        delay = retry_delay if retry_delay is not None else _config.retry_delay_seconds
+                        retries = max_retries if max_retries is not None else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+                        delay = retry_delay if retry_delay is not None else FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
                         config = FlextModels.CqrsConfig.Handler(
                             handler_id="order_created_handler",
                             handler_name="OrderCreatedHandler",
