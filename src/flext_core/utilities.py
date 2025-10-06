@@ -60,6 +60,9 @@ from flext_core.typings import FlextTypes
 if TYPE_CHECKING:
     from flext_core.config import FlextConfig
 
+# Late import to avoid circular dependency (utilities -> config)
+from flext_core.config import FlextConfig as _FlextConfig
+
 
 class FlextUtilities:
     """Comprehensive utility functions for FLEXT ecosystem operations."""
@@ -3660,12 +3663,10 @@ class FlextUtilities:
             ...     container_config = config.get_component_config("container")
 
         Note:
-            This method uses late import to avoid circular dependency.
+            Uses module-level import to access configuration.
 
         """
         try:
-            # Late import to avoid circular dependency (utilities -> config)
-            from flext_core.config import FlextConfig as _FlextConfig
 
             # Create base configuration with enhanced flext-core integration
             config = _FlextConfig()

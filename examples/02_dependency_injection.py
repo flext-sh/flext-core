@@ -639,8 +639,8 @@ class ComprehensiveDIService(Flext.Service[User]):
 
             # Log comprehensive statistics
             service_count = len(
-                set(self.container._services.keys())
-                | set(self.container._factories.keys())
+                set(self.container._services.keys())  # noqa: SLF001
+                | set(self.container._factories.keys())  # noqa: SLF001
             )
             self.logger.info(
                 "Service execution statistics",
@@ -656,7 +656,7 @@ class ComprehensiveDIService(Flext.Service[User]):
     def get_service_stats(self) -> Flext.Types.Dict:
         """Get comprehensive service statistics."""
         service_count = len(
-            set(self.container._services.keys()) | set(self.container._factories.keys())
+            set(self.container._services.keys()) | set(self.container._factories.keys())  # noqa: SLF001
         )
         return {
             "container_service_count": service_count,
@@ -684,7 +684,7 @@ class ComprehensiveDIService(Flext.Service[User]):
         print(f"Has database: {has_db}, Has cache: {has_cache}")
 
         service_count = len(
-            set(self.container._services.keys()) | set(self.container._factories.keys())
+            set(self.container._services.keys()) | set(self.container._factories.keys())  # noqa: SLF001
         )
         print(f"Service count: {service_count}")
 
@@ -836,12 +836,12 @@ class ComprehensiveDIService(Flext.Service[User]):
 
         # Build info manually since get_info() is removed
         service_count = len(
-            set(self.container._services.keys()) | set(self.container._factories.keys())
+            set(self.container._services.keys()) | set(self.container._factories.keys())  # noqa: SLF001
         )
         info = {
             "service_count": service_count,
-            "direct_services": len(self.container._services),
-            "factories": len(self.container._factories),
+            "direct_services": len(self.container._services),  # noqa: SLF001
+            "factories": len(self.container._factories),  # noqa: SLF001
         }
         print(f"Container info: {info}")
 
@@ -946,7 +946,7 @@ class ComprehensiveDIService(Flext.Service[User]):
         cache_result = Flext.Result.from_callable(safe_cache_init)
         if cache_result.is_success:
             cache = cache_result.unwrap()
-            print(f"✅ Cache initialized: max_size={cache._max_size}")
+            print(f"✅ Cache initialized: max_size={cache._max_size}")  # noqa: SLF001
 
     def demonstrate_flow_through(self) -> None:
         """Show pipeline composition for service initialization."""
@@ -968,7 +968,7 @@ class ComprehensiveDIService(Flext.Service[User]):
 
         def validate_database(db: DatabaseService) -> Flext.Result[DatabaseService]:
             """Validate database is ready."""
-            if not db._connected:
+            if not db._connected:  # noqa: SLF001
                 return Flext.Result[DatabaseService].fail("Database not connected")
             return Flext.Result[DatabaseService].ok(db)
 
@@ -984,7 +984,7 @@ class ComprehensiveDIService(Flext.Service[User]):
 
         if result.is_success:
             db = result.unwrap()
-            print(f"✅ Service pipeline success: connected={db._connected}")
+            print(f"✅ Service pipeline success: connected={db._connected}")  # noqa: SLF001
         else:
             print(f"Pipeline failure: {result.error}")
 

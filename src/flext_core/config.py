@@ -268,11 +268,16 @@ class FlextConfig(BaseSettings):
 
                 # Try dict access
                 if isinstance(handler_config, dict):
-                    config_mode_dict: object = handler_config.get("handler_type")
-                    if isinstance(config_mode_dict, str) and config_mode_dict in {
-                        "command",
-                        "query",
-                    }:
+                    config_mode_dict = handler_config.get("handler_type")
+                    if (
+                        config_mode_dict is not None
+                        and isinstance(config_mode_dict, str)
+                        and config_mode_dict
+                        in {
+                            "command",
+                            "query",
+                        }
+                    ):
                         return config_mode_dict
 
             # Default to command

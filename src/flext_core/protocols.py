@@ -30,6 +30,7 @@ TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from flext_core.models import FlextModels
     from flext_core.result import FlextResult
 
 

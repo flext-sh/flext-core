@@ -2057,7 +2057,7 @@ class FlextMixins:
             """Get FlextConfig global instance with lazy initialization."""
             if (
                 not hasattr(FlextMixins.Configurable, "_config_instance")
-                or FlextMixins.Configurable._config_instance is None
+                or FlextMixins.Configurable._config_instance is None  # noqa: SLF001
             ):  # type: ignore[attr-defined]
                 FlextMixins.Configurable._config_instance = (  # type: ignore[attr-defined]  # noqa: SLF001
                     FlextConfig.get_global_instance()

@@ -60,6 +60,7 @@ class _ContextVarToken[T_co]:
             old_value: Previous value before update (None if unset)
 
         """
+        super().__init__()
         self._key = key
         self._old_value = old_value
 
@@ -109,6 +110,7 @@ class _StructlogContextVar[T_co]:
             default: Default value when not set
 
         """
+        super().__init__()
         self._name = name
         self._default = default
 
@@ -329,6 +331,7 @@ class FlextContext:
                 old_value: Previous value before update (None if unset)
 
             """
+            super().__init__()
             self._key = key
             self._old_value = old_value
 
@@ -377,6 +380,7 @@ class FlextContext:
                 default: Default value when not set
 
             """
+            super().__init__()
             self._name = name
             self._default = default
 
@@ -514,7 +518,7 @@ class FlextContext:
 
             operations = self._statistics.get("operations", {})
             if isinstance(operations, dict) and "set" in operations:
-                set_count: object = operations["set"]
+                set_count: int = operations["set"]
                 if isinstance(set_count, int):
                     operations["set"] = set_count + 1
 
@@ -547,7 +551,7 @@ class FlextContext:
 
             operations = self._statistics.get("operations", {})
             if isinstance(operations, dict) and "get" in operations:
-                get_count: object = operations["get"]
+                get_count: int = operations["get"]
                 if isinstance(get_count, int):
                     operations["get"] = get_count + 1
             return scope_data.get(key, default)
@@ -590,7 +594,7 @@ class FlextContext:
                     self._statistics["removes"] = removes_count + 1
 
                 operations = self._statistics.get("operations", {})
-                remove_count: object = (
+                remove_count: int = (
                     operations.get("remove", 0)
                     if isinstance(operations, dict) and "remove" in operations
                     else 0
@@ -613,7 +617,7 @@ class FlextContext:
 
             operations = self._statistics.get("operations", {})
             if isinstance(operations, dict) and "clear" in operations:
-                clear_count: object = operations["clear"]
+                clear_count: int = operations["clear"]
                 if isinstance(clear_count, int):
                     operations["clear"] = clear_count + 1
 
@@ -758,7 +762,7 @@ class FlextContext:
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
             data_values = data.values()
-            if all(isinstance(cast("Any", v), dict) for v in data_values):
+            if all(isinstance(v, dict) for v in data_values):
                 # New scoped format
                 context._scopes = data
             else:

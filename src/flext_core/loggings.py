@@ -285,7 +285,7 @@ class FlextLogger:
         """Bind additional context to the logger."""
         # Create new instance with bound logger
         new_logger = FlextLogger.__new__(FlextLogger)
-        new_logger._name = self._name
+        new_logger._name = self.name  # noqa: SLF001
         new_logger.logger = self.logger.bind(**context)
         return new_logger
 
