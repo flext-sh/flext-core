@@ -12,19 +12,24 @@ from typing import (
     TYPE_CHECKING,
     Generic,
     Protocol,
+    TypeVar,
     overload,
     runtime_checkable,
 )
 
-from flext_core.typings import (
-    FlextTypes,
-    T,
-    T_contra,
-    TInput_contra,
-    TResult,
-)
+from flext_core.typings import FlextTypes
+
+# Local TypeVars for protocol definitions (avoiding import of instance TypeVars)
+T_ResultProtocol = TypeVar("T_ResultProtocol")  # Invariant (used in parameters)
+T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True)
+T_Service_co = TypeVar("T_Service_co", covariant=True)
+T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
+TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
+TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from flext_core.models import FlextModels
     from flext_core.result import FlextResult
 
@@ -194,10 +199,10 @@ class FlextProtocols:
                 ...
 
         @runtime_checkable
-        class Validator(Protocol, Generic[T_contra]):  # type: ignore[valid-type]
+        class Validator(Protocol, Generic[T_Validator_contra]):
             """Generic validator protocol reused by modernization guardrails."""
 
-            def validate(self, data: T_contra) -> object:
+            def validate(self, data: T_Validator_contra) -> object:
                 """Validate input data according to the shared release policy."""
                 ...
 
@@ -282,6 +287,336 @@ class FlextProtocols:
                 """Validate command and return FlextResult."""
                 ...
 
+        @runtime_checkable
+        class Injectable(Protocol):
+            """Protocol for DI-injectable components with logger access.
+
+            Components implementing this protocol can receive logger instances
+            through dependency injection from FlextContainer.
+            """
+
+            @property
+            def logger(self) -> object:
+                """Get logger instance from DI container.
+
+                Returns:
+                    Logger instance injected via FlextContainer
+
+                """
+                ...
+
+        @runtime_checkable
+        class ContextAware(Protocol):
+            """Protocol for context-aware components using structlog.
+
+            Components implementing this protocol can manage execution context
+            using structlog's contextvars for automatic context propagation.
+            """
+
+            def get_current_context(self) -> FlextTypes.Dict:
+                """Get current structlog context.
+
+                Returns:
+                    Dictionary of current context variables
+
+                """
+                ...
+
+            def bind_context(self, **context_data: object) -> None:
+                """Bind context data to current context.
+
+                Args:
+                    **context_data: Context key-value pairs to bind
+
+                """
+                ...
+
+            def clear_context(self) -> None:
+                """Clear all context variables."""
+                ...
+
+        @runtime_checkable
+        class Measurable(Protocol):
+            """Protocol for components with performance measurement capabilities.
+
+            Components implementing this protocol can measure operation timing
+            with automatic logging and structlog integration.
+            """
+
+            def get_timing_stats(self) -> FlextTypes.Dict:
+                """Get timing statistics from structlog context.
+
+                Returns:
+                    Dictionary of timing metrics with _ms suffix keys
+
+                """
+                ...
+
+        @runtime_checkable
+        class Validatable(Protocol):
+            """Protocol for components with returns-based validation.
+
+            Components implementing this protocol can validate data using
+            railway-oriented programming with FlextResult composition.
+            """
+
+            def validate_with_result(
+                self,
+                data: object,
+                validators: list[object] | None = None,
+            ) -> object:
+                """Validate data using returns Result type.
+
+                Args:
+                    data: Data to validate
+                    validators: List of validator functions
+
+                Returns:
+                    FlextResult indicating validation success or failure
+
+                """
+                ...
+
+        @runtime_checkable
+        class ResultProtocol(Protocol, Generic[T_ResultProtocol]):
+            """Protocol for FlextResult-like types (breaks circular imports).
+
+            This protocol defines the interface for result types without importing
+            the concrete FlextResult class, preventing circular dependencies between
+            config, models, utilities, and result modules.
+            """
+
+            @property
+            def is_success(self) -> bool:
+                """Check if result represents success."""
+                ...
+
+            @property
+            def is_failure(self) -> bool:
+                """Check if result represents failure."""
+                ...
+
+            @property
+            def value(self) -> T_ResultProtocol:
+                """Get the success value (may raise if failure)."""
+                ...
+
+            @property
+            def error(self) -> str | None:
+                """Get the error message if failure, None otherwise."""
+                ...
+
+            def unwrap(self) -> T_ResultProtocol:
+                """Extract value, raising exception if failure."""
+                ...
+
+            def unwrap_or(self, default: T_ResultProtocol) -> T_ResultProtocol:
+                """Extract value or return default if failure."""
+                ...
+
+        @runtime_checkable
+        class ConfigProtocol(Protocol):
+            """Protocol for FlextConfig-like types (breaks circular imports).
+
+            This protocol defines the interface for configuration objects without
+            importing the concrete FlextConfig class, preventing circular dependencies
+            between config, utilities, models, and other modules.
+            """
+
+            @property
+            def debug(self) -> bool:
+                """Check if debug mode is enabled."""
+                ...
+
+            @property
+            def log_level(self) -> str:
+                """Get logging level."""
+                ...
+
+            @property
+            def environment(self) -> str:
+                """Get current environment (development, production, etc.)."""
+                ...
+
+            def configure(self, config: FlextTypes.Dict) -> object:
+                """Configure component with provided settings."""
+                ...
+
+            def validate_runtime_requirements(self) -> object:
+                """Validate configuration meets runtime requirements."""
+                ...
+
+            def save_to_file(self, file_path: str | Path, **kwargs: object) -> object:
+                """Save configuration to file."""
+                ...
+
+        @runtime_checkable
+        class LoggerProtocolSimple(Protocol):
+            """Simplified logger protocol (breaks circular imports).
+
+            This protocol defines a minimal interface for logger objects without
+            importing the concrete FlextLogger class, preventing circular dependencies.
+            This is a simpler alternative to Infrastructure.LoggerProtocol for cases
+            where full FlextResult integration is not needed.
+            """
+
+            def debug(self, message: str, **kwargs: object) -> None:
+                """Log debug message."""
+                ...
+
+            def info(self, message: str, **kwargs: object) -> None:
+                """Log info message."""
+                ...
+
+            def warning(self, message: str, **kwargs: object) -> None:
+                """Log warning message."""
+                ...
+
+            def error(self, message: str, **kwargs: object) -> None:
+                """Log error message."""
+                ...
+
+        @runtime_checkable
+        class ModelProtocol(Protocol):
+            """Protocol for model-like objects (breaks circular imports).
+
+            This protocol defines the interface for domain model types without
+            importing the concrete FlextModels class, preventing circular dependencies
+            between models, config, utilities, and other modules.
+            """
+
+            def validate(self) -> object:
+                """Validate model business rules.
+
+                Returns:
+                    FlextResult[None]: Success if valid, failure with error details
+
+                """
+                ...
+
+            def model_dump(self, **kwargs: object) -> FlextTypes.Dict:
+                """Dump model to dictionary (Pydantic compatibility).
+
+                Args:
+                    **kwargs: Additional serialization options
+
+                Returns:
+                    Dictionary representation of the model
+
+                """
+                ...
+
+            def model_dump_json(self, **kwargs: object) -> str:
+                """Dump model to JSON string (Pydantic compatibility).
+
+                Args:
+                    **kwargs: Additional serialization options
+
+                Returns:
+                    JSON string representation of the model
+
+                """
+                ...
+
+        @runtime_checkable
+        class ValidationUtility(Protocol):
+            """Protocol for validation utility functions (breaks circular imports).
+
+            This protocol defines interfaces for validation utilities without
+            importing concrete utility implementations, preventing circular dependencies.
+            """
+
+            @staticmethod
+            def validate_email(email: str) -> bool:
+                """Validate email address format.
+
+                Args:
+                    email: Email address to validate
+
+                Returns:
+                    True if valid email, False otherwise
+
+                """
+                ...
+
+            @staticmethod
+            def validate_url(url: str) -> bool:
+                """Validate URL format.
+
+                Args:
+                    url: URL to validate
+
+                Returns:
+                    True if valid URL, False otherwise
+
+                """
+                ...
+
+            @staticmethod
+            def validate_phone(phone: str) -> bool:
+                """Validate phone number format.
+
+                Args:
+                    phone: Phone number to validate
+
+                Returns:
+                    True if valid phone, False otherwise
+
+                """
+                ...
+
+        @runtime_checkable
+        class ConstantsProtocol(Protocol):
+            """Protocol for constants access (breaks circular imports).
+
+            This protocol defines interfaces for accessing constants without
+            importing the concrete FlextConstants class, preventing circular dependencies.
+            """
+
+            DEFAULT_LOG_LEVEL: str
+            DEFAULT_TIMEOUT: int
+            DEFAULT_ENCODING: str
+            DEFAULT_MAX_WORKERS: int
+            DEFAULT_PAGE_SIZE: int
+
+        @runtime_checkable
+        class SerializationUtility(Protocol):
+            """Protocol for serialization utility functions (breaks circular imports).
+
+            This protocol defines interfaces for serialization utilities without
+            importing concrete implementations, preventing circular dependencies.
+            """
+
+            @staticmethod
+            def safe_serialize_to_dict(obj: object) -> FlextTypes.Dict | None:
+                """Serialize object to dictionary safely.
+
+                Args:
+                    obj: Object to serialize
+
+                Returns:
+                    Dictionary representation or None if serialization fails
+
+                """
+                ...
+
+            @staticmethod
+            def safe_get_attribute(
+                obj: object, attr: str, default: object = None
+            ) -> object:
+                """Get attribute safely without raising AttributeError.
+
+                Args:
+                    obj: Object to get attribute from
+                    attr: Attribute name
+                    default: Default value if attribute doesn't exist
+
+                Returns:
+                    Attribute value or default
+
+                """
+                ...
+
     # =========================================================================
     # DOMAIN LAYER - Business logic protocols
     # =========================================================================
@@ -292,15 +627,15 @@ class FlextProtocols:
         # Domain protocols providing service and repository patterns
 
         @runtime_checkable
-        class Service(Protocol, Generic[T]):
+        class Service(Protocol, Generic[T_Service_co]):
             """Domain service contract aligned with FlextService implementation."""
 
             @abstractmethod
-            def execute(self) -> FlextResult[T]:
+            def execute(self) -> object:
                 """Execute the main domain operation.
 
                 Returns:
-                    FlextResult[T_co]: Success with domain result or failure with error
+                    FlextResult[T_Service_co]: Success with domain result or failure with error
 
                 """
                 ...
@@ -356,7 +691,7 @@ class FlextProtocols:
                 ...
 
         @runtime_checkable
-        class Repository(Protocol, Generic[T_contra]):
+        class Repository(Protocol, Generic[T_Repository_contra]):
             """Repository protocol shaping modernization data access patterns."""
 
             @abstractmethod
@@ -365,7 +700,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def save(self, entity: T_contra) -> object:
+            def save(self, entity: T_Repository_contra) -> object:
                 """Persist an entity following modernization consistency rules."""
                 ...
 
@@ -387,23 +722,23 @@ class FlextProtocols:
         """Application layer protocols - use cases and handlers."""
 
         @runtime_checkable
-        class Handler(Protocol, Generic[TInput_contra, TResult]):
+        class Handler(Protocol, Generic[TInput_Handler_contra, TResult_Handler_co]):
             """Application handler protocol aligned with FlextHandlers implementation."""
 
             @abstractmethod
-            def handle(self, message: TInput_contra) -> FlextResult[TResult]:
+            def handle(self, message: TInput_Handler_contra) -> object:
                 """Handle the message and return result.
 
                 Args:
                     message: The input message to process
 
                 Returns:
-                    FlextResult[TResult]: Success with result or failure with error
+                    FlextResult[TResult_Handler_co]: Success with result or failure with error
 
                 """
                 ...
 
-            def __call__(self, input_data: TInput_contra) -> FlextResult[TResult]:
+            def __call__(self, input_data: TInput_Handler_contra) -> object:
                 """Process input and return a ``FlextResult`` containing the output."""
                 ...
 
@@ -419,19 +754,19 @@ class FlextProtocols:
                 """
                 ...
 
-            def execute(self, message: TInput_contra) -> FlextResult[TResult]:
+            def execute(self, message: TInput_Handler_contra) -> object:
                 """Execute the handler with the given message.
 
                 Args:
                     message: The input message to execute
 
                 Returns:
-                    FlextResult[TResult]: Execution result
+                    FlextResult[TResult_Handler_co]: Execution result
 
                 """
                 ...
 
-            def validate_command(self, command: TInput_contra) -> FlextResult[None]:
+            def validate_command(self, command: TInput_Handler_contra) -> object:
                 """Validate a command message.
 
                 Args:
@@ -443,11 +778,11 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate(self, _data: TInput_contra) -> FlextResult[None]:
+            def validate(self, _data: TInput_Handler_contra) -> object:
                 """Validate input before processing and wrap the outcome in ``FlextResult``."""
                 ...
 
-            def validate_query(self, query: TInput_contra) -> FlextResult[None]:
+            def validate_query(self, query: TInput_Handler_contra) -> object:
                 """Validate a query message.
 
                 Args:

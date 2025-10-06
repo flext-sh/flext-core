@@ -31,9 +31,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+import uuid
 
 from flext_core.constants import FlextConstants
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+structlog = FlextRuntime.structlog()
 
 
 class FlextExceptions:
@@ -60,16 +64,23 @@ class FlextExceptions:
     """
 
     class BaseError(Exception):
-        """Base exception class for all FLEXT exceptions.
+        """Base exception class for all FLEXT exceptions with structured logging.
 
         Provides common functionality including error codes, correlation IDs,
-        and structured metadata for all FLEXT exceptions.
+        structured metadata, and automatic exception logging via structlog.
+
+        Advanced Features (Phase 1):
+        - Automatic structured logging on exception creation
+        - Correlation ID generation and propagation
+        - Exception chaining with cause tracking
+        - Structured metadata with context
 
         Attributes:
             error_code: Error code for categorization
             correlation_id: Correlation ID for tracking
             metadata: Additional structured metadata
             timestamp: When the error occurred
+            auto_log: Whether to automatically log on creation
 
         """
 
@@ -80,31 +91,74 @@ class FlextExceptions:
             error_code: str | None = None,
             correlation_id: str | None = None,
             metadata: FlextTypes.Dict | None = None,
+            auto_log: bool = False,
+            auto_correlation: bool = False,
             **extra_kwargs: object,
         ) -> None:
-            """Initialize base error with structured information.
+            """Initialize base error with structured logging.
 
             Args:
                 message: Error message
                 error_code: Optional error code for categorization
-                correlation_id: Optional correlation ID for tracking
+                correlation_id: Optional correlation ID
                 metadata: Optional additional metadata
+                auto_log: Whether to automatically log exception (default: False for backward compat)
+                auto_correlation: Whether to auto-generate correlation ID (default: False for backward compat)
                 **extra_kwargs: Additional keyword arguments stored in metadata
 
             """
             super().__init__(message)
             self.message = message
             self.error_code = error_code
-            self.correlation_id = correlation_id
+            self.correlation_id = correlation_id or (
+                self._generate_correlation_id() if auto_correlation else None
+            )
             self.metadata = metadata or {}
             self.metadata.update(extra_kwargs)
             self.timestamp = time.time()
+            self.auto_log = auto_log
+
+            # Automatic structured logging
+            if auto_log:
+                self._log_exception()
+
+        @staticmethod
+        def _generate_correlation_id() -> str:
+            """Generate unique correlation ID for exception tracking."""
+            return f"exc_{uuid.uuid4().hex[:12]}"
+
+        def _log_exception(self) -> None:
+            """Log exception with structured context."""
+            try:
+                logger = structlog.get_logger()
+                logger.error(
+                    "exception_raised",
+                    event_type="exception",
+                    error_type=self.__class__.__name__,
+                    error_code=self.error_code,
+                    message=self.message,
+                    correlation_id=self.correlation_id,
+                    timestamp=self.timestamp,
+                    metadata=self.metadata,
+                )
+            except Exception as e:
+                # Don't fail if logging fails, but print to stderr for diagnostics
+                import sys
+
+                print(
+                    f"Warning: Logging failed in exception handler: {e}",
+                    file=sys.stderr,
+                )
 
         def __str__(self) -> str:
-            """String representation with error code."""
+            """String representation with error code and correlation ID."""
+            parts: list[str] = []
             if self.error_code:
-                return f"[{self.error_code}] {self.message}"
-            return self.message
+                parts.append(f"[{self.error_code}]")
+            if self.correlation_id:
+                parts.append(f"(ID: {self.correlation_id})")
+            parts.append(self.message)
+            return " ".join(parts)
 
         def to_dict(self) -> FlextTypes.Dict:
             """Convert exception to dictionary representation."""
@@ -116,6 +170,69 @@ class FlextExceptions:
                 "timestamp": self.timestamp,
                 "metadata": self.metadata,
             }
+
+        def with_context(self, **context: object) -> FlextExceptions.BaseError:
+            """Add additional context to exception metadata.
+
+            Args:
+                **context: Context key-value pairs to add
+
+            Returns:
+                Self for chaining
+
+            Example:
+                >>> raise FlextExceptions.ValidationError("Invalid").with_context(
+                ...     field="email", user_id=123
+                ... )
+
+            """
+            self.metadata.update(context)
+            return self
+
+        def chain_from(self, cause: Exception) -> FlextExceptions.BaseError:
+            """Chain this exception from a cause exception.
+
+            Args:
+                cause: Original exception that caused this
+
+            Returns:
+                Self for chaining
+
+            Example:
+                >>> try:
+                ...     dangerous_operation()
+                ... except ValueError as e:
+                ...     raise FlextExceptions.ValidationError(
+                ...         "Validation failed"
+                ...     ).chain_from(e)
+
+            """
+            self.__cause__ = cause
+            if hasattr(cause, "correlation_id"):
+                self.metadata["parent_correlation_id"] = getattr(
+                    cause, "correlation_id"
+                )
+
+            # Log exception chaining
+            try:
+                logger = structlog.get_logger()
+                logger.warning(
+                    "exception_chained",
+                    event_type="exception_chain",
+                    child_error=self.__class__.__name__,
+                    parent_error=cause.__class__.__name__,
+                    correlation_id=self.correlation_id,
+                )
+            except Exception as e:
+                # Don't fail if logging fails, but print to stderr for diagnostics
+                import sys
+
+                print(
+                    f"Warning: Logging failed in exception handler: {e}",
+                    file=sys.stderr,
+                )
+
+            return self
 
     class ValidationError(BaseError):
         """Exception raised for validation failures.
@@ -478,6 +595,8 @@ class FlextExceptions:
             error_code: str | None = None,
             correlation_id: str | None = None,
             metadata: FlextTypes.Dict | None = None,
+            auto_log: bool = False,
+            auto_correlation: bool = False,
             **extra_kwargs: object,
         ) -> None:
             """Initialize type error.
@@ -489,6 +608,8 @@ class FlextExceptions:
                 error_code: Optional error code override
                 correlation_id: Optional correlation ID
                 metadata: Optional metadata dictionary
+                auto_log: Whether to automatically log exception
+                auto_correlation: Whether to auto-generate correlation ID
                 **extra_kwargs: Additional keyword arguments stored in metadata
 
             """
@@ -497,6 +618,8 @@ class FlextExceptions:
                 error_code=error_code or FlextConstants.Errors.TYPE_ERROR,
                 correlation_id=correlation_id,
                 metadata=metadata,
+                auto_log=auto_log,
+                auto_correlation=auto_correlation,
                 **extra_kwargs,
             )
             self.expected_type = expected_type
@@ -542,7 +665,7 @@ class FlextExceptions:
     def create_error(
         error_type: str,
         message: str,
-    ) -> BaseError:
+    ) -> FlextExceptions.BaseError:
         """Create an error instance by type name.
 
         Args:
@@ -556,7 +679,7 @@ class FlextExceptions:
             ValueError: If error type is not recognized
 
         """
-        error_classes = {
+        error_classes: dict[str, type[FlextExceptions.BaseError]] = {
             "ValidationError": FlextExceptions.ValidationError,
             "ConfigurationError": FlextExceptions.ConfigurationError,
             "ConnectionError": FlextExceptions.ConnectionError,

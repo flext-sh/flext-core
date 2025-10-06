@@ -82,6 +82,13 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+from flext_core.decorators import (
+    combined,
+    inject,
+    log_operation,
+    railway,
+    track_performance,
+)
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
@@ -120,4 +127,10 @@ __all__ = [
     "FlextUtilities",
     "__version__",
     "__version_info__",
+    "combined",
+    # Automation decorators (new in architectural enhancement)
+    "inject",
+    "log_operation",
+    "railway",
+    "track_performance",
 ]

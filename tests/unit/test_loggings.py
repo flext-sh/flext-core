@@ -536,15 +536,16 @@ class TestFlextLogger:
         """Test logging with metrics collection - not implemented in new FlextLogger."""
         logger = FlextLogger("test_logger")
 
-        logger.info("Test message 1")
-        logger.warning("Test message 2")
-        logger.error("Test message 3")
+        result1 = logger.info("Test message 1")
+        result2 = logger.warning("Test message 2")
+        result3 = logger.error("Test message 3")
 
         # Metrics collection is not implemented in the new thin FlextLogger
-        # Just test basic functionality
-        attrs = logger.get_logger_attributes()
-        assert attrs["name"] == "test_logger"
-        assert "context" in attrs
+        # Just test that logging operations succeed
+        assert result1.is_success
+        assert result2.is_success
+        assert result3.is_success
+        assert logger.name == "test_logger"
 
     def test_logger_get_performance_metrics(self) -> None:
         """Test getting logger performance metrics - not implemented in new FlextLogger."""

@@ -6,1097 +6,341 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
-import time
-from typing import Protocol, cast
+from typing import Protocol
 
-import pytest
-
-from flext_core import FlextExceptions, FlextProtocols, FlextResult, FlextTypes
+from flext_core import FlextProtocols
 
 
 class TestFlextProtocols:
-    """Test suite for FlextProtocols protocol functionality."""
+    """Test suite for FlextProtocols protocol definitions."""
 
     def test_protocols_initialization(self) -> None:
-        """Test protocols initialization."""
-        protocols = FlextProtocols()
-        assert protocols is not None
-        assert isinstance(protocols, FlextProtocols)
-
-    def test_protocols_with_custom_config(self) -> None:
-        """Test protocols initialization with custom configuration."""
-        config: FlextTypes.Dict = {"max_retries": 3, "timeout": 30}
-        protocols = FlextProtocols(config=config)
-        assert protocols is not None
-
-    def test_protocols_register_protocol(self) -> None:
-        """Test protocol registration."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        result = protocols.register("test_protocol", TestProtocol)
-        assert result.is_success
-
-    def test_protocols_register_protocol_invalid(self) -> None:
-        """Test protocol registration with invalid parameters."""
-        protocols = FlextProtocols()
-
-        result = protocols.register("", object)
-        assert result.is_failure
-
-    def test_protocols_register_protocol_none(self) -> None:
-        """Test protocol registration with None protocol."""
-        protocols = FlextProtocols()
-
-        result = protocols.register("test", None)
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "cannot be None" in result.error
-        )
-
-    def test_protocols_register_protocol_duplicate(self) -> None:
-        """Test registering the same protocol name twice."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.register("test_protocol", TestProtocol)
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "already registered" in result.error
-        )
-
-    def test_protocols_unregister_protocol(self) -> None:
-        """Test protocol unregistration."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.unregister("test_protocol", TestProtocol)
-        assert result.is_success
-
-    def test_protocols_unregister_nonexistent_protocol(self) -> None:
-        """Test unregistering non-existent protocol."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        result = protocols.unregister("nonexistent_protocol", TestProtocol)
-        assert result.is_failure
-
-    def test_protocols_unregister_protocol_mismatch(self) -> None:
-        """Test unregistering protocol with wrong protocol type."""
-        protocols = FlextProtocols()
-
-        class TestProtocol1(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestProtocol2(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol1)
-        result = protocols.unregister("test_protocol", TestProtocol2)
-        assert result.is_failure
-        assert result.error is not None and result.error and "mismatch" in result.error
-
-    def test_protocols_unregister_empty_name(self) -> None:
-        """Test unregistering with empty name."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        result = protocols.unregister("", TestProtocol)
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "cannot be empty" in result.error
-        )
-
-    def test_protocols_validate_implementation(self) -> None:
-        """Test protocol implementation validation."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-    def test_protocols_validate_nonexistent_protocol(self) -> None:
-        """Test validation with non-existent protocol."""
-        protocols = FlextProtocols()
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        result = protocols.validate_implementation(
-            "nonexistent_protocol",
-            TestImplementation,
-        )
-        assert result.is_failure
-        assert result.error is not None and "not found" in result.error
-
-    def test_protocols_validate_invalid_implementation(self) -> None:
-        """Test validation with invalid implementation."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class InvalidImplementation:
-            def wrong_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation(
-            "test_protocol",
-            InvalidImplementation,
-        )
-        # Note: Current implementation may not validate method signatures
-        # This test verifies the container handles the validation
-        assert result.is_success or result.is_failure
-
-    def test_protocols_validate_with_retry(self) -> None:
-        """Test validation with retry mechanism."""
-        protocols = FlextProtocols(config={"max_retries": 3, "retry_delay": 0.01})
-
-        retry_count = 0
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class RetryImplementation:
-            def test_method(self) -> str:
-                nonlocal retry_count
-                retry_count += 1
-                if retry_count < 3:
-                    msg = "Temporary failure"
-                    raise ValueError(msg)
-                return f"success_after_{retry_count}_retries"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation("test_protocol", RetryImplementation)
-        # Note: validate_implementation returns FlextResult[None], not the method result
-        # This test verifies the validation succeeds
-        assert result.is_success
-
-    def test_protocols_validate_with_timeout(self) -> None:
-        """Test validation with timeout."""
-        protocols = FlextProtocols(config={"timeout": 0.1})
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TimeoutImplementation:
-            def test_method(self) -> str:
-                time.sleep(0.2)  # Exceed timeout
-                return "should_not_reach_here"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation(
-            "test_protocol",
-            TimeoutImplementation,
-        )
-        # Note: Current implementation may not enforce timeouts
-        # This test verifies the container handles the validation
-        assert result.is_success or result.is_failure
-
-    def test_protocols_validate_with_validation(self) -> None:
-        """Test validation with validation."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class ValidatedImplementation:
-            def test_method(self) -> str:
-                return "validated_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation(
-            "test_protocol",
-            ValidatedImplementation,
-        )
-        assert result.is_success
-
-    def test_protocols_validate_with_middleware(self) -> None:
-        """Test validation with middleware."""
-        protocols = FlextProtocols()
-
-        middleware_called = False
-
-        def middleware(implementation_class: object) -> object:
-            nonlocal middleware_called
-            middleware_called = True
-            return implementation_class
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.add_middleware(middleware)
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-        assert middleware_called is True
-
-    def test_protocols_validate_with_logging(self) -> None:
-        """Test validation with logging."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-    def test_protocols_validate_with_metrics(self) -> None:
-        """Test validation with metrics."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-        # Check metrics
-        metrics = protocols.get_metrics()
-        assert "registrations" in metrics
-        assert "successful_validations" in metrics
-        assert int(cast("int", metrics["registrations"])) >= 1
-        assert int(cast("int", metrics["successful_validations"])) >= 1
-
-    def test_protocols_validate_with_correlation_id(self) -> None:
-        """Test validation with correlation ID."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-    def test_protocols_validate_with_batch(self) -> None:
-        """Test validation with batch processing."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation1:
-            def test_method(self) -> str:
-                return "test_result_1"
-
-        class TestImplementation2:
-            def test_method(self) -> str:
-                return "test_result_2"
-
-        class TestImplementation3:
-            def test_method(self) -> str:
-                return "test_result_3"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        implementations: list[type[object]] = [
-            TestImplementation1,
-            TestImplementation2,
-            TestImplementation3,
-        ]
-        result = protocols.validate_batch("test_protocol", implementations)
-        assert result.is_success
-        assert len(result.value) == 3
-
-    def test_protocols_validate_with_parallel(self) -> None:
-        """Test validation with parallel processing."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation1:
-            def test_method(self) -> str:
-                time.sleep(0.1)  # Simulate work
-                return "test_result_1"
-
-        class TestImplementation2:
-            def test_method(self) -> str:
-                time.sleep(0.1)  # Simulate work
-                return "test_result_2"
-
-        class TestImplementation3:
-            def test_method(self) -> str:
-                time.sleep(0.1)  # Simulate work
-                return "test_result_3"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        implementations: list[type[object]] = [
-            TestImplementation1,
-            TestImplementation2,
-            TestImplementation3,
-        ]
-
-        start_time = time.time()
-        result = protocols.validate_parallel("test_protocol", implementations)
-        end_time = time.time()
-
-        assert result.is_success
-        assert len(result.value) == 3
-        # Should complete faster than sequential execution
-        assert end_time - start_time < 0.3
-
-    def test_protocols_validate_with_circuit_breaker(self) -> None:
-        """Test validation with circuit breaker."""
-        protocols = FlextProtocols(config={"circuit_breaker_threshold": 3})
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class FailingImplementation:
-            def test_method(self) -> str:
-                msg = "Service unavailable"
-                raise ValueError(msg)
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Execute validations to test circuit breaker functionality
-        for _ in range(5):
-            result = protocols.validate_implementation(
-                "test_protocol",
-                FailingImplementation,
-            )
-            # Note: Current implementation may not enforce circuit breakers
-            # This test verifies the container handles the validation
-            assert result.is_success or result.is_failure
-
-        # Test circuit breaker state
-        is_open = protocols.is_circuit_breaker_open("test_protocol")
-        assert isinstance(is_open, bool)
-
-    def test_protocols_validate_with_rate_limiting(self) -> None:
-        """Test validation with rate limiting."""
-        protocols = FlextProtocols(config={"rate_limit": 2, "rate_limit_window": 1})
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Execute validations within rate limit
-        for _i in range(2):
-            result = protocols.validate_implementation(
-                "test_protocol",
-                TestImplementation,
-            )
-            assert result.is_success
-
-        # Exceed rate limit
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_failure
-        assert result.error is not None and "rate limit" in (result.error or "").lower()
-
-    def test_protocols_validate_with_caching(self) -> None:
-        """Test validation with caching."""
-        protocols = FlextProtocols(config={"cache_ttl": 60})
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # First validation should cache result
-        result1 = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result1.is_success
-
-        # Second validation should use cache
-        result2 = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result2.is_success
-        assert result1.data == result2.data
-
-    def test_protocols_validate_with_audit(self) -> None:
-        """Test validation with audit logging."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-        # Check audit log
-        audit_log = protocols.get_audit_log()
-        # Note: Current implementation may not track protocol-specific audit info
-        # This test verifies the method exists and returns a list
-        assert isinstance(audit_log, list)
-
-    def test_protocols_validate_with_performance_monitoring(self) -> None:
-        """Test validation with performance monitoring."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                time.sleep(0.1)  # Simulate work
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-        # Check performance metrics
-        performance = protocols.get_performance_metrics()
-        # Note: Current implementation may not track protocol-specific performance
-        # This test verifies the method exists and returns a dict
-        assert isinstance(performance, dict)
-
-    def test_protocols_validate_with_error_handling(self) -> None:
-        """Test validation with error handling."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class ErrorImplementation:
-            def test_method(self) -> str:
-                msg = "Implementation error"
-                raise RuntimeError(msg)
-
-        protocols.register("test_protocol", TestProtocol)
-
-        result = protocols.validate_implementation("test_protocol", ErrorImplementation)
-        # Note: Current implementation may not call methods during validation
-        # This test verifies the container handles the validation
-        assert result.is_success or result.is_failure
-
-    def test_protocols_validate_with_cleanup(self) -> None:
-        """Test validation with cleanup."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_success
-
-        # Cleanup
-        protocols.cleanup()
-
-        # After cleanup, protocols should be cleared
-        result = protocols.validate_implementation("test_protocol", TestImplementation)
-        assert result.is_failure
-        assert (result.error is not None and "No protocol found" in result.error) or (
-            result.error is not None and "not found" in result.error
-        )
-
-    def test_protocols_get_registered_protocols(self) -> None:
-        """Test getting registered protocols."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-        registered_protocols = protocols.get_protocols("test_protocol")
-        assert len(registered_protocols) == 1
-        assert TestProtocol in registered_protocols
-
-    def test_protocols_get_protocols_for_nonexistent_protocol(self) -> None:
-        """Test getting protocols for non-existent protocol."""
-        protocols = FlextProtocols()
-
-        registered_protocols = protocols.get_protocols("nonexistent_protocol")
-        assert len(registered_protocols) == 0
-
-    def test_protocols_clear_protocols(self) -> None:
-        """Test clearing all protocols."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-        protocols.clear_protocols()
-
-        registered_protocols = protocols.get_protocols("test_protocol")
-        assert len(registered_protocols) == 0
-
-    def test_protocols_statistics(self) -> None:
-        """Test protocols statistics tracking."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-        protocols.validate_implementation("test_protocol", TestImplementation)
-
-        stats = protocols.get_statistics()
-        # Note: Current implementation provides global statistics, not protocol-specific
-        # This test verifies the method exists and returns a dict
-        assert isinstance(stats, dict)
-        assert "audit_log_size" in stats
-
-    def test_protocols_thread_safety(self) -> None:
-        """Test protocols thread safety."""
-        # Use a config with higher rate limit to avoid interference in thread safety test
-        config: FlextTypes.Dict = {"rate_limit": 100, "rate_limit_window": 60}
-        protocols = FlextProtocols(config)
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        results: list[FlextResult[bool]] = []
-
-        def validate_implementation(_thread_id: int) -> None:
-            result: FlextResult[bool] = protocols.validate_implementation(
-                "test_protocol",
-                TestImplementation,
-            )
-            results.append(result)
-
-        threads: list[threading.Thread] = []
-        for i in range(10):
-            thread = threading.Thread(target=validate_implementation, args=(i,))
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        assert len(results) == 10
-        assert all(result.is_success for result in results)
-
-    def test_protocols_performance(self) -> None:
-        """Test protocols performance characteristics."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class FastImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.register("test_protocol", TestProtocol)
-
-        start_time = time.time()
-
-        # Perform many operations
-        for _i in range(100):
-            protocols.validate_implementation("test_protocol", FastImplementation)
-
-        end_time = time.time()
-
-        # Should complete 100 operations in reasonable time
-        assert end_time - start_time < 1.0
-
-    def test_protocols_error_handling(self) -> None:
-        """Test protocols error handling mechanisms."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        class ErrorImplementation:
-            def test_method(self) -> str:
-                msg = "Implementation error"
-                raise ValueError(msg)
-
-        protocols.register("test_protocol", TestProtocol)
-
-        result = protocols.validate_implementation("test_protocol", ErrorImplementation)
-        # Note: Current implementation may not call methods during validation
-        # This test verifies the container handles the validation
-        assert result.is_success or result.is_failure
-
-    def test_protocols_validation(self) -> None:
-        """Test protocols validation."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        result = protocols.validate()
-        assert result.is_success
-
-    def test_protocols_export_import(self) -> None:
-        """Test protocols export/import."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Export protocols configuration
-        config = protocols.export_config()
-        assert isinstance(config, dict)
-        # Note: Current implementation provides global config, not protocol-specific
-        # This test verifies the method exists and returns a dict
-        assert "cache_ttl" in config
-
-        # Test that the config can be used
-        assert (
-            isinstance(config["cache_ttl"], (int, float)) and config["cache_ttl"] >= 0
-        )
-
-    def test_protocols_cleanup(self) -> None:
-        """Test protocols cleanup."""
-        protocols = FlextProtocols()
-
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        class TestImplementation:
-            def test_method(self) -> str:
-                return "test_result"
-
-        protocols.validate_implementation("test_protocol", TestImplementation)
-
-        protocols.cleanup()
-
-        # After cleanup, protocols should be cleared
-        registered_protocols = protocols.get_protocols("test_protocol")
-        assert len(registered_protocols) == 0
-
-    def test_protocols_circuit_breaker_blocks_validation(self) -> None:
-        """Test circuit breaker prevents validation when open (line 417)."""
-        protocols = FlextProtocols()
-
-        # Define a protocol
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Manually open the circuit breaker for this protocol
-        protocols._circuit_breaker["test_protocol"] = True
-
-        # Implementation that would normally be valid
-        class ValidImpl:
-            def execute(self) -> str:
-                return "test"
-
-        # Validation should fail due to circuit breaker
-        result = protocols.validate_implementation("test_protocol", ValidImpl)
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Circuit breaker open" in result.error
-        )
-
-    def test_protocols_rate_limiter_resets_window(self) -> None:
-        """Test rate limiter resets count after window expires (lines 429-430)."""
-        # NOTE: Rate limiting functionality not yet implemented in protocols
-        # This test is a placeholder for future rate limiting implementation
-        protocols = FlextProtocols()
-
-        # Define a protocol
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Implementation
-        class ValidImpl:
-            def execute(self) -> str:
-                return "test"
-
-        # Skip rate limiter test - functionality not implemented yet
-        result = protocols.validate_implementation("test_protocol", ValidImpl)
-        assert result.is_success
-
-    def test_protocols_middleware_exception_handling(self) -> None:
-        """Test middleware exception is caught and returns failure (lines 452-453)."""
-        protocols = FlextProtocols()
-
-        # Define a protocol
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Add middleware that raises an exception
-        def failing_middleware(impl: type[object]) -> type[object]:
-            msg = "Middleware error"
-            raise RuntimeError(msg)
-
-        protocols.add_middleware(failing_middleware)
-
-        # Implementation
-        class ValidImpl:
-            def execute(self) -> str:
-                return "test"
-
-        # Validation should fail due to middleware error
-        result = protocols.validate_implementation("test_protocol", ValidImpl)
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Middleware error" in result.error
-        )
-
-    def test_protocols_validation_with_no_annotations(self) -> None:
-        """Test validation fails when protocol has no annotations (line 472)."""
-        protocols = FlextProtocols()
-
-        # Define a protocol without annotations (edge case)
-        class EmptyProtocol(Protocol):
-            pass  # No methods, no annotations
-
-        protocols.register("empty_protocol", EmptyProtocol)
-
-        # Implementation
-        class Impl:
-            pass
-
-        # This should trigger the "no annotations" path
-        result = protocols.validate_implementation("empty_protocol", Impl)
-        # Note: This might pass or fail depending on implementation
-        # The key is to exercise line 472
-        assert result.is_success or result.is_failure
-
-    def test_protocols_validation_exception_with_metrics(self) -> None:
-        """Test validation exception updates metrics and audit log (lines 473-484)."""
-        protocols = FlextProtocols()
-
-        # Register a protocol but then break internal state to trigger exception
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Corrupt the registry to trigger exception during validation
-        protocols._registry["test_protocol"] = cast("type", str)
-
-        class ValidImpl:
-            def execute(self) -> str:
-                return "test"
-
-        # This should trigger exception handling - accepts any failure message
-        result = protocols.validate_implementation("test_protocol", ValidImpl)
-        assert result.is_failure
-        # object failure is acceptable - the goal is to exercise error handling paths
-        assert result.error is not None
-
-    def test_protocols_add_middleware_non_callable(self) -> None:
-        """Test add_middleware raises TypeError for non-callable (lines 496-497)."""
-        protocols = FlextProtocols()
-
-        # Try to add non-callable middleware
-        with pytest.raises(FlextExceptions.TypeError) as exc_info:
-            protocols.add_middleware("not_callable")
-
-        assert "Middleware must be callable" in str(exc_info.value)
-
-    def test_protocols_validate_batch_with_failure(self) -> None:
-        """Test validate_batch stops on first failure (line 558)."""
-        protocols = FlextProtocols()
-
-        # Define a protocol
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Valid implementation
-        class ValidImpl:
-            def execute(self) -> str:
-                return "test"
-
-        # Test batch with nonexistent protocol to guarantee failure
-        implementations: list[type[object]] = [ValidImpl, ValidImpl]
-        result = protocols.validate_batch("nonexistent_protocol", implementations)
-        assert result.is_failure
-        # The error should mention the nonexistent protocol
-
-    def test_protocols_validate_with_invalid_protocol_name(self) -> None:
-        """Test validate() fails with invalid protocol name (line 642)."""
-        protocols = FlextProtocols()
-
-        # Register a protocol with non-string key (corrupt state)
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols._registry[cast("str", 123)] = TestProtocol
-
-        # Validate should detect the invalid name
-        result = protocols.validate()
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Invalid protocol name" in result.error
-        )
-
-    def test_protocols_validate_with_invalid_protocol_type(self) -> None:
-        """Test validate() fails with invalid protocol type (lines 644, 647-648)."""
-        protocols = FlextProtocols()
-
-        # Register a protocol with invalid type (not a type)
-        protocols._registry["bad_protocol"] = cast("type", str)
-
-        # Validate should detect the invalid type
-        result = protocols.validate()
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Invalid protocol type" in result.error
-        )
-
-    def test_protocols_import_config_with_config_dict(self) -> None:
-        """Test import_config with config dictionary (lines 678-680)."""
-        protocols = FlextProtocols()
-
-        # Import config with nested config dict
-        config = cast(
-            "FlextTypes.Dict",
-            {
-                "config": {"custom_key": "custom_value", "another_key": 42},
-                "cache_ttl": 120,
-                "circuit_breaker_threshold": 10,
-            },
-        )
-
-        result = protocols.import_config(config)
-        assert result.is_success
-
-        # Verify config was updated
-        assert protocols._config["custom_key"] == "custom_value"
-        assert protocols._config["another_key"] == 42
-        assert protocols._cache_ttl == 120.0
-        assert protocols._circuit_breaker_threshold == 10
-
-    def test_protocols_import_config_with_string_values(self) -> None:
-        """Test import_config converts string values to appropriate types (lines 683-693)."""
-        protocols = FlextProtocols()
-
-        # Import config with string representations of numbers
-        config: FlextTypes.Dict = {
-            "cache_ttl": "180.5",
-            "circuit_breaker_threshold": "15",
-        }
-
-        result = protocols.import_config(config)
-        assert result.is_success
-
-        # Verify conversion
-        assert protocols._cache_ttl == 180.5
-        assert protocols._circuit_breaker_threshold == 15
-
-    def test_protocols_import_config_exception_handling(self) -> None:
-        """Test import_config handles exceptions gracefully (line 693)."""
-        protocols = FlextProtocols()
-
-        # Create a config that would cause an exception during processing
-        # Make _config.update() fail by passing something that will raise
-
-        # Corrupt the internal state to force exception during config update
-        # Replace _config with something that doesn't have update method
-        protocols._config = cast("FlextTypes.Dict", {})
-
-        result = protocols.import_config({"config": {"key": "value"}})
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Config import failed" in result.error
-        )
-
-    def test_protocols_validate_implementation_with_callable_implementation(
-        self,
-    ) -> None:
-        """Test validation returns ok for implementation without exception (line 1626)."""
-        protocols = FlextProtocols()
-
-        # Define a protocol
-        class TestProtocol(Protocol):
-            def execute(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Valid implementation
-        class ValidImpl:
-            def execute(self) -> str:
-                return "test"
-
-        # This should succeed and exercise the success path
-        result = protocols.validate_implementation("test_protocol", ValidImpl)
-        assert result.is_success
-
-    def test_rate_limiter_window_reset(self) -> None:
-        """Test rate limiter window reset (lines 429-430)."""
+        """Test FlextProtocols namespace access."""
+        assert FlextProtocols is not None
+        assert hasattr(FlextProtocols, "Foundation")
+        assert hasattr(FlextProtocols, "Domain")
+        assert hasattr(FlextProtocols, "Infrastructure")
+        assert hasattr(FlextProtocols, "Application")
+        assert hasattr(FlextProtocols, "Commands")
+        assert hasattr(FlextProtocols, "Extensions")
+
+    # Foundation Protocols Tests
+    def test_has_result_value_protocol(self) -> None:
+        """Test HasResultValue protocol definition."""
+        protocol = FlextProtocols.Foundation.HasResultValue
+        assert protocol is not None
+        # Check it's a Protocol
+        assert issubclass(protocol, Protocol)
+
+    def test_has_result_value_implementation(self) -> None:
+        """Test that a class can implement HasResultValue."""
+
+        class ResultContainer:
+            def __init__(self, value: str) -> None:
+                self._value = value
+
+            @property
+            def value(self) -> str:
+                return self._value
+
+        container = ResultContainer("test")
+        # Should have the required value property
+        assert hasattr(container, "value")
+        assert container.value == "test"
+
+    def test_has_timestamps_protocol(self) -> None:
+        """Test HasTimestamps protocol definition."""
+        protocol = FlextProtocols.Foundation.HasTimestamps
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_has_timestamps_implementation(self) -> None:
+        """Test that a class can implement HasTimestamps."""
         import time
 
-        from flext_core.protocols import FlextProtocols
+        class TimestampedEntity:
+            def __init__(self) -> None:
+                self.created_at = time.time()
+                self.updated_at = time.time()
 
-        # Create protocols with rate limiting configured
-        protocols = FlextProtocols(
-            config={
-                "rate_limit": 2,  # Max 2 requests
-                "rate_limit_window": 1,  # 1 second window
-            },
-        )
+        entity = TimestampedEntity()
+        assert hasattr(entity, "created_at")
+        assert hasattr(entity, "updated_at")
 
-        # Define a protocol
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
+    def test_has_model_fields_protocol(self) -> None:
+        """Test HasModelFields protocol definition."""
+        protocol = FlextProtocols.Foundation.HasModelFields
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
 
-        # Register protocol
-        protocols.register("test_protocol", TestProtocol)
+    def test_has_model_dump_protocol(self) -> None:
+        """Test HasModelDump protocol definition."""
+        protocol = FlextProtocols.Foundation.HasModelDump
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
 
-        # Create implementation
-        class TestImpl:
-            def test_method(self) -> str:
+    def test_has_handler_type_protocol(self) -> None:
+        """Test HasHandlerType protocol definition."""
+        protocol = FlextProtocols.Foundation.HasHandlerType
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    # Domain Protocols Tests
+    def test_repository_protocol(self) -> None:
+        """Test Repository protocol definition."""
+        protocol = FlextProtocols.Domain.Repository
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_repository_implementation(self) -> None:
+        """Test that a class can implement Repository protocol."""
+        from flext_core import FlextResult
+
+        class UserRepository:
+            def find_by_id(self, entity_id: str) -> FlextResult[dict]:
+                return FlextResult[dict].ok({"id": entity_id, "name": "Test"})
+
+            def save(self, entity: dict) -> FlextResult[dict]:
+                return FlextResult[dict].ok(entity)
+
+            def delete(self, entity_id: str) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        repo = UserRepository()
+        assert hasattr(repo, "find_by_id")
+        assert hasattr(repo, "save")
+        assert hasattr(repo, "delete")
+
+    def test_service_protocol(self) -> None:
+        """Test Service protocol definition."""
+        protocol = FlextProtocols.Domain.Service
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_service_implementation(self) -> None:
+        """Test that a class can implement Service protocol."""
+        from flext_core import FlextResult
+
+        class UserService:
+            def execute(self, **kwargs: object) -> FlextResult[dict]:
+                return FlextResult[dict].ok({"status": "success"})
+
+        service = UserService()
+        assert hasattr(service, "execute")
+        result = service.execute()
+        assert result.is_success
+
+    # Infrastructure Protocols Tests
+    def test_configurable_protocol(self) -> None:
+        """Test Configurable protocol definition."""
+        protocol = FlextProtocols.Infrastructure.Configurable
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_connection_protocol(self) -> None:
+        """Test Connection protocol definition."""
+        protocol = FlextProtocols.Infrastructure.Connection
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_connection_implementation(self) -> None:
+        """Test that a class can implement Connection protocol."""
+        from flext_core import FlextResult
+
+        class DatabaseConnection:
+            def connect(self) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+            def disconnect(self) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+            def is_connected(self) -> bool:
+                return True
+
+        conn = DatabaseConnection()
+        assert hasattr(conn, "connect")
+        assert hasattr(conn, "disconnect")
+        assert hasattr(conn, "is_connected")
+
+    def test_logger_protocol(self) -> None:
+        """Test LoggerProtocol definition."""
+        protocol = FlextProtocols.Infrastructure.LoggerProtocol
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    # Application Protocols Tests
+    def test_handler_protocol(self) -> None:
+        """Test Handler protocol definition."""
+        protocol = FlextProtocols.Application.Handler
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_handler_implementation(self) -> None:
+        """Test that a class can implement Handler protocol."""
+        from flext_core import FlextResult
+
+        class CreateUserHandler:
+            def handle(self, command: dict) -> FlextResult[dict]:
+                return FlextResult[dict].ok({"user_id": "123"})
+
+        handler = CreateUserHandler()
+        assert hasattr(handler, "handle")
+        result = handler.handle({"name": "Test"})
+        assert result.is_success
+
+    # Commands Protocols Tests
+    def test_command_handler_protocol(self) -> None:
+        """Test CommandHandler protocol definition."""
+        protocol = FlextProtocols.Commands.CommandHandler
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_query_handler_protocol(self) -> None:
+        """Test QueryHandler protocol definition."""
+        protocol = FlextProtocols.Commands.QueryHandler
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_command_bus_protocol(self) -> None:
+        """Test CommandBus protocol definition."""
+        protocol = FlextProtocols.Commands.CommandBus
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_commands_middleware_protocol(self) -> None:
+        """Test Commands Middleware protocol definition."""
+        protocol = FlextProtocols.Commands.Middleware
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    # Extensions Protocols Tests
+    def test_plugin_protocol(self) -> None:
+        """Test Plugin protocol definition."""
+        protocol = FlextProtocols.Extensions.Plugin
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_plugin_context_protocol(self) -> None:
+        """Test PluginContext protocol definition."""
+        protocol = FlextProtocols.Extensions.PluginContext
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_observability_protocol(self) -> None:
+        """Test Observability protocol definition."""
+        protocol = FlextProtocols.Extensions.Observability
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    def test_extensions_middleware_protocol(self) -> None:
+        """Test Extensions Middleware protocol definition."""
+        protocol = FlextProtocols.Extensions.Middleware
+        assert protocol is not None
+        assert issubclass(protocol, Protocol)
+
+    # Integration Tests
+    def test_protocol_categories_independence(self) -> None:
+        """Test that protocol categories are independent."""
+        foundation = FlextProtocols.Foundation
+        domain = FlextProtocols.Domain
+        infrastructure = FlextProtocols.Infrastructure
+        application = FlextProtocols.Application
+        commands = FlextProtocols.Commands
+        extensions = FlextProtocols.Extensions
+
+        # All should be different objects
+        categories = [
+            foundation,
+            domain,
+            infrastructure,
+            application,
+            commands,
+            extensions,
+        ]
+        for i, cat1 in enumerate(categories):
+            for cat2 in categories[i + 1 :]:
+                assert cat1 is not cat2
+
+    def test_multiple_protocol_implementation(self) -> None:
+        """Test that a class can implement multiple protocols."""
+        from flext_core import FlextResult
+
+        class AdvancedService:
+            """Service implementing multiple protocols."""
+
+            def execute(self, **kwargs: object) -> FlextResult[dict]:
+                return FlextResult[dict].ok({})
+
+            def handle(self, command: dict) -> FlextResult[dict]:
+                return FlextResult[dict].ok({})
+
+        service = AdvancedService()
+        # Should implement both Service and Handler protocols
+        assert hasattr(service, "execute")
+        assert hasattr(service, "handle")
+
+    def test_protocol_runtime_checkable(self) -> None:
+        """Test that protocols support runtime checking."""
+        # HasResultValue should be runtime checkable
+        # protocol = FlextProtocols.Foundation.HasResultValue  # Unused for now
+
+        class Container:
+            @property
+            def value(self) -> str:
                 return "test"
 
-        # Make 2 requests within window (should succeed)
-        result1 = protocols.validate_implementation("test_protocol", type[TestImpl])
-        assert result1.is_success
+        # Runtime check should work if protocol is runtime_checkable
+        container = Container()
+        assert hasattr(container, "value")
 
-        result2 = protocols.validate_implementation("test_protocol", type[TestImpl])
-        assert result2.is_success
+    def test_all_foundation_protocols_available(self) -> None:
+        """Test that all foundation protocols are accessible."""
+        expected_protocols = [
+            "HasResultValue",
+            "HasTimestamps",
+            "HasModelFields",
+            "HasModelDump",
+            "HasHandlerType",
+        ]
+        for proto_name in expected_protocols:
+            assert hasattr(FlextProtocols.Foundation, proto_name)
 
-        # Third request should fail (rate limit exceeded)
-        result3 = protocols.validate_implementation("test_protocol", type[TestImpl])
-        assert result3.is_failure
-        assert (
-            result3.error is not None and "rate limit" in (result3.error or "").lower()
-        )
+    def test_all_domain_protocols_available(self) -> None:
+        """Test that all domain protocols are accessible."""
+        expected_protocols = ["Repository", "Service"]
+        for proto_name in expected_protocols:
+            assert hasattr(FlextProtocols.Domain, proto_name)
 
-        # Wait for window to expire (trigger lines 429-430)
-        time.sleep(1.1)
+    def test_all_infrastructure_protocols_available(self) -> None:
+        """Test that all infrastructure protocols are accessible."""
+        expected_protocols = ["Configurable", "Connection", "LoggerProtocol"]
+        for proto_name in expected_protocols:
+            assert hasattr(FlextProtocols.Infrastructure, proto_name)
 
-        # Next request should reset window and succeed
-        result4 = protocols.validate_implementation("test_protocol", type[TestImpl])
-        assert result4.is_success, "Window reset should allow new request"
+    def test_all_application_protocols_available(self) -> None:
+        """Test that all application protocols are accessible."""
+        expected_protocols = ["Handler"]
+        for proto_name in expected_protocols:
+            assert hasattr(FlextProtocols.Application, proto_name)
 
-    def test_validation_internal_exception(self) -> None:
-        """Test validation exception handling with metrics/audit (lines 473-484)."""
-        from flext_core.protocols import FlextProtocols
+    def test_all_commands_protocols_available(self) -> None:
+        """Test that all commands protocols are accessible."""
+        expected_protocols = [
+            "CommandHandler",
+            "QueryHandler",
+            "CommandBus",
+            "Middleware",
+        ]
+        for proto_name in expected_protocols:
+            assert hasattr(FlextProtocols.Commands, proto_name)
 
-        # Create protocols - metrics tracked automatically
-        protocols = FlextProtocols()
-
-        # Define a protocol with method
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        # Register protocol
-        protocols.register("test_protocol", TestProtocol)
-
-        # Corrupt the registry to force exception during validation
-        protocols._registry["test_protocol"] = cast("type", str)
-
-        # Create any implementation
-        class TestImpl:
-            def test_method(self) -> str:
-                return "test"
-
-        # Attempt validation - should catch exception (lines 473-484)
-        result = protocols.validate_implementation("test_protocol", type[TestImpl])
-        assert result.is_failure
-        # Should contain validation error message
-        assert result.error is not None
-
-    def test_validate_general_exception(self) -> None:
-        """Test general exception in validate() method (lines 647-648)."""
-        from flext_core.protocols import FlextProtocols
-
-        protocols = FlextProtocols()
-
-        # Define protocol
-        class TestProtocol(Protocol):
-            def test_method(self) -> str: ...
-
-        protocols.register("test_protocol", TestProtocol)
-
-        # Corrupt internal state to cause exception in validate()
-        protocols._registry["bad_key"] = cast("type", str)
-
-        # Call validate() which should catch exception (lines 647-648)
-        result = protocols.validate()
-        assert result.is_failure
-        assert result.error is not None and (
-            "validation failed" in (result.error or "").lower()
-            or "invalid" in (result.error or "").lower()
-        )
+    def test_all_extensions_protocols_available(self) -> None:
+        """Test that all extensions protocols are accessible."""
+        expected_protocols = [
+            "Plugin",
+            "PluginContext",
+            "Observability",
+            "Middleware",
+        ]
+        for proto_name in expected_protocols:
+            assert hasattr(FlextProtocols.Extensions, proto_name)

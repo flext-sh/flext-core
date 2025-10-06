@@ -117,73 +117,23 @@ class Flext:
     # Use type alias for proper generic support
     Result = FlextResult
 
-    class Handlers[T, U](FlextHandlers[T, U]):
-        """Handlers class for Flext."""
-
-    class Service[T](FlextService[T]):
-        """Service class for Flext."""
-
-    class Container(FlextContainer):
-        """Container class for Flext."""
-
-    class Logger(FlextLogger):
-        """Logger class for Flext."""
-
-    class Models(FlextModels):
-        """Models class for Flext."""
-
-    class Constants(FlextConstants):
-        """Constants class for Flext."""
-
-    class Types(FlextTypes):
-        """Types class for Flext."""
-
-    class Exceptions(FlextExceptions):
-        """Exceptions class for Flext."""
-
-    class Protocols(FlextProtocols):
-        """Protocols class for Flext."""
-
-    class Bus(FlextBus):
-        """Bus class for Flext."""
-
-    class Context(FlextContext):
-        """Context class for Flext."""
-
-    class Registry(FlextRegistry):
-        """Registry class for Flext."""
-
-    class Dispatcher(FlextDispatcher):
-        """Dispatcher class for Flext."""
-
-    class Mixins(FlextMixins):
-        """Mixins class for Flext."""
-
-    class Utilities(FlextUtilities):
-        """Utilities class for Flext."""
-
-    class Config(FlextConfig):
-        """Config class for Flext."""
-
-        @staticmethod
-        def create_logger(name: str) -> FlextLogger:
-            """Create a new logger instance with the given name."""
-            return FlextLogger(name)
-
-        @staticmethod
-        def create_container() -> FlextContainer:
-            """Create a new container instance."""
-            return FlextContainer()
-
-        @staticmethod
-        def create_bus() -> FlextBus:
-            """Create a new event bus instance."""
-            return FlextBus()
-
-        @staticmethod
-        def create_context() -> FlextContext:
-            """Create a new context instance."""
-            return FlextContext()
+    # Direct access to main classes without wrappers
+    Types = FlextTypes
+    Models = FlextModels
+    Constants = FlextConstants
+    Exceptions = FlextExceptions
+    Protocols = FlextProtocols
+    Config = FlextConfig
+    Container = FlextContainer
+    Logger = FlextLogger
+    Bus = FlextBus
+    Context = FlextContext
+    Registry = FlextRegistry
+    Dispatcher = FlextDispatcher
+    Handlers = FlextHandlers
+    Service = FlextService
+    Mixins = FlextMixins
+    Utilities = FlextUtilities
 
     # =================================================================
     # INSTANCE INITIALIZATION

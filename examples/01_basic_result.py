@@ -25,15 +25,27 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import Flext
+from flext_core import Flext, FlextConstants, FlextExceptions, FlextRuntime
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveResultService:
-    """Service demonstrating ALL FlextResult patterns and methods."""
+class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
+    """Service demonstrating ALL FlextResult patterns with FlextMixins.Service infrastructure.
+
+    This service now inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context)
+    - Inherited context property (FlextContext for request tracking)
+    - Inherited config property (FlextConfig with settings)
+    - Inherited metrics property (FlextMetrics for observability)
+
+    These inherited properties showcase the foundation infrastructure available
+    to all services in the FLEXT ecosystem.
+    """
 
     class Scenario:
         """Shared access to canonical flext_tests scenarios."""
@@ -84,14 +96,141 @@ class ComprehensiveResultService:
             return str(scenario.get("message", "Scenario failure"))
 
     def __init__(self) -> None:
-        """Initialize with FlextLogger for structured logging."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger or container initialization needed!
+        All infrastructure is inherited from Flext.Service base class:
+        - self.logger: FlextLogger with service context
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for request tracking
+        - self.config: FlextConfig with application settings
+        - self.metrics: FlextMetrics for observability
+        """
         super().__init__()
-        self._logger = Flext.Logger(__name__)
         self._dataset: Flext.Types.Dict = self.Scenario.dataset()
         self._validation: Flext.Types.Dict = self.Scenario.validation_data()
         self._metadata: Flext.Types.Dict = self.Scenario.metadata()
 
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "ComprehensiveResultService initialized with inherited infrastructure",
+            extra={
+                "dataset_keys": list(self._dataset.keys()),
+                "service_type": "FlextResult demonstration",
+            },
+        )
+
+    def execute(self) -> Flext.Result[Flext.Types.Dict]:
+        """Execute all FlextResult demonstrations and return summary.
+
+        This method satisfies the FlextService abstract interface while
+        demonstrating all FlextResult capabilities as a comprehensive example.
+
+        Returns:
+            FlextResult containing demonstration summary with method counts
+
+        """
+        self.logger.info("Starting comprehensive FlextResult demonstration")
+
+        try:
+            # Run all demonstrations
+            self.demonstrate_flext_runtime_integration()
+            self.demonstrate_factory_methods()
+            self.demonstrate_value_extraction()
+            self.demonstrate_railway_operations()
+            self.demonstrate_error_recovery()
+            self.demonstrate_advanced_combinators()
+            self.demonstrate_collection_operations()
+            self.demonstrate_validation_chaining()
+            self.demonstrate_operators()
+            self.demonstrate_context_operations()
+            self.demonstrate_flext_exceptions_integration()
+            self.demonstrate_from_callable()
+            self.demonstrate_flow_through()
+            self.demonstrate_lash()
+            self.demonstrate_alt()
+            self.demonstrate_value_or_call()
+            self.demonstrate_deprecated_patterns()
+
+            summary = {
+                "demonstrations_completed": 17,
+                "methods_covered": [
+                    "FlextRuntime integration",
+                    "factory methods",
+                    "value extraction",
+                    "railway operations",
+                    "error recovery",
+                    "advanced combinators",
+                    "collection operations",
+                    "validation chaining",
+                    "operators",
+                    "context operations",
+                    "FlextExceptions integration",
+                    "from_callable",
+                    "flow_through",
+                    "lash",
+                    "alt",
+                    "value_or_call",
+                    "deprecated patterns",
+                ],
+                "infrastructure": {
+                    "logger": type(self.logger).__name__,
+                    "container": type(self.container).__name__,
+                    "context": type(self.context).__name__,
+                },
+                "completed_at": datetime.now(UTC).isoformat(),
+            }
+
+            self.logger.info(
+                "FlextResult demonstration completed successfully", extra=summary
+            )
+
+            return Flext.Result[Flext.Types.Dict].ok(summary)
+
+        except Exception as e:
+            error_msg = f"Demonstration failed: {e}"
+            self.logger.exception(error_msg)
+            return Flext.Result[Flext.Types.Dict].fail(
+                error_msg, error_code=FlextConstants.Errors.SERVICE_ERROR
+            )
+
     # ========== BASIC OPERATIONS ==========
+
+    def demonstrate_flext_runtime_integration(self) -> None:
+        """Show FlextRuntime (Layer 0.5) integration with FlextResult."""
+        print("\n=== FlextRuntime Integration (Layer 0.5) ===")
+
+        # FlextRuntime type guards with FlextResult
+        email = "test@example.com"
+        if FlextRuntime.is_valid_email(email):
+            result = Flext.Result[str].ok(email)
+            print(f"✅ Valid email via FlextRuntime: {result.unwrap()}")
+        else:
+            result = Flext.Result[str].fail(
+                "Invalid email", error_code=FlextConstants.Errors.VALIDATION_ERROR
+            )
+
+        # JSON validation with FlextRuntime
+        json_str = '{"key": "value"}'
+        if FlextRuntime.is_valid_json(json_str):
+            result = Flext.Result[str].ok(json_str)
+            print("✅ Valid JSON via FlextRuntime: validated")
+
+        # UUID validation
+        uuid_str = "550e8400-e29b-41d4-a716-446655440000"
+        if FlextRuntime.is_valid_uuid(uuid_str):
+            result = Flext.Result[str].ok(uuid_str)
+            print(f"✅ Valid UUID via FlextRuntime: {uuid_str[:8]}...")
+
+        # Configuration defaults from FlextRuntime
+        timeout = FlextRuntime.DEFAULT_TIMEOUT
+        print(f"✅ FlextRuntime.DEFAULT_TIMEOUT: {timeout}s")
+
+        # Demonstrate inherited logger usage
+        self.logger.debug(
+            "FlextRuntime integration demonstrated",
+            extra={"validated": ["email", "json", "uuid"]},
+        )
 
     def demonstrate_factory_methods(self) -> None:
         """Show all ways to create FlextResult instances."""
@@ -100,14 +239,23 @@ class ComprehensiveResultService:
         success = self.Scenario.result_success({"scenario": "factory"})
         print(f"✅ .ok(): {success}")
 
-        failure = self.Scenario.result_failure("Validation failed")
-        print(f"❌ .fail(): {failure}")
+        # Using FlextConstants for error codes
+        failure = Flext.Result[object].fail(
+            "Validation failed", error_code=FlextConstants.Errors.VALIDATION_ERROR
+        )
+        print(f"❌ .fail() with FlextConstants error code: {failure}")
 
         def risky_operation() -> int:
             return 1 // 0  # Will raise ZeroDivisionError
 
         from_exc = Flext.Result[int].safe_call(risky_operation)
         print(f"🔥 .safe_call() for exceptions: {from_exc}")
+
+        # Log factory method demonstration
+        self.logger.info(
+            "FlextResult factory methods demonstrated",
+            extra={"methods": ["ok", "fail", "safe_call"]},
+        )
 
     def demonstrate_value_extraction(self) -> None:
         """Show all ways to extract values from Flext.Result."""
@@ -279,23 +427,23 @@ class ComprehensiveResultService:
         )
         print(f".chain_validations(): {result}")
 
-        def validate_not_empty_none(value: object) -> Flext.Result[None]:
+        def validate_not_empty_none(value: object) -> Flext.Result[bool]:
             str_value = cast("str", value)
             if not str_value:
-                return Flext.Result[None].fail("Empty string")
-            return Flext.Result[None].ok(None)
+                return Flext.Result[bool].fail("Empty string")
+            return Flext.Result[bool].ok(True)
 
-        def validate_email_none(value: object) -> Flext.Result[None]:
+        def validate_email_none(value: object) -> Flext.Result[bool]:
             str_value = cast("str", value)
             if "@" not in str_value:
-                return Flext.Result[None].fail("Invalid email")
-            return Flext.Result[None].ok(None)
+                return Flext.Result[bool].fail("Invalid email")
+            return Flext.Result[bool].ok(True)
 
-        def validate_domain_none(value: object) -> Flext.Result[None]:
+        def validate_domain_none(value: object) -> Flext.Result[bool]:
             str_value = cast("str", value)
             if not str_value.endswith(".com"):
-                return Flext.Result[None].fail("Must be .com domain")
-            return Flext.Result[None].ok(None)
+                return Flext.Result[bool].fail("Must be .com domain")
+            return Flext.Result[bool].ok(True)
 
         all_results = Flext.Result.validate_all(
             invalid_email,
@@ -349,7 +497,7 @@ class ComprehensiveResultService:
     # ========== CONTEXT AND LOGGING ==========
 
     def demonstrate_context_operations(self) -> None:
-        """Context enrichment and logging."""
+        """Context enrichment and logging with inherited infrastructure."""
         print("\n=== Context and Logging ===")
 
         def risky_operation() -> Flext.Result[int]:
@@ -363,7 +511,8 @@ class ComprehensiveResultService:
 
         def log_error(error: str) -> None:
             extra = {**self._metadata, "severity": "high"}
-            self._logger.error("Logged error: %s", error, extra=extra)
+            # Using inherited logger (no manual instantiation!)
+            self.logger.error("Logged error: %s", error, extra=extra)
 
         result = risky_operation().rescue_with_logging(log_error)
         print(f".rescue_with_logging() (logs error): {result}")
@@ -372,6 +521,208 @@ class ComprehensiveResultService:
             risky_operation().rescue_with_logging(log_error).recover(lambda _: 0)
         )
         print(f"Logged and recovered: {result_with_fallback}")
+
+        # Demonstrate context tracking with inherited context property
+        print("\n✨ Inherited Infrastructure Demonstration:")
+        print(f"   - Logger: {type(self.logger).__name__}")
+        print(f"   - Container: {type(self.container).__name__}")
+        print(f"   - Context: {type(self.context).__name__}")
+
+    def demonstrate_flext_exceptions_integration(self) -> None:
+        """Show FlextExceptions (Layer 2) structured error handling."""
+        print("\n=== FlextExceptions Integration (Layer 2) ===")
+
+        # ValidationError with field context
+        try:
+            error_message = "Invalid email format"
+            raise FlextExceptions.ValidationError(
+                error_message,
+                field="email",
+                value="invalid-email",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+        except FlextExceptions.ValidationError as e:
+            result = Flext.Result[str].fail(
+                e.message,
+                error_code=e.error_code,
+            )
+            print(f"✅ ValidationError: {result.error_code} - {result.error}")
+            print(f"   Field: {e.field}, Value: {e.value}")
+
+        # ConfigurationError with config key tracking
+        try:
+            config_error_message = "Missing required configuration"
+            raise FlextExceptions.ConfigurationError(
+                config_error_message,
+                config_key="DATABASE_URL",
+                config_source="environment",
+            )
+        except FlextExceptions.ConfigurationError as e:
+            result = Flext.Result[str].fail(
+                e.message,
+                error_code=e.error_code,
+            )
+            print(f"✅ ConfigurationError: {e.error_code}")
+            print(f"   Config Key: {e.config_key}, Source: {e.config_source}")
+
+        # NotFoundError with resource details
+        try:
+            not_found_message = "User not found"
+            raise FlextExceptions.NotFoundError(
+                not_found_message,
+                resource_type="user",
+                resource_id="123",
+            )
+        except FlextExceptions.NotFoundError as e:
+            result = Flext.Result[dict].fail(
+                e.message,
+                error_code=e.error_code,
+            )
+            print(f"✅ NotFoundError: {e.error_code}")
+            print(f"   Resource: {e.resource_type}, ID: {e.resource_id}")
+
+    # ========== NEW ADVANCED METHODS (v0.9.9+) ==========
+
+    def demonstrate_from_callable(self) -> None:
+        """Show from_callable pattern for safe exception handling."""
+        print("\n=== from_callable(): Safe Exception Handling ===")
+
+        # Safe division using from_callable
+        def risky_division() -> float:
+            return 10 / 0  # Will raise ZeroDivisionError
+
+        result = Flext.Result.from_callable(risky_division)
+        print(
+            f"✅ Caught exception: {result.error if result.is_failure else 'Unexpected success'}"
+        )
+
+        # Successful callable
+        def safe_addition() -> int:
+            return 5 + 10
+
+        result = Flext.Result.from_callable(safe_addition)
+        print(f".from_callable(safe): {result.unwrap()}")
+
+        # With custom error code
+        def parse_int_string() -> int:
+            return int("not a number")
+
+        result = Flext.Result.from_callable(
+            parse_int_string,
+            error_code=Flext.Constants.Errors.VALIDATION_ERROR,
+        )
+        print(f".from_callable(with error_code): {result.error}")
+
+    def demonstrate_flow_through(self) -> None:
+        """Show pipeline composition with flow_through."""
+        print("\n=== flow_through(): Pipeline Composition ===")
+
+        def validate_positive(x: int) -> Flext.Result[int]:
+            if x <= 0:
+                return Flext.Result[int].fail("Must be positive")
+            return Flext.Result[int].ok(x)
+
+        def add_ten(x: int) -> Flext.Result[int]:
+            return Flext.Result[int].ok(x + 10)
+
+        def multiply_by_two(x: int) -> Flext.Result[int]:
+            return Flext.Result[int].ok(x * 2)
+
+        # Success pipeline: 5 → validate → +10 → *2 = 30
+        result = (
+            Flext.Result[int]
+            .ok(5)
+            .flow_through(
+                validate_positive,
+                add_ten,
+                multiply_by_two,
+            )
+        )
+        print(f"✅ Pipeline success: 5 → +10 → *2 = {result.unwrap()}")
+
+        # Failure pipeline (stops at validation)
+        result = (
+            Flext.Result[int]
+            .ok(-5)
+            .flow_through(
+                validate_positive,
+                add_ten,
+                multiply_by_two,
+            )
+        )
+        print(f"Pipeline failure: {result.error}")
+
+    def demonstrate_lash(self) -> None:
+        """Show error recovery with lash (opposite of flat_map)."""
+        print("\n=== lash(): Error Recovery ===")
+
+        # Primary operation that fails
+        def try_primary_database() -> Flext.Result[str]:
+            return Flext.Result[str].fail("Primary database unavailable")
+
+        # Recovery function for errors
+        def recover_to_cache(error: str) -> Flext.Result[str]:
+            print(f"  Recovering from error: {error}")
+            return Flext.Result[str].ok("Data from cache")
+
+        result = try_primary_database().lash(recover_to_cache)
+        print(f"✅ Recovered: {result.unwrap()}")
+
+        # Success case - lash not called
+        def try_successful_operation() -> Flext.Result[str]:
+            return Flext.Result[str].ok("Primary success")
+
+        result = try_successful_operation().lash(recover_to_cache)
+        print(f"Success (no recovery): {result.unwrap()}")
+
+    def demonstrate_alt(self) -> None:
+        """Show fallback pattern with alt."""
+        print("\n=== alt(): Fallback Pattern ===")
+
+        # Primary fails, use fallback
+        primary = Flext.Result[str].fail("Primary service unavailable")
+        fallback = Flext.Result[str].ok("Fallback value")
+
+        result = primary.alt(fallback)
+        print(f"✅ Using fallback: {result.unwrap()}")
+
+        # Primary succeeds, ignore fallback
+        primary = Flext.Result[str].ok("Primary value")
+        fallback = Flext.Result[str].ok("Fallback value")
+
+        result = primary.alt(fallback)
+        print(f"Primary success: {result.unwrap()}")
+
+        # Chain multiple fallbacks
+        first = Flext.Result[str].fail("First failed")
+        second = Flext.Result[str].fail("Second failed")
+        third = Flext.Result[str].ok("Third succeeded")
+
+        result = first.alt(second).alt(third)
+        print(f"Fallback chain: {result.unwrap()}")
+
+    def demonstrate_value_or_call(self) -> None:
+        """Show lazy default evaluation with value_or_call."""
+        print("\n=== value_or_call(): Lazy Defaults ===")
+
+        expensive_called = False
+
+        def expensive_default() -> str:
+            nonlocal expensive_called
+            expensive_called = True
+            print("  Computing expensive default...")
+            return "expensive computed default"
+
+        # Success case - default NOT called (lazy evaluation)
+        success = Flext.Result[str].ok("success value")
+        result = success.value_or_call(expensive_default)
+        print(f"✅ Success: {result}, expensive_called={expensive_called}")
+
+        # Failure case - default IS called
+        expensive_called = False
+        failure = Flext.Result[str].fail("error occurred")
+        result = failure.value_or_call(expensive_default)
+        print(f"Failure: {result}, expensive_called={expensive_called}")
 
     # ========== DEPRECATED PATTERNS (WITH WARNINGS) ==========
 
@@ -437,7 +788,13 @@ def main() -> None:
     print("=" * 60)
     print("FLEXTRESULT COMPLETE API DEMONSTRATION")
     print("Foundation for 32+ FLEXT Ecosystem Projects")
+    print(
+        "With Layer 0.5-3 Integration (FlextRuntime → FlextConstants → FlextProtocols → FlextExceptions)"
+    )
     print("=" * 60)
+
+    # Foundation layer integration (NEW)
+    service.demonstrate_flext_runtime_integration()
 
     # Core patterns
     service.demonstrate_factory_methods()
@@ -454,11 +811,27 @@ def main() -> None:
     service.demonstrate_operators()
     service.demonstrate_context_operations()
 
+    # Structured error handling (NEW)
+    service.demonstrate_flext_exceptions_integration()
+
+    # New advanced methods (v0.9.9+)
+    service.demonstrate_from_callable()
+    service.demonstrate_flow_through()
+    service.demonstrate_lash()
+    service.demonstrate_alt()
+    service.demonstrate_value_or_call()
+
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 60)
     print("✅ ALL FlextResult methods demonstrated!")
+    print(
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+    )
+    print(
+        "🎯 Layer Integration: FlextRuntime (0.5) → FlextConstants (1) → FlextExceptions (2)"
+    )
     print("🎯 Next: See 02_dependency_injection.py for FlextContainer patterns")
     print("=" * 60)
 

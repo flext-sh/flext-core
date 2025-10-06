@@ -1,9 +1,11 @@
-"""Layer 0: Foundation constants backing the FLEXT-Core 1.0.0 modernization plan.
+"""Layer 1: Foundation constants backing the FLEXT-Core 1.0.0 modernization plan.
 
 This module provides the foundational constants for the entire FLEXT ecosystem.
-As Layer 0, it has NO dependencies and serves as the basis for all other modules.
+As Layer 1, it references FlextRuntime (Layer 0.5) primitives to avoid duplication
+while serving as the basis for all other modules.
 
-Dependency Layer: 0 (Foundation - No Dependencies)
+Dependency Layer: 1 (Foundation - depends on FlextRuntime Layer 0.5)
+Dependencies: FlextRuntime
 Used by: All other Flext modules and ecosystem projects
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,6 +22,7 @@ from typing import (
 )
 
 from flext_core.__version__ import __version__
+from flext_core.runtime import FlextRuntime
 
 
 class FlextConstants:
@@ -536,7 +539,9 @@ class FlextConstants:
             "test",
             "local",
         ]
-        DEFAULT_ENVIRONMENT: Final[str] = "development"  # Usage count: 0
+        DEFAULT_ENVIRONMENT: Final[str] = (
+            FlextRuntime.DEFAULT_ENVIRONMENT
+        )  # References FlextRuntime
         DOTENV_FILES: Final[list[str]] = [
             ".env",
             ".env.local",
@@ -645,8 +650,10 @@ class FlextConstants:
                 return f"{protocol}{host}:{port}"
         """
 
-        FLEXT_API_PORT: Final[int] = 8000  # Usage count: 4
-        DEFAULT_HOST: Final[str] = "localhost"  # Usage count: 0
+        FLEXT_API_PORT: Final[int] = (
+            FlextRuntime.DEFAULT_PORT
+        )  # References FlextRuntime
+        DEFAULT_HOST: Final[str] = FlextRuntime.DEFAULT_HOST  # References FlextRuntime
         LOOPBACK_IP: Final[str] = "127.0.0.1"  # Localhost IP address
 
         # Database defaults
@@ -766,10 +773,10 @@ class FlextConstants:
         DIR_TEMP: Final[str] = "temp"
         DIR_CACHE: Final[str] = "cache"
 
-        # Configuration delimiters
-        ENV_NESTED_DELIMITER: Final[str] = "__"
-        ENV_PREFIX: Final[str] = "FLEXT_"
-        ENV_FILE_DEFAULT: Final[str] = ".env"
+        # Configuration delimiters (references FlextRuntime)
+        ENV_NESTED_DELIMITER: Final[str] = FlextRuntime.ENV_NESTED_DELIMITER
+        ENV_PREFIX: Final[str] = FlextRuntime.ENV_PREFIX
+        ENV_FILE_DEFAULT: Final[str] = FlextRuntime.ENV_FILE_DEFAULT
 
         # Validation patterns
         PATTERN_SECURITY_LEVEL: Final[str] = "^(low|standard|high|critical)$"
@@ -1026,8 +1033,8 @@ class FlextConstants:
         # JWT token expiry limits - Additional short-term option
         SHORT_JWT_EXPIRY_MINUTES: Final[int] = 60  # 1 hour for short sessions
 
-        # BCrypt configuration
-        DEFAULT_BCRYPT_ROUNDS: Final[int] = 12  # Secure default for password hashing
+        # BCrypt configuration (references FlextRuntime)
+        DEFAULT_BCRYPT_ROUNDS: Final[int] = FlextRuntime.DEFAULT_BCRYPT_ROUNDS
         MIN_BCRYPT_ROUNDS: Final[int] = 10  # Minimum acceptable rounds
         MAX_BCRYPT_ROUNDS: Final[int] = 15  # Maximum reasonable rounds
 
@@ -1398,26 +1405,24 @@ class FlextConstants:
         ERROR: Final[str] = "ERROR"
         CRITICAL: Final[str] = "CRITICAL"
 
-        # Default log level for different environments
-        DEFAULT_LEVEL: Final[str] = "INFO"
-        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
-        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
-        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
+        # Default log level for different environments (references FlextRuntime)
+        DEFAULT_LEVEL: Final[str] = FlextRuntime.DEFAULT_LOG_LEVEL
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = FlextRuntime.LOG_LEVEL_DEBUG
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = FlextRuntime.LOG_LEVEL_WARNING
+        DEFAULT_LEVEL_TESTING: Final[str] = FlextRuntime.LOG_LEVEL_INFO
 
         # Valid log levels set
         VALID_LEVELS: Final[set[str]] = {
             "TRACE",
-            "DEBUG",
-            "INFO",
-            "WARNING",
-            "ERROR",
-            "CRITICAL",
+            FlextRuntime.LOG_LEVEL_DEBUG,
+            FlextRuntime.LOG_LEVEL_INFO,
+            FlextRuntime.LOG_LEVEL_WARNING,
+            FlextRuntime.LOG_LEVEL_ERROR,
+            FlextRuntime.LOG_LEVEL_CRITICAL,
         }
 
-        # Log Formatting
-        DEFAULT_FORMAT: Final[str] = (
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        # Log Formatting (references FlextRuntime)
+        DEFAULT_FORMAT: Final[str] = FlextRuntime.DEFAULT_LOG_FORMAT
         DETAILED_FORMAT: Final[str] = (
             "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s"
         )
@@ -1739,16 +1744,16 @@ class FlextConstants:
         VALIDATION_STRICT = "strict"
         VALIDATION_CUSTOM = "custom"
 
-        # Log Levels (simple string constants)
-        LOG_LEVEL_DEBUG = "DEBUG"
-        LOG_LEVEL_INFO = "INFO"
-        LOG_LEVEL_WARNING = "WARNING"
-        LOG_LEVEL_ERROR = "ERROR"
-        LOG_LEVEL_CRITICAL = "CRITICAL"
+        # Log Levels (references FlextRuntime)
+        LOG_LEVEL_DEBUG = FlextRuntime.LOG_LEVEL_DEBUG
+        LOG_LEVEL_INFO = FlextRuntime.LOG_LEVEL_INFO
+        LOG_LEVEL_WARNING = FlextRuntime.LOG_LEVEL_WARNING
+        LOG_LEVEL_ERROR = FlextRuntime.LOG_LEVEL_ERROR
+        LOG_LEVEL_CRITICAL = FlextRuntime.LOG_LEVEL_CRITICAL
 
-        # Serialization Defaults
+        # Serialization Defaults (references FlextRuntime)
         DEFAULT_JSON_INDENT = 2
-        DEFAULT_ENCODING = "utf-8"
+        DEFAULT_ENCODING = FlextRuntime.DEFAULT_ENCODING
         DEFAULT_SORT_KEYS = False
         DEFAULT_ENSURE_ASCII = False
 

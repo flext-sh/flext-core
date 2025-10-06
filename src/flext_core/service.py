@@ -24,11 +24,8 @@ from typing import (
 
 from pydantic import ConfigDict
 
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer
 from flext_core.exceptions import FlextExceptions
-from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
@@ -38,16 +35,20 @@ from flext_core.typings import FlextTypes
 
 class FlextService[TDomainResult](
     FlextModels.ArbitraryTypesModel,
-    FlextMixins.Serializable,
-    FlextMixins.Loggable,
+    FlextMixins.Service,  # Full service infrastructure (Container, Context, Logging, Metrics, Configurable)
     ABC,
 ):
     """Domain service base using railway patterns with Pydantic models.
 
-    **Function**: Domain service base class for business logic
+    **Function**: Domain service base class for business logic with full infrastructure
         - Abstract execute() method for domain operations (Domain.Service protocol)
         - Business rule validation with FlextResult (Domain.Service protocol)
         - Configuration validation and management (Domain.Service protocol)
+        - Dependency injection via FlextMixins.Container
+        - Context propagation via FlextMixins.Context
+        - Structured logging via FlextMixins.Logging
+        - Performance tracking via FlextMixins.Metrics
+        - Configuration access via FlextMixins.Configurable
         - Operation execution with timeout support (Domain.Service protocol)
         - Batch processing for multiple operations
         - Performance metrics collection and tracking
@@ -195,57 +196,42 @@ class FlextService[TDomainResult](
         use_enum_values=True,
     )
 
-    # Dependency injection attributes (set by infrastructure)
-    _container: FlextContainer | None = None
-    _logger: FlextLogger | None = None
-    _config: FlextConfig | None = None
+    # Dependency injection attributes provided by FlextMixins.Service
+    # - container: FlextContainer (via FlextMixins.Container)
+    # - context: object (via FlextMixins.Context)
+    # - logger: FlextLogger (via FlextMixins.Logging)
+    # - config: object (via FlextMixins.Configurable)
+    # - _track_operation: context manager (via FlextMixins.Metrics)
+
     _bus: object | None = None  # FlextBus type to avoid circular import
-    _context: object | None = None  # FlextContext type to avoid circular import
 
     @override
     def __init__(self, **data: object) -> None:
-        """Initialize domain service with Pydantic validation."""
+        """Initialize domain service with Pydantic validation and infrastructure."""
         super().__init__(**data)
+        # Initialize service infrastructure if needed
+        self._init_service(service_name=self.__class__.__name__)
+
+        # Enrich context with service metadata (Phase 1 enhancement)
+        # This automatically adds service information to all logs
+        self._enrich_context(
+            service_type=self.__class__.__name__,
+            service_module=self.__class__.__module__,
+        )
 
     # =============================================================================
-    # DEPENDENCY INJECTION PROPERTIES - Lazy initialization
+    # DEPENDENCY INJECTION PROPERTIES - Provided by FlextMixins.Service
     # =============================================================================
-
-    @property
-    def logger(self) -> FlextLogger:
-        """Get logger instance with lazy initialization.
-
-        Returns:
-            FlextLogger instance for this service.
-
-        """
-        if self._logger is None:
-            self._logger = FlextLogger(type(self).__name__)
-        return self._logger
-
-    @property
-    def container(self) -> FlextContainer:
-        """Get dependency injection container with lazy initialization.
-
-        Returns:
-            FlextContainer global instance.
-
-        """
-        if self._container is None:
-            self._container = FlextContainer.get_global()
-        return self._container
-
-    @property
-    def config(self) -> FlextConfig:
-        """Get configuration instance with lazy initialization.
-
-        Returns:
-            FlextConfig instance.
-
-        """
-        if self._config is None:
-            self._config = FlextConfig()
-        return self._config
+    # Properties are inherited from FlextMixins.Service:
+    # - logger: FlextLogger (via FlextMixins.Logging)
+    # - container: FlextContainer (via FlextMixins.Container)
+    # - config: object (via FlextMixins.Configurable)
+    # - context: object (via FlextMixins.Context)
+    # - _track_operation: context manager (via FlextMixins.Metrics)
+    # - _log_with_context: method (via FlextMixins.Logging)
+    # - _propagate_context: method (via FlextMixins.Context)
+    # - _get_correlation_id: method (via FlextMixins.Context)
+    # - _get_config_value: method (via FlextMixins.Configurable)
 
     # =============================================================================
     # ABSTRACT METHODS - Must be implemented by subclasses (Domain.Service protocol)
@@ -673,6 +659,109 @@ class FlextService[TDomainResult](
 
         # Execute after successful validation
         return self.execute()
+
+    def execute_with_context_enrichment(
+        self,
+        operation_name: str,
+        correlation_id: str | None = None,
+        user_id: str | None = None,
+        **context_data: object,
+    ) -> FlextResult[TDomainResult]:
+        """Execute with automatic context enrichment (Phase 1 enhancement).
+
+        Demonstrates the new context enrichment patterns from Phase 1 architectural
+        enhancement. This method shows ecosystem projects how to use the new features.
+
+        Args:
+            operation_name: Name of the operation for context tracking
+            correlation_id: Optional correlation ID (auto-generated if None)
+            user_id: Optional user ID for audit context
+            **context_data: Additional context data to enrich logs
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with error
+
+        Example:
+            ```python
+            class OrderService(FlextService[Order]):
+                def create_order(
+                    self, customer_id: str, items: list
+                ) -> FlextResult[Order]:
+                    # Use context enrichment for automatic logging
+                    return self.execute_with_context_enrichment(
+                        operation_name="create_order",
+                        user_id=customer_id,
+                        item_count=len(items),
+                        order_type="standard",
+                    )
+
+                def execute(self) -> FlextResult[Order]:
+                    # Actual business logic here
+                    return FlextResult[Order].ok(Order())
+            ```
+
+        Note:
+            - Context is automatically added to all logs within the operation
+            - Correlation ID is generated if not provided
+            - Context is automatically cleaned up after operation
+            - All logs include: operation_name, correlation_id, user_id, and custom data
+
+        """
+        try:
+            # Set correlation ID for request tracking
+            actual_correlation_id = self._with_correlation_id(correlation_id)
+
+            # Set operation context with additional data
+            self._with_operation_context(operation_name, **context_data)
+
+            # Set user context if provided
+            if user_id:
+                self._with_user_context(user_id)
+
+            # Log operation start with enriched context
+            self._log_with_context(
+                "info",
+                f"Starting {operation_name}",
+                correlation_id=actual_correlation_id,
+            )
+
+            # Execute the domain operation with enriched context
+            with self._track_operation(operation_name):
+                result = self.execute()
+
+            # Log completion
+            if result.is_success:
+                self._log_with_context(
+                    "info",
+                    f"Completed {operation_name} successfully",
+                    correlation_id=actual_correlation_id,
+                )
+            else:
+                self._log_with_context(
+                    "error",
+                    f"Failed {operation_name}",
+                    error=result.error,
+                    correlation_id=actual_correlation_id,
+                )
+
+            return result
+
+        except Exception as e:
+            # Log exception with context
+            self._log_with_context(
+                "error",
+                f"Exception in {operation_name}",
+                exception=str(e),
+                exception_type=type(e).__name__,
+            )
+            return FlextResult[TDomainResult].fail(
+                f"Operation '{operation_name}' failed: {e}",
+                error_code="OPERATION_EXCEPTION",
+            )
+
+        finally:
+            # Always clean up operation context
+            self._clear_operation_context()
 
     # =============================================================================
     # OPERATION HELPER METHODS - Simplified execution logic

@@ -17,18 +17,27 @@ from typing import (
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class FlextProcessors:
+class FlextProcessors(FlextMixins.Service):
     """Processing convenience namespace aligned with dispatcher workflows.
 
     Registries, pipelines, and handler helpers mirror ergonomics
     promoted in modernization plan so supporting packages can compose
     around ``FlextDispatcher`` without bespoke glue code.
+
+    **Inherited Infrastructure** (from FlextMixins.Service):
+        - container: FlextContainer (via FlextMixins.Container)
+        - context: object (via FlextMixins.Context)
+        - logger: FlextLogger (via FlextMixins.Logging) - per-processor logger instance
+        - config: object (via FlextMixins.Configurable) - global config access
+        - _track_operation: context manager (via FlextMixins.Metrics)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
 
     **Function**: Processing utilities for dispatcher integration
         - Processor registration and discovery
@@ -148,9 +157,14 @@ class FlextProcessors:
             config: Optional configuration dictionary for processors
 
         """
+        super().__init__()
+
+        # Initialize service infrastructure (DI, Context, Logging, Metrics)
+        self._init_service("flext_processors")
+
         self._registry: FlextTypes.Dict = {}
         self._middleware: FlextTypes.List = []
-        self._config = config or {}
+        self._processor_config = config or {}
         self._metrics: dict[str, int] = {}
         self._audit_log: list[FlextTypes.Dict] = []
         self._performance_metrics: FlextTypes.FloatDict = {}
@@ -162,14 +176,16 @@ class FlextProcessors:
         self._circuit_breaker_threshold: int = 0
         self._rate_limit: int = 0
         self._rate_limit_window: int = 0
-        cache_ttl = self._config.get("cache_ttl", FlextConstants.Defaults.CACHE_TTL)
+        cache_ttl = self._processor_config.get(
+            "cache_ttl", FlextConstants.Defaults.CACHE_TTL
+        )
         self._cache_ttl = (
             float(cache_ttl)
             if isinstance(cache_ttl, (int, float, str))
             else float(FlextConstants.Defaults.CACHE_TTL)
         )
 
-        circuit_threshold = self._config.get(
+        circuit_threshold = self._processor_config.get(
             "circuit_breaker_threshold",
             5,  # Default circuit breaker threshold
         )
@@ -179,7 +195,7 @@ class FlextProcessors:
             else 5
         )
 
-        rate_limit = self._config.get(
+        rate_limit = self._processor_config.get(
             "rate_limit",
             3,  # Default max retry attempts
         )
@@ -189,7 +205,7 @@ class FlextProcessors:
             else 3  # Default max retry attempts
         )
 
-        rate_window = self._config.get(
+        rate_window = self._processor_config.get(
             "rate_limit_window",
             60,  # Default rate limit window (60 seconds)
         )
@@ -491,7 +507,7 @@ class FlextProcessors:
             FlextResult[None]: Success if valid, failure otherwise
 
         """
-        if not isinstance(self._config, dict):
+        if not isinstance(self._processor_config, dict):
             return FlextResult[None].fail("Configuration must be a dictionary")
 
         if self._cache_ttl < FlextConstants.Core.ZERO:
@@ -558,57 +574,6 @@ class FlextProcessors:
         except (ValueError, TypeError) as e:
             return FlextResult[None].fail(f"Configuration import error: {e}")
 
-    class Config:
-        """Configuration settings for FlextProcessors using FlextConfig defaults."""
-
-        @classmethod
-        def get_default_timeout(cls) -> float:
-            """Get default timeout from configuration or constants.
-
-            Returns:
-                float: Default timeout in seconds, from configuration or
-                fallback to constants.
-
-            """
-            try:
-                config = FlextConfig.get_global_instance()
-                return float(
-                    getattr(config, "default_timeout", FlextConstants.Defaults.TIMEOUT),
-                )
-            except Exception:
-                return float(FlextConstants.Defaults.TIMEOUT)
-
-        @classmethod
-        def get_max_batch_size(cls) -> int:
-            """Get maximum batch size from configuration or constants.
-
-            Returns:
-                int: Maximum batch size configured or the default constant.
-
-            """
-            # Use default batch size as this is a class method without instance config
-            return 100  # Default batch size
-
-        @classmethod
-        def get_max_handlers(cls) -> int:
-            """Get maximum number of handlers from configuration or constants.
-
-            Returns:
-                int: Maximum handlers configured or the default constant.
-
-            """
-            try:
-                config = FlextConfig.get_global_instance()
-                return int(
-                    getattr(
-                        config,
-                        "max_handlers",
-                        FlextConstants.Container.MAX_SERVICES,
-                    ),
-                )
-            except Exception:
-                return FlextConstants.Container.MAX_SERVICES
-
     class Handler:
         """Minimal handler base returning modernization-compliant results."""
 
@@ -648,7 +613,7 @@ class FlextProcessors:
                 )
 
             # Check handler registry size limits
-            max_handlers = FlextProcessors.Config.get_max_handlers()
+            max_handlers = FlextConfig.get_global_instance().max_workers
             if len(self._handlers) >= max_handlers:
                 return FlextResult[None].fail(
                     f"Handler registry full: {len(self._handlers)}/{max_handlers} handlers registered",
@@ -785,11 +750,11 @@ class FlextProcessors:
                 a FlextResult, possibly a failure on timeout.
 
             """
-            timeout_seconds = getattr(
-                config,
-                "timeout_seconds",
-                FlextProcessors.Config.get_default_timeout(),
-            )
+            # timeout_seconds = getattr(  # Unused for now
+            #     config,
+            #     "timeout_seconds",
+            #     FlextProcessors.Config.get_default_timeout(),
+            # )
 
             # Execute handler with timeout protection
             try:
@@ -855,7 +820,7 @@ class FlextProcessors:
                 continue_on_error = config.continue_on_error
 
             # Validate batch size limits
-            max_batch_size = FlextProcessors.Config.get_max_batch_size()
+            max_batch_size = FlextConfig.get_global_instance().max_batch_size
             if len(data_items) > max_batch_size:
                 return FlextResult[FlextTypes.List].fail(
                     f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
@@ -977,7 +942,7 @@ class FlextProcessors:
             timeout_seconds = getattr(
                 request,
                 "timeout_seconds",
-                FlextProcessors.Config.get_default_timeout(),
+                FlextConfig.get_global_instance().timeout_seconds,
             )
 
             # Validate timeout bounds
@@ -1071,7 +1036,7 @@ class FlextProcessors:
                 continue_on_error = config.continue_on_error
 
             # Validate batch size limits
-            max_batch_size = FlextProcessors.Config.get_max_batch_size()
+            max_batch_size = FlextConfig.get_global_instance().max_batch_size
             if len(data_items) > max_batch_size:
                 return FlextResult[FlextTypes.List].fail(
                     f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",

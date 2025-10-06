@@ -23,6 +23,7 @@ import uuid
 from pathlib import Path
 from typing import Any, ClassVar, Self, cast
 
+from dependency_injector import providers
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,12 +33,10 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
-providers = FlextRuntime.dependency_providers()
+structlog = FlextRuntime.structlog()
 
 
-class FlextConfig(
-    BaseSettings,
-):
+class FlextConfig(BaseSettings):
     """Configuration management system for FLEXT ecosystem - OPTIMIZATION SHOWCASE.
 
     FLEXT-CORE OPTIMIZATION PATTERNS DEMONSTRATED:
@@ -170,25 +169,6 @@ class FlextConfig(
             return {"level": self.log_level}
 
 
-    # ✅ AFTER - Unified configuration with flext-core integration
-    class FlextConfig(BaseSettings):  # Single class pattern
-        log_level: str = Field(default="INFO")  # Pydantic field
-
-        @computed_field  # Derived configuration
-        def logging_config(self) -> dict:
-            return {
-                "level": self.effective_log_level,  # Considers debug/trace
-                "format": self.log_format,
-                "structured": self.structured_output,
-            }
-
-        def get_component_config(self, component: str) -> FlextResult[FlextTypes.Dict]:
-            # Integration with flext-core components
-            return FlextResult[FlextTypes.Dict].ok({
-                "component": component,
-                "config": "enhanced",
-            })
-    ```
 
     **Args**:
         **data: Configuration values as keyword arguments.
@@ -343,6 +323,227 @@ class FlextConfig(
                 config.update(handler_config)
 
             return config
+
+    class Providers:
+        """Dependency injection provider factory utilities.
+
+        Provides factory methods for creating dependency_injector providers
+        for FlextConfig integration with the DI container.
+
+        This class demonstrates Phase 2 enhancement patterns:
+        - Singleton providers for global config access
+        - Factory providers for config instance creation
+        - Callable providers for computed configuration values
+        - Configuration providers for settings injection
+        """
+
+        @staticmethod
+        def create_singleton_provider(
+            config_instance: FlextConfig | None = None,
+        ) -> providers.Singleton:
+            """Create a Singleton provider for FlextConfig.
+
+            Args:
+                config_instance: Optional config instance to use. If None,
+                    uses get_global_instance() to get/create singleton.
+
+            Returns:
+                providers.Singleton: Singleton provider for config instance
+
+            Example:
+                >>> from flext_core import FlextConfig
+                >>> config_provider = FlextConfig.Providers.create_singleton_provider()
+                >>> # Use in container
+                >>> container.config = config_provider
+
+            """
+            if config_instance is None:
+                config_instance = FlextConfig.get_global_instance()
+
+            return providers.Singleton(lambda: config_instance)
+
+        @staticmethod
+        def create_factory_provider(
+            **default_kwargs: FlextTypes.ConfigValue,
+        ) -> providers.Factory:
+            """Create a Factory provider for FlextConfig instances.
+
+            Args:
+                **default_kwargs: Default configuration values to use
+
+            Returns:
+                providers.Factory: Factory provider for creating config instances
+
+            Example:
+                >>> factory = FlextConfig.Providers.create_factory_provider(
+                ...     debug=True, environment="test"
+                ... )
+                >>> # Creates new config with defaults
+                >>> config = factory()
+
+            """
+            return providers.Factory(
+                FlextConfig.create,
+                **default_kwargs,
+            )
+
+        @staticmethod
+        def create_callable_provider(
+            config_instance: FlextConfig,
+            field_name: str,
+        ) -> providers.Callable:
+            """Create a Callable provider for a specific config field.
+
+            Args:
+                config_instance: Config instance to read from
+                field_name: Name of the field to provide
+
+            Returns:
+                providers.Callable: Callable provider for field value
+
+            Example:
+                >>> config = FlextConfig()
+                >>> log_level_provider = FlextConfig.Providers.create_callable_provider(
+                ...     config, "log_level"
+                ... )
+                >>> # Access field value
+                >>> level = log_level_provider()
+
+            """
+            return providers.Callable(lambda: getattr(config_instance, field_name))
+
+        @staticmethod
+        def create_configuration_provider(
+            config_instance: FlextConfig | None = None,
+        ) -> Any:  # providers.Configuration
+            """Create a Configuration provider from FlextConfig.
+
+            Args:
+                config_instance: Optional config instance. If None,
+                    uses get_global_instance().
+
+            Returns:
+                providers.Configuration: Configuration provider with all config values
+
+            Example:
+                >>> config_provider = (
+                ...     FlextConfig.Providers.create_configuration_provider()
+                ... )
+                >>> # Access via DI
+                >>> log_level = config_provider.log_level()
+                >>> timeout = config_provider.timeout_seconds()
+
+            """
+            if config_instance is None:
+                config_instance = FlextConfig.get_global_instance()
+
+            config_provider = providers.Configuration()
+            config_provider.from_dict(config_instance.model_dump())
+            return config_provider
+
+        @staticmethod
+        def create_component_provider(
+            component_name: str,
+            config_instance: FlextConfig | None = None,
+        ) -> FlextResult[Any]:  # FlextResult[providers.Callable]
+            """Create a provider for component-specific configuration.
+
+            Args:
+                component_name: Name of component ('container', 'bus', etc.)
+                config_instance: Optional config instance
+
+            Returns:
+                FlextResult containing Callable provider or error
+
+            Example:
+                >>> result = FlextConfig.Providers.create_component_provider(
+                ...     "container"
+                ... )
+                >>> if result.is_success:
+                ...     container_config_provider = result.unwrap()
+                ...     config = container_config_provider()
+
+            """
+            if config_instance is None:
+                config_instance = FlextConfig.get_global_instance()
+
+            # Validate component exists
+            component_config_result = config_instance.get_component_config(
+                component_name
+            )
+            if component_config_result.is_failure:
+                return FlextResult[Any].fail(
+                    f"Component provider creation failed: {component_config_result.error}"
+                )
+
+            # Create callable provider for component config
+            provider = providers.Callable(
+                lambda: config_instance.get_component_config(component_name).unwrap()
+            )
+
+            return FlextResult[Any].ok(provider)
+
+        @staticmethod
+        def register_in_container(
+            container: Any,  # FlextContainer or dependency_injector.containers.Container
+            config_instance: FlextConfig | None = None,
+        ) -> FlextResult[None]:
+            """Register FlextConfig providers in a DI container.
+
+            Args:
+                container: DI container to register providers in
+                config_instance: Optional config instance to use
+
+            Returns:
+                FlextResult[None]: Success or failure result
+
+            Example:
+                >>> from flext_core import FlextContainer, FlextConfig
+                >>> container = FlextContainer.get_global()
+                >>> result = FlextConfig.Providers.register_in_container(
+                ...     container, FlextConfig()
+                ... )
+
+            """
+            try:
+                if config_instance is None:
+                    config_instance = FlextConfig.get_global_instance()
+
+                # Check if container has _di_container attribute (FlextContainer)
+                if hasattr(container, "_di_container"):
+                    # FlextContainer with internal dependency-injector container
+                    di_container = container._di_container
+
+                    # Register configuration provider
+                    di_container.config = (
+                        FlextConfig.Providers.create_configuration_provider(
+                            config_instance
+                        )
+                    )
+
+                    # Register singleton config instance
+                    config_singleton = FlextConfig.Providers.create_singleton_provider(
+                        config_instance
+                    )
+                    container.register("flext_config", config_singleton)
+
+                    return FlextResult[None].ok(None)
+
+                # Direct dependency-injector container
+                if hasattr(container, "config"):
+                    container.config = (
+                        FlextConfig.Providers.create_configuration_provider(
+                            config_instance
+                        )
+                    )
+                    return FlextResult[None].ok(None)
+
+                return FlextResult[None].fail(
+                    "Container does not support config provider registration"
+                )
+
+            except Exception as e:
+                return FlextResult[None].fail(f"Provider registration failed: {e}")
 
     # Singleton pattern implementation - per-class instances to support inheritance
     _instances: ClassVar[dict[type, FlextConfig]] = {}
@@ -578,6 +779,13 @@ class FlextConfig(
         description="Maximum number of workers",
     )
 
+    max_batch_size: int = Field(
+        default=100,
+        ge=1,
+        le=1000,
+        description="Maximum batch size for batch operations",
+    )
+
     # Circuit breaker configuration
     enable_circuit_breaker: bool = Field(
         default=False,
@@ -783,11 +991,11 @@ class FlextConfig(
 
         return getattr(self, key)
 
-    # Field validators
+    # Field validators with structured logging
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v: str) -> str:
-        """Validate that environment is one of the allowed values."""
+        """Validate that environment is one of the allowed values with structured logging."""
         valid_environments = {
             "development",
             "dev",
@@ -798,6 +1006,26 @@ class FlextConfig(
         }
         if v.lower() not in valid_environments:
             msg = f"Invalid environment: {v}. Must be one of: {', '.join(sorted(valid_environments))}"
+
+            # Structured validation error logging
+            try:
+                logger = structlog.get_logger()
+                logger.warning(
+                    "config_validation_failed",
+                    event_type="validation_error",
+                    validator="validate_environment",
+                    field="environment",
+                    invalid_value=v,
+                    valid_values=sorted(valid_environments),
+                )
+            except Exception as e:
+                # Don't fail validation if logging fails, but log to stderr for diagnostics
+                import sys
+
+                print(
+                    f"Warning: Logging failed during validation: {e}", file=sys.stderr
+                )
+
             raise FlextExceptions.ValidationError(
                 message=msg,
             )
@@ -806,10 +1034,30 @@ class FlextConfig(
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
-        """Validate that log_level is one of the allowed values (case-insensitive)."""
+        """Validate that log_level is one of the allowed values with structured logging."""
         v_upper = v.upper()
         if v_upper not in FlextConstants.Logging.VALID_LEVELS:
             msg = f"Invalid log level: {v}. Must be one of: {', '.join(FlextConstants.Logging.VALID_LEVELS)}"
+
+            # Structured validation error logging
+            try:
+                logger = structlog.get_logger()
+                logger.warning(
+                    "config_validation_failed",
+                    event_type="validation_error",
+                    validator="validate_log_level",
+                    field="log_level",
+                    invalid_value=v,
+                    valid_values=list(FlextConstants.Logging.VALID_LEVELS),
+                )
+            except Exception as e:
+                # Don't fail validation if logging fails, but log to stderr for diagnostics
+                import sys
+
+                print(
+                    f"Warning: Logging failed during validation: {e}", file=sys.stderr
+                )
+
             raise FlextExceptions.ValidationError(
                 message=msg,
             )
@@ -948,7 +1196,8 @@ class FlextConfig(
                     if instance is not None:
                         # Convert Pydantic model to dict and populate DI provider
                         config_dict = instance.model_dump()
-                        cls._di_config_provider.from_dict(config_dict)
+                        if cls._di_config_provider is not None:
+                            cls._di_config_provider.from_dict(config_dict)
         return cls._di_config_provider
 
     @classmethod
@@ -967,7 +1216,8 @@ class FlextConfig(
 
         # Update the provider with current Pydantic settings instance
         # The provider automatically reads values from the Pydantic settings
-        di_provider.set_pydantic_settings([config_instance])
+        if di_provider is not None:
+            di_provider.set_pydantic_settings([config_instance])
 
     @classmethod
     def get_di_config_provider(cls) -> Any:  # providers.Configuration
@@ -1110,6 +1360,265 @@ class FlextConfig(
             return FlextResult[FlextConfig].fail(
                 f"Failed to load config: Error loading configuration: {e}",
             )
+
+    # =========================================================================
+    # Advanced Structlog Integration (Phase 1 Enhancement)
+    # =========================================================================
+
+    @classmethod
+    def audit_config_change(
+        cls,
+        *,
+        field: str,
+        old_value: object,
+        new_value: object,
+        change_reason: str | None = None,
+    ) -> FlextResult[None]:
+        """Audit configuration changes with structured logging.
+
+        Args:
+            field: Configuration field that changed
+            old_value: Previous field value (masked if sensitive)
+            new_value: New field value (masked if sensitive)
+            change_reason: Optional reason for the change
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> FlextConfig.audit_config_change(
+            ...     field="log_level",
+            ...     old_value="INFO",
+            ...     new_value="DEBUG",
+            ...     change_reason="Troubleshooting production issue",
+            ... )
+
+        """
+        try:
+            # Mask sensitive fields
+            sensitive_fields = {"secret_key", "api_key", "jwt_secret", "database_url"}
+            is_sensitive = field in sensitive_fields
+
+            masked_old = (
+                FlextConstants.Messages.REDACTED_SECRET if is_sensitive else old_value
+            )
+            masked_new = (
+                FlextConstants.Messages.REDACTED_SECRET if is_sensitive else new_value
+            )
+
+            # Structured audit log
+            logger = structlog.get_logger()
+            logger.info(
+                "config_change_audit",
+                event_type="configuration_change",
+                field=field,
+                old_value=masked_old,
+                new_value=masked_new,
+                change_reason=change_reason,
+                is_sensitive=is_sensitive,
+            )
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Audit logging failed: {e}")
+
+    def track_validation_error(
+        self,
+        *,
+        validator: str,
+        field: str,
+        error: str,
+        value: object = None,
+    ) -> FlextResult[None]:
+        """Track validation errors with structured logging.
+
+        Args:
+            validator: Name of the validator that failed
+            field: Field that failed validation
+            error: Validation error message
+            value: Value that failed (masked if sensitive)
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> config.track_validation_error(
+            ...     validator="validate_log_level",
+            ...     field="log_level",
+            ...     error="Invalid log level: TRACE",
+            ...     value="TRACE",
+            ... )
+
+        """
+        try:
+            # Mask sensitive field values
+            sensitive_fields = {"secret_key", "api_key", "jwt_secret", "database_url"}
+            is_sensitive = field in sensitive_fields
+            masked_value = (
+                FlextConstants.Messages.REDACTED_SECRET if is_sensitive else value
+            )
+
+            logger = structlog.get_logger()
+            logger.warning(
+                "config_validation_error",
+                event_type="validation_failure",
+                validator=validator,
+                field=field,
+                error=error,
+                value=masked_value if value is not None else "not_provided",
+                is_sensitive=is_sensitive,
+            )
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Validation tracking failed: {e}")
+
+    def generate_config_diff(
+        self,
+        other: FlextConfig,
+    ) -> FlextResult[FlextTypes.Dict]:
+        """Generate structured diff between two configurations.
+
+        Args:
+            other: Other configuration to compare with
+
+        Returns:
+            FlextResult containing diff dictionary or error
+
+        Example:
+            >>> config1 = FlextConfig(debug=False, log_level="INFO")
+            >>> config2 = FlextConfig(debug=True, log_level="DEBUG")
+            >>> diff_result = config1.generate_config_diff(config2)
+            >>> if diff_result.is_success:
+            ...     print(diff_result.unwrap())
+
+        """
+        try:
+            current_dict = self.model_dump()
+            other_dict = other.model_dump()
+
+            # Track differences with proper type annotations
+            added_fields: dict[str, object] = {}
+            removed_fields: dict[str, object] = {}
+            changed_fields: dict[str, dict[str, object]] = {}
+
+            # Find added and changed fields
+            for key, value in other_dict.items():
+                if key not in current_dict:
+                    added_fields[key] = value
+                elif current_dict[key] != value:
+                    changed_fields[key] = {
+                        "old": current_dict[key],
+                        "new": value,
+                    }
+
+            # Find removed fields
+            for key in current_dict:
+                if key not in other_dict:
+                    removed_fields[key] = current_dict[key]
+
+            # Create differences dict
+            differences: FlextTypes.Dict = {
+                "added": added_fields,
+                "removed": removed_fields,
+                "changed": changed_fields,
+            }
+
+            # Mask sensitive fields
+            sensitive_fields = {"secret_key", "api_key", "jwt_secret", "database_url"}
+            for section_data in differences.values():
+                if not isinstance(section_data, dict):
+                    continue
+                section_data_dict = cast("dict[str, object]", section_data)
+                for field in section_data_dict:
+                    if field in sensitive_fields:
+                        if isinstance(section_data_dict[field], dict):
+                            section_data_dict[field] = {
+                                "old": FlextConstants.Messages.REDACTED_SECRET,
+                                "new": FlextConstants.Messages.REDACTED_SECRET,
+                            }
+                        else:
+                            section_data_dict[field] = (
+                                FlextConstants.Messages.REDACTED_SECRET
+                            )
+
+            # Log the diff
+            logger = structlog.get_logger()
+            changed_dict = differences["changed"]
+            added_dict = differences["added"]
+            removed_dict = differences["removed"]
+            logger.info(
+                "config_diff_generated",
+                event_type="configuration_diff",
+                changes_count=len(changed_dict)
+                if isinstance(changed_dict, dict)
+                else 0,
+                additions_count=len(added_dict) if isinstance(added_dict, dict) else 0,
+                removals_count=len(removed_dict)
+                if isinstance(removed_dict, dict)
+                else 0,
+            )
+
+            return FlextResult[FlextTypes.Dict].ok(differences)
+        except Exception as e:
+            return FlextResult[FlextTypes.Dict].fail(f"Diff generation failed: {e}")
+
+    def log_config_state(
+        self,
+        *,
+        event: str = "config_snapshot",
+        include_sensitive: bool = False,
+    ) -> FlextResult[None]:
+        """Log current configuration state with structured logging.
+
+        Args:
+            event: Event name for the log entry
+            include_sensitive: Whether to include sensitive fields (NOT RECOMMENDED)
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> config.log_config_state(event="application_startup")
+
+        """
+        try:
+            config_dict = self.model_dump()
+
+            # Mask sensitive fields unless explicitly requested
+            if not include_sensitive:
+                sensitive_fields = {
+                    "secret_key",
+                    "api_key",
+                    "jwt_secret",
+                    "database_url",
+                }
+                for field in sensitive_fields:
+                    if field in config_dict and config_dict[field] is not None:
+                        config_dict[field] = FlextConstants.Messages.REDACTED_SECRET
+
+            logger = structlog.get_logger()
+            logger.info(
+                event,
+                event_type="configuration_snapshot",
+                environment=self.environment,
+                debug_enabled=self.debug,
+                trace_enabled=self.trace,
+                log_level=self.effective_log_level,
+                app_name=self.app_name,
+                version=self.version,
+                config_summary={
+                    "environment": self.environment,
+                    "debug": self.debug,
+                    "log_level": self.log_level,
+                    "max_workers": self.max_workers,
+                    "timeout_seconds": self.timeout_seconds,
+                },
+            )
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Config state logging failed: {e}")
 
     # Instance methods for configuration access
     def is_development(self) -> bool:
@@ -1596,25 +2105,101 @@ class FlextConfig(
 
         return FlextResult[FlextTypes.Dict].ok(component_configs[component])
 
-    class BaseConfig(BaseSettings):
-        """Base configuration class for all FLEXT configuration models.
+    def get_config_with_fallback(
+        self,
+        primary_key: str,
+        *fallback_keys: str,
+        default: object | None = None,
+    ) -> object:
+        """Get configuration value trying multiple keys using alt pattern.
 
-        Extends BaseModel with configuration-specific patterns for FLEXT
-        ecosystem configuration classes. Used for settings, configs, and
-        environment-based configuration models.
+        Demonstrates alt pattern for configuration fallback chains.
 
-        Provides:
-        - Environment variable integration
-        - Configuration validation
-        - Settings management patterns
+        Args:
+            primary_key: Primary configuration key to try
+            *fallback_keys: Fallback keys to try in order
+            default: Default value if all keys fail
+
+        Returns:
+            Configuration value from first found key, or default
+
+        Example:
+            >>> config = FlextConfig()
+            >>> host = config.get_config_with_fallback(
+            ...     "db_host", "database_host", default="localhost"
+            ... )
+
         """
 
-        model_config = SettingsConfigDict(
-            env_file=".env",
-            env_file_encoding="utf-8",
-            case_sensitive=False,
-            extra="ignore",
+        def get_value(key: str) -> FlextResult[object]:
+            if hasattr(self, key):
+                value = getattr(self, key)
+                if value is not None:
+                    return FlextResult[object].ok(value)
+            return FlextResult[object].fail(f"Key '{key}' not found or None")
+
+        result = get_value(primary_key)
+        for fallback_key in fallback_keys:
+            result = result.alt(get_value(fallback_key))
+
+        return (
+            result.unwrap_or(default) if default is not None else result.unwrap_or(None)
         )
+
+    def validate_config_pipeline(self) -> FlextResult[None]:
+        """Validate complete configuration using flow_through pattern.
+
+        Demonstrates flow_through for validation pipeline composition.
+
+        Returns:
+            FlextResult[None]: Success if all validations pass
+
+        Example:
+            >>> config = FlextConfig()
+            >>> result = config.validate_config_pipeline()
+            >>> if result.is_success:
+            ...     print("Configuration valid")
+
+        """
+        return (
+            FlextResult[None]
+            .ok(None)
+            .flow_through(
+                lambda _: self.validate_runtime_requirements(),
+                lambda _: self.validate_business_rules(),
+            )
+        )
+
+    def safe_get_component_config(
+        self,
+        component: str,
+        default_config: FlextTypes.Dict | None = None,
+    ) -> FlextTypes.Dict:
+        """Get component config with fallback using lash pattern.
+
+        Demonstrates lash for error recovery with fallback.
+
+        Args:
+            component: Component name
+            default_config: Default configuration if component not found
+
+        Returns:
+            Component configuration or default
+
+        Example:
+            >>> config = FlextConfig()
+            >>> logger_config = config.safe_get_component_config(
+            ...     "logger", {"level": "INFO"}
+            ... )
+
+        """
+
+        def provide_default(_error: str) -> FlextResult[FlextTypes.Dict]:
+            if default_config is not None:
+                return FlextResult[FlextTypes.Dict].ok(default_config)
+            return FlextResult[FlextTypes.Dict].ok({})
+
+        return self.get_component_config(component).lash(provide_default).unwrap()
 
 
 FlextConfig.model_rebuild()

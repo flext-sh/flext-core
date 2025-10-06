@@ -20,17 +20,26 @@ from typing import (
 from flext_core.constants import FlextConstants
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class FlextRegistry:
+class FlextRegistry(FlextMixins.Service):
     """Stateful helper that reports on handler adoption across packages.
 
     By wrapping ``FlextDispatcher`` it provides registration summaries
     and idempotency guarantees that feed ecosystem migration dashboards
     during the 1.0.0 rollout.
+
+    **Inherited Infrastructure** (from FlextMixins.Service):
+        - container: FlextContainer (via FlextMixins.Container)
+        - context: object (via FlextMixins.Context)
+        - logger: FlextLogger (via FlextMixins.Logging) - per-registry logger instance
+        - config: object (via FlextMixins.Configurable) - global config access
+        - _track_operation: context manager (via FlextMixins.Metrics)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
 
     **Function**: Handler registration management and tracking
         - Handler registration with dispatcher integration
@@ -169,7 +178,11 @@ class FlextRegistry:
 
     def __init__(self, dispatcher: FlextDispatcher) -> None:
         """Initialize the registry with a FlextDispatcher instance."""
-        # No super() call needed as this class doesn't inherit from anything
+        super().__init__()
+
+        # Initialize service infrastructure (DI, Context, Logging, Metrics)
+        self._init_service("flext_registry")
+
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
@@ -208,6 +221,10 @@ class FlextRegistry:
             FlextResult[FlextDispatcher.Registration[MessageT, ResultT]]: Success result with registration details.
 
         """
+        # Propagate context for distributed tracing
+        handler_name = handler.__class__.__name__ if handler else "unknown"
+        self._propagate_context(f"register_handler_{handler_name}")
+
         # Validate handler is not None
         if handler is None:
             return FlextResult[FlextModels.RegistrationDetails].fail(
@@ -263,6 +280,9 @@ class FlextRegistry:
             FlextResult[FlextRegistry.Summary]: Success result with registration summary.
 
         """
+        # Propagate context for distributed tracing
+        self._propagate_context("register_handlers_batch")
+
         summary = FlextRegistry.Summary()
         for handler in handlers:
             result: FlextResult[None] = self._process_single_handler(handler, summary)

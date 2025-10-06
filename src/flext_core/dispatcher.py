@@ -21,29 +21,36 @@ import concurrent.futures
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from contextvars import Token
 from dataclasses import dataclass
 from typing import Literal, cast, override
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.context import FlextContext
+from flext_core.context import FlextContext, _ContextVarToken
 from flext_core.handlers import FlextHandlers
-from flext_core.loggings import FlextLogger
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextDispatcher:
+class FlextDispatcher(FlextMixins.Service):
     """Orchestrates CQRS execution while enforcing context observability.
 
     The dispatcher is the front door promoted across the ecosystem: all
     handler registration flows, context scoping, and dispatch telemetry
     align with the modernization plan so downstream packages can adopt
     a consistent runtime contract without bespoke buses.
+
+    **Inherited Infrastructure** (from FlextMixins.Service):
+        - container: FlextContainer (via FlextMixins.Container)
+        - context: object (via FlextMixins.Context)
+        - logger: FlextLogger (via FlextMixins.Logging) - per-dispatcher logger instance
+        - config: object (via FlextMixins.Configurable) - global config access
+        - _track_operation: context manager (via FlextMixins.Metrics)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
 
     **Function**: High-level message dispatch orchestration
         - Handler registration for command and query patterns
@@ -180,7 +187,11 @@ class FlextDispatcher:
         """
         super().__init__()
 
-        global_config = FlextConfig()
+        # Initialize service infrastructure (DI, Context, Logging, Metrics)
+        self._init_service("flext_dispatcher")
+
+        # Use global config instance for consistency across the system
+        global_config = FlextConfig.get_global_instance()
         self._global_config = global_config
 
         if config is None:
@@ -258,7 +269,6 @@ class FlextDispatcher:
             busglobal_config_dict_final = None
 
         self._bus = bus or FlextBus(bus_config=busglobal_config_dict_final)
-        self._logger = FlextLogger(self.__class__.__name__)
 
         # Circuit breaker state - failure counts per message type
         self._circuit_breaker_failures: dict[str, int] = {}
@@ -384,7 +394,8 @@ class FlextDispatcher:
         }
 
         if self.global_config.get("enable_logging"):
-            self._logger.info(
+            self._log_with_context(
+                "info",
                 "handler_registered",
                 registration_id=details.get("registration_id"),
                 handler_mode=details.get("handler_mode"),
@@ -625,6 +636,11 @@ class FlextDispatcher:
             FlextResult with structured dispatch result
 
         """
+        # Propagate context for distributed tracing
+        message = request.get("message")
+        message_type = type(message).__name__ if message else "unknown"
+        self._propagate_context(f"dispatch_with_request_{message_type}")
+
         start_time = time.time()
 
         # Validate request
@@ -690,7 +706,8 @@ class FlextDispatcher:
                 }
 
                 if self.global_config.get("enable_logging"):
-                    self._logger.debug(
+                    self._log_with_context(
+                        "debug",
                         "dispatch_succeeded",
                         request_id=request.get("request_id"),
                         message_type=type(request.get("message")).__name__,
@@ -711,7 +728,8 @@ class FlextDispatcher:
             }
 
             if self.global_config.get("enable_logging"):
-                self._logger.error(
+                self._log_with_context(
+                    "error",
                     "dispatch_failed",
                     request_id=request.get("request_id"),
                     message_type=type(request.get("message")).__name__,
@@ -748,6 +766,14 @@ class FlextDispatcher:
             FlextResult with execution result or error
 
         """
+        # Propagate context for distributed tracing
+        dispatch_type = (
+            type(message_or_type).__name__
+            if not isinstance(message_or_type, str)
+            else str(message_or_type)
+        )
+        self._propagate_context(f"dispatch_{dispatch_type}")
+
         # Support both old API (message_type, data) and new API (message)
         if isinstance(message_or_type, str):
             if data is not None:
@@ -851,10 +877,10 @@ class FlextDispatcher:
             float(retry_delay_raw) if isinstance(retry_delay_raw, (int, float)) else 0.1
         )
 
-        start_time = time.time()
+        # start_time = time.time()  # Unused for now
 
         for attempt in range(max_retries):
-            attempt_start_time = time.time()
+            # attempt_start_time = time.time()  # Unused for now
             try:
                 # Get timeout from config
                 timeout_seconds = float(
@@ -904,8 +930,8 @@ class FlextDispatcher:
                         continue
                 else:
                     bus_result = execute_with_context()
-                attempt_end_time = time.time()
-                attempt_duration = attempt_end_time - attempt_start_time
+                # attempt_end_time = time.time()  # Unused for now
+                # attempt_duration = attempt_end_time - attempt_start_time  # Unused for now
 
                 if bus_result.is_success:
                     # Reset circuit breaker failures on success
@@ -926,7 +952,7 @@ class FlextDispatcher:
 
                 return FlextResult[object].fail(bus_result.error or "Dispatch failed")
             except Exception as e:
-                attempt_end_time = time.time()
+                # attempt_end_time = time.time()  # Unused for now
                 # attempt_duration = attempt_end_time - attempt_start_time  # Unused for now
 
                 # Track circuit breaker failure for exceptions
@@ -940,7 +966,7 @@ class FlextDispatcher:
                 return FlextResult[object].fail(f"Dispatch error: {e}")
 
         # Record final failure
-        end_time = time.time()
+        # end_time = time.time()  # Unused for now
         # total_duration = end_time - start_time  # Unused for now
         return FlextResult[object].fail("Max retries exceeded")
 
@@ -1045,9 +1071,9 @@ class FlextDispatcher:
             yield
             return
 
-        metadata_token: Token[FlextTypes.Dict | None] | None = None
-        correlation_token: Token[str | None] | None = None
-        parent_token: Token[str | None] | None = None
+        metadata_token: _ContextVarToken[FlextTypes.Dict | None] | None = None
+        correlation_token: _ContextVarToken[str | None] | None = None
+        parent_token: _ContextVarToken[str | None] | None = None
         metadata_var = FlextContext.Variables.Performance.OPERATION_METADATA
         correlation_var = FlextContext.Variables.Correlation.CORRELATION_ID
         parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
@@ -1075,7 +1101,8 @@ class FlextDispatcher:
                 )
 
             if self.global_config.get("enable_logging"):
-                self._logger.debug(
+                self._log_with_context(
+                    "debug",
                     "dispatch_context_entered",
                     correlation_id=effective_correlation_id,
                 )
@@ -1087,7 +1114,8 @@ class FlextDispatcher:
                     metadata_var.reset(metadata_token)
 
                 if self.global_config.get("enable_logging"):
-                    self._logger.debug(
+                    self._log_with_context(
+                        "debug",
                         "dispatch_context_exited",
                         correlation_id=effective_correlation_id,
                     )
@@ -1125,11 +1153,12 @@ class FlextDispatcher:
         """Clean up dispatcher resources using processors."""
         try:
             # Clear all handlers using the public API
-            if hasattr(self, "_bus") and self._bus:
-                if hasattr(self._bus, "clear_handlers"):
-                    self._bus.clear_handlers()
-                if hasattr(self._bus, "cleanup"):
-                    self._bus.cleanup()
+            if (
+                hasattr(self, "_bus")
+                and self._bus
+                and hasattr(self._bus, "clear_handlers")
+            ):
+                self._bus.clear_handlers()
 
             # Clear internal state
             self._circuit_breaker_failures.clear()
@@ -1140,7 +1169,7 @@ class FlextDispatcher:
                 self._executor = None
 
         except Exception as e:
-            self._logger.warning("Cleanup failed", error=str(e))
+            self._log_with_context("warning", "Cleanup failed", error=str(e))
 
 
 __all__ = ["FlextDispatcher"]

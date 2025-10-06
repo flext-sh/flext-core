@@ -534,7 +534,8 @@ class TestDomainServicesFixed:
         """Test service logging through mixins."""
         service = SampleUserService()
 
-        assert isinstance(service, FlextMixins.Loggable)
+        # Service inherits from FlextMixins.Service which includes Logging mixin
+        assert isinstance(service, FlextMixins.Service)
 
         log_request = FlextModels.LogOperation(
             level="INFO",
@@ -620,8 +621,8 @@ class TestDomainServicesFixed:
 
         # Service extends FlextModels foundation which is based on Pydantic BaseModel
         assert isinstance(service, FlextModels.ArbitraryTypesModel)
-        assert isinstance(service, FlextMixins.Serializable)
-        assert isinstance(service, FlextMixins.Loggable)
+        # Service inherits from FlextMixins.Service (which provides all service infrastructure)
+        assert isinstance(service, FlextMixins.Service)
 
     def test_service_with_complex_types(self) -> None:
         """Test service with complex types."""
