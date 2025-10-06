@@ -176,7 +176,7 @@ class PaymentService(FlextService[dict[str, object]]):
         self._with_operation_context("process_payment", amount=amount)
 
         # All logs now include full context automatically
-        self._logger.info("Processing payment", payment_id=payment_id, amount=amount)
+        self.logger.info("Processing payment", payment_id=payment_id, amount=amount)
 
         # Business logic here...
 

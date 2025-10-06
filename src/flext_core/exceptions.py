@@ -144,7 +144,10 @@ class FlextExceptions:
             except Exception as e:
                 # Don't fail if logging fails, but log the error using standard logging
                 import logging
-                logging.getLogger(__name__).debug("Logging failed in exception handler: %s", e)
+
+                logging.getLogger(__name__).debug(
+                    "Logging failed in exception handler: %s", e
+                )
 
         def __str__(self) -> str:
             """String representation with error code and correlation ID."""
@@ -222,7 +225,10 @@ class FlextExceptions:
             except Exception as e:
                 # Don't fail if logging fails, but log the error using standard logging
                 import logging
-                logging.getLogger(__name__).debug("Logging failed in exception handler: %s", e)
+
+                logging.getLogger(__name__).debug(
+                    "Logging failed in exception handler: %s", e
+                )
 
             return self
 

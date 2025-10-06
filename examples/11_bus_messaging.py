@@ -663,7 +663,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
     def demonstrate_new_flextresult_methods(self) -> None:
         """Demonstrate the 5 new FlextResult methods in bus messaging context.
-        
+
         Shows how the new v0.9.9+ methods work with bus messaging patterns:
         - from_callable: Safe bus operations
         - flow_through: Message pipeline composition
@@ -732,7 +732,13 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
         def validate_complete(data: dict) -> FlextResult[dict]:
             """Validate message is ready for bus."""
-            required_fields = ["type", "payload", "message_id", "timestamp", "registered"]
+            required_fields = [
+                "type",
+                "payload",
+                "message_id",
+                "timestamp",
+                "registered",
+            ]
             missing = [f for f in required_fields if f not in data]
             if missing:
                 return FlextResult[dict].fail(f"Missing fields: {', '.join(missing)}")
@@ -789,7 +795,9 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
         def get_custom_bus_config() -> FlextResult[FlextModels.CqrsConfig.Bus]:
             """Try to get custom bus configuration."""
-            return FlextResult[FlextModels.CqrsConfig.Bus].fail("Custom config not found")
+            return FlextResult[FlextModels.CqrsConfig.Bus].fail(
+                "Custom config not found"
+            )
 
         def get_default_bus_config() -> FlextResult[FlextModels.CqrsConfig.Bus]:
             """Provide default bus configuration."""

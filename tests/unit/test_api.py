@@ -374,7 +374,7 @@ class TestFlextUsagePatterns:
             def __init__(self) -> None:
                 super().__init__()
                 # Store logger in private attribute to avoid Pydantic validation
-                self._logger = Flext.create_logger(__name__)
+                self.logger = Flext.create_logger(__name__)
 
             def execute(self) -> FlextResult[str]:
                 return Flext.Result[str].ok("Service executed")

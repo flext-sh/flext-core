@@ -237,7 +237,7 @@ class FlextLogger:
         """
         return cls(module_name)
 
-    def __init__(
+    def __init__(  # type: ignore[reportMissingSuperCall]
         self,
         name: str,
         *,
@@ -274,7 +274,7 @@ class FlextLogger:
             context["correlation_id"] = _correlation_id
 
         # Create bound logger with initial context
-        self._logger = structlog.get_logger(name).bind(**context)
+        self.logger = structlog.get_logger(name).bind(**context)
 
     @property
     def name(self) -> str:
@@ -286,7 +286,7 @@ class FlextLogger:
         # Create new instance with bound logger
         new_logger = FlextLogger.__new__(FlextLogger)
         new_logger._name = self._name
-        new_logger._logger = self._logger.bind(**context)
+        new_logger.logger = self.logger.bind(**context)
         return new_logger
 
     # =============================================================================
@@ -301,7 +301,7 @@ class FlextLogger:
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
 
-            self._logger.debug(
+            self.logger.debug(
                 formatted_message, **kwargs
             )  # structlog doesn't have trace
             return FlextResult[None].ok(None)
@@ -317,7 +317,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self._logger.debug(formatted_message, **context)
+            self.logger.debug(formatted_message, **context)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -329,7 +329,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self._logger.info(formatted_message, **context)
+            self.logger.info(formatted_message, **context)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -343,7 +343,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self._logger.warning(formatted_message, **context)
+            self.logger.warning(formatted_message, **context)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -355,7 +355,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self._logger.error(formatted_message, **kwargs)
+            self.logger.error(formatted_message, **kwargs)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -369,7 +369,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self._logger.critical(formatted_message, **kwargs)
+            self.logger.critical(formatted_message, **kwargs)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -383,7 +383,7 @@ class FlextLogger:
                 import traceback
 
                 kwargs["stack_trace"] = traceback.format_exc()
-            self._logger.error(message, **kwargs)
+            self.logger.error(message, **kwargs)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -462,7 +462,7 @@ class FlextLogger:
 class PerformanceTracker:
     """Context manager for performance tracking with automatic logging."""
 
-    def __init__(self, logger: FlextLogger, operation_name: str) -> None:
+    def __init__(self, logger: FlextLogger, operation_name: str) -> None:  # type: ignore[reportMissingSuperCall]
         """Initialize performance tracker.
 
         Args:
@@ -470,7 +470,7 @@ class PerformanceTracker:
             operation_name: Name of operation being tracked
 
         """
-        self._logger = logger
+        self.logger = logger
         self._operation_name = operation_name
         self._start_time: float = 0.0
 
@@ -494,7 +494,7 @@ class PerformanceTracker:
 
         if exc_type is None:
             # Success case
-            self._logger.info(
+            self.logger.info(
                 f"{self._operation_name} completed",
                 duration_seconds=elapsed,
                 operation=self._operation_name,
@@ -502,7 +502,7 @@ class PerformanceTracker:
             )
         else:
             # Failure case
-            self._logger.error(
+            self.logger.error(
                 f"{self._operation_name} failed",
                 duration_seconds=elapsed,
                 operation=self._operation_name,

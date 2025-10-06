@@ -64,7 +64,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         - self.metrics: FlextMetrics for message observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not _logger
+        # Use self.logger from FlextMixins.Logging, not logger
         self._event_store: list[Flext.Models.DomainEvent] = []
         self._message_queue: list[Flext.Models.Payload[Flext.Types.Dict]] = []
         self._scenarios = ExampleScenarios()

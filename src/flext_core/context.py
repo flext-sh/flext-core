@@ -24,6 +24,7 @@ from datetime import UTC, datetime
 from typing import (
     Any,
     Final,
+    cast,
     override,
 )
 
@@ -513,7 +514,7 @@ class FlextContext:
 
             operations = self._statistics.get("operations", {})
             if isinstance(operations, dict) and "set" in operations:
-                set_count = operations["set"]
+                set_count: object = operations["set"]
                 if isinstance(set_count, int):
                     operations["set"] = set_count + 1
 
@@ -546,7 +547,7 @@ class FlextContext:
 
             operations = self._statistics.get("operations", {})
             if isinstance(operations, dict) and "get" in operations:
-                get_count = operations["get"]
+                get_count: object = operations["get"]
                 if isinstance(get_count, int):
                     operations["get"] = get_count + 1
             return scope_data.get(key, default)
@@ -589,8 +590,11 @@ class FlextContext:
                     self._statistics["removes"] = removes_count + 1
 
                 operations = self._statistics.get("operations", {})
-                if isinstance(operations, dict) and "remove" in operations:
-                    remove_count = operations["remove"]
+                remove_count: object = (
+                    operations.get("remove", 0)
+                    if isinstance(operations, dict) and "remove" in operations
+                    else 0
+                )
                 if isinstance(remove_count, int):
                     operations["remove"] = remove_count + 1
 
@@ -609,7 +613,7 @@ class FlextContext:
 
             operations = self._statistics.get("operations", {})
             if isinstance(operations, dict) and "clear" in operations:
-                clear_count = operations["clear"]
+                clear_count: object = operations["clear"]
                 if isinstance(clear_count, int):
                     operations["clear"] = clear_count + 1
 
@@ -734,8 +738,7 @@ class FlextContext:
             # Combine all scopes into a single flat dictionary for backward compatibility
             all_data: FlextTypes.Dict = {}
             for scope_data in self._scopes.values():
-                if isinstance(scope_data, dict):
-                    all_data.update(scope_data)
+                all_data.update(scope_data)
             return json.dumps(all_data, default=str)
 
     @classmethod
@@ -754,7 +757,8 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            if all(isinstance(v, dict) for v in data.values()):
+            data_values = data.values()
+            if all(isinstance(cast("Any", v), dict) for v in data_values):
                 # New scoped format
                 context._scopes = data
             else:

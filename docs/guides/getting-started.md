@@ -141,11 +141,11 @@ class UserService(FlextService):
 
     def __init__(self) -> None:
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
         """Create user with validation."""
-        self._logger.info("Creating user", extra={"name": name})
+        self.logger.info("Creating user", extra={"name": name})
 
         # Validate
         if age < 18:
@@ -157,7 +157,7 @@ class UserService(FlextService):
         # Create entity
         try:
             user = User(id=f"user_{name.lower()}", name=name, email=email, age=age)
-            self._logger.info("User created", extra={"user_id": user.id})
+            self.logger.info("User created", extra={"user_id": user.id})
             return FlextResult[User].ok(user)
         except ValueError as e:
             return FlextResult[User].fail(str(e))
@@ -250,12 +250,12 @@ class ProductService(FlextService):
 
     def __init__(self) -> None:
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
         self._products: dict[str, Product] = {}
 
     def create_product(self, name: str, price: float, quantity: int) -> FlextResult[Product]:
         """Create a new product."""
-        self._logger.info("Creating product", extra={"name": name})
+        self.logger.info("Creating product", extra={"name": name})
 
         # Validation
         if price <= 0:
@@ -270,7 +270,7 @@ class ProductService(FlextService):
                 quantity=quantity
             )
             self._products[product.id] = product
-            self._logger.info("Product created", extra={"product_id": product.id})
+            self.logger.info("Product created", extra={"product_id": product.id})
             return FlextResult[Product].ok(product)
         except ValueError as e:
             return FlextResult[Product].fail(str(e))

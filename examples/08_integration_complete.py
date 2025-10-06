@@ -272,7 +272,7 @@ class InventoryService(FlextService[FlextTypes.Dict]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not _logger
+        # Use self.logger from FlextMixins.Logging, not logger
         self._scenarios = ExampleScenarios
         self._products = {}
         self._initialize_products()
@@ -283,7 +283,7 @@ class InventoryService(FlextService[FlextTypes.Dict]):
             extra={
                 "service_type": "Inventory Management",
                 "products_loaded": len(self._products),
-            }
+            },
         )
 
     def _initialize_products(self) -> None:
@@ -384,7 +384,7 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not _logger
+        # Use self.logger from FlextMixins.Logging, not logger
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
@@ -392,7 +392,7 @@ class PaymentService(FlextService[FlextTypes.Dict]):
             extra={
                 "service_type": "Payment Processing",
                 "payment_methods": ["credit_card", "paypal"],
-            }
+            },
         )
 
     def process_payment(
@@ -484,7 +484,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
                 "service_type": "Order Orchestration",
                 "dependencies": ["InventoryService", "PaymentService"],
                 "metadata": self._metadata,
-            }
+            },
         )
 
     def create_order(
@@ -669,11 +669,11 @@ class OrderValidationHandler:
         """Initialize handler."""
         super().__init__()
         self.name = "OrderValidator"
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def handle(self, request: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
         """Validate order data."""
-        self._logger.info("Validating order request")
+        self.logger.info("Validating order request")
 
         # Check required fields
         if not request.get("customer_id"):
@@ -707,7 +707,7 @@ class OrderEnrichmentHandler:
         """Initialize handler."""
         super().__init__()
         self.name = "OrderEnricher"
-        self._logger = FlextLogger(__name__)
+        self.logger = FlextLogger(__name__)
 
     def handle(
         self,
@@ -716,7 +716,7 @@ class OrderEnrichmentHandler:
         _debug: bool = False,
     ) -> FlextResult[FlextTypes.Dict]:
         """Add metadata to order."""
-        self._logger.info("Enriching order request")
+        self.logger.info("Enriching order request")
 
         if not request.get("validated"):
             return FlextResult[FlextTypes.Dict].fail("Order must be validated first")
@@ -743,7 +743,7 @@ class OrderEnrichmentHandler:
 
 def demonstrate_new_flextresult_methods() -> None:
     """Demonstrate the 5 new FlextResult methods in integration context.
-    
+
     Shows how the new v0.9.9+ methods work with complete FLEXT integration:
     - from_callable: Safe exception handling
     - flow_through: Pipeline composition
@@ -841,7 +841,9 @@ def demonstrate_new_flextresult_methods() -> None:
 
     if pipeline_result.is_success:
         final_order = pipeline_result.unwrap()
-        print(f"✅ Integration pipeline complete: ${final_order.get('final_total', 0):.2f}")
+        print(
+            f"✅ Integration pipeline complete: ${final_order.get('final_total', 0):.2f}"
+        )
         print(f"   Subtotal: ${final_order.get('subtotal', 0):.2f}")
         print(f"   Tax: ${final_order.get('tax', 0):.2f}")
         print(f"   Discount: ${final_order.get('discount', 0):.2f}")

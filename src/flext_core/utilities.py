@@ -49,6 +49,7 @@ from pydantic import (
 from pydantic.types import conint, constr
 
 from flext_core.constants import FlextConstants
+from flext_core.container import FlextContainer
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
@@ -277,8 +278,8 @@ class FlextUtilities:
             """
             try:
                 # Pydantic EmailStr handles all RFC 5322 validation
-                email_adapter = TypeAdapter(EmailStr)
-                validated = email_adapter.validate_python(email)
+                email_adapter: TypeAdapter[EmailStr] = TypeAdapter(EmailStr)
+                validated: EmailStr = email_adapter.validate_python(email)
                 return FlextResult[str].ok(str(validated))
             except (PydanticValidationError, ValueError) as e:
                 return FlextResult[str].fail(f"Invalid email format: {e}")
@@ -854,7 +855,7 @@ class FlextUtilities:
                 return providers_module.Singleton(ValidationService)
 
             @staticmethod
-            def register_in_container(container: object) -> FlextResult[None]:
+            def register_in_container(container: FlextContainer) -> FlextResult[None]:
                 """Register validation service in DI container.
 
                 Args:
@@ -979,7 +980,7 @@ class FlextUtilities:
                     return FlextResult[FlextTypes.Dict].fail(
                         "Parsed JSON is not a dictionary"
                     )
-                return FlextResult[FlextTypes.Dict].ok(data)
+                return FlextResult[FlextTypes.Dict].ok(cast("FlextTypes.Dict", data))
             except orjson.JSONDecodeError as e:
                 return FlextResult[FlextTypes.Dict].fail(f"JSON parse error: {e}")
             except Exception as e:
@@ -1029,7 +1030,7 @@ class FlextUtilities:
                 <Failure: ...>
 
             """
-            return FlextResult.from_callable(lambda: int(value))
+            return FlextResult[int].from_callable(lambda: int(value))
 
         @staticmethod
         def safe_parse_float(value: str) -> FlextResult[float]:
@@ -1042,7 +1043,7 @@ class FlextUtilities:
                 FlextResult[float]: Parsed float or error
 
             """
-            return FlextResult.from_callable(lambda: float(value))
+            return FlextResult[float].from_callable(lambda: float(value))
 
         @staticmethod
         def validate_and_normalize_email(email: str) -> FlextResult[str]:
@@ -1762,27 +1763,41 @@ class FlextUtilities:
                                 pass
                             else:
                                 # For custom classes, try calling with the value
-                                converted_value = target_type(value)  # type: ignore[call-arg]  # Generic type constructor call
-                                return FlextResult[T].ok(converted_value)
-                        except (TypeError, ValueError):
-                            # If constructor fails with args, try no-arg constructor
-                            if callable(target_type) and target_type is not type:
                                 try:
-                                    converted_value = target_type()
+                                    converted_value = target_type(value)
                                     return FlextResult[T].ok(converted_value)
                                 except (TypeError, ValueError):
-                                    pass
-                            raise
-                    # If no constructor or object type, return the value with proper type annotation
-                    return FlextResult[T].ok(cast("T", value))
-                except (TypeError, ValueError):
-                    # If constructor fails, return the value with explicit type annotation
-                    return FlextResult[T].ok(cast("T", value))
+                                    # If constructor fails with args, try no-arg constructor
+                                    if (
+                                        callable(target_type)
+                                        and target_type is not type
+                                    ):
+                                        try:
+                                            converted_value = target_type()
+                                            return FlextResult[T].ok(converted_value)
+                                        except (TypeError, ValueError):
+                                            pass
+                                    # Re-raise the original exception
+                                    raise
+                                # If no constructor or object type, return the value with proper type annotation
+                                return FlextResult[T].ok(cast("T", value))
+                        except (TypeError, ValueError):
+                            # If constructor fails, return the value with explicit type annotation
+                            return FlextResult[T].ok(cast("T", value))
+                    else:
+                        # For non-callable types, return the value as-is
+                        return FlextResult[T].ok(cast("T", value))
 
-            except (ValueError, TypeError) as e:
+                except (ValueError, TypeError) as e:
+                    type_name = getattr(target_type, "__name__", str(target_type))
+                    return FlextResult[T].fail(
+                        f"Cannot cast {field_name} to {type_name}: {e}",
+                    )
+
+            except Exception as e:
                 type_name = getattr(target_type, "__name__", str(target_type))
                 return FlextResult[T].fail(
-                    f"Cannot cast {field_name} to {type_name}: {e}",
+                    f"Unexpected error casting {field_name} to {type_name}: {e}",
                 )
 
         @staticmethod
@@ -1824,15 +1839,15 @@ class FlextUtilities:
                 for key in keys:
                     if isinstance(current, dict):
                         # Type narrow: current is now FlextTypes.Dict due to isinstance check
-                        dict_current = current
+                        dict_current: FlextTypes.Dict = current
                         if key in dict_current:
-                            current_value = dict_current[key]
+                            current_value: object = dict_current[key]
                             current = current_value
                         else:
                             return FlextResult[object].ok(default)
                     else:
                         return FlextResult[object].ok(default)
-                return FlextResult[object].ok(current)
+                return FlextResult[object].ok(cast("object", current))
             except Exception as e:
                 return FlextResult[object].fail(f"Error accessing path '{path}': {e}")
 
@@ -2194,7 +2209,8 @@ class FlextUtilities:
                 max_size: Maximum number of cached results
 
             """
-            # CqrsCache doesn't inherit from any class, so no super() call needed
+            # Initialize parent class (object)
+            super().__init__()
 
             self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
             self._max_size = max_size
@@ -2494,7 +2510,9 @@ class FlextUtilities:
                 else:
                     normalized[key] = str(value)
 
-            return FlextResult[dict[str, object]].ok(cast("dict[str, object]", normalized))
+            return FlextResult[dict[str, object]].ok(
+                cast("dict[str, object]", normalized)
+            )
 
         @staticmethod
         def format_table_data(
@@ -2613,12 +2631,7 @@ class FlextUtilities:
                     "Operation completed but returned no result",
                 )
 
-            result = result_container[0]
-            if result is None:
-                return FlextResult[TTimeout].fail(
-                    "Operation completed but returned no result",
-                )
-            return result
+            return result_container[0]
 
         @staticmethod
         def circuit_breaker[TCircuit](
@@ -2717,8 +2730,7 @@ class FlextUtilities:
                     # Open circuit - failures exceeded threshold
                     state["circuit_state"] = "OPEN"
                     return FlextResult[TCircuit].fail(
-                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. "
-                        f"Error: {result.error}"
+                        f"Circuit breaker OPENED - failure threshold {failure_threshold} exceeded. Error: {result.error}"
                     )
 
                 return result
@@ -3021,7 +3033,7 @@ class FlextUtilities:
         """
 
         # Class-level logger for internal debug operations
-        _internal_logger: ClassVar[FlextLogger] = FlextLogger(__name__)
+        internal_logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
         _SERIALIZABLE_MESSAGE_EXPECTATION = (
             "FlextTypes.Dict, str, int, float, bool, dataclass, attrs class, or object exposing "
@@ -3096,7 +3108,7 @@ class FlextUtilities:
                         # If calling without parameters fails, it's likely a Pydantic field validator
                         # Skip custom validation in this case - this is expected behavior
                         # Log at debug level since this is expected for Pydantic field validators
-                        cls._internal_logger.debug(
+                        cls.internal_logger.debug(
                             "Skipping validation method %s: %s",
                             validation_method_name,
                             e,
@@ -3240,7 +3252,7 @@ class FlextUtilities:
                             return cast("FlextTypes.Dict", result_data)
                     except Exception as e:
                         # Log the exception for debugging purposes as required by S112
-                        cls._internal_logger.debug(
+                        cls.internal_logger.debug(
                             f"Serialization method '{method_name}' failed for {type(message).__name__}: {e}",
                             method_name=method_name,
                             message_type=type(message).__name__,
@@ -3312,7 +3324,7 @@ class FlextUtilities:
         """
 
         # Class-level logger for internal operations
-        _internal_logger: ClassVar[FlextLogger] = FlextLogger(__name__)
+        internal_logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
         @staticmethod
         def compose_pipeline[T](
@@ -3372,7 +3384,7 @@ class FlextUtilities:
                                 "error": result.error,
                             },
                         )
-                    results.append(result.unwrap())
+                    results.append(cast("U", result.unwrap()))
                 return FlextResult[list[U]].ok(results)
 
             return parallel_composed
@@ -3740,7 +3752,7 @@ class FlextUtilities:
             # Validate logger
             try:
                 # Use class-level logger to verify logger functionality
-                FlextUtilities.Composition._internal_logger.info(
+                FlextUtilities.Composition.internal_logger.info(
                     "Logger validation check"
                 )
                 validation_results["logger"] = {
@@ -3854,7 +3866,7 @@ class FlextUtilities:
             # Demonstrate container pattern
 
             # Demonstrate logging pattern
-            FlextUtilities.Composition._internal_logger.info(
+            FlextUtilities.Composition.internal_logger.info(
                 "Demonstrating flext-core patterns",
                 extra={
                     "component_count": 5,
@@ -3891,7 +3903,7 @@ class FlextUtilities:
                     "logging_pattern": {
                         "description": "Structured logging with context and correlation",
                         "logger_available": True,
-                        "logger_name": FlextUtilities.Composition._internal_logger.name,
+                        "logger_name": FlextUtilities.Composition.internal_logger.name,
                     },
                 },
                 "integration_level": "comprehensive",

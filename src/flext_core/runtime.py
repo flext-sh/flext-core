@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import Any, TypeGuard, cast
@@ -311,13 +312,12 @@ class FlextRuntime:
         # Strategy 1: Check for model_dump method (Pydantic)
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
             try:
-                result = obj.model_dump()  # type: ignore[attr-defined]
+                model_dump_method = getattr(obj, "model_dump")
+                result = model_dump_method()
                 if isinstance(result, dict):
                     return result
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
-                import logging
-
                 logging.getLogger(__name__).debug(
                     f"model_dump() serialization strategy failed: {e}"
                 )
@@ -325,13 +325,12 @@ class FlextRuntime:
         # Strategy 2: Check for dict method
         if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
             try:
-                result = obj.dict()  # type: ignore[attr-defined]
+                dict_method = getattr(obj, "dict")
+                result = dict_method()
                 if isinstance(result, dict):
                     return result
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
-                import logging
-
                 logging.getLogger(__name__).debug(
                     f"dict() serialization strategy failed: {e}"
                 )
@@ -340,12 +339,9 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                if isinstance(result, dict):
-                    return dict(result)
+                return dict(result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
-                import logging
-
                 logging.getLogger(__name__).debug(
                     f"__dict__ serialization strategy failed: {e}"
                 )
@@ -368,8 +364,6 @@ class FlextRuntime:
 
         """
         try:
-            import typing
-
             # Get the origin (e.g., Union for Union[T, None])
             origin = typing.get_origin(type_hint)
             if origin is typing.Union:
@@ -393,8 +387,6 @@ class FlextRuntime:
 
         """
         try:
-            import typing
-
             return typing.get_args(type_hint)
         except Exception:
             return ()
@@ -411,9 +403,6 @@ class FlextRuntime:
 
         """
         try:
-            import typing
-            from collections.abc import Sequence
-
             origin = typing.get_origin(type_hint)
             if origin is not None:
                 return issubclass(origin, Sequence)

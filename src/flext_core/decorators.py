@@ -117,7 +117,7 @@ def log_operation(
         ```
 
     Note:
-        Works best with classes that have _logger attribute (FlextMixins.Service).
+        Works best with classes that have logger attribute (FlextMixins.Service).
         Falls back to structlog.get_logger() otherwise.
 
     """
@@ -128,8 +128,8 @@ def log_operation(
             op_name = operation_name or func.__name__
 
             # Get logger from self if available
-            if args and hasattr(args[0], "_logger"):
-                logger = getattr(args[0], "_logger", structlog.get_logger())
+            if args and hasattr(args[0], "logger"):
+                logger = getattr(args[0], "logger", structlog.get_logger())
             else:
                 logger = structlog.get_logger()
 
@@ -205,8 +205,8 @@ def track_performance(
             op_name = operation_name or func.__name__
 
             # Get logger from self if available
-            if args and hasattr(args[0], "_logger"):
-                logger = getattr(args[0], "_logger", structlog.get_logger())
+            if args and hasattr(args[0], "logger"):
+                logger = getattr(args[0], "logger", structlog.get_logger())
             else:
                 logger = structlog.get_logger()
 
@@ -292,7 +292,7 @@ def railway(
 
                 # If already a FlextResult, return as-is
                 if isinstance(result, FlextResult):
-                    return result
+                    return cast("FlextResult[T]", result)
 
                 # Wrap successful result
                 return FlextResult[T].ok(result)

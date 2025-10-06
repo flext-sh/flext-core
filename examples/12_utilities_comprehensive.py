@@ -278,7 +278,7 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
 
     def demonstrate_new_flextresult_methods(self) -> None:
         """Demonstrate the 5 new FlextResult methods in utilities context.
-        
+
         Shows how the new v0.9.9+ methods work with utilities operations:
         - from_callable: Safe utility operations
         - flow_through: Utility pipeline composition
@@ -370,7 +370,9 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
 
         if pipeline_result.is_success:
             final_data = pipeline_result.unwrap()
-            print(f"✅ Validation pipeline complete: ID {final_data.get('validation_id', 'N/A')}")
+            print(
+                f"✅ Validation pipeline complete: ID {final_data.get('validation_id', 'N/A')}"
+            )
             print(f"   Fields validated: {final_data.get('fields_validated', 0)}")
             print(f"   Email: {final_data.get('email', 'N/A')}")
         else:
@@ -386,7 +388,6 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
         def fallback_id_generator(error: str) -> FlextResult[str]:
             """Fallback ID generator when primary fails."""
             print(f"   ⚠️  Primary failed: {error}, using fallback...")
-            import uuid
             fallback_id = f"FALLBACK-{uuid.uuid4().hex[:8]}"
             return FlextResult[str].ok(fallback_id)
 
@@ -421,8 +422,12 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
         if validator_result.is_success:
             validator_config = validator_result.unwrap()
             print(f"✅ Validator configured: {validator_config['validator_type']}")
-            print(f"   Email validation: {validator_config.get('email_validation', False)}")
-            print(f"   Hostname validation: {validator_config.get('hostname_validation', False)}")
+            print(
+                f"   Email validation: {validator_config.get('email_validation', False)}"
+            )
+            print(
+                f"   Hostname validation: {validator_config.get('hostname_validation', False)}"
+            )
         else:
             print(f"❌ No validator available: {validator_result.error}")
 
