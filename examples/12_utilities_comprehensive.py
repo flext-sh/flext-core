@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+import uuid
 
 from flext_core import (
     FlextResult,
@@ -28,20 +29,107 @@ from flext_core import (
 
 
 class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating essential FlextUtilities patterns."""
+    """Service demonstrating essential FlextUtilities patterns with FlextMixins.Service infrastructure.
+
+    This service inherits from Flext.Service to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - UTILITIES FOCUS!)
+    - Inherited context property (FlextContext for request/correlation tracking)
+    - Inherited config property (FlextConfig with application settings)
+    - Inherited metrics property (FlextMetrics for observability)
+
+    FlextUtilities provides:
+    - Validation: String, email, hostname, file path validation
+    - ID Generation: UUID, event, command, query, correlation IDs
+    - Timestamp Generation: Unix and ISO timestamps
+    - Cache Operations: Object caching and key generation
+    - Type Conversion: String to int/float conversion
+    - Reliability: Timeout and circuit breaker patterns
+    """
 
     def __init__(self) -> None:
-        """Initialize with automatic Flext infrastructure."""
+        """Initialize with inherited FlextMixins.Service infrastructure.
+
+        Inherited properties (no manual instantiation needed):
+        - self.logger: FlextLogger with service context (utilities operations)
+        - self.container: FlextContainer singleton (for service dependencies)
+        - self.context: FlextContext (for correlation tracking)
+        - self.config: FlextConfig (for application configuration)
+        - self.metrics: FlextMetrics (for observability)
+        """
         super().__init__()
         self._cache: FlextTypes.Dict = {}
 
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "UtilitiesComprehensiveService initialized with inherited infrastructure",
+            extra={
+                "service_type": "FlextUtilities demonstration",
+                "utility_categories": [
+                    "validation",
+                    "id_generation",
+                    "conversions",
+                    "caching",
+                    "reliability",
+                    "composition",
+                ],
+            },
+        )
+
     def execute(self) -> FlextResult[FlextTypes.Dict]:
-        """Execute method required by FlextService."""
-        self.logger.info("Executing utilities demo")
-        return FlextResult[FlextTypes.Dict].ok({
-            "status": "completed",
-            "utilities_executed": True,
-        })
+        """Execute all FlextUtilities pattern demonstrations.
+
+        Runs comprehensive utilities demonstrations:
+        1. Validation: Email, hostname, string validation
+        2. ID Generation: UUID, event, command, query IDs
+        3. Conversions: String to int/float type conversions
+        4. Caching: Object caching and key generation
+        5. Reliability: Timeout and circuit breaker patterns
+        6. Composition: Combining multiple utilities
+        7. Deprecated patterns (for educational comparison)
+
+        Returns:
+            FlextResult[FlextTypes.Dict]: Execution summary with demonstration results
+
+        """
+        self.logger.info("Starting comprehensive FlextUtilities demonstration")
+
+        try:
+            # Run all 7 demonstrations
+            self.demonstrate_validation()
+            self.demonstrate_id_generation()
+            self.demonstrate_conversions()
+            self.demonstrate_caching()
+            self.demonstrate_reliability()
+            self.demonstrate_composition()
+            self.demonstrate_deprecated_patterns()
+
+            summary = {
+                "status": "completed",
+                "demonstrations": 7,
+                "categories": [
+                    "validation",
+                    "id_generation",
+                    "conversions",
+                    "caching",
+                    "reliability",
+                    "composition",
+                    "deprecated_patterns",
+                ],
+                "utilities_executed": True,
+            }
+
+            self.logger.info(
+                "FlextUtilities demonstration completed successfully",
+                extra={"summary": summary},
+            )
+
+            return FlextResult[FlextTypes.Dict].ok(summary)
+
+        except Exception as e:
+            error_msg = f"FlextUtilities demonstration failed: {e}"
+            self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
+            return FlextResult[FlextTypes.Dict].fail(error_msg)
 
     # ========== VALIDATION UTILITIES ==========
 
@@ -188,6 +276,189 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
 
     # ========== DEPRECATED PATTERN WARNINGS ==========
 
+    def demonstrate_new_flextresult_methods(self) -> None:
+        """Demonstrate the 5 new FlextResult methods in utilities context.
+        
+        Shows how the new v0.9.9+ methods work with utilities operations:
+        - from_callable: Safe utility operations
+        - flow_through: Utility pipeline composition
+        - lash: Utility fallback recovery
+        - alt: Utility provider alternatives
+        - value_or_call: Lazy utility initialization
+        """
+        print("\n" + "=" * 60)
+        print("NEW FLEXTRESULT METHODS - UTILITIES CONTEXT")
+        print("Demonstrating v0.9.9+ methods with FlextUtilities patterns")
+        print("=" * 60)
+
+        # 1. from_callable - Safe Utility Operations
+        print("\n=== 1. from_callable: Safe Utility Operations ===")
+
+        def risky_validation_operation() -> dict:
+            """Validation operation that might raise exceptions."""
+            test_data = {
+                "email": "test@example.com",
+                "hostname": "www.example.com",
+                "string": "valid",
+            }
+            # Simulate validation that might fail
+            if not test_data.get("email") or "@" not in test_data["email"]:
+                msg = "Invalid email format"
+                raise ValueError(msg)
+            return {"validated": True, **test_data}
+
+        # Safe validation without try/except
+        validation_result = FlextResult.from_callable(risky_validation_operation)
+        if validation_result.is_success:
+            validated_data = validation_result.unwrap()
+            print(f"✅ Validation successful: {validated_data['email']}")
+        else:
+            print(f"❌ Validation failed: {validation_result.error}")
+
+        # 2. flow_through - Utility Pipeline Composition
+        print("\n=== 2. flow_through: Utility Pipeline Composition ===")
+
+        def validate_email_format(data: dict) -> FlextResult[dict]:
+            """Validate email format in data."""
+            email = data.get("email", "")
+            if not email or "@" not in email:
+                return FlextResult[dict].fail("Invalid email format")
+            return FlextResult[dict].ok(data)
+
+        def validate_hostname_format(data: dict) -> FlextResult[dict]:
+            """Validate hostname format in data."""
+            hostname = data.get("hostname", "")
+            if not hostname or "." not in hostname:
+                return FlextResult[dict].fail("Invalid hostname format")
+            return FlextResult[dict].ok(data)
+
+        def enrich_with_metadata(data: dict) -> FlextResult[dict]:
+            """Enrich data with validation metadata."""
+            enriched = {
+                **data,
+                "validation_id": str(uuid.uuid4())[:8],
+                "validated_at": time.time(),
+                "validator": "FlextUtilities",
+            }
+            return FlextResult[dict].ok(enriched)
+
+        def finalize_validation(data: dict) -> FlextResult[dict]:
+            """Finalize validation with summary."""
+            enriched = {
+                **data,
+                "validation_complete": True,
+                "fields_validated": len(data) - 3,  # Exclude metadata fields
+            }
+            return FlextResult[dict].ok(enriched)
+
+        # Flow through complete validation pipeline
+        test_data = {
+            "email": "user@example.com",
+            "hostname": "internal.invalid.com",
+            "username": "testuser",
+        }
+        pipeline_result = (
+            FlextResult[dict]
+            .ok(test_data)
+            .flow_through(
+                validate_email_format,
+                validate_hostname_format,
+                enrich_with_metadata,
+                finalize_validation,
+            )
+        )
+
+        if pipeline_result.is_success:
+            final_data = pipeline_result.unwrap()
+            print(f"✅ Validation pipeline complete: ID {final_data.get('validation_id', 'N/A')}")
+            print(f"   Fields validated: {final_data.get('fields_validated', 0)}")
+            print(f"   Email: {final_data.get('email', 'N/A')}")
+        else:
+            print(f"❌ Pipeline failed: {pipeline_result.error}")
+
+        # 3. lash - Utility Fallback Recovery
+        print("\n=== 3. lash: Utility Fallback Recovery ===")
+
+        def primary_id_generator() -> FlextResult[str]:
+            """Primary ID generator that might fail."""
+            return FlextResult[str].fail("Primary ID generator unavailable")
+
+        def fallback_id_generator(error: str) -> FlextResult[str]:
+            """Fallback ID generator when primary fails."""
+            print(f"   ⚠️  Primary failed: {error}, using fallback...")
+            import uuid
+            fallback_id = f"FALLBACK-{uuid.uuid4().hex[:8]}"
+            return FlextResult[str].ok(fallback_id)
+
+        # Try primary generator, fall back on failure
+        id_result = primary_id_generator().lash(fallback_id_generator)
+        if id_result.is_success:
+            generated_id = id_result.unwrap()
+            print(f"✅ ID generated: {generated_id}")
+        else:
+            print(f"❌ All ID generators failed: {id_result.error}")
+
+        # 4. alt - Utility Provider Alternatives
+        print("\n=== 4. alt: Utility Provider Alternatives ===")
+
+        def get_custom_validator() -> FlextResult[dict]:
+            """Try to get custom validator configuration."""
+            return FlextResult[dict].fail("Custom validator not configured")
+
+        def get_default_validator() -> FlextResult[dict]:
+            """Provide default validator configuration."""
+            config = {
+                "validator_type": "default",
+                "email_validation": True,
+                "hostname_validation": True,
+                "string_validation": True,
+                "strict_mode": False,
+            }
+            return FlextResult[dict].ok(config)
+
+        # Try custom validator, fall back to default
+        validator_result = get_custom_validator().alt(get_default_validator())
+        if validator_result.is_success:
+            validator_config = validator_result.unwrap()
+            print(f"✅ Validator configured: {validator_config['validator_type']}")
+            print(f"   Email validation: {validator_config.get('email_validation', False)}")
+            print(f"   Hostname validation: {validator_config.get('hostname_validation', False)}")
+        else:
+            print(f"❌ No validator available: {validator_result.error}")
+
+        # 5. value_or_call - Lazy Utility Initialization
+        print("\n=== 5. value_or_call: Lazy Utility Initialization ===")
+
+        def create_expensive_cache() -> dict:
+            """Create and configure cache (expensive operation)."""
+            print("   ⚙️  Creating new cache with full configuration...")
+            return {
+                "cache_type": "in_memory",
+                "max_size": 1000,
+                "ttl": 300,
+                "eviction_policy": "lru",
+                "initialized": True,
+            }
+
+        # Try to get existing cache, create new one if not available
+        cache_fail_result = FlextResult[dict].fail("No existing cache")
+        cache = cache_fail_result.value_or_call(create_expensive_cache)
+        print(f"✅ Cache acquired: {cache.get('cache_type', 'unknown')}")
+        print(f"   Max size: {cache.get('max_size', 0)}")
+        print(f"   TTL: {cache.get('ttl', 0)}s")
+
+        # Try again with successful result (lazy function NOT called)
+        existing_cache = {"cache_type": "redis", "initialized": True}
+        cache_success_result = FlextResult[dict].ok(existing_cache)
+        cache_cached = cache_success_result.value_or_call(create_expensive_cache)
+        print(f"✅ Existing cache used: {cache_cached.get('cache_type', 'unknown')}")
+        print("   No expensive creation needed")
+
+        print("\n" + "=" * 60)
+        print("✅ NEW FLEXTRESULT METHODS UTILITIES DEMO COMPLETE!")
+        print("All 5 methods demonstrated with FlextUtilities context")
+        print("=" * 60)
+
     def demonstrate_deprecated_patterns(self) -> None:
         """Show what NOT to do - deprecated patterns."""
         print("\n=== ⚠️ DEPRECATED PATTERNS (DO NOT USE) ===")
@@ -234,6 +505,7 @@ def main() -> None:
     service.demonstrate_caching()
     service.demonstrate_reliability()
     service.demonstrate_composition()
+    service.demonstrate_new_flextresult_methods()
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 50)

@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
-"""FLEXT Core Utilities Integration Examples.
+"""10 - FLEXT Core Utilities Integration: Manual Component Setup Patterns.
 
-Comprehensive examples demonstrating how all flext-core components work together
-in realistic scenarios. These examples were moved from utilities.py to maintain
-the single-class-per-module pattern.
+This comprehensive example demonstrates MANUAL integration patterns for flext-core
+components WITHOUT using FlextMixins.Service inheritance. This contrasts with
+Examples 01-09 which demonstrate inherited infrastructure patterns.
 
-This file demonstrates:
-- FlextConfig integration with computed fields and validators
-- FlextContainer dependency injection patterns
-- FlextBus event-driven architecture
-- FlextDispatcher message routing
-- FlextLogger structured logging
-- Complete service integration patterns
+**IMPORTANT**: This example shows MANUAL setup for advanced integration scenarios.
+For standard service development, use FlextMixins.Service inheritance as shown
+in Examples 01-09 to get automatic infrastructure (logger, container, context, etc.).
 
-Usage:
-    python examples/utilities_integration_examples.py
+Key Integration Patterns Demonstrated:
+- FlextConfig: Manual configuration integration with computed fields and validators
+- FlextContainer: Manual dependency injection without inherited container property
+- FlextBus: Manual event-driven architecture setup
+- FlextDispatcher: Manual message routing and dispatching
+- FlextLogger: Manual logger instantiation vs inherited logger property
+- Complete service integration with manual component wiring
+
+**When to use Manual vs Inherited patterns**:
+- Manual (this example): Advanced scenarios requiring fine-grained component control
+- Inherited (Examples 01-09): Standard service development with automatic infrastructure
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -211,16 +219,37 @@ class MessageHandler:
 
 
 class IntegratedService:
-    """Complete service integration demonstrating all flext-core components."""
+    """Complete service integration demonstrating MANUAL component setup.
+
+    This service demonstrates MANUAL integration of all flext-core components
+    WITHOUT using FlextMixins.Service inheritance. This contrasts with the
+    inherited infrastructure pattern shown in Examples 01-09.
+
+    **IMPORTANT**: This manual setup is for advanced scenarios. For standard
+    service development, use FlextMixins.Service to get automatic infrastructure:
+    - Inherited self.logger (no manual FlextLogger instantiation)
+    - Inherited self.container (no manual FlextContainer.get_global())
+    - Inherited self.context (automatic request/correlation tracking)
+    - Inherited self.config (automatic FlextConfig with settings)
+    - Inherited self.metrics (automatic observability)
+
+    See Examples 01-09 for the recommended FlextMixins.Service inheritance pattern.
+    """
 
     def __init__(self) -> None:
-        """Initialize integrated service with all components."""
+        """Initialize with MANUAL component setup.
+
+        This demonstrates manual wiring of all components. Compare with
+        FlextMixins.Service inheritance which provides all these automatically
+        via inherited properties (see Examples 01-09).
+        """
         super().__init__()
-        self._config = FlextConfig()
-        self._container = FlextContainer.get_global()
-        self._bus = FlextBus()
-        self._dispatcher = FlextDispatcher()
-        self._logger = FlextLogger(__name__)
+        # MANUAL setup - compare with FlextMixins.Service automatic inheritance:
+        self._config = FlextConfig()                    # vs inherited self.config
+        self._container = FlextContainer.get_global()   # vs inherited self.container
+        self._bus = FlextBus()                          # vs inherited self.bus
+        self._dispatcher = FlextDispatcher()            # vs inherited self.dispatcher
+        self._logger = FlextLogger(__name__)            # vs inherited self.logger
 
         # Register this service in the container
         self._container.register("integrated_service", self)
@@ -292,6 +321,187 @@ class IntegratedService:
         })
 
 
+def demonstrate_new_flextresult_methods() -> None:
+    """Demonstrate the 5 new FlextResult methods in utilities integration context.
+    
+    Shows how the new v0.9.9+ methods work with complete utilities integration:
+    - from_callable: Safe utility operations
+    - flow_through: Utility pipeline composition
+    - lash: Utility fallback recovery
+    - alt: Utility provider alternatives
+    - value_or_call: Lazy utility loading
+    """
+    print("\n" + "=" * 60)
+    print("NEW FLEXTRESULT METHODS - UTILITIES INTEGRATION CONTEXT")
+    print("Demonstrating v0.9.9+ methods with all flext-core utilities")
+    print("=" * 60)
+
+    # 1. from_callable - Safe Utility Operations
+    print("\n=== 1. from_callable: Safe Utility Operations ===")
+
+    def risky_config_operation() -> dict:
+        """Configuration operation that might raise exceptions."""
+        config = FlextConfig()
+        if not hasattr(config, 'batch_size'):
+            msg = "Configuration incomplete"
+            raise FlextExceptions.ConfigurationError(msg)
+        return {
+            "batch_size": config.batch_size,
+            "timeout": config.timeout_seconds,
+            "debug": config.is_debug_enabled,
+        }
+
+    # Safe config access without try/except
+    config_result = FlextResult.from_callable(risky_config_operation)
+    if config_result.is_success:
+        config_data = config_result.unwrap()
+        print(f"✅ Configuration loaded safely: batch_size={config_data['batch_size']}")
+    else:
+        print(f"❌ Configuration loading failed: {config_result.error}")
+
+    # 2. flow_through - Utility Pipeline Composition
+    print("\n=== 2. flow_through: Utility Pipeline Composition ===")
+
+    def validate_request_data(data: dict) -> FlextResult[dict]:
+        """Validate incoming request data."""
+        if not data:
+            return FlextResult[dict].fail("Request data cannot be empty")
+        if not data.get("id"):
+            return FlextResult[dict].fail("Request ID required")
+        return FlextResult[dict].ok(data)
+
+    def enrich_with_config(data: dict) -> FlextResult[dict]:
+        """Enrich request with configuration settings."""
+        config = FlextConfig()
+        enriched = {
+            **data,
+            "batch_size": config.batch_size,
+            "timeout_ms": config.timeout_seconds * 1000,
+        }
+        return FlextResult[dict].ok(enriched)
+
+    def register_in_container(data: dict) -> FlextResult[dict]:
+        """Register request context in DI container."""
+        container = FlextContainer.get_global()
+        request_context = {"id": data["id"], "timestamp": "now"}
+        reg_result = container.register(f"request_{data['id']}", request_context)
+        if reg_result.is_failure:
+            return FlextResult[dict].fail(f"Container registration failed: {reg_result.error}")
+        enriched = {**data, "container_registered": True}
+        return FlextResult[dict].ok(enriched)
+
+    def publish_to_bus(data: dict) -> FlextResult[dict]:
+        """Publish event to message bus."""
+        bus = FlextBus()
+        event = {
+            "type": "request_processed",
+            "request_id": data["id"],
+            "enriched": True,
+        }
+        pub_result = bus.publish_event(event)
+        if pub_result.is_failure:
+            return FlextResult[dict].fail(f"Event publishing failed: {pub_result.error}")
+        enriched = {**data, "event_published": True}
+        return FlextResult[dict].ok(enriched)
+
+    # Flow through complete utility pipeline
+    request_data = {"id": "REQ-UTIL-001", "type": "integration_test"}
+    pipeline_result = (
+        FlextResult[dict]
+        .ok(request_data)
+        .flow_through(
+            validate_request_data,
+            enrich_with_config,
+            register_in_container,
+            publish_to_bus,
+        )
+    )
+
+    if pipeline_result.is_success:
+        final_data = pipeline_result.unwrap()
+        print(f"✅ Utility pipeline complete: {final_data['id']}")
+        print(f"   Batch size: {final_data.get('batch_size', 'N/A')}")
+        print(f"   Container registered: {final_data.get('container_registered', False)}")
+        print(f"   Event published: {final_data.get('event_published', False)}")
+    else:
+        print(f"❌ Pipeline failed: {pipeline_result.error}")
+
+    # 3. lash - Utility Fallback Recovery
+    print("\n=== 3. lash: Utility Fallback Recovery ===")
+
+    def primary_dispatcher() -> FlextResult[dict]:
+        """Primary dispatcher that might fail."""
+        return FlextResult[dict].fail("Primary dispatcher unavailable")
+
+    def fallback_dispatcher(error: str) -> FlextResult[dict]:
+        """Fallback dispatcher when primary fails."""
+        print(f"   ⚠️  Primary failed: {error}, using fallback dispatcher...")
+        dispatcher = FlextDispatcher()
+        message = {"type": "fallback_dispatch", "original_error": error}
+        dispatch_result = dispatcher.dispatch(message)
+        if dispatch_result.is_failure:
+            return FlextResult[dict].fail(f"Fallback also failed: {dispatch_result.error}")
+        return FlextResult[dict].ok({"dispatcher": "fallback", "message_sent": True})
+
+    # Try primary, fall back on failure
+    dispatch_result = primary_dispatcher().lash(fallback_dispatcher)
+    if dispatch_result.is_success:
+        dispatch_data = dispatch_result.unwrap()
+        print(f"✅ Dispatch successful via: {dispatch_data['dispatcher']}")
+        print(f"   Message sent: {dispatch_data.get('message_sent', False)}")
+    else:
+        print(f"❌ All dispatchers failed: {dispatch_result.error}")
+
+    # 4. alt - Utility Provider Alternatives
+    print("\n=== 4. alt: Utility Provider Alternatives ===")
+
+    def get_custom_logger() -> FlextResult[FlextLogger]:
+        """Try to get custom configured logger."""
+        return FlextResult[FlextLogger].fail("Custom logger not configured")
+
+    def get_default_logger() -> FlextResult[FlextLogger]:
+        """Provide default logger as fallback."""
+        logger = FlextLogger("utilities_integration")
+        return FlextResult[FlextLogger].ok(logger)
+
+    # Try custom, fall back to default
+    logger_result = get_custom_logger().alt(get_default_logger())
+    if logger_result.is_success:
+        logger = logger_result.unwrap()
+        print(f"✅ Logger acquired: {type(logger).__name__}")
+        logger.info("Logger fallback test successful")
+    else:
+        print(f"❌ No logger available: {logger_result.error}")
+
+    # 5. value_or_call - Lazy Utility Loading
+    print("\n=== 5. value_or_call: Lazy Utility Loading ===")
+
+    def create_expensive_container() -> FlextContainer:
+        """Create and configure a new container (expensive operation)."""
+        print("   ⚙️  Creating new container with full configuration...")
+        container = FlextContainer()
+        container.register("logger", FlextLogger("lazy_container"))
+        container.register("config", FlextConfig())
+        return container
+
+    # Try to get existing container, create new one if not available
+    container_fail_result = FlextResult[FlextContainer].fail("No existing container")
+    container = container_fail_result.value_or_call(create_expensive_container)
+    print(f"✅ Container acquired: {type(container).__name__}")
+    print(f"   Container has services: {hasattr(container, '_services')}")
+
+    # Try again with successful result (lazy function NOT called)
+    container_success_result = FlextResult[FlextContainer].ok(FlextContainer.get_global())
+    container_cached = container_success_result.value_or_call(create_expensive_container)
+    print(f"✅ Existing container used: {type(container_cached).__name__}")
+    print("   No expensive creation needed")
+
+    print("\n" + "=" * 60)
+    print("✅ NEW FLEXTRESULT METHODS UTILITIES INTEGRATION DEMO COMPLETE!")
+    print("All 5 methods demonstrated with complete utility integration context")
+    print("=" * 60)
+
+
 def run_integration_examples() -> None:
     """Run comprehensive integration examples."""
     print("🔧 Running FLEXT Core Integration Examples")
@@ -343,6 +553,9 @@ def run_integration_examples() -> None:
     print("  • Message routing capabilities")
     print("  • Structured logging practices")
     print("  • Railway-oriented error handling")
+
+    # Demonstrate new FlextResult methods (v0.9.9+)
+    demonstrate_new_flextresult_methods()
 
 
 if __name__ == "__main__":

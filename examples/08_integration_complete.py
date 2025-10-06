@@ -31,6 +31,7 @@ from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextContext,
+    FlextExceptions,
     FlextLogger,
     FlextModels,
     FlextResult,
@@ -65,7 +66,7 @@ def assert_logger_initialized(logger: FlextLogger | None) -> FlextLogger:
     """
     if logger is None:
         msg = "Logger must be initialized"
-        raise Flext.Exceptions.ConfigurationError(msg)
+        raise FlextExceptions.ConfigurationError(msg)
     return logger
 
 
@@ -84,7 +85,7 @@ def assert_container_initialized(container: FlextContainer | None) -> FlextConta
     """
     if container is None:
         msg = "Container must be initialized"
-        raise Flext.Exceptions.ConfigurationError(msg)
+        raise FlextExceptions.ConfigurationError(msg)
     return container
 
 
@@ -247,15 +248,43 @@ class Order(FlextModels.AggregateRoot):
 
 
 class InventoryService(FlextService[FlextTypes.Dict]):
-    """Inventory management service."""
+    """Inventory management service with FlextMixins.Service infrastructure.
+
+    This service inherits from FlextService to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context)
+    - Inherited context property (FlextContext for request tracking)
+    - Inherited config property (FlextConfig with application settings)
+    - Inherited metrics property (FlextMetrics for observability)
+
+    Manages product inventory with domain model operations and structured logging.
+    """
 
     def __init__(self) -> None:
-        """Initialize with products."""
+        """Initialize inventory service with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger initialization needed!
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for request tracking
+        - self.config: FlextConfig with application settings
+        - self.metrics: FlextMetrics for observability
+        """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Use self.logger from FlextMixins.Logging, not _logger
         self._scenarios = ExampleScenarios
         self._products = {}
         self._initialize_products()
+
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "InventoryService initialized with inherited infrastructure",
+            extra={
+                "service_type": "Inventory Management",
+                "products_loaded": len(self._products),
+            }
+        )
 
     def _initialize_products(self) -> None:
         """Initialize sample products."""
@@ -331,12 +360,40 @@ class InventoryService(FlextService[FlextTypes.Dict]):
 
 
 class PaymentService(FlextService[FlextTypes.Dict]):
-    """Payment processing service using strategy pattern."""
+    """Payment processing service with FlextMixins.Service infrastructure.
+
+    This service inherits from FlextService to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context)
+    - Inherited context property (FlextContext for correlation tracking)
+    - Inherited config property (FlextConfig with payment settings)
+    - Inherited metrics property (FlextMetrics for payment observability)
+
+    Implements payment processing with strategy pattern and structured logging.
+    """
 
     def __init__(self) -> None:
-        """Initialize payment service."""
+        """Initialize payment service with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger initialization needed!
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for correlation tracking
+        - self.config: FlextConfig with payment settings
+        - self.metrics: FlextMetrics for observability
+        """
         super().__init__()
-        self._logger = FlextLogger(__name__)
+        # Use self.logger from FlextMixins.Logging, not _logger
+
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "PaymentService initialized with inherited infrastructure",
+            extra={
+                "service_type": "Payment Processing",
+                "payment_methods": ["credit_card", "paypal"],
+            }
+        )
 
     def process_payment(
         self,
@@ -344,7 +401,7 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         method: str,
     ) -> FlextResult[FlextTypes.Dict]:
         """Process payment for order."""
-        self._logger.info(
+        self.logger.info(
             "Processing payment",
             extra={
                 "order_id": order.id,
@@ -392,13 +449,43 @@ class PaymentService(FlextService[FlextTypes.Dict]):
 
 
 class OrderService(FlextService[FlextTypes.Dict]):
-    """Order processing service - orchestrates the workflow."""
+    """Order processing service with FlextMixins.Service infrastructure - orchestrates the workflow.
+
+    This service inherits from FlextService to demonstrate:
+    - Inherited container property (FlextContainer singleton for service dependencies)
+    - Inherited logger property (FlextLogger with service context and correlation tracking)
+    - Inherited context property (FlextContext for request and correlation IDs)
+    - Inherited config property (FlextConfig with order processing settings)
+    - Inherited metrics property (FlextMetrics for order observability)
+
+    Orchestrates complete order workflow: validation → creation → payment → confirmation.
+    Uses inherited container to access InventoryService and PaymentService dependencies.
+    """
 
     def __init__(self) -> None:
-        """Initialize with automatic Flext infrastructure."""
+        """Initialize order service with inherited FlextMixins.Service infrastructure.
+
+        Note: No manual logger initialization needed!
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton (access inventory/payment services)
+        - self.context: FlextContext for request and correlation tracking
+        - self.config: FlextConfig with order processing configuration
+        - self.metrics: FlextMetrics for order workflow observability
+        """
         super().__init__()
         self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["integration", "demo"])
+
+        # Demonstrate inherited logger (no manual instantiation needed!)
+        self.logger.info(
+            "OrderService initialized with inherited infrastructure",
+            extra={
+                "service_type": "Order Orchestration",
+                "dependencies": ["InventoryService", "PaymentService"],
+                "metadata": self._metadata,
+            }
+        )
 
     def create_order(
         self,
@@ -654,6 +741,203 @@ class OrderEnrichmentHandler:
 # ========== INTEGRATION DEMONSTRATION ==========
 
 
+def demonstrate_new_flextresult_methods() -> None:
+    """Demonstrate the 5 new FlextResult methods in integration context.
+    
+    Shows how the new v0.9.9+ methods work with complete FLEXT integration:
+    - from_callable: Safe exception handling
+    - flow_through: Pipeline composition
+    - lash: Error recovery
+    - alt: Alternative results
+    - value_or_call: Lazy defaults
+    """
+    print("=" * 60)
+    print("NEW FLEXTRESULT METHODS - INTEGRATION CONTEXT")
+    print("Demonstrating v0.9.9+ methods in complete system integration")
+    print("=" * 60)
+
+    # Setup test data
+    scenario_data: RealisticDataDict = ExampleScenarios.realistic_data()
+    order_template: RealisticOrderDict = scenario_data["order"]
+    user_pool = ExampleScenarios.users()
+    REDACTED_LDAP_BIND_PASSWORD_user = user_pool[0]  # Get first user for demos
+
+    # 1. from_callable - Safe Integration Layer Operations
+    print("\n=== 1. from_callable: Safe Integration Operations ===")
+
+    def risky_order_creation(customer_id: str, items: list) -> Order:
+        """Order creation that might raise exceptions."""
+        if not items:
+            msg = "Cannot create empty order"
+            raise FlextExceptions.ValidationError(msg, field="items", value=items)
+        if not customer_id:
+            msg = "Customer ID required"
+            raise FlextExceptions.ValidationError(msg, field="customer_id", value=None)
+        return Order(customer_id=customer_id, items=[], domain_events=[])
+
+    # Safe order creation without try/except
+    order_result = FlextResult.from_callable(
+        lambda: risky_order_creation(
+            REDACTED_LDAP_BIND_PASSWORD_user["email"],
+            order_template.get("items", []),
+        ),
+    )
+    if order_result.is_success:
+        order = order_result.unwrap()
+        print(f"✅ Order created safely: {order.customer_id}")
+    else:
+        print(f"❌ Order creation failed: {order_result.error}")
+
+    # 2. flow_through - Complete Integration Pipeline
+    print("\n=== 2. flow_through: Integration Pipeline Composition ===")
+
+    def validate_order_data(data: dict) -> FlextResult[dict]:
+        """Validate order request data."""
+        if not data.get("customer_id"):
+            return FlextResult[dict].fail("Customer ID required")
+        if not data.get("items"):
+            return FlextResult[dict].fail("Items required")
+        return FlextResult[dict].ok(data)
+
+    def check_inventory_availability(data: dict) -> FlextResult[dict]:
+        """Check all items are in stock."""
+        # Simulate inventory check
+        enriched = {**data, "inventory_status": "available"}
+        return FlextResult[dict].ok(enriched)
+
+    def calculate_order_total(data: dict) -> FlextResult[dict]:
+        """Calculate total price with taxes."""
+        items = data.get("items", [])
+        subtotal = sum(item.get("price", 0) * item.get("quantity", 1) for item in items)
+        tax = subtotal * Decimal("0.1")
+        total = subtotal + tax
+        enriched = {**data, "subtotal": subtotal, "tax": tax, "total": total}
+        return FlextResult[dict].ok(enriched)
+
+    def apply_promotions(data: dict) -> FlextResult[dict]:
+        """Apply promotional discounts."""
+        total = data.get("total", Decimal(0))
+        discount = total * Decimal("0.05") if total > 100 else Decimal(0)
+        final_total = total - discount
+        enriched = {**data, "discount": discount, "final_total": final_total}
+        return FlextResult[dict].ok(enriched)
+
+    # Flow through complete integration pipeline
+    order_data: dict = {
+        "customer_id": REDACTED_LDAP_BIND_PASSWORD_user["email"],
+        "items": order_template.get("items", []),
+        "source": "web_checkout",
+    }
+    pipeline_result = (
+        FlextResult[dict]
+        .ok(order_data)
+        .flow_through(
+            validate_order_data,
+            check_inventory_availability,
+            calculate_order_total,
+            apply_promotions,
+        )
+    )
+
+    if pipeline_result.is_success:
+        final_order = pipeline_result.unwrap()
+        print(f"✅ Integration pipeline complete: ${final_order.get('final_total', 0):.2f}")
+        print(f"   Subtotal: ${final_order.get('subtotal', 0):.2f}")
+        print(f"   Tax: ${final_order.get('tax', 0):.2f}")
+        print(f"   Discount: ${final_order.get('discount', 0):.2f}")
+    else:
+        print(f"❌ Pipeline failed: {pipeline_result.error}")
+
+    # 3. lash - Service Fallback Recovery
+    print("\n=== 3. lash: Service Fallback Recovery ===")
+
+    def try_primary_payment_gateway(_amount: Decimal) -> FlextResult[dict]:
+        """Try primary payment processor."""
+        # Simulate failure (amount parameter for demonstration purposes)
+        return FlextResult[dict].fail("Primary gateway timeout")
+
+    def fallback_to_secondary_gateway(error: str) -> FlextResult[dict]:
+        """Fallback to secondary payment processor."""
+        print(f"   ⚠️  Primary failed: {error}, using fallback...")
+        # Simulate successful fallback
+        return FlextResult[dict].ok({
+            "gateway": "secondary",
+            "transaction_id": str(uuid4()),
+            "status": "approved",
+        })
+
+    # Try primary, fallback to secondary on failure
+    payment_result = try_primary_payment_gateway(Decimal("99.99")).lash(
+        fallback_to_secondary_gateway,
+    )
+
+    if payment_result.is_success:
+        payment_data = payment_result.unwrap()
+        print(f"✅ Payment processed via {payment_data.get('gateway')} gateway")
+        print(f"   Transaction: {payment_data.get('transaction_id')}")
+    else:
+        print(f"❌ All payment gateways failed: {payment_result.error}")
+
+    # 4. alt - Service Discovery with Fallback
+    print("\n=== 4. alt: Service Discovery with Fallback ===")
+
+    def get_premium_shipping_service() -> FlextResult[dict]:
+        """Try to get premium shipping service."""
+        # Simulate service unavailable
+        return FlextResult[dict].fail("Premium shipping service unavailable")
+
+    def get_standard_shipping_service() -> FlextResult[dict]:
+        """Get standard shipping service."""
+        return FlextResult[dict].ok({
+            "service": "standard",
+            "estimated_days": 5,
+            "cost": Decimal("9.99"),
+        })
+
+    # Try premium, fall back to standard
+    shipping = get_premium_shipping_service().alt(get_standard_shipping_service())
+
+    if shipping.is_success:
+        shipping_data = shipping.unwrap()
+        print(f"✅ Shipping service: {shipping_data.get('service')}")
+        print(f"   Delivery: {shipping_data.get('estimated_days')} days")
+        print(f"   Cost: ${shipping_data.get('cost')}")
+    else:
+        print(f"❌ No shipping services available: {shipping.error}")
+
+    # 5. value_or_call - Lazy Configuration Loading
+    print("\n=== 5. value_or_call: Lazy Configuration Loading ===")
+
+    def load_custom_config() -> dict:
+        """Expensive configuration loading operation."""
+        print("   ⚙️  Loading custom configuration from database...")
+        time.sleep(0.1)  # Simulate expensive operation
+        return {
+            "max_order_amount": Decimal(10000),
+            "default_currency": "USD",
+            "tax_rate": Decimal("0.1"),
+        }
+
+    # Config not found, lazy-load default
+    config_result: FlextResult[dict] = FlextResult[dict].fail("Config not in cache")
+
+    # Only loads if result is failure
+    config = config_result.value_or_call(load_custom_config)
+    print(f"✅ Configuration loaded: currency={config.get('default_currency')}")
+    print(f"   Max order: ${config.get('max_order_amount')}")
+    print(f"   Tax rate: {config.get('tax_rate')}")
+
+    # When success, doesn't call the function
+    cached_config: FlextResult[dict] = FlextResult[dict].ok({"cached": True})
+    result_config = cached_config.value_or_call(load_custom_config)  # Won't execute
+    print(f"✅ Cached config used: {result_config}")
+
+    print("\n" + "=" * 60)
+    print("✅ NEW FLEXTRESULT METHODS INTEGRATION DEMO COMPLETE!")
+    print("All 5 methods demonstrated in complete system integration context")
+    print("=" * 60)
+
+
 def demonstrate_complete_integration() -> None:
     """Demonstrate all FLEXT components working together."""
     print("=" * 60)
@@ -674,9 +958,7 @@ def demonstrate_complete_integration() -> None:
 
     # 2. Container setup with dependency injection
     print("\n=== 2. Dependency Injection ===")
-    manager = FlextContainer.get_global_instance()
-
-    container = manager.get_or_create()
+    container = FlextContainer.get_global()
 
     # Register services
     inventory = InventoryService()
@@ -1174,6 +1456,9 @@ def demonstrate_flextcore_11_features() -> None:
 
 def main() -> None:
     """Main entry point."""
+    # New FlextResult methods (v0.9.9+)
+    demonstrate_new_flextresult_methods()
+
     # Traditional pattern
     demonstrate_complete_integration()
 

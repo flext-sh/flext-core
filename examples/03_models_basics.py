@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 import warnings
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -776,8 +777,6 @@ class ComprehensiveModelsService(Flext.Service[Order]):
             print(f"✅ Valid UUID for entity: {product.id[:8]}...")
 
         # JSON validation for serialized models
-        import json
-
         order_json = json.dumps(
             {
                 "id": str(uuid4()),
@@ -801,8 +800,9 @@ class ComprehensiveModelsService(Flext.Service[Order]):
         try:
             invalid_email = "not-an-email"
             if not FlextRuntime.is_valid_email(invalid_email):
+                error_msg = "Invalid email format for value object"
                 raise FlextExceptions.ValidationError(
-                    "Invalid email format for value object",
+                    error_msg,
                     field="address",
                     value=invalid_email,
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -814,8 +814,9 @@ class ComprehensiveModelsService(Flext.Service[Order]):
         # NotFoundError with entity repository
         try:
             missing_id = str(uuid4())
+            error_msg = "Entity not found in repository"
             raise FlextExceptions.NotFoundError(
-                "Entity not found in repository",
+                error_msg,
                 resource_type="Product",
                 resource_id=missing_id,
             )
@@ -825,8 +826,9 @@ class ComprehensiveModelsService(Flext.Service[Order]):
 
         # ConflictError for business rule violations
         try:
+            error_msg = "Cannot ship order without items"
             raise FlextExceptions.ConflictError(
-                "Cannot ship order without items",
+                error_msg,
                 conflict_reason="Order must have at least one line item",
             )
         except FlextExceptions.ConflictError as e:

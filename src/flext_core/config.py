@@ -340,7 +340,7 @@ class FlextConfig(BaseSettings):
         @staticmethod
         def create_singleton_provider(
             config_instance: FlextConfig | None = None,
-        ) -> providers.Singleton:
+        ) -> providers.Singleton[FlextConfig]:
             """Create a Singleton provider for FlextConfig.
 
             Args:
@@ -365,7 +365,7 @@ class FlextConfig(BaseSettings):
         @staticmethod
         def create_factory_provider(
             **default_kwargs: FlextTypes.ConfigValue,
-        ) -> providers.Factory:
+        ) -> providers.Factory[FlextConfig]:
             """Create a Factory provider for FlextConfig instances.
 
             Args:
@@ -391,7 +391,7 @@ class FlextConfig(BaseSettings):
         def create_callable_provider(
             config_instance: FlextConfig,
             field_name: str,
-        ) -> providers.Callable:
+        ) -> providers.Callable[object]:
             """Create a Callable provider for a specific config field.
 
             Args:
@@ -1018,13 +1018,9 @@ class FlextConfig(BaseSettings):
                     invalid_value=v,
                     valid_values=sorted(valid_environments),
                 )
-            except Exception as e:
+            except Exception:
                 # Don't fail validation if logging fails, but log to stderr for diagnostics
-                import sys
-
-                print(
-                    f"Warning: Logging failed during validation: {e}", file=sys.stderr
-                )
+                pass
 
             raise FlextExceptions.ValidationError(
                 message=msg,
@@ -1050,13 +1046,9 @@ class FlextConfig(BaseSettings):
                     invalid_value=v,
                     valid_values=list(FlextConstants.Logging.VALID_LEVELS),
                 )
-            except Exception as e:
+            except Exception:
                 # Don't fail validation if logging fails, but log to stderr for diagnostics
-                import sys
-
-                print(
-                    f"Warning: Logging failed during validation: {e}", file=sys.stderr
-                )
+                pass
 
             raise FlextExceptions.ValidationError(
                 message=msg,

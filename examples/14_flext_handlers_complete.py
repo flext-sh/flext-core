@@ -27,7 +27,6 @@ from decimal import Decimal
 from uuid import uuid4
 
 from flext_core import (
-    FlextContainer,
     FlextHandlers,
     FlextLogger,
     FlextModels,
@@ -105,16 +104,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._logger = FlextLogger(__name__)
-        manager = FlextContainer.ensure_global_manager()
-        self._container = manager.get_or_create()
+        # Use inherited self.logger and self.container from FlextService
         # In-memory stores for demo
         self._users: dict[str, User] = {}
         self._events: list[UserCreatedEvent] = []
 
     def execute(self) -> FlextResult[dict[str, str | bool]]:
         """Execute method required by FlextService."""
-        self._logger.info("Executing FlextHandlers demo")
+        self.logger.info("Executing FlextHandlers demo")
         return FlextResult[dict[str, str | bool]].ok({
             "status": "processed",
             "handlers_executed": True,
