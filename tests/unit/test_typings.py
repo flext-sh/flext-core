@@ -4,8 +4,6 @@ Tests real functionality of the centralized type system, ensuring all
 TypeVars, type aliases, and FlextTypes namespace work correctly.
 """
 
-from collections import OrderedDict
-
 from flext_core import FlextTypes
 from flext_core.typings import (
     Command,
@@ -122,12 +120,6 @@ class TestFlextTypes:
 
     def test_flexttypes_core_types(self) -> None:
         """Test FlextTypes types are accessible."""
-        # Test basic types
-        assert FlextTypes.T is not None
-        assert FlextTypes.U is not None
-        assert FlextTypes.V is not None
-        assert FlextTypes.W is not None
-
         # Test collection types
         assert FlextTypes.Dict == FlextTypes.Dict
         assert FlextTypes.List == FlextTypes.List
@@ -140,7 +132,7 @@ class TestFlextTypes:
         assert FlextTypes.NestedDict == FlextTypes.NestedDict
         # OrderedDict is actually OrderedDict type
 
-        assert FlextTypes.OrderedDict == OrderedDict[str, object]
+        assert FlextTypes.OrderedDict == dict[str, object]
 
         # Test configuration types
         config_dict: FlextTypes.ConfigDict = {"key": "value", "number": 42}

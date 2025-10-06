@@ -1,4 +1,4 @@
-"""FlextCore - Unified facade for complete flext-core ecosystem.
+"""Flext - Unified facade for complete flext-core ecosystem.
 
 This module provides the main thin facade exposing ALL flext-core functionality
 through a single unified entry point. Following FLEXT domain library standards,
@@ -14,8 +14,10 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import cast, override
+from typing import cast
 from uuid import uuid4
+
+from pydantic import ConfigDict
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -28,7 +30,6 @@ from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
@@ -37,7 +38,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextCore(FlextService[None]):
+class Flext:
     """Unified facade for complete flext-core ecosystem integration.
 
     This is the single recommended entry point for accessing ALL flext-core
@@ -56,7 +57,6 @@ class FlextCore(FlextService[None]):
     - **FlextBus**: Event messaging and pub/sub
     - **FlextContext**: Request/operation context management
     - **FlextHandlers**: CQRS handler registration
-    - **FlextProcessors**: Processing pipelines
     - **FlextRegistry**: Component registration
     - **FlextDispatcher**: Message routing
     - **FlextMixins**: Reusable behaviors
@@ -70,10 +70,10 @@ class FlextCore(FlextService[None]):
     **Usage Examples**:
 
     ```python
-    from flext_core import FlextCore
+    from flext_core import Flext
 
     # Create unified core instance
-    core = FlextCore()
+    core = Flext()
 
     # Access components through properties
     config = core.config
@@ -82,13 +82,13 @@ class FlextCore(FlextService[None]):
 
     # Or use direct class access (namespace pattern)
     result = FlextResult[str].ok("success")
-    user = FlextCore.Models.Entity(id="123", name="John")
-    timeout = FlextCore.Constants.Defaults.TIMEOUT
+    user = Flext.Models.Entity(id="123", name="John")
+    timeout = Flext.Constants.Defaults.TIMEOUT
 
     # Factory methods for common components
-    logger = FlextCore.ComponentFactory.create_logger(__name__)
-    container = FlextCore.ComponentFactory.create_container()
-    bus = FlextCore.ComponentFactory.create_bus()
+    logger = Flext.ComponentFactory.create_logger(__name__)
+    container = Flext.ComponentFactory.create_container()
+    bus = Flext.ComponentFactory.create_bus()
     ```
 
     **Architecture**:
@@ -108,70 +108,82 @@ class FlextCore(FlextService[None]):
     - Ecosystem foundation: Sets standards for all projects
     """
 
+    model_config = ConfigDict(
+        validate_assignment=True,
+        validate_return=True,
+        validate_default=True,
+        use_enum_values=True,
+        arbitrary_types_allowed=True,
+        ser_json_timedelta="iso8601",
+        ser_json_bytes="base64",
+        serialize_by_alias=True,
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        str_to_lower=False,
+        str_to_upper=False,
+        defer_build=False,
+        coerce_numbers_to_str=False,
+        ignored_types=(type,),
+    )
+
     # =================================================================
     # CLASS-LEVEL TYPE ALIASES (PEP 695 - Python 3.12+)
     # =================================================================
     # Using PEP 695 'type' statement for proper type aliases that work in annotations
     # while avoiding Pydantic field interpretation. TypeAliasType instances enable
-    # usage like: def foo() -> FlextCore.Types.Dict: ...
+    # usage like: def foo() -> Flext.Types.Dict: ...
 
     # Direct class references (not fields) - following namespace class pattern
-    type Result[T] = FlextResult[T]
+    # Use type alias for proper generic support
+    Result = FlextResult
 
     class Handlers[T, U](FlextHandlers[T, U]):
-        """Handlers class for FlextCore."""
+        """Handlers class for Flext."""
 
     class Service[T](FlextService[T]):
-        """Service class for FlextCore."""
-
-    class Config(FlextConfig):
-        """Config class for FlextCore."""
+        """Service class for Flext."""
 
     class Container(FlextContainer):
-        """Container class for FlextCore."""
+        """Container class for Flext."""
 
     class Logger(FlextLogger):
-        """Logger class for FlextCore."""
+        """Logger class for Flext."""
 
     class Models(FlextModels):
-        """Models class for FlextCore."""
+        """Models class for Flext."""
 
     class Constants(FlextConstants):
-        """Constants class for FlextCore."""
+        """Constants class for Flext."""
 
     class Types(FlextTypes):
-        """Types class for FlextCore."""
+        """Types class for Flext."""
 
     class Exceptions(FlextExceptions):
-        """Exceptions class for FlextCore."""
+        """Exceptions class for Flext."""
 
     class Protocols(FlextProtocols):
-        """Protocols class for FlextCore."""
+        """Protocols class for Flext."""
 
     class Bus(FlextBus):
-        """Bus class for FlextCore."""
+        """Bus class for Flext."""
 
     class Context(FlextContext):
-        """Context class for FlextCore."""
-
-    class Processors(FlextProcessors):
-        """Processors class for FlextCore."""
+        """Context class for Flext."""
 
     class Registry(FlextRegistry):
-        """Registry class for FlextCore."""
+        """Registry class for Flext."""
 
     class Dispatcher(FlextDispatcher):
-        """Dispatcher class for FlextCore."""
+        """Dispatcher class for Flext."""
 
     class Mixins(FlextMixins):
-        """Mixins class for FlextCore."""
+        """Mixins class for Flext."""
 
     class Utilities(FlextUtilities):
-        """Utilities class for FlextCore."""
+        """Utilities class for Flext."""
 
-    # Nested helper classes for complex operations
-    class ComponentFactory:
-        """Factory methods for creating commonly used component instances."""
+    class Config(FlextConfig):
+        """Config class for Flext."""
 
         @staticmethod
         def create_logger(name: str) -> FlextLogger:
@@ -197,18 +209,57 @@ class FlextCore(FlextService[None]):
     # INSTANCE INITIALIZATION
     # =================================================================
     # Note: PEP 695 type aliases (above) automatically support generic subscripting
-    # like FlextCore.Result[T] without needing __class_getitem__ method
+    # like Flext.Result[T] without needing __class_getitem__ method
 
-    @override
+    @classmethod
+    def get_container(cls) -> FlextContainer:
+        """Get a new container instance."""
+        return FlextContainer()
+
+    @classmethod
+    def get_config(cls) -> FlextConfig:
+        """Get a new config instance."""
+        return FlextConfig()
+
+    @classmethod
+    def create_result_ok[T](cls, value: T) -> FlextResult[T]:
+        """Create a successful result."""
+        return FlextResult[T].ok(value)
+
+    @classmethod
+    def create_result_fail[T](
+        cls, error: str, error_code: str | None = None
+    ) -> FlextResult[T]:
+        """Create a failed result."""
+        return FlextResult[T].fail(error, error_code=error_code)
+
+    @classmethod
+    def create_logger(cls, name: str) -> FlextLogger:
+        """Create a new logger instance."""
+        return FlextLogger(name)
+
+    @classmethod
+    def build_pipeline[T](
+        cls, *steps: Callable[[T], FlextResult[T]]
+    ) -> Callable[[T], FlextResult[T]]:
+        """Build a pipeline from a series of steps."""
+
+        def pipeline(initial_value: T) -> FlextResult[T]:
+            result = FlextResult[T].ok(initial_value)
+            for step in steps:
+                result = result.flat_map(step)
+            return result
+
+        return pipeline
+
     def __init__(self, config: FlextConfig | None = None) -> None:
         """Initialize the unified core facade.
 
         Args:
             config: Optional configuration instance. If not provided,
-                   uses FlextConfig() direct instantiation.
+                    uses FlextConfig() direct instantiation.
 
         """
-        super().__init__()
         self._config = config or FlextConfig()
 
         # Lazy-loaded components (initialized on first access)
@@ -217,18 +268,7 @@ class FlextCore(FlextService[None]):
         self._bus_instance: FlextBus | None = None
         self._context_instance: FlextContext | None = None
         self._dispatcher: FlextDispatcher | None = None
-        self._processors: FlextProcessors | None = None
         self._registry: FlextRegistry | None = None
-
-    @override
-    def execute(self) -> FlextResult[None]:
-        """Execute the main operation (required by FlextService).
-
-        Returns:
-            Success result with None value.
-
-        """
-        return FlextResult[None].ok(None)
 
     # =================================================================
     # PROPERTY ACCESSORS (Lazy-loaded component instances)
@@ -305,18 +345,6 @@ class FlextCore(FlextService[None]):
         return self._dispatcher
 
     @property
-    def processors(self) -> FlextProcessors:
-        """Get processing utilities instance.
-
-        Returns:
-            FlextProcessors instance for handler pipelines.
-
-        """
-        if self._processors is None:
-            self._processors = FlextProcessors()
-        return self._processors
-
-    @property
     def registry(self) -> FlextRegistry:
         """Get component registry instance.
 
@@ -357,7 +385,7 @@ class FlextCore(FlextService[None]):
             - context: FlextContext instance
 
         Example:
-            >>> result = FlextCore.setup_service_infrastructure("my-service")
+            >>> result = Flext.setup_service_infrastructure("my-service")
             >>> if result.is_success:
             ...     infra = result.unwrap()
             ...     logger = infra["logger"]
@@ -420,13 +448,13 @@ class FlextCore(FlextService[None]):
             event_type: Type/name of the event (e.g., "user.created").
             data: Event payload data.
             correlation_id: Optional correlation ID. If not provided,
-                           attempts to get from context.
+                            attempts to get from context.
 
         Returns:
             FlextResult indicating success or failure of event publishing.
 
         Example:
-            >>> core = FlextCore()
+            >>> core = Flext()
             >>> result = core.publish_event(
             ...     "order.created", {"order_id": "123", "amount": 99.99}
             ... )
@@ -462,11 +490,11 @@ class FlextCore(FlextService[None]):
     @classmethod
     def create_service(
         cls,
-        service_class: type[FlextService],
+        service_class: type[FlextService[object]],
         service_name: str,
         config: FlextConfig | None = None,
         **kwargs: object,
-    ) -> FlextResult[FlextService]:
+    ) -> FlextResult[FlextService[object]]:
         """Create service with automatic infrastructure setup.
 
         This convenience method combines infrastructure setup with service
@@ -482,11 +510,11 @@ class FlextCore(FlextService[None]):
             FlextResult containing initialized service or error.
 
         Example:
-            >>> class MyService(FlextCore.Service):
+            >>> class MyService(Flext.Service):
             ...     def execute(self) -> FlextResult[str]:
-            ...         return FlextCore.Result[str].ok("executed")
+            ...         return Flext.Result[str].ok("executed")
             >>>
-            >>> result = FlextCore.create_service(MyService, "my-service")
+            >>> result = Flext.create_service(MyService, "my-service")
             >>> if result.is_success:
             ...     service = result.unwrap()
             ...     service.execute()
@@ -496,7 +524,7 @@ class FlextCore(FlextService[None]):
             # Setup infrastructure
             infra_result = cls.setup_service_infrastructure(service_name, config=config)
             if infra_result.is_failure:
-                return FlextResult[FlextService].fail(
+                return FlextResult[FlextService[object]].fail(
                     f"Infrastructure setup failed: {infra_result.error}"
                 )
 
@@ -518,14 +546,14 @@ class FlextCore(FlextService[None]):
             if hasattr(service, "_context"):
                 setattr(service, "_context", infra["context"])
 
-            return FlextResult[FlextService].ok(service)
+            return FlextResult[FlextService[object]].ok(service)
 
         except Exception as e:
             error_msg = f"Service creation failed: {e}"
-            return FlextResult[FlextService].fail(error_msg)
+            return FlextResult[FlextService[object]].fail(error_msg)
 
     @staticmethod
-    def build_pipeline(
+    def build_pipeline_operations(
         *operations: object,
     ) -> Callable[[object], FlextResult[object]]:
         """Build railway-oriented pipeline from operations.
@@ -545,13 +573,13 @@ class FlextCore(FlextService[None]):
         Example:
             >>> def validate(data: str) -> FlextResult[str]:
             ...     if not data:
-            ...         return FlextCore.Result[str].fail("Empty data")
-            ...     return FlextCore.Result[str].ok(data)
+            ...         return Flext.Result[str].fail("Empty data")
+            ...     return Flext.Result[str].ok(data)
             >>>
             >>> def process(data: str) -> FlextResult[str]:
-            ...     return FlextCore.Result[str].ok(data.upper())
+            ...     return Flext.Result[str].ok(data.upper())
             >>>
-            >>> pipeline = FlextCore.build_pipeline(validate, process)
+            >>> pipeline = Flext.build_pipeline(validate, process)
             >>> result = pipeline("test")
             >>> print(result.value)  # "TEST"
 
@@ -603,7 +631,7 @@ class FlextCore(FlextService[None]):
             FlextContext instance with request data set.
 
         Example:
-            >>> core = FlextCore()
+            >>> core = Flext()
             >>> with core.request_context(user_id="123", trace=True) as ctx:
             ...     # Context is automatically populated
             ...     print(ctx.get("request_id"))
@@ -660,7 +688,7 @@ class FlextCore(FlextService[None]):
             >>> def handle_create_user(cmd):
             ...     return FlextResult[FlextTypes.Dict].ok({"user": "created"})
             >>>
-            >>> result = FlextCore.create_command_handler(handle_create_user)
+            >>> result = Flext.create_command_handler(handle_create_user)
 
         """
         try:
@@ -704,7 +732,7 @@ class FlextCore(FlextService[None]):
             >>> def handle_get_user(query):
             ...     return FlextResult[FlextTypes.Dict].ok({"user_id": "123"})
             >>>
-            >>> result = FlextCore.create_query_handler(handle_get_user)
+            >>> result = Flext.create_query_handler(handle_get_user)
 
         """
         try:
@@ -730,17 +758,13 @@ class FlextCore(FlextService[None]):
             return FlextResult[FlextTypes.Dict].fail(error_msg)
 
 
-# =================================================================
-# CLASS ATTRIBUTE ASSIGNMENTS (avoid Pydantic Config conflict)
-# =================================================================
+# Nested classes are defined inside the class
 
-# Add Config as a class attribute after class definition to avoid Pydantic conflict
-FlextCore.Config = FlextConfig
 
 # =================================================================
 # MODULE EXPORTS
 # =================================================================
 
 __all__ = [
-    "FlextCore",
+    "Flext",
 ]

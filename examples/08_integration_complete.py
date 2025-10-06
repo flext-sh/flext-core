@@ -27,10 +27,10 @@ from uuid import uuid4
 from pydantic import Field
 
 from flext_core import (
+    Flext,
     FlextConfig,
     FlextContainer,
     FlextContext,
-    FlextCore,
     FlextLogger,
     FlextModels,
     FlextResult,
@@ -65,7 +65,7 @@ def assert_logger_initialized(logger: FlextLogger | None) -> FlextLogger:
     """
     if logger is None:
         msg = "Logger must be initialized"
-        raise FlextCore.Exceptions.ConfigurationError(msg)
+        raise Flext.Exceptions.ConfigurationError(msg)
     return logger
 
 
@@ -84,7 +84,7 @@ def assert_container_initialized(container: FlextContainer | None) -> FlextConta
     """
     if container is None:
         msg = "Container must be initialized"
-        raise FlextCore.Exceptions.ConfigurationError(msg)
+        raise Flext.Exceptions.ConfigurationError(msg)
     return container
 
 
@@ -395,7 +395,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
     """Order processing service - orchestrates the workflow."""
 
     def __init__(self) -> None:
-        """Initialize with automatic FlextCore infrastructure."""
+        """Initialize with automatic Flext infrastructure."""
         super().__init__()
         self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["integration", "demo"])
@@ -906,9 +906,9 @@ def demonstrate_complete_integration() -> None:
 
 
 def demonstrate_flextcore_unified_access() -> None:
-    """Demonstrate the modern FlextCore unified facade pattern.
+    """Demonstrate the modern Flext unified facade pattern.
 
-    This shows how FlextCore provides a single entry point for accessing
+    This shows how Flext provides a single entry point for accessing
     ALL flext-core components with improved convenience and discoverability.
     """
     print("\n" + "=" * 60)
@@ -918,7 +918,7 @@ def demonstrate_flextcore_unified_access() -> None:
 
     # 1. Setup complete infrastructure with single call
     print("\n=== 1. Unified Infrastructure Setup ===")
-    setup_result = FlextCore.setup_service_infrastructure("ecommerce-service")
+    setup_result = Flext.setup_service_infrastructure("ecommerce-service")
 
     if setup_result.is_success:
         infra = setup_result.unwrap()
@@ -929,11 +929,11 @@ def demonstrate_flextcore_unified_access() -> None:
         print(f"     - Bus: {type(infra['bus']).__name__}")
         print(f"     - Context: {type(infra['context']).__name__}")
 
-    # 2. Direct class access through FlextCore
+    # 2. Direct class access through Flext
     print("\n=== 2. Direct Component Access ===")
     result = FlextResult[str].ok("Order created successfully")
-    config = FlextCore.Config()
-    timeout = FlextCore.Constants.Defaults.TIMEOUT
+    config = Flext.Config()
+    timeout = Flext.Constants.Defaults.TIMEOUT
 
     print(f"  ✅ Result access: {result.value}")
     print(f"  ✅ Config access: log_level = {config.log_level}")
@@ -941,9 +941,9 @@ def demonstrate_flextcore_unified_access() -> None:
 
     # 3. Factory methods for convenience
     print("\n=== 3. Convenience Factory Methods ===")
-    success = FlextCore.create_result_ok({"order_id": "ORD-123", "status": "created"})
-    failure = FlextCore.create_result_fail("Payment declined", "PAYMENT_ERROR")
-    logger = FlextCore.create_logger("ecommerce")
+    success = Flext.create_result_ok({"order_id": "ORD-123", "status": "created"})
+    failure = Flext.create_result_fail("Payment declined", "PAYMENT_ERROR")
+    logger = Flext.create_logger("ecommerce")
 
     print(f"  ✅ Success result: {success.value}")
     print(f"  ✅ Failure result: {failure.error}")
@@ -951,7 +951,7 @@ def demonstrate_flextcore_unified_access() -> None:
 
     # 4. Instance-based access to all components
     print("\n=== 4. Unified Core Instance ===")
-    core = FlextCore()
+    core = Flext()
 
     # Access all components through one object
     core_config = core.config
@@ -966,8 +966,8 @@ def demonstrate_flextcore_unified_access() -> None:
     print(f"  ✅ Bus: {type(core_bus).__name__}")
     print(f"  ✅ Context: {type(core_context).__name__}")
 
-    # 5. Railway pattern with FlextCore
-    print("\n=== 5. Railway Pattern via FlextCore ===")
+    # 5. Railway pattern with Flext
+    print("\n=== 5. Railway Pattern via Flext ===")
 
     def validate_order(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         if not data.get("customer_id"):
@@ -992,7 +992,7 @@ def demonstrate_flextcore_unified_access() -> None:
 
 
 def demonstrate_flextcore_11_features() -> None:
-    """Demonstrate FlextCore 1.1.0 convenience methods.
+    """Demonstrate Flext 1.1.0 convenience methods.
 
     Shows the four new convenience methods added in version 1.1.0:
     1. publish_event() - Event publishing with correlation tracking
@@ -1006,7 +1006,7 @@ def demonstrate_flextcore_11_features() -> None:
 
     # 1. Event Publishing with Correlation Tracking
     print("\n=== 1. Event Publishing ===")
-    core = FlextCore()
+    core = Flext()
 
     # Publish events with automatic correlation tracking
     event_result = core.publish_event(
@@ -1035,9 +1035,7 @@ def demonstrate_flextcore_11_features() -> None:
             return FlextResult[str].ok("Order processed successfully")
 
     # Create service with automatic infrastructure setup
-    service_result = FlextCore.create_service(
-        OrderProcessingService, "order-processing"
-    )
+    service_result = Flext.create_service(OrderProcessingService, "order-processing")
 
     if service_result.is_success:
         service = service_result.unwrap()
@@ -1074,7 +1072,7 @@ def demonstrate_flextcore_11_features() -> None:
         return FlextResult[FlextTypes.Dict].ok(data)
 
     # Build pipeline
-    order_pipeline = FlextCore.build_pipeline(
+    order_pipeline = Flext.build_pipeline(
         validate_order_data, check_inventory, calculate_shipping, apply_discounts
     )
 
@@ -1083,7 +1081,7 @@ def demonstrate_flextcore_11_features() -> None:
     pipeline_result = order_pipeline(order_data)
 
     if pipeline_result.is_success:
-        final_order = cast("FlextCore.Types.Dict", pipeline_result.unwrap())
+        final_order = cast("Flext.Types.Dict", pipeline_result.unwrap())
         print(f"  ✅ Pipeline completed: {len(final_order)} fields")
         print(f"     - Inventory checked: {final_order.get('inventory_checked')}")
         print(f"     - Shipping: ${final_order.get('shipping'):.2f}")
@@ -1124,7 +1122,7 @@ def demonstrate_flextcore_11_features() -> None:
         return FlextResult[FlextTypes.Dict].ok(data)
 
     # Build complete workflow pipeline
-    workflow = FlextCore.build_pipeline(
+    workflow = Flext.build_pipeline(
         validate_customer, reserve_inventory, process_payment
     )
 
@@ -1142,7 +1140,7 @@ def demonstrate_flextcore_11_features() -> None:
         workflow_result = workflow(order_input)
 
         if workflow_result.is_success:
-            completed_order = cast("FlextCore.Types.Dict", workflow_result.unwrap())
+            completed_order = cast("Flext.Types.Dict", workflow_result.unwrap())
 
             # Publish success event with request correlation
             core.publish_event(
@@ -1178,10 +1176,10 @@ def main() -> None:
     # Traditional pattern
     demonstrate_complete_integration()
 
-    # Modern FlextCore pattern (1.0.0)
+    # Modern Flext pattern (1.0.0)
     demonstrate_flextcore_unified_access()
 
-    # FlextCore 1.1.0 convenience methods
+    # Flext 1.1.0 convenience methods
     demonstrate_flextcore_11_features()
 
 

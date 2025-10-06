@@ -31,7 +31,7 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
     """Service demonstrating essential FlextUtilities patterns."""
 
     def __init__(self) -> None:
-        """Initialize with automatic FlextCore infrastructure."""
+        """Initialize with automatic Flext infrastructure."""
         super().__init__()
         self._cache: FlextTypes.Dict = {}
 

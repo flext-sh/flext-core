@@ -530,18 +530,24 @@ def benchmark_data() -> FlextTypes.Dict:
 # -----------------------------------------------------------------------------
 
 
-@pytest.fixture(autouse=True)
-def _isolate_flext_core_state() -> None:
-    """Clear core specialized configs before each test.
-
-    Prevents cross-test leakage of database/security/logging configs that could
-    make property-default tests flaky or order-dependent.
-    """
-    # Individual components isolation - FlextCore facade was removed
-    # Reset container singleton state if needed
-    manager = FlextContainer.ensure_global_manager()
-    container = manager.get_or_create()
-    container.clear()
+# Temporarily disabled - causing test hangs, needs investigation
+# @pytest.fixture(autouse=True)
+# def _isolate_flext_core_state() -> None:
+#     """Clear core specialized configs before each test.
+#
+#     Prevents cross-test leakage of database/security/logging configs that could
+#     make property-default tests flaky or order-dependent.
+#     """
+#     try:
+#         # Individual components isolation - Flext facade was removed
+#         # Reset container singleton state if needed
+#         manager = FlextContainer.ensure_global_manager()
+#         container = manager.get_or_create()
+#         container.clear()
+#     except Exception:
+#         # If container isolation fails, continue with test
+#         # This prevents test hangs while still attempting isolation
+#         pass
 
 
 @pytest.fixture

@@ -41,7 +41,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextExceptions patterns and methods."""
 
     def __init__(self) -> None:
-        """Initialize with automatic FlextCore infrastructure."""
+        """Initialize with automatic Flext infrastructure."""
         super().__init__()
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:

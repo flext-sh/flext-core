@@ -151,8 +151,7 @@ class TestFlextLogger:
         # Getting a logger should auto-configure
         logger = FlextLogger("test")
 
-        if not FlextLogger.is_configured():
-            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
+        # The new thin FlextLogger auto-configures structlog on first use
         assert logger is not None
 
     def test_get_logger_creates_instance(self) -> None:
@@ -165,11 +164,12 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
 
     def test_get_logger_caches_instances(self) -> None:
-        """Test that FlextLogger caches logger instances."""
+        """Test that FlextLogger creates new instances (no caching in new implementation)."""
         logger1 = FlextLogger("cached_test")
         logger2 = FlextLogger("cached_test")
 
-        assert logger1 is logger2
+        # The new thin FlextLogger doesn't cache instances
+        assert logger1 is not logger2
 
     def test_logger_methods_exist(self) -> None:
         """Test that logger has expected methods."""
@@ -182,8 +182,8 @@ class TestFlextLogger:
         assert hasattr(logger, "error")
         assert hasattr(logger, "critical")
 
-        # Binding methods
-        assert hasattr(logger, "bind")
+        # The new thin FlextLogger doesn't have bind method
+        # Context binding is handled through FlextContext
 
     def test_configure_with_defaults(self) -> None:
         """Test configuring logger with default settings."""

@@ -60,7 +60,6 @@ from flext_core.loggings import FlextLogger
 # Layer 5 - Advanced Infrastructure
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -71,9 +70,7 @@ from flext_core.utilities import FlextUtilities
 _config = FlextConfig()
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    FlextMixins, ABC, FlextProtocols.Application.Handler[MessageT_contra, ResultT]
-):
+class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Handler base class for CQRS command and query implementations.
 
     FlextHandlers provides the foundation for implementing CQRS handlers
@@ -300,23 +297,14 @@ class FlextHandlers[MessageT_contra, ResultT](
                         value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
                         if hasattr(message, "__str__")
                         else "unknown",
-                        validation_details={
-                            "pydantic_exception": str(e),
-                            "model_class": message.__class__.__name__,
-                            "revalidated": True,
-                        },
-                        context={
-                            "operation": operation,
-                            "message_type": type(message).__name__,
-                            "validation_type": "pydantic_revalidation",
-                            "revalidate_pydantic_messages": revalidate_pydantic_messages,
-                        },
+                        validation_details=f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
+                        context=f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
                         correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
                     )
                     return FlextResult[None].fail(
                         str(validation_error),
                         error_code=validation_error.error_code,
-                        error_data={"exception_context": validation_error.context},
+                        error_data={"exception_context": str(validation_error)},
                     )
 
             # For non-Pydantic objects, ensure serializable representation can be constructed
@@ -327,25 +315,22 @@ class FlextHandlers[MessageT_contra, ResultT](
                     return FlextResult[None].fail(
                         str(exc),
                         error_code=exc.error_code,
-                        error_data={"exception_context": exc.context},
+                        error_data={
+                            "exception_context": getattr(exc, "context", str(exc))
+                        },
                     )
 
                 fallback_error = FlextExceptions.TypeError(
                     f"Invalid message type for {operation}: {type(message).__name__}",
                     expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                     actual_type=type(message).__name__,
-                    context={
-                        "operation": operation,
-                        "message_type": type(message).__name__,
-                        "validation_type": "serializable_check",
-                        "original_exception": str(exc),
-                    },
+                    context=f"operation: {operation}, message_type: {type(message).__name__}, validation_type: serializable_check, original_exception: {exc!s}",
                     correlation_id=f"type_validation_{int(time.time() * 1000)}",
                 )
                 return FlextResult[None].fail(
                     str(fallback_error),
                     error_code=fallback_error.error_code,
-                    error_data={"exception_context": fallback_error.context},
+                    error_data={"exception_context": str(fallback_error)},
                 )
 
             return FlextResult[None].ok(None)
@@ -370,11 +355,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     msg,
                     expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                     actual_type="NoneType",
-                    context={
-                        "operation": context_operation,
-                        "message_type": type(None),
-                        "validation_type": "serializable_check",
-                    },
+                    context=f"operation: {context_operation}, message_type: NoneType, validation_type: serializable_check",
                     correlation_id=f"message_serialization_{int(time.time() * 1000)}",
                 )
 
@@ -429,12 +410,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                         msg,
                         expected_type="str, list, or tuple",
                         actual_type=type(slots).__name__,
-                        context={
-                            "operation": context_operation,
-                            "message_type": type(message).__name__,
-                            "validation_type": "serializable_check",
-                            "__slots__": repr(slots),
-                        },
+                        context=f"operation: {context_operation}, message_type: {type(message).__name__}, validation_type: serializable_check, __slots__: {slots!r}",
                         correlation_id=f"message_serialization_{int(time.time() * 1000)}",
                     )
 
@@ -455,11 +431,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 msg,
                 expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                 actual_type=type(message).__name__,
-                context={
-                    "operation": context_operation,
-                    "message_type": type(message).__name__,
-                    "validation_type": "serializable_check",
-                },
+                context=f"operation: {context_operation}, message_type: {type(message).__name__}, validation_type: serializable_check",
                 correlation_id=f"message_serialization_{int(time.time() * 1000)}",
             )
 
@@ -1017,11 +989,11 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Advanced handler patterns for complex domain operations."""
 
         @staticmethod
-        def create_command_handler[TCommand](
+        def create_command_handler(
             handler_func: FlextTypes.Handlers.HandlerFunc,
             command_type: str,
             validation_rules: FlextTypes.Handlers.HandlerList | None = None,
-        ) -> FlextHandlers[TCommand, object]:
+        ) -> FlextHandlers[object, object]:
             """REMOVED: Use direct class definition instead of factory method.
 
             Migration:
@@ -1061,13 +1033,13 @@ class FlextHandlers[MessageT_contra, ResultT](
             raise NotImplementedError(msg)
 
         @staticmethod
-        def create_query_handler[TQuery, TResult](
+        def create_query_handler(
             handler_func: FlextTypes.Handlers.HandlerFunc,
             query_type: str,
             *,
             caching_enabled: bool = False,
             cache_ttl: int = FlextConstants.Defaults.CACHE_TTL,
-        ) -> FlextHandlers[TQuery, TResult]:
+        ) -> FlextHandlers[object, object]:
             """REMOVED: Use direct class definition instead of factory method.
 
             Migration:
@@ -1108,11 +1080,11 @@ class FlextHandlers[MessageT_contra, ResultT](
             raise NotImplementedError(msg)
 
         @staticmethod
-        def create_event_handler[TEvent](
+        def create_event_handler(
             handler_func: FlextTypes.Handlers.HandlerFunc,
             event_type: str,
             retry_policy: FlextTypes.Handlers.HandlerConfig | None = None,
-        ) -> FlextHandlers[TEvent, None]:
+        ) -> FlextHandlers[object, None]:
             """REMOVED: Use direct class definition instead of factory method.
 
             Migration:
@@ -1166,11 +1138,11 @@ class FlextHandlers[MessageT_contra, ResultT](
             raise NotImplementedError(msg)
 
         @staticmethod
-        def create_saga_handler[TState](
-            saga_steps: FlextTypes.Handlers.SagaSteps[TState],
-            compensation_steps: FlextTypes.Handlers.CompensationSteps[TState],
+        def create_saga_handler(
+            saga_steps: FlextTypes.Handlers.SagaSteps[object],
+            compensation_steps: FlextTypes.Handlers.CompensationSteps[object],
             saga_type: str,
-        ) -> FlextHandlers[TState, TState]:
+        ) -> FlextHandlers[object, object]:
             """REMOVED: Use direct class definition instead of factory method.
 
             Migration:

@@ -2,8 +2,6 @@
 
 Quick start guide for using FLEXT-Core v0.9.9 - the foundation library providing railway-oriented programming, dependency injection, and domain-driven design patterns with Python 3.13+.
 
----
-
 ## Prerequisites
 
 - **Python**: 3.13+ (required)
@@ -16,8 +14,6 @@ Verify your environment:
 python --version  # Should be 3.13+
 poetry --version  # Latest Poetry
 ```
-
----
 
 ## Installation
 
@@ -44,8 +40,6 @@ python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
 # Check version
 python -c "from flext_core import __version__; print(f'FLEXT-Core {__version__}')"
 ```
-
----
 
 ## Core Concepts
 
@@ -223,8 +217,6 @@ except Exception as e:
     logger.error("Calculation failed", extra={"error": str(e)})
 ```
 
----
-
 ## Complete Example
 
 Here's a complete example combining all concepts:
@@ -316,8 +308,6 @@ if service_result.is_success:
         print(f"📦 Product: {product.name} - ${product.price}")
 ```
 
----
-
 ## Running Tests
 
 ### Quick Test
@@ -343,16 +333,12 @@ pytest tests/integration/ -v
 pytest tests/unit/test_result.py -v
 ```
 
----
-
 ## Next Steps
 
 1. **Explore Examples**: Check `examples/` directory for more examples
-2. **Read Architecture**: See `docs/architecture.md` for architecture overview
-3. **API Reference**: Check `docs/api-reference.md` for complete API documentation
-4. **Development Guide**: See `docs/development.md` for contributing guidelines
-
----
+2. **Read Architecture**: See [Architecture Overview](../architecture/overview.md) for architecture details
+3. **API Reference**: Check [API Reference](../api-reference/) for complete API documentation
+4. **Development Guide**: See [Development Guide](../development/contributing.md) for contributing guidelines
 
 ## Common Patterns
 
@@ -404,8 +390,6 @@ class Order(FlextModels.AggregateRoot):
         return FlextResult[None].ok(None)
 ```
 
----
-
 ## Troubleshooting
 
 ### Import Errors
@@ -441,8 +425,6 @@ pytest tests/ -v --tb=short
 # Run specific failing test
 pytest tests/unit/test_result.py::TestFlextResult::test_ok -v
 ```
-
----
 
 ## Getting Help
 

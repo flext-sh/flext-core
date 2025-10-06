@@ -1,4 +1,4 @@
-"""Layer 3: Railway-oriented result type with type-safe composition semantics.
+"""Railway-oriented result type with type-safe composition semantics.
 
 This module provides the foundational FlextResult[T] class implementing the
 railway pattern for error handling throughout the FLEXT ecosystem. Use
@@ -6,7 +6,7 @@ FlextResult for all operations that can succeed or fail.
 
 Dependency Layer: 3 (Early Foundation)
 Dependencies: FlextConstants, FlextTypes, FlextExceptions
-Used by: All FlextCore modules and ecosystem projects
+Used by: All Flext modules and ecosystem projects
 
 Provides the canonical success/failure wrapper for FLEXT-Core 1.0.0,
 including explicit error metadata and backward-compatible `.value`/`.data`
@@ -192,13 +192,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
     _error: str | None
     _error_code: str | None
     _error_data: FlextTypes.Dict
-
-    # =========================================================================
-    # CONSTANTS - ERROR MESSAGES
-    # =========================================================================
-
-    _FIRST_ARG_FAILED_MSG: str = "First argument failed"
-    _SECOND_ARG_FAILED_MSG: str = "Second argument failed"
 
     # =========================================================================
     # NESTED HELPER CLASSES - UNIFIED ARCHITECTURE PATTERN
@@ -423,11 +416,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
             if result1.is_failure:
                 return FlextResult[TResult].fail(
-                    result1.error or FlextResult._FIRST_ARG_FAILED_MSG,
+                    result1.error or FlextConstants.Errors.FIRST_ARG_FAILED_MSG,
                 )
             if result2.is_failure:
                 return FlextResult[TResult].fail(
-                    result2.error or FlextResult._SECOND_ARG_FAILED_MSG,
+                    result2.error or FlextConstants.Errors.SECOND_ARG_FAILED_MSG,
                 )
             return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
 
@@ -441,11 +434,11 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
             if result1.is_failure:
                 return FlextResult[TResult].fail(
-                    result1.error or FlextResult._FIRST_ARG_FAILED_MSG,
+                    result1.error or FlextConstants.Errors.FIRST_ARG_FAILED_MSG,
                 )
             if result2.is_failure:
                 return FlextResult[TResult].fail(
-                    result2.error or FlextResult._SECOND_ARG_FAILED_MSG,
+                    result2.error or FlextConstants.Errors.SECOND_ARG_FAILED_MSG,
                 )
             if result3.is_failure:
                 return FlextResult[TResult].fail(
@@ -1264,7 +1257,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             msg = "Cannot cast successful result to failed"
             raise _get_exceptions().ValidationError(
                 message=msg,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                field="result",
             )
         return FlextResult[object].fail(
             self.error or "Unknown error",
@@ -1946,9 +1939,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Factory for FlextResult[FlextTypes.StringDict]."""
         return FlextResult[FlextTypes.StringDict]
 
-    # Type alias moved from nested Result class
-    type Success = str  # Generic success type without FlextResult dependency
-
     @staticmethod
     def _is_flattenable_sequence(item: object) -> bool:
         return isinstance(item, Sequence) and not isinstance(
@@ -1994,76 +1984,6 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
 # =============================================================================
 
 
-def safe[TResult](
-    func: Callable[..., TResult] | None = None,
-    *,
-    error_code: str | None = None,
-) -> (
-    Callable[..., FlextResult[TResult]]
-    | Callable[[Callable[..., TResult]], Callable[..., FlextResult[TResult]]]
-):
-    """Decorator to wrap function in FlextResult error handling.
-
-    Inspired by dry-python/returns @safe decorator. Converts any function
-    into one that returns FlextResult[T] instead of raising exceptions.
-
-    Args:
-        func: Function to wrap
-        error_code: Optional error code for failures (defaults to OPERATION_ERROR)
-
-    Returns:
-        Wrapped function returning FlextResult[TResult]
-
-    Example:
-        ```python
-        from flext_core import FlextResult, safe
-
-
-        @safe
-        def fetch_user(user_id: int) -> dict:
-            return api.get_user(user_id)  # May raise exceptions
-
-
-        @safe(error_code="DB_ERROR")
-        def query_database(query: str) -> list[dict]:
-            return db.execute(query)  # May raise exceptions
-
-
-        # Usage
-        result = fetch_user(123)
-        if result.is_success:
-            user = result.unwrap()
-
-        # Railway-oriented composition
-        user_result = (
-            fetch_user(123)
-            .flat_map(lambda u: validate_user(u))
-            .map(lambda u: format_response(u))
-        )
-        ```
-
-    """
-
-    def decorator(f: Callable[..., TResult]) -> Callable[..., FlextResult[TResult]]:
-        def wrapper(*args: object, **kwargs: object) -> FlextResult[TResult]:
-            try:
-                value = f(*args, **kwargs)
-                return FlextResult[TResult].ok(value)
-            except Exception as e:
-                return FlextResult[TResult].fail(
-                    str(e),
-                    error_code=error_code or FlextConstants.Errors.OPERATION_ERROR,
-                )
-
-        return wrapper
-
-    # Support both @safe and @safe(error_code="...")
-    if func is None:
-        return decorator
-    return decorator(func)
-
-
 __all__: FlextTypes.StringList = [
     "FlextResult",  # Main unified result class
-    "safe",  # Convenience decorator
 ]

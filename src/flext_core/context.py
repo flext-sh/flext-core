@@ -27,10 +27,16 @@ from typing import (
     override,
 )
 
-from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Import structlog for context integration
+try:
+    import structlog.contextvars
+except ImportError:
+    # Fallback if structlog is not available
+    structlog = None
 
 
 class FlextContext:
@@ -242,19 +248,11 @@ class FlextContext:
         if not self._active:
             return
 
-        # Validate inputs - only check type, not content for setting
-        if not isinstance(key, str):
-            msg = "Key must be a string"
-            raise FlextExceptions.TypeError(
-                message=msg,
-                error_code=FlextConstants.Errors.TYPE_ERROR,
-            )
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
             msg = "Value must be serializable"
             raise FlextExceptions.TypeError(
                 message=msg,
-                error_code=FlextConstants.Errors.TYPE_ERROR,
             )
 
         with self._lock:
@@ -476,7 +474,7 @@ class FlextContext:
             # Check for empty keys in all scopes
             for scope_data in self._scopes.values():
                 for key in scope_data:
-                    if not key or not isinstance(key, str):
+                    if not key:
                         return FlextResult[None].fail("Invalid key found in context")
             return FlextResult[None].ok(None)
 
@@ -489,9 +487,10 @@ class FlextContext:
         """
         with self._lock:
             # Combine all scopes into a single flat dictionary for backward compatibility
-            all_data = {}
+            all_data: FlextTypes.Dict = {}
             for scope_data in self._scopes.values():
-                all_data.update(scope_data)
+                if isinstance(scope_data, dict):
+                    all_data.update(scope_data)
             return json.dumps(all_data, default=str)
 
     @classmethod
@@ -510,7 +509,7 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            if all(isinstance(v, dict) for v in data.values()):
+            if all(isinstance(v, dict) for v in data.values()):  # type: ignore[arg-type]
                 # New scoped format
                 context._scopes = data
             else:
@@ -791,12 +790,18 @@ class FlextContext:
         def set_correlation_id(correlation_id: str) -> None:
             """Set correlation ID."""
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
 
         @staticmethod
         def generate_correlation_id() -> str:
             """Generate unique correlation ID."""
             correlation_id = f"corr_{str(uuid.uuid4())[:8]}"
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
             return correlation_id
 
         @staticmethod
@@ -887,6 +892,9 @@ class FlextContext:
         def set_service_name(service_name: str) -> None:
             """Set service name."""
             FlextContext.Variables.Service.SERVICE_NAME.set(service_name)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(service_name=service_name)
 
         @staticmethod
         def get_service_version() -> str | None:
@@ -897,6 +905,9 @@ class FlextContext:
         def set_service_version(version: str) -> None:
             """Set service version."""
             FlextContext.Variables.Service.SERVICE_VERSION.set(version)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(service_version=version)
 
         @staticmethod
         @contextmanager
@@ -941,6 +952,9 @@ class FlextContext:
         def set_user_id(user_id: str) -> None:
             """Set user ID in context."""
             FlextContext.Variables.Request.USER_ID.set(user_id)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(user_id=user_id)
 
         @staticmethod
         def get_operation_name() -> str | None:
@@ -951,6 +965,9 @@ class FlextContext:
         def set_operation_name(operation_name: str) -> None:
             """Set operation name in context."""
             FlextContext.Variables.Performance.OPERATION_NAME.set(operation_name)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(operation_name=operation_name)
 
         @staticmethod
         def get_request_id() -> str | None:
@@ -961,6 +978,9 @@ class FlextContext:
         def set_request_id(request_id: str) -> None:
             """Set request ID in context."""
             FlextContext.Variables.Request.REQUEST_ID.set(request_id)
+            # Also set in structlog context if available
+            if structlog is not None:
+                structlog.contextvars.bind_contextvars(request_id=request_id)
 
         @staticmethod
         @contextmanager
@@ -1204,6 +1224,10 @@ class FlextContext:
             with contextlib.suppress(LookupError):
                 FlextContext.Variables.Request.REQUEST_TIMESTAMP.set(None)
 
+            # Also clear structlog context if available
+            if structlog is not None:
+                structlog.contextvars.clear_contextvars()
+
         @staticmethod
         def ensure_correlation_id() -> str:
             """Ensure correlation ID exists, creating one if needed."""
@@ -1328,471 +1352,6 @@ class FlextContext:
     # =========================================================================
     # Enhanced flext-core Integration Methods
     # =========================================================================
-
-    @staticmethod
-    def create_flext_core_context() -> FlextResult[FlextContext]:
-        """Create enhanced FlextContext with complete flext-core integration.
-
-        Demonstrates proper flext-core integration by creating a context
-        that integrates with FlextConfig, FlextLogger, FlextContainer, and
-        other flext-core components for comprehensive context management.
-
-        Returns:
-            FlextResult[FlextContext]: Configured FlextContext instance or error
-
-        Example:
-            >>> context_result = FlextContext.create_flext_core_context()
-            >>> if context_result.is_success:
-            ...     context = context_result.unwrap()
-            ...     # Use context with full flext-core integration
-            ...     with context.correlation_context() as corr_id:
-            ...         print(f"Processing with correlation: {corr_id}")
-
-        """
-        try:
-            # Create base context with enhanced flext-core integration
-            context = FlextContext()
-
-            # Validate context can access flext-core components
-            try:
-                # Test integration with core components
-
-                # Set up context with integration metadata
-                context.set(
-                    "flext_core_integration",
-                    {
-                        "config_available": True,
-                        "logger_available": True,
-                        "container_available": True,
-                        "integration_timestamp": str(datetime.now(UTC)),
-                    },
-                )
-
-                return FlextResult[FlextContext].ok(context)
-
-            except Exception as e:
-                return FlextResult[FlextContext].fail(
-                    f"Flext-core integration check failed: {e}"
-                )
-
-        except Exception as e:
-            return FlextResult[FlextContext].fail(
-                f"Failed to create flext-core context: {e}"
-            )
-
-    @staticmethod
-    def validate_flext_core_integration() -> FlextResult[FlextTypes.Dict]:
-        """Validate complete flext-core context integration with ecosystem components.
-
-        Demonstrates comprehensive flext-core validation by checking that the
-        context system properly integrates with all major flext-core components
-        including configuration, logging, container, and dispatcher.
-
-        Returns:
-            FlextResult[FlextTypes.Dict]: Validation results with detailed component status
-
-        Example:
-            >>> integration_result = FlextContext.validate_flext_core_integration()
-            >>> if integration_result.is_success:
-            ...     status = integration_result.unwrap()
-            ...     print(f"Context integration: {status['context']['status']}")
-            ...     print(f"Config integration: {status['config']['status']}")
-
-        """
-        integration_results = {
-            "context": {"status": "unknown", "details": ""},
-            "config": {"status": "unknown", "details": ""},
-            "logger": {"status": "unknown", "details": ""},
-            "container": {"status": "unknown", "details": ""},
-            "bus": {"status": "unknown", "details": ""},
-        }
-
-        try:
-            # Validate context itself
-            context = FlextContext()
-            integration_results["context"] = {
-                "status": "available",
-                "details": "FlextContext properly initialized",
-            }
-
-            # Validate config integration
-            try:
-                # Test context-config integration
-                context.set("config_test", {"test": "value"})
-                integration_results["config"] = {
-                    "status": "integrated",
-                    "details": f"Config-context integration working, test value: {context.get('config_test')}",
-                }
-            except Exception as e:
-                integration_results["config"] = {"status": "error", "details": str(e)}
-
-            # Validate logger integration
-            try:
-                # Test context-logger integration
-                context.set("logger_test", {"correlation_id": "test-123"})
-                integration_results["logger"] = {
-                    "status": "integrated",
-                    "details": f"Logger-context integration working, context data: {context.get('logger_test')}",
-                }
-            except Exception as e:
-                integration_results["logger"] = {"status": "error", "details": str(e)}
-
-            # Validate container integration
-            try:
-                # Test context-container integration
-                context.set("container_test", {"service": "test"})
-                integration_results["container"] = {
-                    "status": "integrated",
-                    "details": f"Container-context integration working, context data: {context.get('container_test')}",
-                }
-            except Exception as e:
-                integration_results["container"] = {
-                    "status": "error",
-                    "details": str(e),
-                }
-
-            # Validate bus integration
-            try:
-                # Test context-bus integration
-                context.set("bus_test", {"event": "test"})
-                integration_results["bus"] = {
-                    "status": "integrated",
-                    "details": f"Bus-context integration working, context data: {context.get('bus_test')}",
-                }
-            except Exception as e:
-                integration_results["bus"] = {"status": "error", "details": str(e)}
-
-            # Check overall integration health
-            all_integrated = all(
-                result["status"] in {"integrated", "available"}
-                for result in integration_results.values()
-            )
-
-            if all_integrated:
-                return FlextResult[FlextTypes.Dict].ok({
-                    "overall_status": "fully_integrated",
-                    "components": integration_results,
-                    "message": "All flext-core components properly integrated with context system",
-                })
-            return FlextResult[FlextTypes.Dict].ok({
-                "overall_status": "partially_integrated",
-                "components": integration_results,
-                "message": "Some flext-core components have integration issues - check details",
-            })
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
-                f"Flext-core integration validation failed: {e}"
-            )
-
-    @staticmethod
-    def create_integration_example(component: str) -> FlextResult[str]:
-        """Create practical flext-core context integration examples.
-
-        Provides working code examples that demonstrate proper flext-core
-        context integration patterns for different components and use cases.
-
-        Args:
-            component: Component name ('config', 'logger', 'container', 'bus', 'dispatcher')
-
-        Returns:
-            FlextResult[str]: Integration example code or error
-
-        Example:
-            >>> example = FlextContext.create_integration_example("logger")
-            >>> if example.is_success:
-            ...     print(f"Logger integration example: {example.unwrap()[:100]}...")
-
-        """
-        examples = {
-            "config": """
-# Example: Enhanced FlextContext with FlextConfig integration
-from flext_core import FlextContext, FlextConfig, FlextResult
-
-class ConfigAwareService:
-    def __init__(self):
-        self._context = FlextContext()
-        self._config = FlextConfig()
-
-    def process_with_context(self, data: dict) -> FlextResult[FlextTypes.Dict]:
-        # Set up context with configuration integration
-        with self._context.correlation_context() as corr_id:
-            # Access configuration through context
-            timeout = self._config.timeout_seconds
-            debug_mode = self._config.is_debug_enabled
-
-            # Process with context-aware settings
-            result = {
-                "correlation_id": corr_id,
-                "timeout_used": timeout,
-                "debug_enabled": debug_mode,
-                "processed": True
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(result)
-
-# Usage with full flext-core integration
-service = ConfigAwareService()
-result = service.process_with_context({"test": "data"})
-""",
-            "logger": """
-# Example: Enhanced FlextContext with FlextLogger integration
-from flext_core import FlextContext, FlextLogger, FlextResult
-
-class LoggingAwareService:
-    def __init__(self):
-        self._context = FlextContext()
-        self._logger = FlextLogger(__name__)
-
-    def process_with_logging(self, data: dict) -> FlextResult[FlextTypes.Dict]:
-        # Set up context with logging integration
-        with self._context.correlation_context() as corr_id:
-            # Log with context information
-            self._logger.info("Processing request", extra={
-                "correlation_id": corr_id,
-                "data_size": len(str(data)),
-                "context_data": self._context.get_all()
-            })
-
-            # Process with context-aware logging
-            result = {"processed": True, "correlation_id": corr_id}
-
-            # Log completion with context
-            self._logger.info("Request completed", extra={
-                "correlation_id": corr_id,
-                "result_size": len(str(result))
-            })
-
-            return FlextResult[FlextTypes.Dict].ok(result)
-
-# Usage with structured logging integration
-service = LoggingAwareService()
-result = service.process_with_logging({"test": "data"})
-""",
-            "container": """
-# Example: Enhanced FlextContext with FlextContainer integration
-from flext_core import FlextContext, FlextContainer, FlextResult
-
-class ContainerAwareService:
-    def __init__(self):
-        self._context = FlextContext()
-        self._container = FlextContainer.get_global()
-
-    def process_with_dependencies(self, data: dict) -> FlextResult[FlextTypes.Dict]:
-        # Set up context with container integration
-        with self._context.correlation_context() as corr_id:
-            # Register service in container with context
-            self._container.register("context_service", self)
-
-            # Access dependencies through container
-            db_result = self._container.get("database")
-            if db_result.is_failure:
-                return FlextResult[FlextTypes.Dict].fail(f"Database unavailable: {db_result.error}")
-
-            # Process with dependency and context
-            db_service = db_result.unwrap()
-            result = {
-                "correlation_id": corr_id,
-                "database_available": True,
-                "processed": True
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(result)
-
-# Usage with dependency injection integration
-service = ContainerAwareService()
-result = service.process_with_dependencies({"test": "data"})
-""",
-            "bus": """
-# Example: Enhanced FlextContext with FlextBus integration
-from flext_core import FlextContext, FlextBus, FlextResult
-
-class EventAwareService:
-    def __init__(self):
-        self._context = FlextContext()
-        self._bus = FlextBus()
-
-    def process_with_events(self, data: dict) -> FlextResult[FlextTypes.Dict]:
-        # Set up context with event integration
-        with self._context.correlation_context() as corr_id:
-            # Publish processing event with context
-            event_result = self._bus.publish("data_processing", {
-                "correlation_id": corr_id,
-                "data_size": len(str(data)),
-                "timestamp": str(datetime.now(UTC))
-            })
-
-            if event_result.is_failure:
-                return FlextResult[FlextTypes.Dict].fail(f"Event publishing failed: {event_result.error}")
-
-            # Process with event-driven context
-            result = {
-                "correlation_id": corr_id,
-                "event_published": True,
-                "processed": True
-            }
-
-            # Publish completion event
-            completion_result = self._bus.publish("data_processed", {
-                "correlation_id": corr_id,
-                "result_size": len(str(result))
-            })
-
-            return FlextResult[FlextTypes.Dict].ok(result)
-
-# Usage with event-driven architecture integration
-service = EventAwareService()
-result = service.process_with_events({"test": "data"})
-""",
-            "dispatcher": """
-# Example: Enhanced FlextContext with FlextDispatcher integration
-from flext_core import FlextContext, FlextDispatcher, FlextResult
-
-class DispatchAwareService:
-    def __init__(self):
-        self._context = FlextContext()
-        self._dispatcher = FlextDispatcher()
-
-    def process_with_dispatch(self, message: dict) -> FlextResult[FlextTypes.Dict]:
-        # Set up context with dispatcher integration
-        with self._context.correlation_context() as corr_id:
-            # Enhance message with context information
-            enhanced_message = {
-                **message,
-                "correlation_id": corr_id,
-                "context_data": self._context.get_all(),
-                "timestamp": str(datetime.now(UTC))
-            }
-
-            # Dispatch with context integration
-            dispatch_result = self._dispatcher.dispatch(enhanced_message)
-            if dispatch_result.is_failure:
-                return FlextResult[FlextTypes.Dict].fail(f"Dispatch failed: {dispatch_result.error}")
-
-            # Process with dispatcher context
-            result = {
-                "correlation_id": corr_id,
-                "message_dispatched": True,
-                "processed": True
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(result)
-
-# Usage with message dispatching integration
-service = DispatchAwareService()
-result = service.process_with_dispatch({"type": "test", "data": "example"})
-""",
-        }
-
-        if component not in examples:
-            available = ", ".join(examples.keys())
-            return FlextResult[str].fail(
-                f"Unknown component: {component}. Available: {available}"
-            )
-
-        return FlextResult[str].ok(examples[component].strip())
-
-    @staticmethod
-    def demonstrate_flext_core_context_patterns() -> FlextResult[FlextTypes.Dict]:
-        """Demonstrate comprehensive flext-core context integration patterns.
-
-        Provides a working example that showcases how FlextContext integrates
-        with all major flext-core components in realistic scenarios, demonstrating
-        best practices for context management across the ecosystem.
-
-        Returns:
-            FlextResult[FlextTypes.Dict]: Demonstration results with pattern explanations
-
-        Example:
-            >>> demo = FlextContext.demonstrate_flext_core_context_patterns()
-            >>> if demo.is_success:
-            ...     patterns = demo.unwrap()
-            ...     print(
-            ...         f"Context pattern: {patterns['context_pattern']['description']}"
-            ...     )
-
-        """
-        try:
-            # Create context with integration validation
-            context_result = FlextContext.create_flext_core_context()
-            if context_result.is_failure:
-                return FlextResult[FlextTypes.Dict].fail(
-                    f"Context creation failed: {context_result.error}"
-                )
-
-            context = context_result.unwrap()
-
-            # Demonstrate correlation pattern
-            correlation_example = None
-            with FlextContext.Correlation.new_correlation() as corr_id:
-                correlation_example = {
-                    "correlation_id": corr_id,
-                    "context_data": context.get_all_data(),
-                    "pattern": "correlation_propagation",
-                }
-
-            # Demonstrate service context pattern
-            service_context_example = None
-            with FlextContext.Service.service_context("demo-service", "1.0.0"):
-                service_context_example = {
-                    "service_name": context.get("service_name"),
-                    "service_version": context.get("service_version"),
-                    "pattern": "service_context",
-                }
-
-            # Demonstrate request context pattern
-            request_context_example = None
-            with FlextContext.Request.request_context(
-                user_id="user123", operation_name="demo_operation", request_id="req-abc"
-            ):
-                request_context_example = {
-                    "user_id": context.get("user_id"),
-                    "operation_name": context.get("operation_name"),
-                    "request_id": context.get("request_id"),
-                    "pattern": "request_context",
-                }
-
-            return FlextResult[FlextTypes.Dict].ok({
-                "demonstration_status": "successful",
-                "patterns_demonstrated": {
-                    "correlation_pattern": {
-                        "description": "Correlation ID propagation across context boundaries",
-                        "example_result": correlation_example,
-                        "integration_level": "full",
-                    },
-                    "service_context_pattern": {
-                        "description": "Service identification and versioning in context",
-                        "example_result": service_context_example,
-                        "integration_level": "full",
-                    },
-                    "request_context_pattern": {
-                        "description": "Request metadata and user context propagation",
-                        "example_result": request_context_example,
-                        "integration_level": "full",
-                    },
-                },
-                "integration_level": "comprehensive",
-                "components_integrated": [
-                    "FlextContext",
-                    "FlextConfig",
-                    "FlextLogger",
-                    "FlextContainer",
-                    "FlextBus",
-                ],
-                "best_practices_demonstrated": [
-                    "Context propagation across component boundaries",
-                    "Correlation ID management for distributed tracing",
-                    "Service identification and versioning",
-                    "Request metadata enrichment",
-                    "Thread-safe context variable management",
-                    "Context serialization for cross-service communication",
-                ],
-            })
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Dict].fail(
-                f"Context pattern demonstration failed: {e}"
-            )
 
 
 __all__: FlextTypes.StringList = [

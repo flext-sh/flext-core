@@ -3,7 +3,7 @@
 This module centralizes the access to the official ``flext_tests`` factories
 so that every numbered example can focus on the behaviour it demonstrates
 instead of re-creating mock data. All helpers return plain dictionaries or
-``FlextResult`` instances so that the example scripts can stay lightweight
+``Flext.Result`` instances so that the example scripts can stay lightweight
 and easy to read.
 """
 
@@ -13,8 +13,8 @@ from decimal import Decimal
 from functools import lru_cache
 from typing import Final, TypedDict, cast
 
-from flext_core import FlextLogger, FlextResult, FlextTypes
-from flext_tests import FlextTestsFactories
+from flext_core import Flext
+from flext_tests import FlextTestsMatchers
 
 
 # TypedDict definitions for type-safe scenario data
@@ -40,8 +40,8 @@ class RealisticDataDict(TypedDict):
     """Typed dictionary for complete realistic data."""
 
     order: RealisticOrderDict
-    api_response: FlextTypes.Dict
-    user_registration: FlextTypes.Dict  # User registration data used by examples
+    api_response: Flext.Types.Dict
+    user_registration: Flext.Types.Dict  # User registration data used by examples
 
 
 class ExampleScenarios:
@@ -51,9 +51,9 @@ class ExampleScenarios:
 
     @classmethod
     @lru_cache(maxsize=1)
-    def dataset(cls) -> FlextTypes.Dict:
+    def dataset(cls) -> Flext.Types.Dict:
         """Return a reusable dataset with users, configs, and fields."""
-        builder = FlextTestsFactories.TestDataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         return (
             builder.with_users(count=cls._DEFAULT_USER_COUNT)
             .with_configs(production=False)
@@ -62,66 +62,66 @@ class ExampleScenarios:
         )
 
     @staticmethod
-    def validation_data() -> FlextTypes.Dict:
+    def validation_data() -> Flext.Types.Dict:
         """Return shared validation data used by multiple examples."""
-        return FlextTestsFactories.create_validation_test_data()
+        return FlextTestsMatchers.create_validation_test_data()
 
     @staticmethod
     def realistic_data() -> RealisticDataDict:
         """Return realistic integration-style data for advanced flows."""
         # Type narrowing through casting for type safety
         return cast(
-            "RealisticDataDict", FlextTestsFactories.create_realistic_test_data()
+            "RealisticDataDict", FlextTestsMatchers.create_realistic_test_data()
         )
 
     @staticmethod
-    def user(**overrides: object) -> FlextTypes.Dict:
+    def user(**overrides: object) -> Flext.Types.Dict:
         """Return a single user dictionary."""
-        return FlextTestsFactories.UserFactory.create(**overrides)
+        return FlextTestsMatchers.UserFactory.create(**overrides)
 
     @staticmethod
-    def users(count: int = _DEFAULT_USER_COUNT) -> list[FlextTypes.Dict]:
+    def users(count: int = _DEFAULT_USER_COUNT) -> list[Flext.Types.Dict]:
         """Return multiple users."""
-        return FlextTestsFactories.UserFactory.create_batch(count)
+        return FlextTestsMatchers.UserFactory.create_batch(count)
 
     @staticmethod
-    def config(*, production: bool = False, **overrides: object) -> FlextTypes.Dict:
+    def config(*, production: bool = False, **overrides: object) -> Flext.Types.Dict:
         """Return environment configuration data."""
         if production:
-            return FlextTestsFactories.ConfigFactory.production_config(**overrides)
-        return FlextTestsFactories.ConfigFactory.create(**overrides)
+            return FlextTestsMatchers.ConfigFactory.production_config(**overrides)
+        return FlextTestsMatchers.ConfigFactory.create(**overrides)
 
     @staticmethod
-    def service_batch(logger_name: str = "example_batch") -> FlextTypes.Dict:
+    def service_batch(logger_name: str = "example_batch") -> Flext.Types.Dict:
         """Return services ready for ``FlextContainer.batch_register``."""
         return {
-            "logger": FlextLogger(logger_name),
+            "logger": Flext.Logger(logger_name),
             "config": ExampleScenarios.config(),
             "metrics": {"requests": 0, "errors": 0},
         }
 
     @staticmethod
-    def payload(**overrides: object) -> FlextTypes.Dict:
+    def payload(**overrides: object) -> Flext.Types.Dict:
         """Return a messaging payload."""
         return ExampleScenarios.realistic_data()["api_response"] | overrides
 
     @staticmethod
-    def result_success(data: object | None = None) -> FlextResult[object]:
-        """Return a successful ``FlextResult`` instance."""
-        return FlextTestsFactories.ResultFactory.success_result(data)
+    def result_success(data: object | None = None) -> Flext.Result[object]:
+        """Return a successful ``Flext.Result`` instance."""
+        return FlextTestsMatchers.ResultFactory.success_result(data)
 
     @staticmethod
-    def result_failure(message: str = "Scenario error") -> FlextResult[object]:
-        """Return a failed ``FlextResult`` instance."""
-        return FlextTestsFactories.ResultFactory.failure_result(message)
+    def result_failure(message: str = "Scenario error") -> Flext.Result[object]:
+        """Return a failed ``Flext.Result`` instance."""
+        return FlextTestsMatchers.ResultFactory.failure_result(message)
 
     @staticmethod
-    def user_result(success: bool = True) -> FlextResult[FlextTypes.Dict]:
-        """Return a user-specific ``FlextResult``."""
-        return FlextTestsFactories.ResultFactory.user_result(success=success)
+    def user_result(success: bool = True) -> Flext.Result[Flext.Types.Dict]:
+        """Return a user-specific ``Flext.Result``."""
+        return FlextTestsMatchers.ResultFactory.user_result(success=success)
 
     @staticmethod
-    def error_scenario(error_type: str = "ValidationError") -> FlextTypes.Dict:
+    def error_scenario(error_type: str = "ValidationError") -> Flext.Types.Dict:
         """Return a structured error scenario for examples."""
         return {
             "error_type": error_type,
@@ -132,7 +132,7 @@ class ExampleScenarios:
         }
 
     @staticmethod
-    def metadata(source: str = "examples", **extra: object) -> FlextTypes.Dict:
+    def metadata(source: str = "examples", **extra: object) -> Flext.Types.Dict:
         """Return standard metadata for logging and utilities examples."""
         tags = extra.pop("tags", ["scenario", "demo"])
         return {

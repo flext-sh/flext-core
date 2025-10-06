@@ -64,48 +64,7 @@ result = (
 )
 
 
-# Safe decorator for exception handling
-@safe
-def fetch_user(user_id: int) -> dict:
-    return api.get_user(user_id)  # Automatically wrapped in FlextResult
-
-
-@safe(error_code="DB_ERROR")
-def query_database(query: str) -> list[dict]:
-    return db.execute(query)  # Custom error code on failure
-
-
-# Extend DDD base classes
-class User(FlextModels.Entity):
-    name: str
-    email: str
-
-
-# Use type system throughout
-def process[T](items: list[T]) -> FlextResult[list[T]]:
-    return FlextResult[list[T]].ok([item for item in items])
-
-
-# Implement protocols
-class OrderService(FlextProtocols.Domain.Service):
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
-        return FlextResult[FlextTypes.Dict].ok({"status": "success"})
-
-
-# Structured logging
-logger = FlextLogger(__name__)
-logger.info("Operation completed", extra={"user_id": "123", "duration": 0.5})
-
-
-# Service with dependency injection
-class UserService(FlextService):
-    def __init__(self):
-        super().__init__()
-        self._container = FlextContainer.get_global()
-
-    def create_user(self, data: dict) -> FlextResult[User]:
-        # Use FlextResult for all operations
-        return FlextResult[User].ok(User(**data))
+# Examples removed - see individual module documentation for usage examples
 ```
 
 OPTIMIZATION PRINCIPLES DEMONSTRATED:
@@ -135,7 +94,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
-from flext_core.api import FlextCore
+from flext_core.api import Flext
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -150,62 +109,18 @@ from flext_core.models import FlextModels
 from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
-from flext_core.result import FlextResult, safe
+from flext_core.result import FlextResult
 from flext_core.service import FlextService
-from flext_core.typings import (
-    T1,
-    T2,
-    T3,
-    E,
-    F,
-    FlextTypes,
-    K,
-    MessageT,
-    MessageT_contra,
-    P,
-    R,
-    T,
-    T_co,
-    T_contra,
-    TAccumulate,
-    TAggregate,
-    TAggregate_co,
-    TCommand,
-    TCommand_contra,
-    TEvent,
-    TEvent_contra,
-    TInput_contra,
-    TItem,
-    TQuery,
-    TQuery_contra,
-    TResult,
-    TState,
-    TState_co,
-    TUtil,
-    U,
-    V,
-    W,
-)
+from flext_core.typings import FlextTypes, T, T_co
 from flext_core.utilities import FlextUtilities
 
-# Test infrastructure removed - not allowed in production src/
-
-# Aliases for consistency with domain library naming conventions
-FlextCoreAPI = FlextCore
-
 __all__ = [
-    "T1",
-    "T2",
-    "T3",
-    "E",
-    "F",
+    "Flext",
     "FlextBus",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
-    "FlextCore",
-    "FlextCoreAPI",
     "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
@@ -219,33 +134,8 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
-    "K",
-    "MessageT",
-    "MessageT_contra",
-    "P",
-    "R",
     "T",
-    "TAccumulate",
-    "TAggregate",
-    "TAggregate_co",
-    "TCommand",
-    "TCommand_contra",
-    "TEvent",
-    "TEvent_contra",
-    "TInput_contra",
-    "TItem",
-    "TQuery",
-    "TQuery_contra",
-    "TResult",
-    "TState",
-    "TState_co",
-    "TUtil",
     "T_co",
-    "T_contra",
-    "U",
-    "V",
-    "W",
     "__version__",
     "__version_info__",
-    "safe",  # Convenience decorator for safe function calls
 ]

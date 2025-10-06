@@ -18,19 +18,10 @@ from typing import (
     override,
 )
 
-# Layer 1 - Foundation
 from flext_core.constants import FlextConstants
-
-# Layer 6 - Orchestration
 from flext_core.dispatcher import FlextDispatcher
-
-# Layer 5 - Advanced Infrastructure
 from flext_core.handlers import FlextHandlers
-
-# Layer 3 - Core Infrastructure
 from flext_core.models import FlextModels
-
-# Layer 2 - Early Foundation
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -178,7 +169,7 @@ class FlextRegistry:
             return len(self.errors)
 
     @override
-    def __init__(self, dispatcher: FlextDispatcher) -> None:
+    def __init__(self, dispatcher: FlextDispatcher) -> None:  # type: ignore[override]
         """Initialize the registry with a FlextDispatcher instance."""
         # No super() call needed as this class doesn't inherit from anything
         self._dispatcher = dispatcher

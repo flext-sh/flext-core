@@ -179,15 +179,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             if self._container is None:
                 with self._lock:
                     if self._container is None:
-                        # Create instance using parent __new__ and __init__
-                        instance = object.__new__(FlextContainer)
-                        instance.__init__()
-                        self._container = instance
+                        # Create instance using direct instantiation
+                        self._container = FlextContainer()
             return self._container
 
     def __new__(cls) -> Self:
         """Create or return the global singleton instance."""
-        return cls.get_global()
+        return cast("Self", cls.get_global())
 
     def __init__(self) -> None:
         """Initialize container with optimized data structures and internal DI.

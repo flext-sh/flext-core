@@ -1,8 +1,6 @@
-# FLEXT-Core Architecture
+# Architecture Overview
 
 Comprehensive architecture guide for FLEXT-Core v0.9.9 - the foundation library implementing Clean Architecture principles with railway-oriented programming, dependency injection, and domain-driven design.
-
----
 
 ## Overview
 
@@ -37,8 +35,6 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 ```
 
 **Dependency Rule**: Dependencies flow inward only. Inner layers know nothing about outer layers.
-
----
 
 ## Layer Details
 
@@ -83,8 +79,6 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - Immutable by default
 - Type-safe operations
 - Zero runtime overhead
-
----
 
 ### Domain Layer (Business Logic)
 
@@ -143,8 +137,6 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - Framework independence
 - Testable without infrastructure
 - Pydantic v2 validation
-
----
 
 ### Application Layer (Use Cases)
 
@@ -209,8 +201,6 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - No business logic (delegates to domain)
 - Infrastructure-agnostic
 - Composable pipelines
-
----
 
 ### Infrastructure Layer (External Concerns)
 
@@ -278,8 +268,6 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - Dependency inversion
 - Easy testing/mocking
 
----
-
 ## Cross-Cutting Concerns
 
 ### Error Handling Strategy
@@ -343,8 +331,6 @@ Only outer layers depend on inner layers, never reversed.
 - Real external systems (Docker)
 - No mocks (use flext_tests)
 
----
-
 ## Module Dependency Graph
 
 ```
@@ -378,8 +364,6 @@ FlextContext
 - Foundation has zero dependencies
 - Infrastructure depends on everything
 
----
-
 ## Design Patterns Used
 
 ### Creational Patterns
@@ -407,8 +391,6 @@ FlextContext
 2. **Functor**: `.map()` operations
 3. **Applicative**: `.flat_map()` (monadic bind)
 
----
-
 ## Quality Metrics
 
 ### Current State (v0.9.9)
@@ -430,8 +412,6 @@ FlextContext
 | **Domain**         | 60-70%   | ⚠️ Need improvement |
 | **Application**    | 50-95%   | ⚠️ Mixed            |
 | **Infrastructure** | 70-90%   | ✅ Good             |
-
----
 
 ## Extension Points
 
@@ -455,8 +435,6 @@ FlextContext
    - Extend `FlextContext` with new scope
    - Update `FlextLogger` integration
 
----
-
 ## Performance Considerations
 
 ### Bottlenecks
@@ -472,8 +450,6 @@ FlextContext
 2. Cache handler lookups when possible
 3. Use `FlextResult` early returns to avoid unnecessary work
 4. Batch operations when using `FlextRegistry`
-
----
 
 ## Migration Guidelines
 
@@ -510,16 +486,12 @@ logger_result = container.get("logger")
 logger = logger_result.unwrap() if logger_result.is_success else FlextLogger(__name__)
 ```
 
----
-
 ## References
 
 - **Clean Architecture**: Robert C. Martin
 - **Domain-Driven Design**: Eric Evans
 - **Railway-Oriented Programming**: Scott Wlaschin
 - **Functional Programming**: Haskell/F# patterns
-
----
 
 ## Appendix: Module Responsibilities
 

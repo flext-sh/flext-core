@@ -4,7 +4,7 @@ This module provides the foundational constants for the entire FLEXT ecosystem.
 As Layer 0, it has NO dependencies and serves as the basis for all other modules.
 
 Dependency Layer: 0 (Foundation - No Dependencies)
-Used by: All other FlextCore modules and ecosystem projects
+Used by: All other Flext modules and ecosystem projects
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,15 +14,12 @@ from __future__ import annotations
 
 from enum import StrEnum
 from typing import (
-    TYPE_CHECKING,
     ClassVar,
     Final,
+    Literal,
 )
 
 from flext_core.__version__ import __version__
-
-if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
 
 
 class FlextConstants:
@@ -176,6 +173,12 @@ class FlextConstants:
         VERSION: Final[str] = __version__
         DEFAULT_VERSION: Final[str] = __version__
 
+        # Core-specific overrides
+        SYSTEM_NAME: Final[str] = "flext-core"
+        MAJOR_VERSION: Final[int] = 1
+        MINOR_VERSION: Final[int] = 0
+        PATCH_VERSION: Final[int] = 0
+
         # Semantic zero and initial values
         ZERO: Final[int] = 0  # Semantic zero for counters/initialization
         INITIAL_TIME: Final[float] = (
@@ -263,10 +266,15 @@ class FlextConstants:
         # Core error codes (actively used)
         VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"  # Usage count: 28
         TYPE_ERROR: Final[str] = "TYPE_ERROR"  # Usage count: 4
+        ATTRIBUTE_ERROR: Final[str] = "ATTRIBUTE_ERROR"  # Usage count: 1
         CONFIG_ERROR: Final[str] = "CONFIG_ERROR"  # Usage count: 1
         GENERIC_ERROR: Final[str] = "GENERIC_ERROR"  # Usage count: 3
         COMMAND_PROCESSING_FAILED: Final[str] = "COMMAND_PROCESSING_FAILED"
         UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"  # Usage count: 1
+
+        # Applicative pattern error messages
+        FIRST_ARG_FAILED_MSG: Final[str] = "First argument failed"
+        SECOND_ARG_FAILED_MSG: Final[str] = "Second argument failed"
 
         # Serialization errors (reserved for FlextResult operations)
         SERIALIZATION_ERROR: Final[str] = (
@@ -324,6 +332,95 @@ class FlextConstants:
         CRITICAL_ERROR: Final[str] = (
             "CRITICAL_ERROR"  # Reserved for system failures  # Usage count: 1
         )
+
+        # Error category literals for type safety
+        class CategoryLiteral:
+            """Error category literals for type annotations."""
+
+            VALIDATION: Final[str] = "validation"
+            NETWORK: Final[str] = "network"
+            DATABASE: Final[str] = "database"
+            AUTH: Final[str] = "auth"
+            SYSTEM: Final[str] = "system"
+            UNKNOWN: Final[str] = "unknown"
+
+        # Error severity literals for type safety
+        class SeverityLiteral:
+            """Error severity literals for type annotations."""
+
+            LOW: Final[str] = "low"
+            MEDIUM: Final[str] = "medium"
+            HIGH: Final[str] = "high"
+            CRITICAL: Final[str] = "critical"
+
+        # Service type literals for type safety
+        class ServiceTypeLiteral:
+            """Service type literals for type annotations."""
+
+            INSTANCE: Final[str] = "instance"
+            FACTORY: Final[str] = "factory"
+            SINGLETON: Final[str] = "singleton"
+
+        # Service lifecycle literals for type safety
+        class ServiceLifecycleLiteral:
+            """Service lifecycle literals for type annotations."""
+
+            INITIALIZING: Final[str] = "initializing"
+            READY: Final[str] = "ready"
+            RUNNING: Final[str] = "running"
+            STOPPING: Final[str] = "stopping"
+            STOPPED: Final[str] = "stopped"
+            ERROR: Final[str] = "error"
+
+        # Service protocol literals for type safety
+        class ServiceProtocolLiteral:
+            """Service protocol literals for type annotations."""
+
+            HTTP: Final[str] = "http"
+            GRPC: Final[str] = "grpc"
+            WEBSOCKET: Final[str] = "websocket"
+            MESSAGE_QUEUE: Final[str] = "message_queue"
+
+        # Environment literals for type safety
+        class EnvironmentLiteral:
+            """Environment literals for type annotations."""
+
+            DEVELOPMENT: Final[str] = "development"
+            STAGING: Final[str] = "staging"
+            PRODUCTION: Final[str] = "production"
+            TEST: Final[str] = "test"
+            LOCAL: Final[str] = "local"
+
+        # Log level literals for type safety
+        class LogLevelLiteral:
+            """Log level literals for type annotations."""
+
+            DEBUG: Final[str] = "DEBUG"
+            INFO: Final[str] = "INFO"
+            WARNING: Final[str] = "WARNING"
+            ERROR: Final[str] = "ERROR"
+            CRITICAL: Final[str] = "CRITICAL"
+
+        # Output format literals for type safety
+        class OutputFormatLiteral:
+            """Output format literals for type annotations."""
+
+            JSON: Final[str] = "json"
+            YAML: Final[str] = "yaml"
+            TABLE: Final[str] = "table"
+            CSV: Final[str] = "csv"
+            TEXT: Final[str] = "text"
+            XML: Final[str] = "xml"
+
+        # Serialization format literals for type safety
+        class SerializationFormatLiteral:
+            """Serialization format literals for type annotations."""
+
+            JSON: Final[str] = "json"
+            YAML: Final[str] = "yaml"
+            TOML: Final[str] = "toml"
+            INI: Final[str] = "ini"
+            XML: Final[str] = "xml"
 
     class Messages:
         """User-facing validation and failure messages.
@@ -432,7 +529,7 @@ class FlextConstants:
     class Config:
         """Configuration defaults anchoring the unified lifecycle."""
 
-        ENVIRONMENTS: Final[FlextTypes.StringList] = [  # Usage count: 3
+        ENVIRONMENTS: Final[list[str]] = [  # Usage count: 3
             "development",
             "staging",
             "production",
@@ -440,7 +537,7 @@ class FlextConstants:
             "local",
         ]
         DEFAULT_ENVIRONMENT: Final[str] = "development"  # Usage count: 0
-        DOTENV_FILES: Final[FlextTypes.StringList] = [
+        DOTENV_FILES: Final[list[str]] = [
             ".env",
             ".internal.invalid",
             ".env.production",
@@ -961,6 +1058,215 @@ class FlextConstants:
         # Handler types - Using Literal for type safety
         DEFAULT_HANDLER_TYPE: Final = "command"
         COMMAND_HANDLER_TYPE: Final = "command"
+
+        # CQRS handler type literals for type annotations
+        class HandlerTypeLiteral:
+            """CQRS handler type literals for type annotations."""
+
+            COMMAND: Final[str] = "command"
+            QUERY: Final[str] = "query"
+            EVENT: Final[str] = "event"
+            SAGA: Final[str] = "saga"
+
+        # Processing mode literals for type annotations
+        class ProcessingModeLiteral:
+            """Processing mode literals for type annotations."""
+
+            BATCH: Final[str] = "batch"
+            STREAM: Final[str] = "stream"
+            PARALLEL: Final[str] = "parallel"
+            SEQUENTIAL: Final[str] = "sequential"
+
+        # Processing status literals for type annotations
+        class ProcessingStatusLiteral:
+            """Processing status literals for type annotations."""
+
+            PENDING: Final[str] = "pending"
+            RUNNING: Final[str] = "running"
+            COMPLETED: Final[str] = "completed"
+            FAILED: Final[str] = "failed"
+            CANCELLED: Final[str] = "cancelled"
+
+        # Validation level literals for type annotations
+        class ValidationLevelLiteral:
+            """Validation level literals for type annotations."""
+
+            STRICT: Final[str] = "strict"
+            LENIENT: Final[str] = "lenient"
+            STANDARD: Final[str] = "standard"
+
+        # Processing phase literals for type annotations
+        class ProcessingPhaseLiteral:
+            """Processing phase literals for type annotations."""
+
+            PREPARE: Final[str] = "prepare"
+            EXECUTE: Final[str] = "execute"
+            VALIDATE: Final[str] = "validate"
+            COMPLETE: Final[str] = "complete"
+
+        # Model-specific literal types (moved from models.py)
+        class BindTypeLiteral:
+            """Bind type literals for model annotations."""
+
+            TEMPORARY: Final[str] = "temporary"
+            PERMANENT: Final[str] = "permanent"
+
+        class MergeStrategyLiteral:
+            """Merge strategy literals for model annotations."""
+
+            REPLACE: Final[str] = "replace"
+            UPDATE: Final[str] = "update"
+            MERGE_DEEP: Final[str] = "merge_deep"
+
+        class StatusLiteral:
+            """Common status literals for model annotations."""
+
+            PENDING: Final[str] = "pending"
+            RUNNING: Final[str] = "running"
+            COMPLETED: Final[str] = "completed"
+            FAILED: Final[str] = "failed"
+            COMPENSATING: Final[str] = "compensating"
+
+        class HealthStatusLiteral:
+            """Health status literals for monitoring."""
+
+            HEALTHY: Final[str] = "healthy"
+            DEGRADED: Final[str] = "degraded"
+            UNHEALTHY: Final[str] = "unhealthy"
+
+        class TokenTypeLiteral:
+            """Token type literals for authentication."""
+
+            BEARER: Final[str] = "bearer"
+            API_KEY: Final[str] = "api_key"
+            JWT: Final[str] = "jwt"
+
+        class CircuitBreakerStateLiteral:
+            """Circuit breaker state literals."""
+
+            CLOSED: Final[str] = "closed"
+            OPEN: Final[str] = "open"
+            HALF_OPEN: Final[str] = "half_open"
+
+        class NotificationStatusLiteral:
+            """Notification status literals."""
+
+            PENDING: Final[str] = "pending"
+            SENT: Final[str] = "sent"
+            FAILED: Final[str] = "failed"
+
+        class TokenStatusLiteral:
+            """Token status literals."""
+
+            PENDING: Final[str] = "pending"
+            RUNNING: Final[str] = "running"
+            COMPLETED: Final[str] = "completed"
+            FAILED: Final[str] = "failed"
+
+        class CircuitBreakerStatusLiteral:
+            """Circuit breaker status literals."""
+
+            IDLE: Final[str] = "idle"
+            RUNNING: Final[str] = "running"
+            COMPLETED: Final[str] = "completed"
+            FAILED: Final[str] = "failed"
+
+        class BatchStatusLiteral:
+            """Batch processing status literals."""
+
+            PENDING: Final[str] = "pending"
+            PROCESSING: Final[str] = "processing"
+            COMPLETED: Final[str] = "completed"
+            FAILED: Final[str] = "failed"
+
+        class ExportStatusLiteral:
+            """Export status literals."""
+
+            PENDING: Final[str] = "pending"
+            PROCESSING: Final[str] = "processing"
+            COMPLETED: Final[str] = "completed"
+            FAILED: Final[str] = "failed"
+
+        class OperationStatusLiteral:
+            """Operation status literals."""
+
+            SUCCESS: Final[str] = "success"
+            FAILURE: Final[str] = "failure"
+            PARTIAL: Final[str] = "partial"
+
+        class SerializationFormatLiteral:
+            """Serialization format literals."""
+
+            JSON: Final[str] = "json"
+            YAML: Final[str] = "yaml"
+            TOML: Final[str] = "toml"
+            MSGPACK: Final[str] = "msgpack"
+
+        class CompressionLiteral:
+            """Compression type literals."""
+
+            NONE: Final[str] = "none"
+            GZIP: Final[str] = "gzip"
+            BZIP2: Final[str] = "bzip2"
+            LZ4: Final[str] = "lz4"
+
+        class AggregationLiteral:
+            """Aggregation function literals."""
+
+            SUM: Final[str] = "sum"
+            AVG: Final[str] = "avg"
+            MIN: Final[str] = "min"
+            MAX: Final[str] = "max"
+            COUNT: Final[str] = "count"
+
+        class ActionLiteral:
+            """Action type literals."""
+
+            GET: Final[str] = "get"
+            CREATE: Final[str] = "create"
+            UPDATE: Final[str] = "update"
+            DELETE: Final[str] = "delete"
+            LIST: Final[str] = "list"
+
+        class PersistenceLevelLiteral:
+            """Persistence level literals."""
+
+            MEMORY: Final[str] = "memory"
+            DISK: Final[str] = "disk"
+            DISTRIBUTED: Final[str] = "distributed"
+
+        class TargetFormatLiteral:
+            """Target format literals."""
+
+            FULL: Final[str] = "full"
+            COMPACT: Final[str] = "compact"
+            MINIMAL: Final[str] = "minimal"
+
+        class WarningLevelLiteral:
+            """Warning level literals."""
+
+            NONE: Final[str] = "none"
+            WARN: Final[str] = "warn"
+            ERROR: Final[str] = "error"
+
+        class OutputFormatLiteral:
+            """Output format literals."""
+
+            DICT: Final[str] = "dict"
+            JSON: Final[str] = "json"
+
+        class ModeLiteral:
+            """Mode literals for various operations."""
+
+            VALIDATION: Final[str] = "validation"
+            SERIALIZATION: Final[str] = "serialization"
+
+        class RegistrationStatusLiteral:
+            """Registration status literals."""
+
+            ACTIVE: Final[str] = "active"
+            INACTIVE: Final[str] = "inactive"
+
         QUERY_HANDLER_TYPE: Final = "query"
         EVENT_HANDLER_TYPE: Final = "event"
         SAGA_HANDLER_TYPE: Final = "saga"
@@ -1008,6 +1314,10 @@ class FlextConstants:
         QUERY_VALIDATION_FAILED: Final[str] = "QUERY_VALIDATION_FAILED"
         HANDLER_CONFIG_INVALID: Final[str] = "HANDLER_CONFIG_INVALID"
         COMMAND_PROCESSING_FAILED: Final[str] = "COMMAND_PROCESSING_FAILED"
+
+        # FlextResult error messages
+        FIRST_ARG_FAILED_MSG: Final[str] = "First argument failed"
+        SECOND_ARG_FAILED_MSG: Final[str] = "Second argument failed"
 
     class Container:
         """Container configuration constants for FlextContainer."""
@@ -1181,7 +1491,7 @@ class FlextConstants:
         class Environment:
             """Environment-specific logging configuration overrides."""
 
-            DEVELOPMENT: Final[FlextTypes.ConfigDict] = {
+            DEVELOPMENT: Final[dict[str, object]] = {
                 "level": "DEBUG",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -1190,7 +1500,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            STAGING: Final[FlextTypes.ConfigDict] = {
+            STAGING: Final[dict[str, object]] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": True,
@@ -1199,7 +1509,7 @@ class FlextConstants:
                 "track_performance": True,
             }
 
-            PRODUCTION: Final[FlextTypes.ConfigDict] = {
+            PRODUCTION: Final[dict[str, object]] = {
                 "level": "WARNING",
                 "console_enabled": False,
                 "file_enabled": True,
@@ -1208,7 +1518,7 @@ class FlextConstants:
                 "track_performance": False,
             }
 
-            TESTING: Final[FlextTypes.ConfigDict] = {
+            TESTING: Final[dict[str, object]] = {
                 "level": "INFO",
                 "console_enabled": True,
                 "file_enabled": False,
@@ -1552,6 +1862,20 @@ class FlextConstants:
         }
         METHODS_WITH_BODY: ClassVar[set[str]] = {"POST", "PUT", "PATCH"}
 
+        # HTTP Literals for type safety
+        class MethodLiteral:
+            """HTTP method literals for type annotations."""
+
+            GET: Final[str] = "GET"
+            POST: Final[str] = "POST"
+            PUT: Final[str] = "PUT"
+            DELETE: Final[str] = "DELETE"
+            PATCH: Final[str] = "PATCH"
+            HEAD: Final[str] = "HEAD"
+            OPTIONS: Final[str] = "OPTIONS"
+            TRACE: Final[str] = "TRACE"
+            CONNECT: Final[str] = "CONNECT"
+
         # HTTP Ports
         HTTP_PORT: Final[int] = 80
         HTTPS_PORT: Final[int] = 443
@@ -1611,6 +1935,92 @@ class FlextConstants:
             DEFAULT_SIZE: Final[int] = 1000  # Standard batch size for processing
             SMALL_SIZE: Final[int] = 100  # Small batch size for limited operations
             LARGE_SIZE: Final[int] = 10000  # Large batch size for bulk operations
+
+    class Paths:
+        """File system paths for core operations."""
+
+        CONFIG_DIR: Final[str] = "config"
+        LOGS_DIR: Final[str] = "logs"
+        CACHE_DIR: Final[str] = "cache"
+        TEMP_DIR: Final[str] = "tmp"
+
+    # =================================================================
+    # TYPE ALIASES (Python 3.13+ Literal types from FlextConstants)
+    # =================================================================
+
+    # Bind type literals - reference nested class attributes correctly
+    BindType = Literal[
+        "temporary",
+        "permanent",
+    ]
+
+    # Merge strategy literals - reference nested class attributes correctly
+    MergeStrategy = Literal[
+        "replace",
+        "update",
+        "merge_deep",
+    ]
+
+    # Status literals - reference nested class attributes correctly
+    Status = Literal[
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "compensating",
+    ]
+
+    # Health status literals - reference nested class attributes correctly
+    HealthStatus = Literal[
+        "healthy",
+        "degraded",
+        "unhealthy",
+    ]
+
+    # Token type literals - reference nested class attributes correctly
+    TokenType = Literal[
+        "bearer",
+        "api_key",
+        "jwt",
+    ]
+
+    # Notification status literals - reference nested class attributes correctly
+    NotificationStatus = Literal[
+        "pending",
+        "sent",
+        "failed",
+    ]
+
+    # Token status literals - reference nested class attributes correctly
+    TokenStatus = Literal[
+        "pending",
+        "running",
+        "completed",
+        "failed",
+    ]
+
+    # Batch status literals - reference nested class attributes correctly
+    BatchStatus = Literal[
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+    ]
+
+    # Circuit breaker status literals - reference nested class attributes correctly
+    CircuitBreakerStatus = Literal[
+        "idle",
+        "running",
+        "completed",
+        "failed",
+    ]
+
+    # Circuit breaker state literals - reference nested class attributes correctly
+    CircuitBreakerState = Literal[
+        "closed",
+        "open",
+        "half_open",
+    ]
 
 
 __all__ = ["FlextConstants"]

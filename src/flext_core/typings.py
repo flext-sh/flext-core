@@ -25,164 +25,21 @@ from typing import (
     TypeVar,
 )
 
-# NOTE: FlextResult import removed to break circular import with result.py
-# Type aliases that depend on FlextResult are defined in result.py instead
-
-# =============================================================================
-# CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
-# =============================================================================
-
-# Core generic type variables with Python 3.13+ enhancements
-P = ParamSpec("P")
-
-# Core TypeVars (enhanced for better ecosystem integration)
-T1 = TypeVar("T1")
-T2 = TypeVar("T2")
-T3 = TypeVar("T3")
-
-# Enhanced covariant type variables (read-only with better naming)
-T1_co = TypeVar("T1_co", covariant=True)
-T2_co = TypeVar("T2_co", covariant=True)
-T3_co = TypeVar("T3_co", covariant=True)
-
-# Enhanced contravariant type variables (write-only with better naming)
-TItem = TypeVar("TItem")
-TItem_contra = TypeVar("TItem_contra", contravariant=True)
-TResult = TypeVar("TResult")
-TResult_contra = TypeVar("TResult_contra", contravariant=True)
-TUtil = TypeVar("TUtil")
-TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
-T_contra = TypeVar("T_contra", contravariant=True)
-
-# Enhanced message and CQRS type variables
-MessageT = TypeVar("MessageT")
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
-TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
-TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
-TInput_contra = TypeVar("TInput_contra", contravariant=True)
-TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
-TState_co = TypeVar("TState_co", covariant=True)
-TState = TypeVar("TState")
-
-# Enhanced core type variables
-E = TypeVar("E")
-F = TypeVar("F")
-K = TypeVar("K")
-R = TypeVar("R")
-
-# Enhanced async and concurrent type variables
-TAsync = TypeVar("TAsync")
-TAsync_co = TypeVar("TAsync_co", covariant=True)
-TAwaitable = TypeVar("TAwaitable")
-TConcurrent = TypeVar("TConcurrent")
-TParallel = TypeVar("TParallel")
-TSync = TypeVar("TSync")
-
-# Enhanced data processing type variables
-TData = TypeVar("TData")
-TData_co = TypeVar("TData_co", covariant=True)
-TProcessor = TypeVar("TProcessor")
-TPipeline = TypeVar("TPipeline")
-TTransform = TypeVar("TTransform")
-TTransform_co = TypeVar("TTransform_co", covariant=True)
-
-# Enhanced error handling type variables
-TError = TypeVar("TError")
-TError_co = TypeVar("TError_co", covariant=True)
-TException = TypeVar("TException")
-TException_co = TypeVar("TException_co", covariant=True)
-
-# Enhanced configuration type variables
-TConfig = TypeVar("TConfig")
-TConfig_co = TypeVar("TConfig_co", covariant=True)
-TSettings = TypeVar("TSettings")
-TSettings_co = TypeVar("TSettings_co", covariant=True)
-
-# Enhanced service type variables
-TService = TypeVar("TService")
-TService_co = TypeVar("TService_co", covariant=True)
-TClient = TypeVar("TClient")
-TClient_co = TypeVar("TClient_co", covariant=True)
-
-# Domain-specific type variables
-Message = TypeVar("Message")
-Command = TypeVar("Command")
-Query = TypeVar("Query")
-Event = TypeVar("Event")
-ResultT = TypeVar("ResultT")
-TCommand = TypeVar("TCommand")
-TEvent = TypeVar("TEvent")
-TQuery = TypeVar("TQuery")
-
-# Service and infrastructure type variables
-U = TypeVar("U")
-V = TypeVar("V")
-T = TypeVar("T")
-T_co = TypeVar("T_co", covariant=True)
-TAccumulate = TypeVar("TAccumulate")
-TAggregate = TypeVar("TAggregate")
-TAggregate_co = TypeVar("TAggregate_co", covariant=True)
-TCacheKey = TypeVar("TCacheKey")
-TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
-TCacheValue = TypeVar("TCacheValue")
-TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
-W = TypeVar("W")
-TConfigKey = TypeVar("TConfigKey")
-TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
-TConfigValue = TypeVar("TConfigValue")
-TConfigValue_co = TypeVar("TConfigValue_co", covariant=True)
-TDomainEvent = TypeVar("TDomainEvent")
-TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
-TEntity = TypeVar("TEntity")
-TEntity_co = TypeVar("TEntity_co", covariant=True)
-TKey = TypeVar("TKey")
-TKey_contra = TypeVar("TKey_contra", contravariant=True)
-TMessage = TypeVar("TMessage")
-TParallel = TypeVar("TParallel")
-TResource = TypeVar("TResource")
-TResult_co = TypeVar("TResult_co", covariant=True)
-TService = TypeVar("TService")
-TTimeout = TypeVar("TTimeout")
-TValue = TypeVar("TValue")
-TValue_co = TypeVar("TValue_co", covariant=True)
-TValueObject_co = TypeVar("TValueObject_co", covariant=True)
-UParallel = TypeVar("UParallel")
-UResource = TypeVar("UResource")
-TPlugin = TypeVar("TPlugin")
-TPluginConfig = TypeVar("TPluginConfig")
-
 # =============================================================================
 # FLEXT TYPES NAMESPACE - Centralized type system for the FLEXT ecosystem
 # =============================================================================
 
 
 class FlextTypes:
-    """Centralized type system namespace for the FLEXT ecosystem - OPTIMIZATION SHOWCASE.
+    """Centralized type system namespace for the FLEXT ecosystem.
 
     FLEXT-CORE OPTIMIZATION PATTERNS DEMONSTRATED:
 
     🚀 NAMESPACE CLASS PATTERN
-    Single unified class with nested specialized namespaces:
-    - Core: Fundamental types with Python 3.13+ enhancements
-    - Async: Modern async and concurrent patterns
-    - ErrorHandling: Enhanced error handling types
-    - Service: Comprehensive service layer types
-    - Headers: HTTP headers and metadata types
-    - Domain: DDD and event sourcing patterns
-    - Validation: Complex validation scenario types
-    - Processing: Generic processing patterns
-    - Handlers: CQRS handler registries and pipelines
-    - Reliability: Circuit breaker, retry, and rate limiting
-    - Context: Context and scope management
-
-    🔢 40+ TYPE VARIABLES
-    Comprehensive type variable system:
-    - Core generics: T1, T2, T3 with covariant/contravariant variants
-    - Async types: TAsync, TAsync_co, TAwaitable, TConcurrent, TParallel
-    - Data processing: TData, TProcessor, TPipeline, TTransform
-    - Error handling: TError, TException with covariant variants
-    - Configuration: TConfig, TSettings with covariant variants
-    - Service types: TService, TClient with covariant variants
+    Single unified class with nested specialized namespaces AND centralized TypeVars:
+    - All 40+ TypeVars defined as class attributes for strict module organization
+    - Nested namespaces for specialized type groups (Core, Async, ErrorHandling, etc.)
+    - No loose TypeVar definitions outside the class
 
     **Function**: Type definitions for ecosystem-wide consistency
         - Core fundamental types (Dict, List, Headers) with Python 3.13+ patterns
@@ -205,112 +62,6 @@ class FlextTypes:
         - Modern type aliases with type keyword
         - Covariant and contravariant variance for type safety
         - Generic type constraints for proper type relationships
-
-    OPTIMIZATION EXAMPLES:
-
-    ```python
-    # ✅ CORRECT - Complete type system with optimization patterns
-    from flext_core import (
-        FlextTypes,
-        T,
-        T_co,
-        T_contra,
-    )  # FlextResult import removed to break circular import
-
-
-    # Example 1: Enhanced core types with async patterns
-    async def process_async_data(
-        data: FlextTypes.Async.AsyncDict,
-    ) -> FlextTypes.Async.AsyncResult[FlextTypes.Dict]:
-        results = []
-        async for key, value in data.items():
-            result = await process_item(key, value)
-            results.append(result)
-        return {"processed": len(results)}
-
-
-    # Example 2: Error handling types with recovery strategies
-    def handle_with_recovery[T](
-        operation: Callable[[], T],
-        recovery: FlextTypes.ErrorHandling.RecoveryStrategy[T],
-    ) -> FlextTypes.ErrorHandling.RecoveryResult[T]:
-        try:
-            return operation()
-        except Exception as e:
-            # Use enhanced error handling types
-            return recovery(e)
-
-
-    # Example 3: Service types with flext-core integration
-    def register_service[T](
-        name: str, factory: FlextTypes.Service.ServiceFactory
-    ) -> object:  # Return type moved to result.py to break circular import
-        registry = {name: factory({})}
-        return registry  # Simplified for typing example
-
-
-    # Example 4: Generic type variables with variance
-    def read_data[T_co]() -> T_co:  # Covariant output
-        return get_data()  # Can return subtype
-
-
-    def write_data[T_contra](data: T_contra) -> None:  # Contravariant input
-        process_data(data)  # Can accept supertype
-
-
-    # Example 5: Modern async patterns
-    async def concurrent_process[T](
-        items: FlextTypes.Async.ConcurrentList[T],
-    ) -> FlextTypes.Async.ConcurrentResult[T]:
-        return await asyncio.gather(*[process(item) for item in items])
-
-
-    # Example 6: Enhanced error types
-    def classify_error(
-        error: FlextTypes.ErrorHandling.ErrorType,
-    ) -> FlextTypes.ErrorHandling.ErrorCategory:
-        if isinstance(error, ValidationError):
-            return "validation"
-        elif isinstance(error, NetworkError):
-            return "network"
-        return "unknown"
-    ```
-
-    BEFORE vs AFTER OPTIMIZATION:
-
-    ```python
-    # ❌ BEFORE - Basic typing, no variance, limited patterns
-    from typing import TypeVar, Dict, List
-
-    T = TypeVar("T")  # Basic, no variance
-    BasicDict = FlextTypes.Dict  # Simple alias
-
-
-    def process(data: BasicDict) -> BasicDict:
-        return data
-
-
-    # ✅ AFTER - Advanced typing with variance and modern patterns
-    from flext_core import FlextTypes, T, T_co, T_contra
-
-
-    # Enhanced with variance and modern syntax
-    def read_data[T_co]() -> T_co:  # Covariant - can return subtype
-        return get_subtype_data()
-
-
-    def write_data[T_contra](
-        data: T_contra,
-    ) -> None:  # Contravariant - can accept supertype
-        process_supertype_data(data)
-
-
-    def process_async(
-        data: FlextTypes.Async.AsyncDict,
-    ) -> FlextTypes.Async.AsyncResult[FlextTypes.Dict]:
-        # Modern async patterns with proper typing
-        return async_process_data(data)
-    ```
 
     **Attributes**:
         Core: Core fundamental types for ecosystem with Python 3.13+ enhancements.
@@ -337,32 +88,134 @@ class FlextTypes:
         Covariance/contravariance must be used appropriately for type safety.
         Type aliases should not wrap existing types unnecessarily.
 
-    **Example**:
-        Complete type system showcase with generics and variance:
-
-        >>> # Modern async processing with proper typing
-        >>> async def process_concurrent[T](
-        ...     items: FlextTypes.Async.ConcurrentList[T],
-        ... ) -> FlextTypes.Async.ConcurrentResult[T]:
-        ...     return await asyncio.gather(*[process(item) for item in items])
-        >>>
-        >>> # Enhanced error handling with recovery
-        >>> def safe_operation[T](
-        ...     operation: Callable[[], T],
-        ...     recovery: FlextTypes.ErrorHandling.RecoveryStrategy[T],
-        ... ) -> FlextTypes.ErrorHandling.RecoveryResult[T]:
-        ...     try:
-        ...         return operation()
-        ...     except Exception as e:
-        ...         return recovery(e)
-
     **See Also**:
-        # FlextResult: For result type patterns and railway composition (import removed to break circular import)
+        FlextResult: For result type patterns and railway composition.
         FlextModels: For domain model types and DDD patterns.
         FlextHandlers: For handler type usage and CQRS patterns.
         FlextProtocols: For protocol definitions and interface contracts.
         FlextUtilities: For type validation and transformation utilities.
     """
+
+    # =========================================================================
+    # CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
+    # =========================================================================
+
+    # Core generic type variables with Python 3.13+ enhancements
+    P = ParamSpec("P")
+
+    # Core TypeVars (enhanced for better ecosystem integration)
+    T1 = TypeVar("T1")
+    T2 = TypeVar("T2")
+    T3 = TypeVar("T3")
+
+    # Enhanced covariant type variables (read-only with better naming)
+    T1_co = TypeVar("T1_co", covariant=True)
+    T2_co = TypeVar("T2_co", covariant=True)
+    T3_co = TypeVar("T3_co", covariant=True)
+
+    # Enhanced contravariant type variables (write-only with better naming)
+    TItem = TypeVar("TItem")
+    TItem_contra = TypeVar("TItem_contra", contravariant=True)
+    TResult = TypeVar("TResult")
+    TResult_contra = TypeVar("TResult_contra", contravariant=True)
+    TUtil = TypeVar("TUtil")
+    TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
+    T_contra = TypeVar("T_contra", contravariant=True)
+
+    # Enhanced message and CQRS type variables
+    MessageT = TypeVar("MessageT")
+    MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
+    TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
+    TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
+    TInput_contra = TypeVar("TInput_contra", contravariant=True)
+    TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
+    TState_co = TypeVar("TState_co", covariant=True)
+    TState = TypeVar("TState")
+
+    # Enhanced core type variables
+    E = TypeVar("E")
+    F = TypeVar("F")
+    K = TypeVar("K")
+    R = TypeVar("R")
+
+    # Enhanced async and concurrent type variables
+    TAsync = TypeVar("TAsync")
+    TAsync_co = TypeVar("TAsync_co", covariant=True)
+    TAwaitable = TypeVar("TAwaitable")
+    TConcurrent = TypeVar("TConcurrent")
+    TParallel = TypeVar("TParallel")
+    TSync = TypeVar("TSync")
+
+    # Enhanced data processing type variables
+    TData = TypeVar("TData")
+    TData_co = TypeVar("TData_co", covariant=True)
+    TProcessor = TypeVar("TProcessor")
+    TPipeline = TypeVar("TPipeline")
+    TTransform = TypeVar("TTransform")
+    TTransform_co = TypeVar("TTransform_co", covariant=True)
+
+    # Enhanced error handling type variables
+    TError = TypeVar("TError")
+    TError_co = TypeVar("TError_co", covariant=True)
+    TException = TypeVar("TException")
+    TException_co = TypeVar("TException_co", covariant=True)
+
+    # Enhanced configuration type variables
+    TConfig = TypeVar("TConfig")
+    TConfig_co = TypeVar("TConfig_co", covariant=True)
+    TSettings = TypeVar("TSettings")
+    TSettings_co = TypeVar("TSettings_co", covariant=True)
+
+    # Enhanced service type variables
+    TService = TypeVar("TService")
+    TService_co = TypeVar("TService_co", covariant=True)
+    TClient = TypeVar("TClient")
+    TClient_co = TypeVar("TClient_co", covariant=True)
+
+    # Domain-specific type variables
+    Message = TypeVar("Message")
+    Command = TypeVar("Command")
+    Query = TypeVar("Query")
+    Event = TypeVar("Event")
+    ResultT = TypeVar("ResultT")
+    TCommand = TypeVar("TCommand")
+    TEvent = TypeVar("TEvent")
+    TQuery = TypeVar("TQuery")
+
+    # Service and infrastructure type variables
+    U = TypeVar("U")
+    V = TypeVar("V")
+    T = TypeVar("T")
+    T_co = TypeVar("T_co", covariant=True)
+    TAccumulate = TypeVar("TAccumulate")
+    TAggregate = TypeVar("TAggregate")
+    TAggregate_co = TypeVar("TAggregate_co", covariant=True)
+    TCacheKey = TypeVar("TCacheKey")
+    TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
+    TCacheValue = TypeVar("TCacheValue")
+    TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
+    W = TypeVar("W")
+    TConfigKey = TypeVar("TConfigKey")
+    TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
+    TConfigValue = TypeVar("TConfigValue")
+    TConfigValue_co = TypeVar("TConfigValue_co", covariant=True)
+    TDomainEvent = TypeVar("TDomainEvent")
+    TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
+    TEntity = TypeVar("TEntity")
+    TEntity_co = TypeVar("TEntity_co", covariant=True)
+    TKey = TypeVar("TKey")
+    TKey_contra = TypeVar("TKey_contra", contravariant=True)
+    TMessage = TypeVar("TMessage")
+    TResource = TypeVar("TResource")
+    TResult_co = TypeVar("TResult_co", covariant=True)
+    TTimeout = TypeVar("TTimeout")
+    TValue = TypeVar("TValue")
+    TValue_co = TypeVar("TValue_co", covariant=True)
+    TValueObject_co = TypeVar("TValueObject_co", covariant=True)
+    UParallel = TypeVar("UParallel")
+    UResource = TypeVar("UResource")
+    TPlugin = TypeVar("TPlugin")
+    TPluginConfig = TypeVar("TPluginConfig")
 
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
@@ -376,11 +229,7 @@ class FlextTypes:
     FloatList = list[float]
     BoolList = list[bool]
 
-    # Type variable references for backward compatibility
-    T = T
-    U = U
-    V = V
-    W = W
+    # Type variable references moved to module level below
 
     # Collection types for backward compatibility
     OrderedDict = dict[str, object]  # Use dict for type annotation (modern Python 3.7+)
@@ -422,6 +271,7 @@ class FlextTypes:
 
     # Value types
     type Value = str | int | float | bool | object | None
+    type Success = str  # Generic success type without dependencies
 
     # Collection types with ordering (duplicate removed - use dict for type hints)
     # Note: Use FlextTypes.Dict for OrderedDict type annotations in modern Python
@@ -446,20 +296,17 @@ class FlextTypes:
             >>> data: FlextTypes.Core.Dict = {"key": "value"}
             >>> items: FlextTypes.Core.List = [1, 2, 3]
             >>> mapping: FlextTypes.Core.Mapping = {"a": 1, "b": 2}
-            >>> async_items: FlextTypes.Core.AsyncList = [
-            ...     await process(1),
-            ...     await process(2),
-            ... ]
+            >>> items_list: FlextTypes.Core.List = [1, 2, 3]
 
         Enhanced patterns:
-            >>> # Generic async operations
-            >>> async def process_async[T](data: T) -> TAsync_co[T]:
-            ...     return await async_operation(data)
+            >>> # Generic sync operations
+            >>> def process_data[T](data: T) -> T:
+            ...     return data
             >>>
             >>> # Enhanced error handling
             >>> def safe_operation[T](
             ...     data: T,
-            ... ) -> object:  # Type moved to break circular import
+            ... ) -> T:
             ...     return data
 
         """
@@ -565,7 +412,8 @@ class FlextTypes:
         ]
         type EventStream = list[FlextTypes.Domain.EventTyped]
 
-        # NOTE: EventHandler type alias moved to result.py to break circular import
+        # Event handler types
+        type EventHandler = Callable[[FlextTypes.Domain.EventTyped], None]
         type EventHandlerList = list[FlextTypes.Domain.EventHandler]
         type EventHandlerRegistry = dict[
             FlextTypes.Domain.EventType, FlextTypes.Domain.EventHandlerList
@@ -586,21 +434,21 @@ class FlextTypes:
         and concurrent data structures.
 
         Examples:
-            Async operations with proper typing:
+            Sync operations with proper typing:
 
-            >>> async def process_async(data: Async.AsyncDict) -> Async.AsyncResult:
+            >>> def process_data(data: dict) -> dict:
             ...     results = []
-            ...     async for key, value in data.items():
-            ...         result = await process_item(key, value)
+            ...     for key, value in data.items():
+            ...         result = process_item(key, value)
             ...         results.append(result)
             ...     return {"processed": len(results)}
 
             Concurrent processing:
 
-            >>> async def process_concurrent[T](
-            ...     items: Async.ConcurrentList[T],
-            ... ) -> Async.ConcurrentResult[T]:
-            ...     return await asyncio.gather(*[process(item) for item in items])
+            >>> def process_concurrent[T](
+            ...     items: list[T],
+            ... ) -> list[T]:
+            ...     return [process(item) for item in items]
 
         """
 
@@ -643,14 +491,14 @@ class FlextTypes:
 
             Error recovery patterns:
 
-            >>> async def recover_from_error[T](
-            ...     operation: Callable[[], Awaitable[T]],
-            ...     recovery: ErrorHandling.RecoveryStrategy[T],
-            ... ) -> ErrorHandling.RecoveryResult[T]:
+            >>> def recover_from_error[T](
+            ...     operation: Callable[[], T],
+            ...     recovery: Callable[[Exception], T],
+            ... ) -> T:
             ...     try:
-            ...         return await operation()
+            ...         return operation()
             ...     except Exception as e:
-            ...         return await recovery(e)
+            ...         return recovery(e)
 
         """
 
@@ -660,13 +508,15 @@ class FlextTypes:
         ]
         type ErrorSeverity = Literal["low", "medium", "high", "critical"]
 
-        type RecoveryStrategy[T] = Callable[[ErrorType], Awaitable[T]]
-        type RecoveryResult[T] = T | ErrorType
-        type ErrorHandler[T] = Callable[[ErrorType], RecoveryResult[T]]
-
         type ErrorContext = FlextTypes.Dict
-        type ErrorReport = dict[str, ErrorType | ErrorContext | str]
-        type ErrorChain = list[ErrorType]
+        type ErrorReport = dict[str, Exception | BaseException | ErrorContext | str]
+        type ErrorChain = list[Exception | BaseException]
+
+        type RecoveryStrategy[T] = Callable[[Exception | BaseException], Awaitable[T]]
+        type RecoveryResult[T] = T | Exception | BaseException
+        type ErrorHandler[T] = Callable[
+            [Exception | BaseException], T | Exception | BaseException
+        ]
 
     # =========================================================================
     # SERVICE TYPES - Service layer patterns (Enhanced)
@@ -744,6 +594,12 @@ class FlextTypes:
             ],
             str,
         ]
+
+        # Core-specific type aliases
+        type ConfigData = dict[str, FlextTypes.ConfigValue]
+        type ModuleConfig = dict[str, FlextTypes.Config.ConfigData]
+        type ServiceRegistry = dict[str, object]
+        type ComponentMap = dict[str, type | object]
 
     # =========================================================================
     # VALIDATION TYPES - Validation patterns (ENHANCED for complex scenarios)
@@ -991,6 +847,17 @@ class FlextTypes:
 
         type RateLimiterRegistry = dict[str, FlextTypes.Reliability.RateLimiterState]
 
+        class DispatcherRateLimiterState(TypedDict):
+            """Rate limiter state for FlextDispatcher sliding window implementation.
+
+            Used by FlextDispatcher for tracking rate limiting state with
+            count-based sliding window algorithm.
+            """
+
+            count: int
+            window_start: float
+            block_until: float
+
         # Performance metrics
         type PerformanceMetrics = dict[str, dict[str, int | float]]
 
@@ -1029,152 +896,7 @@ class FlextTypes:
         type HookList = list[FlextTypes.Context.HookFunc]
         type HookRegistry = dict[str, FlextTypes.Context.HookList]
 
-        # Note: Type variables are assigned at module level below
-
-
-# Assign type variables to FlextTypes class for backward compatibility and ecosystem access
-FlextTypes.T = T
-FlextTypes.U = U
-FlextTypes.V = V
-FlextTypes.W = W
-FlextTypes.OrderedDict = dict[
-    str, object
-]  # Use dict for type annotation (modern Python 3.7+)
-
-# Assign enhanced type variables for ecosystem access
-FlextTypes.TAsync = TAsync
-FlextTypes.TAsync_co = TAsync_co
-FlextTypes.TAwaitable = TAwaitable
-FlextTypes.TConcurrent = TConcurrent
-FlextTypes.TParallel = TParallel
-FlextTypes.TSync = TSync
-
-FlextTypes.TData = TData
-FlextTypes.TData_co = TData_co
-FlextTypes.TProcessor = TProcessor
-FlextTypes.TPipeline = TPipeline
-FlextTypes.TTransform = TTransform
-FlextTypes.TTransform_co = TTransform_co
-
-FlextTypes.TError = TError
-FlextTypes.TError_co = TError_co
-FlextTypes.TException = TException
-FlextTypes.TException_co = TException_co
-
-FlextTypes.TConfig = TConfig
-FlextTypes.TConfig_co = TConfig_co
-FlextTypes.TSettings = TSettings
-FlextTypes.TSettings_co = TSettings_co
-
-FlextTypes.TService = TService
-FlextTypes.TService_co = TService_co
-FlextTypes.TClient = TClient
-FlextTypes.TClient_co = TClient_co
-
 
 __all__: list[str] = [
-    # Core type variables
-    "T1",
-    "T2",
-    "T3",
-    # Domain-specific type variables
-    "Command",
-    "E",
-    "Event",
-    "F",
-    # Main namespace
     "FlextTypes",
-    "K",
-    "Message",
-    "MessageT",
-    "MessageT_contra",
-    "P",
-    "Query",
-    "R",
-    "ResultT",
-    "T",
-    # Covariant type variables
-    "T1_co",
-    "T2_co",
-    "T3_co",
-    # Enhanced type variables
-    "TAccumulate",
-    "TAggregate",
-    "TAggregate_co",
-    # Enhanced async and concurrent type variables
-    "TAsync",
-    "TAsync_co",
-    "TAwaitable",
-    "TCacheKey",
-    "TCacheKey_contra",
-    "TCacheValue",
-    "TCacheValue_co",
-    "TClient",
-    "TClient_co",
-    "TCommand",
-    "TCommand_contra",
-    "TConcurrent",
-    # Enhanced configuration type variables
-    "TConfig",
-    "TConfigKey",
-    "TConfigKey_contra",
-    "TConfigValue",
-    "TConfigValue_co",
-    "TConfig_co",
-    # Enhanced data processing type variables
-    "TData",
-    "TData_co",
-    "TDomainEvent",
-    "TDomainEvent_co",
-    "TEntity",
-    "TEntity_co",
-    # Enhanced error handling type variables
-    "TError",
-    "TError_co",
-    "TEvent",
-    "TEvent_contra",
-    "TException",
-    "TException_co",
-    "TInput_contra",
-    "TItem",
-    "TItem_contra",
-    "TKey",
-    "TKey_contra",
-    "TMessage",
-    "TParallel",
-    "TPipeline",
-    "TPlugin",
-    "TPluginConfig",
-    "TProcessor",
-    "TQuery",
-    "TQuery_contra",
-    "TResource",
-    "TResult",
-    "TResult_co",
-    "TResult_contra",
-    # Enhanced service type variables
-    "TService",
-    "TService",
-    "TService_co",
-    "TSettings",
-    "TSettings_co",
-    "TState",
-    "TState_co",
-    "TSync",
-    "TTimeout",
-    "TTransform",
-    "TTransform_co",
-    "TUtil",
-    "TUtil_contra",
-    "TValue",
-    "TValueObject_co",
-    "TValue_co",
-    "T_co",
-    # Contravariant type variables
-    "T_contra",
-    "U",
-    "UParallel",
-    "UResource",
-    "V",
-    "W",
 ]
