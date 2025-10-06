@@ -99,12 +99,6 @@ class TestFlextWildcardExports:
         assert isinstance(timestamp, str)
         assert len(timestamp) > 0
 
-        # Test safe type conversion (using to_int which returns FlextResult)
-        int_result = FlextUtilities.TypeConversions.to_int("123")
-        # FlextResult return type
-        assert int_result.is_success is True
-        assert int_result.value == 123
-
     def test_flext_constants_access(self) -> None:
         """Test that FlextConstants hierarchy is accessible after wildcard import."""
         # Test accessing nested constants

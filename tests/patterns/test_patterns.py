@@ -22,8 +22,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes
-
-FlextTypes.T
+from flext_core.typings import T
 
 
 def mark_test_pattern(

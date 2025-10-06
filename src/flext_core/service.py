@@ -387,26 +387,50 @@ class FlextService[TDomainResult](
         # Parse timeout
         timeout_seconds = self._parse_timeout(operation)
 
-        # Execute operation directly (simplified from complex retry logic)
+        # Check if retry configuration is provided
+        retry_config_result = self._parse_retry_configuration(operation, operation_name)
+        if retry_config_result.is_failure:
+            return cast("FlextResult[TDomainResult]", retry_config_result)
+
+        retry_config = retry_config_result.unwrap()
+
+        # Use retry logic if retry config is provided, otherwise simple execution
+        if retry_config is not None:
+            retry_params = self._extract_retry_parameters(retry_config)
+            return self._execute_with_retry_and_timeout(
+                operation,
+                operation_name,
+                positional_arguments,
+                keyword_arguments,
+                timeout_seconds,
+                retry_params,
+            )
+
+        # Execute operation directly (no retry logic)
         def call_operation() -> FlextResult[TDomainResult]:
-            # operation_callable is already validated as Callable[..., object] in the model
-            operation_callable = cast(
-                "FlextProtocols.Foundation.OperationCallable",
-                operation.operation_callable,
-            )
-            result: object = operation_callable(
-                *positional_arguments,
-                **keyword_arguments,
-            )
-            # Convert the result to FlextResult if it's not already
-            if isinstance(result, FlextResult):
-                # Cast to FlextResult[TDomainResult] to ensure type compatibility
-                typed_result: FlextResult[TDomainResult] = cast(
-                    "FlextResult[TDomainResult]",
-                    result,
+            try:
+                # operation_callable is already validated as Callable[..., object] in the model
+                operation_callable = cast(
+                    "FlextProtocols.Foundation.OperationCallable",
+                    operation.operation_callable,
                 )
-                return typed_result
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+                result: object = operation_callable(
+                    *positional_arguments,
+                    **keyword_arguments,
+                )
+                # Convert the result to FlextResult if it's not already
+                if isinstance(result, FlextResult):
+                    # Cast to FlextResult[TDomainResult] to ensure type compatibility
+                    typed_result: FlextResult[TDomainResult] = cast(
+                        "FlextResult[TDomainResult]",
+                        result,
+                    )
+                    return typed_result
+                return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+            except Exception as e:
+                # Catch all exceptions and wrap in FlextResult.fail() (Railway pattern)
+                error_msg = f"Operation '{operation_name}' failed: {e}"
+                return FlextResult[TDomainResult].fail(error_msg)
 
         if timeout_seconds <= 0:
             return call_operation()
@@ -474,7 +498,7 @@ class FlextService[TDomainResult](
         try:
             with timeout_context(timeout_seconds):
                 return self.execute()
-        except TimeoutError as e:
+        except (TimeoutError, FlextExceptions.TimeoutError) as e:
             return FlextResult[TDomainResult].fail(str(e))
 
     def execute_conditionally(

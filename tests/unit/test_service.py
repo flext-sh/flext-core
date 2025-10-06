@@ -600,7 +600,7 @@ class TestDomainServicesFixed:
         assert result.is_failure
         assert (
             result.error is not None
-            and "Validation failed (pre-execution)" in result.error
+            and "failed validation (pre-execution)" in result.error
         )
 
     def test_service_model_config(self) -> None:

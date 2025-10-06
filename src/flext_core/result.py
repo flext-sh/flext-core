@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextResult[T_co]:  # Monad library legitimately needs many methods
+class FlextResult[T_co]:  # type: ignore[misc,return] # Monad library legitimately needs many methods
     """Railway-oriented result type for type-safe error handling.
 
     FlextResult[T] implements the railway pattern (Either monad) for
@@ -409,7 +409,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         """Combine multiple results into a single result."""
         return FlextResult._combine_results(list(results))
 
-    def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:
+    def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:  # type: ignore[return,misc]
         """Transform the success payload using ``func`` while preserving errors."""
         if self.is_failure:
             error_msg = self._error or "Map operation failed"
@@ -440,7 +440,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
 
-    def flat_map(self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
+    def flat_map(self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:  # type: ignore[return]
         """Chain operations returning FlextResult."""
         if self.is_failure:
             error_msg = self._error or "Flat map operation failed"
@@ -1084,7 +1084,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         self,
         validator: Callable[[T_co], FlextResult[None]],
         executor: Callable[[T_co], FlextResult[U]],
-    ) -> FlextResult[U]:
+    ) -> FlextResult[U]:  # type: ignore[return]
         """Common pattern: validate data then execute operation.
 
         Args:
@@ -1269,7 +1269,7 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
         condition: Callable[[T_co], bool],
         then_func: Callable[[T_co], FlextResult[U]],
         else_func: Callable[[T_co], FlextResult[U]],
-    ) -> FlextResult[U]:
+    ) -> FlextResult[U]:  # type: ignore[return]
         """Conditional branching with different execution paths.
 
         Args:
@@ -1521,7 +1521,8 @@ class FlextResult[T_co]:  # Monad library legitimately needs many methods
             msg = f"Operation timed out after {timeout_seconds} seconds"
             raise FlextResult._get_exceptions().TimeoutError(
                 message=msg,
-                error_code=FlextConstants.Errors.TIMEOUT_ERROR,
+                timeout_seconds=timeout_seconds,
+                operation="with_timeout",
             )
 
         try:

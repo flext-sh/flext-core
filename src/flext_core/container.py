@@ -24,14 +24,16 @@ import threading
 from collections.abc import Callable
 from typing import Self, cast, override
 
-from dependency_injector import containers, providers
-
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T
+
+containers = FlextRuntime.dependency_containers()
+providers = FlextRuntime.dependency_providers()
 
 
 class FlextContainer(FlextProtocols.Infrastructure.Configurable):
@@ -162,8 +164,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     _global_lock: threading.Lock = threading.Lock()
 
     def __new__(cls) -> Self:
-        """Create or return the global singleton instance."""
-        return cast("Self", cls.get_global())
+        """Create or return the global singleton instance using double-checked locking."""
+        if cls._global_instance is None:
+            with cls._global_lock:
+                if cls._global_instance is None:
+                    # Create instance directly without recursion
+                    instance = super().__new__(cls)
+                    cls._global_instance = instance
+        return cast("Self", cls._global_instance)
 
     def __init__(self) -> None:
         """Initialize container with optimized data structures and internal DI.
