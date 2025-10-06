@@ -1,12 +1,15 @@
 # FLEXT-Core Documentation
 
-**Professional Documentation | Status: Production Ready | Version: 0.9.9 | Last Updated: 2025-10-05**
+Professional Documentation · Status: Production Ready · Version: 0.9.9
+Last Updated: 2025-10-05
 
-This comprehensive documentation covers FLEXT-Core, the foundation library for the FLEXT ecosystem. It provides railway-oriented programming, dependency injection, domain-driven design patterns, and comprehensive type safety with Python 3.13+.
+This comprehensive documentation covers FLEXT-Core, the foundation library for the
+FLEXT ecosystem. It provides railway-oriented programming, dependency injection,
+domain-driven design patterns, and comprehensive type safety with Python 3.13+.
 
 ## Documentation Structure
 
-```
+```text
 docs/
 ├── README.md                 # This file - documentation overview
 ├── api-reference/           # Complete API reference
@@ -52,10 +55,8 @@ make setup
 python -c "from flext_core import FlextResult; print('✅ FLEXT-Core v0.9.9 ready')"
 ```
 
-### Basic Usage
-
 ```python
-from flext_core import FlextResult, FlextContainer, FlextLogger
+from flext_core import FlextResult, FlextContainer, FlextLogger, FlextModels
 
 # Railway-oriented error handling
 result = FlextResult[str].ok("Success!")
@@ -64,7 +65,8 @@ if result.is_success:
 
 # Dependency injection
 container = FlextContainer.get_global()
-container.register("logger", FlextLogger(__name__))
+container.register("logger", FlextLogger(**name**))
+
 
 # Domain modeling with DDD patterns
 class User(FlextModels.Entity):
@@ -106,6 +108,10 @@ db = container.get("database")
 Entity, Value Object, and Aggregate Root patterns:
 
 ```python
+from typing import List
+from decimal import Decimal
+from flext_core import FlextModels
+
 class Order(FlextModels.Entity):
     customer_id: str
     items: List[OrderItem]
@@ -116,9 +122,6 @@ class Order(FlextModels.Entity):
         pass
 ```
 
-## Quality Standards
-
-- **Zero Ruff Violations**: Code quality enforced
 - **Zero MyPy Errors**: Type safety guaranteed
 - **75%+ Test Coverage**: Comprehensive testing
 - **Python 3.13+**: Modern Python features
@@ -126,14 +129,20 @@ class Order(FlextModels.Entity):
 
 ## Getting Help
 
-- **[API Reference](./api-reference/)**: Complete API documentation
-- **[GitHub Issues](https://github.com/flext-sh/flext-core/issues)**: Report bugs or request features
-- **[GitHub Discussions](https://github.com/flext-sh/flext-core/discussions)**: Ask questions and share ideas
+- **[API Reference](./api-reference/)**:
+    Complete API documentation
+- **[GitHub Issues](https://github.com/flext-sh/flext-core/issues)**:
+    Report bugs or request features
+- **[GitHub Discussions](https://github.com/flext-sh/flext-core/discussions)**:
+    Ask questions and share ideas
 
 ## Contributing
 
-See [Contributing Guide](./development/contributing.md) for development guidelines and workflow.
+See [Contributing Guide](./development/contributing.md) for development guidelines
+and workflow.
 
 ---
 
-**FLEXT-Core v0.9.9** - Production-ready foundation for enterprise Python applications with railway-oriented programming, dependency injection, and domain-driven design patterns.
+**FLEXT-Core v0.9.9** - Production-ready foundation for enterprise Python applications
+with railway-oriented programming, dependency injection, and domain-driven design
+patterns.

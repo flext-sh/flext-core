@@ -25,7 +25,7 @@ import time
 import warnings
 from uuid import uuid4
 
-from flext_core import Flext
+from flext_core import Flext, FlextLogger
 
 
 class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
@@ -34,7 +34,7 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        self._logger = Flext.Logger(__name__)
+        self._logger = FlextLogger(__name__)
         self._config = Flext.Config()
 
     def execute(self) -> Flext.Result[Flext.Types.StringDict]:
@@ -228,25 +228,7 @@ class ContextManagementService(Flext.Service[Flext.Types.StringDict]):
         print(f"  user_id: {user_id}")
         print(f"  request_id: {request_id}")
 
-        # Get single header
-        user_id = Flext.Context.Request.get_user_id() or "Not set"
-        print(f"\nUser ID: {user_id}")
-
-        # Get query parameters
-        request_id = Flext.Context.Request.get_request_id() or "Not set"
-        print(f"\nRequest ID: {request_id}")
-
-        # Get body
-        user_id = Flext.Context.Request.get_user_id() or "Not set"
-        print(f"User ID: {user_id}")
-
-        # Get request ID
-        request_id = Flext.Context.Request.get_request_id() or "Not set"
-        print(f"\nRequest ID: {request_id}")
-
-        # Get user info
-        user_id = Flext.Context.Request.get_user_id() or "Not set"
-        print(f"User info: {user_id}")
+        # Context data already demonstrated above
 
         # Clear request context
         Flext.Context.Variables.Request.USER_ID.set(None)

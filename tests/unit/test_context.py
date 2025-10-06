@@ -101,7 +101,7 @@ class TestFlextContext:
         """Test context with nested data structures."""
         context = FlextContext()
 
-        nested_data = {
+        nested_data: FlextTypes.Dict = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -182,13 +182,15 @@ class TestFlextContext:
     def test_context_thread_safety(self) -> None:
         """Test context thread safety."""
         context = FlextContext()
-        results = []
+        results: list[str] = []
 
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")
-            results.append(context.get(f"thread_{thread_id}"))
+            result = context.get(f"thread_{thread_id}")
+            if result is not None:
+                results.append(str(result))
 
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(10):
             thread = threading.Thread(target=set_value, args=(i,))
             threads.append(thread)
@@ -319,11 +321,16 @@ class TestFlextContext:
         context.remove("key1")
 
         stats = context.get_statistics()
-        if isinstance(stats, dict) and "operations" in stats:
-            operations = cast("FlextTypes.Dict", stats["operations"])
-            assert cast("int", operations["set"]) >= 2
-            assert cast("int", operations["get"]) >= 2
-            assert cast("int", operations["remove"]) >= 1
+        if "operations" in stats:
+            operations = stats["operations"]
+            if isinstance(operations, dict):
+                # Use cast to handle dynamic typing from context statistics
+                set_count = cast("int", operations.get("set", 0))
+                get_count = cast("int", operations.get("get", 0))
+                remove_count = cast("int", operations.get("remove", 0))
+                assert set_count >= 2
+                assert get_count >= 2
+                assert remove_count >= 1
 
     def test_context_cleanup(self) -> None:
         """Test context cleanup."""

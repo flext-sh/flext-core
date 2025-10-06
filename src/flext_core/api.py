@@ -17,8 +17,6 @@ from contextlib import contextmanager
 from typing import cast
 from uuid import uuid4
 
-from pydantic import ConfigDict
-
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -107,24 +105,6 @@ class Flext:
     - Zero duplication: Direct access to components
     - Ecosystem foundation: Sets standards for all projects
     """
-
-    model_config = ConfigDict(
-        validate_assignment=True,
-        validate_return=True,
-        validate_default=True,
-        use_enum_values=True,
-        arbitrary_types_allowed=True,
-        ser_json_timedelta="iso8601",
-        ser_json_bytes="base64",
-        serialize_by_alias=True,
-        populate_by_name=True,
-        str_strip_whitespace=True,
-        str_to_lower=False,
-        str_to_upper=False,
-        defer_build=False,
-        coerce_numbers_to_str=False,
-        ignored_types=(type,),
-    )
 
     # =================================================================
     # CLASS-LEVEL TYPE ALIASES (PEP 695 - Python 3.12+)
@@ -227,30 +207,16 @@ class Flext:
         return FlextResult[T].ok(value)
 
     @classmethod
-    def create_result_fail[T](
+    def create_result_fail(
         cls, error: str, error_code: str | None = None
-    ) -> FlextResult[T]:
+    ) -> FlextResult[object]:
         """Create a failed result."""
-        return FlextResult[T].fail(error, error_code=error_code)
+        return FlextResult[object].fail(error, error_code=error_code)
 
     @classmethod
     def create_logger(cls, name: str) -> FlextLogger:
         """Create a new logger instance."""
         return FlextLogger(name)
-
-    @classmethod
-    def build_pipeline[T](
-        cls, *steps: Callable[[T], FlextResult[T]]
-    ) -> Callable[[T], FlextResult[T]]:
-        """Build a pipeline from a series of steps."""
-
-        def pipeline(initial_value: T) -> FlextResult[T]:
-            result = FlextResult[T].ok(initial_value)
-            for step in steps:
-                result = result.flat_map(step)
-            return result
-
-        return pipeline
 
     def __init__(self, config: FlextConfig | None = None) -> None:
         """Initialize the unified core facade.
@@ -260,6 +226,7 @@ class Flext:
                     uses FlextConfig() direct instantiation.
 
         """
+        super().__init__()
         self._config = config or FlextConfig()
 
         # Lazy-loaded components (initialized on first access)
@@ -413,7 +380,7 @@ class Flext:
             )
 
             # Return all components
-            infrastructure = {
+            infrastructure: FlextTypes.Dict = {
                 "config": service_config,
                 "container": container,
                 "logger": logger,
@@ -421,9 +388,7 @@ class Flext:
                 "context": context,
             }
 
-            return FlextResult[FlextTypes.Dict].ok(
-                cast("FlextTypes.Dict", infrastructure)
-            )
+            return FlextResult[FlextTypes.Dict].ok(infrastructure)
 
         except Exception as e:
             error_msg = f"Service infrastructure setup failed for {service_name}: {e}"
@@ -486,71 +451,6 @@ class Flext:
             error_msg = f"Event publishing failed: {e}"
             self.logger.exception(error_msg, extra={"event_type": event_type})
             return FlextResult[None].fail(error_msg)
-
-    @classmethod
-    def create_service(
-        cls,
-        service_class: type[FlextService[object]],
-        service_name: str,
-        config: FlextConfig | None = None,
-        **kwargs: object,
-    ) -> FlextResult[FlextService[object]]:
-        """Create service with automatic infrastructure setup.
-
-        This convenience method combines infrastructure setup with service
-        instantiation, reducing boilerplate for common service creation patterns.
-
-        Args:
-            service_class: Service class to instantiate (must extend FlextService).
-            service_name: Name for the service (used in logging and registration).
-            config: Optional configuration instance.
-            **kwargs: Additional keyword arguments passed to service constructor.
-
-        Returns:
-            FlextResult containing initialized service or error.
-
-        Example:
-            >>> class MyService(Flext.Service):
-            ...     def execute(self) -> FlextResult[str]:
-            ...         return Flext.Result[str].ok("executed")
-            >>>
-            >>> result = Flext.create_service(MyService, "my-service")
-            >>> if result.is_success:
-            ...     service = result.unwrap()
-            ...     service.execute()
-
-        """
-        try:
-            # Setup infrastructure
-            infra_result = cls.setup_service_infrastructure(service_name, config=config)
-            if infra_result.is_failure:
-                return FlextResult[FlextService[object]].fail(
-                    f"Infrastructure setup failed: {infra_result.error}"
-                )
-
-            infra = infra_result.unwrap()
-
-            # Instantiate service with provided kwargs
-            service = service_class(**kwargs)
-
-            # Inject infrastructure components if service has expected attributes
-            # Using setattr to avoid private member access warnings
-            if hasattr(service, "_container"):
-                setattr(service, "_container", infra["container"])
-            if hasattr(service, "_logger"):
-                setattr(service, "_logger", infra["logger"])
-            if hasattr(service, "_config"):
-                setattr(service, "_config", infra["config"])
-            if hasattr(service, "_bus"):
-                setattr(service, "_bus", infra["bus"])
-            if hasattr(service, "_context"):
-                setattr(service, "_context", infra["context"])
-
-            return FlextResult[FlextService[object]].ok(service)
-
-        except Exception as e:
-            error_msg = f"Service creation failed: {e}"
-            return FlextResult[FlextService[object]].fail(error_msg)
 
     @staticmethod
     def build_pipeline_operations(
@@ -701,7 +601,7 @@ class Flext:
 
             # Return handler configuration (not instantiated handler)
             # Actual handler instance should extend FlextHandlers and implement handle()
-            handler_config = {
+            handler_config: FlextTypes.Dict = {
                 "config": config,
                 "handler_func": handler_func,
                 "command_type": command_type,
@@ -745,7 +645,7 @@ class Flext:
 
             # Return handler configuration (not instantiated handler)
             # Actual handler instance should extend FlextHandlers and implement handle()
-            handler_config = {
+            handler_config: FlextTypes.Dict = {
                 "config": config,
                 "handler_func": handler_func,
                 "query_type": query_type,

@@ -15,7 +15,6 @@ from dataclasses import dataclass, field
 from typing import (
     Literal,
     cast,
-    override,
 )
 
 from flext_core.constants import FlextConstants
@@ -168,8 +167,7 @@ class FlextRegistry:
             """Number of failed registrations."""
             return len(self.errors)
 
-    @override
-    def __init__(self, dispatcher: FlextDispatcher) -> None:  # type: ignore[override]
+    def __init__(self, dispatcher: FlextDispatcher) -> None:
         """Initialize the registry with a FlextDispatcher instance."""
         # No super() call needed as this class doesn't inherit from anything
         self._dispatcher = dispatcher

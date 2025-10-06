@@ -80,6 +80,7 @@ class FlextExceptions:
             error_code: str | None = None,
             correlation_id: str | None = None,
             metadata: FlextTypes.Dict | None = None,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize base error with structured information.
 
@@ -88,7 +89,7 @@ class FlextExceptions:
                 error_code: Optional error code for categorization
                 correlation_id: Optional correlation ID for tracking
                 metadata: Optional additional metadata
-            : Additional keyword arguments
+                **extra_kwargs: Additional keyword arguments stored in metadata
 
             """
             super().__init__(message)
@@ -96,6 +97,7 @@ class FlextExceptions:
             self.error_code = error_code
             self.correlation_id = correlation_id
             self.metadata = metadata or {}
+            self.metadata.update(extra_kwargs)
             self.timestamp = time.time()
 
         def __str__(self) -> str:
@@ -128,6 +130,9 @@ class FlextExceptions:
             *,
             field: str | None = None,
             value: object | None = None,
+            error_code: str | None = None,
+            correlation_id: str | None = None,
+            metadata: FlextTypes.Dict | None = None,
         ) -> None:
             """Initialize validation error.
 
@@ -135,12 +140,16 @@ class FlextExceptions:
                 message: Validation error message
                 field: Optional field name that failed validation
                 value: Optional invalid value
-            : Additional metadata
+                error_code: Optional error code override
+                correlation_id: Optional correlation ID
+                metadata: Optional metadata dictionary
 
             """
             super().__init__(
                 message,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                error_code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
+                correlation_id=correlation_id,
+                metadata=metadata,
             )
             self.field = field
             self.value = value
@@ -466,6 +475,10 @@ class FlextExceptions:
             *,
             expected_type: str | None = None,
             actual_type: str | None = None,
+            error_code: str | None = None,
+            correlation_id: str | None = None,
+            metadata: FlextTypes.Dict | None = None,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize type error.
 
@@ -473,14 +486,18 @@ class FlextExceptions:
                 message: Type error message
                 expected_type: Optional expected type name
                 actual_type: Optional actual type name
-            : Additional metadata
+                error_code: Optional error code override
+                correlation_id: Optional correlation ID
+                metadata: Optional metadata dictionary
+                **extra_kwargs: Additional keyword arguments stored in metadata
 
             """
             super().__init__(
                 message,
-                error_code=FlextConstants.Errors.TYPE_ERROR,
-                expected_type=expected_type,
-                actual_type=actual_type,
+                error_code=error_code or FlextConstants.Errors.TYPE_ERROR,
+                correlation_id=correlation_id,
+                metadata=metadata,
+                **extra_kwargs,
             )
             self.expected_type = expected_type
             self.actual_type = actual_type
@@ -517,49 +534,51 @@ class FlextExceptions:
             self.operation = operation
             self.reason = reason
 
+    # =========================================================================
+    # UTILITY METHODS - Convenience functions for error creation
+    # =========================================================================
 
-# Module-level convenience functions for backward compatibility
-def create_error(
-    error_type: str,
-    message: str,
-) -> FlextExceptions.BaseError:
-    """Create an error instance by type name.
+    @staticmethod
+    def create_error(
+        error_type: str,
+        message: str,
+    ) -> BaseError:
+        """Create an error instance by type name.
 
-    Args:
-        error_type: Name of the error class (e.g., 'ValidationError')
-        message: Error message
+        Args:
+            error_type: Name of the error class (e.g., 'ValidationError')
+            message: Error message
 
-    Returns:
-        Error instance
+        Returns:
+            Error instance
 
-    Raises:
-        ValueError: If error type is not recognized
+        Raises:
+            ValueError: If error type is not recognized
 
-    """
-    error_classes = {
-        "ValidationError": FlextExceptions.ValidationError,
-        "ConfigurationError": FlextExceptions.ConfigurationError,
-        "ConnectionError": FlextExceptions.ConnectionError,
-        "TimeoutError": FlextExceptions.TimeoutError,
-        "AuthenticationError": FlextExceptions.AuthenticationError,
-        "AuthorizationError": FlextExceptions.AuthorizationError,
-        "NotFoundError": FlextExceptions.NotFoundError,
-        "ConflictError": FlextExceptions.ConflictError,
-        "RateLimitError": FlextExceptions.RateLimitError,
-        "CircuitBreakerError": FlextExceptions.CircuitBreakerError,
-        "TypeError": FlextExceptions.TypeError,
-        "OperationError": FlextExceptions.OperationError,
-    }
+        """
+        error_classes = {
+            "ValidationError": FlextExceptions.ValidationError,
+            "ConfigurationError": FlextExceptions.ConfigurationError,
+            "ConnectionError": FlextExceptions.ConnectionError,
+            "TimeoutError": FlextExceptions.TimeoutError,
+            "AuthenticationError": FlextExceptions.AuthenticationError,
+            "AuthorizationError": FlextExceptions.AuthorizationError,
+            "NotFoundError": FlextExceptions.NotFoundError,
+            "ConflictError": FlextExceptions.ConflictError,
+            "RateLimitError": FlextExceptions.RateLimitError,
+            "CircuitBreakerError": FlextExceptions.CircuitBreakerError,
+            "TypeError": FlextExceptions.TypeError,
+            "OperationError": FlextExceptions.OperationError,
+        }
 
-    error_class = error_classes.get(error_type)
-    if not error_class:
-        msg = f"Unknown error type: {error_type}"
-        raise ValueError(msg)
+        error_class = error_classes.get(error_type)
+        if not error_class:
+            msg = f"Unknown error type: {error_type}"
+            raise ValueError(msg)
 
-    return error_class(message)
+        return error_class(message)
 
 
 __all__ = [
     "FlextExceptions",
-    "create_error",
 ]

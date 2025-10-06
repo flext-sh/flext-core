@@ -20,13 +20,7 @@ from pathlib import Path
 from typing import ClassVar, Self, cast
 
 from dependency_injector import providers
-from pydantic import (
-    Field,
-    SecretStr,
-    computed_field,
-    field_validator,
-    model_validator,
-)
+from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
@@ -279,7 +273,7 @@ class FlextConfig(
 
                 # Try dict access
                 if isinstance(handler_config, dict):
-                    config_mode_dict = handler_config.get("handler_type")  # type: ignore[arg-type]
+                    config_mode_dict = handler_config.get("handler_type")
                     if isinstance(config_mode_dict, str) and config_mode_dict in {
                         "command",
                         "query",
@@ -858,7 +852,7 @@ class FlextConfig(
             # Import models module and update its config
             # NOTE: This access to private _config is necessary for the current
             # architecture where models use global config for field defaults.
-            import flext_core.models as models_module  # noqa: F401
+            pass
 
             # Configuration is handled through dependency injection
 
@@ -873,20 +867,13 @@ class FlextConfig(
     # Singleton pattern implementation - per-class singletons
     _instance_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    def __new__(cls) -> Self:
-        """Implement singleton pattern with proper subclass support.
+    def __new__(cls, *args: object, **kwargs: object) -> Self:
+        """Create new FlextConfig instance.
 
-        Each class (FlextConfig, FlextApiConfig, etc.) gets its own singleton instance.
-        This allows proper inheritance where subclasses maintain their own state.
+        Normal Pydantic instantiation - each call creates a new instance.
+        Use get_global_instance() for singleton behavior.
         """
-        if cls not in cls._instances:
-            with cls._instance_lock:
-                if cls not in cls._instances:
-                    instance = super().__new__(cls)
-                    cls._instances[cls] = instance
-                    # Update models module config when global instance is created
-                    cls._update_models_config(instance)
-        return cast("Self", cls._instances[cls])
+        return super().__new__(cls, *args, **kwargs)
 
     @classmethod
     def get_global_instance(cls) -> Self:
@@ -901,7 +888,14 @@ class FlextConfig(
             >>> assert config is config2  # Same instance
 
         """
-        return cls()
+        if cls not in cls._instances:
+            with cls._instance_lock:
+                if cls not in cls._instances:
+                    instance = cls()
+                    cls._instances[cls] = instance
+                    # Update models module config when global instance is created
+                    cls._update_models_config(instance)
+        return cast("Self", cls._instances[cls])
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
@@ -915,6 +909,16 @@ class FlextConfig(
             cls._instances[cls] = instance
             # Update models module config when FlextConfig changes
             cls._update_models_config(instance)
+
+    @classmethod
+    def reset_global_instance(cls) -> None:
+        """Reset the global singleton instance for this class.
+
+        Removes the singleton instance, so the next call to get_global_instance()
+        will create a new instance.
+        """
+        with cls._instance_lock:
+            cls._instances.pop(cls, None)
 
     @classmethod
     def _get_or_create_di_provider(cls) -> providers.Configuration:
@@ -1085,7 +1089,8 @@ class FlextConfig(
             if path.suffix.lower() == ".json":
                 with path.open("r", encoding="utf-8") as f:
                     data = json.load(f)
-                config = cls(**data)
+                # Create instance using model_validate to bypass singleton __new__
+                config = cls.model_validate(data)
                 return FlextResult[FlextConfig].ok(config)
             return FlextResult[FlextConfig].fail(
                 f"Unsupported file format: {path.suffix}",

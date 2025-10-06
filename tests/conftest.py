@@ -34,7 +34,7 @@ def test_scenario() -> FlextTypes.Config.Environment:
     """Basic test scenario fixture.
 
     Returns:
-        FlextTypes.StringDict: Test scenario data with status and environment.
+        FlextTypes.Config.Environment: Test scenario data with status and environment.
 
     """
     return {"status": "test", "environment": "test"}
@@ -675,4 +675,4 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "core: Core framework tests")
     config.addinivalue_line("markers", "performance: Performance tests")
     config.addinivalue_line("markers", "slow: Slow-running tests")
-    config.addinivalue_line("markers", " tests")
+    config.addinivalue_line("markers", "smoke: Smoke tests")

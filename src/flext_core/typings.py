@@ -37,9 +37,9 @@ class FlextTypes:
 
     🚀 NAMESPACE CLASS PATTERN
     Single unified class with nested specialized namespaces AND centralized TypeVars:
-    - All 40+ TypeVars defined as class attributes for strict module organization
-    - Nested namespaces for specialized type groups (Core, Async, ErrorHandling, etc.)
-    - No loose TypeVar definitions outside the class
+    All 80+ TypeVars defined as class attributes for strict module organization
+    Nested namespaces for specialized type groups (Core, Async, ErrorHandling, etc.)
+    No loose TypeVar definitions outside the class
 
     **Function**: Type definitions for ecosystem-wide consistency
         - Core fundamental types (Dict, List, Headers) with Python 3.13+ patterns
@@ -96,24 +96,14 @@ class FlextTypes:
         FlextUtilities: For type validation and transformation utilities.
     """
 
-    # =========================================================================
-    # CENTRALIZED TYPE VARIABLES - All TypeVars for the entire FLEXT ecosystem
-    # =========================================================================
-
-    # Core generic type variables with Python 3.13+ enhancements
+    # Type Variables - All centralized in this class
     P = ParamSpec("P")
-
-    # Core TypeVars (enhanced for better ecosystem integration)
     T1 = TypeVar("T1")
     T2 = TypeVar("T2")
     T3 = TypeVar("T3")
-
-    # Enhanced covariant type variables (read-only with better naming)
     T1_co = TypeVar("T1_co", covariant=True)
     T2_co = TypeVar("T2_co", covariant=True)
     T3_co = TypeVar("T3_co", covariant=True)
-
-    # Enhanced contravariant type variables (write-only with better naming)
     TItem = TypeVar("TItem")
     TItem_contra = TypeVar("TItem_contra", contravariant=True)
     TResult = TypeVar("TResult")
@@ -121,8 +111,6 @@ class FlextTypes:
     TUtil = TypeVar("TUtil")
     TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
     T_contra = TypeVar("T_contra", contravariant=True)
-
-    # Enhanced message and CQRS type variables
     MessageT = TypeVar("MessageT")
     MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
     TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
@@ -131,48 +119,34 @@ class FlextTypes:
     TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
     TState_co = TypeVar("TState_co", covariant=True)
     TState = TypeVar("TState")
-
-    # Enhanced core type variables
     E = TypeVar("E")
     F = TypeVar("F")
     K = TypeVar("K")
     R = TypeVar("R")
-
-    # Enhanced async and concurrent type variables
     TAsync = TypeVar("TAsync")
     TAsync_co = TypeVar("TAsync_co", covariant=True)
     TAwaitable = TypeVar("TAwaitable")
     TConcurrent = TypeVar("TConcurrent")
     TParallel = TypeVar("TParallel")
     TSync = TypeVar("TSync")
-
-    # Enhanced data processing type variables
     TData = TypeVar("TData")
     TData_co = TypeVar("TData_co", covariant=True)
     TProcessor = TypeVar("TProcessor")
     TPipeline = TypeVar("TPipeline")
     TTransform = TypeVar("TTransform")
     TTransform_co = TypeVar("TTransform_co", covariant=True)
-
-    # Enhanced error handling type variables
     TError = TypeVar("TError")
     TError_co = TypeVar("TError_co", covariant=True)
     TException = TypeVar("TException")
     TException_co = TypeVar("TException_co", covariant=True)
-
-    # Enhanced configuration type variables
     TConfig = TypeVar("TConfig")
     TConfig_co = TypeVar("TConfig_co", covariant=True)
     TSettings = TypeVar("TSettings")
     TSettings_co = TypeVar("TSettings_co", covariant=True)
-
-    # Enhanced service type variables
     TService = TypeVar("TService")
     TService_co = TypeVar("TService_co", covariant=True)
     TClient = TypeVar("TClient")
     TClient_co = TypeVar("TClient_co", covariant=True)
-
-    # Domain-specific type variables
     Message = TypeVar("Message")
     Command = TypeVar("Command")
     Query = TypeVar("Query")
@@ -181,8 +155,6 @@ class FlextTypes:
     TCommand = TypeVar("TCommand")
     TEvent = TypeVar("TEvent")
     TQuery = TypeVar("TQuery")
-
-    # Service and infrastructure type variables
     U = TypeVar("U")
     V = TypeVar("V")
     T = TypeVar("T")
@@ -217,14 +189,11 @@ class FlextTypes:
     TPlugin = TypeVar("TPlugin")
     TPluginConfig = TypeVar("TPluginConfig")
 
-    # =========================================================================
-    # CORE TYPES - Fundamental building blocks
-    # =========================================================================
-
     # Basic collection types - Direct access for backward compatibility
     Dict = dict[str, object]
     List = list[object]
     StringList = list[str]
+
     IntList = list[int]
     FloatList = list[float]
     BoolList = list[bool]
@@ -507,10 +476,8 @@ class FlextTypes:
             "validation", "network", "database", "auth", "system", "unknown"
         ]
         type ErrorSeverity = Literal["low", "medium", "high", "critical"]
-
-        type ErrorContext = FlextTypes.Dict
-        type ErrorReport = dict[str, Exception | BaseException | ErrorContext | str]
-        type ErrorChain = list[Exception | BaseException]
+        type ErrorReport = dict[str, Exception | str]
+        type ErrorChain = list[Exception]
 
         type RecoveryStrategy[T] = Callable[[Exception | BaseException], Awaitable[T]]
         type RecoveryResult[T] = T | Exception | BaseException
@@ -897,6 +864,192 @@ class FlextTypes:
         type HookRegistry = dict[str, FlextTypes.Context.HookList]
 
 
+# Module level exports for backward compatibility (temporary - to be removed)
+
+T1 = FlextTypes.T1
+T2 = FlextTypes.T2
+T3 = FlextTypes.T3
+Command = FlextTypes.Command
+E = FlextTypes.E
+Event = FlextTypes.Event
+F = FlextTypes.F
+K = FlextTypes.K
+Message = FlextTypes.Message
+MessageT = FlextTypes.MessageT
+MessageT_contra = FlextTypes.MessageT_contra
+Query = FlextTypes.Query
+R = FlextTypes.R
+ResultT = FlextTypes.ResultT
+T = FlextTypes.T
+T1_co = FlextTypes.T1_co
+T2_co = FlextTypes.T2_co
+T3_co = FlextTypes.T3_co
+TAccumulate = FlextTypes.TAccumulate
+TAggregate = FlextTypes.TAggregate
+TAggregate_co = FlextTypes.TAggregate_co
+TAsync = FlextTypes.TAsync
+TAsync_co = FlextTypes.TAsync_co
+TAwaitable = FlextTypes.TAwaitable
+TCacheKey = FlextTypes.TCacheKey
+TCacheKey_contra = FlextTypes.TCacheKey_contra
+TCacheValue = FlextTypes.TCacheValue
+TCacheValue_co = FlextTypes.TCacheValue_co
+TClient = FlextTypes.TClient
+TClient_co = FlextTypes.TClient_co
+TCommand = FlextTypes.TCommand
+TCommand_contra = FlextTypes.TCommand_contra
+TConcurrent = FlextTypes.TConcurrent
+TConfig = FlextTypes.TConfig
+TConfigKey = FlextTypes.TConfigKey
+TConfigKey_contra = FlextTypes.TConfigKey_contra
+TConfigValue = FlextTypes.TConfigValue
+TConfigValue_co = FlextTypes.TConfigValue_co
+TConfig_co = FlextTypes.TConfig_co
+TData = FlextTypes.TData
+TData_co = FlextTypes.TData_co
+TDomainEvent = FlextTypes.TDomainEvent
+TDomainEvent_co = FlextTypes.TDomainEvent_co
+TEntity = FlextTypes.TEntity
+TEntity_co = FlextTypes.TEntity_co
+TError = FlextTypes.TError
+TError_co = FlextTypes.TError_co
+TEvent = FlextTypes.TEvent
+TEvent_contra = FlextTypes.TEvent_contra
+TException = FlextTypes.TException
+TException_co = FlextTypes.TException_co
+TInput_contra = FlextTypes.TInput_contra
+TItem = FlextTypes.TItem
+TItem_contra = FlextTypes.TItem_contra
+TKey = FlextTypes.TKey
+TKey_contra = FlextTypes.TKey_contra
+TMessage = FlextTypes.TMessage
+TParallel = FlextTypes.TParallel
+TPipeline = FlextTypes.TPipeline
+TPlugin = FlextTypes.TPlugin
+TPluginConfig = FlextTypes.TPluginConfig
+TProcessor = FlextTypes.TProcessor
+TQuery = FlextTypes.TQuery
+TQuery_contra = FlextTypes.TQuery_contra
+TResource = FlextTypes.TResource
+TResult = FlextTypes.TResult
+TResult_co = FlextTypes.TResult_co
+TResult_contra = FlextTypes.TResult_contra
+TService = FlextTypes.TService
+TService_co = FlextTypes.TService_co
+TSettings = FlextTypes.TSettings
+TSettings_co = FlextTypes.TSettings_co
+TState = FlextTypes.TState
+TState_co = FlextTypes.TState_co
+TSync = FlextTypes.TSync
+TTimeout = FlextTypes.TTimeout
+TTransform = FlextTypes.TTransform
+TTransform_co = FlextTypes.TTransform_co
+TUtil = FlextTypes.TUtil
+TUtil_contra = FlextTypes.TUtil_contra
+TValue = FlextTypes.TValue
+TValueObject_co = FlextTypes.TValueObject_co
+TValue_co = FlextTypes.TValue_co
+T_co = FlextTypes.T_co
+T_contra = FlextTypes.T_contra
+U = FlextTypes.U
+UParallel = FlextTypes.UParallel
+UResource = FlextTypes.UResource
+V = FlextTypes.V
+W = FlextTypes.W
+P = FlextTypes.P
+
 __all__: list[str] = [
+    # TypeVars for backward compatibility
+    "T1",
+    "T2",
+    "T3",
+    "Command",
+    "E",
+    "Event",
+    "F",
     "FlextTypes",
+    "K",
+    "Message",
+    "MessageT",
+    "MessageT_contra",
+    "P",
+    "Query",
+    "R",
+    "ResultT",
+    "T",
+    "T1_co",
+    "T2_co",
+    "T3_co",
+    "TAccumulate",
+    "TAggregate",
+    "TAggregate_co",
+    "TAsync",
+    "TAsync_co",
+    "TAwaitable",
+    "TCacheKey",
+    "TCacheKey_contra",
+    "TCacheValue",
+    "TCacheValue_co",
+    "TClient",
+    "TClient_co",
+    "TCommand",
+    "TCommand_contra",
+    "TConcurrent",
+    "TConfig",
+    "TConfigKey",
+    "TConfigKey_contra",
+    "TConfigValue",
+    "TConfigValue_co",
+    "TConfig_co",
+    "TData",
+    "TData_co",
+    "TDomainEvent",
+    "TDomainEvent_co",
+    "TEntity",
+    "TEntity_co",
+    "TError",
+    "TError_co",
+    "TEvent",
+    "TEvent_contra",
+    "TException",
+    "TException_co",
+    "TInput_contra",
+    "TItem",
+    "TItem_contra",
+    "TKey",
+    "TKey_contra",
+    "TMessage",
+    "TParallel",
+    "TPipeline",
+    "TPlugin",
+    "TPluginConfig",
+    "TProcessor",
+    "TQuery",
+    "TQuery_contra",
+    "TResource",
+    "TResult",
+    "TResult_co",
+    "TResult_contra",
+    "TService",
+    "TService_co",
+    "TSettings",
+    "TSettings_co",
+    "TState",
+    "TState_co",
+    "TSync",
+    "TTimeout",
+    "TTransform",
+    "TTransform_co",
+    "TUtil",
+    "TUtil_contra",
+    "TValue",
+    "TValueObject_co",
+    "TValue_co",
+    "T_co",
+    "T_contra",
+    "U",
+    "UParallel",
+    "UResource",
+    "V",
+    "W",
 ]

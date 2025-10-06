@@ -8,7 +8,7 @@ Testing utilities and fixtures for FLEXT ecosystem projects.
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextTypes as FlextTypes
+from flext_core import FlextResult as FlextResult, FlextTypes as FlextTypes
 
 
 class FlextTestsDomains:
@@ -22,18 +22,9 @@ class FlextTestsDomains:
     MIGRATION = "migration"
 
 
-class FlextTestsMatchers:
-    """FLEXT testing matchers for assertions."""
+# flext-core/src/flext_tests/__init__.py
 
-    @staticmethod
-    def is_success_result(result: FlextResult) -> bool:
-        """Check if result is successful."""
-        return result.is_success
-
-    @staticmethod
-    def is_failure_result(result: FlextResult) -> bool:
-        """Check if result is a failure."""
-        return result.is_failure
+# (Removed FlextTestsMatchers – callers should use result.is_success / result.is_failure directly.)
 
 
 # Placeholder for flext_tests module

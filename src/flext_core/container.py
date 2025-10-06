@@ -158,30 +158,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # SINGLETON MANAGEMENT - Class-level global state
     # =========================================================================
 
-    _global_manager: FlextContainer.GlobalManager | None = None
-
-    class GlobalManager:
-        """Thread-safe global container management."""
-
-        def __init__(self) -> None:
-            """Initialize the global container manager."""
-            super().__init__()
-            self._container: FlextContainer | None = None
-            self._lock = threading.Lock()
-
-        def get_or_create(self) -> FlextContainer:
-            """Get or create the global container instance.
-
-            Returns:
-                FlextContainer: The global container instance.
-
-            """
-            if self._container is None:
-                with self._lock:
-                    if self._container is None:
-                        # Create instance using direct instantiation
-                        self._container = FlextContainer()
-            return self._container
+    _global_instance: FlextContainer | None = None
+    _global_lock: threading.Lock = threading.Lock()
 
     def __new__(cls) -> Self:
         """Create or return the global singleton instance."""
@@ -193,6 +171,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         Note: This method is called only once for the singleton instance.
         Subsequent calls to FlextContainer() return the same instance.
         """
+        if hasattr(self, "_di_container"):
+            return
+
         super().__init__()
 
         # Internal dependency-injector container (NEW v1.1.0)
@@ -353,6 +334,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         if name in self._services:
             return FlextResult[None].fail(f"Service '{name}' already registered")
 
+        provider_registered = False
         try:
             # Store in tracking dict (backward compatibility)
             self._services[name] = service
@@ -361,10 +343,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # Object provider is for existing instances (singletons by nature)
             provider = providers.Object(service)
             self._di_container.set_provider(name, provider)
+            provider_registered = True
 
             return FlextResult[None].ok(None)
         except Exception as e:
             # Rollback on failure
+            if provider_registered and hasattr(self._di_container, name):
+                with contextlib.suppress(AttributeError, KeyError):
+                    delattr(self._di_container, name)
             self._services.pop(name, None)
             return FlextResult[None].fail(f"Service storage failed: {e}")
 
@@ -408,6 +394,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         if name in self._factories:
             return FlextResult[None].fail(f"Factory '{name}' already registered")
 
+        provider_registered = False
         try:
             # Store in tracking dict (backward compatibility)
             self._factories[name] = factory
@@ -416,11 +403,15 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             # This creates lazy singleton: factory called once, result cached
             provider = providers.Singleton(factory)
             self._di_container.set_provider(name, provider)
+            provider_registered = True
 
             return FlextResult[None].ok(None)
         except Exception as e:
             # Rollback on failure
             self._factories.pop(name, None)
+            if provider_registered and hasattr(self._di_container, name):
+                with contextlib.suppress(AttributeError, KeyError):
+                    delattr(self._di_container, name)
             return FlextResult[None].fail(f"Factory storage failed: {e}")
 
     def unregister(self, name: str) -> FlextResult[None]:
@@ -534,7 +525,10 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         """
         return self.get(name).flat_map(
-            lambda service: self._validate_service_type(service, expected_type),
+            lambda service: cast(
+                "FlextResult[object]",
+                self._validate_service_type(service, expected_type),
+            ),
         )
 
     def _validate_service_type[T](
@@ -680,7 +674,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         return self.get(name)
 
-    def create_service(
+    def create_service[T](
         self,
         service_class: type[T],
         service_name: str | None = None,
@@ -980,16 +974,19 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # =========================================================================
 
     @classmethod
-    def ensure_global_manager(cls) -> FlextContainer.GlobalManager:
-        """Ensure global manager exists with thread safety.
+    def _ensure_global_instance(cls) -> FlextContainer:
+        """Ensure global instance exists with thread safety.
 
         Returns:
-            FlextContainer.GlobalManager: The global manager instance.
+            FlextContainer: The global container instance.
 
         """
-        if cls._global_manager is None:
-            cls._global_manager = cls.GlobalManager()
-        return cls._global_manager
+        if cls._global_instance is None:
+            with cls._global_lock:
+                if cls._global_instance is None:
+                    # Create instance using direct instantiation
+                    cls._global_instance = cls()
+        return cls._global_instance
 
     @classmethod
     def get_global(cls) -> FlextContainer:
@@ -1003,8 +1000,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             For new code, use FlextContainer() directly.
 
         """
-        manager = cls.ensure_global_manager()
-        return manager.get_or_create()
+        return cls._ensure_global_instance()
 
     @classmethod
     def create_module_utilities(
@@ -1022,8 +1018,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 "Module name must be non-empty string",
             )
 
-        manager = cls.ensure_global_manager()
-        container = manager.get_or_create()
+        container = cls._ensure_global_instance()
         return FlextResult[FlextTypes.Dict].ok({
             "container": container,
             "module": module_name,

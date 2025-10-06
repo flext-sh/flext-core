@@ -297,9 +297,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
                         if hasattr(message, "__str__")
                         else "unknown",
-                        validation_details=f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
-                        context=f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
                         correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
+                        metadata={
+                            "validation_details": f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
+                            "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
+                        },
                     )
                     return FlextResult[None].fail(
                         str(validation_error),
@@ -652,7 +654,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Extract message ID
         message_id: str = "unknown"
         if isinstance(message, dict):
-            message_dict = message
+            message_dict: dict[str, object] = message
             message_id = (
                 str(message_dict.get(f"{operation}_id", "unknown"))
                 or str(message_dict.get("message_id", "unknown"))
@@ -663,7 +665,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         elif hasattr(message, "message_id"):
             message_id = str(getattr(message, "message_id", "unknown"))
 
-        message_type = type(message).__name__
+        message_type: str = type(message).__name__
 
         # Log start
         FlextHandlers.Metrics.log_handler_start(
@@ -686,7 +688,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
         # Validate message can be handled
-        message_type_obj = type(message)
+        message_type_obj: type[object] = type(message)
         if not self.can_handle(message_type_obj):
             FlextHandlers.Metrics.log_handler_cannot_handle(
                 logger=self.logger,
@@ -813,12 +815,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         if handler_config is not None:
             if isinstance(handler_config, dict):
                 # Merge defaults with provided dict (dict values override defaults)
-                config_data = {
+                config_data: dict[str, object] = {
                     "handler_id": f"{resolved_handler_name}_{id(callable_func)}",
                     "handler_name": resolved_handler_name,
                     "handler_type": effective_type,
                     "handler_mode": effective_type,
-                    **handler_config,  # Override with provided values
+                    **handler_config,
                 }
                 try:
                     config = FlextModels.CqrsConfig.Handler.model_validate(config_data)

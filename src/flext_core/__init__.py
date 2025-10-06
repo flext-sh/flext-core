@@ -47,25 +47,7 @@ from flext_core import (
     FlextLogger,  # Structured logging
     FlextService,  # Service base class
     FlextContainer,  # Dependency injection
-    safe,  # Decorator for safe function calls
-)
 
-# Create configuration with full flext-core integration
-config = FlextConfig()
-print(f"Environment: {config.environment}")
-print(f"Debug mode: {config.is_debug_enabled}")
-
-# Use railway pattern for error handling
-result = (
-    validate_input(data)
-    .flat_map(lambda d: process_data(d))
-    .map(lambda d: format_output(d))
-    .map_error(lambda e: log_error(e))
-)
-
-
-# Examples removed - see individual module documentation for usage examples
-```
 
 OPTIMIZATION PRINCIPLES DEMONSTRATED:
 
@@ -111,7 +93,7 @@ from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.service import FlextService
-from flext_core.typings import FlextTypes, T, T_co
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 __all__ = [
@@ -134,8 +116,6 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
-    "T",
-    "T_co",
     "__version__",
     "__version_info__",
 ]

@@ -211,10 +211,10 @@ logger.info("Application started")
 logger.info("User login", extra={"user_id": "user_123", "ip": "192.168.1.1"})
 
 # Log errors
-try:
-    result = divide(10, 0)
-except Exception as e:
-    logger.error("Calculation failed", extra={"error": str(e)})
+# Log errors with Result pattern
+result = divide(10, 0)
+if not result.is_success:
+    logger.error("Calculation failed", extra={"error": result.error})
 ```
 
 ## Complete Example
