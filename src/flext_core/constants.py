@@ -1606,7 +1606,7 @@ class FlextConstants:
         STATE_UNHEALTHY = "unhealthy"
 
         # Status Constants for Scripts and Diagnostics
-        STATUS_PASS = "PASS"  # Not a password, status constant
+        STATUS_PASS = "PASS"  # nosec B105 - Not a password, status constant
         STATUS_FAIL = "FAIL"
         STATUS_NO_TARGET = "NO_TARGET"
         STATUS_SKIP = "SKIP"

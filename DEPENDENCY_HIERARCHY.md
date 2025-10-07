@@ -77,7 +77,7 @@ This document defines the strict dependency hierarchy for flext-core modules, en
 
 ### ✅ ALLOWED Import Patterns
 
-1. **Downward Imports**: Any layer can import from lower layers
+1. **Downward Imports**: object layer can import from lower layers
 
    ```python
    # utilities.py (Layer 7) can import from:

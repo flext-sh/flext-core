@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 import threading
 import time
-from typing import Any
 
 import pytest
 
@@ -95,7 +94,7 @@ class TestFlextLogger:
         """Test logging with structured data."""
         logger = FlextLogger("test_logger")
 
-        structured_data: dict[str, Any] = {
+        structured_data: dict[str, object] = {
             "action": "user_action",
             "data": {"key": "value"},
             "metadata": {"timestamp": "2025-01-01"},
@@ -117,7 +116,7 @@ class TestFlextLogger:
         """Test logging with custom fields."""
         logger = FlextLogger("test_logger")
 
-        custom_fields: dict[str, Any] = {
+        custom_fields: dict[str, object] = {
             "custom_field_1": "value1",
             "custom_field_2": 42,
             "custom_field_3": True,
@@ -130,7 +129,7 @@ class TestFlextLogger:
         """Test logging with nested context."""
         logger = FlextLogger("test_logger")
 
-        nested_context: dict[str, Any] = {
+        nested_context: dict[str, object] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -145,7 +144,7 @@ class TestFlextLogger:
         """Test logging with array data."""
         logger = FlextLogger("test_logger")
 
-        array_data: dict[str, Any] = {
+        array_data: dict[str, object] = {
             "items": [1, 2, 3, 4, 5],
             "tags": ["tag1", "tag2", "tag3"],
             "scores": [85.5, 92.3, 78.9],
@@ -167,7 +166,11 @@ class TestFlextLogger:
         """Test logging with numeric data."""
         logger = FlextLogger("test_logger")
 
-        numeric_data: dict[str, Any] = {"count": 42, "percentage": 85.5, "ratio": 0.75}
+        numeric_data: dict[str, object] = {
+            "count": 42,
+            "percentage": 85.5,
+            "ratio": 0.75,
+        }
 
         result = logger.info("Test message", **numeric_data)
         assert result.is_success
@@ -212,7 +215,7 @@ class TestFlextLogger:
         """Test logging with large data."""
         logger = FlextLogger("test_logger")
 
-        large_data: dict[str, Any] = {
+        large_data: dict[str, object] = {
             "large_string": "x" * 1000,
             "large_list": list(range(1000)),
             "large_dict": {f"key_{i}": f"value_{i}" for i in range(1000)},
@@ -225,7 +228,7 @@ class TestFlextLogger:
         """Test logging with complex data structures."""
         logger = FlextLogger("test_logger")
 
-        complex_data: dict[str, Any] = {
+        complex_data: dict[str, object] = {
             "nested": {
                 "level1": {
                     "level2": {

@@ -22,7 +22,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar, cast
+from typing import ParamSpec, TypeVar, cast
 
 import structlog
 
@@ -337,8 +337,8 @@ class FlextDecorators:
 
             @FlextDecorators.railway(error_code="VALIDATION_ERROR")
             def validate_email(email: str) -> str:
-                # Any exception automatically becomes FlextResult.fail()
-                # Any success automatically becomes FlextResult.ok()
+                # object exception automatically becomes FlextResult.fail()
+                # object success automatically becomes FlextResult.ok()
                 if "@" not in email:
                     raise ValueError("Invalid email format")
                 return email.lower()
@@ -673,7 +673,7 @@ class FlextDecorators:
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             # Start with the base function
-            decorated: Any = func
+            decorated: object = func
 
             # Apply railway pattern first if requested (outermost wrapper)
             if use_railway:

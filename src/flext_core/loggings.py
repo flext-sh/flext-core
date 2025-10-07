@@ -17,7 +17,7 @@ import time
 import traceback
 import types
 from collections.abc import Callable, Sequence
-from typing import Any, Self
+from typing import Self
 
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -102,7 +102,7 @@ class FlextLogger:
         log_level: int | None = None,
         *,
         console_enabled: bool = True,
-        additional_processors: Sequence[Callable[..., Any]] | None = None,
+        additional_processors: Sequence[Callable[..., object]] | None = None,
     ) -> None:
         """Configure structlog with advanced processor chain.
 

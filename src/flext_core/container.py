@@ -1245,7 +1245,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                         validation_result = validation_result_raw
                     else:
                         # Handle case where validator returns non-FlextResult
-                        validation_result = FlextResult[object].ok(validation_result_raw)
+                        validation_result = FlextResult[object].ok(
+                            validation_result_raw
+                        )
                     if validation_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validation_result.error}"

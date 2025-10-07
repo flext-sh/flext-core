@@ -21,7 +21,7 @@ import pathlib
 import re
 import secrets
 import string
-import subprocess
+import subprocess  # nosec B404 - Required for shell command execution utilities
 import threading
 import uuid
 from collections.abc import Callable, Mapping, Sequence
@@ -1823,7 +1823,7 @@ class FlextUtilities:
 
             # Execute subprocess.run with explicit parameters to avoid overload issues
             # S603: Command is validated above to ensure it's a safe list of strings
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 cmd,
                 capture_output=capture_output,
                 check=check,

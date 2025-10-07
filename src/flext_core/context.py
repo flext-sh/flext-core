@@ -21,7 +21,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import (
-    Any,
     Final,
     cast,
 )
@@ -82,7 +81,7 @@ class _StructlogContextVar[T_co]:
 
     Type Safety:
         Generic[T_co] maintains compile-time type checking for all
-        context variable values while structlog stores as Dict[str, Any].
+        context variable values while structlog stores as Dict[str, object].
 
     Thread Safety:
         Inherits thread-safety from structlog.contextvars which uses
@@ -290,8 +289,8 @@ class FlextContext:
         SOLID principles. This is an implementation detail of FlextContext.
         """
 
-        data: dict[str, Any] = field(default_factory=dict)
-        metadata: dict[str, Any] = field(default_factory=dict)
+        data: dict[str, object] = field(default_factory=dict)
+        metadata: dict[str, object] = field(default_factory=dict)
 
     @dataclass(slots=True)
     class _ContextExport:
@@ -301,8 +300,8 @@ class FlextContext:
         SOLID principles. This is an implementation detail of FlextContext.
         """
 
-        data: dict[str, Any] = field(default_factory=dict)
-        metadata: dict[str, Any] = field(default_factory=dict)
+        data: dict[str, object] = field(default_factory=dict)
+        metadata: dict[str, object] = field(default_factory=dict)
         statistics: dict[str, object] = field(default_factory=dict)
 
     # =========================================================================
@@ -352,7 +351,7 @@ class FlextContext:
 
         Type Safety:
             Generic[T_co] maintains compile-time type checking for all
-            context variable values while structlog stores as Dict[str, Any].
+            context variable values while structlog stores as Dict[str, object].
 
         Thread Safety:
             Inherits thread-safety from structlog.contextvars which uses
@@ -449,10 +448,10 @@ class FlextContext:
         else:
             context_data = initial_data
 
-        self._data: dict[str, Any] = context_data.data
-        self._metadata: dict[str, Any] = context_data.metadata
+        self._data: dict[str, object] = context_data.data
+        self._metadata: dict[str, object] = context_data.metadata
         self._hooks: FlextTypes.Context.HookRegistry = {}
-        self._statistics: dict[str, Any] = {
+        self._statistics: dict[str, object] = {
             "operations": {
                 "set": 0,
                 "get": 0,
@@ -532,7 +531,7 @@ class FlextContext:
     def get(
         self,
         key: str,
-        default: object = None,
+        default: object | None = None,
         scope: str = FlextConstants.Context.SCOPE_GLOBAL,
     ) -> object:
         """Get a value from the context.
@@ -766,10 +765,10 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            data_values = cast("dict[str, Any]", data).values()
+            data_values = cast("dict[str, object]", data).values()
             if all(isinstance(v, dict) for v in data_values):
                 # New scoped format
-                context._scopes = cast("dict[str, dict[str, Any]]", data)
+                context._scopes = cast("dict[str, dict[str, object]]", data)
             else:
                 # Old flat format - put everything in global scope
                 context._scopes[FlextConstants.Context.SCOPE_GLOBAL] = data
@@ -826,7 +825,7 @@ class FlextContext:
         with self._lock:
             self._metadata[key] = value
 
-    def get_metadata(self, key: str, default: object = None) -> object:
+    def get_metadata(self, key: str, default: object | None = None) -> object:
         """Get metadata from the context.
 
         Args:

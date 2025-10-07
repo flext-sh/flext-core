@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Any
 
 import pytest
 from returns.io import IO, IOFailure, IOSuccess
@@ -120,12 +119,12 @@ class TestFlextResult:
     def test_result_railway_composition(self) -> None:
         """Test railway-oriented composition."""
 
-        def validate_input(data: dict[str, Any]) -> FlextResult[FlextTypes.Dict]:
+        def validate_input(data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
             if not data.get("value"):
                 return FlextResult[FlextTypes.Dict].fail("Missing value")
             return FlextResult[FlextTypes.Dict].ok(data)
 
-        def process_data(data: dict[str, Any]) -> FlextResult[int]:
+        def process_data(data: dict[str, object]) -> FlextResult[int]:
             return FlextResult[int].ok(data["value"] * 2)
 
         def format_result(value: int) -> FlextResult[str]:
