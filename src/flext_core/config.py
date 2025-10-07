@@ -825,7 +825,7 @@ class FlextConfig(BaseSettings):
         https://python-dependency-injector.ets-labs.org/providers/configuration.html
 
         Returns:
-            Any: The DI Configuration provider instance (providers.Configuration)
+            object: The DI Configuration provider instance (providers.Configuration)
 
         """
         if cls._di_config_provider is None:
@@ -869,7 +869,7 @@ class FlextConfig(BaseSettings):
         values injectable through dependency injection.
 
         Returns:
-            Any: Configuration provider for DI container (providers.Configuration)
+            object: Configuration provider for DI container (providers.Configuration)
 
         Example:
             >>> config_provider = FlextConfig.get_di_config_provider()

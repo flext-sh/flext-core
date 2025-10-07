@@ -32,7 +32,7 @@ import re
 import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import Any, TypeGuard, cast
+from typing import TypeGuard, cast
 
 import structlog
 from dependency_injector import containers, providers
@@ -165,7 +165,7 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_dict_like(value: object) -> TypeGuard[dict[str, Any]]:
+    def is_dict_like(value: object) -> TypeGuard[dict[str, object]]:
         """Type guard to check if value is dict-like.
 
         Args:
@@ -178,7 +178,7 @@ class FlextRuntime:
         return isinstance(value, dict)
 
     @staticmethod
-    def is_list_like(value: object) -> TypeGuard[list[Any]]:
+    def is_list_like(value: object) -> TypeGuard[list[object]]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -262,7 +262,7 @@ class FlextRuntime:
         return getattr(obj, attr, default)
 
     @staticmethod
-    def safe_serialize_to_dict(obj: object) -> dict[str, Any] | None:
+    def safe_serialize_to_dict(obj: object) -> dict[str, object] | None:
         """Serialize object to dictionary without dependencies.
 
         Attempts multiple serialization strategies without importing
@@ -348,7 +348,7 @@ class FlextRuntime:
             return False
 
     @staticmethod
-    def extract_generic_args(type_hint: object) -> tuple[Any, ...]:
+    def extract_generic_args(type_hint: object) -> tuple[object, ...]:
         """Extract generic type arguments from a type hint.
 
         Args:
@@ -435,7 +435,7 @@ class FlextRuntime:
 
         level_to_use = log_level if log_level is not None else logging.INFO
 
-        processors: list[Any] = [
+        processors: list[object] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             module.processors.TimeStamper(fmt="iso"),

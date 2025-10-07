@@ -52,7 +52,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Any,
     ClassVar,
     Literal,
     Self,
@@ -4114,7 +4113,7 @@ class FlextModels:
             for key, value in self.filters.items():
                 if isinstance(value, (list, tuple)):
                     params[f"filter_{key}"] = ",".join(
-                        str(cast("Any", item)) for item in value
+                        str(cast("object", item)) for item in value
                     )
                 else:
                     params[f"filter_{key}"] = str(value)
@@ -4435,7 +4434,7 @@ class FlextModels:
         @staticmethod
         def create_entity_factory_provider(
             entity_class: type[FlextModels.Entity],
-        ) -> providers.Factory[Any]:
+        ) -> providers.Factory[object]:
             """Create a Factory provider for Entity instances.
 
             Args:
@@ -4463,13 +4462,13 @@ class FlextModels:
             """
             providers_module = FlextRuntime.dependency_providers()
             return cast(
-                "providers.Factory[Any]", providers_module.Factory(entity_class)
+                "providers.Factory[object]", providers_module.Factory(entity_class)
             )
 
         @staticmethod
         def create_value_factory_provider(
             value_class: type[FlextModels.Value],
-        ) -> providers.Factory[Any]:
+        ) -> providers.Factory[object]:
             """Create a Factory provider for Value Object instances.
 
             Args:
@@ -4495,12 +4494,14 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return cast("providers.Factory[Any]", providers_module.Factory(value_class))
+            return cast(
+                "providers.Factory[object]", providers_module.Factory(value_class)
+            )
 
         @staticmethod
         def create_aggregate_factory_provider(
             aggregate_class: type[FlextModels.AggregateRoot],
-        ) -> providers.Factory[Any]:
+        ) -> providers.Factory[object]:
             """Create a Factory provider for AggregateRoot instances.
 
             Args:
@@ -4528,7 +4529,7 @@ class FlextModels:
             """
             providers_module = FlextRuntime.dependency_providers()
             return cast(
-                "providers.Factory[Any]", providers_module.Factory(aggregate_class)
+                "providers.Factory[object]", providers_module.Factory(aggregate_class)
             )
 
         @staticmethod
@@ -4537,7 +4538,7 @@ class FlextModels:
             aggregate_id: str,
             data: FlextTypes.Dict | None = None,
             metadata: FlextTypes.Domain.EventMetadata | None = None,
-        ) -> providers.Callable[Any]:
+        ) -> providers.Callable[object]:
             """Create a Callable provider for domain events.
 
             Args:
@@ -4574,13 +4575,13 @@ class FlextModels:
                 )
 
             return cast(
-                "providers.Callable[Any]", providers_module.Callable(create_event)
+                "providers.Callable[object]", providers_module.Callable(create_event)
             )
 
         @staticmethod
         def create_command_factory_provider(
             command_class: type[FlextModels.Command],
-        ) -> providers.Factory[Any]:
+        ) -> providers.Factory[object]:
             """Create a Factory provider for Command instances (CQRS).
 
             Args:
@@ -4608,13 +4609,13 @@ class FlextModels:
             """
             providers_module = FlextRuntime.dependency_providers()
             return cast(
-                "providers.Factory[Any]", providers_module.Factory(command_class)
+                "providers.Factory[object]", providers_module.Factory(command_class)
             )
 
         @staticmethod
         def create_query_factory_provider(
             query_class: type[FlextModels.Query],
-        ) -> providers.Factory[Any]:
+        ) -> providers.Factory[object]:
             """Create a Factory provider for Query instances (CQRS).
 
             Args:
@@ -4640,7 +4641,9 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return cast("providers.Factory[Any]", providers_module.Factory(query_class))
+            return cast(
+                "providers.Factory[object]", providers_module.Factory(query_class)
+            )
 
         @staticmethod
         def register_in_container(

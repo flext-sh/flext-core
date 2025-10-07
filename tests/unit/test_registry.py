@@ -1068,7 +1068,13 @@ def test_registry_register_function_map_handler_creation_failure() -> None:
     def invalid_handler() -> None:  # Wrong signature
         pass
 
-    mapping: dict[type[object], tuple[Callable[[object], object | FlextResult[object]], object | FlextResult[object]]] = {TestMessage: (invalid_handler, {})}  # type: ignore[assignment]
+    mapping: dict[
+        type[object],
+        tuple[
+            Callable[[object], object | FlextResult[object]],
+            object | FlextResult[object],
+        ],
+    ] = {TestMessage: (invalid_handler, {})}  # type: ignore[assignment]
     result = registry.register_function_map(mapping)  # type: ignore[arg-type]
     # Should handle error in creation
     assert isinstance(result, FlextResult)

@@ -76,7 +76,7 @@ Comprehensive exception hierarchy with error codes and context.
 ````python
 from flext_core import FlextException, ErrorCode
 class ValidationException(FlextException):
-    def __init__(self, field: str, value: Any):
+    def __init__(self, field: str, value: object):
         super().__init__(
             error_code=ErrorCode.VALIDATION_ERROR,
             message=f"Invalid value for {field}: {value}",
@@ -119,7 +119,7 @@ class Repository(Protocol):
         ...
 
 # Type aliases
-JsonDict = FlextTypes.JsonDict  # Dict[str, Any]
+JsonDict = FlextTypes.JsonDict  # Dict[str, object]
 ```
 
 ## Quality Metrics
