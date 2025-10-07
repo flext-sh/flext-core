@@ -16,11 +16,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 import json
 import threading
 from pathlib import Path
-from typing import Any, ClassVar, Self, cast
+from typing import ClassVar, Self, cast
 
 from dependency_injector import providers
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
@@ -247,7 +246,8 @@ class FlextConfig(BaseSettings):
         cli_parse_args=False,  # Disable CLI parsing by default
         cli_avoid_json=True,  # Avoid JSON CLI options for complex types
         enable_decoding=True,  # Enable JSON decoding for environment variables
-        nested_model_default_partial_update=True,  # Allow partial updates to nested models
+        # Allow partial updates to nested models
+        nested_model_default_partial_update=True,
         # Advanced Pydantic 2.11+ features
         str_strip_whitespace=True,  # Strip whitespace from strings
         str_to_lower=False,  # Keep original case
@@ -746,21 +746,19 @@ class FlextConfig(BaseSettings):
         This ensures that FlextModels classes use the current FlextConfig instance
         as their configuration source, enabling the newer pattern where FlextConfig
         serves as the central source of configuration for all model classes.
-        """
-        with contextlib.suppress(ImportError):
-            # Import models module and update its config
-            # NOTE: This access to private _config is necessary for the current
-            # architecture where models use global config for field defaults.
-            pass
 
-            # Configuration is handled through dependency injection
+        Note: Configuration is currently handled through dependency injection.
+        This method is a placeholder for future configuration propagation if needed.
+        """
+        # Configuration is handled through dependency injection
+        # No need to import models module here to avoid circular imports
 
     # NOTE: Removed synchronize_di_config validator to avoid circular dependency
     # The DI Configuration provider is created lazily when first accessed
     # and automatically syncs with the Pydantic settings instance
 
     # Dependency Injection integration (v1.1.0+)
-    _di_config_provider: ClassVar[Any | None] = None  # providers.Configuration
+    _di_config_provider: ClassVar[providers.Configuration | None] = None
     _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
 
     # Singleton pattern implementation - per-class singletons
@@ -841,8 +839,7 @@ class FlextConfig(BaseSettings):
                     if instance is not None:
                         # Convert Pydantic model to dict and populate DI provider
                         config_dict = instance.model_dump()
-                        if cls._di_config_provider is not None:
-                            cls._di_config_provider.from_dict(config_dict)
+                        cls._di_config_provider.from_dict(config_dict)
         return cls._di_config_provider
 
     @classmethod
@@ -948,7 +945,7 @@ class FlextConfig(BaseSettings):
     @classmethod
     def create_for_environment(
         cls, environment: str, **kwargs: FlextTypes.ConfigValue
-    ) -> FlextConfig:
+    ) -> Self:
         """Create a FlextConfig instance for a specific environment.
 
         Args:

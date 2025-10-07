@@ -816,12 +816,8 @@ class FlextExceptions:
         ):
             config_key: str | None = cast("str | None", kwargs.get("config_key"))
             config_source: str | None = cast("str | None", kwargs.get("config_source"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.ConfigurationError(
                 message,
                 error_code=error_code,
@@ -833,12 +829,8 @@ class FlextExceptions:
         if "operation" in kwargs:
             operation: str | None = cast("str | None", kwargs.get("operation"))
             reason: str | None = cast("str | None", kwargs.get("reason"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.OperationError(
                 message,
                 error_code=error_code,
@@ -851,12 +843,8 @@ class FlextExceptions:
             host: str | None = cast("str | None", kwargs.get("host"))
             port: int | None = cast("int | None", kwargs.get("port"))
             timeout: float | None = cast("float | None", kwargs.get("timeout"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.ConnectionError(
                 message,
                 error_code=error_code,
@@ -870,13 +858,9 @@ class FlextExceptions:
             timeout_seconds: float | None = cast(
                 "float | None", kwargs.get("timeout_seconds")
             )
-            operation: str | None = cast("str | None", kwargs.get("operation"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            operation = cast("str | None", kwargs.get("operation"))
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.TimeoutError(
                 message,
                 error_code=error_code,
@@ -889,12 +873,8 @@ class FlextExceptions:
             user_id: str | None = cast("str | None", kwargs.get("user_id"))
             resource: str | None = cast("str | None", kwargs.get("resource"))
             permission: str | None = cast("str | None", kwargs.get("permission"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.AuthorizationError(
                 message,
                 error_code=error_code,
@@ -906,13 +886,9 @@ class FlextExceptions:
             )
         if "auth_method" in kwargs:
             auth_method: str | None = cast("str | None", kwargs.get("auth_method"))
-            user_id: str | None = cast("str | None", kwargs.get("user_id"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            user_id = cast("str | None", kwargs.get("user_id"))
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.AuthenticationError(
                 message,
                 error_code=error_code,
@@ -924,12 +900,8 @@ class FlextExceptions:
         if "resource_id" in kwargs:
             resource_type: str | None = cast("str | None", kwargs.get("resource_type"))
             resource_id: str | None = cast("str | None", kwargs.get("resource_id"))
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.NotFoundError(
                 message,
                 error_code=error_code,
@@ -945,12 +917,8 @@ class FlextExceptions:
             attribute_context: dict[str, object] | None = cast(
                 "dict[str, object] | None", kwargs.get("attribute_context")
             )
-            correlation_id: str | None = cast(
-                "str | None", kwargs.get("correlation_id")
-            )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
-            )
+            correlation_id = cast("str | None", kwargs.get("correlation_id"))
+            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
             return FlextExceptions.AttributeAccessError(
                 message,
                 error_code=error_code,

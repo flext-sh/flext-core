@@ -37,7 +37,6 @@ SPDX-License-Identifier: MIT.
 # ruff: disable=PLC0415
 from __future__ import annotations
 
-import contextlib
 import types
 from collections.abc import Callable, Iterator, Sequence
 from typing import Self, cast, overload, override
@@ -797,10 +796,14 @@ class FlextResult[T_co]:
             return FlextResult[T_co].fail(str(e))
 
     def tap(self, func: Callable[[T_co], None]) -> FlextResult[T_co]:
-        """Execute side effect function on success with non-None data, return self."""
+        """Execute side effect function on success with non-None data, return self.
+
+        Note: Side effect functions should be designed to not raise exceptions.
+        If the function raises an exception, it indicates a programming error
+        and should be fixed in the caller, not suppressed here.
+        """
         if self.is_success and self._data is not None:
-            with contextlib.suppress(TypeError, ValueError, AttributeError):
-                func(self._data)
+            func(self._data)
         return self
 
     # =========================================================================
@@ -1246,9 +1249,9 @@ class FlextResult[T_co]:
             # Extract IO container using value_or, then unwrap the IO
             sentinel = object()
             io_container = io_result.value_or(sentinel)
-            if io_container is not sentinel and io_container is not None:
-                # Unwrap the IO container to get the actual value
-                # Note: _inner_value is private but IO intentionally hides value
+            if io_container is not None and io_container is not sentinel:
+                # Unwrap IO container - returns library doesn't expose public API
+                # for IO value extraction, _inner_value is the only way
                 # Cast is safe: IOSuccess container holds T-typed value
                 value: T = cast("T", io_container._inner_value)
                 return cls.ok(value)
@@ -1258,7 +1261,7 @@ class FlextResult[T_co]:
             # Extract the failure IO container
             io_container = io_result.failure()
             if io_container is not None:
-                # Unwrap the IO container to get the error value
+                # Unwrap IO container - returns library doesn't expose public API
                 error_value = io_container._inner_value
                 error_msg = str(error_value) if error_value else "IO operation failed"
                 return cls.fail(error_msg)

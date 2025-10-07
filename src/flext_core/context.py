@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import collections.abc
-import contextlib
 import json
 import threading
 import time
@@ -523,10 +522,12 @@ class FlextContext:
                 operations["set"] = set_count + 1
 
             # Execute hooks
+            # Note: Hooks should be designed to not raise exceptions.
+            # If a hook raises an exception, it indicates a programming error
+            # in the hook implementation that should be fixed by the caller.
             if "set" in self._hooks:
                 for hook in self._hooks["set"]:
-                    with contextlib.suppress(Exception):
-                        hook(key, value)
+                    hook(key, value)
 
     def get(
         self,
@@ -1539,7 +1540,11 @@ class FlextContext:
 
         @staticmethod
         def clear_context() -> None:
-            """Clear all context variables."""
+            """Clear all context variables.
+
+            Note: ContextVar.set() does not raise LookupError - it always succeeds.
+            Setting to None effectively clears the variable.
+            """
             # Clear string context variables
             for context_var in [
                 FlextContext.Variables.Correlation.CORRELATION_ID,
@@ -1550,16 +1555,12 @@ class FlextContext:
                 FlextContext.Variables.Request.REQUEST_ID,
                 FlextContext.Variables.Performance.OPERATION_NAME,
             ]:
-                with contextlib.suppress(LookupError):
-                    context_var.set(None)
+                context_var.set(None)
 
             # Clear typed context variables
-            with contextlib.suppress(LookupError):
-                FlextContext.Variables.Performance.OPERATION_START_TIME.set(None)
-            with contextlib.suppress(LookupError):
-                FlextContext.Variables.Performance.OPERATION_METADATA.set(None)
-            with contextlib.suppress(LookupError):
-                FlextContext.Variables.Request.REQUEST_TIMESTAMP.set(None)
+            FlextContext.Variables.Performance.OPERATION_START_TIME.set(None)
+            FlextContext.Variables.Performance.OPERATION_METADATA.set(None)
+            FlextContext.Variables.Request.REQUEST_TIMESTAMP.set(None)
 
             # Note: structlog.contextvars automatically cleared via _StructlogContextVar.set(None)
 

@@ -301,7 +301,6 @@ class FlextProcessors(FlextMixins.Service):
                 result = processor(processed_data)
                 if isinstance(result, FlextResult):
                     if result.is_success:
-                        # Type: result is FlextResult[object] based on return type annotation
                         result_value: object = result.value
                         self._cache[cache_key] = (result_value, time.time())
                         self._metrics["successful_processes"] = (
@@ -324,7 +323,7 @@ class FlextProcessors(FlextMixins.Service):
                             "error": result.error,
                             "data_hash": hash(str(data)),
                         })
-                    # Type: result is FlextResult[object] based on function signature
+
                     typed_result: FlextResult[object] = cast(
                         "FlextResult[object]", result
                     )
@@ -429,7 +428,7 @@ class FlextProcessors(FlextMixins.Service):
                 return FlextResult[FlextTypes.List].fail(
                     f"Batch processing failed: {result.error}",
                 )
-            # Type: result is FlextResult[object], result.value is object
+
             result_value: object = result.value
             results.append(result_value)
 

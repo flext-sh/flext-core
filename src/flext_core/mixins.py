@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 import functools
 import json
 import logging
@@ -319,12 +318,16 @@ class FlextMixins:
         Simplified implementation that directly sets the validation flag.
 
         Args:
-            obj: Object to set validation on
+            obj: Object to set validation on (must support attribute assignment)
             field_name: Name of the field to set validation flag
 
+        Note:
+            The object must support attribute assignment. If setattr() fails,
+            it indicates a programming error (e.g., using a frozen dataclass,
+            or an object with __slots__ that doesn't include the field).
+
         """
-        with contextlib.suppress(Exception):
-            setattr(obj, field_name, True)
+        setattr(obj, field_name, True)
 
     @staticmethod
     def initialize_state(request: FlextModels.StateInitializationRequest) -> None:

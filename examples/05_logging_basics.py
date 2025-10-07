@@ -1,8 +1,8 @@
 # !/usr/bin/env python3
-"""05 - FlextLogger Fundamentals: Complete Structured Logging.
+"""05 - FlextCore.Logger Fundamentals: Complete Structured Logging.
 
-This example demonstrates the COMPLETE FlextLogger API - the foundation
-for structured logging across the entire FLEXT ecosystem. FlextLogger provides
+This example demonstrates the COMPLETE FlextCore.Logger API - the foundation
+for structured logging across the entire FLEXT ecosystem. FlextCore.Logger provides
 context-aware, structured logging with correlation tracking and performance metrics.
 
 Key Concepts Demonstrated:
@@ -27,30 +27,23 @@ import warnings
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from flext_core import (
-    FlextConstants,
-    FlextCore,
-    FlextExceptions,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextLogger patterns with FlextMixins.Service infrastructure.
+class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
+    """Service demonstrating ALL FlextCore.Logger patterns with FlextMixins.Service infrastructure.
 
     This service inherits from FlextCore.Service to demonstrate:
-    - Inherited container property (FlextContainer singleton)
-    - Inherited logger property (FlextLogger with service context)
-    - Inherited context property (FlextContext for request tracking)
-    - Inherited config property (FlextConfig with logging settings)
+    - Inherited container property (FlextCore.Container singleton)
+    - Inherited logger property (FlextCore.Logger with service context)
+    - Inherited context property (FlextCore.Context for request tracking)
+    - Inherited config property (FlextCore.Config with logging settings)
     - Inherited metrics property (FlextMetrics for observability)
 
-    The focus is on demonstrating FlextLogger structured logging patterns
-    with FlextExceptions integration, while leveraging complete FlextMixins.Service
+    The focus is on demonstrating FlextCore.Logger structured logging patterns
+    with FlextCore.Exceptions integration, while leveraging complete FlextMixins.Service
     infrastructure for service orchestration.
     """
 
@@ -59,10 +52,10 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
-        - self.container: FlextContainer global singleton
-        - self.context: FlextContext for request tracking
-        - self.config: FlextConfig with logging configuration
+        - self.logger: FlextCore.Logger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextCore.Container global singleton
+        - self.context: FlextCore.Context for request tracking
+        - self.config: FlextCore.Config with logging configuration
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
@@ -75,21 +68,21 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         self.logger.info(
             "ComprehensiveLoggingService initialized with inherited infrastructure",
             extra={
-                "service_type": "FlextLogger demonstration",
+                "service_type": "FlextCore.Logger demonstration",
                 "logger_name": str(self.logger),
                 "config_log_level": self.config.log_level,
                 "structured_logging": True,
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
-        """Execute all FlextLogger demonstrations and return summary.
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+        """Execute all FlextCore.Logger demonstrations and return summary.
 
         Demonstrates inherited logger property alongside other infrastructure
         components from FlextMixins.Service. This is the PRIMARY demonstration
         of structured logging across the FLEXT ecosystem.
         """
-        self.logger.info("Starting comprehensive FlextLogger demonstration")
+        self.logger.info("Starting comprehensive FlextCore.Logger demonstration")
 
         try:
             # Run all demonstrations
@@ -132,17 +125,17 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
             }
 
             self.logger.info(
-                "FlextLogger demonstration completed successfully",
+                "FlextCore.Logger demonstration completed successfully",
                 extra={"demonstrations": summary["demonstrations_completed"]},
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(summary)
 
         except Exception as e:
             error_msg = f"Logging demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(
-                error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                error_msg, error_code=FlextCore.Constants.Errors.VALIDATION_ERROR
             )
 
     # ========== BASIC LOGGING ==========
@@ -299,11 +292,11 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
 
         logger = FlextCore.Logger(__name__)
 
-        # Log exceptions with traceback using FlextResult pattern
+        # Log exceptions with traceback using FlextCore.Result pattern
         def risky_division() -> int:
             return 1 // 0  # Will raise ZeroDivisionError
 
-        result: FlextResult[int] = FlextResult[int].safe_call(risky_division)
+        result: FlextCore.Result[int] = FlextCore.Result[int].safe_call(risky_division)
         if result.is_failure:
             logger.error(
                 "Division failed",
@@ -402,8 +395,8 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         print("\n=== Global Logger Configuration ===")
 
         # Configure all loggers globally
-        # result = FlextLogger.configure(
-        #     log_level=FlextConstants.Logging.INFO,
+        # result = FlextCore.Logger.configure(
+        #     log_level=FlextCore.Constants.Logging.INFO,
         #     json_output=False,
         #     include_source=True,
         #     structured_output=True,
@@ -495,7 +488,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
-    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
 
     def demonstrate_from_callable(self) -> None:
         """Show from_callable for safe logging operations."""
@@ -509,7 +502,9 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
                 raise ValueError(msg)
             return self.config.log_file
 
-        log_path_result: FlextResult[str] = FlextResult.from_callable(risky_log_setup)
+        log_path_result: FlextCore.Result[str] = FlextCore.Result.from_callable(
+            risky_log_setup
+        )
         if log_path_result.is_success:
             print(f"✅ Log file configured: {log_path_result.unwrap()}")
         else:
@@ -523,7 +518,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
                 raise ValueError(msg)
             return f"Logger configured with level {self.config.log_level}"
 
-        validation_result: FlextResult[str] = FlextResult.from_callable(
+        validation_result: FlextCore.Result[str] = FlextCore.Result.from_callable(
             validate_logger_config
         )
         if validation_result.is_success:
@@ -533,32 +528,34 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         """Show pipeline composition for multi-step logging operations."""
         print("\n=== flow_through(): Logging Pipeline ===")
 
-        def init_logger(_: object) -> FlextResult[FlextCore.Logger]:
+        def init_logger(_: object) -> FlextCore.Result[FlextCore.Logger]:
             """Step 1: Initialize logger."""
-            return FlextResult[FlextCore.Logger].ok(FlextCore.Logger(__name__))
+            return FlextCore.Result[FlextCore.Logger].ok(FlextCore.Logger(__name__))
 
         def configure_context(
             logger: FlextCore.Logger,
-        ) -> FlextResult[FlextCore.Logger]:
+        ) -> FlextCore.Result[FlextCore.Logger]:
             """Step 2: Configure logger context."""
             logger.bind(
                 service="logging-demo",
                 environment=self.config.environment,
             )
-            return FlextResult[FlextCore.Logger].ok(logger)
+            return FlextCore.Result[FlextCore.Logger].ok(logger)
 
-        def add_correlation(logger: FlextCore.Logger) -> FlextResult[FlextCore.Logger]:
+        def add_correlation(
+            logger: FlextCore.Logger,
+        ) -> FlextCore.Result[FlextCore.Logger]:
             """Step 3: Add correlation ID."""
             correlation_id = str(uuid4())
             logger.bind(correlation_id=correlation_id)
-            return FlextResult[FlextCore.Logger].ok(logger)
+            return FlextCore.Result[FlextCore.Logger].ok(logger)
 
         def log_initialization(
             logger: FlextCore.Logger,
-        ) -> FlextResult[FlextCore.Logger]:
+        ) -> FlextCore.Result[FlextCore.Logger]:
             """Step 4: Log successful initialization."""
             logger.info("Logger pipeline initialized successfully")
-            return FlextResult[FlextCore.Logger].ok(logger)
+            return FlextCore.Result[FlextCore.Logger].ok(logger)
 
         # Pipeline: init → configure → correlate → log
         result = (
@@ -576,16 +573,16 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         """Show error recovery in logging operations."""
         print("\n=== lash(): Logging Error Recovery ===")
 
-        def try_complex_logging() -> FlextResult[str]:
+        def try_complex_logging() -> FlextCore.Result[str]:
             """Attempt complex logging operation (might fail)."""
-            return FlextResult[str].fail("Complex logging operation failed")
+            return FlextCore.Result[str].fail("Complex logging operation failed")
 
-        def recover_with_simple_log(error: str) -> FlextResult[str]:
+        def recover_with_simple_log(error: str) -> FlextCore.Result[str]:
             """Recover by using simple console logging."""
             print(f"  Recovering from: {error}")
             logger = FlextCore.Logger(__name__)
             logger.info("Using simple console logging as fallback")
-            return FlextResult[str].ok("Simple logging active")
+            return FlextCore.Result[str].ok("Simple logging active")
 
         result = try_complex_logging().lash(recover_with_simple_log)
         if result.is_success:
@@ -596,12 +593,12 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         print("\n=== alt(): Logging Destination Fallback ===")
 
         # Primary: File logging (simulated failure)
-        primary = FlextResult[str].fail("File logging not available")
+        primary = FlextCore.Result[str].fail("File logging not available")
 
         # Fallback: Console logging
         fallback_logger = FlextCore.Logger(__name__)
         fallback_logger.info("Using console logging")
-        fallback = FlextResult[str].ok("Console logging active")
+        fallback = FlextCore.Result[str].ok("Console logging active")
 
         result = primary.alt(fallback)
         if result.is_success:
@@ -613,7 +610,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
 
         # Success case - logger already configured
         success_logger = "preconfigured-logger"
-        success = FlextResult[str].ok(success_logger)
+        success = FlextCore.Result[str].ok(success_logger)
 
         expensive_created = False
 
@@ -630,7 +627,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
 
         # Failure case - expensive init IS called
         expensive_created = False
-        failure = FlextResult[str].fail("Logger config failed")
+        failure = FlextCore.Result[str].fail("Logger config failed")
         logger_id = failure.value_or_call(expensive_logger_init)
         print(
             f"✅ Failure recovered: logger={logger_id}, expensive_created={expensive_created}"
@@ -639,100 +636,102 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
     # ========== FOUNDATION LAYER INTEGRATION (Layer 0.5 - 2) ==========
 
     def demonstrate_flext_constants_logging(self) -> None:
-        """Show FlextConstants.Logging integration with FlextLogger."""
-        print("\n=== FlextConstants.Logging Integration (Layer 1) ===")
+        """Show FlextCore.Constants.Logging integration with FlextCore.Logger."""
+        print("\n=== FlextCore.Constants.Logging Integration (Layer 1) ===")
 
         logger = FlextCore.Logger(__name__)
 
-        # Log level constants from FlextConstants
-        print("FlextConstants.Logging levels:")
-        print(f"  DEFAULT_LEVEL: {FlextConstants.Logging.DEFAULT_LEVEL}")
-        print(f"  VALID_LEVELS: {FlextConstants.Logging.VALID_LEVELS}")
+        # Log level constants from FlextCore.Constants
+        print("FlextCore.Constants.Logging levels:")
+        print(f"  DEFAULT_LEVEL: {FlextCore.Constants.Logging.DEFAULT_LEVEL}")
+        print(f"  VALID_LEVELS: {FlextCore.Constants.Logging.VALID_LEVELS}")
 
-        # Validate log level using FlextConstants
+        # Validate log level using FlextCore.Constants
         log_level = "INFO"
-        if log_level in FlextConstants.Logging.VALID_LEVELS:
+        if log_level in FlextCore.Constants.Logging.VALID_LEVELS:
             print(f"✅ Log level '{log_level}' is valid")
 
         # Log format constants
-        print(f"  DEFAULT_FORMAT: {FlextConstants.Logging.DEFAULT_FORMAT}")
-        print(f"  JSON_OUTPUT_DEFAULT: {FlextConstants.Logging.JSON_OUTPUT_DEFAULT}")
-        print(f"  INCLUDE_SOURCE: {FlextConstants.Logging.INCLUDE_SOURCE}")
+        print(f"  DEFAULT_FORMAT: {FlextCore.Constants.Logging.DEFAULT_FORMAT}")
+        print(
+            f"  JSON_OUTPUT_DEFAULT: {FlextCore.Constants.Logging.JSON_OUTPUT_DEFAULT}"
+        )
+        print(f"  INCLUDE_SOURCE: {FlextCore.Constants.Logging.INCLUDE_SOURCE}")
 
         # Structured logging configuration
-        print("  STRUCTURED_OUTPUT:", FlextConstants.Logging.STRUCTURED_OUTPUT)
-        print("  TRACK_PERFORMANCE:", FlextConstants.Logging.TRACK_PERFORMANCE)
-        print("  TRACK_TIMING:", FlextConstants.Logging.TRACK_TIMING)
+        print("  STRUCTURED_OUTPUT:", FlextCore.Constants.Logging.STRUCTURED_OUTPUT)
+        print("  TRACK_PERFORMANCE:", FlextCore.Constants.Logging.TRACK_PERFORMANCE)
+        print("  TRACK_TIMING:", FlextCore.Constants.Logging.TRACK_TIMING)
 
-        # Log with FlextConstants configuration
+        # Log with FlextCore.Constants configuration
         logger.info(
-            "Logging with FlextConstants configuration",
+            "Logging with FlextCore.Constants configuration",
             extra={
-                "log_level": FlextConstants.Logging.DEFAULT_LEVEL,
-                "structured": FlextConstants.Logging.STRUCTURED_OUTPUT,
-                "performance_tracking": FlextConstants.Logging.TRACK_PERFORMANCE,
+                "log_level": FlextCore.Constants.Logging.DEFAULT_LEVEL,
+                "structured": FlextCore.Constants.Logging.STRUCTURED_OUTPUT,
+                "performance_tracking": FlextCore.Constants.Logging.TRACK_PERFORMANCE,
             },
         )
 
-        print("✅ FlextConstants.Logging integration demonstrated")
+        print("✅ FlextCore.Constants.Logging integration demonstrated")
 
     def demonstrate_flext_runtime_integration(self) -> None:
-        """Show FlextRuntime (Layer 0.5) logging defaults."""
-        print("\n=== FlextRuntime Integration (Layer 0.5) ===")
+        """Show FlextCore.Runtime (Layer 0.5) logging defaults."""
+        print("\n=== FlextCore.Runtime Integration (Layer 0.5) ===")
 
         logger = FlextCore.Logger(__name__)
 
-        # FlextRuntime logging defaults
-        print("FlextRuntime logging configuration defaults:")
-        print(f"  DEFAULT_LOG_LEVEL: {FlextConstants.Logging.DEFAULT_LEVEL}")
-        print(f"  LOG_LEVEL_DEBUG: {FlextConstants.Logging.DEBUG}")
-        print(f"  LOG_LEVEL_INFO: {FlextConstants.Logging.INFO}")
-        print(f"  LOG_LEVEL_WARNING: {FlextConstants.Logging.WARNING}")
-        print(f"  LOG_LEVEL_ERROR: {FlextConstants.Logging.ERROR}")
-        print(f"  LOG_LEVEL_CRITICAL: {FlextConstants.Logging.CRITICAL}")
+        # FlextCore.Runtime logging defaults
+        print("FlextCore.Runtime logging configuration defaults:")
+        print(f"  DEFAULT_LOG_LEVEL: {FlextCore.Constants.Logging.DEFAULT_LEVEL}")
+        print(f"  LOG_LEVEL_DEBUG: {FlextCore.Constants.Logging.DEBUG}")
+        print(f"  LOG_LEVEL_INFO: {FlextCore.Constants.Logging.INFO}")
+        print(f"  LOG_LEVEL_WARNING: {FlextCore.Constants.Logging.WARNING}")
+        print(f"  LOG_LEVEL_ERROR: {FlextCore.Constants.Logging.ERROR}")
+        print(f"  LOG_LEVEL_CRITICAL: {FlextCore.Constants.Logging.CRITICAL}")
 
         # Numeric logging levels
         print(f"  LOG_LEVEL_NUM_INFO: {20}")  # INFO level
         print(f"  LOG_LEVEL_NUM_ERROR: {40}")  # ERROR level
 
-        # Log with FlextRuntime defaults
+        # Log with FlextCore.Runtime defaults
         logger.info(
-            "Logging with FlextRuntime defaults",
+            "Logging with FlextCore.Runtime defaults",
             extra={
-                "default_level": FlextConstants.Logging.DEFAULT_LEVEL,
+                "default_level": FlextCore.Constants.Logging.DEFAULT_LEVEL,
                 "level_numeric": 20,  # INFO level
             },
         )
 
-        # Validate log level using FlextRuntime
+        # Validate log level using FlextCore.Runtime
         test_level = "INFO"
         level_valid = test_level in {
-            FlextConstants.Logging.DEBUG,
-            FlextConstants.Logging.INFO,
-            FlextConstants.Logging.WARNING,
-            FlextConstants.Logging.ERROR,
-            FlextConstants.Logging.CRITICAL,
+            FlextCore.Constants.Logging.DEBUG,
+            FlextCore.Constants.Logging.INFO,
+            FlextCore.Constants.Logging.WARNING,
+            FlextCore.Constants.Logging.ERROR,
+            FlextCore.Constants.Logging.CRITICAL,
         }
         print(f"✅ Log level '{test_level}' is valid: {level_valid}")
 
     def demonstrate_flext_exceptions_integration(self) -> None:
-        """Show FlextExceptions (Layer 2) with logging."""
-        print("\n=== FlextExceptions Integration (Layer 2) ===")
+        """Show FlextCore.Exceptions (Layer 2) with logging."""
+        print("\n=== FlextCore.Exceptions Integration (Layer 2) ===")
 
         logger = FlextCore.Logger(__name__)
 
         # Log ValidationError with structured exception info
         try:
             invalid_level = "INVALID_LEVEL"
-            if invalid_level not in FlextConstants.Logging.VALID_LEVELS:
+            if invalid_level not in FlextCore.Constants.Logging.VALID_LEVELS:
                 error_message = "Invalid log level configuration"
-                raise FlextExceptions.ValidationError(
+                raise FlextCore.Exceptions.ValidationError(
                     error_message,
                     field="log_level",
                     value=invalid_level,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
                 )
-        except FlextExceptions.ValidationError as e:
+        except FlextCore.Exceptions.ValidationError as e:
             logger.exception(
                 "Validation error in logging configuration",
                 extra={
@@ -750,12 +749,12 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
             error_message = (
                 "Failed to configure file logging handler: /invalid/path/log.txt"
             )
-            raise FlextExceptions.ConfigurationError(
+            raise FlextCore.Exceptions.ConfigurationError(
                 error_message,
                 config_key="log_file",
                 config_source=".env",
             )
-        except FlextExceptions.ConfigurationError as e:
+        except FlextCore.Exceptions.ConfigurationError as e:
             logger.exception(
                 "Configuration error in logging setup",
                 extra={
@@ -771,16 +770,16 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         # Log with comprehensive error context
         try:
             error_message = "Complex logging operation failed"
-            raise FlextExceptions.BaseError(
+            raise FlextCore.Exceptions.BaseError(
                 error_message,
-                error_code=FlextConstants.Errors.UNKNOWN_ERROR,
+                error_code=FlextCore.Constants.Errors.UNKNOWN_ERROR,
                 metadata={
                     "operation": "file_logging",
                     "handler": "RotatingFileHandler",
                     "max_bytes": 10485760,
                 },
             )
-        except FlextExceptions.BaseError as e:
+        except FlextCore.Exceptions.BaseError as e:
             logger.critical(
                 "Critical logging failure",
                 extra={
@@ -807,13 +806,13 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         print("print('Debug:', variable)")
         print("print(f'Error: {error}')")
 
-        print("\n✅ CORRECT WAY (FlextLogger):")
+        print("\n✅ CORRECT WAY (FlextCore.Logger):")
         print("logger = FlextCore.Logger(__name__)")
         print("logger.debug('Debug info', extra={'variable': variable})")
 
         # OLD: Basic logging module (DEPRECATED)
         warnings.warn(
-            "Basic logging module is DEPRECATED! Use FlextLogger for structured logging.",
+            "Basic logging module is DEPRECATED! Use FlextCore.Logger for structured logging.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -821,9 +820,9 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         print("import logging")
         print("logging.info('Message')")
 
-        print("\n✅ CORRECT WAY (FlextLogger):")
-        print("\n✅ CORRECT WAY (FlextLogger):")
-        print("from flext_core import Flext")
+        print("\n✅ CORRECT WAY (FlextCore.Logger):")
+        print("\n✅ CORRECT WAY (FlextCore.Logger):")
+        print("from flext_core import FlextCore.Constants")
         print("logger = FlextCore.Logger(__name__)")
         print("logger.info('Message', extra={'context': 'data'})")
 
@@ -841,7 +840,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextLogger capabilities."""
+    """Main entry point demonstrating all FlextCore.Logger capabilities."""
     service = ComprehensiveLoggingService()
 
     print("=" * 60)
@@ -873,7 +872,7 @@ def main() -> None:
     service.demonstrate_flext_runtime_integration()
     service.demonstrate_flext_exceptions_integration()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_from_callable()
     service.demonstrate_flow_through()
     service.demonstrate_lash()
@@ -884,12 +883,12 @@ def main() -> None:
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 60)
-    print("✅ ALL FlextLogger methods demonstrated!")
+    print("✅ ALL FlextCore.Logger methods demonstrated!")
     print(
         "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
     )
     print(
-        "🔧 Including foundation integration: FlextConstants.Logging, FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)"
+        "🔧 Including foundation integration: FlextCore.Constants.Logging, FlextCore.Runtime (Layer 0.5), FlextCore.Exceptions (Layer 2)"
     )
     print("🎯 Next: See 06_*.py for intermediate patterns")
     print("=" * 60)
