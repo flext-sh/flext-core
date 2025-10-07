@@ -72,7 +72,8 @@ class TestFlextProcessors:
         processors.register("test_processor", test_processor)
         result = processors.process("test_processor", "test_data")
         assert result.is_success
-        assert isinstance(result.data, str) and "processed_test_data" in result.data
+        assert isinstance(result.data, str)
+        assert "processed_test_data" in result.data
 
     def test_processors_process_nonexistent_processor(self) -> None:
         """Test processing with non-existent processor."""
@@ -80,10 +81,8 @@ class TestFlextProcessors:
 
         result = processors.process("nonexistent_processor", "test_data")
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Processor 'nonexistent_processor' not found" in result.error
-        )
+        assert result.error is not None
+        assert "Processor 'nonexistent_processor' not found" in result.error
 
     def test_processors_process_with_failing_processor(self) -> None:
         """Test processing with failing processor."""
@@ -95,7 +94,8 @@ class TestFlextProcessors:
         processors.register("test_processor", failing_processor)
         result = processors.process("test_processor", "test_data")
         assert result.is_failure
-        assert result.error is not None and "Processor failed" in result.error
+        assert result.error is not None
+        assert "Processor failed" in result.error
 
     def test_processors_process_with_exception(self) -> None:
         """Test processing with exception."""
@@ -108,7 +108,8 @@ class TestFlextProcessors:
         processors.register("test_processor", exception_processor)
         result = processors.process("test_processor", "test_data")
         assert result.is_failure
-        assert result.error is not None and "Processor exception" in result.error
+        assert result.error is not None
+        assert "Processor exception" in result.error
 
     def test_processors_process_with_retry(self) -> None:
         """Test processing with retry mechanism."""
@@ -120,7 +121,8 @@ class TestFlextProcessors:
         processors.register("test_processor", retry_processor)
         result = processors.process("test_processor", "test_data")
         assert result.is_success
-        assert isinstance(result.data, str) and "processed_data" in result.data
+        assert isinstance(result.data, str)
+        assert "processed_data" in result.data
 
     def test_processors_process_with_timeout(self) -> None:
         """Test processing with timeout."""
@@ -151,7 +153,8 @@ class TestFlextProcessors:
         # Invalid data
         result = processors.process("test_processor", "")
         assert result.is_failure
-        assert result.error is not None and "Data is required" in result.error
+        assert result.error is not None
+        assert "Data is required" in result.error
 
     def test_processors_process_with_middleware(self) -> None:
         """Test processing with middleware."""
@@ -281,7 +284,8 @@ class TestFlextProcessors:
         # Exceed rate limit
         result = processors.process("test_processor", "test3")
         assert result.is_failure
-        assert result.error is not None and "rate limit" in result.error.lower()
+        assert result.error is not None
+        assert "rate limit" in result.error.lower()
 
     def test_processors_process_with_caching(self) -> None:
         """Test processing with caching."""
@@ -346,7 +350,8 @@ class TestFlextProcessors:
 
         result = processors.process("test_processor", "test_data")
         assert result.is_failure
-        assert result.error is not None and "Processor error" in result.error
+        assert result.error is not None
+        assert "Processor error" in result.error
 
     def test_processors_process_with_cleanup(self) -> None:
         """Test processing with cleanup."""
@@ -411,10 +416,8 @@ class TestFlextProcessors:
 
         stats = processors.get_statistics()
         assert "metrics" in stats
-        assert (
-            isinstance(stats["metrics"], dict)
-            and stats["metrics"]["successful_processes"] >= 1
-        )
+        assert isinstance(stats["metrics"], dict)
+        assert stats["metrics"]["successful_processes"] >= 1
 
     def test_processors_thread_safety(self) -> None:
         """Test processors thread safety."""
@@ -426,7 +429,7 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        results: list[FlextResult[str]] = []
+        results: list[FlextResult[object]] = []
 
         def process_data(thread_id: int) -> None:
             result = processors.process("test_processor", f"data_{thread_id}")
@@ -476,7 +479,8 @@ class TestFlextProcessors:
 
         result = processors.process("test_processor", "test_data")
         assert result.is_failure
-        assert result.error is not None and "Processor error" in result.error
+        assert result.error is not None
+        assert "Processor error" in result.error
 
     def test_processors_validation(self) -> None:
         """Test processors validation."""
@@ -517,7 +521,8 @@ class TestFlextProcessors:
         new_processors.register("test_processor", test_processor_2)
         result = new_processors.process("test_processor", "test_data")
         assert result.is_success
-        assert isinstance(result.data, str) and "processed_test_data" in result.data
+        assert isinstance(result.data, str)
+        assert "processed_test_data" in result.data
 
     def test_processors_cleanup(self) -> None:
         """Test processors cleanup."""

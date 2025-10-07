@@ -1,15 +1,26 @@
-"""Centralized type system for FLEXT ecosystem with Python 3.13+ patterns.
+"""Layer 0: Centralized type system for the entire FLEXT ecosystem.
 
-This module provides the complete type system for the FLEXT ecosystem,
-centralizing all TypeVars and type aliases in a single location following
-strict Flext standards and Clean Architecture principles.
+This module provides the complete type system that ALL other flext_core modules depend on.
+As Layer 0 (pure Python), it has ZERO dependencies on other flext_core modules,
+making it safe to import from anywhere without circular dependency risks.
 
-Key Principles:
-- Single source of truth for all types
-- Python 3.13+ syntax with modern union types
-- Pydantic 2 patterns and validation
-- No wrappers, aliases, or legacy patterns
-- Centralized TypeVars exported as public API
+**ARCHITECTURE HIERARCHY**:
+- Layer 0: constants.py, typings.py (pure Python, no flext_core imports)
+- Layer 0.5: runtime.py (imports Layer 0, exposes external libraries)
+- Layer 1+: All other modules (import Layer 0 and 0.5)
+
+**KEY FEATURES**:
+- 80+ TypeVars for generic programming with proper variance
+- Core fundamental types (Dict, List, Headers) with Python 3.13+ patterns
+- Configuration types with modern union syntax (X | Y)
+- Message types for CQRS patterns with proper covariance
+- Handler types for command/query patterns with contravariance
+- Service and Protocol types for domain-driven design
+- Async types for coroutines and generators
+- Error handling types for railway pattern
+
+**DEPENDENCIES**: ZERO flext_core imports (pure Python stdlib only)
+**USED BY**: ALL flext_core modules and 32+ ecosystem projects
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,33 +42,37 @@ from typing import (
 
 
 class FlextTypes:
-    """Centralized type system namespace for the FLEXT ecosystem.
+    """Centralized type system namespace for the FLEXT ecosystem (Layer 0).
 
-    FLEXT-CORE OPTIMIZATION PATTERNS DEMONSTRATED:
+    FlextTypes provides the single source of truth for all type definitions
+    across the entire FLEXT ecosystem. As Layer 0, this module has ZERO
+    dependencies on other flext_core modules, making it safe to import
+    from anywhere without circular dependency risks.
 
-    🚀 NAMESPACE CLASS PATTERN
-    Single unified class with nested specialized namespaces AND centralized TypeVars:
-    All 80+ TypeVars defined as class attributes for strict module organization
-    Nested namespaces for specialized type groups (Core, Async, ErrorHandling, etc.)
-    No loose TypeVar definitions outside the class
+    **ARCHITECTURE ROLE**: Layer 0 - Pure Python Foundation
+        - NO dependencies on other flext_core modules
+        - Imported by ALL higher-level modules (result, models, handlers, etc.)
+        - Foundation for 32+ dependent ecosystem projects
+        - Provides 80+ TypeVars with proper variance annotations
 
-    **Function**: Type definitions for ecosystem-wide consistency
+    **PROVIDES**:
         - Core fundamental types (Dict, List, Headers) with Python 3.13+ patterns
-        - Configuration types (ConfigValue, ConfigDict) with modern syntax
-        - JSON types with Python 3.13+ union syntax (X | Y)
-        - Message types for CQRS patterns with proper variance
+        - Configuration types (ConfigValue, ConfigDict) with modern union syntax
+        - JSON types with Python 3.13+ syntax (X | Y instead of Union[X, Y])
+        - Message types for CQRS patterns with proper covariance
         - Handler types for command/query handlers with contravariant inputs
         - Service types for domain services with covariant outputs
         - Protocol types for interface definitions
-        - Plugin types for extensibility
-        - Generic type variables with 40+ specialized variants
-        - Covariant and contravariant type variables for type safety
+        - Plugin types for extensibility patterns
+        - Error handling types for railway pattern (FlextResult)
+        - Async types for coroutines and generators
 
-    **Uses**: Modern Python type system infrastructure
+    **PATTERN**: Namespace class with 80+ TypeVars as class attributes
         - typing.TypeVar for generic type variables with variance
         - typing.ParamSpec for parameter specifications
         - typing.Literal for literal type hints
         - collections.abc.Callable and Awaitable for callable types
+        - Pure Python stdlib only (no external dependencies)
         - Python 3.13+ union syntax (X | Y) for modern type expressions
         - Modern type aliases with type keyword
         - Covariant and contravariant variance for type safety
@@ -537,6 +552,141 @@ class FlextTypes:
         type ServiceStatus = dict[str, LifecycleState | ServiceMetrics | ServiceHealth]
 
     # =========================================================================
+    # CONTEXT TYPES - Context management patterns
+    # =========================================================================
+
+    class Context:
+        """Context management types for FlextContext operations.
+
+        This namespace provides types for context scopes, correlation IDs,
+        context dictionaries, and context export operations aligned with
+        FlextConstants.Context configuration.
+
+        Examples:
+            Context scope definitions:
+
+            >>> scope: FlextTypes.Context.Scope = "request"
+            >>> correlation_id: FlextTypes.Context.CorrelationId = "flext-abc123def456"
+
+            Context data structures:
+
+            >>> context_data: FlextTypes.Context.Dict = {
+            ...     "user_id": "user-123",
+            ...     "request_id": "req-456",
+            ...     "timestamp": 1234567890,
+            ... }
+
+            Context export formats:
+
+            >>> export_format: FlextTypes.Context.ExportFormat = "json"
+
+        """
+
+        # Scope types (aligned with FlextConstants.Context scope literals)
+        type Scope = Literal["global", "request", "session", "transaction"]
+
+        # Correlation ID type (aligned with FlextConstants.Context correlation config)
+        type CorrelationId = str
+
+        # Context value types (support multiple primitive types)
+        type ContextValue = str | int | float | bool | None
+        type ContextDict = dict[str, FlextTypes.Context.ContextValue]
+
+        # Context metadata types
+        type ContextMetadata = dict[str, str | int | float]
+        type ContextTimestamp = int  # Milliseconds since epoch
+
+        # Context export types (aligned with FlextConstants.Context export formats)
+        type ExportFormat = Literal["json", "dict"]
+        type ExportedContext = dict[str, object] | str
+
+        # Context depth and size types (aligned with FlextConstants.Context limits)
+        type ContextDepth = int
+        type ContextSize = int
+
+        # Scope management types (for nested context scopes)
+        type ScopeRegistry = dict[str, FlextTypes.Dict]
+
+        # Context hooks types (for context lifecycle hooks)
+        type HookFunc = Callable[..., object]
+        type HookList = list[FlextTypes.Context.HookFunc]
+        type HookRegistry = dict[str, FlextTypes.Context.HookList]
+
+    # =========================================================================
+    # UTILITIES TYPES - Utility function patterns
+    # =========================================================================
+
+    class Utilities:
+        """Utility function types for FlextUtilities operations.
+
+        This namespace provides types for validation, caching, secret generation,
+        string/number processing, and collection operations aligned with
+        FlextConstants.Utilities configuration.
+
+        Examples:
+            Validation types:
+
+            >>> validation_result: FlextTypes.Utilities.ValidationResult = True
+            >>> validation_error: FlextTypes.Utilities.ValidationError = "Invalid input"
+
+            Cache types:
+
+            >>> cache_key: FlextTypes.Utilities.CacheKey = "user:123"
+            >>> cache_value: FlextTypes.Utilities.CacheValue = {"name": "John"}
+            >>> cache_ttl: FlextTypes.Utilities.CacheTTL = 300
+
+            Secret generation:
+
+            >>> secret: FlextTypes.Utilities.SecretString = "abc123def456..."
+            >>> secret_length: FlextTypes.Utilities.SecretLength = 32
+
+            String/number processing:
+
+            >>> encoding: FlextTypes.Utilities.Encoding = "utf-8"
+            >>> decimal_places: FlextTypes.Utilities.DecimalPlaces = 2
+
+            Collection operations:
+
+            >>> batch_size: FlextTypes.Utilities.BatchSize = 100
+            >>> collection_size: FlextTypes.Utilities.CollectionSize = 1000
+
+        """
+
+        # Validation types
+        type ValidationResult = bool
+        type ValidationError = str | None
+        type ValidationReport = dict[str, FlextTypes.Utilities.ValidationError]
+
+        # Cache types (aligned with FlextConstants.Utilities cache config)
+        type CacheKey = str
+        type CacheValue = object
+        type CacheTTL = int  # Time-to-live in seconds
+        type CacheSize = int
+
+        # Secret generation types (aligned with FlextConstants.Utilities secret config)
+        type SecretString = str
+        type SecretLength = int
+        type SecretBytes = bytes
+
+        # String processing types (aligned with FlextConstants.Utilities string config)
+        type Encoding = str
+        type StringLength = int
+        type ProcessedString = str
+
+        # Number processing types (aligned with FlextConstants.Utilities decimal config)
+        type DecimalPlaces = int
+        type ProcessedNumber = int | float
+
+        # Collection types (aligned with FlextConstants.Utilities collection limits)
+        type BatchSize = int
+        type CollectionSize = int
+        type CollectionIndex = int
+
+        # Timeout types (aligned with FlextConstants.Utilities timeout config)
+        type TimeoutSeconds = int
+        type OperationTimeout = int
+
+    # =========================================================================
     # CONFIG TYPES - Configuration and settings
     # =========================================================================
 
@@ -828,154 +978,150 @@ class FlextTypes:
         # Performance metrics
         type PerformanceMetrics = dict[str, dict[str, int | float]]
 
-    # =========================================================================
-    # CONTEXT TYPES - Context and scope management (NEW)
-    # =========================================================================
 
-    class Context:
-        """Context and scope management types for cross-cutting concerns.
+# =============================================================================
+# BACKWARD COMPATIBILITY EXPORTS - Direct access to TypeVars
+# =============================================================================
 
-        This namespace provides types for managing execution context, scopes,
-        and context propagation across service boundaries.
+# Core TypeVars
+T = FlextTypes.T
+T_co = FlextTypes.T_co
+T_contra = FlextTypes.T_contra
+U = FlextTypes.U
+V = FlextTypes.V
+W = FlextTypes.W
 
-        Examples:
-            Nested scope context:
+# Specialized TypeVars
+E = FlextTypes.E
+F = FlextTypes.F
+K = FlextTypes.K
+R = FlextTypes.R
+P = FlextTypes.P
 
-            >>> scopes: FlextTypes.Context.ScopeRegistry = {
-            ...     "global": {"user_id": "123", "tenant": "acme"},
-            ...     "request": {"request_id": "abc", "path": "/api/users"},
-            ... }
+# Message/CQRS TypeVars
+Message = FlextTypes.Message
+Command = FlextTypes.Command
+Query = FlextTypes.Query
+Event = FlextTypes.Event
+MessageT = FlextTypes.MessageT
+MessageT_contra = FlextTypes.MessageT_contra
+ResultT = FlextTypes.ResultT
+TCommand = FlextTypes.TCommand
+TEvent = FlextTypes.TEvent
+TQuery = FlextTypes.TQuery
+TCommand_contra = FlextTypes.TCommand_contra
+TEvent_contra = FlextTypes.TEvent_contra
+TQuery_contra = FlextTypes.TQuery_contra
 
-            Context hooks:
-
-            >>> hooks: FlextTypes.Context.HookRegistry = {
-            ...     "before_request": [validate_hook, auth_hook],
-            ...     "after_request": [log_hook, metrics_hook],
-            ... }
-
-        """
-
-        # Scope management
-        type ScopeRegistry = dict[str, FlextTypes.Dict]
-
-        # Context hooks
-        type HookFunc = Callable[..., object]
-        type HookList = list[FlextTypes.Context.HookFunc]
-        type HookRegistry = dict[str, FlextTypes.Context.HookList]
-
-
-# Module level exports for backward compatibility (temporary - to be removed)
-
+# Generic TypeVars with variance
 T1 = FlextTypes.T1
 T2 = FlextTypes.T2
 T3 = FlextTypes.T3
-Command = FlextTypes.Command
-E = FlextTypes.E
-Event = FlextTypes.Event
-F = FlextTypes.F
-K = FlextTypes.K
-Message = FlextTypes.Message
-MessageT = FlextTypes.MessageT
-MessageT_contra = FlextTypes.MessageT_contra
-Query = FlextTypes.Query
-R = FlextTypes.R
-ResultT = FlextTypes.ResultT
-T = FlextTypes.T
 T1_co = FlextTypes.T1_co
 T2_co = FlextTypes.T2_co
 T3_co = FlextTypes.T3_co
-TAccumulate = FlextTypes.TAccumulate
-TAggregate = FlextTypes.TAggregate
-TAggregate_co = FlextTypes.TAggregate_co
+TItem = FlextTypes.TItem
+TItem_contra = FlextTypes.TItem_contra
+TResult = FlextTypes.TResult
+TResult_co = FlextTypes.TResult_co
+TResult_contra = FlextTypes.TResult_contra
+TUtil = FlextTypes.TUtil
+TUtil_contra = FlextTypes.TUtil_contra
+
+# Async/Concurrent TypeVars
 TAsync = FlextTypes.TAsync
 TAsync_co = FlextTypes.TAsync_co
 TAwaitable = FlextTypes.TAwaitable
-TCacheKey = FlextTypes.TCacheKey
-TCacheKey_contra = FlextTypes.TCacheKey_contra
-TCacheValue = FlextTypes.TCacheValue
-TCacheValue_co = FlextTypes.TCacheValue_co
-TClient = FlextTypes.TClient
-TClient_co = FlextTypes.TClient_co
-TCommand = FlextTypes.TCommand
-TCommand_contra = FlextTypes.TCommand_contra
 TConcurrent = FlextTypes.TConcurrent
+TParallel = FlextTypes.TParallel
+TSync = FlextTypes.TSync
+UParallel = FlextTypes.UParallel
+UResource = FlextTypes.UResource
+
+# Data/Processing TypeVars
+TData = FlextTypes.TData
+TData_co = FlextTypes.TData_co
+TProcessor = FlextTypes.TProcessor
+TPipeline = FlextTypes.TPipeline
+TTransform = FlextTypes.TTransform
+TTransform_co = FlextTypes.TTransform_co
+
+# Error/Exception TypeVars
+TError = FlextTypes.TError
+TError_co = FlextTypes.TError_co
+TException = FlextTypes.TException
+TException_co = FlextTypes.TException_co
+
+# Configuration TypeVars
 TConfig = FlextTypes.TConfig
+TConfig_co = FlextTypes.TConfig_co
+TSettings = FlextTypes.TSettings
+TSettings_co = FlextTypes.TSettings_co
 TConfigKey = FlextTypes.TConfigKey
 TConfigKey_contra = FlextTypes.TConfigKey_contra
 TConfigValue = FlextTypes.TConfigValue
 TConfigValue_co = FlextTypes.TConfigValue_co
-TConfig_co = FlextTypes.TConfig_co
-TData = FlextTypes.TData
-TData_co = FlextTypes.TData_co
+
+# Service/Client TypeVars
+TService = FlextTypes.TService
+TService_co = FlextTypes.TService_co
+TClient = FlextTypes.TClient
+TClient_co = FlextTypes.TClient_co
+
+# Domain TypeVars
 TDomainEvent = FlextTypes.TDomainEvent
 TDomainEvent_co = FlextTypes.TDomainEvent_co
 TEntity = FlextTypes.TEntity
 TEntity_co = FlextTypes.TEntity_co
-TError = FlextTypes.TError
-TError_co = FlextTypes.TError_co
-TEvent = FlextTypes.TEvent
-TEvent_contra = FlextTypes.TEvent_contra
-TException = FlextTypes.TException
-TException_co = FlextTypes.TException_co
-TInput_contra = FlextTypes.TInput_contra
-TItem = FlextTypes.TItem
-TItem_contra = FlextTypes.TItem_contra
-TKey = FlextTypes.TKey
-TKey_contra = FlextTypes.TKey_contra
-TMessage = FlextTypes.TMessage
-TParallel = FlextTypes.TParallel
-TPipeline = FlextTypes.TPipeline
-TPlugin = FlextTypes.TPlugin
-TPluginConfig = FlextTypes.TPluginConfig
-TProcessor = FlextTypes.TProcessor
-TQuery = FlextTypes.TQuery
-TQuery_contra = FlextTypes.TQuery_contra
-TResource = FlextTypes.TResource
-TResult = FlextTypes.TResult
-TResult_co = FlextTypes.TResult_co
-TResult_contra = FlextTypes.TResult_contra
-TService = FlextTypes.TService
-TService_co = FlextTypes.TService_co
-TSettings = FlextTypes.TSettings
-TSettings_co = FlextTypes.TSettings_co
+
+# State/Messaging TypeVars
 TState = FlextTypes.TState
 TState_co = FlextTypes.TState_co
-TSync = FlextTypes.TSync
+TInput_contra = FlextTypes.TInput_contra
+TMessage = FlextTypes.TMessage
+
+# Cache/Resource TypeVars
+TCacheKey = FlextTypes.TCacheKey
+TCacheKey_contra = FlextTypes.TCacheKey_contra
+TCacheValue = FlextTypes.TCacheValue
+TCacheValue_co = FlextTypes.TCacheValue_co
+TResource = FlextTypes.TResource
 TTimeout = FlextTypes.TTimeout
-TTransform = FlextTypes.TTransform
-TTransform_co = FlextTypes.TTransform_co
-TUtil = FlextTypes.TUtil
-TUtil_contra = FlextTypes.TUtil_contra
 TValue = FlextTypes.TValue
-TValueObject_co = FlextTypes.TValueObject_co
 TValue_co = FlextTypes.TValue_co
-T_co = FlextTypes.T_co
-T_contra = FlextTypes.T_contra
-U = FlextTypes.U
-UParallel = FlextTypes.UParallel
-UResource = FlextTypes.UResource
-V = FlextTypes.V
-W = FlextTypes.W
-P = FlextTypes.P
+TValueObject_co = FlextTypes.TValueObject_co
+TKey = FlextTypes.TKey
+TKey_contra = FlextTypes.TKey_contra
+
+# Plugin/Aggregate TypeVars
+TPlugin = FlextTypes.TPlugin
+TPluginConfig = FlextTypes.TPluginConfig
+TAggregate = FlextTypes.TAggregate
+TAggregate_co = FlextTypes.TAggregate_co
+TAccumulate = FlextTypes.TAccumulate
+
 
 __all__: list[str] = [
-    # TypeVars for backward compatibility
+    # Generic TypeVars with variance
     "T1",
     "T2",
     "T3",
     "Command",
+    # Specialized TypeVars
     "E",
     "Event",
     "F",
+    # Core type system
     "FlextTypes",
     "K",
+    # Message/CQRS TypeVars
     "Message",
     "MessageT",
     "MessageT_contra",
-    "P",
     "Query",
     "R",
     "ResultT",
+    # Core TypeVars
     "T",
     "T1_co",
     "T2_co",
@@ -983,9 +1129,11 @@ __all__: list[str] = [
     "TAccumulate",
     "TAggregate",
     "TAggregate_co",
+    # Async/Concurrent TypeVars
     "TAsync",
     "TAsync_co",
     "TAwaitable",
+    # Cache/Resource TypeVars
     "TCacheKey",
     "TCacheKey_contra",
     "TCacheValue",
@@ -995,18 +1143,22 @@ __all__: list[str] = [
     "TCommand",
     "TCommand_contra",
     "TConcurrent",
+    # Configuration TypeVars
     "TConfig",
     "TConfigKey",
     "TConfigKey_contra",
     "TConfigValue",
     "TConfigValue_co",
     "TConfig_co",
+    # Data/Processing TypeVars
     "TData",
     "TData_co",
+    # Domain TypeVars
     "TDomainEvent",
     "TDomainEvent_co",
     "TEntity",
     "TEntity_co",
+    # Error/Exception TypeVars
     "TError",
     "TError_co",
     "TEvent",
@@ -1021,6 +1173,7 @@ __all__: list[str] = [
     "TMessage",
     "TParallel",
     "TPipeline",
+    # Plugin/Aggregate TypeVars
     "TPlugin",
     "TPluginConfig",
     "TProcessor",
@@ -1030,10 +1183,12 @@ __all__: list[str] = [
     "TResult",
     "TResult_co",
     "TResult_contra",
+    # Service/Client TypeVars
     "TService",
     "TService_co",
     "TSettings",
     "TSettings_co",
+    # State/Messaging TypeVars
     "TState",
     "TState_co",
     "TSync",

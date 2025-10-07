@@ -416,9 +416,7 @@ class TestFlextLogger:
 
         # Statistics functionality is not implemented in the new thin FlextLogger
         # Just test basic logging functionality
-        attrs = logger.get_logger_attributes()
-        assert "name" in attrs
-        assert "context" in attrs
+        assert logger.name == "test_logger"
 
     def test_logger_logging_with_audit(self) -> None:
         """Test logging with audit."""

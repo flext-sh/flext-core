@@ -27,20 +27,23 @@ from typing import cast
 from uuid import uuid4
 
 from flext_core import (
-    Flext,
     FlextConstants,
+    FlextCore,
     FlextExceptions,
     FlextLogger,
+    FlextResult,
     FlextRuntime,
+    FlextService,
+    FlextTypes,
 )
 
 from .example_scenarios import ExampleScenarios
 
 
-class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
+class MessagingPatternsService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL messaging and event patterns with FlextMixins.Service infrastructure.
 
-    This service inherits from Flext.Service to demonstrate:
+    This service inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextContainer singleton)
     - Inherited logger property (FlextLogger with service context - MESSAGING FOCUS!)
     - Inherited context property (FlextContext for request/correlation tracking)
@@ -56,7 +59,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         """Initialize with inherited FlextMixins.Service infrastructure.
 
         Note: No manual logger initialization needed!
-        All infrastructure is inherited from Flext.Service base class:
+        All infrastructure is inherited from FlextCore.Service base class:
         - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
         - self.container: FlextContainer global singleton
         - self.context: FlextContext for correlation and request tracking
@@ -65,12 +68,16 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         """
         super().__init__()
         # Use self.logger from FlextMixins.Logging, not logger
-        self._event_store: list[Flext.Models.DomainEvent] = []
-        self._message_queue: list[Flext.Models.Payload[Flext.Types.Dict]] = []
+        self._event_store: list[FlextCore.Models.DomainEvent] = []
+        self._message_queue: list[FlextCore.Models.Payload[FlextTypes.Dict]] = []
         self._scenarios = ExampleScenarios()
         self._metadata = self._scenarios.metadata(tags=["messaging", "demo"])
-        # Filter out incompatible metadata fields for Payload models
-        self._safe_metadata = {k: v for k, v in self._metadata.items() if k != "tags"}
+        # Filter out incompatible metadata fields for Payload models and ensure type compatibility
+        self._safe_metadata: dict[str, str | int | float] = {
+            k: v
+            for k, v in self._metadata.items()
+            if k != "tags" and isinstance(v, (str, int, float))
+        }
         self._user = self._scenarios.user()
         self._users = self._scenarios.users()
         self._order = self._scenarios.realistic_data()["order"]
@@ -88,7 +95,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
             },
         )
 
-    def execute(self) -> Flext.Result[Flext.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute all messaging and event pattern demonstrations.
 
         Demonstrates inherited infrastructure alongside messaging patterns:
@@ -133,7 +140,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
             # Deprecation warnings
             self.demonstrate_deprecated_patterns()
 
-            summary = {
+            summary: dict[str, object] = {
                 "demonstrations_completed": 17,
                 "events_stored": len(self._event_store),
                 "messages_queued": len(self._message_queue),
@@ -156,13 +163,13 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                 "Messaging patterns demonstration completed successfully", extra=summary
             )
 
-            return Flext.Result[Flext.Types.Dict].ok(summary)
+            return FlextResult[FlextTypes.Dict].ok(summary)
 
         except Exception as e:
             error_msg = f"Messaging patterns demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return Flext.Result[Flext.Types.Dict].fail(
-                error_msg, error_code=FlextConstants.Errors.SERVICE_ERROR
+            return FlextResult[FlextTypes.Dict].fail(
+                error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
             )
 
     def get_event_count(self) -> int:
@@ -179,29 +186,31 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         """Show basic payload creation and usage."""
         print("\n=== Basic Payload Patterns ===")
 
-        greeting_data: Flext.Types.Dict = {
+        greeting_data: FlextTypes.Dict = {
             "message": "Hello, FLEXT!",
             "source_service": "greeting_service",
             "message_type": "greeting",
             "user": self._user,
         }
-        greeting_payload = Flext.Models.Payload[Flext.Types.Dict](
+        greeting_payload = FlextCore.Models.Payload[FlextTypes.Dict](
             data=greeting_data,
             metadata={
                 **self._safe_metadata,
                 "timestamp": datetime.now(UTC).isoformat(),
-                "correlation_id": self._api_payload.get("request_id", str(uuid4())),
+                "correlation_id": str(
+                    self._api_payload.get("request_id", str(uuid4()))
+                ),
             },
         )
         data_dict = greeting_payload.data
         print(f"✅ Greeting: {data_dict.get('message')}")
         print(f"Source: {data_dict.get('source_service')}")
         print(f"Type: {data_dict.get('message_type')}")
-        user_data = cast("Flext.Types.Dict", data_dict.get("user", {}))
+        user_data = cast("FlextTypes.Dict", data_dict.get("user", {}))
         print(f"User email: {user_data.get('email')}")
         print(f"Timestamp: {greeting_payload.metadata.get('timestamp')}")
 
-        user_payload = Flext.Models.Payload[Flext.Types.Dict](
+        user_payload = FlextCore.Models.Payload[FlextTypes.Dict](
             data=self._user,
             metadata={
                 **self._safe_metadata,
@@ -227,7 +236,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         order_id = self._order["order_id"]
         total = float(self._order["total"])
 
-        create_order_command = Flext.Models.Payload[Flext.Types.Dict](
+        create_order_command = FlextCore.Models.Payload[FlextTypes.Dict](
             data={
                 "command": "CreateOrder",
                 "order_id": order_id,
@@ -241,7 +250,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                 "message_type": "command",
                 "command_type": "CreateOrder",
                 "correlation_id": str(uuid4()),
-                "user_id": self._user["id"],
+                "user_id": str(self._user["id"]),
             },
         )
         command_data = create_order_command.data
@@ -249,7 +258,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print(f"Order ID: {command_data['order_id']}")
         print(f"Total: ${command_data['total']}")
 
-        process_payment_command = Flext.Models.Payload[Flext.Types.Dict](
+        process_payment_command = FlextCore.Models.Payload[FlextTypes.Dict](
             data={
                 "command": "ProcessPayment",
                 "order_id": command_data["order_id"],
@@ -280,7 +289,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
 
         user_id = self._user["id"]
 
-        get_orders_query = Flext.Models.Payload[Flext.Types.Dict](
+        get_orders_query = FlextCore.Models.Payload[FlextTypes.Dict](
             data={
                 "query": "GetUserOrders",
                 "user_id": user_id,
@@ -289,7 +298,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "date_from": datetime.now(UTC).date().replace(day=1).isoformat(),
                     "date_to": datetime.now(UTC).date().isoformat(),
                 },
-                "pagination": Flext.Models.Pagination(page=1, size=20).model_dump(),
+                "pagination": FlextCore.Models.Pagination(page=1, size=20).model_dump(),
             },
             metadata={
                 **self._safe_metadata,
@@ -306,7 +315,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print(f"User: {query_data['user_id']}")
         print(f"Filters: {query_data['filters']}")
 
-        sales_report_query = Flext.Models.Payload[Flext.Types.Dict](
+        sales_report_query = FlextCore.Models.Payload[FlextTypes.Dict](
             data={
                 "query": "GenerateSalesReport",
                 "period": "monthly",
@@ -338,7 +347,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         aggregate_id = self._order["order_id"]
         order_total = str(self._order["total"])
 
-        order_created_event = Flext.Models.DomainEvent(
+        order_created_event = FlextCore.Models.DomainEvent(
             aggregate_id=aggregate_id,
             event_type="OrderCreated",
             data={
@@ -357,7 +366,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print(f"Aggregate: {order_created_event.aggregate_id}")
         print(f"Sequence: {order_created_event.metadata.get('sequence_number')}")
 
-        payment_processed_event = Flext.Models.DomainEvent(
+        payment_processed_event = FlextCore.Models.DomainEvent(
             aggregate_id=aggregate_id,
             event_type="PaymentProcessed",
             data={
@@ -375,13 +384,15 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print(f"\n✅ Payment event: {payment_processed_event.event_type}")
         print(f"Payment ID: {payment_processed_event.data['payment_id']}")
 
-        order_shipped_event = Flext.Models.DomainEvent(
+        order_shipped_event = FlextCore.Models.DomainEvent(
             aggregate_id=aggregate_id,
             event_type="OrderShipped",
             data={
                 "shipment_id": str(uuid4()),
                 "carrier": "FedEx",
-                "tracking_number": self._api_payload.get("request_id", "tracking-123"),
+                "tracking_number": str(
+                    self._api_payload.get("request_id", "tracking-123")
+                ),
                 "estimated_delivery": (
                     datetime.now(UTC) + timedelta(days=3)
                 ).isoformat(),
@@ -410,7 +421,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         user_aggregate_id = str(user_record["id"])
 
         events = [
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=user_aggregate_id,
                 event_type="UserRegistered",
                 data={
@@ -422,7 +433,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 1,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=user_aggregate_id,
                 event_type="EmailVerified",
                 data={"verified_at": datetime.now(UTC).isoformat()},
@@ -431,7 +442,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 2,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=user_aggregate_id,
                 event_type="ProfileUpdated",
                 data={
@@ -443,7 +454,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 3,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=user_aggregate_id,
                 event_type="RoleGranted",
                 data={"role": "premium_user", "granted_by": "REDACTED_LDAP_BIND_PASSWORD"},
@@ -454,7 +465,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
             ),
         ]
 
-        user_state: Flext.Types.Dict = {}
+        user_state: FlextTypes.Dict = {}
         for event in events:
             version = event.metadata.get("aggregate_version", 0)
             print(f"Processing: {event.event_type} (v{version})")
@@ -470,14 +481,14 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                 user_state.update(event.data)
             elif event.event_type == "RoleGranted":
                 roles_raw = user_state.get("roles", [])
-                roles: Flext.Types.StringList
+                roles: FlextCore.Types.StringList
                 if isinstance(roles_raw, list) and all(
                     isinstance(role, str) for role in roles_raw
                 ):
                     roles = list(roles_raw)
                 else:
                     roles = []
-                role = event.data["role"]
+                role: str = event.data["role"]
                 if isinstance(role, str):
                     roles.append(role)
                     user_state["roles"] = roles
@@ -497,7 +508,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print("\n=== Message Routing ===")
 
         messages = [
-            Flext.Models.Payload[Flext.Types.Dict](
+            FlextCore.Models.Payload[FlextTypes.Dict](
                 data={
                     "action": "send_email",
                     "to": self._user["email"],
@@ -512,7 +523,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "priority": 5,
                 },
             ),
-            Flext.Models.Payload[Flext.Types.Dict](
+            FlextCore.Models.Payload[FlextTypes.Dict](
                 data={
                     "action": "update_inventory",
                     "items": self._order["items"],
@@ -526,7 +537,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "priority": 8,
                 },
             ),
-            Flext.Models.Payload[Flext.Types.Dict](
+            FlextCore.Models.Payload[FlextTypes.Dict](
                 data={
                     "action": "calculate_shipping",
                     "weight": 2.5,
@@ -543,7 +554,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
             ),
         ]
 
-        routes: dict[str, list[Flext.Models.Payload[Flext.Types.Dict]]] = {}
+        routes: dict[str, list[FlextCore.Models.Payload[FlextTypes.Dict]]] = {}
         for msg in messages:
             target = msg.metadata.get("target_service", "unknown")
             if isinstance(target, str):
@@ -570,7 +581,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         correlation_id = str(uuid4())
         order_id = self._order["order_id"]
 
-        request_payload = Flext.Models.Payload[Flext.Types.Dict](
+        request_payload = FlextCore.Models.Payload[FlextTypes.Dict](
             data={
                 "operation": "process_order",
                 "order_id": order_id,
@@ -583,7 +594,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                 "message_type": "request",
                 "correlation_id": correlation_id,
                 "session_id": str(uuid4()),
-                "user_id": self._user["id"],
+                "user_id": str(self._user["id"]),
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
@@ -592,35 +603,35 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         request_data = request_payload.data
         print(f"Operation: {request_data['operation']}")
 
-        internal_messages: list[Flext.Models.Payload[Flext.Types.Dict]] = []
+        internal_messages: list[FlextCore.Models.Payload[FlextTypes.Dict]] = []
 
-        validation_msg = Flext.Models.Payload[Flext.Types.Dict](
+        validation_msg = FlextCore.Models.Payload[FlextTypes.Dict](
             data={"validate": "order", "order_id": order_id},
             metadata={
                 **self._safe_metadata,
                 "source_service": "order_service",
                 "message_type": "internal",
                 "correlation_id": correlation_id,
-                "parent_message_id": request_data["message_id"],
+                "parent_message_id": str(request_data["message_id"]),
                 "step": "validation",
             },
         )
         internal_messages.append(validation_msg)
 
-        payment_msg = Flext.Models.Payload[Flext.Types.Dict](
+        payment_msg = FlextCore.Models.Payload[FlextTypes.Dict](
             data={"process": "payment", "amount": request_data["amount"]},
             metadata={
                 **self._safe_metadata,
                 "source_service": "order_service",
                 "message_type": "internal",
                 "correlation_id": correlation_id,
-                "parent_message_id": request_data["message_id"],
+                "parent_message_id": str(request_data["message_id"]),
                 "step": "payment",
             },
         )
         internal_messages.append(payment_msg)
 
-        response_payload = Flext.Models.Payload[Flext.Types.Dict](
+        response_payload = FlextCore.Models.Payload[FlextTypes.Dict](
             data={
                 "status": "success",
                 "order_id": order_id,
@@ -657,7 +668,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         )
 
         events = [
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=account_id,
                 event_type="AccountOpened",
                 data={"initial_balance": 0, "currency": "USD"},
@@ -666,7 +677,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 1,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyDeposited",
                 data={"amount": order_total, "source": "order_payment"},
@@ -675,7 +686,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 2,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyWithdrawn",
                 data={
@@ -687,7 +698,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 3,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyDeposited",
                 data={
@@ -699,7 +710,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "aggregate_version": 4,
                 },
             ),
-            Flext.Models.DomainEvent(
+            FlextCore.Models.DomainEvent(
                 aggregate_id=account_id,
                 event_type="MoneyWithdrawn",
                 data={"amount": 100, "reason": "operational_cost"},
@@ -759,32 +770,41 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         """Show from_callable for safe message processing."""
         print("\n=== from_callable: Safe Message Processing ===")
 
-        def risky_message_parse(data: dict) -> Flext.Models.Payload[Flext.Types.Dict]:
+        def risky_message_parse(
+            data: dict[str, object],
+        ) -> FlextCore.Models.Payload[FlextTypes.Dict]:
             """Message parsing that might raise exceptions."""
             if not data.get("message_type"):
                 msg = "Message type required"
                 raise FlextExceptions.ValidationError(
                     msg, field="message_type", value=None
                 )
-            return Flext.Models.Payload[Flext.Types.Dict](
+            return FlextCore.Models.Payload[FlextTypes.Dict](
                 data=data,
                 metadata={
                     **self._safe_metadata,
-                    "message_type": data["message_type"],
+                    "message_type": str(data["message_type"]),
                 },
             )
 
         # Safe message parsing without try/except
-        result = Flext.Result.from_callable(
-            lambda: risky_message_parse({"message_type": "order", "data": self._order}),
+        result: FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]] = (
+            FlextResult.from_callable(
+                lambda: risky_message_parse({
+                    "message_type": "order",
+                    "data": self._order,
+                }),
+            )
         )
         if result.is_success:
-            payload = result.unwrap()
+            payload: FlextCore.Models.Payload[FlextTypes.Dict] = result.unwrap()
             print(f"✅ Message parsed: {payload.metadata.get('message_type')}")
 
         # Failed parsing captured as Result
-        failed = Flext.Result.from_callable(
-            lambda: risky_message_parse({}),
+        failed: FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]] = (
+            FlextResult.from_callable(
+                lambda: risky_message_parse({}),
+            )
         )
         if failed.is_failure:
             print(f"❌ Parse failed: {failed.error}")
@@ -794,20 +814,20 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print("\n=== flow_through: Message Pipeline ===")
 
         def validate_message(
-            msg: Flext.Models.Payload[Flext.Types.Dict],
-        ) -> Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]:
+            msg: FlextCore.Models.Payload[FlextTypes.Dict],
+        ) -> FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]]:
             """Validate message structure."""
             if not msg.data.get("command"):
-                return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].fail(
+                return FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]].fail(
                     "Missing command"
                 )
-            return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(msg)
+            return FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]].ok(msg)
 
         def enrich_message(
-            msg: Flext.Models.Payload[Flext.Types.Dict],
-        ) -> Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]:
+            msg: FlextCore.Models.Payload[FlextTypes.Dict],
+        ) -> FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]]:
             """Add metadata to message."""
-            enriched = Flext.Models.Payload[Flext.Types.Dict](
+            enriched = FlextCore.Models.Payload[FlextTypes.Dict](
                 data=msg.data,
                 metadata={
                     **msg.metadata,
@@ -815,13 +835,13 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "enriched_at": datetime.now(UTC).isoformat(),
                 },
             )
-            return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(enriched)
+            return FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]].ok(enriched)
 
         def route_message(
-            msg: Flext.Models.Payload[Flext.Types.Dict],
-        ) -> Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]:
+            msg: FlextCore.Models.Payload[FlextTypes.Dict],
+        ) -> FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]]:
             """Add routing information."""
-            routed = Flext.Models.Payload[Flext.Types.Dict](
+            routed = FlextCore.Models.Payload[FlextTypes.Dict](
                 data=msg.data,
                 metadata={
                     **msg.metadata,
@@ -829,17 +849,17 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
                     "routing_key": "orders.process",
                 },
             )
-            return Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(routed)
+            return FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]].ok(routed)
 
         # Create initial message
-        initial_msg = Flext.Models.Payload[Flext.Types.Dict](
+        initial_msg = FlextCore.Models.Payload[FlextTypes.Dict](
             data={"command": "ProcessOrder", "order_id": self._order["order_id"]},
             metadata={**self._safe_metadata},
         )
 
         # Flow through message pipeline
         result = (
-            Flext.Result[Flext.Models.Payload[Flext.Types.Dict]]
+            FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]]
             .ok(initial_msg)
             .flow_through(
                 validate_message,
@@ -861,20 +881,20 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         attempt_count = {"count": 0}
 
         def send_to_primary_queue(
-            msg: Flext.Models.Payload[Flext.Types.Dict],
-        ) -> Flext.Result[str]:
+            msg: FlextCore.Models.Payload[FlextTypes.Dict],
+        ) -> FlextResult[str]:
             """Try sending to primary message queue (might fail)."""
             attempt_count["count"] += 1
             if attempt_count["count"] < 3:
-                return Flext.Result[str].fail("Primary queue unavailable")
-            return Flext.Result[str].ok(f"Sent to primary: {msg.data.get('command')}")
+                return FlextResult[str].fail("Primary queue unavailable")
+            return FlextResult[str].ok(f"Sent to primary: {msg.data.get('command')}")
 
-        def send_to_backup_queue(error: str) -> Flext.Result[str]:
+        def send_to_backup_queue(error: str) -> FlextResult[str]:
             """Fallback to backup queue on failure."""
             print(f"   Retrying via backup queue after: {error}")
-            return Flext.Result[str].ok("Sent to backup queue")
+            return FlextResult[str].ok("Sent to backup queue")
 
-        message = Flext.Models.Payload[Flext.Types.Dict](
+        message = FlextCore.Models.Payload[FlextTypes.Dict](
             data={"command": "ProcessPayment", "amount": 100},
             metadata={**self._safe_metadata},
         )
@@ -888,19 +908,19 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         """Show alt for event handler fallback."""
         print("\n=== alt: Event Handler Fallback ===")
 
-        def get_specialized_handler(event_type: str) -> Flext.Result[str]:
+        def get_specialized_handler(event_type: str) -> FlextResult[str]:
             """Try to get specialized event handler."""
             handlers = {
                 "OrderCreated": "OrderCreatedHandler",
                 "PaymentProcessed": "PaymentHandler",
             }
             if event_type in handlers:
-                return Flext.Result[str].ok(handlers[event_type])
-            return Flext.Result[str].fail(f"No specialized handler for {event_type}")
+                return FlextResult[str].ok(handlers[event_type])
+            return FlextResult[str].fail(f"No specialized handler for {event_type}")
 
-        def get_default_handler() -> Flext.Result[str]:
+        def get_default_handler() -> FlextResult[str]:
             """Fallback to default event handler."""
-            return Flext.Result[str].ok("DefaultEventHandler")
+            return FlextResult[str].ok("DefaultEventHandler")
 
         # Try specialized, use default as fallback
         event_type = "UserRegistered"
@@ -914,17 +934,17 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         """Show value_or_call for lazy message defaults."""
         print("\n=== value_or_call: Lazy Message Defaults ===")
 
-        def create_default_payload() -> Flext.Models.Payload[Flext.Types.Dict]:
+        def create_default_payload() -> FlextCore.Models.Payload[FlextTypes.Dict]:
             """Create default payload (only called if needed)."""
             print("   Generating default payload...")
-            return Flext.Models.Payload[Flext.Types.Dict](
+            return FlextCore.Models.Payload[FlextTypes.Dict](
                 data={"type": "system", "message": "default"},
                 metadata={**self._safe_metadata, "is_default": True},
             )
 
         # Success case - default not called
-        msg_result = Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].ok(
-            Flext.Models.Payload[Flext.Types.Dict](
+        msg_result = FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]].ok(
+            FlextCore.Models.Payload[FlextTypes.Dict](
                 data={"type": "user", "message": "Hello"},
                 metadata={**self._safe_metadata},
             ),
@@ -933,7 +953,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print(f"✅ Got user payload: {payload.data['message']}")
 
         # Failure case - default called lazily
-        failed_result = Flext.Result[Flext.Models.Payload[Flext.Types.Dict]].fail(
+        failed_result = FlextResult[FlextCore.Models.Payload[FlextTypes.Dict]].fail(
             "No message"
         )
         default_payload = failed_result.value_or_call(create_default_payload)
@@ -958,7 +978,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print(f"  CONFIG_ERROR: {FlextConstants.Errors.CONFIG_ERROR}")
 
         # Use constants in message validation
-        message_data: Flext.Types.Dict = {
+        message_data: FlextTypes.Dict = {
             "type": "UserCommand",
             "payload": {"user_id": "123", "action": "update"},
         }
@@ -1054,17 +1074,19 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
 
         # FlextRuntime configuration defaults for messaging
         print("FlextRuntime messaging defaults:")
-        print(f"  DEFAULT_TIMEOUT: {FlextRuntime.DEFAULT_TIMEOUT}")
-        print(f"  DEFAULT_MAX_WORKERS: {FlextRuntime.DEFAULT_MAX_WORKERS}")
-        print(f"  DEFAULT_BATCH_SIZE: {FlextRuntime.DEFAULT_BATCH_SIZE}")
-        print(f"  DEFAULT_RETRY_ATTEMPTS: {FlextRuntime.DEFAULT_RETRY_ATTEMPTS}")
+        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Config.DEFAULT_TIMEOUT}")
+        print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
+        print(f"  DEFAULT_BATCH_SIZE: {FlextConstants.Processing.DEFAULT_BATCH_SIZE}")
+        print(
+            f"  DEFAULT_RETRY_ATTEMPTS: {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}"
+        )
 
         # Message processing configuration
-        processing_config: Flext.Types.Dict = {
-            "timeout": FlextRuntime.DEFAULT_TIMEOUT,
-            "max_workers": FlextRuntime.DEFAULT_MAX_WORKERS,
-            "batch_size": FlextRuntime.DEFAULT_BATCH_SIZE,
-            "retry_attempts": FlextRuntime.DEFAULT_RETRY_ATTEMPTS,
+        processing_config: FlextTypes.Dict = {
+            "timeout": FlextConstants.Config.DEFAULT_TIMEOUT,
+            "max_workers": FlextConstants.Processing.DEFAULT_MAX_WORKERS,
+            "batch_size": FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+            "retry_attempts": FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         }
 
         print(f"\nMessage processing config: {processing_config}")
@@ -1073,7 +1095,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         message_data = {"user_id": "test@example.com", "type": "UserCommand"}
         email = message_data.get("user_id", "")
 
-        if isinstance(email, str) and FlextRuntime.is_valid_email(email):
+        if FlextRuntime.is_valid_email(email):
             print(f"✅ Valid email in message: {email}")
         else:
             print(f"❌ Invalid email in message: {email}")
@@ -1088,15 +1110,15 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
 
         # OLD: Untyped dictionaries for messages (DEPRECATED)
         warnings.warn(
-            "Untyped dictionaries are DEPRECATED! Use Flext.Models.Payload.",
+            "Untyped dictionaries are DEPRECATED! Use FlextCore.Models.Payload.",
             DeprecationWarning,
             stacklevel=2,
         )
-        print("❌ OLD WAY (untyped dict):")
+        print("❌ OLD WAY (untyped dict[str, object]):")
         print("message = {'type': 'order', 'data': {...}}")
 
         print("\n✅ CORRECT WAY (typed Payload):")
-        print("message = Flext.Models.Payload(")
+        print("message = FlextCore.Models.Payload(")
         print("    data={...},")
         print("    metadata={'source_service': 'service', 'message_type': 'order'}")
         print(")")
@@ -1111,7 +1133,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print("event = {'timestamp': datetime.now(), 'type': 'event'}")
 
         print("\n✅ CORRECT WAY (auto timestamp):")
-        print("event = Flext.Models.DomainEvent(")
+        print("event = FlextCore.Models.DomainEvent(")
         print("    event_type='OrderCreated', event_data={...}")
         print(")  # timestamp added automatically")
 
@@ -1125,7 +1147,7 @@ class MessagingPatternsService(Flext.Service[Flext.Types.Dict]):
         print("send_message('order_service', message)")
 
         print("\n✅ CORRECT WAY (metadata routing):")
-        print("payload = Flext.Models.Payload(")
+        print("payload = FlextCore.Models.Payload(")
         print("    data={...},")
         print("    metadata={")
         print("        'target_service': 'order_service',")

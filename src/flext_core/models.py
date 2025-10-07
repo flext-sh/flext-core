@@ -33,8 +33,8 @@ Usage:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+# ruff: disable=PLC2701,E402
 
-# ruff: disable=PLC2701
 from __future__ import annotations
 
 import base64
@@ -61,8 +61,9 @@ from typing import (
 )
 from urllib.parse import ParseResult, urlencode, urlparse
 
+import pydantic
+from dependency_injector import providers
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     ValidationError,
@@ -80,9 +81,10 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 if TYPE_CHECKING:
+    from dependency_injector.containers import DeclarativeContainer
+
     from flext_core.config import FlextConfig
     from flext_core.loggings import FlextLogger
-    from flext_core.protocols import FlextProtocols
 
 
 class FlextModels:
@@ -243,6 +245,7 @@ class FlextModels:
         """Lazy load configuration to avoid import cycles."""
         if FlextModels._config_cache is None:
             # Lazy import to break circular dependency
+
             from flext_core.config import FlextConfig
 
             # Store in class cache
@@ -369,7 +372,7 @@ class FlextModels:
     # BEHAVIOR MIXINS - Reusable model behaviors (Pydantic 2.11 pattern)
     # =========================================================================
 
-    class BaseModel(BaseModel):
+    class BaseModel(pydantic.BaseModel):
         """Base model class for all FLEXT domain models.
 
         Extends Pydantic's BaseModel with common FLEXT ecosystem patterns.
@@ -389,7 +392,7 @@ class FlextModels:
             from_attributes=True,
         )
 
-    class IdentifiableMixin(BaseModel):
+    class IdentifiableMixin(pydantic.BaseModel):
         """Mixin for models with unique identifiers.
 
         Provides the `id` field using UuidField pattern with explicit default.
@@ -398,7 +401,7 @@ class FlextModels:
 
         id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
-    class TimestampableMixin(BaseModel):
+    class TimestampableMixin(pydantic.BaseModel):
         """Mixin for models with creation and update timestamps.
 
         Provides `created_at` and `updated_at` fields with automatic timestamp management.
@@ -421,7 +424,7 @@ class FlextModels:
             """Update the updated_at timestamp to current UTC time."""
             self.updated_at = datetime.now(UTC)
 
-    class TimeoutableMixin(BaseModel):
+    class TimeoutableMixin(pydantic.BaseModel):
         """Mixin for models with timeout configuration.
 
         Provides `timeout_seconds` field with default from FlextConstants.
@@ -473,6 +476,7 @@ class FlextModels:
 
             """
             # Use lazy-loaded config to avoid circular imports
+
             from flext_core.config import FlextConfig
 
             config = FlextConfig()
@@ -486,7 +490,7 @@ class FlextModels:
 
             return cls(timeout_seconds=timeout_value)
 
-    class RetryableMixin(BaseModel):
+    class RetryableMixin(pydantic.BaseModel):
         """Mixin for models with retry configuration.
 
         Provides `max_retry_attempts` and `retry_policy` fields for retry behavior.
@@ -510,7 +514,9 @@ class FlextModels:
 
         max_retry_attempts: Annotated[
             int,
-            Field(default_factory=lambda: 5),  # Default value, will be overridden by config
+            Field(
+                default_factory=lambda: 5
+            ),  # Default value, will be overridden by config
         ]
         retry_policy: FlextTypes.Reliability.RetryPolicy = Field(default_factory=dict)
 
@@ -534,6 +540,7 @@ class FlextModels:
 
             """
             # Use lazy-loaded config to avoid circular imports
+
             from flext_core.config import FlextConfig
 
             config = FlextConfig()
@@ -547,7 +554,7 @@ class FlextModels:
 
             return cls(max_retry_attempts=max_retries)
 
-    class VersionableMixin(BaseModel):
+    class VersionableMixin(pydantic.BaseModel):
         """Mixin for models with versioning support.
 
         Provides `version` field and increment_version method for optimistic locking.
@@ -569,7 +576,7 @@ class FlextModels:
 
     # Enhanced validation using FlextUtilities and FlextConstants
     # Base model classes for configuration consolidation with Pydantic 2.11 features
-    class ArbitraryTypesModel(BaseModel):
+    class ArbitraryTypesModel(pydantic.BaseModel):
         """Most common pattern: validate_assignment=True, use_enum_values=True, arbitrary_types_allowed=True.
 
         Enhanced with comprehensive Pydantic 2.11 features for better validation and serialization.
@@ -618,7 +625,7 @@ class FlextModels:
         across the FLEXT ecosystem.
         """
 
-    class StrictArbitraryTypesModel(BaseModel):
+    class StrictArbitraryTypesModel(pydantic.BaseModel):
         """Strict pattern: forbid extra fields, arbitrary types allowed.
 
         Used by domain service models requiring strict validation.
@@ -636,7 +643,7 @@ class FlextModels:
             defer_build=False,
         )
 
-    class FrozenStrictModel(BaseModel):
+    class FrozenStrictModel(pydantic.BaseModel):
         """Immutable pattern: frozen with extra fields forbidden.
 
         Used by value objects and configuration models.
@@ -687,7 +694,7 @@ class FlextModels:
         context management, and logging configuration.
         """
 
-        class LogEntry(BaseModel):
+        class LogEntry(pydantic.BaseModel):
             """Structured log entry model with comprehensive validation."""
 
             model_config = {
@@ -859,7 +866,7 @@ class FlextModels:
                     exclude_unset=True,
                 )
 
-        class LoggerInitializationModel(BaseModel):
+        class LoggerInitializationModel(pydantic.BaseModel):
             """Logger initialization with advanced validation."""
 
             model_config = {
@@ -892,7 +899,7 @@ class FlextModels:
                     )
                 return v_upper
 
-        class LoggerRequestContextModel(BaseModel):
+        class LoggerRequestContextModel(pydantic.BaseModel):
             """Logger request context model."""
 
             model_config = {
@@ -927,7 +934,7 @@ class FlextModels:
                     )
                 return self
 
-        class LoggerContextBindingModel(BaseModel):
+        class LoggerContextBindingModel(pydantic.BaseModel):
             """Logger context binding model."""
 
             model_config = {
@@ -979,7 +986,7 @@ class FlextModels:
                     )
                 return v
 
-        class LoggerPermanentContextModel(BaseModel):
+        class LoggerPermanentContextModel(pydantic.BaseModel):
             """Logger permanent context model."""
 
             model_config = {
@@ -1244,7 +1251,7 @@ class FlextModels:
             if not isinstance(other, self.__class__):
                 return False
             if hasattr(self, "model_dump") and hasattr(other, "model_dump"):
-                return self.model_dump() == other.model_dump()
+                return bool(self.model_dump() == other.model_dump())
             return False
 
         @override
@@ -2460,9 +2467,7 @@ class FlextModels:
 
         @field_validator("operation_callable", mode="plain")
         @classmethod
-        def validate_operation_callable(
-            cls, v: object
-        ) -> FlextProtocols.Foundation.OperationCallable:
+        def validate_operation_callable(cls, v: object) -> Callable[..., object]:
             """Validate operation is callable."""
             if not callable(v):
                 error_msg = "Operation must be callable"
@@ -2478,7 +2483,7 @@ class FlextModels:
                         }
                     ],
                 )
-            return cast("FlextProtocols.Foundation.OperationCallable", v)
+            return v
 
     class RetryConfiguration(ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
@@ -2839,7 +2844,7 @@ class FlextModels:
             return base64.b64encode(b).decode("ascii")
 
     # Model serialization configuration
-    class SerializableModel(BaseModel):
+    class SerializableModel(pydantic.BaseModel):
         """Base model with optimized serialization support.
 
         Combines Pydantic BaseModel with SerializationMixin for enhanced
@@ -2860,7 +2865,7 @@ class FlextModels:
             json_schema_mode_override="validation",
         )
 
-    class CompactSerializableModel(BaseModel):
+    class CompactSerializableModel(pydantic.BaseModel):
         """Model that defaults to compact serialization.
 
         Automatically excludes unset, default, and None values during serialization
@@ -2891,7 +2896,7 @@ class FlextModels:
         max_depth: int = 10
 
     # Model with context-aware serialization
-    class ContextAwareModel(BaseModel):
+    class ContextAwareModel(pydantic.BaseModel):
         """Model that serializes based on context settings."""
 
         @classmethod
@@ -3030,12 +3035,9 @@ class FlextModels:
         """Optimized batch serialization for collections of models."""
 
         @staticmethod
-        def validate_json_serializable(model: BaseModel) -> None:
+        def validate_json_serializable(model: pydantic.BaseModel) -> None:
             """Validate model is JSON serializable if configuration requires it."""
             # Config defaults from FlextConstants
-            if False:  # Always validate JSON serializable
-                return
-
             try:
                 # Simple validation - attempt to serialize
                 model.model_dump_json()
@@ -3048,7 +3050,7 @@ class FlextModels:
 
         @staticmethod
         def serialize_batch(
-            models: list[BaseModel],
+            models: list[pydantic.BaseModel],
             output_format: str = FlextConstants.Cqrs.OutputFormatLiteral.DICT,
             *,
             compact: bool = False,
@@ -3089,7 +3091,7 @@ class FlextModels:
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     if output_format == "dict":
 
-                        def serialize_to_dict(m: BaseModel) -> FlextTypes.Dict:
+                        def serialize_to_dict(m: pydantic.BaseModel) -> FlextTypes.Dict:
                             return m.model_dump(
                                 exclude_unset=cast(
                                     "bool", dump_kwargs.get("exclude_unset", False)
@@ -3105,7 +3107,7 @@ class FlextModels:
                         results = list(executor.map(serialize_to_dict, models))
                     else:
 
-                        def serialize_to_json(m: BaseModel) -> str:
+                        def serialize_to_json(m: pydantic.BaseModel) -> str:
                             return m.model_dump_json(
                                 exclude_unset=cast(
                                     "bool", dump_kwargs.get("exclude_unset", False)
@@ -3162,7 +3164,7 @@ class FlextModels:
 
         @staticmethod
         def get_optimized_schema(
-            model: type[BaseModel],
+            model: type[pydantic.BaseModel],
             *,
             by_alias: bool = True,
             ref_template: str = "#/$defs/{model}",
@@ -3206,7 +3208,7 @@ class FlextModels:
                     if "description" in prop_schema and not prop_schema["description"]:
                         del prop_schema["description"]
 
-            return schema
+            return cast("FlextTypes.Dict", schema)
 
     # Export control decorator
     # No exclude_from_export decorator needed - use Pydantic 2.11's native features:
@@ -3215,7 +3217,7 @@ class FlextModels:
     # 3. Use computed_field with exclude parameter for computed fields
 
     # Model with automatic aliasing
-    class CamelCaseModel(BaseModel):
+    class CamelCaseModel(pydantic.BaseModel):
         """Model that automatically uses camelCase for JSON."""
 
         model_config = ConfigDict(
@@ -3227,7 +3229,7 @@ class FlextModels:
             populate_by_name=True,
         )
 
-    class KebabCaseModel(BaseModel):
+    class KebabCaseModel(pydantic.BaseModel):
         """Model that automatically uses kebab-case for URLs."""
 
         model_config = ConfigDict(
@@ -3260,7 +3262,7 @@ class FlextModels:
     class CqrsConfig:
         """CQRS configuration models for bus and handler setup."""
 
-        class Bus(BaseModel):
+        class Bus(pydantic.BaseModel):
             """Bus configuration model for CQRS command bus."""
 
             enable_middleware: bool = Field(
@@ -3327,7 +3329,7 @@ class FlextModels:
 
                 return cls.model_validate(config_data)
 
-        class Handler(BaseModel):
+        class Handler(pydantic.BaseModel):
             """Handler configuration model for CQRS handlers."""
 
             handler_id: str = Field(description="Unique handler identifier")
@@ -3389,7 +3391,7 @@ class FlextModels:
     # REGISTRATION DETAILS MODEL
     # ============================================================================
 
-    class RegistrationDetails(BaseModel):
+    class RegistrationDetails(pydantic.BaseModel):
         """Registration details for handler registration tracking."""
 
         registration_id: str = Field(description="Unique registration identifier")
@@ -3674,7 +3676,7 @@ class FlextModels:
             return FlextResult[T].ok(model)
 
         @staticmethod
-        def validate_performance[T: BaseModel](
+        def validate_performance[T: pydantic.BaseModel](
             model: T,
             max_validation_time_ms: int | None = None,
         ) -> FlextResult[T]:
@@ -3970,7 +3972,7 @@ class FlextModels:
     # PHASE 9: QUERY AND PAGINATION MODELS
     # ============================================================================
 
-    class Pagination(BaseModel):
+    class Pagination(pydantic.BaseModel):
         """Pagination model for query results with Pydantic 2 computed fields."""
 
         page: int = Field(
@@ -4004,7 +4006,7 @@ class FlextModels:
                 "limit": self.limit,
             }
 
-    class Query(BaseModel):
+    class Query(pydantic.BaseModel):
         """Query model for CQRS query operations."""
 
         filters: FlextTypes.Dict = Field(
@@ -4025,8 +4027,8 @@ class FlextModels:
             """Convert pagination to Pagination instance."""
             if isinstance(v, dict):
                 # Extract page and size from dict
-                page: int | str = v.get("page", 1)  # type: ignore[assignment]
-                size: int | str = v.get("size", 20)  # type: ignore[assignment]
+                page: int | str = v.get("page", 1)
+                size: int | str = v.get("size", 20)
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -4044,8 +4046,8 @@ class FlextModels:
                 page_int = int(page) if isinstance(page, (int, str)) else 1
                 size_int = int(size) if isinstance(size, (int, str)) else 20
                 # Type casting for mypy - after validation, these are guaranteed to be int
-                page_int = int(page_int)  # type: ignore[assignment]
-                size_int = int(size_int)  # type: ignore[assignment]
+                page_int = int(page_int)
+                size_int = int(size_int)
                 return FlextModels.Pagination(page=page_int, size=size_int)
             if isinstance(v, FlextModels.Pagination):
                 return v
@@ -4064,8 +4066,8 @@ class FlextModels:
                 if isinstance(pagination_data, FlextModels.Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
-                    page: int | str = pagination_data.get("page", 1)  # type: ignore[assignment]
-                    size: int | str = pagination_data.get("size", 20)  # type: ignore[assignment]
+                    page: int | str = pagination_data.get("page", 1)
+                    size: int | str = pagination_data.get("size", 20)
                     pagination = FlextModels.Pagination(
                         page=int(page) if page else 1, size=int(size) if size else 20
                     )
@@ -4077,7 +4079,7 @@ class FlextModels:
                 if not isinstance(filters, dict):
                     filters = {}
                 # Type casting for mypy - after validation, filters is guaranteed to be dict
-                filters = dict(filters)  # type: ignore[assignment]
+                filters = dict(filters)
                 # No need to validate pagination dict - Pydantic validator handles conversion
 
                 query = cls(
@@ -4433,7 +4435,7 @@ class FlextModels:
         @staticmethod
         def create_entity_factory_provider(
             entity_class: type[FlextModels.Entity],
-        ) -> Any:  # providers.Factory
+        ) -> providers.Factory[Any]:
             """Create a Factory provider for Entity instances.
 
             Args:
@@ -4465,7 +4467,7 @@ class FlextModels:
         @staticmethod
         def create_value_factory_provider(
             value_class: type[FlextModels.Value],
-        ) -> Any:  # providers.Factory
+        ) -> providers.Factory[Any]:
             """Create a Factory provider for Value Object instances.
 
             Args:
@@ -4496,7 +4498,7 @@ class FlextModels:
         @staticmethod
         def create_aggregate_factory_provider(
             aggregate_class: type[FlextModels.AggregateRoot],
-        ) -> Any:  # providers.Factory
+        ) -> providers.Factory[Any]:
             """Create a Factory provider for AggregateRoot instances.
 
             Args:
@@ -4531,7 +4533,7 @@ class FlextModels:
             aggregate_id: str,
             data: FlextTypes.Dict | None = None,
             metadata: FlextTypes.Domain.EventMetadata | None = None,
-        ) -> Any:  # providers.Callable
+        ) -> providers.Callable[Any]:
             """Create a Callable provider for domain events.
 
             Args:
@@ -4572,7 +4574,7 @@ class FlextModels:
         @staticmethod
         def create_command_factory_provider(
             command_class: type[FlextModels.Command],
-        ) -> Any:  # providers.Factory
+        ) -> providers.Factory[Any]:
             """Create a Factory provider for Command instances (CQRS).
 
             Args:
@@ -4604,7 +4606,7 @@ class FlextModels:
         @staticmethod
         def create_query_factory_provider(
             query_class: type[FlextModels.Query],
-        ) -> Any:  # providers.Factory
+        ) -> providers.Factory[Any]:
             """Create a Factory provider for Query instances (CQRS).
 
             Args:
@@ -4634,7 +4636,7 @@ class FlextModels:
 
         @staticmethod
         def register_in_container(
-            container: Any,  # FlextContainer or dependency_injector.containers.Container
+            container: DeclarativeContainer,
             entity_classes: list[type[FlextModels.Entity]] | None = None,
             value_classes: list[type[FlextModels.Value]] | None = None,
             aggregate_classes: list[type[FlextModels.AggregateRoot]] | None = None,

@@ -19,9 +19,8 @@ from __future__ import annotations
 import contextlib
 import json
 import threading
-import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
+from typing import Any, ClassVar, Self, cast
 
 from dependency_injector import providers
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
@@ -32,6 +31,9 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+# NOTE: FlextLogger NOT imported here - causes circular dependency
+# config.py is Layer 2, loggings.py imports config, creating circular import
 
 structlog = FlextRuntime.structlog()
 
@@ -223,341 +225,6 @@ class FlextConfig(BaseSettings):
         FlextLogger: For logging configuration usage.
         FlextUtilities: For configuration validation utilities.
     """
-
-    class HandlerConfiguration:
-        """Handler configuration resolution utilities."""
-
-        @staticmethod
-        def resolve_handler_mode(
-            handler_mode: str | None = None,
-            handler_config: object = None,
-        ) -> str:
-            """Resolve handler mode from various sources.
-
-            Args:
-                handler_mode: Explicit handler mode
-                handler_config: Config object or dict containing handler_type
-
-            Returns:
-                str: Resolved handler mode (command or query)
-
-            """
-            # Use explicit handler_mode if provided and valid
-            if handler_mode in {"command", "query"}:
-                return handler_mode
-
-            # Try to extract from config object
-            if handler_config is not None:
-                # Try attribute access
-                # Lazy import to avoid circular dependency
-                if TYPE_CHECKING:
-                    from flext_core.protocols import FlextProtocols
-
-                try:
-                    from flext_core.protocols import FlextProtocols
-
-                    if isinstance(
-                        handler_config, FlextProtocols.Foundation.HasHandlerType
-                    ):
-                        config_mode: str | None = handler_config.handler_type
-                        if config_mode in {"command", "query"}:
-                            return str(config_mode)
-                except ImportError:
-                    # Handle case where protocols module not available
-                    pass
-
-                # Try dict access
-                if isinstance(handler_config, dict):
-                    config_mode_dict = handler_config.get("handler_type")
-                    if (
-                        config_mode_dict is not None
-                        and isinstance(config_mode_dict, str)
-                        and config_mode_dict
-                        in {
-                            "command",
-                            "query",
-                        }
-                    ):
-                        return config_mode_dict
-
-            # Default to command
-            return FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
-
-        @staticmethod
-        def create_handler_config(
-            handler_mode: str | None = None,
-            handler_name: str | None = None,
-            handler_id: str | None = None,
-            handler_config: FlextTypes.Dict | None = None,
-            command_timeout: int = 0,
-            max_command_retries: int = 0,
-        ) -> FlextTypes.Dict:
-            """Create handler configuration dictionary.
-
-            Args:
-                handler_mode: Handler mode (command or query)
-                handler_name: Handler name
-                handler_id: Handler ID
-                handler_config: Additional configuration to merge
-                command_timeout: Command timeout in milliseconds
-                max_command_retries: Maximum command retries
-
-            Returns:
-                dict: Handler configuration dictionary
-
-            """
-            # Resolve handler mode
-            resolved_mode = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-                handler_mode=handler_mode,
-                handler_config=handler_config,
-            )
-
-            # Generate default handler_id if not provided or empty
-            if not handler_id:
-                unique_suffix = uuid.uuid4().hex[:8]
-                handler_id = f"{resolved_mode}_handler_{unique_suffix}"
-
-            # Generate default handler_name if not provided or empty
-            if not handler_name:
-                handler_name = f"{resolved_mode.capitalize()} Handler"
-
-            # Create base config
-            config: FlextTypes.Dict = {
-                "handler_id": handler_id,
-                "handler_name": handler_name,
-                "handler_type": resolved_mode,
-                "handler_mode": resolved_mode,
-                "command_timeout": command_timeout,
-                "max_command_retries": max_command_retries,
-                "metadata": {},
-            }
-
-            # Merge additional config if provided
-            if handler_config:
-                config.update(handler_config)
-
-            return config
-
-    class Providers:
-        """Dependency injection provider factory utilities.
-
-        Provides factory methods for creating dependency_injector providers
-        for FlextConfig integration with the DI container.
-
-        This class demonstrates Phase 2 enhancement patterns:
-        - Singleton providers for global config access
-        - Factory providers for config instance creation
-        - Callable providers for computed configuration values
-        - Configuration providers for settings injection
-        """
-
-        @staticmethod
-        def create_singleton_provider(
-            config_instance: FlextConfig | None = None,
-        ) -> providers.Singleton[FlextConfig]:
-            """Create a Singleton provider for FlextConfig.
-
-            Args:
-                config_instance: Optional config instance to use. If None,
-                    uses get_global_instance() to get/create singleton.
-
-            Returns:
-                providers.Singleton: Singleton provider for config instance
-
-            Example:
-                >>> from flext_core import FlextConfig
-                >>> config_provider = FlextConfig.Providers.create_singleton_provider()
-                >>> # Use in container
-                >>> container.config = config_provider
-
-            """
-            if config_instance is None:
-                config_instance = FlextConfig.get_global_instance()
-
-            return providers.Singleton(lambda: config_instance)
-
-        @staticmethod
-        def create_factory_provider(
-            **default_kwargs: FlextTypes.ConfigValue,
-        ) -> providers.Factory[FlextConfig]:
-            """Create a Factory provider for FlextConfig instances.
-
-            Args:
-                **default_kwargs: Default configuration values to use
-
-            Returns:
-                providers.Factory: Factory provider for creating config instances
-
-            Example:
-                >>> factory = FlextConfig.Providers.create_factory_provider(
-                ...     debug=True, environment="test"
-                ... )
-                >>> # Creates new config with defaults
-                >>> config = factory()
-
-            """
-            return providers.Factory(
-                FlextConfig.create,
-                **default_kwargs,
-            )
-
-        @staticmethod
-        def create_callable_provider(
-            config_instance: FlextConfig,
-            field_name: str,
-        ) -> providers.Callable[object]:
-            """Create a Callable provider for a specific config field.
-
-            Args:
-                config_instance: Config instance to read from
-                field_name: Name of the field to provide
-
-            Returns:
-                providers.Callable: Callable provider for field value
-
-            Example:
-                >>> config = FlextConfig()
-                >>> log_level_provider = FlextConfig.Providers.create_callable_provider(
-                ...     config, "log_level"
-                ... )
-                >>> # Access field value
-                >>> level = log_level_provider()
-
-            """
-            return providers.Callable(lambda: getattr(config_instance, field_name))
-
-        @staticmethod
-        def create_configuration_provider(
-            config_instance: FlextConfig | None = None,
-        ) -> Any:  # providers.Configuration
-            """Create a Configuration provider from FlextConfig.
-
-            Args:
-                config_instance: Optional config instance. If None,
-                    uses get_global_instance().
-
-            Returns:
-                providers.Configuration: Configuration provider with all config values
-
-            Example:
-                >>> config_provider = (
-                ...     FlextConfig.Providers.create_configuration_provider()
-                ... )
-                >>> # Access via DI
-                >>> log_level = config_provider.log_level()
-                >>> timeout = config_provider.timeout_seconds()
-
-            """
-            if config_instance is None:
-                config_instance = FlextConfig.get_global_instance()
-
-            config_provider = providers.Configuration()
-            config_provider.from_dict(config_instance.model_dump())
-            return config_provider
-
-        @staticmethod
-        def create_component_provider(
-            component_name: str,
-            config_instance: FlextConfig | None = None,
-        ) -> FlextResult[Any]:  # FlextResult[providers.Callable]
-            """Create a provider for component-specific configuration.
-
-            Args:
-                component_name: Name of component ('container', 'bus', etc.)
-                config_instance: Optional config instance
-
-            Returns:
-                FlextResult containing Callable provider or error
-
-            Example:
-                >>> result = FlextConfig.Providers.create_component_provider(
-                ...     "container"
-                ... )
-                >>> if result.is_success:
-                ...     container_config_provider = result.unwrap()
-                ...     config = container_config_provider()
-
-            """
-            if config_instance is None:
-                config_instance = FlextConfig.get_global_instance()
-
-            # Validate component exists
-            component_config_result = config_instance.get_component_config(
-                component_name
-            )
-            if component_config_result.is_failure:
-                return FlextResult[Any].fail(
-                    f"Component provider creation failed: {component_config_result.error}"
-                )
-
-            # Create callable provider for component config
-            provider = providers.Callable(
-                lambda: config_instance.get_component_config(component_name).unwrap()
-            )
-
-            return FlextResult[Any].ok(provider)
-
-        @staticmethod
-        def register_in_container(
-            container: Any,  # FlextContainer or dependency_injector.containers.Container
-            config_instance: FlextConfig | None = None,
-        ) -> FlextResult[None]:
-            """Register FlextConfig providers in a DI container.
-
-            Args:
-                container: DI container to register providers in
-                config_instance: Optional config instance to use
-
-            Returns:
-                FlextResult[None]: Success or failure result
-
-            Example:
-                >>> from flext_core import FlextContainer, FlextConfig
-                >>> container = FlextContainer.get_global()
-                >>> result = FlextConfig.Providers.register_in_container(
-                ...     container, FlextConfig()
-                ... )
-
-            """
-            try:
-                if config_instance is None:
-                    config_instance = FlextConfig.get_global_instance()
-
-                # Check if container has _di_container attribute (FlextContainer)
-                if hasattr(container, "_di_container"):
-                    # FlextContainer with internal dependency-injector container
-                    di_container = container._di_container
-
-                    # Register configuration provider
-                    di_container.config = (
-                        FlextConfig.Providers.create_configuration_provider(
-                            config_instance
-                        )
-                    )
-
-                    # Register singleton config instance
-                    config_singleton = FlextConfig.Providers.create_singleton_provider(
-                        config_instance
-                    )
-                    container.register("flext_config", config_singleton)
-
-                    return FlextResult[None].ok(None)
-
-                # Direct dependency-injector container
-                if hasattr(container, "config"):
-                    container.config = (
-                        FlextConfig.Providers.create_configuration_provider(
-                            config_instance
-                        )
-                    )
-                    return FlextResult[None].ok(None)
-
-                return FlextResult[None].fail(
-                    "Container does not support config provider registration"
-                )
-
-            except Exception as e:
-                return FlextResult[None].fail(f"Provider registration failed: {e}")
 
     # Singleton pattern implementation - per-class instances to support inheritance
     _instances: ClassVar[dict[type, FlextConfig]] = {}
@@ -1006,49 +673,6 @@ class FlextConfig(BaseSettings):
 
         return getattr(self, key)
 
-    # Field validators with structured logging
-    @field_validator("environment")
-    @classmethod
-    def validate_environment(cls, v: str) -> str:
-        """Validate that environment is one of the allowed values with structured logging."""
-        valid_environments = {
-            "development",
-            "dev",
-            "local",
-            "staging",
-            "test",
-            "production",
-        }
-        if v.lower() not in valid_environments:
-            msg = f"Invalid environment: {v}. Must be one of: {', '.join(sorted(valid_environments))}"
-
-            # Structured validation error logging
-            try:
-                logger = structlog.get_logger()
-                logger.warning(
-                    "config_validation_failed",
-                    event_type="validation_error",
-                    validator="validate_environment",
-                    field="environment",
-                    invalid_value=v,
-                    valid_values=sorted(valid_environments),
-                )
-            except Exception:
-                # Don't fail validation if logging fails, but log to stderr for diagnostics
-                import logging as python_logging
-
-                stderr_logger = python_logging.getLogger("flext.config.validation")
-                stderr_logger.exception(
-                    "Validation logging failed for field '%s'. Original validation error: %s",
-                    "environment",
-                    msg,
-                )
-
-            raise FlextExceptions.ValidationError(
-                message=msg,
-            )
-        return v
-
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -1112,11 +736,11 @@ class FlextConfig(BaseSettings):
         serves as the central source of configuration for all model classes.
         """
         # Update models config to use this instance as the source
-        FlextConfig._update_models_config(self)
+        FlextConfig._update_models_config()
         return self
 
     @classmethod
-    def _update_models_config(cls, _config_instance: FlextConfig) -> None:
+    def _update_models_config(cls) -> None:
         """Update the models module configuration to use the current FlextConfig instance.
 
         This ensures that FlextModels classes use the current FlextConfig instance
@@ -1169,7 +793,7 @@ class FlextConfig(BaseSettings):
                     instance = cls()
                     cls._instances[cls] = instance
                     # Update models module config when global instance is created
-                    cls._update_models_config(instance)
+                    cls._update_models_config()
         return cast("Self", cls._instances[cls])
 
     @classmethod
@@ -1183,7 +807,7 @@ class FlextConfig(BaseSettings):
         with cls._instance_lock:
             cls._instances[cls] = instance
             # Update models module config when FlextConfig changes
-            cls._update_models_config(instance)
+            cls._update_models_config()
 
     @classmethod
     def reset_global_instance(cls) -> None:
@@ -1196,7 +820,7 @@ class FlextConfig(BaseSettings):
             cls._instances.pop(cls, None)
 
     @classmethod
-    def _get_or_create_di_provider(cls) -> Any:  # providers.Configuration
+    def _get_or_create_di_provider(cls) -> providers.Configuration:
         """Get or create the dependency-injector Configuration provider.
 
         Creates a Configuration provider linked to Pydantic settings as described in:
@@ -1237,11 +861,11 @@ class FlextConfig(BaseSettings):
 
         # Update the provider with current Pydantic settings instance
         # The provider automatically reads values from the Pydantic settings
-        if di_provider is not None:
-            di_provider.set_pydantic_settings([config_instance])
+        settings_list: list[FlextConfig] = [config_instance]
+        di_provider.set_pydantic_settings(settings_list)
 
     @classmethod
-    def get_di_config_provider(cls) -> Any:  # providers.Configuration
+    def get_di_config_provider(cls) -> providers.Configuration:
         """Get the dependency-injector Configuration provider for FlextConfig.
 
         This provider can be used in FlextContainer to make configuration
@@ -1269,7 +893,9 @@ class FlextConfig(BaseSettings):
         # Ensure it's synced with current instance for this class
         instance = cls._instances.get(cls)
         if instance is not None:
-            provider.set_pydantic_settings([instance])
+            # Apply Pydantic settings for DI provider
+            settings_list: list[FlextConfig] = [instance]
+            provider.set_pydantic_settings(settings_list)
 
         return provider
 
@@ -1285,7 +911,6 @@ class FlextConfig(BaseSettings):
     @classmethod
     def get_or_create_shared_instance(
         cls,
-        project_name: str | None = None,
         **overrides: FlextTypes.Value,
     ) -> FlextConfig:
         """REMOVED: Create config directly and apply overrides.
@@ -1293,18 +918,12 @@ class FlextConfig(BaseSettings):
         Migration:
             # Old pattern
             config = FlextConfig.get_or_create_shared_instance(
-                project_name="my-project",
                 debug=True
             )
 
             # New pattern - create and configure
             config = FlextConfig()
             config.debug = True
-
-            # For logging project access
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.debug("Project 'my-project' using FlextConfig instance")
 
         """
         msg = (
@@ -1952,10 +1571,8 @@ class FlextConfig(BaseSettings):
             FlextResult[None]: Success if valid, failure with error details
 
         """
-        # Validate environment
-        env_validation = self.validate_environment(self.environment)
-        if not env_validation:
-            return FlextResult[None].fail(f"Invalid environment: {self.environment}")
+        # NOTE: Environment validation removed - validate_environment method not implemented
+        # Environment is already validated by Pydantic model validation
 
         # Validate log level
         try:

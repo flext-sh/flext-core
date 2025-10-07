@@ -88,10 +88,8 @@ class TestFlextHandlers:
 
         result = handler.handle("test_message")
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Handler failed for: test_message" in result.error
-        )
+        assert result.error is not None
+        assert "Handler failed for: test_message" in result.error
 
     def test_handlers_config_access(self) -> None:
         """Test access to handler configuration."""
@@ -416,10 +414,9 @@ class TestFlextHandlers:
         result = handler._run_pipeline("test_message", operation="query")
 
         assert result.is_failure
+        assert result.error is not None
         assert (
-            result.error is not None
-            and "Handler with mode 'command' cannot execute query pipelines"
-            in result.error
+            "Handler with mode 'command' cannot execute query pipelines" in result.error
         )
 
     def test_handlers_run_pipeline_cannot_handle_message_type(self) -> None:
@@ -449,10 +446,8 @@ class TestFlextHandlers:
         result = handler._run_pipeline("test_message", operation="command")
 
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Handler cannot handle message type str" in result.error
-        )
+        assert result.error is not None
+        assert "Handler cannot handle message type str" in result.error
 
     def test_handlers_run_pipeline_validation_failure(self) -> None:
         """Test _run_pipeline when message validation fails."""
@@ -480,10 +475,8 @@ class TestFlextHandlers:
         result = handler._run_pipeline("test_message", operation="command")
 
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Message validation failed: Validation failed for test" in result.error
-        )
+        assert result.error is not None
+        assert "Message validation failed: Validation failed for test" in result.error
 
     def test_handlers_run_pipeline_handler_exception(self) -> None:
         """Test _run_pipeline when handler.handle() raises exception."""
@@ -509,10 +502,8 @@ class TestFlextHandlers:
         result = handler._run_pipeline("test_message", operation="command")
 
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Critical handler failure: Test exception in handler" in result.error
-        )
+        assert result.error is not None
+        assert "Critical handler failure: Test exception in handler" in result.error
 
     def test_handlers_run_pipeline_query_operation(self) -> None:
         """Test _run_pipeline with query operation."""
@@ -563,10 +554,8 @@ class TestFlextHandlers:
         result = handler._run_pipeline("test_query", operation="query")
 
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Message validation failed: Query validation failed" in result.error
-        )
+        assert result.error is not None
+        assert "Message validation failed: Query validation failed" in result.error
 
     def test_handlers_from_callable_basic(self) -> None:
         """Test from_callable with basic function."""
@@ -624,7 +613,8 @@ class TestFlextHandlers:
 
         result = handler.handle("test")
         assert result.is_failure
-        assert result.error is not None and "Handler failed" in result.error
+        assert result.error is not None
+        assert "Handler failed" in result.error
 
     def test_handlers_from_callable_default_name(self) -> None:
         """Test from_callable with default handler name from function name."""

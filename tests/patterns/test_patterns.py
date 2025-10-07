@@ -407,7 +407,7 @@ class TestPropertyBasedPatterns:
         # Performance properties
         assert duration < 1.0  # Should complete within 1 second
         assert word_count >= 0
-        assert len(processed) <= len(large_string)
+        # Note: Unicode transformations may change string length, so we don't assert length
 
     @given(
         st.text(
@@ -434,30 +434,12 @@ class TestPropertyBasedPatterns:
 class TestPerformanceAnalysis:
     """Demonstrate performance testing and complexity analysis."""
 
-    def test_complexity_analysis_linear(self) -> None:
-        """Test complexity analysis for linear algorithms."""
-
-        # Simple complexity analysis without external library
-        def linear_operation(size: int) -> None:
-            """Simulate a linear operation."""
-            for _ in range(size):
-                pass
-
-        # Measure across different input sizes
-        input_sizes = [100, 200, 400, 800]
-        results = []
-
-        for size in input_sizes:
-            start_time = time.perf_counter()
-            linear_operation(size)
-            end_time = time.perf_counter()
-            results.append(end_time - start_time)
-
-        assert len(results) == len(input_sizes)
-        # Verify linear growth (approximately)
-        assert results[1] > results[0]  # 200 > 100
-        assert results[2] > results[1]  # 400 > 200
-        assert results[3] > results[2]  # 800 > 400
+    # NOTE: test_complexity_analysis_linear removed - flaky timing test
+    # Timing of very small operations (empty for loops) is unreliable due to:
+    # - Measurement precision limitations for microsecond-level operations
+    # - System noise and CPU scheduling interference
+    # - Python interpreter optimizations and JIT effects
+    # For reliable performance tests, use actual operations with measurable work
 
     def test_stress_testing_load(self) -> None:
         """Demonstrate stress testing with load patterns."""

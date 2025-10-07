@@ -76,7 +76,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
-from flext_core.api import Flext
+from flext_core.api import FlextCore
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -105,12 +105,12 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 __all__ = [
-    "Flext",
     "FlextBus",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
+    "FlextCore",
     "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
@@ -128,7 +128,6 @@ __all__ = [
     "__version__",
     "__version_info__",
     "combined",
-    # Automation decorators (new in architectural enhancement)
     "inject",
     "log_operation",
     "railway",

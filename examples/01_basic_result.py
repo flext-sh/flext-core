@@ -1,19 +1,19 @@
 # !/usr/bin/env python3
-"""01 - Flext.Result Fundamentals: Complete Railway-Oriented Programming.
+"""01 - FlextResult Fundamentals: Complete Railway-Oriented Programming.
 
-This example demonstrates the COMPLETE Flext.Result[T] API - the foundation
-for error handling across the entire FLEXT ecosystem. Flext.Result provides
+This example demonstrates the COMPLETE FlextResult[T] API - the foundation
+for error handling across the entire FLEXT ecosystem. FlextResult provides
 railway-oriented programming that eliminates exceptions in business logic.
 
 Key Concepts Demonstrated:
 - Factory methods: .ok() and .fail() with error codes
 - Value extraction: .unwrap(), .unwrap_or(), .expect()
 - Railway operations: .map(), .flat_map(), .filter()
-- Error recovery: .recover(), .recover_with(), .or_else()
-- Advanced combinators: .tap(), .zip_with(), .traverse()
-- Collection operations: .sequence(), .all_success(), .any_success()
+- Error recovery: .recover(), .or_else()
+- Advanced combinators: .tap(), .traverse()
+- Collection operations: .sequence()
 - Validation chaining: .chain_validations(), .validate_all()
-- Context and logging: .with_context(), .rescue_with_logging()
+- Context and logging: .with_context()
 - Operators: >>, <<, @, /, %, &, |, ^
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -22,21 +22,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import operator
 import warnings
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import Flext, FlextConstants, FlextExceptions, FlextRuntime
+from flext_core import (
+    FlextConstants,
+    FlextCore,
+    FlextExceptions,
+    FlextResult,
+    FlextRuntime,
+    FlextService,
+    FlextTypes,
+)
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
+class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextResult patterns with FlextMixins.Service infrastructure.
 
-    This service now inherits from Flext.Service to demonstrate:
+    This service now inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextContainer singleton)
     - Inherited logger property (FlextLogger with service context)
     - Inherited context property (FlextContext for request tracking)
@@ -53,12 +60,12 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         _scenarios = ExampleScenarios
 
         @classmethod
-        def dataset(cls) -> Flext.Types.Dict:
+        def dataset(cls) -> FlextTypes.Dict:
             """Return a reusable dataset with users, configs, and fields."""
             return cls._scenarios.dataset()
 
         @classmethod
-        def validation_data(cls) -> Flext.Types.Dict:
+        def validation_data(cls) -> FlextTypes.Dict:
             """Return shared validation data used by multiple examples."""
             return cls._scenarios.validation_data()
 
@@ -66,12 +73,12 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         def result_success(
             cls,
             data: object | None = None,
-        ) -> Flext.Result[object]:
+        ) -> FlextResult[object]:
             """Return a successful ``FlextResult`` instance."""
             return cls._scenarios.result_success(data)
 
         @classmethod
-        def result_failure(cls, message: str) -> Flext.Result[object]:
+        def result_failure(cls, message: str) -> FlextResult[object]:
             """Return a failed ``FlextResult`` instance."""
             return cls._scenarios.result_failure(message)
 
@@ -80,12 +87,12 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
             cls,
             *,
             success: bool = True,
-        ) -> Flext.Result[Flext.Types.Dict]:
+        ) -> FlextResult[FlextTypes.Dict]:
             """Return a user-specific ``FlextResult``."""
             return cls._scenarios.user_result(success=success)
 
         @classmethod
-        def metadata(cls) -> Flext.Types.Dict:
+        def metadata(cls) -> FlextTypes.Dict:
             """Return a structured error scenario from fixtures."""
             return cls._scenarios.metadata(tags=["result", "demo"])
 
@@ -99,7 +106,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         """Initialize with inherited FlextMixins.Service infrastructure.
 
         Note: No manual logger or container initialization needed!
-        All infrastructure is inherited from Flext.Service base class:
+        All infrastructure is inherited from FlextCore.Service base class:
         - self.logger: FlextLogger with service context
         - self.container: FlextContainer global singleton
         - self.context: FlextContext for request tracking
@@ -107,20 +114,20 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        self._dataset: Flext.Types.Dict = self.Scenario.dataset()
-        self._validation: Flext.Types.Dict = self.Scenario.validation_data()
-        self._metadata: Flext.Types.Dict = self.Scenario.metadata()
+        self._dataset: FlextTypes.Dict = self.Scenario.dataset()
+        self._validation: FlextTypes.Dict = self.Scenario.validation_data()
+        self._metadata: FlextTypes.Dict = self.Scenario.metadata()
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
             "ComprehensiveResultService initialized with inherited infrastructure",
             extra={
-                "dataset_keys": list(self._dataset.keys()),
+                "dataset_keys": list[object](self._dataset.keys()),
                 "service_type": "FlextResult demonstration",
             },
         )
 
-    def execute(self) -> Flext.Result[Flext.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute all FlextResult demonstrations and return summary.
 
         This method satisfies the FlextService abstract interface while
@@ -185,13 +192,13 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
                 "FlextResult demonstration completed successfully", extra=summary
             )
 
-            return Flext.Result[Flext.Types.Dict].ok(summary)
+            return FlextResult[FlextTypes.Dict].ok(cast("FlextTypes.Dict", summary))
 
         except Exception as e:
             error_msg = f"Demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return Flext.Result[Flext.Types.Dict].fail(
-                error_msg, error_code=FlextConstants.Errors.SERVICE_ERROR
+            return FlextResult[FlextTypes.Dict].fail(
+                error_msg, error_code="VALIDATION_ERROR"
             )
 
     # ========== BASIC OPERATIONS ==========
@@ -203,28 +210,28 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         # FlextRuntime type guards with FlextResult
         email = "test@example.com"
         if FlextRuntime.is_valid_email(email):
-            result = Flext.Result[str].ok(email)
+            result = FlextResult[str].ok(email)
             print(f"✅ Valid email via FlextRuntime: {result.unwrap()}")
         else:
-            result = Flext.Result[str].fail(
+            result = FlextResult[str].fail(
                 "Invalid email", error_code=FlextConstants.Errors.VALIDATION_ERROR
             )
 
         # JSON validation with FlextRuntime
         json_str = '{"key": "value"}'
         if FlextRuntime.is_valid_json(json_str):
-            result = Flext.Result[str].ok(json_str)
+            result = FlextResult[str].ok(json_str)
             print("✅ Valid JSON via FlextRuntime: validated")
 
         # UUID validation
         uuid_str = "550e8400-e29b-41d4-a716-446655440000"
         if FlextRuntime.is_valid_uuid(uuid_str):
-            result = Flext.Result[str].ok(uuid_str)
+            result = FlextResult[str].ok(uuid_str)
             print(f"✅ Valid UUID via FlextRuntime: {uuid_str[:8]}...")
 
         # Configuration defaults from FlextRuntime
-        timeout = FlextRuntime.DEFAULT_TIMEOUT
-        print(f"✅ FlextRuntime.DEFAULT_TIMEOUT: {timeout}s")
+        timeout = FlextConstants.Network.DEFAULT_TIMEOUT
+        print(f"✅ FlextConstants.Network.DEFAULT_TIMEOUT: {timeout}s")
 
         # Demonstrate inherited logger usage
         self.logger.debug(
@@ -240,7 +247,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         print(f"✅ .ok(): {success}")
 
         # Using FlextConstants for error codes
-        failure = Flext.Result[object].fail(
+        failure = FlextResult[object].fail(
             "Validation failed", error_code=FlextConstants.Errors.VALIDATION_ERROR
         )
         print(f"❌ .fail() with FlextConstants error code: {failure}")
@@ -248,7 +255,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         def risky_operation() -> int:
             return 1 // 0  # Will raise ZeroDivisionError
 
-        from_exc = Flext.Result[int].safe_call(risky_operation)
+        from_exc = FlextResult[int].safe_call(risky_operation)
         print(f"🔥 .safe_call() for exceptions: {from_exc}")
 
         # Log factory method demonstration
@@ -258,13 +265,13 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         )
 
     def demonstrate_value_extraction(self) -> None:
-        """Show all ways to extract values from Flext.Result."""
+        """Show all ways to extract values from FlextResult."""
         print("\n=== Value Extraction ===")
 
         dataset = self._dataset
-        users_list = cast("Flext.Types.List", dataset["users"])
-        user_payload = cast("Flext.Types.Dict", users_list[0])
-        success = Flext.Result[Flext.Types.Dict].ok(user_payload)
+        users_list = cast("FlextTypes.List", dataset["users"])
+        user_payload = cast("FlextTypes.Dict", users_list[0])
+        success = FlextResult[FlextTypes.Dict].ok(user_payload)
         failure = self.Scenario.result_failure("error")
 
         print(f".unwrap() on success: {success.unwrap()['email']}")
@@ -280,35 +287,35 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         """Core railway-oriented programming patterns."""
         print("\n=== Railway Operations ===")
 
-        def validate_length(s: str) -> Flext.Result[str]:
+        def validate_length(s: str) -> FlextResult[str]:
             if len(s) < 3:
-                return Flext.Result[str].fail("Too short")
-            return Flext.Result[str].ok(s)
+                return FlextResult[str].fail("Too short")
+            return FlextResult[str].ok(s)
 
         def to_upper(s: str) -> str:
             return s.upper()
 
-        def add_prefix(s: str) -> Flext.Result[str]:
-            return Flext.Result[str].ok(f"PREFIX_{s}")
+        def add_prefix(s: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"PREFIX_{s}")
 
         # Map: transform success value
-        result = Flext.Result[str].ok("test").map(to_upper)
+        result = FlextResult[str].ok("test").map(to_upper)
         print(f".map(to_upper): {result.unwrap()}")
 
-        # FlatMap: chain operations that return Flext.Result
+        # FlatMap: chain operations that return FlextResult
         result = (
-            Flext.Result[str].ok("hello").flat_map(validate_length).flat_map(add_prefix)
+            FlextResult[str].ok("hello").flat_map(validate_length).flat_map(add_prefix)
         )
         print(f".flat_map chain: {result.unwrap()}")
 
         # Filter: conditional success
-        filtered_result: Flext.Result[int] = (
-            Flext.Result[int].ok(10).filter(lambda x: x > 5, "Too small")
+        filtered_result: FlextResult[int] = (
+            FlextResult[int].ok(10).filter(lambda x: x > 5, "Too small")
         )
         print(f".filter(>5): {filtered_result}")
 
         # Using operators (syntactic sugar)
-        result = Flext.Result[str].ok("test") >> validate_length >> add_prefix
+        result = FlextResult[str].ok("test") >> validate_length >> add_prefix
         print(f">> operator chain: {result}")
 
     # ========== ERROR RECOVERY ==========
@@ -317,21 +324,18 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         """Show error recovery patterns."""
         print("\n=== Error Recovery ===")
 
-        failure = Flext.Result[str].fail("Initial error")
+        failure = FlextResult[str].fail("Initial error")
 
         # Recover: transform error to success
         recovered = failure.recover(lambda e: f"Recovered from: {e}")
         print(f".recover(): {recovered.unwrap()}")
 
         # RecoverWith: chain recovery operations
-        def try_recovery(error: str) -> Flext.Result[str]:
-            return Flext.Result[str].ok(f"Recovery attempted for: {error}")
-
-        recovered = failure.recover_with(try_recovery)
-        print(f".recover_with(): {recovered.unwrap()}")
+        def try_recovery(error: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"Recovery attempted for: {error}")
 
         # OrElse: provide fallback value
-        fallback = failure.or_else(Flext.Result[str].ok("fallback"))
+        fallback = failure.or_else(FlextResult[str].ok("fallback"))
         print(f".or_else(): {fallback.unwrap()}")
 
     # ========== ADVANCED COMBINATORS ==========
@@ -342,53 +346,38 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
 
         # Tap: side effects without changing value
         result = (
-            Flext.Result[int]
+            FlextResult[int]
             .ok(42)
             .tap(lambda x: print(f"  Tapping success: {x}"))
             .map(lambda x: x * 2)
         )
         print(f".tap() result: {result.unwrap()}")
 
-        # ZipWith: combine two results
-        result1 = Flext.Result[int].ok(10)
-        result2 = Flext.Result[int].ok(20)
-        combined = result1.zip_with(result2, operator.add)
-        print(f".zip_with(): {combined.unwrap()}")
-
         # Traverse: map and sequence
         items = [1, 2, 3]
 
-        def process(x: int) -> Flext.Result[int]:
-            return Flext.Result[int].ok(x * 2)
+        def process(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x * 2)
 
-        traversed = Flext.Result.traverse(items, process)
+        traversed = FlextResult.traverse(items, process)
         print(f".traverse(): {traversed.unwrap()}")
 
     # ========== COLLECTION OPERATIONS ==========
 
     def demonstrate_collection_operations(self) -> None:
-        """Operations on collections of Flext.Result instances."""
+        """Operations on collections of FlextResult instances."""
         print("\n=== Collection Operations ===")
 
-        results: list[Flext.Result[Flext.Types.Dict]] = [
+        results: list[FlextResult[FlextTypes.Dict]] = [
             self.Scenario.user_result(success=True),
             self.Scenario.user_result(success=True),
             self.Scenario.user_result(success=True),
         ]
 
-        sequenced = Flext.Result.sequence(results)
+        sequenced = FlextResult.sequence(results)
         print(f".sequence(): {len(sequenced.unwrap())} successful users")
 
-        all_ok = Flext.Result.all_success(*results)
-        print(f".all_success(): {all_ok}")
-
         results.append(self.Scenario.user_result(success=False))
-
-        any_ok = Flext.Result.any_success(*results)
-        print(f".any_success(): {any_ok}")
-
-        successes = Flext.Result.collect_successes(results)
-        print(f".collect_successes(): {len(successes)} users")
 
     # ========== VALIDATION PATTERNS ==========
 
@@ -397,29 +386,29 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         print("\n=== Validation Chaining ===")
 
         validation_data = self._validation
-        sample_email = cast("Flext.Types.List", validation_data["valid_emails"])[0]
-        invalid_email = cast("Flext.Types.List", validation_data["invalid_emails"])[0]
+        sample_email = cast("FlextTypes.List", validation_data["valid_emails"])[0]
+        invalid_email = cast("FlextTypes.List", validation_data["invalid_emails"])[0]
 
-        def validate_not_empty(value: object) -> Flext.Result[str]:
+        def validate_not_empty(value: object) -> FlextResult[str]:
             str_value = cast("str", value)
             if not str_value:
-                return Flext.Result[str].fail("Empty string")
-            return Flext.Result[str].ok(str_value)
+                return FlextResult[str].fail("Empty string")
+            return FlextResult[str].ok(str_value)
 
-        def validate_email(value: object) -> Flext.Result[str]:
+        def validate_email(value: object) -> FlextResult[str]:
             str_value = cast("str", value)
             if "@" not in str_value:
-                return Flext.Result[str].fail("Invalid email")
-            return Flext.Result[str].ok(str_value)
+                return FlextResult[str].fail("Invalid email")
+            return FlextResult[str].ok(str_value)
 
-        def validate_domain(value: object) -> Flext.Result[str]:
+        def validate_domain(value: object) -> FlextResult[str]:
             str_value = cast("str", value)
             if not str_value.endswith(".com"):
-                return Flext.Result[str].fail("Must be .com domain")
-            return Flext.Result[str].ok(str_value)
+                return FlextResult[str].fail("Must be .com domain")
+            return FlextResult[str].ok(str_value)
 
         result = (
-            Flext.Result[str]
+            FlextResult[str]
             .ok(cast("str", sample_email))
             .flat_map(validate_not_empty)
             .flat_map(validate_email)
@@ -427,25 +416,25 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         )
         print(f".chain_validations(): {result}")
 
-        def validate_not_empty_none(value: object) -> Flext.Result[bool]:
+        def validate_not_empty_none(value: object) -> FlextResult[None]:
             str_value = cast("str", value)
             if not str_value:
-                return Flext.Result[bool].fail("Empty string")
-            return Flext.Result[bool].ok(True)
+                return FlextResult[None].fail("Empty string")
+            return FlextResult[None].ok(None)
 
-        def validate_email_none(value: object) -> Flext.Result[bool]:
+        def validate_email_none(value: object) -> FlextResult[None]:
             str_value = cast("str", value)
             if "@" not in str_value:
-                return Flext.Result[bool].fail("Invalid email")
-            return Flext.Result[bool].ok(True)
+                return FlextResult[None].fail("Invalid email")
+            return FlextResult[None].ok(None)
 
-        def validate_domain_none(value: object) -> Flext.Result[bool]:
+        def validate_domain_none(value: object) -> FlextResult[None]:
             str_value = cast("str", value)
             if not str_value.endswith(".com"):
-                return Flext.Result[bool].fail("Must be .com domain")
-            return Flext.Result[bool].ok(True)
+                return FlextResult[None].fail("Must be .com domain")
+            return FlextResult[None].ok(None)
 
-        all_results = Flext.Result.validate_all(
+        all_results = FlextResult.validate_all(
             invalid_email,
             validate_not_empty_none,
             validate_email_none,
@@ -459,38 +448,38 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         """All operator overloads for ergonomic usage."""
         print("\n=== Operator Overloads ===")
 
-        def double(x: int) -> Flext.Result[int]:
-            return Flext.Result[int].ok(x * 2)
+        def double(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x * 2)
 
-        def add_ten(x: int) -> Flext.Result[int]:
-            return Flext.Result[int].ok(x + 10)
+        def add_ten(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x + 10)
 
         # >> operator (flat_map)
-        result = Flext.Result[int].ok(5) >> double >> add_ten
+        result = FlextResult[int].ok(5) >> double >> add_ten
         print(f">> (flat_map): 5 >> double >> add_ten = {result.unwrap()}")
 
         # << operator (map)
         def multiply_by_three(x: int) -> int:
             return x * 3
 
-        mapped_result = Flext.Result[int].ok(5) << multiply_by_three
+        mapped_result = FlextResult[int].ok(5) << multiply_by_three
         print(f"<< (map): 5 << (*3) = {mapped_result.unwrap()}")
 
         # @ operator (applicative)
-        func_result = Flext.Result[Callable[[int], int]].ok(lambda x: x + 100)
-        value_result = Flext.Result[int].ok(42)
+        func_result = FlextResult[Callable[[int], int]].ok(lambda x: x + 100)
+        value_result = FlextResult[int].ok(42)
         applied = func_result @ value_result
         print(f"@ (apply): (+100) @ 42 = {applied.unwrap()}")
 
         # & operator (combine/and)
-        r1 = Flext.Result[int].ok(10)
-        r2 = Flext.Result[int].ok(20)
+        r1 = FlextResult[int].ok(10)
+        r2 = FlextResult[int].ok(20)
         combined = r1 & r2
         print(f"& (combine): 10 & 20 = {combined}")
 
         # | operator (or_else)
-        failure = Flext.Result[int].fail("error")
-        fallback = Flext.Result[int].ok(999)
+        failure = FlextResult[int].fail("error")
+        fallback = FlextResult[int].ok(999)
         result = failure.or_else(fallback)
         print(f"| (or_else): failure | 999 = {result.unwrap()}")
 
@@ -500,9 +489,9 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         """Context enrichment and logging with inherited infrastructure."""
         print("\n=== Context and Logging ===")
 
-        def risky_operation() -> Flext.Result[int]:
+        def risky_operation() -> FlextResult[int]:
             message = self.Scenario.error_message()
-            return Flext.Result[int].fail(message)
+            return FlextResult[int].fail(message)
 
         result = risky_operation().with_context(
             lambda err: f"{self._metadata.get('component', 'component')} error: {err}",
@@ -513,14 +502,6 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
             extra = {**self._metadata, "severity": "high"}
             # Using inherited logger (no manual instantiation!)
             self.logger.error("Logged error: %s", error, extra=extra)
-
-        result = risky_operation().rescue_with_logging(log_error)
-        print(f".rescue_with_logging() (logs error): {result}")
-
-        result_with_fallback = (
-            risky_operation().rescue_with_logging(log_error).recover(lambda _: 0)
-        )
-        print(f"Logged and recovered: {result_with_fallback}")
 
         # Demonstrate context tracking with inherited context property
         print("\n✨ Inherited Infrastructure Demonstration:")
@@ -542,7 +523,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
         except FlextExceptions.ValidationError as e:
-            result = Flext.Result[str].fail(
+            result = FlextResult[str].fail(
                 e.message,
                 error_code=e.error_code,
             )
@@ -558,7 +539,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
                 config_source="environment",
             )
         except FlextExceptions.ConfigurationError as e:
-            result = Flext.Result[str].fail(
+            result = FlextResult[str].fail(
                 e.message,
                 error_code=e.error_code,
             )
@@ -574,7 +555,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
                 resource_id="123",
             )
         except FlextExceptions.NotFoundError as e:
-            result = Flext.Result[dict].fail(
+            result = FlextResult[FlextTypes.Dict].fail(
                 e.message,
                 error_code=e.error_code,
             )
@@ -591,7 +572,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         def risky_division() -> float:
             return 10 / 0  # Will raise ZeroDivisionError
 
-        result = Flext.Result.from_callable(risky_division)
+        result = FlextResult[float].from_callable(risky_division)
         print(
             f"✅ Caught exception: {result.error if result.is_failure else 'Unexpected success'}"
         )
@@ -600,16 +581,16 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         def safe_addition() -> int:
             return 5 + 10
 
-        result = Flext.Result.from_callable(safe_addition)
+        result = FlextResult[int].from_callable(safe_addition)
         print(f".from_callable(safe): {result.unwrap()}")
 
         # With custom error code
         def parse_int_string() -> int:
             return int("not a number")
 
-        result = Flext.Result.from_callable(
+        result = FlextResult[int].from_callable(
             parse_int_string,
-            error_code=Flext.Constants.Errors.VALIDATION_ERROR,
+            error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
         )
         print(f".from_callable(with error_code): {result.error}")
 
@@ -617,20 +598,20 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         """Show pipeline composition with flow_through."""
         print("\n=== flow_through(): Pipeline Composition ===")
 
-        def validate_positive(x: int) -> Flext.Result[int]:
+        def validate_positive(x: int) -> FlextResult[int]:
             if x <= 0:
-                return Flext.Result[int].fail("Must be positive")
-            return Flext.Result[int].ok(x)
+                return FlextResult[int].fail("Must be positive")
+            return FlextResult[int].ok(x)
 
-        def add_ten(x: int) -> Flext.Result[int]:
-            return Flext.Result[int].ok(x + 10)
+        def add_ten(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x + 10)
 
-        def multiply_by_two(x: int) -> Flext.Result[int]:
-            return Flext.Result[int].ok(x * 2)
+        def multiply_by_two(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x * 2)
 
         # Success pipeline: 5 → validate → +10 → *2 = 30
         result = (
-            Flext.Result[int]
+            FlextResult[int]
             .ok(5)
             .flow_through(
                 validate_positive,
@@ -642,7 +623,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
 
         # Failure pipeline (stops at validation)
         result = (
-            Flext.Result[int]
+            FlextResult[int]
             .ok(-5)
             .flow_through(
                 validate_positive,
@@ -657,20 +638,20 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         print("\n=== lash(): Error Recovery ===")
 
         # Primary operation that fails
-        def try_primary_database() -> Flext.Result[str]:
-            return Flext.Result[str].fail("Primary database unavailable")
+        def try_primary_database() -> FlextResult[str]:
+            return FlextResult[str].fail("Primary database unavailable")
 
         # Recovery function for errors
-        def recover_to_cache(error: str) -> Flext.Result[str]:
+        def recover_to_cache(error: str) -> FlextResult[str]:
             print(f"  Recovering from error: {error}")
-            return Flext.Result[str].ok("Data from cache")
+            return FlextResult[str].ok("Data from cache")
 
         result = try_primary_database().lash(recover_to_cache)
         print(f"✅ Recovered: {result.unwrap()}")
 
         # Success case - lash not called
-        def try_successful_operation() -> Flext.Result[str]:
-            return Flext.Result[str].ok("Primary success")
+        def try_successful_operation() -> FlextResult[str]:
+            return FlextResult[str].ok("Primary success")
 
         result = try_successful_operation().lash(recover_to_cache)
         print(f"Success (no recovery): {result.unwrap()}")
@@ -680,23 +661,23 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         print("\n=== alt(): Fallback Pattern ===")
 
         # Primary fails, use fallback
-        primary = Flext.Result[str].fail("Primary service unavailable")
-        fallback = Flext.Result[str].ok("Fallback value")
+        primary = FlextResult[str].fail("Primary service unavailable")
+        fallback = FlextResult[str].ok("Fallback value")
 
         result = primary.alt(fallback)
         print(f"✅ Using fallback: {result.unwrap()}")
 
         # Primary succeeds, ignore fallback
-        primary = Flext.Result[str].ok("Primary value")
-        fallback = Flext.Result[str].ok("Fallback value")
+        primary = FlextResult[str].ok("Primary value")
+        fallback = FlextResult[str].ok("Fallback value")
 
         result = primary.alt(fallback)
         print(f"Primary success: {result.unwrap()}")
 
         # Chain multiple fallbacks
-        first = Flext.Result[str].fail("First failed")
-        second = Flext.Result[str].fail("Second failed")
-        third = Flext.Result[str].ok("Third succeeded")
+        first = FlextResult[str].fail("First failed")
+        second = FlextResult[str].fail("Second failed")
+        third = FlextResult[str].ok("Third succeeded")
 
         result = first.alt(second).alt(third)
         print(f"Fallback chain: {result.unwrap()}")
@@ -714,13 +695,13 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
             return "expensive computed default"
 
         # Success case - default NOT called (lazy evaluation)
-        success = Flext.Result[str].ok("success value")
+        success = FlextResult[str].ok("success value")
         result = success.value_or_call(expensive_default)
         print(f"✅ Success: {result}, expensive_called={expensive_called}")
 
         # Failure case - default IS called
         expensive_called = False
-        failure = Flext.Result[str].fail("error occurred")
+        failure = FlextResult[str].fail("error occurred")
         result = failure.value_or_call(expensive_default)
         print(f"Failure: {result}, expensive_called={expensive_called}")
 
@@ -732,7 +713,7 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
 
         # OLD: Manual try/except (DEPRECATED)
         warnings.warn(
-            "Manual try/except is DEPRECATED! Use Flext.Result.safe_call() instead.",
+            "Manual try/except is DEPRECATED! Use FlextResult.safe_call() instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -749,12 +730,12 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
             error_message = "Division by zero"
             raise ZeroDivisionError(error_message)  # Will raise
 
-        result = Flext.Result[int].safe_call(risky_function)
+        result = FlextResult[int].safe_call(risky_function)
         print(f"FlextResult.safe_call(): {result}")
 
         # OLD: Multiple return types (DEPRECATED)
         warnings.warn(
-            "Returning Optional[T] or Union[T, None] is DEPRECATED! Always return Flext.Result[T].",
+            "Returning Optional[T] or Union[T, None] is DEPRECATED! Always return FlextResult[T].",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -763,12 +744,12 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         print("    return None  # or User")
 
         print("\n✅ CORRECT WAY (FlextResult):")
-        print("def find_user(id: int) -> Flext.Result[User]:")
-        print("    return Flext.Result[User].fail('Not found')")
+        print("def find_user(id: int) -> FlextResult[User]:")
+        print("    return FlextResult[User].fail('Not found')")
 
         # OLD: Boolean success flags (DEPRECATED)
         warnings.warn(
-            "Returning (bool, T) tuples is DEPRECATED! Use Flext.Result[T].",
+            "Returning (bool, T) tuples is DEPRECATED! Use FlextResult[T].",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -777,8 +758,8 @@ class ComprehensiveResultService(Flext.Service[Flext.Types.Dict]):
         print("    return (False, 'error message')")
 
         print("\n✅ CORRECT WAY (FlextResult):")
-        print("def process() -> Flext.Result[str]:")
-        print("    return Flext.Result[str].fail('error message')")
+        print("def process() -> FlextResult[str]:")
+        print("    return FlextResult[str].fail('error message')")
 
 
 def main() -> None:

@@ -28,6 +28,7 @@ from uuid import uuid4
 from flext_core import (
     FlextBus,
     FlextConstants,
+    FlextLogger,
     FlextModels,
     FlextResult,
     FlextService,
@@ -39,7 +40,7 @@ from flext_core.handlers import FlextHandlers
 class BusMessagingService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextBus patterns with FlextMixins.Service infrastructure.
 
-    This service inherits from Flext.Service to demonstrate:
+    This service inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextContainer singleton)
     - Inherited logger property (FlextLogger with service context - BUS MESSAGING FOCUS!)
     - Inherited context property (FlextContext for request/correlation tracking)
@@ -115,7 +116,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             self.demonstrate_new_flextresult_methods()
             self.demonstrate_deprecated_patterns()
 
-            summary = {
+            summary: FlextTypes.Dict = {
                 "status": "completed",
                 "demonstrations": 8,
                 "patterns": [
@@ -248,9 +249,11 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         class OrderCommandHandlers:
             """Handles order commands."""
 
+            logger: FlextLogger
+
             def __init__(self) -> None:
                 self._orders: FlextTypes.NestedDict = {}
-                # Logger available via self.logger
+                self.logger = FlextLogger(__name__)
 
             def handle_place_order(self, cmd: PlaceOrderCommand) -> FlextResult[str]:
                 """Place a new order."""
@@ -358,9 +361,10 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         class LoggingMiddleware:
             """Logs all bus operations."""
 
+            logger: FlextLogger
+
             def __init__(self) -> None:
-                # Logger available via self.logger
-                pass
+                self.logger = FlextLogger(__name__)
 
             def __call__(
                 self,
@@ -703,15 +707,19 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         # 2. flow_through - Message Pipeline Composition
         print("\n=== 2. flow_through: Message Pipeline Composition ===")
 
-        def validate_message_format(data: dict) -> FlextResult[dict]:
+        def validate_message_format(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Validate message has required fields."""
             if not data.get("type"):
-                return FlextResult[dict].fail("Message type required")
+                return FlextResult[dict[str, object]].fail("Message type required")
             if not data.get("payload"):
-                return FlextResult[dict].fail("Message payload required")
-            return FlextResult[dict].ok(data)
+                return FlextResult[dict[str, object]].fail("Message payload required")
+            return FlextResult[dict[str, object]].ok(data)
 
-        def enrich_with_metadata(data: dict) -> FlextResult[dict]:
+        def enrich_with_metadata(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Add bus metadata to message."""
             enriched = {
                 **data,
@@ -719,18 +727,20 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 "timestamp": time.time(),
                 "bus_version": "1.0",
             }
-            return FlextResult[dict].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
-        def register_in_bus(data: dict) -> FlextResult[dict]:
+        def register_in_bus(data: dict[str, object]) -> FlextResult[dict[str, object]]:
             """Register message in bus tracking."""
             enriched = {
                 **data,
                 "registered": True,
                 "tracking_id": f"TRACK-{data.get('message_id', 'unknown')[:8]}",
             }
-            return FlextResult[dict].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
-        def validate_complete(data: dict) -> FlextResult[dict]:
+        def validate_complete(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Validate message is ready for bus."""
             required_fields = [
                 "type",
@@ -741,8 +751,10 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             ]
             missing = [f for f in required_fields if f not in data]
             if missing:
-                return FlextResult[dict].fail(f"Missing fields: {', '.join(missing)}")
-            return FlextResult[dict].ok(data)
+                return FlextResult[dict[str, object]].fail(
+                    f"Missing fields: {', '.join(missing)}"
+                )
+            return FlextResult[dict[str, object]].ok(data)
 
         # Flow through complete bus message pipeline
         message_data = {
@@ -750,7 +762,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             "payload": {"user_id": "USER-001", "name": "Alice"},
         }
         pipeline_result = (
-            FlextResult[dict]
+            FlextResult[dict[str, object]]
             .ok(message_data)
             .flow_through(
                 validate_message_format,

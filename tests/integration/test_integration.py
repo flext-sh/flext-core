@@ -172,9 +172,8 @@ class TestLibraryIntegration:
         assert service_result.value == test_value
 
         # Act - Test global container access
-        manager = FlextContainer.ensure_global_manager()
-
-        global_container = manager.get_or_create()
+        # API changed: use get_global() instead of ensure_global_manager()
+        global_container = FlextContainer.get_global()
 
         # Assert - Global container availability
         assert isinstance(global_container, FlextContainer)

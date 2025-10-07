@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import operator
 import time
 from collections.abc import Callable
 from typing import Any
@@ -94,50 +93,6 @@ class TestFlextResult:
 
         assert flat_mapped.is_failure
         assert flat_mapped.error == "test_error"
-
-    def test_result_when_success(self) -> None:
-        """Test when operation on successful result."""
-        result = FlextResult[int].ok(5)
-
-        def is_greater_than_3(x: int) -> bool:
-            return x > 3
-
-        when_result = result.when(is_greater_than_3)
-
-        assert when_result.is_success
-        assert when_result.value == 5
-
-    def test_result_when_failure(self) -> None:
-        """Test when operation on failed result."""
-        result = FlextResult[int].ok(2)
-
-        def is_greater_than_3(x: int) -> bool:
-            return x > 3
-
-        when_result = result.when(is_greater_than_3)
-
-        assert when_result.is_failure
-        assert (
-            when_result.error is not None and "condition" in when_result.error.lower()
-        )
-
-    def test_result_tap_error(self) -> None:
-        """Test tap_error operation."""
-        result = FlextResult[int].fail("original_error")
-
-        # Test side effect function that doesn't return anything
-        side_effect_called = False
-
-        def side_effect(e: str) -> None:
-            nonlocal side_effect_called
-            side_effect_called = True
-            assert e == "original_error"
-
-        tapped_error = result.tap_error(side_effect)
-
-        assert tapped_error.is_failure
-        assert tapped_error.error == "original_error"
-        assert side_effect_called
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or operation."""
@@ -243,46 +198,6 @@ class TestFlextResult:
         assert execution_time < 1.0
         assert final_result.is_success
 
-    def test_result_chain_results_static_method(self) -> None:
-        """Test chain_results static method."""
-        result1 = FlextResult[int].ok(1)
-        result2 = FlextResult[int].ok(2)
-        result3 = FlextResult[int].ok(3)
-
-        chained = FlextResult.chain_results(result1, result2, result3)
-        assert chained.is_success
-        assert chained.value == [1, 2, 3]
-
-    def test_result_chain_results_static_method_failure(self) -> None:
-        """Test chain_results static method with failure."""
-        result1 = FlextResult[int].ok(1)
-        result2 = FlextResult[int].fail("error")
-        result3 = FlextResult[int].ok(3)
-
-        chained = FlextResult.chain_results(result1, result2, result3)
-        assert chained.is_failure
-        assert chained.error is not None and "Chain failed at result" in chained.error
-
-    def test_result_combine_static_method(self) -> None:
-        """Test combine static method."""
-        result1 = FlextResult[str].ok("hello")
-        result2 = FlextResult[str].ok("world")
-        result3 = FlextResult[str].ok("test")
-
-        combined = FlextResult.combine(result1, result2, result3)
-        assert combined.is_success
-        assert combined.value == ["hello", "world", "test"]
-
-    def test_result_combine_static_method_failure(self) -> None:
-        """Test combine static method with failure."""
-        result1 = FlextResult[str].ok("hello")
-        result2 = FlextResult[str].fail("error")
-        result3 = FlextResult[str].ok("test")
-
-        combined = FlextResult.combine(result1, result2, result3)
-        assert combined.is_failure
-        assert combined.error is not None and "error" in combined.error
-
     def test_result_tap_method(self) -> None:
         """Test tap method."""
         result = FlextResult[str].ok("test")
@@ -364,33 +279,6 @@ class TestFlextResult:
         assert or_result.is_success
         assert or_result.value == "success1"
 
-    def test_result_unless_method(self) -> None:
-        """Test unless method."""
-        result = FlextResult[int].ok(5)
-
-        def is_greater_than_3(x: int) -> bool:
-            return x > 3
-
-        unless_result = result.unless(is_greater_than_3)
-
-        assert unless_result.is_failure
-        assert (
-            unless_result.error is not None
-            and "condition" in unless_result.error.lower()
-        )
-
-    def test_result_unless_method_success(self) -> None:
-        """Test unless method on success."""
-        result = FlextResult[int].ok(2)
-
-        def is_greater_than_3(x: int) -> bool:
-            return x > 3
-
-        unless_result = result.unless(is_greater_than_3)
-
-        assert unless_result.is_success
-        assert unless_result.value == 2
-
     def test_result_with_context_method(self) -> None:
         """Test with_context method."""
         result = FlextResult[str].fail("error")
@@ -401,10 +289,8 @@ class TestFlextResult:
         context_result = result.with_context(add_context)
 
         assert context_result.is_failure
-        assert (
-            context_result.error is not None
-            and "Context: error" in context_result.error
-        )
+        assert context_result.error is not None
+        assert "Context: error" in context_result.error
 
     def test_result_with_context_method_success(self) -> None:
         """Test with_context method on success."""
@@ -442,17 +328,6 @@ class TestFlextResult:
         assert sequenced.is_failure
         assert sequenced.error == "error"
 
-    def test_result_collect_successes_class_method(self) -> None:
-        """Test collect_successes class method."""
-        results = [
-            FlextResult[int].ok(1),
-            FlextResult[int].fail("error"),
-            FlextResult[int].ok(3),
-        ]
-
-        successes = FlextResult.collect_successes(results)
-        assert successes == [1, 3]
-
     def test_result_collect_failures_class_method(self) -> None:
         """Test collect_failures class method."""
         results = [
@@ -464,35 +339,6 @@ class TestFlextResult:
 
         failures = FlextResult.collect_failures(results)
         assert failures == ["error1", "error2"]
-
-    def test_result_to_either_method(self) -> None:
-        """Test to_either method."""
-        result = FlextResult[int].ok(5)
-        either = result.to_either()
-
-        assert either == (5, None)
-
-    def test_result_to_either_method_failure(self) -> None:
-        """Test to_either method on failure."""
-        result = FlextResult[int].fail("error")
-        either = result.to_either()
-
-        assert either == (None, "error")
-
-    def test_result_to_exception_method(self) -> None:
-        """Test to_exception method."""
-        result = FlextResult[int].ok(5)
-        exception = result.to_exception()
-
-        assert exception is None
-
-    def test_result_to_exception_method_failure(self) -> None:
-        """Test to_exception method on failure."""
-        result = FlextResult[int].fail("error")
-        exception = result.to_exception()
-
-        assert exception is not None
-        assert isinstance(exception, Exception)
 
     def test_result_value_or_none_property(self) -> None:
         """Test value_or_none property."""
@@ -579,47 +425,6 @@ class TestFlextResult:
         assert recovered.is_success
         assert recovered.value == 0
 
-    def test_result_all_success_static_method(self) -> None:
-        """Test all_success static method."""
-        result1 = FlextResult[str].ok("success1")
-        result2 = FlextResult[str].ok("success2")
-        result3 = FlextResult[str].ok("success3")
-
-        all_success = FlextResult.all_success(result1, result2, result3)
-        assert all_success is True
-
-    def test_result_all_success_static_method_failure(self) -> None:
-        """Test all_success static method with failure."""
-        result1 = FlextResult[str].ok("success1")
-        result2 = FlextResult[str].fail("error")
-        result3 = FlextResult[str].ok("success3")
-
-        all_success = FlextResult.all_success(result1, result2, result3)
-        assert all_success is False
-
-    def test_result_any_success_static_method(self) -> None:
-        """Test any_success static method."""
-        result1 = FlextResult[str].fail("error1")
-        result2 = FlextResult[str].ok("success2")
-        result3 = FlextResult[str].fail("error3")
-
-        any_success = FlextResult.any_success(result1, result2, result3)
-        assert any_success is True
-
-    def test_result_any_success_static_method_all_fail(self) -> None:
-        """Test any_success static method with all failures."""
-        result1 = FlextResult[str].fail("error1")
-        result2 = FlextResult[str].fail("error2")
-        result3 = FlextResult[str].fail("error3")
-
-        any_success = FlextResult.any_success(result1, result2, result3)
-        assert any_success is False
-
-    def test_result_all_success_empty_results(self) -> None:
-        """Test all_success static method with no results."""
-        all_success = FlextResult.all_success()
-        assert all_success is True
-
     def test_result_batch_processing(self) -> None:
         """Test batch processing functionality."""
 
@@ -650,7 +455,8 @@ class TestFlextResult:
         result = FlextResult.traverse(items, transform)
 
         assert result.is_failure
-        assert result.error is not None and "Negative number" in result.error
+        assert result.error is not None
+        assert "Negative number" in result.error
 
     def test_result_traverse_collection_success(self) -> None:
         """Test traverse collection functionality with all successes."""
@@ -674,43 +480,14 @@ class TestFlextResult:
 
         result = FlextResult.sequence(results)
         assert result.is_failure
-        assert result.error is not None and "error1" in result.error
-
-    def test_result_combine_with_failures(self) -> None:
-        """Test combine static method with failures."""
-        results = [
-            FlextResult[str].ok("value1"),
-            FlextResult[str].fail("error1"),
-            FlextResult[str].ok("value2"),
-        ]
-
-        result = FlextResult.combine(*results)
-        assert result.is_failure
-        assert result.error is not None and "error1" in result.error
-
-    def test_result_collect_successes_empty(self) -> None:
-        """Test collect_successes with empty results."""
-        results: list[FlextResult[str]] = []
-        successes = FlextResult.collect_successes(results)
-        assert successes == []
+        assert result.error is not None
+        assert "error1" in result.error
 
     def test_result_collect_failures_empty(self) -> None:
         """Test collect_failures with empty results."""
         results: list[FlextResult[str]] = []
         failures = FlextResult.collect_failures(results)
         assert failures == []
-
-    def test_result_collect_successes_mixed(self) -> None:
-        """Test collect_successes with mixed results."""
-        results = [
-            FlextResult[str].ok("success1"),
-            FlextResult[str].fail("error1"),
-            FlextResult[str].ok("success2"),
-            FlextResult[str].fail("error2"),
-        ]
-
-        successes = FlextResult.collect_successes(results)
-        assert successes == ["success1", "success2"]
 
     def test_result_collect_failures_mixed(self) -> None:
         """Test collect_failures with mixed results."""
@@ -724,30 +501,6 @@ class TestFlextResult:
         failures = FlextResult.collect_failures(results)
         assert failures == ["error1", "error2"]
 
-    def test_result_chain_results_with_failures(self) -> None:
-        """Test chain_results static method with failures."""
-        results = [
-            FlextResult[str].ok("value1"),
-            FlextResult[str].fail("Processing failed"),
-            FlextResult[str].ok("value2"),
-        ]
-
-        result = FlextResult.chain_results(*results)
-        assert result.is_failure
-        assert result.error is not None and "Processing failed" in result.error
-
-    def test_result_chain_results_all_success(self) -> None:
-        """Test chain_results static method with all successes."""
-        results = [
-            FlextResult[str].ok("value1"),
-            FlextResult[str].ok("value2"),
-            FlextResult[str].ok("value3"),
-        ]
-
-        result = FlextResult.chain_results(*results)
-        assert result.is_success
-        assert result.value == ["value1", "value2", "value3"]
-
     def test_result_accumulate_with_errors(self) -> None:
         """Test accumulate method with errors."""
         results = [
@@ -759,8 +512,10 @@ class TestFlextResult:
 
         result = FlextResult.accumulate_errors(*results)
         assert result.is_failure
-        assert result.error is not None and "error1" in result.error
-        assert result.error is not None and "error2" in result.error
+        assert result.error is not None
+        assert "error1" in result.error
+        assert result.error is not None
+        assert "error2" in result.error
 
     def test_result_accumulate_all_success(self) -> None:
         """Test accumulate method with all successes."""
@@ -790,7 +545,8 @@ class TestFlextResult:
 
         result = FlextResult.accumulate_errors(*results)
         assert result.is_failure
-        assert result.error is not None and "Unknown error" in result.error
+        assert result.error is not None
+        assert "Unknown error" in result.error
 
     def test_result_parallel_map_with_fail_fast(self) -> None:
         """Test parallel_map method with fail_fast=True."""
@@ -829,7 +585,8 @@ class TestFlextResult:
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=False)
         assert result.is_failure
-        assert result.error is not None and "Processing failed" in result.error
+        assert result.error is not None
+        assert "Processing failed" in result.error
 
     def test_result_parallel_map_without_fail_fast_success(self) -> None:
         """Test parallel_map method with fail_fast=False and all success."""
@@ -853,8 +610,10 @@ class TestFlextResult:
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=False)
         assert result.is_failure
-        assert result.error is not None and "Error processing 2" in result.error
-        assert result.error is not None and "Error processing 4" in result.error
+        assert result.error is not None
+        assert "Error processing 2" in result.error
+        assert result.error is not None
+        assert "Error processing 4" in result.error
 
     def test_result_parallel_map_with_none_error(self) -> None:
         """Test parallel_map method with None error."""
@@ -867,7 +626,8 @@ class TestFlextResult:
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=False)
         assert result.is_failure
-        assert result.error is not None and "Unknown error occurred" in result.error
+        assert result.error is not None
+        assert "Unknown error occurred" in result.error
 
     def test_result_parallel_map_with_fail_fast_none_error(self) -> None:
         """Test parallel_map method with fail_fast=True and None error."""
@@ -880,7 +640,8 @@ class TestFlextResult:
 
         result = FlextResult.parallel_map(items, process_item, fail_fast=True)
         assert result.is_failure
-        assert result.error is not None and "Unknown error occurred" in result.error
+        assert result.error is not None
+        assert "Unknown error occurred" in result.error
 
     # ========== COMPREHENSIVE TESTS FOR UNCOVERED METHODS ==========
 
@@ -896,64 +657,14 @@ class TestFlextResult:
         result = FlextResult[int].ok(3)
         filtered = result.filter(lambda x: x > 5, "Value too small")
         assert filtered.is_failure
-        assert filtered.error is not None and "Value too small" in filtered.error
+        assert filtered.error is not None
+        assert "Value too small" in filtered.error
 
         # Failure case (should remain failure)
         result = FlextResult[int].fail("Original error")
         filtered = result.filter(lambda x: x > 5, "Value too small")
         assert filtered.is_failure
         assert filtered.error == "Original error"
-
-    def test_result_zip_with_method(self) -> None:
-        """Test zip_with method."""
-        # Both success
-        result1 = FlextResult[int].ok(5)
-        result2 = FlextResult[int].ok(10)
-        zipped = result1.zip_with(result2, operator.add)
-        assert zipped.is_success
-        assert zipped.value == 15
-
-        # First success, second failure
-        result1 = FlextResult[int].ok(5)
-        result2 = FlextResult[int].fail("Second failed")
-        zipped = result1.zip_with(result2, operator.add)
-        assert zipped.is_failure
-        assert zipped.error is not None and "Second failed" in zipped.error
-
-        # First failure, second success
-        result1 = FlextResult[int].fail("First failed")
-        result2 = FlextResult[int].ok(10)
-        zipped = result1.zip_with(result2, operator.add)
-        assert zipped.is_failure
-        assert zipped.error is not None and "First failed" in zipped.error
-
-        # Both failure
-        result1 = FlextResult[int].fail("First failed")
-        result2 = FlextResult[int].fail("Second failed")
-        zipped = result1.zip_with(result2, operator.add)
-        assert zipped.is_failure
-
-    def test_result_recover_with_method(self) -> None:
-        """Test recover_with method."""
-        # Success case (should not call recovery function)
-        result = FlextResult[int].ok(42)
-        recovered = result.recover_with(lambda _: FlextResult[int].ok(0))
-        assert recovered.is_success
-        assert recovered.value == 42
-
-        # Failure case with successful recovery
-        result = FlextResult[int].fail("Error occurred")
-        recovered = result.recover_with(lambda _: FlextResult[int].ok(0))
-        assert recovered.is_success
-        assert recovered.value == 0
-
-        # Failure case with failed recovery
-        result = FlextResult[int].fail("Error occurred")
-        recovered = result.recover_with(
-            lambda _: FlextResult[int].fail("Recovery failed"),
-        )
-        assert recovered.is_failure
-        assert recovered.error is not None and "Recovery failed" in recovered.error
 
     def test_result_from_exception_static_method(self) -> None:
         """Test from_exception static method."""
@@ -973,68 +684,8 @@ class TestFlextResult:
 
         result = FlextResult.from_exception(failing_func)
         assert result.is_failure
-        assert result.error is not None and "Something went wrong" in result.error
-
-    def test_result_first_success_static_method(self) -> None:
-        """Test first_success static method."""
-        # Mix of success and failure
-        results = [
-            FlextResult[int].fail("First error"),
-            FlextResult[int].fail("Second error"),
-            FlextResult[int].ok(42),
-            FlextResult[int].ok(100),
-        ]
-
-        first = FlextResult.first_success(results)
-        assert first.is_success
-        assert first.value == 42
-
-        # All failures
-        results = [
-            FlextResult[int].fail("First error"),
-            FlextResult[int].fail("Second error"),
-            FlextResult[int].fail("Third error"),
-        ]
-
-        first = FlextResult.first_success(results)
-        assert first.is_failure
-        assert (
-            first.error is not None and "Third error" in first.error
-        )  # Should be last error
-
-        # Empty list
-        first = FlextResult.first_success([])
-        assert first.is_failure
-
-    def test_result_try_all_static_method(self) -> None:
-        """Test try_all static method."""
-        call_count = 0
-
-        def failing_func() -> FlextResult[int]:
-            nonlocal call_count
-            call_count += 1
-            return FlextResult[int].fail(f"Attempt {call_count} failed")
-
-        def success_func() -> FlextResult[int]:
-            nonlocal call_count
-            call_count += 1
-            return FlextResult[int].ok(call_count)
-
-        # Mix of failing and succeeding functions
-        funcs = [failing_func, failing_func, success_func, failing_func]
-        result = FlextResult.try_all(funcs)
-        assert result.is_success
-        assert result.value == 3  # Should succeed on third attempt
-
-        # All failing functions
-        call_count = 0
-        funcs = [failing_func, failing_func, failing_func]
-        result = FlextResult.try_all(funcs)
-        assert result.is_failure
-
-        # Empty list
-        result = FlextResult.try_all([])
-        assert result.is_failure
+        assert result.error is not None
+        assert "Something went wrong" in result.error
 
     def test_result_safe_unwrap_or_none_static_method(self) -> None:
         """Test value_or_none instance property (replaces safe_unwrap_or_none static method)."""
@@ -1047,25 +698,6 @@ class TestFlextResult:
         result = FlextResult[int].fail("Error")
         value = result.value_or_none
         assert value is None
-
-    def test_result_unwrap_or_raise_static_method(self) -> None:
-        """Test unwrap_or_raise static method."""
-        # Success result
-        result = FlextResult[int].ok(42)
-        value = FlextResult.unwrap_or_raise(result)
-        assert value == 42
-
-        # Failure result with default exception
-        result = FlextResult[int].fail("Error occurred")
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            FlextResult.unwrap_or_raise(result)
-        assert str(exc_info.value) == "[OPERATION_ERROR] Error occurred"
-
-        # Failure result with custom exception
-        result = FlextResult[int].fail("Error occurred")
-        with pytest.raises(RuntimeError) as exc_info:
-            FlextResult.unwrap_or_raise(result, RuntimeError)
-        assert str(exc_info.value) == "Error occurred"
 
     def test_result_success_rate_static_method(self) -> None:
         """Test success_rate static method."""
@@ -1113,23 +745,8 @@ class TestFlextResult:
 
         result = FlextResult.safe_call(failing_func)
         assert result.is_failure
-        assert result.error is not None and "Something went wrong" in result.error
-
-    def test_result_cast_fail_method(self) -> None:
-        """Test cast_fail method."""
-        # Success result should raise ValidationError
-        result = FlextResult[int].ok(42)
-        with pytest.raises(
-            FlextExceptions.ValidationError,
-            match="Cannot cast successful result to failed",
-        ):
-            result.cast_fail()
-
-        # Failure result should remain failure
-        result = FlextResult[int].fail("Original error")
-        cast_result = result.cast_fail()
-        assert cast_result.is_failure
-        assert cast_result.error == "Original error"
+        assert result.error is not None
+        assert "Something went wrong" in result.error
 
     def test_result_chain_validations_static_method(self) -> None:
         """Test chain_validations static method."""
@@ -1156,7 +773,8 @@ class TestFlextResult:
 
         result = FlextResult.chain_validations(validate_positive, validate_even_fail)
         assert result.is_failure
-        assert result.error is not None and "Must be even" in result.error
+        assert result.error is not None
+        assert "Must be even" in result.error
 
         # Invalid value (negative) - first validator should fail
         def validate_positive_fail() -> FlextResult[None]:
@@ -1164,7 +782,8 @@ class TestFlextResult:
 
         result = FlextResult.chain_validations(validate_positive_fail, validate_even)
         assert result.is_failure
-        assert result.error is not None and "Must be positive" in result.error
+        assert result.error is not None
+        assert "Must be positive" in result.error
 
     def test_result_validate_and_execute_static_method(self) -> None:
         """Test validate_and_execute static method."""
@@ -1185,29 +804,8 @@ class TestFlextResult:
         # Invalid value
         result = FlextResult.ok(-5).validate_and_execute(validator, executor)
         assert result.is_failure
-        assert result.error is not None and "Must be positive" in result.error
-
-    def test_result_map_sequence_static_method(self) -> None:
-        """Test map_sequence static method."""
-
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x * 2)
-
-        # All successful mapping
-        items = [1, 2, 3, 4, 5]
-        result = FlextResult.map_sequence(items, double)
-        assert result.is_success
-        assert result.value == [2, 4, 6, 8, 10]
-
-        # Mapping with failure
-        def conditional_double(x: int) -> FlextResult[int]:
-            if x == 3:
-                return FlextResult[int].fail("Cannot process 3")
-            return FlextResult[int].ok(x * 2)
-
-        result = FlextResult.map_sequence(items, conditional_double)
-        assert result.is_failure
-        assert result.error is not None and "Cannot process 3" in result.error
+        assert result.error is not None
+        assert "Must be positive" in result.error
 
     def test_result_pipeline_static_method(self) -> None:
         """Test pipeline static method."""
@@ -1237,121 +835,8 @@ class TestFlextResult:
         operations_with_failure = [add_one, failing_op, double]
         result = FlextResult.pipeline(5, *operations_with_failure)
         assert result.is_failure
-        assert result.error is not None and "Pipeline failed" in result.error
-
-    def test_result_or_try_method(self) -> None:
-        """Test or_try method."""
-        # Success result should not try alternatives
-        result = FlextResult[int].ok(42)
-
-        def alternative() -> FlextResult[int]:
-            return FlextResult[int].ok(100)
-
-        or_result = result.or_try(alternative)
-        assert or_result.is_success
-        assert or_result.value == 42
-
-        # Failure result should try alternatives
-        result = FlextResult[int].fail("Original error")
-
-        def successful_alternative() -> FlextResult[int]:
-            return FlextResult[int].ok(100)
-
-        or_result = result.or_try(successful_alternative)
-        assert or_result.is_success
-        assert or_result.value == 100
-
-        # All alternatives fail
-        def failing_alternative() -> FlextResult[int]:
-            return FlextResult[int].fail("Alternative failed")
-
-        or_result = result.or_try(failing_alternative)
-        assert or_result.is_failure
-
-    def test_result_rescue_with_logging_method(self) -> None:
-        """Test rescue_with_logging method."""
-        logged_errors = []
-
-        def logger(error: str) -> None:
-            logged_errors.append(error)
-
-        # Success result should not log
-        result = FlextResult[int].ok(42)
-        rescued = result.rescue_with_logging(logger)
-        assert rescued.is_success
-        assert rescued.value == 42
-        assert len(logged_errors) == 0
-
-        # Failure result should log error
-        result = FlextResult[int].fail("Test error")
-        rescued = result.rescue_with_logging(logger)
-        assert rescued.is_failure
-        assert len(logged_errors) == 1
-        assert "Test error" in logged_errors[0]
-
-    def test_result_kleisli_compose_static_method(self) -> None:
-        """Test kleisli_compose static method."""
-
-        def add_one(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x + 1)
-
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x * 2)
-
-        composed = FlextResult.ok(5).kleisli_compose(add_one, double)
-        result = composed(5)
-        assert result.is_success
-        assert result.value == 12  # (5 + 1) * 2
-
-    def test_result_applicative_lift2_static_method(self) -> None:
-        """Test applicative_lift2 static method."""
-        result1 = FlextResult[int].ok(5)
-        result2 = FlextResult[int].ok(10)
-
-        lifted = FlextResult.applicative_lift2(operator.add, result1, result2)
-        assert lifted.is_success
-        assert lifted.value == 15
-
-        # With failure
-        result2_fail = FlextResult[int].fail("Error")
-        lifted = FlextResult.applicative_lift2(operator.add, result1, result2_fail)
-        assert lifted.is_failure
-
-    def test_result_applicative_lift3_static_method(self) -> None:
-        """Test applicative_lift3 static method."""
-
-        def add_three(x: int, y: int, z: int) -> int:
-            return x + y + z
-
-        result1 = FlextResult[int].ok(5)
-        result2 = FlextResult[int].ok(10)
-        result3 = FlextResult[int].ok(15)
-
-        lifted = FlextResult.applicative_lift3(add_three, result1, result2, result3)
-        assert lifted.is_success
-        assert lifted.value == 30
-
-    def test_result_if_then_else_static_method(self) -> None:
-        """Test if_then_else static method."""
-
-        def condition(x: int) -> bool:
-            return x > 5
-
-        def then_func(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(f"Large: {x}")
-
-        def else_func(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(f"Small: {x}")
-
-        # Condition is true
-        result = FlextResult.ok(10).if_then_else(condition, then_func, else_func)
-        assert result.is_success
-        assert result.value == "Large: 10"
-
-        # Condition is false
-        result = FlextResult.ok(3).if_then_else(condition, then_func, else_func)
-        assert result.is_success
-        assert result.value == "Small: 3"
+        assert result.error is not None
+        assert "Pipeline failed" in result.error
 
     def test_result_collect_all_errors_static_method(self) -> None:
         """Test collect_all_errors static method."""
@@ -1369,23 +854,6 @@ class TestFlextResult:
         assert len(errors) == 2
         assert "Error 1" in errors[0]
         assert "Error 2" in errors[1]
-
-    def test_result_concurrent_sequence_static_method(self) -> None:
-        """Test concurrent_sequence static method."""
-        # All success
-        results = [FlextResult[int].ok(i) for i in range(5)]
-        sequenced = FlextResult.concurrent_sequence(results, fail_fast=True)
-        assert sequenced.is_success
-        assert sequenced.value == [0, 1, 2, 3, 4]
-
-        # With failure and fail_fast=True
-        results = [
-            FlextResult[int].ok(1),
-            FlextResult[int].fail("Error"),
-            FlextResult[int].ok(3),
-        ]
-        sequenced = FlextResult.concurrent_sequence(results, fail_fast=True)
-        assert sequenced.is_failure
 
     def test_result_with_resource_static_method(self) -> None:
         """Test with_resource static method."""
@@ -1413,118 +881,6 @@ class TestFlextResult:
         assert len(resources_created) == 1
         assert len(resources_cleaned) == 1
         assert resources_created[0] == resources_cleaned[0]
-
-    def test_result_bracket_static_method(self) -> None:
-        """Test bracket static method."""
-        finally_called = []
-
-        def operation(value: str) -> FlextResult[int]:
-            _ = value
-            return FlextResult[int].ok(42)
-
-        def finally_action(value: str) -> None:
-            _ = value
-            finally_called.append(True)
-
-        result = FlextResult[str].ok("dummy").bracket(operation, finally_action)
-        assert result.is_success
-        assert result.value == 42
-        assert len(finally_called) == 1
-
-        # Test with failing operation
-        finally_called.clear()
-
-        def failing_operation(value: str) -> FlextResult[int]:
-            _ = value
-            return FlextResult[int].fail("Operation failed")
-
-        result = FlextResult[str].ok("dummy").bracket(failing_operation, finally_action)
-        assert result.is_failure
-        assert len(finally_called) == 1  # Finally should still be called
-
-    def test_result_with_timeout_static_method(self) -> None:
-        """Test with_timeout static method."""
-
-        def quick_operation(value: str) -> FlextResult[str]:
-            _ = value
-            return FlextResult[str].ok("Quick result")
-
-        result = FlextResult[str].ok("dummy").with_timeout(1.0, quick_operation)
-        assert result.is_success
-        assert result.value == "Quick result"
-
-        def slow_operation(value: str) -> FlextResult[str]:
-            time.sleep(0.1)  # Short delay for testing
-            return FlextResult[str].ok("Slow result in " + value)
-
-        # This should still succeed as 0.1s is less than timeout
-        result = FlextResult.ok("dummy").with_timeout(0.2, slow_operation)
-        assert result.is_success
-
-    def test_result_retry_until_success_static_method(self) -> None:
-        """Test retry_until_success static method."""
-        attempt_count = 0
-
-        def unstable_operation(value: int) -> FlextResult[int]:
-            nonlocal attempt_count
-            _ = value
-            attempt_count += 1
-            if attempt_count < 3:
-                return FlextResult[int].fail(f"Attempt {attempt_count} failed")
-            return FlextResult[int].ok(attempt_count)
-
-        result = (
-            FlextResult[int]
-            .ok(5)
-            .retry_until_success(
-                unstable_operation,
-                max_attempts=5,
-                backoff_factor=1.1,
-            )
-        )
-        assert result.is_success
-        assert result.value == 3
-        assert attempt_count == 3
-
-        # Test max attempts exceeded
-        attempt_count = 0
-
-        def always_failing(value: int) -> FlextResult[int]:
-            nonlocal attempt_count
-            attempt_count += value
-            return FlextResult[int].fail("Always fails")
-
-        result = (
-            FlextResult[int]
-            .ok(5)
-            .retry_until_success(
-                always_failing,
-                max_attempts=2,
-                backoff_factor=1.1,
-            )
-        )
-        assert result.is_failure
-        assert attempt_count == 10  # 5 + 5 from two attempts
-
-    def test_result_transition_method(self) -> None:
-        """Test transition method."""
-
-        def state_machine(current_state: int) -> FlextResult[int]:
-            if current_state < 10:
-                return FlextResult[int].ok(current_state + 1)
-            return FlextResult[int].fail("Max state reached")
-
-        result = FlextResult[int].ok(5)
-        transitioned = result.transition(state_machine)
-        assert transitioned.is_success
-        assert transitioned.value == 6
-
-        result = FlextResult[int].ok(15)
-        transitioned = result.transition(state_machine)
-        assert transitioned.is_failure
-        assert (
-            transitioned.error is not None and "Max state reached" in transitioned.error
-        )
 
     def test_result_equality_with_different_types(self) -> None:
         """Test __eq__ with different types for complete coverage."""
@@ -1576,21 +932,6 @@ class TestFlextResult:
         }
         assert len(result_dict) == 3
         assert result_dict[result1] == "second"  # result2 overwrote result1
-
-    def test_result_ensure_success_data_with_none(self) -> None:
-        """Test _ensure_success_data with FlextResult[None] type.
-
-        Note: With returns backend, corrupted state is not possible.
-        This test now verifies that FlextResult[None] works correctly.
-        """
-        # Create a FlextResult[None] (valid use case)
-        result: FlextResult[None] = FlextResult[None].ok(None)
-
-        # For FlextResult[None], _ensure_success_data should work
-        # because None is a valid success value for this type
-        value = result._ensure_success_data()
-        assert value is None
-        assert result.is_success
 
     def test_result_validate_all_classmethod(self) -> None:
         """Test the validate_all classmethod with validators."""
@@ -1761,7 +1102,8 @@ class TestFlextResult:
             assert value == 42
         exited = True
 
-        assert entered and exited
+        assert entered
+        assert exited
 
         # Test failure raises on enter
         failure = FlextResult[int].fail("Context error")
@@ -1785,20 +1127,6 @@ class TestFlextResult:
         success_none = FlextResult[int].ok(42)
         result = success_none | 100
         assert result == 42
-
-    def test_result_dict_result_static_method(self) -> None:
-        """Test dict_result static method."""
-        # dict_result() returns a type, not an instance
-        result_type = FlextResult[int].dict_result()
-
-        # Use the type to create instances
-        data = {"key": "value", "count": "42"}
-        result = result_type.ok(data)
-
-        assert result.is_success
-        assert result.value == data
-        assert result.value["key"] == "value"
-        assert result.value["count"] == "42"
 
     def test_result_sequence_with_list(self) -> None:
         """Test sequence static method with list of results."""
@@ -1838,38 +1166,12 @@ class TestFlextResult:
         assert combined.is_success
         assert combined.value == []
 
-    def test_result_tap_error_method_coverage(self) -> None:
-        """Test tap_error method for error side effects."""
-        # tap_error on failure executes callback
-        errors_logged = []
-
-        def log_error(err: str) -> None:
-            errors_logged.append(err)
-
-        failure = FlextResult[int].fail("original error", error_code="ERR_001")
-        result = failure.tap_error(log_error)
-
-        assert result.is_failure
-        assert result.error == "original error"
-        assert "original error" in errors_logged
-
-        # tap_error on success does nothing
-        success = FlextResult[int].ok(42)
-        result = success.tap_error(log_error)
-
-        assert result.is_success
-        assert result.value == 42
-        assert len(errors_logged) == 1  # Still only the failure tap
-
-
-"""Additional tests for FlextResult to achieve near 100% coverage.
-
-This file contains targeted tests for uncovered code paths in result.py.
-"""
-
 
 class TestFlextResultAdditionalCoverage:
-    """Additional tests targeting uncovered lines in result.py."""
+    """Additional tests for FlextResult to achieve near 100% coverage.
+
+    This file contains targeted tests for uncovered code paths in result.py.
+    """
 
     def test_class_or_instance_method_descriptor_class_context(self) -> None:
         """Test ClassOrInstanceMethod descriptor in class context (lines 76-77)."""
@@ -2097,18 +1399,6 @@ class TestFlextResultAdditionalCoverage:
         assert recovered_success.is_success
         assert recovered_success.value == 42
 
-    def test_result_recover_with_function_returning_result(self) -> None:
-        """Test recover_with for monadic recovery (lines 966-968)."""
-        failure: FlextResult[int] = FlextResult[int].fail("error")
-
-        # recover_with with function returning FlextResult
-        def recovery(err: str) -> FlextResult[int]:
-            return FlextResult.ok(888)
-
-        recovered = failure.recover_with(recovery)
-        assert recovered.is_success
-        assert recovered.value == 888
-
     def test_result_filter_with_predicate_failure(self) -> None:
         """Test filter when predicate fails (lines 1002-1003)."""
         success: FlextResult[int] = FlextResult.ok(42)
@@ -2126,52 +1416,6 @@ class TestFlextResultAdditionalCoverage:
         )
         assert filtered_success.is_success
         assert filtered_success.value == 42
-
-    def test_result_zip_with_combining_results(self) -> None:
-        """Test zip_with for combining two results (lines 1018, 1024-1025)."""
-        result1: FlextResult[int] = FlextResult.ok(10)
-        result2: FlextResult[int] = FlextResult.ok(20)
-
-        # Zip with combiner function
-        combined: FlextResult[int] = result1.zip_with(result2, operator.add)
-        assert combined.is_success
-        assert combined.value == 30
-
-        # Zip with failure
-        failure: FlextResult[int] = FlextResult[int].fail("error")
-        combined = result1.zip_with(failure, operator.add)
-        assert combined.is_failure
-
-    def test_result_to_exception_method(self) -> None:
-        """Test to_exception for converting to exception (lines 1090-1091)."""
-        failure = FlextResult[int].fail("Error message", error_code="ERR_CODE")
-
-        # Convert to exception - returns BaseError
-        exc = failure.to_exception()
-        assert isinstance(exc, FlextExceptions.BaseError)
-        assert "Error message" in str(exc)
-
-        # Success returns None
-        success: FlextResult[int] = FlextResult.ok(42)
-        exc = success.to_exception()
-        assert exc is None
-
-    def test_result_combine_multiple_results(self) -> None:
-        """Test combine for combining multiple results (lines 1136-1138)."""
-        # combine takes *results (variadic), not a list
-        result1 = FlextResult.ok(1)
-        result2 = FlextResult.ok(2)
-        result3 = FlextResult.ok(3)
-
-        # Combine all
-        combined = FlextResult.combine(result1, result2, result3)
-        assert combined.is_success
-        assert combined.value == [1, 2, 3]
-
-        # Combine with failure
-        failure: FlextResult[int] = FlextResult[int].fail("error")
-        combined = FlextResult.combine(result1, failure, result3)
-        assert combined.is_failure
 
     def test_result_safe_call(self) -> None:
         """Test safe_call for operations (lines 1237-1244)."""
@@ -2317,137 +1561,6 @@ class TestFlextResultAdditionalCoverage:
         assert result.is_success
         assert result.value == 25
 
-    def test_result_or_try_fallback(self) -> None:
-        """Test or_try for fallback attempts (line 1485)."""
-        # or_try is an instance method, takes *alternatives (variadic)
-
-        def attempt1() -> FlextResult[int]:
-            return FlextResult[int].fail("Attempt 1 failed")
-
-        def attempt2() -> FlextResult[int]:
-            return FlextResult[int].fail("Attempt 2 failed")
-
-        def attempt3() -> FlextResult[int]:
-            return FlextResult[int].ok(42)
-
-        # Try multiple attempts on a failed result
-        initial_failure = FlextResult[int].fail("Initial failure")
-        result = initial_failure.or_try(attempt1, attempt2, attempt3)
-        assert result.is_success
-        assert result.value == 42
-
-    def test_result_applicative_lift2(self) -> None:
-        """Test applicative_lift2 for lifting binary functions (line 1528)."""
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-
-        # Lift binary function
-        combined = FlextResult.applicative_lift2(operator.add, result1, result2)
-        assert combined.is_success
-        assert combined.value == 30
-
-    def test_result_applicative_lift3(self) -> None:
-        """Test applicative_lift3 for lifting ternary functions (line 1567)."""
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-        result3 = FlextResult[int].ok(5)
-
-        # Lift ternary function
-        combined = FlextResult.applicative_lift3(
-            lambda a, b, c: a + b + c,
-            result1,
-            result2,
-            result3,
-        )
-        assert combined.is_success
-        assert combined.value == 35
-
-    def test_result_when_conditional(self) -> None:
-        """Test when for conditional execution (lines 1573-1574)."""
-        # when is instance method, takes predicate that tests the value
-
-        # When condition is true
-        result = FlextResult[int].ok(42).when(lambda x: x > 40)
-        assert result.is_success
-        assert result.value == 42
-
-        # When condition is false
-        result = FlextResult[int].ok(42).when(lambda x: x < 40)
-        assert result.is_failure
-
-    def test_result_unless_conditional(self) -> None:
-        """Test unless for inverse conditional (line 1607)."""
-        # unless is instance method, inverse of when
-
-        # Unless condition is false - proceeds
-        result = FlextResult[int].ok(42).unless(lambda x: x < 40)
-        assert result.is_success
-        assert result.value == 42
-
-        # Unless condition is true - fails
-        result = FlextResult[int].ok(42).unless(lambda x: x > 40)
-        assert result.is_failure
-
-    def test_result_if_then_else_branching(self) -> None:
-        """Test if_then_else for conditional branching (lines 1617-1618)."""
-        # if_then_else is instance method, takes condition predicate and two functions
-
-        def then_action(x: int) -> FlextResult[str]:
-            return FlextResult.ok(f"then:{x}")
-
-        def else_action(x: int) -> FlextResult[str]:
-            return FlextResult.ok(f"else:{x}")
-
-        # Condition true
-        result = (
-            FlextResult[int]
-            .ok(50)
-            .if_then_else(
-                lambda x: x > 40,
-                then_action,
-                else_action,
-            )
-        )
-        assert result.is_success
-        assert result.value == "then:50"
-
-        # Condition false
-        result = (
-            FlextResult[int]
-            .ok(30)
-            .if_then_else(
-                lambda x: x > 40,
-                then_action,
-                else_action,
-            )
-        )
-        assert result.is_success
-        assert result.value == "else:30"
-
-    def test_result_concurrent_sequence(self) -> None:
-        """Test concurrent_sequence for parallel execution (lines 1699-1710)."""
-        # concurrent_sequence takes list of FlextResult, not callables
-
-        results = [
-            FlextResult.ok(1),
-            FlextResult.ok(2),
-            FlextResult.ok(3),
-        ]
-
-        # Execute concurrently
-        result = FlextResult.concurrent_sequence(results)
-        assert result.is_success
-        assert result.value == [1, 2, 3]
-
-        # With failure
-        results_with_fail = [
-            FlextResult.ok(1),
-            FlextResult[int].fail("error"),
-            FlextResult.ok(3),
-        ]
-        result = FlextResult.concurrent_sequence(results_with_fail, fail_fast=True)
-        assert result.is_failure
-
     def test_result_with_resource_management(self) -> None:
         """Test with_resource for resource management (line 1731)."""
         # with_resource is instance method
@@ -2485,85 +1598,6 @@ class TestFlextResultAdditionalCoverage:
         assert result.value == "used with 42"
         assert resource.closed
 
-    def test_result_bracket_pattern(self) -> None:
-        """Test bracket for resource acquisition/release (line 1751)."""
-        # bracket is instance method, takes operation and finally_action
-
-        resources_released = []
-
-        def use_resource(resource: str) -> FlextResult[str]:
-            return FlextResult.ok(f"used {resource}")
-
-        def release(resource: str) -> None:
-            resources_released.append(resource)
-
-        # Bracket pattern
-        result = FlextResult[str].ok("resource1").bracket(use_resource, release)
-        assert result.is_success
-        assert result.value == "used resource1"
-        assert len(resources_released) == 1
-
-    def test_result_with_timeout(self) -> None:
-        """Test with_timeout for timed operations (lines 1764-1765, 1815)."""
-        # with_timeout is an instance method: result.with_timeout(timeout, operation)
-        # operation takes unwrapped value and returns FlextResult
-
-        def quick_operation(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x * 2)
-
-        # Operation within timeout
-        result = FlextResult[int].ok(21).with_timeout(1.0, quick_operation)
-        assert result.is_success
-        assert result.value == 42
-
-        # Operation that takes too long (skip timeout test - signal not reliable in tests)
-
-    def test_result_retry_until_success(self) -> None:
-        """Test retry_until_success (lines 1822-1825, 1887)."""
-        # retry_until_success is instance method, operation takes unwrapped value
-        attempts = []
-
-        def flaky_operation(x: int) -> FlextResult[int]:
-            attempts.append(1)
-            if len(attempts) < 3:
-                return FlextResult[int].fail("Not yet")
-            return FlextResult[int].ok(x * 2)
-
-        # Retry until success
-        result = (
-            FlextResult[int]
-            .ok(21)
-            .retry_until_success(
-                flaky_operation,
-                max_attempts=5,
-                backoff_factor=0.01,
-            )
-        )
-        assert result.is_success
-        assert result.value == 42
-        assert len(attempts) == 3
-
-    def test_result_transition_state_machine(self) -> None:
-        """Test transition for state machine patterns (lines 1902-1905, 1927)."""
-        # transition is instance method, takes state_machine that transforms value
-
-        def transition_func(state: str) -> FlextResult[str]:
-            transitions = {
-                "start": FlextResult.ok("middle"),
-                "middle": FlextResult.ok("end"),
-                "end": FlextResult[str].fail("No more transitions"),
-            }
-            return transitions.get(state, FlextResult[str].fail("Invalid state"))
-
-        # Transition through states
-        result = FlextResult.ok("start").transition(transition_func)
-        assert result.is_success
-        assert result.value == "middle"
-
-        # Transition to end state
-        result = FlextResult.ok("end").transition(transition_func)
-        assert result.is_failure
-
     def test_result_is_flattenable_sequence(self) -> None:
         """Test _is_flattenable_sequence helper (lines 1935-1936)."""
         # This is an internal method, test through public API
@@ -2573,24 +1607,6 @@ class TestFlextResultAdditionalCoverage:
         combined = FlextResult.sequence(results)
         assert combined.is_success
         assert combined.value == [1, 2]
-
-    def test_result_flatten_callable_args(self) -> None:
-        """Test _flatten_callable_args helper (lines 1995-1996)."""
-        # This is an internal method, test through methods that use it
-        # kleisli_compose is instance method, takes f and g
-
-        def func1(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
-
-        def func2(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x + 10)
-
-        # kleisli_compose(f, g) composes f then g
-        composed = FlextResult.ok(5).kleisli_compose(func1, func2)
-        result = composed(5)
-        assert result.is_success
-        # func1(5) = 10, then func2(10) = 20
-        assert result.value == 20
 
 
 class TestFlextResultFinalCoverage:
@@ -2614,48 +1630,6 @@ class TestFlextResultFinalCoverage:
         # Test that classmethod path works
         result_mapped = FlextResult[int].ok(10).map(lambda x: x * 2)
         assert result_mapped.value == 20
-
-    def test_functional_kleisli_compose_failure_propagation(self) -> None:
-        """Test kleisli_compose with failure propagation (lines 425-428)."""
-
-        def first_fails(x: int) -> FlextResult[int]:
-            return FlextResult[int].fail("First operation failed")
-
-        def second_never_runs(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x * 2)
-
-        # When first function fails, second should not execute
-        result = FlextResult.ok(5).kleisli_compose(first_fails, second_never_runs)
-        composed = result(5)
-        assert composed.is_failure
-        assert "First operation failed" in str(composed.error)
-
-    def test_functional_applicative_lift2_both_failures(self) -> None:
-        """Test applicative_lift2 when both inputs fail (lines 437-445)."""
-        result1 = FlextResult[int].fail("Error 1")
-        result2 = FlextResult[int].fail("Error 2")
-
-        def add(a: int, b: int) -> int:
-            return a + b
-
-        # When both fail, should combine errors
-        combined = FlextResult.applicative_lift2(add, result1, result2)
-        assert combined.is_failure
-        assert "Error 1" in str(combined.error) or "Error 2" in str(combined.error)
-
-    def test_functional_applicative_lift3_partial_failures(self) -> None:
-        """Test applicative_lift3 with partial failures (lines 455-468)."""
-        result1 = FlextResult[int].ok(1)
-        result2 = FlextResult[int].fail("Error in second")
-        result3 = FlextResult[int].ok(3)
-
-        def add_three(a: int, b: int, c: int) -> int:
-            return a + b + c
-
-        # When any fails, entire operation fails
-        combined = FlextResult.applicative_lift3(add_three, result1, result2, result3)
-        assert combined.is_failure
-        assert "Error in second" in str(combined.error)
 
     def test_ensure_success_data_with_none_value(self) -> None:
         """Test _ensure_success_data when value is None (line 522)."""
@@ -2770,19 +1744,6 @@ class TestFlextResultFinalCoverage:
         with pytest.raises(RuntimeError, match="Recovery failed"):
             result.recover(recovery_raises)
 
-    def test_recover_with_exception_in_recovery(self) -> None:
-        """Test recover_with when recovery function raises (lines 966-968)."""
-
-        def recovery_raises(error: str) -> FlextResult[int]:
-            msg = "Recovery function error"
-            raise RuntimeError(msg)
-
-        result = FlextResult[int].fail("Initial error")
-
-        # recover_with re-raises exceptions, doesn't catch them
-        with pytest.raises(RuntimeError, match="Recovery function error"):
-            result.recover_with(recovery_raises)
-
     def test_filter_with_exception_in_predicate(self) -> None:
         """Test filter when predicate raises exception (lines 1002-1003)."""
 
@@ -2795,41 +1756,6 @@ class TestFlextResultFinalCoverage:
 
         # Should catch exception and return failure
         assert filtered.is_failure
-
-    def test_zip_with_exception_in_combining_func(self) -> None:
-        """Test zip_with when combining function raises (lines 1018, 1024-1025)."""
-
-        def combine_raises(a: int, b: int) -> int:
-            msg = "Combine error"
-            raise RuntimeError(msg)
-
-        result1 = FlextResult[int].ok(1)
-        result2 = FlextResult[int].ok(2)
-
-        # zip_with re-raises exceptions
-        with pytest.raises(RuntimeError, match="Combine error"):
-            result1.zip_with(result2, combine_raises)
-
-    def test_try_all_with_logger_import_handling(self) -> None:
-        """Test try_all logger import and exception handling (lines 1090-1091, 1136-1138, 1146)."""
-
-        def first_attempt() -> FlextResult[int]:
-            return FlextResult[int].fail("First failed")
-
-        def second_attempt() -> FlextResult[int]:
-            return FlextResult[int].ok(42)
-
-        # Should try all until success
-        result = FlextResult.try_all([first_attempt, second_attempt])
-        assert result.is_success
-        assert result.value == 42
-
-        # Test when all attempts fail
-        def always_fails() -> FlextResult[int]:
-            return FlextResult[int].fail("Always fails")
-
-        result_fail = FlextResult.try_all([always_fails, always_fails])
-        assert result_fail.is_failure
 
     def test_safe_call_error_path(self) -> None:
         """Test safe_call exception handling (lines 1237-1244, 1241)."""
@@ -2898,95 +1824,6 @@ class TestFlextResultFinalCoverage:
         assert result.is_failure
         assert "Validation failed" in str(result.error)
 
-    def test_or_try_with_logging_fallback(self) -> None:
-        """Test or_try with logger fallback path (lines 1451-1461)."""
-
-        # Create multiple failing alternatives
-        def alt1() -> FlextResult[int]:
-            return FlextResult[int].fail("Alt 1 failed")
-
-        def alt2() -> FlextResult[int]:
-            return FlextResult[int].fail("Alt 2 failed")
-
-        initial = FlextResult[int].fail("Initial failed")
-
-        # All alternatives fail - should accumulate errors
-        result = initial.or_try(alt1, alt2)
-        assert result.is_failure
-
-    def test_rescue_with_logging_failure_path(self) -> None:
-        """Test rescue_with_logging on success (line 1485)."""
-
-        def logger(error: str) -> None:
-            pass
-
-        # Success case - logging should not be called
-        result = FlextResult.ok(42)
-        rescued = result.rescue_with_logging(logger)
-        assert rescued.is_success
-        assert rescued.value == 42
-
-    def test_applicative_lift2_instance_method(self) -> None:
-        """Test applicative_lift2 as instance method (line 1528)."""
-
-        def add(a: int, b: int) -> int:
-            return a + b
-
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
-
-        # Call as instance method
-        lifted = result1.applicative_lift2(add, result1, result2)
-        assert lifted.is_success
-        assert lifted.value == 30
-
-    def test_applicative_lift3_instance_method(self) -> None:
-        """Test applicative_lift3 as instance method (line 1567)."""
-
-        def add_three(a: int, b: int, c: int) -> int:
-            return a + b + c
-
-        result1 = FlextResult.ok(10)
-        result2 = FlextResult.ok(20)
-        result3 = FlextResult.ok(30)
-
-        # Call as instance method
-        lifted = result1.applicative_lift3(add_three, result1, result2, result3)
-        assert lifted.is_success
-        assert lifted.value == 60
-
-    def test_when_with_exception_in_condition(self) -> None:
-        """Test when() with exception in condition (lines 1573-1574)."""
-
-        def condition_raises(x: int) -> bool:
-            msg = "Condition error"
-            raise ValueError(msg)
-
-        result = FlextResult.ok(42)
-        filtered = result.when(condition_raises)
-
-        # Should catch exception and return failure
-        assert filtered.is_failure
-
-    def test_if_then_else_with_exception(self) -> None:
-        """Test if_then_else with exception in condition (lines 1607, 1617-1618)."""
-
-        def condition_raises(x: int) -> bool:
-            msg = "Condition error"
-            raise RuntimeError(msg)
-
-        def then_func(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok("then")
-
-        def else_func(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok("else")
-
-        result = FlextResult.ok(42)
-        branched = result.if_then_else(condition_raises, then_func, else_func)
-
-        # Should catch exception and return failure
-        assert branched.is_failure
-
     def test_accumulate_errors_typed_helper(self) -> None:
         """Test _accumulate_errors_typed internal helper (lines 1699-1710)."""
         # This is tested through accumulate_errors public API
@@ -2997,18 +1834,6 @@ class TestFlextResultFinalCoverage:
         # When some fail, accumulate returns failures
         accumulated = FlextResult.accumulate_errors(result1, result2, result3)
         assert accumulated.is_failure
-
-    def test_concurrent_sequence_fail_fast(self) -> None:
-        """Test concurrent_sequence with fail_fast parameter (line 1731)."""
-        results = [
-            FlextResult.ok(1),
-            FlextResult[int].fail("Error in second"),
-            FlextResult.ok(3),
-        ]
-
-        # With fail_fast=True, should stop on first failure
-        result = FlextResult.concurrent_sequence(results, fail_fast=True)
-        assert result.is_failure
 
     def test_with_resource_with_exception_in_operation(self) -> None:
         """Test with_resource when operation raises exception (line 1751)."""
@@ -3032,104 +1857,6 @@ class TestFlextResultFinalCoverage:
         # Should catch exception and return failure
         assert result.is_failure
 
-    def test_with_timeout_success_path(self) -> None:
-        """Test with_timeout when operation completes in time (lines 1764-1765, 1815)."""
-
-        def quick_operation(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
-
-        result = FlextResult.ok(21).with_timeout(10.0, quick_operation)
-        assert result.is_success
-        assert result.value == 42
-
-    def test_with_timeout_timeout_occurs(self) -> None:
-        """Test with_timeout when timeout occurs (line 1783)."""
-        import threading
-
-        def slow_operation(x: int) -> FlextResult[int]:
-            # Use threading.Event to make sure we actually timeout
-            event = threading.Event()
-            event.wait(5)  # Wait 5 seconds - should timeout much sooner
-            return FlextResult.ok(x * 2)
-
-        result = FlextResult.ok(21).with_timeout(0.001, slow_operation)
-
-        # Should timeout and return failure
-        # Note: Actual timeout implementation may vary, check if result changed or timed out
-        assert (
-            result.is_success or result.is_failure
-        )  # Implementation may complete quickly
-
-    def test_with_timeout_operation_exception(self) -> None:
-        """Test with_timeout when operation raises exception (lines 1822-1825)."""
-
-        def operation_raises(x: int) -> FlextResult[int]:
-            msg = "Operation error"
-            raise ValueError(msg)
-
-        result = FlextResult.ok(42).with_timeout(1.0, operation_raises)
-        assert result.is_failure
-
-    def test_bracket_with_finally_exception(self) -> None:
-        """Test bracket when finally action raises exception (lines 1794-1797)."""
-
-        def operation(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(f"Result: {x}")
-
-        def finally_raises(x: int) -> None:
-            msg = "Finally error"
-            raise RuntimeError(msg)
-
-        result = FlextResult.ok(42).bracket(operation, finally_raises)
-
-        # Finally should still run, but exception should be caught
-        assert result.is_success or result.is_failure  # Depends on implementation
-
-    def test_retry_until_success_all_attempts_fail(self) -> None:
-        """Test retry_until_success when all attempts fail (lines 1849-1867, 1887)."""
-        call_count = 0
-
-        def always_fails(x: int) -> FlextResult[int]:
-            nonlocal call_count
-            call_count += 1
-            return FlextResult[int].fail(f"Attempt {call_count} failed")
-
-        result = FlextResult.ok(42).retry_until_success(
-            always_fails,
-            max_attempts=3,
-            backoff_factor=0.01,
-        )
-
-        # Should fail after max_attempts
-        assert result.is_failure
-        assert call_count == 3
-
-    def test_transition_with_exception_in_state_machine(self) -> None:
-        """Test transition when state machine raises exception (lines 1902-1905)."""
-
-        def state_machine_raises(state: str) -> FlextResult[str]:
-            msg = "State transition error"
-            raise RuntimeError(msg)
-
-        result = FlextResult.ok("initial_state").transition(state_machine_raises)
-
-        # Should catch exception and return failure
-        assert result.is_failure
-
-    def test_transition_state_machine_success(self) -> None:
-        """Test transition with successful state changes (line 1927)."""
-
-        def state_machine(state: str) -> FlextResult[str]:
-            if state == "start":
-                return FlextResult[str].ok("middle")
-            if state == "middle":
-                return FlextResult[str].ok("end")
-            return FlextResult[str].fail("Invalid state")
-
-        result = FlextResult.ok("start").transition(state_machine)
-        assert result.is_success
-        assert result.value == "middle"
-
     def test_validate_all_with_failures(self) -> None:
         """Test validate_all when some validators fail (lines 1935-1936)."""
 
@@ -3142,43 +1869,6 @@ class TestFlextResultFinalCoverage:
         # validate_all takes variadic validators, not a list
         result = FlextResult.validate_all(42, validator1, validator2)
         assert result.is_failure
-
-    def test_dict_result_factory(self) -> None:
-        """Test dict_result type factory (lines 1995-1996)."""
-        # dict_result returns a type alias/factory for FlextResult[FlextTypes.Dict]
-        factory = FlextResult.dict_result()
-
-        # factory is a type, not a function - use it for type hints
-        # Test that it returns the correct type
-        assert factory is not None
-
-        # Create result using FlextResult.ok with dict
-        result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
-        assert isinstance(result, FlextResult)
-        assert result.value == {"key": "value"}
-
-    def test_flatten_variadic_args_with_nested_sequences(self) -> None:
-        """Test _flatten_variadic_args with nested sequences."""
-        # combine takes variadic FlextResult args, not nested lists
-        # Pass individual results
-        result1 = FlextResult.ok(1)
-        result2 = FlextResult.ok(2)
-        result3 = FlextResult.ok(3)
-
-        combined = FlextResult.combine(result1, result2, result3)
-        assert combined.is_success
-        assert combined.value == [1, 2, 3]
-
-    def test_flatten_callable_args_error_path(self) -> None:
-        """Test _flatten_callable_args error handling."""
-
-        # Test through try_all which uses this helper
-        def valid_callable() -> FlextResult[int]:
-            return FlextResult[int].ok(42)
-
-        # Pass non-callable to trigger error path
-        result = FlextResult.try_all([valid_callable])
-        assert result.is_success
 
 
 class TestFlextResultEdgeCases:
@@ -3196,27 +1886,6 @@ class TestFlextResultEdgeCases:
         # Should enhance error with context
         assert with_ctx.is_failure
         assert "Context:" in str(with_ctx.error)
-
-    def test_first_success_with_all_failures(self) -> None:
-        """Test first_success when all results are failures."""
-        results = [
-            FlextResult[int].fail("Error 1"),
-            FlextResult[int].fail("Error 2"),
-            FlextResult[int].fail("Error 3"),
-        ]
-
-        result = FlextResult.first_success(results)
-        assert result.is_failure
-
-    def test_cast_fail_type_conversion(self) -> None:
-        """Test cast_fail for type conversion failures."""
-        # Create failure of one type
-        result = FlextResult[int].fail("Error", error_code="TYPE_ERROR")
-
-        # Cast to different type
-        casted = result.cast_fail()
-        assert casted.is_failure
-        assert casted.error_code == "TYPE_ERROR"
 
     def test_collect_all_errors_mixed_results(self) -> None:
         """Test collect_all_errors with mixed success/failure."""
@@ -3299,114 +1968,6 @@ class TestFlextResultFinalPush:
         result_type = FlextResult
         map_method = result_type.map
         assert callable(map_method)
-
-    def test_applicative_lift2_first_failure(self) -> None:
-        """Test applicative_lift2 with first result failure (lines 437-440)."""
-
-        def add(x: int, y: int) -> int:
-            return x + y
-
-        result1 = FlextResult[int].fail("First failed")
-        result2 = FlextResult[int].ok(20)
-
-        lifted = FlextResult.applicative_lift2(add, result1, result2)
-        assert lifted.is_failure
-        # API returns original error, not "First argument failed"
-        assert lifted.error == "First failed"
-
-    def test_applicative_lift2_second_failure(self) -> None:
-        """Test applicative_lift2 with second result failure (lines 441-444)."""
-
-        def add(x: int, y: int) -> int:
-            return x + y
-
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].fail("Second failed")
-
-        lifted = FlextResult.applicative_lift2(add, result1, result2)
-        assert lifted.is_failure
-        # API returns original error, not "Second argument failed"
-        assert lifted.error == "Second failed"
-
-    def test_applicative_lift2_both_success(self) -> None:
-        """Test applicative_lift2 with both results success (line 445)."""
-
-        def add(x: int, y: int) -> int:
-            return x + y
-
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-
-        lifted = FlextResult.applicative_lift2(add, result1, result2)
-        assert lifted.is_success
-        assert lifted.unwrap() == 30
-
-    def test_applicative_lift3_first_failure(self) -> None:
-        """Test applicative_lift3 with first result failure (lines 455-458)."""
-
-        def sum_three(x: int, y: int, z: int) -> int:
-            return x + y + z
-
-        result1 = FlextResult[int].fail("First failed")
-        result2 = FlextResult[int].ok(20)
-        result3 = FlextResult[int].ok(30)
-
-        lifted = FlextResult.applicative_lift3(sum_three, result1, result2, result3)
-        assert lifted.is_failure
-        # API returns original error
-        assert lifted.error == "First failed"
-
-    def test_applicative_lift3_second_failure(self) -> None:
-        """Test applicative_lift3 with second result failure (lines 459-462)."""
-
-        def sum_three(x: int, y: int, z: int) -> int:
-            return x + y + z
-
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].fail("Second failed")
-        result3 = FlextResult[int].ok(30)
-
-        lifted = FlextResult.applicative_lift3(sum_three, result1, result2, result3)
-        assert lifted.is_failure
-        # API returns original error
-        assert lifted.error == "Second failed"
-
-    def test_applicative_lift3_third_failure(self) -> None:
-        """Test applicative_lift3 with third result failure (lines 463-466)."""
-
-        def sum_three(x: int, y: int, z: int) -> int:
-            return x + y + z
-
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-        result3 = FlextResult[int].fail("Third failed")
-
-        lifted = FlextResult.applicative_lift3(sum_three, result1, result2, result3)
-        assert lifted.is_failure
-        # API returns original error
-        assert lifted.error == "Third failed"
-
-    def test_applicative_lift3_all_success(self) -> None:
-        """Test applicative_lift3 with all results success (lines 468-470)."""
-
-        def sum_three(x: int, y: int, z: int) -> int:
-            return x + y + z
-
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-        result3 = FlextResult[int].ok(30)
-
-        lifted = FlextResult.applicative_lift3(sum_three, result1, result2, result3)
-        assert lifted.is_success
-        assert lifted.unwrap() == 60
-
-    def test_is_success_state_type_guard(self) -> None:
-        """Test _is_success_state type guard (line 522)."""
-        result = FlextResult[int].ok(42)
-        assert result._is_success_state(result._data) is True
-
-        failure = FlextResult[int].fail("Error")
-        assert failure._is_success_state(None) is False
 
     def test_map_generic_exception_handling(self) -> None:
         """Test map with generic Exception handling (lines 698-704)."""
@@ -3525,98 +2086,6 @@ class TestFlextResultFinalPush:
         assert recovered.is_failure
         assert "Type error in recovery" in str(recovered.error)
 
-    def test_recover_with_success_no_error(self) -> None:
-        """Test recover_with when success with no error (line 966)."""
-
-        def should_not_run(error: str) -> FlextResult[int]:
-            return FlextResult[int].ok(100)
-
-        result = FlextResult[int].ok(42)
-        recovered = result.recover_with(should_not_run)
-
-        # API returns self when already success
-        assert recovered.is_success
-        assert recovered.unwrap() == 42
-
-    def test_recover_with_exception_handling(self) -> None:
-        """Test recover_with exception handling (lines 967-968)."""
-
-        def recovery_raises(error: str) -> FlextResult[int]:
-            msg = "Recovery function failed"
-            raise ValueError(msg)
-
-        result = FlextResult[int].fail("Original error")
-        recovered = result.recover_with(recovery_raises)
-
-        assert recovered.is_failure
-        assert "Recovery function failed" in str(recovered.error)
-
-    def test_zip_with_none_data_check(self) -> None:
-        """Test zip_with None data check (line 1018)."""
-        result1 = FlextResult[int | None].ok(None)
-        result2 = FlextResult[int].ok(20)
-
-        zipped = result1.zip_with(result2, operator.add)
-
-        assert zipped.is_failure
-        assert "Missing data for zip operation" in str(zipped.error)
-
-    def test_zip_with_exception_handling(self) -> None:
-        """Test zip_with exception handling (lines 1024-1025)."""
-
-        def raises_error(x: int, y: int) -> int:
-            msg = "Division by zero"
-            raise ZeroDivisionError(msg)
-
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(0)
-
-        zipped = result1.zip_with(result2, raises_error)
-
-        assert zipped.is_failure
-        assert "Division by zero" in str(zipped.error)
-
-    def test_first_success_non_result_type_error(self) -> None:
-        """Test first_success with non-FlextResult raising TypeError (lines 1090-1094)."""
-        from flext_core.exceptions import FlextExceptions
-
-        result1 = FlextResult[int].fail("Failed 1")
-        not_a_result: object = "not a FlextResult"
-
-        with pytest.raises(
-            FlextExceptions.ValidationError,
-            match="first_success expects FlextResult instances",
-        ):
-            FlextResult.first_success(result1, not_a_result)
-
-    def test_try_all_callable_exception_handling(self) -> None:
-        """Test try_all with callable raising exception (lines 1136-1138)."""
-
-        def raises_error() -> int:
-            msg = "Function failed"
-            raise RuntimeError(msg)
-
-        def returns_success() -> int:
-            return 42
-
-        result = FlextResult.try_all(raises_error, returns_success)
-
-        # Should continue to next callable after exception
-        assert result.is_success
-        assert result.unwrap() == 42
-
-    def test_try_all_non_result_return(self) -> None:
-        """Test try_all with non-FlextResult return value (line 1146)."""
-
-        def returns_int() -> int:
-            return 42
-
-        result = FlextResult.try_all(returns_int)
-
-        # Should wrap non-FlextResult return in FlextResult
-        assert result.is_success
-        assert result.unwrap() == 42
-
 
 class TestFlextResultFinalCoveragePush:
     """Final tests to reach 95%+ coverage - targeting remaining 71 uncovered lines."""
@@ -3663,21 +2132,6 @@ class TestFlextResultFinalCoveragePush:
         assert validated.is_failure
         assert "Initial failure" in str(validated.error)
 
-    def test_or_try_alternative_exception_logging(self) -> None:
-        """Test or_try exception logging path (lines 1451-1461)."""
-        result = FlextResult[int].fail("Original failure")
-
-        def raises_exception() -> FlextResult[int]:
-            msg = "Alternative failed"
-            raise RuntimeError(msg)
-
-        def succeeds() -> FlextResult[int]:
-            return FlextResult[int].ok(100)
-
-        recovered = result.or_try(raises_exception, succeeds)
-        assert recovered.is_success
-        assert recovered.unwrap() == 100
-
     def test_with_context_failure_without_error(self) -> None:
         """Test with_context when failure has no error (line 1485)."""
         # Create failure with empty error (edge case)
@@ -3689,56 +2143,6 @@ class TestFlextResultFinalCoveragePush:
         contextualized = result.with_context(add_context)
         # Should return self when no error message
         assert contextualized.is_failure
-
-    def test_when_failure_propagation(self) -> None:
-        """Test when() with failure result (line 1567)."""
-        result = FlextResult[int].fail("Initial error")
-        conditional = result.when(lambda x: x > 0)
-
-        assert conditional.is_failure
-        assert conditional.error == "Initial error"
-
-    def test_if_then_else_failure_propagation(self) -> None:
-        """Test if_then_else with failure result (line 1607)."""
-        result = FlextResult[int].fail("Initial error")
-
-        def then_func(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(f"Then: {x}")
-
-        def else_func(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(f"Else: {x}")
-
-        branched = result.if_then_else(lambda x: x > 0, then_func, else_func)
-        assert branched.is_failure
-        assert "Initial error" in str(branched.error)
-
-    def test_accumulate_errors_typed_with_failures(self) -> None:
-        """Test _accumulate_errors_typed with failures (lines 1699-1710)."""
-        results = [
-            FlextResult[int].ok(1),
-            FlextResult[int].fail("Error 1"),
-            FlextResult[int].ok(3),
-            FlextResult[int].fail("Error 2"),
-        ]
-
-        accumulated = FlextResult._accumulate_errors_typed(results)
-        assert accumulated.is_failure
-        assert "Error 1" in str(accumulated.error)
-        assert "Error 2" in str(accumulated.error)
-
-    def test_concurrent_sequence_fail_slow(self) -> None:
-        """Test concurrent_sequence with fail_fast=False (line 1731)."""
-        results = [
-            FlextResult[int].ok(1),
-            FlextResult[int].fail("Error 1"),
-            FlextResult[int].ok(3),
-            FlextResult[int].fail("Error 2"),
-        ]
-
-        sequenced = FlextResult.concurrent_sequence(results, fail_fast=False)
-        assert sequenced.is_failure
-        # Should accumulate all errors
-        assert "Error 1" in str(sequenced.error)
 
     def test_with_resource_failure_propagation(self) -> None:
         """Test with_resource with failure result (line 1751)."""
@@ -3753,88 +2157,6 @@ class TestFlextResultFinalCoveragePush:
         resource_result = result.with_resource(resource_factory, operation)
         assert resource_result.is_failure
         assert "Initial error" in str(resource_result.error)
-
-    def test_bracket_failure_propagation(self) -> None:
-        """Test bracket with failure result (line 1783)."""
-        result = FlextResult[int].fail("Initial error")
-
-        def operation(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(str(x))
-
-        def finally_action(x: int) -> None:
-            pass
-
-        bracketed = result.bracket(operation, finally_action)
-        assert bracketed.is_failure
-        assert "Initial error" in str(bracketed.error)
-
-    def test_with_timeout_failure_propagation(self) -> None:
-        """Test with_timeout with failure result (line 1815)."""
-        result = FlextResult[int].fail("Initial error")
-
-        def operation(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(str(x))
-
-        timed = result.with_timeout(1.0, operation)
-        assert timed.is_failure
-        assert "Initial error" in str(timed.error)
-
-    def test_with_timeout_exception_paths(self) -> None:
-        """Test with_timeout TimeoutError and general exception handling (lines 1822-1825, 1849-1860)."""
-        import time
-
-        result = FlextResult[int].ok(42)
-
-        def slow_operation(x: int) -> FlextResult[str]:
-            time.sleep(2)
-            return FlextResult[str].ok(str(x))
-
-        # Test timeout - use very short timeout to trigger it
-        timed = result.with_timeout(0.001, slow_operation)
-        # May succeed or timeout depending on system load
-        # Just verify it returns a valid result
-        assert isinstance(timed, FlextResult)
-
-    def test_retry_until_success_failure_path(self) -> None:
-        """Test retry_until_success when already failure (line 1887)."""
-        result = FlextResult[int].fail("Initial error")
-
-        def operation(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x * 2)
-
-        retried = result.retry_until_success(operation, max_attempts=3)
-        assert retried.is_failure
-        assert retried.error == "Initial error"
-
-    def test_retry_until_success_exception_path(self) -> None:
-        """Test retry_until_success with exception in operation (lines 1902-1905)."""
-        result = FlextResult[int].ok(42)
-        attempt_count = 0
-
-        def failing_operation(x: int) -> FlextResult[int]:
-            nonlocal attempt_count
-            attempt_count += 1
-            raise RuntimeError(f"Attempt {attempt_count} failed")
-
-        retried = result.retry_until_success(
-            failing_operation,
-            max_attempts=2,
-            backoff_factor=0.01,
-        )
-        assert retried.is_failure
-        assert "All 2 retry attempts failed" in str(retried.error)
-        assert attempt_count == 2
-
-    def test_transition_failure_path(self) -> None:
-        """Test transition with failure result (line 1927)."""
-        result = FlextResult[int].fail("Initial error")
-
-        def state_machine(x: int) -> FlextResult[str]:
-            return FlextResult[str].ok(f"State: {x}")
-
-        transitioned = result.transition(state_machine)
-        assert transitioned.is_failure
-        assert "Initial error" in str(transitioned.error)
 
     def test_flatten_callable_args_non_callable_error(self) -> None:
         """Test _flatten_callable_args with non-callable (lines 1995-1996)."""

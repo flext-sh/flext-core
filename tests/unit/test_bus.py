@@ -37,7 +37,7 @@ class TestFlextBus:
         config: FlextTypes.Dict = {"enable_middleware": True, "enable_caching": False}
         bus = FlextBus(bus_config=config)
         assert bus is not None
-        assert bus.config.enable_caching is False
+        assert bus.bus_config.enable_caching is False
 
     def test_register_handler_single_arg(self) -> None:
         """Test handler registration with single argument (auto-discovery)."""
@@ -144,7 +144,8 @@ class TestFlextBus:
         result = bus.execute(command)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Handler failed" in result.error
+        assert result.error is not None
+        assert "Handler failed" in result.error
 
     def test_get_registered_handlers(self) -> None:
         """Test getting registered handlers."""
@@ -212,7 +213,8 @@ class TestFlextBus:
         result = bus.execute(command)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Handler error" in result.error
+        assert result.error is not None
+        assert "Handler error" in result.error
 
     def test_bus_performance(self) -> None:
         """Test bus performance characteristics."""
@@ -454,9 +456,9 @@ class TestFlextBusMissingCoverage:
 
         # Should return the same instance
         bus = FlextBus(bus_config=bus_model)
-        assert bus.config.enable_middleware is True
-        assert bus.config.enable_caching is False
-        assert bus.config.max_cache_size == 50
+        assert bus.bus_config.enable_middleware is True
+        assert bus.bus_config.enable_caching is False
+        assert bus.bus_config.max_cache_size == 50
 
     def test_normalize_middleware_config_with_mapping(self) -> None:
         """Test _normalize_middleware_config with Mapping (lines 361-363)."""
@@ -1255,9 +1257,9 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config=config)
 
         # Test configuration access
-        assert bus.config.enable_caching is True
-        assert bus.config.max_cache_size == 10
-        assert bus.config.enable_middleware is False
+        assert bus.bus_config.enable_caching is True
+        assert bus.bus_config.max_cache_size == 10
+        assert bus.bus_config.enable_middleware is False
 
         # Test configuration model creation
         config_model = bus._create_config_model(config)

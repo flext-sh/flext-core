@@ -27,6 +27,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import (
     FlextBus,
     FlextConfig,
@@ -44,6 +46,7 @@ class MyService:
 
     def __init__(self) -> None:
         """Initialize service with configuration."""
+        super().__init__()
         self._config = FlextConfig()
 
         # Use computed fields for enhanced configuration
@@ -56,7 +59,7 @@ class MyService:
         if container_config.is_success:
             self._container_settings = container_config.unwrap()
 
-    def process_data(self, data: dict) -> FlextResult[FlextTypes.Dict]:
+    def process_data(self, data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         """Process data with configuration-driven validation."""
         # Use configuration-driven validation
         if len(data) > self._config.batch_size:
@@ -75,7 +78,7 @@ class DatabaseService:
     def __init__(self) -> None:
         """Initialize database service."""
         super().__init__()
-        self._connection = None
+        self._connection: str | None = None
 
     def connect(self) -> FlextResult[None]:
         """Connect to database with proper error handling."""
@@ -121,9 +124,11 @@ class EventService:
         """Initialize event service with bus integration."""
         super().__init__()
         self._bus = FlextBus()
-        self._events = []
+        self._events: list[dict[str, object]] = []
 
-    def publish_event(self, event_type: str, data: dict) -> FlextResult[None]:
+    def publish_event(
+        self, event_type: str, data: dict[str, object]
+    ) -> FlextResult[None]:
         """Publish event with proper error handling."""
         try:
             # FlextBus.publish_event takes a single event object
@@ -137,12 +142,12 @@ class EventService:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to publish event: {e}")
 
-    def get_events(self) -> FlextResult[list]:
+    def get_events(self) -> FlextResult[list[object]]:
         """Get events with railway pattern."""
         if not self._events:
-            return FlextResult[list].fail("No events available")
+            return FlextResult[list[object]].fail("No events available")
 
-        return FlextResult[list].ok(self._events)
+        return FlextResult[list[object]].ok(self._events)
 
 
 class EventHandler:
@@ -150,9 +155,10 @@ class EventHandler:
 
     def __init__(self, event_service: EventService) -> None:
         """Initialize event handler."""
+        super().__init__()
         self._event_service = event_service
 
-    def handle_user_created(self, event_data: dict) -> FlextResult[None]:
+    def handle_user_created(self, event_data: dict[str, object]) -> FlextResult[None]:
         """Handle user created event with validation."""
         user_id = event_data.get("user_id")
         if not user_id:
@@ -169,9 +175,9 @@ class MessageService:
         """Initialize message service with dispatcher."""
         super().__init__()
         self._dispatcher = FlextDispatcher()
-        self._messages = []
+        self._messages: list[dict[str, object]] = []
 
-    def send_message(self, message: dict) -> FlextResult[str]:
+    def send_message(self, message: dict[str, object]) -> FlextResult[str]:
         """Send message with proper error handling."""
         try:
             message_id = f"msg_{len(self._messages)}"
@@ -185,12 +191,12 @@ class MessageService:
         except Exception as e:
             return FlextResult[str].fail(f"Failed to send message: {e}")
 
-    def get_messages(self) -> FlextResult[list]:
+    def get_messages(self) -> FlextResult[list[object]]:
         """Get messages with railway pattern."""
         if not self._messages:
-            return FlextResult[list].fail("No messages available")
+            return FlextResult[list[object]].fail("No messages available")
 
-        return FlextResult[list].ok(self._messages)
+        return FlextResult[list[object]].ok(self._messages)
 
 
 class MessageHandler:
@@ -198,9 +204,12 @@ class MessageHandler:
 
     def __init__(self, message_service: MessageService) -> None:
         """Initialize message handler."""
+        super().__init__()
         self._message_service = message_service
 
-    def process_message(self, message: dict) -> FlextResult[FlextTypes.Dict]:
+    def process_message(
+        self, message: dict[str, object]
+    ) -> FlextResult[FlextTypes.Dict]:
         """Process message with validation."""
         msg_type = message.get("type")
         if not msg_type:
@@ -254,7 +263,9 @@ class IntegratedService:
         # Register this service in the container
         self._container.register("integrated_service", self)
 
-    def process_request(self, request: dict) -> FlextResult[FlextTypes.Dict]:
+    def process_request(
+        self, request: dict[str, object]
+    ) -> FlextResult[FlextTypes.Dict]:
         """Process request with full flext-core integration."""
         # Log request with structured logging
         self.logger.info(
@@ -321,145 +332,70 @@ class IntegratedService:
         })
 
 
-def demonstrate_new_flextresult_methods() -> None:
-    """Demonstrate the 5 new FlextResult methods in utilities integration context.
+def run_integration_examples() -> None:
+    """Run comprehensive integration examples."""
+    print("🔧 Running FLEXT Core Integration Examples")
+    print("=" * 50)
 
-    Shows how the new v0.9.9+ methods work with complete utilities integration:
-    - from_callable: Safe utility operations
-    - flow_through: Utility pipeline composition
-    - lash: Utility fallback recovery
-    - alt: Utility provider alternatives
-    - value_or_call: Lazy utility loading
-    """
-    print("\n" + "=" * 60)
-    print("NEW FLEXTRESULT METHODS - UTILITIES INTEGRATION CONTEXT")
-    print("Demonstrating v0.9.9+ methods with all flext-core utilities")
-    print("=" * 60)
-
-    # 1. from_callable - Safe Utility Operations
-    print("\n=== 1. from_callable: Safe Utility Operations ===")
-
-    def risky_config_operation() -> dict:
-        """Configuration operation that might raise exceptions."""
-        config = FlextConfig()
-        if not hasattr(config, "batch_size"):
-            msg = "Configuration incomplete"
-            raise FlextExceptions.ConfigurationError(msg)
-        return {
-            "batch_size": config.batch_size,
-            "timeout": config.timeout_seconds,
-            "debug": config.is_debug_enabled,
-        }
-
-    # Safe config access without try/except
-    config_result = FlextResult.from_callable(risky_config_operation)
+    # Example 1: Configuration integration
+    print("\n1. Configuration Integration:")
+    service = MyService()
+    config_result = service.process_data({"test": "data"})
+    print(f"   Config-driven processing: {config_result.is_success}")
     if config_result.is_success:
-        config_data = config_result.unwrap()
-        print(f"✅ Configuration loaded safely: batch_size={config_data['batch_size']}")
-    else:
-        print(f"❌ Configuration loading failed: {config_result.error}")
+        print(f"   Debug mode used: {config_result.unwrap()['config_used']}")
 
-    # 2. flow_through - Utility Pipeline Composition
-    print("\n=== 2. flow_through: Utility Pipeline Composition ===")
+    # Example 2: Dependency injection
+    print("\n2. Dependency Injection:")
+    user_service = UserService()
+    user_result = user_service.get_user("user123")
+    print(f"   DI pattern: {user_result.is_success}")
+    if user_result.is_success:
+        print(f"   Service used: {user_result.unwrap()['service']}")
 
-    def validate_request_data(data: dict) -> FlextResult[dict]:
-        """Validate incoming request data."""
-        if not data:
-            return FlextResult[dict].fail("Request data cannot be empty")
-        if not data.get("id"):
-            return FlextResult[dict].fail("Request ID required")
-        return FlextResult[dict].ok(data)
+    # Example 3: Event-driven architecture
+    print("\n3. Event-Driven Architecture:")
+    event_service = EventService()
+    event_result = event_service.publish_event("user_created", {"user_id": "user123"})
+    print(f"   Event publishing: {event_result.is_success}")
 
-    def enrich_with_config(data: dict) -> FlextResult[dict]:
-        """Enrich request with configuration settings."""
-        config = FlextConfig()
-        enriched = {
-            **data,
-            "batch_size": config.batch_size,
-            "timeout_ms": config.timeout_seconds * 1000,
-        }
-        return FlextResult[dict].ok(enriched)
+    # Example 4: Message routing
+    print("\n4. Message Routing:")
+    message_service = MessageService()
+    msg_result = message_service.send_message({"type": "greeting", "content": "Hello"})
+    print(f"   Message dispatching: {msg_result.is_success}")
 
-    def register_in_container(data: dict) -> FlextResult[dict]:
-        """Register request context in DI container."""
-        container = FlextContainer.get_global()
-        request_context = {"id": data["id"], "timestamp": "now"}
-        reg_result = container.register(f"request_{data['id']}", request_context)
-        if reg_result.is_failure:
-            return FlextResult[dict].fail(
-                f"Container registration failed: {reg_result.error}"
+    # Example 5: Complete integration
+    print("\n5. Complete Integration:")
+    integrated_service = IntegratedService()
+    status_result = integrated_service.get_service_status()
+    print(f"   Full integration status: {status_result.is_success}")
+    if status_result.is_success:
+        status = status_result.unwrap()
+        print(f"   Integration level: {status['integration_level']}")
+        components = status["components"]
+        if isinstance(components, dict[str, object]):
+            print(
+                f"   Components available: {len(cast('dict[str, object]', components))}"
             )
-        enriched = {**data, "container_registered": True}
-        return FlextResult[dict].ok(enriched)
+        else:
+            print("   Components data unavailable")
 
-    def publish_to_bus(data: dict) -> FlextResult[dict]:
-        """Publish event to message bus."""
-        bus = FlextBus()
-        event = {
-            "type": "request_processed",
-            "request_id": data["id"],
-            "enriched": True,
-        }
-        pub_result = bus.publish_event(event)
-        if pub_result.is_failure:
-            return FlextResult[dict].fail(
-                f"Event publishing failed: {pub_result.error}"
-            )
-        enriched = {**data, "event_published": True}
-        return FlextResult[dict].ok(enriched)
+    print("\n✅ All integration examples completed successfully!")
+    print("\nThese examples demonstrate:")
+    print("  • Configuration-driven behavior")
+    print("  • Dependency injection patterns")
+    print("  • Event-driven architecture")
+    print("  • Message routing capabilities")
+    print("  • Structured logging practices")
+    print("  • Railway-oriented error handling")
 
-    # Flow through complete utility pipeline
-    request_data = {"id": "REQ-UTIL-001", "type": "integration_test"}
-    pipeline_result = (
-        FlextResult[dict]
-        .ok(request_data)
-        .flow_through(
-            validate_request_data,
-            enrich_with_config,
-            register_in_container,
-            publish_to_bus,
-        )
-    )
+    # Demonstrate new FlextResult methods (v0.9.9+)
+    demonstrate_new_flextresult_methods()
 
-    if pipeline_result.is_success:
-        final_data = pipeline_result.unwrap()
-        print(f"✅ Utility pipeline complete: {final_data['id']}")
-        print(f"   Batch size: {final_data.get('batch_size', 'N/A')}")
-        print(
-            f"   Container registered: {final_data.get('container_registered', False)}"
-        )
-        print(f"   Event published: {final_data.get('event_published', False)}")
-    else:
-        print(f"❌ Pipeline failed: {pipeline_result.error}")
 
-    # 3. lash - Utility Fallback Recovery
-    print("\n=== 3. lash: Utility Fallback Recovery ===")
-
-    def primary_dispatcher() -> FlextResult[dict]:
-        """Primary dispatcher that might fail."""
-        return FlextResult[dict].fail("Primary dispatcher unavailable")
-
-    def fallback_dispatcher(error: str) -> FlextResult[dict]:
-        """Fallback dispatcher when primary fails."""
-        print(f"   ⚠️  Primary failed: {error}, using fallback dispatcher...")
-        dispatcher = FlextDispatcher()
-        message = {"type": "fallback_dispatch", "original_error": error}
-        dispatch_result = dispatcher.dispatch(message)
-        if dispatch_result.is_failure:
-            return FlextResult[dict].fail(
-                f"Fallback also failed: {dispatch_result.error}"
-            )
-        return FlextResult[dict].ok({"dispatcher": "fallback", "message_sent": True})
-
-    # Try primary, fall back on failure
-    dispatch_result = primary_dispatcher().lash(fallback_dispatcher)
-    if dispatch_result.is_success:
-        dispatch_data = dispatch_result.unwrap()
-        print(f"✅ Dispatch successful via: {dispatch_data['dispatcher']}")
-        print(f"   Message sent: {dispatch_data.get('message_sent', False)}")
-    else:
-        print(f"❌ All dispatchers failed: {dispatch_result.error}")
-
+def demonstrate_new_flextresult_methods() -> None:
+    """Demonstrate new FlextResult methods (v0.9.9+)."""
     # 4. alt - Utility Provider Alternatives
     print("\n=== 4. alt: Utility Provider Alternatives ===")
 
@@ -512,62 +448,6 @@ def demonstrate_new_flextresult_methods() -> None:
     print("✅ NEW FLEXTRESULT METHODS UTILITIES INTEGRATION DEMO COMPLETE!")
     print("All 5 methods demonstrated with complete utility integration context")
     print("=" * 60)
-
-
-def run_integration_examples() -> None:
-    """Run comprehensive integration examples."""
-    print("🔧 Running FLEXT Core Integration Examples")
-    print("=" * 50)
-
-    # Example 1: Configuration integration
-    print("\n1. Configuration Integration:")
-    service = MyService()
-    config_result = service.process_data({"test": "data"})
-    print(f"   Config-driven processing: {config_result.is_success}")
-    if config_result.is_success:
-        print(f"   Debug mode used: {config_result.unwrap()['config_used']}")
-
-    # Example 2: Dependency injection
-    print("\n2. Dependency Injection:")
-    user_service = UserService()
-    user_result = user_service.get_user("user123")
-    print(f"   DI pattern: {user_result.is_success}")
-    if user_result.is_success:
-        print(f"   Service used: {user_result.unwrap()['service']}")
-
-    # Example 3: Event-driven architecture
-    print("\n3. Event-Driven Architecture:")
-    event_service = EventService()
-    event_result = event_service.publish_event("user_created", {"user_id": "user123"})
-    print(f"   Event publishing: {event_result.is_success}")
-
-    # Example 4: Message routing
-    print("\n4. Message Routing:")
-    message_service = MessageService()
-    msg_result = message_service.send_message({"type": "greeting", "content": "Hello"})
-    print(f"   Message dispatching: {msg_result.is_success}")
-
-    # Example 5: Complete integration
-    print("\n5. Complete Integration:")
-    integrated_service = IntegratedService()
-    status_result = integrated_service.get_service_status()
-    print(f"   Full integration status: {status_result.is_success}")
-    if status_result.is_success:
-        status = status_result.unwrap()
-        print(f"   Integration level: {status['integration_level']}")
-        print(f"   Components available: {len(status['components'])}")
-
-    print("\n✅ All integration examples completed successfully!")
-    print("\nThese examples demonstrate:")
-    print("  • Configuration-driven behavior")
-    print("  • Dependency injection patterns")
-    print("  • Event-driven architecture")
-    print("  • Message routing capabilities")
-    print("  • Structured logging practices")
-    print("  • Railway-oriented error handling")
-
-    # Demonstrate new FlextResult methods (v0.9.9+)
-    demonstrate_new_flextresult_methods()
 
 
 if __name__ == "__main__":

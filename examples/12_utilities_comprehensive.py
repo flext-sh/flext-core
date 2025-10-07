@@ -31,7 +31,7 @@ from flext_core import (
 class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
     """Service demonstrating essential FlextUtilities patterns with FlextMixins.Service infrastructure.
 
-    This service inherits from Flext.Service to demonstrate:
+    This service inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextContainer singleton)
     - Inherited logger property (FlextLogger with service context - UTILITIES FOCUS!)
     - Inherited context property (FlextContext for request/correlation tracking)
@@ -104,7 +104,7 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
             self.demonstrate_composition()
             self.demonstrate_deprecated_patterns()
 
-            summary = {
+            summary: FlextTypes.Dict = {
                 "status": "completed",
                 "demonstrations": 7,
                 "categories": [
@@ -294,7 +294,7 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
         # 1. from_callable - Safe Utility Operations
         print("\n=== 1. from_callable: Safe Utility Operations ===")
 
-        def risky_validation_operation() -> dict:
+        def risky_validation_operation() -> dict[str, object]:
             """Validation operation that might raise exceptions."""
             test_data = {
                 "email": "test@example.com",
@@ -318,47 +318,59 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
         # 2. flow_through - Utility Pipeline Composition
         print("\n=== 2. flow_through: Utility Pipeline Composition ===")
 
-        def validate_email_format(data: dict) -> FlextResult[dict]:
+        def validate_email_format(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Validate email format in data."""
             email = data.get("email", "")
-            if not email or "@" not in email:
-                return FlextResult[dict].fail("Invalid email format")
-            return FlextResult[dict].ok(data)
+            if not isinstance(email, str) or not email or "@" not in email:
+                return FlextResult[dict[str, object]].fail(
+                    "Invalid email format"
+                )
+            return FlextResult[dict[str, object]].ok(data)
 
-        def validate_hostname_format(data: dict) -> FlextResult[dict]:
+        def validate_hostname_format(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Validate hostname format in data."""
             hostname = data.get("hostname", "")
-            if not hostname or "." not in hostname:
-                return FlextResult[dict].fail("Invalid hostname format")
-            return FlextResult[dict].ok(data)
+            if not isinstance(hostname, str) or not hostname or "." not in hostname:
+                return FlextResult[dict[str, object]].fail(
+                    "Invalid hostname format"
+                )
+            return FlextResult[dict[str, object]].ok(data)
 
-        def enrich_with_metadata(data: dict) -> FlextResult[dict]:
+        def enrich_with_metadata(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Enrich data with validation metadata."""
-            enriched = {
+            enriched: dict[str, object] = {
                 **data,
                 "validation_id": str(uuid.uuid4())[:8],
                 "validated_at": time.time(),
                 "validator": "FlextUtilities",
             }
-            return FlextResult[dict].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
-        def finalize_validation(data: dict) -> FlextResult[dict]:
+        def finalize_validation(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Finalize validation with summary."""
-            enriched = {
+            enriched: dict[str, object] = {
                 **data,
                 "validation_complete": True,
                 "fields_validated": len(data) - 3,  # Exclude metadata fields
             }
-            return FlextResult[dict].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
         # Flow through complete validation pipeline
-        test_data = {
+        test_data: dict[str, object] = {
             "email": "user@example.com",
             "hostname": "internal.invalid.com",
             "username": "testuser",
         }
         pipeline_result = (
-            FlextResult[dict]
+            FlextResult[dict[str, object]]
             .ok(test_data)
             .flow_through(
                 validate_email_format,
@@ -402,20 +414,22 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
         # 4. alt - Utility Provider Alternatives
         print("\n=== 4. alt: Utility Provider Alternatives ===")
 
-        def get_custom_validator() -> FlextResult[dict]:
+        def get_custom_validator() -> FlextResult[dict[str, object]]:
             """Try to get custom validator configuration."""
-            return FlextResult[dict].fail("Custom validator not configured")
+            return FlextResult[dict[str, object]].fail(
+                "Custom validator not configured"
+            )
 
-        def get_default_validator() -> FlextResult[dict]:
+        def get_default_validator() -> FlextResult[dict[str, object]]:
             """Provide default validator configuration."""
-            config = {
+            config: dict[str, object] = {
                 "validator_type": "default",
                 "email_validation": True,
                 "hostname_validation": True,
                 "string_validation": True,
                 "strict_mode": False,
             }
-            return FlextResult[dict].ok(config)
+            return FlextResult[dict[str, object]].ok(config)
 
         # Try custom validator, fall back to default
         validator_result = get_custom_validator().alt(get_default_validator())
@@ -434,7 +448,7 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
         # 5. value_or_call - Lazy Utility Initialization
         print("\n=== 5. value_or_call: Lazy Utility Initialization ===")
 
-        def create_expensive_cache() -> dict:
+        def create_expensive_cache() -> dict[str, object]:
             """Create and configure cache (expensive operation)."""
             print("   ⚙️  Creating new cache with full configuration...")
             return {
@@ -446,15 +460,22 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
             }
 
         # Try to get existing cache, create new one if not available
-        cache_fail_result = FlextResult[dict].fail("No existing cache")
+        cache_fail_result = FlextResult[dict[str, object]].fail(
+            "No existing cache"
+        )
         cache = cache_fail_result.value_or_call(create_expensive_cache)
         print(f"✅ Cache acquired: {cache.get('cache_type', 'unknown')}")
         print(f"   Max size: {cache.get('max_size', 0)}")
         print(f"   TTL: {cache.get('ttl', 0)}s")
 
         # Try again with successful result (lazy function NOT called)
-        existing_cache = {"cache_type": "redis", "initialized": True}
-        cache_success_result = FlextResult[dict].ok(existing_cache)
+        existing_cache: dict[str, object] = {
+            "cache_type": "redis",
+            "initialized": True,
+        }
+        cache_success_result = FlextResult[dict[str, object]].ok(
+            existing_cache
+        )
         cache_cached = cache_success_result.value_or_call(create_expensive_cache)
         print(f"✅ Existing cache used: {cache_cached.get('cache_type', 'unknown')}")
         print("   No expensive creation needed")

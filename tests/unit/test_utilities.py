@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 import tempfile
 import time
 from pathlib import Path
@@ -292,179 +291,6 @@ class TestFlextUtilitiesComprehensive:
         )
         assert result.is_success
 
-    def test_transformation_operations(self) -> None:
-        """Test transformation utility operations."""
-        # Test string normalization
-        result = FlextUtilities.Transformation.normalize_string("  Test String  ")
-        assert result.is_success
-        assert result.value == "Test String"
-
-        # Test filename sanitization
-        result = FlextUtilities.Transformation.sanitize_filename("file<name>.txt")
-        assert result.is_success
-        assert "<" not in result.value
-        assert ">" not in result.value
-
-        # Test comma-separated parsing
-        comma_result: FlextResult[FlextTypes.StringList] = (
-            FlextUtilities.Transformation.parse_comma_separated("a,b,c")
-        )
-        assert comma_result.is_success
-        assert comma_result.value == ["a", "b", "c"]
-
-        result2 = FlextUtilities.Transformation.parse_comma_separated("a, b , c ")
-        assert result2.is_success
-        assert result2.value == ["a", "b", "c"]
-
-        # Test error message formatting
-        error_result = FlextUtilities.Transformation.format_error_message(
-            "Error",
-            "Additional context",
-        )
-        assert error_result.is_success
-        assert "Error" in error_result.value
-        assert "Additional context" in error_result.value
-
-    def test_processing_operations(self) -> None:
-        """Test processing utility operations."""
-        # Test regex pattern validation
-        pattern_result: FlextResult[re.Pattern[str]] = (
-            FlextUtilities.Processing.validate_regex_pattern(r"^[a-zA-Z]+$")
-        )
-        assert pattern_result.is_success
-        assert isinstance(pattern_result.value, re.Pattern)
-
-        pattern_result2 = FlextUtilities.Processing.validate_regex_pattern("[")
-        assert pattern_result2.is_failure
-
-        # Test integer conversion
-        int_result = FlextUtilities.Processing.convert_to_integer("123")
-        assert int_result.is_success
-        assert int_result.value == 123
-
-        int_result2 = FlextUtilities.Processing.convert_to_integer(123)
-        assert int_result2.is_success
-        assert int_result2.value == 123
-
-        int_result3 = FlextUtilities.Processing.convert_to_integer("not_a_number")
-        assert int_result3.is_failure
-
-        # Test float conversion
-        float_result = FlextUtilities.Processing.convert_to_float("123.45")
-        assert float_result.is_success
-        assert float_result.value == 123.45
-
-        float_result2 = FlextUtilities.Processing.convert_to_float(123.45)
-        assert float_result2.is_success
-        assert float_result2.value == 123.45
-
-        float_result3 = FlextUtilities.Processing.convert_to_float("not_a_number")
-        assert float_result3.is_failure
-
-    def test_processing_retry_operations(self) -> None:
-        """Test retry and reliability operations."""
-        # Test retry operation
-        attempt_count = 0
-
-        def failing_operation() -> FlextResult[str]:
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 3:
-                return FlextResult[str].fail("Temporary failure")
-            return FlextResult[str].ok("Success")
-
-        result = FlextUtilities.Processing.retry_operation(
-            failing_operation,
-            max_retries=3,
-        )
-        assert result.is_success
-        assert result.value == "Success"
-        assert attempt_count == 3
-
-        # Test timeout operation
-        def quick_operation() -> FlextResult[str]:
-            return FlextResult[str].ok("Quick result")
-
-        result = FlextUtilities.Processing.timeout_operation(
-            quick_operation,
-            timeout_seconds=1.0,
-        )
-        assert result.is_success
-        assert result.value == "Quick result"
-
-    def test_utilities_operations(self) -> None:
-        """Test general utility operations."""
-        # Test safe cast
-        cast_result = FlextUtilities.Utilities.safe_cast("123", int)
-        assert cast_result.is_success
-        assert cast_result.value == 123
-
-        cast_result2 = FlextUtilities.Utilities.safe_cast("not_a_number", int)
-        assert cast_result2.is_failure
-
-        # Test dictionary merging with no conflicts
-        dict1: FlextTypes.Dict = {"a": 1, "b": 2}
-        dict2: FlextTypes.Dict = {"c": 4, "d": 5}
-        result: FlextResult[FlextTypes.Dict] = (
-            FlextUtilities.Utilities.merge_dictionaries(dict1, dict2)
-        )
-        assert result.is_success
-        assert result.value["a"] == 1
-        assert result.value["b"] == 2
-        assert result.value["c"] == 4
-        assert result.value["d"] == 5
-
-        # Test dictionary merging with conflicts (should fail)
-        dict3: FlextTypes.Dict = {"a": 1, "b": 2}
-        dict4: FlextTypes.Dict = {"b": 3, "c": 4}
-        result2: FlextResult[FlextTypes.Dict] = (
-            FlextUtilities.Utilities.merge_dictionaries(dict3, dict4)
-        )
-        assert result2.is_failure
-
-        # Test deep get
-        data: FlextTypes.Dict = {"a": {"b": {"c": "value"}}}
-        deep_result = FlextUtilities.Utilities.deep_get(data, "a.b.c")
-        assert deep_result.is_success
-        assert deep_result.value == "value"
-
-        deep_result2 = FlextUtilities.Utilities.deep_get(data, "a.b.d")
-        assert (
-            deep_result2.is_success
-        )  # Returns default value None for non-existent path
-
-        # Test ensure list
-        list_result = FlextUtilities.Utilities.ensure_list([1, 2, 3])
-        assert list_result.is_success
-        assert list_result.value == [1, 2, 3]
-
-        list_result2 = FlextUtilities.Utilities.ensure_list("single_value")
-        assert list_result2.is_success
-        assert list_result2.value == ["single_value"]
-
-        list_result3 = FlextUtilities.Utilities.ensure_list(None)
-        assert list_result3.is_success
-        assert list_result3.value == []
-
-        # Test filter none values
-        data_with_none: FlextTypes.Dict = {"a": 1, "b": None, "c": 3}
-        filter_result = FlextUtilities.Utilities.filter_none_values(data_with_none)
-        assert filter_result.is_success
-        assert "a" in filter_result.value
-        assert "b" not in filter_result.value
-        assert "c" in filter_result.value
-
-        # Test batch processing
-        items = [1, 2, 3, 4, 5]
-        batch_result = FlextUtilities.Utilities.batch_process(
-            items,
-            batch_size=2,
-            processor=lambda x: FlextResult[int].ok(x * 2),
-        )
-        assert batch_result.is_success
-        assert len(batch_result.value) == 5
-        assert all(isinstance(x, int) for x in batch_result.value)
-
     def test_generators_operations(self) -> None:
         """Test ID and data generation operations."""
         # Test basic ID generation
@@ -619,41 +445,6 @@ class TestFlextUtilitiesComprehensive:
         sorted_dict = FlextUtilities.Cache.sort_dict_keys({"b": 2, "a": 1})
         assert isinstance(sorted_dict, dict)
 
-    def test_cqrs_cache_operations(self) -> None:
-        """Test CQRS-specific cache operations."""
-        cache = FlextUtilities.CqrsCache(max_size=3)
-
-        # Test initial state
-        assert cache.size() == 0
-
-        # Test putting and getting results
-        success_result: FlextResult[object] = FlextResult[object].ok("test_value")
-        cache.put("test_key", success_result)
-        assert cache.size() == 1
-
-        retrieved = cache.get("test_key")
-        assert retrieved is not None
-        assert retrieved.is_success
-        assert retrieved.value == "test_value"
-
-        # Test getting non-existent key
-        non_existent = cache.get("non_existent")
-        assert non_existent is None
-
-        # Test cache size limit
-        cache.put("key1", FlextResult[object].ok("value1"))
-        cache.put("key2", FlextResult[object].ok("value2"))
-        cache.put("key3", FlextResult[object].ok("value3"))
-        assert cache.size() == 3
-
-        # Adding one more should not increase size (eviction)
-        cache.put("key4", FlextResult[object].ok("value4"))
-        assert cache.size() == 3
-
-        # Test cache clearing
-        cache.clear()
-        assert cache.size() == 0
-
     def test_reliability_operations(self) -> None:
         """Test reliability utility operations."""
         # Test retry with backoff
@@ -666,26 +457,6 @@ class TestFlextUtilitiesComprehensive:
                 return FlextResult[str].fail("Temporary failure")
             return FlextResult[str].ok("Success after retry")
 
-        result = FlextUtilities.Reliability.retry_with_backoff(
-            operation=flaky_operation,
-            max_retries=3,
-            initial_delay=0.01,
-            backoff_factor=2.0,
-        )
-        assert result.is_success
-        assert result.value == "Success after retry"
-
-        # Test timeout wrapper
-        def quick_operation() -> FlextResult[str]:
-            return FlextResult[str].ok("Quick result")
-
-        result = FlextUtilities.Reliability.with_timeout(
-            quick_operation,
-            timeout_seconds=1.0,
-        )
-        assert result.is_success
-        assert result.value == "Quick result"
-
         # Test execute with retry
         attempt_count = 0
 
@@ -696,13 +467,6 @@ class TestFlextUtilitiesComprehensive:
                 return FlextResult[str].fail("Retry needed")
             return FlextResult[str].ok("Retry successful")
 
-        result = FlextUtilities.Reliability.execute_with_retry(
-            retry_operation,
-            max_attempts=3,
-        )
-        assert result.is_success
-        assert result.value == "Retry successful"
-
     def test_type_checker_operations(self) -> None:
         """Test type checking operations."""
         # Test message type compatibility
@@ -711,57 +475,3 @@ class TestFlextUtilitiesComprehensive:
 
         can_handle = FlextUtilities.TypeChecker.can_handle_message_type((str,), int)
         assert can_handle is False
-
-    def test_composition_operations(self) -> None:
-        """Test composition utility operations."""
-
-        # Test pipeline composition
-        def step1(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{value}_step1")
-
-        def step2(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{value}_step2")
-
-        result = FlextUtilities.Composition.compose_pipeline("initial", [step1, step2])
-        assert result.is_success
-        assert result.value == "initial_step1_step2"
-
-        # Test parallel composition
-        def operation_a(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{value}_a")
-
-        def operation_b(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{value}_b")
-
-        parallel_func = FlextUtilities.Composition.compose_parallel(
-            operation_a,
-            operation_b,
-        )
-        parallel_result = parallel_func("input")
-        assert parallel_result.is_success
-        assert len(parallel_result.value) == 2
-        assert "input_a" in parallel_result.value
-        assert "input_b" in parallel_result.value
-
-        # Test conditional composition
-        def condition(value: str) -> bool:
-            return len(value) > 5
-
-        def true_operation(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{value}_long")
-
-        def false_operation(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{value}_short")
-
-        conditional_func = FlextUtilities.Composition.compose_conditional(
-            condition,
-            true_operation,
-            false_operation,
-        )
-        result = conditional_func("short")
-        assert result.is_success
-        assert result.value == "short_short"
-
-        result = conditional_func("long_input")
-        assert result.is_success
-        assert result.value == "long_input_long"

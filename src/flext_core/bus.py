@@ -1,3 +1,4 @@
+# ruff: disable=E402
 """Command bus for FLEXT-Core 1.0.0 CQRS flows.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -295,7 +296,7 @@ class FlextBus(
         return FlextModels.CqrsConfig.Bus()
 
     @property
-    def config(self) -> FlextModels.CqrsConfig.Bus:
+    def bus_config(self) -> FlextModels.CqrsConfig.Bus:
         """Access the bus configuration model."""
         return self._config_model
 
@@ -979,6 +980,9 @@ class FlextBus(
     def publish_events(self, events: FlextTypes.List) -> FlextResult[None]:
         """Publish multiple domain events.
 
+        Uses FlextResult.from_callable() to eliminate try/except and
+        flow_through() for declarative event processing pipeline.
+
         Args:
             events: List of domain events to publish
 
@@ -986,15 +990,23 @@ class FlextBus(
             FlextResult[None]: Success or failure result
 
         """
-        try:
-            for event in events:
-                result = self.publish_event(event)
-                if result.is_failure:
-                    return result
 
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(f"Batch event publishing error: {e}")
+        def publish_all() -> None:
+            # Convert events to FlextResult pipeline
+            def make_publish_func(
+                event_item: object,
+            ) -> Callable[[None], FlextResult[None]]:
+                return cast(
+                    "Callable[[None], FlextResult[None]]",
+                    lambda _: self.publish_event(event_item),
+                )
+
+            publish_funcs = [make_publish_func(event) for event in events]
+            result = FlextResult[None].ok(None).flow_through(*publish_funcs)
+            if result.is_failure:
+                raise RuntimeError(result.error or "Event publishing failed")
+
+        return FlextResult[None].from_callable(publish_all)
 
     def subscribe(self, event_type: str, handler: object) -> FlextResult[None]:
         """Subscribe to an event type.

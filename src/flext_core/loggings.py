@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
+import traceback
 import types
 from collections.abc import Callable, Sequence
 from typing import Any, Self
@@ -237,7 +239,7 @@ class FlextLogger:
         """
         return cls(module_name)
 
-    def __init__(  # type: ignore[reportMissingSuperCall]
+    def __init__(
         self,
         name: str,
         *,
@@ -285,7 +287,7 @@ class FlextLogger:
         """Bind additional context to the logger."""
         # Create new instance with bound logger
         new_logger = FlextLogger.__new__(FlextLogger)
-        new_logger._name = self.name  # noqa: SLF001
+        new_logger._name = self._name  # noqa: SLF001
         new_logger.logger = self.logger.bind(**context)
         return new_logger
 
@@ -380,8 +382,6 @@ class FlextLogger:
         """Log exception message with stack trace - LoggerProtocol implementation."""
         try:
             if exc_info:
-                import traceback
-
                 kwargs["stack_trace"] = traceback.format_exc()
             self.logger.error(message, **kwargs)
             return FlextResult[None].ok(None)
@@ -462,7 +462,7 @@ class FlextLogger:
 class PerformanceTracker:
     """Context manager for performance tracking with automatic logging."""
 
-    def __init__(self, logger: FlextLogger, operation_name: str) -> None:  # type: ignore[reportMissingSuperCall]
+    def __init__(self, logger: FlextLogger, operation_name: str) -> None:
         """Initialize performance tracker.
 
         Args:
@@ -476,8 +476,6 @@ class PerformanceTracker:
 
     def __enter__(self) -> Self:
         """Start performance tracking."""
-        import time
-
         self._start_time = time.time()
         return self
 
@@ -488,8 +486,6 @@ class PerformanceTracker:
         exc_tb: types.TracebackType | None,
     ) -> None:
         """Complete performance tracking and log results."""
-        import time
-
         elapsed = time.time() - self._start_time
 
         if exc_type is None:
