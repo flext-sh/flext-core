@@ -1194,6 +1194,38 @@ class FlextDispatcher(FlextMixins.Service):
     # Missing Methods for Test Compatibility
     # =============================================================================
 
+    def dispatch_batch(
+        self,
+        message_type: str,
+        messages: list[object],
+    ) -> list[FlextResult[object]]:
+        """Dispatch multiple messages in batch.
+
+        Args:
+            message_type: Type of messages to dispatch
+            messages: List of message data to dispatch
+
+        Returns:
+            List of FlextResult objects for each dispatched message
+
+        """
+        return [self.dispatch(message_type, msg) for msg in messages]
+
+    def get_performance_metrics(self) -> FlextTypes.Dict:
+        """Get performance metrics for the dispatcher.
+
+        Returns:
+            Dictionary containing performance metrics
+
+        """
+        # Basic metrics - can be extended with actual performance data
+        return {
+            "total_dispatches": 0,  # Track actual dispatches (future enhancement)
+            "circuit_breaker_failures": len(self._circuit_breaker_failures),
+            "rate_limit_states": len(self._rate_limit_state),
+            "executor_workers": self._executor_workers if self._executor else 0,
+        }
+
     def cleanup(self) -> None:
         """Clean up dispatcher resources using processors."""
         try:

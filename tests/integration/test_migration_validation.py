@@ -25,6 +25,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    FlextTypes,
 )
 
 
@@ -34,12 +35,12 @@ class TestMigrationScenario1:
     def test_flext_result_dual_access_pattern(self) -> None:
         """Verify both .value and .data access patterns work (ABI compatibility)."""
 
-        def process_user(user_id: str) -> FlextResult[dict]:
+        def process_user(user_id: str) -> FlextResult[dict[str, str]]:
             if not user_id:
-                return FlextResult[dict].fail("User ID required")
+                return FlextResult[dict[str, str]].fail("User ID required")
 
-            user_data = {"id": user_id, "name": "Alice"}
-            return FlextResult[dict].ok(user_data)
+            user_data: dict[str, str] = {"id": user_id, "name": "Alice"}
+            return FlextResult[dict[str, str]].ok(user_data)
 
         # Test with .value (primary access - documented pattern)
         result = process_user("user_123")
@@ -151,14 +152,14 @@ class TestMigrationScenario4:
                 """Execute method required by FlextService abstract class."""
                 return FlextResult[None].ok(None)
 
-            def create_user(self, username: str, email: str) -> FlextResult[dict]:
+            def create_user(self, username: str, email: str) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
-                    return FlextResult[dict].fail("Username and email required")
+                    return FlextResult[dict[str, str]].fail("Username and email required")
 
                 self._logger.info("Creating user", extra={"username": username})
                 user_data = {"username": username, "email": email}
-                return FlextResult[dict].ok(user_data)
+                return FlextResult[dict[str, str]].ok(user_data)
 
         # Test service functionality
         service = UserService()
@@ -253,7 +254,7 @@ class TestNewFeatures:
         class MyHttpResponse(FlextModels.HttpResponse):
             """Custom HTTP response extending base."""
 
-            custom_data: dict = Field(default_factory=dict)
+            custom_data: dict[str, object] = Field(default_factory=dict)
 
         # Create response - success
         success_response = MyHttpResponse(
@@ -397,14 +398,14 @@ class TestMigrationComplexity:
                 self.logger = FlextLogger(__name__)
                 self.container = FlextContainer.get_global()
 
-            def process_data(self, data: dict) -> FlextResult[dict]:
+            def process_data(self, data: dict[str, str]) -> FlextResult[dict[str, object]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict].fail("Data required")
+                    return FlextResult[dict[str, object]].fail("Data required")
 
                 self.logger.info("Processing data", extra={"size": len(data)})
-                processed = {"original": data, "processed": True}
-                return FlextResult[dict].ok(processed)
+                processed: dict[str, object] = {"original": str(data), "processed": True}
+                return FlextResult[dict[str, object]].ok(processed)
 
         # Test application works identically
         app = ExistingApplication()

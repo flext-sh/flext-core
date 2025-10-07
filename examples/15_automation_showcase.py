@@ -231,7 +231,9 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
             return task_data
 
         # Safe execution without try/except
-        automation_result = FlextCore.Result.from_callable(risky_automation_task)
+        automation_result = FlextCore.Result[dict[str, object]].from_callable(
+            risky_automation_task
+        )
         if automation_result.is_success:
             data = automation_result.unwrap()
             print(f"✅ Automation successful: {data.get('task_type', 'N/A')}")

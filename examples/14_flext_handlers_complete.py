@@ -522,7 +522,7 @@ class FlextHandlersService(FlextCore.Service[dict[str, str | bool]]):
                     )
 
                 # Success case
-                validated_data = {
+                validated_data: dict[str, object] = {
                     "id": message["id"],
                     "amount": amount,
                     "validated_at": time.time(),
@@ -749,7 +749,9 @@ class FlextHandlersService(FlextCore.Service[dict[str, str | bool]]):
             return user_data
 
         # Safe execution without try/except
-        handler_result = FlextCore.Result.from_callable(risky_handler_operation)
+        handler_result = FlextCore.Result[dict[str, object]].from_callable(
+            risky_handler_operation
+        )
         if handler_result.is_success:
             data = handler_result.unwrap()
             print(f"✅ Handler successful: User {data.get('username', 'N/A')}")

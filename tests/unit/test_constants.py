@@ -323,15 +323,15 @@ class TestFlextConstants:
     def test_class_getitem_nested_path(self) -> None:
         """Test FlextConstants[] method with nested paths."""
         # Test valid nested path access
-        validation_error = FlextConstants["Errors.VALIDATION_ERROR"]
+        validation_error = FlextConstants["Errors.VALIDATION_ERROR"]  # type: ignore[misc]
         assert validation_error == "VALIDATION_ERROR"
 
         # Test another nested path
-        default_timeout = FlextConstants["Defaults.TIMEOUT"]
+        default_timeout = FlextConstants["Defaults.TIMEOUT"]  # type: ignore[misc]
         assert default_timeout == 30
 
         # Test deep nested path
-        default_level = FlextConstants["Logging.DEFAULT_LEVEL"]
+        default_level = FlextConstants["Logging.DEFAULT_LEVEL"]  # type: ignore[misc]
         assert default_level == "INFO"
 
     def test_class_getitem_invalid_path(self) -> None:
@@ -340,8 +340,8 @@ class TestFlextConstants:
 
         # Test non-existent path
         with pytest.raises(AttributeError, match=r"Constant path .* not found"):
-            FlextConstants["NonExistent.PATH"]
+            FlextConstants["NonExistent.PATH"]  # type: ignore[misc]
 
         # Test partially valid path
         with pytest.raises(AttributeError, match=r"Constant path .* not found"):
-            FlextConstants["Errors.NONEXISTENT_ERROR"]
+            FlextConstants["Errors.NONEXISTENT_ERROR"]  # type: ignore[misc]

@@ -94,6 +94,7 @@ class FlextLogger:
     # PRIVATE MEMBERS - Structlog configuration
     # =========================================================================
 
+    _configured: bool = False
     _structlog_configured: bool = False
 
     @staticmethod
@@ -128,6 +129,7 @@ class FlextLogger:
         )
 
         FlextLogger._structlog_configured = True
+        FlextLogger._configured = True
 
     # =========================================================================
     # ADVANCED FEATURES - Global context management via contextvars

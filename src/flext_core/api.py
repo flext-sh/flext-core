@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from collections.abc import Callable
+from typing import Literal, cast
 
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.bus import FlextBus
@@ -148,39 +149,6 @@ class FlextCore:
     class Types(FlextTypes):
         """Type system namespace providing type definitions."""
 
-        class Core(FlextTypes.Core):
-            """Core fundamental types for the FLEXT ecosystem with Python 3.13+ enhancements."""
-
-        class Headers(FlextTypes.Headers):
-            """HTTP headers and metadata types."""
-
-        class Domain(FlextTypes.Domain):
-            """Domain-Driven Design types."""
-
-        class Async(FlextTypes.Async):
-            """Async types for coroutines and generators."""
-
-        class ErrorHandling(FlextTypes.ErrorHandling):
-            """Error handling types for robust error management."""
-
-        class Project(FlextTypes.Project):
-            """Project-specific types for the FLEXT ecosystem."""
-
-        class Service(FlextTypes.Service):
-            """Service types for domain services."""
-
-        class Context(FlextTypes.Context):
-            """Context types for request/operation context management."""
-
-        class Utilities(FlextTypes.Utilities):
-            """Utility types for validation and transformation utilities."""
-
-        class Config(FlextTypes.Config):
-            """Configuration types for Pydantic."""
-
-        class Handlers(FlextTypes.Handlers):
-            """CQRS handler registration and execution types."""
-
     class Models(FlextModels):
         """Domain modeling namespace providing DDD patterns."""
 
@@ -237,7 +205,51 @@ class FlextCore:
         """Message routing and dispatching."""
 
     class Handlers[MessageT_contra, ResultT](FlextHandlers[MessageT_contra, ResultT]):
-        """CQRS handler registration and execution."""
+        """CQRS handler registration and execution with facade-compatible type returns.
+
+        Overrides parent classmethods to return FlextCore.Handlers type
+        instead of FlextHandlers for proper type compatibility in examples.
+        """
+
+        @classmethod
+        def from_callable(
+            cls,
+            callable_func: Callable[..., object],
+            handler_name: str | None = None,
+            handler_type: Literal["command", "query"] = "command",
+            mode: str | None = None,
+            handler_config: FlextModels.CqrsConfig.Handler
+            | FlextTypes.Dict
+            | None = None,
+        ) -> FlextCore.Handlers[object, object]:
+            """Create a handler from a callable function.
+
+            Args:
+                callable_func: The callable function to wrap
+                handler_name: Name for the handler (defaults to function name)
+                handler_type: Type of handler (command, query, etc.)
+                mode: Handler mode (for compatibility)
+                handler_config: Optional handler configuration
+
+            Returns:
+                FlextCore.Handlers: Handler instance with proper facade typing.
+
+            Note:
+                This override ensures FlextCore.Handlers.from_callable() returns
+                FlextCore.Handlers type instead of base FlextHandlers type.
+
+            """
+            # Call parent implementation but cast to correct facade type
+            return cast(
+                "FlextCore.Handlers[object, object]",
+                super().from_callable(
+                    callable_func=callable_func,
+                    handler_name=handler_name,
+                    handler_type=handler_type,
+                    mode=mode,
+                    handler_config=handler_config,
+                ),
+            )
 
     class Processors(FlextProcessors):
         """Processing utilities and orchestration."""

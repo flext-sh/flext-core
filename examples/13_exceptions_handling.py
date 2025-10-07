@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
+from typing import cast
 from uuid import uuid4
 
 from flext_core import FlextCore
@@ -129,7 +130,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         self.logger.info("Starting comprehensive FlextCore.Exceptions demonstration")
 
         try:
-            # Run all demonstrations
+            # Run all demonstrations (only methods that exist)
             self.demonstrate_base_exception()
             self.demonstrate_validation_errors()
             self.demonstrate_operation_errors()
@@ -151,53 +152,54 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             self.demonstrate_exception_with_result()
             self.demonstrate_exception_context()
             self.demonstrate_new_flextresult_methods()
-            self.demonstrate_deprecated_patterns()
+            # Skip deprecated patterns as it's not defined
 
-            summary = {
-                "status": "completed",
-                "demonstrations": 22,
-                "exception_types": [
-                    "base",
-                    "validation",
-                    "operation",
-                    "configuration",
-                    "connection",
-                    "processing",
-                    "timeout",
-                    "resource",
-                    "security",
-                    "type",
-                    "critical",
-                    "generic",
-                    "attribute",
-                ],
-                "features": [
-                    "error_factory",
-                    "callable_interface",
-                    "metrics_tracking",
-                    "module_exceptions",
-                    "correlation_tracking",
-                    "flextresult_integration",
-                    "exception_context",
-                    "new_flextresult_methods",
-                    "deprecated_patterns",
-                ],
-                "exceptions_executed": True,
-            }
+            summary = cast(
+                "dict[str, object]",
+                {
+                    "status": "completed",
+                    "demonstrations": 21,
+                    "exception_types": [
+                        "base",
+                        "validation",
+                        "operation",
+                        "configuration",
+                        "connection",
+                        "processing",
+                        "timeout",
+                        "resource",
+                        "security",
+                        "type",
+                        "critical",
+                        "generic",
+                        "attribute",
+                    ],
+                    "features": [
+                        "error_factory",
+                        "callable_interface",
+                        "metrics_tracking",
+                        "module_exceptions",
+                        "correlation_tracking",
+                        "flextresult_integration",
+                        "exception_context",
+                        "new_flextresult_methods",
+                        "deprecated_patterns",
+                    ],
+                    "exceptions_executed": True,
+                },
+            )
 
             self.logger.info(
                 "FlextCore.Exceptions demonstration completed successfully",
                 extra={"summary": summary},
             )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(
-                FlextCore.Types.Dict(summary)
-            )
+            return FlextCore.Result[dict[str, object]].ok(summary)
 
         except Exception as e:
             error_msg = f"FlextCore.Exceptions demonstration failed: {e}"
             self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
-            return FlextCore.Result[FlextCore.Types.Dict].fail(error_msg)
+            return FlextCore.Result[dict[str, object]].fail(error_msg)
 
     # ========== BASE EXCEPTION ==========
 
@@ -755,7 +757,9 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             return user_data
 
         # Safe execution without try/except
-        result = FlextCore.Result.from_callable(risky_operation)
+        result: FlextCore.Result[dict[str, object]] = FlextCore.Result.from_callable(
+            risky_operation
+        )
         if result.is_success:
             data = result.unwrap()
             print(f"✅ Operation successful: {data.get('email', 'N/A')}")

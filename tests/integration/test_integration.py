@@ -28,8 +28,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_core import (
@@ -46,6 +44,7 @@ class FunctionalExternalService:
 
     def __init__(self) -> None:
         """Initialize functional external service with processing state."""
+        super().__init__()
         self.call_count = 0
         self.processed_items: FlextTypes.StringList = []
         self.should_fail = False
@@ -120,11 +119,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: FlextTypes.Dict
-        | bool
-        | list[int]
-        | FlextTypes.Config.Environment
-        | None,
+        sample_data: FlextTypes.Dict,
     ) -> None:
         """Test comprehensive integration of core library exports.
 
@@ -137,11 +132,7 @@ class TestLibraryIntegration:
 
         """
         # Arrange
-        if not isinstance(sample_data, dict):
-            pytest.skip("sample_data is not a dictionary")
-        # Type narrow sample_data to FlextTypes.Dict for indexing
-        sample_dict = cast("FlextTypes.Dict", sample_data)
-        test_value: str = cast("str", sample_dict["string"])
+        test_value = str(sample_data["string"])
 
         # Act - Test FlextResult creation
         result = FlextResult[str].ok(test_value)
@@ -196,7 +187,7 @@ class TestLibraryIntegration:
 
         """
         # Arrange
-        expected_result_data = "container_result"
+        expected_result_data: str = "container_result"
 
         def create_result() -> FlextResult[str]:
             # Use functional service processing - real behavior

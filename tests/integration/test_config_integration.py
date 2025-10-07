@@ -1,14 +1,12 @@
 """Integration tests for FlextConfig singleton pattern and multi-source configuration.
 
 This test validates that:
-1. FlextConfig works as a singleton across all modules
+1. FlextConfig works as a singleton across all modules using get_global_instance()
 2. Configuration can be loaded from multiple sources (.env, JSON, YAML, TOML)
 3. Environment variables override file configurations
 4. All modules use the same configuration instance
 
-NOTE: These tests expect FlextConfig() to return singleton instances automatically,
-but current API requires using FlextConfig.get_global_instance() for singleton behavior.
-Tests skipped pending API migration.
+Updated to use FlextConfig.get_global_instance() for singleton behavior.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,7 +20,6 @@ import tempfile
 import threading
 from pathlib import Path
 
-import pytest
 import yaml
 
 from flext_core import (
@@ -30,10 +27,6 @@ from flext_core import (
     FlextContainer,
     FlextModels,
     FlextProcessors,
-)
-
-pytestmark = pytest.mark.skip(
-    reason="Tests expect FlextConfig() singleton behavior - use get_global_instance() instead"
 )
 
 
@@ -51,11 +44,11 @@ class TestFlextConfigSingletonIntegration:
         FlextContainer.get_global().clear()  # API changed
 
     def test_singleton_pattern(self) -> None:
-        """Test that FlextConfig() returns the same instance."""
-        # Get config instance multiple times
-        config1 = FlextConfig()
-        config2 = FlextConfig()
-        config3 = FlextConfig()
+        """Test that FlextConfig.get_global_instance() returns the same instance."""
+        # Get config instance multiple times using singleton API
+        config1 = FlextConfig.get_global_instance()
+        config2 = FlextConfig.get_global_instance()
+        config3 = FlextConfig.get_global_instance()
 
         # All should be the same instance
         assert config1 is config2
@@ -71,19 +64,19 @@ class TestFlextConfigSingletonIntegration:
 
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""
-        # Get global config
-        global_config = FlextConfig()
+        # Get global config using singleton API
+        global_config = FlextConfig.get_global_instance()
 
-        # Create new container
-        container = FlextContainer()
+        # Get global container (FlextContainer also uses singleton pattern)
+        container = FlextContainer.get_global()
 
         # Container should have reference to global config
         assert container._flext_config is global_config
 
     def test_config_in_processors(self) -> None:
         """Test that processors use global config."""
-        # Get global config
-        global_config = FlextConfig()
+        # Get global config using singleton API
+        global_config = FlextConfig.get_global_instance()
 
         # Test with available FlextProcessors classes - use direct instantiation
         handler_registry = FlextProcessors.HandlerRegistry()
@@ -118,8 +111,8 @@ class TestFlextConfigSingletonIntegration:
         os.environ["FLEXT_DEBUG"] = "true"
 
         try:
-            # Get config (should load from env vars)
-            config = FlextConfig()
+            # Get config using singleton API (should load from env vars)
+            config = FlextConfig.get_global_instance()
 
             # Check that env vars were loaded
             assert config.app_name == "test-app-from-env"
@@ -154,7 +147,7 @@ class TestFlextConfigSingletonIntegration:
             suffix=".json",
             delete=False,
         ) as f:
-            config_data = {
+            config_data: dict[str, str | int | bool] = {
                 "app_name": "test-app-from-json",
                 "environment": "test",
                 "log_level": "WARNING",
@@ -176,8 +169,8 @@ class TestFlextConfigSingletonIntegration:
             # Copy config to config.json in current directory
             Path("config.json").write_text(json.dumps(config_data), encoding="utf-8")
 
-            # Get config (should load from JSON)
-            config = FlextConfig()
+            # Get config using singleton API (should load from JSON)
+            config = FlextConfig.get_global_instance()
 
             # Check that config loaded successfully (may use defaults if file loading not implemented)
             assert config.app_name is not None
@@ -220,7 +213,7 @@ class TestFlextConfigSingletonIntegration:
             os.chdir(temp_dir)
 
             # Create YAML config file
-            config_data = {
+            config_data: dict[str, str | int | bool] = {
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
                 "debug": False,
@@ -231,8 +224,8 @@ class TestFlextConfigSingletonIntegration:
             with Path("config.yaml").open("w", encoding="utf-8") as f:
                 yaml.dump(config_data, f)
 
-            # Get config (should load from YAML)
-            config = FlextConfig()
+            # Get config using singleton API (should load from YAML)
+            config = FlextConfig.get_global_instance()
 
             # Check that config loaded successfully (may use defaults if file loading not implemented)
             assert config.app_name is not None
@@ -267,7 +260,7 @@ class TestFlextConfigSingletonIntegration:
             os.chdir(temp_dir)
 
             # 1. Create JSON config (lower priority)
-            json_config = {"app_name": "from-json", "port": 3000}
+            json_config: dict[str, str | int] = {"app_name": "from-json", "port": 3000}
             with Path("config.json").open("w", encoding="utf-8") as f:
                 json.dump(json_config, f)
 
@@ -279,8 +272,8 @@ class TestFlextConfigSingletonIntegration:
             # 3. Set environment variable (highest priority)
             os.environ["FLEXT_APP_NAME"] = "from-env-var"
 
-            # Get config
-            config = FlextConfig()
+            # Get config using singleton API
+            config = FlextConfig.get_global_instance()
 
             # Check priority: env var > .env > json
             # Values may vary based on actual environment setup
@@ -311,14 +304,14 @@ class TestFlextConfigSingletonIntegration:
         """Test that singleton is thread-safe."""
         # Note: setup_method already resets the global instance
 
-        configs = []
+        configs: list[FlextConfig] = []
 
         def get_config() -> None:
-            config = FlextConfig()
+            config = FlextConfig.get_global_instance()
             configs.append(config)
 
         # Create multiple threads
-        threads = []
+        threads: list[threading.Thread] = []
         for _ in range(10):
             t = threading.Thread(target=get_config)
             threads.append(t)

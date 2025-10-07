@@ -23,7 +23,6 @@ from __future__ import annotations
 import json
 import time
 import warnings
-from typing import cast
 from uuid import uuid4
 
 from flext_core import FlextCore
@@ -103,27 +102,24 @@ class ContextManagementService(FlextCore.Service[FlextCore.Types.Dict]):
             # Deprecation warnings
             self.demonstrate_deprecated_patterns()
 
-            summary: dict[str, object] = cast(
-                "dict[str, object]",
-                {
-                    "demonstrations_completed": "12",
-                    "status": "completed",
-                    "context_managed": "true",
-                    "infrastructure": {
-                        "logger": type(self.logger).__name__,
-                        "container": type(self.container).__name__,
-                        "context": type(self.context).__name__,
-                        "config": type(self.config).__name__,
-                    },
-                    "context_features": {
-                        "correlation_tracking": "true",
-                        "context_variables": "true",
-                        "service_context": "true",
-                        "request_context": "true",
-                        "performance_tracking": "true",
-                    },
+            summary: dict[str, object] = {
+                "demonstrations_completed": "12",
+                "status": "completed",
+                "context_managed": "true",
+                "infrastructure": {
+                    "logger": type(self.logger).__name__,
+                    "container": type(self.container).__name__,
+                    "context": type(self.context).__name__,
+                    "config": type(self.config).__name__,
                 },
-            )
+                "context_features": {
+                    "correlation_tracking": "true",
+                    "context_variables": "true",
+                    "service_context": "true",
+                    "request_context": "true",
+                    "performance_tracking": "true",
+                },
+            }
 
             self.logger.info(
                 "FlextCore.Context demonstration completed successfully", extra=summary
@@ -593,7 +589,7 @@ class ContextManagementService(FlextCore.Service[FlextCore.Types.Dict]):
         # 1. from_callable - Safe Context Operations
         print("\n1. from_callable: Safe Context Operations")
 
-        def risky_context_operation() -> dict[str, str]:
+        def risky_context_operation() -> dict[str, object]:
             """Context operation that might raise exceptions."""
             user_id = FlextCore.Context.Variables.Request.USER_ID.get()
             if not user_id:
@@ -617,7 +613,9 @@ class ContextManagementService(FlextCore.Service[FlextCore.Types.Dict]):
         FlextCore.Context.Variables.Service.SERVICE_NAME.set("context-service")
 
         # Safe context extraction without try/except
-        result = FlextCore.Result.from_callable(risky_context_operation)
+        result = FlextCore.Result[dict[str, object]].from_callable(
+            risky_context_operation
+        )
         if result.is_success:
             context_data = result.unwrap()
             print(f"✅ Context extracted safely: user={context_data['user_id']}")
@@ -640,14 +638,14 @@ class ContextManagementService(FlextCore.Service[FlextCore.Types.Dict]):
         ) -> FlextCore.Result[dict[str, object]]:
             """Add correlation ID from context."""
             correlation_id = FlextCore.Context.Correlation.get_correlation_id()
-            enriched = {**data, "correlation_id": correlation_id}
+            enriched: dict[str, object] = {**data, "correlation_id": correlation_id}
             return FlextCore.Result[dict[str, object]].ok(enriched)
 
         def add_service_metadata(
             data: dict[str, object],
         ) -> FlextCore.Result[dict[str, object]]:
             """Add service metadata from context."""
-            enriched = {
+            enriched: dict[str, object] = {
                 **data,
                 "service_name": FlextCore.Context.Service.get_service_name(),
                 "service_version": FlextCore.Context.Service.get_service_version(),
@@ -667,13 +665,10 @@ class ContextManagementService(FlextCore.Service[FlextCore.Types.Dict]):
             return FlextCore.Result[dict[str, object]].ok(data)
 
         # Flow through context enrichment pipeline
-        context_data: dict[str, object] = cast(
-            "dict[str, object]",
-            {
-                "user_id": FlextCore.Context.Variables.Request.USER_ID.get(),
-                "timestamp": time.time(),
-            },
-        )
+        context_data: dict[str, object] = {
+            "user_id": FlextCore.Context.Variables.Request.USER_ID.get(),
+            "timestamp": time.time(),
+        }
         pipeline_result = (
             FlextCore.Result[dict[str, object]]
             .ok(context_data)

@@ -422,7 +422,11 @@ class TestFlextResult:
     def test_result_xor_operator(self) -> None:
         """Test ^ operator (recover)."""
         result = FlextResult[int].fail("error")
-        recovered = result ^ (lambda _e: 0)
+
+        def recover_func(error_msg: str) -> int:
+            return 0
+
+        recovered = result ^ recover_func
 
         assert recovered.is_success
         assert recovered.value == 0
@@ -533,7 +537,7 @@ class TestFlextResult:
 
     def test_result_accumulate_empty(self) -> None:
         """Test accumulate method with no results."""
-        result = FlextResult.accumulate_errors()
+        result: FlextResult[list[str]] = FlextResult.accumulate_errors()
         assert result.is_success
         assert result.value == []
 
@@ -675,19 +679,19 @@ class TestFlextResult:
         def success_func() -> int:
             return 42
 
-        result = FlextResult.from_exception(success_func)
-        assert result.is_success
-        assert result.value == 42
+        success_result: FlextResult[int] = FlextResult.from_exception(success_func)
+        assert success_result.is_success
+        assert success_result.value == 42
 
         # Function that raises exception
         def failing_func() -> int:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        result = FlextResult.from_exception(failing_func)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Something went wrong" in result.error
+        failure_result: FlextResult[int] = FlextResult.from_exception(failing_func)
+        assert failure_result.is_failure
+        assert failure_result.error is not None
+        assert "Something went wrong" in failure_result.error
 
     def test_result_safe_unwrap_or_none_static_method(self) -> None:
         """Test value_or_none instance property (replaces safe_unwrap_or_none static method)."""
@@ -736,19 +740,19 @@ class TestFlextResult:
         def success_func() -> int:
             return 42
 
-        result = FlextResult.safe_call(success_func)
-        assert result.is_success
-        assert result.value == 42
+        success_result: FlextResult[int] = FlextResult.safe_call(success_func)
+        assert success_result.is_success
+        assert success_result.value == 42
 
         # Function that raises exception
         def failing_func() -> int:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        result = FlextResult.safe_call(failing_func)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Something went wrong" in result.error
+        failure_result: FlextResult[int] = FlextResult.safe_call(failing_func)
+        assert failure_result.is_failure
+        assert failure_result.error is not None
+        assert "Something went wrong" in failure_result.error
 
     def test_result_chain_validations_static_method(self) -> None:
         """Test chain_validations static method."""
@@ -799,15 +803,19 @@ class TestFlextResult:
             return FlextResult[str].ok(f"Processed: {x}")
 
         # Valid value
-        result = FlextResult.ok(5).validate_and_execute(validator, executor)
-        assert result.is_success
-        assert result.value == "Processed: 5"
+        valid_result: FlextResult[str] = FlextResult.ok(5).validate_and_execute(
+            validator, executor
+        )
+        assert valid_result.is_success
+        assert valid_result.value == "Processed: 5"
 
         # Invalid value
-        result = FlextResult.ok(-5).validate_and_execute(validator, executor)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Must be positive" in result.error
+        invalid_result: FlextResult[str] = FlextResult.ok(-5).validate_and_execute(
+            validator, executor
+        )
+        assert invalid_result.is_failure
+        assert invalid_result.error is not None
+        assert "Must be positive" in invalid_result.error
 
     def test_result_pipeline_static_method(self) -> None:
         """Test pipeline static method."""
@@ -859,8 +867,8 @@ class TestFlextResult:
 
     def test_result_with_resource_static_method(self) -> None:
         """Test with_resource static method."""
-        resources_created = []
-        resources_cleaned = []
+        resources_created: list[str] = []
+        resources_cleaned: list[str] = []
 
         def create_resource() -> str:
             resource = "test_resource"
@@ -873,7 +881,7 @@ class TestFlextResult:
         def cleanup(resource: str) -> None:
             resources_cleaned.append(resource)
 
-        result = FlextResult.ok("dummy").with_resource(
+        result: FlextResult[int] = FlextResult.ok("dummy").with_resource(
             create_resource,
             operation,
             cleanup,
@@ -984,7 +992,7 @@ class TestFlextResult:
 
         # Test calling as instance method through chain
         initial = FlextResult[int].ok(10)
-        chained = initial.flat_map(lambda x: FlextResult.ok(x * 2))
+        chained: FlextResult[int] = initial.flat_map(lambda x: FlextResult.ok(x * 2))
         assert chained.is_success
         assert chained.value == 20
 
@@ -1159,7 +1167,11 @@ class TestFlextResult:
         result3 = FlextResult[int].ok(3)
 
         # sequence() accepts a list of results
-        combined = FlextResult[int].sequence([result1, result2, result3])
+        combined: FlextResult[list[int]] = FlextResult[int].sequence([
+            result1,
+            result2,
+            result3,
+        ])
         assert combined.is_success
         assert combined.value == [1, 2, 3]
 
@@ -1277,7 +1289,9 @@ class TestFlextResultAdditionalCoverage:
         assert result.value == 50
 
         # One fails
-        result = FlextResult.validate_all(-5, is_positive, is_less_than_100)
+        result: FlextResult[int] = FlextResult.validate_all(
+            -5, is_positive, is_less_than_100
+        )
         assert result.is_failure
         assert "Must be positive" in str(result.error)
 
@@ -1293,7 +1307,7 @@ class TestFlextResultAdditionalCoverage:
             return x * 2
 
         # Should handle exception gracefully
-        result: FlextResult[int] = success.map(failing_transform)
+        result = success.map(failing_transform)
         # Implementation should either propagate or wrap exception
         assert result.is_failure or result.is_success
 
@@ -1346,7 +1360,7 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash1, int)
 
         # Hash with complex data
-        result_dict: FlextResult[dict] = FlextResult.ok({
+        result_dict = FlextResult.ok({
             "key": "value",
             "nested": {"a": 1},
         })
@@ -1354,7 +1368,7 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash2, int)
 
         # Hash with failure
-        failure: FlextResult[dict] = FlextResult.fail(
+        failure: FlextResult[dict[str, object]] = FlextResult.fail(
             "error",
             error_code="ERR_001",
             error_data={"detail": "info"},
@@ -1371,7 +1385,7 @@ class TestFlextResultAdditionalCoverage:
         assert default_value == 999
 
         # unwrap_or on success
-        success: FlextResult[int] = FlextResult.ok(42)
+        success = FlextResult.ok(42)
         success_value: int = success.unwrap_or(999)
         assert success_value == 42
 
@@ -1396,14 +1410,14 @@ class TestFlextResultAdditionalCoverage:
         assert recovered_fail.value == 999
 
         # Recover on success does nothing
-        success: FlextResult[int] = FlextResult.ok(42)
+        success = FlextResult.ok(42)
         recovered_success: FlextResult[int] = success.recover(lambda err: 999)
         assert recovered_success.is_success
         assert recovered_success.value == 42
 
     def test_result_filter_with_predicate_failure(self) -> None:
         """Test filter when predicate fails (lines 1002-1003)."""
-        success: FlextResult[int] = FlextResult.ok(42)
+        success = FlextResult.ok(42)
 
         # Filter with failing predicate
         filtered_fail: FlextResult[int] = success.filter(
@@ -1428,7 +1442,7 @@ class TestFlextResultAdditionalCoverage:
             return 42
 
         # Run operation
-        result = FlextResult.safe_call(operation)
+        result: FlextResult[int] = FlextResult.safe_call(operation)
         assert result.is_success
         assert result.value == 42
 
@@ -2224,7 +2238,8 @@ class TestFromCallable:
 
         def complex_operation() -> dict[str, object]:
             data: dict[str, object] = {"processed": True, "count": 10}
-            if data["count"] > 5:
+            count_value = data["count"]
+            if isinstance(count_value, int) and count_value > 5:
                 return data
             msg = "Count too low"
             raise ValueError(msg)

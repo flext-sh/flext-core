@@ -445,28 +445,6 @@ class TestFlextUtilitiesComprehensive:
         sorted_dict = FlextUtilities.Cache.sort_dict_keys({"b": 2, "a": 1})
         assert isinstance(sorted_dict, dict)
 
-    def test_reliability_operations(self) -> None:
-        """Test reliability utility operations."""
-        # Test retry with backoff
-        attempt_count = 0
-
-        def flaky_operation() -> FlextResult[str]:
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 2:
-                return FlextResult[str].fail("Temporary failure")
-            return FlextResult[str].ok("Success after retry")
-
-        # Test execute with retry
-        attempt_count = 0
-
-        def retry_operation() -> FlextResult[str]:
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 2:
-                return FlextResult[str].fail("Retry needed")
-            return FlextResult[str].ok("Retry successful")
-
     def test_type_checker_operations(self) -> None:
         """Test type checking operations."""
         # Test message type compatibility

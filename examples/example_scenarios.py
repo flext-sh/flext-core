@@ -14,7 +14,7 @@ from functools import lru_cache
 from typing import Final, TypedDict, cast
 
 from flext_core import FlextCore
-from flext_tests import FlextTestsMatchers
+from flext_tests import FlextTestsMatchers, TestDataBuilder
 
 
 # TypedDict definitions for type-safe scenario data
@@ -53,7 +53,7 @@ class ExampleScenarios:
     @lru_cache(maxsize=1)
     def dataset(cls) -> FlextCore.Types.Dict:
         """Return a reusable dataset with users, configs, and fields."""
-        builder = FlextTestsMatchers.TestDataBuilder()
+        builder = TestDataBuilder()
         return (
             builder.with_users(count=cls._DEFAULT_USER_COUNT)
             .with_configs(production=False)

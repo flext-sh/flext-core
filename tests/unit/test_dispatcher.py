@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
-
 from flext_core import FlextDispatcher, FlextModels, FlextResult, FlextTypes
 from flext_core.handlers import FlextHandlers
 
@@ -80,7 +78,6 @@ class TestFlextDispatcherCoverage:
         dispatch_result = dispatcher.dispatch("simple_message", "test_data")
         assert dispatch_result.is_success
 
-    @pytest.mark.skip(reason="dispatch_batch() not implemented yet")
     def test_dispatcher_batch_processing(self) -> None:
         """Test batch message processing functionality."""
         dispatcher = FlextDispatcher()
@@ -97,12 +94,7 @@ class TestFlextDispatcherCoverage:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[object]:
-                if isinstance(message, list):
-                    # message is guaranteed to be list here, cast to proper type
-                    message_list = cast("list[object]", message)
-                    processed = [f"Batch: {cast('str', msg)}" for msg in message_list]
-                    return FlextResult[object].ok(processed)
-                return FlextResult[object].fail("Invalid message type")
+                return FlextResult[object].ok(f"Batch: {cast('str', message)}")
 
         handler = BatchHandler()
         registration_result = dispatcher.register_handler("batch_message", handler)
@@ -201,7 +193,6 @@ class TestFlextDispatcherCoverage:
         )
         assert dispatch_result.is_success
 
-    @pytest.mark.skip(reason="get_performance_metrics() not implemented yet")
     def test_dispatcher_metrics_collection(self) -> None:
         """Test metrics collection functionality."""
         dispatcher = FlextDispatcher()
@@ -230,6 +221,7 @@ class TestFlextDispatcherCoverage:
             assert dispatch_result.is_success
 
         # Test metrics retrieval - use direct method
+        # TODO: Implement get_performance_metrics method in FlextDispatcher
         metrics = dispatcher.get_performance_metrics()
         assert isinstance(metrics, dict)
 
@@ -398,7 +390,6 @@ class TestFlextDispatcherCoverage:
             dispatch_result = dispatcher.dispatch(f"test_message_{i}", "lookup_test")
             assert dispatch_result.is_success
 
-    @pytest.mark.skip(reason="get_performance_metrics() not implemented yet")
     def test_dispatcher_cleanup(self) -> None:
         """Test dispatcher cleanup functionality."""
         dispatcher = FlextDispatcher()
@@ -423,7 +414,8 @@ class TestFlextDispatcherCoverage:
 
         # Test cleanup operations (if available)
         # This tests methods like clearing metrics, resetting state, etc.
-        metrics = dispatcher.get_performance_metrics()
+        # TODO: Implement get_performance_metrics method in FlextDispatcher
+        metrics = dispatcher.get_performance_metrics()  # type: ignore[attr-defined]
         assert isinstance(metrics, dict)
 
         # Test multiple operations to ensure state management

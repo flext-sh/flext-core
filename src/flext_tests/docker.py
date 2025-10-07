@@ -13,30 +13,24 @@ import functools
 import json
 import shlex
 import subprocess
-from collections.abc import Callable, Container, Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import ClassVar, cast
 
 import click
 import docker
 import pytest
+from docker import DockerClient
 from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
 
 from flext_core import FlextLogger, FlextResult, FlextTypes, FlextUtilities
 
-if TYPE_CHECKING:
-    from docker import DockerClient
-
 pytest_module: ModuleType | None = pytest
-
-
-# Constants
-DOCKER_COMPOSE_FILE_PATH_HELP = "Docker Compose file path"
 
 
 # Lazy logger initialization to avoid configuration issues
@@ -91,7 +85,7 @@ class FlextTestDocker:
         "flext-redis",
         "flext-oracle",
     ]
-    _PYTEST_REGISTERED: ClassVar[bool] = False
+    _pytest_registered: ClassVar[bool] = False
 
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize Docker client with dirty state tracking."""
@@ -274,7 +268,9 @@ class FlextTestDocker:
                 service: str | None = None
                 if isinstance(service_value, str):
                     service = service_value
-                elif service_value is not None and not isinstance(service_value, int):
+                elif isinstance(service_value, int):
+                    service = str(service_value)
+                elif service_value is not None:
                     self._logger.warning(
                         "Unexpected service type in cleanup",
                         extra={"type": type(service_value), "value": service_value},
@@ -513,7 +509,7 @@ class FlextTestDocker:
         try:
             if compose_file_path and compose_file_path.endswith(".yml"):
                 # Basic docker-compose parsing to extract service names and dependencies
-                services = []
+                services: FlextTypes.StringList = []
                 with Path(compose_file_path).open("r", encoding="utf-8") as f:
                     content = f.read()
 
@@ -749,7 +745,9 @@ class FlextTestDocker:
             service: str | None = None
             if isinstance(service_value, str):
                 service = service_value
-            elif service_value is not None and not isinstance(service_value, int):
+            elif isinstance(service_value, int):
+                service = str(service_value)
+            elif service_value is not None:
                 self._logger.warning(
                     "Unexpected service type",
                     extra={"type": type(service_value), "value": service_value},
@@ -773,6 +771,7 @@ class FlextTestDocker:
         """Get container information."""
         try:
             client = self.get_client()
+            # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(name)
             status = (
                 ContainerStatus.RUNNING
@@ -830,26 +829,16 @@ class FlextTestDocker:
         try:
             client = self.get_client()
             container_name = name or f"flext-container-{hash(image)}"
-            # Prepare parameters for docker run
-            run_kwargs: FlextTypes.Dict = {
-                "detach": detach,
-                "remove": remove,
-            }
-
-            if ports is not None:
-                run_kwargs["ports"] = ports
-            if environment is not None:
-                run_kwargs["environment"] = environment
-            if volumes is not None:
-                run_kwargs["volumes"] = volumes
-            if command is not None:
-                run_kwargs["command"] = command
-
-            # Docker SDK overload not properly typed for detach parameter
-            container = client.containers.run(
+            # Docker SDK: Pass parameters directly to preserve original types
+            container = client.containers.run(  # type: ignore[no-matching-overload]
                 image,
                 name=container_name,
-                **run_kwargs,
+                detach=detach,
+                remove=remove,
+                ports=ports,
+                environment=environment,
+                volumes=volumes,
+                command=command,
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -868,6 +857,7 @@ class FlextTestDocker:
         """Remove a Docker container."""
         try:
             client = self.get_client()
+            # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(name)
             container.remove(force=force)
             return FlextResult[str].ok(f"Container {name} removed")
@@ -881,6 +871,7 @@ class FlextTestDocker:
         """Remove a Docker image."""
         try:
             client = self.get_client()
+            # Type: ignore due to incomplete Docker SDK type stubs
             client.images.remove(image, force=force)
             return FlextResult[str].ok(f"Image {image} removed")
         except NotFound:
@@ -899,6 +890,7 @@ class FlextTestDocker:
         """Get formatted container logs."""
         try:
             client = self.get_client()
+            # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
             logs = container.logs(tail=tail, follow=follow, stream=False)
             return FlextResult[str].ok(logs.decode("utf-8"))
@@ -918,6 +910,7 @@ class FlextTestDocker:
         """Execute command in container."""
         try:
             client = self.get_client()
+            # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
             # exec_run not fully typed in docker stubs
             result = container.exec_run(
@@ -942,7 +935,6 @@ class FlextTestDocker:
             containers = client.containers.list(all=all_containers)
             container_infos: list[ContainerInfo] = []
             for container in containers:
-                container = cast("Container", container)
                 # Container attributes not fully typed in docker stubs
                 container_status: str = getattr(container, "status", "unknown")
                 status = (
@@ -1033,6 +1025,7 @@ class FlextTestDocker:
         tail_count = tail or self._DEFAULT_LOG_TAIL
         try:
             client = self.get_client()
+            # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
             logs_bytes = container.logs(tail=tail_count)
             return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
@@ -1045,7 +1038,7 @@ class FlextTestDocker:
     @classmethod
     def register_pytest_fixtures(cls, namespace: FlextTypes.Dict | None = None) -> None:
         """Register pytest fixtures that wrap FlextTestDocker operations."""
-        if cls._PYTEST_REGISTERED:
+        if cls._pytest_registered:
             return
 
         if pytest is None:
@@ -1207,13 +1200,7 @@ class FlextTestDocker:
         ) -> Iterator[FlextTypes.StringDict]:
             start_result = docker_control.start_all()
             if start_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(f"Failed to start all containers: {start_result.error}")
-                else:
-                    msg = f"Failed to start all containers: {start_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(f"Failed to start all containers: {start_result.error}")
 
             yield start_result.value
 
@@ -1230,7 +1217,7 @@ class FlextTestDocker:
             "all_containers_running": all_containers_running,
         })
 
-        cls._PYTEST_REGISTERED = True
+        cls._pytest_registered = True
 
     def init_workspace(self, workspace_root: Path) -> FlextResult[str]:
         """Initialize workspace configuration and auto-discover services."""
@@ -1605,7 +1592,7 @@ class FlextTestDocker:
         start_stack_parser.add_argument(
             "--compose-file",
             required=True,
-            help=DOCKER_COMPOSE_FILE_PATH_HELP,
+            help="Docker Compose file path",
         )
         start_stack_parser.add_argument("--network", help="Network name")
 
@@ -1616,7 +1603,7 @@ class FlextTestDocker:
         stop_stack_parser.add_argument(
             "--compose-file",
             required=True,
-            help=DOCKER_COMPOSE_FILE_PATH_HELP,
+            help="Docker Compose file path",
         )
 
         restart_stack_parser = subparsers.add_parser(
@@ -1626,14 +1613,14 @@ class FlextTestDocker:
         restart_stack_parser.add_argument(
             "--compose-file",
             required=True,
-            help=DOCKER_COMPOSE_FILE_PATH_HELP,
+            help="Docker Compose file path",
         )
 
         logs_parser = subparsers.add_parser("show-logs", help="Show stack logs")
         logs_parser.add_argument(
             "--compose-file",
             required=True,
-            help=DOCKER_COMPOSE_FILE_PATH_HELP,
+            help="Docker Compose file path",
         )
         logs_parser.add_argument("--follow", action="store_true", help="Follow logs")
 
@@ -1641,7 +1628,7 @@ class FlextTestDocker:
         status_parser.add_argument(
             "--compose-file",
             required=True,
-            help=DOCKER_COMPOSE_FILE_PATH_HELP,
+            help="Docker Compose file path",
         )
 
         connect_parser = subparsers.add_parser(
@@ -1681,7 +1668,7 @@ class FlextTestDocker:
         health_parser.add_argument(
             "--compose-file",
             required=True,
-            help=DOCKER_COMPOSE_FILE_PATH_HELP,
+            help="Docker Compose file path",
         )
         health_parser.add_argument(
             "--timeout",
@@ -1834,13 +1821,10 @@ class FlextTestDocker:
             if args.workspace_root is None:
                 return 1
             command_result = manager.validate_workspace(Path(args.workspace_root))
-            if command_result is not None and command_result.is_success:
+            if command_result.is_success:
                 for key, value in command_result.value.items():
                     cls._console.print(f"{key}: {value}")
         else:
-            return 1
-
-        if command_result is None:
             return 1
 
         if command_result.is_success:
@@ -2014,10 +1998,6 @@ class FlextTestDocker:
         """Execute the docker CLI group using click."""
         cli = cls._get_cli_group()
         cli()
-
-
-if pytest is not None:  # pragma: no mutate - ensure fixtures available in tests
-    FlextTestDocker.register_pytest_fixtures(globals())
 
 
 # Cleanup decorators for test functions

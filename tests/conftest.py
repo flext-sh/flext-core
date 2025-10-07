@@ -44,11 +44,11 @@ def reset_container_singleton() -> Generator[None]:
 
 
 @pytest.fixture
-def test_scenario() -> FlextTypes.Config.Environment:
+def test_scenario() -> dict[str, str]:
     """Basic test scenario fixture.
 
     Returns:
-        FlextTypes.Config.Environment: Test scenario data with status and environment.
+        dict[str, str]: Test scenario data with status and environment.
 
     """
     return {"status": "test", "environment": "test"}
@@ -153,6 +153,7 @@ def mock_external_service() -> object:
 
     class MockExternalService:
         def __init__(self) -> None:
+            super().__init__()
             self.call_count = 0
             self.processed_items: FlextTypes.List = []
             self._should_fail = False
@@ -583,7 +584,7 @@ def logging_test_env() -> Generator[None]:
         FlextConfig.reset_global_instance()
 
         # Reset logger singleton state
-        FlextLogger._configured = False
+        FlextLogger._structlog_configured = False
 
         # Set the expected log level for logging tests
         os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
@@ -591,7 +592,7 @@ def logging_test_env() -> Generator[None]:
     finally:
         # Clear both singleton states again and restore original value
         FlextConfig.reset_global_instance()
-        FlextLogger._configured = False
+        FlextLogger._structlog_configured = False
 
         if original_log_level is not None:
             os.environ["FLEXT_LOG_LEVEL"] = original_log_level

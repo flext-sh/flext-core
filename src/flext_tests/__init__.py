@@ -26,60 +26,58 @@ class FlextTestsDomains:
     MIGRATION = "migration"
 
 
+class TestDataBuilder:
+    """Builder for test datasets."""
+
+    def __init__(self) -> None:
+        """Initialize test data builder."""
+        super().__init__()
+        self._data: dict[str, object] = {}
+
+    def with_users(self, count: int = 5) -> TestDataBuilder:
+        """Add users to dataset."""
+        self._data["users"] = [
+            {
+                "id": f"USER-{i}",
+                "name": f"User {i}",
+                "email": f"user{i}@example.com",
+                "age": 20 + i,
+            }
+            for i in range(count)
+        ]
+        return self
+
+    def with_configs(self, *, production: bool = False) -> TestDataBuilder:
+        """Add configuration to dataset."""
+        self._data["configs"] = {
+            "environment": "production" if production else "development",
+            "debug": not production,
+            "database_url": "postgresql://localhost/testdb",
+            "api_timeout": 30,
+            "max_connections": 10,
+        }
+        return self
+
+    def with_validation_fields(self, count: int = 5) -> TestDataBuilder:
+        """Add validation fields to dataset."""
+        self._data["validation_fields"] = {
+            "valid_emails": [f"user{i}@example.com" for i in range(count)],
+            "invalid_emails": ["invalid", "no-at-sign.com", ""],
+            "valid_hostnames": ["example.com", "localhost"],
+            "invalid_hostnames": ["invalid..hostname", ""],
+        }
+        return self
+
+    def build(self) -> dict[str, object]:
+        """Build the dataset."""
+        return dict(self._data)
+
+
 class FlextTestsMatchers:
     """Test data factories and matchers for FLEXT examples.
 
     Minimal implementation to support example scenarios.
     """
-
-    class TestDataBuilder:
-        """Builder for test datasets."""
-
-        def __init__(self) -> None:
-            """Initialize test data builder."""
-            self._data: dict[str, object] = {}
-
-        def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
-            """Add users to dataset."""
-            self._data["users"] = [
-                {
-                    "id": f"USER-{i}",
-                    "name": f"User {i}",
-                    "email": f"user{i}@example.com",
-                    "age": 20 + i,
-                }
-                for i in range(count)
-            ]
-            return self
-
-        def with_configs(
-            self, *, production: bool = False
-        ) -> FlextTestsMatchers.TestDataBuilder:
-            """Add configuration to dataset."""
-            self._data["configs"] = {
-                "environment": "production" if production else "development",
-                "debug": not production,
-                "database_url": "postgresql://localhost/testdb",
-                "api_timeout": 30,
-                "max_connections": 10,
-            }
-            return self
-
-        def with_validation_fields(
-            self, count: int = 5
-        ) -> FlextTestsMatchers.TestDataBuilder:
-            """Add validation fields to dataset."""
-            self._data["validation_fields"] = {
-                "valid_emails": [f"user{i}@example.com" for i in range(count)],
-                "invalid_emails": ["invalid", "no-at-sign.com", ""],
-                "valid_hostnames": ["example.com", "localhost"],
-                "invalid_hostnames": ["invalid..hostname", ""],
-            }
-            return self
-
-        def build(self) -> dict[str, object]:
-            """Build the dataset."""
-            return dict(self._data)
 
     @staticmethod
     def create_validation_test_data() -> dict[str, object]:
@@ -136,7 +134,7 @@ class FlextTestsMatchers:
         @staticmethod
         def create(**overrides: object) -> dict[str, object]:
             """Create a single user."""
-            default = {
+            default: dict[str, object] = {
                 "id": f"USER-{uuid4().hex[:8]}",
                 "name": "Test User",
                 "email": "test@example.com",
@@ -163,7 +161,7 @@ class FlextTestsMatchers:
         @staticmethod
         def create(**overrides: object) -> dict[str, object]:
             """Create development configuration."""
-            default = {
+            default: dict[str, object] = {
                 "environment": "development",
                 "debug": True,
                 "log_level": "DEBUG",
@@ -176,7 +174,7 @@ class FlextTestsMatchers:
         @staticmethod
         def production_config(**overrides: object) -> dict[str, object]:
             """Create production configuration."""
-            default = {
+            default: dict[str, object] = {
                 "environment": "production",
                 "debug": False,
                 "log_level": "INFO",
@@ -190,19 +188,19 @@ class FlextTestsMatchers:
         """Factory for creating FlextResult instances."""
 
         @staticmethod
-        def success_result(data: object | None = None) -> object:
+        def success_result(data: object | None = None) -> FlextResult[object]:
             """Create a successful result."""
             if data is None:
                 data = {"status": "success"}
             return FlextResult[object].ok(data)
 
         @staticmethod
-        def failure_result(message: str = "Operation failed") -> object:
+        def failure_result(message: str = "Operation failed") -> FlextResult[object]:
             """Create a failed result."""
             return FlextResult[object].fail(message)
 
         @staticmethod
-        def user_result(*, success: bool = True) -> object:
+        def user_result(*, success: bool = True) -> FlextResult[dict[str, object]]:
             """Create a user-specific result."""
             if success:
                 user_data = FlextTestsMatchers.UserFactory.create()
@@ -218,4 +216,5 @@ __all__ = [
     "FlextTestsDomains",
     "FlextTestsMatchers",
     "FlextTypes",
+    "TestDataBuilder",
 ]

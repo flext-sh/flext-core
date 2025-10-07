@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+import uuid
 from collections.abc import Iterator
 from typing import cast
 
@@ -369,6 +370,7 @@ class TestFlextBusMissingCoverage:
 
         class TestQueryHandler:
             def __init__(self) -> None:
+                super().__init__()
                 self.call_count = 0
 
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -397,7 +399,7 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 2})
 
         class TestQuery(FlextModels.Query):
-            query_id: str
+            query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
             data: str
 
         class TestQueryHandler:
@@ -466,6 +468,7 @@ class TestFlextBusMissingCoverage:
 
         class CustomMapping(ABCMapping[str, object]):
             def __init__(self, data: FlextTypes.Dict) -> None:
+                super().__init__()
                 self._data = data
 
             def __getitem__(self, key: str) -> object:
@@ -671,12 +674,13 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
         class CacheableQuery(FlextModels.Query):
-            query_id: str
+            query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
             param1: str
             param2: int
 
         class TestHandler:
             def __init__(self) -> None:
+                super().__init__()
                 self.call_count = 0
 
             def handle(self, query: CacheableQuery) -> FlextResult[dict[str, object]]:
@@ -704,7 +708,8 @@ class TestFlextBusMissingCoverage:
         assert result2.is_success
         # Verify cache key generation was executed (lines 543-554 covered)
         assert isinstance(result2.value, dict)
-        assert result2.value["query_id"] == "q1"
+        value_dict = cast("dict[str, object]", result2.value)
+        assert value_dict["query_id"] == "q1"
 
     def test_handler_execution_with_timing(self) -> None:
         """Test _execute_handler with timing (lines 594-600)."""
@@ -732,10 +737,11 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
         class TestQuery(FlextModels.Query):
-            query_id: str
+            query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
         class TestHandler:
             def __init__(self) -> None:
+                super().__init__()
                 self.execution_count = 0
 
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -906,6 +912,7 @@ class TestFlextBusMissingCoverage:
 
         class HandlerWithId:
             def __init__(self) -> None:
+                super().__init__()
                 self.handler_id = "custom_handler_123"  # Has handler_id (line 410)
 
             def handle(self, command: object) -> FlextResult[str]:

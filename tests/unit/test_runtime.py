@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import structlog
 from dependency_injector import containers, providers
@@ -270,7 +271,7 @@ class TestSerializationUtilities:
             def __init__(self) -> None:
                 self.data = "test"
 
-            def model_dump(self) -> dict:
+            def model_dump(self) -> dict[str, object]:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
@@ -287,7 +288,7 @@ class TestSerializationUtilities:
             def __init__(self) -> None:
                 self.data = "test"
 
-            def dict(self) -> dict:
+            def dict(self) -> dict[str, Any]:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
@@ -320,7 +321,7 @@ class TestSerializationUtilities:
             def __init__(self) -> None:
                 self.data = "test"
 
-            def dict(self) -> dict:
+            def dict(self) -> dict[str, Any]:
                 return {"data": self.data, "method": "dict"}
 
         obj = DictMethodWorking()
@@ -457,8 +458,8 @@ class TestStructlogConfiguration:
 
         # Custom processor
         def custom_processor(
-            logger: object, method_name: str, event_dict: dict
-        ) -> dict:
+            logger: object, method_name: str, event_dict: dict[str, Any]
+        ) -> dict[str, Any]:
             event_dict["custom"] = True
             return event_dict
 

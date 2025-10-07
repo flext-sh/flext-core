@@ -55,11 +55,11 @@ class MockScenario:
     def __init__(self, name: str, data: FlextTypes.Dict) -> None:
         """Initialize mockscenario:."""
         self.name = name
-        self.given = cast("FlextTypes.Dict", data.get("given", {}))
-        self.when = cast("FlextTypes.Dict", data.get("when", {}))
-        self.then = cast("FlextTypes.Dict", data.get("then", {}))
-        self.tags = cast("FlextTypes.StringList", data.get("tags", []))
-        self.priority = str(data.get("priority", "normal"))
+        self.given: dict[str, str] = data.get("given", {})  # type: ignore[assignment]
+        self.when: dict[str, str] = data.get("when", {})  # type: ignore[assignment]
+        self.then: dict[str, str] = data.get("then", {})  # type: ignore[assignment]
+        self.tags: list[str] = data.get("tags", [])  # type: ignore[assignment]
+        self.priority: str = str(data.get("priority", "normal"))
 
 
 class GivenWhenThenBuilder:
@@ -149,6 +149,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         self._data: FlextTypes.Dict = {}
+        self._validation_rules: dict[str, object] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -417,7 +418,7 @@ class TestAdvancedPatterns:
 
     def test_given_when_then_builder_pattern(self) -> None:
         """Test Given-When-Then builder pattern."""
-        scenario = (
+        scenario: MockScenario = (
             GivenWhenThenBuilder("user_registration")
             .given("user provides valid data", email="test@example.com")
             .when("registration is processed", action="register")

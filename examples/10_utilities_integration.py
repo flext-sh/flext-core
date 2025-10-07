@@ -125,7 +125,7 @@ class EventService:
         """Publish event with proper error handling."""
         try:
             # FlextCore.Bus.publish_event takes a single event object
-            event = {"type": event_type, **data}
+            event: dict[str, object] = {"type": event_type, **data}
             result = self._bus.publish_event(event)
             if result.is_failure:
                 return result
@@ -176,7 +176,9 @@ class MessageService:
         """Send message with proper error handling."""
         try:
             message_id = f"msg_{len(self._messages)}"
-            enhanced_message = {**message, "id": message_id, "timestamp": "now"}
+            enhanced_message = cast(
+                "dict[str, object]", {**message, "id": message_id, "timestamp": "now"}
+            )
 
             # Dispatch with error handling
             self._dispatcher.dispatch(enhanced_message)
@@ -280,11 +282,14 @@ class IntegratedService:
             return FlextCore.Result[dict[str, object]].fail("Request too large")
 
         # Publish processing event
-        event = {
-            "type": "request_processing",
-            "request_id": request.get("id", "unknown"),
-            "timestamp": "now",
-        }
+        event = cast(
+            "dict[str, object]",
+            {
+                "type": "request_processing",
+                "request_id": request.get("id", "unknown"),
+                "timestamp": "now",
+            },
+        )
         event_result = self._bus.publish_event(event)
         if event_result.is_failure:
             self.logger.warning(
@@ -293,14 +298,21 @@ class IntegratedService:
             )
 
         # Process with dispatcher
-        response = {"processed": True, "request_id": request.get("id")}
+        response = cast(
+            "dict[str, object]", {"processed": True, "request_id": request.get("id")}
+        )
 
         # Send response through dispatcher
-        dispatch_result = self._dispatcher.dispatch({
-            "type": "response",
-            "data": response,
-            "original_request": request.get("id"),
-        })
+        dispatch_result = self._dispatcher.dispatch(
+            cast(
+                "dict[str, object]",
+                {
+                    "type": "response",
+                    "data": response,
+                    "original_request": request.get("id"),
+                },
+            )
+        )
 
         if dispatch_result.is_failure:
             return FlextCore.Result[dict[str, object]].fail(

@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import cast
 
 from flext_core import (
@@ -599,9 +600,6 @@ class TestFlextRegistry:
         registry = FlextRegistry(FlextDispatcher())
 
         # Register a handler first
-        def test_func(x: object) -> object:
-            return x
-
         handler = create_test_handler("map_func_handler")
 
         # Register once
@@ -730,7 +728,7 @@ class TestFlextRegistry:
             )
         )
 
-        bindings_multi = [
+        bindings_multi: list[tuple[type[object], FlextHandlers[object, object]]] = [
             (TestMessageType, handler),  # Duplicate - should be skipped
             (AnotherMessageType, another_handler),
         ]
@@ -777,16 +775,31 @@ class TestFlextRegistry:
             pass
 
         # Test plain function
-        function_map1: dict[type[object], object] = {
-            cast("type[object]", type[TestMessageType]): simple_function
+        function_map1: dict[
+            type[object],
+            tuple[
+                Callable[[object], object | FlextResult[object]],
+                object | FlextResult[object],
+            ],
+        ] = {
+            type[TestMessageType]: (
+                simple_function,
+                {"handler_name": "test_handler"},
+            )
         }
         result1 = registry.register_function_map(function_map1)
         assert result1.is_success
         assert result1.value.successful_registrations == 1
 
         # Test function with config tuple
-        function_map2: dict[type[object], object] = {
-            cast("type[object]", type[TestMessageType]): (
+        function_map2: dict[
+            type[object],
+            tuple[
+                Callable[[object], object | FlextResult[object]],
+                object | FlextResult[object],
+            ],
+        ] = {
+            type[TestMessageType]: (
                 function_with_config,
                 config_dict,
             )
@@ -796,10 +809,10 @@ class TestFlextRegistry:
         assert result2.value.successful_registrations == 1
 
         # Test pre-built handler
-        function_map3: dict[type[object], object] = {
-            cast("type[object]", type[TestMessageType]): prebuilt_handler
+        function_map3: dict[type[object], FlextHandlers[object, object]] = {
+            type[TestMessageType]: prebuilt_handler
         }
-        result3 = registry.register_function_map(function_map3)
+        result3 = registry.register_function_map(function_map3)  # type: ignore[arg-type]
         assert result3.is_success
         assert result3.value.successful_registrations == 1
 
@@ -866,11 +879,13 @@ class TestFlextRegistry:
         class ValidMessageType:
             pass
 
-        valid_map: dict[type[object], object] = {
-            cast(
-                "type[object]", type[ValidMessageType]
-            ): test_function  # Valid message type
-        }
+        valid_map: dict[
+            type[object],
+            tuple[
+                Callable[[object], object | FlextResult[object]],
+                object | FlextResult[object],
+            ],
+        ] = {type[ValidMessageType]: (test_function, FlextResult[object].ok("default"))}
         result_valid_map = registry.register_function_map(valid_map)
         assert result_valid_map.is_success
 
@@ -922,8 +937,14 @@ class TestFlextRegistry:
         class TestMessageType:
             pass
 
-        failing_map: dict[type[object], object] = {
-            cast("type[object]", type[TestMessageType]): failing_function
+        failing_map: dict[
+            type[object],
+            tuple[
+                Callable[[object], object | FlextResult[object]],
+                object | FlextResult[object],
+            ],
+        ] = {
+            type[TestMessageType]: (failing_function, {"handler_name": "test_handler"})
         }
         result_failing = registry.register_function_map(failing_map)
         # Registry handles function failures gracefully
@@ -936,12 +957,12 @@ class TestFlextRegistry:
             return f"valid_{message}"
 
         mixed_map: dict[type[object], object] = {
-            cast("type[object]", type[TestMessageType]): [
+            type[TestMessageType]: [
                 valid_function,
                 failing_function,  # Should cause overall failure
             ]
         }
-        result_mixed = registry.register_function_map(mixed_map)
+        result_mixed = registry.register_function_map(mixed_map)  # type: ignore[arg-type]
         # Registry handles mixed valid/invalid functions gracefully
         assert result_mixed.is_success
 
@@ -1024,7 +1045,10 @@ def test_registry_register_bindings_with_errors() -> None:
         pass
 
     # Create invalid binding to trigger error path
-    handler = cast("FlextHandlers[object, object]", None)
+    class InvalidHandler:
+        pass
+
+    handler = cast("FlextHandlers[object, object]", InvalidHandler())
     bindings = [(TestMessage, handler)]
 
     result = registry.register_bindings(bindings)
@@ -1044,8 +1068,8 @@ def test_registry_register_function_map_handler_creation_failure() -> None:
     def invalid_handler() -> None:  # Wrong signature
         pass
 
-    mapping = {TestMessage: (invalid_handler, {})}
-    result = registry.register_function_map(mapping)
+    mapping: dict[type[object], tuple[Callable[[object], object | FlextResult[object]], object | FlextResult[object]]] = {TestMessage: (invalid_handler, {})}  # type: ignore[assignment]
+    result = registry.register_function_map(mapping)  # type: ignore[arg-type]
     # Should handle error in creation
     assert isinstance(result, FlextResult)
 
@@ -1063,7 +1087,7 @@ def test_registry_register_function_map_registration_failure() -> None:
         return msg
 
     mapping = {TestMessage: (test_handler, {"invalid": "config"})}
-    result = registry.register_function_map(mapping)
+    result = registry.register_function_map(mapping)  # type: ignore[arg-type]
     assert isinstance(result, FlextResult)
 
 
@@ -1083,7 +1107,7 @@ def test_registry_register_function_map_exception_handling() -> None:
         return msg
 
     mapping = {ProblematicMessage(): (test_handler, {})}
-    result = registry.register_function_map(mapping)
+    result = registry.register_function_map(mapping)  # type: ignore[arg-type]
     # Should handle exception and still return result
     assert isinstance(result, FlextResult)
 
@@ -1104,7 +1128,7 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
     handler = StringTestHandler(config=config)
 
     # Use string as message_type to trigger string fallback (line 553)
-    key = registry._resolve_binding_key(handler, "StringMessageType")
+    key = registry._resolve_binding_key(handler, "StringMessageType")  # type: ignore[arg-type]
     assert isinstance(key, str)
     assert "string_test" in key
 
@@ -1118,6 +1142,6 @@ def test_registry_resolve_binding_key_from_entry_string_fallback() -> None:
         return msg
 
     # Use string as message_type to trigger string fallback (line 576)
-    key = registry._resolve_binding_key_from_entry((test_func, {}), "StringType")
+    key = registry._resolve_binding_key_from_entry((test_func, {}), "StringType")  # type: ignore[arg-type]
     assert isinstance(key, str)
     assert "test_func" in key

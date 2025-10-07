@@ -1,6 +1,6 @@
-"""Tests for Flext unified facade.
+"""Tests for FlextCore unified facade.
 
-This module tests the Flext facade providing unified access to all
+This module tests the FlextCore facade providing unified access to all
 flext-core components with proper integration and modern patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -33,26 +33,23 @@ from flext_core import (
     FlextUtilities,
 )
 
-# Alias for convenience in tests
-Flext = FlextCore
-
 
 class TestFlextImports:
-    """Test Flext import and alias functionality."""
+    """Test FlextCore import and alias functionality."""
 
     def test_flextcore_import(self) -> None:
-        """Test Flext can be imported."""
-        assert Flext is not None
+        """Test FlextCore can be imported."""
+        assert FlextCore is not None
         assert isinstance(FlextCore, type)
 
     def test_flextcore_alias(self) -> None:
-        """Test Flext alias works."""
-        assert Flext is not None
+        """Test FlextCore alias works."""
+        assert FlextCore is not None
         assert hasattr(FlextCore, "__name__")
 
 
 class TestFlextClassAttributes:
-    """Test Flext class-level component access."""
+    """Test FlextCore class-level component access."""
 
     def test_core_patterns_available(self) -> None:
         """Test core pattern classes are available."""
@@ -82,124 +79,18 @@ class TestFlextClassAttributes:
         assert issubclass(FlextCore.Utilities, FlextUtilities)
 
 
-@pytest.mark.skip(
-    reason="Instance-based API (Flext()) removed - use FlextCore class-based API"
-)
-class TestFlextInstantiation:
-    """Test Flext instance creation and initialization."""
-
-    def test_create_default_instance(self) -> None:
-        """Test creating Flext instance with defaults."""
-        core = Flext()
-        assert core is not None
-        assert isinstance(core, Flext)
-        # NOTE: Flext no longer inherits from FlextService in current API
-
-    def test_create_instance_with_config(self) -> None:
-        """Test creating Flext instance with custom config."""
-        custom_config = FlextConfig()
-        core = Flext(config=custom_config)
-        assert core is not None
-        assert core.config is custom_config
-
-    # NOTE: execute() method removed from current Flext API
-
-
-@pytest.mark.skip(
-    reason="Instance-based API (Flext().config) removed - use FlextCore class-based API"
-)
-class TestFlextPropertyAccessors:
-    """Test Flext property-based component access."""
-
-    def test_config_property(self) -> None:
-        """Test config property returns FlextConfig instance."""
-        core = Flext()
-        config = core.config
-        assert config is not None
-        assert isinstance(config, FlextConfig)
-
-    def test_container_property(self) -> None:
-        """Test container property returns global container."""
-        core = Flext()
-        container = core.container
-        assert container is not None
-        assert isinstance(container, FlextContainer)
-
-    def test_logger_property(self) -> None:
-        """Test logger property returns FlextLogger instance."""
-        core = Flext()
-        logger = core.logger
-        assert logger is not None
-        assert isinstance(logger, FlextLogger)
-
-    def test_bus_property(self) -> None:
-        """Test bus property returns FlextBus instance."""
-        core = Flext()
-        bus = core.bus
-        assert bus is not None
-        assert isinstance(bus, FlextBus)
-
-    def test_context_property(self) -> None:
-        """Test context property returns FlextContext instance."""
-        core = Flext()
-        context = core.context
-        assert context is not None
-        assert isinstance(context, FlextContext)
-
-    def test_dispatcher_property(self) -> None:
-        """Test dispatcher property returns FlextDispatcher instance."""
-        core = Flext()
-        dispatcher = core.dispatcher
-        assert dispatcher is not None
-        assert isinstance(dispatcher, FlextDispatcher)
-
-    def test_processors_property(self) -> None:
-        """Test processors property returns FlextProcessors instance."""
-        core = Flext()
-        processors = core.processors
-        assert processors is not None
-        assert isinstance(processors, FlextProcessors)
-
-    def test_registry_property(self) -> None:
-        """Test registry property returns FlextRegistry instance."""
-        core = Flext()
-        registry = core.registry
-        assert registry is not None
-        assert isinstance(registry, FlextRegistry)
-
-    def test_property_lazy_loading(self) -> None:
-        """Test properties are lazy-loaded (same instance returned)."""
-        core = Flext()
-
-        # First access
-        logger1 = core.logger
-        bus1 = core.bus
-        context1 = core.context
-
-        # Second access - should return same instances
-        logger2 = core.logger
-        bus2 = core.bus
-        context2 = core.context
-
-        assert logger1 is logger2
-        assert bus1 is bus2
-        assert context1 is context2
-
-
 class TestFlextFactoryMethods:
-    """Test Flext factory methods for common patterns."""
+    """Test FlextCore factory methods for common patterns."""
 
     def test_create_result_ok(self) -> None:
         """Test creating successful result."""
-        result = FlextCore.Result.ok("test_value")
+        result = FlextCore.Result[str].ok("test_value")
         assert result.is_success
         assert result.value == "test_value"
 
     def test_create_result_fail(self) -> None:
         """Test creating failed result."""
-        result: FlextResult[None] = FlextCore.Result.fail(
-            "error message", error_code="ERROR_CODE"
-        )
+        result = FlextCore.Result[str].fail("error message", error_code="ERROR_CODE")
         assert result.is_failure
         assert result.error == "error message"
 
@@ -223,7 +114,7 @@ class TestFlextFactoryMethods:
 
 
 class TestFlextIntegrationHelpers:
-    """Test Flext integration helper methods."""
+    """Test FlextCore integration helper methods."""
 
     def test_setup_service_infrastructure_success(self) -> None:
         """Test successful service infrastructure setup using direct component access."""
@@ -252,36 +143,6 @@ class TestFlextIntegrationHelpers:
         assert isinstance(custom_config, FlextConfig)
         assert isinstance(container, FlextContainer)
         assert isinstance(logger, FlextLogger)
-
-    @pytest.mark.skip(
-        reason="FlextHandlers is abstract - handler creation needs concrete implementation"
-    )
-    def test_create_command_handler_success(self) -> None:
-        """Test creating command handler."""
-
-        def handler_func(cmd: object) -> FlextResult[object]:
-            return FlextResult[object].ok({"processed": True})
-
-        result = FlextCore.create_command_handler(handler_func)
-        assert result.is_success
-        handler = result.unwrap()
-        # Handler is returned as object type from factory
-        assert handler is not None
-
-    @pytest.mark.skip(
-        reason="FlextHandlers is abstract - handler creation needs concrete implementation"
-    )
-    def test_create_query_handler_success(self) -> None:
-        """Test creating query handler."""
-
-        def handler_func(query: object) -> FlextResult[object]:
-            return FlextResult[object].ok({"data": "result"})
-
-        result = FlextCore.create_query_handler(handler_func)
-        assert result.is_success
-        handler = result.unwrap()
-        # Handler is returned as object type from factory
-        assert handler is not None
 
 
 class TestFlextDirectClassAccess:
@@ -315,62 +176,8 @@ class TestFlextDirectClassAccess:
         assert FlextCore.Exceptions.BaseError is not None
 
 
-class TestFlextUsagePatterns:
-    """Test common usage patterns with FlextCore."""
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext()) removed - use FlextCore class-based API"
-    )
-    def test_unified_access_pattern(self) -> None:
-        """Test unified access to all components."""
-        core = Flext()
-
-        # Access all components through unified interface
-        config = core.config
-        container = core.container
-        logger = core.logger
-        bus = core.bus
-        context = core.context
-
-        # Verify all are initialized
-        assert config is not None
-        assert container is not None
-        assert logger is not None
-        assert bus is not None
-        assert context is not None
-
-    def test_result_railway_pattern(self) -> None:
-        """Test railway pattern using FlextCore."""
-
-        def validate_input(data: str) -> FlextResult[str]:
-            if not data:
-                return FlextCore.Result[str].fail("Data cannot be empty")
-            return FlextCore.Result[str].ok(data)
-
-        def process_data(data: str) -> FlextResult[str]:
-            return FlextCore.Result[str].ok(data.upper())
-
-        # Railway-oriented composition
-        result = validate_input("test").flat_map(process_data)
-
-        assert result.is_success
-        assert result.value == "TEST"
-
-    def test_combined_infrastructure_setup(self) -> None:
-        """Test setting up complete infrastructure using direct component access."""
-        # Setup infrastructure components directly (current API pattern)
-        logger = FlextCore.Logger("my-service")
-        container = FlextCore.Container.get_global()
-        FlextCore.Config()
-        FlextCore.Bus()
-
-        # Verify infrastructure components are working
-        assert isinstance(logger, FlextLogger)
-        assert isinstance(container, FlextContainer)
-
-
 class TestFlextBackwardCompatibility:
-    """Test that Flext doesn't break existing patterns."""
+    """Test that FlextCore doesn't break existing patterns."""
 
     def test_direct_imports_still_work(self) -> None:
         """Test that direct imports still work alongside FlextCore."""
@@ -393,139 +200,6 @@ class TestFlextBackwardCompatibility:
         assert logger is not None
         assert result.is_success
 
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext()) removed - use FlextCore class-based API"
-    )
-    def test_both_patterns_coexist(self) -> None:
-        """Test that both old and new patterns can be used together."""
-        # New pattern
-        core = Flext()
-        core_logger = core.logger
-
-        # Old pattern
-        direct_logger = FlextLogger("test")
-
-        # Both should work
-        assert core_logger is not None
-        assert direct_logger is not None
-
-
-# =================================================================
-# Integration Tests
-# =================================================================
-
-
-class TestFlext11Features:
-    """Test Flext 1.1.0 convenience methods."""
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().publish_event) removed - use FlextCore.Bus().publish() instead"
-    )
-    def test_publish_event_success(self) -> None:
-        """Test successful event publishing with correlation tracking."""
-        core = Flext()
-
-        event_data: FlextTypes.Dict = {"user_id": "123", "action": "login"}
-        result = core.publish_event("user.login", event_data)
-
-        assert result.is_success
-        assert result.value is None
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().publish_event) removed - use FlextCore.Bus().publish() instead"
-    )
-    def test_publish_event_with_custom_correlation(self) -> None:
-        """Test event publishing with custom correlation ID."""
-        core = Flext()
-
-        custom_correlation = "test-correlation-123"
-        event_data: FlextTypes.Dict = {"user_id": "456"}
-
-        result = core.publish_event(
-            "user.action", event_data, correlation_id=custom_correlation
-        )
-
-        assert result.is_success
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().publish_event) removed - use FlextCore.Bus().publish() instead"
-    )
-    def test_publish_event_with_empty_data(self) -> None:
-        """Test event publishing with empty data dict."""
-        core = Flext()
-
-        result = core.publish_event("test.event", {})
-
-        # Should succeed with empty data
-        assert result.is_success
-
-    # NOTE: create_service and build_pipeline methods removed from current Flext API - tests removed
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().request_context) removed - use FlextCore.Context() directly"
-    )
-    def test_request_context_manager(self) -> None:
-        """Test request context manager setup and cleanup."""
-        core = Flext()
-
-        with core.request_context() as context:
-            # Context should be available
-            assert context is not None
-            assert isinstance(context, FlextContext)
-
-            # Request ID should be set
-            request_id = context.get("request_id")
-            assert request_id is not None
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().request_context) removed - use FlextCore.Context() directly"
-    )
-    def test_request_context_with_custom_request_id(self) -> None:
-        """Test request context with custom request ID."""
-        core = Flext()
-        custom_id = "test-request-123"
-
-        with core.request_context(request_id=custom_id) as context:
-            request_id = context.get("request_id")
-            assert request_id == custom_id
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().request_context) removed - use FlextCore.Context() directly"
-    )
-    def test_request_context_with_user_id(self) -> None:
-        """Test request context with user ID tracking."""
-        core = Flext()
-
-        with core.request_context(user_id="user-456") as context:
-            user_id = context.get("user_id")
-            assert user_id == "user-456"
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().request_context) removed - use FlextCore.Context() directly"
-    )
-    def test_request_context_with_metadata(self) -> None:
-        """Test request context with custom metadata."""
-        core = Flext()
-
-        with core.request_context(
-            client_ip="192.168.1.1", user_agent="TestClient/1.0"
-        ) as context:
-            assert context.get("client_ip") == "192.168.1.1"
-            assert context.get("user_agent") == "TestClient/1.0"
-
-    @pytest.mark.skip(
-        reason="Instance-based API (Flext().request_context) removed - use FlextCore.Context() directly"
-    )
-    def test_request_context_cleanup(self) -> None:
-        """Test that request context is properly cleaned up."""
-        core = Flext()
-
-        # Use context manager
-        with core.request_context(request_id="cleanup-test") as context:
-            assert context.get("request_id") == "cleanup-test"
-
-        # Context manager should complete successfully
-        assert True
-
 
 # =================================================================
 # Integration Tests
@@ -534,12 +208,12 @@ class TestFlext11Features:
 
 @pytest.mark.integration
 class TestFlextIntegration:
-    """Integration tests for Flext with real components."""
+    """Integration tests for FlextCore with real components."""
 
     def test_complete_workflow(self) -> None:
         """Test complete workflow using FlextCore with direct component access."""
         # Create result using current API
-        result = FlextCore.Result[dict].ok({"user_id": "123"})
+        result = FlextCore.Result[dict[str, str]].ok({"user_id": "123"})
         assert result.is_success
 
         # Create logger using current API
