@@ -474,9 +474,9 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 roles_raw = user_state.get("roles", [])
                 roles: FlextCore.Types.StringList
                 if isinstance(roles_raw, list) and all(
-                    isinstance(role, str) for role in roles_raw if isinstance(role, str)
+                    isinstance(role, str) for role in roles_raw
                 ):
-                    roles = list(roles_raw)
+                    roles = list(roles_raw)  # type: ignore[arg-type]
                 else:
                     roles = []
                 role_raw: object = event.data["role"]
@@ -779,25 +779,23 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             )
 
         # Safe message parsing without try/except
-        result = FlextCore.Result.from_callable(
-            lambda: risky_message_parse({
-                "message_type": "order",
-                "data": self._order,
-            }),
-        )
-        result = cast(
-            "FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]]", result
+        result: FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]] = (
+            FlextCore.Result.from_callable(
+                lambda: risky_message_parse({
+                    "message_type": "order",
+                    "data": self._order,
+                }),
+            )
         )
         if result.is_success:
             payload: FlextCore.Models.Payload[FlextCore.Types.Dict] = result.unwrap()
             print(f"✅ Message parsed: {payload.metadata.get('message_type')}")
 
         # Failed parsing captured as Result
-        failed = FlextCore.Result.from_callable(
-            lambda: risky_message_parse({}),
-        )
-        failed = cast(
-            "FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]]", failed
+        failed: FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]] = (
+            FlextCore.Result.from_callable(
+                lambda: risky_message_parse({}),
+            )
         )
         if failed.is_failure:
             print(f"❌ Parse failed: {failed.error}")

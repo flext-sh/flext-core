@@ -419,7 +419,7 @@ class TestPropertyBasedPatterns:
         """Property-based test for Unicode handling."""
         # Should handle Unicode gracefully without crashing
         result = unicode_text.encode("utf-8").decode("utf-8")
-        assert isinstance(result, str)
+        # result is already typed as str, no need for isinstance check
 
         # Length might differ due to Unicode normalization
         assert len(result) >= 0
@@ -735,13 +735,13 @@ class TestRealWorldScenarios:
                 "should have valid HTTP method",
             ).assert_all()
 
-    @given(  # type: ignore[unknown-argument-type]
-        st.builds(  # type: ignore[unknown-argument-type]
-            dict,  # type: ignore[unknown-argument-type]
-            database_url=st.text(),  # type: ignore[unknown-argument-type]
-            debug=st.booleans(),  # type: ignore[unknown-argument-type]
-            timeout_seconds=st.integers(min_value=1, max_value=300),  # type: ignore[unknown-argument-type]
-            environment=st.sampled_from(["development", "staging", "production"]),  # type: ignore[unknown-argument-type]
+    @given(
+        st.builds(
+            dict,
+            database_url=st.text(),
+            debug=st.booleans(),
+            timeout_seconds=st.integers(min_value=1, max_value=300),
+            environment=st.sampled_from(["development", "staging", "production"]),
         )
     )
     @settings()

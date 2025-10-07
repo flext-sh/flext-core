@@ -37,7 +37,7 @@ class TestFlextProtocols:
         """Test that a class can implement HasResultValue."""
 
         class ResultContainer:
-            def __init__(self, value: str) -> None:  # type: ignore[no-untyped-call]
+            def __init__(self, value: str) -> None:
                 self._value = value
 
             @property

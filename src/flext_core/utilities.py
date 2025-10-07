@@ -33,11 +33,7 @@ from typing import (
     get_type_hints,
 )
 
-try:
-    import orjson
-except ImportError:
-    orjson = None
-
+import orjson
 from pydantic import (
     EmailStr,
     HttpUrl,
@@ -1091,11 +1087,12 @@ class FlextUtilities:
         @staticmethod
         def sort_key(value: object) -> str:
             """Return a deterministic string for ordering normalized cache components."""
-            if orjson is not None:
+            try:
                 json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
                 return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
-            # Fallback to standard library json with sorted keys
-            return json.dumps(value, sort_keys=True, default=str)
+            except Exception:
+                # Fallback to standard library json with sorted keys
+                return json.dumps(value, sort_keys=True, default=str)
 
         @staticmethod
         def normalize_component(value: object) -> object:
@@ -1211,22 +1208,25 @@ class FlextUtilities:
                     dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
                         cast("FlextTypes.Dict", command),
                     )
-                    return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"
+                    return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"  # type: ignore[misc]
 
                 # For other objects, use string representation
                 command_str = str(command) if command is not None else "None"
-                command_hash = hash(command_str)
+                command_hash = hash(command_str)  # type: ignore[misc]
                 return f"{command_type.__name__}_{command_hash}"
 
             except Exception:
                 # Fallback to string representation if anything fails
                 command_str_fallback = str(command) if command is not None else "None"
+                command_str_fallback = command_str_fallback.encode(
+                    "utf-8", errors="ignore"
+                ).decode("utf-8", errors="ignore")
                 try:
-                    command_hash_fallback = hash(command_str_fallback)
+                    command_hash_fallback = hash(command_str_fallback)  # type: ignore[misc]
                     return f"{command_type.__name__}_{command_hash_fallback}"
                 except TypeError:
                     # If hash fails, use a deterministic fallback
-                    return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode(FlextConstants.Utilities.DEFAULT_ENCODING)))}"
+                    return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode(FlextConstants.Utilities.DEFAULT_ENCODING)))}"  # type: ignore[misc]
 
         @staticmethod
         def sort_dict_keys(obj: object) -> object:
@@ -1815,7 +1815,7 @@ class FlextUtilities:
         try:
             # Validate command for security - ensure all parts are safe strings
             # This prevents shell injection since we use list form, not shell=True
-            if not cmd or not all(isinstance(part, str) for part in cmd):
+            if not cmd or not all(part for part in cmd):
                 return FlextResult[subprocess.CompletedProcess[str]].fail(
                     "Command must be a non-empty list of strings",
                     error_code="INVALID_COMMAND",

@@ -812,7 +812,7 @@ class TestFlextRegistry:
         function_map3: dict[type[object], FlextHandlers[object, object]] = {
             type[TestMessageType]: prebuilt_handler
         }
-        result3 = registry.register_function_map(function_map3)  # type: ignore[arg-type]
+        result3 = registry.register_function_map(function_map3)
         assert result3.is_success
         assert result3.value.successful_registrations == 1
 
@@ -1074,8 +1074,8 @@ def test_registry_register_function_map_handler_creation_failure() -> None:
             Callable[[object], object | FlextResult[object]],
             object | FlextResult[object],
         ],
-    ] = {TestMessage: (invalid_handler, {})}  # type: ignore[assignment]
-    result = registry.register_function_map(mapping)  # type: ignore[arg-type]
+    ] = {TestMessage: (invalid_handler, {})}
+    result = registry.register_function_map(mapping)
     # Should handle error in creation
     assert isinstance(result, FlextResult)
 
@@ -1093,7 +1093,7 @@ def test_registry_register_function_map_registration_failure() -> None:
         return msg
 
     mapping = {TestMessage: (test_handler, {"invalid": "config"})}
-    result = registry.register_function_map(mapping)  # type: ignore[arg-type]
+    result = registry.register_function_map(mapping)
     assert isinstance(result, FlextResult)
 
 
@@ -1113,7 +1113,7 @@ def test_registry_register_function_map_exception_handling() -> None:
         return msg
 
     mapping = {ProblematicMessage(): (test_handler, {})}
-    result = registry.register_function_map(mapping)  # type: ignore[arg-type]
+    result = registry.register_function_map(mapping)
     # Should handle exception and still return result
     assert isinstance(result, FlextResult)
 
@@ -1134,7 +1134,7 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
     handler = StringTestHandler(config=config)
 
     # Use string as message_type to trigger string fallback (line 553)
-    key = registry._resolve_binding_key(handler, "StringMessageType")  # type: ignore[arg-type]
+    key = registry._resolve_binding_key(handler, "StringMessageType")
     assert isinstance(key, str)
     assert "string_test" in key
 
@@ -1148,6 +1148,6 @@ def test_registry_resolve_binding_key_from_entry_string_fallback() -> None:
         return msg
 
     # Use string as message_type to trigger string fallback (line 576)
-    key = registry._resolve_binding_key_from_entry((test_func, {}), "StringType")  # type: ignore[arg-type]
+    key = registry._resolve_binding_key_from_entry((test_func, {}), "StringType")
     assert isinstance(key, str)
     assert "test_func" in key

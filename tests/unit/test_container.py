@@ -224,7 +224,7 @@ class TestFlextContainer:
         container.register("test_service", service)
 
         # Get with wrong type
-        result = container.get_typed("test_service", dict)  # type: ignore[unknown-variable-type]
+        result = container.get_typed("test_service", dict)
         assert result.is_success  # Should succeed because dict is the correct type
 
         # Get with wrong type
@@ -255,14 +255,14 @@ class TestFlextContainer:
             "test_service", factory
         )
         assert result2.is_success
-        assert result2.value is result.value  # type: ignore[unknown-member-type] # Same instance
+        assert result2.value is result.value
 
     def test_container_get_or_create_no_factory(self) -> None:
         """Test get or create without factory."""
         container = FlextContainer()
 
         # Service doesn't exist and no factory provided
-        result = container.get_or_create("nonexistent")  # type: ignore[unknown-variable-type]
+        result = container.get_or_create("nonexistent")
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None

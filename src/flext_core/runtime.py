@@ -452,7 +452,7 @@ class FlextRuntime:
             processors.append(module.processors.JSONRenderer())
 
         module.configure(
-            processors=processors,
+            processors=cast("list[Callable[..., dict[str, object]]]", processors),
             wrapper_class=cast(
                 "type[structlog.BoundLoggerBase] | None",
                 wrapper_class_factory

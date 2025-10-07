@@ -22,7 +22,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import ParamSpec, TypeVar, cast
+from typing import Any, ParamSpec, TypeVar, cast
 
 import structlog
 
@@ -673,7 +673,7 @@ class FlextDecorators:
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             # Start with the base function
-            decorated: object = func
+            decorated: Callable[..., Any] = func
 
             # Apply railway pattern first if requested (outermost wrapper)
             if use_railway:
@@ -690,11 +690,10 @@ class FlextDecorators:
                 )(decorated)
 
             # Apply operation logging (innermost wrapper)
-            decorated = FlextDecorators.log_operation(operation_name=operation_name)(
-                decorated
+            return cast(
+                "Callable[P, R]",
+                FlextDecorators.log_operation(operation_name=operation_name)(decorated),
             )
-
-            return cast("Callable[P, R]", decorated)
 
         return decorator
 

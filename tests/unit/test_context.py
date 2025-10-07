@@ -325,9 +325,9 @@ class TestFlextContext:
             operations = stats["operations"]
             if isinstance(operations, dict):
                 # Use cast to handle dynamic typing from context statistics
-                set_count: int = operations.get("set", 0)  # type: ignore[unknown-member-type]
-                get_count: int = operations.get("get", 0)  # type: ignore[unknown-member-type]
-                remove_count: int = operations.get("remove", 0)  # type: ignore[unknown-member-type]
+                set_count: int = operations.get("set", 0)
+                get_count: int = operations.get("get", 0)
+                remove_count: int = operations.get("remove", 0)
                 assert set_count >= 2
                 assert get_count >= 2
                 assert remove_count >= 1
