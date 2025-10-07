@@ -27,7 +27,7 @@ from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, FlextUtilities, T
+from flext_core import FlextLogger, FlextResult, FlextTypes, FlextUtilities
 
 if TYPE_CHECKING:
     from docker import DockerClient
@@ -380,15 +380,20 @@ class FlextTestDocker:
                 timeout=timeout,
             )
 
-            # Return (exit_code, stdout, stderr) tuple
-            stdout = result.stdout if capture_output else ""
-            stderr = result.stderr if capture_output else ""
+            if result.is_success:
+                process = result.value
+                # Return (exit_code, stdout, stderr) tuple
+                stdout = process.stdout if capture_output else ""
+                stderr = process.stderr if capture_output else ""
 
-            return FlextResult[tuple[int, str, str]].ok((
-                result.returncode,
-                stdout,
-                stderr,
-            ))
+                return FlextResult[tuple[int, str, str]].ok((
+                    process.returncode,
+                    stdout,
+                    stderr,
+                ))
+            return FlextResult[tuple[int, str, str]].fail(
+                f"Command execution failed: {result.error}"
+            )
 
         except subprocess.TimeoutExpired:
             return FlextResult[tuple[int, str, str]].fail("Command timeout")
@@ -840,10 +845,11 @@ class FlextTestDocker:
             if command is not None:
                 run_kwargs["command"] = command
 
+            # Docker SDK overload not properly typed for detach parameter
             container = client.containers.run(
                 image,
                 name=container_name,
-                **cast("object", run_kwargs),
+                **run_kwargs,
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -913,6 +919,7 @@ class FlextTestDocker:
         try:
             client = self.get_client()
             container = client.containers.get(container_name)
+            # exec_run not fully typed in docker stubs
             result = container.exec_run(
                 command,
                 user=user if user is not None else "root",
@@ -936,20 +943,24 @@ class FlextTestDocker:
             container_infos: list[ContainerInfo] = []
             for container in containers:
                 container = cast("Container", container)
+                # Container attributes not fully typed in docker stubs
+                container_status: str = getattr(container, "status", "unknown")
                 status = (
                     ContainerStatus.RUNNING
-                    if container.status == "running"
+                    if container_status == "running"
                     else ContainerStatus.STOPPED
                 )
+                container_image = getattr(container, "image", None)
                 image_tags: FlextTypes.StringList = (
-                    container.image.tags
-                    if container.image and hasattr(container.image, "tags")
+                    container_image.tags
+                    if container_image and hasattr(container_image, "tags")
                     else []
                 )
                 image_name: str = image_tags[0] if image_tags else "unknown"
+                container_name_attr = getattr(container, "name", "unknown")
                 container_infos.append(
                     ContainerInfo(
-                        name=str(container.name),
+                        name=str(container_name_attr),
                         status=status,
                         ports={},
                         image=image_name,
@@ -1380,7 +1391,10 @@ class FlextTestDocker:
                 f"Status check failed: {status_result.error}",
             )
 
-        status_info: FlextTypes.Dict = status_result.value.copy()
+        # Convert dict[str, ContainerInfo] to generic dict for FlextTypes.Dict compatibility
+        status_info: FlextTypes.Dict = cast(
+            "FlextTypes.Dict", status_result.value.copy()
+        )
         running_services = self.get_running_services()
         if running_services.is_success:
             status_info["auto_managed_services"] = running_services.value
@@ -1734,7 +1748,7 @@ class FlextTestDocker:
         )
         manager = cls(workspace_root=workspace_root)
 
-        command_result: FlextResult[object] | None = None
+        command_result: object = None
 
         if args.command == "init":
             if args.workspace_root is None:
@@ -1820,7 +1834,7 @@ class FlextTestDocker:
             if args.workspace_root is None:
                 return 1
             command_result = manager.validate_workspace(Path(args.workspace_root))
-            if command_result.is_success:
+            if command_result is not None and command_result.is_success:
                 for key, value in command_result.value.items():
                     cls._console.print(f"{key}: {value}")
         else:
@@ -2009,7 +2023,7 @@ if pytest is not None:  # pragma: no mutate - ensure fixtures available in tests
 # Cleanup decorators for test functions
 def with_clean_container(
     container_name: str,
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[..., FlextTypes.T]], Callable[..., FlextTypes.T]]:
     """Decorator to ensure a container is clean before and after a test.
 
     Args:
@@ -2023,9 +2037,9 @@ def with_clean_container(
 
     """
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[..., FlextTypes.T]) -> Callable[..., FlextTypes.T]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> T:
+        def wrapper(*args: object, **kwargs: object) -> FlextTypes.T:
             # Get FlextTestDocker instance
             docker_manager = FlextTestDocker()
 
@@ -2056,7 +2070,7 @@ def with_clean_container(
 
 def mark_dirty_on_failure(
     container_name: str,
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[..., FlextTypes.T]], Callable[..., FlextTypes.T]]:
     """Decorator to mark a container dirty if a test fails.
 
     Args:
@@ -2070,9 +2084,9 @@ def mark_dirty_on_failure(
 
     """
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[..., FlextTypes.T]) -> Callable[..., FlextTypes.T]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> T:
+        def wrapper(*args: object, **kwargs: object) -> FlextTypes.T:
             docker_manager = FlextTestDocker()
 
             try:
@@ -2091,7 +2105,9 @@ def mark_dirty_on_failure(
     return decorator
 
 
-def auto_cleanup_dirty_containers() -> Callable[[Callable[..., T]], Callable[..., T]]:
+def auto_cleanup_dirty_containers() -> Callable[
+    [Callable[..., FlextTypes.T]], Callable[..., FlextTypes.T]
+]:
     """Decorator to automatically clean up all dirty containers before a test.
 
     Example:
@@ -2102,9 +2118,9 @@ def auto_cleanup_dirty_containers() -> Callable[[Callable[..., T]], Callable[...
 
     """
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[..., FlextTypes.T]) -> Callable[..., FlextTypes.T]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> T:
+        def wrapper(*args: object, **kwargs: object) -> FlextTypes.T:
             docker_manager = FlextTestDocker()
 
             # Clean up all dirty containers before test

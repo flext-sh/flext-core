@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""02 - FlextContainer Fundamentals: Complete Dependency Injection.
+"""02 - FlextCore.Container Fundamentals: Complete Dependency Injection.
 
-This example demonstrates the COMPLETE FlextContainer[T] API - the foundation
-for dependency injection across the entire FLEXT ecosystem. FlextContainer provides
+This example demonstrates the COMPLETE FlextCore.Container[T] API - the foundation
+for dependency injection across the entire FLEXT ecosystem. FlextCore.Container provides
 type-safe service registration, resolution, and lifecycle management with railway-oriented
 error handling and SOLID principles.
 
@@ -14,7 +14,7 @@ Key Concepts Demonstrated:
 - Global singleton: get_global(), register_global()
 - Configuration: configure(), configure_container()
 - Service lifecycles: singleton vs factory patterns
-- Error handling: Railway patterns with FlextResult[T]
+- Error handling: Railway patterns with FlextCore.Result[T]
 - Type safety: Full generic type support with Pydantic 2
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -28,14 +28,7 @@ import warnings
 from datetime import UTC, datetime
 from typing import Protocol, cast, runtime_checkable
 
-from flext_core import (
-    FlextContainer,
-    FlextCore,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 from .example_scenarios import ExampleScenarios
 
@@ -45,20 +38,20 @@ from .example_scenarios import ExampleScenarios
 class DatabaseServiceProtocol(Protocol):
     """Protocol defining database service interface."""
 
-    def connect(self) -> FlextResult[None]:
+    def connect(self) -> FlextCore.Result[None]:
         """Connect to database."""
         ...
 
-    def query(self, sql: str) -> FlextResult[list[FlextTypes.Dict]]:
+    def query(self, sql: str) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
         """Execute query."""
         ...
 
     def query_with_params(
         self,
         sql: str,
-        params: FlextTypes.List,
+        params: FlextCore.Types.List,
         command_type: type[object],
-    ) -> FlextResult[list[FlextTypes.Dict]]:
+    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
         """Execute parameterized query to prevent SQL injection."""
         ...
 
@@ -66,11 +59,11 @@ class DatabaseServiceProtocol(Protocol):
 class CacheServiceProtocol(Protocol):
     """Protocol defining cache service interface."""
 
-    def get(self, key: str) -> FlextResult[object]:
+    def get(self, key: str) -> FlextCore.Result[object]:
         """Get value from cache."""
         ...
 
-    def set(self, key: str, value: object) -> FlextResult[None]:
+    def set(self, key: str, value: object) -> FlextCore.Result[None]:
         """Set value in cache."""
         ...
 
@@ -78,7 +71,7 @@ class CacheServiceProtocol(Protocol):
 class EmailServiceProtocol(Protocol):
     """Protocol defining email service interface."""
 
-    def send(self, to: str, subject: str, body: str) -> FlextResult[None]:
+    def send(self, to: str, subject: str, body: str) -> FlextCore.Result[None]:
         """Send email."""
         ...
 
@@ -87,7 +80,7 @@ class EmailServiceProtocol(Protocol):
 class HasGetStats(Protocol):
     """Protocol for objects with get_stats method."""
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> FlextCore.Types.Dict:
         """Return statistics dictionary."""
         ...
 
@@ -96,7 +89,7 @@ class HasGetStats(Protocol):
 class HasCacheSet(Protocol):
     """Protocol for cache objects with set method."""
 
-    def set(self, key: str, value: object) -> FlextResult[None]:
+    def set(self, key: str, value: object) -> FlextCore.Result[None]:
         """Set value in cache."""
         ...
 
@@ -105,7 +98,7 @@ class HasCacheSet(Protocol):
 class HasCacheGet(Protocol):
     """Protocol for cache objects with get method."""
 
-    def get(self, key: str) -> FlextResult[object]:
+    def get(self, key: str) -> FlextCore.Result[object]:
         """Get value from cache."""
         ...
 
@@ -113,20 +106,24 @@ class HasCacheGet(Protocol):
 # ========== SERVICE IMPLEMENTATIONS ==========
 
 
-class DatabaseService:
+class DatabaseService(FlextCore.Service[None]):
     """Concrete database service implementation with enhanced error handling."""
 
     def __init__(self, connection_string: str = "sqlite:///:memory:") -> None:
         """Initialize with connection string using FLEXT patterns."""
+        super().__init__()
         self._connection_string = connection_string
         self.connected = False
-        self.logger = FlextCore.Logger(__name__)
         self._query_count = 0
 
-    def connect(self) -> FlextResult[None]:
+    def execute(self) -> FlextCore.Result[None]:
+        """Execute the database service."""
+        return FlextCore.Result[None].ok(None)
+
+    def connect(self) -> FlextCore.Result[None]:
         """Connect to database with state validation."""
         if self.connected:
-            return FlextResult[None].fail(
+            return FlextCore.Result[None].fail(
                 "Database already connected",
                 error_code=FlextCore.Constants.Errors.ALREADY_EXISTS,
                 error_data={"connection_string": self._connection_string},
@@ -138,55 +135,57 @@ class DatabaseService:
             "Database connection established",
             extra={"connection_string": self._connection_string},
         )
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
-    def query(self, sql: str) -> FlextResult[list[FlextTypes.Dict]]:
+    def query(self, sql: str) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
         """Execute query with comprehensive error handling."""
         if not self.connected:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                 "Database not connected",
                 error_code=FlextCore.Constants.Errors.CONNECTION_ERROR,
                 error_data={"connection_string": self._connection_string},
             )
 
         if not sql or not sql.strip():
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                 "SQL query cannot be empty",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
         # Simulate query execution with metrics
         self._query_count += 1
-        query_preview = sql[:50] + ("..." if len(sql) > 50 else "")
+        query_preview = sql[: FlextCore.Constants.Validation.PREVIEW_LENGTH] + (
+            "..." if len(sql) > FlextCore.Constants.Validation.PREVIEW_LENGTH else ""
+        )
         self.logger.debug(f"Executing query #{self._query_count}: {query_preview}")
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            return FlextResult[list[FlextTypes.Dict]].ok([
+            return FlextCore.Result[list[FlextCore.Types.Dict]].ok([
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ])
         if "count" in sql.lower():
-            return FlextResult[list[FlextTypes.Dict]].ok([{"count": 42}])
+            return FlextCore.Result[list[FlextCore.Types.Dict]].ok([{"count": 42}])
 
-        return FlextResult[list[FlextTypes.Dict]].ok([])
+        return FlextCore.Result[list[FlextCore.Types.Dict]].ok([])
 
     def query_with_params(
         self,
         sql: str,
-        params: FlextTypes.List,
+        params: FlextCore.Types.List,
         command_type: type[object],
-    ) -> FlextResult[list[FlextTypes.Dict]]:
+    ) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
         """Execute parameterized query to prevent SQL injection."""
         if not self.connected:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                 "Database not connected",
                 error_code=FlextCore.Constants.Errors.CONNECTION_ERROR,
                 error_data={"connection_string": self._connection_string},
             )
 
         if not sql or not sql.strip():
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                 "SQL query cannot be empty",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
@@ -196,45 +195,51 @@ class DatabaseService:
         # Validate command type
         valid_command_types = (dict[str, object], list[object], tuple)
         if command_type not in valid_command_types:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
                 "Invalid command type for query result",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
         # Simulate parameterized query execution with metrics
         self._query_count += 1
-        query_preview = sql[:50] + ("..." if len(sql) > 50 else "")
-        param_preview = str(params)[:50] + ("..." if len(str(params)) > 50 else "")
+        query_preview = sql[: FlextCore.Constants.Validation.PREVIEW_LENGTH] + (
+            "..." if len(sql) > FlextCore.Constants.Validation.PREVIEW_LENGTH else ""
+        )
+        param_preview = str(params)[: FlextCore.Constants.Validation.PREVIEW_LENGTH] + (
+            "..."
+            if len(str(params)) > FlextCore.Constants.Validation.PREVIEW_LENGTH
+            else ""
+        )
         self.logger.debug(
             f"Executing parameterized query #{self._query_count}: {query_preview} with params: {param_preview}",
         )
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            user_data: list[FlextTypes.Dict] = [
+            user_data: list[FlextCore.Types.Dict] = [
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ]
             # Apply command type transformation if specified
             if command_type is dict[str, object]:
-                return FlextResult[list[FlextTypes.Dict]].ok(user_data)
+                return FlextCore.Result[list[FlextCore.Types.Dict]].ok(user_data)
             if command_type is list[object]:
-                # Return user_data as-is since it's already a list[FlextTypes.Dict]
-                return FlextResult[list[FlextTypes.Dict]].ok(user_data)
-            return FlextResult[list[FlextTypes.Dict]].ok(user_data)
+                # Return user_data as-is since it's already a list[FlextCore.Types.Dict]
+                return FlextCore.Result[list[FlextCore.Types.Dict]].ok(user_data)
+            return FlextCore.Result[list[FlextCore.Types.Dict]].ok(user_data)
         if "count" in sql.lower():
-            count_data: FlextTypes.Dict = {"count": 42}
+            count_data: FlextCore.Types.Dict = {"count": 42}
             # Apply command type transformation if specified
             if command_type is dict[str, object]:
-                return FlextResult[list[FlextTypes.Dict]].ok([count_data])
+                return FlextCore.Result[list[FlextCore.Types.Dict]].ok([count_data])
             if command_type is list[object]:
-                # Return [count_data] as-is since it's already a list[FlextTypes.Dict]
-                return FlextResult[list[FlextTypes.Dict]].ok([count_data])
-            return FlextResult[list[FlextTypes.Dict]].ok([count_data])
+                # Return [count_data] as-is since it's already a list[FlextCore.Types.Dict]
+                return FlextCore.Result[list[FlextCore.Types.Dict]].ok([count_data])
+            return FlextCore.Result[list[FlextCore.Types.Dict]].ok([count_data])
 
-        return FlextResult[list[FlextTypes.Dict]].ok([])
+        return FlextCore.Result[list[FlextCore.Types.Dict]].ok([])
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> FlextCore.Types.Dict:
         """Get database service statistics."""
         return {
             "connection_string": self._connection_string,
@@ -243,23 +248,27 @@ class DatabaseService:
         }
 
 
-class CacheService:
+class CacheService(FlextCore.Service[object]):
     """Concrete cache service implementation with advanced FLEXT patterns."""
 
     def __init__(self, max_size: int = 1000, ttl_seconds: int = 3600) -> None:
         """Initialize cache with size and TTL limits."""
-        self._cache: FlextTypes.Dict = {}
+        super().__init__()
+        self._cache: FlextCore.Types.Dict = {}
         self._metadata: FlextCore.Types.NestedDict = {}
         self.max_size = max_size
         self._ttl_seconds = ttl_seconds
-        self.logger = FlextCore.Logger(__name__)
         self._hits = 0
         self._misses = 0
 
-    def get(self, key: str) -> FlextResult[object]:
+    def execute(self) -> FlextCore.Result[object]:
+        """Execute the cache service."""
+        return FlextCore.Result[object].ok(None)
+
+    def get(self, key: str) -> FlextCore.Result[object]:
         """Get value from cache with TTL validation."""
         if not key or not key.strip():
-            return FlextResult[object].fail(
+            return FlextCore.Result[object].fail(
                 "Cache key cannot be empty",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
@@ -268,7 +277,7 @@ class CacheService:
         if key not in self._cache:
             self._misses += 1
             self.logger.debug("Cache miss: %s", key)
-            return FlextResult[object].fail(
+            return FlextCore.Result[object].fail(
                 f"Key not found: {key}",
                 error_code=FlextCore.Constants.Errors.NOT_FOUND,
             )
@@ -295,7 +304,7 @@ class CacheService:
                 del self._metadata[key]
                 self._misses += 1
                 self.logger.debug("Cache expired: %s", key)
-                return FlextResult[object].fail(
+                return FlextCore.Result[object].fail(
                     f"Key expired: {key}",
                     error_code=FlextCore.Constants.Errors.OPERATION_ERROR,
                 )
@@ -303,23 +312,23 @@ class CacheService:
         # Valid hit
         self._hits += 1
         self.logger.debug("Cache hit: %s", key)
-        return FlextResult[object].ok(self._cache[key])
+        return FlextCore.Result[object].ok(self._cache[key])
 
     def set(
         self,
         key: str,
         value: object,
         ttl_seconds: int | None = None,
-    ) -> FlextResult[None]:
+    ) -> FlextCore.Result[None]:
         """Set value in cache with optional TTL override."""
         if not key or not key.strip():
-            return FlextResult[None].fail(
+            return FlextCore.Result[None].fail(
                 "Cache key cannot be empty",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
         if value is None:
-            return FlextResult[None].fail(
+            return FlextCore.Result[None].fail(
                 "Cache value cannot be None",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
@@ -338,7 +347,7 @@ class CacheService:
         self.logger.debug(
             f"Cache set: {key} (TTL: {ttl_seconds or self._ttl_seconds}s)",
         )
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
     def _evict_oldest(self) -> None:
         """Evict the oldest cache entry using LRU strategy."""
@@ -365,7 +374,7 @@ class CacheService:
         del self._metadata[oldest_key]
         self.logger.debug("Cache evicted: %s", oldest_key)
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> FlextCore.Types.Dict:
         """Get cache service statistics."""
         return {
             "max_size": self.max_size,
@@ -379,24 +388,25 @@ class CacheService:
         }
 
 
-class EmailService:
+class EmailService(FlextCore.Service[None]):
     """Concrete email service implementation."""
 
     def __init__(
         self, smtp_host: str = FlextCore.Constants.Platform.DEFAULT_HOST
     ) -> None:
         """Initialize with SMTP host."""
+        super().__init__()
         self._smtp_host = smtp_host
-        self.logger = FlextCore.Logger(__name__)
 
-    def send(self, to: str, subject: str, body: str) -> FlextResult[None]:
+    def execute(self) -> FlextCore.Result[None]:
+        """Execute the email service."""
+        return FlextCore.Result[None].ok(None)
+
+    def send(self, to: str, subject: str, body: str) -> FlextCore.Result[None]:
         """Send email (simulated)."""
         self.logger.info("Email sent to %s: %s", to, subject)
-        self.logger.debug(
-            f"Email body: {body[:100]}...",
-        )  # Log first 100 chars of body
-        # Simulate email sending with the body content
-        return FlextResult[None].ok(None)
+        _ = body
+        return FlextCore.Result[None].ok(None)
 
 
 # ========== DOMAIN MODELS ==========
@@ -411,91 +421,40 @@ class User(FlextCore.Models.Entity):
     is_active: bool = True
 
 
-class UserRepository(FlextService[User]):
+class UserRepository(FlextCore.Service[User]):
     """Repository pattern for User entities with enhanced domain logic."""
 
-    _database: DatabaseServiceProtocol
-    _cache: dict[str, User]
-    logger: FlextLogger
-
-    def __init__(self, database: DatabaseServiceProtocol) -> None:
+    def __init__(self) -> None:
         """Initialize with database dependency using FLEXT patterns."""
         super().__init__()
-        self._database = database
-        self._cache = {}
+        container = FlextCore.Container.get_global()
+        self._database = container.get("database").unwrap_or(None)
+        self._cache: dict[str, User] = {}
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self) -> FlextCore.Result[User]:
         """Execute the main domain operation - find default user."""
-        return self.find_by_id("default_user")
-
-    def find_by_id(self, user_id: str) -> FlextResult[User]:
-        """Find user by ID with caching and enhanced error handling."""
-        if not user_id or not user_id.strip():
-            return FlextResult[User].fail(
-                "User ID cannot be empty",
-                error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
-            )
-
-        # Check cache first
-        if user_id in self._cache:
-            self.logger.debug("User cache hit: %s", user_id)
-            return FlextResult[User].ok(self._cache[user_id])
-
-        # Use parameterized query (simulated) to avoid SQL injection
-        # In a real implementation, this would use proper parameterized queries
-        # For this example, we validate the user_id and use safe query construction
-        if not user_id or not all(c.isalnum() or c in "_-" for c in user_id):
-            return FlextResult[User].fail(
-                "Invalid user ID format",
-                error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
-            )
-
-        # Safe query construction - in real implementation use parameterized queries
-        query = "SELECT * FROM users WHERE id = %s"
-        result = self._database.query_with_params(query, [user_id], dict[str, object])
-        if result.is_failure:
-            return FlextResult[User].fail(
-                f"Database error: {result.error}",
+        if self._database is None:
+            return FlextCore.Result[User].fail(
+                "Database not available",
                 error_code=FlextCore.Constants.Errors.EXTERNAL_SERVICE_ERROR,
-                error_data={"user_id": user_id, "query": query},
             )
 
-        data = result.unwrap()
-        if not data:
-            return FlextResult[User].fail(
-                f"User not found: {user_id}",
-                error_code=FlextCore.Constants.Errors.NOT_FOUND,
-                error_data={"user_id": user_id},
-            )
-
-        # Create user from database data with proper type conversion
-        user_data = data[0]  # Get first result
-        age_raw = user_data.get("age", 0)
-        age = 0
-        if age_raw is not None:
-            try:
-                # Safe conversion with type checking
-                age = int(age_raw) if isinstance(age_raw, (int, str)) else 0
-            except (TypeError, ValueError):
-                age = 0
+        # Simulate database query
         user = User(
-            id=str(user_data.get("id", user_id)),
-            name=str(user_data.get("name", "Unknown")),
-            email=str(user_data.get("email", "")),
-            age=age,
+            id="default_user",
+            name="Default User",
+            email="default@example.com",
+            age=0,
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
             version=1,
             domain_events=[],
         )
+        self._cache[user.id] = user
+        self.logger.info("User loaded from database: %s", user.id)
+        return FlextCore.Result[User].ok(user)
 
-        # Cache the user
-        self._cache[user_id] = user
-        self.logger.info("User loaded from database: %s", user_id)
-
-        return FlextResult[User].ok(user)
-
-    def save(self, user: User) -> FlextResult[None]:
+    def save(self, user: User) -> FlextCore.Result[None]:
         """Save user to database with validation."""
         # Validate user before saving
         validation_result = self._validate_user(user)
@@ -511,31 +470,57 @@ class UserRepository(FlextService[User]):
         # Update cache
         self._cache[user.id] = user
 
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
-    def _validate_user(self, user: User) -> FlextResult[None]:
+    def find_by_id(self, user_id: str) -> FlextCore.Result[User]:
+        """Find user by ID from cache or database."""
+        # Check cache first
+        if user_id in self._cache:
+            return FlextCore.Result[User].ok(self._cache[user_id])
+
+        # Simulate database lookup
+        if user_id == "default_user":
+            user = User(
+                id=user_id,
+                name="Default User",
+                email="default@example.com",
+                age=0,
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+                version=1,
+                domain_events=[],
+            )
+            self._cache[user_id] = user
+            return FlextCore.Result[User].ok(user)
+
+        return FlextCore.Result[User].fail(
+            f"User not found: {user_id}",
+            error_code=FlextCore.Constants.Errors.NOT_FOUND,
+        )
+
+    def _validate_user(self, user: User) -> FlextCore.Result[None]:
         """Validate user data before saving."""
         if not user.name or not user.name.strip():
-            return FlextResult[None].fail(
+            return FlextCore.Result[None].fail(
                 "User name cannot be empty",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
         if not user.email or "@" not in user.email:
-            return FlextResult[None].fail(
+            return FlextCore.Result[None].fail(
                 "User email must be valid",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
         if user.age < 0 or user.age > 150:
-            return FlextResult[None].fail(
+            return FlextCore.Result[None].fail(
                 "User age must be between 0 and 150",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> FlextCore.Types.Dict:
         """Get repository statistics."""
         return {
             "cached_users": len(self._cache),
@@ -546,17 +531,17 @@ class UserRepository(FlextService[User]):
 # ========== COMPREHENSIVE CONTAINER SERVICE ==========
 
 
-class ComprehensiveDIService(FlextService[User]):
-    """Service demonstrating ALL FlextContainer patterns with FlextMixins.Service infrastructure.
+class ComprehensiveDIService(FlextCore.Service[User]):
+    """Service demonstrating ALL FlextCore.Container patterns with FlextMixins.Service infrastructure.
 
     This service inherits from FlextCore.Service to demonstrate:
-    - Inherited container property (FlextContainer singleton for DI)
-    - Inherited logger property (FlextLogger with service context)
-    - Inherited context property (FlextContext for request tracking)
-    - Inherited config property (FlextConfig with settings)
+    - Inherited container property (FlextCore.Container singleton for DI)
+    - Inherited logger property (FlextCore.Logger with service context)
+    - Inherited context property (FlextCore.Context for request tracking)
+    - Inherited config property (FlextCore.Config with settings)
     - Inherited metrics property (FlextMetrics for observability)
 
-    The focus is on demonstrating FlextContainer DI patterns while leveraging
+    The focus is on demonstrating FlextCore.Container DI patterns while leveraging
     the complete FlextMixins.Service infrastructure for service orchestration.
     """
 
@@ -565,10 +550,10 @@ class ComprehensiveDIService(FlextService[User]):
 
         Note: No manual logger or container initialization needed!
         All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextLogger with service context
-        - self.container: FlextContainer global singleton
-        - self.context: FlextContext for request tracking
-        - self.config: FlextConfig with application settings
+        - self.logger: FlextCore.Logger with service context
+        - self.container: FlextCore.Container global singleton
+        - self.context: FlextCore.Context for request tracking
+        - self.config: FlextCore.Config with application settings
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
@@ -582,37 +567,37 @@ class ComprehensiveDIService(FlextService[User]):
             extra={
                 "dataset_keys": list[object](self._dataset.keys()),
                 "config_keys": list[object](self._config_data.keys()),
-                "service_type": "FlextContainer DI demonstration",
+                "service_type": "FlextCore.Container DI demonstration",
             },
         )
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self) -> FlextCore.Result[User]:
         """Execute with automatic error handling and monitoring.
 
-        This method satisfies the FlextService abstract interface while
-        demonstrating FlextContainer DI patterns. Uses inherited infrastructure:
+        This method satisfies the FlextCore.Service abstract interface while
+        demonstrating FlextCore.Container DI patterns. Uses inherited infrastructure:
         - self.container for service resolution and dependency injection
         - self.logger for structured logging throughout execution
         - self.context for request tracking (if needed)
 
         Returns:
-            FlextResult containing User entity from DI container operations
+            FlextCore.Result containing User entity from DI container operations
 
         """
         return self._execute_with_container_patterns()
 
-    def _execute_with_container_patterns(self) -> FlextResult[User]:
+    def _execute_with_container_patterns(self) -> FlextCore.Result[User]:
         """Execute using advanced container patterns."""
         db_result = self.container.get("database")
         if db_result.is_failure:
-            return FlextResult[User].fail(
+            return FlextCore.Result[User].fail(
                 f"Cannot access database: {db_result.error}",
                 error_code=FlextCore.Constants.Errors.EXTERNAL_SERVICE_ERROR,
             )
 
         cache_result = self.container.get("cache")
         if cache_result.is_failure:
-            return FlextResult[User].fail(
+            return FlextCore.Result[User].fail(
                 f"Cannot access cache: {cache_result.error}",
                 error_code=FlextCore.Constants.Errors.EXTERNAL_SERVICE_ERROR,
             )
@@ -627,7 +612,7 @@ class ComprehensiveDIService(FlextService[User]):
 
         self._log_service_statistics()
 
-        return FlextResult[User].ok(user)
+        return FlextCore.Result[User].ok(user)
 
     def _log_service_statistics(self) -> None:
         """Log comprehensive service statistics."""
@@ -664,7 +649,7 @@ class ComprehensiveDIService(FlextService[User]):
         except Exception as e:
             self.logger.warning("Failed to log statistics: %s", e)
 
-    def get_service_stats(self) -> FlextTypes.Dict:
+    def get_service_stats(self) -> FlextCore.Types.Dict:
         """Get comprehensive service statistics."""
         service_count = len(
             set(self.container.services.keys()) | set(self.container.factories.keys())
@@ -706,8 +691,8 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== Service Resolution ===")
 
         dataset = self._dataset
-        users_list = cast("FlextTypes.List", dataset.get("users", []))
-        sample_user = cast("FlextTypes.Dict", users_list[0] if users_list else {})
+        users_list = cast("FlextCore.Types.List", dataset.get("users", []))
+        sample_user = cast("FlextCore.Types.Dict", users_list[0] if users_list else {})
 
         db_result = self.container.get("database")
         if db_result.is_success:
@@ -753,7 +738,9 @@ class ComprehensiveDIService(FlextService[User]):
                 get_method = cache.get
                 get_result = get_method(str(cache_key))
             else:
-                get_result = FlextResult[object].fail("Cache get method not available")
+                get_result = FlextCore.Result[object].fail(
+                    "Cache get method not available"
+                )
             if get_result.is_success:
                 cached_data = get_result.unwrap()
                 if isinstance(cached_data, dict):
@@ -803,9 +790,11 @@ class ComprehensiveDIService(FlextService[User]):
                 db = db_result.unwrap()
                 db.connect()
 
-                users_list = cast("FlextTypes.List", self._dataset.get("users", [{}]))
+                users_list = cast(
+                    "FlextCore.Types.List", self._dataset.get("users", [{}])
+                )
                 user_id = str(
-                    cast("FlextTypes.Dict", users_list[0]).get("id", "user_1")
+                    cast("FlextCore.Types.Dict", users_list[0]).get("id", "user_1")
                 )
                 user_result = repo.find_by_id(user_id)
                 if user_result.is_success:
@@ -821,7 +810,7 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== Container Configuration ===")
 
         production_config = self._scenarios.config(production=True)
-        config: FlextTypes.Dict = {
+        config: FlextCore.Types.Dict = {
             "services": {
                 "database": {
                     "connection_string": production_config.get(
@@ -891,7 +880,7 @@ class ComprehensiveDIService(FlextService[User]):
         """Show global container patterns."""
         print("\n=== Global Container Patterns ===")
 
-        global_container = FlextContainer.get_global()
+        global_container = FlextCore.Container.get_global()
         print(f"Global container: {type(global_container).__name__}")
 
         global_payload = self._scenarios.payload(type="global_service")
@@ -928,7 +917,7 @@ class ComprehensiveDIService(FlextService[User]):
         if result.is_failure:
             print(f"✅ Correct failure for type mismatch: {result.error}")
 
-    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
 
     def demonstrate_from_callable(self) -> None:
         """Show from_callable for safe service initialization."""
@@ -943,7 +932,7 @@ class ComprehensiveDIService(FlextService[User]):
                 raise RuntimeError(msg)
             return db
 
-        db_result: FlextResult[DatabaseService] = FlextResult.from_callable(
+        db_result: FlextCore.Result[DatabaseService] = FlextCore.Result.from_callable(
             risky_db_connect
         )
         if db_result.is_failure:
@@ -955,7 +944,7 @@ class ComprehensiveDIService(FlextService[User]):
         def safe_cache_init() -> CacheService:
             return CacheService(max_size=100, ttl_seconds=300)
 
-        cache_result: FlextResult[CacheService] = FlextResult.from_callable(
+        cache_result: FlextCore.Result[CacheService] = FlextCore.Result.from_callable(
             safe_cache_init
         )
         if cache_result.is_success:
@@ -966,29 +955,29 @@ class ComprehensiveDIService(FlextService[User]):
         """Show pipeline composition for service initialization."""
         print("\n=== flow_through(): Service Initialization Pipeline ===")
 
-        def create_database() -> FlextResult[DatabaseService]:
+        def create_database() -> FlextCore.Result[DatabaseService]:
             """Create database service."""
             db = DatabaseService("sqlite:///:memory:")
-            return FlextResult[DatabaseService].ok(db)
+            return FlextCore.Result[DatabaseService].ok(db)
 
-        def connect_database(db: DatabaseService) -> FlextResult[DatabaseService]:
+        def connect_database(db: DatabaseService) -> FlextCore.Result[DatabaseService]:
             """Connect to database."""
             result = db.connect()
             if result.is_failure:
-                return FlextResult[DatabaseService].fail(
+                return FlextCore.Result[DatabaseService].fail(
                     f"Connection failed: {result.error}"
                 )
-            return FlextResult[DatabaseService].ok(db)
+            return FlextCore.Result[DatabaseService].ok(db)
 
-        def validate_database(db: DatabaseService) -> FlextResult[DatabaseService]:
+        def validate_database(db: DatabaseService) -> FlextCore.Result[DatabaseService]:
             """Validate database is ready."""
             if not db.connected:
-                return FlextResult[DatabaseService].fail("Database not connected")
-            return FlextResult[DatabaseService].ok(db)
+                return FlextCore.Result[DatabaseService].fail("Database not connected")
+            return FlextCore.Result[DatabaseService].ok(db)
 
         # Pipeline: create → connect → validate
         result = (
-            FlextResult[DatabaseService]
+            FlextCore.Result[DatabaseService]
             .ok(DatabaseService())
             .flow_through(
                 connect_database,
@@ -1007,12 +996,12 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== lash(): Service Fallback Pattern ===")
 
         # Primary service that fails
-        def try_primary_database() -> FlextResult[str]:
+        def try_primary_database() -> FlextCore.Result[str]:
             """Try to get data from primary database."""
-            return FlextResult[str].fail("Primary database unavailable")
+            return FlextCore.Result[str].fail("Primary database unavailable")
 
         # Recovery function using cache
-        def recover_with_cache(error: str) -> FlextResult[str]:
+        def recover_with_cache(error: str) -> FlextCore.Result[str]:
             """Recover by using cache service."""
             print(f"  Recovering from: {error}")
             cache = CacheService()
@@ -1020,16 +1009,16 @@ class ComprehensiveDIService(FlextService[User]):
             cached_result = cache.get("fallback_key")
             if cached_result.is_success:
                 data = cached_result.unwrap()
-                return FlextResult[str].ok(str(data))
-            return FlextResult[str].fail("Cache also unavailable")
+                return FlextCore.Result[str].ok(str(data))
+            return FlextCore.Result[str].fail("Cache also unavailable")
 
         result = try_primary_database().lash(recover_with_cache)
         if result.is_success:
             print(f"✅ Recovered with fallback: {result.unwrap()}")
 
         # Success case - no recovery needed
-        def successful_operation() -> FlextResult[str]:
-            return FlextResult[str].ok("Primary success")
+        def successful_operation() -> FlextCore.Result[str]:
+            return FlextCore.Result[str].ok("Primary success")
 
         result = successful_operation().lash(recover_with_cache)
         print(f"Primary success (no recovery): {result.unwrap()}")
@@ -1040,7 +1029,7 @@ class ComprehensiveDIService(FlextService[User]):
 
         # Try primary service, use fallback if fails
         primary = self.container.get("non_existent_service")
-        fallback = FlextResult[object].ok(CacheService())
+        fallback = FlextCore.Result[object].ok(CacheService())
 
         result = primary.alt(fallback)
         if result.is_success:
@@ -1050,7 +1039,7 @@ class ComprehensiveDIService(FlextService[User]):
         # Chain multiple fallbacks
         first = self.container.get("service1")
         second = self.container.get("service2")
-        third = FlextResult[object].ok(EmailService())
+        third = FlextCore.Result[object].ok(EmailService())
 
         result = first.alt(second).alt(third)
         if result.is_success:
@@ -1106,7 +1095,7 @@ class ComprehensiveDIService(FlextService[User]):
         print("            cls._instance = super().__new__(cls)")
         print("        return cls._instance")
 
-        print("\n✅ CORRECT WAY (FlextContainer):")
+        print("\n✅ CORRECT WAY (FlextCore.Container):")
         print("container.register('database', DatabaseService())")
 
         # OLD: Service locator anti-pattern (DEPRECATED)
@@ -1127,7 +1116,7 @@ class ComprehensiveDIService(FlextService[User]):
 
         # OLD: Global variables (DEPRECATED)
         warnings.warn(
-            "Global variables are DEPRECATED! Use FlextContainer for state.",
+            "Global variables are DEPRECATED! Use FlextCore.Container for state.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -1135,41 +1124,40 @@ class ComprehensiveDIService(FlextService[User]):
         print("DATABASE = None  # Global variable")
         print("CACHE = None     # Global variable")
 
-        print("\n✅ CORRECT WAY (FlextContainer):")
+        print("\n✅ CORRECT WAY (FlextCore.Container):")
         print("container = FlextCore.Container.get_global()")
         print("container.register('database', DatabaseService())")
 
 
 def demonstrate_flext_di_access() -> None:
-    """Demonstrate Flext unified access to dependency injection.
+    """Demonstrate FlextCore.Constants unified access to dependency injection.
 
-    Shows how Flext provides convenient access to the DI container
+    Shows how FlextCore.Constants provides convenient access to the DI container
     alongside other flext-core components.
     """
     print("\n" + "=" * 60)
     print("FLEXT UNIFIED DI ACCESS")
-    print("Modern pattern for dependency injection with Flext")
+    print("Modern pattern for dependency injection with FlextCore.Constants")
     print("=" * 60)
-    print("Modern pattern for dependency injection with Flext")
+    print("Modern pattern for dependency injection with FlextCore.Constants")
     print("=" * 60)
 
-    # 1. Access container through Flext instance
-    print("\n=== 1. Container Access Through Flext ===")
-    core = FlextCore()
-    container = core.container  # Lazy-loaded global container
+    # 1. Access container through FlextCore.Constants instance
+    print("\n=== 1. Container Access Through FlextCore.Constants ===")
+    container = FlextCore.Container()
     print(f"  ✅ Container accessed: {type(container).__name__}")
 
-    # 2. Register services through Flext container
+    # 2. Register services through FlextCore.Constants container
     print("\n=== 2. Service Registration ===")
-    logger = core.logger
-    logger.info("Registering services via Flext container")
+    logger = FlextCore.Logger("di-demo-service")
+    logger.info("Registering services via FlextCore.Constants container")
 
     container.register("demo_logger", logger)
     print("  ✅ Logger registered in container")
 
     # 3. Access configuration alongside container
     print("\n=== 3. Combined Configuration and DI ===")
-    config = core.config
+    config = FlextCore.Config()
     print(f"  ✅ Config access: log_level = {config.log_level}")
     services_result = container.list_services()
     service_count = len(services_result.unwrap()) if services_result.is_success else 0
@@ -1177,7 +1165,7 @@ def demonstrate_flext_di_access() -> None:
 
     # 4. Setup complete infrastructure with DI
     print("\n=== 4. Infrastructure Setup with DI ===")
-    setup_result = FlextCore.setup_service_infrastructure("di-demo-service")
+    setup_result = FlextCore.Container.create_module_utilities("di-demo-service")
 
     if setup_result.is_success:
         infra = setup_result.unwrap()
@@ -1189,9 +1177,13 @@ def demonstrate_flext_di_access() -> None:
         print(f"     - Logger: {type(infra_logger).__name__}")
         if hasattr(infra_container, "list_services"):
             # Type assertion for container with list_services method
-            container_with_services = infra_container
+            container_with_services = cast("FlextCore.Container", infra_container)
             infra_services_result = container_with_services.list_services()
-            infra_service_count = len(infra_services_result)
+            infra_service_count = (
+                len(infra_services_result.unwrap())
+                if infra_services_result.is_success
+                else 0
+            )
         else:
             infra_service_count = 0
         print(f"     - Services: {infra_service_count}")
@@ -1199,19 +1191,19 @@ def demonstrate_flext_di_access() -> None:
     # 5. Direct class access for type-safe operations
     print("\n=== 5. Type-Safe DI Operations ===")
     direct_container = FlextCore.Container.get_global()
-    result = FlextResult[str].ok("Service initialized")
+    result = FlextCore.Result[str].ok("Service initialized")
 
     print(f"  ✅ Direct container access: {type(direct_container).__name__}")
     print(f"  ✅ Result pattern: {result.value}")
 
     print("\n" + "=" * 60)
-    print("✅ Flext DI demonstration complete!")
+    print("✅ FlextCore.Constants DI demonstration complete!")
     print("Benefits: Unified access, lazy loading, integrated patterns")
     print("=" * 60)
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextContainer capabilities."""
+    """Main entry point demonstrating all FlextCore.Container capabilities."""
     service = ComprehensiveDIService()
 
     print("=" * 60)
@@ -1233,7 +1225,7 @@ def main() -> None:
     service.demonstrate_global_container()
     service.demonstrate_error_handling()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_from_callable()
     service.demonstrate_flow_through()
     service.demonstrate_lash()
@@ -1243,15 +1235,15 @@ def main() -> None:
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
 
-    # Modern Flext pattern demonstration
+    # Modern FlextCore.Constants pattern demonstration
     demonstrate_flext_di_access()
 
     print("\n" + "=" * 60)
-    print("✅ FlextContainer dependency injection demonstration complete!")
+    print("✅ FlextCore.Container dependency injection demonstration complete!")
     print(
         "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
     )
-    print("🎯 Next: See 03_models_basics.py for FlextModels patterns")
+    print("🎯 Next: See 03_models_basics.py for FlextCore.Models patterns")
     print("=" * 60)
 
 

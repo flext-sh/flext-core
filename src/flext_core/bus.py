@@ -533,16 +533,18 @@ class FlextBus(
 
             self._execution_count = int(self._execution_count) + 1
 
-            # Validate command if it has custom validation method (not Pydantic field validator)
+            # Validate command if it has custom validation method
+            # (not Pydantic field validator)
             if isinstance(command, FlextProtocols.Foundation.HasValidateCommand):
                 validation_method = command.validate_command
                 # Check if it's a custom validation method (callable without parameters)
                 # and returns a FlextResult (not a Pydantic field validator)
                 if callable(validation_method):
                     try:
-                        # Try to call without parameters to see if it's a custom method
+                        # Try to call without parameters to see if custom method
                         sig = inspect.signature(validation_method)
-                        # Allow 0 parameters (staticmethod) or 1 parameter (instance method with self)
+                        # Allow 0 parameters (staticmethod) or 1 parameter
+                        # (instance method with self)
                         if len(sig.parameters) <= 1:
                             validation_result: object = validation_method()
                             if (
@@ -569,8 +571,8 @@ class FlextBus(
                                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                                 )
                     except Exception as e:
-                        # If calling without parameters fails, it's likely a Pydantic field validator
-                        # Skip custom validation in this case
+                        # If calling without parameters fails, it's likely a
+                        # Pydantic field validator - skip custom validation
                         self.logger.debug("Skipping Pydantic field validator: %s", e)
 
             is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
@@ -781,7 +783,8 @@ class FlextBus(
             handler_type=handler.__class__.__name__,
         )
 
-        # ISSUE: Fallback pattern - tries multiple method names instead of requiring standard interface
+        # ISSUE: Fallback pattern - tries multiple method names instead
+        # of requiring standard interface
         # Try different handler methods in order of preference
         handler_methods = [
             FlextConstants.Mixins.METHOD_EXECUTE,
@@ -996,10 +999,10 @@ class FlextBus(
             def make_publish_func(
                 event_item: object,
             ) -> Callable[[None], FlextResult[None]]:
-                return cast(
-                    "Callable[[None], FlextResult[None]]",
-                    lambda _: self.publish_event(event_item),
-                )
+                def publish_func(_: None) -> FlextResult[None]:
+                    return self.publish_event(event_item)
+
+                return publish_func
 
             publish_funcs = [make_publish_func(event) for event in events]
             result = FlextResult[None].ok(None).flow_through(*publish_funcs)

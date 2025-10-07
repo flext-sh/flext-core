@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
-"""14 - FlextHandlers: Complete CQRS Handler Implementation.
+"""14 - FlextCore.Handlers: Complete CQRS Handler Implementation.
 
-This example demonstrates the COMPLETE FlextHandlers API for implementing
+This example demonstrates the COMPLETE FlextCore.Handlers API for implementing
 CQRS handlers with configuration-based architecture, type safety, and pipeline execution.
 
 Key Concepts Demonstrated:
@@ -9,7 +9,7 @@ Key Concepts Demonstrated:
 - CQRS Pattern: Command and Query handler separation
 - Type Safety: Generic message and result types
 - Pipeline Execution: Validation → Processing → Completion
-- Error Handling: Explicit FlextResult error patterns
+- Error Handling: Explicit FlextCore.Result error patterns
 - Factory Methods: from_callable handler creation
 - Companion Modules: Configuration, validation, metrics, context
 - Integration: Real-world usage patterns
@@ -26,16 +26,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import uuid4
 
-from flext_core import (
-    FlextConstants,
-    FlextExceptions,
-    FlextHandlers,
-    FlextLogger,
-    FlextModels,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 
 @dataclass
@@ -100,21 +91,21 @@ class User:
 # ========== HANDLERS SERVICE ==========
 
 
-class FlextHandlersService(FlextService[dict[str, str | bool]]):
-    """Service demonstrating ALL FlextHandlers patterns."""
+class FlextHandlersService(FlextCore.Service[dict[str, str | bool]]):
+    """Service demonstrating ALL FlextCore.Handlers patterns."""
 
     def __init__(self) -> None:
         """Initialize with dependencies."""
         super().__init__()
-        # Use inherited self.logger and self.container from FlextService
+        # Use inherited self.logger and self.container from FlextCore.Service
         # In-memory stores for demo
         self._users: dict[str, User] = {}
         self._events: list[UserCreatedEvent] = []
 
-    def execute(self) -> FlextResult[dict[str, str | bool]]:
-        """Execute method required by FlextService."""
-        self.logger.info("Executing FlextHandlers demo")
-        return FlextResult[dict[str, str | bool]].ok({
+    def execute(self) -> FlextCore.Result[dict[str, str | bool]]:
+        """Execute method required by FlextCore.Service."""
+        self.logger.info("Executing FlextCore.Handlers demo")
+        return FlextCore.Result[dict[str, str | bool]].ok({
             "status": "processed",
             "handlers_executed": True,
         })
@@ -122,11 +113,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
     # ========== COMMAND HANDLERS ==========
 
     def demonstrate_command_handlers(self) -> None:
-        """Show command handler patterns with new FlextHandlers API."""
-        print("\n=== Command Handlers with FlextHandlers ===")
+        """Show command handler patterns with new FlextCore.Handlers API."""
+        print("\n=== Command Handlers with FlextCore.Handlers ===")
 
         # Create User Command Handler
-        class CreateUserHandler(FlextHandlers[CreateUserCommand, str]):
+        class CreateUserHandler(FlextCore.Handlers[CreateUserCommand, str]):
             """Handler for creating new users."""
 
             def __init__(
@@ -135,7 +126,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 event_store: list[UserCreatedEvent],
             ) -> None:
                 # Create handler configuration
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="create_user_handler",
                     handler_name="Create User Handler",
                     handler_type="command",
@@ -147,21 +138,21 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 super().__init__(config=config)
                 self._users = user_store
                 self._events = event_store
-                self._logger = FlextLogger(__name__)
+                self._logger = FlextCore.Logger(__name__)
 
-            def handle(self, message: CreateUserCommand) -> FlextResult[str]:
+            def handle(self, message: CreateUserCommand) -> FlextCore.Result[str]:
                 """Handle user creation command."""
                 self._logger.info(f"Creating user {message.user_id}")
 
                 # Validation
                 if message.user_id in self._users:
-                    return FlextResult[str].fail(
+                    return FlextCore.Result[str].fail(
                         f"User {message.user_id} already exists",
                         error_code="USER_EXISTS",
                     )
 
                 if message.age < 0 or message.age > 150:
-                    return FlextResult[str].fail(
+                    return FlextCore.Result[str].fail(
                         "Invalid age provided",
                         error_code="VALIDATION_ERROR",
                     )
@@ -185,14 +176,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 self._events.append(event)
 
-                return FlextResult[str].ok(message.user_id)
+                return FlextCore.Result[str].ok(message.user_id)
 
         # Update User Command Handler
-        class UpdateUserHandler(FlextHandlers[UpdateUserCommand, None]):
+        class UpdateUserHandler(FlextCore.Handlers[UpdateUserCommand, None]):
             """Handler for updating existing users."""
 
             def __init__(self, user_store: dict[str, User]) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="update_user_handler",
                     handler_name="Update User Handler",
                     handler_type="command",
@@ -203,14 +194,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self._logger = FlextLogger(__name__)
+                self._logger = FlextCore.Logger(__name__)
 
-            def handle(self, message: UpdateUserCommand) -> FlextResult[None]:
+            def handle(self, message: UpdateUserCommand) -> FlextCore.Result[None]:
                 """Handle user update command."""
                 self._logger.info(f"Updating user {message.user_id}")
 
                 if message.user_id not in self._users:
-                    return FlextResult[None].fail(
+                    return FlextCore.Result[None].fail(
                         f"User {message.user_id} not found",
                         error_code="USER_NOT_FOUND",
                     )
@@ -225,7 +216,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 user.updated_at = time.time()
 
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
 
         # Use command handlers
         print("\n1. Creating Command Handlers:")
@@ -274,15 +265,15 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
     # ========== QUERY HANDLERS ==========
 
     def demonstrate_query_handlers(self) -> None:
-        """Show query handler patterns with new FlextHandlers API."""
-        print("\n=== Query Handlers with FlextHandlers ===")
+        """Show query handler patterns with new FlextCore.Handlers API."""
+        print("\n=== Query Handlers with FlextCore.Handlers ===")
 
         # Get User Query Handler
-        class GetUserHandler(FlextHandlers[GetUserQuery, User]):
+        class GetUserHandler(FlextCore.Handlers[GetUserQuery, User]):
             """Handler for retrieving individual users."""
 
             def __init__(self, user_store: dict[str, User]) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="get_user_handler",
                     handler_name="Get User Handler",
                     handler_type="query",
@@ -293,27 +284,27 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self._logger = FlextLogger(__name__)
+                self._logger = FlextCore.Logger(__name__)
 
-            def handle(self, message: GetUserQuery) -> FlextResult[User]:
+            def handle(self, message: GetUserQuery) -> FlextCore.Result[User]:
                 """Handle get user query."""
                 self._logger.info(f"Getting user {message.user_id}")
 
                 user = self._users.get(message.user_id)
                 if not user:
-                    return FlextResult[User].fail(
+                    return FlextCore.Result[User].fail(
                         f"User {message.user_id} not found",
                         error_code="USER_NOT_FOUND",
                     )
 
-                return FlextResult[User].ok(user)
+                return FlextCore.Result[User].ok(user)
 
         # List Users Query Handler
-        class ListUsersHandler(FlextHandlers[ListUsersQuery, list[User]]):
+        class ListUsersHandler(FlextCore.Handlers[ListUsersQuery, list[User]]):
             """Handler for listing users with pagination."""
 
             def __init__(self, user_store: dict[str, User]) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="list_users_handler",
                     handler_name="List Users Handler",
                     handler_type="query",
@@ -326,19 +317,19 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self._logger = FlextLogger(__name__)
+                self._logger = FlextCore.Logger(__name__)
 
-            def handle(self, message: ListUsersQuery) -> FlextResult[list[User]]:
-                """Handle list[object] users query."""
+            def handle(self, message: ListUsersQuery) -> FlextCore.Result[list[User]]:
+                """Handle list users query."""
                 self._logger.info(
                     f"Listing users (limit: {message.limit}, offset: {message.offset})",
                 )
 
-                users = list[object](self._users.values())
+                users = list(self._users.values())
                 # Apply pagination
                 paginated_users = users[message.offset : message.offset + message.limit]
 
-                return FlextResult[list[User]].ok(paginated_users)
+                return FlextCore.Result[list[User]].ok(paginated_users)
 
         # Use query handlers
         print("\n1. Creating Query Handlers:")
@@ -378,23 +369,23 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("\n=== Handler Factory Methods ===")
 
         # Create handler from callable function
-        def validate_email(email: str) -> FlextResult[bool]:
+        def validate_email(email: str) -> FlextCore.Result[bool]:
             """Simple email validation function."""
             if "@" in email and "." in email:
-                return FlextResult[bool].ok(True)
-            return FlextResult[bool].fail("Invalid email format")
+                return FlextCore.Result[bool].ok(True)
+            return FlextCore.Result[bool].fail("Invalid email format")
 
         # Create wrapper function that handles object -> str conversion
-        def validate_email_wrapper(data: object) -> FlextResult[bool]:
+        def validate_email_wrapper(data: object) -> FlextCore.Result[bool]:
             """Wrapper function that converts object to str for email validation."""
             if not isinstance(data, str):
-                return FlextResult[bool].fail("Email must be a string")
+                return FlextCore.Result[bool].fail("Email must be a string")
             return validate_email(data)
 
         print("\n1. Creating Handler from Callable:")
 
         # Create handler config for the callable
-        handler_config = FlextModels.CqrsConfig.Handler(
+        handler_config = FlextCore.Models.CqrsConfig.Handler(
             handler_id="email_validator",
             handler_name="Email Validator",
             handler_type="command",
@@ -405,7 +396,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         )
 
         # Use from_callable factory method with wrapper
-        email_handler = FlextHandlers.from_callable(
+        email_handler = FlextCore.Handlers.from_callable(
             callable_func=validate_email_wrapper,
             mode="command",
             handler_config=handler_config,
@@ -428,7 +419,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # Lambda function handler
         print("\n2. Creating Handler from Lambda:")
 
-        lambda_config = FlextModels.CqrsConfig.Handler(
+        lambda_config = FlextCore.Models.CqrsConfig.Handler(
             handler_id="string_processor",
             handler_name="String Processor",
             handler_type="command",
@@ -439,13 +430,13 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         )
 
         # Create handler from lambda with proper type handling
-        def string_processor_wrapper(data: object) -> FlextResult[str]:
+        def string_processor_wrapper(data: object) -> FlextCore.Result[str]:
             """Wrapper function that handles object -> str conversion for string processing."""
             if not isinstance(data, str):
-                return FlextResult[str].fail("Input must be a string")
-            return FlextResult[str].ok(data.upper() if data else "")
+                return FlextCore.Result[str].fail("Input must be a string")
+            return FlextCore.Result[str].ok(data.upper() if data else "")
 
-        string_handler = FlextHandlers.from_callable(
+        string_handler = FlextCore.Handlers.from_callable(
             callable_func=string_processor_wrapper,
             mode="command",
             handler_config=lambda_config,
@@ -466,11 +457,13 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         """Show comprehensive error handling patterns."""
         print("\n=== Error Handling Patterns ===")
 
-        class ValidationHandler(FlextHandlers[FlextTypes.Dict, FlextTypes.Dict]):
+        class ValidationHandler(
+            FlextCore.Handlers[FlextCore.Types.Dict, FlextCore.Types.Dict]
+        ):
             """Handler demonstrating various error scenarios."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="validation_handler",
                     handler_name="Validation Handler",
                     handler_type="command",
@@ -480,18 +473,18 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     metadata={"description": "Demonstrates error handling patterns"},
                 )
                 super().__init__(config=config)
-                self._logger = FlextLogger(__name__)
+                self._logger = FlextCore.Logger(__name__)
 
             def handle(
                 self,
-                message: FlextTypes.Dict,
-            ) -> FlextResult[FlextTypes.Dict]:
+                message: FlextCore.Types.Dict,
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
                 """Handle validation with comprehensive error handling."""
                 self._logger.info("Processing validation request")
 
                 # Required field validation
                 if not message.get("id"):
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextCore.Result[FlextCore.Types.Dict].fail(
                         "Missing required field: id",
                         error_code="MISSING_FIELD",
                         error_data={
@@ -502,7 +495,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 # Type validation
                 if not isinstance(message.get("amount"), (int, float)):
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextCore.Result[FlextCore.Types.Dict].fail(
                         "Invalid type for amount field",
                         error_code="TYPE_ERROR",
                         error_data={
@@ -515,14 +508,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Business rule validation
                 amount_value = message.get("amount", 0)
                 if not isinstance(amount_value, (int, float)):
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextCore.Result[FlextCore.Types.Dict].fail(
                         "Amount must be a number",
                         error_code="TYPE_ERROR",
                     )
 
                 amount: int | float = amount_value
                 if amount < 0:
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextCore.Result[FlextCore.Types.Dict].fail(
                         "Amount cannot be negative",
                         error_code="BUSINESS_RULE_VIOLATION",
                         error_data={"rule": "positive_amount", "value": amount},
@@ -536,7 +529,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     "status": "validated",
                 }
 
-                return FlextResult[FlextTypes.Dict].ok(validated_data)
+                return FlextCore.Result[FlextCore.Types.Dict].ok(validated_data)
 
         # Test error handling
         print("\n1. Error Handling Scenarios:")
@@ -577,16 +570,16 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         class ProcessOrderCommand:
             order_id: str
             customer_id: str
-            items: list[FlextTypes.Dict]
+            items: list[FlextCore.Types.Dict]
             total_amount: Decimal
 
         class OrderValidationHandler(
-            FlextHandlers[ProcessOrderCommand, ProcessOrderCommand],
+            FlextCore.Handlers[ProcessOrderCommand, ProcessOrderCommand],
         ):
             """First stage: Order validation."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="order_validation",
                     handler_name="Order Validation Handler",
                     handler_type="command",
@@ -600,27 +593,27 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             def handle(
                 self,
                 message: ProcessOrderCommand,
-            ) -> FlextResult[ProcessOrderCommand]:
+            ) -> FlextCore.Result[ProcessOrderCommand]:
                 """Validate order before processing."""
                 if not message.items:
-                    return FlextResult[ProcessOrderCommand].fail(
+                    return FlextCore.Result[ProcessOrderCommand].fail(
                         "Order must contain items",
                     )
 
                 if message.total_amount <= 0:
-                    return FlextResult[ProcessOrderCommand].fail(
+                    return FlextCore.Result[ProcessOrderCommand].fail(
                         "Total amount must be positive",
                     )
 
-                return FlextResult[ProcessOrderCommand].ok(message)
+                return FlextCore.Result[ProcessOrderCommand].ok(message)
 
         class OrderEnrichmentHandler(
-            FlextHandlers[ProcessOrderCommand, ProcessOrderCommand],
+            FlextCore.Handlers[ProcessOrderCommand, ProcessOrderCommand],
         ):
             """Second stage: Order enrichment."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="order_enrichment",
                     handler_name="Order Enrichment Handler",
                     handler_type="command",
@@ -634,10 +627,10 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             def handle(
                 self,
                 message: ProcessOrderCommand,
-            ) -> FlextResult[ProcessOrderCommand]:
+            ) -> FlextCore.Result[ProcessOrderCommand]:
                 """Enrich order with additional data."""
                 # Simulate enrichment by adding timestamps and IDs
-                enriched_items: list[FlextTypes.Dict] = []
+                enriched_items: list[FlextCore.Types.Dict] = []
                 for item in message.items:
                     enriched_item = item.copy()
                     enriched_item["item_id"] = f"ITEM-{uuid4().hex[:8]}"
@@ -652,13 +645,13 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     total_amount=message.total_amount,
                 )
 
-                return FlextResult[ProcessOrderCommand].ok(enriched_command)
+                return FlextCore.Result[ProcessOrderCommand].ok(enriched_command)
 
-        class OrderPersistenceHandler(FlextHandlers[ProcessOrderCommand, str]):
+        class OrderPersistenceHandler(FlextCore.Handlers[ProcessOrderCommand, str]):
             """Final stage: Order persistence."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextCore.Models.CqrsConfig.Handler(
                     handler_id="order_persistence",
                     handler_name="Order Persistence Handler",
                     handler_type="command",
@@ -669,14 +662,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: ProcessOrderCommand) -> FlextResult[str]:
+            def handle(self, message: ProcessOrderCommand) -> FlextCore.Result[str]:
                 """Persist order to storage."""
                 # Simulate persistence
                 confirmation_id = f"CONF-{uuid4().hex[:8]}"
                 print(
                     f"    💾 Order {message.order_id} persisted with confirmation {confirmation_id}",
                 )
-                return FlextResult[str].ok(confirmation_id)
+                return FlextCore.Result[str].ok(confirmation_id)
 
         # Execute integration pipeline
         print("\n1. Order Processing Pipeline:")
@@ -701,7 +694,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # Execute pipeline using railway pattern
         pipeline_result = (
-            FlextResult[ProcessOrderCommand]
+            FlextCore.Result[ProcessOrderCommand]
             .ok(order)
             .flat_map(validator.handle)
             .flat_map(enricher.handle)
@@ -716,10 +709,10 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
     # ========== DEPRECATED PATTERNS ==========
 
-    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
 
     def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextResult methods in handlers context.
+        """Demonstrate the 5 new FlextCore.Result methods in handlers context.
 
         Shows how the new v0.9.9+ methods work with command/query handlers:
         - from_callable: Safe handler execution
@@ -729,7 +722,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         - value_or_call: Lazy handler initialization
         """
         print("\n" + "=" * 60)
-        print("NEW FLEXTRESULT METHODS - HANDLERS CONTEXT")
+        print("NEW FlextCore.Result METHODS - HANDLERS CONTEXT")
         print("Demonstrating v0.9.9+ methods with command/query handlers")
         print("=" * 60)
 
@@ -748,7 +741,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             # Could raise exception if validation fails
             if not user_data.get("email"):
                 msg = "Email is required for user creation"
-                raise FlextExceptions.ValidationError(
+                raise FlextCore.Exceptions.ValidationError(
                     msg,
                     field="email",
                     value=None,
@@ -756,7 +749,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             return user_data
 
         # Safe execution without try/except
-        handler_result = FlextResult.from_callable(risky_handler_operation)
+        handler_result = FlextCore.Result.from_callable(risky_handler_operation)
         if handler_result.is_success:
             data = handler_result.unwrap()
             print(f"✅ Handler successful: User {data.get('username', 'N/A')}")
@@ -769,44 +762,44 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         def validate_command(
             cmd: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Validate command data."""
             username = cmd.get("username", "")
             if not isinstance(username, str) or not username or len(username) < 3:
-                return FlextResult[dict[str, object]].fail(
+                return FlextCore.Result[dict[str, object]].fail(
                     "Username must be at least 3 characters",
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
                 )
-            return FlextResult[dict[str, object]].ok(cmd)
+            return FlextCore.Result[dict[str, object]].ok(cmd)
 
         def check_authorization(
             cmd: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Check if user is authorized for command."""
             # Simulate authorization check
-            return FlextResult[dict[str, object]].ok(cmd)
+            return FlextCore.Result[dict[str, object]].ok(cmd)
 
         def execute_command(
             cmd: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Execute the actual command."""
             executed: dict[str, object] = {
                 **cmd,
                 "executed_at": "2025-01-01T12:00:00Z",
                 "status": "success",
             }
-            return FlextResult[dict[str, object]].ok(executed)
+            return FlextCore.Result[dict[str, object]].ok(executed)
 
         def persist_result(
             cmd: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextCore.Result[dict[str, object]]:
             """Persist command execution result."""
             persisted: dict[str, object] = {
                 **cmd,
                 "persisted": True,
                 "db_id": str(uuid4())[:8],
             }
-            return FlextResult[dict[str, object]].ok(persisted)
+            return FlextCore.Result[dict[str, object]].ok(persisted)
 
         # Flow through handler pipeline
         command_input: dict[str, object] = {
@@ -815,7 +808,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             "command_type": "CreateUser",
         }
         pipeline_result = (
-            FlextResult[dict[str, object]]
+            FlextCore.Result[dict[str, object]]
             .ok(command_input)
             .flow_through(
                 validate_command,
@@ -836,17 +829,17 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # 3. lash - Handler Fallback
         print("\n=== 3. lash: Handler Fallback ===")
 
-        def primary_handler() -> FlextResult[str]:
+        def primary_handler() -> FlextCore.Result[str]:
             """Primary handler that might fail."""
-            return FlextResult[str].fail(
+            return FlextCore.Result[str].fail(
                 "Primary handler unavailable",
-                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                error_code=FlextCore.Constants.Errors.OPERATION_ERROR,
             )
 
-        def fallback_handler(error: str) -> FlextResult[str]:
+        def fallback_handler(error: str) -> FlextCore.Result[str]:
             """Fallback handler for error recovery."""
             print(f"   ⚠️  Primary failed: {error}, using fallback handler...")
-            return FlextResult[str].ok("FALLBACK-HANDLER-RESULT")
+            return FlextCore.Result[str].ok("FALLBACK-HANDLER-RESULT")
 
         # Try primary handler, fall back on error
         recovery_result = primary_handler().lash(fallback_handler)
@@ -859,20 +852,20 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # 4. alt - Alternative Handler Execution
         print("\n=== 4. alt: Alternative Handler Execution ===")
 
-        def get_cached_handler() -> FlextResult[dict[str, object]]:
+        def get_cached_handler() -> FlextCore.Result[dict[str, object]]:
             """Try to get cached handler result."""
-            return FlextResult[dict[str, object]].fail(
-                "Cache miss", error_code=FlextConstants.Errors.OPERATION_ERROR
+            return FlextCore.Result[dict[str, object]].fail(
+                "Cache miss", error_code=FlextCore.Constants.Errors.OPERATION_ERROR
             )
 
-        def execute_fresh_handler() -> FlextResult[dict[str, object]]:
+        def execute_fresh_handler() -> FlextCore.Result[dict[str, object]]:
             """Execute fresh handler."""
             handler_result: dict[str, object] = {
                 "handler_type": "fresh",
                 "execution_time": "10ms",
                 "result": "success",
             }
-            return FlextResult[dict[str, object]].ok(handler_result)
+            return FlextCore.Result[dict[str, object]].ok(handler_result)
 
         # Try cached, fall back to fresh execution
         handler_exec_result = get_cached_handler().alt(execute_fresh_handler())
@@ -897,7 +890,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             }
 
         # Try to get existing handler, create if not available
-        handler_fail_result = FlextResult[dict[str, object]].fail(
+        handler_fail_result = FlextCore.Result[dict[str, object]].fail(
             "No existing handler"
         )
         handler = handler_fail_result.value_or_call(create_expensive_handler)
@@ -912,7 +905,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             "initialized": True,
             "memory_mb": 64,
         }
-        handler_success_result = FlextResult[dict[str, object]].ok(
+        handler_success_result = FlextCore.Result[dict[str, object]].ok(
             existing_handler
         )
         handler_cached = handler_success_result.value_or_call(create_expensive_handler)
@@ -923,7 +916,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("   No expensive initialization needed")
 
         print("\n" + "=" * 60)
-        print("✅ NEW FLEXTRESULT METHODS HANDLERS DEMO COMPLETE!")
+        print("✅ NEW FlextCore.Result METHODS HANDLERS DEMO COMPLETE!")
         print("All 5 methods demonstrated with handler patterns")
         print("=" * 60)
 
@@ -935,24 +928,24 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # OLD: Direct instantiation without config (DEPRECATED)
         warnings.warn(
-            "Direct FlextHandlers instantiation is DEPRECATED! Use config-based initialization.",
+            "Direct FlextCore.Handlers instantiation is DEPRECATED! Use config-based initialization.",
             DeprecationWarning,
             stacklevel=2,
         )
         print("❌ OLD WAY (direct instantiation):")
-        print("class OldHandler(FlextHandlers):")
+        print("class OldHandler(FlextCore.Handlers):")
         print("    def __init__(self):")
         print("        super().__init__()  # No config provided")
 
         print("\n✅ CORRECT WAY (config-based):")
-        print("class NewHandler(FlextHandlers[MessageT, ResultT]):")
+        print("class NewHandler(FlextCore.Handlers[MessageT, ResultT]):")
         print("    def __init__(self):")
-        print("        config = FlextModels.CqrsConfig.Handler(...)")
+        print("        config = FlextCore.Models.CqrsConfig.Handler(...)")
         print("        super().__init__(config=config)")
 
         # OLD: Exception-based error handling (DEPRECATED)
         warnings.warn(
-            "Exception-based error handling is DEPRECATED! Use FlextResult patterns.",
+            "Exception-based error handling is DEPRECATED! Use FlextCore.Result patterns.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -962,11 +955,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("        raise ValueError('Invalid input')")
         print("    return result")
 
-        print("\n✅ CORRECT WAY (FlextResult):")
-        print("def handle(self, message) -> FlextResult[T]:")
+        print("\n✅ CORRECT WAY (FlextCore.Result):")
+        print("def handle(self, message) -> FlextCore.Result[T]:")
         print("    if invalid:")
-        print("        return FlextResult[T].fail('Invalid input')")
-        print("    return FlextResult[T].ok(result)")
+        print("        return FlextCore.Result[T].fail('Invalid input')")
+        print("    return FlextCore.Result[T].ok(result)")
 
         # OLD: Mixed command/query handlers (DEPRECATED)
         warnings.warn(
@@ -979,12 +972,12 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("    def create_and_get_user(self): ...")  # Both write and read
 
         print("\n✅ CORRECT WAY (separated):")
-        print("class CreateUserHandler(FlextHandlers[CreateCommand, str]): ...")
-        print("class GetUserHandler(FlextHandlers[GetQuery, User]): ...")
+        print("class CreateUserHandler(FlextCore.Handlers[CreateCommand, str]): ...")
+        print("class GetUserHandler(FlextCore.Handlers[GetQuery, User]): ...")
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextHandlers capabilities."""
+    """Main entry point demonstrating all FlextCore.Handlers capabilities."""
     service = FlextHandlersService()
 
     print("=" * 70)
@@ -1001,14 +994,14 @@ def main() -> None:
     service.demonstrate_error_handling()
     service.demonstrate_integration_patterns()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 70)
-    print("✅ ALL FlextHandlers patterns demonstrated!")
+    print("✅ ALL FlextCore.Handlers patterns demonstrated!")
     print("🎯 Key Features:")
     print("   • Configuration-based initialization")
     print("   • Type-safe generic handlers")

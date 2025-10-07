@@ -4462,7 +4462,7 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return providers_module.Factory(entity_class)
+            return cast("providers.Factory[Any]", providers_module.Factory(entity_class))
 
         @staticmethod
         def create_value_factory_provider(
@@ -4493,7 +4493,7 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return providers_module.Factory(value_class)
+            return cast("providers.Factory[Any]", providers_module.Factory(value_class))
 
         @staticmethod
         def create_aggregate_factory_provider(
@@ -4525,7 +4525,7 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return providers_module.Factory(aggregate_class)
+            return cast("providers.Factory[Any]", providers_module.Factory(aggregate_class))
 
         @staticmethod
         def create_domain_event_provider(

@@ -283,13 +283,48 @@ class FlextLogger:
         """Logger name."""
         return self._name
 
+    @classmethod
+    def _create_bound_logger(cls, name: str, bound_logger: object) -> FlextLogger:
+        """Internal factory for creating logger with pre-bound structlog instance.
+
+        This factory method allows creating FlextLogger instances with an already
+        configured structlog BoundLogger, avoiding the need to access private
+        attributes directly.
+
+        Args:
+            name: Logger name
+            bound_logger: Pre-configured bound structlog logger (object type used
+                         as structlog.BoundLogger is not publicly exposed)
+
+        Returns:
+            FlextLogger instance with bound logger
+
+        """
+        instance = cls.__new__(cls)
+        # Use setattr to initialize attributes without triggering descriptor protocol
+        setattr(instance, "_name", name)
+        setattr(instance, "logger", bound_logger)
+        return instance
+
     def bind(self, **context: object) -> FlextLogger:
-        """Bind additional context to the logger."""
-        # Create new instance with bound logger
-        new_logger = FlextLogger.__new__(FlextLogger)
-        new_logger._name = self._name  # noqa: SLF001
-        new_logger.logger = self.logger.bind(**context)
-        return new_logger
+        """Bind additional context to the logger.
+
+        Creates a new FlextLogger instance with additional context bound to the
+        underlying structlog logger. The original logger remains unchanged.
+
+        Args:
+            **context: Context key-value pairs to bind
+
+        Returns:
+            New FlextLogger instance with additional context bound
+
+        Example:
+            >>> logger = FlextLogger(__name__)
+            >>> request_logger = logger.bind(request_id="123", user_id="456")
+            >>> request_logger.info("Processing request")
+
+        """
+        return FlextLogger._create_bound_logger(self.name, self.logger.bind(**context))
 
     # =============================================================================
     # LOGGING METHODS - DELEGATE TO STRUCTLOG

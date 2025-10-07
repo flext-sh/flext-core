@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""04 - FlextConfig Fundamentals: Complete Configuration Management.
+"""04 - FlextCore.Config Fundamentals: Complete Configuration Management.
 
-This example demonstrates the COMPLETE FlextConfig API - the foundation
-for configuration management across the entire FLEXT ecosystem. FlextConfig provides
+This example demonstrates the COMPLETE FlextCore.Config API - the foundation
+for configuration management across the entire FLEXT ecosystem. FlextCore.Config provides
 environment-aware, type-safe configuration with Pydantic Settings integration.
 
 Key Concepts Demonstrated:
@@ -22,32 +22,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
-from typing import cast
 
-from flext_core import (
-    FlextConstants,
-    FlextCore,
-    FlextExceptions,
-    FlextResult,
-    FlextRuntime,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 from .example_scenarios import ExampleScenarios
 
 
-class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextConfig patterns with FlextMixins.Service infrastructure.
+class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
+    """Service demonstrating ALL FlextCore.Config patterns with FlextMixins.Service infrastructure.
 
     This service inherits from FlextCore.Service to demonstrate:
-    - Inherited container property (FlextContainer singleton)
-    - Inherited logger property (FlextLogger with service context)
-    - Inherited context property (FlextContext for request tracking)
-    - Inherited config property (FlextConfig with Pydantic 2.11+ Settings)
+    - Inherited container property (FlextCore.Container singleton)
+    - Inherited logger property (FlextCore.Logger with service context)
+    - Inherited context property (FlextCore.Context for request tracking)
+    - Inherited config property (FlextCore.Config with Pydantic 2.11+ Settings)
     - Inherited metrics property (FlextMetrics for observability)
 
-    The focus is on demonstrating FlextConfig patterns (Pydantic 2.11+ Settings
+    The focus is on demonstrating FlextCore.Config patterns (Pydantic 2.11+ Settings
     with dependency_injector integration) while leveraging complete FlextMixins.Service
     infrastructure for service orchestration.
     """
@@ -57,10 +48,10 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
         Note: No manual logger or config initialization needed!
         All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextLogger with service context
-        - self.container: FlextContainer global singleton
-        - self.context: FlextContext for request tracking
-        - self.config: FlextConfig with Pydantic 2.11+ Settings
+        - self.logger: FlextCore.Logger with service context
+        - self.container: FlextCore.Container global singleton
+        - self.context: FlextCore.Context for request tracking
+        - self.config: FlextCore.Config with Pydantic 2.11+ Settings
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
@@ -73,20 +64,20 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         self.logger.info(
             "ComprehensiveConfigService initialized with inherited infrastructure",
             extra={
-                "service_type": "FlextConfig Pydantic 2.11+ demonstration",
+                "service_type": "FlextCore.Config Pydantic 2.11+ demonstration",
                 "environment": self.config.environment,
                 "debug_mode": self.config.debug,
                 "log_level": self.config.log_level,
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
-        """Execute all FlextConfig demonstrations and return summary.
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+        """Execute all FlextCore.Config demonstrations and return summary.
 
         Demonstrates inherited config property alongside other infrastructure
         components (logger, container, context, metrics) from FlextMixins.Service.
         """
-        self.logger.info("Starting comprehensive FlextConfig demonstration")
+        self.logger.info("Starting comprehensive FlextCore.Config demonstration")
 
         try:
             # Run all demonstrations
@@ -130,17 +121,17 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             }
 
             self.logger.info(
-                "FlextConfig demonstration completed successfully",
+                "FlextCore.Config demonstration completed successfully",
                 extra={"demonstrations": summary["demonstrations_completed"]},
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(summary)
 
         except Exception as e:
             error_msg = f"Configuration demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(
-                error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                error_msg, error_code=FlextCore.Constants.Errors.VALIDATION_ERROR
             )
 
     # ========== GLOBAL SINGLETON ACCESS ==========
@@ -416,7 +407,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
         FlextCore.Config()
 
-        print("Note: FlextConfig is immutable after initialization")
+        print("Note: FlextCore.Config is immutable after initialization")
         print("To change config, create new instance with environment variables")
 
         print("\nCreating config for different environment:")
@@ -481,7 +472,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
-    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
 
     def demonstrate_from_callable(self) -> None:
         """Show from_callable for safe configuration loading."""
@@ -496,7 +487,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
                 raise ValueError(msg)
             return config
 
-        config_result = FlextResult.from_callable(risky_config_load)
+        config_result = FlextCore.Result.from_callable(risky_config_load)
         if config_result.is_success:
             config = config_result.unwrap()
             print(f"✅ Config loaded safely: environment={config.environment}")
@@ -510,7 +501,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
                 raise ValueError(msg)
             return f"Production config valid: debug={config.debug}"
 
-        validation_result = FlextResult.from_callable(validate_production)
+        validation_result = FlextCore.Result.from_callable(validate_production)
         if validation_result.is_success:
             print(f"✅ {validation_result.unwrap()}")
         else:
@@ -520,13 +511,13 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show pipeline composition for multi-step config operations."""
         print("\n=== flow_through(): Configuration Validation Pipeline ===")
 
-        def load_config(_: object) -> FlextResult[FlextCore.Config]:
+        def load_config(_: object) -> FlextCore.Result[FlextCore.Config]:
             """Step 1: Load configuration."""
-            return FlextResult[FlextCore.Config].ok(FlextCore.Config())
+            return FlextCore.Result[FlextCore.Config].ok(FlextCore.Config())
 
         def validate_environment(
             config: FlextCore.Config,
-        ) -> FlextResult[FlextCore.Config]:
+        ) -> FlextCore.Result[FlextCore.Config]:
             """Step 2: Validate environment settings."""
             if config.environment not in {
                 "development",
@@ -534,28 +525,30 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
                 "staging",
                 "production",
             }:
-                return FlextResult[FlextCore.Config].fail(
+                return FlextCore.Result[FlextCore.Config].fail(
                     f"Invalid environment: {config.environment}"
                 )
-            return FlextResult[FlextCore.Config].ok(config)
+            return FlextCore.Result[FlextCore.Config].ok(config)
 
-        def validate_logging(config: FlextCore.Config) -> FlextResult[FlextCore.Config]:
+        def validate_logging(
+            config: FlextCore.Config,
+        ) -> FlextCore.Result[FlextCore.Config]:
             """Step 3: Validate logging configuration."""
             if config.log_level not in FlextCore.Constants.Logging.VALID_LEVELS:
-                return FlextResult[FlextCore.Config].fail(
+                return FlextCore.Result[FlextCore.Config].fail(
                     f"Invalid log level: {config.log_level}"
                 )
-            return FlextResult[FlextCore.Config].ok(config)
+            return FlextCore.Result[FlextCore.Config].ok(config)
 
         def validate_performance(
             config: FlextCore.Config,
-        ) -> FlextResult[FlextCore.Config]:
+        ) -> FlextCore.Result[FlextCore.Config]:
             """Step 4: Validate performance settings."""
             if config.max_workers <= 0 or config.timeout_seconds <= 0:
-                return FlextResult[FlextCore.Config].fail(
+                return FlextCore.Result[FlextCore.Config].fail(
                     "Invalid performance settings"
                 )
-            return FlextResult[FlextCore.Config].ok(config)
+            return FlextCore.Result[FlextCore.Config].ok(config)
 
         # Pipeline: load → validate env → validate logging → validate performance
         result = (
@@ -578,15 +571,17 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show error recovery in configuration operations."""
         print("\n=== lash(): Configuration Error Recovery ===")
 
-        def try_load_production_config() -> FlextResult[FlextCore.Config]:
+        def try_load_production_config() -> FlextCore.Result[FlextCore.Config]:
             """Attempt to load production config (might fail)."""
-            return FlextResult[FlextCore.Config].fail("Production config not available")
+            return FlextCore.Result[FlextCore.Config].fail(
+                "Production config not available"
+            )
 
-        def recover_with_default(error: str) -> FlextResult[FlextCore.Config]:
+        def recover_with_default(error: str) -> FlextCore.Result[FlextCore.Config]:
             """Recover by loading default development config."""
             print(f"  Recovering from: {error}")
             default_config = FlextCore.Config.create_for_environment("development")
-            return FlextResult[FlextCore.Config].ok(default_config)
+            return FlextCore.Result[FlextCore.Config].ok(default_config)
 
         result = try_load_production_config().lash(recover_with_default)
         if result.is_success:
@@ -600,11 +595,13 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print("\n=== alt(): Configuration Source Fallback ===")
 
         # Primary: Production config (simulated failure)
-        primary = FlextResult[FlextCore.Config].fail("Production config unavailable")
+        primary = FlextCore.Result[FlextCore.Config].fail(
+            "Production config unavailable"
+        )
 
         # Fallback: Development config
         fallback_config = FlextCore.Config.create_for_environment("development")
-        fallback = FlextResult[FlextCore.Config].ok(fallback_config)
+        fallback = FlextCore.Result[FlextCore.Config].ok(fallback_config)
 
         result = primary.alt(fallback)
         if result.is_success:
@@ -617,7 +614,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
         # Success case - no expensive initialization needed
         success_config = FlextCore.Config()
-        success = FlextResult[FlextCore.Config].ok(success_config)
+        success = FlextCore.Result[FlextCore.Config].ok(success_config)
 
         expensive_created = False
 
@@ -637,7 +634,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
         # Failure case - expensive_default IS called
         expensive_created = False
-        failure = FlextResult[FlextCore.Config].fail("Config load failed")
+        failure = FlextCore.Result[FlextCore.Config].fail("Config load failed")
         config = failure.value_or_call(expensive_default)
         print(
             f"✅ Failure recovered: environment={config.environment}, "
@@ -647,61 +644,65 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
     # ========== FOUNDATION LAYER INTEGRATION (Layer 0.5 - 2) ==========
 
     def demonstrate_flext_runtime_integration(self) -> None:
-        """Show FlextRuntime (Layer 0.5) configuration defaults with FlextConfig."""
-        print("\n=== FlextRuntime Integration (Layer 0.5) ===")
+        """Show FlextCore.Runtime (Layer 0.5) configuration defaults with FlextCore.Config."""
+        print("\n=== FlextCore.Runtime Integration (Layer 0.5) ===")
 
         config = FlextCore.Config()
 
-        # FlextRuntime provides configuration defaults without circular dependencies
-        print("FlextRuntime configuration defaults:")
+        # FlextCore.Runtime provides configuration defaults without circular dependencies
+        print("FlextCore.Runtime configuration defaults:")
         print(f"  DEFAULT_APP_NAME: {'flext-app'}")
-        print(f"  DEFAULT_ENVIRONMENT: {FlextConstants.Config.DEFAULT_ENVIRONMENT}")
-        print(f"  DEFAULT_LOG_LEVEL: {FlextConstants.Logging.DEFAULT_LEVEL}")
-        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Defaults.TIMEOUT}s")
-        print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
+        print(
+            f"  DEFAULT_ENVIRONMENT: {FlextCore.Constants.Config.DEFAULT_ENVIRONMENT}"
+        )
+        print(f"  DEFAULT_LOG_LEVEL: {FlextCore.Constants.Logging.DEFAULT_LEVEL}")
+        print(f"  DEFAULT_TIMEOUT: {FlextCore.Constants.Defaults.TIMEOUT}s")
+        print(
+            f"  DEFAULT_MAX_WORKERS: {FlextCore.Constants.Processing.DEFAULT_MAX_WORKERS}"
+        )
 
-        # Validate configuration values using FlextRuntime type guards
+        # Validate configuration values using FlextCore.Runtime type guards
         if config.database_url:
-            is_valid_url = FlextRuntime.is_valid_url(config.database_url)
+            is_valid_url = FlextCore.Runtime.is_valid_url(config.database_url)
             print(f"✅ Database URL validation: {is_valid_url}")
 
         # Environment variable validation
-        env_value = config.environment or FlextConstants.Config.DEFAULT_ENVIRONMENT
-        is_valid_identifier = FlextRuntime.is_valid_identifier(env_value)
+        env_value = config.environment or FlextCore.Constants.Config.DEFAULT_ENVIRONMENT
+        is_valid_identifier = FlextCore.Runtime.is_valid_identifier(env_value)
         print(f"✅ Environment name is valid identifier: {is_valid_identifier}")
 
         # Log level validation
         log_level_valid = config.log_level in {
-            FlextConstants.Logging.DEBUG,
-            FlextConstants.Logging.INFO,
-            FlextConstants.Logging.WARNING,
-            FlextConstants.Logging.ERROR,
-            FlextConstants.Logging.CRITICAL,
+            FlextCore.Constants.Logging.DEBUG,
+            FlextCore.Constants.Logging.INFO,
+            FlextCore.Constants.Logging.WARNING,
+            FlextCore.Constants.Logging.ERROR,
+            FlextCore.Constants.Logging.CRITICAL,
         }
         print(f"✅ Log level '{config.log_level}' is valid: {log_level_valid}")
 
     def demonstrate_flext_constants_integration(self) -> None:
-        """Show FlextConstants (Layer 1) with configuration patterns."""
-        print("\n=== FlextConstants Integration (Layer 1) ===")
+        """Show FlextCore.Constants (Layer 1) with configuration patterns."""
+        print("\n=== FlextCore.Constants Integration (Layer 1) ===")
 
         config = FlextCore.Config()
 
-        # Configuration validation using FlextConstants
-        print("FlextConstants configuration validation:")
+        # Configuration validation using FlextCore.Constants
+        print("FlextCore.Constants configuration validation:")
 
         # Environment constants
         valid_envs = [
-            FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT.value,
-            FlextConstants.Environment.ConfigEnvironment.TESTING.value,
-            FlextConstants.Environment.ConfigEnvironment.STAGING.value,
-            FlextConstants.Environment.ConfigEnvironment.PRODUCTION.value,
+            FlextCore.Constants.Environment.ConfigEnvironment.DEVELOPMENT.value,
+            FlextCore.Constants.Environment.ConfigEnvironment.TESTING.value,
+            FlextCore.Constants.Environment.ConfigEnvironment.STAGING.value,
+            FlextCore.Constants.Environment.ConfigEnvironment.PRODUCTION.value,
         ]
         env_valid = config.environment in valid_envs
         print(f"✅ Environment '{config.environment}' is valid: {env_valid}")
 
         # Logging level constants
-        if hasattr(FlextConstants, "Logging"):
-            log_levels = FlextConstants.Logging.VALID_LEVELS
+        if hasattr(FlextCore.Constants, "Logging"):
+            log_levels = FlextCore.Constants.Logging.VALID_LEVELS
             log_valid = config.log_level in log_levels
             print(f"✅ Log level '{config.log_level}' in valid levels: {log_valid}")
 
@@ -712,15 +713,15 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print(f"✅ Timeout is positive: {timeout_ok}")
 
         # HTTP configuration defaults
-        if hasattr(FlextConstants, "Http"):
+        if hasattr(FlextCore.Constants, "Http"):
             print(
-                f"✅ HTTP Content-Type default: {FlextConstants.Http.DEFAULT_CONTENT_TYPE}"
+                f"✅ HTTP Content-Type default: {FlextCore.Constants.Http.DEFAULT_CONTENT_TYPE}"
             )
-            print(f"✅ HTTP Accept header: {FlextConstants.Http.DEFAULT_ACCEPT}")
+            print(f"✅ HTTP Accept header: {FlextCore.Constants.Http.DEFAULT_ACCEPT}")
 
     def demonstrate_flext_exceptions_integration(self) -> None:
-        """Show FlextExceptions (Layer 2) with configuration error handling."""
-        print("\n=== FlextExceptions Integration (Layer 2) ===")
+        """Show FlextCore.Exceptions (Layer 2) with configuration error handling."""
+        print("\n=== FlextCore.Exceptions Integration (Layer 2) ===")
 
         # ConfigurationError for invalid configuration
         try:
@@ -728,12 +729,12 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             invalid_workers = -1
             if invalid_workers <= 0:
                 error_message = "Invalid max_workers configuration"
-                raise FlextExceptions.ConfigurationError(
+                raise FlextCore.Exceptions.ConfigurationError(
                     error_message,
                     config_key="max_workers",
                     config_source="environment",
                 )
-        except FlextExceptions.ConfigurationError as e:
+        except FlextCore.Exceptions.ConfigurationError as e:
             print(f"✅ ConfigurationError: {e.error_code} - {e.message}")
             print(f"   Config key: {e.config_key}, Source: {e.config_source}")
 
@@ -741,18 +742,18 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         try:
             invalid_env = "invalid_environment"
             valid_envs = [
-                FlextConstants.Environment.ConfigEnvironment.DEVELOPMENT.value,
-                FlextConstants.Environment.ConfigEnvironment.PRODUCTION.value,
+                FlextCore.Constants.Environment.ConfigEnvironment.DEVELOPMENT.value,
+                FlextCore.Constants.Environment.ConfigEnvironment.PRODUCTION.value,
             ]
             if invalid_env not in valid_envs:
                 error_message = "Invalid environment configuration"
-                raise FlextExceptions.ValidationError(
+                raise FlextCore.Exceptions.ValidationError(
                     error_message,
                     field="environment",
                     value=invalid_env,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
                 )
-        except FlextExceptions.ValidationError as e:
+        except FlextCore.Exceptions.ValidationError as e:
             print(f"✅ ValidationError: {e.error_code} - {e.message}")
             print(f"   Field: {e.field}, Value: {e.value}")
 
@@ -762,12 +763,12 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             missing_required_config = None
             if missing_required_config is None:
                 error_message = "Required configuration not found"
-                raise FlextExceptions.ConfigurationError(
+                raise FlextCore.Exceptions.ConfigurationError(
                     error_message,
                     config_key="database_url",
                     config_source="environment",
                 )
-        except FlextExceptions.ConfigurationError as e:
+        except FlextCore.Exceptions.ConfigurationError as e:
             print(f"✅ Configuration loading error: {e.error_code}")
             print(f"   Missing config key: {e.config_key}")
 
@@ -786,13 +787,13 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print("API_PORT = 8000")
         print("DEBUG = True")
 
-        print("\n✅ CORRECT WAY (FlextConfig):")
+        print("\n✅ CORRECT WAY (FlextCore.Config):")
         print("config = FlextCore.Config()")
         print("database_url = config.database_url")
 
         # OLD: Global variables (DEPRECATED)
         warnings.warn(
-            "Global configuration variables are DEPRECATED! Use FlextConfig singleton.",
+            "Global configuration variables are DEPRECATED! Use FlextCore.Config singleton.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -820,20 +821,19 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
 
 
 def demonstrate_flextcore_config_access() -> None:
-    """Demonstrate Flext unified access to configuration.
+    """Demonstrate FlextCore.Constants unified access to configuration.
 
-    Shows how Flext provides convenient access to configuration
+    Shows how FlextCore.Constants provides convenient access to configuration
     alongside other flext-core components.
     """
     print("\n" + "=" * 60)
     print("FLEXTCORE UNIFIED CONFIG ACCESS")
-    print("Modern pattern for configuration with Flext")
+    print("Modern pattern for configuration with FlextCore.Constants")
     print("=" * 60)
 
-    # 1. Access config through Flext instance
-    print("\n=== 1. Config Access Through Flext ===")
-    core = FlextCore()
-    config = core.config
+    # 1. Access config through FlextCore.Constants class
+    print("\n=== 1. Config Access Through FlextCore.Constants ===")
+    config = FlextCore.Config()
     print(f"  ✅ Config accessed: {type(config).__name__}")
     print(f"  ✅ Environment: {config.environment}")
     print(f"  ✅ Log level: {config.log_level}")
@@ -846,14 +846,14 @@ def demonstrate_flextcore_config_access() -> None:
 
     # 3. Factory method for configuration
     print("\n=== 3. Config Factory Method ===")
-    factory_config = FlextCore.get_config()
+    factory_config = FlextCore.Config.create_for_environment("production")
     print(f"  ✅ Factory config: {type(factory_config).__name__}")
     print(f"  ✅ Timeout: {factory_config.timeout_seconds}s")
 
     # 4. Combined config with other components
     print("\n=== 4. Config with Integrated Components ===")
-    logger = core.logger
-    container = core.container
+    logger = FlextCore.Logger(__name__)
+    container = FlextCore.Container.get_global()
 
     logger.info("Configuration loaded", extra={"env": config.environment})
     container.register("config", config)
@@ -867,27 +867,27 @@ def demonstrate_flextcore_config_access() -> None:
     # 5. Infrastructure setup with configuration
     print("\n=== 5. Infrastructure with Custom Config ===")
     custom_config = FlextCore.Config()
-    setup_result = FlextCore.setup_service_infrastructure(
-        "config-demo-service", config=custom_config
-    )
 
-    if setup_result.is_success:
-        infra = setup_result.unwrap()
-        infra_config = cast("FlextCore.Config", infra["config"])
+    # Note: setup_service_infrastructure method not available in current version
+    # Using direct service instantiation instead
+    _ = FlextCore.Service[FlextCore.Types.Dict]()
+    # Service would typically get config injected via DI container
+    container = FlextCore.Container.get_global()
+    container.register("config", custom_config)
 
-        print("  ✅ Infrastructure initialized with custom config:")
-        print(f"     - Config type: {type(infra_config).__name__}")
-        print(f"     - Environment: {infra_config.environment}")
-        print(f"     - Same instance: {infra_config is custom_config}")
+    print("  ✅ Service initialized with custom config:")
+    print(f"     - Config type: {type(custom_config).__name__}")
+    print(f"     - Environment: {custom_config.environment}")
+    print("     - Container registered: config")
 
     print("\n" + "=" * 60)
-    print("✅ Flext config demonstration complete!")
+    print("✅ FlextCore.Constants config demonstration complete!")
     print("Benefits: Unified access, lazy loading, integrated patterns")
     print("=" * 60)
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextConfig capabilities."""
+    """Main entry point demonstrating all FlextCore.Config capabilities."""
     service = ComprehensiveConfigService()
 
     print("=" * 60)
@@ -922,7 +922,7 @@ def main() -> None:
     service.demonstrate_flext_constants_integration()
     service.demonstrate_flext_exceptions_integration()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_from_callable()
     service.demonstrate_flow_through()
     service.demonstrate_lash()
@@ -932,18 +932,18 @@ def main() -> None:
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()
 
-    # Modern Flext pattern demonstration
+    # Modern FlextCore.Constants pattern demonstration
     demonstrate_flextcore_config_access()
 
     print("\n" + "=" * 60)
-    print("✅ ALL FlextConfig methods demonstrated!")
+    print("✅ ALL FlextCore.Config methods demonstrated!")
     print(
         "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
     )
     print(
-        "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextConstants (Layer 1), FlextExceptions (Layer 2)"
+        "🔧 Including foundation integration: FlextCore.Runtime (Layer 0.5), FlextCore.Constants (Layer 1), FlextCore.Exceptions (Layer 2)"
     )
-    print("🎯 Next: See 05_logging_basics.py for FlextLogger patterns")
+    print("🎯 Next: See 05_logging_basics.py for FlextCore.Logger patterns")
     print("=" * 60)
 
 

@@ -107,6 +107,7 @@
         [tool.poetry.group.dev.dependencies]
             docker       = "^7.1.0"
             pyrefly      = "^0.34.0"
+            pytest       = "^8.4.0"
             types-pyyaml = "^6.0.12.20250822"
 
         [tool.poetry.group.typings.dependencies]

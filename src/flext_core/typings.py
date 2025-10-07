@@ -996,7 +996,7 @@ E = FlextTypes.E
 F = FlextTypes.F
 K = FlextTypes.K
 R = FlextTypes.R
-P = FlextTypes.P
+# P = FlextTypes.P  # Commented out due to pyrefly limitation - ParamSpec cannot be aliased
 
 # Message/CQRS TypeVars
 Message = FlextTypes.Message
@@ -1118,6 +1118,7 @@ __all__: list[str] = [
     "Message",
     "MessageT",
     "MessageT_contra",
+    # "P",  # ParamSpec cannot be exported - pyrefly limitation
     "Query",
     "R",
     "ResultT",

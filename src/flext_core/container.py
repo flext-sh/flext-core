@@ -18,10 +18,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 import inspect
 import threading
 from collections.abc import Callable
+from contextlib import suppress
 from typing import TYPE_CHECKING, Self, cast, override
 
 from flext_core.config import FlextConfig
@@ -247,14 +247,12 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # Use FlextConfig's DI Configuration provider
         # This provider is linked to Pydantic settings and automatically
         # syncs configuration values
-        try:
+        # If config provider is not ready (e.g., during initialization),
+        # skip sync - it will be synced on first use or manually via configure()
+        # This is intentional to prevent deadlock during container initialization
+        with suppress(Exception):
             config_provider = FlextConfig.get_di_config_provider()
             cast("DynamicContainer", self._di_container).config = config_provider
-        except Exception:  # noqa: S110
-            # If config provider is not ready (e.g., during initialization),
-            # skip sync - it will be synced on first use or manually via configure()
-            # This is intentional to prevent deadlock during container initialization
-            pass
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -280,6 +278,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         Note:
             This property provides read-only access to the internal services registry
             for backward compatibility with existing code that expects direct access.
+
         """
         return self._services.copy()
 
@@ -293,6 +292,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         Note:
             This property provides read-only access to the internal factories registry
             for backward compatibility with existing code that expects direct access.
+
         """
         return self._factories.copy()
 
@@ -308,7 +308,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "max_workers": self._global_config["max_workers"],
             "timeout_seconds": self._global_config["timeout_seconds"],
             "environment": self._global_config["environment"],
-            "service_count": len(set(self._services.keys()) | set(self._factories.keys())),
+            "service_count": len(
+                set(self._services.keys()) | set(self._factories.keys())
+            ),
             "services": list(self._services.keys()),
             "factories": list(self._factories.keys()),
         }
@@ -391,10 +393,11 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
             return FlextResult[None].ok(None)
         except Exception as e:
-            # Rollback on failure
+            # Rollback on failure - only delete if we successfully registered it
+            # We successfully called set_provider, so the attribute should exist
+            # If it doesn't, something unexpected happened but rollback continues
             if provider_registered and hasattr(self._di_container, name):
-                with contextlib.suppress(AttributeError, KeyError):
-                    delattr(self._di_container, name)
+                delattr(self._di_container, name)
             self._services.pop(name, None)
             return FlextResult[None].fail(f"Service storage failed: {e}")
 
@@ -451,11 +454,12 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
             return FlextResult[None].ok(None)
         except Exception as e:
-            # Rollback on failure
+            # Rollback on failure - only delete if we successfully registered it
             self._factories.pop(name, None)
+            # We successfully called set_provider, so the attribute should exist
+            # If it doesn't, something unexpected happened but rollback continues
             if provider_registered and hasattr(self._di_container, name):
-                with contextlib.suppress(AttributeError, KeyError):
-                    delattr(self._di_container, name)
+                delattr(self._di_container, name)
             return FlextResult[None].fail(f"Factory storage failed: {e}")
 
     def unregister(self, name: str) -> FlextResult[None]:
@@ -488,12 +492,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._factories.pop(name, None)
 
         # Remove from internal DI container (access as attribute)
-        # Best-effort removal - failure is non-critical since tracking dicts are cleaned
+        # Check existence before deletion to avoid AttributeError
         if hasattr(self._di_container, name):
-            with contextlib.suppress(AttributeError, KeyError):
-                # Expected: provider doesn't exist or already removed
-                # Non-critical: tracking dicts are authoritative
-                delattr(self._di_container, name)
+            delattr(self._di_container, name)
 
         return FlextResult[None].ok(None)
 

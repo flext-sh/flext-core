@@ -10,35 +10,35 @@ This directory contains comprehensive examples demonstrating ALL capabilities of
 
 These examples demonstrate the core building blocks of the FLEXT ecosystem:
 
-#### 01_basic_result.py - FlextResult Railway Pattern
+#### 01_basic_result.py - FlextCore.Result Railway Pattern
 
-- **Purpose**: Complete FlextResult[T] API demonstration
+- **Purpose**: Complete FlextCore.Result[T] API demonstration
 - **Concepts**: Railway-oriented programming, error handling without exceptions
 - **Key Methods**: `ok()`, `fail()`, `map()`, `flat_map()`, `filter()`, `recover()`, `tap()`, `zip_with()`, `traverse()`
 - **Run**: `python examples/01_basic_result.py`
 
-#### 02_dependency_injection.py - FlextContainer DI
+#### 02_dependency_injection.py - FlextCore.Container DI
 
 - **Purpose**: Complete dependency injection and service management
 - **Concepts**: Service registration, resolution, auto-wiring, lifecycle management
 - **Key Methods**: `register()`, `get()`, `register_factory()`, `register_singleton()`, `auto_wire()`, `batch_register()`
 - **Run**: `python examples/02_dependency_injection.py`
 
-#### 03_models_basics.py - FlextModels DDD Patterns
+#### 03_models_basics.py - FlextCore.Models DDD Patterns
 
 - **Purpose**: Domain-driven design with entities, values, and aggregates
 - **Concepts**: Value Objects, Entities, Aggregate Roots, Domain Events, Business Logic
-- **Key Classes**: `FlextModels.Value`, `FlextModels.Entity`, `FlextModels.AggregateRoot`
+- **Key Classes**: `FlextCore.Models.Value`, `FlextCore.Models.Entity`, `FlextCore.Models.AggregateRoot`
 - **Run**: `python examples/03_models_basics.py`
 
-#### 04_config_basics.py - FlextConfig Management
+#### 04_config_basics.py - FlextCore.Config Management
 
 - **Purpose**: Environment-aware configuration with Pydantic Settings
 - **Concepts**: Global singleton, environment detection, all configuration domains
 - **Key Features**: Database, cache, API, logging, performance, CQRS settings
 - **Run**: `python examples/04_config_basics.py`
 
-#### 05_logging_basics.py - FlextLogger Structured Logging
+#### 05_logging_basics.py - FlextCore.Logger Structured Logging
 
 - **Purpose**: Complete structured logging with context management
 - **Concepts**: Log levels, context binding, correlation tracking, performance metrics
@@ -53,14 +53,14 @@ These examples show specialized patterns and processing:
 
 - **Purpose**: Message passing and domain event patterns
 - **Concepts**: Generic payloads, domain events, message routing, correlation
-- **Key Classes**: `FlextModels.Payload[T]`, `FlextModels.DomainEvent`
+- **Key Classes**: `FlextCore.Models.Payload[T]`, `FlextCore.Models.DomainEvent`
 - **Run**: `python examples/06_messaging_patterns.py`
 
-#### 07_processing_handlers.py - FlextProcessors Patterns
+#### 07_processing_handlers.py - FlextCore.Processors Patterns
 
 - **Purpose**: Handler pipelines and strategy patterns
 - **Concepts**: Chain of responsibility, strategy pattern, registry, error recovery
-- **Key Classes**: `FlextProcessors.Implementation.BasicHandler`
+- **Key Classes**: `FlextCore.Processors.Implementation.BasicHandler`
 - **Run**: `python examples/07_processing_handlers.py`
 
 ### Integration Example (08)
@@ -145,20 +145,20 @@ done
 
 ### ✅ DO (Shown in Examples)
 
-- Use `FlextResult[T]` for all error handling (no exceptions in business logic)
-- Access configuration via `FlextConfig()` (direct instantiation)
-- Use `FlextContainer.get_global()` for dependency injection
-- Model domains with `FlextModels.Entity/Value/AggregateRoot`
-- Structure logs with `FlextLogger(__name__)` and context binding
+- Use `FlextCore.Result[T]` for all error handling (no exceptions in business logic)
+- Access configuration via `FlextCore.Config()` (direct instantiation)
+- Use `FlextCore.Container.get_global()` for dependency injection
+- Model domains with `FlextCore.Models.Entity/Value/AggregateRoot`
+- Structure logs with `FlextCore.Logger(__name__)` and context binding
 - Chain operations with railway pattern (`.flat_map()`, `.map()`)
 - Use type hints everywhere for type safety
 
 ### ❌ DON'T (Shown as Deprecation Warnings)
 
-- Don't use try/except for business logic (use FlextResult)
-- Don't use print() for logging (use FlextLogger)
-- Don't hard-code configuration (use FlextConfig)
-- Don't use global variables (use FlextContainer)
+- Don't use try/except for business logic (use FlextCore.Result)
+- Don't use print() for logging (use FlextCore.Logger)
+- Don't hard-code configuration (use FlextCore.Config)
+- Don't use global variables (use FlextCore.Container)
 - Don't mix infrastructure with domain logic (use DDD patterns)
 - Don't use mutable default arguments (use Pydantic models)
 - Don't ignore type hints (enable MyPy strict mode)
@@ -204,11 +204,11 @@ pytest tests/test_examples.py -v
 
 ## 🎯 Key Takeaways
 
-1. **FlextResult eliminates exceptions** - All operations return results that can be composed
-2. **FlextContainer manages dependencies** - Type-safe service injection without magic
-3. **FlextModels enforce business rules** - Domain logic lives in the models
-4. **FlextConfig centralizes settings** - One source of truth for configuration
-5. **FlextLogger provides structure** - Context-aware logging with correlation
+1. **FlextCore.Result eliminates exceptions** - All operations return results that can be composed
+2. **FlextCore.Container manages dependencies** - Type-safe service injection without magic
+3. **FlextCore.Models enforce business rules** - Domain logic lives in the models
+4. **FlextCore.Config centralizes settings** - One source of truth for configuration
+5. **FlextCore.Logger provides structure** - Context-aware logging with correlation
 6. **Everything composes** - All patterns work together seamlessly
 
 ## 🔄 Version Compatibility

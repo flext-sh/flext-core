@@ -1010,7 +1010,7 @@ def test_registry_register_command_failure() -> None:
         pass
 
     # Register with None handler to trigger failure (line 269)
-    result = registry.register_handler(None)  # type: ignore[arg-type]
+    result = registry.register_handler(None)
     assert result.is_failure
     assert "Handler cannot be None" in (result.error or "")
 
@@ -1073,7 +1073,9 @@ def test_registry_register_function_map_exception_handling() -> None:
     registry = FlextRegistry(dispatcher=dispatcher)
 
     class ProblematicMessage:
-        def __name__(self) -> None:  # noqa: PLW3201  # Deliberately problematic for testing
+        @property
+        def name(self) -> str:
+            """Property that raises to test error handling."""
             msg = "error"
             raise RuntimeError(msg)
 

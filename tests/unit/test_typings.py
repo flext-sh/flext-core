@@ -12,7 +12,7 @@ from flext_core.typings import (
     F,
     K,
     Message,
-    P,
+    # P is not exported due to ParamSpec limitations
     Query,
     R,
     ResultT,
@@ -96,7 +96,9 @@ class TestTypeVars:
 
     def test_paramspec_defined(self) -> None:
         """Test ParamSpec is properly defined."""
-        assert P is not None
+        # P is not exported at module level due to ParamSpec limitations
+        # Access through FlextTypes.P instead
+        assert FlextTypes.P is not None
 
 
 class TestRateLimiterState:

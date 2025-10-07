@@ -11,24 +11,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
 from typing import cast
-from uuid import uuid4
 
+from flext_core.__version__ import __version__, __version_info__
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.decorators import (
-    combined,
-    inject,
-    log_operation,
-    railway,
-    track_performance,
-)
+from flext_core.decorators import FlextDecorators
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
@@ -80,9 +71,9 @@ class FlextCore:
     # ✅ SINGLE IMPORT - Complete framework access
     from flext_core import FlextCore
 
-    # Railway pattern - shorthand factory methods
-    result = FlextCore.ok("success")  # FlextResult[str].ok()
-    error = FlextCore.fail("error")   # FlextResult.fail()
+    # Railway pattern - direct class access
+    result = FlextCore.Result[str].ok("success")
+    error = FlextCore.Result[str].fail("error")
 
     # Components via namespace (zero additional imports)
     logger = FlextCore.Logger(__name__)
@@ -93,16 +84,26 @@ class FlextCore:
     timeout = FlextCore.Constants.Defaults.TIMEOUT
     http_ok = FlextCore.Constants.Http.Status.OK
 
-    # Decorators
-    @FlextCore.Decorators.railway
+
+    # Decorators - TWO ACCESS PATTERNS
+    @FlextCore.railway  # Direct access (NEW in v0.9.9+)
     def operation() -> FlextCore.Result[str]:
-        return FlextCore.ok("done")
+        return FlextCore.Result[str].ok("done")
+
+
+    @FlextCore.Decorators.railway  # Namespace access (also supported)
+    def operation2() -> FlextCore.Result[str]:
+        return FlextCore.Result[str].ok("done")
+
 
     # Runtime management
     runtime = FlextCore.Runtime()
 
     # Validation utilities
     is_valid = FlextCore.validate.is_not_empty("test")
+
+    # Version information
+    print(f"Version: {FlextCore.version}")  # e.g., "0.9.9"
     ```
 
     **Instance-Based Usage** (for stateful operations):
@@ -135,113 +136,148 @@ class FlextCore:
     """
 
     # =================================================================
-    # CLASS-LEVEL TYPE ALIASES (PEP 695 - Python 3.12+)
+    # CLASS-LEVEL TYPE ALIASES
     # =================================================================
-    # Using PEP 695 'type' statement for proper type aliases that work in annotations
-    # while avoiding Pydantic field interpretation. TypeAliasType instances enable
-    # usage like: def foo() -> FlextCore.Types.Dict: ...
+    # Direct class references for maintaining method access patterns
+    # This allows both FlextCore.Result[T].ok() and isinstance() checks to work
 
-    # Direct class references (not fields) - following namespace class pattern
-    # Direct reference to maintain identity check (FlextCore.Result is FlextResult)
+    # Direct class reference (not a type alias) to maintain method access
+    # FlextCore.Result.ok() and FlextCore.Result[T].ok() both work
     Result = FlextResult
 
-    # Direct access to main classes without wrappers
-    Types = FlextTypes
-    Models = FlextModels
-    Constants = FlextConstants
-    Exceptions = FlextExceptions
-    Protocols = FlextProtocols
-    Config = FlextConfig
-    Container = FlextContainer
-    Logger = FlextLogger
-    Bus = FlextBus
-    Context = FlextContext
-    Registry = FlextRegistry
-    Dispatcher = FlextDispatcher
-    Handlers = FlextHandlers
-    Processors = FlextProcessors
-    Service = FlextService
-    Mixins = FlextMixins
-    Utilities = FlextUtilities
-    Runtime = FlextRuntime
+    class Types(FlextTypes):
+        """Type system namespace providing type definitions."""
 
-    # =================================================================
-    # DECORATORS NAMESPACE (Python 3.13+ Nested Class Pattern)
-    # =================================================================
-    class Decorators:
+        class Core(FlextTypes.Core):
+            """Core fundamental types for the FLEXT ecosystem with Python 3.13+ enhancements."""
+
+        class Headers(FlextTypes.Headers):
+            """HTTP headers and metadata types."""
+
+        class Domain(FlextTypes.Domain):
+            """Domain-Driven Design types."""
+
+        class Async(FlextTypes.Async):
+            """Async types for coroutines and generators."""
+
+        class ErrorHandling(FlextTypes.ErrorHandling):
+            """Error handling types for robust error management."""
+
+        class Project(FlextTypes.Project):
+            """Project-specific types for the FLEXT ecosystem."""
+
+        class Service(FlextTypes.Service):
+            """Service types for domain services."""
+
+        class Context(FlextTypes.Context):
+            """Context types for request/operation context management."""
+
+        class Utilities(FlextTypes.Utilities):
+            """Utility types for validation and transformation utilities."""
+
+        class Config(FlextTypes.Config):
+            """Configuration types for Pydantic."""
+
+        class Handlers(FlextTypes.Handlers):
+            """CQRS handler registration and execution types."""
+
+    class Models(FlextModels):
+        """Domain modeling namespace providing DDD patterns."""
+
+    class Constants(FlextConstants):
+        """System constants and configuration values."""
+
+    class Exceptions(FlextExceptions):
+        """Exception hierarchy for error handling."""
+
+    class Protocols(FlextProtocols):
+        """Protocol definitions and interfaces."""
+
+    class Config(FlextConfig):
+        """Configuration management with Pydantic."""
+
+    class Container(FlextContainer):
+        """Dependency injection container with facade-compatible type returns.
+
+        Overrides parent classmethods to return FlextCore.Container type
+        instead of FlextContainer for proper type compatibility in examples.
+        """
+
+        @classmethod
+        def get_global(cls) -> FlextCore.Container:
+            """Get the global container instance.
+
+            Returns:
+                FlextCore.Container: The global container instance with proper facade typing.
+
+            Note:
+                This override ensures FlextCore.Container.get_global() returns
+                FlextCore.Container type instead of base FlextContainer type.
+
+            """
+            # Call parent implementation but cast to correct facade type
+            # The parent _ensure_global_instance() creates FlextContainer instance,
+            # but since FlextCore.Container inherits from FlextContainer,
+            # the instance is compatible - we just need to satisfy the type checker
+            return cast("FlextCore.Container", super().get_global())
+
+    class Logger(FlextLogger):
+        """Structured logging with context."""
+
+    class Bus(FlextBus):
+        """Event messaging and pub/sub."""
+
+    class Context(FlextContext):
+        """Request and operation context management."""
+
+    class Registry(FlextRegistry):
+        """Component registration and discovery."""
+
+    class Dispatcher(FlextDispatcher):
+        """Message routing and dispatching."""
+
+    class Handlers[MessageT_contra, ResultT](FlextHandlers[MessageT_contra, ResultT]):
+        """CQRS handler registration and execution."""
+
+    class Processors(FlextProcessors):
+        """Processing utilities and orchestration."""
+
+    class Service[TDomainResult](FlextService[TDomainResult]):
+        """Base service class with infrastructure."""
+
+    class Mixins(FlextMixins):
+        """Reusable behavior mixins."""
+
+    class Utilities(FlextUtilities):
+        """Helper functions and utilities."""
+
+    class Runtime(FlextRuntime):
+        """Runtime management and lifecycle."""
+
+    class Decorators(FlextDecorators):
         """Decorator utilities namespace.
 
         Provides access to all flext-core decorators through unified facade.
+        Inherits from FlextDecorators for single-class pattern consistency.
 
         Example:
-            >>> @FlextCore.Decorators.railway
+            >>> @FlextCore.Decorators.railway()
             ... def operation() -> FlextResult[str]:
             ...     return FlextResult[str].ok("success")
             >>>
-            >>> @FlextCore.Decorators.inject("logger")
-            ... def process(logger: FlextLogger) -> None:
+            >>> @FlextCore.Decorators.inject(logger=FlextLogger)
+            ... def process(*, logger: FlextLogger) -> None:
             ...     logger.info("Processing...")
 
         """
 
-        railway = railway
-        inject = inject
-        log_operation = log_operation
-        track_performance = track_performance
-        combined = combined
-
-    # Validation utilities shorthand
-    validate = FlextUtilities.Validation
-
     # =================================================================
-    # SHORTHAND FACTORY METHODS (Python 3.13+ Type Parameters)
+    # VERSION INFORMATION (v0.9.9+ Enhancement)
     # =================================================================
-    # These provide convenient single-import access to common patterns
+    # Direct access to version information through FlextCore facade
 
-    @classmethod
-    def ok[T](cls, value: T) -> FlextResult[T]:
-        """Create successful FlextResult - shorthand for FlextResult[T].ok().
-
-        This is the recommended factory method for creating success results
-        when using single-import pattern with FlextCore.
-
-        Args:
-            value: Success value of type T.
-
-        Returns:
-            FlextResult[T] in success state containing the value.
-
-        Example:
-            >>> result = FlextCore.ok("success")
-            >>> assert result.is_success
-            >>> assert result.value == "success"
-
-        """
-        return FlextResult[T].ok(value)
-
-    @classmethod
-    def fail(
-        cls, error: str, error_code: str | None = None
-    ) -> FlextResult[object]:
-        """Create failed FlextResult - shorthand for FlextResult.fail().
-
-        This is the recommended factory method for creating failure results
-        when using single-import pattern with FlextCore.
-
-        Args:
-            error: Error message describing the failure.
-            error_code: Optional error code for categorization.
-
-        Returns:
-            FlextResult[object] in failure state with error information.
-
-        Example:
-            >>> result = FlextCore.fail("validation error", "VAL_001")
-            >>> assert result.is_failure
-            >>> assert result.error == "validation error"
-
-        """
-        return FlextResult[object].fail(error, error_code=error_code)
+    version: str = __version__
+    version_info: tuple[int | str, ...] = __version_info__
 
     # =================================================================
     # INSTANCE INITIALIZATION
@@ -249,500 +285,15 @@ class FlextCore:
     # Note: PEP 695 type aliases (above) automatically support generic subscripting
     # like FlextCore.Result[T] without needing __class_getitem__ method
 
-    @classmethod
-    def get_container(cls) -> FlextContainer:
-        """Get a new container instance."""
-        return FlextContainer()
-
-    @classmethod
-    def get_config(cls) -> FlextConfig:
-        """Get a new config instance."""
-        return FlextConfig()
-
-    @classmethod
-    def create_result_ok[T](cls, value: T) -> FlextResult[T]:
-        """Create a successful result.
-
-        Deprecated: Use FlextCore.ok() instead.
-
-        """
-        return FlextResult[T].ok(value)
-
-    @classmethod
-    def create_result_fail(
-        cls, error: str, error_code: str | None = None
-    ) -> FlextResult[object]:
-        """Create a failed result.
-
-        Deprecated: Use FlextCore.fail() instead.
-
-        """
-        return FlextResult[object].fail(error, error_code=error_code)
-
-    @classmethod
-    def create_logger(cls, name: str) -> FlextLogger:
-        """Create a new logger instance."""
-        return FlextLogger(name)
-
-    def __init__(self, config: FlextConfig | None = None) -> None:
+    def __init__(self) -> None:
         """Initialize the unified core facade.
 
         Args:
-            config: Optional configuration instance. If not provided,
-                    uses FlextConfig() direct instantiation.
+            None
 
         """
         super().__init__()
-        self._config = config or FlextConfig()
 
-        # Lazy-loaded components (initialized on first access)
-        self._container: FlextContainer | None = None
-        self._logger: FlextLogger | None = None
-        self._bus_instance: FlextBus | None = None
-        self.context_instance: FlextContext | None = None
-        self._dispatcher: FlextDispatcher | None = None
-        self._registry: FlextRegistry | None = None
-        self._processors: FlextProcessors | None = None
-
-    # =================================================================
-    # PROPERTY ACCESSORS (Lazy-loaded component instances)
-    # =================================================================
-
-    @property
-    def config(self) -> FlextConfig:
-        """Get configuration instance (direct instantiation pattern).
-
-        Returns:
-            FlextConfig instance with current configuration.
-
-        """
-        return self._config or FlextConfig()
-
-    @property
-    def container(self) -> FlextContainer:
-        """Get global dependency injection container.
-
-        Returns:
-            Global FlextContainer singleton instance.
-
-        """
-        if self._container is None:
-            self._container = FlextContainer.get_global()
-        return self._container
-
-    @property
-    def logger(self) -> FlextLogger:
-        """Get structured logger instance.
-
-        Returns:
-            FlextLogger instance for this module.
-
-        """
-        if self._logger is None:
-            self._logger = FlextLogger(__name__)
-        return self._logger
-
-    @property
-    def bus(self) -> FlextBus:
-        """Get event bus instance.
-
-        Returns:
-            FlextBus instance for pub/sub messaging.
-
-        """
-        if self._bus_instance is None:
-            self._bus_instance = FlextBus()
-        return self._bus_instance
-
-    @property
-    def context(self) -> FlextContext:
-        """Get context management instance.
-
-        Returns:
-            FlextContext instance for request/operation context.
-
-        """
-        if self.context_instance is None:
-            self.context_instance = FlextContext()
-        return self.context_instance
-
-    @property
-    def dispatcher(self) -> FlextDispatcher:
-        """Get message dispatcher instance.
-
-        Returns:
-            FlextDispatcher instance for message routing.
-
-        """
-        if self._dispatcher is None:
-            self._dispatcher = FlextDispatcher()
-        return self._dispatcher
-
-    @property
-    def registry(self) -> FlextRegistry:
-        """Get component registry instance.
-
-        Returns:
-            FlextRegistry instance for component registration.
-
-        """
-        if self._registry is None:
-            self._registry = FlextRegistry(dispatcher=self.dispatcher)
-        return self._registry
-
-    @property
-    def processors(self) -> FlextProcessors:
-        """Get processors instance for processing utilities.
-
-        Returns:
-            FlextProcessors instance for processing operations.
-
-        """
-        if self._processors is None:
-            self._processors = FlextProcessors()
-        return self._processors
-
-    # =================================================================
-    # INTEGRATION HELPERS (Common patterns)
-    # =================================================================
-
-    @classmethod
-    def setup_service_infrastructure(
-        cls,
-        service_name: str,
-        config: FlextConfig | None = None,
-    ) -> FlextResult[FlextTypes.Dict]:
-        """Setup complete service infrastructure with all components.
-
-        This is a convenience method that initializes all common flext-core
-        components needed for a typical service: config, container, logger,
-        bus, and context.
-
-        Args:
-            service_name: Name of the service being setup.
-            config: Optional configuration instance.
-
-        Returns:
-            FlextResult containing dict with all initialized components:
-            - config: FlextConfig instance
-            - container: FlextContainer instance
-            - logger: FlextLogger instance
-            - bus: FlextBus instance
-            - context: FlextContext instance
-
-        Example:
-            >>> result = FlextCore.setup_service_infrastructure("my-service")
-            >>> if result.is_success:
-            ...     infra = result.unwrap()
-            ...     logger = infra["logger"]
-            ...     container = infra["container"]
-
-        """
-        try:
-            # Initialize all components
-            service_config = config or FlextConfig()
-            container = FlextContainer.get_global()
-            logger = FlextLogger(service_name)
-            bus = FlextBus()
-            context = FlextContext()
-
-            # Register core components in container
-            container.register("config", service_config)
-            container.register("logger", logger)
-            container.register("bus", bus)
-            container.register("context", context)
-
-            # Log infrastructure setup
-            logger.info(
-                "Service infrastructure setup completed",
-                extra={"service": service_name},
-            )
-
-            # Return all components
-            infrastructure: FlextTypes.Dict = {
-                "config": service_config,
-                "container": container,
-                "logger": logger,
-                "bus": bus,
-                "context": context,
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(infrastructure)
-
-        except Exception as e:
-            error_msg = f"Service infrastructure setup failed for {service_name}: {e}"
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
-
-    # =================================================================
-    # CONVENIENCE METHODS (1.1.0 ENHANCEMENTS)
-    # =================================================================
-
-    def publish_event(
-        self,
-        event_type: str,
-        data: FlextTypes.Dict,
-        correlation_id: str | None = None,
-    ) -> FlextResult[None]:
-        """Publish event with automatic correlation tracking.
-
-        This convenience method simplifies event publishing by automatically
-        adding correlation ID and timestamp to event data.
-
-        Args:
-            event_type: Type/name of the event (e.g., "user.created").
-            data: Event payload data.
-            correlation_id: Optional correlation ID. If not provided,
-                            attempts to get from context.
-
-        Returns:
-            FlextResult indicating success or failure of event publishing.
-
-        Example:
-            >>> core = FlextCore()
-            >>> result = core.publish_event(
-            ...     "order.created", {"order_id": "123", "amount": 99.99}
-            ... )
-            >>> if result.is_success:
-            ...     print("Event published successfully")
-
-        """
-        try:
-            # Get or generate correlation ID
-            correlation = correlation_id
-            if correlation is None:
-                # Generate unique correlation ID
-                correlation = str(uuid4())
-
-            # Log event with structured data
-            self.logger.info(
-                f"Event: {event_type}",
-                extra={
-                    "event_type": event_type,
-                    "correlation_id": correlation,
-                    "timestamp": time.time(),
-                    "data": data,
-                },
-            )
-
-            return FlextResult[None].ok(None)
-
-        except Exception as e:
-            error_msg = f"Event publishing failed: {e}"
-            self.logger.exception(error_msg, extra={"event_type": event_type})
-            return FlextResult[None].fail(error_msg)
-
-    @staticmethod
-    def build_pipeline_operations(
-        *operations: object,
-    ) -> Callable[[object], FlextResult[object]]:
-        """Build railway-oriented pipeline from operations.
-
-        Creates a composed function that executes operations in sequence,
-        automatically handling FlextResult chaining with early termination
-        on first failure (railway pattern).
-
-        Args:
-            *operations: Sequence of operations to compose. Each operation
-                        should accept previous result and return FlextResult.
-
-        Returns:
-            Composed pipeline function that accepts initial value and
-            returns final FlextResult.
-
-        Example:
-            >>> def validate(data: str) -> FlextResult[str]:
-            ...     if not data:
-            ...         return FlextCore.Result[str].fail("Empty data")
-            ...     return FlextCore.Result[str].ok(data)
-            >>>
-            >>> def process(data: str) -> FlextResult[str]:
-            ...     return FlextCore.Result[str].ok(data.upper())
-            >>>
-            >>> pipeline = FlextCore.build_pipeline(validate, process)
-            >>> result = pipeline("test")
-            >>> print(result.value)  # "TEST"
-
-        """
-
-        def pipeline(initial_value: object) -> FlextResult[object]:
-            """Execute pipeline with initial value."""
-            # Start with successful result containing initial value
-            result = FlextResult[object].ok(initial_value)
-
-            # Chain operations with early termination on failure
-            for operation_obj in operations:
-                if result.is_failure:
-                    break
-
-                # Each operation receives unwrapped value and returns FlextResult
-                try:
-                    current_value = result.unwrap()
-                    operation = cast(
-                        "Callable[[object], FlextResult[object]]", operation_obj
-                    )
-                    result = operation(current_value)
-                except Exception as e:
-                    result = FlextResult[object].fail(f"Pipeline operation failed: {e}")
-                    break
-
-            return result
-
-        return pipeline
-
-    @contextmanager
-    def request_context(
-        self,
-        request_id: str | None = None,
-        user_id: str | None = None,
-        **metadata: object,
-    ) -> Iterator[FlextContext]:
-        """Context manager for request-scoped context.
-
-        Automatically manages context lifecycle, setting request-scoped
-        data and ensuring cleanup after the request completes.
-
-        Args:
-            request_id: Optional request ID. Generated if not provided.
-            user_id: Optional user ID for the request.
-            **metadata: Additional metadata to store in context.
-
-        Yields:
-            FlextContext instance with request data set.
-
-        Example:
-            >>> core = FlextCore()
-            >>> with core.request_context(user_id="123", trace=True) as ctx:
-            ...     # Context is automatically populated
-            ...     print(ctx.get("request_id"))
-            ...     print(ctx.get("user_id"))  # "123"
-            ...     # Process request here
-            ... # Context is automatically cleared after block
-
-        """
-        # Generate request ID if not provided
-        req_id = request_id or str(uuid4())
-
-        # Set request context
-        self.context.set("request_id", req_id)
-        if user_id:
-            self.context.set("user_id", user_id)
-
-        # Set additional metadata
-        for key, value in metadata.items():
-            self.context.set(key, value)
-
-        # Log request start
-        self.logger.info(
-            "Request started",
-            extra={"request_id": req_id, "user_id": user_id},
-        )
-
-        try:
-            # Yield context for use in with block
-            yield self.context
-        finally:
-            # Cleanup context after request
-            self.logger.info(
-                "Request completed",
-                extra={"request_id": req_id},
-            )
-            # Note: Context cleanup handled by context manager itself
-
-    @classmethod
-    def create_command_handler(
-        cls,
-        handler_func: object,
-        command_type: type | None = None,
-    ) -> FlextResult[FlextTypes.Dict]:
-        """Create CQRS command handler.
-
-        Args:
-            handler_func: Handler function or callable.
-            command_type: Optional command type for registration.
-
-        Returns:
-            FlextResult containing handler configuration for registration.
-
-        Example:
-            >>> def handle_create_user(cmd):
-            ...     return FlextResult[FlextTypes.Dict].ok({"user": "created"})
-            >>>
-            >>> result = FlextCore.create_command_handler(handle_create_user)
-
-        """
-        try:
-            # Create handler configuration for registration
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id="command_handler",
-                handler_name="CommandHandler",
-                handler_type="command",
-            )
-
-            # Return handler configuration (not instantiated handler)
-            # Actual handler instance should extend FlextHandlers and implement handle()
-            handler_config: FlextTypes.Dict = {
-                "config": config,
-                "handler_func": handler_func,
-                "command_type": command_type,
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(handler_config)
-
-        except Exception as e:
-            error_msg = f"Command handler creation failed: {e}"
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
-
-    @classmethod
-    def create_query_handler(
-        cls,
-        handler_func: object,
-        query_type: type | None = None,
-    ) -> FlextResult[FlextTypes.Dict]:
-        """Create CQRS query handler.
-
-        Args:
-            handler_func: Handler function or callable.
-            query_type: Optional query type for registration.
-
-        Returns:
-            FlextResult containing handler configuration for registration.
-
-        Example:
-            >>> def handle_get_user(query):
-            ...     return FlextResult[FlextTypes.Dict].ok({"user_id": "123"})
-            >>>
-            >>> result = FlextCore.create_query_handler(handle_get_user)
-
-        """
-        try:
-            # Create handler configuration for registration
-            config = FlextModels.CqrsConfig.Handler(
-                handler_id="query_handler",
-                handler_name="QueryHandler",
-                handler_type="query",
-            )
-
-            # Return handler configuration (not instantiated handler)
-            # Actual handler instance should extend FlextHandlers and implement handle()
-            handler_config: FlextTypes.Dict = {
-                "config": config,
-                "handler_func": handler_func,
-                "query_type": query_type,
-            }
-
-            return FlextResult[FlextTypes.Dict].ok(handler_config)
-
-        except Exception as e:
-            error_msg = f"Query handler creation failed: {e}"
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
-
-
-# Nested classes are defined inside the class
-
-
-# =================================================================
-# MODULE EXPORTS
-# =================================================================
 
 __all__ = [
     "FlextCore",
