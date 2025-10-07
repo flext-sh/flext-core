@@ -55,10 +55,10 @@ class MockScenario:
     def __init__(self, name: str, data: FlextTypes.Dict) -> None:
         """Initialize mockscenario:."""
         self.name = name
-        self.given: dict[str, str] = data.get("given", {})  # type: ignore[assignment]
-        self.when: dict[str, str] = data.get("when", {})  # type: ignore[assignment]
-        self.then: dict[str, str] = data.get("then", {})  # type: ignore[assignment]
-        self.tags: list[str] = data.get("tags", [])  # type: ignore[assignment]
+        self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
+        self.when: dict[str, str] = cast("dict[str, str]", data.get("when", {}))
+        self.then: dict[str, str] = cast("dict[str, str]", data.get("then", {}))
+        self.tags: list[str] = cast("list[str]", data.get("tags", []))
         self.priority: str = str(data.get("priority", "normal"))
 
 
@@ -344,17 +344,13 @@ class AssertionBuilder:
             # Check if item is in the data container
             if isinstance(self.data, (list, tuple, set, str)):
                 # Type-safe check for sequence types
-                if isinstance(self.data, (list, tuple, set)):
+                if isinstance(self.data, (list, tuple, set)) or isinstance(item, str):
                     assert item in self.data
-                elif isinstance(self.data, str):
-                    # For strings, check if item is also a string
-                    if isinstance(item, str):
-                        assert item in self.data
-                    else:
-                        msg = f"Cannot check if {item!r} is in string {self.data!r}"
-                        raise AssertionError(
-                            msg,
-                        )
+                else:
+                    msg = f"Cannot check if {item!r} is in string {self.data!r}"
+                    raise AssertionError(
+                        msg,
+                    )
             elif isinstance(self.data, dict):
                 # For dict, check if item is a key
                 assert item in self.data

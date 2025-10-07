@@ -854,7 +854,7 @@ class FlextConfig(BaseSettings):
 
         """
         # Get or create the DI Configuration provider
-        di_provider = cls._get_or_create_di_provider()
+        di_provider: providers.Configuration = cls._get_or_create_di_provider()
 
         # Update the provider with current Pydantic settings instance
         # The provider automatically reads values from the Pydantic settings

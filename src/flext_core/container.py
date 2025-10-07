@@ -22,7 +22,9 @@ import inspect
 import threading
 from collections.abc import Callable
 from contextlib import suppress
-from typing import TYPE_CHECKING, Self, TypeVar, cast, override
+from typing import Self, TypeVar, cast, override
+
+from dependency_injector.containers import DynamicContainer
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -31,9 +33,6 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
-
-if TYPE_CHECKING:
-    from dependency_injector.containers import DynamicContainer
 
 containers = FlextRuntime.dependency_containers()
 providers = FlextRuntime.dependency_providers()
@@ -1241,13 +1240,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             for validator in validators:
                 if callable(validator):
                     validation_result_raw = validator(service)
-                    if isinstance(validation_result_raw, FlextResult):
-                        validation_result = validation_result_raw
-                    else:
-                        # Handle case where validator returns non-FlextResult
-                        validation_result = FlextResult[object].ok(
-                            validation_result_raw
-                        )
+                    validation_result = validation_result_raw
                     if validation_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validation_result.error}"

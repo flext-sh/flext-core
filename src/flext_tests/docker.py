@@ -25,6 +25,7 @@ import docker
 import pytest
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
+from docker.models.containers import Container
 from rich.console import Console
 from rich.table import Table
 
@@ -830,15 +831,19 @@ class FlextTestDocker:
             client = self.get_client()
             container_name = name or f"flext-container-{hash(image)}"
             # Docker SDK: Pass parameters directly to preserve original types
-            container = client.containers.run(  # type: ignore[no-matching-overload]
-                image,
-                name=container_name,
-                detach=detach,
-                remove=remove,
-                ports=ports,
-                environment=environment,
-                volumes=volumes,
-                command=command,
+            # Cast to Container to help Pyrefly resolve overload
+            container = cast(
+                "Container",
+                client.containers.run(
+                    image,
+                    name=container_name,
+                    detach=detach,
+                    remove=remove,
+                    ports=ports,
+                    environment=environment,
+                    volumes=volumes,
+                    command=command,
+                ),
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -1027,7 +1032,7 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
-            logs_bytes = container.logs(tail=tail_count)
+            logs_bytes = container.logs(tail=tail_count)  # type: ignore[attr-defined]
             return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")

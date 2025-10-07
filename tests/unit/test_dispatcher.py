@@ -415,7 +415,7 @@ class TestFlextDispatcherCoverage:
         # Test cleanup operations (if available)
         # This tests methods like clearing metrics, resetting state, etc.
         # TODO: Implement get_performance_metrics method in FlextDispatcher
-        metrics = dispatcher.get_performance_metrics()  # type: ignore[attr-defined]
+        metrics = dispatcher.get_performance_metrics()
         assert isinstance(metrics, dict)
 
         # Test multiple operations to ensure state management

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 from returns.io import IO, IOFailure, IOSuccess
@@ -125,7 +126,7 @@ class TestFlextResult:
             return FlextResult[FlextTypes.Dict].ok(data)
 
         def process_data(data: dict[str, object]) -> FlextResult[int]:
-            return FlextResult[int].ok(data["value"] * 2)
+            return FlextResult[int].ok(cast("int", data["value"]) * 2)
 
         def format_result(value: int) -> FlextResult[str]:
             return FlextResult[str].ok(f"Result: {value}")

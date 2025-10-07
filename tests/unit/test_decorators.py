@@ -66,7 +66,7 @@ class TestInjectDecorator:
             return missing_service
 
         # Should use default when injection fails
-        result = process_data()  # type: ignore[missing-argument]
+        result = process_data()  # type: ignore[call-arg]
         assert result == "default"
 
     def test_inject_with_provided_kwarg(self) -> None:
