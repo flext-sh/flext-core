@@ -559,7 +559,7 @@ def benchmark_data() -> FlextTypes.Dict:
 #     try:
 #         # Individual components isolation - Flext facade was removed
 #         # Reset container singleton state if needed
-#         manager = FlextContainer.ensure_global_manager()
+#         manager = FlextContainer.get_global().clear()()
 #         container = manager.get_or_create()
 #         container.clear()
 #     except Exception:

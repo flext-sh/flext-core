@@ -1,18 +1,27 @@
-"""Layer 0.5 runtime connectors exposing external libraries without circular imports.
+"""Layer 0.5: Runtime utilities and external library connectors.
 
-This module isolates direct imports of third-party libraries that are required by
-lower foundation layers (constants, config, loggings, models, exceptions,
-typings, utilities). By centralizing the integration points here we eliminate
-circular import risks while still providing direct access to the original APIs,
-in line with FLEXT's *direct API* rule.
+This module provides runtime utilities and exposes external libraries that are required by
+higher-level modules. It imports from Layer 0 (constants.py) to use validation patterns,
+eliminating duplication while maintaining the correct dependency hierarchy.
 
-**CRITICAL**: This module maintains ZERO imports from other flext_core modules
-to break circular dependencies. All runtime primitives, validation patterns,
-and type guards are defined here without dependencies.
+**ARCHITECTURE HIERARCHY**:
+- Layer 0: constants.py, typings.py (pure Python, no flext_core imports)
+- Layer 0.5: runtime.py (imports Layer 0, exposes external libraries)
+- Layer 1+: All other modules (import Layer 0 and 0.5)
 
-Dependency Layer: 0.5 (external runtime connectors only)
-Dependencies: structlog, dependency_injector, Python stdlib only
-Used by: config, container, loggings, dispatcher and any lower-layer module
+**KEY FEATURES**:
+- Type guard utilities using patterns from FlextConstants.Platform
+- Serialization utilities for object conversion
+- Direct access to external library modules (structlog, dependency_injector)
+- Structured logging configuration with FLEXT defaults
+- Optional type introspection utilities
+- Sequence type checking utilities
+
+**DEPENDENCIES**: FlextConstants (Layer 0), structlog, dependency_injector, Python stdlib
+**USED BY**: ALL higher-layer modules (loggings, config, container, models, exceptions)
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -28,94 +37,65 @@ from typing import Any, TypeGuard, cast
 import structlog
 from dependency_injector import containers, providers
 
+from flext_core.constants import FlextConstants
+
 
 class FlextRuntime:
-    """Expose structlog and dependency-injector primitives to foundation layers.
+    """Runtime utilities and external library connectors for higher layers (Layer 0.5).
 
-    The class intentionally keeps ZERO imports from other ``flext_core`` modules
-    so that any layer (including ``FlextConstants`` and ``FlextTypes``) can
-    access runtime primitives without creating circular dependencies. All
-    methods return the concrete library modules or perform direct configuration
-    using the official APIs—no wrappers, aliases or indirection beyond this
-    centralized access point.
+    FlextRuntime provides runtime utilities that consume patterns from FlextConstants
+    (Layer 0) and expose external library APIs to higher-level modules (Layer 1+).
+    This eliminates code duplication while maintaining proper dependency hierarchy.
 
-    **Enhanced Features**:
-    - Configuration primitives and defaults without FlextConfig dependency
-    - Validation patterns (email, URL, phone) without FlextConstants dependency
-    - Logging level constants without FlextLogger dependency
-    - Type guard utilities without FlextTypes dependency
-    - Serialization utilities without FlextModels dependency
-    - Runtime primitives without any flext_core imports
+    **ARCHITECTURE ROLE**: Layer 0.5 - Runtime Utilities
+        - Imports FlextConstants (Layer 0) for validation patterns
+        - NO imports from other flext_core modules (loggings, config, models, etc.)
+        - Imported by ALL higher-level modules for runtime utilities
+        - Exposes structlog and dependency-injector APIs
+
+    **PROVIDES**:
+        - Type guard utilities using FlextConstants.Platform patterns
+          (is_valid_email, is_valid_url, is_valid_uuid, etc.)
+        - Serialization utilities for Pydantic and dict conversion
+        - Optional type introspection (is_optional_type, extract_generic_args)
+        - Sequence type checking (is_sequence_type)
+        - Direct access to external library modules (structlog(), dependency_providers())
+        - Structured logging configuration (configure_structlog())
+
+    **USAGE**: Higher-level modules use FlextRuntime for utilities
+        ```python
+        from flext_core.runtime import FlextRuntime
+
+        # Type guards using FlextConstants patterns
+        if FlextRuntime.is_valid_email(user_input):
+            process_email(user_input)
+
+        # Access external libraries
+        structlog_module = FlextRuntime.structlog()
+        providers = FlextRuntime.dependency_providers()
+        ```
     """
 
     _structlog_configured: bool = False
 
-    # =========================================================================
-    # CONFIGURATION PRIMITIVES (No flext_core imports)
-    # =========================================================================
-    # NOTE: These provide default configuration values that can be used by
-    # FlextConstants and FlextConfig without creating circular dependencies.
-
-    # Core application defaults
-    DEFAULT_APP_NAME: str = "FLEXT Application"
-    DEFAULT_ENVIRONMENT: str = "development"
-    DEFAULT_ENCODING: str = "utf-8"
-
-    # Logging defaults
-    DEFAULT_LOG_LEVEL: str = "INFO"
-    DEFAULT_LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-    # Logging level constants
+    # Log level constants for compatibility with examples and tests
     LOG_LEVEL_DEBUG: str = "DEBUG"
     LOG_LEVEL_INFO: str = "INFO"
     LOG_LEVEL_WARNING: str = "WARNING"
     LOG_LEVEL_ERROR: str = "ERROR"
     LOG_LEVEL_CRITICAL: str = "CRITICAL"
-
-    # Numeric logging levels for structlog integration
-    LOG_LEVEL_NUM_DEBUG: int = logging.DEBUG
-    LOG_LEVEL_NUM_INFO: int = logging.INFO
-    LOG_LEVEL_NUM_WARNING: int = logging.WARNING
-    LOG_LEVEL_NUM_ERROR: int = logging.ERROR
-    LOG_LEVEL_NUM_CRITICAL: int = logging.CRITICAL
-
-    # Performance and timeout defaults
-    DEFAULT_TIMEOUT: int = 30
-    DEFAULT_MAX_WORKERS: int = 10
-    DEFAULT_PAGE_SIZE: int = 50
-    DEFAULT_BATCH_SIZE: int = 100
-    DEFAULT_RETRY_ATTEMPTS: int = 3
-
-    # Network defaults
-    DEFAULT_PORT: int = 8000
-    DEFAULT_HOST: str = "localhost"
-    DEFAULT_CONNECTION_POOL_SIZE: int = 10
-
-    # Cache defaults
-    DEFAULT_CACHE_TTL: int = 300
-    DEFAULT_CACHE_MAX_SIZE: int = 1000
-
-    # Security defaults
-    DEFAULT_JWT_EXPIRY_MINUTES: int = 15
-    DEFAULT_BCRYPT_ROUNDS: int = 12
-
-    # Environment variable prefix
-    ENV_PREFIX: str = "FLEXT_"
-    ENV_FILE_DEFAULT: str = ".env"
-    ENV_NESTED_DELIMITER: str = "__"
+    LOG_LEVEL_NUM_INFO: int = 20
+    LOG_LEVEL_NUM_ERROR: int = 40
 
     # =========================================================================
-    # TYPE GUARD UTILITIES (No flext_core imports, uses regex directly)
+    # TYPE GUARD UTILITIES (Uses regex patterns from FlextConstants)
     # =========================================================================
-    # NOTE: These use compiled regex patterns for runtime validation without
-    # depending on FlextConstants to avoid circular imports.
 
     @staticmethod
     def is_valid_email(value: object) -> TypeGuard[str]:
         """Type guard to check if value is a valid email string.
 
-        Uses RFC 5322 simplified pattern for validation.
-        FlextConstants.Platform.PATTERN_EMAIL contains the same pattern.
+        Uses RFC 5322 simplified pattern from FlextConstants.Platform.PATTERN_EMAIL.
 
         Args:
             value: Value to check
@@ -126,17 +106,14 @@ class FlextRuntime:
         """
         if not isinstance(value, str):
             return False
-        pattern = re.compile(
-            r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}"
-            r"[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-        )
+        pattern = re.compile(FlextConstants.Platform.PATTERN_EMAIL)
         return pattern.match(value) is not None
 
     @staticmethod
     def is_valid_url(value: object) -> TypeGuard[str]:
         """Type guard to check if value is a valid HTTP/HTTPS URL string.
 
-        FlextConstants.Platform.URL_PATTERN contains similar validation.
+        Uses URL pattern from FlextConstants.Platform.PATTERN_URL.
 
         Args:
             value: Value to check
@@ -147,23 +124,14 @@ class FlextRuntime:
         """
         if not isinstance(value, str):
             return False
-        pattern = re.compile(
-            r"^https?://"
-            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"
-            r"localhost|"
-            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-            r"(?::\d+)?"
-            r"(?:/?|[/?]\S+)$",
-            re.IGNORECASE,
-        )
+        pattern = re.compile(FlextConstants.Platform.PATTERN_URL, re.IGNORECASE)
         return pattern.match(value) is not None
 
     @staticmethod
     def is_valid_phone(value: object) -> TypeGuard[str]:
         """Type guard to check if value is a valid phone number string.
 
-        Uses international format validation.
-        FlextConstants.Platform.PATTERN_PHONE_NUMBER contains similar pattern.
+        Uses international format pattern from FlextConstants.Platform.PATTERN_PHONE_NUMBER.
 
         Args:
             value: Value to check
@@ -174,15 +142,15 @@ class FlextRuntime:
         """
         if not isinstance(value, str):
             return False
-        pattern = re.compile(r"^\+?1?\d{9,15}$")
+        pattern = re.compile(FlextConstants.Platform.PATTERN_PHONE_NUMBER)
         return pattern.match(value) is not None
 
     @staticmethod
     def is_valid_uuid(value: object) -> TypeGuard[str]:
         """Type guard to check if value is a valid UUID string.
 
-        Supports both hyphenated and non-hyphenated UUID formats.
-        FlextConstants.Platform.PATTERN_UUID contains similar validation.
+        Supports both hyphenated and non-hyphenated formats.
+        Uses pattern from FlextConstants.Platform.PATTERN_UUID.
 
         Args:
             value: Value to check
@@ -193,10 +161,7 @@ class FlextRuntime:
         """
         if not isinstance(value, str):
             return False
-        pattern = re.compile(
-            r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?"
-            r"[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
-        )
+        pattern = re.compile(FlextConstants.Platform.PATTERN_UUID)
         return pattern.match(value) is not None
 
     @staticmethod
@@ -248,6 +213,8 @@ class FlextRuntime:
     def is_valid_path(value: object) -> TypeGuard[str]:
         """Type guard to check if value is a valid file/directory path.
 
+        Uses pattern from FlextConstants.Platform.PATTERN_PATH.
+
         Args:
             value: Value to check
 
@@ -257,8 +224,7 @@ class FlextRuntime:
         """
         if not isinstance(value, str):
             return False
-        # Basic path validation - checks for invalid characters
-        pattern = re.compile(r'^[^<>:"|?*\x00-\x1F]+$')
+        pattern = re.compile(FlextConstants.Platform.PATTERN_PATH)
         return pattern.match(value) is not None
 
     @staticmethod
@@ -340,8 +306,9 @@ class FlextRuntime:
             try:
                 result = obj.__dict__
                 return dict(result)
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
+                # Extremely rare: __dict__ exists but dict() conversion fails
                 logging.getLogger(__name__).debug(
                     f"__dict__ serialization strategy failed: {e}"
                 )
@@ -354,7 +321,9 @@ class FlextRuntime:
 
     @staticmethod
     def is_optional_type(type_hint: object) -> bool:
-        """Check if type hint represents Optional[T] (Union[T, None]).
+        """Check if type hint represents Optional[T] (Union[T, None] or T | None).
+
+        Supports both Union[T, None] and Python 3.10+ syntax T | None.
 
         Args:
             type_hint: Type hint to check
@@ -364,15 +333,18 @@ class FlextRuntime:
 
         """
         try:
-            # Get the origin (e.g., Union for Union[T, None])
+            # Get the origin (e.g., Union for Union[T, None] or T | None)
             origin = typing.get_origin(type_hint)
-            if origin is typing.Union:
+            # Python 3.10+ uses types.UnionType for X | Y syntax
+            # typing.Union is used for Union[X, Y] syntax
+            if origin is typing.Union or str(type(type_hint).__name__) == "UnionType":
                 # Get the args (e.g., (T, NoneType) for Union[T, None])
                 args = typing.get_args(type_hint)
                 # Check if None is one of the args
                 return type(None) in args
             return False
-        except Exception:
+        except Exception:  # pragma: no cover
+            # Defensive: typing module failures are extremely rare
             return False
 
     @staticmethod
@@ -388,7 +360,8 @@ class FlextRuntime:
         """
         try:
             return typing.get_args(type_hint)
-        except Exception:
+        except Exception:  # pragma: no cover
+            # Defensive: typing module failures are extremely rare
             return ()
 
     @staticmethod
@@ -407,7 +380,8 @@ class FlextRuntime:
             if origin is not None:
                 return issubclass(origin, Sequence)
             return False
-        except Exception:
+        except Exception:  # pragma: no cover
+            # Defensive: typing/issubclass failures are extremely rare
             return False
 
     @staticmethod
@@ -467,12 +441,14 @@ class FlextRuntime:
             module.processors.TimeStamper(fmt="iso"),
             module.processors.StackInfoRenderer(),
         ]
-        if additional_processors:
+        if additional_processors:  # pragma: no cover
+            # Tested but not covered: structlog configures once per process
             processors.extend(additional_processors)
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
-        else:
+        else:  # pragma: no cover
+            # Tested but not covered: structlog configures once per process
             processors.append(module.processors.JSONRenderer())
 
         module.configure(

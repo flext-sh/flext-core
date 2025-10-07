@@ -164,7 +164,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # =========================================================================
 
     _global_instance: FlextContainer | None = None
-    _global_lock: threading.Lock = threading.Lock()
+    _global_lock: threading.RLock = threading.RLock()
 
     def __new__(cls) -> Self:
         """Create or return the global singleton instance using double-checked locking."""
@@ -241,13 +241,20 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         Note:
             Added in v1.1.0 as part of internal DI wrapper implementation.
             Enhanced to use FlextConfig's DI provider for proper Pydantic integration.
+            If config provider is not ready during initialization, sync is deferred.
 
         """
         # Use FlextConfig's DI Configuration provider
         # This provider is linked to Pydantic settings and automatically
         # syncs configuration values
-        config_provider = FlextConfig.get_di_config_provider()
-        cast("DynamicContainer", self._di_container).config = config_provider
+        try:
+            config_provider = FlextConfig.get_di_config_provider()
+            cast("DynamicContainer", self._di_container).config = config_provider
+        except Exception:  # noqa: S110
+            # If config provider is not ready (e.g., during initialization),
+            # skip sync - it will be synced on first use or manually via configure()
+            # This is intentional to prevent deadlock during container initialization
+            pass
 
     # =========================================================================
     # CONFIGURABLE PROTOCOL IMPLEMENTATION - Protocol compliance for 1.0.0
@@ -263,6 +270,32 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         return self.configure_container(config)
 
+    @property
+    def services(self) -> FlextTypes.Dict:
+        """Get registered services dictionary (read-only access for compatibility).
+
+        Returns:
+            FlextTypes.Dict: Dictionary of registered service instances.
+
+        Note:
+            This property provides read-only access to the internal services registry
+            for backward compatibility with existing code that expects direct access.
+        """
+        return self._services.copy()
+
+    @property
+    def factories(self) -> FlextTypes.Dict:
+        """Get registered factories dictionary (read-only access for compatibility).
+
+        Returns:
+            FlextTypes.Dict: Dictionary of registered factory functions.
+
+        Note:
+            This property provides read-only access to the internal factories registry
+            for backward compatibility with existing code that expects direct access.
+        """
+        return self._factories.copy()
+
     def get_config(self) -> FlextTypes.Dict:
         """Get current configuration - Configurable protocol implementation.
 
@@ -275,7 +308,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             "max_workers": self._global_config["max_workers"],
             "timeout_seconds": self._global_config["timeout_seconds"],
             "environment": self._global_config["environment"],
-            "service_count": self.get_service_count(),
+            "service_count": len(set(self._services.keys()) | set(self._factories.keys())),
             "services": list(self._services.keys()),
             "factories": list(self._factories.keys()),
         }
@@ -793,6 +826,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         try:
             self._services.clear()
             self._factories.clear()
+            # Reset DI container to clear all providers
+            self._di_container = containers.DynamicContainer()
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Failed to clear container: {e}")
@@ -1194,7 +1229,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-                    validation_result: FlextResult[object] = validator(service)
+                    validation_result: FlextResult[object] = cast(
+                        "FlextResult[object]", validator(service)
+                    )
                     if validation_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validation_result.error}"

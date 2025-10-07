@@ -1,3 +1,4 @@
+# ruff: disable=E402
 """Domain service abstractions supporting the 1.0.0 alignment pillar.
 
 These bases codify the service ergonomics described in ``README.md`` and
@@ -18,7 +19,6 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import (
     cast,
-    get_args,
     override,
 )
 
@@ -513,14 +513,7 @@ class FlextService[TDomainResult](
             action_result = condition.false_action(self)
             if isinstance(action_result, FlextResult):
                 return action_result
-            # Validate the type before casting
-            if not isinstance(
-                action_result,
-                get_args(TDomainResult)[0] if get_args(TDomainResult) else object,
-            ):
-                return FlextResult[TDomainResult].fail(
-                    f"Action returned unexpected type: {type(action_result).__name__}"
-                )
+            # Type assertion since we expect TDomainResult from the action
             return FlextResult[TDomainResult].ok(cast("TDomainResult", action_result))
         return FlextResult[TDomainResult].fail("Condition not met")
 

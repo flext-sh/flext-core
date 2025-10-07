@@ -1,12 +1,26 @@
-"""Layer 1: Foundation constants backing the FLEXT-Core 1.0.0 modernization plan.
+"""Layer 0: Foundation constants for the entire FLEXT ecosystem.
 
-This module provides the foundational constants for the entire FLEXT ecosystem.
-As Layer 1, it references FlextRuntime (Layer 0.5) primitives to avoid duplication
-while serving as the basis for all other modules.
+This module provides the foundational constants that ALL other flext_core modules depend on.
+As Layer 0 (pure Python), it has ZERO dependencies on other flext_core modules,
+making it safe to import from anywhere without circular dependency risks.
 
-Dependency Layer: 1 (Foundation - depends on FlextRuntime Layer 0.5)
-Dependencies: FlextRuntime
-Used by: All other Flext modules and ecosystem projects
+**ARCHITECTURE HIERARCHY**:
+- Layer 0: constants.py, typings.py (pure Python, no flext_core imports)
+- Layer 0.5: runtime.py (imports Layer 0, exposes external libraries)
+- Layer 1+: All other modules (import Layer 0 and 0.5)
+
+**KEY FEATURES**:
+- Error codes for exception categorization (50+ codes)
+- Configuration defaults (timeouts, environments, network settings)
+- Validation patterns (email, URL, UUID, phone - used by runtime.py)
+- Logging constants (levels, formats)
+- Platform constants (HTTP, encodings, paths)
+- Message and display constants
+- Telemetry and metrics defaults
+- Complete immutability with typing.Final
+
+**DEPENDENCIES**: ZERO flext_core imports (pure Python stdlib only)
+**USED BY**: ALL flext_core modules and 32+ ecosystem projects
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,32 +36,37 @@ from typing import (
 )
 
 from flext_core.__version__ import __version__
-from flext_core.runtime import FlextRuntime
 
 
 class FlextConstants:
-    """Ecosystem-wide constant definitions for FLEXT foundation.
+    """Ecosystem-wide constant definitions for FLEXT foundation (Layer 0).
 
     FlextConstants provides the single source of truth for all constants
-    across the entire FLEXT ecosystem. As Layer 0, this module has NO
-    dependencies and serves as the foundation for all 32+ dependent
-    projects. All constants are immutable using typing.Final.
+    across the entire FLEXT ecosystem. As Layer 0, this module has ZERO
+    dependencies on other flext_core modules, making it safe to import
+    from anywhere without circular dependency risks.
 
-    **Function**: Central constant definitions for ecosystem
-        - Define error codes for exception categorization (50+ codes)
-        - Provide configuration defaults (timeout, environment, etc.)
-        - Establish validation limits (string length, ports, etc.)
-        - Define logging constants (levels, formats, defaults)
-        - Provide platform constants (OS, encoding, paths)
-        - Support message and display constants
-        - Enable telemetry and metrics defaults
-        - Guarantee immutability with typing.Final
+    **ARCHITECTURE ROLE**: Layer 0 - Pure Python Foundation
+        - NO dependencies on other flext_core modules
+        - Imported by runtime.py (Layer 0.5) for validation patterns
+        - Imported by ALL higher-level modules (loggings, config, models, etc.)
+        - Foundation for 32+ dependent ecosystem projects
 
-    **Uses**: Pure Python foundation (Layer 0 - no dependencies)
+    **PROVIDES**:
+        - Error codes for exception categorization (50+ codes)
+        - Configuration defaults (timeout, environment, network)
+        - Validation patterns (email, URL, UUID, phone) - consumed by runtime.py
+        - Logging constants (levels, formats, defaults)
+        - Platform constants (HTTP, encodings, paths)
+        - Message and display constants
+        - Telemetry and metrics defaults
+        - Complete immutability with typing.Final
+
+    **PATTERN**: Namespace class with nested classes for organization
         - typing.Final for immutable constant definitions
         - enum.StrEnum for string enumeration types
         - typing.ClassVar for class-level constants
-        - No external dependencies (pure Python stdlib)
+        - Pure Python stdlib only (no external dependencies)
         - Layer 0 foundation - imported by all other modules
 
     **How to use**: Access constants via nested namespaces
@@ -244,9 +263,22 @@ class FlextConstants:
         MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
 
         # Phone number validation
-        MIN_PHONE_DIGITS: Final[int] = (
-            10  # Minimum phone number length  # Minimum phone number length
+        MIN_PHONE_DIGITS: Final[int] = 10  # Minimum phone number length
+        MIN_USERNAME_LENGTH: Final[int] = 3  # Minimum username length for validation
+        MAX_AGE: Final[int] = 150  # Maximum valid age for persons
+        MIN_AGE: Final[int] = 0  # Minimum valid age for persons
+        PREVIEW_LENGTH: Final[int] = 50  # Maximum length for string previews/truncation
+        DISCOUNT_THRESHOLD: Final[int] = 100  # Minimum total for discount eligibility
+        DISCOUNT_RATE: Final[float] = 0.05  # 5% discount rate
+        SLOW_OPERATION_THRESHOLD: Final[float] = (
+            0.1  # Threshold for slow operation warning (seconds)
         )
+        RESOURCE_LIMIT_MIN: Final[int] = 50  # Minimum resource limit
+        FILTER_THRESHOLD: Final[int] = 5  # General filter threshold for comparisons
+        RETRY_COUNT_MIN: Final[int] = 2  # Minimum retry attempts
+        RETRY_COUNT_MAX: Final[int] = 3  # Maximum retry attempts
+        WORKERS_TEST_COUNT: Final[int] = 8  # Test-specific worker count
+        TIMEOUT_TEST_SECONDS: Final[int] = 60  # Test-specific timeout
 
     class Errors:
         """Canonical error codes surfaced in telemetry narratives.
@@ -292,6 +324,7 @@ class FlextConstants:
         OPERATION_ERROR: Final[str] = (
             "OPERATION_ERROR"  # Reserved for service operations
         )
+        SERVICE_ERROR: Final[str] = "SERVICE_ERROR"  # Reserved for service-level errors
         BUSINESS_RULE_VIOLATION: Final[str] = (
             "BUSINESS_RULE_VIOLATION"  # Reserved for DDD
         )
@@ -514,6 +547,10 @@ class FlextConstants:
         SECONDS_PER_HOUR: Final[int] = 3600  # Usage count: 0
         BYTES_PER_KB: Final[int] = 1024  # Usage count: 0
 
+        # Encoding and processing defaults
+        DEFAULT_ENCODING: Final[str] = "utf-8"  # Default character encoding
+        DEFAULT_BATCH_SIZE: Final[int] = 1000  # Default batch size for processing
+
         # Security and validation constants
         MIN_TOKEN_LENGTH: Final[int] = (
             8  # Minimum length for security tokens and passwords
@@ -539,9 +576,7 @@ class FlextConstants:
             "test",
             "local",
         ]
-        DEFAULT_ENVIRONMENT: Final[str] = (
-            FlextRuntime.DEFAULT_ENVIRONMENT
-        )  # References FlextRuntime
+        DEFAULT_ENVIRONMENT: Final[str] = "development"
         DOTENV_FILES: Final[list[str]] = [
             ".env",
             ".env.local",
@@ -571,6 +606,9 @@ class FlextConstants:
 
         PROFILE_BATCH_JOB: Final[str] = "batch_job"
         PROFILE_MICROSERVICE: Final[str] = "microservice"
+
+        # Timeout defaults
+        DEFAULT_TIMEOUT: Final[int] = 30  # Default timeout in seconds
 
         class ConfigSource(StrEnum):
             """Enumerate configuration origins supported by FlextConfig."""
@@ -650,10 +688,8 @@ class FlextConstants:
                 return f"{protocol}{host}:{port}"
         """
 
-        FLEXT_API_PORT: Final[int] = (
-            FlextRuntime.DEFAULT_PORT
-        )  # References FlextRuntime
-        DEFAULT_HOST: Final[str] = FlextRuntime.DEFAULT_HOST  # References FlextRuntime
+        FLEXT_API_PORT: Final[int] = 8000
+        DEFAULT_HOST: Final[str] = "localhost"
         LOOPBACK_IP: Final[str] = "127.0.0.1"  # Localhost IP address
 
         # Database defaults
@@ -773,21 +809,45 @@ class FlextConstants:
         DIR_TEMP: Final[str] = "temp"
         DIR_CACHE: Final[str] = "cache"
 
-        # Configuration delimiters (references FlextRuntime)
-        ENV_NESTED_DELIMITER: Final[str] = FlextRuntime.ENV_NESTED_DELIMITER
-        ENV_PREFIX: Final[str] = FlextRuntime.ENV_PREFIX
-        ENV_FILE_DEFAULT: Final[str] = FlextRuntime.ENV_FILE_DEFAULT
+        # Configuration delimiters
+        ENV_NESTED_DELIMITER: Final[str] = "__"
+        ENV_PREFIX: Final[str] = "FLEXT_"
+        ENV_FILE_DEFAULT: Final[str] = ".env"
 
-        # Validation patterns
+        # Validation patterns for runtime type guards
         PATTERN_SECURITY_LEVEL: Final[str] = "^(low|standard|high|critical)$"
         PATTERN_DATA_CLASSIFICATION: Final[str] = (
             "^(public|internal|confidential|restricted)$"
         )
-        PATTERN_EMAIL: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-        PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[1-9]\d{1,14}$"
-        PATTERN_UUID: Final[str] = (
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+
+        # Email validation (RFC 5322 simplified) - used by FlextRuntime.is_valid_email()
+        PATTERN_EMAIL: Final[str] = (
+            r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}"
+            r"[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
         )
+
+        # URL validation (HTTP/HTTPS) - used by FlextRuntime.is_valid_url()
+        PATTERN_URL: Final[str] = (
+            r"^https?://"
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"
+            r"localhost|"
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            r"(?::\d+)?"
+            r"(?:/?|[/?]\S+)$"
+        )
+
+        # Phone number validation (international format with separators) - used by FlextRuntime.is_valid_phone()
+        PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[\d\s\-\(\)]{10,20}$"
+
+        # UUID validation (with/without hyphens) - used by FlextRuntime.is_valid_uuid()
+        PATTERN_UUID: Final[str] = (
+            r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?"
+            r"[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
+        )
+
+        # File path validation - used by FlextRuntime.is_valid_path()
+        # Allows Windows paths (C:\...) and Unix paths (/home/...)
+        PATTERN_PATH: Final[str] = r'^[^<>"|?*\x00-\x1F]+$'
 
         # HTTP headers
         HEADER_CONTENT_TYPE: Final[str] = "Content-Type"
@@ -965,6 +1025,64 @@ class FlextConstants:
             30.0  # Alternative recovery timeout
         )
 
+    class Logging:
+        """Logging configuration constants for FlextLogger and FlextConfig.
+
+        Provides default values for logging configuration across the FLEXT ecosystem,
+        ensuring consistent logging behavior.
+        """
+
+        # Log level constants
+        DEBUG: Final[str] = "DEBUG"
+        INFO: Final[str] = "INFO"
+        WARNING: Final[str] = "WARNING"
+        ERROR: Final[str] = "ERROR"
+        CRITICAL: Final[str] = "CRITICAL"
+
+        # Log level defaults
+        DEFAULT_LEVEL: Final[str] = "INFO"
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
+        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
+        VALID_LEVELS: Final[tuple[str, ...]] = (
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        )
+
+        # Output format defaults
+        JSON_OUTPUT_DEFAULT: Final[bool] = False
+        DEFAULT_FORMAT: Final[str] = (
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        STRUCTURED_OUTPUT: Final[bool] = True
+
+        # Source code tracking
+        INCLUDE_SOURCE: Final[bool] = True
+        VERBOSITY: Final[str] = "compact"  # Logging verbosity (compact, detailed, full)
+
+        # File logging defaults
+        MAX_FILE_SIZE: Final[int] = 10485760  # 10 MB in bytes
+        BACKUP_COUNT: Final[int] = 5
+
+        # Console output defaults
+        CONSOLE_ENABLED: Final[bool] = True
+        CONSOLE_COLOR_ENABLED: Final[bool] = True
+
+        # Performance tracking
+        TRACK_PERFORMANCE: Final[bool] = False
+        TRACK_TIMING: Final[bool] = False
+
+        # Context and correlation
+        INCLUDE_CONTEXT: Final[bool] = True
+        INCLUDE_CORRELATION_ID: Final[bool] = True
+        MAX_CONTEXT_KEYS: Final[int] = 50  # Maximum context keys to include in logs
+
+        # Security
+        MASK_SENSITIVE_DATA: Final[bool] = True
+
     class Security:
         """Security-related constants for authentication and authorization.
 
@@ -1033,8 +1151,8 @@ class FlextConstants:
         # JWT token expiry limits - Additional short-term option
         SHORT_JWT_EXPIRY_MINUTES: Final[int] = 60  # 1 hour for short sessions
 
-        # BCrypt configuration (references FlextRuntime)
-        DEFAULT_BCRYPT_ROUNDS: Final[int] = FlextRuntime.DEFAULT_BCRYPT_ROUNDS
+        # BCrypt configuration
+        DEFAULT_BCRYPT_ROUNDS: Final[int] = 12
         MIN_BCRYPT_ROUNDS: Final[int] = 10  # Minimum acceptable rounds
         MAX_BCRYPT_ROUNDS: Final[int] = 15  # Maximum reasonable rounds
 
@@ -1326,298 +1444,73 @@ class FlextConstants:
         FIRST_ARG_FAILED_MSG: Final[str] = "First argument failed"
         SECOND_ARG_FAILED_MSG: Final[str] = "Second argument failed"
 
-    class Container:
-        """Container configuration constants for FlextContainer."""
+    class Context:
+        """Context management constants for FlextContext operations.
 
-        # Worker configuration
-        MAX_WORKERS: Final[int] = 4
-        MIN_WORKERS: Final[int] = 1
-        DEFAULT_WORKERS: Final[int] = 2
-
-        # Timeout configuration
-        TIMEOUT_SECONDS: Final[float] = 30.0
-        MIN_TIMEOUT_SECONDS: Final[float] = 0.1
-        MAX_TIMEOUT_SECONDS: Final[float] = 600.0
-
-        # Registration limits
-        MAX_SERVICES: Final[int] = 1000
-        MAX_FACTORIES: Final[int] = 500
-
-    class Logging:
-        """Comprehensive logging configuration constants for FLEXT ecosystem.
-
-        Provides centralized logging defaults, levels, formats, and configuration
-        options used across all FLEXT modules and subprojects.
+        Centralized constants for context scope management, correlation IDs,
+        timeouts, and context depth limits. Used by FlextContext and related
+        context management utilities across the ecosystem.
 
         Usage example:
-            from flext_core import FlextConstants, FlextLogger
+            from flext_core import FlextConstants, FlextContext
 
-            # Configure logger with environment-specific settings
-            def setup_logger(environment: str) -> FlextLogger:
-                if environment == "production":
-                    config = FlextConstants.Logging.Environment.PRODUCTION
-                    level = FlextConstants.Logging.DEFAULT_LEVEL_PRODUCTION
-                elif environment == "development":
-                    config = FlextConstants.Logging.Environment.DEVELOPMENT
-                    level = FlextConstants.Logging.DEFAULT_LEVEL_DEVELOPMENT
-                else:
-                    config = FlextConstants.Logging.Environment.STAGING
-                    level = FlextConstants.Logging.DEFAULT_LEVEL
+            context = FlextContext()
+            context.set("user_id", "123", scope=FlextConstants.Context.SCOPE_GLOBAL)
+            context.set("request_id", "req-456", scope=FlextConstants.Context.SCOPE_REQUEST)
 
-                logger = FlextLogger(__name__)
-                logger.setLevel(level)
-                return logger
-
-            # Log with structured output and performance tracking
-            logger = FlextLogger(__name__)
-            if FlextConstants.Logging.TRACK_PERFORMANCE:
-                start_time = time.time()
-                # ... operation ...
-                duration_ms = (time.time() - start_time) * 1000
-
-                if duration_ms > FlextConstants.Logging.PERFORMANCE_THRESHOLD_CRITICAL:
-                    logger.warning(
-                        FlextConstants.Logging.Messages.PERFORMANCE_CRITICAL,
-                        extra={"operation": "data_processing", "duration": duration_ms}
-                    )
-
-            # Module-specific logging level
-            db_logger = FlextLogger("flext_db_oracle")
-            db_logger.setLevel(FlextConstants.Logging.ModuleLevels.FLEXT_DB_ORACLE)
-
-            # Structured logging with context
-            if FlextConstants.Logging.INCLUDE_CONTEXT:
-                logger.info(
-                    FlextConstants.Logging.Messages.API_REQUEST,
-                    extra={
-                        "method": "POST",
-                        "endpoint": "/api/users",
-                        "correlation_id": "abc-123"
-                    }
-                )
+            correlation_id = f"{FlextConstants.Context.CORRELATION_ID_PREFIX}{uuid.uuid4().hex[:8]}"
         """
 
-        # Log Levels - Standard hierarchy
-        TRACE: Final[str] = "TRACE"
-        DEBUG: Final[str] = "DEBUG"
-        INFO: Final[str] = "INFO"
-        WARNING: Final[str] = "WARNING"
-        ERROR: Final[str] = "ERROR"
-        CRITICAL: Final[str] = "CRITICAL"
+        # Scope literals for context management
+        SCOPE_GLOBAL: Final[str] = "global"  # Global scope across entire application
+        SCOPE_REQUEST: Final[str] = "request"  # Request-specific scope
+        SCOPE_SESSION: Final[str] = "session"  # Session-specific scope
+        SCOPE_TRANSACTION: Final[str] = "transaction"  # Transaction-specific scope
 
-        # Default log level for different environments (references FlextRuntime)
-        DEFAULT_LEVEL: Final[str] = FlextRuntime.DEFAULT_LOG_LEVEL
-        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = FlextRuntime.LOG_LEVEL_DEBUG
-        DEFAULT_LEVEL_PRODUCTION: Final[str] = FlextRuntime.LOG_LEVEL_WARNING
-        DEFAULT_LEVEL_TESTING: Final[str] = FlextRuntime.LOG_LEVEL_INFO
-
-        # Valid log levels set
-        VALID_LEVELS: Final[set[str]] = {
-            "TRACE",
-            FlextRuntime.LOG_LEVEL_DEBUG,
-            FlextRuntime.LOG_LEVEL_INFO,
-            FlextRuntime.LOG_LEVEL_WARNING,
-            FlextRuntime.LOG_LEVEL_ERROR,
-            FlextRuntime.LOG_LEVEL_CRITICAL,
-        }
-
-        # Log Formatting (references FlextRuntime)
-        DEFAULT_FORMAT: Final[str] = FlextRuntime.DEFAULT_LOG_FORMAT
-        DETAILED_FORMAT: Final[str] = (
-            "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s"
+        # Correlation ID configuration
+        CORRELATION_ID_PREFIX: Final[str] = (
+            "flext-"  # Standard prefix for correlation IDs
         )
-        JSON_FORMAT: Final[str] = "json"
-        SIMPLE_FORMAT: Final[str] = "%(levelname)s - %(message)s"
+        CORRELATION_ID_LENGTH: Final[int] = (
+            12  # Standard length for correlation ID suffix
+        )
 
-        # Date formatting
-        DATE_FORMAT: Final[str] = "%Y-%m-%d %H:%M:%S"
-        DATE_FORMAT_WITH_MS: Final[str] = "%Y-%m-%d %H:%M:%S.%f"
+        # Context operation timeouts and limits
+        DEFAULT_CONTEXT_TIMEOUT: Final[int] = (
+            30  # Default timeout for context operations (seconds)
+        )
+        MAX_CONTEXT_DEPTH: Final[int] = 10  # Maximum nesting depth for contexts
+        MAX_CONTEXT_SIZE: Final[int] = 1000  # Maximum number of items in a context
 
-        # FlextLogger optimization constants for Pydantic models
-        INCLUDE_SOURCE: Final[bool] = True
-        STRUCTURED_OUTPUT: Final[bool] = True
-        VERBOSITY: Final[str] = "detailed"
-        VALID_VERBOSITY_LEVELS: Final[set[str]] = {"compact", "detailed", "full"}
+        # Time conversion constants
+        MILLISECONDS_PER_SECOND: Final[int] = 1000  # Conversion factor for elapsed time
 
-        # Output configuration
-        JSON_OUTPUT_DEFAULT: Final[None] = None  # Auto-detect
-        JSON_OUTPUT_ENABLED: Final[bool] = True
-        JSON_OUTPUT_DISABLED: Final[bool] = False
+        # Context export formats
+        EXPORT_FORMAT_JSON: Final[str] = "json"
+        EXPORT_FORMAT_DICT: Final[str] = "dict"
 
-        # Performance tracking constants
-        TRACK_PERFORMANCE: Final[bool] = True
-        TRACK_MEMORY: Final[bool] = False
-        TRACK_TIMING: Final[bool] = True
-        ENABLE_TRACING: Final[bool] = False  # Distributed tracing disabled by default
-        PERFORMANCE_THRESHOLD_WARNING: Final[float] = 1000.0  # milliseconds
-        PERFORMANCE_THRESHOLD_CRITICAL: Final[float] = 5000.0  # milliseconds
+    class Container:
+        """Constants for FlextContainer dependency injection.
 
-        # Log rotation and file management
-        MAX_FILE_SIZE: Final[int] = 10 * 1024 * 1024  # 10MB
-        BACKUP_COUNT: Final[int] = 5
-        ROTATION_WHEN: Final[str] = "midnight"
-        MAX_CONTEXT_KEYS: Final[int] = 100  # Maximum context keys per log entry
+        Provides default values for container configuration including
+        worker threads, caching, and service lifecycle management.
+        """
 
-        # Console output configuration
-        CONSOLE_ENABLED: Final[bool] = True
-        CONSOLE_DISABLED: Final[bool] = False
-        CONSOLE_COLOR_ENABLED: Final[bool] = True
-        CONSOLE_COLOR_DISABLED: Final[bool] = False
+        # Worker thread configuration
+        DEFAULT_WORKERS: Final[int] = 4  # Default thread pool size for async operations
+        MAX_WORKERS: Final[int] = 4  # Alias for DEFAULT_WORKERS (config.py uses this)
+        MIN_WORKERS: Final[int] = 1  # Minimum worker threads allowed
 
-        # File output configuration
-        FILE_ENABLED: Final[bool] = True
-        FILE_DISABLED: Final[bool] = False
-        DEFAULT_LOG_FILE: Final[str] = "flext.log"
-        ERROR_LOG_FILE: Final[str] = "flext_error.log"
+        # Service lifecycle timeouts
+        TIMEOUT_SECONDS: Final[int] = 30  # Default timeout for container operations
+        MIN_TIMEOUT_SECONDS: Final[int] = 1  # Minimum timeout in seconds
+        MAX_TIMEOUT_SECONDS: Final[int] = 300  # Maximum timeout in seconds (5 minutes)
+        DEFAULT_STARTUP_TIMEOUT: Final[int] = 30  # Seconds
+        DEFAULT_SHUTDOWN_TIMEOUT: Final[int] = 10  # Seconds
 
-        # Network logging (syslog, remote logging)
-        SYSLOG_ENABLED: Final[bool] = False
-        REMOTE_LOGGING_ENABLED: Final[bool] = False
-        DEFAULT_SYSLOG_FACILITY: Final[str] = "local0"
-
-        # Context and metadata
-        INCLUDE_CONTEXT: Final[bool] = True
-        INCLUDE_CORRELATION_ID: Final[bool] = True
-        INCLUDE_USER_ID: Final[bool] = False
-        INCLUDE_SESSION_ID: Final[bool] = False
-
-        # Filtering and sampling
-        ENABLE_FILTERING: Final[bool] = True
-        DEFAULT_SAMPLE_RATE: Final[float] = 1.0  # 100% sampling
-        HIGH_VOLUME_SAMPLE_RATE: Final[float] = 0.1  # 10% sampling for high-volume logs
-
-        # Security and compliance
-        MASK_SENSITIVE_DATA: Final[bool] = True
-        REDACT_PASSWORDS: Final[bool] = True
-        REDACT_API_KEYS: Final[bool] = True
-        REDACT_CREDIT_CARDS: Final[bool] = True
-
-        # Environment-specific overrides
-        class Environment:
-            """Environment-specific logging configuration overrides."""
-
-            DEVELOPMENT: Final[dict[str, object]] = {
-                "level": "DEBUG",
-                "console_enabled": True,
-                "file_enabled": True,
-                "structured_output": False,
-                "include_source": True,
-                "track_performance": True,
-            }
-
-            STAGING: Final[dict[str, object]] = {
-                "level": "INFO",
-                "console_enabled": True,
-                "file_enabled": True,
-                "structured_output": True,
-                "include_source": True,
-                "track_performance": True,
-            }
-
-            PRODUCTION: Final[dict[str, object]] = {
-                "level": "WARNING",
-                "console_enabled": False,
-                "file_enabled": True,
-                "structured_output": True,
-                "include_source": False,
-                "track_performance": False,
-            }
-
-            TESTING: Final[dict[str, object]] = {
-                "level": "INFO",
-                "console_enabled": True,
-                "file_enabled": False,
-                "structured_output": False,
-                "include_source": True,
-                "track_performance": False,
-            }
-
-        # Module-specific logging levels
-        class ModuleLevels:
-            """Default log levels for different FLEXT modules."""
-
-            # Core modules
-            FLEXT_CORE: Final[str] = "INFO"
-            FLEXT_CONFIG: Final[str] = "WARNING"
-            FLEXT_LOGGER: Final[str] = "WARNING"
-            FLEXT_CONTAINER: Final[str] = "INFO"
-
-            # API modules
-            FLEXT_API: Final[str] = "INFO"
-            FLEXT_WEB: Final[str] = "INFO"
-            FLEXT_GRPC: Final[str] = "INFO"
-
-            # Data modules
-            FLEXT_DB_ORACLE: Final[str] = "WARNING"
-            FLEXT_LDAP: Final[str] = "WARNING"
-            FLEXT_LDIF: Final[str] = "WARNING"
-            FLEXT_MELTANO: Final[str] = "INFO"
-
-            # CLI modules
-            FLEXT_CLI: Final[str] = "INFO"
-
-            # Auth modules
-            FLEXT_AUTH: Final[str] = "WARNING"
-
-            # Target modules
-            FLEXT_TARGET_ORACLE: Final[str] = "WARNING"
-            FLEXT_TARGET_LDAP: Final[str] = "WARNING"
-            FLEXT_TARGET_LDIF: Final[str] = "WARNING"
-
-            # Tap modules
-            FLEXT_TAP_ORACLE: Final[str] = "WARNING"
-            FLEXT_TAP_LDAP: Final[str] = "WARNING"
-            FLEXT_TAP_LDIF: Final[str] = "WARNING"
-
-            # DBT modules
-            FLEXT_DBT_ORACLE: Final[str] = "WARNING"
-            FLEXT_DBT_LDAP: Final[str] = "WARNING"
-            FLEXT_DBT_LDIF: Final[str] = "WARNING"
-
-        # Log message templates
-        class Messages:
-            """Standard log message templates."""
-
-            # Configuration messages
-            CONFIG_LOADED: Final[str] = "Configuration loaded from {source}"
-            CONFIG_VALIDATED: Final[str] = "Configuration validation completed"
-            CONFIG_ERROR: Final[str] = "Configuration error: {error}"
-
-            # Service messages
-            SERVICE_STARTED: Final[str] = "Service {service_name} started"
-            SERVICE_STOPPED: Final[str] = "Service {service_name} stopped"
-            SERVICE_ERROR: Final[str] = "Service {service_name} error: {error}"
-
-            # Database messages
-            DB_CONNECTED: Final[str] = "Database connected to {database}"
-            DB_DISCONNECTED: Final[str] = "Database disconnected from {database}"
-            DB_QUERY_EXECUTED: Final[str] = "Database query executed: {query_type}"
-            DB_ERROR: Final[str] = "Database error: {error}"
-
-            # API messages
-            API_REQUEST: Final[str] = "API request: {method} {endpoint}"
-            API_RESPONSE: Final[str] = "API response: {status_code} {endpoint}"
-            API_ERROR: Final[str] = "API error: {error}"
-
-            # Authentication messages
-            AUTH_SUCCESS: Final[str] = "Authentication successful for user {user}"
-            AUTH_FAILED: Final[str] = "Authentication failed for user {user}"
-            AUTH_ERROR: Final[str] = "Authentication error: {error}"
-
-            # Performance messages
-            PERFORMANCE_WARNING: Final[str] = (
-                "Performance warning: {operation} took {duration}ms"
-            )
-            PERFORMANCE_CRITICAL: Final[str] = (
-                "Performance critical: {operation} took {duration}ms"
-            )
-
-            # Error messages
-            ERROR_OCCURRED: Final[str] = "Error occurred: {error}"
-            CRITICAL_ERROR: Final[str] = "Critical error: {error}"
-            VALIDATION_ERROR_MESSAGE: Final[str] = (
-                "Validation error: {error}"  # Template referencing Errors.VALIDATION_ERROR
-            )
+        # Caching defaults
+        ENABLE_SERVICE_CACHE: Final[bool] = True
+        MAX_CACHE_SIZE: Final[int] = 100
 
     class Dispatcher:
         """Constants for FlextDispatcher operations.
@@ -1710,7 +1603,7 @@ class FlextConstants:
         STATE_UNHEALTHY = "unhealthy"
 
         # Status Constants for Scripts and Diagnostics
-        STATUS_PASS = "PASS"  # nosec B105 - Not a password, status constant
+        STATUS_PASS = "PASS"  # Not a password, status constant
         STATUS_FAIL = "FAIL"
         STATUS_NO_TARGET = "NO_TARGET"
         STATUS_SKIP = "SKIP"
@@ -1744,16 +1637,16 @@ class FlextConstants:
         VALIDATION_STRICT = "strict"
         VALIDATION_CUSTOM = "custom"
 
-        # Log Levels (references FlextRuntime)
-        LOG_LEVEL_DEBUG = FlextRuntime.LOG_LEVEL_DEBUG
-        LOG_LEVEL_INFO = FlextRuntime.LOG_LEVEL_INFO
-        LOG_LEVEL_WARNING = FlextRuntime.LOG_LEVEL_WARNING
-        LOG_LEVEL_ERROR = FlextRuntime.LOG_LEVEL_ERROR
-        LOG_LEVEL_CRITICAL = FlextRuntime.LOG_LEVEL_CRITICAL
+        # Log Levels
+        LOG_LEVEL_DEBUG = "DEBUG"
+        LOG_LEVEL_INFO = "INFO"
+        LOG_LEVEL_WARNING = "WARNING"
+        LOG_LEVEL_ERROR = "ERROR"
+        LOG_LEVEL_CRITICAL = "CRITICAL"
 
-        # Serialization Defaults (references FlextRuntime)
+        # Serialization Defaults
         DEFAULT_JSON_INDENT = 2
-        DEFAULT_ENCODING = FlextRuntime.DEFAULT_ENCODING
+        DEFAULT_ENCODING = "utf-8"
         DEFAULT_SORT_KEYS = False
         DEFAULT_ENSURE_ASCII = False
 
@@ -1940,6 +1833,12 @@ class FlextConstants:
             DEFAULT_SIZE: Final[int] = 1000  # Standard batch size for processing
             SMALL_SIZE: Final[int] = 100  # Small batch size for limited operations
             LARGE_SIZE: Final[int] = 10000  # Large batch size for bulk operations
+
+    class Processing:
+        """Processing pipeline constants for batch operations and workers."""
+
+        DEFAULT_MAX_WORKERS: Final[int] = 4  # Default maximum worker threads
+        DEFAULT_BATCH_SIZE: Final[int] = 1000  # Default batch size for processing
 
     class Paths:
         """File system paths for core operations."""

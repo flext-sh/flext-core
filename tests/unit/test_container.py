@@ -104,10 +104,8 @@ class TestFlextContainer:
         result = container.auto_wire(Service)
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error is not None
-            and "Cannot resolve required dependency" in result.error
-        )
+        assert result.error is not None
+        assert "Cannot resolve required dependency" in result.error
 
     def test_container_auto_wire_with_defaults(self) -> None:
         """Test auto-wiring with default parameters."""
@@ -190,7 +188,8 @@ class TestFlextContainer:
         result = container.batch_register(services)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "already registered" in result.error
+        assert result.error is not None
+        assert "already registered" in result.error
 
         # Original service should still be there
         get_result = container.get("service1")
@@ -241,7 +240,8 @@ class TestFlextContainer:
         result = container.get_typed("test_service", WrongType)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "type mismatch" in result.error
+        assert result.error is not None
+        assert "type mismatch" in result.error
 
     def test_container_get_or_create(self) -> None:
         """Test get or create service."""
@@ -272,10 +272,8 @@ class TestFlextContainer:
         result = container.get_or_create("nonexistent")
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error is not None
-            and "not found and no factory provided" in result.error
-        )
+        assert result.error is not None
+        assert "not found and no factory provided" in result.error
 
     def test_container_list_services(self) -> None:
         """Test listing services."""
@@ -345,7 +343,8 @@ class TestFlextContainer:
         result = container.register_factory("invalid", invalid_factory)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "must be callable" in result.error
+        assert result.error is not None
+        assert "must be callable" in result.error
 
     def test_container_get_service_with_factory_caching(self) -> None:
         """Test that factory services are cached after first creation."""
@@ -403,12 +402,14 @@ class TestFlextContainer:
         result = container.register("", "service")
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "empty" in result.error
+        assert result.error is not None
+        assert "empty" in result.error
 
         result = container.register("invalid/name", "service")
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "invalid characters" in result.error
+        assert result.error is not None
+        assert "invalid characters" in result.error
 
     def test_container_unregister_nonexistent(self) -> None:
         """Test unregistering non-existent service."""
@@ -417,7 +418,8 @@ class TestFlextContainer:
         result = container.unregister("nonexistent")
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not registered" in result.error
+        assert result.error is not None
+        assert "not registered" in result.error
 
     def test_container_get_nonexistent_typed(self) -> None:
         """Test getting non-existent service with typing."""
@@ -428,7 +430,8 @@ class TestFlextContainer:
         )
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "not found" in result.error
+        assert result.error is not None
+        assert "not found" in result.error
 
     def test_container_has_invalid_name(self) -> None:
         """Test has() with invalid service name."""
@@ -465,10 +468,8 @@ class TestFlextContainer:
         result = container.create_service(Service)
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error is not None
-            and "Cannot resolve required dependency" in result.error
-        )
+        assert result.error is not None
+        assert "Cannot resolve required dependency" in result.error
 
     def test_container_create_service_with_defaults(self) -> None:
         """Test creating service with default parameters."""
@@ -499,7 +500,8 @@ class TestFlextContainer:
         result = container.batch_register(services)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "empty" in result.error
+        assert result.error is not None
+        assert "empty" in result.error
 
         # Since batch operation fails fast, no services should be registered
         # when the first service has an invalid name
@@ -521,7 +523,8 @@ class TestFlextContainer:
         result = container.create_service(FailingService)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Service creation failed" in result.error
+        assert result.error is not None
+        assert "Service creation failed" in result.error
 
     def test_container_get_service_with_exception_in_factory(self) -> None:
         """Test exception handling when factory throws exception."""
@@ -536,7 +539,8 @@ class TestFlextContainer:
         result = container.get("failing")
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Factory 'failing' failed" in result.error
+        assert result.error is not None
+        assert "Factory 'failing' failed" in result.error
 
     def test_container_global_singleton_functionality(self) -> None:
         """Test global singleton container functionality."""
@@ -991,9 +995,8 @@ class TestServiceRegistrationSync:
         # Duplicate registration fails
         result2 = container.register("service", {"value": 2})
         assert result2.is_failure
-        assert (
-            result2.error is not None and "already registered" in result2.error.lower()
-        )
+        assert result2.error is not None
+        assert "already registered" in result2.error.lower()
 
         # Original service unchanged
         assert container._services["service"] == {"value": 1}
@@ -1047,7 +1050,8 @@ class TestServiceResolutionSync:
 
         result = container.get("nonexistent")
         assert result.is_failure
-        assert result.error is not None and "not found" in result.error.lower()
+        assert result.error is not None
+        assert "not found" in result.error.lower()
 
 
 class TestServiceUnregistrationSync:
@@ -1105,7 +1109,8 @@ class TestServiceUnregistrationSync:
 
         result = container.unregister("nonexistent")
         assert result.is_failure
-        assert result.error is not None and "not registered" in result.error.lower()
+        assert result.error is not None
+        assert "not registered" in result.error.lower()
 
 
 class TestFlextConfigSync:
@@ -1213,7 +1218,8 @@ class TestExceptionTranslation:
         # Try to register non-callable as factory
         result = container.register_factory("bad_factory", "not_callable")
         assert result.is_failure
-        assert result.error is not None and "must be callable" in result.error.lower()
+        assert result.error is not None
+        assert "must be callable" in result.error.lower()
 
     def test_resolution_error_wrapped(self) -> None:
         """Service resolution errors are wrapped in FlextResult."""

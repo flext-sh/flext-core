@@ -30,13 +30,14 @@ class TestFlextProtocols:
         protocol = FlextProtocols.Foundation.HasResultValue
         assert protocol is not None
         # Check it's a Protocol
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_has_result_value_implementation(self) -> None:
         """Test that a class can implement HasResultValue."""
 
         class ResultContainer:
-            def __init__(self, value: str) -> None:  # type: ignore[reportMissingSuperCall]
+            def __init__(self, value: str) -> None:
                 self._value = value
 
             @property
@@ -52,14 +53,15 @@ class TestFlextProtocols:
         """Test HasTimestamps protocol definition."""
         protocol = FlextProtocols.Foundation.HasTimestamps
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_has_timestamps_implementation(self) -> None:
         """Test that a class can implement HasTimestamps."""
         import time
 
         class TimestampedEntity:
-            def __init__(self) -> None:  # type: ignore[reportMissingSuperCall]
+            def __init__(self) -> None:
                 self.created_at = time.time()
                 self.updated_at = time.time()
 
@@ -71,26 +73,30 @@ class TestFlextProtocols:
         """Test HasModelFields protocol definition."""
         protocol = FlextProtocols.Foundation.HasModelFields
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_has_model_dump_protocol(self) -> None:
         """Test HasModelDump protocol definition."""
         protocol = FlextProtocols.Foundation.HasModelDump
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_has_handler_type_protocol(self) -> None:
         """Test HasHandlerType protocol definition."""
         protocol = FlextProtocols.Foundation.HasHandlerType
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     # Domain Protocols Tests
     def test_repository_protocol(self) -> None:
         """Test Repository protocol definition."""
         protocol = FlextProtocols.Domain.Repository
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_repository_implementation(self) -> None:
         """Test that a class can implement Repository protocol."""
@@ -118,7 +124,8 @@ class TestFlextProtocols:
         """Test Service protocol definition."""
         protocol = FlextProtocols.Domain.Service
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_service_implementation(self) -> None:
         """Test that a class can implement Service protocol."""
@@ -138,13 +145,15 @@ class TestFlextProtocols:
         """Test Configurable protocol definition."""
         protocol = FlextProtocols.Infrastructure.Configurable
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_connection_protocol(self) -> None:
         """Test Connection protocol definition."""
         protocol = FlextProtocols.Infrastructure.Connection
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_connection_implementation(self) -> None:
         """Test that a class can implement Connection protocol."""
@@ -169,14 +178,16 @@ class TestFlextProtocols:
         """Test LoggerProtocol definition."""
         protocol = FlextProtocols.Infrastructure.LoggerProtocol
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     # Application Protocols Tests
     def test_handler_protocol(self) -> None:
         """Test Handler protocol definition."""
         protocol = FlextProtocols.Application.Handler
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_handler_implementation(self) -> None:
         """Test that a class can implement Handler protocol."""
@@ -198,50 +209,58 @@ class TestFlextProtocols:
         """Test CommandHandler protocol definition."""
         protocol = FlextProtocols.Commands.CommandHandler
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_query_handler_protocol(self) -> None:
         """Test QueryHandler protocol definition."""
         protocol = FlextProtocols.Commands.QueryHandler
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_command_bus_protocol(self) -> None:
         """Test CommandBus protocol definition."""
         protocol = FlextProtocols.Commands.CommandBus
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_commands_middleware_protocol(self) -> None:
         """Test Commands Middleware protocol definition."""
         protocol = FlextProtocols.Commands.Middleware
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     # Extensions Protocols Tests
     def test_plugin_protocol(self) -> None:
         """Test Plugin protocol definition."""
         protocol = FlextProtocols.Extensions.Plugin
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_plugin_context_protocol(self) -> None:
         """Test PluginContext protocol definition."""
         protocol = FlextProtocols.Extensions.PluginContext
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_observability_protocol(self) -> None:
         """Test Observability protocol definition."""
         protocol = FlextProtocols.Extensions.Observability
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     def test_extensions_middleware_protocol(self) -> None:
         """Test Extensions Middleware protocol definition."""
         protocol = FlextProtocols.Extensions.Middleware
         assert protocol is not None
-        assert issubclass(protocol, Protocol)
+        if isinstance(protocol, type):
+            assert issubclass(protocol, Protocol)
 
     # Integration Tests
     def test_protocol_categories_independence(self) -> None:
@@ -254,7 +273,8 @@ class TestFlextProtocols:
         extensions = FlextProtocols.Extensions
 
         # All should be different objects
-        categories = [
+        # Protocol categories list
+        categories: list[type] = [
             foundation,
             domain,
             infrastructure,

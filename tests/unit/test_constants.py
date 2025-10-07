@@ -120,6 +120,84 @@ class TestFlextConstants:
         assert FlextConstants.Platform.DEFAULT_HOST == "localhost"
         assert FlextConstants.Platform.LOOPBACK_IP == "127.0.0.1"
 
+    def test_validation_patterns_email(self) -> None:
+        """Test email validation pattern."""
+        import re
+
+        pattern = re.compile(FlextConstants.Platform.PATTERN_EMAIL)
+
+        # Valid emails
+        assert pattern.match("test@example.com") is not None
+        assert pattern.match("user.name+tag@example.co.uk") is not None
+        assert pattern.match("valid_email@domain.com") is not None
+
+        # Invalid emails
+        assert pattern.match("invalid.email") is None
+        assert pattern.match("@example.com") is None
+        assert pattern.match("test@") is None
+
+    def test_validation_patterns_url(self) -> None:
+        """Test URL validation pattern."""
+        import re
+
+        pattern = re.compile(FlextConstants.Platform.PATTERN_URL, re.IGNORECASE)
+
+        # Valid URLs
+        assert pattern.match("https://github.com") is not None
+        assert pattern.match("http://localhost:8000") is not None
+        assert pattern.match("https://example.com/path?query=1") is not None
+
+        # Invalid URLs
+        assert pattern.match("not-a-url") is None
+        assert pattern.match("ftp://invalid.com") is None
+
+    def test_validation_patterns_phone(self) -> None:
+        """Test phone number validation pattern."""
+        import re
+
+        pattern = re.compile(FlextConstants.Platform.PATTERN_PHONE_NUMBER)
+
+        # Valid phone numbers
+        assert pattern.match("+5511987654321") is not None
+        assert pattern.match("5511987654321") is not None
+        assert pattern.match("+1234567890") is not None
+
+        # Invalid phone numbers
+        assert pattern.match("123") is None
+        assert pattern.match("abc1234567890") is None
+
+    def test_validation_patterns_uuid(self) -> None:
+        """Test UUID validation pattern."""
+        import re
+
+        pattern = re.compile(FlextConstants.Platform.PATTERN_UUID)
+
+        # Valid UUIDs
+        assert pattern.match("550e8400-e29b-41d4-a716-446655440000") is not None
+        assert (
+            pattern.match("550e8400e29b41d4a716446655440000") is not None
+        )  # Without hyphens
+        assert pattern.match("123e4567-E89B-12D3-A456-426614174000") is not None
+
+        # Invalid UUIDs
+        assert pattern.match("invalid-uuid") is None
+        assert pattern.match("550e8400-e29b-41d4") is None
+
+    def test_validation_patterns_path(self) -> None:
+        """Test file path validation pattern."""
+        import re
+
+        pattern = re.compile(FlextConstants.Platform.PATTERN_PATH)
+
+        # Valid paths
+        assert pattern.match("/home/user/file.txt") is not None
+        assert pattern.match("C:\\Users\\file.txt") is not None
+        assert pattern.match("relative/path/file.py") is not None
+
+        # Invalid paths (with invalid characters)
+        assert pattern.match("path/with<invalid>chars") is None
+        assert pattern.match('path/with"quotes') is None
+
     def test_observability_constants(self) -> None:
         """Test observability constants access."""
         assert FlextConstants.Observability.DEFAULT_LOG_LEVEL == "INFO"
@@ -241,3 +319,29 @@ class TestFlextConstants:
         assert FlextConstants.Network.__doc__ is not None
         assert FlextConstants.Validation.__doc__ is not None
         assert FlextConstants.Errors.__doc__ is not None
+
+    def test_class_getitem_nested_path(self) -> None:
+        """Test FlextConstants[] method with nested paths."""
+        # Test valid nested path access
+        validation_error = FlextConstants["Errors.VALIDATION_ERROR"]
+        assert validation_error == "VALIDATION_ERROR"
+
+        # Test another nested path
+        default_timeout = FlextConstants["Defaults.TIMEOUT"]
+        assert default_timeout == 30
+
+        # Test deep nested path
+        default_level = FlextConstants["Logging.DEFAULT_LEVEL"]
+        assert default_level == "INFO"
+
+    def test_class_getitem_invalid_path(self) -> None:
+        """Test FlextConstants[] with invalid path raises AttributeError."""
+        import pytest
+
+        # Test non-existent path
+        with pytest.raises(AttributeError, match=r"Constant path .* not found"):
+            FlextConstants["NonExistent.PATH"]
+
+        # Test partially valid path
+        with pytest.raises(AttributeError, match=r"Constant path .* not found"):
+            FlextConstants["Errors.NONEXISTENT_ERROR"]

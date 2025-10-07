@@ -1,3 +1,4 @@
+# ruff: disable=E402
 """Dispatcher facade delivering the Phase 1 unified dispatcher charter.
 
 The façade wraps ``FlextBus`` so handler registration, context propagation, and
@@ -274,12 +275,16 @@ class FlextDispatcher(FlextMixins.Service):
         self._circuit_breaker_failures: dict[str, int] = {}
         circuit_breaker_threshold_raw = config.get(
             "circuit_breaker_threshold",
-            global_config.circuit_breaker_threshold,
+            getattr(
+                global_config,
+                "circuit_breaker_threshold",
+                FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+            ),
         )
         self._circuit_breaker_threshold = (
             int(circuit_breaker_threshold_raw)
             if isinstance(circuit_breaker_threshold_raw, (int, str))
-            else global_config.circuit_breaker_threshold
+            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
         )
 
         # Rate limiting state - sliding window with count, window_start, block_until
@@ -289,21 +294,29 @@ class FlextDispatcher(FlextMixins.Service):
         ] = {}
         rate_limit_raw = config.get(
             "rate_limit",
-            global_config.rate_limit_max_requests,
+            getattr(
+                global_config,
+                "rate_limit_max_requests",
+                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+            ),
         )
         self._rate_limit = (
             int(rate_limit_raw)
             if isinstance(rate_limit_raw, (int, str))
-            else global_config.rate_limit_max_requests
+            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
         )
         rate_limit_window_raw = config.get(
             "rate_limit_window",
-            global_config.rate_limit_window_seconds,
+            getattr(
+                global_config,
+                "rate_limit_window_seconds",
+                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            ),
         )
         self._rate_limit_window = (
             float(rate_limit_window_raw)
             if isinstance(rate_limit_window_raw, (int, float, str))
-            else float(global_config.rate_limit_window_seconds)
+            else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
         )
         rate_limit_grace_raw = config.get(
             "rate_limit_block_grace",
@@ -327,7 +340,7 @@ class FlextDispatcher(FlextMixins.Service):
         self._executor: concurrent.futures.ThreadPoolExecutor | None = None
 
     @property
-    def config(self) -> FlextTypes.Dict:
+    def dispatcher_config(self) -> FlextTypes.Dict:
         """Access the dispatcher configuration."""
         return self.global_config
 
@@ -794,7 +807,16 @@ class FlextDispatcher(FlextMixins.Service):
         # Check circuit breaker
         failures = self._circuit_breaker_failures.get(message_type, 0)
         if failures >= self._circuit_breaker_threshold:
-            return FlextResult[object].fail("Circuit breaker is open")
+            return FlextResult[object].fail(
+                f"Circuit breaker is open for message type '{message_type}'",
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                error_data={
+                    "message_type": message_type,
+                    "failure_count": failures,
+                    "threshold": self._circuit_breaker_threshold,
+                    "reason": "circuit_breaker_open",
+                },
+            )
 
         # Check rate limiting
         current_time = time.time()
@@ -809,7 +831,18 @@ class FlextDispatcher(FlextMixins.Service):
             state = new_state
 
         if current_time < state.get("block_until", 0.0):
-            return FlextResult[object].fail("Rate limit exceeded")
+            retry_after = int(state.get("block_until", 0.0) - current_time)
+            return FlextResult[object].fail(
+                f"Rate limit exceeded for message type '{message_type}' - blocked until recovery",
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                error_data={
+                    "message_type": message_type,
+                    "limit": self._rate_limit,
+                    "window_seconds": self._rate_limit_window,
+                    "retry_after": retry_after,
+                    "reason": "rate_limit_blocked",
+                },
+            )
 
         if (
             current_time - state.get("window_start", current_time)
@@ -823,7 +856,19 @@ class FlextDispatcher(FlextMixins.Service):
             state["block_until"] = (
                 current_time + self._rate_limit_window + self._rate_limit_block_grace
             )
-            return FlextResult[object].fail("Rate limit exceeded")
+            retry_after = int(self._rate_limit_window + self._rate_limit_block_grace)
+            return FlextResult[object].fail(
+                f"Rate limit exceeded for message type '{message_type}' - too many requests",
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                error_data={
+                    "message_type": message_type,
+                    "limit": self._rate_limit,
+                    "window_seconds": self._rate_limit_window,
+                    "current_count": state["count"],
+                    "retry_after": retry_after,
+                    "reason": "rate_limit_exceeded",
+                },
+            )
 
         state["count"] += 1
         if state["count"] >= self._rate_limit:

@@ -88,7 +88,8 @@ class TestFlextMixins:
 
         result = mixins.apply("nonexistent_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "No mixin found" in result.error
+        assert result.error is not None
+        assert "No mixin found" in result.error
 
     def test_mixins_apply_mixin_with_failure(self) -> None:
         """Test mixin application with failure."""
@@ -105,7 +106,8 @@ class TestFlextMixins:
         mixins.register("failing_mixin", FailingMixin)
         result = mixins.apply("failing_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "Mixin failed" in result.error
+        assert result.error is not None
+        assert "Mixin failed" in result.error
 
     def test_mixins_apply_mixin_with_retry(self) -> None:
         """Test mixin application with retry mechanism."""
@@ -128,7 +130,8 @@ class TestFlextMixins:
         mixins.register("retry_mixin", RetryMixin)
         result = mixins.apply("retry_mixin", TestClass)
         assert result.is_success
-        assert isinstance(result.data, str) and "success_after_3_retries" in result.data
+        assert isinstance(result.data, str)
+        assert "success_after_3_retries" in result.data
 
     def test_mixins_apply_mixin_with_timeout(self) -> None:
         """Test mixin application with timeout."""
@@ -145,7 +148,8 @@ class TestFlextMixins:
         mixins.register("timeout_mixin", TimeoutMixin)
         result = mixins.apply("timeout_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "timeout" in result.error.lower()
+        assert result.error is not None
+        assert "timeout" in result.error.lower()
 
     def test_mixins_apply_mixin_with_validation(self) -> None:
         """Test mixin application with validation."""
@@ -219,10 +223,8 @@ class TestFlextMixins:
         # Check metrics
         metrics = mixins.get_metrics()
         assert "test_mixin" in metrics
-        assert (
-            isinstance(metrics["test_mixin"], dict)
-            and metrics["test_mixin"]["applications"] >= 1
-        )
+        assert isinstance(metrics["test_mixin"], dict)
+        assert metrics["test_mixin"]["applications"] >= 1
 
     def test_mixins_apply_mixin_with_correlation_id(self) -> None:
         """Test mixin application with correlation ID."""
@@ -351,7 +353,8 @@ class TestFlextMixins:
         # Exceed rate limit
         result = mixins.apply("test_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "rate limit" in result.error.lower()
+        assert result.error is not None
+        assert "rate limit" in result.error.lower()
 
     def test_mixins_apply_mixin_with_caching(self) -> None:
         """Test mixin application with caching."""
@@ -434,7 +437,8 @@ class TestFlextMixins:
 
         result = mixins.apply("error_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "Mixin error" in result.error
+        assert result.error is not None
+        assert "Mixin error" in result.error
 
     def test_mixins_apply_mixin_with_cleanup(self) -> None:
         """Test mixin application with cleanup."""
@@ -458,7 +462,8 @@ class TestFlextMixins:
         # After cleanup, mixins should be cleared
         result = mixins.apply("test_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "No mixin found" in result.error
+        assert result.error is not None
+        assert "No mixin found" in result.error
 
     def test_mixins_get_registered_mixins(self) -> None:
         """Test getting registered mixins."""
@@ -510,10 +515,8 @@ class TestFlextMixins:
 
         stats = mixins.get_statistics()
         assert "test_mixin" in stats
-        assert (
-            isinstance(stats["test_mixin"], dict)
-            and stats["test_mixin"]["applications"] >= 1
-        )
+        assert isinstance(stats["test_mixin"], dict)
+        assert stats["test_mixin"]["applications"] >= 1
 
     def test_mixins_thread_safety(self) -> None:
         """Test mixins thread safety."""
@@ -586,7 +589,8 @@ class TestFlextMixins:
 
         result = mixins.apply("error_mixin", TestClass)
         assert result.is_failure
-        assert result.error is not None and "Mixin error" in result.error
+        assert result.error is not None
+        assert "Mixin error" in result.error
 
     def test_mixins_validation(self) -> None:
         """Test mixins validation."""

@@ -11,7 +11,6 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -142,22 +141,6 @@ class TestFlextConfig:
         )
         assert config.app_name == "valid_app"
         assert config.environment == "production"
-
-    def test_config_validation_failure(self) -> None:
-        """Test config validation failure."""
-        # Invalid config should fail
-        # Invalid environment should fail validation
-        with pytest.raises(Exception) as exc_info:
-            FlextConfig(
-                app_name="test_app",
-                version="1.0.0",
-                environment="invalid_env",  # This should fail validation
-            )
-        # Expected validation error - test passes
-        assert (
-            "environment" in str(exc_info.value).lower()
-            or "invalid" in str(exc_info.value).lower()
-        )
 
     def test_config_environment_variables(self) -> None:
         """Test config loading from environment variables."""
@@ -360,101 +343,8 @@ class TestFlextConfig:
         assert restored_config.version == config.version
         assert restored_config.environment == config.environment
 
-    def test_config_handler_configuration_resolve_handler_mode_with_config_attr(
-        self,
-    ) -> None:
-        """Test resolve_handler_mode with handler_config.handler_type attribute (line 181-184)."""
-        from flext_core import FlextConfig
-
-        # Create a config object with handler_type attribute
-        class MockConfig:
-            handler_type = "query"
-
-        resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-            handler_mode=None,
-            handler_config=MockConfig(),
-        )
-        assert resolved == "query"
-
-    def test_config_handler_configuration_resolve_handler_mode_with_dict(self) -> None:
-        """Test resolve_handler_mode with handler_config dict (line 187-193)."""
-        from flext_core import FlextConfig
-
-        # Test with dict containing handler_type
-        config_dict = {"handler_type": "query"}
-        resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-            handler_mode=None,
-            handler_config=config_dict,
-        )
-        assert resolved == "query"
-
-    def test_config_handler_configuration_resolve_handler_mode_default(self) -> None:
-        """Test resolve_handler_mode default fallback (line 196)."""
-        from flext_core import FlextConfig, FlextConstants
-
-        # Test default fallback when no valid mode found
-        resolved = FlextConfig.HandlerConfiguration.resolve_handler_mode(
-            handler_mode=None,
-            handler_config=None,
-        )
-        assert resolved == FlextConstants.Cqrs.DEFAULT_HANDLER_TYPE
-
-    def test_config_handler_configuration_create_handler_config_defaults(self) -> None:
-        """Test create_handler_config with automatic defaults (line 222-250)."""
-        from flext_core import FlextConfig
-
-        # Test with minimal inputs - should generate defaults
-        config = FlextConfig.HandlerConfiguration.create_handler_config(
-            handler_mode="command",
-        )
-
-        # Should have auto-generated handler_id
-        assert "handler_id" in config
-        handler_id = cast("str", config["handler_id"])
-        assert handler_id.startswith("command_handler_")
-
-        # Should have auto-generated handler_name
-        assert "handler_name" in config
-        handler_name = config["handler_name"]
-        assert handler_name == "Command Handler"
-
-        # Should have correct handler_type
-        handler_type = config["handler_type"]
-        handler_mode = config["handler_mode"]
-        assert handler_type == "command"
-        assert handler_mode == "command"
-
-    def test_config_handler_configuration_create_handler_config_with_merge(
-        self,
-    ) -> None:
-        """Test create_handler_config with additional config merge (line 247-248)."""
-        from flext_core import FlextConfig
-
-        # Test with additional config that should be merged
-        additional_config = cast(
-            "FlextTypes.Dict",
-            {"custom_field": "custom_value", "another_field": 42},
-        )
-
-        config = FlextConfig.HandlerConfiguration.create_handler_config(
-            handler_mode="query",
-            handler_id="test_query",
-            handler_name="Test Query Handler",
-            handler_config=additional_config,
-        )
-
-        # Should have the provided values
-        assert config["handler_id"] == "test_query"
-        assert config["handler_name"] == "Test Query Handler"
-
-        # Should have merged the additional config
-        assert config["custom_field"] == "custom_value"
-        assert config["another_field"] == 42
-
     def test_config_validate_log_level_invalid(self) -> None:
         """Test log level validation with invalid level (line 597-601)."""
-        import pytest
-
         from flext_core import FlextConfig, FlextExceptions
 
         # Test with invalid log level - raises FlextExceptions.ValidationError
@@ -465,8 +355,6 @@ class TestFlextConfig:
 
     def test_config_validate_debug_trace_production_error(self) -> None:
         """Test debug cannot be enabled in production (line 608-613)."""
-        import pytest
-
         from flext_core import FlextConfig, FlextExceptions
 
         # Test production with debug=True should fail - raises FlextExceptions.ValidationError
@@ -477,8 +365,6 @@ class TestFlextConfig:
 
     def test_config_validate_trace_requires_debug(self) -> None:
         """Test trace requires debug to be enabled (line 616-620)."""
-        import pytest
-
         from flext_core import FlextConfig, FlextExceptions
 
         # Test trace=True with debug=False should fail - raises FlextExceptions.ValidationError

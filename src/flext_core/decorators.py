@@ -5,9 +5,13 @@ This module provides decorators that automatically handle:
 - Operation logging with context (@log_operation)
 - Performance tracking (@track_performance)
 - Railway pattern wrapping (@railway)
+- Retry logic with exponential backoff (@retry)
+- Operation timeout enforcement (@timeout)
 
 These decorators significantly reduce boilerplate code in services, handlers,
-and other components by automating infrastructure concerns.
+and other components by automating infrastructure concerns. All decorators
+integrate foundation modules (FlextLogger, FlextConstants, FlextExceptions)
+for consistency across the ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,7 +26,10 @@ from typing import Any, ParamSpec, TypeVar, cast
 
 import structlog
 
+from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
+from flext_core.exceptions import FlextExceptions
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 
 # Type variables for decorator signatures
@@ -127,34 +134,49 @@ def log_operation(
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             op_name = operation_name or func.__name__
 
-            # Get logger from self if available
-            if args and hasattr(args[0], "logger"):
-                logger = getattr(args[0], "logger", structlog.get_logger())
+            # Get logger from self if available, otherwise create one
+            args_tuple = cast("tuple[object, ...]", args)
+            first_arg = args_tuple[0] if args_tuple else None
+            if first_arg is not None and hasattr(first_arg, "logger"):
+                potential_logger = getattr(first_arg, "logger")
+                logger = (
+                    potential_logger
+                    if isinstance(potential_logger, FlextLogger)
+                    else FlextLogger(func.__module__)
+                )
             else:
-                logger = structlog.get_logger()
+                logger = FlextLogger(func.__module__)
 
-            # Bind operation context
+            # Bind operation context for structured logging
             structlog.contextvars.bind_contextvars(operation=op_name)
 
-            logger.info(
-                f"{op_name}_started",
-                function=func.__name__,
-                module=func.__module__,
-            )
-
             try:
+                logger.info(
+                    f"{op_name}_started",
+                    extra={
+                        "function": func.__name__,
+                        "func_module": func.__module__,
+                    },
+                )
+
                 result = func(*args, **kwargs)
                 logger.info(
                     f"{op_name}_completed",
-                    function=func.__name__,
-                    success=True,
+                    extra={
+                        "function": func.__name__,
+                        "success": True,
+                    },
                 )
                 return result
-            except Exception:
+            except Exception as e:
                 logger.exception(
                     f"{op_name}_failed",
-                    function=func.__name__,
-                    success=False,
+                    extra={
+                        "function": func.__name__,
+                        "success": False,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
                 )
                 raise
             finally:
@@ -204,13 +226,22 @@ def track_performance(
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             op_name = operation_name or func.__name__
 
-            # Get logger from self if available
-            if args and hasattr(args[0], "logger"):
-                logger = getattr(args[0], "logger", structlog.get_logger())
+            # Get logger from self if available, otherwise create one
+            args_tuple = cast("tuple[object, ...]", args)
+            first_arg = args_tuple[0] if args_tuple else None
+            if first_arg is not None and hasattr(first_arg, "logger"):
+                potential_logger = getattr(first_arg, "logger")
+                logger = (
+                    potential_logger
+                    if isinstance(potential_logger, FlextLogger)
+                    else FlextLogger(func.__module__)
+                )
             else:
-                logger = structlog.get_logger()
+                logger = FlextLogger(func.__module__)
 
             start_time = time.perf_counter()
+
+            # Bind operation context for structured logging
             structlog.contextvars.bind_contextvars(operation=op_name)
 
             try:
@@ -219,24 +250,31 @@ def track_performance(
 
                 logger.info(
                     "operation_completed",
-                    operation=op_name,
-                    duration_ms=duration * 1000,
-                    duration_seconds=duration,
-                    success=True,
+                    extra={
+                        "operation": op_name,
+                        "duration_ms": duration * 1000,
+                        "duration_seconds": duration,
+                        "success": True,
+                    },
                 )
                 return result
-            except Exception:
+            except Exception as e:
                 duration = time.perf_counter() - start_time
 
                 logger.exception(
                     "operation_failed",
-                    operation=op_name,
-                    duration_ms=duration * 1000,
-                    duration_seconds=duration,
-                    success=False,
+                    extra={
+                        "operation": op_name,
+                        "duration_ms": duration * 1000,
+                        "duration_seconds": duration,
+                        "success": False,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
                 )
                 raise
             finally:
+                # Unbind operation context
                 structlog.contextvars.unbind_contextvars("operation")
 
         return wrapper
@@ -303,6 +341,237 @@ def railway(
                     str(e),
                     error_code=error_code or "OPERATION_ERROR",
                 )
+
+        return wrapper
+
+    return decorator
+
+
+def retry(
+    max_attempts: int | None = None,
+    delay_seconds: float | None = None,
+    backoff_strategy: str | None = None,
+    error_code: str | None = None,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """Decorator to automatically retry failed operations with exponential backoff.
+
+    Uses FlextConstants.Reliability for default values and FlextExceptions for
+    structured error handling, integrating foundation modules.
+
+    Args:
+        max_attempts: Maximum retry attempts (default: FlextConstants.Reliability.DEFAULT_MAX_RETRIES)
+        delay_seconds: Initial delay between retries (default: FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+        backoff_strategy: Backoff strategy ('exponential' or 'linear', default: FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY)
+        error_code: Optional error code for failures
+
+    Returns:
+        Decorated function with automatic retry logic
+
+    Example:
+        ```python
+        from flext_core.decorators import retry
+        from flext_core import FlextMixins
+
+
+        class MyService(FlextMixins.Service):
+            @retry(max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential")
+            def unreliable_operation(self) -> dict:
+                # Automatically retries on failure with exponential backoff
+                return self._make_api_call()
+        ```
+
+    Note:
+        Uses FlextConstants.Reliability for defaults, ensuring consistency
+        across the entire ecosystem. Logs retry attempts automatically.
+
+    """
+    # Use FlextConstants.Reliability for defaults
+    attempts = max_attempts or FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+    delay = delay_seconds or float(
+        FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+    )
+    strategy = backoff_strategy or FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY
+
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            # Get logger from self if available
+            args_tuple = cast("tuple[object, ...]", args)
+            first_arg = args_tuple[0] if args_tuple else None
+            if first_arg is not None and hasattr(first_arg, "logger"):
+                potential_logger = getattr(first_arg, "logger")
+                logger = (
+                    potential_logger
+                    if isinstance(potential_logger, FlextLogger)
+                    else FlextLogger(func.__module__)
+                )
+            else:
+                logger = FlextLogger(func.__module__)
+
+            last_exception: Exception | None = None
+            current_delay = delay
+
+            for attempt in range(1, attempts + 1):
+                try:
+                    if attempt > 1:
+                        logger.info(
+                            "retry_attempt",
+                            extra={
+                                "function": func.__name__,
+                                "attempt": attempt,
+                                "max_attempts": attempts,
+                                "delay_seconds": current_delay,
+                            },
+                        )
+                        time.sleep(current_delay)
+
+                    return func(*args, **kwargs)
+
+                except Exception as e:
+                    last_exception = e
+
+                    logger.warning(
+                        "operation_failed_retrying",
+                        extra={
+                            "function": func.__name__,
+                            "attempt": attempt,
+                            "max_attempts": attempts,
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                        },
+                    )
+
+                    # Calculate next delay based on strategy
+                    if strategy == "exponential":
+                        current_delay *= 2
+                    elif strategy == "linear":
+                        current_delay += delay
+                    # For unknown strategies, keep constant delay
+
+                    # If this was the last attempt, we'll raise after the loop
+                    if attempt == attempts:
+                        break
+
+            # All retries exhausted - log without exc_info since we're outside handler
+            if last_exception:
+                logger.error(
+                    "operation_failed_all_retries_exhausted",
+                    extra={
+                        "function": func.__name__,
+                        "attempts": attempts,
+                        "error": str(last_exception),
+                        "error_type": type(last_exception).__name__,
+                    },
+                )
+            else:
+                logger.error(
+                    "operation_failed_all_retries_exhausted",
+                    extra={
+                        "function": func.__name__,
+                        "attempts": attempts,
+                        "error": "Unknown error",
+                    },
+                )
+
+            # Raise the last exception
+            if last_exception:
+                raise last_exception
+
+            # Should never reach here, but type safety
+            msg = f"Operation {func.__name__} failed after {attempts} attempts"
+            raise FlextExceptions.TimeoutError(
+                msg,
+                error_code=error_code or "RETRY_EXHAUSTED",
+            )
+
+        return wrapper
+
+    return decorator
+
+
+def timeout(
+    timeout_seconds: float | None = None,
+    error_code: str | None = None,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """Decorator to enforce operation timeout.
+
+    Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default timeout
+    and FlextExceptions.TimeoutError for structured error handling.
+
+    Args:
+        timeout_seconds: Timeout in seconds (default: FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS)
+        error_code: Optional error code for timeout
+
+    Returns:
+        Decorated function with timeout enforcement
+
+    Example:
+        ```python
+        from flext_core.decorators import timeout
+        from flext_core import FlextMixins
+
+
+        class MyService(FlextMixins.Service):
+            @timeout(timeout_seconds=30.0)
+            def long_running_operation(self) -> dict:
+                # Automatically raises TimeoutError if exceeds 30 seconds
+                return self._process_data()
+        ```
+
+    Note:
+        This is a simple timeout based on elapsed time checking.
+        For true thread-based timeouts, use threading.Timer or asyncio.
+
+    """
+    # Use FlextConstants.Reliability for default
+    max_duration = (
+        timeout_seconds
+        if timeout_seconds is not None
+        else FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+    )
+
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            start_time = time.perf_counter()
+
+            try:
+                result = func(*args, **kwargs)
+
+                # Check if operation exceeded timeout
+                duration = time.perf_counter() - start_time
+                if duration > max_duration:
+                    msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s)"
+                    raise FlextExceptions.TimeoutError(
+                        msg,
+                        error_code=error_code or "OPERATION_TIMEOUT",
+                        timeout_seconds=max_duration,
+                        operation=func.__name__,
+                        metadata={"duration_seconds": duration},
+                    )
+
+                return result
+
+            except FlextExceptions.TimeoutError:
+                # Re-raise timeout errors
+                raise
+            except Exception as e:
+                # Check duration even on exception
+                duration = time.perf_counter() - start_time
+                if duration > max_duration:
+                    msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {type(e).__name__}"
+                    raise FlextExceptions.TimeoutError(
+                        msg,
+                        error_code=error_code or "OPERATION_TIMEOUT",
+                        timeout_seconds=max_duration,
+                        operation=func.__name__,
+                        metadata={
+                            "duration_seconds": duration,
+                            "original_error": str(e),
+                        },
+                    ) from e
+                # Re-raise original exception if not timeout
+                raise
 
         return wrapper
 
@@ -391,5 +660,7 @@ __all__ = [
     "inject",
     "log_operation",
     "railway",
+    "retry",
+    "timeout",
     "track_performance",
 ]

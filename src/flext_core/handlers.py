@@ -1,3 +1,4 @@
+# ruff: disable=E402
 """Layer 13: Unified CQRS handler base promoted for the FLEXT 1.0.0 rollout.
 
 This module provides FlextHandlers base classes for implementing CQRS command
@@ -106,7 +107,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         - FlextModels.CqrsConfig.Handler for configuration
         - FlextContext.HandlerExecutionContext for state
         - FlextUtilities.TypeChecker for type validation
-        - FlextUtilities.MessageValidator for messages
         - FlextLogger for handler operation logging
         - FlextConstants for handler defaults
         - FlextExceptions for structured errors
@@ -535,7 +535,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         return self._config_model.handler_mode
 
     @property
-    def config(self) -> FlextModels.CqrsConfig.Handler:
+    def handler_config(self) -> FlextModels.CqrsConfig.Handler:
         """Get handler configuration.
 
         Returns:
@@ -658,7 +658,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         # Extract message ID
         message_id: str = "unknown"
         if isinstance(message, dict):
-            message_dict = cast("dict[str, object]", message)
+            message_dict: dict[str, object] = message
             message_id = (
                 str(message_dict.get(f"{operation}_id", "unknown"))
                 or str(message_dict.get("message_id", "unknown"))
@@ -1043,7 +1043,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             handler_func: FlextTypes.Handlers.HandlerFunc,
             query_type: str,
             *,
-            caching_enabled: bool = False,
             cache_ttl: int = FlextConstants.Defaults.CACHE_TTL,
         ) -> FlextHandlers[object, object]:
             """REMOVED: Use direct class definition instead of factory method.
@@ -1053,7 +1052,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
                 handler = FlextHandlers.HandlerPatterns.create_query_handler(
                     lambda q: get_order_by_id(q),
                     "GetOrderById",
-                    caching_enabled=True,
                     cache_ttl=600,
                 )
 
@@ -1089,7 +1087,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         def create_event_handler(
             handler_func: FlextTypes.Handlers.HandlerFunc,
             event_type: str,
-            retry_policy: FlextTypes.Handlers.HandlerConfig | None = None,
         ) -> FlextHandlers[object, None]:
             """REMOVED: Use direct class definition instead of factory method.
 
@@ -1098,10 +1095,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
                 handler = FlextHandlers.HandlerPatterns.create_event_handler(
                     lambda e: handle_order_created(e),
                     "OrderCreated",
-                    retry_policy={
-                        "max_retries": 3,
-                        "retry_delay": 1.0,
-                    },
                 )
 
                 # New pattern - define handler class directly
@@ -1144,20 +1137,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             raise NotImplementedError(msg)
 
         @staticmethod
-        def create_saga_handler(
-            saga_steps: FlextTypes.Handlers.SagaSteps[object],
-            compensation_steps: FlextTypes.Handlers.CompensationSteps[object],
-            saga_type: str,
-        ) -> FlextHandlers[object, object]:
+        def create_saga_handler() -> FlextHandlers[object, object]:
             """REMOVED: Use direct class definition instead of factory method.
 
             Migration:
                 # Old pattern
-                handler = FlextHandlers.HandlerPatterns.create_saga_handler(
-                    [create_order, reserve_inventory, process_payment],
-                    [refund_payment, release_inventory, cancel_order],
-                    "OrderProcessingSaga",
-                )
+                handler = FlextHandlers.HandlerPatterns.create_saga_handler()
 
                 # New pattern - define handler class directly
                 class OrderProcessingSagaHandler(FlextHandlers[OrderState, OrderState]):

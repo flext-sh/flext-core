@@ -25,12 +25,11 @@ from typing import (
     Any,
     Final,
     cast,
-    override,
 )
 
-import structlog
 import structlog.contextvars
 
+from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -469,18 +468,23 @@ class FlextContext:
         self._active = True
         self._suspended = False
         self._lock = threading.RLock()
-        # Scope-based storage
+        # Scope-based storage using FlextConstants.Context scope literals
         self._scopes: FlextTypes.Context.ScopeRegistry = {
-            "global": self._data,
-            "user": {},
-            "session": {},
+            FlextConstants.Context.SCOPE_GLOBAL: self._data,
+            "user": {},  # Custom scope (not in standard scope literals)
+            FlextConstants.Context.SCOPE_SESSION: {},
         }
 
     # =========================================================================
     # Instance Methods - Core context operations
     # =========================================================================
 
-    def set(self, key: str, value: object, scope: str = "global") -> None:
+    def set(
+        self,
+        key: str,
+        value: object,
+        scope: str = FlextConstants.Context.SCOPE_GLOBAL,
+    ) -> None:
         """Set a value in the context.
 
         Args:
@@ -492,13 +496,10 @@ class FlextContext:
         if not self._active:
             return
 
-        # Key is already typed as str, no need for isinstance check
-
-        if not key:
-            structlog.get_logger(__name__).warning(
-                "Context key is empty; validation will fail",
-                scope=scope,
-            )
+        # Validate key is not None (empty string is allowed but will fail validation)
+        if key is None:
+            msg = "Context key cannot be None"
+            raise ValueError(msg)
 
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
@@ -516,11 +517,10 @@ class FlextContext:
             if isinstance(sets_count, int):
                 self._statistics["sets"] = sets_count + 1
 
-            operations = self._statistics.get("operations", {})
-            if isinstance(operations, dict) and "set" in operations:
+            operations = cast("dict[str, int]", self._statistics.get("operations", {}))
+            if "set" in operations:
                 set_count: int = operations["set"]
-                if isinstance(set_count, int):
-                    operations["set"] = set_count + 1
+                operations["set"] = set_count + 1
 
             # Execute hooks
             if "set" in self._hooks:
@@ -528,7 +528,12 @@ class FlextContext:
                     with contextlib.suppress(Exception):
                         hook(key, value)
 
-    def get(self, key: str, default: object = None, scope: str = "global") -> object:
+    def get(
+        self,
+        key: str,
+        default: object = None,
+        scope: str = FlextConstants.Context.SCOPE_GLOBAL,
+    ) -> object:
         """Get a value from the context.
 
         Args:
@@ -549,14 +554,13 @@ class FlextContext:
             if isinstance(gets_count, int):
                 self._statistics["gets"] = gets_count + 1
 
-            operations = self._statistics.get("operations", {})
-            if isinstance(operations, dict) and "get" in operations:
+            operations = cast("dict[str, int]", self._statistics.get("operations", {}))
+            if "get" in operations:
                 get_count: int = operations["get"]
-                if isinstance(get_count, int):
-                    operations["get"] = get_count + 1
+                operations["get"] = get_count + 1
             return scope_data.get(key, default)
 
-    def has(self, key: str, scope: str = "global") -> bool:
+    def has(self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.
 
         Args:
@@ -574,7 +578,9 @@ class FlextContext:
             scope_data = self._scopes.get(scope, {})
             return key in scope_data
 
-    def remove(self, key: str, scope: str = "global") -> None:
+    def remove(
+        self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL
+    ) -> None:
         """Remove a key from the context.
 
         Args:
@@ -593,14 +599,13 @@ class FlextContext:
                 if isinstance(removes_count, int):
                     self._statistics["removes"] = removes_count + 1
 
-                operations = self._statistics.get("operations", {})
-                remove_count: int = (
-                    operations.get("remove", 0)
-                    if isinstance(operations, dict) and "remove" in operations
-                    else 0
+                operations = cast(
+                    "dict[str, int]", self._statistics.get("operations", {})
                 )
-                if isinstance(remove_count, int):
-                    operations["remove"] = remove_count + 1
+                remove_count: int = (
+                    operations.get("remove", 0) if "remove" in operations else 0
+                )
+                operations["remove"] = remove_count + 1
 
     def clear(self) -> None:
         """Clear all data from the context."""
@@ -615,11 +620,10 @@ class FlextContext:
             if isinstance(clears_count, int):
                 self._statistics["clears"] = clears_count + 1
 
-            operations = self._statistics.get("operations", {})
-            if isinstance(operations, dict) and "clear" in operations:
+            operations = cast("dict[str, int]", self._statistics.get("operations", {}))
+            if "clear" in operations:
                 clear_count: int = operations["clear"]
-                if isinstance(clear_count, int):
-                    operations["clear"] = clear_count + 1
+                operations["clear"] = clear_count + 1
 
     def keys(self) -> FlextTypes.StringList:
         """Get all keys in the context.
@@ -691,8 +695,8 @@ class FlextContext:
                         self._scopes[scope_name] = {}
                     self._scopes[scope_name].update(scope_data)
             else:
-                # Merge into global scope
-                self._scopes["global"].update(other)
+                # Merge into global scope using FlextConstants.Context
+                self._scopes[FlextConstants.Context.SCOPE_GLOBAL].update(other)
         return self
 
     def clone(self) -> FlextContext:
@@ -761,13 +765,13 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            data_values = data.values()
+            data_values = cast("dict[str, Any]", data).values()
             if all(isinstance(v, dict) for v in data_values):
                 # New scoped format
-                context._scopes = data
+                context._scopes = cast("dict[str, dict[str, Any]]", data)
             else:
                 # Old flat format - put everything in global scope
-                context._scopes["global"] = data
+                context._scopes[FlextConstants.Context.SCOPE_GLOBAL] = data
 
         return context
 
@@ -909,8 +913,8 @@ class FlextContext:
 
         """
         with self._lock:
-            # Import data into global scope
-            self._scopes["global"].update(data)
+            # Import data into global scope using FlextConstants.Context
+            self._scopes[FlextConstants.Context.SCOPE_GLOBAL].update(data)
 
     # =========================================================================
     # Global Context Management - Static methods for global context
@@ -952,12 +956,12 @@ class FlextContext:
 
             # Or for singleton pattern, manage explicitly
             _context_lock = threading.RLock()
-            _context_instance: FlextContext | None = None
+            context_instance: FlextContext | None = None
 
             with _context_lock:
-                if _context_instance is None:
-                    _context_instance = FlextContext()
-                context = _context_instance
+                if context_instance is None:
+                    context_instance = FlextContext()
+                context = context_instance
 
         """
         msg = (
@@ -975,7 +979,7 @@ class FlextContext:
             FlextContext.reset_global()
 
             # New pattern - manage your own singleton
-            _context_instance = None  # Reset in your own code
+            context_instance = None  # Reset in your own code
 
         """
         msg = (
@@ -1065,8 +1069,15 @@ class FlextContext:
             """Generate unique correlation ID.
 
             Note: Automatically propagates to structlog via _StructlogContextVar.
+            Uses FlextConstants.Context configuration for prefix and length.
             """
-            correlation_id = f"corr_{str(uuid.uuid4())[:8]}"
+            # Generate correlation ID using centralized constants
+            random_suffix = str(uuid.uuid4()).replace("-", "")[
+                : FlextConstants.Context.CORRELATION_ID_LENGTH
+            ]
+            correlation_id = (
+                f"{FlextConstants.Context.CORRELATION_ID_PREFIX}{random_suffix}"
+            )
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
             return correlation_id
 
@@ -1086,10 +1097,18 @@ class FlextContext:
             correlation_id: str | None = None,
             parent_id: str | None = None,
         ) -> Generator[str]:
-            """Create correlation context scope."""
+            """Create correlation context scope.
+
+            Uses FlextConstants.Context configuration for correlation ID generation.
+            """
             # Generate correlation ID if not provided
             if correlation_id is None:
-                correlation_id = f"corr_{str(uuid.uuid4())[:8]}"
+                random_suffix = str(uuid.uuid4()).replace("-", "")[
+                    : FlextConstants.Context.CORRELATION_ID_LENGTH
+                ]
+                correlation_id = (
+                    f"{FlextConstants.Context.CORRELATION_ID_PREFIX}{random_suffix}"
+                )
 
             # Save current context
             current_correlation = (
@@ -1590,7 +1609,6 @@ class FlextContext:
         handler execution and provide reusable context management patterns.
         """
 
-        @override
         def __init__(self, handler_name: str, handler_mode: str) -> None:
             """Initialize handler execution context.
 
@@ -1599,7 +1617,6 @@ class FlextContext:
                 handler_mode: Mode of the handler (command/query)
 
             """
-            super().__init__()
             self.handler_name = handler_name
             self.handler_mode = handler_mode
             self._start_time: float | None = None

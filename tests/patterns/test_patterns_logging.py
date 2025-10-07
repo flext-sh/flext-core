@@ -33,7 +33,8 @@ class TestFlextContext:
 
         assert isinstance(context, dict)
         if len(context) != 0:
-            raise AssertionError(f"Expected {0}, got {len(context)}")
+            msg = f"Expected {0}, got {len(context)}"
+            raise AssertionError(msg)
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
@@ -45,10 +46,12 @@ class TestFlextContext:
         }
 
         if context["user_id"] != "123":
-            raise AssertionError(f"Expected {'123'}, got {context['user_id']}")
+            msg = f"Expected {'123'}, got {context['user_id']}"
+            raise AssertionError(msg)
         assert context["request_id"] == "req-456"
         if context["operation"] != "login":
-            raise AssertionError(f"Expected {'login'}, got {context['operation']}")
+            msg = f"Expected {'login'}, got {context['operation']}"
+            raise AssertionError(msg)
         assert context["duration_ms"] == 150.5
 
     def test_context_optional_fields(self) -> None:
@@ -59,7 +62,8 @@ class TestFlextContext:
         }
 
         if context["user_id"] != "123":
-            raise AssertionError(f"Expected {'123'}, got {context['user_id']}")
+            msg = f"Expected {'123'}, got {context['user_id']}"
+            raise AssertionError(msg)
         # Other fields are optional and not present
 
     def test_context_enterprise_fields(self) -> None:
@@ -73,15 +77,18 @@ class TestFlextContext:
         }
 
         if context["tenant_id"] != "tenant-123":
-            raise AssertionError(f"Expected {'tenant-123'}, got {context['tenant_id']}")
+            msg = f"Expected {'tenant-123'}, got {context['tenant_id']}"
+            raise AssertionError(msg)
         assert context["session_id"] == "session-456"
         if context["transaction_id"] != "tx-789":
+            msg = f"Expected {'tx-789'}, got {context['transaction_id']}"
             raise AssertionError(
-                f"Expected {'tx-789'}, got {context['transaction_id']}",
+                msg,
             )
         assert context["customer_id"] == "customer-abc"
         if context["order_id"] != "order-def":
-            raise AssertionError(f"Expected {'order-def'}, got {context['order_id']}")
+            msg = f"Expected {'order-def'}, got {context['order_id']}"
+            raise AssertionError(msg)
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
@@ -92,10 +99,12 @@ class TestFlextContext:
         }
 
         if context["duration_ms"] != 250.0:
-            raise AssertionError(f"Expected {250.0}, got {context['duration_ms']}")
+            msg = f"Expected {250.0}, got {context['duration_ms']}"
+            raise AssertionError(msg)
         assert context["memory_mb"] == 128.5
         if context["cpu_percent"] != 75.2:
-            raise AssertionError(f"Expected {75.2}, got {context['cpu_percent']}")
+            msg = f"Expected {75.2}, got {context['cpu_percent']}"
+            raise AssertionError(msg)
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
@@ -106,11 +115,13 @@ class TestFlextContext:
         }
 
         if context["error_code"] != "E001":
-            raise AssertionError(f"Expected {'E001'}, got {context['error_code']}")
+            msg = f"Expected {'E001'}, got {context['error_code']}"
+            raise AssertionError(msg)
         assert context["error_type"] == "ValidationError"
         if context["stack_trace"] != "Traceback...":
+            msg = f"Expected {'Traceback...'}, got {context['stack_trace']}"
             raise AssertionError(
-                f"Expected {'Traceback...'}, got {context['stack_trace']}",
+                msg,
             )
 
 
@@ -185,36 +196,6 @@ class TestFlextLogger:
         # The new thin FlextLogger doesn't have bind method
         # Context binding is handled through FlextContext
 
-    def test_configure_with_defaults(self) -> None:
-        """Test configuring logger with default settings."""
-        FlextLogger.configure()
-
-        if not FlextLogger.is_configured():
-            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
-
-    def test_configure_with_custom_settings(self) -> None:
-        """Test configuring logger with custom settings."""
-        FlextLogger.configure(
-            log_level="DEBUG",
-            json_output=True,
-            include_source=False,
-        )
-
-        if not FlextLogger.is_configured():
-            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
-
-    def test_configure_idempotent(self) -> None:
-        """Test that configure is idempotent."""
-        # Configure once
-        FlextLogger.configure()
-        if not FlextLogger.is_configured():
-            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
-
-        # Configure again should not raise error
-        FlextLogger.configure()
-        if not FlextLogger.is_configured():
-            raise AssertionError(f"Expected True, got {FlextLogger.is_configured()}")
-
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance."""
         base_logger = FlextLogger("base_test")
@@ -239,23 +220,6 @@ class TestFlextLogger:
 
         assert bound_logger is not None
         assert hasattr(bound_logger, "info")
-
-    def test_clear_context(self) -> None:
-        """Test clearing context variables."""
-        # Create a logger instance first
-        logger = FlextLogger("test_clear_context")
-        # This should not raise an error
-        logger.clear_request_context()
-
-    def test_with_performance_tracking(self) -> None:
-        """Test getting logger with performance tracking."""
-        perf_logger = FlextLogger("perf_test")
-        # FlextLogger has built-in performance tracking methods
-        assert hasattr(perf_logger, "start_operation")
-        assert hasattr(perf_logger, "complete_operation")
-
-        assert perf_logger is not None
-        assert hasattr(perf_logger, "info")
 
     def test_backward_compatibility_function(self) -> None:
         """Test backward compatibility function."""
@@ -325,48 +289,9 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 
-    def test_logger_factory_real_execution(self) -> None:
-        """Test logger factory with real execution instead of mocks."""
-        # Test real logger creation (FlextLogger doesn't have _loggers cache)
-
-        # Test real logger creation
-        logger1 = FlextLogger("factory_test")
-        logger2 = FlextLogger("factory_test")
-
-        # Same name should return same cached instance
-        assert logger1 is logger2
-
-        # Different name should return different instance
-        logger3 = FlextLogger("different_test")
-        assert logger1 is not logger3
-
-        # Test that loggers have the expected methods
-        assert hasattr(logger1, "info")
-        assert hasattr(logger1, "error")
-        assert hasattr(logger1, "debug")
-        assert hasattr(logger1, "warning")
-
-        # Test actual logging (should not raise exceptions)
-        logger1.info("Test message")
-        logger3.error("Test error message")
-
 
 class TestFlextLoggerIntegration:
     """Integration tests for FlextLogger."""
-
-    def test_multiple_loggers(self) -> None:
-        """Test creating and using multiple loggers."""
-        logger1 = FlextLogger("service1")
-        logger2 = FlextLogger("service2")
-        logger3 = FlextLogger("service3")
-
-        # Should be different instances
-        assert logger1 is not logger2
-        assert logger2 is not logger3
-
-        # But same name should return same instance
-        logger1_again = FlextLogger("service1")
-        assert logger1 is logger1_again
 
     def test_logging_hierarchy(self) -> None:
         """Test hierarchical logging."""

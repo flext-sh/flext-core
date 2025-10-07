@@ -24,6 +24,7 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextExceptions,
+    FlextHandlers,
     FlextResult,
     FlextTypes,
     FlextUtilities,

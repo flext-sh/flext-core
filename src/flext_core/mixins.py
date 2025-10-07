@@ -1386,9 +1386,8 @@ class FlextMixins:
 
                 # Try with retry logic (up to 3 attempts) and timeout
                 max_retries = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-                timeout_seconds = (
-                    FlextConstants.Container.MIN_TIMEOUT_SECONDS
-                )  # Quick timeout for testing
+                # Use 0.1 seconds for quick timeout in testing
+                timeout_seconds = 0.1
 
                 for attempt in range(max_retries):
                     try:
@@ -1754,10 +1753,6 @@ class FlextMixins:
             return FlextResult[FlextTypes.List].ok(processed_list)
         except Exception as e:
             return FlextResult[FlextTypes.List].fail(f"Parallel processing failed: {e}")
-        # This should never be reached, but added for type safety
-        return FlextResult[FlextTypes.List].fail(
-            "Unexpected error in parallel processing"
-        )
 
     def _check_circuit_breaker(self, name: str) -> None:
         """Check if circuit breaker should be opened based on failure rate."""
@@ -1811,7 +1806,7 @@ class FlextMixins:
         """
 
         # Class variable for lazy initialization of global container
-        _container_instance: FlextContainer | None = None
+        container_instance: FlextContainer | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize container for subclasses (ABI compatibility)."""
@@ -1822,12 +1817,12 @@ class FlextMixins:
         def container(self) -> FlextContainer:
             """Get global FlextContainer instance with lazy initialization."""
             if (
-                not hasattr(FlextMixins.Container, "_container_instance")
-                or FlextMixins.Container._container_instance is None  # type: ignore[attr-defined]  # noqa: SLF001
+                not hasattr(FlextMixins.Container, "container_instance")
+                or FlextMixins.Container.container_instance is None
             ):
                 # Use direct instantiation to avoid deadlock in __new__ singleton pattern
-                FlextMixins.Container._container_instance = FlextContainer()  # type: ignore[attr-defined]  # noqa: SLF001
-            return FlextMixins.Container._container_instance  # type: ignore[attr-defined]  # noqa: SLF001
+                FlextMixins.Container.container_instance = FlextContainer()
+            return FlextMixins.Container.container_instance
 
         def _register_in_container(self, service_name: str) -> FlextResult[None]:
             """Register self in global container for service discovery."""
@@ -1868,7 +1863,7 @@ class FlextMixins:
         """
 
         # Class variable for lazy initialization of global context
-        _context_instance: FlextContext | None = None
+        context_instance: FlextContext | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize context for subclasses (ABI compatibility)."""
@@ -1879,11 +1874,11 @@ class FlextMixins:
         def context(self) -> FlextContext:
             """Get FlextContext instance with lazy initialization."""
             if (
-                not hasattr(FlextMixins.Context, "_context_instance")
-                or FlextMixins.Context._context_instance is None  # type: ignore[attr-defined]  # noqa: SLF001
+                not hasattr(FlextMixins.Context, "context_instance")
+                or FlextMixins.Context.context_instance is None
             ):
-                FlextMixins.Context._context_instance = FlextContext()  # type: ignore[attr-defined]  # noqa: SLF001
-            return FlextMixins.Context._context_instance  # type: ignore[attr-defined]  # noqa: SLF001
+                FlextMixins.Context.context_instance = FlextContext()
+            return FlextMixins.Context.context_instance
 
         def _propagate_context(self, operation_name: str) -> None:
             """Propagate context for current operation with automatic setup."""
@@ -1932,8 +1927,8 @@ class FlextMixins:
         """
 
         # Class variables for lazy initialization of logger
-        _logger_instance: FlextLogger | None = None
-        _logger_name: str | None = None
+        logger_instance: FlextLogger | None = None
+        logger_name: str | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize logger for subclasses (ABI compatibility)."""
@@ -1944,15 +1939,15 @@ class FlextMixins:
         def logger(self) -> FlextLogger:
             """Get FlextLogger instance with lazy initialization."""
             if (
-                not hasattr(FlextMixins.Logging, "_logger_instance")
-                or FlextMixins.Logging._logger_instance is None  # type: ignore[attr-defined]  # noqa: SLF001
-                or FlextMixins.Logging._logger_name != self.__class__.__name__  # type: ignore[attr-defined]  # noqa: SLF001
+                not hasattr(FlextMixins.Logging, "logger_instance")
+                or FlextMixins.Logging.logger_instance is None
+                or FlextMixins.Logging.logger_name != self.__class__.__name__
             ):
-                FlextMixins.Logging._logger_name = self.__class__.__name__  # type: ignore[attr-defined]  # noqa: SLF001
-                FlextMixins.Logging._logger_instance = FlextLogger(  # type: ignore[attr-defined]  # noqa: SLF001
+                FlextMixins.Logging.logger_name = self.__class__.__name__
+                FlextMixins.Logging.logger_instance = FlextLogger(
                     self.__class__.__name__
                 )
-            return FlextMixins.Logging._logger_instance  # type: ignore[attr-defined]  # noqa: SLF001
+            return FlextMixins.Logging.logger_instance
 
         def _log_with_context(self, level: str, message: str, **extra: object) -> None:
             """Log message with automatic context data inclusion."""
@@ -2045,7 +2040,7 @@ class FlextMixins:
         """
 
         # Class variable for lazy initialization of global config
-        _config_instance: FlextConfig | None = None
+        config_instance: FlextConfig | None = None
 
         def __init_subclass__(cls, **kwargs: object) -> None:
             """Auto-initialize config for subclasses (ABI compatibility)."""
@@ -2056,13 +2051,13 @@ class FlextMixins:
         def config(self) -> FlextConfig:
             """Get FlextConfig global instance with lazy initialization."""
             if (
-                not hasattr(FlextMixins.Configurable, "_config_instance")
-                or FlextMixins.Configurable._config_instance is None  # noqa: SLF001
-            ):  # type: ignore[attr-defined]
-                FlextMixins.Configurable._config_instance = (  # type: ignore[attr-defined]  # noqa: SLF001
+                not hasattr(FlextMixins.Configurable, "config_instance")
+                or FlextMixins.Configurable.config_instance is None
+            ):
+                FlextMixins.Configurable.config_instance = (
                     FlextConfig.get_global_instance()
                 )
-            return FlextMixins.Configurable._config_instance  # type: ignore[attr-defined]  # noqa: SLF001
+            return FlextMixins.Configurable.config_instance
 
         def _get_config_value(self, key: str, default: object = None) -> object:
             """Get configuration value with fallback to default."""

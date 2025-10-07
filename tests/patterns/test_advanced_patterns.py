@@ -350,8 +350,9 @@ class AssertionBuilder:
                     if isinstance(item, str):
                         assert item in self.data
                     else:
+                        msg = f"Cannot check if {item!r} is in string {self.data!r}"
                         raise AssertionError(
-                            f"Cannot check if {item!r} is in string {self.data!r}",
+                            msg,
                         )
             elif isinstance(self.data, dict):
                 # For dict, check if item is a key

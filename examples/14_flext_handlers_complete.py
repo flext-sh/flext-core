@@ -27,6 +27,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 from flext_core import (
+    FlextConstants,
+    FlextExceptions,
     FlextHandlers,
     FlextLogger,
     FlextModels,
@@ -64,7 +66,7 @@ class GetUserQuery:
 
 @dataclass
 class ListUsersQuery:
-    """Query to list users with pagination."""
+    """Query to list[object] users with pagination."""
 
     limit: int = 10
     offset: int = 0
@@ -145,11 +147,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 super().__init__(config=config)
                 self._users = user_store
                 self._events = event_store
-                self.logger = FlextLogger(__name__)
+                self._logger = FlextLogger(__name__)
 
             def handle(self, message: CreateUserCommand) -> FlextResult[str]:
                 """Handle user creation command."""
-                self.logger.info(f"Creating user {message.user_id}")
+                self._logger.info(f"Creating user {message.user_id}")
 
                 # Validation
                 if message.user_id in self._users:
@@ -201,11 +203,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self.logger = FlextLogger(__name__)
+                self._logger = FlextLogger(__name__)
 
             def handle(self, message: UpdateUserCommand) -> FlextResult[None]:
                 """Handle user update command."""
-                self.logger.info(f"Updating user {message.user_id}")
+                self._logger.info(f"Updating user {message.user_id}")
 
                 if message.user_id not in self._users:
                     return FlextResult[None].fail(
@@ -291,11 +293,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self.logger = FlextLogger(__name__)
+                self._logger = FlextLogger(__name__)
 
             def handle(self, message: GetUserQuery) -> FlextResult[User]:
                 """Handle get user query."""
-                self.logger.info(f"Getting user {message.user_id}")
+                self._logger.info(f"Getting user {message.user_id}")
 
                 user = self._users.get(message.user_id)
                 if not user:
@@ -319,20 +321,20 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=2000,
                     max_command_retries=1,
                     metadata={
-                        "description": "Handles user list queries with pagination",
+                        "description": "Handles user list[object] queries with pagination",
                     },
                 )
                 super().__init__(config=config)
                 self._users = user_store
-                self.logger = FlextLogger(__name__)
+                self._logger = FlextLogger(__name__)
 
             def handle(self, message: ListUsersQuery) -> FlextResult[list[User]]:
-                """Handle list users query."""
-                self.logger.info(
+                """Handle list[object] users query."""
+                self._logger.info(
                     f"Listing users (limit: {message.limit}, offset: {message.offset})",
                 )
 
-                users = list(self._users.values())
+                users = list[object](self._users.values())
                 # Apply pagination
                 paginated_users = users[message.offset : message.offset + message.limit]
 
@@ -478,14 +480,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     metadata={"description": "Demonstrates error handling patterns"},
                 )
                 super().__init__(config=config)
-                self.logger = FlextLogger(__name__)
+                self._logger = FlextLogger(__name__)
 
             def handle(
                 self,
                 message: FlextTypes.Dict,
             ) -> FlextResult[FlextTypes.Dict]:
                 """Handle validation with comprehensive error handling."""
-                self.logger.info("Processing validation request")
+                self._logger.info("Processing validation request")
 
                 # Required field validation
                 if not message.get("id"):
@@ -494,7 +496,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                         error_code="MISSING_FIELD",
                         error_data={
                             "field": "id",
-                            "provided_fields": list(message.keys()),
+                            "provided_fields": list[object](message.keys()),
                         },
                     )
 
@@ -714,6 +716,219 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
     # ========== DEPRECATED PATTERNS ==========
 
+    # ========== NEW FLEXTRESULT METHODS (v0.9.9+) ==========
+
+    def demonstrate_new_flextresult_methods(self) -> None:
+        """Demonstrate the 5 new FlextResult methods in handlers context.
+
+        Shows how the new v0.9.9+ methods work with command/query handlers:
+        - from_callable: Safe handler execution
+        - flow_through: Handler pipeline composition
+        - lash: Handler fallback and recovery
+        - alt: Alternative handler execution
+        - value_or_call: Lazy handler initialization
+        """
+        print("\n" + "=" * 60)
+        print("NEW FLEXTRESULT METHODS - HANDLERS CONTEXT")
+        print("Demonstrating v0.9.9+ methods with command/query handlers")
+        print("=" * 60)
+
+        # 1. from_callable - Safe Handler Execution
+        print("\n=== 1. from_callable: Safe Handler Execution ===")
+
+        def risky_handler_operation() -> dict[str, object]:
+            """Handler operation that might raise exceptions."""
+            # Simulate command execution that might fail
+            user_id = str(uuid4())
+            user_data: dict[str, object] = {
+                "user_id": user_id,
+                "username": "newuser",
+                "email": "newuser@example.com",
+            }
+            # Could raise exception if validation fails
+            if not user_data.get("email"):
+                msg = "Email is required for user creation"
+                raise FlextExceptions.ValidationError(
+                    msg,
+                    field="email",
+                    value=None,
+                )
+            return user_data
+
+        # Safe execution without try/except
+        handler_result = FlextResult.from_callable(risky_handler_operation)
+        if handler_result.is_success:
+            data = handler_result.unwrap()
+            print(f"✅ Handler successful: User {data.get('username', 'N/A')}")
+            print(f"   Email: {data.get('email', 'N/A')}")
+        else:
+            print(f"❌ Handler failed: {handler_result.error}")
+
+        # 2. flow_through - Handler Pipeline Composition
+        print("\n=== 2. flow_through: Handler Pipeline Composition ===")
+
+        def validate_command(
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Validate command data."""
+            username = cmd.get("username", "")
+            if not isinstance(username, str) or not username or len(username) < 3:
+                return FlextResult[dict[str, object]].fail(
+                    "Username must be at least 3 characters",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            return FlextResult[dict[str, object]].ok(cmd)
+
+        def check_authorization(
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Check if user is authorized for command."""
+            # Simulate authorization check
+            return FlextResult[dict[str, object]].ok(cmd)
+
+        def execute_command(
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Execute the actual command."""
+            executed: dict[str, object] = {
+                **cmd,
+                "executed_at": "2025-01-01T12:00:00Z",
+                "status": "success",
+            }
+            return FlextResult[dict[str, object]].ok(executed)
+
+        def persist_result(
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Persist command execution result."""
+            persisted: dict[str, object] = {
+                **cmd,
+                "persisted": True,
+                "db_id": str(uuid4())[:8],
+            }
+            return FlextResult[dict[str, object]].ok(persisted)
+
+        # Flow through handler pipeline
+        command_input: dict[str, object] = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "command_type": "CreateUser",
+        }
+        pipeline_result = (
+            FlextResult[dict[str, object]]
+            .ok(command_input)
+            .flow_through(
+                validate_command,
+                check_authorization,
+                execute_command,
+                persist_result,
+            )
+        )
+
+        if pipeline_result.is_success:
+            final_data = pipeline_result.unwrap()
+            print(f"✅ Pipeline complete: {final_data.get('username', 'N/A')}")
+            print(f"   Status: {final_data.get('status', 'N/A')}")
+            print(f"   DB ID: {final_data.get('db_id', 'N/A')}")
+        else:
+            print(f"❌ Pipeline failed: {pipeline_result.error}")
+
+        # 3. lash - Handler Fallback
+        print("\n=== 3. lash: Handler Fallback ===")
+
+        def primary_handler() -> FlextResult[str]:
+            """Primary handler that might fail."""
+            return FlextResult[str].fail(
+                "Primary handler unavailable",
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+            )
+
+        def fallback_handler(error: str) -> FlextResult[str]:
+            """Fallback handler for error recovery."""
+            print(f"   ⚠️  Primary failed: {error}, using fallback handler...")
+            return FlextResult[str].ok("FALLBACK-HANDLER-RESULT")
+
+        # Try primary handler, fall back on error
+        recovery_result = primary_handler().lash(fallback_handler)
+        if recovery_result.is_success:
+            value = recovery_result.unwrap()
+            print(f"✅ Recovery successful: {value}")
+        else:
+            print(f"❌ All handlers failed: {recovery_result.error}")
+
+        # 4. alt - Alternative Handler Execution
+        print("\n=== 4. alt: Alternative Handler Execution ===")
+
+        def get_cached_handler() -> FlextResult[dict[str, object]]:
+            """Try to get cached handler result."""
+            return FlextResult[dict[str, object]].fail(
+                "Cache miss", error_code=FlextConstants.Errors.OPERATION_ERROR
+            )
+
+        def execute_fresh_handler() -> FlextResult[dict[str, object]]:
+            """Execute fresh handler."""
+            handler_result: dict[str, object] = {
+                "handler_type": "fresh",
+                "execution_time": "10ms",
+                "result": "success",
+            }
+            return FlextResult[dict[str, object]].ok(handler_result)
+
+        # Try cached, fall back to fresh execution
+        handler_exec_result = get_cached_handler().alt(execute_fresh_handler())
+        if handler_exec_result.is_success:
+            result = handler_exec_result.unwrap()
+            print(f"✅ Handler executed: {result.get('handler_type', 'unknown')}")
+            print(f"   Time: {result.get('execution_time', 'N/A')}")
+        else:
+            print(f"❌ Handler failed: {handler_exec_result.error}")
+
+        # 5. value_or_call - Lazy Handler Initialization
+        print("\n=== 5. value_or_call: Lazy Handler Initialization ===")
+
+        def create_expensive_handler() -> dict[str, object]:
+            """Create handler (expensive operation)."""
+            print("   ⚙️  Initializing expensive handler...")
+            return {
+                "handler_id": "EXP-HANDLER-001",
+                "handler_type": "complex_query",
+                "initialized": True,
+                "memory_mb": 256,
+            }
+
+        # Try to get existing handler, create if not available
+        handler_fail_result = FlextResult[dict[str, object]].fail(
+            "No existing handler"
+        )
+        handler = handler_fail_result.value_or_call(create_expensive_handler)
+        print(f"✅ Handler acquired: {handler.get('handler_id', 'unknown')}")
+        print(f"   Type: {handler.get('handler_type', 'unknown')}")
+        print(f"   Memory: {handler.get('memory_mb', 0)}MB")
+
+        # Try again with successful result (lazy function NOT called)
+        existing_handler: dict[str, object] = {
+            "handler_id": "EXIST-HANDLER-001",
+            "handler_type": "cached_query",
+            "initialized": True,
+            "memory_mb": 64,
+        }
+        handler_success_result = FlextResult[dict[str, object]].ok(
+            existing_handler
+        )
+        handler_cached = handler_success_result.value_or_call(create_expensive_handler)
+        print(
+            f"✅ Existing handler used: {handler_cached.get('handler_id', 'unknown')}"
+        )
+        print(f"   Memory: {handler_cached.get('memory_mb', 0)}MB")
+        print("   No expensive initialization needed")
+
+        print("\n" + "=" * 60)
+        print("✅ NEW FLEXTRESULT METHODS HANDLERS DEMO COMPLETE!")
+        print("All 5 methods demonstrated with handler patterns")
+        print("=" * 60)
+
+    # ========== DEPRECATED PATTERNS ==========
+
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated handler patterns to avoid."""
         print("\n=== ⚠️ DEPRECATED PATTERNS ===")
@@ -785,6 +1000,9 @@ def main() -> None:
     service.demonstrate_factory_methods()
     service.demonstrate_error_handling()
     service.demonstrate_integration_patterns()
+
+    # New FlextResult methods (v0.9.9+)
+    service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings
     service.demonstrate_deprecated_patterns()

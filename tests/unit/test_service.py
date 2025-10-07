@@ -244,7 +244,8 @@ class TestDomainServicesFixed:
 
         result = service.validate_business_rules()
         assert result.is_failure
-        assert result.error is not None and "Name is required" in result.error
+        assert result.error is not None
+        assert "Name is required" in result.error
 
     def test_validate_business_rules_multiple_conditions(self) -> None:
         """Test validate_business_rules with multiple conditions."""
@@ -256,7 +257,8 @@ class TestDomainServicesFixed:
 
         result = service.validate_business_rules()
         assert result.is_failure
-        assert result.error is not None and "Name is required" in result.error
+        assert result.error is not None
+        assert "Name is required" in result.error
 
     def test_validate_config_default(self) -> None:
         """Test default configuration validation."""
@@ -278,7 +280,8 @@ class TestDomainServicesFixed:
 
         result = service.validate_config()
         assert result.is_failure
-        assert result.error is not None and "Name too long" in result.error
+        assert result.error is not None
+        assert "Name too long" in result.error
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
@@ -331,7 +334,8 @@ class TestDomainServicesFixed:
         )
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert result.error is not None and "Name too long" in result.error
+        assert result.error is not None
+        assert "Name too long" in result.error
 
     def test_execute_operation_runtime_error(self) -> None:
         """Test execute_operation with runtime error."""
@@ -350,8 +354,10 @@ class TestDomainServicesFixed:
         result = service.execute_operation(operation_request)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "failing_op" in result.error
-        assert result.error is not None and "Operation failed" in result.error
+        assert result.error is not None
+        assert "failing_op" in result.error
+        assert result.error is not None
+        assert "Operation failed" in result.error
 
     def test_execute_operation_value_error(self) -> None:
         """Test execute_operation - Note: FlextService.execute_operation calls self.execute(), not the provided callable."""
@@ -372,8 +378,10 @@ class TestDomainServicesFixed:
         result = service.execute_operation(operation_request)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "value_error_op" in result.error
-        assert result.error is not None and "Invalid value" in result.error
+        assert result.error is not None
+        assert "value_error_op" in result.error
+        assert result.error is not None
+        assert "Invalid value" in result.error
 
     def test_execute_operation_type_error(self) -> None:
         """Test execute_operation with type error."""
@@ -392,8 +400,10 @@ class TestDomainServicesFixed:
         result = service.execute_operation(operation_request)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "type_error_op" in result.error
-        assert result.error is not None and "Wrong type" in result.error
+        assert result.error is not None
+        assert "type_error_op" in result.error
+        assert result.error is not None
+        assert "Wrong type" in result.error
 
     def test_execute_operation_unexpected_error(self) -> None:
         """Test execute_operation with unexpected error."""
@@ -412,8 +422,10 @@ class TestDomainServicesFixed:
         result = service.execute_operation(operation_request)
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "unexpected_op" in result.error
-        assert result.error is not None and "Unexpected error" in result.error
+        assert result.error is not None
+        assert "unexpected_op" in result.error
+        assert result.error is not None
+        assert "Unexpected error" in result.error
 
     def test_execute_operation_timeout_failure(self) -> None:
         """Test execute_operation handles timeouts as failures."""
@@ -433,8 +445,10 @@ class TestDomainServicesFixed:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "slow_op" in result.error
-        assert result.error is not None and "timed out" in result.error
+        assert result.error is not None
+        assert "slow_op" in result.error
+        assert result.error is not None
+        assert "timed out" in result.error
 
     def test_execute_operation_retry_success(self) -> None:
         """Test execute_operation respects retry configuration."""
@@ -580,10 +594,8 @@ class TestDomainServicesFixed:
         )
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Business rules validation failed" in result.error
-        )
+        assert result.error is not None
+        assert "Business rules validation failed" in result.error
 
     def test_complex_service_execution_config_failure(self) -> None:
         """Test complex service execution with config failure."""
@@ -599,10 +611,8 @@ class TestDomainServicesFixed:
         )
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "failed validation (pre-execution)" in result.error
-        )
+        assert result.error is not None
+        assert "failed validation (pre-execution)" in result.error
 
     def test_service_model_config(self) -> None:
         """Test service model configuration."""
@@ -768,7 +778,8 @@ class TestServiceCoverageImprovements:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Validation failed" in result.error
+        assert result.error is not None
+        assert "Validation failed" in result.error
 
     def test_execute_with_full_validation_success(self) -> None:
         """Test execute_with_full_validation with success."""
@@ -823,7 +834,8 @@ class TestServiceCoverageImprovements:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Validation failed" in result.error
+        assert result.error is not None
+        assert "Validation failed" in result.error
 
     def test_validate_business_rules_enabled(self) -> None:
         """Test validate_business_rules with validation enabled."""
@@ -922,7 +934,8 @@ class TestServiceCoverageImprovements:
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Business rule failed" in result.error
+        assert result.error is not None
+        assert "Business rule failed" in result.error
 
     def test_execute_with_request_success(self) -> None:
         """Test execute_with_request with success."""
@@ -1021,11 +1034,9 @@ class TestServiceCoverageImprovements:
 
         assert result.is_failure
         assert result.error is not None
-        assert (
-            result.error is not None
-            and result.error
-            and "Condition not met" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Condition not met" in result.error
 
     def test_execute_batch_with_request_success(self) -> None:
         """Test execute_batch_with_request with success."""
@@ -1162,11 +1173,9 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_operation(operation_request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Invalid retry configuration" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Invalid retry configuration" in result.error
 
     def test_execute_operation_no_timeout(self) -> None:
         """Test execute_operation with timeout <= 0 (no timeout)."""
@@ -1306,7 +1315,8 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_operation(operation_request)
         assert result.is_failure  # Should fail immediately, not retry
-        assert result.error is not None and "Should not retry this" in result.error
+        assert result.error is not None
+        assert "Should not retry this" in result.error
 
     def test_execute_operation_without_explicit_exception(self) -> None:
         """Test execute_operation fallback path when operation completes without raising."""
@@ -1337,11 +1347,9 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_conditionally(request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Condition not met" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Condition not met" in result.error
 
     def test_execute_conditionally_false_action_result(self) -> None:
         """Test execute_conditionally with False condition and false_action returning FlextResult."""
@@ -1411,7 +1419,8 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_batch_with_request(request)
         assert result.is_failure
-        assert result.error is not None and "Batch execution failed" in result.error
+        assert result.error is not None
+        assert "Batch execution failed" in result.error
         assert service.call_count == 2  # Should stop after second call fails
 
     def test_execute_batch_continue_on_failure_true(self) -> None:
@@ -1438,9 +1447,8 @@ class TestServiceComprehensiveCoverage:
         # Since continue_on_failure attribute doesn't exist on the model,
         # getattr will return False, so it will still fail
         assert result.is_failure
-        assert (
-            result.error is not None and "Batch execution failed" in result.error
-        )  # Should get results from items 1 and 3
+        assert result.error is not None
+        assert "Batch execution failed" in result.error
 
     def test_execute_batch_exception_continue_false(self) -> None:
         """Test execute_batch_with_request with exception and continue_on_failure=False."""
@@ -1464,8 +1472,10 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_batch_with_request(request)
         assert result.is_failure
-        assert result.error is not None and "Batch execution failed" in result.error
-        assert result.error is not None and "Batch execution exception" in result.error
+        assert result.error is not None
+        assert "Batch execution failed" in result.error
+        assert result.error is not None
+        assert "Batch execution exception" in result.error
 
     def test_execute_batch_exception_continue_true(self) -> None:
         """Test execute_batch_with_request with exception and continue_on_failure=True."""
@@ -1492,9 +1502,8 @@ class TestServiceComprehensiveCoverage:
         # Since continue_on_failure attribute doesn't exist on the model,
         # getattr will return False, so it will still fail
         assert result.is_failure
-        assert (
-            result.error is not None and "Batch execution failed" in result.error
-        )  # Should get results from items 1 and 3
+        assert result.error is not None
+        assert "Batch execution failed" in result.error
 
     def test_execute_with_metrics_request_exception(self) -> None:
         """Test execute_with_metrics_request with execution exception."""
@@ -1511,10 +1520,10 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_with_metrics_request(request)
         assert result.is_failure
-        assert result.error is not None and "Metrics execution error" in result.error
-        assert (
-            result.error is not None and "Metrics execution exception" in result.error
-        )
+        assert result.error is not None
+        assert "Metrics execution error" in result.error
+        assert result.error is not None
+        assert "Metrics execution exception" in result.error
 
     def test_execute_with_resource_request_exception(self) -> None:
         """Test execute_with_resource_request with execution exception."""
@@ -1532,10 +1541,10 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_with_resource_request(request)
         assert result.is_failure
-        assert result.error is not None and "Resource execution error" in result.error
-        assert (
-            result.error is not None and "Resource execution exception" in result.error
-        )
+        assert result.error is not None
+        assert "Resource execution error" in result.error
+        assert result.error is not None
+        assert "Resource execution exception" in result.error
 
     def test_validate_and_transform_validation_disabled(self) -> None:
         """Test validate_and_transform with validation disabled."""
@@ -1567,10 +1576,8 @@ class TestServiceComprehensiveCoverage:
 
         result = service.validate_and_transform(config)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and "Business rule validation failed" in result.error
-        )
+        assert result.error is not None
+        assert "Business rule validation failed" in result.error
 
     def test_validate_and_transform_validation_no_error(self) -> None:
         """Test validate_and_transform with validation failure but no error message."""
@@ -1590,10 +1597,8 @@ class TestServiceComprehensiveCoverage:
 
         result = service.validate_and_transform(config)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and FlextConstants.Messages.VALIDATION_FAILED in result.error
-        )
+        assert result.error is not None
+        assert FlextConstants.Messages.VALIDATION_FAILED in result.error
 
     def test_validation_helper_validate_domain_rules(self) -> None:
         """Test _ValidationHelper.validate_domain_rules."""
@@ -1720,11 +1725,9 @@ class TestServiceComprehensiveCoverage:
         )
         result = service.validate_with_request(request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Business rule violation" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Business rule violation" in result.error
 
     def test_execute_operation_raw_arguments_none(self) -> None:
         """Test execute_operation with None arguments (uses defaults)."""
@@ -1796,11 +1799,9 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_operation(operation)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Invalid keyword arguments" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Invalid keyword arguments" in result.error
 
     def test_execute_operation_backoff_multiplier_zero(self) -> None:
         """Test execute_operation with invalid backoff_multiplier (must be >= 1)."""
@@ -1833,16 +1834,12 @@ class TestServiceComprehensiveCoverage:
         # The operation should fail due to invalid retry configuration
         result = service.execute_operation(operation)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Invalid retry configuration" in result.error
-        )
-        assert (
-            result.error is not None
-            and result.error
-            and "backoff_multiplier" in result.error
-        )  # Should use default multiplier of 1.0
+        assert result.error is not None
+        assert result.error
+        assert "Invalid retry configuration" in result.error
+        assert result.error is not None
+        assert result.error
+        assert "backoff_multiplier" in result.error
 
     def test_execute_operation_result_cast_to_flext_result(self) -> None:
         """Test execute_operation when operation returns FlextResult."""
@@ -1916,11 +1913,9 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_operation(operation)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "nonexistent_operation" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "nonexistent_operation" in result.error
 
     def test_execute_with_request_validation_failure(self) -> None:
         """Test execute_with_request - note: it doesn't use enable_validation."""
@@ -1977,11 +1972,9 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_conditionally(condition_request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Condition not met" in result.error
-        )  # Returns execute() result
+        assert result.error is not None
+        assert result.error
+        assert "Condition not met" in result.error
 
     def test_execute_batch_with_request_exception_handling(self) -> None:
         """Test execute_batch_with_request exception handling."""
@@ -2003,11 +1996,9 @@ class TestServiceComprehensiveCoverage:
 
         result = service.execute_batch_with_request(request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Service failed" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Service failed" in result.error
 
     def test_execute_with_metrics_request_exception_alt(self) -> None:
         """Test execute_with_metrics_request when execution raises exception (alternative)."""
@@ -2024,11 +2015,9 @@ class TestServiceComprehensiveCoverage:
         request = TestRequest(service_name="FailingService")
         result = service.execute_with_metrics_request(request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Execution failed" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Execution failed" in result.error
 
     def test_execute_with_resource_request_exception_alt(self) -> None:
         """Test execute_with_resource_request when execution raises exception (alternative)."""
@@ -2045,11 +2034,9 @@ class TestServiceComprehensiveCoverage:
         request = TestRequest(service_name="FailingService")
         result = service.execute_with_resource_request(request)
         assert result.is_failure
-        assert (
-            result.error is not None
-            and result.error
-            and "Resource execution failed" in result.error
-        )
+        assert result.error is not None
+        assert result.error
+        assert "Resource execution failed" in result.error
 
     def test_validate_and_transform_no_error_attribute(self) -> None:
         """Test validate_and_transform when validation result has no error attribute."""
@@ -2171,7 +2158,8 @@ class TestServiceMissingCoverage:
 
         result = service.execute_operation(operation)
         assert result.is_failure
-        assert result.error is not None and "timed out" in result.error.lower()
+        assert result.error is not None
+        assert "timed out" in result.error.lower()
 
     def test_execute_with_timeout_actual_timeout(self) -> None:
         """Test lines 559-560, 572-573: actual timeout signal handling."""
@@ -2187,7 +2175,8 @@ class TestServiceMissingCoverage:
 
         # Should timeout and return failure
         assert result.is_failure
-        assert result.error is not None and "timed out" in result.error.lower()
+        assert result.error is not None
+        assert "timed out" in result.error.lower()
 
     def test_execute_batch_metrics_collection(self) -> None:
         """Test lines 664-669: metrics collection in batch execution."""
@@ -2431,7 +2420,8 @@ class BatchService(FlextService[FlextTypes.StringList]):
 
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None and "Resource limit too low" in result.error
+        assert result.error is not None
+        assert "Resource limit too low" in result.error
 
     def test_execute_operation_with_single_argument_not_iterable(self) -> None:
         """Test execute_operation with single non-iterable argument (line 369)."""
@@ -2562,7 +2552,8 @@ class BatchService(FlextService[FlextTypes.StringList]):
 
         result = service.execute_operation(operation)
         assert result.is_failure
-        assert result.error is not None and "timed out" in result.error.lower()
+        assert result.error is not None
+        assert "timed out" in result.error.lower()
 
     def test_execute_operation_failure_without_exception(self) -> None:
         """Test operation failure path without exception (lines 525-526)."""
@@ -2598,7 +2589,8 @@ class BatchService(FlextService[FlextTypes.StringList]):
         # This should catch the TimeoutError
         result = service.execute_with_timeout(1)
         assert result.is_failure
-        assert result.error is not None and "timeout" in result.error.lower()
+        assert result.error is not None
+        assert "timeout" in result.error.lower()
 
     def test_execute_conditionally_with_true_action_cast(self) -> None:
         """Test execute_conditionally casts result from true_action (line 594)."""

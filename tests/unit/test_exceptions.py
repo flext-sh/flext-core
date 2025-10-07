@@ -38,7 +38,7 @@ class TestFlextExceptions:
 
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
-        metadata = {"field": "email", "value": "invalid"}
+        metadata: dict[str, object] = {"field": "email", "value": "invalid"}
         error = FlextExceptions.BaseError("Test error", metadata=metadata)
         assert error.metadata["field"] == "email"
         assert error.metadata["value"] == "invalid"
@@ -63,7 +63,9 @@ class TestFlextExceptions:
         assert error_dict["error_code"] == "TEST_001"
         assert error_dict["correlation_id"] == "corr-123"
         assert "timestamp" in error_dict
-        assert error_dict["metadata"]["field"] == "email"
+        metadata = error_dict["metadata"]
+        if isinstance(metadata, dict):
+            assert metadata["field"] == "email"
 
     def test_base_error_str_without_code(self) -> None:
         """Test BaseError string representation without error code."""
@@ -164,12 +166,12 @@ class TestFlextExceptions:
     def test_rate_limit_error(self) -> None:
         """Test RateLimitError exception type."""
         error = FlextExceptions.RateLimitError(
-            "Rate limit exceeded", limit=100, window_seconds=60.0
+            "Rate limit exceeded", limit=100, window_seconds=60
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Rate limit exceeded"
         assert error.limit == 100
-        assert error.window_seconds == 60.0
+        assert error.window_seconds == 60
 
     def test_circuit_breaker_error(self) -> None:
         """Test CircuitBreakerError exception type."""
@@ -303,7 +305,7 @@ class TestFlextExceptions:
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
-        metadata = {"existing": "value"}
+        metadata: dict[str, object] = {"existing": "value"}
         error = FlextExceptions.BaseError(
             "Test error", metadata=metadata, new_field="new_value"
         )

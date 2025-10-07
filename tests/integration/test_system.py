@@ -177,9 +177,8 @@ class TestCompleteFlextSystemIntegration:
     def _test_container_system(self) -> None:
         """Test container system (Dependency Injection)."""
         # Teste do sistema de container
-        manager = FlextContainer.ensure_global_manager()
-
-        container = manager.get_or_create()
+        # API changed: use get_global() instead of ensure_global_manager()
+        container = FlextContainer.get_global()
 
         # Registrar serviço
         register_result = container.register("test_service", "test_value")
@@ -255,10 +254,8 @@ class TestCompleteFlextSystemIntegration:
         dados_invalidos = {"nome": "", "email": "joao@exemplo.com"}
         resultado_erro = processar_dados_usuario(dados_invalidos)
         assert resultado_erro.is_success is False
-        assert (
-            resultado_erro.error is not None
-            and "não pode estar vazio" in resultado_erro.error
-        )
+        assert resultado_erro.error is not None
+        assert "não pode estar vazio" in resultado_erro.error
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
@@ -322,9 +319,8 @@ class TestCompleteFlextSystemIntegration:
         assert FlextTypes is not None
 
         # Verificar que o sistema está pronto para uso em produção
-        manager = FlextContainer.ensure_global_manager()
-
-        container_final = manager.get_or_create()
+        # API changed: use get_global() instead of ensure_global_manager()
+        container_final = FlextContainer.get_global()
         assert container_final is not None
 
         # Teste final de integração

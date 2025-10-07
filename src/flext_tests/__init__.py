@@ -12,6 +12,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 from flext_core import FlextResult, FlextTypes
+from flext_tests.docker import FlextTestDocker
 
 
 class FlextTestsDomains:
@@ -191,8 +192,6 @@ class FlextTestsMatchers:
         @staticmethod
         def success_result(data: object | None = None) -> object:
             """Create a successful result."""
-            from flext_core import FlextResult
-
             if data is None:
                 data = {"status": "success"}
             return FlextResult[object].ok(data)
@@ -200,15 +199,11 @@ class FlextTestsMatchers:
         @staticmethod
         def failure_result(message: str = "Operation failed") -> object:
             """Create a failed result."""
-            from flext_core import FlextResult
-
             return FlextResult[object].fail(message)
 
         @staticmethod
         def user_result(*, success: bool = True) -> object:
             """Create a user-specific result."""
-            from flext_core import FlextResult
-
             if success:
                 user_data = FlextTestsMatchers.UserFactory.create()
                 return FlextResult[dict[str, object]].ok(user_data)
@@ -217,4 +212,10 @@ class FlextTestsMatchers:
 
 __version__ = "0.9.9"
 
-__all__ = ["FlextResult", "FlextTestsDomains", "FlextTestsMatchers", "FlextTypes"]
+__all__ = [
+    "FlextResult",
+    "FlextTestDocker",
+    "FlextTestsDomains",
+    "FlextTestsMatchers",
+    "FlextTypes",
+]
