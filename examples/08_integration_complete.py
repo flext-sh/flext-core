@@ -26,7 +26,7 @@ from uuid import uuid4
 
 from pydantic import Field
 
-from flext_core import FlextCore, FlextLogger
+from flext_core import FlextCore
 
 from .example_scenarios import (
     ExampleScenarios,
@@ -372,7 +372,7 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
     """
 
     # Type annotations for inherited mixin properties
-    logger: FlextLogger
+    # logger: FlextLogger  # Provided by FlextMixins.Logging
 
     def __init__(self) -> None:
         """Initialize payment service with inherited FlextMixins.Service infrastructure.
@@ -645,26 +645,26 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
 
         if operation == "create_and_submit":
             # Create order
-            customer_id = data["customer_id"]
-            items = data["items"]
-            if isinstance(customer_id, str) and isinstance(items, list):
-                order_result = self.create_order(
-                    customer_id, items  # type: ignore[arg-type]
-                )
-                if order_result.is_failure:
-                    return FlextCore.Result[FlextCore.Types.Dict].fail(
-                        order_result.error or UNKNOWN_ERROR_MSG,
-                    )
-
-                order = order_result.unwrap()
-
-                # Submit with payment
-                payment_method = data.get("payment_method", "credit_card")
-                if isinstance(payment_method, str):
-                    return self.submit_order(order, payment_method)
+            customer_id = str(data["customer_id"])
+            items = cast("list[dict[str, object]]", data["items"])
+            order_result = self.create_order(
+                customer_id,
+                items,
+            )
+            if order_result.is_failure:
                 return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Invalid payment method type",
+                    order_result.error or UNKNOWN_ERROR_MSG,
                 )
+
+            order = order_result.unwrap()
+
+            # Submit with payment
+            payment_method = data.get("payment_method", "credit_card")
+            if isinstance(payment_method, str):
+                return self.submit_order(order, payment_method)
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                "Invalid payment method type",
+            )
 
         return FlextCore.Result[FlextCore.Types.Dict].fail(
             f"Unknown operation: {operation}"
@@ -697,18 +697,23 @@ class OrderValidationHandler:
             return FlextCore.Result[FlextCore.Types.Dict].fail("Order items required")
 
         # Validate items
-        items = request["items"]
-        if isinstance(items, list):
-            for item in items:
-                if not item.get("product_id"):
-                    return FlextCore.Result[FlextCore.Types.Dict].fail(
-                        "Product ID required for all items",
-                    )
-                quantity = item.get("quantity")
-                if not isinstance(quantity, int) or quantity <= 0:
-                    return FlextCore.Result[FlextCore.Types.Dict].fail(
-                        "Valid quantity required for all items",
-                    )
+        items_raw = request["items"]
+        if not isinstance(items_raw, list):
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                "Order items must be a list"
+            )
+        items: list[dict[str, object]] = items_raw
+        for item in items:
+            item_dict: dict[str, object] = item
+            if not item_dict.get("product_id"):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    "Product ID required for all items",
+                )
+            quantity = item_dict.get("quantity")
+            if not isinstance(quantity, int) or quantity <= 0:
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    "Valid quantity required for all items",
+                )
 
         request["validated"] = True
         return FlextCore.Result[FlextCore.Types.Dict].ok(request)
@@ -865,11 +870,14 @@ def demonstrate_new_flextresult_methods() -> None:
         return FlextCore.Result[dict[str, object]].ok(result_dict)
 
     # Flow through complete integration pipeline
-    order_data: dict[str, object] = {
-        "customer_id": admin_user["email"],
-        "items": order_template.get("items", []),
-        "source": "web_checkout",
-    }
+    order_data = cast(
+        "dict[str, object]",
+        {
+            "customer_id": str(admin_user["email"]),
+            "items": order_template.get("items", []),
+            "source": "web_checkout",
+        },
+    )
     pipeline_result = (
         FlextCore.Result[dict[str, object]]
         .ok(order_data)
@@ -1060,17 +1068,24 @@ def demonstrate_complete_integration() -> None:
         ],
         "payment_method": "credit_card",
     }
-    order_dict = order_request
-    items_list = cast("FlextCore.Types.List", order_dict["items"])
-    first_item = cast("FlextCore.Types.Dict", items_list[0])
-    first_product_id = first_item["product_id"]
+    order_dict: dict[str, object] = order_request
+    items_list_raw = order_dict["items"]
+    if not isinstance(items_list_raw, list):
+        print("Items is not a list")
+    else:
+        items_list: list[dict[str, object]] = items_list_raw
+        if items_list:
+            first_item: dict[str, object] = items_list[0]
+            first_product_id = first_item["product_id"]
 
     print(f"Customer: {order_dict['customer_id']}")
-    items = order_dict["items"]
-    if isinstance(items, list):
-        print(f"Items: {len(items)} products")
+    items_raw = order_dict["items"]
+    if isinstance(items_raw, list):
+        order_items: list[dict[str, object]] = items_raw
+        print(f"Items: {len(order_items)} products")
     else:
-        print("Items: Invalid items format")
+        print("Items is not a list")
+        order_items = []
 
     # Run through pipeline
     pipeline_result = execute_pipeline(order_request)
@@ -1095,11 +1110,11 @@ def demonstrate_complete_integration() -> None:
         and isinstance(items_raw, list)
         and isinstance(payment_method, str)
     ):
-        items = items_raw
+        enriched_items: list[dict[str, object]] = items_raw
         result = order_service.process_operation({
             "operation": "create_and_submit",
             "customer_id": customer_id,
-            "items": items,
+            "items": enriched_items,
             "payment_method": payment_method,
         })
     else:
@@ -1155,11 +1170,11 @@ def demonstrate_complete_integration() -> None:
             and isinstance(items_raw, list)
             and isinstance(payment_method, str)
         ):
-            items = items_raw
+            validation_items: list[dict[str, object]] = items_raw
             result = order_service.process_operation({
                 "operation": "create_and_submit",
                 "customer_id": customer_id,
-                "items": items,
+                "items": validation_items,
                 "payment_method": payment_method,
             })
         else:
@@ -1181,7 +1196,10 @@ def demonstrate_complete_integration() -> None:
         user_pool[0]["id"] if user_pool else scenario_order["customer_id"]
     )
     simple_order = Order(customer_id=default_customer, domain_events=[])
-    item_template = scenario_order["items"][0]
+    items_list_raw = scenario_order["items"]
+    # Convert TypedDict items to dict[str, object]
+    items_list = [dict(item) for item in items_list_raw]
+    item_template: dict[str, object] = items_list[0]
     template_price = item_template.get("price", Decimal("10.00"))
     price_amount = (
         template_price
@@ -1189,8 +1207,8 @@ def demonstrate_complete_integration() -> None:
         else Decimal(str(template_price))
     )
     product = Product(
-        id=item_template.get("product_id", "PROD-TEMPLATE"),
-        name=item_template.get("name", "Template Product"),
+        id=str(item_template.get("product_id", "PROD-TEMPLATE")),
+        name=str(item_template.get("name", "Template Product")),
         price=Money(amount=price_amount, currency="USD"),
         stock=5,
     )
@@ -1200,9 +1218,9 @@ def demonstrate_complete_integration() -> None:
 
     for event in simple_order.get_domain_events():
         # Domain events are FlextCore.Models.DomainEvent objects
-        if isinstance(event, dict) and event.get("type"):
-            event_name: str = event.get("event_type", "Unknown")
-            event_data: dict[str, object] = event.get("data", {})
+        if isinstance(event, FlextCore.Models.DomainEvent):
+            event_name = event.event_type
+            event_data = event.data
             print(f"  📢 {event_name}: {event_data}")
         else:
             print(f"  📢 Unexpected event format: {event}")
@@ -1282,8 +1300,11 @@ def demonstrate_flextcore_unified_access() -> None:
 
     # 3. Factory methods for convenience
     print("\n=== 3. Convenience Factory Methods ===")
-    success = FlextCore.Result[str].ok({"order_id": "ORD-123", "status": "created"})
-    failure = FlextCore.Result[str].fail("Payment declined", "PAYMENT_ERROR")
+    success = FlextCore.Result[dict[str, str]].ok({
+        "order_id": "ORD-123",
+        "status": "created",
+    })
+    failure = FlextCore.Result[str].fail("Payment declined", error_code="PAYMENT_ERROR")
     logger = FlextCore.Logger("ecommerce")
 
     print(f"  ✅ Success result: {success.value}")
@@ -1322,10 +1343,8 @@ def demonstrate_flextcore_unified_access() -> None:
         return FlextCore.Result[FlextCore.Types.Dict].ok(data)
 
     # Compose operations
-    order_data = {"customer_id": "CUST-001", "amount": 100}
-    pipeline_result = validate_order(cast("dict[str, object]", order_data)).flat_map(
-        process_order
-    )
+    order_data: dict[str, object] = {"customer_id": "CUST-001", "amount": 100}
+    pipeline_result = validate_order(order_data).flat_map(process_order)
 
     if pipeline_result.is_success:
         print(f"  ✅ Pipeline result: {pipeline_result.value}")
@@ -1352,8 +1371,11 @@ def demonstrate_flextcore_11_features() -> None:
     # 1. Event Publishing with Correlation Tracking
     print("\n=== 1. Event Publishing ===")
 
+    # Create bus instance for event publishing
+    bus = FlextCore.Bus()
+
     # Publish events with automatic correlation tracking
-    event_result = FlextCore.Bus.publish_event(
+    event_result = bus.publish_event(
         {
             "type": "order.created",
             "order_id": "ORD-123",
@@ -1366,7 +1388,7 @@ def demonstrate_flextcore_11_features() -> None:
         print("  ✅ Event published successfully")
 
     # Publish with custom correlation ID
-    correlation_result = FlextCore.Bus.publish_event(
+    correlation_result = bus.publish_event(
         {
             "type": "payment.processed",
             "payment_id": "PAY-789",
@@ -1381,10 +1403,6 @@ def demonstrate_flextcore_11_features() -> None:
     # 2. Service Creation with Infrastructure Injection
     print("\n=== 2. Service Creation ===")
 
-    class OrderProcessingService:
-        def execute(self) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok("Order processed successfully")
-
     # Create service with automatic infrastructure setup
     # service_result = FlextCore.create_service(OrderProcessingService, "order-processing")
     # if service_result.is_success:
@@ -1396,103 +1414,31 @@ def demonstrate_flextcore_11_features() -> None:
     # 3. Railway Pipeline Builder
     print("\n=== 3. Pipeline Builder ===")
 
-    # Define pipeline operations
-    def validate_order_data(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        if not data.get("order_id"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Order ID required")
-        if not data.get("amount"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Amount required")
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+    print("  Pipeline builder demo skipped - functions removed since not used")
 
-    def check_inventory(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        # Simulate inventory check
-        data["inventory_checked"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+    # 4. Request Context Management
+    print("\n=== 4. Request Context Management ===")
 
-    def calculate_shipping(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        # Simulate shipping calculation
-        amount_raw = data.get("amount", 0)
-        amount = Decimal(str(amount_raw)) if amount_raw else Decimal(0)
-        shipping = amount * Decimal("0.1")  # 10% shipping
-        data["shipping"] = float(shipping)
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
-
-    def apply_discounts(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        # Simulate discount application
-        data["discount_applied"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
-
-    # Build pipeline
-    # order_pipeline = FlextCore.build_pipeline(
-    #     validate_order_data, check_inventory, calculate_shipping, apply_discounts
-    # )
-
-    # # Execute pipeline
-    # order_data: dict[str, object] = {"order_id": "ORD-999", "amount": 100.00}
-    # pipeline_result = order_pipeline(order_data)
-
-    # if pipeline_result.is_success:
-    #     final_order = cast("FlextCore.Types.Dict", pipeline_result.unwrap())
-    #     print(f"  ✅ Pipeline completed: {len(final_order)} fields")
-    #     print(f"     - Inventory checked: {final_order.get('inventory_checked')}")
-    #     print(f"     - Shipping: ${final_order.get('shipping'):.2f}")
-    #     print(f"     - Discount applied: {final_order.get('discount_applied')}")
-    print("  Pipeline builder demo skipped")
-
-    # 4. Request Context Manager
-    print("\n=== 4. Request Context Manager ===")
-
-    # Use context manager for request-scoped data
+    # Use context for request-scoped data
     context = FlextCore.Context()
-    with context:
-        # Set request context data
-        context.set("request_id", "req-12345")
-        context.set("user_id", "user-789")
-        context.set("client_ip", "192.168.1.100")
-        context.set("user_agent", "Mozilla/5.0")
 
-        print(f"  ✅ Request context active: {context.get('request_id')}")
-        print(f"     - User ID: {context.get('user_id')}")
-        print(f"     - Client IP: {context.get('client_ip')}")
+    # Set request context data
+    context.set("request_id", "req-12345")
+    context.set("user_id", "user-789")
+    context.set("client_ip", "192.168.1.100")
+    context.set("user_agent", "Mozilla/5.0")
 
-        # Context is automatically cleaned up on exit
+    print(f"  ✅ Request context active: {context.get('request_id')}")
+    print(f"     - User ID: {context.get('user_id')}")
+    print(f"     - Client IP: {context.get('client_ip')}")
+
+    # Context can be explicitly cleared when done
+    context.clear()
 
     # 5. Complete Integration - All Features Together
     print("\n=== 5. Complete Integration Example ===")
 
-    # Define a complete order processing workflow
-    def validate_customer(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        if not data.get("customer_id"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Customer ID required")
-        data["customer_validated"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
-
-    def reserve_inventory(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        data["inventory_reserved"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
-
-    def process_payment(
-        data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
-        data["payment_processed"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
-
-    # Build complete workflow pipeline
-    # workflow = FlextCore.build_pipeline(
-    #     validate_customer, reserve_inventory, process_payment
-    # )
+    # Complete workflow pipeline demo skipped - functions removed since not used
 
     # Execute within request context
     # with core.request_context(request_id="complete-req-001") as ctx:

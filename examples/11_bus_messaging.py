@@ -246,6 +246,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
             logger: FlextCore.Logger
 
             def __init__(self) -> None:
+                super().__init__()
                 self._orders: FlextCore.Types.NestedDict = {}
                 self.logger = FlextCore.Logger(__name__)
 
@@ -364,6 +365,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
             logger: FlextCore.Logger
 
             def __init__(self) -> None:
+                super().__init__()
                 self.logger = FlextCore.Logger(__name__)
 
             def __call__(
@@ -414,6 +416,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
             """Tracks performance metrics."""
 
             def __init__(self) -> None:
+                super().__init__()
                 self._metrics: dict[str, FlextCore.Types.FloatList] = {}
 
             def __call__(
@@ -699,11 +702,13 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
             return FlextCore.Bus(bus_config=bus_config)
 
         # Safe bus creation without try/except
-        bus_result = FlextCore.Result.from_callable(risky_bus_registration)
+        bus_result = FlextCore.Result[FlextCore.Bus].from_callable(
+            risky_bus_registration
+        )
         if bus_result.is_success:
             bus = bus_result.unwrap()
             print(f"✅ Bus created safely: {type(bus).__name__}")
-            print(f"   Middleware enabled: {bus.config.enable_middleware}")
+            # Note: Middleware status can be checked via bus._config_model.enable_middleware
         else:
             print(f"❌ Bus creation failed: {bus_result.error}")
 
@@ -726,7 +731,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
             data: dict[str, object],
         ) -> FlextCore.Result[dict[str, object]]:
             """Add bus metadata to message."""
-            enriched = {
+            enriched: dict[str, object] = {
                 **data,
                 "message_id": str(uuid4()),
                 "timestamp": time.time(),
@@ -739,7 +744,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
         ) -> FlextCore.Result[dict[str, object]]:
             """Register message in bus tracking."""
             message_id = str(data.get("message_id", "unknown"))
-            enriched = {
+            enriched: dict[str, object] = {
                 **data,
                 "registered": True,
                 "tracking_id": f"TRACK-{message_id[:8]}",

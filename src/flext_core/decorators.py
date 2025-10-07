@@ -69,7 +69,7 @@ class FlextDecorators:
 
     @staticmethod
     def inject(
-        **dependencies: type,
+        **dependencies: str,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
@@ -621,7 +621,7 @@ class FlextDecorators:
     @staticmethod
     def combined(
         *,
-        inject_deps: dict[str, type] | None = None,
+        inject_deps: dict[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: bool = False,

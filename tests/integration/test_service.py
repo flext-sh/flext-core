@@ -233,7 +233,7 @@ class TestServiceIntegrationPatterns:
     def test_service_pipeline_performance(
         self,
         mock_external_service: FunctionalExternalService,
-        performance_threshold: FlextTypes.FloatDict,
+        performance_threshold: dict[str, float],
         benchmark_data: FlextTypes.Dict | dict[str, dict[str, dict[str, list[int]]]],
     ) -> None:
         """Test service pipeline meets performance requirements.

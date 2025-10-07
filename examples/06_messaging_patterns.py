@@ -474,7 +474,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 roles_raw = user_state.get("roles", [])
                 roles: FlextCore.Types.StringList
                 if isinstance(roles_raw, list) and all(
-                    isinstance(role, str) for role in roles_raw
+                    isinstance(role, str) for role in roles_raw if isinstance(role, str)
                 ):
                     roles = list(roles_raw)
                 else:
@@ -779,23 +779,25 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             )
 
         # Safe message parsing without try/except
-        result: FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]] = (
-            FlextCore.Result.from_callable(
-                lambda: risky_message_parse({
-                    "message_type": "order",
-                    "data": self._order,
-                }),
-            )
+        result = FlextCore.Result.from_callable(
+            lambda: risky_message_parse({
+                "message_type": "order",
+                "data": self._order,
+            }),
+        )
+        result = cast(
+            "FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]]", result
         )
         if result.is_success:
             payload: FlextCore.Models.Payload[FlextCore.Types.Dict] = result.unwrap()
             print(f"✅ Message parsed: {payload.metadata.get('message_type')}")
 
         # Failed parsing captured as Result
-        failed: FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]] = (
-            FlextCore.Result.from_callable(
-                lambda: risky_message_parse({}),
-            )
+        failed = FlextCore.Result.from_callable(
+            lambda: risky_message_parse({}),
+        )
+        failed = cast(
+            "FlextCore.Result[FlextCore.Models.Payload[FlextCore.Types.Dict]]", failed
         )
         if failed.is_failure:
             print(f"❌ Parse failed: {failed.error}")
@@ -882,7 +884,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         ) -> FlextCore.Result[str]:
             """Try sending to primary message queue (might fail)."""
             attempt_count["count"] += 1
-            if attempt_count["count"] < 3:
+            if attempt_count["count"] < FlextCore.Constants.Validation.RETRY_COUNT_MAX:
                 return FlextCore.Result[str].fail("Primary queue unavailable")
             return FlextCore.Result[str].ok(
                 f"Sent to primary: {msg.data.get('command')}"

@@ -96,8 +96,6 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
             self.demonstrate_id_generation()
             self.demonstrate_conversions()
             self.demonstrate_caching()
-            self.demonstrate_reliability()
-            self.demonstrate_composition()
             self.demonstrate_deprecated_patterns()
 
             summary: FlextCore.Types.Dict = {
@@ -222,54 +220,6 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
 
         print("  INFO: Caching examples (not yet implemented)")
 
-    # ========== RELIABILITY PATTERNS ==========
-
-    def demonstrate_reliability(self) -> None:
-        """Show reliability patterns."""
-        print("\n=== Reliability Patterns ===")
-
-        # Timeout pattern
-        print("\n1. Timeout Pattern:")
-
-        def quick_operation() -> str:
-            return "Success!"
-
-        def slow_operation() -> str:
-            time.sleep(2)  # This will timeout
-            return "This won't be reached"
-
-        print("  INFO: Timeout pattern examples (not yet implemented)")
-
-        # Circuit breaker pattern
-        print("\n2. Circuit Breaker Pattern:")
-
-        def failing_operation() -> str:
-            msg = "Operation failed"
-            raise ValueError(msg)
-
-        def working_operation() -> str:
-            return "Operation succeeded"
-
-        print("  INFO: Circuit breaker examples (not yet implemented)")
-
-    # ========== COMPOSITION PATTERNS ==========
-
-    def demonstrate_composition(self) -> None:
-        """Show function composition patterns."""
-        print("\n=== Composition Patterns ===")
-
-        # Pipeline composition
-        def add_one(x: int) -> int:
-            return x + 1
-
-        def multiply_two(x: int) -> int:
-            return x * 2
-
-        def square(x: int) -> int:
-            return x * x
-
-        print("  INFO: Composition pattern examples (not yet implemented)")
-
     # ========== DEPRECATED PATTERN WARNINGS ==========
 
     def demonstrate_new_flextresult_methods(self) -> None:
@@ -304,7 +254,9 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
             return {"validated": True, **test_data}
 
         # Safe validation without try/except
-        validation_result = FlextCore.Result.from_callable(risky_validation_operation)
+        validation_result: FlextCore.Result[dict[str, object]] = (
+            FlextCore.Result.from_callable(risky_validation_operation)
+        )
         if validation_result.is_success:
             validated_data = validation_result.unwrap()
             print(f"✅ Validation successful: {validated_data['email']}")
@@ -521,8 +473,6 @@ def main() -> None:
     service.demonstrate_id_generation()
     service.demonstrate_conversions()
     service.demonstrate_caching()
-    service.demonstrate_reliability()
-    service.demonstrate_composition()
     service.demonstrate_new_flextresult_methods()
     service.demonstrate_deprecated_patterns()
 

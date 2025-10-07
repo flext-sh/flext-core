@@ -51,22 +51,22 @@ class TestInjectDecorator:
         container.register("test_service", service)
 
         # Use inject decorator
-        @inject(test_service=TestService)
+        @inject(test_service="test_service")
         def process_data(data: str, *, test_service: TestService) -> str:
             return f"{data}_{test_service.get_value()}"
 
-        result = process_data("input")
+        result = process_data("input")  # type: ignore[call-arg]
         assert result == "input_test_value"
 
     def test_inject_missing_dependency(self) -> None:
         """Test inject with missing dependency."""
 
-        @inject(missing_service=str)
+        @inject(missing_service="missing_service")
         def process_data(*, missing_service: str = "default") -> str:
             return missing_service
 
         # Should use default when injection fails
-        result = process_data()
+        result = process_data()  # type: ignore[missing-argument]
         assert result == "default"
 
     def test_inject_with_provided_kwarg(self) -> None:
@@ -79,7 +79,7 @@ class TestInjectDecorator:
 
         container.register("service", TestService("from_container"))
 
-        @inject(service=TestService)
+        @inject(service="service")
         def process(*, service: TestService) -> str:
             return service.value
 
@@ -424,11 +424,11 @@ class TestCombinedDecorator:
 
         container.register("service", TestService())
 
-        @combined(inject_deps={"service": TestService}, operation_name="process")
+        @combined(inject_deps={"service": "service"}, operation_name="process")
         def process_data(*, service: TestService) -> str:
             return service.get_value()
 
-        result = process_data()
+        result = process_data()  # type: ignore[call-arg]
         assert result == "injected"
 
     def test_combined_with_railway(self) -> None:
@@ -476,7 +476,7 @@ class TestCombinedDecorator:
         container.register("repo", Repository())
 
         @combined(
-            inject_deps={"repo": Repository},
+            inject_deps={"repo": "repo"},
             operation_name="full_operation",
             track_perf=True,
             use_railway=True,
@@ -485,7 +485,7 @@ class TestCombinedDecorator:
         def full_operation(data: str, *, repo: Repository) -> str:
             return repo.save(data)
 
-        result = full_operation("test")
+        result = full_operation("test")  # type: ignore[call-arg]
         assert isinstance(result, FlextResult)
         assert result.is_success
         assert "saved_test" in result.unwrap()
@@ -499,7 +499,7 @@ class TestDecoratorEdgeCases:
         container = FlextContainer.get_global()
         container.clear()
 
-        @inject(nonexistent=str)
+        @inject(nonexistent="nonexistent")
         def func(*, nonexistent: str = "fallback") -> str:
             return nonexistent
 

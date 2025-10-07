@@ -259,12 +259,6 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
-
-        # Teste de recuperação de erro com flat_map
-        def tentar_recuperar(_valor: str) -> FlextResult[str]:
-            # This function should not be called for failed results
-            return FlextResult[str].ok("valor_recuperado")
-
         resultado_com_erro = FlextResult[str].fail("erro_original")
         # Use or_else_get for error recovery instead of flat_map
         resultado_recuperado = resultado_com_erro.or_else_get(

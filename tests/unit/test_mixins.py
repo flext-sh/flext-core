@@ -405,7 +405,7 @@ class TestFlextMixins:
 
         class TestMixin:
             def test_method(self) -> str:
-                time.sleep(0.1)  # Simulate work
+                time.sleep(0.05)  # Simulate work
                 return "test_result"
 
         class TestClass:
@@ -419,7 +419,7 @@ class TestFlextMixins:
         # Check performance metrics
         performance = mixins.get_performance_metrics()
         assert "test_mixin" in performance
-        assert performance["test_mixin"]["avg_execution_time"] >= 0.1
+        assert performance["test_mixin"]["avg_execution_time"] >= 0.05
 
     def test_mixins_apply_mixin_with_error_handling(self) -> None:
         """Test mixin application with error handling."""

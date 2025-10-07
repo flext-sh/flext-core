@@ -707,12 +707,17 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
         """Show repository pattern integration."""
         print("\n=== Repository Pattern ===")
 
-        class OrderRepository:
+        class OrderRepository(FlextCore.Service[bool]):
             """Repository for Order aggregates."""
 
             def __init__(self) -> None:
                 """Initialize repository."""
+                super().__init__()
                 self._storage: dict[str, Order] = {}
+
+            def execute(self) -> FlextCore.Result[bool]:
+                """Execute the repository service."""
+                return FlextCore.Result[bool].ok(True)
 
             def save(self, order: Order) -> FlextCore.Result[bool]:
                 """Save order aggregate."""
@@ -854,9 +859,8 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
                 raise ValueError(msg)
             return email_result.unwrap()
 
-        email_result: FlextCore.Result[Email] = FlextCore.Result.from_callable(
-            risky_email_creation
-        )
+        email_result = FlextCore.Result.from_callable(risky_email_creation)
+        email_result = cast("FlextCore.Result[Email]", email_result)
         if email_result.is_failure:
             print(f"✅ Caught email validation error safely: {email_result.error}")
 
@@ -871,9 +875,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
                 stock=10,
             )
 
-        product_result: FlextCore.Result[Product] = FlextCore.Result.from_callable(
-            create_product
-        )
+        product_result = FlextCore.Result[Product].from_callable(create_product)
         if product_result.is_success:
             product: Product = product_result.unwrap()
             print(f"✅ Product created safely: {product.name}")

@@ -375,10 +375,10 @@ class TestEnterprisePatterns:
             @staticmethod
             def create_service(
                 service_type: str,
-            ) -> FlextResult[FlextTypes.Headers]:
+            ) -> FlextResult[FlextTypes.StringDict]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[FlextTypes.Headers].ok(
+                    return FlextResult[FlextTypes.StringDict].ok(
                         {
                             "type": "email",
                             "provider": "smtp",

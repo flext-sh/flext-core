@@ -22,7 +22,7 @@ import inspect
 import threading
 from collections.abc import Callable
 from contextlib import suppress
-from typing import TYPE_CHECKING, Self, cast, override
+from typing import TYPE_CHECKING, Self, TypeVar, cast, override
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
 containers = FlextRuntime.dependency_containers()
 providers = FlextRuntime.dependency_providers()
+
+T = TypeVar("T")
 
 
 class FlextContainer(FlextProtocols.Infrastructure.Configurable):
@@ -189,14 +191,14 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         # Internal dependency-injector container (NEW v1.1.0)
         # Provides advanced DI features while maintaining backward compatibility
-        self._di_container: object = containers.DynamicContainer()
+        self._di_container = containers.DynamicContainer()
 
         # Core service storage with type safety (MAINTAINED for compatibility)
         self._services: FlextTypes.Dict = {}
         self._factories: FlextTypes.Dict = {}
 
-        # Use FlextConfig directly for container configuration
-        self._flext_config: FlextConfig = FlextConfig()
+        # Use FlextConfig global singleton for container configuration
+        self._flext_config: FlextConfig = FlextConfig.get_global_instance()
         self._global_config: FlextTypes.Dict = self._create_container_config()
         self._user_overrides: FlextTypes.Dict = {}
 
@@ -677,22 +679,25 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def get_or_create(
         self,
         name: str,
-        factory: Callable[[], object] | None = None,
-    ) -> FlextResult[object]:
+        factory: Callable[[], T] | None = None,
+    ) -> FlextResult[T]:
         """Get existing service or create using provided factory.
 
         Returns:
-            FlextResult[object]: Success with service instance or failure with error.
+            FlextResult[T]: Success with service instance or failure with error.
 
         """
         service_result: FlextResult[object] = self.get(name)
 
         if service_result.is_success:
-            return service_result
+            return cast("FlextResult[T]", service_result)
 
         if factory is None:
-            return FlextResult[object].fail(
-                f"Service '{name}' not found and no factory provided",
+            return cast(
+                "FlextResult[T]",
+                FlextResult[object].fail(
+                    f"Service '{name}' not found and no factory provided",
+                ),
             )
 
         return self._create_from_factory(name, factory)
@@ -700,21 +705,26 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def _create_from_factory(
         self,
         name: str,
-        factory: Callable[[], object],
-    ) -> FlextResult[object]:
+        factory: Callable[[], T],
+    ) -> FlextResult[T]:
         """Create service from factory and register it.
 
         Returns:
-            FlextResult[object]: Success with service instance or failure with error.
+            FlextResult[T]: Success with service instance or failure with error.
 
         """
         register_result = self.register_factory(name, factory)
         if register_result.is_failure:
-            return FlextResult[object].fail(
+            return FlextResult[T].fail(
                 register_result.error or "Factory registration failed",
             )
 
-        return self.get(name)
+        service_result = self.get(name)
+        if service_result.is_success:
+            # Type assertion since we know the service type matches
+            service = service_result.unwrap()
+            return FlextResult[T].ok(cast("T", service))
+        return FlextResult[T].fail(service_result.error or "Service retrieval failed")
 
     def create_service[T](
         self,
@@ -1230,9 +1240,12 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-                    validation_result: FlextResult[object] = cast(
-                        "FlextResult[object]", validator(service)
-                    )
+                    validation_result_raw = validator(service)
+                    if isinstance(validation_result_raw, FlextResult):
+                        validation_result = validation_result_raw
+                    else:
+                        # Handle case where validator returns non-FlextResult
+                        validation_result = FlextResult[object].ok(validation_result_raw)
                     if validation_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validation_result.error}"

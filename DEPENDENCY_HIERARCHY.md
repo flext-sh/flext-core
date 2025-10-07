@@ -78,6 +78,7 @@ This document defines the strict dependency hierarchy for flext-core modules, en
 ### ✅ ALLOWED Import Patterns
 
 1. **Downward Imports**: Any layer can import from lower layers
+
    ```python
    # utilities.py (Layer 7) can import from:
    from flext_core.constants import FlextConstants  # Layer 0
@@ -86,18 +87,20 @@ This document defines the strict dependency hierarchy for flext-core modules, en
    ```
 
 2. **TYPE_CHECKING Imports**: Higher-layer types can be used in annotations
+
    ```python
    from typing import TYPE_CHECKING
-   
+
    if TYPE_CHECKING:
        from flext_core.config import FlextConfig  # Type hint only
-   
+
    def process_config(config: "FlextConfig") -> None:
        # Use string annotation for type hint
        pass
    ```
 
 3. **Late Import Pattern**: Import inside functions when runtime access needed
+
    ```python
    def create_config() -> FlextResult[FlextConfig]:
        # Import at function level to break circular dependency
@@ -108,6 +111,7 @@ This document defines the strict dependency hierarchy for flext-core modules, en
 ### ❌ FORBIDDEN Import Patterns
 
 1. **Upward Imports**: NEVER import from higher layers at module level
+
    ```python
    # ❌ FORBIDDEN in config.py (Layer 5):
    from flext_core.utilities import FlextUtilities  # Layer 7
@@ -115,6 +119,7 @@ This document defines the strict dependency hierarchy for flext-core modules, en
    ```
 
 2. **Circular Module Imports**: NEVER create circular dependencies
+
    ```python
    # ❌ FORBIDDEN: utilities.py imports config at module level
    from flext_core.config import FlextConfig  # Circular with config → utilities
@@ -123,6 +128,7 @@ This document defines the strict dependency hierarchy for flext-core modules, en
 ## Verification Commands
 
 ### Check for Circular Imports
+
 ```bash
 # Test all layers import successfully
 python3 -c "
@@ -146,6 +152,7 @@ print('✅ ALL LAYERS IMPORTED SUCCESSFULLY')
 ```
 
 ### Check for Upward Dependencies
+
 ```bash
 # Verify config.py has no upward imports
 grep -E "^from flext_core\.(models|utilities|loggings|protocols)" src/flext_core/config.py
@@ -166,18 +173,21 @@ grep -E "^from flext_core\.(config|models|utilities)" src/flext_core/loggings.py
 
 **Problem**: utilities.py (Layer 7) had module-level import of config.py (Layer 5), creating circular dependency.
 
-**Solution**: 
+**Solution**:
+
 - Removed module-level late import: `from flext_core.config import FlextConfig as _FlextConfig`
 - Kept FlextConfig in TYPE_CHECKING block for type hints
 - Moved actual import inside `create_flext_core_config()` function
 
 **Files Changed**:
+
 - `src/flext_core/utilities.py` lines 64-68 (removed module-level import)
 - `src/flext_core/utilities.py` lines 3623-3659 (added function-level import)
 
 ### 2. Layer Isolation Verification (2025-10-07)
 
 **Verified**:
+
 - ✅ config.py (Layer 5): No imports from models (Layer 6) or utilities (Layer 7)
 - ✅ models.py (Layer 6): No imports from utilities (Layer 7)
 - ✅ loggings.py (Layer 4): No imports from config, models, or utilities
@@ -185,12 +195,14 @@ grep -E "^from flext_core\.(config|models|utilities)" src/flext_core/loggings.py
 ### 3. TYPE_CHECKING Pattern Usage
 
 **Modules using TYPE_CHECKING correctly**:
+
 - `protocols.py`: Uses TYPE_CHECKING for models and result imports
 - `utilities.py`: Uses TYPE_CHECKING for config type hints
 
 ## Testing
 
 ### Test Results (2025-10-07)
+
 ```bash
 # All 254 FlextResult tests passing
 pytest tests/unit/test_result.py -v
@@ -235,7 +247,7 @@ python3 -c "import sys; sys.path.insert(0, 'src'); from flext_core import *"
 ✅ **Layer 4**: loggings.py - No upward dependencies verified  
 ✅ **Layer 5**: config.py - No upward dependencies verified  
 ✅ **Layer 6**: models.py - No imports from Layer 7 verified  
-✅ **Layer 7**: utilities.py - TYPE_CHECKING + late import pattern verified  
+✅ **Layer 7**: utilities.py - TYPE_CHECKING + late import pattern verified
 
 **Last Validated**: 2025-10-07  
 **Status**: ✅ Zero circular imports across all layers

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import contextvars
 import inspect
+import json
 import math
 import operator
 import os
@@ -32,7 +33,11 @@ from typing import (
     get_type_hints,
 )
 
-import orjson
+try:
+    import orjson
+except ImportError:
+    orjson = None
+
 from pydantic import (
     EmailStr,
     HttpUrl,
@@ -272,6 +277,9 @@ class FlextUtilities:
                 email_adapter: TypeAdapter[EmailStr] = TypeAdapter(EmailStr)
                 validated: EmailStr = email_adapter.validate_python(email)
                 return FlextResult[str].ok(str(validated))
+            except ImportError:
+                # email-validator not installed, fall back to foundation validation
+                return FlextResult[str].ok(email)
             except (PydanticValidationError, ValueError) as e:
                 return FlextResult[str].fail(f"Invalid email format: {e}")
 
@@ -1083,8 +1091,11 @@ class FlextUtilities:
         @staticmethod
         def sort_key(value: object) -> str:
             """Return a deterministic string for ordering normalized cache components."""
-            json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
-            return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
+            if orjson is not None:
+                json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
+                return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
+            # Fallback to standard library json with sorted keys
+            return json.dumps(value, sort_keys=True, default=str)
 
         @staticmethod
         def normalize_component(value: object) -> object:

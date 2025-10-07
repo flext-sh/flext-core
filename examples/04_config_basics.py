@@ -106,7 +106,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
             self.demonstrate_deprecated_patterns()
 
             # Summary using inherited config property
-            summary = {
+            summary: dict[str, object] = {
                 "demonstrations_completed": 23,
                 "environment": self.config.environment,
                 "debug_mode": self.config.debug,
@@ -206,7 +206,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         print(f"Console colors: {config.console_color_enabled}")
 
         # Access logging configuration directly from config attributes
-        log_config = {
+        log_config: dict[str, object] = {
             "log_level": config.log_level,
             "json_output": config.json_output,
             "include_source": config.include_source,
@@ -228,7 +228,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         print(f"Database pool size: {config.database_pool_size}")
 
         # Direct attribute access (get_database_config removed)
-        db_config = {
+        db_config: dict[str, object] = {
             "url": config.database_url,
             "pool_size": config.database_pool_size,
         }
@@ -275,7 +275,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         config = FlextCore.Config()
 
         # Direct attribute access (get_cqrs_bus_config removed)
-        cqrs_config = {
+        cqrs_config: dict[str, object] = {
             "auto_context": config.dispatcher_auto_context,
             "timeout_seconds": config.dispatcher_timeout_seconds,
             "enable_metrics": config.dispatcher_enable_metrics,
@@ -324,7 +324,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         config = FlextCore.Config()
 
         # Direct attribute access (get_metadata removed)
-        metadata = {
+        metadata: dict[str, object] = {
             "app_name": config.app_name,
             "version": config.version,
             "environment": config.environment,
@@ -344,7 +344,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show environment variable loading."""
         print("\n=== Environment Variables ===")
 
-        base_env = {
+        base_env: dict[str, object] = {
             "FLEXT_ENVIRONMENT": self._reference_config.get(
                 "environment",
                 "development",
@@ -487,7 +487,9 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
                 raise ValueError(msg)
             return config
 
-        config_result = FlextCore.Result.from_callable(risky_config_load)
+        config_result: FlextCore.Result[FlextCore.Config] = (
+            FlextCore.Result.from_callable(risky_config_load)
+        )
         if config_result.is_success:
             config = config_result.unwrap()
             print(f"✅ Config loaded safely: environment={config.environment}")
@@ -501,7 +503,9 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
                 raise ValueError(msg)
             return f"Production config valid: debug={config.debug}"
 
-        validation_result = FlextCore.Result.from_callable(validate_production)
+        validation_result: FlextCore.Result[str] = FlextCore.Result.from_callable(
+            validate_production
+        )
         if validation_result.is_success:
             print(f"✅ {validation_result.unwrap()}")
         else:
@@ -561,7 +565,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         if result.is_success:
             config = result.unwrap()
             print(
-                f"✅ Config validation pipeline success: "
+                "✅ Config validation pipeline success: "
                 f"env={config.environment}, "
                 f"log={config.log_level}, "
                 f"workers={config.max_workers}"
@@ -707,7 +711,9 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
             print(f"✅ Log level '{config.log_level}' in valid levels: {log_valid}")
 
         # Performance constants
-        max_workers_ok = 1 <= config.max_workers <= 100
+        max_workers_ok = (
+            1 <= config.max_workers <= FlextCore.Constants.Validation.MAX_WORKERS_LIMIT
+        )
         timeout_ok = config.timeout_seconds >= 1
         print(f"✅ Max workers in range: {max_workers_ok}")
         print(f"✅ Timeout is positive: {timeout_ok}")
@@ -869,8 +875,6 @@ def demonstrate_flextcore_config_access() -> None:
     custom_config = FlextCore.Config()
 
     # Note: setup_service_infrastructure method not available in current version
-    # Using direct service instantiation instead
-    _ = FlextCore.Service[FlextCore.Types.Dict]()
     # Service would typically get config injected via DI container
     container = FlextCore.Container.get_global()
     container.register("config", custom_config)

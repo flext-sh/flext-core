@@ -1248,22 +1248,23 @@ class FlextResult[T_co]:
         if isinstance(io_result, IOSuccess):
             # Extract IO container using value_or, then unwrap the IO
             sentinel = object()
-            io_container = io_result.value_or(sentinel)
-            if io_container is not None and io_container is not sentinel:
-                # Unwrap IO container - returns library doesn't expose public API
-                # for IO value extraction, _inner_value is the only way
-                # Cast is safe: IOSuccess container holds T-typed value
-                value: T = cast("T", io_container._inner_value)
+            value_or_sentinel = io_result.value_or(sentinel)
+            if value_or_sentinel is not None and value_or_sentinel is not sentinel:
+                # CRITICAL: value_or() returns an IO container, not the raw value
+                # The returns library provides no public API to extract from IO
+                # We MUST access _inner_value for interop - this is by design
+                value: T = cast("T", value_or_sentinel._inner_value)
                 return cls.ok(value)
 
         # It's IOFailure - extract the error
         if isinstance(io_result, IOFailure):
             # Extract the failure IO container
-            io_container = io_result.failure()
-            if io_container is not None:
-                # Unwrap IO container - returns library doesn't expose public API
-                error_value = io_container._inner_value
-                error_msg = str(error_value) if error_value else "IO operation failed"
+            error_value = io_result.failure()
+            if error_value is not None:
+                # CRITICAL: failure() returns an IO container, not the raw error
+                # The returns library provides no public API to extract from IO
+                # We MUST access _inner_value for interop - this is by design
+                error_msg = str(error_value._inner_value)
                 return cls.fail(error_msg)
 
         # Unknown type

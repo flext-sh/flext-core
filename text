@@ -1,0 +1,12 @@
+ERROR Argument `() -> dict[str, str]` is not assignable to parameter `func` with type `() -> dict[str, object]` in function `flext_core.result.FlextResult.from_callable` [bad-argument-type]
+   --> examples/09_context_management.py:621:13
+    |
+621 |             risky_context_operation
+    |             ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Object of class `FlextConfig` has no attribute `enable_middleware` [missing-attribute]
+   --> examples/11_bus_messaging.py:708:45
+    |
+708 |             print(f"   Middleware enabled: {bus.config.enable_middleware}")
+    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |

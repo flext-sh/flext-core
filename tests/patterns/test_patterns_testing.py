@@ -19,18 +19,17 @@ from contextlib import AbstractContextManager as ContextManager, contextmanager
 from typing import cast
 
 import pytest
-from hypothesis import HealthCheck, given, settings, strategies as st
+from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextTypes
-from flext_core.typings import T
 
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[[T], None]], Callable[[T], None]]:
+) -> Callable[[Callable[..., None]], Callable[..., None]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[[T], None]) -> Callable[[T], None]:
+    def decorator(func: Callable[..., None]) -> Callable[..., None]:
         # Use hasattr/setattr for dynamic attribute setting to avoid PyRight error
         setattr(func, "_test_pattern", pattern)
         return func
@@ -375,7 +374,7 @@ class TestPropertyBasedPatterns:
         st.builds(
             dict,
             id=st.uuids().map(str),
-            name=st.text(min_size=1, max_size=50),
+            name=st.text(),
             email=st.emails(),
         )
     )
@@ -736,16 +735,16 @@ class TestRealWorldScenarios:
                 "should have valid HTTP method",
             ).assert_all()
 
-    @given(
-        st.builds(
-            dict,
-            database_url=st.text(min_size=10),
-            debug=st.booleans(),
-            timeout_seconds=st.integers(min_value=1, max_value=300),
-            environment=st.sampled_from(["development", "staging", "production"]),
+    @given(  # type: ignore[unknown-argument-type]
+        st.builds(  # type: ignore[unknown-argument-type]
+            dict,  # type: ignore[unknown-argument-type]
+            database_url=st.text(),  # type: ignore[unknown-argument-type]
+            debug=st.booleans(),  # type: ignore[unknown-argument-type]
+            timeout_seconds=st.integers(min_value=1, max_value=300),  # type: ignore[unknown-argument-type]
+            environment=st.sampled_from(["development", "staging", "production"]),  # type: ignore[unknown-argument-type]
         )
     )
-    @settings(suppress_health_check=[HealthCheck.too_slow])
+    @settings()
     def test_configuration_validation_comprehensive(
         self,
         config: FlextTypes.Dict,

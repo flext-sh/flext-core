@@ -187,6 +187,7 @@ class PaymentService(FlextService[dict[str, object]]):
 ```
 
 **Available Methods**:
+
 - `_enrich_context(**context_data)` - Add service metadata to logs
 - `_with_correlation_id(correlation_id?)` - Set/generate correlation IDs for tracing
 - `_with_user_context(user_id, **user_data)` - Set user audit context
@@ -258,6 +259,7 @@ class OrderService(FlextService[Order]):
 ### **Examples**
 
 See `examples/automation_showcase.py` for complete working examples demonstrating:
+
 - Basic service with automatic context enrichment
 - Payment service with correlation ID tracking
 - Order service using context enrichment helper method

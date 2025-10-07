@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Never, cast
+from typing import Never, cast
 
 from flext_core import FlextConstants, FlextContainer, FlextResult, FlextTypes
 
@@ -27,7 +27,6 @@ class TestFlextContainer:
 
         class TestService:
             def __init__(self) -> None:
-                super().__init__()
                 self.value = "test"
 
         service_instance = TestService()
@@ -41,12 +40,10 @@ class TestFlextContainer:
         # Register a dependency
         class Dependency:
             def __init__(self) -> None:
-                super().__init__()
                 self.name = "dependency"
 
         class Service:
             def __init__(self, dependency: Dependency) -> None:
-                super().__init__()
                 self.dependency = dependency
                 self.initialized = True
 
@@ -68,12 +65,10 @@ class TestFlextContainer:
         # Register a dependency
         class Dependency:
             def __init__(self) -> None:
-                super().__init__()
                 self.name = "dependency"
 
         class Service:
             def __init__(self, dependency: Dependency) -> None:
-                super().__init__()
                 self.dependency = dependency
                 self.initialized = True
 
@@ -97,7 +92,6 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self, _missing_dep: object) -> None:
-                super().__init__()
                 self.initialized = True
 
         # Auto-wire service with missing dependency
@@ -230,7 +224,7 @@ class TestFlextContainer:
         container.register("test_service", service)
 
         # Get with wrong type
-        result = container.get_typed("test_service", dict)
+        result = container.get_typed("test_service", dict)  # type: ignore[unknown-variable-type]
         assert result.is_success  # Should succeed because dict is the correct type
 
         # Get with wrong type
@@ -239,7 +233,6 @@ class TestFlextContainer:
 
         result = container.get_typed("test_service", WrongType)
         assert result.is_failure
-        assert result.error is not None
         assert result.error is not None
         assert "type mismatch" in result.error
 
@@ -251,25 +244,25 @@ class TestFlextContainer:
             return {"created": "by_factory"}
 
         # Service doesn't exist, should create using factory
-        result: FlextResult[FlextTypes.StringDict] = container.get_or_create(
-            "test_service", factory
-        )
+        result: FlextResult[object] = container.get_or_create("test_service", factory)
         assert result.is_success
         assert isinstance(result.value, dict)
-        value = result.value
+        value = cast("FlextTypes.StringDict", result.value)
         assert value["created"] == "by_factory"
 
         # Service now exists, should return existing
-        result2 = container.get_or_create("test_service", factory)
+        result2: FlextResult[FlextTypes.StringDict] = container.get_or_create(
+            "test_service", factory
+        )
         assert result2.is_success
-        assert result2.value is result.value  # Same instance
+        assert result2.value is result.value  # type: ignore[unknown-member-type] # Same instance
 
     def test_container_get_or_create_no_factory(self) -> None:
         """Test get or create without factory."""
         container = FlextContainer()
 
         # Service doesn't exist and no factory provided
-        result = container.get_or_create("nonexistent")
+        result = container.get_or_create("nonexistent")  # type: ignore[unknown-variable-type]
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
@@ -931,7 +924,8 @@ class TestDIContainerInitialization:
         assert hasattr(container._di_container, "config")
 
         # Config should be a Configuration provider
-        assert container._di_container.config.__class__.__name__ == "Configuration"
+        di_container = container._di_container
+        assert di_container.config.__class__.__name__ == "Configuration"
 
 
 class TestServiceRegistrationSync:
@@ -1121,7 +1115,7 @@ class TestFlextConfigSync:
         container = FlextContainer()
 
         # Access the config provider
-        config_provider = cast("Any", container._di_container.config)
+        config_provider = container._di_container.config
 
         # Verify config values are synced
         # Note: Config provider sync is incomplete - values return None
@@ -1146,7 +1140,8 @@ class TestFlextConfigSync:
         container = FlextContainer()
 
         assert hasattr(container._di_container, "config")
-        assert container._di_container.config.__class__.__name__ == "Configuration"
+        di_container = container._di_container
+        assert di_container.config.__class__.__name__ == "Configuration"
 
 
 class TestFlextResultWrapping:
@@ -1216,7 +1211,10 @@ class TestExceptionTranslation:
         container = FlextContainer()
 
         # Try to register non-callable as factory
-        result = container.register_factory("bad_factory", "not_callable")
+        result = container.register_factory(
+            "bad_factory",
+            cast("Callable[[], object]", "not_callable"),
+        )
         assert result.is_failure
         assert result.error is not None
         assert "must be callable" in result.error.lower()

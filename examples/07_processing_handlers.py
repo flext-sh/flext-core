@@ -173,8 +173,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 if not email_value:
                     return FlextCore.Result[str].fail("Email required")
 
-                if not isinstance(email_value, str):
-                    return FlextCore.Result[str].fail("Email must be a string")
+                # email_value is guaranteed to be str after cast and None check
 
                 if "@" not in email_value:
                     return FlextCore.Result[str].fail("Invalid email format")
@@ -228,8 +227,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 if not token_value:
                     return FlextCore.Result[str].fail("Authentication required")
 
-                if not isinstance(token_value, str):
-                    return FlextCore.Result[str].fail("Token must be a string")
+                # token_value is guaranteed to be str after cast and None check
 
                 if token_value != "valid-token":
                     return FlextCore.Result[str].fail("Invalid token")
@@ -530,8 +528,6 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
 
                 request_dict = cast("dict[str, object]", request)
                 text_value = cast("str", request_dict.get("text", ""))
-                if not isinstance(text_value, str):
-                    text_value = str(text_value)
                 return FlextCore.Result[str].ok(f"Uppercase: {text_value.upper()}")
 
         class LowerCaseHandler(FlextCore.Processors.Implementation.BasicHandler):
@@ -544,8 +540,6 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
 
                 request_dict = cast("dict[str, object]", request)
                 text_value = cast("str", request_dict.get("text", ""))
-                if not isinstance(text_value, str):
-                    text_value = str(text_value)
                 return FlextCore.Result[str].ok(f"Lowercase: {text_value.lower()}")
 
         class ReverseHandler(FlextCore.Processors.Implementation.BasicHandler):
@@ -813,7 +807,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         def primary_handler(data: FlextCore.Types.Dict) -> FlextCore.Result[str]:
             """Try primary handler (might fail)."""
             attempt_count["count"] += 1
-            if attempt_count["count"] < 3:
+            if attempt_count["count"] < FlextCore.Constants.Validation.RETRY_COUNT_MAX:
                 return FlextCore.Result[str].fail("Primary handler unavailable")
             return FlextCore.Result[str].ok(f"Primary: Processed {data.get('action')}")
 
@@ -1055,14 +1049,14 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             print(f"✅ Valid handler ID: {handler_id}")
 
         handler_type = handler_input.get("handler_type", "")
-        if isinstance(handler_type, str) and FlextCore.Runtime.is_valid_identifier(
-            handler_type
-        ):
+        if FlextCore.Runtime.is_valid_identifier(handler_type):
             print(f"✅ Valid handler type: {handler_type}")
 
         # Path validation for handler configuration files
         config_path = "/etc/flext/handlers.yaml"
-        if FlextCore.Runtime.is_valid_path(config_path):
+        if FlextCore.Runtime.is_valid_path(
+            config_path
+        ):  # config_path is a string literal
             print(f"✅ Valid config path: {config_path}")
 
     def demonstrate_deprecated_patterns(self) -> None:

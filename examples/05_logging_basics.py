@@ -25,6 +25,7 @@ from __future__ import annotations
 import time
 import warnings
 from datetime import UTC, datetime
+from typing import cast
 from uuid import uuid4
 
 from flext_core import FlextCore
@@ -502,9 +503,7 @@ class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
                 raise ValueError(msg)
             return self.config.log_file
 
-        log_path_result: FlextCore.Result[str] = FlextCore.Result.from_callable(
-            risky_log_setup
-        )
+        log_path_result = FlextCore.Result[str].from_callable(risky_log_setup)
         if log_path_result.is_success:
             print(f"✅ Log file configured: {log_path_result.unwrap()}")
         else:
@@ -518,9 +517,8 @@ class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
                 raise ValueError(msg)
             return f"Logger configured with level {self.config.log_level}"
 
-        validation_result: FlextCore.Result[str] = FlextCore.Result.from_callable(
-            validate_logger_config
-        )
+        validation_result = FlextCore.Result.from_callable(validate_logger_config)
+        validation_result = cast("FlextCore.Result[str]", validation_result)
         if validation_result.is_success:
             print(f"✅ {validation_result.unwrap()}")
 

@@ -130,11 +130,11 @@ class Order(FlextModels.Entity):
 ## Getting Help
 
 - **[API Reference](./api-reference/)**:
-    Complete API documentation
+  Complete API documentation
 - **[GitHub Issues](https://github.com/flext-sh/flext-core/issues)**:
-    Report bugs or request features
+  Report bugs or request features
 - **[GitHub Discussions](https://github.com/flext-sh/flext-core/discussions)**:
-    Ask questions and share ideas
+  Ask questions and share ideas
 
 ## Contributing
 

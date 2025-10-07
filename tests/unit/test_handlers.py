@@ -730,9 +730,7 @@ class TestFlextHandlers:
     def test_handlers_from_callable_anonymous_function(self) -> None:
         """Test from_callable with lambda (anonymous function)."""
         handler = FlextHandlers.from_callable(
-            lambda message: f"lambda_{message}"
-            if isinstance(message, str)
-            else f"lambda_{message!s}",
+            lambda message: f"lambda_{message!s}",
             handler_name="lambda_handler",
             handler_type="command",
         )

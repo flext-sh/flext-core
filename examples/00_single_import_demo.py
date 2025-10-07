@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """00 - FlextCore Single-Import Pattern Demo.
 
 This example demonstrates the NEW recommended single-import pattern
@@ -41,8 +40,10 @@ def demonstrate_single_import_pattern() -> None:
     print(f"   ❌ FlextCore.Result.fail(): {error_result.error}")
 
     # Chain operations using railway pattern
+    min_length = 3
+
     def validate_length(s: str) -> FlextCore.Result[str]:
-        if len(s) < 3:
+        if len(s) < min_length:
             return FlextCore.Result[str].fail("Too short")
         return FlextCore.Result[str].ok(s)
 

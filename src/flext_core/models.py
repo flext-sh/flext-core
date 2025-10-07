@@ -4462,7 +4462,9 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return cast("providers.Factory[Any]", providers_module.Factory(entity_class))
+            return cast(
+                "providers.Factory[Any]", providers_module.Factory(entity_class)
+            )
 
         @staticmethod
         def create_value_factory_provider(
@@ -4525,7 +4527,9 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return cast("providers.Factory[Any]", providers_module.Factory(aggregate_class))
+            return cast(
+                "providers.Factory[Any]", providers_module.Factory(aggregate_class)
+            )
 
         @staticmethod
         def create_domain_event_provider(
@@ -4569,7 +4573,9 @@ class FlextModels:
                     metadata=metadata or {},
                 )
 
-            return providers_module.Callable(create_event)
+            return cast(
+                "providers.Callable[Any]", providers_module.Callable(create_event)
+            )
 
         @staticmethod
         def create_command_factory_provider(
@@ -4601,7 +4607,9 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return providers_module.Factory(command_class)
+            return cast(
+                "providers.Factory[Any]", providers_module.Factory(command_class)
+            )
 
         @staticmethod
         def create_query_factory_provider(
@@ -4632,7 +4640,7 @@ class FlextModels:
 
             """
             providers_module = FlextRuntime.dependency_providers()
-            return providers_module.Factory(query_class)
+            return cast("providers.Factory[Any]", providers_module.Factory(query_class))
 
         @staticmethod
         def register_in_container(

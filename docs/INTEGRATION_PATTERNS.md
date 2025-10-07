@@ -1,4 +1,5 @@
 # FLEXT-CORE INTEGRATION PATTERNS
+
 ## Universal FlextContainer & FlextContext Integration Guide
 
 **Version**: 1.0.0 | **Status**: Implementation Guide | **Updated**: 2025-10-06
@@ -449,6 +450,7 @@ class TestUserService:
 ### Migrating Existing Code to Use Pattern
 
 **BEFORE** (manual infrastructure):
+
 ```python
 class OldService:
     def __init__(self):
@@ -468,6 +470,7 @@ class OldService:
 ```
 
 **AFTER** (automatic infrastructure):
+
 ```python
 class NewService(FlextMixins.Service):
     def __init__(self):
@@ -503,9 +506,9 @@ class NewService(FlextMixins.Service):
 ### DO ✅
 
 1. **Inherit from FlextMixins.Service** for all service classes
-2. **Call _init_service()** in __init__ with service name
-3. **Use _track_operation()** for performance-critical operations
-4. **Use _propagate_context()** for operations that call other services
+2. **Call \_init_service()** in **init** with service name
+3. **Use \_track_operation()** for performance-critical operations
+4. **Use \_propagate_context()** for operations that call other services
 5. **Use self.logger** for all logging (automatic DI)
 6. **Use self.container** for service discovery
 7. **Return FlextResult** from all operations
@@ -514,8 +517,8 @@ class NewService(FlextMixins.Service):
 
 1. **Don't manually instantiate FlextLogger** - use self.logger
 2. **Don't manually call FlextContainer.get_global()** - use self.container
-3. **Don't manually manage context** - use _propagate_context()
-4. **Don't forget _init_service()** - required for auto-registration
+3. **Don't manually manage context** - use \_propagate_context()
+4. **Don't forget \_init_service()** - required for auto-registration
 5. **Don't use print()** for logging - use self.logger
 6. **Don't use try/except for business logic** - use FlextResult
 7. **Don't create custom infrastructure** - use provided patterns

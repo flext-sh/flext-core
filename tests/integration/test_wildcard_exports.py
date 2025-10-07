@@ -43,14 +43,16 @@ class TestFlextWildcardExports:
         namespace = {}
         spec = importlib.util.spec_from_file_location(
             "flext_core",
-            "src/flext_core/__init__.py",
+            "/home/marlonsc/flext/flext-core/src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
-        spec = cast("importlib.machinery.ModuleSpec", spec)
-        assert spec.loader is not None  # Type guard for pyrefly
+
+        # At this point, spec and spec.loader are guaranteed to be not None
+        spec = cast("importlib.machinery.ModuleSpec", spec)  # Help type checker
+        loader = spec.loader  # Type: Loader (not None)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        loader.exec_module(module)  # type: ignore[union-attr]
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -142,17 +144,19 @@ class TestFlextWildcardExports:
     def test_no_import_duplications(self) -> None:
         """Test that there are no duplicate exports in wildcard import."""
         # Test wildcard import in a clean namespace
-        namespace = {}
+        namespace: dict[str, object] = {}
         spec = importlib.util.spec_from_file_location(
             "flext_core",
-            "src/flext_core/__init__.py",
+            "/home/marlonsc/flext/flext-core/src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
-        spec = cast("importlib.machinery.ModuleSpec", spec)
-        assert spec.loader is not None  # Type guard for pyrefly
+
+        # At this point, spec and spec.loader are guaranteed to be not None
+        spec = cast("importlib.machinery.ModuleSpec", spec)  # Help type checker
+        loader = spec.loader  # Type: Loader (not None)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        loader.exec_module(module)  # type: ignore[union-attr]
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -160,15 +164,17 @@ class TestFlextWildcardExports:
                 namespace[name] = getattr(module, name)
 
         # Get all exported names (excluding builtins)
-        exported_names = [
+        exported_names: list[str] = [
             name
             for name in namespace
             if not name.startswith("_") and name not in dir(__builtins__)
         ]
 
         # Check for duplicates
-        unique_names = set(exported_names)
-        duplicates = [name for name in unique_names if exported_names.count(name) > 1]
+        unique_names: set[str] = set(exported_names)
+        duplicates: list[str] = [
+            name for name in unique_names if exported_names.count(name) > 1
+        ]
         assert len(exported_names) == len(unique_names), (
             f"Duplicate exports detected: {duplicates}"
         )
@@ -179,14 +185,16 @@ class TestFlextWildcardExports:
         namespace = {}
         spec = importlib.util.spec_from_file_location(
             "flext_core",
-            "src/flext_core/__init__.py",
+            "/home/marlonsc/flext/flext-core/src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
-        spec = cast("importlib.machinery.ModuleSpec", spec)
-        assert spec.loader is not None  # Type guard for pyrefly
+
+        # At this point, spec and spec.loader are guaranteed to be not None
+        spec = cast("importlib.machinery.ModuleSpec", spec)  # Help type checker
+        loader = spec.loader  # Type: Loader (not None)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        loader.exec_module(module)  # type: ignore[union-attr]
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -201,7 +209,7 @@ class TestFlextWildcardExports:
             "Utilities",  # FlextUtilities
         ]
 
-        exported_names = [
+        exported_names: list[str] = [
             name
             for name in namespace
             if not name.startswith("_") and name not in dir(__builtins__)
@@ -219,21 +227,23 @@ class TestFlextWildcardExports:
         namespace = {}
         spec = importlib.util.spec_from_file_location(
             "flext_core",
-            "src/flext_core/__init__.py",
+            "/home/marlonsc/flext/flext-core/src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
-        spec = cast("importlib.machinery.ModuleSpec", spec)
-        assert spec.loader is not None  # Type guard for pyrefly
+
+        # At this point, spec and spec.loader are guaranteed to be not None
+        spec = cast("importlib.machinery.ModuleSpec", spec)  # Help type checker
+        loader = spec.loader  # Type: Loader (not None)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        loader.exec_module(module)  # type: ignore[union-attr]
 
         # Copy the exports to our test namespace
         for name in dir(module):
             if not name.startswith("_"):
                 namespace[name] = getattr(module, name)
 
-        exported_names = [
+        exported_names: list[str] = [
             name
             for name in namespace
             if not name.startswith("_") and name not in dir(__builtins__)
@@ -287,14 +297,16 @@ class TestFlextWildcardExports:
         namespace = {}
         spec = importlib.util.spec_from_file_location(
             "flext_core",
-            "src/flext_core/__init__.py",
+            "/home/marlonsc/flext/flext-core/src/flext_core/__init__.py",
         )
         if spec is None or spec.loader is None:
             pytest.fail("Failed to create module spec")
-        spec = cast("importlib.machinery.ModuleSpec", spec)
-        assert spec.loader is not None  # Type guard for pyrefly
+
+        # At this point, spec and spec.loader are guaranteed to be not None
+        spec = cast("importlib.machinery.ModuleSpec", spec)  # Help type checker
+        loader = spec.loader  # Type: Loader (not None)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        loader.exec_module(module)  # type: ignore[union-attr]
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -302,7 +314,7 @@ class TestFlextWildcardExports:
                 namespace[name] = getattr(module, name)
 
         # Get all Flext-prefixed exports
-        flext_exports = [
+        flext_exports: list[str] = [
             name
             for name in namespace
             if name.startswith("Flext")

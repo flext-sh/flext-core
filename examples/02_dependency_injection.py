@@ -512,9 +512,12 @@ class UserRepository(FlextCore.Service[User]):
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
-        if user.age < 0 or user.age > 150:
+        if (
+            user.age < FlextCore.Constants.Validation.MIN_AGE
+            or user.age > FlextCore.Constants.Validation.MAX_AGE
+        ):
             return FlextCore.Result[None].fail(
-                "User age must be between 0 and 150",
+                f"User age must be between {FlextCore.Constants.Validation.MIN_AGE} and {FlextCore.Constants.Validation.MAX_AGE}",
                 error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
             )
 
@@ -744,11 +747,13 @@ class ComprehensiveDIService(FlextCore.Service[User]):
             if get_result.is_success:
                 cached_data = get_result.unwrap()
                 if isinstance(cached_data, dict):
-                    print(f"✅ Cache test: {cached_data.get('email')}")
+                    cached_dict = cast("FlextCore.Types.Dict", cached_data)
+                    print(f"✅ Cache test: {cached_dict.get('email')}")
 
             stats = getattr(cache, "get_stats", dict)()
+            stats_dict = cast("FlextCore.Types.Dict", stats)
             print(
-                f"   Cache stats: {stats.get('current_size', 0)} items, {stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses"
+                f"   Cache stats: {stats_dict.get('current_size', 0)} items, {stats_dict.get('hits', 0)} hits, {stats_dict.get('misses', 0)} misses"
             )
 
     # ========== BATCH OPERATIONS ==========
@@ -790,9 +795,8 @@ class ComprehensiveDIService(FlextCore.Service[User]):
                 db = db_result.unwrap()
                 db.connect()
 
-                users_list = cast(
-                    "FlextCore.Types.List", self._dataset.get("users", [{}])
-                )
+                users_list_result = self._dataset.get("users", [{}])
+                users_list = cast("FlextCore.Types.List", users_list_result)
                 user_id = str(
                     cast("FlextCore.Types.Dict", users_list[0]).get("id", "user_1")
                 )
@@ -932,9 +936,8 @@ class ComprehensiveDIService(FlextCore.Service[User]):
                 raise RuntimeError(msg)
             return db
 
-        db_result: FlextCore.Result[DatabaseService] = FlextCore.Result.from_callable(
-            risky_db_connect
-        )
+        db_result = FlextCore.Result.from_callable(risky_db_connect)
+        db_result = cast("FlextCore.Result[DatabaseService]", db_result)
         if db_result.is_failure:
             print(f"✅ Caught connection error safely: {db_result.error}")
         else:
@@ -944,9 +947,8 @@ class ComprehensiveDIService(FlextCore.Service[User]):
         def safe_cache_init() -> CacheService:
             return CacheService(max_size=100, ttl_seconds=300)
 
-        cache_result: FlextCore.Result[CacheService] = FlextCore.Result.from_callable(
-            safe_cache_init
-        )
+        cache_result = FlextCore.Result.from_callable(safe_cache_init)
+        cache_result = cast("FlextCore.Result[CacheService]", cache_result)
         if cache_result.is_success:
             cache = cache_result.unwrap()
             print(f"✅ Cache initialized: max_size={cache.max_size}")
@@ -954,11 +956,6 @@ class ComprehensiveDIService(FlextCore.Service[User]):
     def demonstrate_flow_through(self) -> None:
         """Show pipeline composition for service initialization."""
         print("\n=== flow_through(): Service Initialization Pipeline ===")
-
-        def create_database() -> FlextCore.Result[DatabaseService]:
-            """Create database service."""
-            db = DatabaseService("sqlite:///:memory:")
-            return FlextCore.Result[DatabaseService].ok(db)
 
         def connect_database(db: DatabaseService) -> FlextCore.Result[DatabaseService]:
             """Connect to database."""

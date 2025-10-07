@@ -73,7 +73,7 @@ if logger_result.is_success:
 
 Comprehensive exception hierarchy with error codes and context.
 
-```python
+````python
 from flext_core import FlextException, ErrorCode
 class ValidationException(FlextException):
     def __init__(self, field: str, value: Any):
@@ -100,7 +100,7 @@ pattern = FlextConstants.Regex.EMAIL
 
 # Framework defaults
 timeout = FlextConstants.Defaults.REQUEST_TIMEOUT
-```
+````
 
 ### FlextTypes - Type System
 

@@ -279,6 +279,9 @@ class FlextConstants:
         RETRY_COUNT_MAX: Final[int] = 3  # Maximum retry attempts
         WORKERS_TEST_COUNT: Final[int] = 8  # Test-specific worker count
         TIMEOUT_TEST_SECONDS: Final[int] = 60  # Test-specific timeout
+        MAX_WORKERS_LIMIT: Final[int] = (
+            100  # Maximum reasonable worker count for validation
+        )
 
     class Errors:
         """Canonical error codes surfaced in telemetry narratives.
