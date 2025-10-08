@@ -497,6 +497,9 @@ class FlextContext:
             return
 
         # Validate key (str type is guaranteed by type annotation)
+        if key is None:
+            msg = "Key cannot be None"
+            raise TypeError(msg)
 
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
@@ -1680,6 +1683,10 @@ class FlextContext:
             return cls(handler_name, handler_mode)
 
 
+# Export HandlerExecutionContext at module level for API compatibility
+HandlerExecutionContext = FlextContext.HandlerExecutionContext
+
 __all__: FlextTypes.StringList = [
     "FlextContext",
+    "HandlerExecutionContext",
 ]

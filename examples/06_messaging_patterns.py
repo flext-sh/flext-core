@@ -146,7 +146,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         }
         self._user = self._scenarios.user()
         self._users = self._scenarios.users()
-        self._order = self._scenarios.realistic_data()["order"]
+        self._order: dict[str, object] = cast("dict[str, object]", self._scenarios.realistic_data()["order"])
         self._api_payload = self._scenarios.payload()
 
         # Demonstrate inherited logger (no manual instantiation needed!)
@@ -299,15 +299,15 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show command message patterns for CQRS."""
         print("\n=== Command Patterns ===")
 
-        order_id = self._order["order_id"]
-        total = float(self._order["total"])
+        order_id = cast("str", self._order["order_id"])
+        total = float(cast("str", self._order["total"]))
 
         create_order_command = FlextCore.Models.Payload[FlextCore.Types.Dict](
             data={
                 "command": "CreateOrder",
                 "order_id": order_id,
-                "customer_id": self._order["customer_id"],
-                "items": self._order["items"],
+                "customer_id": cast(str, self._order["customer_id"]),
+                "items": cast(list[dict[str, object]], self._order["items"]),
                 "total": total,
             },
             metadata={
@@ -410,8 +410,8 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show domain event patterns for event sourcing."""
         print("\n=== Domain Event Patterns ===")
 
-        aggregate_id = self._order["order_id"]
-        order_total = str(self._order["total"])
+        aggregate_id = cast(str, self._order["order_id"])
+        order_total = str(cast(str, self._order["total"]))
 
         order_created_event = FlextCore.Models.DomainEvent(
             aggregate_id=aggregate_id,
@@ -652,7 +652,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             data={
                 "operation": "process_order",
                 "order_id": order_id,
-                "amount": float(self._order["total"]),
+                "amount": float(cast("str", self._order["total"])),
                 "message_id": str(uuid4()),
             },
             metadata={
@@ -726,13 +726,10 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== Event Replay ===")
 
         account_id = str(uuid4())
-        order_total = float(self._order["total"])
-        first_item = self._order["items"][0]
-        second_item = (
-            self._order["items"][0]
-            if len(self._order["items"]) == 1
-            else self._order["items"][1]
-        )
+        order_total = float(cast("str", self._order["total"]))
+        order_items = cast("list[object]", self._order["items"])
+        first_item = order_items[0]
+        second_item = order_items[0] if len(order_items) == 1 else order_items[1]
 
         events = [
             FlextCore.Models.DomainEvent(
@@ -757,7 +754,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 aggregate_id=account_id,
                 event_type="MoneyWithdrawn",
                 data={
-                    "amount": float(first_item["price"]),
+                    "amount": float(cast("str", cast("dict[str, object]", first_item)["price"])),
                     "reason": "inventory_purchase",
                 },
                 metadata={
@@ -769,7 +766,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 aggregate_id=account_id,
                 event_type="MoneyDeposited",
                 data={
-                    "amount": float(second_item["price"]),
+                    "amount": float(cast("str", cast("dict[str, object]", second_item)["price"])),
                     "source": "upsell_revenue",
                 },
                 metadata={

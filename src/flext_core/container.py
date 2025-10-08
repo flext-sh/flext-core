@@ -1232,12 +1232,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     # Call validator and check result type
                     validator_result = validator(service)
                     # Type assertion: validator should return FlextResult
-                    if not isinstance(validator_result, FlextResult):
-                        return FlextResult[object].fail(
-                            f"Validator must return FlextResult, got {type(validator_result)}"
-                        )
-                    # Cast to the expected type for better type inference
-                    validated_result = cast("FlextResult[object]", validator_result)
+                    validated_result: FlextResult[object] = validator_result
                     if validated_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validated_result.error}"

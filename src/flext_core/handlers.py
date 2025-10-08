@@ -658,10 +658,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         # Extract message ID
         message_id: str = "unknown"
         if isinstance(message, dict):
-            message_dict = cast("dict[str, object]", message)
+            message_dict = message
             message_id = (
-                str(message_dict.get(f"{operation}_id", "unknown"))
-                or str(message_dict.get("message_id", "unknown"))
+                str(message_dict.get(f"{operation}_id", "unknown"))  # type: ignore[arg-type]
+                or str(message_dict.get("message_id", "unknown"))  # type: ignore[arg-type]
                 or "unknown"
             )
         elif hasattr(message, f"{operation}_id"):
@@ -669,7 +669,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         elif hasattr(message, "message_id"):
             message_id = str(getattr(message, "message_id", "unknown"))
 
-        message_type: str = type(message).__name__
+        message_type: str = type(message).__name__  # type: ignore[arg-type]
 
         # Log start
         FlextHandlers.Metrics.log_handler_start(
@@ -692,7 +692,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             )
 
         # Validate message can be handled
-        message_type_obj: type[object] = type(message)
+        message_type_obj = type(message)
         if not self.can_handle(message_type_obj):
             FlextHandlers.Metrics.log_handler_cannot_handle(
                 logger=self.logger,

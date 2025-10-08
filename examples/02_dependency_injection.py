@@ -85,7 +85,7 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextCore.Types.Dict:
         """Get a demo user object with optional overrides."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])  # type: ignore[index]
+        user = deepcopy(DemoScenarios._DATASET["users"][0])
         user.update(overrides)
         return user
 

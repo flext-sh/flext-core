@@ -126,15 +126,16 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextCore.Types.Dict:
         """Get a demo user object with optional overrides."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])  # type: ignore[index]
+        users_list = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])
+        user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
     @staticmethod
     def users(count: int = 5) -> list[FlextCore.Types.Dict]:
         """Get a list of demo users (default: 5 users)."""
-        users_list = DemoScenarios._DATASET["users"]
-        return [deepcopy(user) for user in users_list[:count]]  # type: ignore[misc]
+        users_list = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])
+        return [deepcopy(user) for user in users_list[:count]]
 
     @staticmethod
     def service_batch(logger_name: str = "example_batch") -> FlextCore.Types.Dict:
@@ -178,7 +179,7 @@ class DemoScenarios:
     @staticmethod
     def user_result(success: bool = True) -> FlextCore.Result[dict[str, object]]:
         """Get a demo user result (success or failure)."""
-        user = DemoScenarios._DATASET["users"][0]  # type: ignore[index]
+        user = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])[0]
         if success:
             return FlextCore.Result[dict[str, object]].ok(user)
         return FlextCore.Result[dict[str, object]].fail("User lookup failed")

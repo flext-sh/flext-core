@@ -8,6 +8,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
+
 from flext_core import FlextConstants
 
 
@@ -116,8 +118,6 @@ class TestFlextConstants:
 
     def test_validation_patterns_email(self) -> None:
         """Test email validation pattern."""
-        import re
-
         pattern = re.compile(FlextConstants.Platform.PATTERN_EMAIL)
 
         # Valid emails
@@ -132,8 +132,6 @@ class TestFlextConstants:
 
     def test_validation_patterns_url(self) -> None:
         """Test URL validation pattern."""
-        import re
-
         pattern = re.compile(FlextConstants.Platform.PATTERN_URL, re.IGNORECASE)
 
         # Valid URLs
@@ -147,8 +145,6 @@ class TestFlextConstants:
 
     def test_validation_patterns_phone(self) -> None:
         """Test phone number validation pattern."""
-        import re
-
         pattern = re.compile(FlextConstants.Platform.PATTERN_PHONE_NUMBER)
 
         # Valid phone numbers
@@ -162,8 +158,6 @@ class TestFlextConstants:
 
     def test_validation_patterns_uuid(self) -> None:
         """Test UUID validation pattern."""
-        import re
-
         pattern = re.compile(FlextConstants.Platform.PATTERN_UUID)
 
         # Valid UUIDs
@@ -179,8 +173,6 @@ class TestFlextConstants:
 
     def test_validation_patterns_path(self) -> None:
         """Test file path validation pattern."""
-        import re
-
         pattern = re.compile(FlextConstants.Platform.PATTERN_PATH)
 
         # Valid paths

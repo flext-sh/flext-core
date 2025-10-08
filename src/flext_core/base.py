@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from contextlib import AbstractContextManager
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -327,9 +327,7 @@ class FlextBase:
             try:
                 outcome = operation(*args, **kwargs)
                 if isinstance(outcome, FlextResult):
-                    return cast(
-                        "FlextResult[ResultType]", outcome
-                    )  # pyrefly: ignore[redundant-cast]
+                    return outcome  # type: ignore[return-value]
                 return FlextResult[ResultType].ok(outcome)
             except Exception as exc:  # pragma: no cover - defensive logging path
                 self.error(

@@ -1244,23 +1244,23 @@ class FlextResult[T_co]:
         if isinstance(io_result, IOSuccess):
             # Extract IO container using value_or, then unwrap the IO
             sentinel = object()
-            value_or_sentinel: IO[T] = io_result.value_or(sentinel)  # type: ignore[assignment]
+            value_or_sentinel = io_result.value_or(sentinel)
             if value_or_sentinel is not sentinel:
                 # CRITICAL: value_or() returns an IO container, not the raw value
                 # The returns library provides no public API to extract from IO
                 # We MUST access _inner_value for interop - this is by design
-                io_container = value_or_sentinel
-                value: T = cast("T", io_container._inner_value)  # type: ignore[attr-defined]
-                return cls.ok(value)
+                io_container = value_or_sentinel  # type: ignore[assignment]
+                value = io_container._inner_value  # type: ignore[attr-defined]
+                return cls.ok(cast("T", value))
 
         # It's IOFailure - extract the error
         if isinstance(io_result, IOFailure):
             # Extract the failure IO container
-            error_io_result: IO[Exception] = io_result.failure()  # type: ignore[assignment]
+            error_io_result: IO[Exception] = io_result.failure()
             # CRITICAL: failure() returns an IO container, not the raw error
             # The returns library provides no public API to extract from IO
             # We MUST access _inner_value for interop - this is by design
-            error_io_container = error_io_result
+            error_io_container = error_io_result  # type: ignore[assignment]
             error_msg = str(error_io_container._inner_value)  # type: ignore[attr-defined]
             return cls.fail(error_msg)
 
@@ -1378,38 +1378,27 @@ class FlextResult[T_co]:
         """Left shift operator (<<) for functor map - ADVANCED COMPOSITION."""
         return self.map(func)
 
-    def __matmul__[U](self, other: FlextResult[U]) -> FlextResult[tuple[T_co, U]]:
+    def __matmul__[U](self, other: FlextResult[U]) -> FlextResult[tuple[T_co, U]]:  # type: ignore[return]
         """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION."""
         # Use applicative functor pattern
         if self.is_failure:
-            # Create a failed result with the correct type - directly construct to avoid type inference issues
-            return cast(
-                "FlextResult[tuple[T_co, U]]",
-                FlextResult(
-                    error=self._error or "Unknown error",
-                    error_code=self._error_code,
-                    error_data=self._error_data,
-                ),
+            return FlextResult[tuple[T_co, U]].fail(  # type: ignore[return]
+                self._error or "Unknown error",
+                error_code=self._error_code,
+                error_data=self._error_data,
             )
         if other.is_failure:
-            # Create a failed result with the correct type - directly construct to avoid type inference issues
-            return cast(
-                "FlextResult[tuple[T_co, U]]",
-                FlextResult(
-                    error=other._error or "Unknown error",
-                    error_code=other._error_code,
-                    error_data=other._error_data,
-                ),
+            return FlextResult[tuple[T_co, U]].fail(  # type: ignore[return]
+                other._error or "Unknown error",
+                error_code=other._error_code,
+                error_data=other._error_data,
             )
 
         # Both successful - combine values
         left_val: T_co = self.unwrap()
         right_val: U = other.unwrap()
         combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        return cast(
-            "FlextResult[tuple[T_co, U]]",
-            FlextResult[tuple[T_co, U]].ok(combined_tuple),  # type: ignore[arg-type]
-        )
+        return FlextResult[tuple[T_co, U]].ok(combined_tuple)  # type: ignore[return]
 
     def __truediv__[U](self, other: FlextResult[U]) -> FlextResult[T_co | U]:
         """Division operator (/) for alternative fallback - ADVANCED COMPOSITION."""

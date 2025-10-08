@@ -352,7 +352,7 @@ class FlextTestDocker:
             capture_output = kwargs.get("capture_output", False)
 
             # Run the command
-            result = FlextUtilities.run_external_command(  # type: ignore[attr-defined]
+            result = FlextUtilities.TypeChecker.run_external_command(
                 ["docker"] + shlex.split(script_path),
                 check=False,
                 capture_output=bool(capture_output),
@@ -361,13 +361,13 @@ class FlextTestDocker:
             )
 
             if result.is_success:
-                process = result.value
+                process = result.value  # type: ignore[assignment]
                 # Return (exit_code, stdout, stderr) tuple
-                stdout = process.stdout if capture_output else ""
-                stderr = process.stderr if capture_output else ""
+                stdout = process.stdout if capture_output else ""  # type: ignore[attr-defined]
+                stderr = process.stderr if capture_output else ""  # type: ignore[attr-defined]
 
                 return FlextResult[tuple[int, str, str]].ok((
-                    process.returncode,
+                    process.returncode,  # type: ignore[attr-defined]
                     stdout,
                     stderr,
                 ))
@@ -855,9 +855,8 @@ class FlextTestDocker:
     def remove_image(self, image: str, *, force: bool = False) -> FlextResult[str]:
         """Remove a Docker image."""
         try:
-            client = self.get_client()
             # Type: ignore due to incomplete Docker SDK type stubs
-            client.images.remove(image, force=force)
+            self.client.images.remove(image, force=force)  # type: ignore[attr-defined]
             return FlextResult[str].ok(f"Image {image} removed")
         except NotFound:
             return FlextResult[str].fail(f"Image {image} not found")
@@ -898,7 +897,7 @@ class FlextTestDocker:
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
             # exec_run not fully typed in docker stubs
-            result = container.exec_run(
+            result = container.exec_run(  # type: ignore[attr-defined,call-arg]
                 command,
                 user=user if user is not None else "root",
             )
@@ -917,31 +916,31 @@ class FlextTestDocker:
         """List containers."""
         try:
             client = self.get_client()
-            containers = client.containers.list(all=all_containers)
+            containers = cast("list", client.containers.list(all=all_containers))  # type: ignore[return-value,attr-defined]
             container_infos: list[ContainerInfo] = []
             for container in containers:
                 # Container attributes not fully typed in docker stubs
-                container_status: str = getattr(container, "status", "unknown")
+                container_status: str = getattr(container, "status", "unknown")  # type: ignore[attr-defined]
                 status = (
                     ContainerStatus.RUNNING
                     if container_status == "running"
                     else ContainerStatus.STOPPED
                 )
-                container_image = getattr(container, "image", None)
+                container_image = getattr(container, "image", None)  # type: ignore[attr-defined]
                 image_tags: FlextTypes.StringList = (
-                    container_image.tags
+                    container_image.tags  # type: ignore[attr-defined]
                     if container_image and hasattr(container_image, "tags")
                     else []
                 )
                 image_name: str = image_tags[0] if image_tags else "unknown"
-                container_name_attr = getattr(container, "name", "unknown")
+                container_name_attr = getattr(container, "name", "unknown")  # type: ignore[attr-defined]
                 container_infos.append(
                     ContainerInfo(
                         name=str(container_name_attr),
                         status=status,
                         ports={},
                         image=image_name,
-                        container_id=getattr(container, "id", "unknown") or "unknown",
+                        container_id=getattr(container, "id", "unknown") or "unknown",  # type: ignore[attr-defined]
                     ),
                 )
             return FlextResult[list[ContainerInfo]].ok(container_infos)
@@ -1068,15 +1067,9 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(
-                        f"Failed to start PostgreSQL container: {start_result.error}",
-                    )
-                else:
-                    msg = f"Failed to start PostgreSQL container: {start_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(
+                    f"Failed to start PostgreSQL container: {start_result.error}",
+                )
 
             yield container_name
             docker_control.stop_container(container_name)
@@ -1096,15 +1089,9 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(
-                        f"Failed to start Redis container: {start_result.error}",
-                    )
-                else:
-                    msg = f"Failed to start Redis container: {start_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(
+                    f"Failed to start Redis container: {start_result.error}",
+                )
 
             yield container_name
             docker_control.stop_container(container_name)
@@ -1124,15 +1111,9 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(
-                        f"Failed to start Oracle container: {start_result.error}",
-                    )
-                else:
-                    msg = f"Failed to start Oracle container: {start_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(
+                    f"Failed to start Oracle container: {start_result.error}",
+                )
 
             yield container_name
             docker_control.stop_container(container_name)
@@ -1142,13 +1123,8 @@ class FlextTestDocker:
             container_name = "flext-shared-ldap"
             reset_result = docker_control.reset_container(container_name)
             if reset_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(f"Failed to reset LDAP container: {reset_result.error}")
-                else:
-                    msg = f"Failed to reset LDAP container: {reset_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(f"Failed to reset LDAP container: {reset_result.error}")
+
             return container_name
 
         @pytest.fixture
@@ -1156,15 +1132,9 @@ class FlextTestDocker:
             container_name = "flext-postgres"
             reset_result = docker_control.reset_container(container_name)
             if reset_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(
-                        f"Failed to reset PostgreSQL container: {reset_result.error}",
-                    )
-                else:
-                    msg = f"Failed to reset PostgreSQL container: {reset_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(
+                    f"Failed to reset PostgreSQL container: {reset_result.error}",
+                )
             return container_name
 
         @pytest.fixture
@@ -1828,7 +1798,7 @@ class FlextTestDocker:
             default="all",
             help="Container to start",
         )
-        def start_command(container: str) -> None:
+        def start_command(self: FlextTestDocker, container: str) -> None:  # type: ignore[unused-function]
             manager = cls()
             if container.lower() == "all":
                 cls._console.print(
@@ -1871,7 +1841,9 @@ class FlextTestDocker:
             is_flag=True,
             help="Remove container after stopping",
         )
-        def stop_command(container: str, *, remove: bool) -> None:
+        def stop_command(
+            self: FlextTestDocker, container: str, *, remove: bool
+        ) -> None:
             manager = cls()
             if container.lower() == "all":
                 action = "Stopping and removing" if remove else "Stopping"
@@ -1907,7 +1879,7 @@ class FlextTestDocker:
             default="all",
             help="Container to reset",
         )
-        def reset_command(container: str) -> None:
+        def reset_command(self: FlextTestDocker, container: str) -> None:
             manager = cls()
             if container.lower() == "all":
                 cls._console.print(
@@ -1934,7 +1906,7 @@ class FlextTestDocker:
                     raise click.ClickException(str(reset_result.error))
 
         @docker_cli.command(name="status")
-        def status_command() -> None:
+        def status_command(self: FlextTestDocker) -> None:
             manager = cls()
             cls._display_status_table(manager)
 
@@ -1952,7 +1924,9 @@ class FlextTestDocker:
             default=None,
             help="Number of log lines to show",
         )
-        def logs_command(container: str, tail: int | None) -> None:
+        def logs_command(
+            self: FlextTestDocker, container: str, tail: int | None
+        ) -> None:
             manager = cls()
             cls._console.print(
                 f"[bold blue]Fetching logs for {container}...[/bold blue]",
@@ -1972,135 +1946,82 @@ class FlextTestDocker:
         cli = cls._get_cli_group()
         cli()
 
+    @staticmethod
+    def mark_dirty_on_failure(
+        container_name: str,
+    ) -> Callable[[Callable[..., object]], Callable[..., object]]:
+        """Decorator to mark a container dirty if a test fails.
 
-# Cleanup decorators for test functions
-def with_clean_container[R](
-    container_name: str,
-) -> Callable[[Callable[..., R]], Callable[..., R]]:
-    """Decorator to ensure a container is clean before and after a test.
+        Args:
+            container_name: Name of the container to mark dirty on failure
 
-    Args:
-        container_name: Name of the container to manage
-
-    Example:
-        @with_clean_container("flext-postgres-test")
-        def test_database_operations(postgres_container):
-            # Test code here
-            pass
-
-    """
-
-    def decorator(func: Callable[..., R]) -> Callable[..., R]:
-        @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> R:
-            # Get FlextTestDocker instance
-            docker_manager = FlextTestDocker()
-
-            # Clean up if dirty before test
-            if docker_manager.is_container_dirty(container_name):
-                cleanup_result = docker_manager.cleanup_dirty_containers()
-                if cleanup_result.is_failure:
-                    msg = f"Failed to clean container: {cleanup_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
-
-            # Run test
-            try:
-                return func(*args, **kwargs)
-            except Exception:
-                # Mark dirty on failure
-                docker_manager.mark_container_dirty(container_name)
-                raise
-            finally:
-                # Optional: Mark dirty after test if state can't be verified
+        Example:
+            @mark_dirty_on_failure("flext-redis-test")
+            def test_redis_operations(redis_container):
+                # Test code that modifies Redis state
                 pass
 
-        return wrapper
+        """
 
-    return decorator
+        def decorator(func: Callable[..., object]) -> Callable[..., object]:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                docker_manager = FlextTestDocker()
 
-
-def mark_dirty_on_failure(
-    container_name: str,
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
-    """Decorator to mark a container dirty if a test fails.
-
-    Args:
-        container_name: Name of the container to mark dirty on failure
-
-    Example:
-        @mark_dirty_on_failure("flext-redis-test")
-        def test_redis_operations(redis_container):
-            # Test code that modifies Redis state
-            pass
-
-    """
-
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
-        @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
-            docker_manager = FlextTestDocker()
-
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                # Mark container dirty on any exception
-                docker_manager.mark_container_dirty(container_name)
-                logger.warning(
-                    "Test failed, marking container dirty",
-                    extra={"container": container_name, "error": str(e)},
-                )
-                raise
-
-        return wrapper
-
-    return decorator
-
-
-def auto_cleanup_dirty_containers() -> Callable[
-    [Callable[..., object]], Callable[..., object]
-]:
-    """Decorator to automatically clean up all dirty containers before a test.
-
-    Example:
-        @auto_cleanup_dirty_containers()
-        def test_clean_environment():
-            # Test runs with all containers in clean state
-            pass
-
-    """
-
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
-        @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
-            docker_manager = FlextTestDocker()
-
-            # Clean up all dirty containers before test
-            dirty = docker_manager.get_dirty_containers()
-            if dirty:
-                logger.info(
-                    "Cleaning dirty containers before test",
-                    extra={"containers": dirty},
-                )
-                cleanup_result = docker_manager.cleanup_dirty_containers()
-                if cleanup_result.is_failure:
-                    msg = f"Failed to cleanup dirty containers: {cleanup_result.error}"
-                    raise RuntimeError(
-                        msg,
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    # Mark container dirty on any exception
+                    docker_manager.mark_container_dirty(container_name)
+                    logger.warning(
+                        "Test failed, marking container dirty",
+                        extra={"container": container_name, "error": str(e)},
                     )
+                    raise
 
-            # Run test
-            return func(*args, **kwargs)
+            return wrapper
 
-        return wrapper
+        return decorator
 
-    return decorator
+    @staticmethod
+    def auto_cleanup_dirty_containers() -> Callable[
+        [Callable[..., object]], Callable[..., object]
+    ]:
+        """Decorator to automatically clean up all dirty containers before a test.
 
+        Example:
+            @auto_cleanup_dirty_containers()
+            def test_clean_environment():
+                # Test runs with all containers in clean state
+                pass
 
-def workspace_main(argv: FlextTypes.StringList | None = None) -> int:
-    """Entry point compatible with the former workspace manager script."""
-    return FlextTestDocker.run_workspace_command(argv)
+        """
+
+        def decorator(func: Callable[..., object]) -> Callable[..., object]:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                docker_manager = FlextTestDocker()
+
+                # Clean up all dirty containers before test
+                dirty = docker_manager.get_dirty_containers()
+                if dirty:
+                    logger.info(
+                        "Cleaning dirty containers before test",
+                        extra={"containers": dirty},
+                    )
+                    cleanup_result = docker_manager.cleanup_dirty_containers()
+                    if cleanup_result.is_failure:
+                        msg = f"Failed to cleanup dirty containers: {cleanup_result.error}"
+                        raise RuntimeError(
+                            msg,
+                        )
+
+                # Run test
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
 
 
 def main() -> None:

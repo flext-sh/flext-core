@@ -580,5 +580,37 @@ class FlextRegistry(FlextMixins.Service):
         # Handle dict or other types
         return str(entry)
 
+    def register(
+        self,
+        name: str,
+        service: object,
+        metadata: FlextTypes.Dict | None = None,
+    ) -> FlextResult[None]:
+        """Register a service component with optional metadata.
+
+        Delegates to the container's register method for dependency injection.
+        Metadata is currently stored for future use but not actively used.
+
+        Args:
+            name: Service name for later retrieval
+            service: Service instance to register
+            metadata: Optional metadata about the service
+
+        Returns:
+            FlextResult[None]: Success if registered or failure with error details.
+
+
+        """
+        # Store metadata if provided (for future use)
+        if metadata:
+            # Could store in a metadata registry, but for now just log
+            self.logger.debug(
+                f"Registering service '{name}' with metadata",
+                extra={"service_name": name, "metadata": metadata},
+            )
+
+        # Delegate to container
+        return self.container.register(name, service)
+
 
 __all__ = ["FlextRegistry"]
