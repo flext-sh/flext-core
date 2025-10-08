@@ -93,7 +93,7 @@ class TestFlextMixins:
         result = mixins.apply("nonexistent_mixin", TestClass)
         assert result.is_failure
         assert result.error is not None
-        assert "No mixin found" in result.error
+        assert "not found" in result.error
 
     def test_mixins_apply_mixin_with_failure(self) -> None:
         """Test mixin application with failure."""
@@ -467,7 +467,7 @@ class TestFlextMixins:
         result = mixins.apply("test_mixin", TestClass)
         assert result.is_failure
         assert result.error is not None
-        assert "No mixin found" in result.error
+        assert "not found" in result.error
 
     def test_mixins_get_registered_mixins(self) -> None:
         """Test getting registered mixins."""

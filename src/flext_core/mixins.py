@@ -13,7 +13,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import UTC, datetime
 from typing import (
     ClassVar,
@@ -1346,37 +1346,17 @@ class FlextMixins:
             mixin_class = self._registry[name]
 
             # For class mixins, create a new class with mixin applied
-            if isinstance(mixin_class, type):
-                # Create a new class that inherits from both the mixin and the data class
-                if isinstance(data, type):
-                    # Data is a class, create mixed class
-                    mixed_class = type(
-                        f"{data.__name__}With{mixin_class.__name__}",
-                        (mixin_class, data),
-                        {},
-                    )
-                    result = FlextResult[object].ok(mixed_class)
-                else:
-                    # Data is an instance, create mixed instance
-                    mixed_class = type(
-                        f"{data.__class__.__name__}With{mixin_class.__name__}",
-                        (mixin_class, data.__class__),
-                        {},
-                    )
-                    mixed_instance = mixed_class()
-                    # Copy attributes from original instance
-                    for attr in dir(data):
-                        if not attr.startswith("_") and hasattr(data, attr):
-                            try:
-                                setattr(mixed_instance, attr, getattr(data, attr))
-                            except:
-                                pass  # Skip non-settable attributes
-                    result = FlextResult[object].ok(mixed_instance)
-            else:
+            # Create a new class that inherits from both the mixin and the data class
+            if isinstance(data, type):
+                # Data is a class, create mixed class
+                mixed_class = type(
+                    f"{data.__name__}With{mixin_class.__name__}",
+                    (mixin_class, data),
+                    {},
+                )
+                result = FlextResult[object].ok(mixed_class)
+            elif callable(mixin_class):
                 # For callable mixins, use the original logic
-                if not callable(mixin_class):
-                    return FlextResult[object].fail("Mixin is not callable")
-
                 # Create mixin instance
                 mixin_instance = mixin_class()
 
@@ -1385,6 +1365,20 @@ class FlextMixins:
 
                 # Execute mixin
                 result = self._execute_mixin(mixin_instance, processed_data)
+            else:
+                # Create mixed instance
+                mixed_class = type(
+                    f"{data.__class__.__name__}With{mixin_class.__name__}",
+                    (mixin_class, data.__class__),
+                    {},
+                )
+                mixed_instance = mixed_class()
+                # Copy attributes from original instance
+                for attr in dir(data):
+                    if not attr.startswith("_") and hasattr(data, attr):
+                        with suppress(AttributeError):
+                            setattr(mixed_instance, attr, getattr(data, attr))
+                result = FlextResult[object].ok(mixed_instance)
 
             # Track success metrics
             self._track_success_metrics(name, result)
@@ -1460,8 +1454,12 @@ class FlextMixins:
         current_metrics["successes"] += 1
         self._metrics[name] = current_metrics
 
-    def _track_failure_metrics(self, name: str, error: Exception) -> None:  # noqa: ARG002
+    def _track_failure_metrics(self, name: str, error: Exception) -> None:
         """Track failure metrics for the mixin."""
+        # Log the failure for debugging/monitoring
+        logger = logging.getLogger(__name__)
+        logger.warning("Mixin '%s' failed: %s", name, error)
+
         # Update application metrics
         current_metrics = self._metrics.get(
             name, {"applications": 0, "successes": 0, "errors": 0, "timeouts": 0}
@@ -1700,64 +1698,56 @@ class FlextMixins:
     # =========================================================================
 
     class Context:
-        """Context integration mixin for correlation and request tracking.
+        """Simplified context integration using FlextContext directly.
 
-        **Function**: Automatic context management and propagation
-            - Request context with correlation IDs
-            - Service identification context
-            - Automatic context propagation
-            - Integration with FlextContext
-            - ABI compatibility through __init_subclass__
+        **Function**: Direct delegation to FlextContext for all context operations
+            - Request context with correlation IDs via FlextContext.Request
+            - Service identification via FlextContext.Service
+            - Correlation management via FlextContext.Correlation
+            - Performance tracking via FlextContext.Performance
+            - Automatic context propagation through FlextContext
 
-        **Uses**: Existing FlextCore infrastructure
-            - FlextContext for context management
-            - FlextUtilities.Correlation for ID generation
-            - structlog.contextvars for propagation
+        **Uses**: Direct FlextContext integration
+            - No custom context management or lazy initialization
+            - All context operations delegate to FlextContext
+            - Maintains ABI compatibility through property access
 
-        **How to use**: Inherit to add context capabilities
+        **How to use**: Direct access to FlextContext functionality
             ```python
             class MyService(FlextMixins.Context):
                 def process(self, data: dict):
-                    # _context automatically available
-                    self._propagate_context("process_data")
-                    corr_id = self._get_correlation_id()
+                    # Direct access to FlextContext
+                    corr_id = FlextContext.Correlation.get_correlation_id()
+                    FlextContext.Request.set_operation_name("process_data")
                     return {"correlation_id": corr_id}
             ```
 
-        **ABI Compatibility**: Uses __init_subclass__ for automatic initialization,
+        **ABI Compatibility**: Property provides access to global FlextContext,
         ensuring existing code works without changes.
 
         """
 
-        # Class variable for lazy initialization of global context
-        context_instance: FlextContext | None = None
-
-        def __init_subclass__(cls, **kwargs: object) -> None:
-            """Auto-initialize context for subclasses (ABI compatibility)."""
-            super().__init_subclass__(**kwargs)
-            # Context is lazily initialized on first access
-
         @property
         def context(self) -> FlextContext:
-            """Get FlextContext instance with lazy initialization."""
-            if (
-                not hasattr(FlextMixins.Context, "context_instance")
-                or FlextMixins.Context.context_instance is None
-            ):
-                FlextMixins.Context.context_instance = FlextContext()
-            return FlextMixins.Context.context_instance
+            """Get FlextContext instance.
 
+            Creates a new FlextContext instance for context operations.
+            All context operations should use FlextContext directly.
+            """
+            return FlextContext()
+
+        # Convenience methods that delegate to FlextContext for backward compatibility
         def _propagate_context(self, operation_name: str) -> None:
-            """Propagate context for current operation with automatic setup."""
+            """Propagate context for current operation using FlextContext."""
             FlextContext.Request.set_operation_name(operation_name)
             FlextContext.Utilities.ensure_correlation_id()
 
         def _get_correlation_id(self) -> str | None:
-            """Get current correlation ID from context."""
+            """Get current correlation ID from FlextContext."""
             return FlextContext.Correlation.get_correlation_id()
 
         def _set_correlation_id(self, correlation_id: str) -> None:
-            """Set correlation ID in context."""
+            """Set correlation ID in FlextContext."""
             FlextContext.Correlation.set_correlation_id(correlation_id)
 
     # =========================================================================

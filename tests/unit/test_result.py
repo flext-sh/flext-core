@@ -886,7 +886,7 @@ class TestFlextResult:
             .ok("42")
             .with_resource(
                 create_resource,
-                operation,  # type: ignore[arg-type]
+                operation,
                 cleanup,
             )
         )
@@ -1100,8 +1100,6 @@ class TestFlextResult:
 
     def test_result_context_manager_with_none_value(self) -> None:
         """Test context manager protocol with edge cases."""
-        from flext_core.exceptions import FlextExceptions
-
         # Success with None value is allowed (data validation removed for performance)
         success_none = FlextResult[None].ok(None)
         # Using __enter__ directly (not expect which wraps it)
@@ -1660,8 +1658,6 @@ class TestFlextResultFinalCoverage:
 
     def test_value_property_failure_path(self) -> None:
         """Test value property when result is failure (lines 552-553)."""
-        from flext_core.exceptions import FlextExceptions
-
         result = FlextResult[int].fail("Operation failed")
 
         # Accessing value on failure should raise FlextExceptions.TypeError
@@ -1701,8 +1697,6 @@ class TestFlextResultFinalCoverage:
 
     def test_enter_with_failure_result(self) -> None:
         """Test __enter__ context manager with failure (lines 815-816)."""
-        from flext_core.exceptions import FlextExceptions
-
         # Enter on failure should raise FlextExceptions.OperationError
         result = FlextResult[int].fail("Context error")
 
@@ -2007,8 +2001,6 @@ class TestFlextResultFinalPush:
 
     def test_expect_with_none_data_success(self) -> None:
         """Test expect with None data in success state (lines 815-819)."""
-        from flext_core.exceptions import FlextExceptions
-
         # Create a success result with None data (edge case)
         result = FlextResult[int | None].ok(None)
 
@@ -2180,8 +2172,6 @@ class TestFlextResultFinalCoveragePush:
 
     def test_flatten_callable_args_non_callable_error(self) -> None:
         """Test _flatten_callable_args with non-callable (lines 1995-1996)."""
-        from flext_core.exceptions import FlextExceptions
-
         with pytest.raises(FlextExceptions.ValidationError, match="Expected callable"):
             FlextResult._flatten_callable_args("not a callable")
 

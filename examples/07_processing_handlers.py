@@ -54,7 +54,8 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextCore.Types.Dict:
         """Create user data dictionary for processing examples."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        users_list = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])
+        user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
@@ -107,7 +108,9 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         # Use self.logger from FlextMixins.Logging, not logger
         self._scenarios = DemoScenarios()
         self._user = self._scenarios.user()
-        self._order = self._scenarios.realistic_data()["order"]
+        self._order: dict[str, object] = cast(
+            "dict[str, object]", self._scenarios.realistic_data()["order"]
+        )
         self._REDACTED_LDAP_BIND_PASSWORD_user: dict[str, object] = {
             **self._user,
             "role": "REDACTED_LDAP_BIND_PASSWORD",
@@ -472,7 +475,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 return strategy.process(amount)
 
         processor = PaymentProcessor()
-        amount = float(self._order["total"])
+        amount = float(cast("str", self._order["total"]))
 
         card_result = processor.process("credit_card", amount)
         if card_result.is_success:

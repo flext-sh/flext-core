@@ -795,7 +795,7 @@ def main() -> None:
 
     # Core patterns
     service.demonstrate_global_singleton()
-    service.demonstrate_environment_config()
+    service.demonstrate_env_variables()
 
     # Configuration domains
     service.demonstrate_logging_config()

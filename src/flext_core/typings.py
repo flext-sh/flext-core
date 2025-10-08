@@ -237,6 +237,7 @@ class FlextTypes:
     type StringDict = dict[str, str]
     type IntDict = dict[str, int]
     type FloatDict = dict[str, float]
+    type BoolDict = dict[str, bool]
 
     # Configuration types
     type ConfigValue = (

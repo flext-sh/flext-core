@@ -1050,6 +1050,31 @@ class FlextBus(
             self.logger.exception("Event unsubscription error")
             return FlextResult[None].fail(f"Event unsubscription error: {e}")
 
+    def publish(
+        self,
+        event_name: str,
+        data: FlextTypes.Dict,
+    ) -> FlextResult[None]:
+        """Publish a named event with data.
+
+        Convenience method for publishing events by name with associated data.
+
+        Args:
+            event_name: Name/identifier of the event
+            data: Event data payload
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
+        # Create a simple event dict with name and data
+        event = {
+            "event_name": event_name,
+            "data": data,
+            "timestamp": getattr(self, "_get_timestamp", lambda: "now")(),
+        }
+        return self.publish_event(event)
+
 
 # Direct class access - no legacy aliases
 

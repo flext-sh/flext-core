@@ -603,6 +603,14 @@ class FlextConstants:
         PROFILE_DATA_PROCESSOR: Final[str] = "data_processor"
         PROFILE_API_CLIENT: Final[str] = "api_client"
 
+        # Environment constants
+        ENVIRONMENTS: Final[tuple[str, ...]] = (
+            "development",
+            "staging",
+            "production",
+            "testing",
+        )
+
         class LogLevel(StrEnum):
             """Standard log levels for centralized logging configuration."""
 
@@ -1053,7 +1061,6 @@ class FlextConstants:
 
         # Log level defaults
         DEFAULT_LEVEL: Final[str] = "INFO"
-        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
         VALID_LEVELS: Final[tuple[str, ...]] = (
             "DEBUG",
             "INFO",

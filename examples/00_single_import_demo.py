@@ -67,7 +67,7 @@ def demonstrate_single_import_pattern() -> None:
 
     # Logger
     logger = FlextCore.Logger(__name__)
-    logger.info("Single-import pattern demonstration")  # type: ignore[attr-defined]
+    logger.info("Single-import pattern demonstration")
     print(f"   ✅ FlextCore.Logger: {type(logger).__name__}")
 
     # Container

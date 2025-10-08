@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import threading
+from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar, Self
 
@@ -66,6 +67,7 @@ class FlextConfig(BaseSettings):
 
     # Pydantic 2.11+ BaseSettings configuration - NO environment variables
     model_config = SettingsConfigDict(
+        env_file=None,  # Disable environment file loading
         extra="ignore",
         use_enum_values=True,
         frozen=False,
@@ -348,6 +350,10 @@ class FlextConfig(BaseSettings):
                         cls._di_config_provider.from_dict(config_dict)
         return cls._di_config_provider
 
+    def _get_or_create_di_provider(self) -> providers.Configuration:
+        """Get or create DI provider for this instance."""
+        return self.get_di_config_provider()
+
     @classmethod
     def get_global_instance(cls) -> Self:
         """Get or create global singleton instance."""
@@ -357,6 +363,12 @@ class FlextConfig(BaseSettings):
                     instance = cls()
                     cls._instances[cls] = instance
         return cls._instances[cls]  # type: ignore[return-value]
+
+    @classmethod
+    def set_global_instance(cls, instance: FlextConfig) -> None:
+        """Set global singleton instance."""
+        with cls._lock:
+            cls._instances[cls] = instance
 
     @classmethod
     def reset_global_instance(cls) -> None:
@@ -553,7 +565,9 @@ class FlextConfig(BaseSettings):
 
     def get_component_config(self, component: str) -> FlextResult[FlextTypes.Dict]:
         """Get configuration for specific flext-core component."""
-        component_configs: dict[str, FlextTypes.Dict] = {
+        component_configs: dict[
+            str, FlextTypes.Dict | Callable[[], FlextTypes.Dict]
+        ] = {
             "container": {
                 "max_workers": self.max_workers,
                 "enable_metrics": self.enable_metrics,
@@ -581,7 +595,10 @@ class FlextConfig(BaseSettings):
                 f"Unknown component: {component}. Available: {list(component_configs.keys())}"
             )
 
-        return FlextResult[FlextTypes.Dict].ok(component_configs[component])
+        config_value = component_configs[component]
+        if callable(config_value):
+            config_value = config_value()
+        return FlextResult[FlextTypes.Dict].ok(config_value)
 
 
 FlextConfig.model_rebuild()

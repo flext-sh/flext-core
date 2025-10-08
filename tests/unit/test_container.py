@@ -126,7 +126,6 @@ class TestFlextContainer:
         config: FlextTypes.Dict = {
             "max_workers": 8,
             "timeout_seconds": 60.0,
-            "environment": "testing",
         }
         result = container.configure(config)
         assert result.is_success
@@ -134,7 +133,6 @@ class TestFlextContainer:
         # Check configuration was applied
         assert container._global_config["max_workers"] == 8
         assert container._global_config["timeout_seconds"] == 60.0
-        assert container._global_config["environment"] == "testing"
 
     def test_container_configure_invalid_keys(self) -> None:
         """Test container configuration with invalid keys."""

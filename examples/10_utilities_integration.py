@@ -448,9 +448,7 @@ def demonstrate_new_flextresult_methods() -> None:
     print(f"   Container has services: {hasattr(container, '_services')}")
 
     # Try again with successful result (lazy function NOT called)
-    container_success_result = FlextCore.Result[FlextCore.Container].ok(
-        FlextCore.Container.get_global()
-    )
+    container_success_result = FlextCore.Result.ok(FlextCore.Container.get_global())
     container_cached = container_success_result.value_or_call(
         create_expensive_container
     )
