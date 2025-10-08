@@ -5,13 +5,13 @@ This comprehensive example demonstrates how ALL FLEXT components work together
 in a real-world application scenario - an e-commerce order processing system.
 
 Integrates:
-- FlextCore.Result for railway-oriented error handling throughout
+- FlextResult for railway-oriented error handling throughout
 - FlextCore.Container for dependency injection and service management
-- FlextCore.Models for domain modeling (entities, values, aggregates)
+- FlextModels for domain modeling (entities, values, aggregates)
 - FlextCore.Config for environment-aware configuration
-- FlextCore.Logger for structured logging with correlation tracking
+- FlextLogger for structured logging with correlation tracking
 - FlextCore.Processors for handler pipelines and strategy patterns
-- FlextCore.Models.Payload and DomainEvent for messaging
+- FlextModels.Payload and DomainEvent for messaging
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,7 +27,16 @@ from uuid import uuid4
 
 from pydantic import Field
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextConstants,
+    FlextContainer,
+    FlextCore,
+    FlextLogger,
+    FlextModels,
+    FlextResult,
+    FlextService,
+    FlextTypes,
+)
 
 
 class OrderItemDict(TypedDict):
@@ -52,8 +61,8 @@ class RealisticDataDict(TypedDict):
     """Type definition for realistic combined data in integration examples."""
 
     order: RealisticOrderDict
-    api_response: FlextCore.Types.Dict
-    user_registration: FlextCore.Types.Dict
+    api_response: FlextTypes.Dict
+    user_registration: FlextTypes.Dict
 
 
 class DemoScenarios:
@@ -112,20 +121,20 @@ class DemoScenarios:
         },
     }
 
-    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
+    _CONFIG: ClassVar[FlextTypes.Dict] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
         "event": "order_processed",
         "order_id": "order-456",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
     @staticmethod
-    def dataset() -> FlextCore.Types.Dict:
+    def dataset() -> FlextTypes.Dict:
         """Get a copy of the demo dataset."""
         return deepcopy(DemoScenarios._DATASET)
 
@@ -135,7 +144,7 @@ class DemoScenarios:
         return deepcopy(DemoScenarios._REALISTIC)
 
     @staticmethod
-    def validation_data() -> FlextCore.Types.Dict:
+    def validation_data() -> FlextTypes.Dict:
         """Get validation demo data."""
         return {
             "valid_emails": ["user@example.com"],
@@ -143,7 +152,7 @@ class DemoScenarios:
         }
 
     @staticmethod
-    def config(**overrides: object) -> FlextCore.Types.Dict:
+    def config(**overrides: object) -> FlextTypes.Dict:
         """Create configuration dictionary with optional overrides."""
         value = deepcopy(DemoScenarios._CONFIG)
         value.update(overrides)
@@ -152,9 +161,9 @@ class DemoScenarios:
     @staticmethod
     def metadata(
         *, source: str = "examples", tags: list[str] | None = None, **extra: object
-    ) -> FlextCore.Types.Dict:
+    ) -> FlextTypes.Dict:
         """Create metadata dictionary for integration examples."""
-        data: FlextCore.Types.Dict = {
+        data: FlextTypes.Dict = {
             "source": source,
             "component": "flext_core",
             "tags": tags or ["integration", "demo"],
@@ -163,19 +172,19 @@ class DemoScenarios:
         return data
 
     @staticmethod
-    def user(**overrides: object) -> FlextCore.Types.Dict:
+    def user(**overrides: object) -> FlextTypes.Dict:
         """Create user data dictionary for integration examples."""
         user = deepcopy(DemoScenarios._DATASET["users"][0])
         user.update(overrides)
         return user
 
     @staticmethod
-    def users(count: int = 5) -> list[FlextCore.Types.Dict]:
+    def users(count: int = 5) -> list[FlextTypes.Dict]:
         """Create list of user data dictionaries for integration examples."""
         return [deepcopy(user) for user in DemoScenarios._DATASET["users"][:count]]
 
     @staticmethod
-    def payload(**overrides: object) -> FlextCore.Types.Dict:
+    def payload(**overrides: object) -> FlextTypes.Dict:
         """Create event payload dictionary for integration examples."""
         payload = deepcopy(DemoScenarios._PAYLOAD)
         payload.update(overrides)
@@ -187,7 +196,7 @@ UNKNOWN_ERROR_MSG = "Unknown error"
 
 
 # Type guard helper functions (Python 3.13+ pattern)
-def assert_logger_initialized(logger: FlextCore.Logger | None) -> FlextCore.Logger:
+def assert_logger_initialized(logger: FlextLogger | None) -> FlextLogger:
     """Type guard to assert logger is initialized.
 
     Args:
@@ -227,42 +236,42 @@ def assert_container_initialized(
     return container
 
 
-class ProductId(FlextCore.Models.Value):
+class ProductId(FlextModels.Value):
     """Product identifier value object."""
 
     value: str
 
-    def validate_business_rules(self) -> FlextCore.Result[None]:
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate product ID format."""
         if not self.value or not self.value.startswith("PROD-"):
-            return FlextCore.Result[None].fail("Invalid product ID format")
-        return FlextCore.Result[None].ok(None)
+            return FlextResult[None].fail("Invalid product ID format")
+        return FlextResult[None].ok(None)
 
 
-class Money(FlextCore.Models.Value):
+class Money(FlextModels.Value):
     """Money value object with currency."""
 
     amount: Decimal
     currency: str = "USD"
 
-    def validate_business_rules(self) -> FlextCore.Result[None]:
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate money amount."""
         if self.amount < 0:
-            return FlextCore.Result[None].fail("Amount cannot be negative")
+            return FlextResult[None].fail("Amount cannot be negative")
         if self.currency not in {"USD", "EUR", "GBP"}:
-            return FlextCore.Result[None].fail(f"Unsupported currency: {self.currency}")
-        return FlextCore.Result[None].ok(None)
+            return FlextResult[None].fail(f"Unsupported currency: {self.currency}")
+        return FlextResult[None].ok(None)
 
-    def add(self, other: Money) -> FlextCore.Result[Money]:
+    def add(self, other: Money) -> FlextResult[Money]:
         """Add money amounts with same currency."""
         if self.currency != other.currency:
-            return FlextCore.Result[Money].fail("Cannot add different currencies")
-        return FlextCore.Result[Money].ok(
+            return FlextResult[Money].fail("Cannot add different currencies")
+        return FlextResult[Money].ok(
             Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
 
-class Product(FlextCore.Models.Entity):
+class Product(FlextModels.Entity):
     """Product entity."""
 
     name: str
@@ -273,12 +282,10 @@ class Product(FlextCore.Models.Entity):
         """Check if product is available in requested quantity."""
         return self.stock >= quantity
 
-    def reserve(self, quantity: int) -> FlextCore.Result[None]:
+    def reserve(self, quantity: int) -> FlextResult[None]:
         """Reserve product quantity."""
         if not self.is_available(quantity):
-            return FlextCore.Result[None].fail(
-                f"Insufficient stock: {self.stock} available"
-            )
+            return FlextResult[None].fail(f"Insufficient stock: {self.stock} available")
         self.stock -= quantity
         self.add_domain_event(
             "ProductReserved",
@@ -288,10 +295,10 @@ class Product(FlextCore.Models.Entity):
                 "remaining_stock": self.stock,
             },
         )
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
 
-class OrderItem(FlextCore.Models.Value):
+class OrderItem(FlextModels.Value):
     """Order line item value object."""
 
     product: Product
@@ -306,7 +313,7 @@ class OrderItem(FlextCore.Models.Value):
         )
 
 
-class Order(FlextCore.Models.AggregateRoot):
+class Order(FlextModels.AggregateRoot):
     """Order aggregate root - maintains consistency boundary."""
 
     customer_id: str
@@ -316,18 +323,18 @@ class Order(FlextCore.Models.AggregateRoot):
         default_factory=lambda: Money(amount=Decimal(0), currency="USD"),
     )
 
-    def add_item(self, product: Product, quantity: int) -> FlextCore.Result[None]:
+    def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
         """Add item to order with business validation."""
         # Validate business rules
         if self.status != "DRAFT":
-            return FlextCore.Result[None].fail("Cannot modify submitted order")
+            return FlextResult[None].fail("Cannot modify submitted order")
 
         if quantity <= 0:
-            return FlextCore.Result[None].fail("Quantity must be positive")
+            return FlextResult[None].fail("Quantity must be positive")
 
         # Check product availability
         if not product.is_available(quantity):
-            return FlextCore.Result[None].fail(f"Product {product.name} not available")
+            return FlextResult[None].fail(f"Product {product.name} not available")
 
         # Reserve product
         reserve_result = product.reserve(quantity)
@@ -356,19 +363,19 @@ class Order(FlextCore.Models.AggregateRoot):
             },
         )
 
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
-    def get_domain_events(self) -> list[FlextCore.Models.DomainEvent]:
+    def get_domain_events(self) -> list[FlextModels.DomainEvent]:
         """Get all domain events."""
         return self.domain_events
 
-    def submit(self) -> FlextCore.Result[None]:
+    def submit(self) -> FlextResult[None]:
         """Submit order for processing."""
         if self.status != "DRAFT":
-            return FlextCore.Result[None].fail("Order already submitted")
+            return FlextResult[None].fail("Order already submitted")
 
         if not self.items:
-            return FlextCore.Result[None].fail("Cannot submit empty order")
+            return FlextResult[None].fail("Cannot submit empty order")
 
         self.status = "SUBMITTED"
         self.add_domain_event(
@@ -381,18 +388,18 @@ class Order(FlextCore.Models.AggregateRoot):
             },
         )
 
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
 
-# ========== SERVICES (Using FlextCore.Service patterns) ==========
+# ========== SERVICES (Using FlextService patterns) ==========
 
 
-class InventoryService(FlextCore.Service[FlextCore.Types.Dict]):
+class InventoryService(FlextService[FlextTypes.Dict]):
     """Inventory management service with FlextMixins.Service infrastructure.
 
-    This service inherits from FlextCore.Service to demonstrate:
+    This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextCore.Logger with service context)
+    - Inherited logger property (FlextLogger with service context)
     - Inherited context property (FlextCore.Context for request tracking)
     - Inherited config property (FlextCore.Config with application settings)
     - Inherited metrics property (FlextMetrics for observability)
@@ -404,8 +411,8 @@ class InventoryService(FlextCore.Service[FlextCore.Types.Dict]):
         """Initialize inventory service with inherited FlextMixins.Service infrastructure.
 
         Note: No manual logger initialization needed!
-        All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextCore.Logger with service context (ALREADY CONFIGURED!)
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
         - self.container: FlextCore.Container global singleton
         - self.context: FlextCore.Context for request tracking
         - self.config: FlextCore.Config with application settings
@@ -459,23 +466,21 @@ class InventoryService(FlextCore.Service[FlextCore.Types.Dict]):
         for product in products:
             self._products[product.id] = product
 
-    def get_product(self, product_id: str) -> FlextCore.Result[Product]:
+    def get_product(self, product_id: str) -> FlextResult[Product]:
         """Get product by ID."""
         product = self._products.get(product_id)
         if not product:
-            return FlextCore.Result[Product].fail(f"Product not found: {product_id}")
-        return FlextCore.Result[Product].ok(product)
+            return FlextResult[Product].fail(f"Product not found: {product_id}")
+        return FlextResult[Product].ok(product)
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute inventory operation."""
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "status": "inventory_service_ready"
-        })
+        return FlextResult[FlextTypes.Dict].ok({"status": "inventory_service_ready"})
 
     def process_operation(
         self,
         data: dict[str, str | int],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Process inventory operation."""
         operation = data.get("operation")
 
@@ -485,7 +490,7 @@ class InventoryService(FlextCore.Service[FlextCore.Types.Dict]):
                 result = self.get_product(product_id)
                 if result.is_success:
                     product = result.unwrap()
-                    return FlextCore.Result[FlextCore.Types.Dict].ok({
+                    return FlextResult[FlextTypes.Dict].ok({
                         "product": {
                             "id": product.id,
                             "name": product.name,
@@ -493,24 +498,20 @@ class InventoryService(FlextCore.Service[FlextCore.Types.Dict]):
                             "stock": product.stock,
                         },
                     })
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     result.error or UNKNOWN_ERROR_MSG,
                 )
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                "Invalid product ID type"
-            )
+            return FlextResult[FlextTypes.Dict].fail("Invalid product ID type")
 
-        return FlextCore.Result[FlextCore.Types.Dict].fail(
-            f"Unknown operation: {operation}"
-        )
+        return FlextResult[FlextTypes.Dict].fail(f"Unknown operation: {operation}")
 
 
-class PaymentService(FlextCore.Service[dict[str, object]]):
+class PaymentService(FlextService[dict[str, object]]):
     """Payment processing service with FlextMixins.Service infrastructure.
 
-    This service inherits from FlextCore.Service to demonstrate:
+    This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextCore.Logger with service context)
+    - Inherited logger property (FlextLogger with service context)
     - Inherited context property (FlextCore.Context for correlation tracking)
     - Inherited config property (FlextCore.Config with payment settings)
     - Inherited metrics property (FlextMetrics for payment observability)
@@ -525,8 +526,8 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
         """Initialize payment service with inherited FlextMixins.Service infrastructure.
 
         Note: No manual logger initialization needed!
-        All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextCore.Logger with service context (ALREADY CONFIGURED!)
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
         - self.container: FlextCore.Container global singleton
         - self.context: FlextCore.Context for correlation tracking
         - self.config: FlextCore.Config with payment settings
@@ -548,7 +549,7 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
         self,
         order: Order,
         method: str,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Process payment for order."""
         self.logger.info(
             "Processing payment",
@@ -563,7 +564,7 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
         if method == "credit_card":
             # Simulate credit card processing
             time.sleep(0.1)  # Simulate API call
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "transaction_id": str(uuid4()),
                 "status": "approved",
                 "method": method,
@@ -573,38 +574,36 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
         if method == "paypal":
             # Simulate PayPal processing
             time.sleep(0.15)  # Simulate API call
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
+            return FlextResult[FlextTypes.Dict].ok({
                 "transaction_id": str(uuid4()),
                 "status": "approved",
                 "method": method,
                 "amount": str(order.total.amount),
             })
 
-        return FlextCore.Result[FlextCore.Types.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             f"Unsupported payment method: {method}",
         )
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute payment operation."""
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "status": "payment_service_ready"
-        })
+        return FlextResult[FlextTypes.Dict].ok({"status": "payment_service_ready"})
 
     def process_operation(
         self,
         data: dict[str, str | int],
-    ) -> FlextCore.Result[dict[str, str | int]]:
+    ) -> FlextResult[dict[str, str | int]]:
         """Process payment operation."""
         _ = data  # This would process the payment based on data
-        return FlextCore.Result[dict[str, str | int]].ok({"status": "processed"})
+        return FlextResult[dict[str, str | int]].ok({"status": "processed"})
 
 
-class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
+class OrderService(FlextService[FlextTypes.Dict]):
     """Order processing service with FlextMixins.Service infrastructure - orchestrates the workflow.
 
-    This service inherits from FlextCore.Service to demonstrate:
+    This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton for service dependencies)
-    - Inherited logger property (FlextCore.Logger with service context and correlation tracking)
+    - Inherited logger property (FlextLogger with service context and correlation tracking)
     - Inherited context property (FlextCore.Context for request and correlation IDs)
     - Inherited config property (FlextCore.Config with order processing settings)
     - Inherited metrics property (FlextMetrics for order observability)
@@ -617,8 +616,8 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
         """Initialize order service with inherited FlextMixins.Service infrastructure.
 
         Note: No manual logger initialization needed!
-        All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextCore.Logger with service context (ALREADY CONFIGURED!)
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
         - self.container: FlextCore.Container global singleton (access inventory/payment services)
         - self.context: FlextCore.Context for request and correlation tracking
         - self.config: FlextCore.Config with order processing configuration
@@ -642,7 +641,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
         self,
         customer_id: str,
         items: list[dict[str, object]],
-    ) -> FlextCore.Result[Order]:
+    ) -> FlextResult[Order]:
         """Create and process an order."""
         # Create correlation ID for tracking
         correlation_id = str(uuid4())
@@ -652,7 +651,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
         # Get services from container
         inventory_result = self.container.get_typed("inventory", InventoryService)
         if inventory_result.is_failure:
-            return FlextCore.Result[Order].fail("Inventory service not available")
+            return FlextResult[Order].fail("Inventory service not available")
         inventory = inventory_result.unwrap()
 
         # Create order
@@ -687,7 +686,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
 
         # Check if any items were added
         if not order.items:
-            return FlextCore.Result[Order].fail("No items could be added to order")
+            return FlextResult[Order].fail("No items could be added to order")
 
         self.logger.info(
             "Order created successfully",
@@ -698,29 +697,27 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
             },
         )
 
-        return FlextCore.Result[Order].ok(order)
+        return FlextResult[Order].ok(order)
 
     def submit_order(
         self,
         order: Order,
         payment_method: str,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Submit order with payment processing."""
         self.logger.info("Submitting order", extra={"order_id": order.id})
 
         # Submit the order
         submit_result = order.submit()
         if submit_result.is_failure:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 submit_result.error or UNKNOWN_ERROR_MSG,
             )
 
         # Get payment service
         payment_service_result = self.container.get_typed("payment", PaymentService)
         if payment_service_result.is_failure:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                "Payment service not available"
-            )
+            return FlextResult[FlextTypes.Dict].fail("Payment service not available")
         payment = payment_service_result.unwrap()
 
         # Process payment
@@ -728,7 +725,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
         if payment_result.is_failure:
             # Rollback order status
             order.status = "PAYMENT_FAILED"
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Payment failed: {payment_result.error}",
             )
 
@@ -747,7 +744,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
             "total": str(order.total.amount),
             "status": order.status,
         }
-        confirmation_payload = FlextCore.Models.Payload[dict[str, str | int | float]](
+        confirmation_payload = FlextModels.Payload[dict[str, str | int | float]](
             data=confirmation_data,
             correlation_id=FlextCore.Context.Correlation.get_correlation_id(),
             source_service="order_service",
@@ -763,7 +760,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
             },
         )
 
-        result_data: FlextCore.Types.Dict = {
+        result_data: FlextTypes.Dict = {
             "order_id": order.id,
             "status": order.status,
             "total": str(order.total.amount),
@@ -775,18 +772,16 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
         )
         result_data["payment_status"] = str(payment_data.get("status", "unknown"))
 
-        return FlextCore.Result[FlextCore.Types.Dict].ok(result_data)
+        return FlextResult[FlextTypes.Dict].ok(result_data)
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute order operation."""
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "status": "order_service_ready"
-        })
+        return FlextResult[FlextTypes.Dict].ok({"status": "order_service_ready"})
 
     def process_operation(
         self,
         data: dict[str, object],
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Process order operation."""
         operation = data.get("operation")
 
@@ -799,7 +794,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
                 items,
             )
             if order_result.is_failure:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     order_result.error or UNKNOWN_ERROR_MSG,
                 )
 
@@ -809,13 +804,11 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
             payment_method = data.get("payment_method", "credit_card")
             if isinstance(payment_method, str):
                 return self.submit_order(order, payment_method)
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 "Invalid payment method type",
             )
 
-        return FlextCore.Result[FlextCore.Types.Dict].fail(
-            f"Unknown operation: {operation}"
-        )
+        return FlextResult[FlextTypes.Dict].fail(f"Unknown operation: {operation}")
 
 
 # ========== HANDLER PIPELINE (Using FlextCore.Processors) ==========
@@ -828,42 +821,38 @@ class OrderValidationHandler:
         """Initialize handler."""
         super().__init__()
         self.name = "OrderValidator"
-        self.logger = FlextCore.Logger(__name__)
+        self.logger = FlextCore.create_logger(__name__)
 
-    def handle(
-        self, request: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def handle(self, request: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
         """Validate order data."""
         self.logger.info("Validating order request")
 
         # Check required fields
         if not request.get("customer_id"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Customer ID required")
+            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
 
         if not request.get("items"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Order items required")
+            return FlextResult[FlextTypes.Dict].fail("Order items required")
 
         # Validate items
         items_raw = request["items"]
         if not isinstance(items_raw, list):
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                "Order items must be a list"
-            )
+            return FlextResult[FlextTypes.Dict].fail("Order items must be a list")
         items: list[dict[str, object]] = items_raw
         for item in items:
             item_dict: dict[str, object] = item
             if not item_dict.get("product_id"):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     "Product ID required for all items",
                 )
             quantity = item_dict.get("quantity")
             if not isinstance(quantity, int) or quantity <= 0:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     "Valid quantity required for all items",
                 )
 
         request["validated"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(request)
+        return FlextResult[FlextTypes.Dict].ok(request)
 
 
 class OrderEnrichmentHandler:
@@ -873,21 +862,19 @@ class OrderEnrichmentHandler:
         """Initialize handler."""
         super().__init__()
         self.name = "OrderEnricher"
-        self.logger = FlextCore.Logger(__name__)
+        self.logger = FlextCore.create_logger(__name__)
 
     def handle(
         self,
-        request: FlextCore.Types.Dict,
+        request: FlextTypes.Dict,
         *,
         _debug: bool = False,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Add metadata to order."""
         self.logger.info("Enriching order request")
 
         if not request.get("validated"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                "Order must be validated first"
-            )
+            return FlextResult[FlextTypes.Dict].fail("Order must be validated first")
 
         # Add metadata
         metadata: dict[str, str | float] = {
@@ -898,19 +885,19 @@ class OrderEnrichmentHandler:
         }
 
         # Create a new dict[str, object] with the metadata added
-        enriched_request: FlextCore.Types.Dict = {
+        enriched_request: FlextTypes.Dict = {
             **request,
             "metadata": metadata,
         }
 
-        return FlextCore.Result[FlextCore.Types.Dict].ok(enriched_request)
+        return FlextResult[FlextTypes.Dict].ok(enriched_request)
 
 
 # ========== INTEGRATION DEMONSTRATION ==========
 
 
 def demonstrate_new_flextresult_methods() -> None:
-    """Demonstrate the 5 new FlextCore.Result methods in integration context.
+    """Demonstrate the 5 new FlextResult methods in integration context.
 
     Shows how the new v0.9.9+ methods work with complete FLEXT integration:
     - from_callable: Safe exception handling
@@ -920,7 +907,7 @@ def demonstrate_new_flextresult_methods() -> None:
     - value_or_call: Lazy defaults
     """
     print("=" * 60)
-    print("NEW FlextCore.Result METHODS - INTEGRATION CONTEXT")
+    print("NEW FlextResult METHODS - INTEGRATION CONTEXT")
     print("Demonstrating v0.9.9+ methods in complete system integration")
     print("=" * 60)
 
@@ -947,7 +934,7 @@ def demonstrate_new_flextresult_methods() -> None:
 
     # Safe order creation without try/except
     customer_id = cast("str", REDACTED_LDAP_BIND_PASSWORD_user["email"])
-    order_result = FlextCore.Result.from_callable(
+    order_result = FlextResult.from_callable(
         lambda: risky_order_creation(
             customer_id,
             cast("list[dict[str, object]]", list(order_template.get("items", []))),
@@ -964,27 +951,27 @@ def demonstrate_new_flextresult_methods() -> None:
 
     def validate_order_data(
         data: dict[str, object],
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Validate order request data."""
         if not data.get("customer_id"):
-            return FlextCore.Result[dict[str, object]].fail("Customer ID required")
+            return FlextResult[dict[str, object]].fail("Customer ID required")
         if not data.get("items"):
-            return FlextCore.Result[dict[str, object]].fail("Items required")
-        return FlextCore.Result[dict[str, object]].ok(data)
+            return FlextResult[dict[str, object]].fail("Items required")
+        return FlextResult[dict[str, object]].ok(data)
 
     def check_inventory_availability(
         data: dict[str, object],
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Check all items are in stock."""
         # Simulate inventory check
-        return FlextCore.Result[dict[str, object]].ok({
+        return FlextResult[dict[str, object]].ok({
             **data,
             "inventory_status": "available",
         })
 
     def calculate_order_total(
         data: dict[str, object],
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Calculate total price with taxes."""
         items = cast("list[dict[str, object]]", data.get("items", []))
         subtotal = sum(
@@ -997,11 +984,11 @@ def demonstrate_new_flextresult_methods() -> None:
             "dict[str, object]",
             {**data, "subtotal": subtotal, "tax": tax, "total": total},
         )
-        return FlextCore.Result[dict[str, object]].ok(result_dict)
+        return FlextResult[dict[str, object]].ok(result_dict)
 
     def apply_promotions(
         data: dict[str, object],
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Apply promotional discounts."""
         total = Decimal(str(data.get("total", 0)))
         discount = total * Decimal("0.05") if total > 100 else Decimal(0)
@@ -1014,7 +1001,7 @@ def demonstrate_new_flextresult_methods() -> None:
                 "final_total": final_total,
             },
         )
-        return FlextCore.Result[dict[str, object]].ok(result_dict)
+        return FlextResult[dict[str, object]].ok(result_dict)
 
     # Flow through complete integration pipeline
     order_data = cast(
@@ -1026,7 +1013,7 @@ def demonstrate_new_flextresult_methods() -> None:
         },
     )
     pipeline_result = (
-        FlextCore.Result[dict[str, object]]
+        FlextResult[dict[str, object]]
         .ok(order_data)
         .flow_through(
             validate_order_data,
@@ -1052,18 +1039,18 @@ def demonstrate_new_flextresult_methods() -> None:
 
     def try_primary_payment_gateway(
         _amount: Decimal,
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Try primary payment processor."""
         # Simulate failure (amount parameter for demonstration purposes)
-        return FlextCore.Result[dict[str, object]].fail("Primary gateway timeout")
+        return FlextResult[dict[str, object]].fail("Primary gateway timeout")
 
     def fallback_to_secondary_gateway(
         error: str,
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Fallback to secondary payment processor."""
         print(f"   ⚠️  Primary failed: {error}, using fallback...")
         # Simulate successful fallback
-        return FlextCore.Result[dict[str, object]].ok({
+        return FlextResult[dict[str, object]].ok({
             "gateway": "secondary",
             "transaction_id": str(uuid4()),
             "status": "approved",
@@ -1084,16 +1071,16 @@ def demonstrate_new_flextresult_methods() -> None:
     # 4. alt - Service Discovery with Fallback
     print("\n=== 4. alt: Service Discovery with Fallback ===")
 
-    def get_premium_shipping_service() -> FlextCore.Result[dict[str, object]]:
+    def get_premium_shipping_service() -> FlextResult[dict[str, object]]:
         """Try to get premium shipping service."""
         # Simulate service unavailable
-        return FlextCore.Result[dict[str, object]].fail(
+        return FlextResult[dict[str, object]].fail(
             "Premium shipping service unavailable"
         )
 
-    def get_standard_shipping_service() -> FlextCore.Result[dict[str, object]]:
+    def get_standard_shipping_service() -> FlextResult[dict[str, object]]:
         """Get standard shipping service."""
-        return FlextCore.Result[dict[str, object]].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": "standard",
             "estimated_days": 5,
             "cost": Decimal("9.99"),
@@ -1124,9 +1111,9 @@ def demonstrate_new_flextresult_methods() -> None:
         }
 
     # Config not found, lazy-load default
-    config_result: FlextCore.Result[dict[str, object]] = FlextCore.Result[
-        dict[str, object]
-    ].fail("Config not in cache")
+    config_result: FlextResult[dict[str, object]] = FlextResult[dict[str, object]].fail(
+        "Config not in cache"
+    )
 
     # Only loads if result is failure
     config = config_result.value_or_call(load_custom_config)
@@ -1135,14 +1122,14 @@ def demonstrate_new_flextresult_methods() -> None:
     print(f"   Tax rate: {config.get('tax_rate')}")
 
     # When success, doesn't call the function
-    cached_config: FlextCore.Result[dict[str, object]] = FlextCore.Result[
-        dict[str, object]
-    ].ok({"cached": True})
+    cached_config: FlextResult[dict[str, object]] = FlextResult[dict[str, object]].ok({
+        "cached": True
+    })
     result_config = cached_config.value_or_call(load_custom_config)  # Won't execute
     print(f"✅ Cached config used: {result_config}")
 
     print("\n" + "=" * 60)
-    print("✅ NEW FlextCore.Result METHODS INTEGRATION DEMO COMPLETE!")
+    print("✅ NEW FlextResult METHODS INTEGRATION DEMO COMPLETE!")
     print("All 5 methods demonstrated in complete system integration context")
     print("=" * 60)
 
@@ -1160,13 +1147,13 @@ def demonstrate_complete_integration() -> None:
 
     # 1. Configuration setup
     print("\n=== 1. Configuration ===")
-    config = FlextCore.Config()
+    config = FlextCore.create_config()
     print(f"Debug: {config.debug}")
     print(f"Log Level: {config.log_level}")
 
     # 2. Container setup with dependency injection
     print("\n=== 2. Dependency Injection ===")
-    container = FlextCore.Container.get_global()
+    container = FlextContainer.get_global()
 
     # Register services
     inventory = InventoryService()
@@ -1184,8 +1171,8 @@ def demonstrate_complete_integration() -> None:
     enrichment_handler = OrderEnrichmentHandler()
 
     def execute_pipeline(
-        request: FlextCore.Types.Dict,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        request: FlextTypes.Dict,
+    ) -> FlextResult[FlextTypes.Dict]:
         """Execute the processing pipeline."""
         # Chain handlers using railway pattern
         return validation_handler.handle(request).flat_map(enrichment_handler.handle)
@@ -1203,7 +1190,7 @@ def demonstrate_complete_integration() -> None:
             if product_result.is_success:
                 products.append(product_result.unwrap())
 
-    order_request: FlextCore.Types.Dict = {
+    order_request: FlextTypes.Dict = {
         "customer_id": scenario_order["customer_id"],
         "items": [
             {
@@ -1264,9 +1251,7 @@ def demonstrate_complete_integration() -> None:
             "payment_method": payment_method,
         })
     else:
-        result = FlextCore.Result[FlextCore.Types.Dict].fail(
-            "Invalid enriched data types"
-        )
+        result = FlextResult[FlextTypes.Dict].fail("Invalid enriched data types")
 
     if result.is_success:
         order_data = result.unwrap()
@@ -1289,7 +1274,7 @@ def demonstrate_complete_integration() -> None:
     print("\n=== 6. Error Handling ===")
 
     # Try to order with insufficient stock
-    large_order: FlextCore.Types.Dict = {
+    large_order: FlextTypes.Dict = {
         "customer_id": (
             user_pool[1]["id"] if len(user_pool) > 1 else scenario_order["customer_id"]
         ),
@@ -1324,7 +1309,7 @@ def demonstrate_complete_integration() -> None:
                 "payment_method": payment_method,
             })
         else:
-            result = FlextCore.Result[FlextCore.Types.Dict].fail(
+            result = FlextResult[FlextTypes.Dict].fail(
                 "Invalid validation data types",
             )
 
@@ -1363,8 +1348,8 @@ def demonstrate_complete_integration() -> None:
     simple_order.submit()
 
     for event in simple_order.get_domain_events():
-        # Domain events are FlextCore.Models.DomainEvent objects
-        if isinstance(event, FlextCore.Models.DomainEvent):
+        # Domain events are FlextModels.DomainEvent objects
+        if isinstance(event, FlextModels.DomainEvent):
             event_name = event.event_type
             event_data = event.data
             print(f"  📢 {event_name}: {event_data}")
@@ -1373,7 +1358,7 @@ def demonstrate_complete_integration() -> None:
 
     # 8. Logging with correlation
     print("\n=== 8. Structured Logging ===")
-    logger = FlextCore.Logger(__name__)
+    logger = FlextCore.create_logger(__name__)
     correlation_id = str(uuid4())
     logger.bind(correlation_id=correlation_id)
 
@@ -1383,13 +1368,13 @@ def demonstrate_complete_integration() -> None:
             "orders_processed": 2,
             "success_rate": 0.5,
             "components_tested": [
-                "FlextCore.Result",
+                "FlextResult",
                 "FlextCore.Container",
-                "FlextCore.Models",
+                "FlextModels",
                 "FlextCore.Config",
-                "FlextCore.Logger",
+                "FlextLogger",
                 "FlextCore.Processors",
-                "FlextCore.Service",
+                "FlextService",
                 "Payload & Events",
             ],
         },
@@ -1408,9 +1393,9 @@ def demonstrate_complete_integration() -> None:
 
 
 def demonstrate_flextcore_unified_access() -> None:
-    """Demonstrate the modern FlextCore.Constants unified facade pattern.
+    """Demonstrate the modern FlextConstants unified facade pattern.
 
-    This shows how FlextCore.Constants provides a single entry point for accessing
+    This shows how FlextConstants provides a single entry point for accessing
     ALL flext-core components with improved convenience and discoverability.
     """
     print("\n" + "=" * 60)
@@ -1421,9 +1406,9 @@ def demonstrate_flextcore_unified_access() -> None:
     # 1. Setup complete infrastructure manually
     print("\n=== 1. Unified Infrastructure Setup ===")
     # Create infrastructure components manually
-    config = FlextCore.Config()
-    container = FlextCore.Container.get_global()
-    logger = FlextCore.Logger("ecommerce-service")
+    config = FlextCore.create_config()
+    container = FlextContainer.get_global()
+    logger = FlextCore.create_logger("ecommerce-service")
     bus = FlextCore.Bus()
     context = FlextCore.Context()
 
@@ -1434,11 +1419,11 @@ def demonstrate_flextcore_unified_access() -> None:
     print(f"     - Bus: {type(bus).__name__}")
     print(f"     - Context: {type(context).__name__}")
 
-    # 2. Direct class access through FlextCore.Constants
+    # 2. Direct class access through FlextConstants
     print("\n=== 2. Direct Component Access ===")
-    result = FlextCore.Result[str].ok("Order created successfully")
-    config = FlextCore.Config()
-    timeout = FlextCore.Constants.Defaults.TIMEOUT
+    result = FlextResult[str].ok("Order created successfully")
+    config = FlextCore.create_config()
+    timeout = FlextConstants.Defaults.TIMEOUT
 
     print(f"  ✅ Result access: {result.value}")
     print(f"  ✅ Config access: log_level = {config.log_level}")
@@ -1446,12 +1431,12 @@ def demonstrate_flextcore_unified_access() -> None:
 
     # 3. Factory methods for convenience
     print("\n=== 3. Convenience Factory Methods ===")
-    success = FlextCore.Result[dict[str, str]].ok({
+    success = FlextResult[dict[str, str]].ok({
         "order_id": "ORD-123",
         "status": "created",
     })
-    failure = FlextCore.Result[str].fail("Payment declined", error_code="PAYMENT_ERROR")
-    logger = FlextCore.Logger("ecommerce")
+    failure = FlextResult[str].fail("Payment declined", error_code="PAYMENT_ERROR")
+    logger = FlextCore.create_logger("ecommerce")
 
     print(f"  ✅ Success result: {success.value}")
     print(f"  ✅ Failure result: {failure.error}")
@@ -1460,9 +1445,9 @@ def demonstrate_flextcore_unified_access() -> None:
     # 4. Instance-based access to all components
     print("\n=== 4. Unified Core Instance ===")
     # Create core components manually since FlextCore doesn't have instance-based access
-    core_config = FlextCore.Config()
-    core_container = FlextCore.Container.get_global()
-    core_logger = FlextCore.Logger("core")
+    core_config = FlextCore.create_config()
+    core_container = FlextContainer.get_global()
+    core_logger = FlextCore.create_logger("core")
     core_bus = FlextCore.Bus()
     core_context = FlextCore.Context()
 
@@ -1472,21 +1457,21 @@ def demonstrate_flextcore_unified_access() -> None:
     print(f"  ✅ Bus: {type(core_bus).__name__}")
     print(f"  ✅ Context: {type(core_context).__name__}")
 
-    # 5. Railway pattern with FlextCore.Constants
-    print("\n=== 5. Railway Pattern via FlextCore.Constants ===")
+    # 5. Railway pattern with FlextConstants
+    print("\n=== 5. Railway Pattern via FlextConstants ===")
 
     def validate_order(
         data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         if not data.get("customer_id"):
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Customer ID required")
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
+        return FlextResult[FlextTypes.Dict].ok(data)
 
     def process_order(
         data: dict[str, object],
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         data["processed"] = True
-        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+        return FlextResult[FlextTypes.Dict].ok(data)
 
     # Compose operations
     order_data: dict[str, object] = {"customer_id": "CUST-001", "amount": 100}
@@ -1502,7 +1487,7 @@ def demonstrate_flextcore_unified_access() -> None:
 
 
 def demonstrate_flextcore_11_features() -> None:
-    """Demonstrate FlextCore.Constants 1.1.0 convenience methods.
+    """Demonstrate FlextConstants 1.1.0 convenience methods.
 
     Shows the four new convenience methods added in version 1.1.0:
     1. publish_event() - Event publishing with correlation tracking
@@ -1600,7 +1585,7 @@ def demonstrate_flextcore_11_features() -> None:
     # workflow_result = workflow(order_input)
 
     # if workflow_result.is_success:
-    #     completed_order = cast("FlextCore.Types.Dict", workflow_result.unwrap())
+    #     completed_order = cast("FlextTypes.Dict", workflow_result.unwrap())
 
     #     # Publish success event with request correlation
     #     core.publish_event(
@@ -1633,16 +1618,16 @@ def demonstrate_flextcore_11_features() -> None:
 
 def main() -> None:
     """Main entry point."""
-    # New FlextCore.Result methods (v0.9.9+)
+    # New FlextResult methods (v0.9.9+)
     demonstrate_new_flextresult_methods()
 
     # Traditional pattern
     demonstrate_complete_integration()
 
-    # Modern FlextCore.Constants pattern (1.0.0)
+    # Modern FlextConstants pattern (1.0.0)
     demonstrate_flextcore_unified_access()
 
-    # FlextCore.Constants 1.1.0 convenience methods
+    # FlextConstants 1.1.0 convenience methods
     demonstrate_flextcore_11_features()
 
 

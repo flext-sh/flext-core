@@ -180,7 +180,7 @@ class TestFlextRegistry:
                 registration_id="test1",
                 handler_mode="command",
                 timestamp="2025-01-01T00:00:00Z",
-                status="active",
+                status="running",
             ),
         )
         summary.errors.append("test_error")
@@ -226,17 +226,17 @@ class TestFlextRegistry:
         assert registry._safe_get_handler_mode(None) == "command"
 
     def test_registry_safe_get_status(self) -> None:
-        """Test safe status extraction."""
+        """Test safe status extraction with mapping to FlextConstants.Status."""
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        # Test valid statuses
-        assert registry._safe_get_status("active") == "active"
-        assert registry._safe_get_status("inactive") == "inactive"
+        # Test status mapping (old values → new Status literal)
+        assert registry._safe_get_status("active") == "running"
+        assert registry._safe_get_status("inactive") == "completed"
 
-        # Test invalid status (should default to active)
-        assert registry._safe_get_status("invalid") == "active"
-        assert registry._safe_get_status(None) == "active"
+        # Test invalid status (should default to running)
+        assert registry._safe_get_status("invalid") == "running"
+        assert registry._safe_get_status(None) == "running"
 
     def test_registry_resolve_handler_key(self) -> None:
         """Test handler key resolution."""
@@ -303,7 +303,7 @@ class TestFlextRegistry:
         reg_details = result.value
         assert reg_details.registration_id is not None
         assert reg_details.handler_mode in {"command", "query"}
-        assert reg_details.status in {"active", "inactive"}
+        assert reg_details.status in {"running", "completed", "pending", "failed"}
 
     def test_registry_error_handling(self) -> None:
         """Test registry error handling."""
@@ -340,7 +340,7 @@ class TestFlextRegistry:
                 registration_id="test1",
                 handler_mode="command",
                 timestamp="2025-01-01T00:00:00Z",
-                status="active",
+                status="running",
             ),
         )
 
@@ -841,7 +841,7 @@ class TestFlextRegistry:
             registration_id="test_reg",
             handler_mode="command",
             timestamp="2025-01-01T00:00:00Z",
-            status="active",
+            status="running",
         )
         summary.registered.append(reg_details)
         summary.skipped.append("skipped_handler")

@@ -426,11 +426,26 @@ class FlextLogger:
             return FlextResult[None].fail(f"Logging failed: {e}")
 
     def exception(
-        self, message: str, *, exc_info: bool = True, **kwargs: object
+        self,
+        message: str,
+        *,
+        exception: BaseException | None = None,
+        exc_info: bool = True,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Log exception message with stack trace - LoggerProtocol implementation."""
         try:
-            if exc_info:
+            # If a specific exception is provided, format its traceback
+            if exception is not None:
+                kwargs["stack_trace"] = "".join(
+                    traceback.format_exception(
+                        type(exception), exception, exception.__traceback__
+                    )
+                )
+                kwargs["exception_type"] = type(exception).__name__
+                kwargs["exception_message"] = str(exception)
+            # Otherwise, if exc_info is True, get current exception info
+            elif exc_info:
                 kwargs["stack_trace"] = traceback.format_exc()
             self.logger.error(message, **kwargs)
             return FlextResult[None].ok(None)
@@ -441,7 +456,7 @@ class FlextLogger:
     # ADVANCED FEATURES - Performance tracking and result integration
     # =========================================================================
 
-    def track_performance(self, operation_name: str) -> PerformanceTracker:
+    def track_performance(self, operation_name: str) -> FlextLogger.PerformanceTracker:
         """Track operation performance with automatic logging.
 
         Returns context manager that automatically logs operation timing.
@@ -460,7 +475,7 @@ class FlextLogger:
             # Automatically logs: "database_query completed in 0.123s"
 
         """
-        return PerformanceTracker(self, operation_name)
+        return FlextLogger.PerformanceTracker(self, operation_name)
 
     def log_result(
         self,
@@ -507,74 +522,56 @@ class FlextLogger:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to log result: {e}")
 
+    class PerformanceTracker:
+        """Context manager for performance tracking with automatic logging."""
 
-class PerformanceTracker:
-    """Context manager for performance tracking with automatic logging."""
+        def __init__(self, logger: FlextLogger, operation_name: str) -> None:
+            """Initialize performance tracker.
 
-    def __init__(self, logger: FlextLogger, operation_name: str) -> None:
-        """Initialize performance tracker.
+            Args:
+                logger: FlextLogger instance
+                operation_name: Name of operation being tracked
 
-        Args:
-            logger: FlextLogger instance
-            operation_name: Name of operation being tracked
+            """
+            super().__init__()
+            self.logger = logger
+            self._operation_name = operation_name
+            self._start_time: float = 0.0
 
-        """
-        super().__init__()
-        self.logger = logger
-        self._operation_name = operation_name
-        self._start_time: float = 0.0
+        def __enter__(self) -> Self:
+            """Start performance tracking."""
+            self._start_time = time.time()
+            return self
 
-    def __enter__(self) -> Self:
-        """Start performance tracking."""
-        self._start_time = time.time()
-        return self
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: types.TracebackType | None,
+        ) -> None:
+            """Complete performance tracking and log results."""
+            elapsed = time.time() - self._start_time
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None,
-    ) -> None:
-        """Complete performance tracking and log results."""
-        elapsed = time.time() - self._start_time
-
-        if exc_type is None:
-            # Success case
-            self.logger.info(
-                f"{self._operation_name} completed",
-                duration_seconds=elapsed,
-                operation=self._operation_name,
-                status="success",
-            )
-        else:
-            # Failure case
-            self.logger.error(
-                f"{self._operation_name} failed",
-                duration_seconds=elapsed,
-                operation=self._operation_name,
-                status="failed",
-                exception_type=exc_type.__name__ if exc_type else None,
-                exception_message=str(exc_val) if exc_val else None,
-            )
-
-
-# =============================================================================
-# DEPENDENCY INJECTION PROVIDERS - Advanced DI patterns for FlextLogger
-# =============================================================================
-
-
-# FlextLoggerProviders removed - unused across entire ecosystem
-# Users can directly use FlextRuntime.dependency_providers() for DI patterns
-# Example:
-#   providers = FlextRuntime.dependency_providers()
-#   logger_provider = providers.Singleton(FlextLogger.create_module_logger, "app")
-
-
-# MODULE EXPORTS
-# =============================================================================
+            if exc_type is None:
+                # Success case
+                self.logger.info(
+                    f"{self._operation_name} completed",
+                    duration_seconds=elapsed,
+                    operation=self._operation_name,
+                    status="success",
+                )
+            else:
+                # Failure case
+                self.logger.error(
+                    f"{self._operation_name} failed",
+                    duration_seconds=elapsed,
+                    operation=self._operation_name,
+                    status="failed",
+                    exception_type=exc_type.__name__ if exc_type else None,
+                    exception_message=str(exc_val) if exc_val else None,
+                )
 
 
 __all__: FlextTypes.StringList = [
     "FlextLogger",
-    "PerformanceTracker",
 ]

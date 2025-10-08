@@ -13,6 +13,7 @@ import math
 import os
 import shutil
 import tempfile
+import warnings
 from collections.abc import Generator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,6 +26,11 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextTypes,
+)
+
+# Suppress pkg_resources deprecation warning from fs package
+warnings.filterwarnings(
+    "ignore", message="pkg_resources is deprecated", category=UserWarning
 )
 
 

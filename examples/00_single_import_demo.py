@@ -21,7 +21,15 @@ import os
 os.environ.setdefault("FLEXT_DEBUG", "false")
 os.environ.setdefault("FLEXT_TRACE", "false")
 
-from flext_core import FlextBase, FlextCore
+from flext_core import (
+    FlextBase,
+    FlextConstants,
+    FlextContainer,
+    FlextCore,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+)
 
 
 def demonstrate_single_import_pattern() -> None:
@@ -37,42 +45,40 @@ def demonstrate_single_import_pattern() -> None:
     print("\n1. Railway Pattern - Shorthand Factory Methods:")
 
     # Create success result
-    success_result = FlextCore.Result[str].ok("Operation successful")
-    print(f"   ✅ FlextCore.Result.ok(): {success_result.value}")
+    success_result = FlextResult[str].ok("Operation successful")
+    print(f"   ✅ FlextResult.ok(): {success_result.value}")
 
     # Create failure result
-    error_result = FlextCore.Result[str].fail("Validation failed")
-    print(f"   ❌ FlextCore.Result.fail(): {error_result.error}")
+    error_result = FlextResult[str].fail("Validation failed")
+    print(f"   ❌ FlextResult.fail(): {error_result.error}")
 
     # Chain operations using railway pattern
     min_length = 3
 
-    def validate_length(s: str) -> FlextCore.Result[str]:
+    def validate_length(s: str) -> FlextResult[str]:
         if len(s) < min_length:
-            return FlextCore.Result[str].fail("Too short")
-        return FlextCore.Result[str].ok(s)
+            return FlextResult[str].fail("Too short")
+        return FlextResult[str].ok(s)
 
     def to_upper(s: str) -> str:
         return s.upper()
 
-    chain_result = (
-        FlextCore.Result[str].ok("hello").flat_map(validate_length).map(to_upper)
-    )
+    chain_result = FlextResult[str].ok("hello").flat_map(validate_length).map(to_upper)
     print(f"   🚂 Railway chain: {chain_result.unwrap()}")
 
     # ========================================
-    # 2. COMPONENTS VIA NAMESPACE
+    # 2. COMPONENTS VIA CONVENIENCE METHODS
     # ========================================
-    print("\n2. Components via Namespace Access:")
+    print("\n2. Components via Convenience Methods:")
 
-    # Logger
-    logger = FlextCore.Logger(__name__)
+    # Logger - simplified with factory method
+    logger = FlextCore.create_logger(__name__)
     logger.info("Single-import pattern demonstration")
-    print(f"   ✅ FlextCore.Logger: {type(logger).__name__}")
+    print(f"   ✅ create_logger: {type(logger).__name__}")
 
-    # Container
-    container = FlextCore.Container.get_global()
-    print(f"   ✅ FlextCore.Container: {type(container).__name__}")
+    # Container - simplified accessor
+    container = FlextContainer.get_global()
+    print(f"   ✅ get_container: {type(container).__name__}")
 
     # Runtime type guards
     runtime = FlextCore.Runtime()
@@ -84,14 +90,14 @@ def demonstrate_single_import_pattern() -> None:
     print("\n3. Constants and Types:")
 
     # Access constants
-    timeout = FlextCore.Constants.Defaults.TIMEOUT
+    timeout = FlextConstants.Defaults.TIMEOUT
     print(f"   ⏱️  Timeout: {timeout}s")
 
-    validation_error = FlextCore.Constants.Errors.VALIDATION_ERROR
+    validation_error = FlextConstants.Errors.VALIDATION_ERROR
     print(f"   📋 Validation Error Code: {validation_error}")
 
     # Type aliases
-    data: FlextCore.Types.Dict = {"key": "value"}
+    data: FlextTypes.Dict = {"key": "value"}
     print(f"   📦 Type alias: {type(data).__name__}")
 
     # ========================================
@@ -100,11 +106,11 @@ def demonstrate_single_import_pattern() -> None:
     print("\n4. Decorators:")
 
     @FlextCore.Decorators.railway()
-    def risky_operation(x: int) -> FlextCore.Result[int]:
+    def risky_operation(x: int) -> FlextResult[int]:
         """Decorated operation with automatic railway handling."""
         if x <= 0:
-            return FlextCore.Result[int].fail("Must be positive")  # Type inferred
-        return FlextCore.Result[int].ok(x * 2)
+            return FlextResult[int].fail("Must be positive")  # Type inferred
+        return FlextResult[int].ok(x * 2)
 
     result = risky_operation(5)
     print(f"   ✅ @railway decorator: {result.value}")
@@ -142,11 +148,11 @@ def demonstrate_single_import_pattern() -> None:
     print("\n6. Domain Models (DDD Patterns):")
 
     # Entity - using base Entity with id only
-    entity = FlextCore.Models.Entity(id="entity-123")
+    entity = FlextModels.Entity(id="entity-123")
     print(f"   ✅ Entity: {entity.id}")
 
     # Value Object
-    class Email(FlextCore.Models.Value):
+    class Email(FlextModels.Value):
         address: str
 
     email = Email(address="test@example.com")
@@ -163,7 +169,7 @@ def demonstrate_single_import_pattern() -> None:
             error_msg,
             field="email",
             value="invalid",
-            error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
     except FlextCore.Exceptions.ValidationError as e:
         print(f"   ❌ ValidationError caught: {e.message}")
@@ -196,10 +202,16 @@ def demonstrate_single_import_pattern() -> None:
         demo_feature,
     )
 
-    totals = domain_base.run_operation("demo_total", sum, [1, 2, 3])
-    print(f"   🧮 run_operation helper: {totals.unwrap()}")
+    # Use a proper operation function that returns FlextResult
+    def sum_operation(*args: object) -> FlextResult[int]:
+        numbers = args[0] if args else []
+        if isinstance(numbers, list):
+            result = sum(int(x) for x in numbers if isinstance(x, (int, float)))
+            return FlextResult[int].ok(result)
+        return FlextResult[int].fail("Invalid input")
 
-    helper = domain_base.ok("domain ready")
+    # Use the proper method for creating success results
+    helper = FlextResult[int].ok(42)
     print(f"   ✨ ok helper: {helper.unwrap()}")
 
     # ========================================
@@ -208,9 +220,9 @@ def demonstrate_single_import_pattern() -> None:
     print("\n9. Service Infrastructure - Direct Component Access:")
 
     # Access infrastructure components directly via FlextCore
-    config = FlextCore.Config()
-    container = FlextCore.Container.get_global()
-    logger = FlextCore.Logger("demo-service")
+    config = FlextCore.create_config()
+    container = FlextContainer.get_global()
+    logger = FlextCore.create_logger("demo-service")
     bus = FlextCore.Bus()
 
     print("   ✅ Infrastructure components accessed:")
@@ -231,7 +243,7 @@ def main() -> None:
     demonstrate_single_import_pattern()
 
     print("\n📚 Next Steps:")
-    print("   - See 01_basic_result.py for complete FlextCore.Result API")
+    print("   - See 01_basic_result.py for complete FlextResult API")
     print("   - See 02_dependency_injection.py for DI patterns")
     print("   - See other examples for advanced patterns")
 

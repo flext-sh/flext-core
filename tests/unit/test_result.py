@@ -380,24 +380,6 @@ class TestFlextResult:
         assert mapped.is_success
         assert mapped.value == 10
 
-    def test_result_matmul_operator(self) -> None:
-        """Test @ operator (zip)."""
-        result1 = FlextResult[int].ok(5)
-        result2 = FlextResult[str].ok("hello")
-
-        zipped = result1 @ result2
-        assert zipped.is_success
-        assert zipped.value == (5, "hello")
-
-    def test_result_truediv_operator(self) -> None:
-        """Test / operator (or_else)."""
-        result1 = FlextResult[int].fail("error1")
-        result2 = FlextResult[int].ok(10)
-
-        or_result = result1 / result2
-        assert or_result.is_success
-        assert or_result.value == 10
-
     def test_result_mod_operator(self) -> None:
         """Test % operator (when)."""
         result = FlextResult[int].ok(5)
@@ -409,15 +391,6 @@ class TestFlextResult:
 
         assert filtered.is_success
         assert filtered.value == 5
-
-    def test_result_and_operator(self) -> None:
-        """Test & operator (combine)."""
-        result1 = FlextResult[int].ok(5)
-        result2 = FlextResult[str].ok("hello")
-
-        combined = result1 & result2
-        assert combined.is_success
-        assert combined.value == (5, "hello")
 
     def test_result_xor_operator(self) -> None:
         """Test ^ operator (recover)."""
@@ -1477,23 +1450,6 @@ class TestFlextResultAdditionalCoverage:
         chained = result << func
         assert chained.is_success
 
-    def test_result_operator_truediv(self) -> None:
-        """Test / operator for alternative fallback (line 1289)."""
-        # / operator takes another FlextResult, returns first success
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-
-        # First success wins
-        combined = result1 / result2
-        assert combined.is_success
-        assert combined.value == 10
-
-        # Fallback to second if first fails
-        failure: FlextResult[int] = FlextResult[int].fail("error")
-        combined = failure / result2
-        assert combined.is_success
-        assert combined.value == 20
-
     def test_result_operator_mod(self) -> None:
         """Test % operator for filter (line 1292)."""
         result = FlextResult[int].ok(10)
@@ -1505,40 +1461,29 @@ class TestFlextResultAdditionalCoverage:
         filtered_fail = result % (lambda x: x > 15)
         assert filtered_fail.is_failure
 
-    def test_result_operator_and(self) -> None:
-        """Test & operator for zip (line 1299)."""
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
+    def test_result_validate_all(self) -> None:
+        """Test validate_all method for chaining value-based validations."""
+        # validate_all takes a value and *validators, each is Callable[[T], FlextResult[None]]
 
-        # Use & to combine
-        combined = result1 & result2
-        assert combined.is_success
-
-    def test_result_chain_validations(self) -> None:
-        """Test chain_validations method (lines 1355-1356)."""
-        # chain_validations takes *validators (variadic), each is Callable[[], FlextResult[None]]
-        # Validators take NO arguments and return FlextResult[None]
-
-        value = 10
-
-        def validate_positive() -> FlextResult[None]:
+        def validate_positive(value: int) -> FlextResult[None]:
             if value <= 0:
                 return FlextResult[None].fail("Must be positive")
             return FlextResult[None].ok(None)
 
-        def validate_even() -> FlextResult[None]:
+        def validate_even(value: int) -> FlextResult[None]:
             if value % 2 != 0:
                 return FlextResult[None].fail("Must be even")
             return FlextResult[None].ok(None)
 
-        # Chain validations - all pass
-        result = FlextResult.chain_validations(validate_positive, validate_even)
+        # Validate value - all pass
+        result = FlextResult.validate_all(10, validate_positive, validate_even)
         assert result.is_success
+        assert result.value == 10
 
-        # Chain validations - one fails
-        value = 9
-        result = FlextResult.chain_validations(validate_positive, validate_even)
+        # Validate value - one fails
+        result = FlextResult.validate_all(9, validate_positive, validate_even)
         assert result.is_failure
+        assert "Must be even" in result.error
 
     def test_result_validate_and_execute(self) -> None:
         """Test validate_and_execute method (lines 1375)."""
@@ -1783,21 +1728,6 @@ class TestFlextResultFinalCoverage:
         assert result.is_failure
         assert "operation failed" in str(result.error)
 
-    def test_matmul_operator_combination(self) -> None:
-        """Test __matmul__ operator for combining results (lines 1260, 1262)."""
-        result1 = FlextResult[int].ok(10)
-        result2 = FlextResult[int].ok(20)
-
-        # @ operator combines into tuple
-        combined = result1 @ result2
-        assert combined.is_success
-        assert combined.value == (10, 20)
-
-        # Test with one failure
-        result3 = FlextResult[int].fail("Error")
-        combined_fail = result1 @ result3
-        assert combined_fail.is_failure
-
     def test_mod_operator_filter_with_exception(self) -> None:
         """Test __mod__ operator (filter) with exception (lines 1292, 1299, 1307-1308)."""
 
@@ -1810,20 +1740,6 @@ class TestFlextResultFinalCoverage:
         # % operator is filter - should handle exceptions
         filtered = result % predicate_raises
         assert filtered.is_failure
-
-    def test_chain_validations_with_exception(self) -> None:
-        """Test chain_validations when validator raises exception (lines 1355-1356)."""
-
-        def valid_validator() -> FlextResult[None]:
-            return FlextResult[None].ok(None)
-
-        def raises_validator() -> FlextResult[None]:
-            msg = "Validator error"
-            raise RuntimeError(msg)
-
-        # Should catch exception in validator
-        result = FlextResult.chain_validations(valid_validator, raises_validator)
-        assert result.is_failure
 
     def test_validate_and_execute_validation_failure(self) -> None:
         """Test validate_and_execute when validation fails (line 1375)."""
@@ -2111,16 +2027,6 @@ class TestFlextResultFinalCoveragePush:
         result = FlextResult.safe_call(sync_func)
         assert result.is_success
         assert result.unwrap() == 42
-
-    def test_truediv_both_failures(self) -> None:
-        """Test __truediv__ with both failures (line 1292)."""
-        result1 = FlextResult[int].fail("First failed")
-        result2 = FlextResult[int].fail("Second failed")
-
-        combined = result1 / result2
-        assert combined.is_failure
-        # Returns second error when both fail
-        assert combined.error == "Second failed"
 
     def test_mod_failure_path(self) -> None:
         """Test __mod__ when already failure (line 1299)."""

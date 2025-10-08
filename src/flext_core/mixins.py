@@ -485,25 +485,6 @@ class FlextMixins:
         return False
 
     # =============================================================================
-    # MIXIN CLASSES - Preserved for inheritance patterns
-    # =============================================================================
-
-    class Serializable:
-        """Mixin for serialization capabilities.
-
-        Provides marker class for objects that can be serialized using FlextMixins methods.
-        """
-
-    class Loggable:
-        """Mixin for logging capabilities.
-
-        Provides marker class for objects that can be logged using FlextMixins methods.
-        """
-
-    # NOTE: Configurable mixin moved to line ~2026 with full implementation
-    # This marker class is deprecated in favor of the enhanced version
-
-    # =============================================================================
     # ENHANCED MIXINS - DI Integration with structlog, dependency_injector, returns
     # =============================================================================
 
@@ -1440,6 +1421,14 @@ class FlextMixins:
         """Execute mixin with data."""
         try:
             result = mixin_instance(data)
+            # Check if result is already a FlextResult (avoid double wrapping)
+            if (
+                hasattr(result, "is_success")
+                and hasattr(result, "value")
+                and hasattr(result, "error")
+            ):
+                # Return the FlextResult directly
+                return cast("FlextResult[object]", result)
             return FlextResult[object].ok(result)
         except Exception as e:
             return FlextResult[object].fail(f"Mixin execution failed: {e}")

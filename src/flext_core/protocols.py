@@ -41,13 +41,9 @@ class FlextProtocols:
     extension points relied upon during the 1.0.0 rollout. Provides
     type-safe protocol definitions for the entire FLEXT ecosystem.
 
-    # Re-export commonly used foundation protocols for convenience
-    HasModelDump = FlextProtocols.Foundation.HasModelDump
-
     **Function**: Protocol interface definitions for type safety
     "ExceptionProtocol",  # Protocol for exception types (breaks circular dependency)
     "FlextProtocols",  # Main hierarchical protocol architecture with Config
-    "HasModelDump",  # Convenience alias for foundation dump protocol
     "ResultProtocol",  # Protocol for result types (breaks circular dependency)
         - Extension protocols for plugin architecture
         - Protocol registration and validation system

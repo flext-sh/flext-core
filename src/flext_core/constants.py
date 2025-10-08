@@ -603,14 +603,6 @@ class FlextConstants:
         PROFILE_DATA_PROCESSOR: Final[str] = "data_processor"
         PROFILE_API_CLIENT: Final[str] = "api_client"
 
-        # Environment constants
-        ENVIRONMENTS: Final[tuple[str, ...]] = (
-            "development",
-            "staging",
-            "production",
-            "testing",
-        )
-
         class LogLevel(StrEnum):
             """Standard log levels for centralized logging configuration."""
 
@@ -648,8 +640,15 @@ class FlextConstants:
             FILE = "file"  # Usage count: 0
             ENVIRONMENT = "env"  # Usage count: 0
             CLI = "cli"  # Usage count: 0
-            DEFAULT = "default"  # Usage count: 0
-            DOTENV = "dotenv"  # Usage count: 0
+
+        class Environment(StrEnum):
+            """Environment types for configuration."""
+
+            DEVELOPMENT = "development"
+            STAGING = "staging"
+            PRODUCTION = "production"
+            TESTING = "testing"
+            LOCAL = "local"
 
     class Enums:
         """Shared enumerations referenced across the API surface."""
@@ -719,6 +718,11 @@ class FlextConstants:
                 )
                 return f"{protocol}{host}:{port}"
         """
+
+        # Environment variable prefix for configuration
+        ENV_PREFIX: Final[str] = "FLEXT_"
+        ENV_FILE_DEFAULT: Final[str] = ".env"
+        ENV_NESTED_DELIMITER: Final[str] = "__"
 
         FLEXT_API_PORT: Final[int] = 8000
         DEFAULT_HOST: Final[str] = "localhost"
@@ -1061,6 +1065,9 @@ class FlextConstants:
 
         # Log level defaults
         DEFAULT_LEVEL: Final[str] = "INFO"
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
+        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
         VALID_LEVELS: Final[tuple[str, ...]] = (
             "DEBUG",
             "INFO",
@@ -1151,27 +1158,22 @@ class FlextConstants:
                 }
         """
 
-        # JWT token expiry limits
-        MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days in minutes
-        DEFAULT_JWT_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours in minutes
-
-        # Session management
-        MAX_SESSION_EXTENSION_HOURS: Final[int] = 168  # 7 days maximum
-        DEFAULT_SESSION_HOURS: Final[int] = 24  # 24 hours default
-
-        # Password and hash validation
-        MIN_BCRYPT_HASH_LENGTH: Final[int] = 32  # Minimum bcrypt hash length
-        MIN_PASSWORD_LENGTH: Final[int] = 8  # Minimum password length
-        MAX_PASSWORD_LENGTH: Final[int] = 128  # Maximum password length
-        MAX_DAYS_FOR_MONTH_ADDITION: Final[int] = 28  # Safe days for month calculations
-
-        # JWT token expiry limits - Additional short-term option
-        SHORT_JWT_EXPIRY_MINUTES: Final[int] = 60  # 1 hour for short sessions
-
-        # BCrypt configuration
+        # Security constants
+        DEFAULT_ADMIN_PASSWORD: Final[str] = (
+            "REDACTED_LDAP_BIND_PASSWORD123"  # Default REDACTED_LDAP_BIND_PASSWORD password for development
+        )
+        MIN_PASSWORD_LENGTH: Final[int] = 8
+        MAX_PASSWORD_LENGTH: Final[int] = 128
         DEFAULT_BCRYPT_ROUNDS: Final[int] = 12
+        SHORT_JWT_EXPIRY_MINUTES: Final[int] = 15
+        DEFAULT_JWT_EXPIRY_MINUTES: Final[int] = 60
+        MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days in minutes
+        MAX_SESSION_EXTENSION_HOURS: Final[int] = 24
+        DEFAULT_SESSION_HOURS: Final[int] = 8
+        MIN_BCRYPT_HASH_LENGTH: Final[int] = 32  # Minimum bcrypt hash length
         MIN_BCRYPT_ROUNDS: Final[int] = 10  # Minimum acceptable rounds
         MAX_BCRYPT_ROUNDS: Final[int] = 15  # Maximum reasonable rounds
+        MAX_DAYS_FOR_MONTH_ADDITION: Final[int] = 28  # Safe days for month calculations
 
         # Default JWT secret
         DEFAULT_JWT_SECRET: Final[str] = "default-jwt-secret-change-before-deployment"
@@ -1388,6 +1390,34 @@ class FlextConstants:
             GZIP: Final[str] = "gzip"
             BZIP2: Final[str] = "bzip2"
             LZ4: Final[str] = "lz4"
+
+        class ModelLiteral:
+            """Model-related literal types."""
+
+            # Handler types
+            COMMAND: Final[str] = "command"
+            QUERY: Final[str] = "query"
+            EVENT: Final[str] = "event"
+            SAGA: Final[str] = "saga"
+
+            # Status types
+            ACTIVE: Final[str] = "active"
+            INACTIVE: Final[str] = "inactive"
+
+            # Action types
+            ACQUIRE: Final[str] = "acquire"
+            RELEASE: Final[str] = "release"
+            CHECK: Final[str] = "check"
+            LIST_OBJECTS: Final[str] = "list[object]"
+
+            # Warning types
+            WARN_NONE: Final[str] = "none"
+            WARN_WARN: Final[str] = "warn"
+            WARN_ERROR: Final[str] = "error"
+
+            # Mode types
+            VALIDATION: Final[str] = "validation"
+            SERIALIZATION: Final[str] = "serialization"
 
         class AggregationLiteral:
             """Aggregation function literals."""
@@ -1981,6 +2011,51 @@ class FlextConstants:
         "closed",
         "open",
         "half_open",
+    ]
+
+    # Model literal types - reference nested class attributes correctly
+    HandlerType = Literal[
+        "command",
+        "query",
+        "event",
+        "saga",
+    ]
+
+    HandlerMode = Literal[
+        "command",
+        "query",
+        "event",
+        "saga",
+    ]
+
+    HandlerModeSimple = Literal[
+        "command",
+        "query",
+    ]
+
+    Action = Literal[
+        "acquire",
+        "release",
+        "check",
+        "list[object]",
+    ]
+
+    WarningLevel = Literal[
+        "none",
+        "warn",
+        "error",
+    ]
+
+    Mode = Literal[
+        "validation",
+        "serialization",
+    ]
+
+    Compression = Literal[
+        "none",
+        "gzip",
+        "bzip2",
+        "lz4",
     ]
 
 

@@ -14,7 +14,6 @@ from collections.abc import Callable, Mapping
 from typing import cast
 
 from flext_core.constants import FlextConstants
-from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
@@ -299,79 +298,6 @@ class FlextBus(
     def bus_config(self) -> FlextModels.CqrsConfig.Bus:
         """Access the bus configuration model."""
         return self._config_model
-
-    @classmethod
-    def create_command_bus(
-        cls,
-        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Dict | None = None,
-    ) -> FlextBus:
-        """REMOVED: Use direct instantiation with FlextBus().
-
-        Migration:
-            # Old pattern
-            bus = FlextBus.create_command_bus(config)
-
-            # New pattern - create instance directly
-            bus = FlextBus(bus_config=config)
-
-        """
-        msg = (
-            "FlextBus.create_command_bus() has been removed. "
-            "Use FlextBus(bus_config=...) to create instances directly."
-        )
-        raise NotImplementedError(msg)
-
-    @staticmethod
-    def create_simple_handler(
-        handler_func: Callable[..., object],
-        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Dict | None = None,
-    ) -> FlextHandlers[object, object]:
-        """REMOVED: Use FlextHandlers.from_callable() directly.
-
-        Migration:
-            # Old pattern
-            handler = FlextBus.create_simple_handler(my_func, config)
-
-            # New pattern - use FlextHandlers directly
-            handler = FlextHandlers.from_callable(
-                callable_func=my_func,
-                handler_name=my_func.__name__,
-                handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                handler_config=config
-            )
-
-        """
-        msg = (
-            "FlextBus.create_simple_handler() has been removed. "
-            "Use FlextHandlers.from_callable() directly."
-        )
-        raise NotImplementedError(msg)
-
-    @staticmethod
-    def create_query_handler(
-        handler_func: Callable[..., object],
-        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Dict | None = None,
-    ) -> FlextHandlers[object, object]:
-        """REMOVED: Use FlextHandlers.from_callable() directly.
-
-        Migration:
-            # Old pattern
-            handler = FlextBus.create_query_handler(my_func, config)
-
-            # New pattern - use FlextHandlers directly
-            handler = FlextHandlers.from_callable(
-                callable_func=my_func,
-                handler_name=my_func.__name__,
-                handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-                handler_config=config
-            )
-
-        """
-        msg = (
-            "FlextBus.create_query_handler() has been removed. "
-            "Use FlextHandlers.from_callable() directly."
-        )
-        raise NotImplementedError(msg)
 
     @staticmethod
     def _normalize_command_key(command_type_obj: object) -> str:

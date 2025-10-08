@@ -17,7 +17,7 @@ import json
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 from dependency_injector import providers
 from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
@@ -65,9 +65,13 @@ class FlextConfig(BaseSettings):
     _instances: ClassVar[dict[type, FlextConfig]] = {}
     _lock: ClassVar[threading.Lock] = threading.Lock()
 
-    # Pydantic 2.11+ BaseSettings configuration - NO environment variables
+    # Pydantic 2.11+ BaseSettings configuration with environment variable support
     model_config = SettingsConfigDict(
-        env_file=None,  # Disable environment file loading
+        case_sensitive=False,
+        env_prefix=FlextConstants.Platform.ENV_PREFIX,
+        env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
+        env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
+        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
         extra="ignore",
         use_enum_values=True,
         frozen=False,
@@ -362,7 +366,7 @@ class FlextConfig(BaseSettings):
                 if cls not in cls._instances:
                     instance = cls()
                     cls._instances[cls] = instance
-        return cls._instances[cls]  # type: ignore[return-value]
+        return cast("Self", cls._instances[cls])
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
@@ -384,7 +388,7 @@ class FlextConfig(BaseSettings):
             path = Path(file_path)
             if not path.exists():
                 return FlextResult[FlextConfig].fail(
-                    f"Configuration file not found: {file_path}"
+                    f"Configuration file not found: {file_path}",
                 )
 
             if path.suffix.lower() == ".json":
@@ -394,18 +398,20 @@ class FlextConfig(BaseSettings):
                 return FlextResult[FlextConfig].ok(config)
 
             return FlextResult[FlextConfig].fail(
-                f"Unsupported file format: {path.suffix}"
+                f"Unsupported file format: {path.suffix}",
             )
 
         except json.JSONDecodeError as e:
             return FlextResult[FlextConfig].fail(
-                f"Invalid JSON in configuration file: {e}"
+                f"Invalid JSON in configuration file: {e}",
             )
         except Exception as e:
             return FlextResult[FlextConfig].fail(f"Failed to load configuration: {e}")
 
     def save_to_file(
-        self, file_path: str | Path, **kwargs: object
+        self,
+        file_path: str | Path,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Save configuration to JSON file."""
         try:
@@ -419,10 +425,12 @@ class FlextConfig(BaseSettings):
                 config_data["api_key"] = FlextConstants.Messages.REDACTED_SECRET
 
             indent_value = kwargs.get(
-                "indent", FlextConstants.Mixins.DEFAULT_JSON_INDENT
+                "indent",
+                FlextConstants.Mixins.DEFAULT_JSON_INDENT,
             )
             sort_keys_value = kwargs.get(
-                "sort_keys", FlextConstants.Mixins.DEFAULT_SORT_KEYS
+                "sort_keys",
+                FlextConstants.Mixins.DEFAULT_SORT_KEYS,
             )
 
             # Type check and convert
@@ -465,7 +473,7 @@ class FlextConfig(BaseSettings):
 
         if self.trace and not self.debug:
             return FlextResult[None].fail(
-                "Trace mode requires debug mode to be enabled"
+                "Trace mode requires debug mode to be enabled",
             )
 
         return FlextResult[None].ok(None)
@@ -566,7 +574,8 @@ class FlextConfig(BaseSettings):
     def get_component_config(self, component: str) -> FlextResult[FlextTypes.Dict]:
         """Get configuration for specific flext-core component."""
         component_configs: dict[
-            str, FlextTypes.Dict | Callable[[], FlextTypes.Dict]
+            str,
+            FlextTypes.Dict | Callable[[], FlextTypes.Dict],
         ] = {
             "container": {
                 "max_workers": self.max_workers,
@@ -592,7 +601,7 @@ class FlextConfig(BaseSettings):
 
         if component not in component_configs:
             return FlextResult[FlextTypes.Dict].fail(
-                f"Unknown component: {component}. Available: {list(component_configs.keys())}"
+                f"Unknown component: {component}. Available: {list(component_configs.keys())}",
             )
 
         config_value = component_configs[component]

@@ -40,68 +40,68 @@ from flext_core.service import FlextService
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-ResultType = TypeVar("ResultType")
-
-
-class _ServiceAdapter(FlextMixins.Service):
-    """Internal helper leveraging FlextMixins.Service for automation."""
-
-    def __init__(
-        self,
-        *,
-        service_name: str,
-        config: FlextConfig | None,
-        container: FlextContainer | None,
-        logger: FlextLogger | None,
-        logger_name: str | None,
-        auto_register: bool,
-    ) -> None:
-        self._config_override = config
-        self._container_override = container
-        self._logger_override = logger
-        self._logger_name_override = logger_name
-        self._custom_logger: FlextLogger | None = None
-        super().__init__()
-        if auto_register:
-            self._init_service(service_name)
-
-    @property
-    def config(self) -> FlextConfig:
-        if self._config_override is not None:
-            return self._config_override
-        return super().config
-
-    @property
-    def container(self) -> FlextContainer:
-        if self._container_override is not None:
-            return self._container_override
-        return super().container
-
-    @property
-    def logger(self) -> FlextLogger:
-        if self._logger_override is not None:
-            return self._logger_override
-        if self._custom_logger is None:
-            name = self._logger_name_override or self.__class__.__name__
-            self._custom_logger = FlextLogger(name)
-        return self._custom_logger
-
-    def log(self, level: str, message: str, **extra: object) -> None:
-        self._log_with_context(level, message, **extra)
-
-    def bind_context(self, **context: object) -> None:
-        self._enrich_context(**context)
-
-    def track(self, operation_name: str) -> AbstractContextManager[FlextTypes.Dict]:
-        return self._track_operation(operation_name)
-
 
 class FlextBase:
     """Convenience base exposing flext-core namespaces and infrastructure."""
 
+    # Type variables for generic operations
+    ResultType = TypeVar("ResultType")
+
+    class _ServiceAdapter(FlextMixins.Service):
+        """Internal helper leveraging FlextMixins.Service for automation."""
+
+        def __init__(
+            self,
+            *,
+            service_name: str,
+            config: FlextConfig | None,
+            container: FlextContainer | None,
+            logger: FlextLogger | None,
+            logger_name: str | None,
+            auto_register: bool,
+        ) -> None:
+            self._config_override = config
+            self._container_override = container
+            self._logger_override = logger
+            self._logger_name_override = logger_name
+            self._custom_logger: FlextLogger | None = None
+            super().__init__()
+            if auto_register:
+                self._init_service(service_name)
+
+        @property
+        def config(self) -> FlextConfig:
+            if self._config_override is not None:
+                return self._config_override
+            return super().config
+
+        @property
+        def container(self) -> FlextContainer:
+            if self._container_override is not None:
+                return self._container_override
+            return super().container
+
+        @property
+        def logger(self) -> FlextLogger:
+            if self._logger_override is not None:
+                return self._logger_override
+            if self._custom_logger is None:
+                name = self._logger_name_override or self.__class__.__name__
+                self._custom_logger = FlextLogger(name)
+            return self._custom_logger
+
+        def log(self, level: str, message: str, **extra: object) -> None:
+            self._log_with_context(level, message, **extra)
+
+        def bind_context(self, **context: object) -> None:
+            self._enrich_context(**context)
+
+        def track(self, operation_name: str) -> AbstractContextManager[FlextTypes.Dict]:
+            return self._track_operation(operation_name)
+
     # Namespace aliases – inherit to enable domain-specific extension.
 
-    Result = FlextResult
+    Result: type[FlextResult] = FlextResult  # Type alias for linter
 
     class Config(FlextConfig):
         """Pydantic settings namespace."""
@@ -179,7 +179,7 @@ class FlextBase:
         self._runtime = runtime or self.Runtime()
         resolved_name = service_name or self.__class__.__name__
         config_override = config or self.Config(debug=False, trace=False)
-        self._service = _ServiceAdapter(
+        self._service = self._ServiceAdapter(
             service_name=resolved_name,
             config=config_override,
             container=container,
@@ -277,8 +277,8 @@ class FlextBase:
     # ------------------------------------------------------------------
 
     @classmethod
-    def ok(cls, value: ResultType) -> FlextResult[ResultType]:
-        return FlextResult[ResultType].ok(value)
+    def ok(cls, value: FlextBase.ResultType) -> FlextResult[FlextBase.ResultType]:
+        return FlextResult[FlextBase.ResultType].ok(value)
 
     @classmethod
     def ok_none(cls) -> FlextResult[None]:
@@ -319,23 +319,25 @@ class FlextBase:
     def run_operation(
         self,
         operation_name: str,
-        operation: Callable[..., ResultType | FlextResult[ResultType]],
+        operation: Callable[
+            ..., FlextBase.ResultType | FlextResult[FlextBase.ResultType]
+        ],
         *args: object,
         **kwargs: object,
-    ) -> FlextResult[ResultType]:
+    ) -> FlextResult[FlextBase.ResultType]:
         with self.track(operation_name):
             try:
                 outcome = operation(*args, **kwargs)
                 if isinstance(outcome, FlextResult):
-                    return outcome  # type: ignore[return-value]
-                return FlextResult[ResultType].ok(outcome)
+                    return outcome
+                return FlextResult[FlextBase.ResultType].ok(outcome)
             except Exception as exc:  # pragma: no cover - defensive logging path
                 self.error(
                     "Operation failed",
                     operation=operation_name,
                     error=str(exc),
                 )
-                return FlextResult[ResultType].fail(
+                return FlextResult[FlextBase.ResultType].fail(
                     str(exc),
                     error_code=self.Constants.Errors.UNKNOWN_ERROR,
                     error_data={
@@ -343,3 +345,8 @@ class FlextBase:
                         "exception": exc.__class__.__name__,
                     },
                 )
+
+
+__all__ = [
+    "FlextBase",
+]

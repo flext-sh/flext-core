@@ -695,8 +695,74 @@ class FlextDecorators:
 
         return decorator
 
+    # Backward compatibility class methods (deprecated, use static methods directly)
+    @classmethod
+    def get_inject(
+        cls, **dependencies: str
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Backward compatibility for inject decorator."""
+        return cls.inject(**dependencies)
 
-# Backward compatibility aliases (deprecated, use FlextDecorators.* instead)
+    @classmethod
+    def get_log_operation(
+        cls, operation_name: str | None = None
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Backward compatibility for log_operation decorator."""
+        return cls.log_operation(operation_name)
+
+    @classmethod
+    def get_track_performance(
+        cls, operation_name: str | None = None
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Backward compatibility for track_performance decorator."""
+        return cls.track_performance(operation_name)
+
+    @classmethod
+    def get_railway(
+        cls, error_code: str | None = None
+    ) -> Callable[[Callable[P, T]], Callable[P, FlextResult[T]]]:
+        """Backward compatibility for railway decorator."""
+        return cls.railway(error_code)
+
+    @classmethod
+    def get_retry(
+        cls,
+        max_attempts: int | None = None,
+        delay_seconds: float | None = None,
+        backoff_strategy: str | None = None,
+        error_code: str | None = None,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Backward compatibility for retry decorator."""
+        return cls.retry(max_attempts, delay_seconds, backoff_strategy, error_code)
+
+    @classmethod
+    def get_timeout(
+        cls, timeout_seconds: float | None = None, error_code: str | None = None
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Backward compatibility for timeout decorator."""
+        return cls.timeout(timeout_seconds, error_code)
+
+    @classmethod
+    def get_combined(
+        cls,
+        *,
+        inject_deps: dict[str, str] | None = None,
+        operation_name: str | None = None,
+        track_perf: bool = True,
+        use_railway: bool = False,
+        error_code: str | None = None,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Backward compatibility for combined decorator."""
+        return cls.combined(
+            inject_deps=inject_deps,
+            operation_name=operation_name,
+            track_perf=track_perf,
+            use_railway=use_railway,
+            error_code=error_code,
+        )
+
+
+# Backward compatibility exports - individual decorator functions
 inject = FlextDecorators.inject
 log_operation = FlextDecorators.log_operation
 track_performance = FlextDecorators.track_performance
@@ -707,7 +773,6 @@ combined = FlextDecorators.combined
 
 __all__ = [
     "FlextDecorators",
-    # Backward compatibility (deprecated)
     "combined",
     "inject",
     "log_operation",

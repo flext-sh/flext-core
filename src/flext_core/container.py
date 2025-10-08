@@ -876,67 +876,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 f"Failed to list services: {e}",
             )
 
-    def get_service_names(self) -> FlextResult[FlextTypes.StringList]:
-        """REMOVED: Access container._services and container._factories directly.
-
-        Migration:
-            # Old pattern
-            result = container.get_service_names()
-            if result.is_success:
-                names = result.unwrap()
-
-            # New pattern - direct access
-            all_names = set(container._services.keys()) | set(container._factories.keys())
-            names = sorted(all_names)
-
-        """
-        msg = (
-            "FlextContainer.get_service_names() has been removed. "
-            "Access _services and _factories attributes directly."
-        )
-        raise NotImplementedError(msg)
-
-    def get_service_count(self) -> int:
-        """REMOVED: Calculate count from container._services and container._factories directly.
-
-        Migration:
-            # Old pattern
-            count = container.get_service_count()
-
-            # New pattern - direct calculation
-            count = len(set(container._services.keys()) | set(container._factories.keys()))
-
-        """
-        msg = (
-            "FlextContainer.get_service_count() has been removed. "
-            "Calculate from _services and _factories attributes directly."
-        )
-        raise NotImplementedError(msg)
-
-    def get_info(self) -> FlextResult[FlextTypes.Dict]:
-        """REMOVED: Build info dict from container attributes directly.
-
-        Migration:
-            # Old pattern
-            result = container.get_info()
-            if result.is_success:
-                info = result.unwrap()
-
-            # New pattern - direct access
-            info = {
-                "service_count": len(set(container._services.keys()) | set(container._factories.keys())),
-                "direct_services": len(container._services),
-                "factories": len(container._factories),
-                "configuration": container._flext_config.model_dump(),
-            }
-
-        """
-        msg = (
-            "FlextContainer.get_info() has been removed. "
-            "Build info dictionary from container attributes directly."
-        )
-        raise NotImplementedError(msg)
-
     def _build_service_info(
         self,
         name: str,
@@ -1232,6 +1171,10 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     # Call validator and check result type
                     validator_result = validator(service)
                     # Type assertion: validator should return FlextResult
+                    if not isinstance(validator_result, FlextResult):
+                        return FlextResult[object].fail(
+                            "Validator must return FlextResult"
+                        )
                     validated_result: FlextResult[object] = validator_result
                     if validated_result.is_failure:
                         return FlextResult[object].fail(

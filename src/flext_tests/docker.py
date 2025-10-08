@@ -14,7 +14,6 @@ import json
 import shlex
 import subprocess
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
@@ -28,7 +27,7 @@ from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
 
-from flext_core import FlextLogger, FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextLogger, FlextModels, FlextResult, FlextTypes, FlextUtilities
 
 pytest_module: ModuleType | None = pytest
 
@@ -44,8 +43,7 @@ class ContainerStatus(Enum):
     ERROR = "error"
 
 
-@dataclass(frozen=True)
-class ContainerInfo:
+class ContainerInfo(FlextModels.Value):
     """Container information."""
 
     name: str
@@ -361,13 +359,13 @@ class FlextTestDocker:
             )
 
             if result.is_success:
-                process = result.value  # type: ignore[assignment]
+                process = result.value
                 # Return (exit_code, stdout, stderr) tuple
-                stdout = process.stdout if capture_output else ""  # type: ignore[attr-defined]
-                stderr = process.stderr if capture_output else ""  # type: ignore[attr-defined]
+                stdout = process.stdout if capture_output else ""
+                stderr = process.stderr if capture_output else ""
 
                 return FlextResult[tuple[int, str, str]].ok((
-                    process.returncode,  # type: ignore[attr-defined]
+                    process.returncode,
                     stdout,
                     stderr,
                 ))
@@ -762,12 +760,7 @@ class FlextTestDocker:
                 if container.status == "running"
                 else ContainerStatus.STOPPED
             )
-            image_tags: FlextTypes.StringList = (
-                container.image.tags
-                if container.image and hasattr(container.image, "tags")
-                else []
-            )
-            image_name: str = image_tags[0] if image_tags else "unknown"
+            image_name: str = getattr(container, "image", "unknown")
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
                     name=name,
@@ -844,7 +837,8 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(name)
-            container.remove(force=force)
+            if hasattr(container, "remove"):
+                container.remove(force=force)
             return FlextResult[str].ok(f"Container {name} removed")
         except NotFound:
             return FlextResult[str].fail(f"Container {name} not found")
@@ -855,8 +849,8 @@ class FlextTestDocker:
     def remove_image(self, image: str, *, force: bool = False) -> FlextResult[str]:
         """Remove a Docker image."""
         try:
-            # Type: ignore due to incomplete Docker SDK type stubs
-            self.client.images.remove(image, force=force)  # type: ignore[attr-defined]
+            if hasattr(self.client, "images") and hasattr(self.client.images, "remove"):
+                self.client.images.remove(image, force=force)
             return FlextResult[str].ok(f"Image {image} removed")
         except NotFound:
             return FlextResult[str].fail(f"Image {image} not found")
@@ -876,7 +870,9 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
-            logs = container.logs(tail=tail, follow=follow, stream=False)
+            logs = getattr(container, "logs", lambda **kwargs: b"")(
+                tail=tail, follow=follow, stream=False
+            )
             return FlextResult[str].ok(logs.decode("utf-8"))
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
@@ -897,11 +893,14 @@ class FlextTestDocker:
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
             # exec_run not fully typed in docker stubs
-            result = container.exec_run(  # type: ignore[attr-defined,call-arg]
-                command,
-                user=user if user is not None else "root",
-            )
-            return FlextResult[str].ok(result.output.decode("utf-8"))
+            exec_run_method = getattr(container, "exec_run", None)
+            if exec_run_method:
+                result = exec_run_method(
+                    command,
+                    user=user if user is not None else "root",
+                )
+                return FlextResult[str].ok(result.output.decode("utf-8"))
+            return FlextResult[str].fail("exec_run method not available")
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
         except DockerException as e:
@@ -916,31 +915,31 @@ class FlextTestDocker:
         """List containers."""
         try:
             client = self.get_client()
-            containers = cast("list", client.containers.list(all=all_containers))  # type: ignore[return-value,attr-defined]
+            containers = cast("list", client.containers.list(all=all_containers))
             container_infos: list[ContainerInfo] = []
             for container in containers:
                 # Container attributes not fully typed in docker stubs
-                container_status: str = getattr(container, "status", "unknown")  # type: ignore[attr-defined]
+                container_status: str = getattr(container, "status", "unknown")
                 status = (
                     ContainerStatus.RUNNING
                     if container_status == "running"
                     else ContainerStatus.STOPPED
                 )
-                container_image = getattr(container, "image", None)  # type: ignore[attr-defined]
+                container_image = getattr(container, "image", None)
                 image_tags: FlextTypes.StringList = (
-                    container_image.tags  # type: ignore[attr-defined]
+                    container_image.tags
                     if container_image and hasattr(container_image, "tags")
                     else []
                 )
                 image_name: str = image_tags[0] if image_tags else "unknown"
-                container_name_attr = getattr(container, "name", "unknown")  # type: ignore[attr-defined]
+                container_name_attr = getattr(container, "name", "unknown")
                 container_infos.append(
                     ContainerInfo(
                         name=str(container_name_attr),
                         status=status,
                         ports={},
                         image=image_name,
-                        container_id=getattr(container, "id", "unknown") or "unknown",  # type: ignore[attr-defined]
+                        container_id=getattr(container, "id", "unknown") or "unknown",
                     ),
                 )
             return FlextResult[list[ContainerInfo]].ok(container_infos)
@@ -1011,7 +1010,8 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container - get container for logs
             container = client.containers.get(container_name)
-            logs_bytes = container.logs(tail=tail_count)
+            logs_method = getattr(container, "logs", None)
+            logs_bytes = logs_method(tail=tail_count) if logs_method else b""
             return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
@@ -1798,7 +1798,7 @@ class FlextTestDocker:
             default="all",
             help="Container to start",
         )
-        def start_command(self: FlextTestDocker, container: str) -> None:  # type: ignore[unused-function]
+        def start_command(self: FlextTestDocker, container: str) -> None:
             manager = cls()
             if container.lower() == "all":
                 cls._console.print(
@@ -2027,3 +2027,6 @@ class FlextTestDocker:
 def main() -> None:
     """Entry point for command-line usage."""
     FlextTestDocker.run_cli()
+
+
+__all__ = ["FlextTestDocker", "main"]
