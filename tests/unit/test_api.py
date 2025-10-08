@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import (
+    FlextBase,
     FlextBus,
     FlextConfig,
     FlextConstants,
@@ -46,6 +47,75 @@ class TestFlextImports:
         """Test FlextCore alias works."""
         assert FlextCore is not None
         assert hasattr(FlextCore, "__name__")
+
+
+class TestFlextBase:
+    """Test FlextBase foundational behaviour."""
+
+    def test_flextbase_exported(self) -> None:
+        """Ensure FlextBase is exported and instantiable."""
+        assert FlextBase is not None
+        assert isinstance(FlextBase, type)
+
+    def test_flextbase_instance_helpers(self) -> None:
+        """FlextBase instances provide ready helpers."""
+        base = FlextBase()
+
+        assert isinstance(base.config, FlextConfig)
+        assert isinstance(base.container, FlextContainer)
+        assert isinstance(base.logger, FlextLogger)
+        assert isinstance(base.runtime, FlextBase.Runtime)
+        assert base.constants is FlextBase.Constants
+        assert base.handlers is FlextBase.Handlers
+        assert base.result is FlextResult
+
+    def test_flextbase_subclass_extension(self) -> None:
+        """Subclasses can extend namespaces without losing types."""
+
+        class CustomBase(FlextBase):
+            class Constants(FlextBase.Constants):
+                class Demo:
+                    VALUE: int = 7
+
+        assert issubclass(CustomBase.Constants, FlextBase.Constants)
+        assert CustomBase.Constants.Demo.VALUE == 7
+
+        custom = CustomBase()
+        assert custom.constants.Demo.VALUE == 7
+        assert isinstance(CustomBase.Container.get_global(), CustomBase.Container)
+
+    def test_flextbase_result_helpers(self) -> None:
+        """Ensure helper methods wrap result creation."""
+        success = FlextBase.ok("value")
+        assert success.is_success
+        assert success.unwrap() == "value"
+
+        empty = FlextBase.ok_none()
+        assert empty.is_success
+        assert empty.unwrap() is None
+
+        failure = FlextBase.fail("error message")
+        assert failure.is_failure
+        assert failure.error == "error message"
+
+    def test_flextbase_operation_helpers(self) -> None:
+        """Helpers should simplify operation execution and tracking."""
+        base = FlextBase()
+
+        result = base.run_operation("add", lambda a, b: a + b, 2, 3)
+        assert result.is_success
+        assert result.unwrap() == 5
+
+        def explode() -> int:
+            msg = "boom"
+            raise ValueError(msg)
+
+        failure = base.run_operation("explode", explode)
+        assert failure.is_failure
+        assert failure.error_code == FlextBase.Constants.Errors.UNKNOWN_ERROR
+
+        with base.track("demo") as metrics:
+            assert isinstance(metrics, dict)
 
 
 class TestFlextClassAttributes:

@@ -24,12 +24,175 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
+from copy import deepcopy
 from datetime import UTC, datetime
-from typing import cast
+from typing import ClassVar, cast
 
 from flext_core import FlextCore
 
-from .example_scenarios import ExampleScenarios
+
+class DemoScenarios:
+    """Lightweight scenario data declared inline for demonstration."""
+
+    _DATASET: ClassVar[dict[str, object]] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            },
+            {
+                "id": 2,
+                "name": "Bob Example",
+                "email": "bob@example.com",
+                "age": 28,
+            },
+            {
+                "id": 3,
+                "name": "Charlie Example",
+                "email": "charlie@example.com",
+                "age": 35,
+            },
+        ],
+        "configs": {"app_name": "Flext Demo", "version": "1.0.0"},
+    }
+    _VALIDATION: ClassVar[FlextCore.Types.Dict] = {
+        "valid_emails": ["user@example.com", "contact@flext.dev"],
+        "invalid_emails": ["invalid", "missing-at-symbol"],
+    }
+    _REALISTIC: ClassVar[FlextCore.Types.Dict] = {
+        "order": {
+            "customer_id": "cust-123",
+            "order_id": "order-456",
+            "total": "59.98",
+            "items": [
+                {
+                    "product_id": "prod-001",
+                    "name": "Widget",
+                    "price": "29.99",
+                    "quantity": 1,
+                },
+                {
+                    "product_id": "prod-002",
+                    "name": "Gadget",
+                    "price": "29.99",
+                    "quantity": 1,
+                },
+            ],
+        },
+        "api_response": {
+            "status": "ok",
+            "processed_at": "2025-01-01T00:00:00Z",
+        },
+        "user_registration": {
+            "user_id": "usr-789",
+            "plan": "standard",
+        },
+    }
+    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "sqlite:///:memory:",
+        "api_timeout": 30,
+        "retry": 3,
+    }
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+        "event": "user_registered",
+        "user_id": "usr-123",
+        "metadata": {"source": "examples", "version": "1.0"},
+    }
+
+    @staticmethod
+    def dataset() -> FlextCore.Types.Dict:
+        """Get a copy of the demo dataset for testing and examples."""
+        return deepcopy(DemoScenarios._DATASET)
+
+    @staticmethod
+    def validation_data() -> FlextCore.Types.Dict:
+        """Get a copy of the demo validation data for testing and examples."""
+        return deepcopy(DemoScenarios._VALIDATION)
+
+    @staticmethod
+    def realistic_data() -> FlextCore.Types.Dict:
+        """Get a simple realistic dataset for aggregate demonstrations."""
+        return deepcopy(DemoScenarios._REALISTIC)
+
+    @staticmethod
+    def config(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a copy of the demo config for testing and examples."""
+        value = deepcopy(DemoScenarios._CONFIG)
+        value.update(overrides)
+        return value
+
+    @staticmethod
+    def user(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a demo user object with optional overrides."""
+        user = deepcopy(DemoScenarios._DATASET["users"][0])  # type: ignore[index]
+        user.update(overrides)
+        return user
+
+    @staticmethod
+    def users(count: int = 5) -> list[FlextCore.Types.Dict]:
+        """Get a list of demo users (default: 5 users)."""
+        users_list = DemoScenarios._DATASET["users"]
+        return [deepcopy(user) for user in users_list[:count]]  # type: ignore[misc]
+
+    @staticmethod
+    def service_batch(logger_name: str = "example_batch") -> FlextCore.Types.Dict:
+        """Create a demo service batch with logger, config, and metrics."""
+        return {
+            "logger": FlextCore.Logger(logger_name),
+            "config": DemoScenarios.config(),
+            "metrics": {"requests": 0, "errors": 0},
+        }
+
+    @staticmethod
+    def payload(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a demo payload with optional overrides."""
+        payload = deepcopy(DemoScenarios._PAYLOAD)
+        payload.update(overrides)
+        return payload
+
+    @staticmethod
+    def metadata(
+        *, source: str = "examples", tags: list[str] | None = None, **extra: object
+    ) -> FlextCore.Types.Dict:
+        """Generate metadata for scenarios with optional tags and extra data."""
+        data: FlextCore.Types.Dict = {
+            "source": source,
+            "component": "flext_core",
+            "tags": tags or ["scenario", "demo"],
+        }
+        data.update(extra)
+        return data
+
+    @staticmethod
+    def result_success(data: object | None = None) -> FlextCore.Result[object]:
+        """Create a successful FlextCore.Result for testing and examples."""
+        return FlextCore.Result[object].ok(data)
+
+    @staticmethod
+    def result_failure(message: str = "Scenario error") -> FlextCore.Result[object]:
+        """Create a failed FlextCore.Result for testing and examples."""
+        return FlextCore.Result[object].fail(message)
+
+    @staticmethod
+    def user_result(success: bool = True) -> FlextCore.Result[dict[str, object]]:
+        """Get a demo user result (success or failure)."""
+        user = DemoScenarios._DATASET["users"][0]  # type: ignore[index]
+        if success:
+            return FlextCore.Result[dict[str, object]].ok(user)
+        return FlextCore.Result[dict[str, object]].fail("User lookup failed")
+
+    @staticmethod
+    def error_scenario(error_type: str = "ValidationError") -> FlextCore.Types.Dict:
+        """Get a demo error scenario dictionary."""
+        return {
+            "error_type": error_type,
+            "error_code": f"{error_type.upper()}_001",
+            "message": f"Example {error_type} scenario",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "severity": "error",
+        }
 
 
 class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
@@ -46,54 +209,6 @@ class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
     to all services in the FLEXT ecosystem.
     """
 
-    class Scenario:
-        """Shared access to canonical flext_tests scenarios."""
-
-        _scenarios = ExampleScenarios
-
-        @classmethod
-        def dataset(cls) -> FlextCore.Types.Dict:
-            """Return a reusable dataset with users, configs, and fields."""
-            return cls._scenarios.dataset()
-
-        @classmethod
-        def validation_data(cls) -> FlextCore.Types.Dict:
-            """Return shared validation data used by multiple examples."""
-            return cls._scenarios.validation_data()
-
-        @classmethod
-        def result_success(
-            cls,
-            data: object | None = None,
-        ) -> FlextCore.Result[object]:
-            """Return a successful ``FlextCore.Result`` instance."""
-            return cls._scenarios.result_success(data)
-
-        @classmethod
-        def result_failure(cls, message: str) -> FlextCore.Result[object]:
-            """Return a failed ``FlextCore.Result`` instance."""
-            return cls._scenarios.result_failure(message)
-
-        @classmethod
-        def user_result(
-            cls,
-            *,
-            success: bool = True,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
-            """Return a user-specific ``FlextCore.Result``."""
-            return cls._scenarios.user_result(success=success)
-
-        @classmethod
-        def metadata(cls) -> FlextCore.Types.Dict:
-            """Return a structured error scenario from fixtures."""
-            return cls._scenarios.metadata(tags=["result", "demo"])
-
-        @classmethod
-        def error_message(cls) -> str:
-            """Return a structured error scenario from fixtures."""
-            scenario = cls._scenarios.error_scenario("ValidationError")
-            return str(scenario.get("message", "Scenario failure"))
-
     def __init__(self) -> None:
         """Initialize with inherited FlextMixins.Service infrastructure.
 
@@ -106,9 +221,12 @@ class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        self._dataset: FlextCore.Types.Dict = self.Scenario.dataset()
-        self._validation: FlextCore.Types.Dict = self.Scenario.validation_data()
-        self._metadata: FlextCore.Types.Dict = self.Scenario.metadata()
+        self._scenarios = DemoScenarios()
+        self._dataset: FlextCore.Types.Dict = self._scenarios.dataset()
+        self._validation: FlextCore.Types.Dict = self._scenarios.validation_data()
+        self._metadata: FlextCore.Types.Dict = self._scenarios.metadata(
+            tags=["result", "demo"]
+        )
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
@@ -235,7 +353,7 @@ class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show all ways to create FlextCore.Result instances."""
         print("\n=== Factory Methods ===")
 
-        success = self.Scenario.result_success({"scenario": "factory"})
+        success = self._scenarios.result_success({"scenario": "factory"})
         print(f"✅ .ok(): {success}")
 
         # Using FlextCore.Constants for error codes
@@ -264,7 +382,7 @@ class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
         users_list = cast("FlextCore.Types.List", dataset["users"])
         user_payload = cast("FlextCore.Types.Dict", users_list[0])
         success = FlextCore.Result[FlextCore.Types.Dict].ok(user_payload)
-        failure = self.Scenario.result_failure("error")
+        failure = self._scenarios.result_failure("error")
 
         print(f".unwrap() on success: {success.unwrap()['email']}")
         print(f".unwrap_or('default'): {failure.unwrap_or({'email': 'default'})}")
@@ -367,15 +485,15 @@ class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== Collection Operations ===")
 
         results: list[FlextCore.Result[FlextCore.Types.Dict]] = [
-            self.Scenario.user_result(success=True),
-            self.Scenario.user_result(success=True),
-            self.Scenario.user_result(success=True),
+            self._scenarios.user_result(success=True),
+            self._scenarios.user_result(success=True),
+            self._scenarios.user_result(success=True),
         ]
 
         sequenced = FlextCore.Result.sequence(results)
         print(f".sequence(): {len(sequenced.unwrap())} successful users")
 
-        results.append(self.Scenario.user_result(success=False))
+        results.append(self._scenarios.user_result(success=False))
 
     # ========== VALIDATION PATTERNS ==========
 
@@ -490,7 +608,7 @@ class ComprehensiveResultService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== Context and Logging ===")
 
         def risky_operation() -> FlextCore.Result[int]:
-            message = self.Scenario.error_message()
+            message = str(self._scenarios.error_scenario("ValidationError")["message"])
             return FlextCore.Result[int].fail(message)
 
         result = risky_operation().with_context(

@@ -281,7 +281,7 @@ class FlextRuntime:
                 model_dump_method = getattr(obj, "model_dump")
                 result = model_dump_method()
                 if isinstance(result, dict):
-                    return result
+                    return cast("dict[str, object]", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
@@ -294,7 +294,7 @@ class FlextRuntime:
                 dict_method = getattr(obj, "dict")
                 result = dict_method()
                 if isinstance(result, dict):
-                    return result
+                    return cast("dict[str, object]", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
@@ -305,7 +305,7 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                return dict(result)
+                return cast("dict[str, object]", dict(result))
             except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
                 # Extremely rare: __dict__ exists but dict() conversion fails
@@ -315,7 +315,7 @@ class FlextRuntime:
 
         # Strategy 4: Check if already dict
         if isinstance(obj, dict):
-            return obj
+            return cast("dict[str, object]", obj)
 
         return None
 

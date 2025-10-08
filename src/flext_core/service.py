@@ -505,14 +505,16 @@ class FlextService[TDomainResult](
             # Execute true action if condition is met
             action_result = condition.true_action(self)
             if isinstance(action_result, FlextResult):
-                return action_result
+                # Cast to the specific FlextResult type for the domain result
+                return cast("FlextResult[TDomainResult]", action_result)
             # Type assertion since we expect TDomainResult from the action
             return FlextResult[TDomainResult].ok(cast("TDomainResult", action_result))
         # Execute false action if condition is not met
         if condition.false_action:
             action_result = condition.false_action(self)
             if isinstance(action_result, FlextResult):
-                return action_result
+                # Cast to the specific FlextResult type for the domain result
+                return cast("FlextResult[TDomainResult]", action_result)
             # Type assertion since we expect TDomainResult from the action
             return FlextResult[TDomainResult].ok(cast("TDomainResult", action_result))
         return FlextResult[TDomainResult].fail("Condition not met")

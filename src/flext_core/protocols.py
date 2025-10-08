@@ -433,11 +433,6 @@ class FlextProtocols:
                 """Get logging level."""
                 ...
 
-            @property
-            def environment(self) -> str:
-                """Get current environment (development, production, etc.)."""
-                ...
-
             def configure(self, config: FlextTypes.Dict) -> object:
                 """Configure component with provided settings."""
                 ...

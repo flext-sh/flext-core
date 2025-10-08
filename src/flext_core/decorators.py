@@ -24,8 +24,6 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar, cast
 
-import structlog
-
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.exceptions import FlextExceptions
@@ -112,10 +110,10 @@ class FlextDecorators:
                 container = FlextContainer.get_global()
 
                 # Inject dependencies that aren't already provided
-                for name in dependencies:
+                for name, service_key in dependencies.items():
                     if name not in kwargs:
-                        # Get from container
-                        result = container.get(str(name))
+                        # Get from container using the service key
+                        result = container.get(service_key)
                         if result.is_success:
                             kwargs[name] = result.unwrap()
                         else:
@@ -159,7 +157,7 @@ class FlextDecorators:
 
         Note:
             Works best with classes that have logger attribute. Falls back to
-            structlog.get_logger() otherwise.
+            FlextLogger.get_logger() otherwise.
 
         """
 
@@ -182,7 +180,7 @@ class FlextDecorators:
                     logger = FlextLogger(func.__module__)
 
                 # Bind operation context for structured logging
-                structlog.contextvars.bind_contextvars(operation=op_name)
+                FlextLogger.bind_global_context(operation=op_name)
 
                 try:
                     logger.info(
@@ -215,7 +213,7 @@ class FlextDecorators:
                     raise
                 finally:
                     # Unbind operation context
-                    structlog.contextvars.unbind_contextvars("operation")
+                    FlextLogger.unbind_global_context("operation")
 
             return wrapper
 
@@ -275,7 +273,7 @@ class FlextDecorators:
                 start_time = time.perf_counter()
 
                 # Bind operation context for structured logging
-                structlog.contextvars.bind_contextvars(operation=op_name)
+                FlextLogger.bind_global_context(operation=op_name)
 
                 try:
                     result = func(*args, **kwargs)
@@ -308,7 +306,7 @@ class FlextDecorators:
                     raise
                 finally:
                     # Unbind operation context
-                    structlog.contextvars.unbind_contextvars("operation")
+                    FlextLogger.unbind_global_context("operation")
 
             return wrapper
 

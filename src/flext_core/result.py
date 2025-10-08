@@ -42,8 +42,8 @@ from collections.abc import Callable, Iterator, Sequence
 from typing import Self, cast, overload, override
 
 from returns.io import IO, IOFailure, IOSuccess
-from returns.maybe import Some
-from returns.result import Failure, Result, Success
+from returns.maybe import Nothing, Some
+from returns.result import Failure, Result, Success, safe
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -77,7 +77,6 @@ class FlextResult[T_co]:
         - Uses returns.Result[T_co, str] for internal storage
         - .map() delegates to returns.Result.map() for correctness
         - 100% backward compatible - external API unchanged
-        - All 254 tests passing with returns backend
         - Zero breaking changes to ecosystem (32+ projects)
 
     **Uses**: Foundation dependencies with returns integration
@@ -233,6 +232,7 @@ class FlextResult[T_co]:
         error_data: FlextTypes.Dict | None = None,
     ) -> None:
         """Initialize result with either success data or error using returns.Result backend."""
+        super().__init__()
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
             # Failure path: create Failure with error message
@@ -442,8 +442,6 @@ class FlextResult[T_co]:
             ```
 
         """
-        from returns.result import Failure, Success, safe
-
         # Use @safe to wrap the callable - converts exceptions to Result
         safe_func = safe(func)
         returns_result = safe_func()
@@ -1027,8 +1025,6 @@ class FlextResult[T_co]:
             ```
 
         """
-        from returns.maybe import Nothing, Some
-
         return Some(self._data) if self.is_success else Nothing
 
     @classmethod
@@ -1248,24 +1244,25 @@ class FlextResult[T_co]:
         if isinstance(io_result, IOSuccess):
             # Extract IO container using value_or, then unwrap the IO
             sentinel = object()
-            value_or_sentinel = io_result.value_or(sentinel)
-            if value_or_sentinel is not None and value_or_sentinel is not sentinel:
+            value_or_sentinel: IO[T] = io_result.value_or(sentinel)  # type: ignore[assignment]
+            if value_or_sentinel is not sentinel:
                 # CRITICAL: value_or() returns an IO container, not the raw value
                 # The returns library provides no public API to extract from IO
                 # We MUST access _inner_value for interop - this is by design
-                value: T = cast("T", value_or_sentinel._inner_value)
+                io_container = value_or_sentinel
+                value: T = cast("T", io_container._inner_value)  # type: ignore[attr-defined]
                 return cls.ok(value)
 
         # It's IOFailure - extract the error
         if isinstance(io_result, IOFailure):
             # Extract the failure IO container
-            error_value = io_result.failure()
-            if error_value is not None:
-                # CRITICAL: failure() returns an IO container, not the raw error
-                # The returns library provides no public API to extract from IO
-                # We MUST access _inner_value for interop - this is by design
-                error_msg = str(error_value._inner_value)
-                return cls.fail(error_msg)
+            error_io_result: IO[Exception] = io_result.failure()  # type: ignore[assignment]
+            # CRITICAL: failure() returns an IO container, not the raw error
+            # The returns library provides no public API to extract from IO
+            # We MUST access _inner_value for interop - this is by design
+            error_io_container = error_io_result
+            error_msg = str(error_io_container._inner_value)  # type: ignore[attr-defined]
+            return cls.fail(error_msg)
 
         # Unknown type
         return cls.fail("Unknown IOResult type")
@@ -1406,10 +1403,13 @@ class FlextResult[T_co]:
             )
 
         # Both successful - combine values
-        left_val = self.unwrap()
-        right_val = other.unwrap()
+        left_val: T_co = self.unwrap()
+        right_val: U = other.unwrap()
         combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        return FlextResult.ok(combined_tuple)
+        return cast(
+            "FlextResult[tuple[T_co, U]]",
+            FlextResult[tuple[T_co, U]].ok(combined_tuple),  # type: ignore[arg-type]
+        )
 
     def __truediv__[U](self, other: FlextResult[U]) -> FlextResult[T_co | U]:
         """Division operator (/) for alternative fallback - ADVANCED COMPOSITION."""
@@ -1463,60 +1463,6 @@ class FlextResult[T_co]:
         return FlextResult[list[UTraverse]].ok(results)
 
     # === RAILWAY-ORIENTED PROGRAMMING ENHANCEMENTS ===
-
-    @classmethod
-    def chain_validations(
-        cls,
-        *validators: Callable[[], FlextResult[None]],
-    ) -> FlextResult[None]:
-        """Chain multiple validation functions with early termination on failure.
-
-        Args:
-            *validators: Validation functions that return FlextResult
-
-        Returns:
-            FlextResult[None] - Success if all validations pass, first failure otherwise
-
-        """
-        for validator in validators:
-            try:
-                result: FlextResult[None] = validator()
-                if result.is_failure:
-                    return FlextResult[None].fail(
-                        result.error
-                        or f"{FlextConstants.Messages.VALIDATION_FAILED} (chain)",
-                        error_code=result.error_code,
-                        error_data=result.error_data,
-                    )
-            except Exception as e:
-                return FlextResult[None].fail(f"Validator execution failed: {e}")
-        return FlextResult[None].ok(None)
-
-    def validate_and_execute[U](
-        self,
-        validator: Callable[[T_co], FlextResult[None]],
-        executor: Callable[[T_co], FlextResult[U]],
-    ) -> FlextResult[U]:
-        """Common pattern: validate data then execute operation.
-
-        Args:
-            validator: Function to validate the current data
-            executor: Function to execute with validated data
-
-        Returns:
-            Result of executor if validation passes, validation error otherwise
-
-        """
-        if self.is_failure:
-            return FlextResult[U].fail(
-                self.error or "Cannot validate failed result",
-                error_code=self.error_code,
-                error_data=self.error_data,
-            )
-
-        return self.flat_map(
-            lambda data: validator(data).flat_map(lambda _: executor(data)),
-        )
 
     @classmethod
     def pipeline[TPipeline](
@@ -1822,7 +1768,9 @@ class FlextResult[T_co]:
                 item,
                 (list, tuple),
             ):
-                flat.extend(FlextResult._flatten_variadic_args(*item))
+                # Cast item to the expected type for recursive call
+                item_cast = cast("tuple[object, ...]", item)
+                flat.extend(FlextResult._flatten_variadic_args(*item_cast))
             else:
                 flat.append(item)
         return flat
@@ -1835,7 +1783,9 @@ class FlextResult[T_co]:
                 item,
                 (list, tuple),
             ):
-                flat_callables.extend(FlextResult._flatten_callable_args(*item))
+                # Cast item to the expected type for recursive call
+                item_cast = cast("tuple[object, ...]", item)
+                flat_callables.extend(FlextResult._flatten_callable_args(*item_cast))
             else:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
@@ -1843,8 +1793,69 @@ class FlextResult[T_co]:
                         message=msg,
                         error_code="VALIDATION_ERROR",
                     )
-                flat_callables.append(item)
+                flat_callables.append(cast("Callable[[], object]", item))
         return flat_callables
+
+    def validate_and_execute[T, U](
+        self,
+        validator: Callable[[T_co], FlextResult[None]],
+        executor: Callable[[T_co], FlextResult[U]],
+    ) -> FlextResult[U]:
+        """Validate and execute operations on successful results.
+
+        Args:
+            validator: Function to validate the result value
+            executor: Function to execute if validation passes
+
+        Returns:
+            FlextResult with execution result or validation/execution failure
+
+        """
+        if self.is_failure:
+            return FlextResult[U].fail(
+                self.error or "Validation failed",
+                error_code=self.error_code,
+                error_data=self.error_data,
+            )
+
+        # Validate the current value
+        validation_result = validator(self.value)
+        if validation_result.is_failure:
+            return FlextResult[U].fail(
+                validation_result.error or "Validation failed",
+                error_code=validation_result.error_code,
+                error_data=validation_result.error_data,
+            )
+
+        # Execute if validation passed
+        try:
+            return executor(self.value)
+        except Exception as e:
+            return FlextResult[U].fail(f"Execution failed: {e}")
+
+    @staticmethod
+    def chain_validations[T](
+        *validators: Callable[[T], FlextResult[T]],
+    ) -> Callable[[T], FlextResult[T]]:
+        """Chain multiple validation functions together.
+
+        Args:
+            *validators: Validation functions to chain
+
+        Returns:
+            Function that applies all validations in sequence
+
+        """
+
+        def chained_validator(value: T) -> FlextResult[T]:
+            result = FlextResult[T].ok(value)
+            for validator in validators:
+                if result.is_failure:
+                    break
+                result = validator(result.value)
+            return result
+
+        return chained_validator
 
 
 __all__: list[str] = [

@@ -52,8 +52,9 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: FlextTypes.Dict) -> None:  # pyright: ignore[reportMissingSuperCall]
+    def __init__(self, name: str, data: FlextTypes.Dict) -> None:
         """Initialize mockscenario:."""
+        super().__init__()
         self.name = name
         self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
         self.when: dict[str, str] = cast("dict[str, str]", data.get("when", {}))
@@ -65,8 +66,9 @@ class MockScenario:
 class GivenWhenThenBuilder:
     """Builder for Given-When-Then test scenarios."""
 
-    def __init__(self, name: str) -> None:  # pyright: ignore[reportMissingSuperCall]
+    def __init__(self, name: str) -> None:
         """Initialize givenwhenthenbuilder:."""
+        super().__init__()
         self.name = name
         self._given: FlextTypes.Dict = {}
         self._when: FlextTypes.Dict = {}
@@ -146,7 +148,7 @@ class GivenWhenThenBuilder:
 class FlextTestBuilder:
     """Builder for FLEXT test data with detailed metadata."""
 
-    def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
+    def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         self._data: FlextTypes.Dict = {}
         self._validation_rules: dict[str, object] = {}
@@ -228,7 +230,7 @@ class FlextTestBuilder:
 class ParameterizedTestBuilder:
     """Builder for parameterized test cases with success/failure scenarios."""
 
-    def __init__(self, test_name: str) -> None:  # pyright: ignore[reportMissingSuperCall]
+    def __init__(self, test_name: str) -> None:
         """Initialize parameterizedtestbuilder:."""
         self.test_name = test_name
         self._cases: list[FlextTypes.Dict] = []
@@ -313,9 +315,11 @@ class ParameterizedTestBuilder:
 class AssertionBuilder:
     """Builder for complex test assertions."""
 
-    def __init__(self, data: object) -> None:  # pyright: ignore[reportMissingSuperCall]
+    def __init__(
+        self, data: list[object] | dict[str, object] | str | tuple[object, ...]
+    ) -> None:
         """Initialize assertionbuilder:."""
-        self.data = data
+        self.data: list[object] | dict[str, object] | str | tuple[object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: object) -> AssertionBuilder:
@@ -347,14 +351,12 @@ class AssertionBuilder:
                 if isinstance(self.data, (list, tuple, set)):
                     container_data = cast("list[object]", self.data)
                     assert item in container_data
-                else:
+                elif isinstance(self.data, str):
                     # self.data must be str since we checked isinstance(self.data, (list, tuple, set, str))
-                    str_data = cast("str", self.data)
-                    assert item in str_data
+                    assert str(item) in self.data
             elif isinstance(self.data, dict):
                 # For dict, check if item is a key
-                dict_data = cast("dict[object, object]", self.data)
-                assert item in dict_data
+                assert item in self.data
             else:
                 # For other types, check if the item is equal to the data
                 assert item == self.data
@@ -378,7 +380,9 @@ class AssertionBuilder:
 
     def satisfies(
         self,
-        condition: Callable[[object], bool],
+        condition: Callable[
+            [list[object] | dict[str, object] | str | tuple[object, ...]], bool
+        ],
         description: str = "",
     ) -> AssertionBuilder:
         """Satisfies method.
@@ -486,7 +490,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: FlextTypes.Dict = {"name": "John", "age": 30, "active": True}
+        test_data: dict[str, object] = {"name": "John", "age": 30, "active": True}
 
         assertion_builder = (
             AssertionBuilder(test_data)
@@ -501,7 +505,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: FlextTypes.Dict = {
+        scenario_data: dict[str, object] = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
@@ -511,7 +515,7 @@ class TestAdvancedPatterns:
 
         scenario = MockScenario(
             "api_request",
-            cast("FlextTypes.Dict", scenario_data),
+            scenario_data,
         )
 
         assert scenario.name == "api_request"
@@ -590,9 +594,7 @@ class TestAdvancedPatterns:
             .assert_type(list)
             .assert_contains(3)
             .satisfies(
-                lambda x: len(x) == 5  # type: ignore[arg-type]
-                if hasattr(x, "__len__") and isinstance(x, (list, tuple, str, dict))
-                else False,
+                lambda x: len(x) == 5,
                 "should have 5 elements",
             )
         )

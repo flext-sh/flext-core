@@ -20,20 +20,167 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from copy import deepcopy
 from decimal import Decimal
-from typing import cast
+from typing import ClassVar, TypedDict, cast
 from uuid import uuid4
 
 from pydantic import Field
 
 from flext_core import FlextCore
 
-from .example_scenarios import (
-    ExampleScenarios,
-    OrderItemDict,
-    RealisticDataDict,
-    RealisticOrderDict,
-)
+
+class OrderItemDict(TypedDict):
+    """Type definition for order item data in integration examples."""
+
+    product_id: str
+    name: str
+    price: str
+    quantity: int
+
+
+class RealisticOrderDict(TypedDict):
+    """Type definition for realistic order data in integration examples."""
+
+    customer_id: str
+    items: list[OrderItemDict]
+    order_id: str
+    total: str
+
+
+class RealisticDataDict(TypedDict):
+    """Type definition for realistic combined data in integration examples."""
+
+    order: RealisticOrderDict
+    api_response: FlextCore.Types.Dict
+    user_registration: FlextCore.Types.Dict
+
+
+class DemoScenarios:
+    """Inline scenario helpers for the integration example."""
+
+    _DATASET: ClassVar[dict] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            },
+            {
+                "id": 2,
+                "name": "Bob Example",
+                "email": "bob@example.com",
+                "age": 28,
+            },
+            {
+                "id": 3,
+                "name": "Charlie Example",
+                "email": "charlie@example.com",
+                "age": 35,
+            },
+        ],
+    }
+
+    _REALISTIC: ClassVar[RealisticDataDict] = {
+        "order": {
+            "customer_id": "cust-123",
+            "order_id": "order-456",
+            "total": "119.97",
+            "items": [
+                {
+                    "product_id": "prod-001",
+                    "name": "Widget",
+                    "price": "39.99",
+                    "quantity": 1,
+                },
+                {
+                    "product_id": "prod-002",
+                    "name": "Gadget",
+                    "price": "29.99",
+                    "quantity": 2,
+                },
+            ],
+        },
+        "api_response": {
+            "status": "ok",
+            "processed_at": "2025-01-01T00:00:00Z",
+        },
+        "user_registration": {
+            "user_id": "usr-789",
+            "plan": "standard",
+        },
+    }
+
+    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "sqlite:///:memory:",
+        "api_timeout": 30,
+        "retry": 3,
+    }
+
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+        "event": "order_processed",
+        "order_id": "order-456",
+        "metadata": {"source": "examples", "version": "1.0"},
+    }
+
+    @staticmethod
+    def dataset() -> FlextCore.Types.Dict:
+        """Get a copy of the demo dataset."""
+        return deepcopy(DemoScenarios._DATASET)
+
+    @staticmethod
+    def realistic_data() -> RealisticDataDict:
+        """Get a copy of realistic demo data."""
+        return deepcopy(DemoScenarios._REALISTIC)
+
+    @staticmethod
+    def validation_data() -> FlextCore.Types.Dict:
+        """Get validation demo data."""
+        return {
+            "valid_emails": ["user@example.com"],
+            "invalid_emails": ["invalid"],
+        }
+
+    @staticmethod
+    def config(**overrides: object) -> FlextCore.Types.Dict:
+        """Create configuration dictionary with optional overrides."""
+        value = deepcopy(DemoScenarios._CONFIG)
+        value.update(overrides)
+        return value
+
+    @staticmethod
+    def metadata(
+        *, source: str = "examples", tags: list[str] | None = None, **extra: object
+    ) -> FlextCore.Types.Dict:
+        """Create metadata dictionary for integration examples."""
+        data: FlextCore.Types.Dict = {
+            "source": source,
+            "component": "flext_core",
+            "tags": tags or ["integration", "demo"],
+        }
+        data.update(extra)
+        return data
+
+    @staticmethod
+    def user(**overrides: object) -> FlextCore.Types.Dict:
+        """Create user data dictionary for integration examples."""
+        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        user.update(overrides)
+        return user
+
+    @staticmethod
+    def users(count: int = 5) -> list[FlextCore.Types.Dict]:
+        """Create list of user data dictionaries for integration examples."""
+        return [deepcopy(user) for user in DemoScenarios._DATASET["users"][:count]]
+
+    @staticmethod
+    def payload(**overrides: object) -> FlextCore.Types.Dict:
+        """Create event payload dictionary for integration examples."""
+        payload = deepcopy(DemoScenarios._PAYLOAD)
+        payload.update(overrides)
+        return payload
+
 
 # Constants
 UNKNOWN_ERROR_MSG = "Unknown error"
@@ -266,7 +413,7 @@ class InventoryService(FlextCore.Service[FlextCore.Types.Dict]):
         """
         super().__init__()
         # Use self.logger from FlextMixins.Logging, not logger
-        self._scenarios = ExampleScenarios
+        self._scenarios = DemoScenarios
         self._products: dict[str, Product] = {}
         self._initialize_products()
 
@@ -478,7 +625,7 @@ class OrderService(FlextCore.Service[FlextCore.Types.Dict]):
         - self.metrics: FlextMetrics for order workflow observability
         """
         super().__init__()
-        self._scenarios = ExampleScenarios()
+        self._scenarios = DemoScenarios()
         self._metadata = self._scenarios.metadata(tags=["integration", "demo"])
 
         # Demonstrate inherited logger (no manual instantiation needed!)
@@ -778,9 +925,9 @@ def demonstrate_new_flextresult_methods() -> None:
     print("=" * 60)
 
     # Setup test data
-    scenario_data: RealisticDataDict = ExampleScenarios.realistic_data()
+    scenario_data: RealisticDataDict = DemoScenarios.realistic_data()
     order_template: RealisticOrderDict = scenario_data["order"]
-    user_pool = ExampleScenarios.users()
+    user_pool = DemoScenarios.users()
     REDACTED_LDAP_BIND_PASSWORD_user = user_pool[0]  # Get first user for demos
 
     # 1. from_callable - Safe Integration Layer Operations
@@ -1007,14 +1154,13 @@ def demonstrate_complete_integration() -> None:
     print("E-Commerce Order Processing System")
     print("=" * 60)
 
-    scenario_data: RealisticDataDict = ExampleScenarios.realistic_data()
+    scenario_data: RealisticDataDict = DemoScenarios.realistic_data()
     order_template: RealisticOrderDict = scenario_data["order"]
-    user_pool = ExampleScenarios.users()
+    user_pool = DemoScenarios.users()
 
     # 1. Configuration setup
     print("\n=== 1. Configuration ===")
     config = FlextCore.Config()
-    print(f"Environment: {config.environment}")
     print(f"Debug: {config.debug}")
     print(f"Log Level: {config.log_level}")
 

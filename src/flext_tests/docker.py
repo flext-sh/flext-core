@@ -32,24 +32,7 @@ from flext_core import FlextLogger, FlextResult, FlextTypes, FlextUtilities
 
 pytest_module: ModuleType | None = pytest
 
-
-# Lazy logger initialization to avoid configuration issues
-class _LoggerSingleton:
-    """Singleton logger instance."""
-
-    _instance: FlextLogger | None = None
-
-    @classmethod
-    def get_logger(cls) -> FlextLogger:
-        """Get logger instance with lazy initialization."""
-        if cls._instance is None:
-            cls._instance = FlextLogger(__name__)
-        return cls._instance
-
-
-def get_logger() -> FlextLogger:
-    """Get logger instance with lazy initialization."""
-    return _LoggerSingleton.get_logger()
+logger: FlextLogger = FlextLogger(__name__)
 
 
 class ContainerStatus(Enum):
@@ -90,7 +73,7 @@ class FlextTestDocker:
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize Docker client with dirty state tracking."""
         self._client: DockerClient | None = None
-        self._logger = get_logger()
+        self.logger: FlextLogger = FlextLogger(__name__)
         self.workspace_root = workspace_root or Path.cwd()
         self.client: DockerClient | None = None  # Will be set by _get_client()
         self._registered_services: set[str] = set()
@@ -104,6 +87,7 @@ class FlextTestDocker:
         self._image_manager = None
 
         # Dirty state tracking
+        super().__init__()
         self._dirty_containers: set[str] = set()
         self._state_file = Path.home() / ".flext" / "docker_state.json"
         self._load_dirty_state()
@@ -118,7 +102,7 @@ class FlextTestDocker:
                 self._client = docker.from_env()
                 self.client = self._client  # Set the public client attribute
             except DockerException:
-                self._logger.exception("Failed to initialize Docker client")
+                self.logger.exception("Failed to initialize Docker client")
                 raise
         return self._client
 
@@ -129,12 +113,12 @@ class FlextTestDocker:
                 with self._state_file.open("r") as f:
                     state = json.load(f)
                     self._dirty_containers = set(state.get("dirty_containers", []))
-                    self._logger.info(
+                    self.logger.info(
                         "Loaded dirty state",
                         extra={"dirty_containers": list(self._dirty_containers)},
                     )
         except Exception as e:
-            self._logger.warning("Failed to load dirty state", extra={"error": str(e)})
+            self.logger.warning("Failed to load dirty state", extra={"error": str(e)})
             self._dirty_containers = set()
 
     def _save_dirty_state(self) -> None:
@@ -147,12 +131,12 @@ class FlextTestDocker:
                     f,
                     indent=2,
                 )
-            self._logger.info(
+            self.logger.info(
                 "Saved dirty state",
                 extra={"dirty_containers": list(self._dirty_containers)},
             )
         except Exception as e:
-            self._logger.warning("Failed to save dirty state", extra={"error": str(e)})
+            self.logger.warning("Failed to save dirty state", extra={"error": str(e)})
 
     def mark_container_dirty(self, container_name: str) -> FlextResult[None]:
         """Mark a container as dirty, requiring recreation on next use.
@@ -167,7 +151,7 @@ class FlextTestDocker:
         try:
             self._dirty_containers.add(container_name)
             self._save_dirty_state()
-            self._logger.info(
+            self.logger.info(
                 "Container marked as dirty",
                 extra={"container": container_name},
             )
@@ -188,7 +172,7 @@ class FlextTestDocker:
         try:
             self._dirty_containers.discard(container_name)
             self._save_dirty_state()
-            self._logger.info(
+            self.logger.info(
                 "Container marked as clean",
                 extra={"container": container_name},
             )
@@ -227,7 +211,7 @@ class FlextTestDocker:
         results: FlextTypes.StringDict = {}
 
         for container_name in list(self._dirty_containers):
-            self._logger.info(
+            self.logger.info(
                 "Cleaning up dirty container",
                 extra={"container": container_name},
             )
@@ -255,7 +239,7 @@ class FlextTestDocker:
                 # Remove associated volumes
                 volume_cleanup = self.cleanup_volumes()
                 if volume_cleanup.is_failure:
-                    self._logger.warning(
+                    self.logger.warning(
                         "Volume cleanup warning",
                         extra={
                             "container": container_name,
@@ -271,7 +255,7 @@ class FlextTestDocker:
                 elif isinstance(service_value, int):
                     service = str(service_value)
                 elif service_value is not None:
-                    self._logger.warning(
+                    self.logger.warning(
                         "Unexpected service type in cleanup",
                         extra={"type": type(service_value), "value": service_value},
                     )
@@ -368,7 +352,7 @@ class FlextTestDocker:
             capture_output = kwargs.get("capture_output", False)
 
             # Run the command
-            result = FlextUtilities.run_external_command(
+            result = FlextUtilities.run_external_command(  # type: ignore[attr-defined]
                 ["docker"] + shlex.split(script_path),
                 check=False,
                 capture_output=bool(capture_output),
@@ -697,7 +681,7 @@ class FlextTestDocker:
             )
             return FlextResult[str].ok(f"Container {name} started")
         except DockerException as e:
-            self._logger.exception("Failed to start container")
+            self.logger.exception("Failed to start container")
             return FlextResult[str].fail(f"Failed to start container: {e}")
 
     def stop_container(
@@ -735,7 +719,7 @@ class FlextTestDocker:
             # Remove associated volumes
             volume_cleanup = self.cleanup_volumes()
             if volume_cleanup.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Volume cleanup warning",
                     extra={"container": container_name, "error": volume_cleanup.error},
                 )
@@ -748,7 +732,7 @@ class FlextTestDocker:
             elif isinstance(service_value, int):
                 service = str(service_value)
             elif service_value is not None:
-                self._logger.warning(
+                self.logger.warning(
                     "Unexpected service type",
                     extra={"type": type(service_value), "value": service_value},
                 )
@@ -796,7 +780,7 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[ContainerInfo].fail(f"Container {name} not found")
         except DockerException as e:
-            self._logger.exception("Failed to get container info")
+            self.logger.exception("Failed to get container info")
             return FlextResult[ContainerInfo].fail(f"Failed to get container info: {e}")
 
     def build_image(
@@ -851,7 +835,7 @@ class FlextTestDocker:
                 ),
             )
         except DockerException as e:
-            self._logger.exception("Failed to run container")
+            self.logger.exception("Failed to run container")
             return FlextResult[ContainerInfo].fail(f"Failed to run container: {e}")
 
     def remove_container(self, name: str, *, force: bool = False) -> FlextResult[str]:
@@ -865,7 +849,7 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[str].fail(f"Container {name} not found")
         except DockerException as e:
-            self._logger.exception("Failed to remove container")
+            self.logger.exception("Failed to remove container")
             return FlextResult[str].fail(f"Failed to remove container: {e}")
 
     def remove_image(self, image: str, *, force: bool = False) -> FlextResult[str]:
@@ -878,7 +862,7 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[str].fail(f"Image {image} not found")
         except DockerException as e:
-            self._logger.exception("Failed to remove image")
+            self.logger.exception("Failed to remove image")
             return FlextResult[str].fail(f"Failed to remove image: {e}")
 
     def container_logs_formatted(
@@ -898,7 +882,7 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
         except DockerException as e:
-            self._logger.exception("Failed to get container logs")
+            self.logger.exception("Failed to get container logs")
             return FlextResult[str].fail(f"Failed to get container logs: {e}")
 
     def execute_command_in_container(
@@ -922,7 +906,7 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
         except DockerException as e:
-            self._logger.exception("Failed to execute command in container")
+            self.logger.exception("Failed to execute command in container")
             return FlextResult[str].fail(f"Failed to execute command in container: {e}")
 
     def list_containers(
@@ -962,7 +946,7 @@ class FlextTestDocker:
                 )
             return FlextResult[list[ContainerInfo]].ok(container_infos)
         except DockerException as e:
-            self._logger.exception("Failed to list containers")
+            self.logger.exception("Failed to list containers")
             return FlextResult[list[ContainerInfo]].fail(
                 f"Failed to list containers: {e}",
             )
@@ -1033,7 +1017,7 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
         except DockerException as exc:
-            self._logger.exception("Failed to fetch container logs")
+            self.logger.exception("Failed to fetch container logs")
             return FlextResult[str].fail(f"Failed to fetch logs: {exc}")
 
     @classmethod
@@ -1223,7 +1207,7 @@ class FlextTestDocker:
                     discovery = self.auto_discover_services(str(compose_path))
                     if discovery.is_success:
                         services = discovery.value
-                        self._logger.info(
+                        self.logger.info(
                             "Auto-discovered services from %s: %s",
                             compose_path,
                             services,
@@ -1233,7 +1217,7 @@ class FlextTestDocker:
                 f"FlextTestDocker initialized for workspace: {workspace_root}",
             )
         except Exception as exc:
-            self._logger.exception("Workspace initialization failed")
+            self.logger.exception("Workspace initialization failed")
             return FlextResult[str].fail(f"Workspace initialization failed: {exc}")
 
     def build_workspace_projects(
@@ -1315,7 +1299,7 @@ class FlextTestDocker:
         if network_name:
             network_result = self.create_network(network_name)
             if network_result.is_failure:
-                self._logger.warning(
+                self.logger.warning(
                     "Network creation failed for %s: %s",
                     network_name,
                     network_result.error,
@@ -1990,9 +1974,9 @@ class FlextTestDocker:
 
 
 # Cleanup decorators for test functions
-def with_clean_container(
+def with_clean_container[R](
     container_name: str,
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
+) -> Callable[[Callable[..., R]], Callable[..., R]]:
     """Decorator to ensure a container is clean before and after a test.
 
     Args:
@@ -2006,9 +1990,9 @@ def with_clean_container(
 
     """
 
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
+    def decorator(func: Callable[..., R]) -> Callable[..., R]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
+        def wrapper(*args: object, **kwargs: object) -> R:
             # Get FlextTestDocker instance
             docker_manager = FlextTestDocker()
 
@@ -2063,7 +2047,7 @@ def mark_dirty_on_failure(
             except Exception as e:
                 # Mark container dirty on any exception
                 docker_manager.mark_container_dirty(container_name)
-                get_logger().warning(
+                logger.warning(
                     "Test failed, marking container dirty",
                     extra={"container": container_name, "error": str(e)},
                 )
@@ -2095,7 +2079,7 @@ def auto_cleanup_dirty_containers() -> Callable[
             # Clean up all dirty containers before test
             dirty = docker_manager.get_dirty_containers()
             if dirty:
-                get_logger().info(
+                logger.info(
                     "Cleaning dirty containers before test",
                     extra={"containers": dirty},
                 )
@@ -2114,11 +2098,11 @@ def auto_cleanup_dirty_containers() -> Callable[
     return decorator
 
 
-def main() -> None:
-    """Entry point for command-line usage."""
-    FlextTestDocker.run_cli()
-
-
 def workspace_main(argv: FlextTypes.StringList | None = None) -> int:
     """Entry point compatible with the former workspace manager script."""
     return FlextTestDocker.run_workspace_command(argv)
+
+
+def main() -> None:
+    """Entry point for command-line usage."""
+    FlextTestDocker.run_cli()

@@ -12,8 +12,7 @@ Layered configuration system supporting multiple sources (environment variables,
 from flext_core import FlextConfig
 
 # Create configuration with multiple sources
-config = FlextConfig.create(
-    environment='development',
+config = FlextConfig(
     config_files=['config.toml', 'secrets.env'],
     overrides={'debug': True}
 )

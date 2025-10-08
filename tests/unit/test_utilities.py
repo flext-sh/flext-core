@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 import tempfile
 import time
 from pathlib import Path
@@ -453,3 +454,95 @@ class TestFlextUtilitiesComprehensive:
 
         can_handle = FlextUtilities.TypeChecker.can_handle_message_type((str,), int)
         assert can_handle is False
+
+    def test_additional_validation_operations(self) -> None:
+        """Test additional validation operations not covered in other tests."""
+        # Test validate_email
+        result = FlextUtilities.Validation.validate_email("test@example.com")
+        assert result.is_success
+        assert result.unwrap() == "test@example.com"
+
+        result = FlextUtilities.Validation.validate_email("invalid-email")
+        assert result.is_failure
+
+        # Test validate_url
+        result = FlextUtilities.Validation.validate_url("https://example.com")
+        assert result.is_success
+
+        result = FlextUtilities.Validation.validate_url("not-a-url")
+        assert result.is_failure
+
+        # Test validate_port
+        result = FlextUtilities.Validation.validate_port(8080)
+        assert result.is_success
+        assert result.unwrap() == 8080
+
+        result = FlextUtilities.Validation.validate_port("invalid")
+        assert result.is_failure
+
+        # Test validate_environment_value
+        result = FlextUtilities.Validation.validate_environment_value(
+            "development", ["development", "staging", "production"]
+        )
+        assert result.is_success
+
+        result = FlextUtilities.Validation.validate_environment_value(
+            "invalid", ["development", "staging", "production"]
+        )
+        assert result.is_failure
+
+        # Test validate_log_level
+        result = FlextUtilities.Validation.validate_log_level("INFO")
+        assert result.is_success
+
+        result = FlextUtilities.Validation.validate_log_level("invalid")
+        assert result.is_failure
+
+        # Test validate_security_token
+        result = FlextUtilities.Validation.validate_security_token("valid_token_123")
+        assert result.is_success
+
+        # Test validate_connection_string
+        result = FlextUtilities.Validation.validate_connection_string(
+            "postgresql://user:pass@localhost:5432/db"
+        )
+        assert result.is_success
+
+        # Test validate_directory_path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = FlextUtilities.Validation.validate_directory_path(temp_dir)
+            assert result.is_success
+
+        # Test validate_file_path
+        with tempfile.NamedTemporaryFile() as temp_file:
+            result = FlextUtilities.Validation.validate_file_path(temp_file.name)
+            assert result.is_success
+
+        # Test validate_existing_file_path
+        with tempfile.NamedTemporaryFile() as temp_file:
+            result = FlextUtilities.Validation.validate_existing_file_path(
+                temp_file.name
+            )
+            assert result.is_success
+
+        # Test validate_timeout_seconds
+        result = FlextUtilities.Validation.validate_timeout_seconds(30.0)
+        assert result.is_success
+
+        result = FlextUtilities.Validation.validate_timeout_seconds(-1.0)
+        assert result.is_failure
+
+        # Test convert_to_float
+        result = FlextUtilities.Validation.convert_to_float("3.14")
+        assert result.is_success
+        assert result.unwrap() == math.pi
+
+        result = FlextUtilities.Validation.convert_to_float("not_a_number")
+        assert result.is_failure
+
+        # Test validate_retry_count
+        result = FlextUtilities.Validation.validate_retry_count(3)
+        assert result.is_success
+
+        result = FlextUtilities.Validation.validate_retry_count(-1)
+        assert result.is_failure

@@ -43,7 +43,7 @@ import json
 import re
 import time as time_module
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
@@ -105,7 +105,7 @@ class FlextModels:
         - Validation utilities with FlextResult integration
         - Pagination support for queries
         - Metadata and error detail models
-        - Configuration models with environment support
+        - Configuration models with centralized defaults
         - Request/Response models for APIs
 
     **Uses**: Pydantic 2 for validation and serialization
@@ -269,7 +269,7 @@ class FlextModels:
     @classmethod
     def get_batch_size(cls) -> int:
         """Get default batch size from config."""
-        return cls._get_config().batch_size
+        return cls._get_config().max_batch_size
 
     @classmethod
     def get_ttl_seconds(cls) -> int:
@@ -998,7 +998,6 @@ class FlextModels:
 
             app_name: str
             app_version: str
-            environment: FlextTypes.Config.Environment
             host: str | None = None
             metadata: FlextTypes.Dict = Field(default_factory=dict)
             permanent_context: FlextTypes.Dict = Field(default_factory=dict)
@@ -1025,53 +1024,6 @@ class FlextModels:
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 return v
-
-            @field_validator("environment", mode="before")
-            @classmethod
-            def normalize_environment(
-                cls, value: object
-            ) -> FlextTypes.Config.Environment:
-                """Normalize and validate environment against shared constants."""
-                # Convert to string if needed (handles any input type)
-                str_value: str
-                if isinstance(value, str):
-                    str_value = value
-                elif hasattr(value, "value"):
-                    # Handle enum-like objects
-                    str_value = str(getattr(value, "value"))
-                else:
-                    # Fallback to string conversion
-                    str_value = str(value)
-
-                normalized = str_value.lower()
-                valid_envs = set(FlextConstants.Config.ENVIRONMENTS)
-                if normalized not in valid_envs:
-                    msg = f"Environment must be one of {sorted(valid_envs)}"
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                return cast("FlextTypes.Config.Environment", normalized)
-
-            @model_validator(mode="after")
-            def validate_permanent_context(self) -> Self:
-                """Validate permanent context."""
-                # Use only the enum values as the single source of truth for valid environments.
-                valid_envs = {
-                    env.value.lower()
-                    for env in FlextConstants.Environment.ConfigEnvironment.__members__.values()
-                }
-                if self.environment.lower() not in valid_envs:
-                    sorted_envs = sorted(valid_envs)
-                    msg = (
-                        f"Invalid environment: {self.environment}. "
-                        f"Must be one of {sorted_envs}"
-                    )
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                return self
 
     # Base model classes from DDD patterns
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
@@ -4022,13 +3974,21 @@ class FlextModels:
 
         @field_validator("pagination", mode="before")
         @classmethod
-        def validate_pagination(cls, v: object) -> FlextModels.Pagination:
+        def validate_pagination(
+            cls, v: FlextModels.Pagination | dict[str, int | str] | None
+        ) -> FlextModels.Pagination:
             """Convert pagination to Pagination instance."""
+            if isinstance(v, FlextModels.Pagination):
+                return v
             if isinstance(v, dict):
-                # Extract page and size from dict
-                v_dict = v  # Type: dict[str, object]
-                page: int | str = v_dict.get("page", 1)
-                size: int | str = v_dict.get("size", 20)
+                # Extract page and size from dict with proper type casting
+                v_dict = cast("dict[str, object]", v)
+                page_raw = v_dict.get("page", 1)
+                size_raw = v_dict.get("size", 20)
+
+                # Convert to int | str types
+                page: int | str = page_raw if isinstance(page_raw, (int, str)) else 1
+                size: int | str = size_raw if isinstance(size_raw, (int, str)) else 20
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -4042,16 +4002,13 @@ class FlextModels:
                     except ValueError:
                         size = 20
 
-                # At this point page and size should be int, cast them properly
-                page_int = int(page) if isinstance(page, (int, str)) else 1
-                size_int = int(size) if isinstance(size, (int, str)) else 20
-                # Type casting for mypy - after validation, these are guaranteed to be int
-                page_int = int(page_int)
-                size_int = int(size_int)
-                return FlextModels.Pagination(page=page_int, size=size_int)
-            if isinstance(v, FlextModels.Pagination):
-                return v
-            # Default pagination
+                return FlextModels.Pagination(
+                    page=page,
+                    size=size,
+                )
+            if v is None:
+                return FlextModels.Pagination()
+            # For any other type, return default pagination
             return FlextModels.Pagination()
 
         @classmethod
@@ -4066,11 +4023,16 @@ class FlextModels:
                 if isinstance(pagination_data, FlextModels.Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
-                    pagination_dict = pagination_data  # Type: dict[str, object]
-                    page: int | str = pagination_dict.get("page", 1)
-                    size: int | str = pagination_dict.get("size", 20)
+                    pagination_dict = cast("dict[str, object]", pagination_data)
+                    page_raw = pagination_dict.get("page", 1)
+                    size_raw = pagination_dict.get("size", 20)
+                    page: int = int(page_raw) if isinstance(page_raw, (int, str)) else 1
+                    size: int = (
+                        int(size_raw) if isinstance(size_raw, (int, str)) else 20
+                    )
                     pagination = FlextModels.Pagination(
-                        page=int(page) if page else 1, size=int(size) if size else 20
+                        page=page,
+                        size=size,
                     )
                 else:
                     pagination = FlextModels.Pagination()
@@ -4080,7 +4042,7 @@ class FlextModels:
                 if not isinstance(filters, dict):
                     filters = {}
                 # Type casting for mypy - after validation, filters is guaranteed to be dict
-                filters_dict = dict(filters)
+                filters_dict = cast("dict[str, object]", filters)
                 # No need to validate pagination dict - Pydantic validator handles conversion
 
                 query = cls(
@@ -4108,15 +4070,17 @@ class FlextModels:
                     params["page"] = self.pagination.page
                     params["size"] = self.pagination.size
                 else:  # pagination is dict[str, object]
-                    params["page"] = self.pagination.get("page", 1)
-                    params["size"] = self.pagination.get("size", 10)
+                    pagination_dict = cast("dict[str, object]", self.pagination)
+                    page_value = pagination_dict.get("page", 1)
+                    size_value = pagination_dict.get("size", 10)
+                    params["page"] = page_value if isinstance(page_value, int) else 1
+                    params["size"] = size_value if isinstance(size_value, int) else 10
 
             # Add filters
             for key, value in self.filters.items():
                 if isinstance(value, (list, tuple)):
-                    params[f"filter_{key}"] = ",".join(
-                        str(cast("object", item)) for item in value
-                    )
+                    value_seq = cast("Sequence[object]", value)
+                    params[f"filter_{key}"] = ",".join(str(item) for item in value_seq)
                 else:
                     params[f"filter_{key}"] = str(value)
 

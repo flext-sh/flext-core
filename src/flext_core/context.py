@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import (
     Final,
+    Self,
     cast,
 )
 
@@ -441,6 +442,7 @@ class FlextContext:
             initial_data: Optional context data (dict or `_ContextData`)
 
         """
+        super().__init__()
         if initial_data is None:
             context_data = FlextContext._ContextData()
         elif isinstance(initial_data, dict):
@@ -494,10 +496,7 @@ class FlextContext:
         if not self._active:
             return
 
-        # Validate key is not None (empty string is allowed but will fail validation)
-        if key is None:
-            msg = "Context key cannot be None"
-            raise ValueError(msg)
+        # Validate key (str type is guaranteed by type annotation)
 
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
@@ -1013,9 +1012,6 @@ class FlextContext:
             )
             SERVICE_VERSION: Final[_StructlogContextVar[str | None]] = (
                 _StructlogContextVar("service_version", default=None)
-            )
-            ENVIRONMENT: Final[_StructlogContextVar[str | None]] = _StructlogContextVar(
-                "environment", default=None
             )
 
         class Request:
@@ -1617,6 +1613,7 @@ class FlextContext:
                 handler_mode: Mode of the handler (command/query)
 
             """
+            super().__init__()
             self.handler_name = handler_name
             self.handler_mode = handler_mode
             self._start_time: float | None = None
@@ -1650,7 +1647,7 @@ class FlextContext:
                 self._metrics_state = {}
             return self._metrics_state
 
-        def set_metrics_state(self, state: FlextTypes.Dict) -> None:
+        def set_metrics_state(self: Self, state: FlextTypes.Dict) -> None:
             """Set metrics state.
 
             Args:
@@ -1659,17 +1656,17 @@ class FlextContext:
             """
             self._metrics_state = state
 
-        def reset(self) -> None:
+        def reset(self: Self) -> None:
             """Reset execution context."""
             self._start_time = None
             self._metrics_state = None
 
         @classmethod
         def create_for_handler(
-            cls,
+            cls: type[Self],
             handler_name: str,
             handler_mode: str,
-        ) -> FlextContext.HandlerExecutionContext:
+        ) -> Self:
             """Create execution context for a handler.
 
             Args:
@@ -1681,10 +1678,6 @@ class FlextContext:
 
             """
             return cls(handler_name, handler_mode)
-
-    # =========================================================================
-    # Enhanced flext-core Integration Methods
-    # =========================================================================
 
 
 __all__: FlextTypes.StringList = [

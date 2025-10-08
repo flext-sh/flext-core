@@ -184,7 +184,7 @@ class FlextBus(
         """
 
         def __init__(
-            self, max_size: int = FlextConstants.Defaults.MAX_CACHE_SIZE
+            self, max_size: int = FlextConstants.Container.MAX_CACHE_SIZE
         ) -> None:
             """Initialize cache manager.
 
