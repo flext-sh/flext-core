@@ -55,7 +55,7 @@ class TestInjectDecorator:
         def process_data(data: str, *, test_service: TestService) -> str:
             return f"{data}_{test_service.get_value()}"
 
-        result = process_data("input")  # type: ignore[call-arg]
+        result = process_data("input")  # type: ignore[missing-argument]
         assert result == "input_test_value"
 
     def test_inject_missing_dependency(self) -> None:
@@ -66,7 +66,7 @@ class TestInjectDecorator:
             return missing_service
 
         # Should use default when injection fails
-        result = process_data()  # type: ignore[call-arg]
+        result = process_data()
         assert result == "default"
 
     def test_inject_with_provided_kwarg(self) -> None:
@@ -428,7 +428,7 @@ class TestCombinedDecorator:
         def process_data(*, service: TestService) -> str:
             return service.get_value()
 
-        result = process_data()  # type: ignore[call-arg]
+        result = process_data()  # type: ignore[missing-argument]
         assert result == "injected"
 
     def test_combined_with_railway(self) -> None:
@@ -485,7 +485,7 @@ class TestCombinedDecorator:
         def full_operation(data: str, *, repo: Repository) -> str:
             return repo.save(data)
 
-        result = full_operation("test")  # type: ignore[call-arg]
+        result = full_operation("test")  # type: ignore[missing-argument]
         assert isinstance(result, FlextResult)
         assert result.is_success
         assert "saved_test" in result.unwrap()

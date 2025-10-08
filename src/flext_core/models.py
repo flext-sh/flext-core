@@ -4026,8 +4026,9 @@ class FlextModels:
             """Convert pagination to Pagination instance."""
             if isinstance(v, dict):
                 # Extract page and size from dict
-                page: int | str = v.get("page", 1)
-                size: int | str = v.get("size", 20)
+                v_dict = v  # Type: dict[str, object]
+                page: int | str = v_dict.get("page", 1)
+                size: int | str = v_dict.get("size", 20)
 
                 # Convert to int if string
                 if isinstance(page, str):
@@ -4065,8 +4066,9 @@ class FlextModels:
                 if isinstance(pagination_data, FlextModels.Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
-                    page: int | str = pagination_data.get("page", 1)
-                    size: int | str = pagination_data.get("size", 20)
+                    pagination_dict = pagination_data  # Type: dict[str, object]
+                    page: int | str = pagination_dict.get("page", 1)
+                    size: int | str = pagination_dict.get("size", 20)
                     pagination = FlextModels.Pagination(
                         page=int(page) if page else 1, size=int(size) if size else 20
                     )
@@ -4078,11 +4080,11 @@ class FlextModels:
                 if not isinstance(filters, dict):
                     filters = {}
                 # Type casting for mypy - after validation, filters is guaranteed to be dict
-                filters = dict(filters)
+                filters_dict = dict(filters)
                 # No need to validate pagination dict - Pydantic validator handles conversion
 
                 query = cls(
-                    filters=filters,
+                    filters=filters_dict,
                     pagination=pagination,  # Pydantic will convert dict to Pagination
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,

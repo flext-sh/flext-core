@@ -110,27 +110,6 @@ class TestFlextConfig:
         result = FlextConfig.from_file("nonexistent.json")
         assert result.is_failure
 
-    def test_config_save_to_file(self, tmp_path: Path) -> None:
-        """Test config saving to file."""
-        config = FlextConfig(app_name="save_app", version="5.0.0", environment="test")
-
-        config_file = tmp_path / "saved_config.json"
-        # Test model_dump method instead
-        config_dict = config.model_dump()
-        assert config_dict["app_name"] == "save_app"
-        assert config_dict["version"] == "5.0.0"
-
-        # Test saving to file manually
-        with Path(config_file).open("w", encoding="utf-8") as f:
-            json.dump(config_dict, f)
-
-        # Verify file was created and contains correct data
-        assert config_file.exists()
-        with Path(config_file).open(encoding="utf-8") as f:
-            saved_data = json.load(f)
-        assert saved_data["app_name"] == "save_app"
-        assert saved_data["version"] == "5.0.0"
-
     def test_config_validation(self) -> None:
         """Test config validation."""
         # Valid config should pass
@@ -396,3 +375,125 @@ class TestFlextConfig:
             config2.app_name == "FLEXT Application"
         )  # Default value from FlextConstants
         assert config2.debug is False  # Default value
+
+    def test_config_from_file_valid_json(self, tmp_path: Path) -> None:
+        """Test loading configuration from a valid JSON file."""
+        from flext_core import FlextConfig, FlextResult
+
+        # Create a test config file
+        config_data = {
+            "app_name": "file_test_app",
+            "version": "3.0.0",
+            "environment": "staging",
+            "debug": True,
+        }
+        config_file = tmp_path / "test_config.json"
+        config_file.write_text(json.dumps(config_data))
+
+        # Test loading from file
+        result = FlextConfig.from_file(str(config_file))
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+
+        config = result.unwrap()
+        assert config.app_name == "file_test_app"
+        assert config.version == "3.0.0"
+        assert config.environment == "staging"
+        assert config.debug is True
+
+    def test_config_from_file_invalid_json(self, tmp_path: Path) -> None:
+        """Test loading configuration from invalid JSON file."""
+        from flext_core import FlextConfig, FlextResult
+
+        # Create an invalid JSON file
+        config_file = tmp_path / "invalid_config.json"
+        config_file.write_text("{invalid json content")
+
+        # Test loading from invalid file
+        result = FlextConfig.from_file(str(config_file))
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+
+    def test_config_from_file_nonexistent(self) -> None:
+        """Test loading configuration from nonexistent file."""
+        from flext_core import FlextConfig, FlextResult
+
+        # Test loading from nonexistent file
+        result = FlextConfig.from_file("nonexistent_file.json")
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+
+    def test_config_save_to_file(self, tmp_path: Path) -> None:
+        """Test saving configuration to file."""
+        from flext_core import FlextConfig, FlextResult
+
+        # Create a config instance
+        config = FlextConfig(
+            app_name="save_test_app",
+            version="4.0.0",
+            environment="development",
+        )
+
+        # Save to file
+        output_file = tmp_path / "saved_config.json"
+        result = config.save_to_file(str(output_file))
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+
+        # Verify file was created and contains correct data
+        assert output_file.exists()
+        saved_data = json.loads(output_file.read_text())
+        assert saved_data["app_name"] == "save_test_app"
+        assert saved_data["version"] == "4.0.0"
+        assert saved_data["environment"] == "development"
+
+    def test_config_environment_methods(self) -> None:
+        """Test environment checking methods."""
+        from flext_core import FlextConfig
+
+        # Test development environment
+        dev_config = FlextConfig(environment="development")
+        assert dev_config.is_development() is True
+        assert dev_config.is_production() is False
+
+        # Test production environment
+        prod_config = FlextConfig(environment="production")
+        assert prod_config.is_development() is False
+        assert prod_config.is_production() is True
+
+        # Test other environments
+        staging_config = FlextConfig(environment="staging")
+        assert staging_config.is_development() is False
+        assert staging_config.is_production() is False
+
+    def test_config_debug_enabled(self) -> None:
+        """Test debug enabled checking."""
+        from flext_core import FlextConfig
+
+        # Test with debug=True
+        debug_config = FlextConfig(debug=True)
+        assert debug_config.is_debug_enabled is True
+
+        # Test with trace=True (requires debug=True)
+        trace_config = FlextConfig(debug=True, trace=True)
+        assert trace_config.is_debug_enabled is True
+
+        # Test with neither
+        normal_config = FlextConfig(debug=False, trace=False)
+        assert normal_config.is_debug_enabled is False
+
+    def test_config_effective_log_level(self) -> None:
+        """Test effective log level calculation."""
+        from flext_core import FlextConfig
+
+        # Test normal case
+        config = FlextConfig(log_level="INFO")
+        assert config.effective_log_level == "INFO"
+
+        # Test with debug enabled (returns INFO level)
+        debug_config = FlextConfig(log_level="INFO", debug=True)
+        assert debug_config.effective_log_level == "INFO"
+
+        # Test with trace enabled (returns DEBUG level)
+        trace_config = FlextConfig(log_level="INFO", debug=True, trace=True)
+        assert trace_config.effective_log_level == "DEBUG"

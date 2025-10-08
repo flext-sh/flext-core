@@ -314,7 +314,6 @@ class TestBackwardCompatibility:
             FlextRegistry,
             FlextResult,
             FlextService,
-            FlextTypes,
             FlextUtilities,
         )
 
