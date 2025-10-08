@@ -22,8 +22,7 @@ import concurrent.futures
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass
-from typing import Literal, cast, override
+from typing import cast, override
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -426,7 +425,7 @@ class FlextDispatcher(FlextMixins.Service):
         | Callable[[object], object | FlextResult[object]]
         | None = None,
         *,
-        handler_mode: Literal["command", "query"] = "command",
+        handler_mode: FlextConstants.HandlerModeSimple = "command",
         handler_config: FlextTypes.Dict | None = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Register handler with support for both old and new API.
@@ -560,7 +559,7 @@ class FlextDispatcher(FlextMixins.Service):
         handler_func: Callable[[object], object | FlextResult[object]],
         *,
         handler_config: FlextTypes.Dict | None = None,
-        mode: Literal["command", "query"] = "command",
+        mode: FlextConstants.HandlerModeSimple = "command",
     ) -> FlextResult[FlextTypes.Dict]:
         """Register function as handler using factory pattern.
 
@@ -606,7 +605,7 @@ class FlextDispatcher(FlextMixins.Service):
         self,
         handler_func: Callable[[object], object | FlextResult[object]],
         handler_config: FlextTypes.Dict | None,
-        mode: Literal["command", "query"],
+        mode: FlextConstants.HandlerModeSimple,
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
@@ -886,18 +885,22 @@ class FlextDispatcher(FlextMixins.Service):
         # Create message object
         if isinstance(message_or_type, str) and data is not None:
 
-            @dataclass
-            class MessageWrapper:
+            class MessageWrapper(FlextModels.Value):
+                """Temporary message wrapper using FlextModels.Value."""
+
                 data: object
                 message_type: str
 
-                def __post_init__(self) -> None:
+                def model_post_init(self, /, __context: object) -> None:
+                    """Post-initialization to set class name."""
+                    super().model_post_init(__context)
                     self.__class__.__name__ = self.message_type
 
                 def __str__(self) -> str:
+                    """String representation."""
                     return str(self.data)
 
-            message = MessageWrapper(data, message_or_type)
+            message = MessageWrapper(data=data, message_type=message_or_type)
             message_type = message_or_type
         else:
             message = message_or_type

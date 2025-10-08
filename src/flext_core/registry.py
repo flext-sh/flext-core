@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
 from typing import (
-    Literal,
     cast,
 )
+
+from pydantic import Field
 
 from flext_core.constants import FlextConstants
 from flext_core.dispatcher import FlextDispatcher
@@ -153,13 +153,12 @@ class FlextRegistry(FlextMixins.Service):
 
     """
 
-    @dataclass(slots=True)
-    class Summary:
-        """Aggregated outcome used for 1.0.0 handler adoption tracking."""
+    class Summary(FlextModels.Value):
+        """Aggregated outcome used for 1.0.0 handler adoption tracking using FlextModels.Value."""
 
-        registered: list[FlextModels.RegistrationDetails] = field(default_factory=list)
-        skipped: FlextTypes.StringList = field(default_factory=list)
-        errors: FlextTypes.StringList = field(default_factory=list)
+        registered: list[FlextModels.RegistrationDetails] = Field(default_factory=list)
+        skipped: FlextTypes.StringList = Field(default_factory=list)
+        errors: FlextTypes.StringList = Field(default_factory=list)
 
         @property
         def is_success(self) -> bool:
@@ -186,7 +185,7 @@ class FlextRegistry(FlextMixins.Service):
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
-    def _safe_get_handler_mode(self, value: object) -> Literal["command", "query"]:
+    def _safe_get_handler_mode(self, value: object) -> FlextConstants.HandlerModeSimple:
         """Safely extract and validate handler mode from dict value."""
         if value == "query":
             return "query"
@@ -195,14 +194,14 @@ class FlextRegistry(FlextMixins.Service):
         # Default to command for invalid values
         return "command"
 
-    def _safe_get_status(self, value: object) -> Literal["active", "inactive"]:
+    def _safe_get_status(self, value: object) -> FlextConstants.Status:
         """Safely extract and validate status from dict value."""
         if value == "active":
-            return "active"
+            return "running"
         if value == "inactive":
-            return "inactive"
-        # Default to active for invalid values
-        return "active"
+            return "completed"
+        # Default to running for invalid values
+        return "running"
 
     # ------------------------------------------------------------------
     # Public API
@@ -239,7 +238,7 @@ class FlextRegistry(FlextMixins.Service):
                     registration_id=key,
                     handler_mode="command",
                     timestamp="",  # Will be set by model if needed
-                    status="active",
+                    status="running",
                 ),
             )
 
@@ -484,7 +483,7 @@ class FlextRegistry(FlextMixins.Service):
                                     registration_id=key,
                                     handler_mode="command",
                                     timestamp="",
-                                    status="active",
+                                    status="running",
                                 )
                                 summary.registered.append(reg_details)
                                 self._registered_keys.add(key)
@@ -504,7 +503,7 @@ class FlextRegistry(FlextMixins.Service):
                                 registration_id=key,
                                 handler_mode="command",
                                 timestamp="",
-                                status="active",
+                                status="running",
                             )
                             summary.registered.append(reg_details)
                             self._registered_keys.add(key)
@@ -518,7 +517,7 @@ class FlextRegistry(FlextMixins.Service):
                         registration_id=key,
                         handler_mode="command",
                         timestamp="",
-                        status="active",
+                        status="running",
                     )
                     summary.registered.append(reg_details)
                     self._registered_keys.add(key)

@@ -82,7 +82,8 @@ class TestFlextBase:
 
         custom = CustomBase()
         assert custom.constants.Demo.VALUE == 7
-        assert isinstance(CustomBase.Container.get_global(), CustomBase.Container)
+        # Container.get_global() returns global singleton FlextContainer
+        assert isinstance(CustomBase.Container.get_global(), FlextContainer)
 
     def test_flextbase_result_helpers(self) -> None:
         """Ensure helper methods wrap result creation."""

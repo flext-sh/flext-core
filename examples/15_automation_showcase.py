@@ -4,7 +4,7 @@ This example demonstrates the context enrichment capabilities introduced in the
 Phase 1 architectural enhancement.
 
 KEY FEATURES DEMONSTRATED:
-- Automatic context enrichment in FlextCore.Service and FlextCore.Handlers
+- Automatic context enrichment in FlextService and FlextCore.Handlers
 - _with_correlation_id: Distributed tracing support
 - _with_user_context: User audit trail
 - _with_operation_context: Operation tracking
@@ -12,7 +12,7 @@ KEY FEATURES DEMONSTRATED:
 
 USAGE PATTERNS:
 - Context enrichment best practices
-- Integration with FlextCore.Service base class
+- Integration with FlextService base class
 - Structured logging with automatic context
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -21,32 +21,30 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import FlextResult
 
 # =============================================================================
 # EXAMPLE 1: Service with Context Enrichment
 # =============================================================================
 
 
-class UserService(FlextCore.Service[dict[str, object]]):
+class UserService(FlextService[dict[str, object]]):
     """Service demonstrating automatic context enrichment."""
 
     def __init__(self, **data: object) -> None:
         """Initialize with automatic context enrichment.
 
-        FlextCore.Service.__init__ automatically calls:
+        FlextService.__init__ automatically calls:
         - _enrich_context() with service metadata
         """
         super().__init__(**data)
         # Context now includes: service_type, service_module
 
-    def execute(self) -> FlextCore.Result[dict[str, object]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Required abstract method implementation."""
-        return FlextCore.Result[dict[str, object]].ok({"status": "initialized"})
+        return FlextResult[dict[str, object]].ok({"status": "initialized"})
 
-    def create_user(
-        self, username: str, email: str
-    ) -> FlextCore.Result[dict[str, object]]:
+    def create_user(self, username: str, email: str) -> FlextResult[dict[str, object]]:
         """Create user with automatic context enrichment."""
         # Context includes service metadata from __init__
         if self.logger:
@@ -59,7 +57,7 @@ class UserService(FlextCore.Service[dict[str, object]]):
             "email": email,
         }
 
-        return FlextCore.Result[dict[str, object]].ok(user_data)
+        return FlextResult[dict[str, object]].ok(user_data)
 
 
 # =============================================================================
@@ -67,23 +65,23 @@ class UserService(FlextCore.Service[dict[str, object]]):
 # =============================================================================
 
 
-class PaymentService(FlextCore.Service[dict[str, object]]):
+class PaymentService(FlextService[dict[str, object]]):
     """Service demonstrating correlation ID tracking."""
 
     def __init__(self, **data: object) -> None:
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
-    def execute(self) -> FlextCore.Result[dict[str, object]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Required abstract method implementation."""
-        return FlextCore.Result[dict[str, object]].ok({"status": "initialized"})
+        return FlextResult[dict[str, object]].ok({"status": "initialized"})
 
     def process_payment(
         self,
         payment_id: str,
         amount: float,
         user_id: str,
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Process payment with correlation tracking.
 
         Demonstrates:
@@ -120,7 +118,7 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
         # Clean up operation context
         self._clear_operation_context()
 
-        return FlextCore.Result[dict[str, object]].ok(payment_data)
+        return FlextResult[dict[str, object]].ok(payment_data)
 
 
 # =============================================================================
@@ -128,7 +126,7 @@ class PaymentService(FlextCore.Service[dict[str, object]]):
 # =============================================================================
 
 
-class OrderService(FlextCore.Service[dict[str, object]]):
+class OrderService(FlextService[dict[str, object]]):
     """Service demonstrating context enrichment helper method."""
 
     def __init__(self, **data: object) -> None:
@@ -136,21 +134,21 @@ class OrderService(FlextCore.Service[dict[str, object]]):
         super().__init__(**data)
         self._order_data: dict[str, object] = {}
 
-    def execute(self) -> FlextCore.Result[dict[str, object]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Process order with business logic."""
         # Implement actual order processing
         self._order_data = {
             "order_id": "ord_123",
             "status": "processed",
         }
-        return FlextCore.Result[dict[str, object]].ok(self._order_data)
+        return FlextResult[dict[str, object]].ok(self._order_data)
 
     def process_order(
         self,
         order_id: str,
         customer_id: str,
         correlation_id: str | None = None,
-    ) -> FlextCore.Result[dict[str, object]]:
+    ) -> FlextResult[dict[str, object]]:
         """Process order with automatic context enrichment.
 
         Uses execute_with_context_enrichment() helper that:
@@ -182,12 +180,12 @@ class OrderService(FlextCore.Service[dict[str, object]]):
 
 
 # =============================================================================
-# EXAMPLE 4: New FlextCore.Result Methods (v0.9.9+)
+# EXAMPLE 4: New FlextResult Methods (v0.9.9+)
 # =============================================================================
 
 
-class AutomationService(FlextCore.Service[dict[str, object]]):
-    """Service demonstrating the 5 new FlextCore.Result methods in automation context.
+class AutomationService(FlextService[dict[str, object]]):
+    """Service demonstrating the 5 new FlextResult methods in automation context.
 
     Shows how the new v0.9.9+ methods work with automated workflows:
     - from_callable: Safe automation task execution
@@ -201,14 +199,14 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
         """Initialize automation service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextCore.Result[dict[str, object]]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Required abstract method implementation."""
-        return FlextCore.Result[dict[str, object]].ok({"status": "automation_ready"})
+        return FlextResult[dict[str, object]].ok({"status": "automation_ready"})
 
     def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextCore.Result methods in automation context."""
+        """Demonstrate the 5 new FlextResult methods in automation context."""
         print("\n" + "=" * 60)
-        print("NEW FlextCore.Result METHODS - AUTOMATION CONTEXT")
+        print("NEW FlextResult METHODS - AUTOMATION CONTEXT")
         print("Demonstrating v0.9.9+ methods with automated workflows")
         print("=" * 60)
 
@@ -231,7 +229,7 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
             return task_data
 
         # Safe execution without try/except
-        automation_result = FlextCore.Result[dict[str, object]].from_callable(
+        automation_result = FlextResult[dict[str, object]].from_callable(
             risky_automation_task
         )
         if automation_result.is_success:
@@ -246,47 +244,47 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
 
         def validate_automation_input(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Validate automation input."""
             task_type = data.get("task_type", "")
             if not isinstance(task_type, str) or not task_type:
-                return FlextCore.Result[dict[str, object]].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Task type is required for automation"
                 )
-            return FlextCore.Result[dict[str, object]].ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         def enrich_automation_context(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Enrich with automation context."""
             enriched: dict[str, object] = {
                 **data,
                 "automation_timestamp": "2025-01-01T12:00:00Z",
                 "automation_engine": "flext-core",
             }
-            return FlextCore.Result[dict[str, object]].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
         def execute_automation(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Execute the automation."""
             executed: dict[str, object] = {
                 **data,
                 "execution_status": "completed",
                 "duration_ms": 250,
             }
-            return FlextCore.Result[dict[str, object]].ok(executed)
+            return FlextResult[dict[str, object]].ok(executed)
 
         def finalize_automation(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Finalize automation execution."""
             final: dict[str, object] = {
                 **data,
                 "finalized": True,
                 "result_id": "RESULT-001",
             }
-            return FlextCore.Result[dict[str, object]].ok(final)
+            return FlextResult[dict[str, object]].ok(final)
 
         # Flow through automation pipeline
         automation_input: dict[str, object] = {
@@ -294,7 +292,7 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
             "source": "database",
         }
         pipeline_result = (
-            FlextCore.Result[dict[str, object]]
+            FlextResult[dict[str, object]]
             .ok(automation_input)
             .flow_through(
                 validate_automation_input,
@@ -315,14 +313,14 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
         # 3. lash - Fallback Automation Strategies
         print("\n=== 3. lash: Fallback Automation Strategies ===")
 
-        def primary_automation_strategy() -> FlextCore.Result[str]:
+        def primary_automation_strategy() -> FlextResult[str]:
             """Primary automation strategy that might fail."""
-            return FlextCore.Result[str].fail("Primary automation engine unavailable")
+            return FlextResult[str].fail("Primary automation engine unavailable")
 
-        def fallback_automation_strategy(error: str) -> FlextCore.Result[str]:
+        def fallback_automation_strategy(error: str) -> FlextResult[str]:
             """Fallback automation strategy."""
             print(f"   ⚠️  Primary failed: {error}, using fallback...")
-            return FlextCore.Result[str].ok("FALLBACK-AUTOMATION-SUCCESS")
+            return FlextResult[str].ok("FALLBACK-AUTOMATION-SUCCESS")
 
         # Try primary, fall back on error
         strategy_result = primary_automation_strategy().lash(
@@ -337,11 +335,11 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
         # 4. alt - Alternative Automation Paths
         print("\n=== 4. alt: Alternative Automation Paths ===")
 
-        def get_cached_automation_config() -> FlextCore.Result[dict[str, object]]:
+        def get_cached_automation_config() -> FlextResult[dict[str, object]]:
             """Try to get cached automation config."""
-            return FlextCore.Result[dict[str, object]].fail("Cache unavailable")
+            return FlextResult[dict[str, object]].fail("Cache unavailable")
 
-        def get_default_automation_config() -> FlextCore.Result[dict[str, object]]:
+        def get_default_automation_config() -> FlextResult[dict[str, object]]:
             """Provide default automation config."""
             config: dict[str, object] = {
                 "automation_mode": "default",
@@ -349,7 +347,7 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
                 "retry_attempts": 3,
                 "timeout_seconds": 30,
             }
-            return FlextCore.Result[dict[str, object]].ok(config)
+            return FlextResult[dict[str, object]].ok(config)
 
         # Try cached, fall back to default
         config_result = get_cached_automation_config().alt(
@@ -376,9 +374,7 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
             }
 
         # Try to get existing engine, create if not available
-        engine_fail_result = FlextCore.Result[dict[str, object]].fail(
-            "No existing engine"
-        )
+        engine_fail_result = FlextResult[dict[str, object]].fail("No existing engine")
         engine = engine_fail_result.value_or_call(create_automation_engine)
         print(f"✅ Engine acquired: {engine.get('engine_id', 'unknown')}")
         print(f"   Type: {engine.get('engine_type', 'unknown')}")
@@ -391,14 +387,14 @@ class AutomationService(FlextCore.Service[dict[str, object]]):
             "initialized": True,
             "worker_count": 4,
         }
-        engine_success_result = FlextCore.Result[dict[str, object]].ok(existing_engine)
+        engine_success_result = FlextResult[dict[str, object]].ok(existing_engine)
         engine_cached = engine_success_result.value_or_call(create_automation_engine)
         print(f"✅ Existing engine used: {engine_cached.get('engine_id', 'unknown')}")
         print(f"   Workers: {engine_cached.get('worker_count', 0)}")
         print("   No expensive initialization needed")
 
         print("\n" + "=" * 60)
-        print("✅ NEW FlextCore.Result METHODS AUTOMATION DEMO COMPLETE!")
+        print("✅ NEW FlextResult METHODS AUTOMATION DEMO COMPLETE!")
         print("All 5 methods demonstrated with automation patterns")
         print("=" * 60)
 
@@ -443,8 +439,8 @@ def main() -> None:
     )
     print(f"Result: {result3.value if result3.is_success else result3.error}")
 
-    # Example 4: New FlextCore.Result methods (v0.9.9+)
-    print("\n4. NEW FlextCore.Result METHODS (v0.9.9+)")
+    # Example 4: New FlextResult methods (v0.9.9+)
+    print("\n4. NEW FlextResult METHODS (v0.9.9+)")
     print("-" * 80)
     automation_service = AutomationService()
     automation_service.demonstrate_new_flextresult_methods()
@@ -452,7 +448,7 @@ def main() -> None:
     print("\n" + "=" * 80)
     print("KEY BENEFITS DEMONSTRATED:")
     print("=" * 80)
-    print("✅ Automatic context enrichment in FlextCore.Service")
+    print("✅ Automatic context enrichment in FlextService")
     print("✅ Correlation ID generation for distributed tracing")
     print("✅ User context enrichment for audit trails")
     print("✅ Operation context tracking")

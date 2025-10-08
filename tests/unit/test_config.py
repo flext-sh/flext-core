@@ -479,3 +479,224 @@ class TestFlextConfig:
         # Note: The exact behavior of accessing config values may vary
         # This test primarily verifies that the provider is created correctly
         assert provider is not None
+
+    def test_pydantic_env_prefix(self) -> None:
+        """Test that FlextConfig uses FLEXT_ prefix for environment variables."""
+        import os
+
+        # Cleanup any existing env vars
+        for key in list(os.environ.keys()):
+            if key.startswith("FLEXT_"):
+                del os.environ[key]
+
+        try:
+            # Test that variables WITHOUT prefix are NOT loaded
+            os.environ["DEBUG"] = "true"
+            os.environ["LOG_LEVEL"] = "ERROR"
+
+            config = FlextConfig()
+            assert config.debug is False  # Not loaded
+            assert config.log_level == "INFO"  # Not loaded, using default
+
+            # Clean up
+            del os.environ["DEBUG"]
+            del os.environ["LOG_LEVEL"]
+
+            # Test that variables WITH FLEXT_ prefix ARE loaded
+            os.environ["FLEXT_DEBUG"] = "true"
+            os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
+
+            config_with_prefix = FlextConfig()
+            assert config_with_prefix.debug is True  # Loaded from FLEXT_DEBUG
+            assert (
+                config_with_prefix.log_level == "ERROR"
+            )  # Loaded from FLEXT_LOG_LEVEL
+
+        finally:
+            # Cleanup
+            for key in ["DEBUG", "LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_LOG_LEVEL"]:
+                if key in os.environ:
+                    del os.environ[key]
+
+    def test_pydantic_dotenv_file_loading(self, tmp_path: Path) -> None:
+        """Test that FlextConfig automatically loads .env file."""
+        import os
+        from pathlib import Path
+
+        original_dir = Path.cwd()
+
+        try:
+            # Change to temp directory
+            os.chdir(tmp_path)
+
+            # Create .env file with FLEXT_ prefix
+            env_file = tmp_path / ".env"
+            env_file.write_text(
+                "FLEXT_APP_NAME=from-dotenv\n"
+                "FLEXT_LOG_LEVEL=WARNING\n"
+                "FLEXT_DEBUG=true\n"
+            )
+
+            # Create config - should load from .env
+            config = FlextConfig()
+
+            assert config.app_name == "from-dotenv"
+            assert config.log_level == "WARNING"
+            assert config.debug is True
+
+        finally:
+            # Cleanup
+            os.chdir(original_dir)
+
+    def test_pydantic_env_var_precedence(self, tmp_path: Path) -> None:
+        """Test that environment variables override .env file."""
+        import os
+        from pathlib import Path
+
+        original_dir = Path.cwd()
+        saved_env_vars = {
+            "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
+            "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
+        }
+
+        try:
+            # Change to temp directory
+            os.chdir(tmp_path)
+
+            # Create .env file
+            env_file = tmp_path / ".env"
+            env_file.write_text("FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\n")
+
+            # Set environment variables (should override .env)
+            os.environ["FLEXT_APP_NAME"] = "from-env-var"
+            os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
+
+            # Create config
+            config = FlextConfig()
+
+            # Environment variables should override .env file
+            assert config.app_name == "from-env-var"
+            assert config.log_level == "ERROR"
+
+        finally:
+            # Cleanup
+            os.chdir(original_dir)
+            for key, value in saved_env_vars.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
+    def test_pydantic_complete_precedence_chain(self, tmp_path: Path) -> None:
+        """Test complete Pydantic 2 Settings precedence chain.
+
+        Precedence (highest to lowest):
+        1. Explicit init arguments (highest)
+        2. Environment variables
+        3. .env file
+        4. Field defaults (lowest)
+        """
+        import os
+        from pathlib import Path
+
+        original_dir = Path.cwd()
+        saved_env_vars = {
+            "FLEXT_TIMEOUT_SECONDS": os.environ.pop("FLEXT_TIMEOUT_SECONDS", None),
+        }
+
+        try:
+            # Change to temp directory
+            os.chdir(tmp_path)
+
+            # Create .env file (precedence level 3)
+            env_file = tmp_path / ".env"
+            env_file.write_text("FLEXT_TIMEOUT_SECONDS=45\n")
+
+            # Set environment variable (precedence level 2)
+            os.environ["FLEXT_TIMEOUT_SECONDS"] = "60"
+
+            # Create config with explicit argument (precedence level 1 - highest)
+            config = FlextConfig(timeout_seconds=90)
+
+            # Explicit argument should win
+            assert config.timeout_seconds == 90
+
+            # Test without explicit argument - env var should win
+            config_no_explicit = FlextConfig()
+            assert config_no_explicit.timeout_seconds == 60  # From env var
+
+            # Remove env var - .env should win
+            del os.environ["FLEXT_TIMEOUT_SECONDS"]
+            config_no_env = FlextConfig()
+            assert config_no_env.timeout_seconds == 45  # From .env
+
+        finally:
+            # Cleanup
+            os.chdir(original_dir)
+            for key, value in saved_env_vars.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
+    def test_pydantic_env_var_naming(self) -> None:
+        """Test that environment variables follow correct naming convention."""
+        import os
+
+        saved_env = os.environ.pop("FLEXT_DEBUG", None)
+
+        try:
+            # Test with properly cased FLEXT_ prefix
+            os.environ["FLEXT_DEBUG"] = "true"
+
+            config = FlextConfig()
+            assert config.debug is True
+
+            # Verify config loaded from environment variable
+            os.environ["FLEXT_DEBUG"] = "false"
+            config_updated = FlextConfig()
+            assert config_updated.debug is False
+
+        finally:
+            # Cleanup
+            if "FLEXT_DEBUG" in os.environ:
+                del os.environ["FLEXT_DEBUG"]
+            if saved_env is not None:
+                os.environ["FLEXT_DEBUG"] = saved_env
+
+    def test_pydantic_effective_log_level_with_precedence(self) -> None:
+        """Test that effective_log_level respects debug mode precedence."""
+        import os
+
+        saved_env_vars = {
+            "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
+            "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),
+        }
+
+        try:
+            # Set env vars
+            os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
+            os.environ["FLEXT_DEBUG"] = "true"
+
+            config = FlextConfig()
+
+            # When debug=True, effective_log_level is "INFO" (debug mode overrides)
+            assert config.log_level == "ERROR"
+            assert config.effective_log_level == "INFO"
+            assert config.is_debug_enabled is True
+
+            # Test with debug=False
+            os.environ["FLEXT_DEBUG"] = "false"
+            config_no_debug = FlextConfig()
+
+            assert config_no_debug.log_level == "ERROR"
+            assert config_no_debug.effective_log_level == "ERROR"
+            assert config_no_debug.is_debug_enabled is False
+
+        finally:
+            # Cleanup
+            for key, value in saved_env_vars.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]

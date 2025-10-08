@@ -203,7 +203,7 @@ class TestFlextConstants:
     def test_security_constants(self) -> None:
         """Test security constants access."""
         assert FlextConstants.Security.MAX_JWT_EXPIRY_MINUTES == 43200
-        assert FlextConstants.Security.DEFAULT_JWT_EXPIRY_MINUTES == 1440
+        assert FlextConstants.Security.DEFAULT_JWT_EXPIRY_MINUTES == 60
 
     def test_cqrs_constants(self) -> None:
         """Test CQRS constants access."""

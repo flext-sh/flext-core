@@ -53,7 +53,6 @@ from typing import (
     TYPE_CHECKING,
     Annotated,
     ClassVar,
-    Literal,
     Self,
     cast,
     override,
@@ -2199,7 +2198,7 @@ class FlextModels:
             default_factory=lambda: FlextConstants.Cqrs.SerializationFormatLiteral.JSON
         )
         encoding: str = Field(default_factory=lambda: "utf-8")
-        compression: Literal["none", "gzip", "bzip2", "lz4"] | None = None
+        compression: FlextConstants.Compression | None = None
         pretty_print: bool = False
         use_model_dump: bool = True
         indent: int | None = None
@@ -2664,7 +2663,7 @@ class FlextModels:
 
         resource_type: str
         resource_id: str | None = None
-        action: Literal["acquire", "release", "check", "list[object]"] = "acquire"
+        action: FlextConstants.Action = "acquire"
         timeout_seconds: int = Field(
             default_factory=lambda: __import__("flext_core.config")
             .FlextConfig()
@@ -2881,15 +2880,15 @@ class FlextModels:
             mode: str = "python",
             include: IncEx | None = None,
             exclude: IncEx | None = None,
+            exclude_computed_fields: bool = False,
             context: object | None = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
             exclude_none: bool = False,
             round_trip: bool = False,
-            warnings: bool | Literal["none", "warn", "error"] = True,
-            fallback: Callable[[object], object]
-            | None = None,  # Required for parent compatibility
+            warnings: bool | FlextConstants.WarningLevel = True,
+            fallback: Callable[[object], object] | None = None,
             serialize_as_any: bool = False,
         ) -> FlextTypes.Dict:
             """Context-aware model dump."""
@@ -3119,7 +3118,7 @@ class FlextModels:
             *,
             by_alias: bool = True,
             ref_template: str = "#/$defs/{model}",
-            mode: Literal["validation", "serialization"] = "validation",
+            mode: FlextConstants.Mode = "validation",
         ) -> FlextTypes.Dict:
             """Get optimized JSON schema for a model.
 
@@ -3285,11 +3284,11 @@ class FlextModels:
 
             handler_id: str = Field(description="Unique handler identifier")
             handler_name: str = Field(description="Human-readable handler name")
-            handler_type: Literal["command", "query", "event", "saga"] = Field(
+            handler_type: FlextConstants.HandlerType = Field(
                 default="command",
                 description="Handler type",
             )
-            handler_mode: Literal["command", "query", "event", "saga"] = Field(
+            handler_mode: FlextConstants.HandlerMode = Field(
                 default="command",
                 description="Handler mode",
             )
@@ -3308,7 +3307,7 @@ class FlextModels:
             @classmethod
             def create_handler_config(
                 cls,
-                handler_type: Literal["command", "query", "event", "saga"],
+                handler_type: FlextConstants.HandlerType,
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
@@ -3346,7 +3345,7 @@ class FlextModels:
         """Registration details for handler registration tracking."""
 
         registration_id: str = Field(description="Unique registration identifier")
-        handler_mode: Literal["command", "query"] = Field(
+        handler_mode: FlextConstants.HandlerModeSimple = Field(
             default="command",
             description="Handler mode",
         )
@@ -3354,8 +3353,8 @@ class FlextModels:
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP,
             description="Registration timestamp",
         )
-        status: Literal["active", "inactive"] = Field(
-            default="active",
+        status: FlextConstants.Status = Field(
+            default="running",
             description="Registration status",
         )
 
@@ -4746,3 +4745,8 @@ class FlextModels:
         retry_delay: float = 0.0
         backoff_multiplier: float = 1.0
         exponential_backoff: bool = False
+
+
+__all__ = [
+    "FlextModels",
+]

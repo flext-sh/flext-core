@@ -201,19 +201,142 @@ class FlextUtilities:
                 return FlextResult[None].fail(f"Invalid regex pattern: {e}")
 
         @staticmethod
-        def validate_string(value: str) -> FlextResult[None]:
-            """Validate that value is a non-empty string."""
+        def validate_string(
+            value: str,
+            min_length: int | None = None,
+            max_length: int | None = None,
+            pattern: str | None = None,
+        ) -> FlextResult[None]:
+            """Validate string with comprehensive checks."""
             if not value.strip():
                 return FlextResult[None].fail(
                     "String cannot be empty or whitespace-only"
                 )
+
+            if min_length is not None and len(value) < min_length:
+                return FlextResult[None].fail(
+                    f"String length {len(value)} is less than minimum {min_length}"
+                )
+
+            if max_length is not None and len(value) > max_length:
+                return FlextResult[None].fail(
+                    f"String length {len(value)} exceeds maximum {max_length}"
+                )
+
+            if pattern is not None:
+                try:
+                    if not re.match(pattern, value):
+                        return FlextResult[None].fail(
+                            "String does not match required pattern"
+                        )
+                except re.error:
+                    return FlextResult[None].fail(f"Invalid regex pattern: {pattern}")
+
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_email(value: str) -> FlextResult[None]:
+        def validate_url(value: str) -> FlextResult[None]:
+            """Validate URL format."""
+            if not value.startswith(("http://", "https://")):
+                return FlextResult[None].fail("URL must start with http:// or https://")
+            if " " in value:
+                return FlextResult[None].fail("URL cannot contain spaces")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_port(value: int | str) -> FlextResult[int]:
+            """Validate port number."""
+            try:
+                port = int(value)
+                if (
+                    port < FlextConstants.Network.MIN_PORT
+                    or port > FlextConstants.Network.MAX_PORT
+                ):
+                    return FlextResult[int].fail(
+                        f"Port must be between {FlextConstants.Network.MIN_PORT} and {FlextConstants.Network.MAX_PORT}"
+                    )
+                return FlextResult[int].ok(port)
+            except (ValueError, TypeError):
+                return FlextResult[int].fail("Port must be a valid integer")
+
+        @staticmethod
+        def validate_host(value: str) -> FlextResult[None]:
+            """Validate host format."""
+            if not value.strip():
+                return FlextResult[None].fail("Host cannot be empty")
+            if " " in value:
+                return FlextResult[None].fail("Host cannot contain spaces")
+            # Basic validation - could be enhanced
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_email(value: str) -> FlextResult[str]:
             """Validate email format."""
             if "@" not in value or "." not in value:
-                return FlextResult[None].fail("Invalid email format")
+                return FlextResult[str].fail("Invalid email format")
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_timeout_seconds(value: float) -> FlextResult[None]:
+            """Validate timeout seconds."""
+            if value <= 0:
+                return FlextResult[None].fail("Timeout must be positive")
+            if value > FlextConstants.Performance.MAX_TIMEOUT_SECONDS:
+                return FlextResult[None].fail(
+                    f"Timeout cannot exceed {FlextConstants.Performance.MAX_TIMEOUT_SECONDS} seconds"
+                )
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_retry_count(value: int) -> FlextResult[None]:
+            """Validate retry count."""
+            if value < 0:
+                return FlextResult[None].fail("Retry count cannot be negative")
+            if value > FlextConstants.Performance.MAX_RETRY_ATTEMPTS_LIMIT:
+                return FlextResult[None].fail(
+                    f"Retry count cannot exceed {FlextConstants.Performance.MAX_RETRY_ATTEMPTS_LIMIT}"
+                )
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_log_level(value: str) -> FlextResult[None]:
+            """Validate log level."""
+            if value not in FlextConstants.Logging.VALID_LEVELS:
+                return FlextResult[None].fail(f"Invalid log level: {value}")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_file_path(value: str) -> FlextResult[None]:
+            """Validate file path."""
+            if not value.strip():
+                return FlextResult[None].fail("File path cannot be empty")
+            if (
+                "<" in value
+                or ">" in value
+                or "|" in value
+                or "?" in value
+                or "*" in value
+            ):
+                return FlextResult[None].fail("File path contains invalid characters")
+            if "\x00" in value:
+                return FlextResult[None].fail("File path contains null characters")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_pipeline(
+            value: str, validators: list[object]
+        ) -> FlextResult[None]:
+            """Validate using a pipeline of validators."""
+            for validator in validators:
+                if callable(validator):
+                    try:
+                        result: FlextResult[None] = cast(
+                            "FlextResult[None]", validator(value)
+                        )
+                        if result.is_failure:
+                            return result
+                    except Exception as e:
+                        return FlextResult[None].fail(f"Validator failed: {e}")
             return FlextResult[None].ok(None)
 
         @staticmethod
@@ -333,16 +456,18 @@ class FlextUtilities:
                     dumped: FlextTypes.Dict = value.model_dump()
                 except TypeError:
                     dumped = {}
-                return ("pydantic", FlextUtilities.Cache.normalize_component(dumped))
+                normalized_dumped = FlextUtilities.Cache.normalize_component(dumped)
+                return ("pydantic", normalized_dumped)
 
             if is_dataclass(value):
                 # Ensure we have a dataclass instance, not a class
                 if isinstance(value, type):
                     return ("dataclass_class", str(value))
-                return (
-                    "dataclass",
-                    FlextUtilities.Cache.normalize_component(asdict(value)),
+                dataclass_dict = asdict(value)
+                normalized_dict = FlextUtilities.Cache.normalize_component(
+                    dataclass_dict
                 )
+                return ("dataclass", normalized_dict)
 
             if isinstance(value, Mapping):
                 # Return sorted FlextTypes.Dict for cache-friendly deterministic ordering
@@ -442,16 +567,19 @@ class FlextUtilities:
 
             except Exception:
                 # Fallback to string representation if anything fails
-                command_str_fallback = str(command) if command is not None else "None"  # type: ignore[arg-type]
-                command_str_fallback = command_str_fallback.encode(
-                    "utf-8", errors="ignore"
-                ).decode("utf-8", errors="ignore")
+                command_str_fallback: str = (
+                    str(command) if command is not None else "None"
+                )
+                # Ensure we have a valid string for encoding
                 try:
                     command_hash_fallback = hash(command_str_fallback)
                     return f"{command_type.__name__}_{command_hash_fallback}"
                 except TypeError:
-                    # If hash fails, use a deterministic fallback
-                    return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode(FlextConstants.Utilities.DEFAULT_ENCODING)))}"
+                    # If hash fails, use a deterministic fallback with proper encoding
+                    encoded_fallback = command_str_fallback.encode(
+                        FlextConstants.Utilities.DEFAULT_ENCODING
+                    )
+                    return f"{command_type.__name__}_{abs(hash(encoded_fallback))}"
 
         @staticmethod
         def sort_dict_keys(obj: object) -> object:
@@ -483,6 +611,24 @@ class FlextUtilities:
                     FlextUtilities.Cache.sort_dict_keys(item) for item in obj_tuple
                 )
             return obj
+
+    class TypeGuards:
+        """Type guard utilities for runtime type checking."""
+
+        @staticmethod
+        def is_string_non_empty(value: object) -> bool:
+            """Check if value is a non-empty string."""
+            return isinstance(value, str) and bool(value.strip())
+
+        @staticmethod
+        def is_dict_non_empty(value: object) -> bool:
+            """Check if value is a non-empty dictionary."""
+            return isinstance(value, dict) and bool(value)
+
+        @staticmethod
+        def is_list_non_empty(value: object) -> bool:
+            """Check if value is a non-empty list."""
+            return isinstance(value, list) and bool(value)
 
     class Generators:
         """ID and data generation utilities."""
@@ -762,19 +908,6 @@ class FlextUtilities:
                 )
 
             return result_container[0]
-
-    class TypeGuards:
-        """Type guard utilities for runtime type checking."""
-
-        @staticmethod
-        def is_dict_non_empty(value: object) -> bool:
-            """Check if value is a non-empty dictionary."""
-            return isinstance(value, dict) and len(cast("FlextTypes.Dict", value)) > 0
-
-        @staticmethod
-        def is_list_non_empty(value: object) -> bool:
-            """Check if value is a non-empty list."""
-            return isinstance(value, list) and len(cast("FlextTypes.List", value)) > 0
 
     class TypeChecker:
         """Handler type checking utilities for FlextHandlers complexity reduction.

@@ -1083,190 +1083,6 @@ class FlextResult[T_co]:
         # It's Nothing or extraction failed
         return cls.fail("No value in Maybe")
 
-    # =========================================================================
-    # IO INTEROP - Convert between FlextResult and returns.io types
-    # =========================================================================
-
-    def to_io(self) -> object:
-        """Wrap success value in returns.io.IO for pure side effects.
-
-        Converts a successful FlextResult into an IO container, which represents
-        a computation that performs side effects. Fails if the result is a failure.
-
-        Returns:
-            IO[T_co]: IO container wrapping the success value
-
-        Raises:
-            ValueError: If called on a failure result
-
-        Example:
-            ```python
-            from flext_core import FlextResult
-
-
-            # Success case - wrap in IO
-            result = FlextResult[int].ok(42)
-            io_value = result.to_io()
-            # io_value is IO(42)
-
-            # Execute the IO to get the value
-            value = io_value.inner_value  # Internal access for demo
-            # value is 42
-
-            # Failure case - raises ValueError
-            result_fail = FlextResult[int].fail("Error")
-            try:
-                io_value = result_fail.to_io()
-            except ValueError as e:
-                print(f"Error: {e}")
-            # Error: Cannot convert failure to IO: Error
-            ```
-
-        """
-        if self.is_failure:
-            error_msg = self._error or "Failed"
-            msg = f"Cannot convert failure to IO: {error_msg}"
-            raise ValueError(msg)
-
-        return IO(self._data)
-
-    def to_io_result(self) -> object:
-        """Convert FlextResult to returns.io.IOResult for impure operations.
-
-        Converts a FlextResult into an IOResult, which combines IO (side effects)
-        with Result (error handling). This is useful for operations that perform
-        side effects and can fail.
-
-        Returns:
-            IOResult[T_co, str]: IOSuccess if success, IOFailure if failure
-
-        Example:
-            ```python
-            from flext_core import FlextResult
-
-            from returns.io import IO
-
-
-            # Success case - convert to IOSuccess
-            result = FlextResult[int].ok(42)
-            io_result = result.to_io_result()
-            # io_result is IOSuccess(42)
-
-            # Failure case - convert to IOFailure
-            result_fail = FlextResult[int].fail("Database error")
-            io_result_fail = result_fail.to_io_result()
-            # io_result_fail is IOFailure("Database error")
-
-            # Use with returns library operations
-            from returns.pipeline import flow
-            from returns.pointfree import bind_result
-
-
-            def save_to_db(value: int) -> "IOResult[str, str]":
-
-            from returns.io import IO
-
-                return IOSuccess(f"Saved: {value}")
-
-
-            result = FlextResult[int].ok(42)
-            final = flow(
-                result.to_io_result(),
-                bind_result(save_to_db),
-            )
-            # final is IOSuccess("Saved: 42")
-            ```
-
-        """
-        if self.is_success:
-            return IOSuccess(self._data)
-
-        error_msg = self._error or "Operation failed"
-        return IOFailure(error_msg)
-
-    @classmethod
-    def from_io_result[T](
-        cls: type[FlextResult[T]], io_result: object
-    ) -> FlextResult[T]:
-        """Create FlextResult from returns.io.IOResult.
-
-        Converts an IOResult from the returns library into a FlextResult,
-        extracting the value if IOSuccess or the error if IOFailure.
-
-        Args:
-            io_result: IOResult[T, E] from returns library
-
-        Returns:
-            FlextResult[T]: Success with value if IOSuccess, Failure if IOFailure
-
-        Example:
-            ```python
-            from flext_core import FlextResult
-
-
-            from returns.io import IO, impure_safe
-
-
-            # Convert IOSuccess to FlextResult success
-            io_success = IOSuccess(42)
-            result = FlextResult[int].from_io_result(io_success)
-            assert result.is_success
-            assert result.value == 42
-
-            # Convert IOFailure to FlextResult failure
-            io_failure = IOFailure(ValueError("Database error"))
-            result_fail = FlextResult[int].from_io_result(io_failure)
-            assert result_fail.is_failure
-            assert "Database error" in result_fail.error
-
-
-            # Use with impure_safe decorator
-            @impure_safe
-            def fetch_from_db(user_id: int) -> dict:
-                # Simulated database fetch
-                if user_id > 0:
-                    return {"id": user_id, "name": "User"}
-                raise ValueError("Invalid user ID")
-
-
-            # Convert IOResult to FlextResult
-            io_result = fetch_from_db(5)
-            result = FlextResult[dict].from_io_result(io_result)
-            # result is Success({"id": 5, "name": "User"})
-
-            io_result_fail = fetch_from_db(-1)
-            result_fail = FlextResult[dict].from_io_result(io_result_fail)
-            # result_fail is Failure("Invalid user ID")
-            ```
-
-        """
-        # Check if it's IOSuccess (has a value)
-        if isinstance(io_result, IOSuccess):
-            # Extract IO container using value_or, then unwrap the IO
-            sentinel = object()
-            value_or_sentinel = io_result.value_or(sentinel)
-            if value_or_sentinel is not sentinel:
-                # CRITICAL: value_or() returns an IO container, not the raw value
-                # The returns library provides no public API to extract from IO
-                # We MUST access _inner_value for interop - this is by design
-                io_container = value_or_sentinel  # type: ignore[assignment]
-                value = io_container._inner_value  # type: ignore[attr-defined]
-                return cls.ok(cast("T", value))
-
-        # It's IOFailure - extract the error
-        if isinstance(io_result, IOFailure):
-            # Extract the failure IO container
-            error_io_result: IO[Exception] = io_result.failure()
-            # CRITICAL: failure() returns an IO container, not the raw error
-            # The returns library provides no public API to extract from IO
-            # We MUST access _inner_value for interop - this is by design
-            error_io_container = error_io_result  # type: ignore[assignment]
-            error_msg = str(error_io_container._inner_value)  # type: ignore[attr-defined]
-            return cls.fail(error_msg)
-
-        # Unknown type
-        return cls.fail("Unknown IOResult type")
-
     @classmethod
     def sequence[T](cls, results: list[FlextResult[T]]) -> FlextResult[list[T]]:
         """Convert list of results to result of list, failing on first failure.
@@ -1378,38 +1194,6 @@ class FlextResult[T_co]:
         """Left shift operator (<<) for functor map - ADVANCED COMPOSITION."""
         return self.map(func)
 
-    def __matmul__[U](self, other: FlextResult[U]) -> FlextResult[tuple[T_co, U]]:  # type: ignore[return]
-        """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION."""
-        # Use applicative functor pattern
-        if self.is_failure:
-            return FlextResult[tuple[T_co, U]].fail(  # type: ignore[return]
-                self._error or "Unknown error",
-                error_code=self._error_code,
-                error_data=self._error_data,
-            )
-        if other.is_failure:
-            return FlextResult[tuple[T_co, U]].fail(  # type: ignore[return]
-                other._error or "Unknown error",
-                error_code=other._error_code,
-                error_data=other._error_data,
-            )
-
-        # Both successful - combine values
-        left_val: T_co = self.unwrap()
-        right_val: U = other.unwrap()
-        combined_tuple: tuple[T_co, U] = (left_val, right_val)
-        return FlextResult[tuple[T_co, U]].ok(combined_tuple)  # type: ignore[return]
-
-    def __truediv__[U](self, other: FlextResult[U]) -> FlextResult[T_co | U]:
-        """Division operator (/) for alternative fallback - ADVANCED COMPOSITION."""
-        if self.is_success:
-            return FlextResult[T_co | U].ok(self.unwrap())
-        if other.is_success:
-            return FlextResult[T_co | U].ok(other.unwrap())
-        return FlextResult[T_co | U].fail(
-            other.error or self.error or "All operations failed",
-        )
-
     def __mod__(self, predicate: Callable[[T_co], bool]) -> FlextResult[T_co]:
         """Modulo operator (%) for conditional filtering - ADVANCED COMPOSITION."""
         if self.is_failure:
@@ -1423,10 +1207,6 @@ class FlextResult[T_co]:
             )
         except Exception as e:
             return FlextResult[T_co].fail(f"Predicate evaluation failed: {e}")
-
-    def __and__[U](self, other: FlextResult[U]) -> FlextResult[tuple[T_co, U]]:
-        """AND operator (&) for sequential composition - ADVANCED COMPOSITION."""
-        return self @ other  # Delegate to matmul for consistency
 
     def __xor__(self, recovery_func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """XOR operator (^) for error recovery - ADVANCED COMPOSITION."""
@@ -1824,8 +1604,8 @@ class FlextResult[T_co]:
 
     @staticmethod
     def chain_validations[T](
-        *validators: Callable[[T], FlextResult[T]],
-    ) -> Callable[[T], FlextResult[T]]:
+        *validators: Callable[[], FlextResult[T]],
+    ) -> FlextResult[T]:
         """Chain multiple validation functions together.
 
         Args:
@@ -1835,16 +1615,55 @@ class FlextResult[T_co]:
             Function that applies all validations in sequence
 
         """
+        if not validators:
+            return FlextResult[T].fail("No validators provided")
 
-        def chained_validator(value: T) -> FlextResult[T]:
-            result = FlextResult[T].ok(value)
-            for validator in validators:
-                if result.is_failure:
-                    break
-                result = validator(result.value)
-            return result
+        # Execute validators in sequence
+        result = validators[0]()
+        for validator in validators[1:]:
+            if result.is_failure:
+                break
+            result = validator()
 
-        return chained_validator
+        return result
+
+    # =========================================================================
+    # IO INTEROP - Convert between FlextResult and returns.io types
+    # =========================================================================
+
+    def to_io(self) -> object:
+        """Wrap success value in returns.io.IO for pure side effects."""
+        if self.is_failure:
+            error_msg = self._error or "Failed"
+            msg = f"Cannot convert failure to IO: {error_msg}"
+            raise ValueError(msg)
+        return IO(self._data)
+
+    def to_io_result(self) -> object:
+        """Convert FlextResult to returns.io.IOResult for impure operations."""
+        if self.is_success:
+            return IOSuccess(self._data)
+        error_msg = self._error or "Operation failed"
+        return IOFailure(error_msg)
+
+    @classmethod
+    def from_io_result[T](
+        cls: type[FlextResult[T]], io_result: object
+    ) -> FlextResult[T]:
+        """Create FlextResult from returns.io.IOResult."""
+        if isinstance(io_result, IOSuccess):
+            sentinel = object()
+            value_or_sentinel = io_result.value_or(sentinel)
+            if value_or_sentinel is not sentinel:
+                io_container = cast("IO[T]", value_or_sentinel)
+                value = io_container._inner_value
+                return cls.ok(value)
+        if isinstance(io_result, IOFailure):
+            error_io_result = io_result.failure()
+            error_io_container = cast("IO[Exception]", error_io_result)
+            error_msg = str(error_io_container._inner_value)
+            return cls.fail(error_msg)
+        return cls.fail("Unknown IOResult type")
 
 
 __all__: list[str] = [

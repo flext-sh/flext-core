@@ -18,141 +18,78 @@ import time
 import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import (
     Final,
     Self,
+    TypeVar,
     cast,
 )
 
 import structlog.contextvars
+from pydantic import Field
 
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+# Type variables for generic context variables
+T_co = TypeVar("T_co", covariant=True)
+
 # =============================================================================
-# STRUCTLOG-BACKED CONTEXT VARIABLE INFRASTRUCTURE
+# PRIVATE HELPERS - Internal data structures using FlextModels.Value
 # =============================================================================
 
 
-class _ContextVarToken[T_co]:
-    """Token for context variable reset operations.
+class _ContextVarToken[T_co](FlextModels.Value):
+    """Token for context variable reset operations using FlextModels.Value."""
 
-    Maintains previous value for precise state restoration in context
-    managers, enabling proper nested scope handling with structlog storage.
+    key: str
+    old_value: T_co | None
 
-    This is an implementation detail of FlextContext providing ContextVar
-    API compatibility while using structlog.contextvars as storage.
-    """
 
-    __slots__ = ("_key", "_old_value")
+class _ContextData(FlextModels.Value):
+    """Lightweight container for initializing context state using FlextModels.Value."""
 
-    def __init__(self, key: str, old_value: T_co | None) -> None:
-        """Initialize token with key and previous value.
+    data: dict[str, object] = Field(default_factory=dict)
+    metadata: dict[str, object] = Field(default_factory=dict)
 
-        Args:
-            key: The context variable key
-            old_value: Previous value before update (None if unset)
 
-        """
-        super().__init__()
-        self._key = key
-        self._old_value = old_value
+class _ContextExport(FlextModels.Value):
+    """Typed snapshot returned by export_snapshot using FlextModels.Value."""
 
-    @property
-    def key(self) -> str:
-        """Get the context variable key."""
-        return self._key
-
-    @property
-    def old_value(self) -> T_co | None:
-        """Get the previous value before update."""
-        return self._old_value
+    data: dict[str, object] = Field(default_factory=dict)
+    metadata: dict[str, object] = Field(default_factory=dict)
+    statistics: dict[str, object] = Field(default_factory=dict)
 
 
 class _StructlogContextVar[T_co]:
-    """ContextVar-compatible wrapper using structlog.contextvars storage.
-
-    Provides Python's ContextVar API (get/set/reset) while using
-    structlog.contextvars as the single source of truth. This eliminates
-    duplication between context storage and logging integration.
-
-    Type Safety:
-        Generic[T_co] maintains compile-time type checking for all
-        context variable values while structlog stores as Dict[str, object].
-
-    Thread Safety:
-        Inherits thread-safety from structlog.contextvars which uses
-        Python's contextvars module internally.
-
-    API Compatibility:
-        Maintains exact ContextVar interface for zero breaking changes:
-        - get(default=None) -> T_co | None
-        - set(value: T_co) -> _ContextVarToken[T_co]
-        - reset(token: _ContextVarToken[T_co]) -> None
-
-    This is an implementation detail of FlextContext enabling ecosystem
-    compatibility while improving architecture.
-    """
+    """ContextVar-compatible wrapper using structlog.contextvars storage."""
 
     __slots__ = ("_default", "_name")
 
     def __init__(self, name: str, *, default: T_co | None = None) -> None:
-        """Initialize context variable with name and default value.
-
-        Args:
-            name: Variable name in structlog context
-            default: Default value when not set
-
-        """
+        """Initialize context variable with name and default value."""
         super().__init__()
         self._name = name
         self._default = default
 
     def get(self, default: T_co | None = None) -> T_co | None:
-        """Get value from structlog context with type safety.
-
-        Args:
-            default: Override default value for this call
-
-        Returns:
-            Current value or default if not set
-
-        """
+        """Get value from structlog context with type safety."""
         ctx = structlog.contextvars.get_contextvars()
         effective_default = self._default if default is None else default
         return ctx.get(self._name, effective_default)
 
     def set(self, value: T_co) -> _ContextVarToken[T_co]:
-        """Set value in structlog context and return reset token.
-
-        Automatically propagates to structlog logging context, eliminating
-        need for manual bind_contextvars() calls.
-
-        Args:
-            value: New value to set
-
-        Returns:
-            Token for restoring previous value via reset()
-
-        """
+        """Set value in structlog context and return reset token."""
         current = self.get()
         structlog.contextvars.bind_contextvars(**{self._name: value})
-        return _ContextVarToken(self._name, current)
+        return _ContextVarToken(key=self._name, old_value=current)
 
     def reset(self, token: _ContextVarToken[T_co]) -> None:
-        """Reset to previous value using token.
-
-        Enables precise state restoration in context managers, maintaining
-        exact ContextVar semantics with structlog storage.
-
-        Args:
-            token: Token from previous set() call
-
-        """
+        """Reset to previous value using token."""
         if token.old_value is None:
             structlog.contextvars.unbind_contextvars(token.key)
         else:
@@ -279,162 +216,12 @@ class FlextContext:
     """
 
     # =========================================================================
-    # PRIVATE HELPERS - Internal data structures
-    # =========================================================================
-
-    @dataclass(slots=True)
-    class _ContextData:
-        """Lightweight container for initializing context state.
-
-        Nested class for context-specific initialization data following
-        SOLID principles. This is an implementation detail of FlextContext.
-        """
-
-        data: dict[str, object] = field(default_factory=dict)
-        metadata: dict[str, object] = field(default_factory=dict)
-
-    @dataclass(slots=True)
-    class _ContextExport:
-        """Typed snapshot returned by `export_snapshot`.
-
-        Nested class for context-specific export data following
-        SOLID principles. This is an implementation detail of FlextContext.
-        """
-
-        data: dict[str, object] = field(default_factory=dict)
-        metadata: dict[str, object] = field(default_factory=dict)
-        statistics: dict[str, object] = field(default_factory=dict)
-
-    # =========================================================================
-    # STRUCTLOG-BACKED CONTEXT VARIABLE INFRASTRUCTURE
-    # =========================================================================
-
-    class _ContextVarToken[T_co]:
-        """Token for context variable reset operations.
-
-        Maintains previous value for precise state restoration in context
-        managers, enabling proper nested scope handling with structlog storage.
-
-        This is an implementation detail of FlextContext providing ContextVar
-        API compatibility while using structlog.contextvars as storage.
-        """
-
-        __slots__ = ("_key", "_old_value")
-
-        def __init__(self, key: str, old_value: T_co | None) -> None:
-            """Initialize token with key and previous value.
-
-            Args:
-                key: The context variable key
-                old_value: Previous value before update (None if unset)
-
-            """
-            super().__init__()
-            self._key = key
-            self._old_value = old_value
-
-        @property
-        def key(self) -> str:
-            """Get the context variable key."""
-            return self._key
-
-        @property
-        def old_value(self) -> T_co | None:
-            """Get the previous value before update."""
-            return self._old_value
-
-    class _StructlogContextVar[T_co]:
-        """ContextVar-compatible wrapper using structlog.contextvars storage.
-
-        Provides Python's ContextVar API (get/set/reset) while using
-        structlog.contextvars as the single source of truth. This eliminates
-        duplication between context storage and logging integration.
-
-        Type Safety:
-            Generic[T_co] maintains compile-time type checking for all
-            context variable values while structlog stores as Dict[str, object].
-
-        Thread Safety:
-            Inherits thread-safety from structlog.contextvars which uses
-            Python's contextvars module internally.
-
-        API Compatibility:
-            Maintains exact ContextVar interface for zero breaking changes:
-            - get(default=None) -> T_co | None
-            - set(value: T_co) -> _ContextVarToken[T_co]
-            - reset(token: _ContextVarToken[T_co]) -> None
-
-        This is an implementation detail of FlextContext enabling ecosystem
-        compatibility while improving architecture.
-        """
-
-        __slots__ = ("_default", "_name")
-
-        def __init__(self, name: str, *, default: T_co | None = None) -> None:
-            """Initialize context variable with name and default value.
-
-            Args:
-                name: Variable name in structlog context
-                default: Default value when not set
-
-            """
-            super().__init__()
-            self._name = name
-            self._default = default
-
-        def get(self, default: T_co | None = None) -> T_co | None:
-            """Get value from structlog context with type safety.
-
-            Args:
-                default: Override default value for this call
-
-            Returns:
-                Current value or default if not set
-
-            """
-            ctx = structlog.contextvars.get_contextvars()
-            effective_default = self._default if default is None else default
-            return ctx.get(self._name, effective_default)
-
-        def set(self, value: T_co) -> FlextContext._ContextVarToken[T_co]:
-            """Set value in structlog context and return reset token.
-
-            Automatically propagates to structlog logging context, eliminating
-            need for manual bind_contextvars() calls.
-
-            Args:
-                value: New value to set
-
-            Returns:
-                Token for restoring previous value via reset()
-
-            """
-            current = self.get()
-            structlog.contextvars.bind_contextvars(**{self._name: value})
-            return FlextContext._ContextVarToken(self._name, current)
-
-        def reset(self, token: FlextContext._ContextVarToken[T_co]) -> None:
-            """Reset to previous value using token.
-
-            Enables precise state restoration in context managers, maintaining
-            exact ContextVar semantics with structlog storage.
-
-            Args:
-                token: Token from previous set() call
-
-            """
-            if token.old_value is None:
-                structlog.contextvars.unbind_contextvars(token.key)
-            else:
-                structlog.contextvars.bind_contextvars(**{token.key: token.old_value})
-
-    # =========================================================================
     # LIFECYCLE METHODS
     # =========================================================================
 
     def __init__(
         self,
-        initial_data: FlextContext._ContextData | FlextTypes.Dict | None = None,
+        initial_data: _ContextData | FlextTypes.Dict | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -444,9 +231,9 @@ class FlextContext:
         """
         super().__init__()
         if initial_data is None:
-            context_data = FlextContext._ContextData()
+            context_data = _ContextData()
         elif isinstance(initial_data, dict):
-            context_data = FlextContext._ContextData(data=initial_data)
+            context_data = _ContextData(data=initial_data)
         else:
             context_data = initial_data
 
@@ -675,7 +462,7 @@ class FlextContext:
                 all_items.extend(scope_data.items())
             return all_items
 
-    def merge(self, other: FlextContext | FlextTypes.Dict) -> FlextContext:
+    def merge(self, other: FlextContext | FlextTypes.Dict) -> Self:
         """Merge another context or dictionary into this context.
 
         Args:
@@ -701,7 +488,7 @@ class FlextContext:
                 self._scopes[FlextConstants.Context.SCOPE_GLOBAL].update(other)
         return self
 
-    def clone(self) -> FlextContext:
+    def clone(self) -> Self:
         """Create a clone of this context.
 
         Returns:
@@ -718,6 +505,16 @@ class FlextContext:
             cloned._metadata = self._metadata.copy()
             cloned._statistics = self._statistics.copy()
             return cloned
+
+    def get_all_scopes(self) -> FlextTypes.Context.ScopeRegistry:
+        """Get all scopes.
+
+        Returns:
+            Dictionary of all scopes
+
+        """
+        with self._lock:
+            return self._scopes.copy()
 
     def validate(self) -> FlextResult[None]:
         """Validate the context data.
@@ -879,29 +676,19 @@ class FlextContext:
                 scope_data.clear()
             self._metadata.clear()
 
-    def get_all_scopes(self) -> FlextTypes.Context.ScopeRegistry:
-        """Get all scopes.
-
-        Returns:
-            Dictionary of all scopes
-
-        """
-        with self._lock:
-            return self._scopes.copy()
-
     def export(self) -> FlextTypes.Dict:
         """Export context data as a dictionary for compatibility consumers."""
         export_snapshot = self.export_snapshot()
         return dict(export_snapshot.data)
 
-    def export_snapshot(self) -> FlextContext._ContextExport:
+    def export_snapshot(self) -> _ContextExport:
         """Return typed export snapshot including metadata and statistics."""
         with self._lock:
             all_data: FlextTypes.Dict = {}
             for scope_data in self._scopes.values():
                 all_data.update(scope_data)
 
-            return FlextContext._ContextExport(
+            return _ContextExport(
                 data=all_data,
                 metadata=self._metadata.copy(),
                 statistics=self._statistics.copy(),
@@ -919,13 +706,9 @@ class FlextContext:
             self._scopes[FlextConstants.Context.SCOPE_GLOBAL].update(data)
 
     # =========================================================================
-    # Global Context Management - Static methods for global context
+    # Container integration for dependency injection
     # =========================================================================
 
-    _global_context: FlextContext | None = None
-    _global_lock = threading.RLock()
-
-    # Container integration for dependency injection
     _container: FlextContainer | None = None
 
     @classmethod
@@ -944,51 +727,6 @@ class FlextContext:
         if cls._container is None:
             cls._container = FlextContainer.get_global()
         return cls._container
-
-    @classmethod
-    def get_global(cls) -> FlextContext:
-        """REMOVED: Use direct instantiation or pass instance explicitly.
-
-        Migration:
-            # Old pattern
-            context = FlextContext.get_global()
-
-            # New pattern - create instance
-            context = FlextContext()
-
-            # Or for singleton pattern, manage explicitly
-            _context_lock = threading.RLock()
-            context_instance: FlextContext | None = None
-
-            with _context_lock:
-                if context_instance is None:
-                    context_instance = FlextContext()
-                context = context_instance
-
-        """
-        msg = (
-            "FlextContext.get_global() has been removed. "
-            "Use FlextContext() to create instances directly."
-        )
-        raise NotImplementedError(msg)
-
-    @classmethod
-    def reset_global(cls) -> None:
-        """REMOVED: Manage singleton lifecycle explicitly if needed.
-
-        Migration:
-            # Old pattern
-            FlextContext.reset_global()
-
-            # New pattern - manage your own singleton
-            context_instance = None  # Reset in your own code
-
-        """
-        msg = (
-            "FlextContext.reset_global() has been removed. "
-            "Manage singleton lifecycle explicitly in your code."
-        )
-        raise NotImplementedError(msg)
 
     # =========================================================================
     # Static Methods - Context variables organized by functionality
@@ -1683,10 +1421,6 @@ class FlextContext:
             return cls(handler_name, handler_mode)
 
 
-# Export HandlerExecutionContext at module level for API compatibility
-HandlerExecutionContext = FlextContext.HandlerExecutionContext
-
 __all__: FlextTypes.StringList = [
     "FlextContext",
-    "HandlerExecutionContext",
 ]

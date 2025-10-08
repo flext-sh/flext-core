@@ -299,7 +299,12 @@ class FlextProcessors(FlextMixins.Service):
         try:
             if callable(processor):
                 result = processor(processed_data)
-                if isinstance(result, FlextResult):
+                # Check if result is a FlextResult-like object (handle import issues)
+                if (
+                    hasattr(result, "is_success")
+                    and hasattr(result, "value")
+                    and hasattr(result, "error")
+                ):
                     # Cast to the expected return type for better type inference
                     typed_result = cast("FlextResult[object]", result)
                     if typed_result.is_success:
@@ -314,24 +319,25 @@ class FlextProcessors(FlextMixins.Service):
                             "status": "success",
                             "data_hash": hash(str(data)),
                         })
-                    else:
-                        # Cast to the expected return type for better type inference
-                        typed_result = cast("FlextResult[object]", result)
-                        self._metrics["failed_processes"] = (
-                            self._metrics.get("failed_processes", 0) + 1
-                        )
-                        self._audit_log.append({
-                            "timestamp": time.time(),
-                            "processor": name,
-                            "status": "failure",
-                            "error": typed_result.error,
-                            "data_hash": hash(str(data)),
-                        })
-
+                        # Return the FlextResult directly, don't wrap it
                         return typed_result
+                    # Cast to the expected return type for better type inference
+                    typed_result = cast("FlextResult[object]", result)
+                    self._metrics["failed_processes"] = (
+                        self._metrics.get("failed_processes", 0) + 1
+                    )
+                    self._audit_log.append({
+                        "timestamp": time.time(),
+                        "processor": name,
+                        "status": "failure",
+                        "error": typed_result.error,
+                        "data_hash": hash(str(data)),
+                    })
+
+                    return typed_result
 
                 # Wrap non-FlextResult in FlextResult
-                result_wrapped = FlextResult[object].ok(cast("object", result))
+                result_wrapped = FlextResult[object].ok(result)
                 self._cache[cache_key] = (result, time.time())
                 self._metrics["successful_processes"] = (
                     self._metrics.get("successful_processes", 0) + 1
@@ -1134,43 +1140,6 @@ class FlextProcessors(FlextMixins.Service):
 
             # Replace current data
             return step
-
-    # Factory methods for convenience
-    @staticmethod
-    def create_handler_registry() -> HandlerRegistry:
-        """REMOVED: Use direct instantiation with FlextProcessors.HandlerRegistry().
-
-        Migration:
-            # Old pattern
-            registry = FlextProcessors.create_handler_registry()
-
-            # New pattern - create instance directly
-            registry = FlextProcessors.HandlerRegistry()
-
-        """
-        msg = (
-            "FlextProcessors.create_handler_registry() has been removed. "
-            "Use FlextProcessors.HandlerRegistry() to create instances directly."
-        )
-        raise NotImplementedError(msg)
-
-    @staticmethod
-    def create_pipeline() -> Pipeline:
-        """REMOVED: Use direct instantiation with FlextProcessors.Pipeline().
-
-        Migration:
-            # Old pattern
-            pipeline = FlextProcessors.create_pipeline()
-
-            # New pattern - create instance directly
-            pipeline = FlextProcessors.Pipeline()
-
-        """
-        msg = (
-            "FlextProcessors.create_pipeline() has been removed. "
-            "Use FlextProcessors.Pipeline() to create instances directly."
-        )
-        raise NotImplementedError(msg)
 
     @staticmethod
     def is_handler_safe(handler: object) -> bool:

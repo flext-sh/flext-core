@@ -26,18 +26,18 @@ import warnings
 from typing import cast
 from uuid import uuid4
 
-from flext_core import FlextCore
+from flext_core import FlextCore, FlextResult
 
 # Constants
 DEMO_EXCEPTION_MSG = "Demo exception raised: %s"
 
 
-class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
+class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
     """Service demonstrating ALL FlextCore.Exceptions patterns with FlextMixins.Service infrastructure.
 
-    This service inherits from FlextCore.Service to demonstrate:
+    This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextCore.Logger with service context - EXCEPTIONS FOCUS!)
+    - Inherited logger property (FlextLogger with service context - EXCEPTIONS FOCUS!)
     - Inherited context property (FlextCore.Context for request/correlation tracking)
     - Inherited config property (FlextCore.Config with application settings)
     - Inherited metrics property (FlextMetrics for observability)
@@ -50,15 +50,15 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
     - Custom Exceptions: Module-specific exception creation
     - Correlation Tracking: Distributed error tracing with correlation IDs
     - Exception Context: Rich structured error information
-    - Error Codes: Standardized error categorization with FlextCore.Constants
-    - Integration: Seamless FlextCore.Result integration for Railway pattern
+    - Error Codes: Standardized error categorization with FlextConstants
+    - Integration: Seamless FlextResult integration for Railway pattern
     """
 
     def __init__(self) -> None:
         """Initialize with inherited FlextMixins.Service infrastructure.
 
         Inherited properties (no manual instantiation needed):
-        - self.logger: FlextCore.Logger with service context (exception handling operations)
+        - self.logger: FlextLogger with service context (exception handling operations)
         - self.container: FlextCore.Container singleton (for service dependencies)
         - self.context: FlextCore.Context (for correlation tracking)
         - self.config: FlextCore.Config (for application configuration)
@@ -96,7 +96,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             },
         )
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute all FlextCore.Exceptions pattern demonstrations.
 
         Runs comprehensive exception handling demonstrations:
@@ -118,13 +118,13 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         16. Metrics tracking (exception monitoring)
         17. Module-specific exceptions (custom modules)
         18. Correlation tracking (distributed tracing)
-        19. FlextCore.Result integration (Railway pattern)
+        19. FlextResult integration (Railway pattern)
         20. Exception context (rich information)
-        21. New FlextCore.Result methods (v0.9.9+ with exceptions)
+        21. New FlextResult methods (v0.9.9+ with exceptions)
         22. Deprecated patterns (for educational comparison)
 
         Returns:
-            FlextCore.Result[FlextCore.Types.Dict]: Execution summary with demonstration results
+            FlextResult[FlextTypes.Dict]: Execution summary with demonstration results
 
         """
         self.logger.info("Starting comprehensive FlextCore.Exceptions demonstration")
@@ -194,12 +194,12 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
                 extra={"summary": summary},
             )
 
-            return FlextCore.Result[dict[str, object]].ok(summary)
+            return FlextResult[dict[str, object]].ok(summary)
 
         except Exception as e:
             error_msg = f"FlextCore.Exceptions demonstration failed: {e}"
             self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
-            return FlextCore.Result[dict[str, object]].fail(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
 
     # ========== BASE EXCEPTION ==========
 
@@ -212,7 +212,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             msg = "Base error occurred"
             raise FlextCore.Exceptions.BaseError(
                 msg,
-                code=str(FlextCore.Constants.Errors.GENERIC_ERROR),
+                code=str(FlextConstants.Errors.GENERIC_ERROR),
                 context={"operation": "demo", "severity": "low"},
                 correlation_id=str(uuid4()),
             )
@@ -238,7 +238,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
                 field="email",
                 value="invalid-email",
                 metadata={"pattern": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
-                error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
         except FlextCore.Exceptions.ValidationError as e:
             print(f"✅ ValidationError: {e}")
@@ -355,7 +355,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             msg = "Operation timed out"
             raise FlextCore.Exceptions.TimeoutError(
                 msg,
-                timeout_seconds=float(FlextCore.Constants.Defaults.TIMEOUT),
+                timeout_seconds=float(FlextConstants.Defaults.TIMEOUT),
                 operation="api_call",
                 metadata={"elapsed": 30.5},
             )
@@ -664,13 +664,13 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             print(f"✅ Correlated error: {e}")
             print(f"   Correlation ID: {e.correlation_id}")
 
-    # ========== EXCEPTION WITH FlextCore.Result ==========
+    # ========== EXCEPTION WITH FlextResult ==========
 
     def demonstrate_exception_with_result(self) -> None:
-        """Show integration with FlextCore.Result."""
-        print("\n=== Exception with FlextCore.Result ===")
+        """Show integration with FlextResult."""
+        print("\n=== Exception with FlextResult ===")
 
-        def risky_operation() -> FlextCore.Result[str]:
+        def risky_operation() -> FlextResult[str]:
             """Operation that might fail."""
             try:
                 # Simulate failure
@@ -681,9 +681,9 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
                     value=None,
                 )
             except FlextCore.Exceptions.BaseError as e:
-                return FlextCore.Result[str].fail(str(e), error_code=e.error_code)
+                return FlextResult[str].fail(str(e), error_code=e.error_code)
 
-        # Use with FlextCore.Result
+        # Use with FlextResult
         result = risky_operation()
         if result.is_failure:
             print(f"✅ Operation failed: {result.error}")
@@ -722,7 +722,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
     # ========== DEPRECATED PATTERNS ==========
 
     def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextCore.Result methods in exceptions context.
+        """Demonstrate the 5 new FlextResult methods in exceptions context.
 
         Shows how the new v0.9.9+ methods work with exception handling:
         - from_callable: Safe exception handling
@@ -732,7 +732,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         - value_or_call: Lazy evaluation with exception safety
         """
         print("\n" + "=" * 60)
-        print("NEW FlextCore.Result METHODS - EXCEPTIONS CONTEXT")
+        print("NEW FlextResult METHODS - EXCEPTIONS CONTEXT")
         print("Demonstrating v0.9.9+ methods with exception handling")
         print("=" * 60)
 
@@ -757,7 +757,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             return user_data
 
         # Safe execution without try/except
-        result: FlextCore.Result[dict[str, object]] = FlextCore.Result.from_callable(
+        result: FlextResult[dict[str, object]] = FlextResult.from_callable(
             risky_operation
         )
         if result.is_success:
@@ -771,43 +771,43 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
 
         def validate_user_data(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Validate user data."""
             email = data.get("email", "")
             if not isinstance(email, str) or not email or "@" not in email:
-                return FlextCore.Result[dict[str, object]].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Invalid email",
-                    error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return FlextCore.Result[dict[str, object]].ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         def check_permissions(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Check user permissions."""
             # Simulate permission check
-            return FlextCore.Result[dict[str, object]].ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         def enrich_with_context(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Enrich with additional context."""
             enriched: dict[str, object] = {
                 **data,
                 "validated_at": "2025-01-01",
                 "permission_level": "standard",
             }
-            return FlextCore.Result[dict[str, object]].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
         def finalize_processing(
             data: dict[str, object],
-        ) -> FlextCore.Result[dict[str, object]]:
+        ) -> FlextResult[dict[str, object]]:
             """Finalize data processing."""
             final: dict[str, object] = {
                 **data,
                 "processing_complete": True,
             }
-            return FlextCore.Result[dict[str, object]].ok(final)
+            return FlextResult[dict[str, object]].ok(final)
 
         # Flow through pipeline with exception safety
         user_input: dict[str, object] = {
@@ -815,7 +815,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             "name": "Test User",
         }
         pipeline_result = (
-            FlextCore.Result[dict[str, object]]
+            FlextResult[dict[str, object]]
             .ok(user_input)
             .flow_through(
                 validate_user_data,
@@ -835,17 +835,17 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         # 3. lash - Exception Recovery
         print("\n=== 3. lash: Exception Recovery ===")
 
-        def primary_operation() -> FlextCore.Result[str]:
+        def primary_operation() -> FlextResult[str]:
             """Primary operation that might fail."""
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 "Primary service unavailable",
-                error_code=FlextCore.Constants.Errors.OPERATION_ERROR,
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
             )
 
-        def fallback_operation(error: str) -> FlextCore.Result[str]:
+        def fallback_operation(error: str) -> FlextResult[str]:
             """Fallback operation for error recovery."""
             print(f"   ⚠️  Primary failed: {error}, using fallback...")
-            return FlextCore.Result[str].ok("FALLBACK-RESULT")
+            return FlextResult[str].ok("FALLBACK-RESULT")
 
         # Try primary, fall back on error
         recovery_result = primary_operation().lash(fallback_operation)
@@ -858,21 +858,21 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         # 4. alt - Alternative Results
         print("\n=== 4. alt: Alternative Results ===")
 
-        def get_custom_config() -> FlextCore.Result[dict[str, object]]:
+        def get_custom_config() -> FlextResult[dict[str, object]]:
             """Try to get custom configuration."""
-            return FlextCore.Result[dict[str, object]].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Custom config not available",
-                error_code=FlextCore.Constants.Errors.CONFIGURATION_ERROR,
+                error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
             )
 
-        def get_default_config() -> FlextCore.Result[dict[str, object]]:
+        def get_default_config() -> FlextResult[dict[str, object]]:
             """Provide default configuration."""
             config: dict[str, object] = {
                 "mode": "default",
                 "timeout": 30,
                 "retry_attempts": 3,
             }
-            return FlextCore.Result[dict[str, object]].ok(config)
+            return FlextResult[dict[str, object]].ok(config)
 
         # Try custom, fall back to default
         config_result = get_custom_config().alt(get_default_config())
@@ -896,7 +896,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             }
 
         # Try to get existing resource, create if not available
-        resource_fail_result = FlextCore.Result[dict[str, object]].fail(
+        resource_fail_result = FlextResult[dict[str, object]].fail(
             "No existing resource"
         )
         resource = resource_fail_result.value_or_call(create_expensive_resource)
@@ -909,9 +909,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
             "resource_type": "cache",
             "initialized": True,
         }
-        resource_success_result = FlextCore.Result[dict[str, object]].ok(
-            existing_resource
-        )
+        resource_success_result = FlextResult[dict[str, object]].ok(existing_resource)
         resource_cached = resource_success_result.value_or_call(
             create_expensive_resource
         )
@@ -921,7 +919,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         print("   No expensive creation needed")
 
         print("\n" + "=" * 60)
-        print("✅ NEW FlextCore.Result METHODS EXCEPTIONS DEMO COMPLETE!")
+        print("✅ NEW FlextResult METHODS EXCEPTIONS DEMO COMPLETE!")
         print("All 5 methods demonstrated with exception handling context")
         print("=" * 60)
 
@@ -949,7 +947,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
 
         # OLD: String error codes
         warnings.warn(
-            "String error codes are DEPRECATED! Use FlextCore.Constants.Errors.",
+            "String error codes are DEPRECATED! Use FlextConstants.Errors.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -957,7 +955,7 @@ class ComprehensiveExceptionService(FlextCore.Service[FlextCore.Types.Dict]):
         print("error_code = 'ERR_001'")
 
         print("\n✅ CORRECT WAY (constants):")
-        print("error_code = FlextCore.Constants.Errors.VALIDATION_ERROR")
+        print("error_code = FlextConstants.Errors.VALIDATION_ERROR")
 
         # OLD: No correlation tracking
         warnings.warn(
@@ -1024,7 +1022,7 @@ def main() -> None:
     service.demonstrate_exception_with_result()
     service.demonstrate_exception_context()
 
-    # New FlextCore.Result methods (v0.9.9+)
+    # New FlextResult methods (v0.9.9+)
     service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings

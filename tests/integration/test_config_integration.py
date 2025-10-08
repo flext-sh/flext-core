@@ -57,7 +57,6 @@ class TestFlextConfigSingletonIntegration:
 
         # Test that the config has expected attributes
         assert hasattr(config1, "app_name")
-        assert hasattr(config1, "environment")
         assert hasattr(config1, "log_level")
         assert hasattr(config1, "max_name_length")
         assert hasattr(config1, "min_phone_digits")
@@ -174,7 +173,6 @@ class TestFlextConfigSingletonIntegration:
 
             # Check that config loaded successfully (may use defaults if file loading not implemented)
             assert config.app_name is not None
-            assert config.environment is not None
             assert config.log_level is not None
             assert config.max_workers is not None
             assert config.enable_caching is not None
@@ -229,7 +227,6 @@ class TestFlextConfigSingletonIntegration:
 
             # Check that config loaded successfully (may use defaults if file loading not implemented)
             assert config.app_name is not None
-            assert config.environment is not None
             assert config.debug is not None
             assert config.timeout_seconds is not None
             assert config.validation_strict_mode is not None
@@ -326,5 +323,156 @@ class TestFlextConfigSingletonIntegration:
         first_config = configs[0]
         for config in configs[1:]:
             assert config is first_config
+
+    def test_pydantic_settings_precedence_order(self) -> None:
+        """Test comprehensive Pydantic 2 Settings precedence order.
+
+        This test validates the complete precedence chain:
+        1. Field defaults (lowest priority)
+        2. .env file values (override defaults)
+        3. Environment variables (override .env)
+        4. Explicit init arguments (highest priority, override everything)
+
+        This is critical for CLI integration and automatic configuration.
+        """
+        # Clear any existing instance
+        FlextConfig.reset_global_instance()
+
+        original_dir = Path.cwd()
+        temp_dir = tempfile.mkdtemp()
+
+        # Save any existing environment variables
+        saved_env_vars: dict[str, str | None] = {
+            "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
+            "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
+            "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),
+            "FLEXT_TIMEOUT_SECONDS": os.environ.pop("FLEXT_TIMEOUT_SECONDS", None),
+        }
+
+        try:
+            os.chdir(temp_dir)
+
+            # === STEP 1: Test Default Values (Baseline) ===
+            # Create config with no .env file or environment variables
+            config_defaults = FlextConfig.get_global_instance()
+
+            # These should use Field defaults
+            assert config_defaults.app_name == "FLEXT Application"  # Default from Field
+            assert config_defaults.log_level == "INFO"  # Default from FlextConstants
+            assert config_defaults.debug is False  # Default from Field
+            assert config_defaults.timeout_seconds == 30  # Default from Field
+
+            # Reset for next test
+            FlextConfig.reset_global_instance()
+
+            # === STEP 2: Test .env File Override (Medium Priority) ===
+            # Create .env file with values
+            with Path(".env").open("w", encoding="utf-8") as f:
+                f.write("FLEXT_APP_NAME=from-dotenv\n")
+                f.write("FLEXT_LOG_LEVEL=WARNING\n")
+                f.write("FLEXT_DEBUG=true\n")
+                f.write("FLEXT_TIMEOUT_SECONDS=45\n")
+
+            config_dotenv = FlextConfig.get_global_instance()
+
+            # These should use .env values (override defaults)
+            assert config_dotenv.app_name == "from-dotenv"
+            assert config_dotenv.log_level == "WARNING"
+            assert config_dotenv.debug is True
+            assert config_dotenv.timeout_seconds == 45
+
+            # Reset for next test
+            FlextConfig.reset_global_instance()
+
+            # === STEP 3: Test Environment Variables Override (High Priority) ===
+            # Set environment variables (should override .env)
+            os.environ["FLEXT_APP_NAME"] = "from-env-var"
+            os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
+            os.environ["FLEXT_DEBUG"] = "false"
+            os.environ["FLEXT_TIMEOUT_SECONDS"] = "60"
+
+            config_env = FlextConfig.get_global_instance()
+
+            # Environment variables should override .env file
+            assert config_env.app_name == "from-env-var"
+            assert config_env.log_level == "DEBUG"
+            assert config_env.debug is False  # Env var overrides .env
+            assert config_env.timeout_seconds == 60
+
+            # Reset for explicit init test
+            FlextConfig.reset_global_instance()
+
+            # === STEP 4: Test Explicit Init Arguments (Highest Priority) ===
+            # Create config with explicit arguments
+            # Note: FlextConfig uses singleton, so we use direct instantiation for this test
+            config_explicit = FlextConfig(
+                app_name="from-init",
+                log_level="ERROR",
+                debug=True,
+                timeout_seconds=90,
+            )
+
+            # Explicit arguments should override everything
+            assert config_explicit.app_name == "from-init"
+            assert config_explicit.log_level == "ERROR"
+            assert config_explicit.debug is True
+            assert config_explicit.timeout_seconds == 90
+
+            # === STEP 5: Validate Logging Configuration ===
+            # Test that logging is correctly configured based on config values
+            from flext_core import FlextLogger
+
+            # Create logger with config from environment
+            test_logger = FlextLogger("test_precedence")
+
+            # Verify logger exists and can be used
+            assert test_logger is not None
+
+            # Test that effective log level is computed correctly
+            # Note: When debug=True, effective_log_level is "INFO" (debug mode overrides)
+            assert config_explicit.log_level == "ERROR"  # Configured level
+            assert (
+                config_explicit.effective_log_level == "INFO"
+            )  # Debug mode forces INFO
+            assert config_explicit.is_debug_enabled is True
+            assert config_explicit.trace is False  # Trace mode disabled
+
+            # Test with debug=False to verify log_level is respected
+            config_no_debug = FlextConfig(log_level="WARNING", debug=False)
+            assert config_no_debug.effective_log_level == "WARNING"
+            assert config_no_debug.is_debug_enabled is False
+
+            # === VALIDATION: Precedence Order Summary ===
+            # Precedence (highest to lowest):
+            # 4. Explicit init > 3. Environment variables > 2. .env file > 1. Field defaults
+            # This is the standard Pydantic 2 BaseSettings behavior
+
+        finally:
+            # Cleanup: Change back to original directory
+            os.chdir(original_dir)
+
+            # Remove .env file
+            Path(temp_dir).joinpath(".env").unlink(missing_ok=True)
+            Path(temp_dir).rmdir()
+
+            # Restore environment variables
+            for key, value in saved_env_vars.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
+            # Clean up any environment variables set during test
+            for key in [
+                "FLEXT_APP_NAME",
+                "FLEXT_LOG_LEVEL",
+                "FLEXT_DEBUG",
+                "FLEXT_TIMEOUT_SECONDS",
+            ]:
+                if key in os.environ and key not in saved_env_vars:
+                    del os.environ[key]
+
+            # Reset singleton
+            FlextConfig.reset_global_instance()
 
         # Note: teardown_method will handle cleanup

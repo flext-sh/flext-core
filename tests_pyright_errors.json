@@ -3,7 +3,7 @@
   "time": "1759862270085",
   "generalDiagnostics": [
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/conftest.py",
+      "file": "..flext-core/tests/conftest.py",
       "severity": "error",
       "message": "Cannot assign to attribute \"_configured\" for class \"type[FlextLogger]\"\n  Attribute \"_configured\" is unknown",
       "range": {
@@ -19,7 +19,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/conftest.py",
+      "file": "..flext-core/tests/conftest.py",
       "severity": "error",
       "message": "Cannot assign to attribute \"_configured\" for class \"type[FlextLogger]\"\n  Attribute \"_configured\" is unknown",
       "range": {
@@ -35,7 +35,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_integration.py",
+      "file": "..flext-core/tests/integration/test_integration.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"dict[str, object]\"",
       "range": {
@@ -51,7 +51,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Return type, \"FlextResult[dict[Unknown, Unknown]]\", is partially unknown",
       "range": {
@@ -67,7 +67,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -83,7 +83,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -99,7 +99,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -115,7 +115,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Return type, \"FlextResult[dict[Unknown, Unknown]]\", is partially unknown",
       "range": {
@@ -131,7 +131,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -147,7 +147,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -163,7 +163,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -179,7 +179,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -195,7 +195,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Return type, \"FlextResult[dict[Unknown, Unknown]]\", is partially unknown",
       "range": {
@@ -211,7 +211,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Type of parameter \"data\" is partially unknown\n  Parameter type is \"dict[Unknown, Unknown]\"",
       "range": {
@@ -227,7 +227,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -243,7 +243,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -259,7 +259,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -275,7 +275,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_migration_validation.py",
+      "file": "..flext-core/tests/integration/test_migration_validation.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -291,7 +291,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_service.py",
+      "file": "..flext-core/tests/integration/test_service.py",
       "severity": "error",
       "message": "Unnecessary isinstance call; \"Dict | dict[str, dict[str, dict[str, list[int]]]]\" is always an instance of \"dict[Unknown, Unknown]\"",
       "range": {
@@ -307,7 +307,7 @@
       "rule": "reportUnnecessaryIsInstance"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_service.py",
+      "file": "..flext-core/tests/integration/test_service.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"dict[str, object]\"",
       "range": {
@@ -323,7 +323,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_service.py",
+      "file": "..flext-core/tests/integration/test_service.py",
       "severity": "error",
       "message": "Unnecessary isinstance call; \"Dict\" is always an instance of \"dict[Unknown, Unknown]\"",
       "range": {
@@ -339,7 +339,7 @@
       "rule": "reportUnnecessaryIsInstance"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_service.py",
+      "file": "..flext-core/tests/integration/test_service.py",
       "severity": "error",
       "message": "Unnecessary isinstance call; \"dict[str, object]\" is always an instance of \"dict[Unknown, Unknown]\"",
       "range": {
@@ -355,7 +355,7 @@
       "rule": "reportUnnecessaryIsInstance"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_system.py",
+      "file": "..flext-core/tests/integration/test_system.py",
       "severity": "error",
       "message": "Function \"tentar_recuperar\" is not accessed",
       "range": {
@@ -371,7 +371,7 @@
       "rule": "reportUnusedFunction"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_wildcard_exports.py",
+      "file": "..flext-core/tests/integration/test_wildcard_exports.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"ModuleSpec\"",
       "range": {
@@ -387,7 +387,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_wildcard_exports.py",
+      "file": "..flext-core/tests/integration/test_wildcard_exports.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"ModuleSpec\"",
       "range": {
@@ -403,7 +403,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_wildcard_exports.py",
+      "file": "..flext-core/tests/integration/test_wildcard_exports.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"ModuleSpec\"",
       "range": {
@@ -419,7 +419,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_wildcard_exports.py",
+      "file": "..flext-core/tests/integration/test_wildcard_exports.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"ModuleSpec\"",
       "range": {
@@ -435,7 +435,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/integration/test_wildcard_exports.py",
+      "file": "..flext-core/tests/integration/test_wildcard_exports.py",
       "severity": "error",
       "message": "Unnecessary \"cast\" call; type is already \"ModuleSpec\"",
       "range": {
@@ -451,7 +451,7 @@
       "rule": "reportUnnecessaryCast"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/patterns/test_advanced_patterns.py",
+      "file": "..flext-core/tests/patterns/test_advanced_patterns.py",
       "severity": "error",
       "message": "Instance variable \"_validation_rules\" is not initialized in the class body or __init__ method",
       "range": {
@@ -467,7 +467,7 @@
       "rule": "reportUninitializedInstanceVariable"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/patterns/test_advanced_patterns.py",
+      "file": "..flext-core/tests/patterns/test_advanced_patterns.py",
       "severity": "error",
       "message": "Unnecessary isinstance call; \"str\" is always an instance of \"str\"",
       "range": {
@@ -483,7 +483,7 @@
       "rule": "reportUnnecessaryIsInstance"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_bus.py",
+      "file": "..flext-core/tests/unit/test_bus.py",
       "severity": "error",
       "message": "No parameter named \"data\"",
       "range": {
@@ -499,7 +499,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_bus.py",
+      "file": "..flext-core/tests/unit/test_bus.py",
       "severity": "error",
       "message": "\"query_id\" overrides a field of the same name but is missing a default value",
       "range": {
@@ -515,7 +515,7 @@
       "rule": "reportGeneralTypeIssues"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_bus.py",
+      "file": "..flext-core/tests/unit/test_bus.py",
       "severity": "error",
       "message": "No parameter named \"data\"",
       "range": {
@@ -531,7 +531,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_bus.py",
+      "file": "..flext-core/tests/unit/test_bus.py",
       "severity": "error",
       "message": "\"query_id\" overrides a field of the same name but is missing a default value",
       "range": {
@@ -547,7 +547,7 @@
       "rule": "reportGeneralTypeIssues"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_bus.py",
+      "file": "..flext-core/tests/unit/test_bus.py",
       "severity": "error",
       "message": "\"query_id\" overrides a field of the same name but is missing a default value",
       "range": {
@@ -563,7 +563,7 @@
       "rule": "reportGeneralTypeIssues"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_bus.py",
+      "file": "..flext-core/tests/unit/test_bus.py",
       "severity": "error",
       "message": "No parameter named \"data\"",
       "range": {
@@ -579,7 +579,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_container.py",
+      "file": "..flext-core/tests/unit/test_container.py",
       "severity": "error",
       "message": "Type \"FlextResult[object]\" is not assignable to declared type \"FlextResult[StringDict]\"\n  \"FlextResult[object]\" is not assignable to \"FlextResult[StringDict]\"\n    Type parameter \"T_co@FlextResult\" is invariant, but \"object\" is not the same as \"StringDict\"",
       "range": {
@@ -595,7 +595,7 @@
       "rule": "reportAssignmentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_container.py",
+      "file": "..flext-core/tests/unit/test_container.py",
       "severity": "error",
       "message": "Cannot access attribute \"config\" for class \"object\"\n  Attribute \"config\" is unknown",
       "range": {
@@ -611,7 +611,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_container.py",
+      "file": "..flext-core/tests/unit/test_container.py",
       "severity": "error",
       "message": "Cannot access attribute \"config\" for class \"object\"\n  Attribute \"config\" is unknown",
       "range": {
@@ -627,7 +627,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_container.py",
+      "file": "..flext-core/tests/unit/test_container.py",
       "severity": "error",
       "message": "Cannot access attribute \"config\" for class \"object\"\n  Attribute \"config\" is unknown",
       "range": {
@@ -643,7 +643,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_container.py",
+      "file": "..flext-core/tests/unit/test_container.py",
       "severity": "error",
       "message": "Argument of type \"Literal['not_callable']\" cannot be assigned to parameter \"factory\" of type \"() -> object\" in function \"register_factory\"\n  Type \"Literal['not_callable']\" is not assignable to type \"() -> object\"",
       "range": {
@@ -659,7 +659,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_decorators.py",
+      "file": "..flext-core/tests/unit/test_decorators.py",
       "severity": "error",
       "message": "Argument missing for parameter \"test_service\"",
       "range": {
@@ -675,7 +675,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_decorators.py",
+      "file": "..flext-core/tests/unit/test_decorators.py",
       "severity": "error",
       "message": "Argument missing for parameter \"service\"",
       "range": {
@@ -691,7 +691,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_decorators.py",
+      "file": "..flext-core/tests/unit/test_decorators.py",
       "severity": "error",
       "message": "Argument missing for parameter \"repo\"",
       "range": {
@@ -707,7 +707,7 @@
       "rule": "reportCallIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_dispatcher.py",
+      "file": "..flext-core/tests/unit/test_dispatcher.py",
       "severity": "error",
       "message": "Cannot access attribute \"dispatch_batch\" for class \"FlextDispatcher\"\n  Attribute \"dispatch_batch\" is unknown",
       "range": {
@@ -723,7 +723,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_dispatcher.py",
+      "file": "..flext-core/tests/unit/test_dispatcher.py",
       "severity": "error",
       "message": "Cannot access attribute \"get_performance_metrics\" for class \"FlextDispatcher\"\n  Attribute \"get_performance_metrics\" is unknown",
       "range": {
@@ -739,7 +739,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_dispatcher.py",
+      "file": "..flext-core/tests/unit/test_dispatcher.py",
       "severity": "error",
       "message": "Cannot access attribute \"get_performance_metrics\" for class \"FlextDispatcher\"\n  Attribute \"get_performance_metrics\" is unknown",
       "range": {
@@ -755,7 +755,7 @@
       "rule": "reportAttributeAccessIssue"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Function \"test_func\" is not accessed",
       "range": {
@@ -771,7 +771,7 @@
       "rule": "reportUnusedFunction"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[object], object]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[object], object]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_VT_co@Mapping\" is covariant, but \"object\" is not a subtype of \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n      Type \"object\" is not assignable to type \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n        \"object\" is not assignable to \"FlextHandlers[object, object]\"\n        \"object\" is not assignable to \"tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]]\"\n        \"object\" is not assignable to \"dict[str, object]\"\n        \"object\" is not assignable to \"tuple[object, ...]\"\n        \"object\" is not assignable to \"None\"",
       "range": {
@@ -787,7 +787,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[object], object]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[object], object]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_VT_co@Mapping\" is covariant, but \"object\" is not a subtype of \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n      Type \"object\" is not assignable to type \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n        \"object\" is not assignable to \"FlextHandlers[object, object]\"\n        \"object\" is not assignable to \"tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]]\"\n        \"object\" is not assignable to \"dict[str, object]\"\n        \"object\" is not assignable to \"tuple[object, ...]\"\n        \"object\" is not assignable to \"None\"",
       "range": {
@@ -803,7 +803,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[object], object]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[object], object]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_VT_co@Mapping\" is covariant, but \"object\" is not a subtype of \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n      Type \"object\" is not assignable to type \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n        \"object\" is not assignable to \"FlextHandlers[object, object]\"\n        \"object\" is not assignable to \"tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]]\"\n        \"object\" is not assignable to \"dict[str, object]\"\n        \"object\" is not assignable to \"tuple[object, ...]\"\n        \"object\" is not assignable to \"None\"",
       "range": {
@@ -819,7 +819,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[object], object]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[object], object]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_VT_co@Mapping\" is covariant, but \"object\" is not a subtype of \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n      Type \"object\" is not assignable to type \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n        \"object\" is not assignable to \"FlextHandlers[object, object]\"\n        \"object\" is not assignable to \"tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]]\"\n        \"object\" is not assignable to \"dict[str, object]\"\n        \"object\" is not assignable to \"tuple[object, ...]\"\n        \"object\" is not assignable to \"None\"",
       "range": {
@@ -835,7 +835,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[object], object]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[object], object]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_VT_co@Mapping\" is covariant, but \"object\" is not a subtype of \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n      Type \"object\" is not assignable to type \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n        \"object\" is not assignable to \"FlextHandlers[object, object]\"\n        \"object\" is not assignable to \"tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]]\"\n        \"object\" is not assignable to \"dict[str, object]\"\n        \"object\" is not assignable to \"tuple[object, ...]\"\n        \"object\" is not assignable to \"None\"",
       "range": {
@@ -851,7 +851,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[object], object]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[object], object]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_VT_co@Mapping\" is covariant, but \"object\" is not a subtype of \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n      Type \"object\" is not assignable to type \"FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None\"\n        \"object\" is not assignable to \"FlextHandlers[object, object]\"\n        \"object\" is not assignable to \"tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]]\"\n        \"object\" is not assignable to \"dict[str, object]\"\n        \"object\" is not assignable to \"tuple[object, ...]\"\n        \"object\" is not assignable to \"None\"",
       "range": {
@@ -867,7 +867,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Class \"TestMessageType\" is not accessed",
       "range": {
@@ -883,7 +883,7 @@
       "rule": "reportUnusedClass"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Class \"TestMessage\" is not accessed",
       "range": {
@@ -899,7 +899,7 @@
       "rule": "reportUnusedClass"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[TestMessage], tuple[() -> None, dict[Unknown, Unknown]]]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[TestMessage], tuple[() -> None, dict[Unknown, Unknown]]]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_KT@Mapping\" is invariant, but \"type[TestMessage]\" is not the same as \"type[object]\"",
       "range": {
@@ -915,7 +915,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[type[TestMessage], tuple[(msg: object) -> object, dict[str, str]]]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[type[TestMessage], tuple[(msg: object) -> object, dict[str, str]]]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_KT@Mapping\" is invariant, but \"type[TestMessage]\" is not the same as \"type[object]\"",
       "range": {
@@ -931,7 +931,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"dict[ProblematicMessage, tuple[(msg: object) -> object, dict[Unknown, Unknown]]]\" cannot be assigned to parameter \"mapping\" of type \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\" in function \"register_function_map\"\n  \"dict[ProblematicMessage, tuple[(msg: object) -> object, dict[Unknown, Unknown]]]\" is not assignable to \"Mapping[type[object], FlextHandlers[object, object] | tuple[(object) -> (object | FlextResult[object]), object | FlextResult[object]] | Dict | tuple[object, ...] | None]\"\n    Type parameter \"_KT@Mapping\" is invariant, but \"ProblematicMessage\" is not the same as \"type[object]\"",
       "range": {
@@ -947,7 +947,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"Literal['StringMessageType']\" cannot be assigned to parameter \"message_type\" of type \"type[object]\" in function \"_resolve_binding_key\"\n  Type \"Literal['StringMessageType']\" is not assignable to type \"type[object]\"",
       "range": {
@@ -963,7 +963,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_registry.py",
+      "file": "..flext-core/tests/unit/test_registry.py",
       "severity": "error",
       "message": "Argument of type \"Literal['StringType']\" cannot be assigned to parameter \"message_type\" of type \"type[object]\" in function \"_resolve_binding_key_from_entry\"\n  Type \"Literal['StringType']\" is not assignable to type \"type[object]\"",
       "range": {
@@ -979,7 +979,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_result.py",
+      "file": "..flext-core/tests/unit/test_result.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -995,7 +995,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_result.py",
+      "file": "..flext-core/tests/unit/test_result.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -1011,7 +1011,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_result.py",
+      "file": "..flext-core/tests/unit/test_result.py",
       "severity": "error",
       "message": "Argument of type \"object\" cannot be assigned to parameter \"x\" of type \"ConvertibleToInt\" in function \"__new__\"\n  Type \"object\" is not assignable to type \"ConvertibleToInt\"\n    \"object\" is not assignable to \"str\"\n    \"object\" is incompatible with protocol \"Buffer\"\n      \"__buffer__\" is not present\n    \"object\" is incompatible with protocol \"SupportsInt\"\n      \"__int__\" is not present\n    \"object\" is incompatible with protocol \"SupportsIndex\"\n      \"__index__\" is not present\n  ...",
       "range": {
@@ -1027,7 +1027,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_result.py",
+      "file": "..flext-core/tests/unit/test_result.py",
       "severity": "error",
       "message": "Argument of type \"object\" cannot be assigned to parameter \"x\" of type \"ConvertibleToInt\" in function \"__new__\"\n  Type \"object\" is not assignable to type \"ConvertibleToInt\"\n    \"object\" is not assignable to \"str\"\n    \"object\" is incompatible with protocol \"Buffer\"\n      \"__buffer__\" is not present\n    \"object\" is incompatible with protocol \"SupportsInt\"\n      \"__int__\" is not present\n    \"object\" is incompatible with protocol \"SupportsIndex\"\n      \"__index__\" is not present",
       "range": {
@@ -1043,7 +1043,7 @@
       "rule": "reportArgumentType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Return type, \"dict[Unknown, Unknown]\", is partially unknown",
       "range": {
@@ -1059,7 +1059,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -1075,7 +1075,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Return type, \"dict[Unknown, Unknown]\", is partially unknown",
       "range": {
@@ -1091,7 +1091,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -1107,7 +1107,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Return type, \"dict[Unknown, Unknown]\", is partially unknown",
       "range": {
@@ -1123,7 +1123,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Type of parameter \"event_dict\" is partially unknown\n  Parameter type is \"dict[Unknown, Unknown]\"",
       "range": {
@@ -1139,7 +1139,7 @@
       "rule": "reportUnknownParameterType"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
@@ -1155,7 +1155,7 @@
       "rule": "reportMissingTypeArgument"
     },
     {
-      "file": "/home/marlonsc/flext/flext-core/tests/unit/test_runtime.py",
+      "file": "..flext-core/tests/unit/test_runtime.py",
       "severity": "error",
       "message": "Expected type arguments for generic class \"dict\"",
       "range": {
